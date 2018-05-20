@@ -16,6 +16,8 @@ proc newUInt*(number: string): UInt =
         number: number
     )
 
+var num1: UInt = newUInt("1")
+
 proc `+`*(x: UInt, y: UInt): UInt =
     result = newUInt("")
     while x.number.len < y.number.len:
@@ -87,9 +89,7 @@ proc `-`*(x: UInt, y: UInt): UInt =
         result.number = result.number.substr(1, result.number.len)
 
 proc `*`*(x: UInt, y: UInt): UInt =
-    var
-        factor: UInt = newUInt(y.number)
-        num1: UInt = newUInt("1")
+    var factor: UInt = newUInt(y.number)
     result = newUInt("0")
     while factor.number != "0":
         result = result + x
@@ -99,7 +99,6 @@ proc `/`*(xArg: UInt, y: UInt): UInt =
     var
         x: UInt = xArg
         noError: bool = true
-        num1: UInt = newUInt("1")
     result = newUInt("0")
     while noError:
         try:
@@ -111,9 +110,9 @@ proc `/`*(xArg: UInt, y: UInt): UInt =
 proc `div`*(x: UInt, y: UInt): UInt =
     result = x / y
 
-proc `+=`*(x: UInt, y: UInt): UInt =
+proc `+=`*(x: UInt, y: UInt) =
     x.number = (x + y).number
-proc `-=`*(x: UInt, y: UInt): UInt =
+proc `-=`*(x: UInt, y: UInt) =
     x.number = (x - y).number
 
 proc `==`*(x: UInt, y: UInt): bool =
@@ -142,3 +141,8 @@ proc `>=`*(x: UInt, y: UInt): bool =
 
 proc `$`*(x: UInt): string =
     result = x.number
+
+proc inc*(x: UInt) =
+    x += num1
+proc dec*(x: UInt)  =
+    x -= num1
