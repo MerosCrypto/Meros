@@ -1,4 +1,6 @@
-import math
+import ./UInt
+
+import math, strutils
 
 var Base16Characters: array[0 .. 15, char] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -6,9 +8,9 @@ var Base16Characters: array[0 .. 15, char] = [
 ]
 
 var
-    num0: uint32 = 0
-    num1: uint32 = 1
-    num16: uint32 = 16
+    num0: UInt = newUInt("0")
+    num1: UInt = newUInt("1")
+    num16: UInt = newUInt("16")
 
 proc verify*(base16Value: string) =
     for i in 0 ..< base16Value.len:
@@ -22,26 +24,25 @@ proc verify*(base16Value: string) =
         else:
             raise newException(Exception, "Invalid Hex Number")
 
-proc convert*(valueArg: uint32): string =
+proc convert*(valueArg: UInt): string =
     if valueArg < num0:
         return
 
     var
-        value: uint32 = valueArg
-        remainder: uint32
+        value: UInt = valueArg
+        remainder: string
     result = ""
 
     while value > num1:
-        remainder = value mod num16
-        value = value div num16
-        result = $Base16Characters[remainder] & result
-    remainder = value mod num16
-    value = value div num16
-    result = $Base16Characters[remainder] & result
+        remainder = $(value mod num16)
+        value = value / num16
+        result = $Base16Characters[parseInt(remainder)] & result
+    remainder = $(value mod num16)
+    value = value / num16
+    result = $Base16Characters[parseInt(remainder)] & result
 
     if value == num1:
-        result = $Base16Characters[remainder] & result
-
+        result = $Base16Characters[parseInt(remainder)] & result
 
     while result[0] == Base16Characters[0]:
         if result.len == 1:
@@ -51,25 +52,63 @@ proc convert*(valueArg: uint32): string =
     if result.len mod 2 == 1:
         result = "0" & result
 
-proc revert*(base16Value: string): uint32 =
+proc convert*(valueArg: UInt, debug: bool): string =
+    if valueArg < num0:
+        return
+
+    var
+        value: UInt = valueArg
+        remainder: string
+    result = ""
+
+    echo "Entering Hex value loop with value " & $value
+    while value > num1:
+        echo "Starting mod"
+        remainder = $(value mod num16)
+        echo "Mod ended"
+        value = value / num16
+        echo "Divided by 16"
+        result = $Base16Characters[parseInt(remainder)] & result
+        echo "Compiled result variable"
+    echo "Finalizing Hex value"
+    remainder = $(value mod num16)
+    value = value / num16
+    result = $Base16Characters[parseInt(remainder)] & result
+
+    echo "Handling edge case"
+    if value == num1:
+        result = $Base16Characters[parseInt(remainder)] & result
+
+
+    echo "Removing leading 0s"
+    while result[0] == Base16Characters[0]:
+        if result.len == 1:
+            break
+        result = result.substr(1, result.len)
+
+    echo "Guaranteeing even length"
+    if result.len mod 2 == 1:
+        result = "0" & result
+
+proc revert*(base16Value: string): UInt =
     verify(base16Value)
 
     var
-        digits: uint32 = (uint32) base16Value.len
-        digitValue: uint32
-        digitMultiple: uint32
-        value: uint32 = 0
+        digits: UInt = newUInt($base16Value.len)
+        digitValue: int
+        digitMultiple: UInt
+        value: UInt = newUInt("0")
 
     for i in 0 ..< base16Value.len:
         dec(digits)
-        digitValue = (uint32) base16Value[i]
-        if digitValue < (uint32) 58:
-            digitValue = digitValue - (uint32) 48
-        elif digitValue < (uint32) 71:
-            digitValue = digitValue - (uint32) 55
+        digitValue = ((int) base16Value[i])
+        if digitValue < 58:
+            digitValue = digitValue - 48
+        elif digitValue < 71:
+            digitValue = digitValue - 55
         else:
-            digitValue = digitValue - (uint32) 87
+            digitValue = digitValue - 87
         digitMultiple = num16 ^ digits
-        value += digitValue * digitMultiple
+        value += newUInt($digitValue) * digitMultiple
 
     return value

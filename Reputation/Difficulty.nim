@@ -3,13 +3,13 @@ import ../lib/UInt
 
 import ./Block as BlockFile
 
-import lists
+import lists, strutils
 
 import os
 
 type Difficulty* = ref object of RootObj
-    start*: uint32
-    endTime*: uint32
+    start*: UInt
+    endTime*: UInt
     difficulty*: string
 
 proc verifyDifficulty*(diff: Difficulty, newBlock: Block) =
@@ -26,11 +26,12 @@ proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: Dou
     echo "Readjusting difficulty"
     sleep(3000)
     var
-        start: uint32 = difficulties.tail.value.start
-        endTime: uint32 = difficulties.tail.value.endTime
+        start: UInt = difficulties.tail.value.start
+        endTime: UInt = difficulties.tail.value.endTime
         lastDifficulty: string = difficulties.tail.value.difficulty
-        blockCount: uint32 = 0
+        blockCount: uint32 = (uint32) 0
         rate: float32
+        strRate: string
 
     for i in items(blocks):
         if i.time < start or i.time > endTime:
@@ -41,8 +42,14 @@ proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: Dou
     rate = ((float32) 60) / (float32) blockCount #Difficulty adjustment time in seconds
     rate = rate / ((float32) 5) #Target block time in seconds
     echo "New rate: " & $rate
+    rate = (((float32) 1) / rate) * (float32) 1000
+    strRate = $(Hex.revert(lastDifficulty) * newUInt(($rate).split(".")[0]))
+    strRate.insert(".", strRate.len-3)
+    echo "strRate:  & strRate"
+    rate = parseFloat(strRate)
+
     result = Difficulty(
         start: endTime,
-        endTime: endTime + (60),
-        difficulty: Hex.convert((Hex.revert(lastDifficulty).float32 * ((float32) 1 / rate)).uint32)
+        endTime: endTime + newUInt("60"),
+        difficulty: Hex.convert(newUInt(($rate).split(".")[0]))
     )

@@ -1,6 +1,9 @@
 type UInt* = ref object of RootObj
     number: string
 
+proc `$`*(x: UInt): string =
+    result = x.number
+
 proc verify*(number: string) =
     var ascii: int
     for i in 0 ..< number.len:
@@ -16,9 +19,16 @@ proc newUInt*(number: string): UInt =
         number: number
     )
 
-var num1: UInt = newUInt("1")
+var
+    num0: UInt = newUInt("0")
+    num1: UInt = newUInt("1")
+    num2: UInt = newUInt("2")
 
-proc `+`*(x: UInt, y: UInt): UInt =
+proc `+`*(xArg: UInt, yArg: UInt): UInt =
+    var
+        x: UInt = xArg
+        y: UInt = yArg
+
     result = newUInt("")
     while x.number.len < y.number.len:
         x.number = "0" & x.number
@@ -47,7 +57,11 @@ proc `+`*(x: UInt, y: UInt): UInt =
     if zVal == 1:
         result.number = "1" & result.number
 
-proc `-`*(x: UInt, y: UInt): UInt =
+proc `-`*(xArg: UInt, yArg: UInt): UInt =
+    var
+        x: UInt = newUInt(xArg.number)
+        y: UInt = newUInt(yArg.number)
+
     result = newUInt("")
     while x.number.len < y.number.len:
         x.number = "0" & x.number
@@ -89,26 +103,11 @@ proc `-`*(x: UInt, y: UInt): UInt =
         result.number = result.number.substr(1, result.number.len)
 
 proc `*`*(x: UInt, y: UInt): UInt =
-    var factor: UInt = newUInt(y.number)
-    result = newUInt("0")
+    var factor: UInt = y
+    result = num0
     while factor.number != "0":
         result = result + x
         factor = factor - num1
-
-proc `/`*(xArg: UInt, y: UInt): UInt =
-    var
-        x: UInt = xArg
-        noError: bool = true
-    result = newUInt("0")
-    while noError:
-        try:
-            x = x - y
-        except:
-            noError = false
-            break
-        result = result + num1
-proc `div`*(x: UInt, y: UInt): UInt =
-    result = x / y
 
 proc `+=`*(x: UInt, y: UInt) =
     x.number = (x + y).number
@@ -139,10 +138,56 @@ proc `>`*(x: UInt, y: UInt): bool =
 proc `>=`*(x: UInt, y: UInt): bool =
     result = (x > y) or (x == y)
 
-proc `$`*(x: UInt): string =
-    result = x.number
-
 proc inc*(x: UInt) =
     x += num1
 proc dec*(x: UInt)  =
     x -= num1
+
+proc `^`*(x: UInt, yArg: UInt): UInt =
+    result = num1
+    var y: UInt = yArg #Don't touch the original
+    while y > num0:
+        result = result * x
+        dec(y)
+proc pow*(x: UInt, y: UInt): UInt =
+    result = x ^ y
+
+proc `mod`*(xArg: UInt, yArg: UInt): UInt =
+    var y: UInt
+    result = xArg
+    while result > yArg:
+        y = yArg
+        while true:
+            try:
+                discard result - (y * num2)
+            except:
+                break
+            y = y * num2
+        result = result - y
+
+proc `/`*(xArg: UInt, yArg: UInt): UInt =
+    var
+        x: UInt = newUInt(xArg.number)
+        y: UInt = newUInt(yArg.number)
+        thisLoop: int
+    result = num0
+
+    echo $x
+    echo $y
+    while x > yArg:
+        y = yArg
+        thisLoop = 1
+        while true:
+            try:
+                discard x - (y * num2)
+            except:
+                break
+            y = y * num2
+            thisLoop = thisLoop * 2
+        echo "Division values:"
+        echo $x
+        echo $y
+        x = x - y
+        result = result + newUInt($thisLoop)
+proc `div`*(x: UInt, y: UInt): UInt =
+    result = x / y

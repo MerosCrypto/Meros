@@ -1,4 +1,6 @@
+import ./UInt
+
 import times
 
-proc getTime*(): uint32 =
-    result = (uint32) epochTime()
+proc getTime*(): UInt =
+    result = newUInt($((uint32) epochTime()))

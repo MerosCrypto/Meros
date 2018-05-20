@@ -1,18 +1,22 @@
-import ../lib/time
+import ../lib/UInt
 import ../lib/Hex
 import ../lib/Base58
+
+import ../lib/time
+
 import ../lib/SHA512
 
 type Block* = ref object of RootObj
-    nonce*: uint32
-    time*: uint32
+    nonce*: UInt
+    time*: UInt
     miner*: string
     proof*: string
     hash*: string
 
-proc createBlock*(nonce: uint32, time: uint32, miner: string, proof: string): Block =
+proc createBlock*(nonce: UInt, time: UInt, miner: string, proof: string): Block =
     Base58.verify(miner)
     Hex.verify(proof)
+    echo "Verified Base58 and Hex"
 
     result = Block(
         nonce: nonce,
@@ -20,14 +24,20 @@ proc createBlock*(nonce: uint32, time: uint32, miner: string, proof: string): Bl
         miner: miner,
         proof: proof
     )
+    echo "Created Block Result"
 
-    result.hash =
-        SHA512(Hex.convert(nonce)).substr(0, 31) &
-        SHA512(Hex.convert(time)).substr(64, 95) &
-        SHA512(Hex.convert(Base58.revert(miner))).substr(32, 63) &
-        SHA512(proof).substr(96, 127)
+    result.hash = SHA512(Hex.convert(nonce)).substr(0, 31)
+    echo "Calculated Nonce Hash"
+    var hexTime: string = Hex.convert(time, true)
+    echo "Converted time to hex"
+    result.hash = result.hash & SHA512(hexTime).substr(64, 95)
+    echo "Calculated Time Hash"
+    result.hash = result.hash & SHA512(Hex.convert(Base58.revert(miner))).substr(32, 63)
+    echo "Calculated Miner Hash"
+    result.hash = result.hash & SHA512(proof).substr(96, 127)
+    echo "Calculated Hashes"
 
-proc createBlock*(nonce: uint32, miner: string, proof: string): Block =
+proc createBlock*(nonce: UInt, miner: string, proof: string): Block =
     result = createBlock(nonce, getTime(), miner, proof)
 
 proc verifyBlock*(newBlock: Block) =

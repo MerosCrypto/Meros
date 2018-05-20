@@ -1,4 +1,6 @@
-import math
+import ./UInt
+
+import math, strutils
 
 var Base58Characters: array[0 .. 57, char] = [
     '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -11,9 +13,9 @@ var Base58Characters: array[0 .. 57, char] = [
 ]
 
 var
-    num0: uint32 = 0
-    num1: uint32 = 1
-    num58: uint32 = 58
+    num0: UInt = newUInt("0")
+    num1: UInt = newUInt("1")
+    num58: UInt = newUInt("58")
 
 proc verify*(base58Value: string) =
     for i in 0 ..< base58Value.len:
@@ -33,57 +35,57 @@ proc verify*(base58Value: string) =
         else:
             raise newException(Exception, "Invalid Base58 Number")
 
-proc convert*(valueArg: uint32): string =
+proc convert*(valueArg: UInt): string =
     if valueArg < num0:
         return
 
     var
-        value: uint32 = valueArg
-        remainder: uint32
+        value: UInt = valueArg
+        remainder: string
     result = ""
 
     while value > num1:
-        remainder = value mod num58
+        remainder = $(value mod num58)
         value = value div num58
-        result = $Base58Characters[remainder] & result
-    remainder = value mod num58
+        result = $Base58Characters[parseInt(remainder)] & result
+    remainder = $(value mod num58)
     value = value div num58
-    result = $Base58Characters[remainder] & result
+    result = $Base58Characters[parseInt(remainder)] & result
 
     if value == num1:
-        result = $Base58Characters[remainder] & result
+        result = $Base58Characters[parseInt(remainder)] & result
 
     while result[0] == Base58Characters[0]:
         if result.len == 1:
             break
         result = result.substr(1, result.len)
 
-proc revert*(base58Value: string): uint32 =
+proc revert*(base58Value: string): UInt =
     verify(base58Value)
 
     var
-        digits: uint32 = (uint32) base58Value.len
-        digitValue: uint32
-        digitMultiple: uint32
-        value: uint32 = 0
+        digits: UInt = newUInt($base58Value.len)
+        digitValue: int
+        digitMultiple: UInt
+        value: UInt = newUInt("0")
 
     for i in 0 .. base58Value.len:
         dec(digits)
-        digitValue = (uint32) base58Value[i]
-        if digitValue < num58:
-            digitValue = digitValue - (uint32) 49
-        elif digitValue < (uint32) 73:
-            digitValue = digitValue - (uint32) 56
-        elif digitValue < (uint32) 79:
-            digitValue = digitValue - (uint32) 57
-        elif digitValue < (uint32) 91:
-            digitValue = digitValue - (uint32) 58
-        elif digitValue < (uint32) 108:
-            digitValue = digitValue - (uint32) 64
-        elif digitValue < (uint32) 123:
-            digitValue = digitValue - (uint32) 65
+        digitValue = (int) base58Value[i]
+        if digitValue < 58:
+            digitValue = digitValue - 49
+        elif digitValue < 73:
+            digitValue = digitValue - 56
+        elif digitValue < 79:
+            digitValue = digitValue - 57
+        elif digitValue < 91:
+            digitValue = digitValue - 58
+        elif digitValue < 108:
+            digitValue = digitValue - 64
+        elif digitValue < 123:
+            digitValue = digitValue - 65
 
         digitMultiple = num58 ^ digits
-        value += digitValue * digitMultiple
+        value += newUInt($digitValue) * digitMultiple
 
     return value

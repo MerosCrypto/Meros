@@ -1,6 +1,7 @@
 # TODO
 
-- Fix the subtraction function in UInt256
+- Clean up the order of functions in uint256
+- Fix the 2x speed ups
 - Port the code to UInt256
 - Fix the if statement in Difficulty (L19)
 
