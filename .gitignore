@@ -1,0 +1,6 @@
+nimcache
+*.c
+*.cpp
+*o
+
+*.exe
