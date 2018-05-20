@@ -53,9 +53,10 @@ proc convert*(valueArg: uint32): string =
     if value == num1:
         result = $Base58Characters[remainder] & result
 
-    if result.len > 1:
-        while result[0] == Base58Characters[0]:
-            result = result.substr(1, result.len)
+    while result[0] == Base58Characters[0]:
+        if result.len == 1:
+            break
+        result = result.substr(1, result.len)
 
 proc revert*(base58Value: string): uint32 =
     verify(base58Value)

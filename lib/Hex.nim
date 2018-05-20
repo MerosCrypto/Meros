@@ -42,9 +42,11 @@ proc convert*(valueArg: uint32): string =
     if value == num1:
         result = $Base16Characters[remainder] & result
 
-    if result.len > 1:
-        while result[0] == Base16Characters[0]:
-            result = result.substr(1, result.len)
+
+    while result[0] == Base16Characters[0]:
+        if result.len == 1:
+            break
+        result = result.substr(1, result.len)
 
     if result.len mod 2 == 1:
         result = "0" & result
