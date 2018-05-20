@@ -65,20 +65,21 @@ proc `-`*(x: UInt, y: UInt): UInt =
             z = z + ascii0
             result.number = $((char) z) & result.number
         else:
+            overflow = ((int) x.number[len-i]) - ((int) y.number[len-i]) + 10 + ascii0
+            result.number = $((char) overflow) & result.number
             z = i
-            while x.number[len-z] == '0':
-                if len - z == 0:
-                    raise newException(Exception, "Negative Overflow Error")
-                inc(z)
+            inc(z)
+            if len - z == -1:
+                raise newException(Exception, "Negative Overflow Error")
             overflow = ((int) x.number[len-z]) - 1
             x.number[len-z] = (char) overflow
-            while z > i + 1:
-                dec(z)
-                overflow = ((int) x.number[len-z]) + 9
+            while ((int) x.number[len-z]) == ascii0 - 1:
+                x.number[len-z] = (char) ascii0 + 9
+                inc(z)
+                if len - z == -1:
+                    raise newException(Exception, "Negative Overflow Error")
+                overflow = ((int) x.number[len-z]) - 1
                 x.number[len-z] = (char) overflow
-
-            overflow = ((int) x.number[len-i]) + 10 - ((int) y.number[len-i])
-            result.number = $((char) overflow + ascii0) & result.number
 
     while result.number[0] == '0':
         if result.number.len == 1:
@@ -94,23 +95,31 @@ proc `*`*(x: UInt, y: UInt): UInt =
         result = result + x
         factor = factor - num1
 
-#proc `/`*(x: UInt, y: UInt): UInt =
-#    result = newUInt(x.binary / y.binary)
-#proc `div`*(x: UInt, y: UInt): UInt =
-#    result = x / y
+proc `/`*(xArg: UInt, y: UInt): UInt =
+    var
+        x: UInt = xArg
+        noError: bool = true
+        num1: UInt = newUInt("1")
+    result = newUInt("0")
+    while noError:
+        try:
+            x = x - y
+        except:
+            noError = false
+            break
+        result = result + num1
+proc `div`*(x: UInt, y: UInt): UInt =
+    result = x / y
 
 proc `+=`*(x: UInt, y: UInt): UInt =
     x.number = (x + y).number
 proc `-=`*(x: UInt, y: UInt): UInt =
     x.number = (x - y).number
 
-#proc `mod`*(x: UInt, y: UInt): UInt =
-#    result = newUInt(x.binary mod y.binary)
-
 proc `==`*(x: UInt, y: UInt): bool =
     result = x.number == y.number
 proc `!=`*(x: UInt, y: UInt): bool =
-    result = x.number == y.number
+    result = x.number != y.number
 
 proc `<`*(x: UInt, y: UInt): bool =
     while x.number.len < y.number.len:
