@@ -1,12 +1,5 @@
-import math
-
 type Binary* = ref object of RootObj
     number: string
-
-proc newBinary*(number: string): Binary =
-    result = Binary(
-        number: number
-    )
 
 proc verify*(binaryValue: string) =
     for i in 0 ..< binaryValue.len:
@@ -16,6 +9,12 @@ proc verify*(binaryValue: string) =
             discard
         else:
             raise newException(Exception, "Invalid Binary Number")
+
+proc newBinary*(number: string): Binary =
+    verify(number)
+    result = Binary(
+        number: number
+    )
 
 proc `+`*(x: Binary, y: Binary): Binary =
     result = newBinary("")
