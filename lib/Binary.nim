@@ -67,7 +67,7 @@ proc `-`*(x: Binary, y: Binary): Binary =
             result.number = "0" & result.number
         elif x.number[len-i] == '1':
             result.number = "1" & result.number
-        elif y.number[len-i] == '1':
+        else:
             result.number = "1" & result.number
             z = i
             while x.number[len-z] != '1':
@@ -85,9 +85,13 @@ proc `-`*(x: Binary, y: Binary): Binary =
         result.number = result.number.substr(1, result.number.len)
 
 proc `*`*(x: Binary, y: Binary): Binary =
+    var
+        factor: Binary = newBinary(y.number)
+        num1: Binary = newBinary("1")
     result = newBinary("0")
-    while y.number != "0":
+    while factor.number != "0":
         result = result + x
+        factor = factor - num1
 
 proc `/`*(xArg: Binary, y: Binary): Binary =
     var
@@ -137,9 +141,8 @@ proc `<`*(x: Binary, y: Binary): bool =
         x.number = "0" & x.number
     while y.number.len < x.number.len:
         y.number = "0" & y.number
+
     for i in 0 ..< x.number.len:
-        echo ((int) x.number[i])
-        echo ((int) y.number[i])
         if ((int) x.number[i]) < ((int) y.number[i]):
             result = true
             return
