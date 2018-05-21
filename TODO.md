@@ -1,8 +1,9 @@
 # TODO
 
 - Clean up the order of functions in uint256
-- Fix the 2x speed ups
+- Fix UInt divide/modulus
 - Port the code to UInt256
+
 - Fix the if statement in Difficulty (L19)
 
 - Add getters to Blockchain.nim
