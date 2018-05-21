@@ -1,7 +1,9 @@
 proc `mod`*(xArg: UInt, yArg: UInt): UInt =
-    var y: UInt
-    result = xArg
-    while result > yArg:
+    var
+        x: UInt = newUInt(xArg.number)
+        y: UInt
+    result = newUInt(x.number)
+    while result >= yArg:
         y = yArg
         while true:
             try:
@@ -10,3 +12,5 @@ proc `mod`*(xArg: UInt, yArg: UInt): UInt =
                 break
             y = y * UIntNums.TWO
         result = result - y
+
+    result.clean()

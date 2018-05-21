@@ -14,7 +14,7 @@ proc `-`*(xArg: UInt, yArg: UInt): UInt =
         ascii0: int = (int) '0'
         z: int
         overflow: int
-    
+
     for i in 1 .. len:
         if x.number[len-i] == y.number[len-i]:
             result.number = "0" & result.number
@@ -39,7 +39,4 @@ proc `-`*(xArg: UInt, yArg: UInt): UInt =
                 overflow = ((int) x.number[len-z]) - 1
                 x.number[len-z] = (char) overflow
 
-    while result.number[0] == '0':
-        if result.number.len == 1:
-            break
-        result.number = result.number.substr(1, result.number.len)
+    result.clean()

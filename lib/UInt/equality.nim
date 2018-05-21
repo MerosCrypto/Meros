@@ -1,5 +1,7 @@
 proc `==`*(x: UInt, y: UInt): bool =
+    x.clean()
+    y.clean()
     result = x.number == y.number
 
 proc `!=`*(x: UInt, y: UInt): bool =
-    result = x.number != y.number
+    result = not (x.number == y.number)

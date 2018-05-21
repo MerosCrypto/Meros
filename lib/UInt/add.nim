@@ -30,3 +30,5 @@ proc `+`*(xArg: UInt, yArg: UInt): UInt =
         result.number = $((char) asciiCode) & result.number
     if zVal == 1:
         result.number = "1" & result.number
+
+    result.clean()

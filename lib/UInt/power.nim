@@ -1,9 +1,13 @@
-proc `^`*(x: UInt, yArg: UInt): UInt =
+proc `^`*(xArg: UInt, yArg: UInt): UInt =
+    var
+        x: UInt = xArg
+        y: UInt = yArg
     result = newUInt(UIntNums.ONE.number)
-    var y: UInt = yArg #Don't touch the original
     while y > UIntNums.ZERO:
         result = result * x
         dec(y)
+
+    result.clean()
 
 proc pow*(x: UInt, y: UInt): UInt =
     result = x ^ y
