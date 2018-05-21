@@ -21,16 +21,13 @@ proc createBlockchain*(genesis: string): Blockchain =
         blocks: initDoublyLinkedList[Block](),
         difficulties: initDoublyLinkedList[Difficulty]()
     );
-    echo "Created result"
 
     result.difficulties.append(Difficulty(
         start: result.creation,
         endTime: result.creation + newUInt("60"),
         difficulty: "44444444"
     ))
-    echo "Created Difficulty"
     result.blocks.append(createBlock(newUInt("0"), "1", "0"))
-    echo "Appended Genesis block"
 
 proc addBlock*(blockchain: Blockchain, newBlock: Block) =
     if blockchain.height + newUInt("1") != newBlock.nonce:

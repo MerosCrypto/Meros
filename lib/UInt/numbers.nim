@@ -1,7 +1,16 @@
-var
-    num0: UInt = newUInt("0")
-    num1: UInt = newUInt("1")
-    num2: UInt = newUInt("2")
-    num10: UInt = newUInt("10")
-    num16: UInt = newUInt("16")
-    num58: UInt = newUInt("58")
+type UIntNumsType* = ref object of RootObj
+    ZERO*: UInt
+    ONE*: UInt
+    TWO*: UInt
+    TEN*: UInt
+    SIXTEEN*: UInt
+    FIFTYEIGHT*: UInt
+
+var UIntNums*: UIntNumsType = UIntNumsType(
+    ZERO: newUInt("0"),
+    ONE: newUInt("1"),
+    TWO: newUInt("2"),
+    TEN: newUInt("10"),
+    SIXTEEN: newUInt("16"),
+    FIFTYEIGHT: newUInt("58")
+)

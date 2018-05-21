@@ -1,5 +1,5 @@
 proc inc*(x: UInt) =
-    x += num1
+    x += UIntNums.ONE
 
 proc dec*(x: UInt)  =
-    x -= num1
+    x -= UIntNums.ONE

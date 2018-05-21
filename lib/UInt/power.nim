@@ -1,9 +1,9 @@
 proc `^`*(x: UInt, yArg: UInt): UInt =
-    result = num1
+    result = newUInt(UIntNums.ONE.number)
     var y: UInt = yArg #Don't touch the original
-    while y > num0:
+    while y > UIntNums.ZERO:
         result = result * x
         dec(y)
-        
+
 proc pow*(x: UInt, y: UInt): UInt =
     result = x ^ y

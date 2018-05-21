@@ -52,44 +52,6 @@ proc convert*(valueArg: UInt): string =
     if result.len mod 2 == 1:
         result = "0" & result
 
-proc convert*(valueArg: UInt, debug: bool): string =
-    if valueArg < num0:
-        return
-
-    var
-        value: UInt = valueArg
-        remainder: string
-    result = ""
-
-    echo "Entering Hex value loop with value " & $value
-    while value > num1:
-        echo "Starting mod"
-        remainder = $(value mod num16)
-        echo "Mod ended"
-        value = value / num16
-        echo "Divided by 16"
-        result = $Base16Characters[parseInt(remainder)] & result
-        echo "Compiled result variable"
-    echo "Finalizing Hex value"
-    remainder = $(value mod num16)
-    value = value / num16
-    result = $Base16Characters[parseInt(remainder)] & result
-
-    echo "Handling edge case"
-    if value == num1:
-        result = $Base16Characters[parseInt(remainder)] & result
-
-
-    echo "Removing leading 0s"
-    while result[0] == Base16Characters[0]:
-        if result.len == 1:
-            break
-        result = result.substr(1, result.len)
-
-    echo "Guaranteeing even length"
-    if result.len mod 2 == 1:
-        result = "0" & result
-
 proc revert*(base16Value: string): UInt =
     verify(base16Value)
 

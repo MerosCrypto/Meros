@@ -4,7 +4,7 @@ proc `*`*(xArg: UInt, yArg: UInt): UInt =
         y: UInt = newUInt(yArg.number)
 
     var factor: UInt = y
-    result = num0
+    result = UIntNums.ZERO
     while factor.number != "0":
         result = result + x
-        factor = factor - num1
+        factor = factor - UIntNums.ONE

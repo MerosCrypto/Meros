@@ -3,17 +3,17 @@ proc `/`*(xArg: UInt, yArg: UInt): UInt =
         x: UInt = newUInt(xArg.number)
         y: UInt = newUInt(yArg.number)
         thisLoop: int
-    result = num0
+    result = newUInt(UIntNums.ZERO.number)
 
     while x > yArg:
         y = yArg
         thisLoop = 1
         while true:
             try:
-                discard x - (y * num2)
+                discard x - (y * UIntNums.TWO)
             except:
                 break
-            y = y * num2
+            y = y * UIntNums.TWO
             thisLoop = thisLoop * 2
         x = x - y
         result = result + newUInt($thisLoop)

@@ -5,8 +5,8 @@ proc `mod`*(xArg: UInt, yArg: UInt): UInt =
         y = yArg
         while true:
             try:
-                discard result - (y * num2)
+                discard result - (y * UIntNums.TWO)
             except:
                 break
-            y = y * num2
+            y = y * UIntNums.TWO
         result = result - y
