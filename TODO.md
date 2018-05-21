@@ -1,14 +1,13 @@
 # TODO
 
-- Clean up the order of functions in uint256
-- Fix UInt divide/modulus
-- Port the code to UInt256
+- Fix UInt's divide/modulus 2x-speed up enhancements
+- Clean up the order of functions in UInt
 
 - Fix the if statement in Difficulty (L19)
 
 - Add getters to Blockchain.nim
 - State.nim
-- Reputation.nim master class
+- Reputation.nim (master class of Blockchain/State)
 
 - Dedicated miner
 - Verify miner ID in Block.nim (public key/address scheme?)
