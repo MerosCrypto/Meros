@@ -69,7 +69,7 @@ proc revert*(base58Value: string): UInt =
         digitMultiple: UInt
         value: UInt = newUInt("0")
 
-    for i in 0 .. base58Value.len:
+    for i in 0 ..< base58Value.len:
         dec(digits)
         digitValue = (int) base58Value[i]
         if digitValue < 58:
