@@ -1,4 +1,4 @@
-import ../lib/UInt
+import ../lib/BN
 import ../lib/time
 
 import ./Block as BlockFile
@@ -7,9 +7,9 @@ import ./Difficulty as DifficultyFile
 import lists
 
 type Blockchain* = ref object of RootObj
-    creation: UInt
+    creation: BN
     genesis: string
-    height: UInt
+    height: BN
     blocks: DoublyLinkedList[Block]
     difficulties: DoublyLinkedList[Difficulty]
 
@@ -17,20 +17,20 @@ proc createBlockchain*(genesis: string): Blockchain =
     result = Blockchain(
         creation: getTime(),
         genesis: genesis,
-        height: newUInt("0"),
+        height: newBN("0"),
         blocks: initDoublyLinkedList[Block](),
         difficulties: initDoublyLinkedList[Difficulty]()
     );
 
     result.difficulties.append(Difficulty(
         start: result.creation,
-        endTime: result.creation + newUInt("60"),
-        difficulty: "44444444"
+        endTime: result.creation + newBN("60"),
+        difficulty: "88888888"
     ))
-    result.blocks.append(createBlock(newUInt("0"), "1", "0"))
+    result.blocks.append(createBlock(newBN("0"), "1", "0"))
 
 proc addBlock*(blockchain: Blockchain, newBlock: Block) =
-    if blockchain.height + newUInt("1") != newBlock.nonce:
+    if blockchain.height + newBN("1") != newBlock.nonce:
         raise newException(Exception, "Invalid nonce")
 
     verifyBlock(newBlock)

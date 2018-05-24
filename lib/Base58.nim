@@ -1,4 +1,4 @@
-import ./UInt
+import ./BN
 
 import math, strutils
 
@@ -13,9 +13,9 @@ var Base58Characters: array[0 .. 57, char] = [
 ]
 
 var
-    num0: UInt = newUInt("0")
-    num1: UInt = newUInt("1")
-    num58: UInt = newUInt("58")
+    num0: BN = newBN("0")
+    num1: BN = newBN("1")
+    num58: BN = newBN("58")
 
 proc verify*(base58Value: string) =
     for i in 0 ..< base58Value.len:
@@ -35,12 +35,12 @@ proc verify*(base58Value: string) =
         else:
             raise newException(Exception, "Invalid Base58 Number")
 
-proc convert*(valueArg: UInt): string =
+proc convert*(valueArg: BN): string =
     if valueArg < num0:
         return
 
     var
-        value: UInt = valueArg
+        value: BN = valueArg
         remainder: string
     result = ""
 
@@ -60,14 +60,14 @@ proc convert*(valueArg: UInt): string =
             break
         result = result.substr(1, result.len)
 
-proc revert*(base58Value: string): UInt =
+proc revert*(base58Value: string): BN =
     verify(base58Value)
 
     var
-        digits: UInt = newUInt($base58Value.len)
+        digits: BN = newBN($base58Value.len)
         digitValue: int
-        digitMultiple: UInt
-        value: UInt = newUInt("0")
+        digitMultiple: BN
+        value: BN = newBN("0")
 
     for i in 0 ..< base58Value.len:
         dec(digits)
@@ -86,6 +86,6 @@ proc revert*(base58Value: string): UInt =
             digitValue = digitValue - 65
 
         digitMultiple = num58 ^ digits
-        value += newUInt($digitValue) * digitMultiple
+        value += newBN($digitValue) * digitMultiple
 
     return value

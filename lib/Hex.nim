@@ -1,4 +1,4 @@
-import ./UInt
+import ./BN
 
 import math, strutils
 
@@ -8,28 +8,28 @@ var Base16Characters: array[0 .. 15, char] = [
 ]
 
 var
-    num0: UInt = newUInt("0")
-    num1: UInt = newUInt("1")
-    num16: UInt = newUInt("16")
+    num0: BN = newBN("0")
+    num1: BN = newBN("1")
+    num16: BN = newBN("16")
 
 proc verify*(base16Value: string) =
     for i in 0 ..< base16Value.len:
         var ascii: int = (int) base16Value[i]
         if 47 < ascii and ascii < 58:
             discard
-        elif 64 < ascii and ascii < 70:
+        elif 64 < ascii and ascii < 71:
             discard
         elif 96 < ascii and ascii < 103:
             discard
         else:
             raise newException(Exception, "Invalid Hex Number")
 
-proc convert*(valueArg: UInt): string =
+proc convert*(valueArg: BN): string =
     if valueArg < num0:
         return
 
     var
-        value: UInt = valueArg
+        value: BN = valueArg
         remainder: string
     result = ""
 
@@ -52,25 +52,26 @@ proc convert*(valueArg: UInt): string =
     if result.len mod 2 == 1:
         result = "0" & result
 
-proc revert*(base16Value: string): UInt =
+proc revert*(base16ValueArg: string): BN =
+    var base16Value: string = base16ValueArg
     verify(base16Value)
 
     var
-        digits: UInt = newUInt($base16Value.len)
         digitValue: int
-        digitMultiple: UInt
-        value: UInt = newUInt("0")
+        digitMultiple: BN
+        value: BN = newBN("0")
 
-    for i in 0 ..< base16Value.len:
-        dec(digits)
-        digitValue = ((int) base16Value[i])
+    while base16Value.len != 0:
+        digitValue = ((int) base16Value[0])
         if digitValue < 58:
             digitValue = digitValue - 48
         elif digitValue < 71:
             digitValue = digitValue - 55
         else:
             digitValue = digitValue - 87
-        digitMultiple = num16 ^ digits
-        value += newUInt($digitValue) * digitMultiple
+
+        digitMultiple = num16 ^ (newBN($base16Value.len) - BNNums.ONE)
+        value += newBN($digitValue) * digitMultiple
+        base16Value = base16Value.substr(1, base16Value.len)
 
     return value

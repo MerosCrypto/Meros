@@ -1,4 +1,4 @@
-import ../lib/UInt
+import ../lib/BN
 import ../lib/Hex
 import ../lib/Base58
 
@@ -7,13 +7,13 @@ import ../lib/time
 import ../lib/SHA512
 
 type Block* = ref object of RootObj
-    nonce*: UInt
-    time*: UInt
+    nonce*: BN
+    time*: BN
     miner*: string
     proof*: string
     hash*: string
 
-proc createBlock*(nonce: UInt, time: UInt, miner: string, proof: string): Block =
+proc createBlock*(nonce: BN, time: BN, miner: string, proof: string): Block =
     Base58.verify(miner)
     Hex.verify(proof)
 
@@ -29,7 +29,7 @@ proc createBlock*(nonce: UInt, time: UInt, miner: string, proof: string): Block 
         SHA512(Hex.convert(Base58.revert(miner))).substr(32, 63) &
         SHA512(proof).substr(96, 127)
 
-proc createBlock*(nonce: UInt, miner: string, proof: string): Block =
+proc createBlock*(nonce: BN, miner: string, proof: string): Block =
     result = createBlock(nonce, getTime(), miner, proof)
 
 proc verifyBlock*(newBlock: Block) =
