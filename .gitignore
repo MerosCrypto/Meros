@@ -1,6 +1,4 @@
 nimcache
-*.c
-*.cpp
-*o
 
+*.o
 *.exe

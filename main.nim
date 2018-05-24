@@ -1,4 +1,4 @@
-import lib/UInt
+import lib/BN
 import lib/Hex
 
 import Reputation/Block
@@ -9,10 +9,9 @@ import os
 var
     blockchain: Blockchain = createBlockchain("0")
     newBlock: Block
-    nonce: UInt = newUInt("1")
-    proof: UInt = newUInt("0")
+    nonce: BN = newBN("1")
+    proof: BN = newBN("0")
 
-echo "Entering while loop"
 while true:
     sleep(1000)
     echo "Looping..."
@@ -24,4 +23,4 @@ while true:
         continue
     echo "Mined a block: " & $nonce
     inc(nonce)
-    proof = newUInt("0")
+    proof = newBN("0")
