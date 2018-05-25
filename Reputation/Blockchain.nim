@@ -25,7 +25,7 @@ proc createBlockchain*(genesis: string): Blockchain =
     result.difficulties.append(Difficulty(
         start: result.creation,
         endTime: result.creation + newBN("60"),
-        difficulty: "88888888"
+        difficulty: "33333333"
     ))
     result.blocks.append(createBlock(newBN("0"), "1", "0"))
 
