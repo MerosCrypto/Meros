@@ -16,8 +16,8 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block) =
     if diff.endTime < newBlock.time:
         raise newException(Exception, "Wrong Difficulty")
 
-    if Hex.revert(diff.difficulty) > Hex.revert(newBlock.hash.substr(96, 103)):
-        echo "Hash is too low:  " & $Hex.revert(newBlock.hash.substr(96, 103))
+    if Hex.revert(diff.difficulty) > Hex.revert(newBlock.lyra.substr(0, 7)):
+        echo "Hash is too low:  " & $Hex.revert(newBlock.lyra.substr(0, 7))
         echo "Must be at least: " & $Hex.revert(diff.difficulty)
         raise newException(Exception, "The hash is too low")
 
@@ -45,7 +45,6 @@ proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: Dou
     rate = (((float32) 1) / rate) * (float32) 1000
     strRate = $(Hex.revert(lastDifficulty) * newBN(($rate).split(".")[0]))
     strRate.insert(".", strRate.len-3)
-    echo "strRate:  & strRate"
     rate = parseFloat(strRate)
 
     result = Difficulty(

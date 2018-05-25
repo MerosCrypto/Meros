@@ -13,7 +13,7 @@ var
     proof: BN = newBN("0")
 
 while true:
-    sleep(1000)
+    sleep(200)
     echo "Looping..."
     try:
         newBlock = createBlock(nonce, "1", Hex.convert(proof))
@@ -23,4 +23,3 @@ while true:
         continue
     echo "Mined a block: " & $nonce
     inc(nonce)
-    proof = newBN("0")
