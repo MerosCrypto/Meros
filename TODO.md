@@ -1,9 +1,9 @@
 # TODO
 
-- Fix UInt's divide/modulus 2x-speed up enhancements
-- Clean up the order of functions in UInt
+- Add in an actual UInt lib (not just the dummy wrapper)
 
-- Fix the if statement in Difficulty (L19)
+- Fix the Difficulty scaling
+- Update Difficulty to use the whole hash
 
 - Add getters to Blockchain.nim
 - State.nim
@@ -11,7 +11,3 @@
 
 - Dedicated miner
 - Verify miner ID in Block.nim (public key/address scheme?)
-
-- Have proof act as a salt of the SHA hash, not a part of the SHA hash
-- Update Difficulty to use the salted SHA hash
-- Move from SHA to Lyra2 (hash = password, proof = salt)
