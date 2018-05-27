@@ -5,7 +5,6 @@
 
 - Add comments
 
-- Add getters to Blockchain.nim
 - State.nim
 - Reputation.nim (master class of Blockchain/State)
 

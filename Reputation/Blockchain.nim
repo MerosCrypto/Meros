@@ -49,5 +49,13 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block) =
     inc(blockchain.height)
     blockchain.blocks.append(newBlock)
 
+proc getCreation*(blockchain: Blockchain): BN =
+    result = blockchain.creation
+proc getGenesis*(blockchain: Blockchain): string =
+    result = blockchain.genesis
 proc getHeight*(blockchain: Blockchain): BN =
     result = blockchain.height
+proc getBlocks*(blockchain: Blockchain): DoublyLinkedList[Block] =
+    result = blockchain.blocks
+proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] =
+    result = blockchain.difficulties
