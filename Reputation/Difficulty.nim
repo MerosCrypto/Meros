@@ -39,7 +39,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block) =
         echo "Must be at least: " & diff.difficulty
         raise newException(Exception, "The hash is too low")
 
-proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: DoublyLinkedList[Difficulty], periodInSeconds: int = (60*60), blocksPerPeriod: int = 6): Difficulty =
+proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: DoublyLinkedList[Difficulty], periodInSeconds: int, blocksPerPeriod: int): Difficulty =
     sleep(3000)
     echo "Readjusting difficulty"
     sleep(3000)
@@ -47,30 +47,45 @@ proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: Dou
         start: BN = difficulties.tail.value.start
         endTime: BN = difficulties.tail.value.endTime
         lastDifficulty: string = difficulties.tail.value.difficulty
-        blockCount: uint32 = (uint32) 0
-        rate: float32
-        strRate: string
+        blockCount: int = 0
+        rate: float64
         difficulty: string
 
     for i in items(blocks):
         if i.time < start or i.time > endTime:
             continue
         inc(blockCount)
-    echo "Mined " & $blockCount & " blocks in the last minute."
+    echo "Mined " & $blockCount & " blocks in the last period."
 
-    rate = ((float32) 60) / (float32) blockCount #Difficulty adjustment time in seconds
-    if rate == Inf:
-        rate = ((float32) 60) / (float32) 1
-    rate = rate / ((float32) 10) #Target block time in seconds
-    echo "New rate: " & $rate
-    rate = (((float32) 1) / rate) * (float32) 1000
+    if blocksPerPeriod < blockCount:
+        rate = blockCount / blocksPerPeriod
+    elif blocksPerPeriod == blockCount:
+        result = Difficulty(
+            start: endTime,
+            endTime: endTime + newBN($periodInSeconds),
+            difficulty: lastDifficulty
+        )
+        return
+    elif blocksPerPeriod > blockCount:
+        rate = blocksPerPeriod / blockCount
 
-    difficulty = Hex.convert(Hex.revert(lastDifficulty) * newBN(($rate).split(".")[0])).substr(0, 63)
-    if difficulty < difficulties.head.value.difficulty:
+    if blockCount == 0:
+        rate = 0
+
+    var bnRate: BN = newBN(($rate).split(".")[0])
+    if blockCount < blocksPerPeriod:
+        difficulty = Hex.convert((Hex.revert(lastDifficulty) / bnRate))
+    elif blockCount > blocksPerPeriod:
+        difficulty = Hex.convert(Hex.revert(lastDifficulty) * bnRate)
+
+    if Hex.revert(difficulty) < Hex.revert(difficulties.head.value.difficulty):
         difficulty = difficulties.head.value.difficulty
+
+    echo "The last difficulty was: " & $Hex.revert(lastDifficulty)
+    echo "The new difficulty is:   " & $Hex.revert(difficulty)
 
     result = Difficulty(
         start: endTime,
-        endTime: endTime + newBN("60"),
+        endTime: endTime + newBN($periodInSeconds),
         difficulty: difficulty
     )

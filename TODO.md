@@ -1,8 +1,5 @@
 # TODO
 
-- Implement periodInSeconds and blocksPerPeriod
-- Fix the Difficulty scaling
-
 - Add comments
 
 - State.nim

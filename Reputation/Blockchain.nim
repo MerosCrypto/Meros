@@ -36,7 +36,7 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block) =
     verifyBlock(newBlock)
 
     while blockchain.difficulties.tail.value.endTime < newBlock.time:
-        blockchain.difficulties.append(calculateNextDifficulty(blockchain.blocks, blockchain.difficulties))
+        blockchain.difficulties.append(calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, (60), 6))
 
     blockchain.difficulties.tail.value.verifyDifficulty(newBlock)
 
