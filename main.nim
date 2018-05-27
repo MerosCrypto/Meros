@@ -13,11 +13,14 @@ var
     proof: BN = newBN("0")
 
 while true:
-    sleep(200)
     echo "Looping..."
     try:
         newBlock = createBlock(nonce, "1", Hex.convert(proof))
-        addBlock(blockchain, newBlock)
+        try:
+            blockchain.testBlock(newBlock)
+        except:
+            raise
+        blockchain.addBlock(newBlock)
     except:
         inc(proof)
         continue

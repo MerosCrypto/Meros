@@ -61,7 +61,7 @@ proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: Dou
     rate = ((float32) 60) / (float32) blockCount #Difficulty adjustment time in seconds
     if rate == Inf:
         rate = ((float32) 60) / (float32) 1
-    rate = rate / ((float32) 5) #Target block time in seconds
+    rate = rate / ((float32) 10) #Target block time in seconds
     echo "New rate: " & $rate
     rate = (((float32) 1) / rate) * (float32) 1000
     strRate = $(Hex.revert(lastDifficulty) * newBN(($rate).split(".")[0]))
@@ -69,6 +69,9 @@ proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: Dou
     rate = parseFloat(strRate)
 
     difficulty = Hex.convert(newBN(($rate).split(".")[0]))
+    echo "Calculated new difficulty: " & $difficulty
+    echo "Original difficulty: " & $difficulties.head.value.difficulty
+    echo "Is new less than original": $(difficulty < difficulties.head.value.difficulty)
     if difficulty < difficulties.head.value.difficulty:
         difficulty = difficulties.head.value.difficulty
 
