@@ -25,12 +25,12 @@ proc createBlockchain*(genesis: string): Blockchain =
     result.difficulties.append(Difficulty(
         start: result.creation,
         endTime: result.creation + newBN("60"),
-        difficulty: "33333333"
+        difficulty: "1111111111111111111111111111111111111111111111111111111111111111"
     ))
     result.blocks.append(createBlock(newBN("0"), "1", "0"))
 
-proc addBlock*(blockchain: Blockchain, newBlock: Block) =
-    if blockchain.height + newBN("1") != newBlock.nonce:
+proc testBlock*(blockchain: Blockchain, newBlock: Block) =
+    if blockchain.height + BNNums.ONE != newBlock.nonce:
         raise newException(Exception, "Invalid nonce")
 
     verifyBlock(newBlock)
@@ -40,5 +40,14 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block) =
 
     blockchain.difficulties.tail.value.verifyDifficulty(newBlock)
 
+proc addBlock*(blockchain: Blockchain, newBlock: Block) =
+    try:
+        blockchain.testBlock(newBlock):
+    except:
+        return
+
     inc(blockchain.height)
     blockchain.blocks.append(newBlock)
+
+proc getHeight*(blockchain: Blockchain): BN =
+    result = blockchain.height

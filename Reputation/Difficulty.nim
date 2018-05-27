@@ -34,8 +34,8 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block) =
     if diff.endTime < newBlock.time:
         raise newException(Exception, "Wrong Difficulty")
 
-    if newBlock.lyra.substr(0, 7) < diff.difficulty:
-        echo "Hash is too low:  " & newBlock.lyra.substr(0, 7)
+    if newBlock.lyra < diff.difficulty:
+        echo "Hash is too low:  " & newBlock.lyra
         echo "Must be at least: " & diff.difficulty
         raise newException(Exception, "The hash is too low")
 
