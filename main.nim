@@ -29,7 +29,7 @@ while true:
         except:
             #We don't have an error handler for testBlock other than the existing one.
             #It's really for Threads, which will be added later.
-            #Just raise it for now/.
+            #Just raise it for now.
             raise
         #Add the block if the test passed.
         blockchain.addBlock(newBlock)

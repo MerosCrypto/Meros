@@ -1,8 +1,10 @@
 # TODO
 
 - Add comments to Hex and Base58
-- Add comments to /Reputation
+- Add comments to Blockchain
+- Add comments to Difficulty
 
+- Add getters to Block.nim
 - State.nim
 - Reputation.nim (master class of Blockchain/State)
 
