@@ -1,6 +1,6 @@
 # TODO
 
-- Add comments to /lib
+- Add comments to Hex and Base58
 - Add comments to /Reputation
 
 - State.nim

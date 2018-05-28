@@ -1,6 +1,7 @@
-import ./BN
+import BN
 
-import times
+import times, strutils
 
+#Get time function. Just turns the epoch into a string and makes a BN off it
 proc getTime*(): BN =
-    result = newBN($((uint32) epochTime())) #Replace before 2038.
+    result = newBN(($(epochTime())).split(".")[0])

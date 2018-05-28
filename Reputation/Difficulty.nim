@@ -1,7 +1,7 @@
 import ../lib/Hex
 import ../lib/BN
 
-import ./Block as BlockFile
+import Block as BlockFile
 
 import lists, strutils
 

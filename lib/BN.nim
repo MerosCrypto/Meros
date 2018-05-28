@@ -1,8 +1,12 @@
+#BN library. Just a Nim wrapper around the imath C library
+
+#Also compile the imath C file
 {.compile: "../lib/BN/imath.c".}
 
 import strutils, math
 
 type
+    #Direct copy of the imath BN struct
     mpz_t {.bycopy.} = object
         single: cuint
         digits: ptr cuint
@@ -10,9 +14,11 @@ type
         used: cuint
         sign: cuchar
 
+    #Wrapper obkect. It's actually easier to use addr number than ref mpz_t. Go figure
     BN* = ref object of RootObj
         number: mpz_t
 
+    #Some basic numbers to stop hard coded BN literals
     BNNumsType* = ref object of RootObj
         ZERO*: BN
         ONE*: BN
@@ -21,11 +27,14 @@ type
         SIXTEEN*: BN
         FIFTYEIGHT*: BN
 
+#C 'constructor'
 proc mpz_tInit(x: ptr mpz_t, base: cint, value: cstring) {.header: "../lib/BN/imath.h", importc: "mp_int_read_string".}
+#Nim constructor
 proc newBN*(number: string = "0"): BN =
     result = BN()
     mpz_tInit(addr result.number, 10, (cstring) number)
 
+#Define some basic numbers
 var BNNums*: BNNumsType = BNNumsType(
     ZERO: newBN("0"),
     ONE: newBN("1"),
@@ -35,19 +44,25 @@ var BNNums*: BNNumsType = BNNumsType(
     FIFTYEIGHT: newBN("58")
 )
 
+#Stringify function
 proc mpz_tStringify(x: ptr mpz_t): cstring {.header: "../lib/BN/wrapper.h", importc: "printMPZ_T".}
 proc `$`*(x: BN): string =
     result = $mpz_tStringify(addr x.number)
 
+
+#Addition  function
 proc mpz_tAdd(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_add".}
 proc `+`*(x: BN, y: BN): BN =
     result = newBN()
     mpz_tAdd(addr x.number, addr y.number, addr result.number)
+#+= operator
 proc `+=`*(x: BN, y: BN) =
     x.number = (x + y).number
+#Nim uses inc/dec instead of ++ and --. This is when BNNums is useful as hell
 proc inc*(x: BN) =
     x += BNNums.ONE
 
+#Subtraction functions
 proc mpz_tSub(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_sub".}
 proc `-`*(x: BN, y: BN): BN =
     result = newBN()
@@ -57,6 +72,7 @@ proc `-=`*(x: BN, y: BN) =
 proc dec*(x: BN) =
     x -= BNNums.ONE
 
+#Multiplication functions
 proc mpz_tMul(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_mul".}
 proc `*`*(x: BN, y: BN): BN =
     result = newBN()
@@ -64,6 +80,7 @@ proc `*`*(x: BN, y: BN): BN =
 proc `*=`*(x: BN, y: BN) =
     x.number = (x * y).number
 
+#Exponent/power functions
 proc mpz_tPow(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_expt_full".}
 proc `^`*(x: BN, y: BN): BN =
     result = newBN()
@@ -71,13 +88,24 @@ proc `^`*(x: BN, y: BN): BN =
 proc `pow`*(x: BN, y: BN): BN =
     result = x ^ y
 
+#Division functions
 proc mpz_tDiv(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t, r: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_div".}
 proc `/`*(x: BN, y: BN): BN =
     result = newBN()
+    #imath also returns the remainder. We don't use it, hence the junk `addr newBN().number`
     mpz_tDiv(addr x.number, addr y.number, addr result.number, addr newBN().number)
 proc `div`*(x: BN, y: BN): BN =
     result = x / y
 
+proc `//`*(x: BN, y: BN): tuple[result: BN, remainder: BN] =
+    result.result = newBN()
+    result.remainder = newBN()
+    mpz_tDiv(addr x.number, addr y.number, addr result.result.number, addr result.remainder.number)
+    return result
+proc `divWRemainder`*(x: BN, y: BN): tuple[result: BN, remainder: BN] =
+    result = x // y
+
+#Modulus functions
 proc mpz_tMod(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_mod".}
 proc `%`*(x: BN, y: BN): BN =
     result = newBN()
@@ -85,6 +113,7 @@ proc `%`*(x: BN, y: BN): BN =
 proc `mod`*(x: BN, y: BN): BN =
     result = x % y
 
+#All the comparison functions. ==, !-, <, <=, >, and >=
 proc mpz_tCompare(x: ptr mpz_t, y: ptr mpz_t): int {.header: "../lib/BN/imath.h", importc: "mp_int_compare".}
 proc `==`*(x: BN, y: BN): bool =
     result = mpz_tCompare(addr x.number, addr y.number) == 0

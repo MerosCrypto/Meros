@@ -1,8 +1,8 @@
 import ../lib/BN
 import ../lib/time
 
-import ./Block as BlockFile
-import ./Difficulty as DifficultyFile
+import Block as BlockFile
+import Difficulty as DifficultyFile
 
 import lists
 
