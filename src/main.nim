@@ -7,6 +7,7 @@ import lib/Hex
 #Block and blockchain file.
 import Reputation/Block
 import Reputation/Blockchain
+import Reputation/State
 
 var
     #Create a blockchain.
