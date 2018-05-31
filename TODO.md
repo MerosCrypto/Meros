@@ -3,7 +3,9 @@
 Core:
 - State.nim
 - Reputation.nim (master class of Blockchain/State)
-- Wallet suite
+- SECP256K1.nim
+- PrivateKey.nim
+- PublicKey.nim
 - Verify miner ID in Block.nim
 
 Features:
@@ -15,6 +17,8 @@ Bug fixes, tests, and behavior changes:
 
 Documentation:
 - Add comments to Hex and Base58
+- Add comments to RNG
+- Add comments to SECP256K1
 - Add comments to Blockchain
 - Add comments to Difficulty
 - Write a proper README
