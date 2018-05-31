@@ -1,7 +1,7 @@
-#BN library. Just a Nim wrapper around the imath C library
+#Nim wrapper around the imath C library
 
 #Also compile the imath C file
-{.compile: "../lib/BN/imath.c".}
+{.compile: "../../src/lib/BN/imath.c".}
 
 import strutils, math
 
@@ -28,7 +28,7 @@ type
         FIFTYEIGHT*: BN
 
 #C 'constructor'
-proc mpz_tInit(x: ptr mpz_t, base: cint, value: cstring) {.header: "../lib/BN/imath.h", importc: "mp_int_read_string".}
+proc mpz_tInit(x: ptr mpz_t, base: cint, value: cstring) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_read_string".}
 #Nim constructor
 proc newBN*(number: string = "0"): BN =
     result = BN()
@@ -45,13 +45,13 @@ var BNNums*: BNNumsType = BNNumsType(
 )
 
 #Stringify function
-proc mpz_tStringify(x: ptr mpz_t): cstring {.header: "../lib/BN/wrapper.h", importc: "printMPZ_T".}
+proc mpz_tStringify(x: ptr mpz_t): cstring {.header: "../../src/lib/BN/wrapper.h", importc: "printMPZ_T".}
 proc `$`*(x: BN): string =
     result = $mpz_tStringify(addr x.number)
 
 
 #Addition  function
-proc mpz_tAdd(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_add".}
+proc mpz_tAdd(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_add".}
 proc `+`*(x: BN, y: BN): BN =
     result = newBN()
     mpz_tAdd(addr x.number, addr y.number, addr result.number)
@@ -63,7 +63,7 @@ proc inc*(x: BN) =
     x += BNNums.ONE
 
 #Subtraction functions
-proc mpz_tSub(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_sub".}
+proc mpz_tSub(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_sub".}
 proc `-`*(x: BN, y: BN): BN =
     result = newBN()
     mpz_tSub(addr x.number, addr y.number, addr result.number)
@@ -73,7 +73,7 @@ proc dec*(x: BN) =
     x -= BNNums.ONE
 
 #Multiplication functions
-proc mpz_tMul(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_mul".}
+proc mpz_tMul(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_mul".}
 proc `*`*(x: BN, y: BN): BN =
     result = newBN()
     mpz_tMul(addr x.number, addr y.number, addr result.number)
@@ -81,7 +81,7 @@ proc `*=`*(x: BN, y: BN) =
     x.number = (x * y).number
 
 #Exponent/power functions
-proc mpz_tPow(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_expt_full".}
+proc mpz_tPow(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_expt_full".}
 proc `^`*(x: BN, y: BN): BN =
     result = newBN()
     mpz_tPow(addr x.number, addr y.number, addr result.number)
@@ -89,7 +89,7 @@ proc `pow`*(x: BN, y: BN): BN =
     result = x ^ y
 
 #Division functions
-proc mpz_tDiv(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t, r: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_div".}
+proc mpz_tDiv(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t, r: ptr mpz_t) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_div".}
 proc `/`*(x: BN, y: BN): BN =
     result = newBN()
     #imath also returns the remainder. We don't use it, hence the junk `addr newBN().number`
@@ -106,7 +106,7 @@ proc `divWRemainder`*(x: BN, y: BN): tuple[result: BN, remainder: BN] =
     result = x // y
 
 #Modulus functions
-proc mpz_tMod(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../lib/BN/imath.h", importc: "mp_int_mod".}
+proc mpz_tMod(x: ptr mpz_t, y: ptr mpz_t, z: ptr mpz_t) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_mod".}
 proc `%`*(x: BN, y: BN): BN =
     result = newBN()
     mpz_tMod(addr x.number, addr y.number, addr result.number)
@@ -114,7 +114,7 @@ proc `mod`*(x: BN, y: BN): BN =
     result = x % y
 
 #All the comparison functions. ==, !-, <, <=, >, and >=
-proc mpz_tCompare(x: ptr mpz_t, y: ptr mpz_t): int {.header: "../lib/BN/imath.h", importc: "mp_int_compare".}
+proc mpz_tCompare(x: ptr mpz_t, y: ptr mpz_t): int {.header: "../../src/lib/BN/imath.h", importc: "mp_int_compare".}
 proc `==`*(x: BN, y: BN): bool =
     result = mpz_tCompare(addr x.number, addr y.number) == 0
 proc `!=`*(x: BN, y: BN): bool =
