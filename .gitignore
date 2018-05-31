@@ -1,4 +1,3 @@
-nimcache
+build
 
-*.o
 *.exe

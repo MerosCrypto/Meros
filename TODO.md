@@ -1,5 +1,7 @@
 # TODO
 
+- Create tests
+
 - Add comments to Hex and Base58
 - Add comments to Blockchain
 - Add comments to Difficulty
