@@ -30,12 +30,12 @@ proc createBlockchain*(genesis: string): Blockchain =
     result.blocks.append(createBlock(newBN("0"), "1", "0"))
 
 proc testBlock*(blockchain: Blockchain, newBlock: Block) =
-    if blockchain.height + BNNums.ONE != newBlock.nonce:
+    if blockchain.height + BNNums.ONE != newBlock.getNonce():
         raise newException(Exception, "Invalid nonce")
 
     verifyBlock(newBlock)
 
-    while blockchain.difficulties.tail.value.endTime < newBlock.time:
+    while blockchain.difficulties.tail.value.endTime < newBlock.getTime():
         blockchain.difficulties.append(calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, (60), 6))
 
     blockchain.difficulties.tail.value.verifyDifficulty(newBlock)

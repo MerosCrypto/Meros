@@ -31,11 +31,11 @@ proc `<`(x: string, y: string): bool =
     result = false
 
 proc verifyDifficulty*(diff: Difficulty, newBlock: Block) =
-    if diff.endTime < newBlock.time:
+    if diff.endTime < newBlock.getTime():
         raise newException(Exception, "Wrong Difficulty")
 
-    if newBlock.lyra < diff.difficulty:
-        echo "Hash is too low:  " & newBlock.lyra
+    if newBlock.getLyra() < diff.difficulty:
+        echo "Hash is too low:  " & newBlock.getLyra()
         echo "Must be at least: " & diff.difficulty
         raise newException(Exception, "The hash is too low")
 
@@ -52,7 +52,7 @@ proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: Dou
         difficulty: string
 
     for i in items(blocks):
-        if i.time < start or i.time > endTime:
+        if i.getTime() < start or i.getTime() > endTime:
             continue
         inc(blockCount)
     echo "Mined " & $blockCount & " blocks in the last period."

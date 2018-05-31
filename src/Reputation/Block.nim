@@ -13,17 +13,17 @@ import ../lib/Lyra2
 #Define the Block class
 type Block* = ref object of RootObj
     #Nonce, AKA index
-    nonce*: BN
+    nonce: BN
     #Timestamp
-    time*: BN
+    time: BN
     #Who t attribute the Rep to
-    miner*: string
+    miner: string
     #Block hash
-    hash*: string
+    hash: string
     #Random hex number to make sure the Lyra of the hash is over the difficulty
-    proof*: string
+    proof: string
     #Lyra2 64 character hash with the hash as the data and proof as the salt
-    lyra*: string
+    lyra: string
 
 #Create Block function. Creates a block. Raises an error if there's an issue.
 proc createBlock*(nonce: BN, time: BN, miner: string, proof: string): Block =
@@ -58,3 +58,22 @@ proc verifyBlock*(newBlock: Block) =
 
     if createdBlock.lyra != newBlock.lyra:
         raise newException(Exception, "Invalid lyra")
+
+#Getters
+proc getNonce*(blockObj: Block): BN =
+    return blockObj.nonce
+
+proc getTime*(blockObj: Block): BN =
+    return blockObj.time
+
+proc getMiner*(blockObj: Block): string =
+    return blockObj.miner
+
+proc getHash*(blockObj: Block): string =
+    return blockObj.hash
+
+proc getProof*(blockObj: Block): string =
+    return blockObj.proof
+
+proc getLyra*(blockObj: Block): string =
+    return blockObj.lyra
