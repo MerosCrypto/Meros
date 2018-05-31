@@ -1,6 +1,13 @@
 # TODO
 
-- Create tests
+- Move NUInt out of this repo
+
+- Create a Nimble library out of BN
+- Create a Nimble library out of Hex/Base58
+- Create a Nimble library out of SHA512
+- Create a Nimble library out of Lyra2
+
+- Write tests
 
 - Add comments to Hex and Base58
 - Add comments to Blockchain
