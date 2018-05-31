@@ -1,7 +1,5 @@
 # TODO
 
-- Move NUInt out of this repo
-
 - Create a Nimble library out of BN
 - Create a Nimble library out of Hex/Base58
 - Create a Nimble library out of SHA512
@@ -21,3 +19,5 @@
 
 - Dedicated miner
 - Verify miner ID in Block.nim (public key/address scheme?)
+
+- Write a proper README
