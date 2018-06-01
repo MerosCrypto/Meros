@@ -57,5 +57,8 @@ proc getHeight*(blockchain: Blockchain): BN =
     result = blockchain.height
 proc getBlocks*(blockchain: Blockchain): DoublyLinkedList[Block] =
     result = blockchain.blocks
+iterator getBlocks*(blockchain: Blockchain): Block =
+    for i in blockchain.blocks.items():
+        yield i
 proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] =
     result = blockchain.difficulties

@@ -9,6 +9,8 @@ Core:
 - Verify miner ID in Block.nim
 
 Features:
+- Add State halving
+- Add State decay
 - Dedicated miner
 
 Bug fixes, tests, and behavior changes:
@@ -21,6 +23,7 @@ Documentation:
 - Add comments to SECP256K1
 - Add comments to Blockchain
 - Add comments to Difficulty
+- Add comments to Wallet/
 - Write a proper README
 
 Community Service:

@@ -4,27 +4,29 @@
 import lib/BN
 import lib/Hex
 
-#Block and blockchain file.
+#Block, blockchain, and State file.
 import Reputation/Block
 import Reputation/Blockchain
-
-#import Reputation/State
+import Reputation/State
 
 var
     #Create a blockchain.
     blockchain: Blockchain = createBlockchain("0")
+    state: State = createState(blockchain)
     #Stop memory leaking in the below loop.
     newBlock: Block
     #Nonce and proof vars.
     nonce: BN = newBN("1")
     proof: BN = newBN("0")
 
+echo "First balance: " & $state.getBalance("2")
+
 #mine the chain.
 while true:
-    echo "Looping..."
+    echo "Looping... Balance of the miner is " & $state.getBalance("2")
     try:
         #Create a block.
-        newBlock = createBlock(nonce, "1", Hex.convert(proof))
+        newBlock = createBlock(nonce, "2", Hex.convert(proof))
         #Test it.
         try:
             blockchain.testBlock(newBlock)
@@ -35,6 +37,7 @@ while true:
             raise
         #Add the block if the test passed.
         blockchain.addBlock(newBlock)
+        state.processBlock(newBlock)
     except:
         #If it didn't, increase the proof and continue.
         inc(proof)

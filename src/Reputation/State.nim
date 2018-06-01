@@ -1,19 +1,34 @@
-import ../lib/BN
+import ../lib/BN as BNFile
 
 import Block
 import Blockchain
 
 import tables
 
-type StateType* = ref object of RootObj
-    state: Table
+type State* = ref object of RootObj
+    state: Table[string, BN]
 
-var state: StateType = StateType(
-    state: initTable[string, BN]()
-)
-echo "Made the state var."
+proc getBalance*(state: State, account: string): BN =
+    result = newBN("0")
+    if state.state.hasKey(account):
+        result = state.state[account]
 
-state.state["test"] = newBN("7")
-echo "Set test."
+proc createState*(): State =
+    result = State(
+        state: initTable[string, BN]()
+    )
 
-echo state.state["test"]
+proc processBlock*(state: State, newBlock: Block) =
+    state.state[newBlock.getMiner()] = state.getBalance(newBlock.getMiner()) + newBN("100")
+
+proc processBlockchain*(state: State, blockchain: Blockchain) =
+    state.state = initTable[string, BN]()
+    for i in blockchain.getBlocks():
+        state.processBlock(i)
+
+proc createState*(blockchain: Blockchain): State =
+    result = State(
+        state: initTable[string, BN]()
+    )
+
+    result.processBlockchain(blockchain)
