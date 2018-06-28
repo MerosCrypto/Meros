@@ -1,14 +1,23 @@
+import ../lib/SHA512
+import ../lib/SECP256K1Wrapper
+
 import PrivateKey
 
-import ../lib/SECP256K1
+import strutils
 
-type PubKey* = ref object of RootObj
+type PublicKey* = ptr secp256k1_pubkey
 
-proc newPubKey*(privKey: PrivKey): PubKey =
-    result = PubKey()
+proc newPublicKey*(privKey: PrivateKey): PublicKey =
+    result = secpPublicKey(privKey.secret)
 
-proc newPubKey*(hex: string): PubKey =
-    result = PubKey()
+proc newPublicKey*(hex: string): PublicKey =
+    result = secpPublicKey(hex)
 
-proc verify*(pubKey: PubKey, hex: string): bool =
-    result = true
+proc `$`*(key: PublicKey): string =
+    result = ""
+    for i in 0 ..< 64:
+        result = result & key.data[i].toHex()
+
+proc verify*(key: PublicKey, msg: string, sig: string): bool =
+    var hash: string = SHA512(msg).substr(0, 31)
+    secpVerify(hash, key, secpSignature(sig))

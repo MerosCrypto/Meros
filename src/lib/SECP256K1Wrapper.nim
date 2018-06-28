@@ -1,4 +1,5 @@
 import SECP256K1/secp256k1
+export secp256k1_pubkey
 
 import strutils
 
@@ -44,10 +45,10 @@ proc secpSign*(hash: var string, privKey: ptr array[32, uint8]): string =
 
     result = $(sig[])
 
-proc secpVerify*(hash: var string, pubKey: ptr secp256k1_pubkey, sig: string): bool =
+proc secpVerify*(hash: var string, pubKey: ptr secp256k1_pubkey, sig: ptr secp256k1_ecdsa_signature): bool =
     result = secp256k1_ecdsa_verify(
         context,
-        secpSignature(sig),
+        sig,
         cast[ptr cuchar](addr hash[0]),
         pubKey
     ) == 1

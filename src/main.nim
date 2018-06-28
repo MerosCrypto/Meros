@@ -1,18 +1,18 @@
 import lib/SHA512
 
 import Wallet/PrivateKey
-#This should be PublicKey in the future.
-import lib/SECP256K1Wrapper
+import Wallet/PublicKey
 
-var privKey = newPrivateKey()
-var privKey2 = newPrivateKey()
 var
-    str: string = "test"
-    hash: string = SHA512(str).substr(0, 31)
+    privKey: PrivateKey = newPrivateKey()
+    pubKey: PublicKey = newPublicKey(privKey)
+    privKey2: PrivateKey = newPrivateKey()
+    pubKey2: PublicKey = newPublicKey(privKey2)
 
-#.secret will be private in the future.
-echo secpVerify(hash, secpPublicKey(privKey.secret), privKey.sign(str))
-echo secpVerify(hash, secpPublicKey(privKey2.secret), privKey.sign(str))
+var str: string = "test"
+
+echo pubKey.verify(str, privKey.sign(str))
+echo pubKey2.verify(str, privKey.sign(str))
 
 discard """
 # This is currently a miner. It creates a Blockchain and adds blocks.
