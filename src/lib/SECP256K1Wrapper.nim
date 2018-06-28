@@ -1,5 +1,4 @@
 import SECP256K1/secp256k1
-export secp256k1_pubkey
 
 import strutils
 
