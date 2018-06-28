@@ -1,5 +1,3 @@
-import lib/SHA512
-
 import Wallet/PrivateKey
 import Wallet/PublicKey
 
