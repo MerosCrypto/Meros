@@ -1,3 +1,20 @@
+import lib/SHA512
+
+import Wallet/PrivateKey
+#This should be PublicKey in the future.
+import lib/SECP256K1Wrapper
+
+var privKey = newPrivateKey()
+var privKey2 = newPrivateKey()
+var
+    str: string = "test"
+    hash: string = SHA512(str).substr(0, 31)
+
+#.secret will be private in the future.
+echo secpVerify(hash, secpPublicKey(privKey.secret), privKey.sign(str))
+echo secpVerify(hash, secpPublicKey(privKey2.secret), privKey.sign(str))
+
+discard """
 # This is currently a miner. It creates a Blockchain and adds blocks.
 
 #Library files.
@@ -46,3 +63,4 @@ while true:
     echo "Mined a block: " & $nonce
     #Increase the nonce.
     inc(nonce)
+"""

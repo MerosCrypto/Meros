@@ -3,7 +3,6 @@ import PrivateKey
 import ../lib/SECP256K1
 
 type PubKey* = ref object of RootObj
-    secret: array[32, uint8]
 
 proc newPubKey*(privKey: PrivKey): PubKey =
     result = PubKey()

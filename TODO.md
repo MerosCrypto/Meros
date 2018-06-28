@@ -1,10 +1,7 @@
 # TODO
 
 Core:
-- State.nim
 - Reputation.nim (master class of Blockchain/State)
-- SECP256K1.nim
-- PrivateKey.nim
 - PublicKey.nim
 - Verify miner ID in Block.nim
 
@@ -21,8 +18,10 @@ Documentation:
 - Add comments to Hex and Base58
 - Add comments to RNG
 - Add comments to SECP256K1
-- Add comments to Blockchain
 - Add comments to Difficulty
+- Add comments to Blockchain
+- Add comments to State
+- Add comments to Reputation
 - Add comments to Wallet/
 - Write a proper README
 

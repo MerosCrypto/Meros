@@ -16,7 +16,7 @@ type Block* = ref object of RootObj
     nonce: BN
     #Timestamp
     time: BN
-    #Who t attribute the Rep to
+    #Who to attribute the Rep to
     miner: string
     #Block hash
     hash: string
