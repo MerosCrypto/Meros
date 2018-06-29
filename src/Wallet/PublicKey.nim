@@ -20,4 +20,4 @@ proc `$`*(key: PublicKey): string =
 
 proc verify*(key: PublicKey, msg: string, sig: string): bool =
     var hash: string = SHA512(msg).substr(0, 31)
-    secpVerify(hash, key, secpSignature(sig))
+    secpVerify(hash, key, sig)
