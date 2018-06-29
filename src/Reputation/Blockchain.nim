@@ -13,7 +13,7 @@ type Blockchain* = ref object of RootObj
     blocks: DoublyLinkedList[Block]
     difficulties: DoublyLinkedList[Difficulty]
 
-proc createBlockchain*(genesis: string): Blockchain =
+proc newBlockchain*(genesis: string): Blockchain =
     result = Blockchain(
         creation: getTime(),
         genesis: genesis,
@@ -27,7 +27,7 @@ proc createBlockchain*(genesis: string): Blockchain =
         endTime: result.creation + newBN("60"),
         difficulty: "1111111111111111111111111111111111111111111111111111111111111111"
     ))
-    result.blocks.append(createBlock(newBN("0"), "1", "0"))
+    result.blocks.append(newBlock(newBN("0"), "1", "0"))
 
 proc testBlock*(blockchain: Blockchain, newBlock: Block) =
     if blockchain.height + BNNums.ONE != newBlock.getNonce():
