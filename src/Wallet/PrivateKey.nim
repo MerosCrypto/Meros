@@ -28,5 +28,5 @@ proc `$`*(key: PrivateKey): string =
         result = result & key.secret[i].toHex()
 
 proc sign*(key: PrivateKey, msg: string): string =
-    var hash: string = SHA512(msg).substr(0, 31)
+    var hash: string = SHA512(msg)
     result = secpSign(hash, key.secret)

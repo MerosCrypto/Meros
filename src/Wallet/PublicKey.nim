@@ -16,8 +16,9 @@ proc newPublicKey*(hex: string): PublicKey =
 proc `$`*(key: PublicKey): string =
     result = ""
     for i in 0 ..< 64:
+        echo i
         result = result & key.data[i].toHex()
 
 proc verify*(key: PublicKey, msg: string, sig: string): bool =
-    var hash: string = SHA512(msg).substr(0, 31)
+    var hash: string = SHA512(msg)
     secpVerify(hash, key, sig)

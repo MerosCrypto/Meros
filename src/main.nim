@@ -1,16 +1,19 @@
 import Wallet/PrivateKey
 import Wallet/PublicKey
+import Wallet/Address
 
 var
-    privKey: PrivateKey = newPrivateKey()
-    pubKey: PublicKey = newPublicKey(privKey)
-    privKey2: PrivateKey = newPrivateKey()
-    pubKey2: PublicKey = newPublicKey(privKey2)
+    privKey: PrivateKey
+    pubKey: PublicKey
+    addresS: string
 
-var str: string = "test"
+for i in 0 .. 100:
+    privKey = newPrivateKey()
+    pubKey = newPublicKey(privKey)
+    address = newAddress($pubKey)
+    echo address & " " & $address.len
 
-echo pubKey.verify(str, privKey.sign(str))
-echo pubKey2.verify(str, privKey.sign(str))
+    dealloc(pubKey)
 
 discard """
 # This is currently a miner. It creates a Blockchain and adds blocks.
@@ -26,7 +29,7 @@ import Reputation/State
 
 var
     #Create a blockchain.
-    blockchain: Blockchain = createBlockchain("0")
+    blockchain: Blockchain = newBlockchain("0")
     state: State = createState(blockchain)
     #Stop memory leaking in the below loop.
     newBlock: Block
@@ -41,7 +44,7 @@ while true:
     echo "Looping... Balance of the miner is " & $state.getBalance("2")
     try:
         #Create a block.
-        newBlock = createBlock(nonce, "2", Hex.convert(proof))
+        newBlock = newBlock(nonce, "2", Hex.convert(proof))
         #Test it.
         try:
             blockchain.testBlock(newBlock)

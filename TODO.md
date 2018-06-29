@@ -2,7 +2,6 @@
 
 Core:
 - Reputation.nim (master class of Blockchain/State)
-- PublicKey.nim
 - Verify miner ID in Block.nim
 
 Features:
@@ -22,7 +21,7 @@ Documentation:
 - Add comments to Blockchain
 - Add comments to State
 - Add comments to Reputation
-- Add comments to Wallet/
+- Add comments to Wallet/ (except Address.nim)
 - Write a proper README
 
 Community Service:
