@@ -12,7 +12,7 @@ type PublicKey* = ref object of RootObj
 proc newPublicKey*(privKey: PrivateKey): PublicKey =
     result = PublicKey(
         initiated: true,
-        key: secpPublicKey(privKey.secret)
+        key: secpPublicKey(addr privKey.secret)
     )
 
 proc newPublicKey*(hex: string): PublicKey =
