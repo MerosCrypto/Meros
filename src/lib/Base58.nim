@@ -17,23 +17,21 @@ var
     num1: BN = newBN("1")
     num58: BN = newBN("58")
 
-proc verify*(base58Value: string) =
+proc verify*(base58Value: string): bool =
+    result = true
+
     for i in 0 ..< base58Value.len:
         var ascii: int = (int) base58Value[i]
-        if 48 < ascii and ascii < 58:
-            discard
-        elif 64 < ascii and ascii < 73:
-            discard
-        elif 73 < ascii and ascii < 79:
-            discard
-        elif 79 < ascii and ascii < 91:
-            discard
-        elif 96 < ascii and ascii < 108:
-            discard
-        elif 108 < ascii and ascii < 123:
-            discard
-        else:
-            raise newException(Exception, "Invalid Base58 Number")
+        if not (
+            (48 < ascii and ascii < 58) or
+            (64 < ascii and ascii < 73) or
+            (73 < ascii and ascii < 79) or
+            (79 < ascii and ascii < 91) or
+            (96 < ascii and ascii < 108) or
+            (108 < ascii and ascii < 123)
+        ):
+            result = false
+            break
 
 proc convert*(valueArg: BN): string =
     if valueArg < num0:
@@ -61,7 +59,8 @@ proc convert*(valueArg: BN): string =
         result = result.substr(1, result.len)
 
 proc revert*(base58Value: string): BN =
-    verify(base58Value)
+    if not verify(base58Value):
+        raise newException(Exception, "Invalid Base58 Number")
 
     var
         digits: BN = newBN($base58Value.len)

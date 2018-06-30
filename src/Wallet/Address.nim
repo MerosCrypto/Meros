@@ -35,8 +35,8 @@ proc newAddress*(key: string): string =
     while result.len < 57:
         result = "0" & result
 
-    while result.len > 61:
-        result = result.substr(1, result.len)
+    if result.len > 61:
+        result = result.substr(result.len - 61, result.len)
 
     result = "Emb" & result
 
@@ -59,9 +59,7 @@ proc verifyAddress*(address: string): bool =
         return
 
     #Check to make sure it's a valid Base58 number, if there's no prefix.
-    try:
-        Base58.verify(address.substr(3, address.len))
-    except:
+    if not Base58.verify(address.substr(3, address.len)):
         result = false
 
 #If we have a key to check with, make an address for that key and compare with the given address.

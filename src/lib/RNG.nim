@@ -29,13 +29,10 @@ when defined(windows):
 else:
     proc randbytes(quantity: int): seq[char] =
         result = newSeq[char](quantity)
-        try:
-            var urandom: File = open("/dev/urandom")
-            discard urandom.readChars(result, 0, quantity)
-        except Exception:
-            raise newException(Exception, "Couldn't read from urandom")
-        finally:
-            f.close()
+        
+        var urandom: File = open("/dev/urandom")
+        discard urandom.readChars(result, 0, quantity)
+        urandom.close()
 
 proc random*(quantity: int): seq[uint8] =
     result = newSeq[uint8](quantity)

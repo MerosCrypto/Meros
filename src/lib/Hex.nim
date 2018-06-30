@@ -12,17 +12,18 @@ var
     num1: BN = newBN("1")
     num16: BN = newBN("16")
 
-proc verify*(base16Value: string) =
+proc verify*(base16Value: string): bool =
+    result = true
+
     for i in 0 ..< base16Value.len:
         var ascii: int = (int) base16Value[i]
-        if 47 < ascii and ascii < 58:
-            discard
-        elif 64 < ascii and ascii < 71:
-            discard
-        elif 96 < ascii and ascii < 103:
-            discard
-        else:
-            raise newException(Exception, "Invalid Hex Number")
+        if not (
+            (48 < ascii and ascii < 58) or
+            (64 < ascii and ascii < 71) or
+            (96 < ascii and ascii < 103)
+        ):
+            result = false
+            break
 
 proc convert*(valueArg: BN): string =
     if valueArg < num0:
@@ -53,10 +54,11 @@ proc convert*(valueArg: BN): string =
         result = "0" & result
 
 proc revert*(base16ValueArg: string): BN =
-    var base16Value: string = base16ValueArg
-    verify(base16Value)
+    if not verify(base16ValueArg):
+        raise newException(Exception, "Invalid Hex Number")
 
     var
+        base16Value: string = base16ValueArg
         digitValue: int
         digitMultiple: BN
         value: BN = newBN("0")
