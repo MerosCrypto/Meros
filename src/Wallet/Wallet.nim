@@ -1,4 +1,7 @@
 discard """
+import Wallet/PrivateKey
+import Wallet/PublicKey
+
 var
     privKey: PrivateKey = newPrivateKey()
     pubKey: PublicKey = newPublicKey(privKey)

@@ -3,6 +3,7 @@
 Core:
 - Reputation.nim (master class of Blockchain/State)
 - Verify miner ID in Block.nim
+- Fix Public Key Stringification
 
 Features:
 - Add State halving
@@ -12,6 +13,7 @@ Features:
 Bug fixes, tests, and behavior changes:
 - Add Difficulty scaling that's not in multiples of "1111111111111111111111111111111111111111111111111111111111111111"
 - Write tests
+- Occasional bug where verifyAddress(address, $pubKey) with proper data fails.
 
 Documentation:
 - Add comments to Hex and Base58

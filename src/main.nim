@@ -2,18 +2,17 @@ import Wallet/PrivateKey
 import Wallet/PublicKey
 import Wallet/Address
 
-var
-    privKey: PrivateKey
-    pubKey: PublicKey
-    addresS: string
+for i in 0 .. 500:
+    var privKey: PrivateKey = newPrivateKey()
+    var pubKey: PublicKey = newPublicKey(privKey)
+    var address: string = newAddress($pubKey)
 
-for i in 0 .. 100:
-    privKey = newPrivateKey()
-    pubKey = newPublicKey(privKey)
-    address = newAddress($pubKey)
-    echo address & " " & $address.len
+    if verifyAddress(address) == false:
+        raise newException(Exception, "Invalid Address Type 1")
+    if verifyAddress(address, $pubKey) == false:
+        raise newException(Exception, "Invalid Address Type 2")
 
-    dealloc(pubKey)
+    echo address
 
 discard """
 # This is currently a miner. It creates a Blockchain and adds blocks.

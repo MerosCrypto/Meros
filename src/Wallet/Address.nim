@@ -41,7 +41,7 @@ proc newAddress*(key: string): string =
     result = "Emb" & result
 
 #Verifies if an address is valid.
-proc verifyAddress(address: string): bool =
+proc verifyAddress*(address: string): bool =
     #Return true if there's no issue.
     result = true
 
@@ -65,5 +65,7 @@ proc verifyAddress(address: string): bool =
         result = false
 
 #If we have a key to check with, make an address for that key and compare with the given address.
-proc verifyAddress(address: string, key: string): bool =
+proc verifyAddress*(address: string, key: string): bool =
     result = address == newAddress(key)
+    if result == false:
+        echo $address & " does not equal \r\n" & newAddress(key)
