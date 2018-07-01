@@ -18,7 +18,7 @@ proc verify*(base16Value: string): bool =
     for i in 0 ..< base16Value.len:
         var ascii: int = (int) base16Value[i]
         if not (
-            (48 < ascii and ascii < 58) or
+            (47 < ascii and ascii < 58) or
             (64 < ascii and ascii < 71) or
             (96 < ascii and ascii < 103)
         ):
