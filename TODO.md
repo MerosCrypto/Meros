@@ -2,31 +2,34 @@
 
 Core:
 - Reputation.nim (master class of Blockchain/State).
-- Verify miner ID in Block.nim.
-- Fix Public Key Stringification.
+- Wallet.nim (master class of PrivateKey/PublicKey/Address).
+- Write tests.
 
 Features:
 - Add State halving.
 - Add State decay.
 - Dedicated miner.
 
-Bug fixes, tests, and behavior changes:
-- Add Difficulty scaling that's not in multiples of "1111111111111111111111111111111111111111111111111111111111111111".
-- Write tests.
+Bug fixes and behavior changes:
+- Smooth difficulty scaling and work on it's decimal scaling.
 
 Documentation:
-- Add comments to Hex and Base58.
-- Add comments to RNG.
-- Add comments to SECP256K1.
-- Add comments to Difficulty.
-- Add comments to Blockchain.
-- Add comments to State.
-- Add comments to Reputation.
-- Add comments to Wallet/ (except Address.nim).
-- Write a proper README.
+- Add comments to:
+    lib/Base58.nim
+    lib/Hex.nim
+    lib/SECP256K1Wrapper.nim
+
+    Reputation/Blockchain.nim
+    Reputation/Difficulty.nim
+    Reputation/State.nim
+
+    Wallet/PrivateKey
+    Wallet/PublicKey
+
+    samples/addressGenerator.nim
+- Write a README.
 
 Community Service:
 - Create a Nimble library out of BN.
-- Create a Nimble library out of Hex/Base58.
-- Create a Nimble library out of SHA512.
+- Create a Nimble library out of Base58/Hex.
 - Create a Nimble library out of Lyra2.
