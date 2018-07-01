@@ -10,7 +10,7 @@ type PrivateKey* = ref object of RootObj
 proc newPrivateKey*(): PrivateKey =
     result = PrivateKey()
 
-    result.secret[0 ..< 32] = random(32)[0 ..< 32]
+    random(cast[ptr array[0, uint8]](addr result.secret), 32)
 
 proc newPrivateKey*(hex: string): PrivateKey =
     result = PrivateKey()

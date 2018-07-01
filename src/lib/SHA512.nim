@@ -1,9 +1,8 @@
-import nimcrypto/nimcrypto
+import nimcrypto
 
 import strutils
 
 var ctx512: sha512
-
 proc SHA512*(hex: string): string =
     ctx512.init()
 

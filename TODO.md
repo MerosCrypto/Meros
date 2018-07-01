@@ -13,7 +13,6 @@ Features:
 Bug fixes, tests, and behavior changes:
 - Add Difficulty scaling that's not in multiples of "1111111111111111111111111111111111111111111111111111111111111111".
 - Write tests.
-- Windows RNG code fails with standard GC.
 
 Documentation:
 - Add comments to Hex and Base58.
