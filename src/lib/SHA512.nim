@@ -1,7 +1,15 @@
-#Wrapper for the SHA512 C library.
+import nimcrypto/nimcrypto
 
-#C function
-proc cSHA512(hexData: cstring): cstring {.header: "../../src/lib/SHA512/SHA512.h", importc: "sha512".}
-#Take in a hex string, return the hex string of the SHA512 hash.
+import strutils
+
+var ctx512: sha512
+
 proc SHA512*(hex: string): string =
-    result = $cSHA512(hex)
+    ctx512.init()
+
+    var ints: string = ""
+    for i in countup(0, hex.len-1, 2):
+        ints = ints & ((char) parseHexInt(hex[i .. i + 1]))
+    result = $sha512.digest(cast[ptr uint8]((cstring) ints), (uint) ints.len)
+
+    ctx512.clear()
