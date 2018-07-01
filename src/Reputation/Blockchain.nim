@@ -27,23 +27,35 @@ proc newBlockchain*(genesis: string): Blockchain =
         endTime: result.creation + newBN("60"),
         difficulty: "1111111111111111111111111111111111111111111111111111111111111111"
     ))
-    result.blocks.append(newBlock(newBN("0"), "1", "0"))
+    result.blocks.append(newBlock(newBN("0"), result.creation, "Emb000000000000000000000000000000000000000000000000000000000000", "0"))
 
-proc testBlock*(blockchain: Blockchain, newBlock: Block) =
+proc testBlock*(blockchain: Blockchain, newBlock: Block): bool =
+    result = true
+
     if blockchain.height + BNNums.ONE != newBlock.getNonce():
-        raise newException(Exception, "Invalid nonce")
+        result = false
+        return
 
-    verifyBlock(newBlock)
+    if blockchain.blocks.tail.value.getTime() >= newBlock.getTime():
+        result = false
+        return
+
+    if not verifyBlock(newBlock):
+        result = false
+        return
 
     while blockchain.difficulties.tail.value.endTime < newBlock.getTime():
         blockchain.difficulties.append(calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, (60), 6))
 
-    blockchain.difficulties.tail.value.verifyDifficulty(newBlock)
+    if not blockchain.difficulties.tail.value.verifyDifficulty(newBlock):
+        result = false
+        return
 
-proc addBlock*(blockchain: Blockchain, newBlock: Block) =
-    try:
-        blockchain.testBlock(newBlock):
-    except:
+proc addBlock*(blockchain: Blockchain, newBlock: Block): bool =
+    result = true
+
+    if not blockchain.testBlock(newBlock):
+        result = false
         return
 
     inc(blockchain.height)
@@ -51,14 +63,19 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block) =
 
 proc getCreation*(blockchain: Blockchain): BN =
     result = blockchain.creation
+
 proc getGenesis*(blockchain: Blockchain): string =
     result = blockchain.genesis
+
 proc getHeight*(blockchain: Blockchain): BN =
     result = blockchain.height
+
 proc getBlocks*(blockchain: Blockchain): DoublyLinkedList[Block] =
     result = blockchain.blocks
+
 iterator getBlocks*(blockchain: Blockchain): Block =
     for i in blockchain.blocks.items():
         yield i
+
 proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] =
     result = blockchain.difficulties

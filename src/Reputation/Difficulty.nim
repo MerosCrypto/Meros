@@ -30,14 +30,18 @@ proc `<`(x: string, y: string): bool =
 
     result = false
 
-proc verifyDifficulty*(diff: Difficulty, newBlock: Block) =
+proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool =
+    result = true
+
     if diff.endTime < newBlock.getTime():
-        raise newException(Exception, "Wrong Difficulty")
+        result = false
+        return
 
     if newBlock.getLyra() < diff.difficulty:
         echo "Hash is too low:  " & newBlock.getLyra()
         echo "Must be at least: " & diff.difficulty
-        raise newException(Exception, "The hash is too low")
+        result = false
+        return
 
 proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: DoublyLinkedList[Difficulty], periodInSeconds: int, blocksPerPeriod: int): Difficulty =
     sleep(3000)

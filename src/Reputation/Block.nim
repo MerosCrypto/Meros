@@ -10,6 +10,9 @@ import ../lib/time
 import ../lib/SHA512
 import ../lib/Lyra2
 
+#Import the Address library.
+import ../Wallet/Address
+
 #Define the Block class.
 type Block* = ref object of RootObj
     #Nonce, AKA index.
@@ -27,9 +30,11 @@ type Block* = ref object of RootObj
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
 proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block =
-    #vErify the arguments.
-    Base58.verify(miner)
-    Hex.verify(proof)
+    #Verify the arguments.
+    if Address.verify(miner) == false:
+        raise newException(Exception, "Invalid Address")
+    if Hex.verify(proof) == false:
+        raise newException(Exception, "Invalid HexNumber")
 
     #Ceate the block.
     result = Block(
@@ -40,40 +45,52 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block =
     )
 
     #Create the hash.
-    result.hash = SHA512(Hex.convert(nonce)).substr(0, 31) &
-        SHA512(Hex.convert(time)).substr(32, 63) &
-        SHA512(Hex.convert(Base58.revert(miner))).substr(64, 127)
+    result.hash =
+        SHA512(
+            Hex.convert(nonce)
+        ).substr(0, 31) &
+        SHA512(
+            Hex.convert(time)
+        ).substr(32, 63) &
+        SHA512(
+            Hex.convert(
+                Base58.revert(
+                    miner.substr(3, miner.len)
+                )
+            )
+        ).substr(64, 127)
+    
     #Calculate the Lyra hash.
     result.lyra = Lyra2(result.hash, result.proof)
 
-#Create Block function that just uses the current time.
-proc newBlock*(nonce: BN, miner: string, proof: string): Block =
-    result = newBlock(nonce, getTime(), miner, proof)
-
 #Verify Block function. Creates the block with the passed in arguments and verifies the hashes. Doesn't check its Blockchain validity.
-proc verifyBlock*(newBlock: Block) =
+proc verifyBlock*(newBlock: Block): bool =
+    result = true
+
     var createdBlock: Block = newBlock(newBlock.nonce, newBlock.time, newBlock.miner, newBlock.proof)
     if createdBlock.hash != newBlock.hash:
-        raise newException(Exception, "Invalid hash")
+        result = false
+        return
 
     if createdBlock.lyra != newBlock.lyra:
-        raise newException(Exception, "Invalid lyra")
+        result = false
+        return
 
 #Getters.
-proc getNonce*(blockObj: Block): BN =
-    return blockObj.nonce
+proc getNonce*(blockArg: Block): BN =
+    return blockArg.nonce
 
-proc getTime*(blockObj: Block): BN =
-    return blockObj.time
+proc getTime*(blockArg: Block): BN =
+    return blockArg.time
 
-proc getMiner*(blockObj: Block): string =
-    return blockObj.miner
+proc getMiner*(blockArg: Block): string =
+    return blockArg.miner
 
-proc getHash*(blockObj: Block): string =
-    return blockObj.hash
+proc getHash*(blockArg: Block): string =
+    return blockArg.hash
 
-proc getProof*(blockObj: Block): string =
-    return blockObj.proof
+proc getProof*(blockArg: Block): string =
+    return blockArg.proof
 
-proc getLyra*(blockObj: Block): string =
-    return blockObj.lyra
+proc getLyra*(blockArg: Block): string =
+    return blockArg.lyra

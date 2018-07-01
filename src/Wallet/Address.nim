@@ -41,29 +41,33 @@ proc newAddress*(key: string): string =
     result = "Emb" & result
 
 #Verifies if an address is valid.
-proc verifyAddress*(address: string): bool =
+proc verify*(address: string): bool =
     #Return true if there's no issue.
     result = true
 
     #Check for the prefix.
     if address.substr(0, 2) != "Emb":
+        echo "prefix\r\n\"" & address.substr(0, 2) & "\""
         result = false
         return
 
     #Check the lengths.
     if address.len < 60:
+        echo "pre len"
         result = false
         return
     if address.len > 64:
+        echo "post len"
         result = false
         return
 
     #Check to make sure it's a valid Base58 number, if there's no prefix.
     if not Base58.verify(address.substr(3, address.len)):
+        echo "not b58"
         result = false
 
 #If we have a key to check with, make an address for that key and compare with the given address.
-proc verifyAddress*(address: string, key: string): bool =
+proc verify*(address: string, key: string): bool =
     result = address == newAddress(key)
     if result == false:
         echo $address & " does not equal \r\n" & newAddress(key)
