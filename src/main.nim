@@ -2,6 +2,9 @@
 import lib/BN
 import lib/Hex
 
+#SHA512 lib.
+import lib/SHA512 as SHA512Fsile
+
 #Time lib.
 import lib/time as TimeFile
 
