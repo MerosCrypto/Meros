@@ -26,7 +26,7 @@ echo "First balance: " & $state.getBalance(miner)
 
 #mine the chain.
 while true:
-    echo "Looping... Balance of the miner is " & $state.getBalance(miner)
+    echo "Looping..."
 
     #Create a block.
     newBlock = newBlock(nonce, time, miner, Hex.convert(proof))
@@ -42,6 +42,7 @@ while true:
 
     #Print that we mined a block!
     echo "Mined a block: " & $nonce
+    echo "Balance of the miner is " & $state.getBalance(miner)
 
     #Finally, increase the nonce and update the timestamp.
     inc(nonce)

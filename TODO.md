@@ -11,7 +11,7 @@ Features:
 - Dedicated miner.
 
 Bug fixes and behavior changes:
-- Smooth difficulty scaling and work on it's decimal scaling.
+- Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 
 Documentation:
 - Add comments to:
