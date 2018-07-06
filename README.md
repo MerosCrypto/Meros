@@ -1,5 +1,4 @@
-# Ember
-![](https://github.com/kayabaNerve/Ember/raw/master/logos/logo64.png "")
+# <img src="https://github.com/kayabaNerve/Ember/raw/master/logos/logo64.png" height="64px"/> Ember
 
 ## An instant, feeless, lattice stored, PoS verified, PoW blockchain secured cryptocurrency for the future.
 
