@@ -60,7 +60,7 @@ proc convert*(valueArg: BN): string =
 
 proc revert*(base58Value: string): BN =
     if not verify(base58Value):
-        raise newException(Exception, "Invalid Base58 Number")
+        raise newException(ValueError, "Invalid Base58 Number.")
 
     var
         digits: BN = newBN($base58Value.len)

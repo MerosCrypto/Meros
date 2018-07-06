@@ -32,9 +32,9 @@ type Block* = ref object of RootObj
 proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block =
     #Verify the arguments.
     if Address.verify(miner) == false:
-        raise newException(Exception, "Invalid Address")
+        raise newException(ValueError, "Invalid Address.")
     if Hex.verify(proof) == false:
-        raise newException(Exception, "Invalid HexNumber")
+        raise newException(ValueError, "Invalid Hex Number.")
 
     #Ceate the block.
     result = Block(
@@ -59,7 +59,7 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block =
                 )
             )
         ).substr(64, 127)
-    
+
     #Calculate the Lyra hash.
     result.lyra = Lyra2(result.hash, result.proof)
 

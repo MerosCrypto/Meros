@@ -55,7 +55,7 @@ proc convert*(valueArg: BN): string =
 
 proc revert*(base16ValueArg: string): BN =
     if not verify(base16ValueArg):
-        raise newException(Exception, "Invalid Hex Number")
+        raise newException(ValueError, "Invalid Hex Number.")
 
     var
         base16Value: string = base16ValueArg
@@ -77,3 +77,8 @@ proc revert*(base16ValueArg: string): BN =
         base16Value = base16Value.substr(1, base16Value.len)
 
     return value
+
+proc pad*(hex: string, len: int): string =
+    result = hex
+    while len > result.len:
+        result = "0" & result
