@@ -1,5 +1,5 @@
 import ../lib/RNG
-import ../lib/SHA512
+import ../lib/SHA512 as SHA512File
 import ../lib/SECP256K1Wrapper
 
 import strutils
@@ -24,5 +24,5 @@ proc `$`*(key: PrivateKey): string =
         result = result & key.secret[i].toHex()
 
 proc sign*(key: PrivateKey, msg: string): string =
-    var hash: string = SHA512(msg)
+    var hash: string = (SHA512^2)(msg)
     result = secpSign(hash, addr key.secret)

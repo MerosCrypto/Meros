@@ -1,4 +1,4 @@
-import ../lib/SHA512
+import ../lib/SHA512 as SHA512File
 import ../lib/SECP256K1Wrapper
 
 import PrivateKey
@@ -31,5 +31,5 @@ proc `$`*(key: PublicKey): string =
         result = result & key.key.data[i].toHex()
 
 proc verify*(key: PublicKey, msg: string, sig: string): bool =
-    var hash: string = SHA512(msg)
+    var hash: string = (SHA512^2)(msg)
     secpVerify(hash, key.key, sig)
