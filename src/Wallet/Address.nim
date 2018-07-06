@@ -1,7 +1,13 @@
+#Number libs.
 import ../lib/BN
 import ../lib/Hex
 import ../lib/Base58
+
+#Hash lib.
 import ../lib/SHA512 as SHA512File
+
+#Public Key lib.
+import PublicKey
 
 #Generates a checksum for the public key.
 #The checksum is the Base58 version of the concatenated 88th, 96th, 104th, 112th, 120th, and 127th key characters.
@@ -40,6 +46,10 @@ proc newAddress*(key: string): string =
 
     result = "Emb" & result
 
+#Work with Public Keys objects, not just hex public keys.
+proc newAddress*(key: PublicKey): string =
+    result = newAddress($key)
+
 #Verifies if an address is valid.
 proc verify*(address: string): bool =
     #Return true if there's no issue.
@@ -65,5 +75,7 @@ proc verify*(address: string): bool =
 #If we have a key to check with, make an address for that key and compare with the given address.
 proc verify*(address: string, key: string): bool =
     result = address == newAddress(key)
-    if result == false:
-        echo $address & " does not equal \r\n" & newAddress(key)
+
+#Work with Public Keys objects, not just hex public keys.
+proc verify*(address: string, key: PublicKey): bool =
+    return verify(address, $key)
