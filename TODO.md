@@ -11,6 +11,7 @@ Features:
 
 Bug fixes and behavior changes:
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
+- PrivateKey's secret property is public.
 
 Documentation:
 - Add comments to:

@@ -1,9 +1,11 @@
 #Number libs.
 import lib/BN
 import lib/Hex
+import lib/Base58
 
-#SHA512 lib.
-import lib/SHA512 as SHA512Fsile
+#Hash libs.
+import lib/SHA512 as SHA512File
+import lib/Lyra2
 
 #Time lib.
 import lib/time as TimeFile
@@ -14,6 +16,10 @@ import Reputation/Blockchain
 import Reputation/State
 
 #Wallet files.
-import Wallet/PrivateKey
 import Wallet/PublicKey
 import Wallet/Address
+import Wallet/Wallet
+
+#Demo.
+var wallet: Wallet = newWallet()
+echo wallet.verify("ffee", wallet.sign("ffee"))

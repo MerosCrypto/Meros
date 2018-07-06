@@ -8,7 +8,6 @@
 #### Current State
 This project is not usable. It has secure RNG, SHA512 hashes, Elliptic Curve Keys, Addresses, Lyra2 mining, and the reputation blockchain complete. That said, there's a lot more to do, from the Reputation master file, to the Wallet master file, to the lattice, to the UI, to the network...
 
-
 #### Compiling
 
 Requirements:

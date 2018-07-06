@@ -9,10 +9,10 @@ type PublicKey* = ref object of RootObj
     initiated: bool
     key: secp256k1_pubkey
 
-proc newPublicKey*(privKey: PrivateKey): PublicKey =
+proc newPublicKey*(privKey: var PrivateKey): PublicKey =
     result = PublicKey(
         initiated: true,
-        key: secpPublicKey(addr privKey.secret)
+        key: secpPublicKey(addr privKey)
     )
 
 proc newPublicKey*(hex: string): PublicKey =
