@@ -1,17 +1,39 @@
-discard """
-import Wallet/PrivateKey
-import Wallet/PublicKey
+import PrivateKey
+import PublicKey
+import Address
 
-var
-    privKey: PrivateKey = newPrivateKey()
-    pubKey: PublicKey = newPublicKey(privKey)
-    privKey2: PrivateKey = newPrivateKey()
-    pubKey2: PublicKey = newPublicKey(privKey2)
+type Wallet* = ref object of RootObj
+    priv: PrivateKey
+    pub: PublicKey
+    address: string
 
-echo pubKey
+proc newWallet*(priv: PrivateKey = newPrivateKey()): Wallet =
+    result = Wallet()
+    result.priv = priv
+    result.pub = newPublicKey(result.priv)
+    result.address = newAddress(result.pub)
 
-var str: string = "test"
+proc newWallet*(priv: PrivateKey, pub: PublicKey): Wallet =
+    result = newWallet(priv)
+    if $result.pub != $pub:
+        raise newException(ValueError, "Invalid Public Key for this Private Key.")
 
-echo pubKey.verify(str, privKey.sign(str))
-echo pubKey2.verify(str, privKey.sign(str))
-"""
+proc newWallet*(priv: PrivateKey, pub: PublicKey, address: string): Wallet =
+    result = newWallet(priv, pub)
+    if result.address != address:
+        raise newException(ValueError, "Invalid Address for this Public Key.")
+
+proc `$`*(wallet: Wallet): string =
+    result =
+        $wallet.priv & "|" &
+        $wallet.pub & "|" &
+        wallet.address
+
+proc sign*(wallet: Wallet, msg: string): string =
+    result = wallet.priv.sign(msg)
+
+proc verify*(wallet: Wallet, msg: string, sig: string): bool =
+    result = wallet.pub.verify(msg, sig)
+
+proc getAddress*(wallet: Wallet): string =
+    return wallet.address

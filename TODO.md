@@ -2,7 +2,6 @@
 
 Core:
 - Reputation.nim (master class of Blockchain/State).
-- Wallet.nim (master class of PrivateKey/PublicKey/Address).
 - Write tests.
 
 Features:
@@ -25,6 +24,7 @@ Documentation:
 
     Wallet/PrivateKey
     Wallet/PublicKey
+    Wallet/Wallet
 
     samples/addressGenerator.nim
 - Write a README.
