@@ -1,6 +1,7 @@
 import PrivateKey
 import PublicKey
 import Address
+export PublicKey, Address
 
 type Wallet* = ref object of RootObj
     priv: PrivateKey

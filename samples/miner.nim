@@ -5,15 +5,12 @@ import lib/Hex
 #Time lib.
 import lib/time as TimeFile
 
-#Block, blockchain, and State libs.
-import Reputation/Block
-import Reputation/Blockchain
-import Reputation/State
+#Reputation lib.
+import Reputation/Reputation
 
 var
-    #Blockchain var and creation.
-    blockchain: Blockchain = newBlockchain("0")
-    state: State = createState(blockchain)
+    #Reputation var.
+    reputation: Reputation = newReputation("0")
     #Block var; defined here to stop a memory leak.
     newBlock: Block
     #Nonce, time, miner's address, and proof vars.
@@ -22,9 +19,9 @@ var
     miner: string = "Emb6tjjZ8McWvkd6TPGrZvEQBTDx2JRSezN269KoLso8D1zpGBga7v5TWetAVK"
     proof: BN = newBN("0")
 
-echo "First balance: " & $state.getBalance(miner)
+echo "First balance: " & $reputation.getBalance(miner)
 
-#mine the chain.
+#Mine the chain.
 while true:
     echo "Looping..."
 
@@ -32,17 +29,17 @@ while true:
     newBlock = newBlock(nonce, time, miner, Hex.convert(proof))
 
     #Test it.
-    if not blockchain.addBlock(newBlock):
+    if not reputation.testBlock(newBlock):
         #If it's invalid, increase the proof and continue.
         inc(proof)
         continue
 
     #If it's valid, have the state process it.
-    state.processBlock(newBlock)
+    discard reputation.processBlock(newBlock)
 
     #Print that we mined a block!
     echo "Mined a block: " & $nonce
-    echo "Balance of the miner is " & $state.getBalance(miner)
+    echo "Balance of the miner is " & $reputation.getBalance(miner)
 
     #Finally, increase the nonce and update the timestamp.
     inc(nonce)

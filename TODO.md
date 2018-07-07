@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Reputation.nim (master class of Blockchain/State).
 - Write tests.
 
 Features:
@@ -22,6 +21,7 @@ Documentation:
     Reputation/Blockchain.nim
     Reputation/Difficulty.nim
     Reputation/State.nim
+    Reputation/Reputation.nim
 
     Wallet/PrivateKey
     Wallet/PublicKey
