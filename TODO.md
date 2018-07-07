@@ -4,8 +4,8 @@ Core:
 - Write tests.
 
 Features:
-- Add State halving.
-- Add State decay.
+- Add Reputation decay.
+- Threaded mining.
 - Dedicated miner.
 
 Bug fixes and behavior changes:
@@ -13,6 +13,7 @@ Bug fixes and behavior changes:
 - PrivateKey's secret property is public.
 
 Documentation:
+- Use raises oragma.
 - Add comments to:
     lib/Base58.nim
     lib/Hex.nim
@@ -28,7 +29,7 @@ Documentation:
     Wallet/Wallet
 
     samples/addressGenerator.nim
-- Write a README.
+- Merit Caching Whitepaper.
 
 Community Service:
 - Create a Nimble library out of BN.
