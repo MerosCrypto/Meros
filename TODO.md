@@ -15,20 +15,20 @@ Bug fixes and behavior changes:
 Documentation:
 - Use raises pragma.
 - Add comments to:
-    lib/Base58.nim
-    lib/Hex.nim
-    lib/SECP256K1Wrapper.nim
+    - lib/Base58.nim
+    - lib/Hex.nim
+    - lib/SECP256K1Wrapper.nim
 
-    Reputation/Blockchain.nim
-    Reputation/Difficulty.nim
-    Reputation/State.nim
-    Reputation/Reputation.nim
+    - Reputation/Blockchain.nim
+    - Reputation/Difficulty.nim
+    - Reputation/State.nim
+    - Reputation/Reputation.nim
 
-    Wallet/PrivateKey
-    Wallet/PublicKey
-    Wallet/Wallet
+    - Wallet/PrivateKey
+    - Wallet/PublicKey
+    - Wallet/Wallet
 
-    samples/addressGenerator.nim
+    - samples/addressGenerator.nim
 - Merit Caching Whitepaper.
 
 Community Service:
