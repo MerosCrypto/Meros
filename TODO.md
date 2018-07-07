@@ -13,7 +13,7 @@ Bug fixes and behavior changes:
 - PrivateKey's secret property is public.
 
 Documentation:
-- Use raises oragma.
+- Use raises pragma.
 - Add comments to:
     lib/Base58.nim
     lib/Hex.nim
