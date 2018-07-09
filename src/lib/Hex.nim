@@ -77,8 +77,3 @@ proc revert*(base16ValueArg: string): BN {.raises: [ValueError].} =
         base16Value = base16Value.substr(1, base16Value.len)
 
     return value
-
-proc pad*(hex: string, len: int): string =
-    result = hex
-    while len > result.len:
-        result = "0" & result

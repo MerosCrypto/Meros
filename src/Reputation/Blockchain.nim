@@ -1,69 +1,95 @@
+#Number lib.
 import ../lib/BN
+
+#Time lib.
 import ../lib/time
 
+#Block and Difficulty libs.
 import Block as BlockFile
 import Difficulty as DifficultyFile
 
+#Lists standard lib.
 import lists
 
+#Blockchain object.
 type Blockchain* = ref object of RootObj
-    creation: BN
+    #Genesis string or network ID.
     genesis: string
+    #Blockchain height. BN for compatibility.
     height: BN
+    #Doubly Linked List of all the blocks, and another of all the difficulties.
     blocks: DoublyLinkedList[Block]
     difficulties: DoublyLinkedList[Difficulty]
 
+#Create a new Blockchain.
 proc newBlockchain*(genesis: string): Blockchain =
+    #Set the current time as the time of creation.
+    var creation: BN = getTime()
+
+    #Init the object.
     result = Blockchain(
-        creation: getTime(),
         genesis: genesis,
         height: newBN("0"),
         blocks: initDoublyLinkedList[Block](),
         difficulties: initDoublyLinkedList[Difficulty]()
-    );
+    )
 
+    #Append the starting difficulty.
     result.difficulties.append(Difficulty(
-        start: result.creation,
-        endTime: result.creation + newBN("60"),
-        difficulty: "1111111111111111111111111111111111111111111111111111111111111111"
+        start: creation,
+        endTime: creation + newBN("60"),
+        difficulty: "3333333333333333333333333333333333333333333333333333333333333333"
     ))
-    result.blocks.append(newBlock(newBN("0"), result.creation, "Emb000000000000000000000000000000000000000000000000000000000000", "0"))
+    #Append the genesis block. ID 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
+    result.blocks.append(newBlock(newBN("0"), creation, "Emb000000000000000000000000000000000000000000000000000000000000", "0"))
 
+#Tests a block for validity.
 proc testBlock*(blockchain: Blockchain, newBlock: Block): bool =
+    #Result is set to true in case if nothing goes wrong.
     result = true
 
+    #If the nonce is off...
     if blockchain.height + BNNums.ONE != newBlock.getNonce():
         result = false
         return
 
+    #If the time is before the last block's...
     if blockchain.blocks.tail.value.getTime() >= newBlock.getTime():
         result = false
         return
 
+    #If the time is ahead of 20 minutes from now...
+    if (getTime() + newBN($(20*60))) < newBlock.getTime():
+        result = false
+        return
+
+    #If the block is invalid...
     if not verifyBlock(newBlock):
         result = false
         return
 
+    #Generate difficulties so we can test the block against the latest difficulty.
     while blockchain.difficulties.tail.value.endTime < newBlock.getTime():
         blockchain.difficulties.append(calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, (60), 6))
 
+    #If the difficulty wasn't beat...
     if not blockchain.difficulties.tail.value.verifyDifficulty(newBlock):
         result = false
         return
 
+#Adds a block to the blockchain.
 proc addBlock*(blockchain: Blockchain, newBlock: Block): bool =
-    result = true
-
+    #Test the block.
     if not blockchain.testBlock(newBlock):
         result = false
         return
 
+    #If we're still here, increase the height, append the new block, and return true.
     inc(blockchain.height)
     blockchain.blocks.append(newBlock)
+    result = true
 
-proc getCreation*(blockchain: Blockchain): BN =
-    result = blockchain.creation
-
+#Getters for the genesis string, height, blocks, and difficulties (along with iterators).
 proc getGenesis*(blockchain: Blockchain): string =
     result = blockchain.genesis
 
@@ -79,3 +105,7 @@ iterator getBlocks*(blockchain: Blockchain): Block =
 
 proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] =
     result = blockchain.difficulties
+
+iterator getDifficulties*(blockchain: Blockchain): Difficulty =
+    for i in blockchain.difficulties.items():
+        yield i
