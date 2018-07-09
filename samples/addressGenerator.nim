@@ -1,15 +1,24 @@
-import Wallet/PrivateKey
-import Wallet/PublicKey
-import Wallet/Address
+#Wallet lib.
+import Wallet/Wallet
 
-for i in 0 .. 500:
-    var privKey: PrivateKey = newPrivateKey()
-    var pubKey: PublicKey = newPublicKey(privKey)
-    var address: string = newAddress($pubKey)
+#Declare the Wallet/Address vars here to not memory leak.
+var
+    wallet: Wallet
+    address: string
 
-    if Address.verify(address) == false:
+#Run 500 times.
+for i in 0 ..< 500:
+    #Create a new wallet.
+    wallet = newWallet()
+    #Get the address.
+    address = wallet.getAddress()
+
+    #Verify the address.
+    if address.verify() == false:
         raise newException(Exception, "Invalid Address Type 1")
-    if Address.verify(address, $pubKey) == false:
+    #Verify the address for the matching pub key.
+    if address.verify(wallet.getPublicKey()) == false:
         raise newException(Exception, "Invalid Address Type 2")
 
+    #Print the generated address.
     echo address

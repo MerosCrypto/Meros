@@ -29,7 +29,7 @@ type Block* = ref object of RootObj
     lyra: string
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
-proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block =
+proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError, OverflowError].} =
     #Verify the arguments.
     if Address.verify(miner) == false:
         raise newException(ValueError, "Invalid Address.")

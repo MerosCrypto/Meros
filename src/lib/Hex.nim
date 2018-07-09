@@ -53,7 +53,7 @@ proc convert*(valueArg: BN): string =
     if result.len mod 2 == 1:
         result = "0" & result
 
-proc revert*(base16ValueArg: string): BN =
+proc revert*(base16ValueArg: string): BN {.raises: [ValueError].} =
     if not verify(base16ValueArg):
         raise newException(ValueError, "Invalid Hex Number.")
 

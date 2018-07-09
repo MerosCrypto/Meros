@@ -58,7 +58,7 @@ proc convert*(valueArg: BN): string =
             break
         result = result.substr(1, result.len)
 
-proc revert*(base58Value: string): BN =
+proc revert*(base58Value: string): BN {.raises: [ValueError].} =
     if not verify(base58Value):
         raise newException(ValueError, "Invalid Base58 Number.")
 
