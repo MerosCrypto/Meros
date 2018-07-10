@@ -18,4 +18,4 @@ import Wallet/Wallet
 
 #Demo.
 var wallet: Wallet = newWallet()
-echo wallet.verify("ffee", wallet.sign("ffee"))
+echo wallet.getPublicKey().verify("ffee", wallet.sign("ffee"))

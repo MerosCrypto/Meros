@@ -32,9 +32,6 @@ proc processBlock*(reputation: Reputation, newBlock: Block): bool =
 
     reputation.state.processBlock(newBlock)
 
-proc getCreation*(reputation: Reputation): BN =
-    result = reputation.blockchain.getCreation()
-
 proc getGenesis*(reputation: Reputation): string =
     result = reputation.blockchain.getGenesis()
 

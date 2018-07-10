@@ -8,7 +8,7 @@ type Wallet* = ref object of RootObj
     pub: PublicKey
     address: string
 
-proc newWallet*(priv: PrivateKey = newPrivateKey()): Wallet =
+proc newWallet*(priv: PrivateKey = newPrivateKey()): Wallet {.raises: [ValueError, OverflowError, Exception].} =
     result = Wallet()
     result.priv = priv
     result.pub = newPublicKey(result.priv)
@@ -30,10 +30,10 @@ proc `$`*(wallet: Wallet): string =
         $wallet.pub & "|" &
         wallet.address
 
-proc sign*(wallet: Wallet, msg: string): string =
+proc sign*(wallet: Wallet, msg: string): string {.raises: [ValueError, Exception].} =
     result = wallet.priv.sign(msg)
 
-proc verify*(wallet: Wallet, msg: string, sig: string): bool =
+proc verify*(wallet: Wallet, msg: string, sig: string): bool {.raises: [ValueError, Exception].} =
     result = wallet.pub.verify(msg, sig)
 
 proc getPrivateKey*(wallet: Wallet): PrivateKey =

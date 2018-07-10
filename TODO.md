@@ -7,20 +7,20 @@ Features:
 - Add Reputation decay.
 - Threaded mining.
 - Dedicated miner.
+- Hex string to byte array and vice versa.
 
 Bug fixes and behavior changes:
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 - PrivateKey's secret property is public.
-- SHA512 uses the generic Exception.
+- Multiple uses of the generic `Exception`.
+- Optimize SECP256K1Wrapper (memory copies, splices...).
+
 
 Documentation:
 - Add comments to:
     - lib/Base58.nim
     - lib/Hex.nim
-    - lib/SECP256K1Wrapper.nim
 
-    - Reputation/Blockchain.nim
-    - Reputation/Difficulty.nim
     - Reputation/State.nim
     - Reputation/Reputation.nim
 
