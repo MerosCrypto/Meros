@@ -2,7 +2,7 @@
 
 ## An instant, feeless, lattice stored, PoS verified, PoW blockchain secured cryptocurrency for the future.
 
-[![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/EmberCryptocurrency/Lobby)
+[![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/EmberCrypto/Lobby)
 
 ### [Outline](https://medium.com/@EmberCrypto/ember-cryptocurrency-d0df75e8170f)
 ### Whitepaper: Being  Written

@@ -4,14 +4,26 @@ import ../lib/SECP256K1Wrapper
 
 import strutils
 
-type PrivateKey* = array[32, uint8]
+type PrivateKey* = array[32, cuchar]
 
-proc newPrivateKey*(): PrivateKey {.raises: [Exception].} =
+proc newPrivateKey*(): PrivateKey {.raises: [ValueError, Exception].} =
     random(cast[ptr array[0, uint8]](addr result), 32)
 
-proc newPrivateKey*(hex: string): PrivateKey {.raises: [].} =
+    var i: int = 0
+    while secpPrivateKey(result) == false:
+        inc(i)
+        if i == 10:
+            raise newException(ValueError, "Couldn't generate a valid private key.")
+
+        random(cast[ptr array[0, uint8]](addr result), 32)
+
+
+proc newPrivateKey*(hex: string): PrivateKey {.raises: [ValueError].} =
     for i in countup(0, 63, 2):
-        result[(int) i / 2] = (uint8) parseHexInt($hex[i .. i + 1])
+        result[i div 2] = (cuchar) parseHexInt(hex[i .. i + 1])
+
+    if secpPrivateKey(result) == false:
+        raise newException(ValueError, "Private key is invalid.")
 
 proc `$`*(key: PrivateKey): string {.raises: [].} =
     result = ""

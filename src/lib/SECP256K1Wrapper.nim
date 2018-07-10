@@ -9,10 +9,18 @@ import strutils
 #SECP256K1 for signing and verifying messages.
 var context: ptr secp256k1_context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN or SECP256K1_CONTEXT_VERIFY)
 
+proc secpPrivatekey*(privKeyArg: array[32, cuchar]): bool {.raises: [].} =
+    var privKey: array[32, cuchar] = privKeyArg
+
+    result = secp256k1_ec_seckey_verify(
+        context,
+        addr privKey[0]
+    ) == 1
+
 #Create a public key from a private key.
-proc secpPublicKey*(privKeyArg: array[32, uint8]): secp256k1_pubkey {.raises: [ValueError].} =
+proc secpPublicKey*(privKeyArg: array[32, cuchar]): secp256k1_pubkey {.raises: [ValueError].} =
     #Copy the object so we don't have to use var in the proc declaration.
-    var privKey: array[32, uint8] = privKeyArg
+    var privKey: array[32, cuchar] = privKeyArg
 
     #Init the result.
     result = secp256k1_pubkey()
@@ -20,7 +28,7 @@ proc secpPublicKey*(privKeyArg: array[32, uint8]): secp256k1_pubkey {.raises: [V
     if secp256k1_ec_pubkey_create(
         context,
         addr result,
-        cast[ptr cuchar](addr privKey)
+        addr privKey[0]
     ) != 1:
         #If that failed...
         raise newException(ValueError, "Invalid Private Key.")
@@ -109,10 +117,10 @@ proc `$`(sigArg: secp256k1_ecdsa_signature): string {.raises: [ValueError].} =
         result = result & bytes[i].toHex()
 
 #Sign a message (hash).
-proc secpSign*(privKeyArg: array[32, uint8], hashArg: string): string {.raises: [ValueError].} =
+proc secpSign*(privKeyArg: array[32, cuchar], hashArg: string): string {.raises: [ValueError].} =
     #Copy the args, init the signature.
     var
-        privKey: array[32, uint8] = privKeyArg
+        privKey: array[32, cuchar] = privKeyArg
         hash: string = hashArg
         sig: secp256k1_ecdsa_signature = secp256k1_ecdsa_signature()
 
@@ -121,7 +129,7 @@ proc secpSign*(privKeyArg: array[32, uint8], hashArg: string): string {.raises: 
         context,
         addr sig,
         cast[ptr cuchar](addr hash[0]),
-        cast[ptr cuchar](addr privKey),
+        addr privKey[0],
         nil,
         nil
     ) != 1:
