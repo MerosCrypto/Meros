@@ -21,7 +21,7 @@ type Difficulty* = ref object of RootObj
     difficulty*: string
 
 #Compares two hex strings.
-proc `<`(x: string, y: string): bool =
+proc `<`(x: string, y: string): bool {.raises: [].} =
     #Length check as that's fastest...
     if x.len < y.len:
         result = true
@@ -44,7 +44,7 @@ proc `<`(x: string, y: string): bool =
 
 
 #Verifies a difficulty against a block.
-proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool =
+proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [].} =
     result = true
 
     #If it's for the wrong time...
@@ -58,7 +58,12 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool =
         return
 
 #Calculate the next difficulty using the blocks, difficulties, period Length, and blocks per period.
-proc calculateNextDifficulty*(blocks: DoublyLinkedList[Block], difficulties: DoublyLinkedList[Difficulty], periodInSeconds: int, blocksPerPeriod: int): Difficulty =
+proc calculateNextDifficulty*(
+    blocks: DoublyLinkedList[Block],
+    difficulties: DoublyLinkedList[Difficulty],
+    periodInSeconds: int,
+    blocksPerPeriod: int
+): Difficulty {.raises: [OverflowError, AssertionError, Exception].} =
     var
         #Last difficulty.
         last: Difficulty = difficulties.tail.value

@@ -6,14 +6,14 @@ import strutils
 
 type PrivateKey* = array[32, uint8]
 
-proc newPrivateKey*(): PrivateKey =
+proc newPrivateKey*(): PrivateKey {.raises: [Exception].} =
     random(cast[ptr array[0, uint8]](addr result), 32)
 
-proc newPrivateKey*(hex: string): PrivateKey =
+proc newPrivateKey*(hex: string): PrivateKey {.raises: [].} =
     for i in countup(0, 63, 2):
         result[(int) i / 2] = (uint8) parseHexInt($hex[i .. i + 1])
 
-proc `$`*(key: PrivateKey): string =
+proc `$`*(key: PrivateKey): string {.raises: [].} =
     result = ""
     for i in 0 ..< 32:
         result = result & key[i].toHex()

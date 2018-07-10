@@ -12,7 +12,7 @@ var
     num1: BN = newBN("1")
     num16: BN = newBN("16")
 
-proc verify*(base16Value: string): bool =
+proc verify*(base16Value: string): bool {.raises: [].} =
     result = true
 
     for i in 0 ..< base16Value.len:
@@ -25,7 +25,7 @@ proc verify*(base16Value: string): bool =
             result = false
             break
 
-proc convert*(valueArg: BN): string =
+proc convert*(valueArg: BN): string {.raises: [OverflowError, Exception].} =
     if valueArg < num0:
         return
 

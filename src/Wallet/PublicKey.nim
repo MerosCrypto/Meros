@@ -13,7 +13,7 @@ proc newPublicKey*(privKey: PrivateKey): PublicKey {.raises: [ValueError].} =
 proc newPublicKey*(hex: string): PublicKey {.raises: [ValueError].} =
     result = secpPublicKey(hex)
 
-proc `$`*(key: PublicKey): string =
+proc `$`*(key: PublicKey): string {.raises: [ValueError].} =
     result = $!(key)
 
 proc verify*(key: PublicKey, msg: string, sig: string): bool {.raises: [ValueError, Exception].} =

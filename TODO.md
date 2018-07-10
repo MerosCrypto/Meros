@@ -14,7 +14,7 @@ Bug fixes and behavior changes:
 - PrivateKey's secret property is public.
 - Multiple uses of the generic `Exception`.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
-
+- Clean up raises.
 
 Documentation:
 - Add comments to:

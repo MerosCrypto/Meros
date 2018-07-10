@@ -22,7 +22,7 @@ type Blockchain* = ref object of RootObj
     difficulties: DoublyLinkedList[Difficulty]
 
 #Create a new Blockchain.
-proc newBlockchain*(genesis: string): Blockchain =
+proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, OverflowError, AssertionError, Exception].} =
     #Set the current time as the time of creation.
     var creation: BN = getTime()
 
@@ -44,7 +44,7 @@ proc newBlockchain*(genesis: string): Blockchain =
     result.blocks.append(newBlock(newBN("0"), creation, "Emb000000000000000000000000000000000000000000000000000000000000", "0"))
 
 #Tests a block for validity.
-proc testBlock*(blockchain: Blockchain, newBlock: Block): bool =
+proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
     #Result is set to true in case if nothing goes wrong.
     result = true
 
@@ -78,7 +78,7 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool =
         return
 
 #Adds a block to the blockchain.
-proc addBlock*(blockchain: Blockchain, newBlock: Block): bool =
+proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
     #Test the block.
     if not blockchain.testBlock(newBlock):
         result = false
@@ -90,22 +90,22 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool =
     result = true
 
 #Getters for the genesis string, height, blocks, and difficulties (along with iterators).
-proc getGenesis*(blockchain: Blockchain): string =
+proc getGenesis*(blockchain: Blockchain): string {.raises: [].} =
     result = blockchain.genesis
 
-proc getHeight*(blockchain: Blockchain): BN =
+proc getHeight*(blockchain: Blockchain): BN {.raises: [].} =
     result = blockchain.height
 
-proc getBlocks*(blockchain: Blockchain): DoublyLinkedList[Block] =
+proc getBlocks*(blockchain: Blockchain): DoublyLinkedList[Block] {.raises: [].} =
     result = blockchain.blocks
 
-iterator getBlocks*(blockchain: Blockchain): Block =
+iterator getBlocks*(blockchain: Blockchain): Block {.raises: [].} =
     for i in blockchain.blocks.items():
         yield i
 
-proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] =
+proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] {.raises: [].} =
     result = blockchain.difficulties
 
-iterator getDifficulties*(blockchain: Blockchain): Difficulty =
+iterator getDifficulties*(blockchain: Blockchain): Difficulty {.raises: [].} =
     for i in blockchain.difficulties.items():
         yield i

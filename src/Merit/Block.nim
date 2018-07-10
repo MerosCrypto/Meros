@@ -29,7 +29,7 @@ type Block* = ref object of RootObj
     lyra: string
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
-proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError, OverflowError].} =
+proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError, OverflowError, Exception].} =
     #Verify the arguments.
     if Address.verify(miner) == false:
         raise newException(ValueError, "Invalid Address.")
@@ -64,7 +64,7 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
     result.lyra = Lyra2(result.hash, result.proof)
 
 #Verify Block function. Creates the block with the passed in arguments and verifies the hashes. Doesn't check its Blockchain validity.
-proc verifyBlock*(newBlock: Block): bool =
+proc verifyBlock*(newBlock: Block): bool {.raises: [ValueError, OverflowError, Exception].} =
     result = true
 
     var createdBlock: Block = newBlock(newBlock.nonce, newBlock.time, newBlock.miner, newBlock.proof)
@@ -77,20 +77,20 @@ proc verifyBlock*(newBlock: Block): bool =
         return
 
 #Getters.
-proc getNonce*(blockArg: Block): BN =
+proc getNonce*(blockArg: Block): BN {.raises: [].} =
     return blockArg.nonce
 
-proc getTime*(blockArg: Block): BN =
+proc getTime*(blockArg: Block): BN {.raises: [].} =
     return blockArg.time
 
-proc getMiner*(blockArg: Block): string =
+proc getMiner*(blockArg: Block): string {.raises: [].} =
     return blockArg.miner
 
-proc getHash*(blockArg: Block): string =
+proc getHash*(blockArg: Block): string {.raises: [].} =
     return blockArg.hash
 
-proc getProof*(blockArg: Block): string =
+proc getProof*(blockArg: Block): string {.raises: [].} =
     return blockArg.proof
 
-proc getLyra*(blockArg: Block): string =
+proc getLyra*(blockArg: Block): string {.raises: [].} =
     return blockArg.lyra

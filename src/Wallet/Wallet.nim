@@ -24,7 +24,7 @@ proc newWallet*(priv: PrivateKey, pub: PublicKey, address: string): Wallet {.rai
     if result.address != address:
         raise newException(ValueError, "Invalid Address for this Public Key.")
 
-proc `$`*(wallet: Wallet): string =
+proc `$`*(wallet: Wallet): string {.raises: [ValueError].} =
     result =
         $wallet.priv & "|" &
         $wallet.pub & "|" &
@@ -36,11 +36,11 @@ proc sign*(wallet: Wallet, msg: string): string {.raises: [ValueError, Exception
 proc verify*(wallet: Wallet, msg: string, sig: string): bool {.raises: [ValueError, Exception].} =
     result = wallet.pub.verify(msg, sig)
 
-proc getPrivateKey*(wallet: Wallet): PrivateKey =
+proc getPrivateKey*(wallet: Wallet): PrivateKey {.raises: [].} =
     result = wallet.priv
 
-proc getPublicKey*(wallet: Wallet): PublicKey =
+proc getPublicKey*(wallet: Wallet): PublicKey {.raises: [].} =
     result = wallet.pub
 
-proc getAddress*(wallet: Wallet): string =
+proc getAddress*(wallet: Wallet): string {.raises: [].} =
     result = wallet.address

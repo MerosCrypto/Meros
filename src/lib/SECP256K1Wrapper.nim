@@ -132,7 +132,7 @@ proc secpSign*(privKeyArg: array[32, uint8], hashArg: string): string {.raises: 
     result = $sig
 
 #Verify a signature.
-proc secpVerify*(pubKeyArg: secp256k1_pubkey, hashArg: string, sigArg: string): bool =
+proc secpVerify*(pubKeyArg: secp256k1_pubkey, hashArg: string, sigArg: string): bool {.raises: [ValueError].} =
     #Copy the args and create a sig object from the passed in stringified sig.
     var
         hash: string = hashArg
