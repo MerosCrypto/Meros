@@ -1,20 +1,19 @@
 # TODO
 
 Core:
+- Lattice.
 - Write tests.
 
 Features:
 - Add Merit decay.
 - Threaded mining.
-- Dedicated miner.
-- Hex string to byte array and vice versa.
+- Dedicated miner
 
 Bug fixes and behavior changes:
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
-- PrivateKey's secret property is public.
-- Multiple uses of the generic `Exception`.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Clean up raises.
+- Multiple uses of the generic `Exception`.
 
 Documentation:
 - Add comments to:
@@ -27,6 +26,8 @@ Documentation:
     - Wallet/PrivateKey
     - Wallet/PublicKey
     - Wallet/Wallet
+
+    - Lattice/
 - Merit Caching Whitepaper.
 
 Community Service:

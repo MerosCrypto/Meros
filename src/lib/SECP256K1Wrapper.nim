@@ -50,7 +50,7 @@ proc `$!`*(pubKeyArg: secp256k1_pubkey): string {.raises: [ValueError].} =
     var
         pubKey: secp256k1_pubkey = pubKeyArg
         len: csize = 33
-        bytes: array[33, char]
+        bytes: array[33, cuchar]
 
     #Serialize the public key in a compressed format.
     if secp256k1_ec_pubkey_serialize(
