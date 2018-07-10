@@ -11,7 +11,7 @@ import lib/Lyra2
 import lib/time as TimeFile
 
 #Block, blockchain, and State libs.
-import Reputation/Reputation
+import Merit/Merit
 
 #Wallet files.
 import Wallet/Wallet

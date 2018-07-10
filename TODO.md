@@ -4,7 +4,7 @@ Core:
 - Write tests.
 
 Features:
-- Add Reputation decay.
+- Add Merit decay.
 - Threaded mining.
 - Dedicated miner.
 - Hex string to byte array and vice versa.
@@ -21,8 +21,8 @@ Documentation:
     - lib/Base58.nim
     - lib/Hex.nim
 
-    - Reputation/State.nim
-    - Reputation/Reputation.nim
+    - Merit/State.nim
+    - Merit/Merit.nim
 
     - Wallet/PrivateKey
     - Wallet/PublicKey
