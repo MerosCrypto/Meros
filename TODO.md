@@ -2,6 +2,9 @@
 
 Core:
 - Lattice.
+- UI.
+- DB.
+- Network.
 - Write tests.
 
 Features:
@@ -28,6 +31,9 @@ Documentation:
     - Wallet/Wallet
 
     - Lattice/
+    - UI/
+    - DB/
+    - Network/
 - Merit Caching Whitepaper.
 
 Community Service:

@@ -20,6 +20,7 @@ Requirements:
 ```
 nimble install nimcrypto
 nimble install secp256k1
+nimble install nimx
 nim c src/main.nim
 ```
 main.nim doesn't do much. There is a miner and address generator under samples/, which are mains that were built to test new code, but are not suitable to be the main file, yet are also not suitable for deletion.
