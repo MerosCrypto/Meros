@@ -7,7 +7,7 @@ var
     address: string
 
 #Run 500 times.
-for i in 0 ..< 500:
+for _ in 0 ..< 500:
     #Create a new wallet.
     wallet = newWallet()
     #Get the address.

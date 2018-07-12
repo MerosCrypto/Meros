@@ -34,6 +34,7 @@ Documentation:
     - UI/
     - DB/
     - Network/
+- Use Documentation Comments.
 - Merit Caching Whitepaper.
 
 Community Service:

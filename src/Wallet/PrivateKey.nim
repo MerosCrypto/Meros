@@ -7,16 +7,12 @@ import strutils
 type PrivateKey* = array[32, cuchar]
 
 proc newPrivateKey*(): PrivateKey {.raises: [ValueError, Exception].} =
-    random(cast[ptr array[0, uint8]](addr result), 32)
-
-    var i: int = 0
-    while secpPrivateKey(result) == false:
-        inc(i)
-        if i == 10:
-            raise newException(ValueError, "Couldn't generate a valid private key.")
-
+    for _ in 0 ..< 10:
         random(cast[ptr array[0, uint8]](addr result), 32)
+        if secpPrivateKey(result):
+            return
 
+    raise newException(ValueError, "Couldn't generate a valid private key.")
 
 proc newPrivateKey*(hex: string): PrivateKey {.raises: [ValueError].} =
     for i in countup(0, 63, 2):
