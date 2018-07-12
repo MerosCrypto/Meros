@@ -1,6 +1,10 @@
 #nimcrypto lib.
 import nimcrypto
 
+#Hash exponentiation.
+import util
+export util
+
 #Standard string utils lib.
 import strutils
 

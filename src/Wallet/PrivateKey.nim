@@ -1,7 +1,6 @@
 import ../lib/RNG
 import ../lib/SHA512 as SHA512File
 import ../lib/SECP256K1Wrapper
-import ../lib/util
 
 import strutils
 

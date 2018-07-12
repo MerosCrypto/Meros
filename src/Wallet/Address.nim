@@ -2,7 +2,6 @@
 import ../lib/BN
 import ../lib/Hex
 import ../lib/Base58
-import ../lib/util
 
 #Hash lib.
 import ../lib/SHA512 as SHA512File
