@@ -1,7 +1,4 @@
-#Nimble libraries.
-SECP256K1
-nimcrypto
-
 #Binary files.
 build
+*.dll
 *.exe
