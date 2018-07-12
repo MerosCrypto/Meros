@@ -21,18 +21,3 @@ proc SHA512*(hex: string): string =
     result = $sha512.digest(cast[ptr uint8](addr bytes[0]), (uint) bytes.len)
     #Clear the context.
     ctx512.clear()
-
-#Hash *exponent*. Used to generate SHA512 Squared and Cubed hashes.
-func `^`*(hash: proc(hex: string): string, times: int): proc(x: string): string {.raises: [Exception].} =
-    #If the exponent is less than or equal to 0, return "".
-    if times <= 0:
-        result = proc(x: string): string =
-            result = ""
-        return
-
-    #Else, recursively hash the hex string and return that.
-    return proc(hex: string): string {.raises: [Exception].} =
-        result = hash(hex)
-
-        for i in 1 ..< times:
-            result = hash(result)
