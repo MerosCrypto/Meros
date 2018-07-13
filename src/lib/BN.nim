@@ -29,10 +29,19 @@ type
 
 #C 'constructor'.
 proc mpz_tInit(x: ptr mpz_t, base: cint, value: cstring) {.header: "../../src/lib/BN/imath.h", importc: "mp_int_read_string".}
-#Nim constructor.
-proc newBN*(number: string = "0"): BN {.raises: [].} =
+#Nim constructors.
+proc newBN*(): BN {.raises: [].} =
     result = BN()
-    mpz_tInit(addr result.number, 10, (cstring) number)
+
+    var default: string = "0"
+    mpz_tInit(addr result.number, 10, addr default[0])
+proc newBN*(numberArg: string): BN {.raises: [].} =
+    result = BN()
+
+    var number: string = numberArg
+    mpz_tInit(addr result.number, 10, addr number[0])
+proc newBN*(number: int): BN {.raises: [].} =
+    result = newBN($number)
 
 #Define some basic numbers.
 var BNNums*: BNNumsType = BNNumsType(
