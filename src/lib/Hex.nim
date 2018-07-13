@@ -2,7 +2,7 @@ import BN
 
 import math, strutils
 
-var Base16Characters: array[0 .. 15, char] = [
+var Base16Characters: array[16, char] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'a', 'b', 'c', 'd', 'e', 'f'
 ]
@@ -28,7 +28,7 @@ proc verify*(value: string): bool {.raises: [].} =
 
 proc convert*(valueArg: BN): string {.raises: [OverflowError, Exception].} =
     if valueArg < num0:
-        return
+        raise newException(ValueError, "BN is negative.")
 
     var
         value: BN = valueArg
@@ -54,27 +54,23 @@ proc convert*(valueArg: BN): string {.raises: [OverflowError, Exception].} =
     if result.len mod 2 == 1:
         result = "0" & result
 
-proc revert*(base16ValueArg: string): BN {.raises: [ValueError].} =
-    if not verify(base16ValueArg):
+proc revert*(base16Value: string): BN {.raises: [ValueError].} =
+    if not verify(base16Value):
         raise newException(ValueError, "Invalid Hex Number.")
 
     var
-        base16Value: string = base16ValueArg
-        digitValue: int
-        digitMultiple: BN
-        value: BN = newBN("0")
+        digits: BN = newBN($base16Value.len)
+        value: int
+    result = newBN("0")
 
-    while base16Value.len != 0:
-        digitValue = ((int) base16Value[0])
-        if digitValue < 58:
-            digitValue = digitValue - 48
-        elif digitValue < 71:
-            digitValue = digitValue - 55
+    for i in 0 ..< base16Value.len:
+        dec(digits)
+        value = (int) base16Value[i]
+        if value < 58:
+            value = value - 48
+        elif value < 71:
+            value = value - 55
         else:
-            digitValue = digitValue - 87
+            value = value - 87
 
-        digitMultiple = num16 ^ (newBN($base16Value.len) - BNNums.ONE)
-        value += newBN($digitValue) * digitMultiple
-        base16Value = base16Value.substr(1, base16Value.len)
-
-    return value
+        result += newBN($value) * (num16 ^ digits)

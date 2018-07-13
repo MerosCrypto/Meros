@@ -1,7 +1,7 @@
 import ../src/lib/BN
 import ../src/lib/Base58
 
-var Base58Characters: array[0 .. 57, char] = [
+var Base58Characters: array[58, char] = [
     '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J',
     'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T',

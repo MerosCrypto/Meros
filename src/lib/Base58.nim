@@ -2,7 +2,7 @@ import BN
 
 import math, strutils
 
-var Base58Characters: array[0 .. 57, char] = [
+var Base58Characters: array[58, char] = [
     '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J',
     'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T',
@@ -36,7 +36,7 @@ proc verify*(value: string): bool {.raises: [].} =
 
 proc convert*(valueArg: BN): string {.raises: [OverflowError, Exception].} =
     if valueArg < num0:
-        return
+        raise newException(ValueError, "BN is negative.")
 
     var
         value: BN = valueArg
@@ -65,27 +65,23 @@ proc revert*(base58Value: string): BN {.raises: [ValueError].} =
 
     var
         digits: BN = newBN($base58Value.len)
-        digitValue: int
-        digitMultiple: BN
-        value: BN = newBN("0")
+        value: int
+    result = newBN("0")
 
     for i in 0 ..< base58Value.len:
         dec(digits)
-        digitValue = (int) base58Value[i]
-        if digitValue < 58:
-            digitValue = digitValue - 49
-        elif digitValue < 73:
-            digitValue = digitValue - 56
-        elif digitValue < 79:
-            digitValue = digitValue - 57
-        elif digitValue < 91:
-            digitValue = digitValue - 58
-        elif digitValue < 108:
-            digitValue = digitValue - 64
-        elif digitValue < 123:
-            digitValue = digitValue - 65
+        value = (int) base58Value[i]
+        if value < 58:
+            value = value - 49
+        elif value < 73:
+            value = value - 56
+        elif value < 79:
+            value = value - 57
+        elif value < 91:
+            value = value - 58
+        elif value < 108:
+            value = value - 64
+        elif value < 123:
+            value = value - 65
 
-        digitMultiple = num58 ^ digits
-        value += newBN($digitValue) * digitMultiple
-
-    return value
+        result += newBN($value) * (num58 ^ digits)
