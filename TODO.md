@@ -5,7 +5,7 @@ Core:
 - UI.
 - DB.
 - Network.
-- Write tests.
+- Write tests besides Base58.
 
 Features:
 - Add Merit decay.
@@ -16,6 +16,7 @@ Bug fixes and behavior changes:
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Clean up raises.
+- Switch some ValueErrors to RaiseErrors.
 - Multiple uses of the generic `Exception`.
 
 Documentation:
