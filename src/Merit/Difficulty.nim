@@ -18,33 +18,10 @@ type Difficulty* = ref object of RootObj
     #End of the period.
     endTime*: BN
     #Difficulty to beat.
-    difficulty*: string
-
-#Compares two hex strings.
-proc `<`(x: string, y: string): bool {.raises: [].} =
-    #Length check as that's fastest...
-    if x.len < y.len:
-        result = true
-        return
-    elif y.len < x.len:
-        result = false
-        return
-
-    #Check each column to see what column is bigger via ASCII codes.
-    for i in 0 ..< x.len:
-        if ((int) x[i]) < ((int) y[i]):
-            result = true
-            return
-        elif ((int) x[i]) > ((int) y[i]):
-            result = false
-            return
-
-    #If we have yet to return, they're equal. Return false.
-    result = false
-
+    difficulty*: BN
 
 #Verifies a difficulty against a block.
-proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [].} =
+proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =
     result = true
 
     #If it's for the wrong time...
@@ -53,7 +30,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [].} =
         return
 
     #If the Lyra hash didn't beat the difficulty...
-    if newBlock.getLyra() < diff.difficulty:
+    if Hex.revert(newBlock.getLyra()) < diff.difficulty:
         result = false
         return
 
@@ -63,14 +40,14 @@ proc calculateNextDifficulty*(
     difficulties: DoublyLinkedList[Difficulty],
     periodInSeconds: int,
     blocksPerPeriod: int
-): Difficulty {.raises: [OverflowError, AssertionError, Exception].} =
+): Difficulty {.raises: [AssertionError].} =
     var
         #Last difficulty.
         last: Difficulty = difficulties.tail.value
         #Blocks in the last period.
         blockCount: int = 0
         rate: float64
-        difficulty: string
+        difficulty: BN
 
     #Iterate through every block.
     for b in items(blocks):
@@ -103,19 +80,19 @@ proc calculateNextDifficulty*(
     if blockCount == 0:
         rate = 10
 
-    #Get a BN out of the route.
+    #Get a BN out of the rate.
     var bnRate: BN = newBN(($rate).split(".")[0])
     #If the count was lower than the target...
     if blockCount < blocksPerPeriod:
         #The difficulty is the last one divided by the rate.
-        difficulty = Hex.convert((Hex.revert(last.difficulty) / bnRate))
+        difficulty = last.difficulty / bnRate
     #Else, if the count was higher than the target...
     elif blockCount > blocksPerPeriod:
         #The difficulty is the last one multiplied by the rate.
-        difficulty = Hex.convert(Hex.revert(last.difficulty) * bnRate)
+        difficulty = last.difficulty * bnRate
 
     #If the difficulty is lower than the starting difficulty, use that.
-    if Hex.revert(difficulty) < Hex.revert(difficulties.head.value.difficulty):
+    if difficulty < difficulties.head.value.difficulty:
         difficulty = difficulties.head.value.difficulty
 
     #Create the new difficulty.

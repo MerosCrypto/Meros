@@ -1,5 +1,6 @@
-#Number lib.
+#Number libs.
 import ../lib/BN
+import ../lib/Hex
 
 #Time lib.
 import ../lib/time
@@ -24,7 +25,7 @@ type Blockchain* = ref object of RootObj
 #Create a new Blockchain.
 proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, OverflowError, AssertionError, Exception].} =
     #Set the current time as the time of creation.
-    var creation: BN = getTime()
+    let creation: BN = getTime()
 
     #Init the object.
     result = Blockchain(
@@ -38,10 +39,10 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Overflow
     result.difficulties.append(Difficulty(
         start: creation,
         endTime: creation + newBN("60"),
-        difficulty: "3333333333333333333333333333333333333333333333333333333333333333"
+        difficulty: Hex.revert("3333333333333333333333333333333333333333333333333333333333333333")
     ))
     #Append the genesis block. ID 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
-    result.blocks.append(newBlock(newBN("0"), creation, "Emb000000000000000000000000000000000000000000000000000000000000", "0"))
+    result.blocks.append(newBlock(newBN("0"), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "0"))
 
 #Tests a block for validity.
 proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
