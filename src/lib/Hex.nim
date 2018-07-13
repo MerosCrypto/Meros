@@ -7,21 +7,22 @@ var Base16Characters: array[0 .. 15, char] = [
     'a', 'b', 'c', 'd', 'e', 'f'
 ]
 
+var Base16Set: set[char] = {
+    '0' .. '9',
+    'A' .. 'F',
+    'a' .. 'f'
+}
+
 var
     num0: BN = newBN("0")
     num1: BN = newBN("1")
     num16: BN = newBN("16")
 
-proc verify*(base16Value: string): bool {.raises: [].} =
+proc verify*(value: string): bool {.raises: [].} =
     result = true
 
-    for i in 0 ..< base16Value.len:
-        var ascii: int = (int) base16Value[i]
-        if not (
-            (47 < ascii and ascii < 58) or
-            (64 < ascii and ascii < 71) or
-            (96 < ascii and ascii < 103)
-        ):
+    for i in 0 ..< value.len:
+        if value[i] notin Base16Set:
             result = false
             break
 

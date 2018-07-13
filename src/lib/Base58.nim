@@ -12,24 +12,25 @@ var Base58Characters: array[0 .. 57, char] = [
     't', 'u', 'v', 'w', 'x', 'y', 'z'
 ]
 
+var Base58Set: set[char] = {
+    '1' .. '9',
+    'A' .. 'H',
+    'J' .. 'N',
+    'P' .. 'Z',
+    'a' .. 'k',
+    'm' .. 'z'
+}
+
 var
     num0: BN = newBN("0")
     num1: BN = newBN("1")
     num58: BN = newBN("58")
 
-proc verify*(base58Value: string): bool {.raises: [].} =
+proc verify*(value: string): bool {.raises: [].} =
     result = true
 
-    for i in 0 ..< base58Value.len:
-        var ascii: int = (int) base58Value[i]
-        if not (
-            (47 < ascii and ascii < 58) or
-            (64 < ascii and ascii < 73) or
-            (73 < ascii and ascii < 79) or
-            (79 < ascii and ascii < 91) or
-            (96 < ascii and ascii < 108) or
-            (108 < ascii and ascii < 123)
-        ):
+    for i in 0 ..< value.len:
+        if value[i] notin Base58Set:
             result = false
             break
 

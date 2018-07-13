@@ -1,19 +1,14 @@
 #Number libs.
 import lib/BN
 import lib/Hex
-import lib/Base58
 
-#Hash libs.
+#SHA512 lib.
 import lib/SHA512 as SHA512File
-import lib/Lyra2
-
-#Time lib.
-import lib/time as TimeFile
 
 #Block, blockchain, and State libs.
 import Merit/Merit
 
-#Wallet files.
+#Wallet libs.
 import Wallet/Wallet
 
 #Demo.
