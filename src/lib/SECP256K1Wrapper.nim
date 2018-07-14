@@ -97,7 +97,7 @@ proc secpSignature(sigArg: string): secp256k1_ecdsa_signature {.raises: [ValueEr
 
 #Stringifies a signature.
 proc `$`(sigArg: secp256k1_ecdsa_signature): string {.raises: [ValueError].} =
-    #Copy the sig arg, make a byte array...
+    #Copy the sig arg and make a byte array.
     var
         sig: secp256k1_ecdsa_signature = sigArg
         bytes: array[64, cuchar]

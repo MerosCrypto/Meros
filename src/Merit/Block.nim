@@ -67,7 +67,7 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
 proc verifyBlock*(newBlock: Block): bool {.raises: [ValueError, OverflowError, Exception].} =
     result = true
 
-    var createdBlock: Block = newBlock(newBlock.nonce, newBlock.time, newBlock.miner, newBlock.proof)
+    let createdBlock: Block = newBlock(newBlock.nonce, newBlock.time, newBlock.miner, newBlock.proof)
     if createdBlock.hash != newBlock.hash:
         result = false
         return

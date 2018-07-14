@@ -8,15 +8,21 @@ import lib/time as TimeFile
 #Merit lib.
 import Merit/Merit
 
+#Wallet lib.
+import Wallet/Wallet
+
 var
+    #Create a wallet to mine to.
+    wallet: Wallet = newWallet()
+    #Get the address.
+    miner = wallet.getAddress()
     #Merit var.
     merit: Merit = newMerit("0")
     #Block var; defined here to stop a memory leak.
     newBlock: Block
-    #Nonce, time, miner's address, and proof vars.
+    #Nonce, time, and proof vars.
     nonce: BN = newBN("1")
     time: BN = getTime()
-    miner: string = "Emb6tjjZ8McWvkd6TPGrZvEQBTDx2JRSezN269KoLso8D1zpGBga7v5TWetAVK"
     proof: BN = newBN("0")
 
 echo "First balance: " & $merit.getBalance(miner)
