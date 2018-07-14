@@ -8,7 +8,7 @@
 ### Whitepaper: Being  Written
 
 #### Current State
-This project is not usable. It has secure RNG, SHA512 hashes, Elliptic Curve Keys, Addresses, Lyra2 mining, and the reputation blockchain complete. That said, there's a lot more to do, from the Reputation master file, to the Wallet master file, to the lattice, to the UI, to the network...
+This project is not usable. It has Base58 and Hexadecimal support, Secure RNG, Elliptic Curve Keys, Addresses, SHA512 hashes, Lyra2 mining, and the Merit Blockchain complete. That said, there's a lot more to do, including the lattice, the UI, the network...
 
 #### Compiling
 
@@ -18,12 +18,17 @@ Requirements:
 - Nimble
 
 ```
+git submodule update --init
 nimble install nimcrypto
 nimble install secp256k1
 nimble install nimx
 nim c src/main.nim
 ```
-main.nim doesn't do much. There is a miner and address generator under samples/, which are mains that were built to test new code, but are not suitable to be the main file, yet are also not suitable for deletion.
+If you're on Windows/Mac OS, you must also go to https://www.libsdl.org/download-2.0.php and download the SDL2 libraries for your platform.
+If you're on a Debian based system, run `sudo apt-get install libsdl2-2.0`.
+For other Linux systems, please look up how to install the SDL2 libraries.
+
+main.nim doesn't do much. There is a miner and address generator under samples/, which are mains that were built to test new code, but are not suitable to be the main file, yet are also not suitable for deletion. Those should be swapped out with main.nim for testing/demoing Ember.
 
 #### Contributing
 Ember will not have an ICO. Ember will not have a premine. Ember will be launched publicly and fairly. The only advantage one gets for contributing is being able to get to use the cryptocurrency one day. That said, I would love help and there is a [TODO](https://github.com/kayabaNerve/Ember/blob/master/TODO.md) file.
