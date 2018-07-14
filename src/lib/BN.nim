@@ -40,7 +40,7 @@ proc newBN*(numberArg: string): BN {.raises: [].} =
 
     var number: string = numberArg
     mpz_tInit(addr result.number, 10, addr number[0])
-proc newBN*(number: int): BN {.raises: [].} =
+proc newBN*(number: SomeInteger): BN {.raises: [].} =
     result = newBN($number)
 
 #Define some basic numbers.
