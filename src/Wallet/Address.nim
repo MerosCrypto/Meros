@@ -1,5 +1,5 @@
 #Number libs.
-import ../lib/BN
+import BN
 import ../lib/Hex
 import ../lib/Base58
 

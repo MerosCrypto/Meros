@@ -19,9 +19,8 @@ Requirements:
 
 ```
 git submodule update --init
-nimble install nimcrypto
-nimble install secp256k1
-nimble install nimx
+nimble install nimcrypto secp256k1 nimx
+nimble install BN
 nim c src/main.nim
 ```
 If you're on Windows/Mac OS, you must also go to https://www.libsdl.org/download-2.0.php and download the SDL2 libraries for your platform.

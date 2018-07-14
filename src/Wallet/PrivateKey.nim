@@ -17,7 +17,7 @@ import strutils
 type PrivateKey* = array[32, cuchar]
 
 #Creates a new Private Key.
-proc newPrivateKey*(): PrivateKey {.raises: [ResultError, Exception].} =
+proc newPrivateKey*(): PrivateKey {.raises: [ResultError].} =
     #Run a max of ten times.
     for _ in 0 ..< 10:
         #Generate a random 256 bit key.

@@ -46,7 +46,6 @@ Documentation:
 - Merit Caching Whitepaper.
 
 Community Service:
-- Create a Nimble library out of BN.
 - Create a Nimble library out of Base58/Hex.
 - Create a Nimble library out of Lyra2.
 - Create a Nimble file for Ember.

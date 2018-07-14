@@ -1,5 +1,5 @@
 #Number lib.
-import ../lib/BN
+import BN
 
 #Block/Blockchain/State libs.
 import Block as BlockFile

@@ -1,6 +1,6 @@
 #Number libs.
+import BN
 import ../lib/Hex
-import ../lib/BN
 
 #Block lib.
 import Block as BlockFile
