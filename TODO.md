@@ -5,19 +5,26 @@ Core:
 - UI.
 - DB.
 - Network.
-- Write tests besides Base58.
+- Write tests for:
+    - BN
+    - SECP256K1Wrapper
+    - SHA512
+
+    - Block
+    - Difficulty
+
+    - Address
 
 Features:
 - Add Merit decay.
 - Threaded mining.
-- Dedicated miner
+- Dedicated miner.
 
 Bug fixes and behavior changes:
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 - Optimize SECP256K1Wrapper (memory copies, splices...).
-- Clean up raises.
-- Switch some ValueErrors to RaiseErrors.
 - Multiple uses of the generic `Exception`.
+- Make each Base a type and add converters.
 
 Documentation:
 - Add comments to:
@@ -25,9 +32,7 @@ Documentation:
     - lib/Hex.nim
 
     - Merit/State.nim
-    - Merit/Merit.nim
 
-    - Wallet/PrivateKey
     - Wallet/PublicKey
     - Wallet/Wallet
 
@@ -35,6 +40,8 @@ Documentation:
     - UI/
     - DB/
     - Network/
+
+    - tests/
 - Use Documentation Comments.
 - Merit Caching Whitepaper.
 
@@ -42,3 +49,5 @@ Community Service:
 - Create a Nimble library out of BN.
 - Create a Nimble library out of Base58/Hex.
 - Create a Nimble library out of Lyra2.
+- Have the SECP256K1 Nimble package automatically download libsecp256k1.
+- Create a Nimble file for Ember.
