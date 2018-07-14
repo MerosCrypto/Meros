@@ -33,8 +33,8 @@ Documentation:
 
     - Merit/State.nim
 
-    - Wallet/PublicKey
-    - Wallet/Wallet
+    - Wallet/PublicKey.nim
+    - Wallet/Wallet.nim
 
     - Lattice/
     - UI/
@@ -49,5 +49,4 @@ Community Service:
 - Create a Nimble library out of BN.
 - Create a Nimble library out of Base58/Hex.
 - Create a Nimble library out of Lyra2.
-- Have the SECP256K1 Nimble package automatically download libsecp256k1.
 - Create a Nimble file for Ember.
