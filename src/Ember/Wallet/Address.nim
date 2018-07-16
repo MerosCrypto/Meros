@@ -1,7 +1,6 @@
 #Number libs.
 import BN
-import ../lib/Hex
-import ../lib/Base58
+import base
 
 #Hash lib.
 import ../lib/SHA512 as SHA512File
@@ -12,11 +11,7 @@ import PublicKey
 #Generates a checksum for the public key.
 #The checksum is the Base58 version of the concatenated 10th, 18th, 26th, 34th, 42nd, 50th, 58th, and 66th key characters.
 proc generateChecksum(key: string): string {.raises: [OverflowError, Exception].} =
-    result = Base58.convert(
-        Hex.revert(
-            key[9] & key[17] & key[25] & key[33] & key[41] & key[49] & key[57] & key[65]
-        )
-    )
+    result = (key[9] & key[17] & key[25] & key[33] & key[41] & key[49] & key[57] & key[65]).toBN(16).toString(58)
 
 #Generates an address based on a public key.
 #An address is composed of the following:
@@ -35,11 +30,7 @@ proc newAddress*(key: string): string {.raises: [ValueError, OverflowError, Exce
         raise newException(ValueError, "Public Key isn't compressed.")
 
     #Base58 encoded version of the first 78 characters, and append the checksum of the key.
-    result = Base58.convert(
-        Hex.revert(
-            ((SHA512^3)(key)).substr(0, 77)
-        )
-    ) & generateChecksum(key)
+    result = ((SHA512^3)(key)).substr(0, 77).toBN(16).toString(58) & generateChecksum(key)
 
     while result.len < 57:
         result = "0" & result
@@ -72,7 +63,7 @@ proc verify*(address: string): bool {.raises: [].} =
         return
 
     #Check to make sure it's a valid Base58 number, if there's no prefix.
-    if not Base58.verify(address.substr(3, address.len)):
+    if not address.substr(3, address.len).isBase(58):
         result = false
 
 #If we have a key to check with, make an address for that key and compare with the given address.

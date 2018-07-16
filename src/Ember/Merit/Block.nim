@@ -1,7 +1,6 @@
 #Import the numerical libraries.
 import BN
-import ../lib/Hex
-import ../lib/Base58
+import ../lib/base
 
 #Import the time library.
 import ../lib/time
@@ -33,7 +32,7 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
     #Verify the arguments.
     if Address.verify(miner) == false:
         raise newException(ValueError, "Invalid Address.")
-    if Hex.verify(proof) == false:
+    if proof.isBase(16) == false:
         raise newException(ValueError, "Invalid Hex Number.")
 
     #Ceate the block.
@@ -47,17 +46,13 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
     #Create the hash.
     result.hash =
         SHA512(
-            Hex.convert(nonce)
+            nonce.toString(16)
         ).substr(0, 31) &
         SHA512(
-            Hex.convert(time)
+            time.toString(16)
         ).substr(32, 63) &
         SHA512(
-            Hex.convert(
-                Base58.revert(
-                    miner.substr(3, miner.len)
-                )
-            )
+            miner.substr(3, miner.len).toBN(58).toString(16)
         ).substr(64, 127)
 
     #Calculate the Lyra hash.
