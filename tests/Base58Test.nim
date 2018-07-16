@@ -1,4 +1,4 @@
-import ../src/lib/BN
+import BN
 import ../src/lib/Base58
 
 var Base58Characters: array[58, char] = [

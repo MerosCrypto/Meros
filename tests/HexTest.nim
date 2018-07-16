@@ -1,4 +1,4 @@
-import ../src/lib/BN
+import BN
 import ../src/lib/Hex
 
 var HexCharacters: array[16, char] = [
