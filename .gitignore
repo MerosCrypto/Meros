@@ -1,4 +1,6 @@
 #Binary files.
-build
 *.dll
 *.exe
+#Working directories
+build
+nimcache
