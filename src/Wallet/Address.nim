@@ -1,6 +1,6 @@
 #Number libs.
 import BN
-import ../lib/base
+import ../lib/Base
 
 #Hash lib.
 import ../lib/SHA512 as SHA512File

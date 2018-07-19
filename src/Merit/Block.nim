@@ -1,6 +1,6 @@
 #Import the numerical libraries.
 import BN
-import ../lib/base
+import ../lib/Base
 
 #Import the time library.
 import ../lib/time

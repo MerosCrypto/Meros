@@ -1,5 +1,5 @@
 import BN
-import ../src/lib/base
+import ../src/lib/Base
 
 assert("1234567898765432234567".isBase(10))
 assert(not "0001012".isBase(2))

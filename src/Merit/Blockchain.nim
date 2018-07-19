@@ -1,6 +1,6 @@
 #Number libs.
 import BN
-import ../lib/base
+import ../lib/Base
 
 #Time lib.
 import ../lib/time
