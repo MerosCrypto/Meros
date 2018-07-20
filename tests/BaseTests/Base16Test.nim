@@ -1,9 +1,9 @@
 import BN
-import ../src/lib/Hex
+import ../../src/lib/Base
 
 var HexCharacters: array[16, char] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'a', 'b', 'c', 'd', 'e', 'f'
+    'A', 'B', 'C', 'D', 'E', 'F'
 ]
 
 type PairObj = object
@@ -19,12 +19,12 @@ var temp: string
 proc test(pair: PairObj): string =
     result = ""
 
-    temp = Hex.convert(newBN(pair.value))
+    temp = newBN(pair.value).toString(16)
     if (pair.target != nil) and (pair.target != temp):
-        result = "Conerted to " & temp & "."
+        result = "Converted to " & temp & "."
         return
 
-    temp = $Hex.revert(temp)
+    temp = $temp.toBN(16)
     if pair.value != temp:
         result = "Reverted to " & temp & "."
         return
@@ -32,8 +32,8 @@ proc test(pair: PairObj): string =
 proc suite*(): string =
     var pairs: seq[PairObj] = @[
         Pair("17", "11"),
-        Pair("240", "f0"),
-        Pair("255", "ff")
+        Pair("240", "F0"),
+        Pair("255", "FF")
     ]
 
     for i in 0 ..< HexCharacters.len:
@@ -48,16 +48,9 @@ proc suite*(): string =
         result = test(pair)
         if result != "":
             result =
-                "Hex Test with a value of: " & pair.value &
+                "Base16 Test with a value of: " & pair.value &
                 " and target of: " & pair.target &
                 " failed. Error: " & result
             return
 
     result = ""
-
-when isMainModule:
-    var res: string = suite()
-    if res == "":
-        echo "Success"
-    else:
-        echo res

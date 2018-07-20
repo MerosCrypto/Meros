@@ -1,6 +1,6 @@
 #Number libs.
 import BN
-import ../lib/Hex
+import ../lib/Base
 
 #Block lib.
 import Block as BlockFile
@@ -30,7 +30,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
         return
 
     #If the Lyra hash didn't beat the difficulty...
-    if Hex.revert(newBlock.getLyra()) < diff.difficulty:
+    if newBlock.getLyra().toBN(16) < diff.difficulty:
         result = false
         return
 

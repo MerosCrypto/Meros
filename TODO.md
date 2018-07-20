@@ -21,6 +21,7 @@ Features:
 - Dedicated miner.
 
 Bug fixes and behavior changes:
+- Fix imath on Linux/integrate GMP.
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Multiple uses of the generic `Exception`.
@@ -28,8 +29,7 @@ Bug fixes and behavior changes:
 
 Documentation:
 - Add comments to:
-    - lib/Base58.nim
-    - lib/Hex.nim
+    - lib/Base.nim
 
     - Merit/State.nim
 
@@ -46,6 +46,5 @@ Documentation:
 - Merit Caching Whitepaper.
 
 Community Service:
-- Create a Nimble library out of Base58/Hex.
+- Create a Nimble library out of Base.
 - Create a Nimble library out of Lyra2.
-- Create a Nimble file for Ember.

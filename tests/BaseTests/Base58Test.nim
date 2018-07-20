@@ -1,5 +1,5 @@
 import BN
-import ../src/lib/Base58
+import ../../src/lib/Base
 
 var Base58Characters: array[58, char] = [
     '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -24,12 +24,12 @@ var temp: string
 proc test(pair: PairObj): string =
     result = ""
 
-    temp = Base58.convert(newBN(pair.value))
+    temp = newBN(pair.value).toString(58)
     if (pair.target != nil) and (pair.target != temp):
-        result = "Conerted to " & temp & "."
+        result = "Converted to " & temp & "."
         return
 
-    temp = $Base58.revert(temp)
+    temp = $temp.toBN(58)
     if pair.value != temp:
         result = "Reverted to " & temp & "."
         return
@@ -56,10 +56,3 @@ proc suite*(): string =
             return
 
     result = ""
-
-when isMainModule:
-    var res: string = suite()
-    if res == "":
-        echo "Success"
-    else:
-        echo res

@@ -17,7 +17,7 @@ type Merit* = ref object of RootObj
     state: State
 
 #Creates A Merit object based on a Gensis string.
-proc newMerit*(genesis: string): Merit {.raises: [ValueError, OverflowError, AssertionError, Exception].} =
+proc newMerit*(genesis: string): Merit {.raises: [ValueError, OverflowError, AssertionError].} =
     result = Merit(
         blockchain: newBlockchain(genesis),
         state: newState()

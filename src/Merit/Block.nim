@@ -1,10 +1,9 @@
 #Import the numerical libraries.
 import BN
-import ../lib/Hex
-import ../lib/Base58
+import ../lib/Base
 
-#Import the time library.
-import ../lib/time
+#Import the Time library.
+import ../lib/Time
 
 #Import the hashing libraries.
 import ../lib/SHA512
@@ -29,11 +28,11 @@ type Block* = ref object of RootObj
     lyra: string
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
-proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError, OverflowError, Exception].} =
+proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError, OverflowError].} =
     #Verify the arguments.
     if Address.verify(miner) == false:
         raise newException(ValueError, "Invalid Address.")
-    if Hex.verify(proof) == false:
+    if proof.isBase(16) == false:
         raise newException(ValueError, "Invalid Hex Number.")
 
     #Ceate the block.
@@ -47,24 +46,20 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
     #Create the hash.
     result.hash =
         SHA512(
-            Hex.convert(nonce)
+            nonce.toString(16)
         ).substr(0, 31) &
         SHA512(
-            Hex.convert(time)
+            time.toString(16)
         ).substr(32, 63) &
         SHA512(
-            Hex.convert(
-                Base58.revert(
-                    miner.substr(3, miner.len)
-                )
-            )
+            miner.substr(3, miner.len).toBN(58).toString(16)
         ).substr(64, 127)
 
     #Calculate the Lyra hash.
     result.lyra = Lyra2(result.hash, result.proof)
 
 #Verify Block function. Creates the block with the passed in arguments and verifies the hashes. Doesn't check its Blockchain validity.
-proc verifyBlock*(newBlock: Block): bool {.raises: [ValueError, OverflowError, Exception].} =
+proc verifyBlock*(newBlock: Block): bool {.raises: [ValueError, OverflowError].} =
     result = true
 
     let createdBlock: Block = newBlock(newBlock.nonce, newBlock.time, newBlock.miner, newBlock.proof)

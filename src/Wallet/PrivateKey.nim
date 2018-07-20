@@ -1,5 +1,5 @@
 #RNG lib.
-import ../lib/RNG
+import ../lib/Random
 
 #SECP256K1 lib.
 import ../lib/SECP256K1Wrapper

@@ -1,9 +1,9 @@
 #Number libs.
 import BN
-import ../lib/Hex
+import ../lib/Base
 
 #Time lib.
-import ../lib/time
+import ../lib/Time
 
 #Block and Difficulty libs.
 import Block as BlockFile
@@ -23,7 +23,7 @@ type Blockchain* = ref object of RootObj
     difficulties: DoublyLinkedList[Difficulty]
 
 #Create a new Blockchain.
-proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, OverflowError, AssertionError, Exception].} =
+proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, OverflowError, AssertionError].} =
     #Set the current time as the time of creation.
     let creation: BN = getTime()
 
@@ -39,7 +39,7 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Overflow
     result.difficulties.append(Difficulty(
         start: creation,
         endTime: creation + newBN("60"),
-        difficulty: Hex.revert("3333333333333333333333333333333333333333333333333333333333333333")
+        difficulty: "3333333333333333333333333333333333333333333333333333333333333333".toBN(16)
     ))
     #Append the genesis block. ID 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
     result.blocks.append(newBlock(newBN("0"), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "0"))
