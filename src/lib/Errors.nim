@@ -1,2 +1,2 @@
 type
-    ResultError* = object of Exception
+    ResultError* = object of ValueError

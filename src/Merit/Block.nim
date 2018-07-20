@@ -44,16 +44,11 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
     )
 
     #Create the hash.
-    result.hash =
-        SHA512(
-            nonce.toString(16)
-        ).substr(0, 31) &
-        SHA512(
-            time.toString(16)
-        ).substr(32, 63) &
-        SHA512(
-            miner.substr(3, miner.len).toBN(58).toString(16)
-        ).substr(64, 127)
+    result.hash = SHA512(
+        nonce.toString(16) &
+        time.toString(16) &
+        miner.substr(3, miner.len).toBN(58).toString(16)
+    )
 
     #Calculate the Lyra hash.
     result.lyra = Lyra2(result.hash, result.proof)

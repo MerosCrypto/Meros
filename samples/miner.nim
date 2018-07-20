@@ -1,6 +1,6 @@
 #Number libs.
 import BN
-import lib/Hex
+import lib/Base
 
 #Time lib.
 import lib/time as TimeFile
@@ -32,7 +32,7 @@ while true:
     echo "Looping..."
 
     #Create a block.
-    newBlock = newBlock(nonce, time, miner, Hex.convert(proof))
+    newBlock = newBlock(nonce, time, miner, proof.toString(16))
 
     #Test it.
     if not merit.testBlock(newBlock):
