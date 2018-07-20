@@ -61,8 +61,7 @@ proc toBN*(encoded: string, base: int): BN {.raises: [ValueError].} =
     if not encoded.isBase(base):
         raise newException(ValueError, "Given string is not a valid base $# number." % $base)
 
-    var intVal = 0
+    let base_BN = newBN(base)
+    result = newBN(0)
     for i, dig in encoded:
-        intVal += base^(encoded.len - i - 1) * base.digits.find(dig)
-
-    return newBN(intVal)
+        result += base_BN^newBN(encoded.len - i - 1) * newBN(base.digits.find(dig))
