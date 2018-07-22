@@ -38,11 +38,11 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Overflow
     #Append the starting difficulty.
     result.difficulties.append(Difficulty(
         start: creation,
-        endTime: creation + newBN("60"),
+        endTime: creation + newBN(60),
         difficulty: "3333333333333333333333333333333333333333333333333333333333333333".toBN(16)
     ))
     #Append the genesis block. ID 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
-    result.blocks.append(newBlock(newBN("0"), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "0"))
+    result.blocks.append(newBlock(newBN(0), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "0"))
 
 #Tests a block for validity.
 proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =

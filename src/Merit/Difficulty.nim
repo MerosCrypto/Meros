@@ -66,7 +66,7 @@ proc calculateNextDifficulty*(
         #Use the same difficulty.
         result = Difficulty(
             start: last.endTime,
-            endTime: last.endTime + newBN($periodInSeconds),
+            endTime: last.endTime + newBN(periodInSeconds),
             difficulty: last.difficulty
         )
         return
@@ -98,6 +98,6 @@ proc calculateNextDifficulty*(
     #Create the new difficulty.
     result = Difficulty(
         start: last.endTime,
-        endTime: last.endTime + newBN($periodInSeconds),
+        endTime: last.endTime + newBN(periodInSeconds),
         difficulty: difficulty
     )

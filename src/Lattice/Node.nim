@@ -4,6 +4,7 @@ import ../lib/Base
 
 #SHA512 lib.
 import ../lib/SHA512 as SHA512File
+import ../lib/Util
 
 #Wallet libs.
 import ../Wallet/Wallet
@@ -24,7 +25,7 @@ type Node* = ref object of RootObj
 
     #Data used to prove it isn't spam.
     #Difficulty units.
-    diffUnits*: int
+    diffUnits*: BN
     #Work to prove this isn't spam.
     work*: BN
     #Lyra2 hash.
@@ -61,9 +62,9 @@ proc newNode*(input: string, output: string, amount: BN, data: string): Node {.r
     )
 
 proc mine*(toMine: Node, networkDifficulty: BN) {.raises: [].} =
-    toMine.diffUnits = 1 + (toMine.data.len * 2)
+    toMine.diffUnits = newBN(1 + (toMine.data.len * 2))
 
-    var difficulty: BN = newBN(toMine.diffUnits) * networkDifficulty
+    var difficulty: BN = toMine.diffUnits * networkDifficulty
 
 
 proc sign*(wallet: Wallet, toSign: Node): bool {.raises: [ValueError, Exception].} =
@@ -81,7 +82,7 @@ proc sign*(wallet: Wallet, toSign: Node): bool {.raises: [ValueError, Exception]
     if toSign.hash != newNode.hash:
         return false
 
-    if toSign.diffUnits != (1 + (2 * toSign.data.len)):
+    if toSign.diffUnits != newBN(1 + (2 * toSign.data.len)):
         return false
 
     #Verify work and Lyra2.

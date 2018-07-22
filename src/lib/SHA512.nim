@@ -3,7 +3,8 @@ import nimcrypto
 
 #Hash exponentiation.
 import Util
-export Util
+#For some reason, this wouldn't work with an upper case export.
+export util
 
 #Standard string utils lib.
 import strutils

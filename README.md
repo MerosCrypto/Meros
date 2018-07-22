@@ -1,6 +1,6 @@
 # <img src="https://github.com/kayabaNerve/Ember/raw/master/logos/logo32.png" height="32px"/> Ember
 
-## An instant, feeless, lattice stored, PoS verified, PoW blockchain secured cryptocurrency for the future.
+## An instant, feeless, Proof of Work secure, Proof of Stake verified cryptocurrency for the future.
 
 <a href="https://discord.gg/nZmdWGA"><img src="https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png" height=92 width=92/></a>
 
