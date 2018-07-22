@@ -11,6 +11,8 @@ import Merit/Merit
 #Wallet libs.
 import Wallet/Wallet
 
+import Lattice/Node
+
 #Demo.
 var wallet: Wallet = newWallet()
 echo wallet.getPublicKey().verify("ffee", wallet.sign("ffee"))

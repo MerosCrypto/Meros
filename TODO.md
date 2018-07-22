@@ -1,6 +1,8 @@
 # TODO
 
 Core:
+- Change Lyra2 to Argon2 (d or id).
+- Have a way for the network to set difficulty.
 - Lattice.
 - UI.
 - DB.
@@ -24,8 +26,7 @@ Bug fixes and behavior changes:
 - Fix imath on Linux/integrate GMP.
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 - Optimize SECP256K1Wrapper (memory copies, splices...).
-- Multiple uses of the generic `Exception`.
-- Make each Base a type and add converters.
+- Remove as many uses of the generic `Exception` as possible.
 
 Documentation:
 - Add comments to:
