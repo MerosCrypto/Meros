@@ -29,6 +29,10 @@ proc digits(base: int): OrderedSet[char] {.raises: [].} =
     return digitsNo0OIl
 
 proc isBase*(value: string, base: int): bool {.raises: [].} =
+    if base == 16:
+        if (value.len mod 2) != 0:
+            return false
+
     var loc: int
     for c in value:
         loc = base.digits.find(c)

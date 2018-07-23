@@ -21,9 +21,9 @@ var
     #Block var; defined here to stop a memory leak.
     newBlock: Block
     #Nonce, time, and proof vars.
-    nonce: BN = newBN("1")
+    nonce: BN = newBN(1)
     time: BN = getTime()
-    proof: BN = newBN("0")
+    proof: BN = newBN(0)
 
 echo "First balance: " & $merit.getBalance(miner)
 

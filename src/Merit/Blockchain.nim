@@ -30,7 +30,7 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Overflow
     #Init the object.
     result = Blockchain(
         genesis: genesis,
-        height: newBN("0"),
+        height: newBN(0),
         blocks: initDoublyLinkedList[Block](),
         difficulties: initDoublyLinkedList[Difficulty]()
     )
@@ -42,7 +42,7 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Overflow
         difficulty: "3333333333333333333333333333333333333333333333333333333333333333".toBN(16)
     ))
     #Append the genesis block. ID 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
-    result.blocks.append(newBlock(newBN(0), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "0"))
+    result.blocks.append(newBlock(newBN(0), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "00"))
 
 #Tests a block for validity.
 proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
@@ -55,7 +55,7 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Overfl
         return
 
     #If the time is before the last block's...
-    if blockchain.blocks.tail.value.getTime() >= newBlock.getTime():
+    if newBlock.getTime() < blockchain.blocks.tail.value.getTime():
         result = false
         return
 
@@ -65,7 +65,7 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Overfl
         return
 
     #If the block is invalid...
-    if not verifyBlock(newBlock):
+    if not newBlock.verify():
         result = false
         return
 

@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Change Lyra2 to Argon2 (d or id).
 - Have a way for the network to set difficulty.
 - Lattice.
 - UI.
@@ -24,7 +23,9 @@ Features:
 
 Bug fixes and behavior changes:
 - Fix imath on Linux/integrate GMP.
+- Fix Argon2 Memory parameter.
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
+- Miner has a memory leak.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Remove as many uses of the generic `Exception` as possible.
 
@@ -48,4 +49,4 @@ Documentation:
 
 Community Service:
 - Create a Nimble library out of Base.
-- Create a Nimble library out of Lyra2.
+- Create a Nimble library out of Argon2.

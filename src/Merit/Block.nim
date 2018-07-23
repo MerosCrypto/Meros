@@ -7,7 +7,7 @@ import ../lib/Time
 
 #Import the hashing libraries.
 import ../lib/SHA512
-import ../lib/Lyra2
+import ../lib/Argon
 
 #Import the Address library.
 import ../Wallet/Address
@@ -24,7 +24,7 @@ type Block* = ref object of RootObj
     hash: string
     #Random hex number to make sure the Lyra of the hash is over the difficulty.
     proof: string
-    #Lyra2 64 character hash with the hash as the data and proof as the salt.
+    #Argon2d 64 character hash with the hash as the data and proof as the salt.
     lyra: string
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
@@ -51,10 +51,10 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
     )
 
     #Calculate the Lyra hash.
-    result.lyra = Lyra2(result.hash, result.proof)
+    result.lyra = Argon(result.hash, result.proof)
 
 #Verify Block function. Creates the block with the passed in arguments and verifies the hashes. Doesn't check its Blockchain validity.
-proc verifyBlock*(newBlock: Block): bool {.raises: [ValueError, OverflowError].} =
+proc verify*(newBlock: Block): bool {.raises: [ValueError, OverflowError].} =
     result = true
 
     let createdBlock: Block = newBlock(newBlock.nonce, newBlock.time, newBlock.miner, newBlock.proof)
