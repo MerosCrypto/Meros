@@ -19,18 +19,55 @@ var wallet: Wallet = newWallet()
 echo wallet.getPublicKey().verify("ffee", wallet.sign("ffee"))
 """
 
-import lib/Argon2
-import lib/SHA512
+#Number libs.
+import BN
+import lib/Base
+
+#Time lib.
+import lib/time as TimeFile
+
+#Merit lib.
+import Merit/Merit
+
+#Wallet lib.
+import Wallet/Wallet
 
 var
-    a: string
-    b: string
-    c: string
+    #Create a wallet to mine to.
+    wallet: Wallet = newWallet()
+    #Get the address.
+    miner = wallet.getAddress()
+    #Merit var.
+    merit: Merit = newMerit("0")
+    #Block var; defined here to stop a memory leak.
+    newBlock: Block
+    #Nonce, time, and proof vars.
+    nonce: BN = newBN(1)
+    time: BN = getTime()
+    proof: BN = newBN(0)
 
-a = Argon2(SHA512("ffee"), "a")
-b = Argon2(SHA512("ffee"), "b")
-c = Argon2(SHA512("ffff"), "b")
+echo "First balance: " & $merit.getBalance(miner)
 
-echo a
-echo b
-echo c
+#Mine the chain.
+while true:
+    echo "Looping..."
+
+    #Create a block.
+    newBlock = newBlock(nonce, time, miner, proof.toString(16))
+
+    #Test it.
+    if not merit.testBlock(newBlock):
+        #If it's invalid, increase the proof and continue.
+        inc(proof)
+        continue
+
+    #If it's valid, have the state process it.
+    discard merit.processBlock(newBlock)
+
+    #Print that we mined a block!
+    echo "Mined a block: " & $nonce
+    echo "Balance of the miner is " & $merit.getBalance(miner)
+
+    #Finally, increase the nonce and update the timestamp.
+    inc(nonce)
+    time = getTime()
