@@ -22,10 +22,10 @@ type Block* = ref object of RootObj
     miner: string
     #Block hash
     hash: string
-    #Random hex number to make sure the Lyra of the hash is over the difficulty.
+    #Random hex number to make sure the Argon of the hash is over the difficulty.
     proof: string
     #Argon2d 64 character hash with the hash as the data and proof as the salt.
-    lyra: string
+    argon: string
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
 proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError, OverflowError].} =
@@ -50,8 +50,8 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
         miner.substr(3, miner.len).toBN(58).toString(16)
     )
 
-    #Calculate the Lyra hash.
-    result.lyra = Argon(result.hash, result.proof)
+    #Calculate the Argon hash.
+    result.argon = Argon(result.hash, result.proof)
 
 #Verify Block function. Creates the block with the passed in arguments and verifies the hashes. Doesn't check its Blockchain validity.
 proc verify*(newBlock: Block): bool {.raises: [ValueError, OverflowError].} =
@@ -62,7 +62,7 @@ proc verify*(newBlock: Block): bool {.raises: [ValueError, OverflowError].} =
         result = false
         return
 
-    if createdBlock.lyra != newBlock.lyra:
+    if createdBlock.argon != newBlock.argon:
         result = false
         return
 
@@ -82,5 +82,5 @@ proc getHash*(blockArg: Block): string {.raises: [].} =
 proc getProof*(blockArg: Block): string {.raises: [].} =
     return blockArg.proof
 
-proc getLyra*(blockArg: Block): string {.raises: [].} =
-    return blockArg.lyra
+proc getArgon*(blockArg: Block): string {.raises: [].} =
+    return blockArg.argon

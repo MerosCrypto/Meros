@@ -11,10 +11,12 @@ Core:
     - SECP256K1Wrapper
     - SHA512
 
+    - Address (mostly done)
+
     - Block
     - Difficulty
 
-    - Address
+    - Node
 
 Features:
 - Add Merit decay.
@@ -38,7 +40,9 @@ Documentation:
     - Wallet/PublicKey.nim
     - Wallet/Wallet.nim
 
-    - Lattice/
+    - Lattice/Lattice.nim
+    - Lattice/Nodechain.nim
+
     - UI/
     - DB/
     - Network/
