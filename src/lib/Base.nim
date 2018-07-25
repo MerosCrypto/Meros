@@ -22,16 +22,20 @@ const
     ].toOrderedSet()
 
 proc digits(base: int): OrderedSet[char] {.raises: [].} =
+    result = digitsNo0OIl
     if base <= 24:
-        return digitsAll
+        result = digitsAll
     elif base <= 45:
-        return digitsNo0O
-    return digitsNo0OIl
+        result = digitsNo0O
 
 proc isBase*(value: string, base: int): bool {.raises: [].} =
+    #Default value of true.
+    result = true
+
     if base == 16:
         if (value.len mod 2) != 0:
-            return false
+            result = false
+            return
 
     var loc: int
     for c in value:
@@ -39,8 +43,8 @@ proc isBase*(value: string, base: int): bool {.raises: [].} =
         if loc == -1 or loc >= base:
             if (base == 16) and (('a' <= c) and (c <= 'f')):
                 continue
-            return false
-    return true
+            result = false
+            return
 
 
 proc toBN*(value: string, baseArg: int): BN {.raises: [ValueError].} =
@@ -68,9 +72,10 @@ proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError, Overfl
         base: BN = newBN(baseArg)
 
     if value == BNNums.ZERO:
+        result = $baseArg.digits[0]
         if baseArg == 16:
-            return "00"
-        return $baseArg.digits[0]
+            result = "00"
+        return
 
     var
         power: BN = newBN(1)

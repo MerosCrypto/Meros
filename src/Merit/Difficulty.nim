@@ -29,7 +29,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
         result = false
         return
 
-    #If the Lyra hash didn't beat the difficulty...
+    #If the Argon hash didn't beat the difficulty...
     if newBlock.getArgon().toBN(16) < diff.difficulty:
         result = false
         return
