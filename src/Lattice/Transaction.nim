@@ -9,6 +9,9 @@ import ../lib/Util
 #Wallet libs.
 import ../Wallet/Wallet
 
+#Signature lib.
+import Signature
+
 #Used to handle data strings.
 import strutils
 
@@ -34,9 +37,11 @@ type Node* = ref object of RootObj
     #Argon2 hash.
     argon*: string
 
-    #Data proved to validate ownership.
-    #Node signature.
+    #Data used to validate owner/network approval.
+    #Owner signature.
     signature*: string
+    #Merit Holders signatures.
+    verifications*: seq[Signature]
 
     #Metadata about when the TX was accepted.
     time*: BN
