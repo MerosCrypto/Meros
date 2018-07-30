@@ -12,7 +12,7 @@ proc newState*(): State {.raises: [].} =
     result[] = initTable[string, BN]()
 
 proc getBalance*(state: State, account: string): BN {.raises: [KeyError].} =
-    result = newBN(0)
+    result = newBN()
     if state.hasKey(account):
         result = state[account]
 

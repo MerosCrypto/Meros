@@ -11,42 +11,46 @@ import Merit/Merit
 #Wallet lib.
 import Wallet/Wallet
 
-var
-    #Create a wallet to mine to.
-    wallet: Wallet = newWallet()
-    #Get the address.
-    miner = wallet.getAddress()
-    #Merit var.
-    merit: Merit = newMerit("0")
-    #Block var; defined here to stop a memory leak.
-    newBlock: Block
-    #Nonce, time, and proof vars.
-    nonce: BN = newBN(1)
-    time: BN = getTime()
-    proof: BN = newBN(0)
+proc main() =
+    var
+        #Create a wallet to mine to.
+        wallet: Wallet = newWallet()
+        #Get the address.
+        miner = wallet.getAddress()
+        #Merit var.
+        merit: Merit = newMerit("0")
+        #Block var; defined here to stop a memory leak.
+        newBlock: Block
+        #Nonce, time, and proof vars.
+        nonce: BN = newBN(1)
+        time: BN = getTime()
+        proof: BN = newBN()
 
-echo "First balance: " & $merit.getBalance(miner)
+    echo "First balance: " & $merit.getBalance(miner)
 
-#Mine the chain.
-while true:
-    echo "Looping..."
+    #Mine the chain.
+    while true:
+        echo "Looping..."
 
-    #Create a block.
-    newBlock = newBlock(nonce, time, miner, proof.toString(16))
+        #Create a block.
+        newBlock = newBlock(nonce, time, miner, proof.toString(16))
 
-    #Test it.
-    if not merit.testBlock(newBlock):
-        #If it's invalid, increase the proof and continue.
-        inc(proof)
-        continue
+        #Test it.
+        if not merit.testBlock(newBlock):
+            #If it's invalid, increase the proof and continue.
+            inc(proof)
+            continue
 
-    #If it's valid, have the state process it.
-    discard merit.processBlock(newBlock)
+        #If it's valid, have the state process it.
+        discard merit.processBlock(newBlock)
 
-    #Print that we mined a block!
-    echo "Mined a block: " & $nonce
-    echo "Balance of the miner is " & $merit.getBalance(miner)
+        #Print that we mined a block!
+        echo "Mined a block: " & $nonce
+        echo "Balance of the miner is " & $merit.getBalance(miner)
 
-    #Finally, increase the nonce and update the timestamp.
-    inc(nonce)
-    time = getTime()
+        #Finally, increase the nonce, update the timestamp, and reset the proof.
+        inc(nonce)
+        time = getTime()
+        proof = newBN()
+
+main()

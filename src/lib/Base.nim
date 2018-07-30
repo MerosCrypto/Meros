@@ -51,7 +51,7 @@ proc toBN*(value: string, baseArg: int): BN {.raises: [ValueError].} =
     if not value.isBase(baseArg):
         raise newException(ValueError, "Invalid Base number.")
 
-    result = newBN(0)
+    result = newBN()
     var
         base: BN = newBN(baseArg)
         digit: char
