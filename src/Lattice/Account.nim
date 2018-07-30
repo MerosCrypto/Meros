@@ -5,36 +5,36 @@ import ../lib/Base
 #Time lib.
 import ../lib/Time
 
-#Node and Difficulty libs.
-import Node as NodeFile
+#Transaction and Difficulty libs.
+import Transaction as TransactionFile
 
 #Lists standard lib.
 import lists
 
-#Nodechain object.
-type Nodechain* = ref object of RootObj
+#Account object.
+type Account* = ref object of RootObj
     #Chain owner.
     address: string
-    #Nodechain height. BN for compatibility.
+    #Account height. BN for compatibility.
     height: BN
     #Doubly Linked List of all the nodes.
-    nodes: DoublyLinkedList[Node]
+    nodes: DoublyLinkedList[Transaction]
     #Balance of the addres.
     balance: BN
 
-#Create a new Nodechain.
-proc newNodechain*(address: string): Nodechain {.raises: [].} =
+#Create a new Account.
+proc newAccount*(address: string): Account {.raises: [].} =
     #Init the object.
-    result = Nodechain(
+    result = Account(
         address: address,
-        height: newBN(0),
-        nodes: initDoublyLinkedList[Node](),
-        balance: newBN(0)
+        height: newBN(),
+        nodes: initDoublyLinkedList[Transaction](),
+        balance: newBN()
     )
 
-proc getNodes*(nodechain: Nodechain): DoublyLinkedList[Node] {.raises: [].} =
+proc getTransactions*(nodechain: Account): DoublyLinkedList[Transaction] {.raises: [].} =
     result = nodechain.nodes
 
-iterator getNodes*(nodechain: Nodechain): Node {.raises: [].} =
+iterator getTransactions*(nodechain: Account): Transaction {.raises: [].} =
     for i in nodechain.nodes.items():
         yield i

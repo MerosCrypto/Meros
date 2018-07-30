@@ -1,1 +1,1 @@
-type Signature = ref object of RootObj
+type Signature* = ref object of RootObj

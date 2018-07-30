@@ -11,7 +11,7 @@ import Merit/Merit
 #Wallet libs.
 import Wallet/Wallet
 
-import Lattice/Node
+import Lattice/Transaction
 
 #Demo.
 var wallet: Wallet = newWallet()

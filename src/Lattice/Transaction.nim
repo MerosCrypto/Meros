@@ -15,8 +15,8 @@ import Signature
 #Used to handle data strings.
 import strutils
 
-#Node object.
-type Node* = ref object of RootObj
+#Transaction object.
+type Transaction* = ref object of RootObj
     #Data used to create the hash.
     #Input address. This address for a send node, a different one for a receive node.
     input*: string
@@ -26,7 +26,7 @@ type Node* = ref object of RootObj
     amount*: BN
     #Data included in the TX.
     data*: string
-    #Node hash.
+    #Transaction hash.
     hash: string
 
     #Data used to prove it isn't spam.
@@ -47,18 +47,18 @@ type Node* = ref object of RootObj
     time*: BN
 
 #Create a new  node.
-proc newNode*(input: string, output: string, amount: BN, data: string): Node {.raises: [ValueError, Exception].} =
+proc newTransaction*(input: string, output: string, amount: BN, data: string): Transaction {.raises: [ValueError, Exception].} =
     #verify input/output.
     if (not Wallet.verify(input)) or (not Wallet.verify(output)):
-        raise newException(ValueError, "Node addresses are not valid.")
+        raise newException(ValueError, "Transaction addresses are not valid.")
 
     #Verify the amount.
     if amount < BNNums.ZERO:
-        raise newException(ValueError, "Node amount is negative.")
+        raise newException(ValueError, "Transaction amount is negative.")
 
     #Verify the data argument.
     if data.len > 127:
-        raise newException(ValueError, "Node data was too long.")
+        raise newException(ValueError, "Transaction data was too long.")
 
     #Turn data into a hex string in order to hash it.
     var dataHex: string = ""
@@ -66,7 +66,7 @@ proc newNode*(input: string, output: string, amount: BN, data: string): Node {.r
         dataHex = dataHex & ord(data[i]).toHex()
 
     #Craft the result.
-    result = Node(
+    result = Transaction(
         input: input,
         output: output,
         amount: amount,
@@ -80,20 +80,20 @@ proc newNode*(input: string, output: string, amount: BN, data: string): Node {.r
     )
 
 #Mine a TX.
-proc mine*(toMine: Node, networkDifficulty: BN) {.raises: [].} =
+proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [].} =
     toMine.diffUnits = newBN(1 + (toMine.data.len * 2))
 
     var difficulty: BN = toMine.diffUnits * networkDifficulty
 
 #Sign a TX.
-proc sign*(wallet: Wallet, toSign: Node): bool {.raises: [ValueError, Exception].} =
+proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError, Exception].} =
     #Set a default return value of true.
     result = true
 
-    #Create a new node and make sure the newNode proc doesn't throw an error.
-    var newNode: Node
+    #Create a new node and make sure the newTransaction proc doesn't throw an error.
+    var newTransaction: Transaction
     try:
-        newNode = newNode(
+        newTransaction = newTransaction(
             toSign.input,
             toSign.output,
             toSign.amount,
@@ -103,7 +103,7 @@ proc sign*(wallet: Wallet, toSign: Node): bool {.raises: [ValueError, Exception]
         result = false
         return
 
-    if toSign.hash != newNode.hash:
+    if toSign.hash != newTransaction.hash:
         result = false
         return
 
