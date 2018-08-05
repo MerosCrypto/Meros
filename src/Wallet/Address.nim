@@ -1,5 +1,5 @@
 #Number libs.
-import BN
+import ../lib/BN
 import ../lib/Base
 
 #Hash lib.
@@ -10,7 +10,7 @@ import PublicKey
 
 #Generates a checksum for the public key.
 #The checksum is the Base58 version of the concatenated 10th, 18th, 26th, 34th, 42nd, 50th, 58th, and 66th key characters.
-proc generateChecksum(key: string): string {.raises: [OverflowError, Exception].} =
+proc generateChecksum(key: string): string {.raises: [Exception].} =
     result = (key[9] & key[17] & key[25] & key[33] & key[41] & key[49] & key[57] & key[65]).toBN(16).toString(58)
 
 #Generates an address based on a public key.
@@ -25,7 +25,7 @@ proc generateChecksum(key: string): string {.raises: [OverflowError, Exception].
 #   A: Less than 57 characters, 0s are prefixed to it.
 #   B: Greater than 61, the first character(s) are removed until it's 61.
 #This is a really poor secondary checksum/safety buffer which makes the address between 60 and 64 characters, with the prefix.
-proc newAddress*(key: string): string {.raises: [ValueError, OverflowError, Exception].} =
+proc newAddress*(key: string): string {.raises: [ValueError, Exception].} =
     if (key.len != 66):
         raise newException(ValueError, "Public Key isn't compressed.")
 
@@ -41,7 +41,7 @@ proc newAddress*(key: string): string {.raises: [ValueError, OverflowError, Exce
     result = "Emb" & result
 
 #Work with Public Keys objects, not just hex public keys.
-proc newAddress*(key: PublicKey): string {.raises: [ValueError, OverflowError, Exception].} =
+proc newAddress*(key: PublicKey): string {.raises: [ValueError, Exception].} =
     result = newAddress($key)
 
 #Verifies if an address is valid.
@@ -67,9 +67,9 @@ proc verify*(address: string): bool {.raises: [].} =
         result = false
 
 #If we have a key to check with, make an address for that key and compare with the given address.
-proc verify*(address: string, key: string): bool {.raises: [ValueError, OverflowError, Exception].} =
+proc verify*(address: string, key: string): bool {.raises: [ValueError, Exception].} =
     result = address == newAddress(key)
 
 #Work with Public Keys objects, not just hex public keys.
-proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError, OverflowError, Exception].} =
+proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError, Exception].} =
     return verify(address, $key)

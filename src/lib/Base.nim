@@ -66,7 +66,7 @@ proc toBN*(value: string, baseArg: int): BN {.raises: [ValueError].} =
                 newBN(value.len - i - 1)
             ) * newBN(baseArg.digits.find(value[i]))
 
-proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError, OverflowError].} =
+proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError].} =
     var
         value: BN = valueArg
         base: BN = newBN(baseArg)

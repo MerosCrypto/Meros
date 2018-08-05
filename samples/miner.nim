@@ -1,9 +1,9 @@
 #Number libs.
-import BN
+import lib/BN
 import lib/Base
 
 #Time lib.
-import lib/time as TimeFile
+import lib/Time as TimeFile
 
 #Merit lib.
 import Merit/Merit

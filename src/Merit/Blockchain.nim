@@ -1,5 +1,5 @@
 #Number libs.
-import BN
+import ../lib/BN
 import ../lib/Base
 
 #Time lib.
@@ -23,7 +23,7 @@ type Blockchain* = ref object of RootObj
     difficulties: DoublyLinkedList[Difficulty]
 
 #Create a new Blockchain.
-proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, OverflowError, AssertionError].} =
+proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, AssertionError].} =
     #Set the current time as the time of creation.
     let creation: BN = getTime()
 
@@ -45,7 +45,7 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Overflow
     result.blocks.append(newBlock(newBN(), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "00"))
 
 #Tests a block for validity.
-proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
+proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [AssertionError, Exception].} =
     #Result is set to true in case if nothing goes wrong.
     result = true
 
@@ -79,7 +79,7 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Overfl
         return
 
 #Adds a block to the blockchain.
-proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
+proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [AssertionError, Exception].} =
     #Test the block.
     if not blockchain.testBlock(newBlock):
         result = false

@@ -8,18 +8,18 @@ type Wallet* = ref object of RootObj
     pub: PublicKey
     address: string
 
-proc newWallet*(priv: PrivateKey = newPrivateKey()): Wallet {.raises: [ValueError, OverflowError, Exception].} =
+proc newWallet*(priv: PrivateKey = newPrivateKey()): Wallet {.raises: [ValueError, Exception].} =
     result = Wallet()
     result.priv = priv
     result.pub = newPublicKey(result.priv)
     result.address = newAddress(result.pub)
 
-proc newWallet*(priv: PrivateKey, pub: PublicKey): Wallet {.raises: [ValueError, OverflowError, Exception].} =
+proc newWallet*(priv: PrivateKey, pub: PublicKey): Wallet {.raises: [ValueError, Exception].} =
     result = newWallet(priv)
     if $result.pub != $pub:
         raise newException(ValueError, "Invalid Public Key for this Private Key.")
 
-proc newWallet*(priv: PrivateKey, pub: PublicKey, address: string): Wallet {.raises: [ValueError, OverflowError, Exception].} =
+proc newWallet*(priv: PrivateKey, pub: PublicKey, address: string): Wallet {.raises: [ValueError, Exception].} =
     result = newWallet(priv, pub)
     if result.address != address:
         raise newException(ValueError, "Invalid Address for this Public Key.")

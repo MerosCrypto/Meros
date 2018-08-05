@@ -1,5 +1,5 @@
 #Import the numerical libraries.
-import BN
+import ../lib/BN
 import ../lib/Base
 
 #Import the Time library.
@@ -28,7 +28,7 @@ type Block* = ref object of RootObj
     argon: string
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
-proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError, OverflowError].} =
+proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raises: [ValueError].} =
     #Verify the arguments.
     if Address.verify(miner) == false:
         raise newException(ValueError, "Invalid Address.")
@@ -54,7 +54,7 @@ proc newBlock*(nonce: BN, time: BN, miner: string, proof: string): Block {.raise
     result.argon = Argon(result.hash, result.proof)
 
 #Verify Block function. Creates the block with the passed in arguments and verifies the hashes. Doesn't check its Blockchain validity.
-proc verify*(newBlock: Block): bool {.raises: [ValueError, OverflowError].} =
+proc verify*(newBlock: Block): bool {.raises: [ValueError].} =
     result = true
 
     let createdBlock: Block = newBlock(newBlock.nonce, newBlock.time, newBlock.miner, newBlock.proof)

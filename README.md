@@ -21,8 +21,7 @@ Requirements:
 
 ```
 git submodule update --init
-nimble install nimcrypto secp256k1 nimx
-nimble install BN
+nimble install stint nimcrypto secp256k1 nimx
 nim cpp src/main.nim
 ```
 
@@ -30,7 +29,7 @@ If you're on Windows/Mac OS, you must also go to https://www.libsdl.org/download
 If you're on a Debian based system, run `sudo apt-get install libsdl2-2.0`.
 For other Linux systems, please look up how to install the SDL2 libraries.
 
-main.nim doesn't do much. There is a miner and address generator under samples/, which are mains that were built to test new code, but are not suitable to be the main file, yet are also not suitable for deletion. Those should be swapped out with main.nim for testing/demoing Ember. Right now, it is a demo file for the Lattice.
+main.nim doesn't do much. There is a miner and address generator under samples/ that can be swapped out with main.nim though in order to test/demo Ember. Right now, main.nim is a demo file for the Lattice.
 
 #### Contributing
 Ember will not have an ICO. Ember will not have a premine. Ember will be launched publicly and fairly. The only advantage one gets for contributing is being able to get to use the cryptocurrency one day. That said, I would love help and there is a [TODO](https://github.com/kayabaNerve/Ember/blob/master/TODO.md) file.

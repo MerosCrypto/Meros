@@ -24,7 +24,7 @@ Features:
 - Dedicated miner.
 
 Bug fixes and behavior changes:
-- Fix imath on Linux/integrate GMP.
+- Use a faster BN lib.
 - Fix Argon2 Memory parameter.
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 - Optimize SECP256K1Wrapper (memory copies, splices...).

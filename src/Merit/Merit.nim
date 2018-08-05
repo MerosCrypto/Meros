@@ -1,5 +1,5 @@
 #Number lib.
-import BN
+import ../lib/BN
 
 #Block/Blockchain/State libs.
 import Block as BlockFile
@@ -17,14 +17,14 @@ type Merit* = ref object of RootObj
     state: State
 
 #Creates A Merit object based on a Gensis string.
-proc newMerit*(genesis: string): Merit {.raises: [ValueError, OverflowError, AssertionError].} =
+proc newMerit*(genesis: string): Merit {.raises: [ValueError, AssertionError].} =
     result = Merit(
         blockchain: newBlockchain(genesis),
         state: newState()
     )
 
 #Tests a block.
-proc testBlock*(merit: Merit, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
+proc testBlock*(merit: Merit, newBlock: Block): bool {.raises: [AssertionError, Exception].} =
     result = true
     #If the blockchain rejects the block...
     if not merit.blockchain.testBlock(newBlock):
@@ -32,7 +32,7 @@ proc testBlock*(merit: Merit, newBlock: Block): bool {.raises: [OverflowError, A
         return
 
 #Add a block.
-proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [OverflowError, AssertionError, Exception].} =
+proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [AssertionError, Exception].} =
     result = true
     #Add the block to the Blockchain.
     if not merit.blockchain.addBlock(newBlock):
