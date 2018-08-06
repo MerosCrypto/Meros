@@ -20,34 +20,50 @@ type Transaction* = ref object of RootObj
     #Data used to create the hash.
     #Input address. This address for a send node, a different one for a receive node.
     input*: string
-    #Output address. This address for a receive node,  different one for a send node.
+    #Output address. This address for a receive node, a different one for a send node.
     output*: string
     #Amount transacted.
     amount*: BN
     #Data included in the TX.
     data*: string
+    #Location on the account.
+    nonce*: BN
     #Transaction hash.
     hash: string
 
     #Data used to prove it isn't spam.
     #Difficulty units.
-    diffUnits*: BN
-    #Work to prove this isn't spam.
-    work*: BN
+    diffUnits: BN
+    #Proof this isn't spam.
+    proof: BN
     #Argon2 hash.
-    argon*: string
+    argon: string
 
     #Data used to validate owner/network approval.
     #Owner signature.
-    signature*: string
+    signature: string
     #Merit Holders signatures.
-    verifications*: seq[Signature]
+    verifications: seq[Signature]
 
     #Metadata about when the TX was accepted.
     time*: BN
 
+proc serialize*(tx: Transaction, level: int): string {.raises: [ValueError].} =
+    result =
+        tx.input.substr(3, tx.input.len).pad(64) &
+        tx.output.substr(3, tx.output.len).pad(64)
+
+    var amount: string = tx.amount.toString(16)
+    if amount[0] == '0':
+        amount = amount.substr(1, amount.len)
+    result =
+        amount.len.toHex() &
+        amount &
+        tx.data &
+        tx.nonce.toString(16)
+
 #Create a new  node.
-proc newTransaction*(input: string, output: string, amount: BN, data: string): Transaction {.raises: [ValueError, Exception].} =
+proc newTransaction*(input: string, output: string, amount: BN, data: string, nonce: BN): Transaction {.raises: [ValueError, Exception].} =
     #verify input/output.
     if (not Wallet.verify(input)) or (not Wallet.verify(output)):
         raise newException(ValueError, "Transaction addresses are not valid.")
@@ -71,11 +87,13 @@ proc newTransaction*(input: string, output: string, amount: BN, data: string): T
         output: output,
         amount: amount,
         data: data,
+        nonce: nonce,
         hash: (SHA512^2)(
             input.substr(3, input.len).toBN(58).toString(16) &
             output.substr(3, output.len).toBN(58).toString(16) &
             amount.toString(16) &
-            dataHex
+            dataHex &
+            nonce.toString(16)
         )
     )
 
@@ -98,6 +116,7 @@ proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError, Exc
             toSign.output,
             toSign.amount,
             toSign.data,
+            toSign.nonce
         )
     except:
         result = false

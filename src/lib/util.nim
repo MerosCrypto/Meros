@@ -16,3 +16,8 @@ proc `[]`*[T](oset: OrderedSet[T], index: int): T {.raises: [ValueError].} =
         if i == index:
             result = item
             return
+
+proc pad*(data: string, len: int, character: string = "0"): string =
+    result = data
+    while result.len < len:
+        result = character & result
