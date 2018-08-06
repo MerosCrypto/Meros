@@ -1,4 +1,4 @@
-import BN
+import ./BN
 import Util
 
 import sets

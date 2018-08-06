@@ -1,6 +1,6 @@
 #Wrapper around the Nim time library that returns a BN.
 
-import ../lib/BN
+import ./BN
 
 import times, strutils
 
