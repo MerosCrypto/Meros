@@ -1,4 +1,4 @@
-import ../lib/SHA512
+import ../../lib/SHA512
 
 type
     Leaf = ref object of RootObj
@@ -11,13 +11,13 @@ type
 
     MerkleTree* = ref object of Branch
 
-proc newLeaf(isLeaf: bool, hash: string): Leaf =
+proc newLeaf(isLeaf: bool, hash: string): Leaf {.raises: [].} =
     Leaf(
         isLeaf: isLeaf,
         hash: hash
     )
 
-proc newBranch(left: Leaf, right: Leaf): Branch =
+proc newBranch(left: Leaf, right: Leaf): Branch {.raises: [].} =
     Branch(
         isLeaf: false,
         hash: SHA512(left.hash & right.hash),
@@ -25,7 +25,7 @@ proc newBranch(left: Leaf, right: Leaf): Branch =
         right: right
     )
 
-proc newMerkleTree*(hashesArg: seq[string]): MerkleTree =
+proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [].} =
     if hashesArg.len == 0:
         result = MerkleTree(
             left: Leaf(
@@ -34,7 +34,7 @@ proc newMerkleTree*(hashesArg: seq[string]): MerkleTree =
             ),
             right: Leaf(
                 isLeaf: true,
-                hash: ""            
+                hash: ""
             )
         )
         return

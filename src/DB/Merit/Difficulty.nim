@@ -1,6 +1,6 @@
 #Number libs.
-import ../lib/BN
-import ../lib/Base
+import ../../lib/BN
+import ../../lib/Base
 
 #Block lib.
 import Block as BlockFile

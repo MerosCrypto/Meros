@@ -1,9 +1,9 @@
 #Number libs.
-import ../lib/BN
-import ../lib/Base
+import ../../lib/BN
+import ../../lib/Base
 
 #Time lib.
-import ../lib/Time
+import ../../lib/Time
 
 #Merkle, Block, and Difficulty libs.
 import Merkle

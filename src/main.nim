@@ -6,12 +6,12 @@ import lib/Base
 import lib/SHA512 as SHA512File
 
 #Block, blockchain, and State libs.
-import Merit/Merit
+import DB/Merit/Merit
 
 #Wallet libs.
 import Wallet/Wallet
 
-import Lattice/Transaction
+import DB/Lattice/Transaction
 
 #Demo.
 var wallet: Wallet = newWallet()

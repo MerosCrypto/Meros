@@ -1,22 +1,25 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Number libs.
-import ../lib/BN
-import ../lib/Base
+import ../../lib/BN
+import ../../lib/Base
 
 #SHA512 lib.
-import ../lib/SHA512 as SHA512File
-import ../lib/Util
+import ../../lib/SHA512 as SHA512File
+import ../../lib/Util
 
 #Wallet libs.
-import ../Wallet/Wallet
+import ../../Wallet/Wallet
 
-#Signature lib.
-import Signature
+#Node object.
+import Node
 
 #Used to handle data strings.
 import strutils
 
 #Transaction object.
-type Transaction* = ref object of RootObj
+type Transaction* = ref object of Node
     #Data used to create the hash.
     #Input address. This address for a send node, a different one for a receive node.
     input*: string
@@ -26,10 +29,6 @@ type Transaction* = ref object of RootObj
     amount*: BN
     #Data included in the TX.
     data*: string
-    #Location on the account.
-    nonce*: BN
-    #Transaction hash.
-    hash: string
 
     #Data used to prove it isn't spam.
     #Difficulty units.
@@ -39,16 +38,8 @@ type Transaction* = ref object of RootObj
     #Argon2 hash.
     argon: string
 
-    #Data used to validate owner/network approval.
-    #Owner signature.
-    signature: string
-    #Merit Holders signatures.
-    verifications: seq[Signature]
-
-    #Metadata about when the TX was accepted.
-    time*: BN
-
-proc serialize*(tx: Transaction, level: int): string {.raises: [ValueError].} =
+#IN PROGRESS!
+proc serialize*(tx: Transaction): string {.raises: [ValueError].} =
     result =
         tx.input.substr(3, tx.input.len).pad(64) &
         tx.output.substr(3, tx.output.len).pad(64)
@@ -63,7 +54,14 @@ proc serialize*(tx: Transaction, level: int): string {.raises: [ValueError].} =
         tx.nonce.toString(16)
 
 #Create a new  node.
-proc newTransaction*(input: string, output: string, amount: BN, data: string, nonce: BN): Transaction {.raises: [ValueError, Exception].} =
+proc newTransaction*(
+    nonce: BN,
+    blockNumber: BN,
+    input: string,
+    output: string,
+    amount: BN,
+    data: string
+): Transaction {.raises: [ResultError, ValueError, Exception].} =
     #verify input/output.
     if (not Wallet.verify(input)) or (not Wallet.verify(output)):
         raise newException(ValueError, "Transaction addresses are not valid.")
@@ -83,21 +81,24 @@ proc newTransaction*(input: string, output: string, amount: BN, data: string, no
 
     #Craft the result.
     result = Transaction(
+        nonce: nonce,
+        blockNumber: newBN(),
+
         input: input,
         output: output,
         amount: amount,
         data: data,
-        nonce: nonce,
-        hash: (SHA512^2)(
-            input.substr(3, input.len).toBN(58).toString(16) &
-            output.substr(3, output.len).toBN(58).toString(16) &
-            amount.toString(16) &
-            dataHex &
-            nonce.toString(16)
-        )
+        diffUnits: newBN(1 + (2 * data.len))
     )
 
-#Mine a TX.
+    if not result.setHash(
+        (SHA512^2)(
+            result.serialize()
+        )
+    ):
+        raise newException(ResultError, "Setting the TX hash failed.")
+
+#IN PROGRESS.
 proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [].} =
     toMine.diffUnits = newBN(1 + (toMine.data.len * 2))
 
@@ -112,17 +113,18 @@ proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError, Exc
     var newTransaction: Transaction
     try:
         newTransaction = newTransaction(
+            toSign.nonce,
+            toSign.blockNumber,
             toSign.input,
             toSign.output,
             toSign.amount,
-            toSign.data,
-            toSign.nonce
+            toSign.data
         )
     except:
         result = false
         return
 
-    if toSign.hash != newTransaction.hash:
+    if toSign.getHash() != newTransaction.getHash():
         result = false
         return
 
@@ -133,4 +135,4 @@ proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError, Exc
     #Verify work and Argon2 hash.
 
     #Sign the Argon2 hash of the TX.
-    toSign.signature = wallet.sign(toSign.argon)
+    toSign.setSignature(wallet.sign(toSign.argon))

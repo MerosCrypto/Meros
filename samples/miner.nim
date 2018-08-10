@@ -6,7 +6,7 @@ import lib/Base
 import lib/Time as TimeFile
 
 #Merit lib.
-import Merit/Merit
+import DB/Merit/Merit
 
 #Wallet lib.
 import Wallet/Wallet

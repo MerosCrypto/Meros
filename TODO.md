@@ -27,6 +27,7 @@ Features:
 - Dedicated miner.
 
 Bug fixes and behavior changes:
+- Move from public variables to getters.
 - Use a faster BN lib.
 - Fix Argon2 parameters.
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
@@ -43,7 +44,7 @@ Documentation:
     - Wallet/PublicKey.nim
     - Wallet/Wallet.nim
 
-    - Lattice/Signature.nim
+    - Lattice/Verification.nim
     - Lattice/Lattice.nim
 
     - UI/
@@ -53,6 +54,7 @@ Documentation:
     - tests/
 - Use Documentation Comments.
 - Merit Caching Whitepaper.
+- Ember Whitepaper.
 
 Community Service:
 - Create a Nimble library out of Base.

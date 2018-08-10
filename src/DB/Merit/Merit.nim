@@ -1,5 +1,5 @@
 #Number lib.
-import ../lib/BN
+import ../../lib/BN
 
 #Block/Blockchain/State libs.
 import Merkle

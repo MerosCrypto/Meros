@@ -1,4 +1,4 @@
-import ../lib/BN as BNFile
+import ../../lib/BN as BNFile
 
 import Block
 import Blockchain

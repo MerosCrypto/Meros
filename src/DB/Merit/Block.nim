@@ -1,16 +1,16 @@
 #Import the numerical libraries.
-import ../lib/BN
-import ../lib/Base
+import ../../lib/BN
+import ../../lib/Base
 
 #Import the Time library.
-import ../lib/Time
+import ../../lib/Time
 
 #Import the hashing libraries.
-import ../lib/SHA512
-import ../lib/Argon
+import ../../lib/SHA512
+import ../../lib/Argon
 
 #Import the Address library.
-import ../Wallet/Address
+import ../../Wallet/Address
 
 #Import the Merkle library.
 import Merkle

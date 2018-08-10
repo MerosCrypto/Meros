@@ -1,9 +1,9 @@
 #Number libs.
-import ../lib/BN
-import ../lib/Base
+import ../../lib/BN
+import ../../lib/Base
 
 #Time lib.
-import ../lib/Time
+import ../../lib/Time
 
 #Transaction and Difficulty libs.
 import Transaction as TransactionFile
@@ -17,8 +17,8 @@ type Account* = ref object of RootObj
     address: string
     #Account height. BN for compatibility.
     height: BN
-    #Doubly Linked List of all the nodes.
-    nodes: DoublyLinkedList[Transaction]
+    #Doubly Linked List of all the Transactions.
+    transactions: DoublyLinkedList[Transaction]
     #Balance of the addres.
     balance: BN
 
@@ -28,13 +28,13 @@ proc newAccount*(address: string): Account {.raises: [].} =
     result = Account(
         address: address,
         height: newBN(),
-        nodes: initDoublyLinkedList[Transaction](),
+        transactions: initDoublyLinkedList[Transaction](),
         balance: newBN()
     )
 
-proc getTransactions*(nodechain: Account): DoublyLinkedList[Transaction] {.raises: [].} =
-    result = nodechain.nodes
+proc getTransactions*(account: Account): DoublyLinkedList[Transaction] {.raises: [].} =
+    result = account.transactions
 
-iterator getTransactions*(nodechain: Account): Transaction {.raises: [].} =
-    for i in nodechain.nodes.items():
+iterator getTransactions*(account: Account): Transaction {.raises: [].} =
+    for i in account.transactions.items():
         yield i
