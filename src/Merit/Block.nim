@@ -75,7 +75,7 @@ proc newBlock*(
     for miner in miners:
         if Address.verify(miner.miner) == false:
             raise newException(ValueError, "Invalid Address.")
-        if miner.percent < 0.1:
+        if (miner.percent < 0.1) or (100 < miner.percent):
             raise newException(ValueError, "Invalid Percent.")
 
     #Ceate the block.
