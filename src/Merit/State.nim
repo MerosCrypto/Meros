@@ -3,6 +3,7 @@ import ../lib/BN as BNFile
 import Block
 import Blockchain
 
+import math
 import tables
 
 type State* = ref Table[string, BN]
@@ -17,7 +18,12 @@ proc getBalance*(state: State, account: string): BN {.raises: [KeyError].} =
         result = state[account]
 
 proc processBlock*(state: State, newBlock: Block) {.raises: [KeyError].} =
-    state[newBlock.getMiner()] = state.getBalance(newBlock.getMiner()) + newBN(100)
+    let miners: seq[tuple[miner: string, percent: float]] = newBlock.getMiners()
+    var weight: float
+
+    for miner in miners:
+        weight = (1000 * miner.percent) / 100
+        state[miner.miner] = state.getBalance(miner.miner) + newBN((int) weight)
 
 proc processBlockchain*(state: State, blockchain: Blockchain) {.raises: [KeyError].} =
     state[] = initTable[string, BN]()

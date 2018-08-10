@@ -2,10 +2,12 @@
 import ../lib/BN
 
 #Block/Blockchain/State libs.
+import Merkle
 import Block as BlockFile
 import Blockchain
 import State
-#Export the Block lib for miners.
+#Export the Merkle and Block lib for miners.
+export Merkle
 export BlockFile
 
 #Lists standard lib.

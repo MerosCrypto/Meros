@@ -33,7 +33,17 @@ proc main() =
         echo "Looping..."
 
         #Create a block.
-        newBlock = newBlock(nonce, time, miner, proof.toString(16))
+        newBlock = newBlock(
+            nonce,
+            time,
+            @[],
+            newMerkleTree(@[]),
+            proof.toString(16),
+            @[(
+                miner: miner,
+                percent: 100.0
+            )]
+        )
 
         #Test it.
         if not merit.testBlock(newBlock):

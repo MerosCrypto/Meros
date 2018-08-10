@@ -5,7 +5,8 @@ import ../lib/Base
 #Time lib.
 import ../lib/Time
 
-#Block and Difficulty libs.
+#Merkle, Block, and Difficulty libs.
+import Merkle
 import Block as BlockFile
 import Difficulty as DifficultyFile
 
@@ -42,7 +43,19 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Assertio
         difficulty: "3333333333333333333333333333333333333333333333333333333333333333".toBN(16)
     ))
     #Append the genesis block. ID 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
-    result.blocks.append(newBlock(newBN(), creation, "Emb111111111111111111111111111111111111111111111111111111111111", "00"))
+    result.blocks.append(
+        newBlock(
+            newBN(),
+            creation,
+            @[],
+            newMerkleTree(@[]),
+            "00",
+            @[(
+                miner: "Emb111111111111111111111111111111111111111111111111111111111111",
+                percent: 100.0
+            )]
+        )
+    )
 
 #Tests a block for validity.
 proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [AssertionError, Exception].} =

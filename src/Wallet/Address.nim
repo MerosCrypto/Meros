@@ -73,3 +73,12 @@ proc verify*(address: string, key: string): bool {.raises: [ValueError, Exceptio
 #Work with Public Keys objects, not just hex public keys.
 proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError, Exception].} =
     return verify(address, $key)
+
+proc toHex*(address: string): string {.raises: [ValueError].} =
+    if not verify(address):
+        raise newException(ValueError, "Invalid Address.")
+
+    result = address.substr(3, address.len).toBN(58).toString(16)
+
+proc toHex*(address: PublicKey): string {.raises: [ValueError, Exception].} =
+    toHex(newAddress(address))
