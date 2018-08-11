@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Add signatures to Blocks.
 - Have a way for the network to set difficulty.
 - Lattice.
 - UI.
