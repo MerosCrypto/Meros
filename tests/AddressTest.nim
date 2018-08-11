@@ -20,7 +20,7 @@ proc Pair(key: PublicKey, address: string): KeyPair {.raises: [].} =
     )
 
 var address: string
-proc test(pair: StringPair): string {.raises: [ValueError, OverflowError, Exception].} =
+proc test(pair: StringPair): string {.raises: [ValueError, Exception].} =
     result = ""
 
     try:
