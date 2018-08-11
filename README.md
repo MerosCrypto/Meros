@@ -1,16 +1,17 @@
 # <img src="https://github.com/kayabaNerve/Ember/raw/master/logos/logo32.png" height="32px"/> Ember
 
-## An instant, feeless, Proof of Work secure, Proof of Stake verified cryptocurrency for the future.
+## An instant and feeless cryptocurrency for the future, secured by the Merit Caching Algorithm.
 
 <a href="https://discord.gg/nZmdWGA"><img src="https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png" height=92 width=92/></a>
 
 [![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/EmberCrypto/Lobby)
 
 ### [Outline](https://medium.com/@EmberCrypto/ember-cryptocurrency-d0df75e8170f)
-### Whitepaper: Being  Written
+### [Merit Caching Whitepaper](https://github.com/EmberCrypto/Merit-Caching)
+### Ember Whitepaper: Being  Written
 
 #### Current State
-This project is not usable. It has support for multiple number bases (2/10/16/58...), Secure RNG, Elliptic Curve Keys, Addresses, SHA512 hashes, Argon2d mining, and the Merit Blockchain complete. That said, there's a lot more to do, including the lattice, the UI, the network...
+This currency is not usable. It has a lot done but there's a lot more to do.
 
 #### Compiling
 
