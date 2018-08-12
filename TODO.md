@@ -16,16 +16,17 @@ Core:
     - Block
     - Difficulty
 
-    - Signature
+    - Node
     - Transaction
+    - Verification
 
 Features:
-- Add Merit decay.
+- Have merit disappear after X blocks.
 - Threaded mining.
 - Dedicated miner.
 
 Bug fixes and behavior changes:
-- Move from public variables to getters.
+- Move from public variables in objects to getters.
 - Use a faster BN lib.
 - Fix Argon2 parameters.
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
@@ -36,22 +37,22 @@ Documentation:
 - Add comments to:
     - lib/Base.nim
 
-    - Merit/Merkle.nim
-    - Merit/State.nim
+    - DB/Merit/Merkle.nim
+    - DB/Merit/State.nim
+
+    - DB/Lattice/Verification.nim
+    - DB/Lattice/Lattice.nim
+
+    - DB/Database.nim
 
     - Wallet/PublicKey.nim
     - Wallet/Wallet.nim
 
-    - Lattice/Verification.nim
-    - Lattice/Lattice.nim
-
     - UI/
-    - DB/
     - Network/
 
     - tests/
 - Use Documentation Comments.
-- Merit Caching Whitepaper.
 - Ember Whitepaper.
 
 Community Service:
