@@ -2,9 +2,8 @@
 
 Core:
 - Have a way for the network to set difficulty.
-- Lattice.
-- UI.
 - DB.
+- UI.
 - Network.
 - Write tests for:
     - BN

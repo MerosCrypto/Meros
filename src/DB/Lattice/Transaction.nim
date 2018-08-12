@@ -20,48 +20,56 @@ import strutils
 
 #Transaction object.
 type Transaction* = ref object of Node
-    #Data used to create the hash.
+    #Data used to create the SHA512 hash.
     #Input address. This address for a send node, a different one for a receive node.
-    input*: string
+    input: string
     #Output address. This address for a receive node, a different one for a send node.
-    output*: string
+    output: string
     #Amount transacted.
-    amount*: BN
+    amount: BN
     #Data included in the TX.
-    data*: string
+    data: seq[uint8]
+
+    #SHA512 hash.
+    sha512: string
 
     #Data used to prove it isn't spam.
     #Difficulty units.
     diffUnits: BN
     #Proof this isn't spam.
     proof: BN
-    #Argon2 hash.
-    argon: string
 
-#IN PROGRESS!
+#Generate a hash for a TX.
+#IN PROGRESS.
+proc hash*(tx: Transaction) =
+    discard
+
+#Serialize a TX for broadcasting over a network.
 proc serialize*(tx: Transaction): string {.raises: [ValueError].} =
-    result =
-        tx.input.substr(3, tx.input.len).pad(64) &
-        tx.output.substr(3, tx.output.len).pad(64)
+    var delim: string = $((char) 0)
 
-    var amount: string = tx.amount.toString(16)
-    if amount[0] == '0':
-        amount = amount.substr(1, amount.len)
     result =
-        amount.len.toHex() &
-        amount &
-        tx.data &
-        tx.nonce.toString(16)
+        tx.getNonce().toString(255) & delim &
+        tx.input.substr(3, tx.input.len).toBN(58).toString(255) & delim &
+        tx.output.substr(3, tx.output.len).toBN(58).toString(255) & delim &
+        tx.amount.toString(255) & delim
+
+    for i in tx.data:
+        result = result & $((char) i)
+
+    result =
+        result & delim &
+        tx.proof.toString(255) & delim &
+        tx.getSignature().toBN(16).toString(255)
 
 #Create a new  node.
 proc newTransaction*(
     nonce: BN,
-    blockNumber: BN,
     input: string,
     output: string,
     amount: BN,
-    data: string
-): Transaction {.raises: [ResultError, ValueError, Exception].} =
+    data: seq[uint8]
+): Transaction {.raises: [ResultError, ValueError].} =
     #verify input/output.
     if (not Wallet.verify(input)) or (not Wallet.verify(output)):
         raise newException(ValueError, "Transaction addresses are not valid.")
@@ -76,63 +84,37 @@ proc newTransaction*(
 
     #Turn data into a hex string in order to hash it.
     var dataHex: string = ""
-    for i in 0 ..< data.len:
-        dataHex = dataHex & ord(data[i]).toHex()
+    for i in data:
+        dataHex = dataHex & $i.toHex()
 
     #Craft the result.
     result = Transaction(
-        nonce: nonce,
-        blockNumber: newBN(),
-
         input: input,
         output: output,
         amount: amount,
         data: data,
+
         diffUnits: newBN(1 + (2 * data.len))
     )
 
-    if not result.setHash(
-        (SHA512^2)(
-            result.serialize()
-        )
-    ):
-        raise newException(ResultError, "Setting the TX hash failed.")
+    if not result.setNonce(nonce):
+        raise newException(ResultError, "Setting the TX nonce failed.")
 
+    result.hash()
+
+#'Mine' a TX (beat the spam filter).
 #IN PROGRESS.
-proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [].} =
-    toMine.diffUnits = newBN(1 + (toMine.data.len * 2))
+proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [ValueError].} =
+    if toMine.diffUnits.isNil:
+        raise newException(ValueError, "Transaction didn't have its difficulty units set..")
+
+    #Check the networkDifficulty value.
 
     var difficulty: BN = toMine.diffUnits * networkDifficulty
 
+    #Generate proofs until the SHA512 cubed hash beats the difficulty.
+
 #Sign a TX.
 proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError, Exception].} =
-    #Set a default return value of true.
-    result = true
-
-    #Create a new node and make sure the newTransaction proc doesn't throw an error.
-    var newTransaction: Transaction
-    try:
-        newTransaction = newTransaction(
-            toSign.nonce,
-            toSign.blockNumber,
-            toSign.input,
-            toSign.output,
-            toSign.amount,
-            toSign.data
-        )
-    except:
-        result = false
-        return
-
-    if toSign.getHash() != newTransaction.getHash():
-        result = false
-        return
-
-    if toSign.diffUnits != newBN(1 + (2 * toSign.data.len)):
-        result = false
-        return
-
-    #Verify work and Argon2 hash.
-
-    #Sign the Argon2 hash of the TX.
-    toSign.setSignature(wallet.sign(toSign.argon))
+    #Sign the hash of the TX.
+    result = toSign.setSignature(wallet.sign(toSign.getHash()))
