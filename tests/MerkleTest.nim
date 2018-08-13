@@ -1,16 +1,29 @@
 import ../src/lib/SHA512
+import ../src/lib/Base
 import ../src/DB/Merit/Merkle
 
 var
+    a: string = SHA512("01".toBN(16).toString(256))
+    b: string = SHA512("0F".toBN(16).toString(256))
+    c: string = SHA512("03".toBN(16).toString(256))
+
     merkle: MerkleTree = newMerkleTree(@[
-        "1",
-        "F",
-        "3"
+        a,
+        b,
+        c
     ])
-    hash: string = SHA512(
-        SHA512($((char) 31)) &
-        SHA512($((char) 51))
+
+    ab: string = SHA512(
+        (a & b).toBN(16).toString(256)
     )
 
-echo merkle.hash
-echo hash
+    cc: string = SHA512(
+        (c & c).toBN(16).toString(256)
+    )
+
+    hash: string = SHA512(
+        (ab & cc).toBN(16).toString(256)
+    )
+
+echo "Hash:   " & hash
+echo "Merkle: " & merkle.hash

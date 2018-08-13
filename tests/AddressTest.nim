@@ -41,7 +41,7 @@ proc test(pair: KeyPair): string {.raises: [ValueError].} =
         result = "Address " & address & " either did not equal " & pair.address & " or was invalid."
         return
 
-proc suite*(): string {.raises: [ValueError, OverflowError, Exception].} =
+proc suite*(): string {.raises: [ValueError, Exception].} =
     result = ""
 
     var

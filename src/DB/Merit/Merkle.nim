@@ -22,8 +22,7 @@ proc newBranch(left: Leaf, right: Leaf): Branch {.raises: [ValueError].} =
     Branch(
         isLeaf: false,
         hash: SHA512(
-            left.hash.toBN(16).toString(256) &
-            right.hash.toBN(16).toString(256)
+            (left.hash & right.hash).toBN(16).toString(256)
         ),
         left: left,
         right: right
