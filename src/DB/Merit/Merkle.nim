@@ -1,3 +1,4 @@
+import ../../lib/Base
 import ../../lib/SHA512
 
 type
@@ -17,15 +18,18 @@ proc newLeaf(isLeaf: bool, hash: string): Leaf {.raises: [].} =
         hash: hash
     )
 
-proc newBranch(left: Leaf, right: Leaf): Branch {.raises: [].} =
+proc newBranch(left: Leaf, right: Leaf): Branch {.raises: [ValueError].} =
     Branch(
         isLeaf: false,
-        hash: SHA512(left.hash & right.hash),
+        hash: SHA512(
+            left.hash.toBN(16).toString(256) &
+            right.hash.toBN(16).toString(256)
+        ),
         left: left,
         right: right
     )
 
-proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [].} =
+proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].} =
     if hashesArg.len == 0:
         result = MerkleTree(
             left: Leaf(

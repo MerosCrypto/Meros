@@ -21,11 +21,12 @@ Core:
     - Verification
 
 Features:
-- Have merit disappear after X blocks.
+- Have Merit disappear after 365.25*24*6 (52596) blocks.
 - Threaded mining.
 - Dedicated miner.
 
 Bug fixes and behavior changes:
+- Clean serialization.
 - Move from public variables in objects to getters.
 - Use a faster BN lib.
 - Fix Argon2 parameters.

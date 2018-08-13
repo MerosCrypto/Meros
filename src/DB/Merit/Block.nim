@@ -37,19 +37,30 @@ type Block* = ref object of RootObj
     #Who to attribute the Merit to.
     miners: seq[tuple[miner: string, percent: float]]
 
-proc serialize*(blockArg: Block): string =
+proc serialize*(blockArg: Block, mined: bool = false): string =
+    var delim: string = $((char) 0)
+
     result =
-        blockArg.nonce.toString(16) & "." &
-        blockArg.time.toString(16) & "." &
-        blockArg.validations.len.toHex() & "."
+        blockArg.nonce.toString(255) & delim &
+        blockArg.time.toString(255) & delim &
+        newBN(blockArg.validations.len).toString(255) & delim
 
     for validation in blockArg.validations:
         result = result &
-            Address.toHex(validation.validator) & "-" &
-            validation.start.toHex() & "-" &
-            validation.last.toHex() & "."
+            Address.toBN(validation.validator).toString(255) & delim &
+            newBN(validation.start).toString(255) & delim &
+            newBN(validation.last).toString(255) & delim
 
-    result = result & blockArg.merkle.hash
+    result = result & blockArg.merkle.hash.toBN(16).toString(255)
+
+    if mined:
+        result = result & delim &
+            blockArg.proof.toBN(16).toString(255)
+
+        for miner in blockArg.miners:
+            result = result & delim &
+                Address.toBN(miner.miner).toString(255) & delim &
+                $miner.percent
 
 #New Block function. Makes a new block. Raises an error if there's an issue.
 proc newBlock*(
@@ -89,14 +100,7 @@ proc newBlock*(
     )
 
     #Create the hash.
-    result.hash = SHA512(
-        result
-        .serialize()
-        .multiReplace(
-            (".", ""),
-            ("-", "")
-        )
-    )
+    result.hash = SHA512(result.serialize())
 
     #Calculate the Argon hash.
     result.argon = Argon(result.hash, result.proof)

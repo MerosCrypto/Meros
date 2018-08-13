@@ -30,7 +30,16 @@ proc newAddress*(key: string): string {.raises: [ValueError, Exception].} =
         raise newException(ValueError, "Public Key isn't compressed.")
 
     #Base58 encoded version of the first 78 characters, and append the checksum of the key.
-    result = ((SHA512^3)(key)).substr(0, 77).toBN(16).toString(58) & generateChecksum(key)
+    result =
+        (
+            (SHA512^3)(
+                key.toBN(16).toString(256)
+            )
+        )
+        .substr(0, 77)
+        .toBN(16)
+        .toString(58) &
+        generateChecksum(key)
 
     while result.len < 57:
         result = "0" & result
@@ -74,11 +83,11 @@ proc verify*(address: string, key: string): bool {.raises: [ValueError, Exceptio
 proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError, Exception].} =
     return verify(address, $key)
 
-proc toHex*(address: string): string {.raises: [ValueError].} =
+proc toBN*(address: string): BN {.raises: [ValueError].} =
     if not verify(address):
         raise newException(ValueError, "Invalid Address.")
 
-    result = address.substr(3, address.len).toBN(58).toString(16)
+    result = address.substr(3, address.len).toBN(58)
 
-proc toHex*(address: PublicKey): string {.raises: [ValueError, Exception].} =
-    toHex(newAddress(address))
+proc toBN*(address: PublicKey): BN {.raises: [ValueError, Exception].} =
+    toBN(newAddress(address))

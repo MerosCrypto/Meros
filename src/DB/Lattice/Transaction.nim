@@ -40,9 +40,24 @@ type Transaction* = ref object of Node
     proof: BN
 
 #Generate a hash for a TX.
-#IN PROGRESS.
-proc hash*(tx: Transaction) =
-    discard
+proc hash*(tx: Transaction) {.raises: [ResultError, ValueError, Exception].} =
+    var
+        delim: string = $((char) 0)
+        hash: string
+
+    hash =
+        tx.getNonce().toString(255) & delim &
+        tx.input.substr(3, tx.input.len).toBN(58).toString(255) & delim &
+        tx.output.substr(3, tx.output.len).toBN(58).toString(255) & delim &
+        tx.amount.toString(255) & delim
+
+    for i in tx.data:
+        hash = hash & $((char) i)
+
+    hash = (SHA512^2)(hash)
+
+    if not tx.setHash(hash):
+        raise newException(ResultError, "Setting the TX hash failed.")
 
 #Serialize a TX for broadcasting over a network.
 proc serialize*(tx: Transaction): string {.raises: [ValueError].} =
@@ -69,7 +84,7 @@ proc newTransaction*(
     output: string,
     amount: BN,
     data: seq[uint8]
-): Transaction {.raises: [ResultError, ValueError].} =
+): Transaction {.raises: [ResultError, ValueError, Exception].} =
     #verify input/output.
     if (not Wallet.verify(input)) or (not Wallet.verify(output)):
         raise newException(ValueError, "Transaction addresses are not valid.")
@@ -115,6 +130,6 @@ proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [ValueError].} 
     #Generate proofs until the SHA512 cubed hash beats the difficulty.
 
 #Sign a TX.
-proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError, Exception].} =
+proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError].} =
     #Sign the hash of the TX.
     result = toSign.setSignature(wallet.sign(toSign.getHash()))

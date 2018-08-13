@@ -30,10 +30,10 @@ proc `$`*(wallet: Wallet): string {.raises: [ValueError].} =
         $wallet.pub & "|" &
         wallet.address
 
-proc sign*(wallet: Wallet, msg: string): string {.raises: [ValueError, Exception].} =
+proc sign*(wallet: Wallet, msg: string): string {.raises: [ValueError].} =
     result = wallet.priv.sign(msg)
 
-proc verify*(wallet: Wallet, msg: string, sig: string): bool {.raises: [ValueError, Exception].} =
+proc verify*(wallet: Wallet, msg: string, sig: string): bool {.raises: [ValueError].} =
     result = wallet.pub.verify(msg, sig)
 
 proc getPrivateKey*(wallet: Wallet): PrivateKey {.raises: [].} =

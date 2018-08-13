@@ -4,9 +4,6 @@ import ../lib/Random
 #SECP256K1 lib.
 import ../lib/SECP256K1Wrapper
 
-#SHA512 lib.
-import ../lib/SHA512 as SHA512File
-
 #Custom Errors.
 import ../lib/Errors
 
@@ -46,6 +43,6 @@ proc `$`*(key: PrivateKey): string {.raises: [].} =
     for i in 0 ..< 32:
         result = result & key[i].toHex()
 
-#Sign a message via its HA512^2 hash.
-proc sign*(key: PrivateKey, msg: string): string {.raises: [ValueError, Exception].} =
-    result = key.secpSign((SHA512^2)(msg))
+#Sign a message via its hash.
+proc sign*(key: PrivateKey, hash: string): string {.raises: [ValueError].} =
+    result = key.secpSign(hash)

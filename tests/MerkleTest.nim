@@ -7,7 +7,10 @@ var
         "F",
         "3"
     ])
-    hash: string = SHA512(SHA512("1" & "F") & SHA512("3" & "3"))
+    hash: string = SHA512(
+        SHA512($((char) 31)) &
+        SHA512($((char) 51))
+    )
 
 echo merkle.hash
 echo hash
