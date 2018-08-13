@@ -23,7 +23,7 @@ Requirements:
 ```
 git submodule update --init
 nimble install stint nimcrypto secp256k1 nimx
-nim cpp src/main.nim
+nim c src/main.nim
 ```
 
 If you're on Windows/Mac OS, you must also go to https://www.libsdl.org/download-2.0.php and download the SDL2 libraries for your platform.
@@ -33,4 +33,5 @@ For other Linux systems, please look up how to install the SDL2 libraries.
 main.nim doesn't do much. There is a miner and address generator under samples/ that can be swapped out with main.nim though in order to test/demo Ember. Right now, main.nim is a demo file for the Lattice.
 
 #### Contributing
-Ember will not have an ICO. Ember will not have a premine. Ember will be launched publicly and fairly. The only advantage one gets for contributing is being able to get to use the cryptocurrency one day. That said, I would love help and there is a [TODO](https://github.com/kayabaNerve/Ember/blob/master/TODO.md) file.
+
+Ember will not have an ICO, yet the community voted on whether or not there should be a premine. The community decided there should be a seven week premine (Ember doesn't have a max supply, and therefore the premine amount cannot be denominated via a percent). Two weeks will be released at the launch of the network, with one more week released every six months. This will allow a strong mainnet launch, guaranteeing Ember's success, and funding for three years.

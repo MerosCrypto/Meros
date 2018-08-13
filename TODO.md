@@ -25,14 +25,17 @@ Features:
 - Threaded mining.
 - Dedicated miner.
 
-Bug fixes and behavior changes:
-- Clean serialization.
-- Move from public variables in objects to getters.
+Improvements:
+- Clean up serialization.
 - Use a faster BN lib.
-- Fix Argon2 parameters.
-- Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
 - Optimize SECP256K1Wrapper (memory copies, splices...).
+
+Bug fixes and behavior changes:
+- Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
+- Fix Argon2 parameters.
+- Standardize error messages.
 - Remove as many uses of the generic `Exception` as possible.
+- Move from public variables in objects to getters.
 
 Documentation:
 - Add comments to:
