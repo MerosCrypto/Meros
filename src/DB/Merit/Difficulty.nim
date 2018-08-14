@@ -40,7 +40,7 @@ proc calculateNextDifficulty*(
     difficulties: DoublyLinkedList[Difficulty],
     periodInSeconds: int,
     blocksPerPeriod: int
-): Difficulty {.raises: [AssertionError].} =
+): Difficulty {.raises: [ValueError, AssertionError].} =
     var
         #Last difficulty.
         last: Difficulty = difficulties.tail.value

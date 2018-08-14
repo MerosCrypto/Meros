@@ -5,7 +5,7 @@ import stint
 type
     #Wrapper object.
     BN* = ref object of RootObj
-        number: StUint[2048]
+        number: StUint[1024]
 
     #Some basic numbers to stop hard coded BN literals.
     BNNumsType* = ref object of RootObj
@@ -16,21 +16,21 @@ type
         HIGH*: BN
 
 #Stringify function.
-proc `$`*(x: BN): string {.raises: [].} =
+proc `$`*(x: BN): string {.raises: [ValueError].} =
     try:
         result = $x.number
-    except:
-        result = ""
+    except DivByZeroError:
+        raise newException(ValueError, "Divide by zero.")
 
 #Nim constructor from a string/nothing.
 proc newBN*(number: string = "0"): BN {.raises: [].} =
     result = BN()
-    result.number = number.parse(StUint[2048])
+    result.number = number.parse(StUint[1024])
 
 #Nim constructor from a number.
 proc newBN*(number: SomeInteger): BN {.raises: [].} =
     result = BN()
-    result.number = number.stuint(2048)
+    result.number = number.stuint(1024)
 
 #Define some basic numbers.
 var BNNums*: BNNumsType = BNNumsType(
@@ -83,25 +83,25 @@ proc `pow`*(x: BN, y: BN): BN {.raises: [].} =
     x ^ y
 
 #Division function.
-proc `/`*(x: BN, y: BN): BN {.raises: [].} =
+proc `/`*(x: BN, y: BN): BN {.raises: [ValueError].} =
     result = newBN()
     try:
         result.number = x.number div y.number
-    except:
-        result.number = BNNums.HIGH.number
+    except DivByZeroError:
+        raise newException(ValueError, "Divide by zero.")
 
-proc `div`*(x: BN, y: BN): BN {.raises: [].} =
+proc `div`*(x: BN, y: BN): BN {.raises: [ValueError].} =
     x / y
 
 #Modulus function.
-proc `%`*(x: BN, y: BN): BN {.raises: [].} =
+proc `%`*(x: BN, y: BN): BN {.raises: [ValueError].} =
     result = newBN()
     try:
         result.number = x.number mod y.number
-    except:
-        result.number = BNNums.HIGH.number
+    except DivByZeroError:
+        raise newException(ValueError, "Divide by zero.")
 
-proc `mod`*(x: BN, y: BN): BN {.raises: [].} =
+proc `mod`*(x: BN, y: BN): BN {.raises: [ValueError].} =
     x % y
 
 #All of the comparison functions. ==, !-, <, <=, >, and >=.
