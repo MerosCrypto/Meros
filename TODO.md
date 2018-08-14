@@ -1,11 +1,12 @@
 # TODO
 
 Core:
+- Verification, Account, Lattice, and Database files.
+- Filesystem code.
 - Move serialize TX to the Serialization files.
 - Have a way for the network to set difficulty.
-- DB.
-- UI.
 - Network.
+- UI.
 - Write tests for:
     - BN
     - SECP256K1Wrapper
@@ -24,9 +25,8 @@ Core:
     - Serialize.
 
 Features:
-- Have Merit disappear after 365.25*24*6 (52596) blocks.
-- Threaded mining.
-- Dedicated miner.
+- Have Merit disappear after 365.25\*24\*6 (52596) blocks.
+- Threaded/dedicated miner.
 
 Improvements:
 - Use a faster BN lib.
@@ -55,7 +55,6 @@ Documentation:
     - Wallet/Wallet.nim
 
     - UI/
-    - Network/
 
     - tests/
 - Use Documentation Comments.
