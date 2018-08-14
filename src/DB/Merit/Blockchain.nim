@@ -49,6 +49,11 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Assert
     #Result is set to true in case if nothing goes wrong.
     result = true
 
+    #If the last hash is off...
+    if blockchain.blocks.tail.value.getArgon() != newBlock.getLast():
+        result = false
+        return
+
     #If the nonce is off...
     if blockchain.height + BNNums.ONE != newBlock.getNonce():
         result = false

@@ -8,6 +8,9 @@ import lib/Time as TimeFile
 #SHA512 lib.
 import lib/SHA512
 
+#Argon2 lib.
+import lib/Argon
+
 #Merit lib.
 import DB/Merit/Merit
 
@@ -25,13 +28,16 @@ proc main() =
         miner: string = wallet.getAddress()
         #Get the publisher.
         publisher: string = $wallet.getPublicKey()
+        #Gensis var.
+        genesis: string = "mainnet"
         #Merit var.
-        merit: Merit = newMerit("mainnet")
+        merit: Merit = newMerit(genesis)
         #Block var; defined here to stop a memory leak.
         newBlock: Block
-        #Nonce, time, and proof vars.
+        #Last block hash, nonce, time, and proof vars.
+        last: string = Argon(SHA512(genesis), "00")
         nonce: BN = newBN(1)
-        time: BN = getTime()
+        time: BN
         proof: BN = newBN()
         miners: seq[tuple[miner: string, percent: int]] = @[(
             miner: miner,
@@ -49,6 +55,7 @@ proc main() =
 
         #Create a block.
         newBlock = newBlock(
+            last,
             nonce,
             time,
             @[],
@@ -72,7 +79,8 @@ proc main() =
         echo "Mined a block: " & $nonce
         echo "The miner's Merit is " & $merit.getBalance(miner) & "."
 
-        #Finally, increase the nonce and reset the proof.
+        #Finally, update the last hash, increase the nonce, and reset the proof.
+        last = newBlock.getArgon()
         inc(nonce)
         proof = newBN()
 

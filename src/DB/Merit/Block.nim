@@ -29,6 +29,7 @@ import strutils
 proc newStartBlock*(genesis: string): Block {.raises: [ValueError, AssertionError].} =
     #Ceate the block.
     result = newBlockObj(
+        "",
         newBN(),
         getTime(),
         @[],
@@ -47,6 +48,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, AssertionErro
 
 #New Block function. Creates a new block. Raises an error if there's an issue.
 proc newBlock*(
+    last: string,
     nonce: BN,
     time: BN,
     validations: seq[tuple[validator: string, start: int, last: int]],
@@ -82,6 +84,7 @@ proc newBlock*(
 
     #Ceate the block.
     result = newBlockObj(
+        last,
         nonce,
         time,
         validations,

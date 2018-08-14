@@ -14,6 +14,8 @@ import common
 proc serialize*(blockArg: Block): string =
     #Create the result.
     result =
+        #Last block.
+        blockArg.getLast().toBN(16).toString(255) !
         #Nonce.
         blockArg.getNonce().toString(255) !
         #Time.

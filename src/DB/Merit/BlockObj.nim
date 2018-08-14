@@ -6,6 +6,8 @@ import Merkle
 
 #Define the Block class.
 type Block* = ref object of RootObj
+    #Argon hash of the last block.
+    last: string
     #Nonce, AKA index.
     nonce: BN
     #Timestamp.
@@ -31,6 +33,7 @@ type Block* = ref object of RootObj
 
 #Constructor.
 proc newBlockObj*(
+    last: string,
     nonce: BN,
     time: BN,
     validations: seq[tuple[validator: string, start: int, last: int]],
@@ -41,6 +44,7 @@ proc newBlockObj*(
     signature: string
 ): Block {.raises: [].} =
     Block(
+        last: last,
         nonce: nonce,
         time: time,
         validations: validations,
@@ -70,6 +74,8 @@ proc setMinersHash*(blockArg: Block, minersHash: string) {.raises: [ValueError].
     blockArg.minersHash = minersHash
 
 #Getters.
+proc getLast*(blockArg: Block): string {.raises: [].} =
+    blockArg.last
 proc getNonce*(blockArg: Block): BN {.raises: [].} =
     blockArg.nonce
 proc getTime*(blockArg: Block): BN {.raises: [].} =
