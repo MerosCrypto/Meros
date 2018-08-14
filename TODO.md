@@ -1,6 +1,7 @@
 # TODO
 
 Core:
+- Move serialize TX to the Serialization files.
 - Have a way for the network to set difficulty.
 - DB.
 - UI.
@@ -20,13 +21,14 @@ Core:
     - Transaction
     - Verification
 
+    - Serialize.
+
 Features:
 - Have Merit disappear after 365.25*24*6 (52596) blocks.
 - Threaded mining.
 - Dedicated miner.
 
 Improvements:
-- Clean up serialization.
 - Use a faster BN lib.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 

@@ -18,12 +18,10 @@ proc getBalance*(state: State, account: string): BN {.raises: [KeyError].} =
         result = state[account]
 
 proc processBlock*(state: State, newBlock: Block) {.raises: [KeyError].} =
-    let miners: seq[tuple[miner: string, percent: float]] = newBlock.getMiners()
-    var weight: float
+    let miners: seq[tuple[miner: string, percent: int]] = newBlock.getMiners()
 
     for miner in miners:
-        weight = (1000 * miner.percent) / 100
-        state[miner.miner] = state.getBalance(miner.miner) + newBN((int) weight)
+        state[miner.miner] = state.getBalance(miner.miner) + newBN(miner.percent)
 
 proc processBlockchain*(state: State, blockchain: Blockchain) {.raises: [KeyError].} =
     state[] = initTable[string, BN]()

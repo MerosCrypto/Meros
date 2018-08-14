@@ -15,8 +15,6 @@ import lists
 
 #Blockchain object.
 type Blockchain* = ref object of RootObj
-    #Genesis string or network ID.
-    genesis: string
     #Blockchain height. BN for compatibility.
     height: BN
     #Doubly Linked List of all the blocks, and another of all the difficulties.
@@ -30,7 +28,6 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Assertio
 
     #Init the object.
     result = Blockchain(
-        genesis: genesis,
         height: newBN(),
         blocks: initDoublyLinkedList[Block](),
         difficulties: initDoublyLinkedList[Difficulty]()
@@ -42,19 +39,9 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Assertio
         endTime: creation + newBN(60),
         difficulty: "3333333333333333333333333333333333333333333333333333333333333333".toBN(16)
     ))
-    #Append the genesis block. ID 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
+    #Append the genesis block. Index 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
     result.blocks.append(
-        newBlock(
-            newBN(),
-            creation,
-            @[],
-            newMerkleTree(@[]),
-            "00",
-            @[(
-                miner: "Emb111111111111111111111111111111111111111111111111111111111111",
-                percent: 100.0
-            )]
-        )
+        newStartBlock(genesis)
     )
 
 #Tests a block for validity.
@@ -74,11 +61,6 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Assert
 
     #If the time is ahead of 20 minutes from now...
     if (getTime() + newBN($(20*60))) < newBlock.getTime():
-        result = false
-        return
-
-    #If the block is invalid...
-    if not newBlock.verify():
         result = false
         return
 
@@ -103,23 +85,16 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Asserti
     blockchain.blocks.append(newBlock)
     result = true
 
-#Getters for the genesis string, height, blocks, and difficulties (along with iterators).
-proc getGenesis*(blockchain: Blockchain): string {.raises: [].} =
-    result = blockchain.genesis
-
+#Getters.
 proc getHeight*(blockchain: Blockchain): BN {.raises: [].} =
-    result = blockchain.height
-
+    blockchain.height
 proc getBlocks*(blockchain: Blockchain): DoublyLinkedList[Block] {.raises: [].} =
-    result = blockchain.blocks
-
+    blockchain.blocks
 iterator getBlocks*(blockchain: Blockchain): Block {.raises: [].} =
     for i in blockchain.blocks.items():
         yield i
-
 proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] {.raises: [].} =
-    result = blockchain.difficulties
-
+    blockchain.difficulties
 iterator getDifficulties*(blockchain: Blockchain): Difficulty {.raises: [].} =
     for i in blockchain.difficulties.items():
         yield i

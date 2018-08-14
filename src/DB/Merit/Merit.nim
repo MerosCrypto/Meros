@@ -45,24 +45,14 @@ proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [AssertionErro
     #Have the state process the block.
     merit.state.processBlock(newBlock)
 
-#Getters for:
-#The genesis string.
-#The blockchain height.
-#Blocks (and an iterator for them).
-#An address's balance.
-proc getGenesis*(merit: Merit): string {.raises: [].} =
-    result = merit.blockchain.getGenesis()
-
+#Getters.
 proc getHeight*(merit: Merit): BN {.raises: [].} =
-    result = merit.blockchain.getHeight()
-
+    merit.blockchain.getHeight()
 proc getBlocks*(merit: Merit): DoublyLinkedList[Block] {.raises: [].} =
-    result = merit.blockchain.getBlocks()
-
+    merit.blockchain.getBlocks()
 iterator getBlocks*(merit: Merit): Block {.raises: [].} =
-    var blocks: DoublyLinkedList[Block] = merit.getBlocks()
+    let blocks: DoublyLinkedList[Block] = merit.getBlocks()
     for i in blocks.items():
         yield i
-
 proc getBalance*(merit: Merit, account: string): BN {.raises: [KeyError].} =
-    result = merit.state.getBalance(account)
+    merit.state.getBalance(account)
