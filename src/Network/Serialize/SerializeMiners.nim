@@ -12,7 +12,7 @@ import common
 import strutils
 
 #Serialization function.
-proc serialize*(miners: seq[tuple[miner: string, percent: int]], nonce: BN): string =
+proc serialize*(miners: seq[tuple[miner: string, amount: int]], nonce: BN): string =
     #Create the result.
     result = nonce.toString(255) & delim
 
@@ -20,7 +20,7 @@ proc serialize*(miners: seq[tuple[miner: string, percent: int]], nonce: BN): str
     for miner in 0 ..< miners.len:
         result &=
             Address.toBN(miners[miner].miner).toString(255) !
-            miners[miner].percent.toHex().toBN(16).toString(255)
+            miners[miner].amount.toHex().toBN(16).toString(255)
 
         #Don't add the delimiter to the end of the string.
         if miner != (miners.len - 1):

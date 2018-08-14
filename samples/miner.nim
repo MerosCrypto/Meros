@@ -39,9 +39,9 @@ proc main() =
         nonce: BN = newBN(1)
         time: BN
         proof: BN = newBN()
-        miners: seq[tuple[miner: string, percent: int]] = @[(
+        miners: seq[tuple[miner: string, amount: int]] = @[(
             miner: miner,
-            percent: 1000
+            amount: 1000
         )]
 
     echo "First balance: " & $merit.getBalance(miner)

@@ -46,4 +46,4 @@ proc serialize*(blockArg: Block): string =
         for miner in blockArg.getMiners():
             result &= delim &
                 Address.toBN(miner.miner).toString(255) !
-                $miner.percent
+                $miner.amount

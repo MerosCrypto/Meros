@@ -55,7 +55,7 @@ proc newBlock*(
     merkle: MerkleTree,
     publisher: string,
     proof: string,
-    miners: seq[tuple[miner: string, percent: int]],
+    miners: seq[tuple[miner: string, amount: int]],
     signature: string
 ): Block {.raises: [ValueError].} =
     #Verify the arguments.
@@ -74,13 +74,13 @@ proc newBlock*(
     var
         total: int = 0
     for miner in miners:
-        total += miner.percent
+        total += miner.amount
         if Address.verify(miner.miner) == false:
             raise newException(ValueError, "Invalid address.")
-        if (miner.percent < 1) or (1000 < miner.percent):
-            raise newException(ValueError, "Invalid percent.")
+        if (miner.amount < 1) or (1000 < miner.amount):
+            raise newException(ValueError, "Invalid amount.")
     if total != 1000:
-        raise newException(ValueError, "Invalid total percent.")
+        raise newException(ValueError, "Invalid total amount.")
 
     #Ceate the block.
     result = newBlockObj(

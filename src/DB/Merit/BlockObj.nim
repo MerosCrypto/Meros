@@ -26,8 +26,8 @@ type Block* = ref object of RootObj
     #Argon2d 64 character hash with the hash as the data and proof as the salt.
     argon: string
 
-    #Who to attribute the Merit to (percent ranges from 0 to 100; minimum payout of 0.1%).
-    miners: seq[tuple[miner: string, percent: int]]
+    #Who to attribute the Merit to (amount ranges from 0 to 1000).
+    miners: seq[tuple[miner: string, amount: int]]
     minersHash: string
     signature: string
 
@@ -40,7 +40,7 @@ proc newBlockObj*(
     merkle: MerkleTree,
     publisher: string,
     proof: string,
-    miners: seq[tuple[miner: string, percent: int]],
+    miners: seq[tuple[miner: string, amount: int]],
     signature: string
 ): Block {.raises: [].} =
     Block(
@@ -92,7 +92,7 @@ proc getProof*(blockArg: Block): string {.raises: [].} =
     blockArg.proof
 proc getArgon*(blockArg: Block): string {.raises: [].} =
     blockArg.argon
-proc getMiners*(blockArg: Block): seq[tuple[miner: string, percent: int]] {.raises: [].} =
+proc getMiners*(blockArg: Block): seq[tuple[miner: string, amount: int]] {.raises: [].} =
     blockArg.miners
 proc getMinersHash*(blockArg: Block): string {.raises: [].} =
     blockArg.minersHash
