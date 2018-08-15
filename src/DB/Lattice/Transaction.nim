@@ -130,6 +130,6 @@ proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [ValueError].} 
     #Generate proofs until the SHA512 cubed hash beats the difficulty.
 
 #Sign a TX.
-proc sign*(wallet: Wallet, toSign: Transaction): bool {.raises: [ValueError].} =
+proc sign*(wallet: Wallet, tx: Transaction): bool {.raises: [ValueError].} =
     #Sign the hash of the TX.
-    result = toSign.setSignature(wallet.sign(toSign.getHash()))
+    result = tx.setSignature(wallet.sign(tx.getHash()))
