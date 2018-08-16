@@ -5,8 +5,8 @@ import ../../lib/Base
 #Block lib.
 import Block as BlockFile
 
-#Lists standard lib and string utils.
-import lists, strutils
+#String utils standard lib.
+import strutils
 
 #OS standard lib.
 import os
@@ -36,14 +36,14 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
 
 #Calculate the next difficulty using the blocks, difficulties, period Length, and blocks per period.
 proc calculateNextDifficulty*(
-    blocks: DoublyLinkedList[Block],
-    difficulties: DoublyLinkedList[Difficulty],
+    blocks: seq[Block],
+    difficulties: seq[Difficulty],
     periodInSeconds: int,
     blocksPerPeriod: int
 ): Difficulty {.raises: [ValueError, AssertionError].} =
     var
         #Last difficulty.
-        last: Difficulty = difficulties.tail.value
+        last: Difficulty = difficulties[difficulties.len-1]
         #Blocks in the last period.
         blockCount: int = 0
         rate: float64
@@ -92,8 +92,8 @@ proc calculateNextDifficulty*(
         difficulty = last.difficulty * bnRate
 
     #If the difficulty is lower than the starting difficulty, use that.
-    if difficulty < difficulties.head.value.difficulty:
-        difficulty = difficulties.head.value.difficulty
+    if difficulty < difficulties[0].difficulty:
+        difficulty = difficulties[0].difficulty
 
     #Create the new difficulty.
     result = Difficulty(

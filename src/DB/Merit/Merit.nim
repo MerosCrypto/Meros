@@ -10,9 +10,6 @@ import State
 export Merkle
 export BlockFile
 
-#Lists standard lib.
-import lists
-
 #Merit master object for a blockchain and state.
 type Merit* = ref object of RootObj
     blockchain: Blockchain
@@ -48,11 +45,7 @@ proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [AssertionErro
 #Getters.
 proc getHeight*(merit: Merit): BN {.raises: [].} =
     merit.blockchain.getHeight()
-proc getBlocks*(merit: Merit): DoublyLinkedList[Block] {.raises: [].} =
+proc getBlocks*(merit: Merit): seq[Block] {.raises: [].} =
     merit.blockchain.getBlocks()
-iterator getBlocks*(merit: Merit): Block {.raises: [].} =
-    let blocks: DoublyLinkedList[Block] = merit.getBlocks()
-    for i in blocks.items():
-        yield i
 proc getBalance*(merit: Merit, account: string): BN {.raises: [KeyError].} =
     merit.state.getBalance(account)

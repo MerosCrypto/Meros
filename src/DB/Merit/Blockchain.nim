@@ -10,16 +10,13 @@ import Merkle
 import Block as BlockFile
 import Difficulty as DifficultyFile
 
-#Lists standard lib.
-import lists
-
 #Blockchain object.
 type Blockchain* = ref object of RootObj
     #Blockchain height. BN for compatibility.
     height: BN
-    #Doubly Linked List of all the blocks, and another of all the difficulties.
-    blocks: DoublyLinkedList[Block]
-    difficulties: DoublyLinkedList[Difficulty]
+    #seq of all the blocks, and another of all the difficulties.
+    blocks: seq[Block]
+    difficulties: seq[Difficulty]
 
 #Create a new Blockchain.
 proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, AssertionError].} =
@@ -29,18 +26,18 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Assertio
     #Init the object.
     result = Blockchain(
         height: newBN(),
-        blocks: initDoublyLinkedList[Block](),
-        difficulties: initDoublyLinkedList[Difficulty]()
+        blocks: @[],
+        difficulties: @[]
     )
 
     #Append the starting difficulty.
-    result.difficulties.append(Difficulty(
+    result.difficulties.add(Difficulty(
         start: creation,
         endTime: creation + newBN(60),
         difficulty: "3333333333333333333333333333333333333333333333333333333333333333".toBN(16)
     ))
     #Append the genesis block. Index 0, creation time, mined to a 0'd public key, with a proof that doesn't matter of "0".
-    result.blocks.append(
+    result.blocks.add(
         newStartBlock(genesis)
     )
 
@@ -50,7 +47,7 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Assert
     result = true
 
     #If the last hash is off...
-    if blockchain.blocks.tail.value.getArgon() != newBlock.getLast():
+    if blockchain.blocks[blockchain.blocks.len-1].getArgon() != newBlock.getLast():
         result = false
         return
 
@@ -60,7 +57,7 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Assert
         return
 
     #If the time is before the last block's...
-    if newBlock.getTime() < blockchain.blocks.tail.value.getTime():
+    if newBlock.getTime() < blockchain.blocks[blockchain.blocks.len-1].getTime():
         result = false
         return
 
@@ -70,11 +67,11 @@ proc testBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Assert
         return
 
     #Generate difficulties so we can test the block against the latest difficulty.
-    while blockchain.difficulties.tail.value.endTime < newBlock.getTime():
-        blockchain.difficulties.append(calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, (60), 6))
+    while blockchain.difficulties[blockchain.difficulties.len-1].endTime < newBlock.getTime():
+        blockchain.difficulties.add(calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, (60), 6))
 
     #If the difficulty wasn't beat...
-    if not blockchain.difficulties.tail.value.verifyDifficulty(newBlock):
+    if not blockchain.difficulties[blockchain.difficulties.len-1].verifyDifficulty(newBlock):
         result = false
         return
 
@@ -87,19 +84,13 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Asserti
 
     #If we're still here, increase the height, append the new block, and return true.
     inc(blockchain.height)
-    blockchain.blocks.append(newBlock)
+    blockchain.blocks.add(newBlock)
     result = true
 
 #Getters.
 proc getHeight*(blockchain: Blockchain): BN {.raises: [].} =
     blockchain.height
-proc getBlocks*(blockchain: Blockchain): DoublyLinkedList[Block] {.raises: [].} =
+proc getBlocks*(blockchain: Blockchain): seq[Block] {.raises: [].} =
     blockchain.blocks
-iterator getBlocks*(blockchain: Blockchain): Block {.raises: [].} =
-    for i in blockchain.blocks.items():
-        yield i
-proc getDifficulties*(blockchain: Blockchain): DoublyLinkedList[Difficulty] {.raises: [].} =
+proc getDifficulties*(blockchain: Blockchain): seq[Difficulty] {.raises: [].} =
     blockchain.difficulties
-iterator getDifficulties*(blockchain: Blockchain): Difficulty {.raises: [].} =
-    for i in blockchain.difficulties.items():
-        yield i
