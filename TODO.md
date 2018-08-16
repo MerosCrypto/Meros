@@ -3,7 +3,7 @@
 Core:
 - Verification, Account, Lattice, and Database files.
 - Filesystem code.
-- Move serialize TX to the Serialization files.
+- Put object definitions into dedicated files.
 - Have a way for the network to set difficulty.
 - Network.
 - UI.

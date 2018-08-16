@@ -15,9 +15,12 @@ import ../../Wallet/Wallet
 import ../../Network/Serialize
 
 #Lattice libs.
-import Node
+import objects/NodeObj
 import Verification
-import MeritRemovalObj
+
+#MeritRemoval object.
+import objects/MeritRemovalObj
+export MeritRemovalObj
 
 #Create a new MeritRemoval object.
 proc newMeritRemoval*(nonce: BN, first: Verification, second: Verification): MeritRemoval {.raises: [ResultError, ValueError].} =
@@ -33,11 +36,7 @@ proc newMeritRemoval*(nonce: BN, first: Verification, second: Verification): Mer
         raise newException(ResultError, "Couldn't set the Merit Removal nonce.")
 
     #Set the hash.
-    if not result.setHash(
-        SHA512(
-            result.serialize()
-        )
-    ):
+    if not result.setHash(SHA512(result.serialize())):
         raise newException(ResultError, "Couldn't set the Merit Removal hash.")
 
 #Sign a MeritRemoval object.

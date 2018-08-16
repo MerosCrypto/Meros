@@ -1,6 +1,6 @@
 #Number libs.
-import ../../lib/BN
-import ../../lib/Base
+import ../../../lib/BN
+import ../../../lib/Base
 
 type Node* = ref object of RootObj
     #Type of descendant.
@@ -42,7 +42,7 @@ proc setHash*(node: Node, hash: string): bool =
 #Set the Node signature.
 proc setSignature*(node: Node, signature: string): bool =
     result = true
-    if not node.signature.isNil:
+    if not ((node.signature.isNil) or (not signature.isBase(16))):
         result = false
         return
 

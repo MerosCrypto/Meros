@@ -18,7 +18,7 @@ import ../../Network/Serialize
 
 #Import the Merkle library and BlockObj.
 import Merkle
-import BlockObj
+import objects/BlockObj
 #Export the BlockObj.
 export BlockObj
 

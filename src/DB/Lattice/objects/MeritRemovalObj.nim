@@ -1,6 +1,6 @@
 #Lattice libs.
-import Node
-import Verification
+import NodeObj
+import VerificationObj
 
 #Merit Removal object.
 type MeritRemoval* = ref object of Node
@@ -10,14 +10,14 @@ type MeritRemoval* = ref object of Node
     second: Verification
 
 #New MeritRemoval object.
-proc newMeritRemovalObj*(first: Verification, second: Verification): MeritRemoval =
-    result = MeritRemoval(
+proc newMeritRemovalObj*(first: Verification, second: Verification): MeritRemoval {.raises: [].} =
+    MeritRemoval(
         first: first,
         second: second
     )
 
 #Getters.
-proc getFirst*(mr: MeritRemoval): Verification =
+proc getFirst*(mr: MeritRemoval): Verification {.raises: [].} =
     mr.first
-proc getSecond*(mr: MeritRemoval): Verification =
+proc getSecond*(mr: MeritRemoval): Verification {.raises: [].} =
     mr.second

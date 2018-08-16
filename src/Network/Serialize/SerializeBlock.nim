@@ -6,7 +6,7 @@ import ../../lib/Base
 import ../../Wallet/Address
 
 #Block object.
-import ../../DB/Merit/BlockObj
+import ../../DB/Merit/objects/BlockObj
 
 #Common serialization functions.
 import common
@@ -44,9 +44,11 @@ proc serialize*(blockArg: Block): string =
         #Add on the proof.
         result &= delim & blockArg.getProof().toBN(16).toString(255)
 
+        #Miners.
         for miner in blockArg.getMiners():
             result &= delim &
                 Address.toBN(miner.miner).toString(255) !
                 $miner.amount
 
+        #Signature.
         result &= delim & blockArg.getSignature().toBN(16).toString(255)

@@ -1,8 +1,8 @@
 #Import the BN library.
-import ../../lib/BN
+import ../../../lib/BN
 
 #Import the Merkle library.
-import Merkle
+import ../Merkle
 
 #Define the Block class.
 type Block* = ref object of RootObj
