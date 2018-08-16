@@ -3,7 +3,7 @@ import lib/BN
 import lib/Base
 
 #Time lib.
-import lib/Time as TimeFile
+import lib/Time
 
 #SHA512 lib.
 import lib/SHA512

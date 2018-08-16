@@ -3,12 +3,12 @@ import ../../lib/BN
 
 #Block/Blockchain/State libs.
 import Merkle
-import Block as BlockFile
+import Block
 import Blockchain
 import State
 #Export the Merkle and Block lib for miners.
 export Merkle
-export BlockFile
+export Block
 
 #Merit master object for a blockchain and state.
 type Merit* = ref object of RootObj

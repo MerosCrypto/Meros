@@ -6,7 +6,7 @@ import ../../lib/BN
 import ../../lib/Base
 
 #SHA512 lib.
-import ../../lib/SHA512 as SHA512File
+import ../../lib/SHA512
 import ../../lib/Util
 
 #Wallet libs.
