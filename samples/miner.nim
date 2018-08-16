@@ -12,7 +12,7 @@ import lib/SHA512
 import lib/Argon
 
 #Merit lib.
-import DB/Merit/Merit
+import Database/Merit/Merit
 
 #Wallet lib.
 import Wallet/Wallet

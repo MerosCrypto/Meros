@@ -3,8 +3,8 @@ import ../../lib/BN
 import ../../lib/Base
 
 #MeritRemoval object.
-import ../../DB/Lattice/objects/NodeObj
-import ../../DB/Lattice/objects/MeritRemovalObj
+import ../../Database/Lattice/objects/NodeObj
+import ../../Database/Lattice/objects/MeritRemovalObj
 
 #Common serialization functions.
 import common

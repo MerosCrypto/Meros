@@ -1,8 +1,5 @@
-#Blockchain.
-import ../src/DB/Merit/Merit
-
-#Lattice.
-import ../src/DB/Lattice/Lattice
+#Database
+import ../src/Database/Database
 
 #UI.
 import ../src/UI/UI

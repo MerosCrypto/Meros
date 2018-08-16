@@ -21,7 +21,7 @@ import Transaction
 import objects/VerificationObj
 export VerificationObj
 
-proc newVerification*(tx: Transaction, nonce: BN): Verification {.raises: [ResultError].} =
+proc newVerification*(tx: Transaction, nonce: BN): Verification {.raises: [ResultError, ValueError].} =
     result = newVerificationObj(
         tx.getInput(),
         tx.getNonce(),

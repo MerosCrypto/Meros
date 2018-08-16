@@ -6,13 +6,13 @@ import lib/Base
 import lib/SHA512
 
 #Block, blockchain, and State libs.
-import DB/Merit/Merit
+import Database/Merit/Merit
 
 #Wallet libs.
 import Wallet/Wallet
 
 #Lattice file to make sure those files have valid syntax.
-import DB/Lattice/Lattice
+import Database/Lattice/Lattice
 
 #Demo.
 var

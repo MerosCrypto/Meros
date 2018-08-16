@@ -6,8 +6,8 @@ import ../../lib/Base
 import ../../Wallet/Address
 
 #Verification object.
-import ../../DB/Lattice/objects/NodeObj
-import ../../DB/Lattice/objects/VerificationObj
+import ../../Database/Lattice/objects/NodeObj
+import ../../Database/Lattice/objects/VerificationObj
 
 #Common serialization functions.
 import common

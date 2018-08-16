@@ -9,8 +9,8 @@ import ../../lib/Errors
 import ../../Wallet/Address
 
 #Transaction object.
-import ../../DB/Lattice/objects/NodeObj
-import ../../DB/Lattice/objects/TransactionObj
+import ../../Database/Lattice/objects/NodeObj
+import ../../Database/Lattice/objects/TransactionObj
 
 #Common serialization functions.
 import common

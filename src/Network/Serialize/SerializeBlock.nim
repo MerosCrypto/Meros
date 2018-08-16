@@ -6,7 +6,7 @@ import ../../lib/Base
 import ../../Wallet/Address
 
 #Block object.
-import ../../DB/Merit/objects/BlockObj
+import ../../Database/Merit/objects/BlockObj
 
 #Common serialization functions.
 import common
