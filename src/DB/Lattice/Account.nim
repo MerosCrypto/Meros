@@ -25,7 +25,7 @@ proc addMeritRemoval(account: Account, mr: MeritRemoval): bool {.raises: [].} =
     discard
 
 proc addNode*(account: Account, node: Node): bool {.raises: [].} =
-    if newBN(account.getTransactions().len) != node.getNonce():
+    if newBN(account.getNodes().len) != node.getNonce():
         result = false
         return
 
