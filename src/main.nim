@@ -3,7 +3,7 @@ import lib/BN
 import lib/Base
 
 #SHA512 lib.
-import lib/SHA512 as SHA512File
+import lib/SHA512
 
 #Block, blockchain, and State libs.
 import DB/Merit/Merit

@@ -2,9 +2,9 @@
 
 Core:
 - Add parse functions to serialize.
+- Put object definitions into dedicated files.
 - Verification, Account, Lattice, and Database files.
 - Filesystem code.
-- Put object definitions into dedicated files.
 - Have a way for the network to set difficulty.
 - Network.
 - UI.

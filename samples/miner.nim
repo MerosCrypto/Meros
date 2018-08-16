@@ -66,14 +66,15 @@ proc main() =
             wallet.sign(SHA512(miners.serialize(nonce)))
         )
 
-        #Test it.
-        if not merit.testBlock(newBlock):
+        #Try to add it.
+        if not merit.processBlock(newBlock):
             #If it's invalid, increase the proof and continue.
             inc(proof)
             continue
 
-        #If it's valid, have the state process it.
-        discard merit.processBlock(newBlock)
+        #If we didn't continue, the block was valid! Print that we mined a block!
+        echo "Mined a block: " & $nonce
+        echo "The miner's Merit is " & $merit.getBalance(miner) & "."
 
         #Print that we mined a block!
         echo "Mined a block: " & $nonce
