@@ -26,11 +26,11 @@ import strutils
 
 #Create a new  node.
 proc newTransaction*(
-    nonce: BN,
     input: string,
     output: string,
     amount: BN,
-    data: seq[uint8]
+    data: seq[uint8],
+    nonce: BN
 ): Transaction {.raises: [ResultError, ValueError].} =
     #Verify input/output.
     if (not Wallet.verify(input)) or (not Wallet.verify(output)):

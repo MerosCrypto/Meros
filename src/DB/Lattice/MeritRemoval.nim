@@ -14,7 +14,7 @@ import ../../Wallet/Wallet
 #Import the Serialization library.
 import ../../Network/Serialize
 
-#Lattice libs.
+#Node object and Verification lib.
 import objects/NodeObj
 import Verification
 
@@ -23,7 +23,7 @@ import objects/MeritRemovalObj
 export MeritRemovalObj
 
 #Create a new MeritRemoval object.
-proc newMeritRemoval*(nonce: BN, first: Verification, second: Verification): MeritRemoval {.raises: [ResultError, ValueError].} =
+proc newMeritRemoval*(first: Verification, second: Verification, nonce: BN): MeritRemoval {.raises: [ResultError, ValueError].} =
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)
 

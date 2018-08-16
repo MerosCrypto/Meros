@@ -17,3 +17,6 @@ proc serialize*(mr: MeritRemoval): string =
             mr.getFirst().getHash() &
             mr.getSecond().getHash()
         ).toBN(16).toString(255)
+
+    if mr.getHash().len == 128:
+        result &= delim & mr.getSignature().toBN(16).toString(255)
