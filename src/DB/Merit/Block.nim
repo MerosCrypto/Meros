@@ -25,27 +25,6 @@ export BlockObj
 #String utils standard library.
 import strutils
 
-#Block 0 function. Creates a new block without caring about the data.
-proc newStartBlock*(genesis: string): Block {.raises: [ValueError, AssertionError].} =
-    #Ceate the block.
-    result = newBlockObj(
-        "",
-        newBN(),
-        getTime(),
-        @[],
-        newMerkleTree(@[]),
-        "",
-        "00",
-        @[],
-        ""
-    )
-    #Calculate the hash.
-    result.setHash(SHA512(genesis))
-    #Calculate the Argon hash.
-    result.setArgon(Argon(result.getHash(), result.getProof()))
-    #Calculate the miners hash.
-    result.setMinersHash(SHA512($((char) 0)))
-
 #New Block function. Creates a new block. Raises an error if there's an issue.
 proc newBlock*(
     last: string,

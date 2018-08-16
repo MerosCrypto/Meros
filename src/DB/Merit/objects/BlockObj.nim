@@ -1,5 +1,14 @@
-#Import the BN library.
+#BN library.
 import ../../../lib/BN
+
+#Time library.
+import ../../../lib/Time
+
+#SHA512 library.
+import ../../../lib/SHA512
+
+#Argon library.
+import ../../../lib/Argon
 
 #Import the Merkle library.
 import ../Merkle
@@ -53,6 +62,27 @@ proc newBlockObj*(
         proof: proof,
         miners: miners
     )
+
+#Creates a new block without caring about the data.
+proc newStartBlock*(genesis: string): Block {.raises: [ValueError, AssertionError].} =
+    #Ceate the block.
+    result = newBlockObj(
+        "",
+        newBN(),
+        getTime(),
+        @[],
+        newMerkleTree(@[]),
+        "",
+        "00",
+        @[],
+        ""
+    )
+    #Calculate the hash.
+    result.hash = SHA512(genesis)
+    #Calculate the Argon hash.
+    result.argon = Argon(result.hash, result.proof)
+    #Calculate the miners hash.
+    result.minersHash = SHA512("00")
 
 #Setters.
 proc setHash*(blockArg: Block, hash: string) {.raises: [ValueError].} =

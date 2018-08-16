@@ -3,7 +3,7 @@ import ../../lib/BN
 import ../../lib/Base
 
 #Block lib.
-import Block as BlockFile
+import Block
 
 #String utils standard lib.
 import strutils
@@ -12,25 +12,20 @@ import strutils
 import os
 
 #Difficulty object.
-type Difficulty* = ref object of RootObj
-    #Start of the period.
-    start*: BN
-    #End of the period.
-    endTime*: BN
-    #Difficulty to beat.
-    difficulty*: BN
+import objects/DifficultyObj
+export DifficultyObj
 
 #Verifies a difficulty against a block.
 proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =
     result = true
 
     #If it's for the wrong time...
-    if (diff.start > newBlock.getTime()) or (diff.endTime <= newBlock.getTime()):
+    if (diff.getStart() > newBlock.getTime()) or (diff.getEnd() <= newBlock.getTime()):
         result = false
         return
 
     #If the Argon hash didn't beat the difficulty...
-    if newBlock.getArgon().toBN(16) < diff.difficulty:
+    if newBlock.getArgon().toBN(16) < diff.getDifficulty():
         result = false
         return
 
@@ -52,7 +47,7 @@ proc calculateNextDifficulty*(
     #Iterate through every block.
     for b in items(blocks):
         #Continue if the b is out of the period.
-        if (b.getTime() < last.start) or (last.endTime <= b.getTime()):
+        if (b.getTime() < last.getStart()) or (last.getEnd() <= b.getTime()):
             continue
         #Else, increment the block count for the last period.
         inc(blockCount)
@@ -64,10 +59,10 @@ proc calculateNextDifficulty*(
     #Else, if there were as many blocks as the target...
     elif blocksPerPeriod == blockCount:
         #Use the same difficulty.
-        result = Difficulty(
-            start: last.endTime,
-            endTime: last.endTime + newBN(periodInSeconds),
-            difficulty: last.difficulty
+        result = newDifficultyObj(
+            last.getEnd(),
+            last.getEnd() + newBN(periodInSeconds),
+            last.getDifficulty()
         )
         return
     #Else, if the count was less than the blocks per period target...
@@ -85,19 +80,19 @@ proc calculateNextDifficulty*(
     #If the count was lower than the target...
     if blockCount < blocksPerPeriod:
         #The difficulty is the last one divided by the rate.
-        difficulty = last.difficulty / bnRate
+        difficulty = last.getDifficulty() / bnRate
     #Else, if the count was higher than the target...
     elif blockCount > blocksPerPeriod:
         #The difficulty is the last one multiplied by the rate.
-        difficulty = last.difficulty * bnRate
+        difficulty = last.getDifficulty() * bnRate
 
     #If the difficulty is lower than the starting difficulty, use that.
-    if difficulty < difficulties[0].difficulty:
-        difficulty = difficulties[0].difficulty
+    if difficulty < difficulties[0].getDifficulty():
+        difficulty = difficulties[0].getDifficulty()
 
     #Create the new difficulty.
-    result = Difficulty(
-        start: last.endTime,
-        endTime: last.endTime + newBN(periodInSeconds),
-        difficulty: difficulty
+    result = newDifficultyObj(
+        last.getEnd(),
+        last.getEnd() + newBN(periodInSeconds),
+        difficulty
     )

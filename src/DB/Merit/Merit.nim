@@ -22,14 +22,6 @@ proc newMerit*(genesis: string): Merit {.raises: [ValueError, AssertionError].} 
         state: newState()
     )
 
-#Tests a block.
-proc testBlock*(merit: Merit, newBlock: Block): bool {.raises: [AssertionError, Exception].} =
-    result = true
-    #If the blockchain rejects the block...
-    if not merit.blockchain.testBlock(newBlock):
-        result = false
-        return
-
 #Add a block.
 proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [AssertionError, Exception].} =
     result = true
