@@ -4,7 +4,7 @@ import Serialize/SerializeMiners
 import Serialize/SerializeBlock
 
 #Lattice sub-libs.
-import Serialize/SerializeTX
+import Serialize/SerializeTransaction
 import Serialize/SerializeVerification
 import Serialize/SerializeMeritRemoval
 
@@ -12,6 +12,6 @@ import Serialize/SerializeMeritRemoval
 export SerializeMiners
 export SerializeBlock
 
-export SerializeTX
+export SerializeTransaction
 export SerializeVerification
 export SerializeMeritRemoval

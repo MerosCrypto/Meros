@@ -1,13 +1,12 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Number libs.
+#Numerical libs.
 import ../../lib/BN
 import ../../lib/Base
 
 #SHA512 lib.
 import ../../lib/SHA512
-import ../../lib/Util
 
 #Wallet libs.
 import ../../Wallet/Wallet
@@ -63,11 +62,11 @@ proc newTransaction*(
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
     if not result.setNonce(nonce):
-        raise newException(ResultError, "Setting the TX nonce failed.")
+        raise newException(ResultError, "Setting the Transaction nonce failed.")
 
     #Set the hash.
     if not result.setHash(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the TX hash.")
+        raise newException(ResultError, "Couldn't set the Transaction hash.")
 
 #'Mine' a TX (beat the spam filter).
 #IN PROGRESS.
