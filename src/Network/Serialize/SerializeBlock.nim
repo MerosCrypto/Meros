@@ -1,4 +1,4 @@
-#Number libs.
+#Numerical libs.
 import ../../lib/BN
 import ../../lib/Base
 
@@ -11,13 +11,14 @@ import ../../DB/Merit/BlockObj
 #Common serialization functions.
 import common
 
+#Serialize a Block.
 proc serialize*(blockArg: Block): string =
     #Create the result.
     result =
-        #Last block.
-        blockArg.getLast().toBN(16).toString(255) !
         #Nonce.
         blockArg.getNonce().toString(255) !
+        #Last block.
+        blockArg.getLast().toBN(16).toString(255) !
         #Time.
         blockArg.getTime().toString(255) !
         #Amount of validations.
@@ -47,3 +48,5 @@ proc serialize*(blockArg: Block): string =
             result &= delim &
                 Address.toBN(miner.miner).toString(255) !
                 $miner.amount
+
+        result &= delim & blockArg.getSignature().toBN(16).toString(255)
