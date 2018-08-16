@@ -11,8 +11,8 @@ import DB/Merit/Merit
 #Wallet libs.
 import Wallet/Wallet
 
-#Transaction file to make sure it has valid syntax.
-import DB/Lattice/Transaction
+#Lattice file to make sure those files have valid syntax.
+import DB/Lattice/Lattice
 
 #Demo.
 var

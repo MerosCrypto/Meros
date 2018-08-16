@@ -16,8 +16,7 @@ switch("lineTrace", "on")
 switch("stackTrace", "on")
 switch("excessiveStackTrace", "on")
 
-#Rebuild on compile and enable parallel building.
-switch("forceBuild")
+#Enable parallel building.
 switch("parallelBuild", "0")
 
 #Build for release (which eliminates dead code) and optimize for size.
