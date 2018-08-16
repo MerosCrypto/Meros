@@ -112,6 +112,10 @@ proc newTransaction*(
         diffUnits: newBN(1 + (2 * data.len))
     )
 
+    #Set the descendant type.
+    if not result.setDescendant(1):
+        raise newException(ResultError, "Couldn't set the node's descendant type.")
+
     if not result.setNonce(nonce):
         raise newException(ResultError, "Setting the TX nonce failed.")
 
