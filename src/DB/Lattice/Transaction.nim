@@ -33,7 +33,7 @@ proc newTransaction*(
     amount: BN,
     data: seq[uint8]
 ): Transaction {.raises: [ResultError, ValueError].} =
-    #verify input/output.
+    #Verify input/output.
     if (not Wallet.verify(input)) or (not Wallet.verify(output)):
         raise newException(ValueError, "Transaction addresses are not valid.")
 

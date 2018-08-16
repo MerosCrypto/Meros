@@ -1,6 +1,7 @@
 # TODO
 
 Core:
+- Add parse functions to serialize.
 - Verification, Account, Lattice, and Database files.
 - Filesystem code.
 - Put object definitions into dedicated files.
