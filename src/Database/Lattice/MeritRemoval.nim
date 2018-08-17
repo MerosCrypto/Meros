@@ -28,7 +28,7 @@ proc newMeritRemoval*(first: Verification, second: Verification, nonce: BN): Mer
     result = newMeritRemovalObj(first, second)
 
     #Set the descendant type.
-    if not result.setDescendant(3):
+    if not result.setDescendant(4):
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
     #Set the nonce.

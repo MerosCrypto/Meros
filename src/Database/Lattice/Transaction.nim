@@ -1,9 +1,8 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Numerical libs.
+#BN lib.
 import ../../lib/BN
-import ../../lib/Base
 
 #SHA512 lib.
 import ../../lib/SHA512
@@ -29,7 +28,6 @@ proc newTransaction*(
     input: string,
     output: string,
     amount: BN,
-    data: seq[uint8],
     nonce: BN
 ): Transaction {.raises: [ResultError, ValueError].} =
     #Verify input/output.
@@ -40,21 +38,11 @@ proc newTransaction*(
     if amount < BNNums.ZERO:
         raise newException(ValueError, "Transaction amount is negative.")
 
-    #Verify the data argument.
-    if data.len > 127:
-        raise newException(ValueError, "Transaction data was too long.")
-
-    #Turn data into a hex string in order to hash it.
-    var dataHex: string = ""
-    for i in data:
-        dataHex = dataHex & $i.toHex()
-
     #Craft the result.
     result = newTransactionObj(
         input,
         output,
-        amount,
-        data
+        amount
     )
 
     #Set the descendant type.
@@ -70,15 +58,9 @@ proc newTransaction*(
 
 #'Mine' a TX (beat the spam filter).
 #IN PROGRESS.
-proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [ValueError].} =
-    if toMine.getDiffUnits().isNil:
-        raise newException(ValueError, "Transaction didn't have its difficulty units set..")
-
-    #Check the networkDifficulty value.
-
-    var difficulty: BN = toMine.getDiffUnits() * networkDifficulty
-
-    #Generate proofs until the SHA512 cubed hash beats the difficulty.
+proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [].} =
+    #Generate proofs until the reduced Argon2 hash beats the difficulty.
+    discard
 
 #Sign a TX.
 proc sign*(wallet: Wallet, tx: Transaction): bool {.raises: [ValueError].} =

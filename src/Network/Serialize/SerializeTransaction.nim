@@ -23,9 +23,6 @@ proc serialize*(tx: Transaction): string {.raises: [ValueError].} =
         tx.getOutput().substr(3, tx.getOutput().len).toBN(58).toString(255) !
         tx.getAmount().toString(255) & delim
 
-    for i in tx.getData():
-        result = result & $((char) i)
-
     if not tx.getProof().isNil:
         result &= delim &
             tx.getProof().toString(255) !

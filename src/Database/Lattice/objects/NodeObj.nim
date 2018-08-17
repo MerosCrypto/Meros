@@ -33,7 +33,7 @@ proc setNonce*(node: Node, nonce: BN): bool =
 #Set the Node hash.
 proc setHash*(node: Node, hash: string): bool =
     result = true
-    if (not node.hash.isNil) or (not hash.isBase(16)):
+    if node.hash.len != 0:
         result = false
         return
 
