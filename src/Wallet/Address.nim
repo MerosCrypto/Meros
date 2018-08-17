@@ -9,52 +9,46 @@ import ../lib/SHA512 as SHA512File
 import PublicKey
 
 #Generates a checksum for the public key.
-#The checksum is the Base58 version of the concatenated 10th, 18th, 26th, 34th, 42nd, 50th, 58th, and 66th key characters.
+#The checksum is the last 4 characters of the Base58 version of the SHA512 cubed hash of the key.
 proc generateChecksum(key: string): string {.raises: [Exception].} =
-    result = (key[9] & key[17] & key[25] & key[33] & key[41] & key[49] & key[57] & key[65]).toBN(16).toString(58)
-
-#Generates an address based on a public key.
-#An address is composed of the following:
-#   1. "Emb" prefix.
-#   2. Base58 encoded version of the first 78 characters of the SHA512 cubed SHA512(SHA512(SHA512(key))) hash.
-#   3. A checksum (described above).
-#The Emb prefix is for easy identification.
-#The SHA512 cubed hash is for security, and the 78 characters bit is to lower the address length from ~90 to ~60 (post Base58 encoding).
-#The checksum, which only comments on what public key it's valid with, not if the address is valid, is in case of a 80/128 character hash collision.
-#Finally, if the address (not including the Emb prefix):
-#   A: Less than 57 characters, 0s are prefixed to it.
-#   B: Greater than 61, the first character(s) are removed until it's 61.
-#This is a really poor secondary checksum/safety buffer which makes the address between 60 and 64 characters, with the prefix.
-proc newAddress*(key: string): string {.raises: [ValueError, Exception].} =
-    if (key.len != 66):
-        raise newException(ValueError, "Public Key isn't compressed.")
-
-    #Base58 encoded version of the first 78 characters, and append the checksum of the key.
     result =
         (
             (SHA512^3)(
                 key.toBN(16).toString(256)
             )
         )
-        .substr(0, 77)
+        .toBN(16)
+        .toString(58)
+    result = result.substr(result.len - 4, result.len)
+
+#Generates an address based on a public key.
+#An address is composed of the following:
+#   1. "Emb" prefix.
+#   2. Base58 encoded version of the public key.
+#   3. A checksum (described above).
+#The Emb prefix is for easy identification.
+#The public key is because we need it; Base58 encoding is to save space.
+#The checksum is to verify the user typed a valid address.
+proc newAddress*(key: string): string {.raises: [ValueError, Exception].} =
+    if (key.len != 66):
+        raise newException(ValueError, "Public Key isn't compressed.")
+
+    #Base58 encoded version of the compressed public key, plus a checksum of said public key.
+    result =
+        key
         .toBN(16)
         .toString(58) &
         generateChecksum(key)
 
-    while result.len < 57:
-        result = "0" & result
-
-    if result.len > 61:
-        result = result.substr(result.len - 61, result.len)
-
+    #Add the EMB prefix.
     result = "Emb" & result
 
 #Work with Public Keys objects, not just hex public keys.
-proc newAddress*(key: PublicKey): string {.raises: [ValueError, Exception].} =
+proc newAddress*(key: PublicKey): string {.raises: [ ValueError, Exception].} =
     result = newAddress($key)
 
 #Verifies if an address is valid.
-proc verify*(address: string): bool {.raises: [].} =
+proc verify*(address: string): bool {.raises: [ValueError, Exception].} =
     #Return true if there's no issue.
     result = true
 
@@ -63,31 +57,35 @@ proc verify*(address: string): bool {.raises: [].} =
         result = false
         return
 
-    #Check the lengths.
-    if address.len < 60:
-        result = false
-        return
-    if address.len > 64:
+    #Check to make sure it's a valid Base58 number.
+    if not address.substr(3, address.len).isBase(58):
         result = false
         return
 
-    #Check to make sure it's a valid Base58 number, if there's no prefix.
-    if not address.substr(3, address.len).isBase(58):
+    #Verify the public key format.
+    let key: string = address.substr(3, address.len-5).toBN(58).toString(16)
+    if (key.substr(0, 1) != "02") and (key.substr(0, 1) != "03"):
         result = false
+        return
+
+    #Verify the checksum.
+    if address.substr(address.len-4, address.len) != generateChecksum(key):
+        result = false
+        return
 
 #If we have a key to check with, make an address for that key and compare with the given address.
 proc verify*(address: string, key: string): bool {.raises: [ValueError, Exception].} =
-    result = address == newAddress(key)
+    address == newAddress(key)
 
 #Work with Public Keys objects, not just hex public keys.
 proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError, Exception].} =
-    return verify(address, $key)
+    verify(address, $key)
 
-proc toBN*(address: string): BN {.raises: [ValueError].} =
+proc toBN*(address: string): BN {.raises: [ValueError, Exception].} =
     if not verify(address):
         raise newException(ValueError, "Invalid Address.")
 
-    result = address.substr(3, address.len).toBN(58)
+    result = address.substr(3, 39).toBN(58)
 
 proc toBN*(address: PublicKey): BN {.raises: [ValueError, Exception].} =
     toBN(newAddress(address))

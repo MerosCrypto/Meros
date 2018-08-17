@@ -16,11 +16,11 @@ import ../../Database/Lattice/objects/TransactionObj
 import common
 
 #Serialize a Transaction.
-proc serialize*(tx: Transaction): string {.raises: [ValueError].} =
+proc serialize*(tx: Transaction): string {.raises: [ValueError, Exception].} =
     result =
         tx.getNonce().toString(255) !
-        tx.getInput().substr(3, tx.getInput().len).toBN(58).toString(255) !
-        tx.getOutput().substr(3, tx.getOutput().len).toBN(58).toString(255) !
+        Address.toBN(tx.getInput()).toString(255) !
+        Address.toBN(tx.getInput()).toString(255) !
         tx.getAmount().toString(255) & delim
 
     if not tx.getProof().isNil:
