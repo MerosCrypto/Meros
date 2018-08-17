@@ -68,7 +68,7 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.r
         memory = 18
     else:
         iterations = 100
-        memory = 1
+        memory = 8
 
     #Iterate 10000 times, using 200MB, with no parallelism.
     #The iteration quantity and memory usage values are for testing only.
