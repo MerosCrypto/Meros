@@ -36,7 +36,7 @@ proc newBlock*(
     proof: string,
     miners: seq[tuple[miner: string, amount: int]],
     signature: string
-): Block {.raises: [ValueError].} =
+): Block {.raises: [ValueError, Exception].} =
     #Verify the arguments.
     #Validations.
     for validation in validations:

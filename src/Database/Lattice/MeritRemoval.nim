@@ -23,7 +23,7 @@ import objects/MeritRemovalObj
 export MeritRemovalObj
 
 #Create a new MeritRemoval object.
-proc newMeritRemoval*(first: Verification, second: Verification, nonce: BN): MeritRemoval {.raises: [ResultError, ValueError].} =
+proc newMeritRemoval*(first: Verification, second: Verification, nonce: BN): MeritRemoval {.raises: [ResultError, ValueError, Exception].} =
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)
 

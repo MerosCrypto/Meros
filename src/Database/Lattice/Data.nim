@@ -26,7 +26,7 @@ export DataObj
 proc newData*(
     data: seq[uint8],
     nonce: BN
-): Data {.raises: [ResultError, ValueError].} =
+): Data {.raises: [ResultError, ValueError, Exception].} =
     #Verify the data argument.
     if data.len > 1024:
         raise newException(ValueError, "Data data was too long.")
