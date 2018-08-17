@@ -85,7 +85,7 @@ proc toBN*(address: string): BN {.raises: [ValueError, Exception].} =
     if not verify(address):
         raise newException(ValueError, "Invalid Address.")
 
-    result = address.substr(3, 39).toBN(58)
+    result = address.substr(3, address.len-5).toBN(58)
 
 proc toBN*(address: PublicKey): BN {.raises: [ValueError, Exception].} =
     toBN(newAddress(address))
