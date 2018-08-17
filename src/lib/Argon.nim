@@ -33,7 +33,7 @@ proc argon2d(
 ): cint {.header: "../../src/lib/Argon/include/argon2.h", importc: "argon2d_hash_raw".}
 
 #Take in data (128 char max) and a salt (64 char max), return a 64 character string.
-proc Argon*(dataArg: string, saltArg: string): string {.raises: [ResultError, ValueError].} =
+proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.raises: [ResultError, ValueError].} =
     var
         data: string = dataArg
         salt: string = saltArg
@@ -60,12 +60,22 @@ proc Argon*(dataArg: string, saltArg: string): string {.raises: [ResultError, Va
     for i in countup(0, 63, 2):
         saltArr[(int) i/2] = (uint8) parseHexInt(salt[i .. i+1])
 
+    var
+        iterations: uint32
+        memory: uint32
+    if not reduced:
+        iterations = 10000
+        memory = 18
+    else:
+        iterations = 100
+        memory = 1
+
     #Iterate 10000 times, using 200MB, with no parallelism.
     #The iteration quantity and memory usage values are for testing only.
     #They are not final and will be changed.
     if argon2d(
-        (uint32) 10000,
-        (uint32) 18,
+        iterations,
+        memory,
         (uint32) 1,
         cast[ptr uint8](addr dataArr[0]),
         (uint32) 64,

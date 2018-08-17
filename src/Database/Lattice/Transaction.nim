@@ -1,11 +1,13 @@
 #Errors lib.
 import ../../lib/Errors
 
-#BN lib.
+#Numerical libs.
 import ../../lib/BN
+import ../../lib/Base
 
-#SHA512 lib.
+#Hashing libs.
 import ../../lib/SHA512
+import ../../lib/Argon
 
 #Wallet libs.
 import ../../Wallet/Wallet
@@ -49,20 +51,34 @@ proc newTransaction*(
     if not result.setDescendant(1):
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
+    #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ResultError, "Setting the Transaction nonce failed.")
 
     #Set the hash.
-    if not result.setHash(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the Transaction hash.")
+    if not result.setSHA512(SHA512(result.serialize())):
+        raise newException(ResultError, "Couldn't set the Transaction SHA512.")
 
 #'Mine' a TX (beat the spam filter).
-#IN PROGRESS.
-proc mine*(toMine: Transaction, networkDifficulty: BN) {.raises: [].} =
+proc mine*(tx: Transaction, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
-    discard
+    var
+        proof: BN = newBN()
+        hash: string = "00"
+
+    while hash.toBN(16) < networkDifficulty:
+        hash = Argon(tx.getSHA512(), proof.toString(16), true)
+
+    if tx.setProof(proof) == false:
+        raise newException(ResultError, "Couldn't set the Transaction proof.")
+    if tx.setHash(hash) == false:
+        raise newException(ResultError, "Couldn't set the Transaction hash.")
 
 #Sign a TX.
 proc sign*(wallet: Wallet, tx: Transaction): bool {.raises: [ValueError].} =
+    if tx.getProof().isNil:
+        result = false
+        return
+
     #Sign the hash of the TX.
     result = tx.setSignature(wallet.sign(tx.getHash()))

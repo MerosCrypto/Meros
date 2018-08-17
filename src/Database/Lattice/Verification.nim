@@ -32,6 +32,7 @@ proc newVerification*(tx: Transaction, nonce: BN): Verification {.raises: [Resul
     if not result.setDescendant(3):
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
+    #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ResultError, "Setting the Verification nonce failed.")
 

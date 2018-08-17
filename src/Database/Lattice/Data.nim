@@ -1,11 +1,13 @@
 #Errors lib.
 import ../../lib/Errors
 
-#BN lib.
+#Numerical libs.
 import ../../lib/BN
+import ../../lib/Base
 
-#SHA512 lib.
+#Hashing libs.
 import ../../lib/SHA512
+import ../../lib/Argon
 
 #Wallet libs.
 import ../../Wallet/Wallet
@@ -38,6 +40,7 @@ proc newData*(
     if not result.setDescendant(2):
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
+    #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ResultError, "Setting the Data nonce failed.")
 
@@ -46,9 +49,19 @@ proc newData*(
         raise newException(ResultError, "Couldn't set the Data hash.")
 
 #'Mine' the data (beat the spam filter).
-proc mine*(toMine: Data, networkDifficulty: BN) {.raises: [].} =
-    #Generate proofs until the SHA512 cubed hash beats the difficulty.
-    discard
+proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =
+    #Generate proofs until the reduced Argon2 hash beats the difficulty.
+    var
+        proof: BN = newBN()
+        hash: string = "00"
+
+    while hash.toBN(16) < networkDifficulty:
+        hash = Argon(data.getSHA512(), proof.toString(16), true)
+
+    if data.setProof(proof) == false:
+        raise newException(ResultError, "Couldn't set the Data proof.")
+    if data.setHash(hash) == false:
+        raise newException(ResultError, "Couldn't set the Data hash.")
 
 #Sign a TX.
 proc sign*(wallet: Wallet, data: Data): bool {.raises: [ValueError].} =
