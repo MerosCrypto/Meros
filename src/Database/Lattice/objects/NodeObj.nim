@@ -5,6 +5,8 @@ import ../../../lib/Base
 type Node* = ref object of RootObj
     #Type of descendant.
     descendant: int
+    #Address behind the node.
+    sender: string
     #Index on the account.
     nonce: BN
     #Node hash.
@@ -12,7 +14,7 @@ type Node* = ref object of RootObj
     #Signature.
     signature: string
 
-#Set the Node descendant
+#Set the Node .
 proc setDescendant*(node: Node, descendant: int): bool =
     result = true
     if node.descendant != 0:
@@ -20,6 +22,15 @@ proc setDescendant*(node: Node, descendant: int): bool =
         return
 
     node.descendant = descendant
+
+#Set the sender.
+proc setSender*(node: Node, sender: string): bool =
+    result = true
+    if node.sender.len != 0:
+        result = false
+        return
+
+    node.sender = sender
 
 #Set the Node nonce.
 proc setNonce*(node: Node, nonce: BN): bool =
@@ -51,6 +62,8 @@ proc setSignature*(node: Node, signature: string): bool =
 #Getters.
 proc getDescendant*(node: Node): int =
     node.descendant
+proc getSender*(node: Node): string =
+    node.sender
 proc getNonce*(node: Node): BN =
     node.nonce
 proc getHash*(node: Node): string =
