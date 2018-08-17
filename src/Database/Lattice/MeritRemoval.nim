@@ -28,7 +28,7 @@ proc newMeritRemoval*(first: Verification, second: Verification, nonce: BN): Mer
     result = newMeritRemovalObj(first, second)
 
     #Set the descendant type.
-    if not result.setDescendant(4):
+    if not result.setDescendant(5):
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
     #Set the nonce.
@@ -40,6 +40,15 @@ proc newMeritRemoval*(first: Verification, second: Verification, nonce: BN): Mer
         raise newException(ResultError, "Couldn't set the Merit Removal hash.")
 
 #Sign a MeritRemoval object.
-proc sign*(wallet: Wallet, removal: MeritRemoval): bool {.raises: [ValueError].} =
-    #Sign the hash of the TX.
-    result = removal.setSignature(wallet.sign(removal.getHash()))
+proc sign*(wallet: Wallet, mr: MeritRemoval): bool {.raises: [ValueError].} =
+    result = true
+
+    #Set the sender behind the node.
+    if not mr.setSender(wallet.getAddress()):
+        result = false
+        return
+
+    #Sign the hash of the MR.
+    if not mr.setSignature(wallet.sign(mr.getHash())):
+        result = false
+        return

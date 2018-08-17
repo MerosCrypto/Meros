@@ -37,7 +37,7 @@ proc newData*(
     )
 
     #Set the descendant type.
-    if not result.setDescendant(2):
+    if not result.setDescendant(3):
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
     #Set the nonce.
@@ -65,5 +65,14 @@ proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError
 
 #Sign a TX.
 proc sign*(wallet: Wallet, data: Data): bool {.raises: [ValueError].} =
-    #Sign the hash of the TX.
-    result = data.setSignature(wallet.sign(data.getHash()))
+    result = true
+
+    #Set the sender behind the node.
+    if not data.setSender(wallet.getAddress()):
+        result = false
+        return
+
+    #Sign the hash of the Data.
+    if not data.setSignature(wallet.sign(data.getHash())):
+        result = false
+        return

@@ -2,8 +2,8 @@
 import ../../lib/BN
 import ../../lib/Base
 
-#Errors lib.
-import ../../lib/Errors
+#Address library.
+import ../../Wallet/Address
 
 #Node and Data objects.
 import ../../Database/Lattice/objects/NodeObj
@@ -21,7 +21,9 @@ proc serialize*(data: Data): string =
     for i in data.getData():
         result &= delim & $i.toHex()
 
-    if not data.getProof().isNil:
-        result &= delim &
+    if data.getHash().len != 0:
+        result =
+            Address.toBN(data.getSender()).toString(255) !
+            result !
             data.getProof().toString(255) !
             data.getSignature().toBN(16).toString(255)

@@ -2,6 +2,9 @@
 import ../../lib/BN
 import ../../lib/Base
 
+#Address library.
+import ../../Wallet/Address
+
 #MeritRemoval object.
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/MeritRemovalObj
@@ -18,5 +21,8 @@ proc serialize*(mr: MeritRemoval): string =
             mr.getSecond().getHash()
         ).toBN(16).toString(255)
 
-    if mr.getHash().len == 128:
-        result &= delim & mr.getSignature().toBN(16).toString(255)
+    if mr.getHash().len != 0:
+        result =
+            Address.toBN(mr.getSender()).toString(255) !
+            result !
+            mr.getSignature().toBN(16).toString(255)

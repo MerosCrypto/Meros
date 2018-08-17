@@ -20,5 +20,8 @@ proc serialize*(verif: Verification): string =
         verif.getIndex().toString(255) !
         verif.getTransaction().toBN(16).toString(255)
 
-    if verif.getHash().len == 128:
-        result &= delim & verif.getSignature().toBN(16).toString(255)
+    if verif.getHash().len != 0:
+        result =
+            Address.toBN(verif.getSender()).toString(255) !
+            result !
+            verif.getSignature().toBN(16).toString(255)

@@ -13,23 +13,23 @@ import ../../Wallet/Wallet
 #Import the Serialization library.
 import ../../Network/Serialize
 
-#Node object and Transaction lib.
+#Node object and Send lib.
 import objects/NodeObj
-import Transaction
+import Send
 
-#Transaction object.
+#Send object.
 import objects/VerificationObj
 export VerificationObj
 
-proc newVerification*(tx: Transaction, nonce: BN): Verification {.raises: [ResultError, ValueError].} =
+proc newVerification*(send: Send, nonce: BN): Verification {.raises: [ResultError, ValueError, Exception].} =
     result = newVerificationObj(
-        tx.getInput(),
-        tx.getNonce(),
-        tx.getHash()
+        send.getSender(),
+        send.getNonce(),
+        send.getHash()
     )
 
     #Set the descendant type.
-    if not result.setDescendant(3):
+    if not result.setDescendant(4):
         raise newException(ResultError, "Couldn't set the node's descendant type.")
 
     #Set the nonce.
@@ -42,5 +42,14 @@ proc newVerification*(tx: Transaction, nonce: BN): Verification {.raises: [Resul
 
 #Sign a TX.
 proc sign*(wallet: Wallet, verif: Verification): bool {.raises: [ValueError].} =
-    #Sign the hash of the TX.
-    result = verif.setSignature(wallet.sign(verif.getHash()))
+    result = true
+
+    #Set the sender behind the node.
+    if not verif.setSender(wallet.getAddress()):
+        result = false
+        return
+
+    #Sign the hash of the Verification.
+    if not verif.setSignature(wallet.sign(verif.getHash())):
+        result = false
+        return
