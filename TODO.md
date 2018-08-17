@@ -1,9 +1,8 @@
 # TODO
 
 Core:
-- Add parse functions to serialize.
-- Put object definitions into dedicated files.
-- Add a Difficulty vote node.
+- Parse functions.
+- Difficulty Vote node.
 - Account, Lattice, and Database files.
 - Filesystem code.
 - Network.
@@ -21,9 +20,11 @@ Core:
 
     - Node
     - Transaction
+    - Data
     - Verification
+    - MeritRemoval
 
-    - Serialize.
+    - Serialize
 
 Features:
 - Have Merit disappear after 365.25\*24\*6 (52596) blocks.
@@ -34,11 +35,11 @@ Improvements:
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 
 Bug fixes and behavior changes:
+- Put object definitions into dedicated files.
 - Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
-- Fix Argon2 parameters.
-- Standardize error messages.
 - Remove as many uses of the generic `Exception` as possible.
-- Move from public variables in objects to getters.
+- Standardize error messages.
+- Finalize Argon2 parameters.
 
 Documentation:
 - Add comments to:
