@@ -13,7 +13,7 @@ import ../../Wallet/Wallet
 import ../../lib/SHA512
 import ../../lib/Argon
 
-#Node object and send object.
+#Node object and Send object.
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/SendObj
 
@@ -44,7 +44,7 @@ proc parse*(sendStr: string): Send {.raises: [ResultError, ValueError, Exception
         #Get the signature.
         signature: string = sendSeq[5].toBN(255).toString(16)
 
-    #Create the send.
+    #Create the Send.
     result = newSendObj(
         output,
         amount
