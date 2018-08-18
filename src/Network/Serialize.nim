@@ -5,6 +5,7 @@ import Serialize/SerializeBlock
 
 #Lattice sub-libs.
 import Serialize/SerializeSend
+import Serialize/ParseSend
 import Serialize/SerializeReceive
 import Serialize/SerializeData
 import Serialize/SerializeVerification
@@ -15,6 +16,7 @@ export SerializeMiners
 export SerializeBlock
 
 export SerializeSend
+export ParseSend
 export SerializeReceive
 export SerializeData
 export SerializeVerification

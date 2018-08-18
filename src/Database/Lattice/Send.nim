@@ -65,8 +65,8 @@ proc mine*(send: Send, networkDifficulty: BN) {.raises: [ResultError, ValueError
         hash: string = "00"
 
     while hash.toBN(16) < networkDifficulty:
-        hash = Argon(send.getSHA512(), proof.toString(16), true)
         inc(proof)
+        hash = Argon(send.getSHA512(), proof.toString(16), true)
 
     if send.setProof(proof) == false:
         raise newException(ResultError, "Couldn't set the Send proof.")

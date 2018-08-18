@@ -5,7 +5,7 @@ import ../../lib/Base
 #Address library.
 import ../../Wallet/Address
 
-#Send object.
+#Node object and send object.
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/SendObj
 
