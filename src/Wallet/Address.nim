@@ -12,10 +12,8 @@ import PublicKey
 #The checksum is the last 4 characters of the Base58 version of the SHA512 cubed hash of the key.
 proc generateChecksum(key: string): string {.raises: [Exception].} =
     result =
-        (
-            (SHA512^3)(
-                key.toBN(16).toString(256)
-            )
+        (SHA512^3)(
+            key.toBN(16).toString(256)
         )
         .toBN(16)
         .toString(58)

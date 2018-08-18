@@ -1,30 +1,13 @@
 # TODO
 
 Core:
+- Write tests.
 - Parse functions.
 - Difficulty Vote node.
 - Account, Lattice, and Database files.
 - Filesystem code.
 - Network.
 - UI.
-- Write tests for:
-    - BN
-    - SECP256K1Wrapper
-    - SHA512
-
-    - Address (mostly done)
-
-    - Merkle
-    - Block
-    - Difficulty
-
-    - Node
-    - Transaction
-    - Data
-    - Verification
-    - MeritRemoval
-
-    - Serialize
 
 Features:
 - Have Merit disappear after 365.25\*24\*6 (52596) blocks.

@@ -1,85 +1,43 @@
-import ../src/Wallet/PublicKey
-import ../src/Wallet/Address
+#Address test.
 
-type StringPair = ref object of RootObj
-    key: string
+#Base library.
+import ../../src/lib/Base
+
+#Address/Wallet libraries.
+import ../../src/Wallet/Address
+import ../../src/Wallet/Wallet
+
+#Test a couple of addresses.
+assert(
+    Address.verify("Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") == false, #Every Base58 char with no checksum.
+    "Address.verify returned true with no prefix/an invalid checksum."
+)
+
+#Define a wallet and address outside of the loop to prevent memory leaks.
+var
+    wallet: Wallet
     address: string
-type KeyPair = ref object of RootObj
-    key: PublicKey
-    address: string
+#Run 10 times.
+for _ in 0 ..< 10:
+    #Create a new wallet.
+    wallet = newWallet()
+    #Get the address.
+    address = wallet.getAddress()
 
-proc Pair(key: string, address: string): StringPair {.raises: [].} =
-    result = StringPair(
-        key: key,
-        address: address
-    )
-proc Pair(key: PublicKey, address: string): KeyPair {.raises: [].} =
-    result = KeyPair(
-        key: key,
-        address: address
+    #Verify the address.
+    assert(
+        Address.verify(address),
+        "Invalid Address."
     )
 
-var address: string
-proc test(pair: StringPair): string {.raises: [ValueError, Exception].} =
-    result = ""
-
-    try:
-        address = newAddress(pair.key)
-    except:
-        result = "Generating the address from " & pair.key & " threw an error."
-    if (address != pair.address) or (not Address.verify(address, pair.key)):
-        result = "Address " & address & " either did not equal " & pair.address & " or was invalid."
-        return
-proc test(pair: KeyPair): string {.raises: [ValueError].} =
-    result = ""
-
-    try:
-        address = newAddress(pair.key)
-    except:
-        result = "Generating the address from " & $pair.key & " threw an error."
-    if (address != pair.address) or (not Address.verify(address)):
-        result = "Address " & address & " either did not equal " & pair.address & " or was invalid."
-        return
-
-proc suite*(): string {.raises: [ValueError, Exception].} =
-    result = ""
-
-    var
-        stringPairs: seq[StringPair] = @[]
-        keyPairs: seq[KeyPair] = @[]
-        addresses: seq[string] = @[
-            "Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxy", #60 length.
-            "Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz", #Every Base58 char.
-            "Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123" #64 length.
-        ]
-
-    for pair in stringPairs:
-        result = test(pair)
-        if result != "":
-            result =
-                "Address Test with a key of: " & pair.key &
-                " and address of: " & pair.address &
-                " failed. Error: " & result
-            return
-
-    for pair in keyPairs:
-        result = test(pair)
-        if result != "":
-            result =
-                "Address Test with a key of: " & $pair.key &
-                " and address of: " & pair.address &
-                " failed. Error: " & result
-            return
-
-    for address in addresses:
-        if not Address.verify(address):
-            result =
-                "Address Test with a address of: " & address &
-                " failed. Error: " & result
-            return
-
-var res = suite()
-if res == "":
-    echo "Success."
-else:
-    echo res
+    #Verify the address for the matching pub key.
+    assert(
+        Address.verify(
+            address,
+            wallet.getPublicKey()
+        ),
+        "Address doesn't match the Public Key."
+    )
+    
+    #Verify toBN works.
+    assert($(wallet.getPublicKey()) == Address.toBN(address).toString(16), "Address.toBN didn't return the correct BN.")

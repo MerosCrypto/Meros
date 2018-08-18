@@ -24,8 +24,8 @@ var
     )
 
 send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
-echo sender.sign(send)
-echo receiver.sign(recv)
+discard sender.sign(send)
+discard receiver.sign(recv)
 
 echo send.serialize().len
 echo recv.serialize().len
