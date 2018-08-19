@@ -25,24 +25,24 @@ import SerializeSend
 import strutils
 
 #Parse a send.
-proc parse*(sendStr: string): Send {.raises: [ResultError, ValueError, Exception].} =
+proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Exception].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.split(delim)
         #Get the sender's public key.
-        sender: PublicKey = sendSeq[0].toBN(255).toString(16).newPublicKey()
+        sender: PublicKey = sendSeq[0].toBN(255).toString(16).pad(64).newPublicKey()
         #Set the input address based off the sender's public key.
         input: string = sender.newAddress()
         #Get the nonce.
         nonce: BN = sendSeq[1].toBN(255)
         #Get the output.
-        output: string = newAddress(sendSeq[2].toBN(255).toString(16))
+        output: string = newAddress(sendSeq[2].toBN(255).toString(16).pad(64))
         #Get the amount.
         amount: BN = sendSeq[3].toBN(255)
         #Get the proof.
         proof: string = sendSeq[4].toBN(255).toString(16)
         #Get the signature.
-        signature: string = sendSeq[5].toBN(255).toString(16)
+        signature: string = sendSeq[5].toBN(255).toString(16).pad(128)
 
     #Create the Send.
     result = newSendObj(

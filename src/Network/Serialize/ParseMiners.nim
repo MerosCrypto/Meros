@@ -12,7 +12,7 @@ import common
 import strutils
 
 #Parse function.
-proc parse*(minersStr: string): seq[tuple[miner: string, amount: int]] =
+proc parseMiners*(minersStr: string): seq[tuple[miner: string, amount: int]] =
     #Init the result.
     result = @[]
 

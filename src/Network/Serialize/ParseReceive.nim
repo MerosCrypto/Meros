@@ -27,7 +27,7 @@ import SerializeReceive
 import strutils
 
 #Parse a Receive.
-proc parse*(recvStr: string): Receive {.raises: [ValueError, Exception].} =
+proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].} =
     var
         #Public Key | Nonce | Input Address | Input Nonce | Amount | Signature
         recvSeq: seq[string] = recvStr.split(delim)
