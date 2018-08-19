@@ -3,7 +3,8 @@
 Core:
 - Write tests.
 - Use custom errors.
-- Parse functions.
+- Move State from Merit to Database.
+- Parse functions (which requires knowing the state).
 - Difficulty Vote node.
 - Account, Lattice, and Database files.
 - Filesystem code.
@@ -12,6 +13,7 @@ Core:
 
 Features:
 - Have Merit disappear after 365.25\*24\*6 (52596) blocks.
+- Have Merit Holders indexable by the order they got Merit in.
 - Threaded/dedicated miner.
 
 Improvements:
