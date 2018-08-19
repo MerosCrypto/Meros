@@ -2,6 +2,7 @@
 
 Core:
 - Write tests.
+- Use custom errors.
 - Parse functions.
 - Difficulty Vote node.
 - Account, Lattice, and Database files.

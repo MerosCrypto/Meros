@@ -1,5 +1,6 @@
-#BN library.
+#Numerical libraries.
 import ../../../lib/BN
+import ../../../lib/Base
 
 #Time library.
 import ../../../lib/Time
@@ -31,7 +32,7 @@ type Block* = ref object of RootObj
     #Hash.
     hash: string
     #Random hex number to make sure the Argon of the hash is over the difficulty.
-    proof: string
+    proof: BN
     #Argon2d 64 character hash with the hash as the data and proof as the salt.
     argon: string
 
@@ -48,7 +49,7 @@ proc newBlockObj*(
     validations: seq[tuple[validator: string, start: int, last: int]],
     merkle: MerkleTree,
     publisher: string,
-    proof: string,
+    proof: BN,
     miners: seq[tuple[miner: string, amount: int]],
     signature: string
 ): Block {.raises: [].} =
@@ -73,14 +74,14 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, AssertionErro
         @[],
         newMerkleTree(@[]),
         "",
-        "00",
+        newBN(),
         @[],
         ""
     )
     #Calculate the hash.
     result.hash = SHA512(genesis)
     #Calculate the Argon hash.
-    result.argon = Argon(result.hash, result.proof)
+    result.argon = Argon(result.hash, result.proof.toString(16))
     #Calculate the miners hash.
     result.minersHash = SHA512("00")
 
@@ -118,7 +119,7 @@ proc getPublisher*(blockArg: Block): string {.raises: [].} =
     blockArg.publisher
 proc getHash*(blockArg: Block): string {.raises: [].} =
     blockArg.hash
-proc getProof*(blockArg: Block): string {.raises: [].} =
+proc getProof*(blockArg: Block): BN {.raises: [].} =
     blockArg.proof
 proc getArgon*(blockArg: Block): string {.raises: [].} =
     blockArg.argon

@@ -33,7 +33,7 @@ proc newBlock*(
     validations: seq[tuple[validator: string, start: int, last: int]],
     merkle: MerkleTree,
     publisher: string,
-    proof: string,
+    proof: BN,
     miners: seq[tuple[miner: string, amount: int]],
     signature: string
 ): Block {.raises: [ValueError, Exception].} =
@@ -46,9 +46,6 @@ proc newBlock*(
             raise newException(ValueError, "Invalid start.")
         if validation.last < 0:
             raise newException(ValueError, "Invalid last.")
-    #Proof.
-    if proof.isBase(16) == false:
-        raise newException(ValueError, "Invalid hex number.")
     #Miners.
     var
         total: int = 0
@@ -76,7 +73,7 @@ proc newBlock*(
     #Calculate the hash.
     result.setHash(SHA512(result.serialize()))
     #Calculate the Argon hash.
-    result.setArgon(Argon(result.getHash(), result.getProof()))
+    result.setArgon(Argon(result.getHash(), result.getProof().toString(16)))
     #Calculate the miners hash.
     result.setMinersHash(SHA512(miners.serialize(nonce)))
     #Verify the signature.

@@ -42,7 +42,7 @@ proc serialize*(blockArg: Block): string =
 
     if not blockArg.getProof().isNil():
         #Add on the proof.
-        result &= delim & blockArg.getProof().toBN(16).toString(255)
+        result &= delim & blockArg.getProof().toString(255)
 
         #Miners.
         for miner in blockArg.getMiners():
