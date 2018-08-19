@@ -5,7 +5,6 @@ import ../../../src/Wallet/Wallet
 
 import ../../../src/Database/Lattice/objects/NodeObj
 import ../../../src/Database/Lattice/Send
-import ../../../src/Database/Lattice/Receive
 
 import ../../../src/Network/Serialize
 
@@ -23,15 +22,15 @@ for i in 1 .. 20:
     send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
     discard sender.sign(send)
 
-    var sendParsed: Send = send.serialize().parse()
+    var sendParsed: Send = send.serialize().parseSend()
 
-    assert send.getDescendant() == sendParsed.getDescendant()
-    assert send.getSender == sendParsed.getSender()
-    assert send.getNonce() == sendParsed.getNonce()
-    assert send.getHash() == sendParsed.getHash()
-    assert send.getSignature() == sendParsed.getSignature()
+    assert(send.getDescendant() == sendParsed.getDescendant())
+    assert(send.getSender() == sendParsed.getSender())
+    assert(send.getNonce() == sendParsed.getNonce())
+    assert(send.getHash() == sendParsed.getHash())
+    assert(send.getSignature() == sendParsed.getSignature())
 
-    assert send.getOutput() == sendParsed.getOutput()
-    assert send.getAmount() == sendParsed.getAmount()
-    assert send.getSHA512() == sendParsed.getSHA512()
-    assert send.getProof() == sendParsed.getProof()
+    assert(send.getOutput() == sendParsed.getOutput())
+    assert(send.getAmount() == sendParsed.getAmount())
+    assert(send.getSHA512() == sendParsed.getSHA512())
+    assert(send.getProof() == sendParsed.getProof())
