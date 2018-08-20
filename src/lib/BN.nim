@@ -5,7 +5,7 @@ import stint
 type
     #Wrapper object.
     BN* = ref object of RootObj
-        number: StUint[1024]
+        number: StUint[2048]
 
     #Some basic numbers to stop hard coded BN literals.
     BNNumsType* = ref object of RootObj
@@ -25,12 +25,12 @@ proc `$`*(x: BN): string {.raises: [ValueError].} =
 #Nim constructor from a string/nothing.
 proc newBN*(number: string = "0"): BN {.raises: [].} =
     result = BN()
-    result.number = number.parse(StUint[1024])
+    result.number = number.parse(StUint[2048])
 
 #Nim constructor from a number.
 proc newBN*(number: SomeInteger): BN {.raises: [].} =
     result = BN()
-    result.number = number.stuint(1024)
+    result.number = number.stuint(2048)
 
 #Define some basic numbers.
 var BNNums*: BNNumsType = BNNumsType(

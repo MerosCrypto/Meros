@@ -111,7 +111,7 @@ proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError].} =
         power: BN = newBN(1)
         numDigits: int = 1
     while power <= value:
-        power = power * base
+        power *= base
         inc(numDigits)
     numDigits -= 2
 
