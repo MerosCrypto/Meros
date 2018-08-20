@@ -1,6 +1,7 @@
 # TODO
 
 Core:
+- Use a faster BN lib.
 - Write tests.
 - Use custom errors.
 - Write a Lattice/Database State.
@@ -17,7 +18,6 @@ Features:
 - Threaded/dedicated miner.
 
 Improvements:
-- Use a faster BN lib.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 
 Bug fixes and behavior changes:
