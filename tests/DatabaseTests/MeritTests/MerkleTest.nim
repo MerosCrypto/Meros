@@ -1,6 +1,6 @@
-import ../src/lib/SHA512
-import ../src/lib/Base
-import ../src/Database/Merit/Merkle
+import ../../../src/lib/SHA512
+import ../../../src/lib/Base
+import ../../../src/Database/Merit/Merkle
 
 var
     a: string = SHA512("01".toBN(16).toString(256))

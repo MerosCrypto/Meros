@@ -3,7 +3,7 @@
 Core:
 - Write tests.
 - Use custom errors.
-- Move State from Merit to Database.
+- Write a Lattice/Database State.
 - Parse functions (which requires knowing the state).
 - Difficulty Vote node.
 - Account, Lattice, and Database files.

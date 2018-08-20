@@ -27,5 +27,5 @@ send.mine("3333333333333333333333333333333333333333333333333333333333333333".toB
 discard sender.sign(send)
 discard receiver.sign(recv)
 
-echo send.serialize().len
-echo recv.serialize().len
+echo "The serialized Send is " & $send.serialize().len & " bytes long."
+echo "The serialized Receive is " & $recv.serialize().len & " bytes long."

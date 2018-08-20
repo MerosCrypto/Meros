@@ -61,7 +61,7 @@ proc main() =
             @[],
             newMerkleTree(@[]),
             publisher,
-            proof.toString(16),
+            proof,
             miners,
             wallet.sign(SHA512(miners.serialize(nonce)))
         )
@@ -73,10 +73,6 @@ proc main() =
             continue
 
         #If we didn't continue, the block was valid! Print that we mined a block!
-        echo "Mined a block: " & $nonce
-        echo "The miner's Merit is " & $merit.getBalance(miner) & "."
-
-        #Print that we mined a block!
         echo "Mined a block: " & $nonce
         echo "The miner's Merit is " & $merit.getBalance(miner) & "."
 
