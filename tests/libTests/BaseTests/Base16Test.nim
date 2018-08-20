@@ -1,3 +1,6 @@
+#Base16 Test.
+#Numerical libs.
+import ../../../src/lib/BN
 import ../../../src/lib/Base
 
 #Test basic conversions.
@@ -13,3 +16,5 @@ assert("0z".isBase(16) == false, "Z was allowed as a hex letter.")
 
 #Verify the output is padded properly.
 assert("0".toBN(10).toString(16).len == 2, "0 wasn't prefixed to the Hex string.")
+
+echo "Finished the lib/Base/Base16 test."

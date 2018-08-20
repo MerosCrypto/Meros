@@ -1,3 +1,6 @@
+#Base58 Test.
+#Numerical libs.
+import ../../../src/lib/BN
 import ../../../src/lib/Base
 
 #Test basic conversions.
@@ -10,3 +13,5 @@ assert("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".isBase(58), 
 
 #Test non-Base58 letters aren't allowed.
 assert("O".isBase(58) == false, "O (Oh) was allowed as a hex letter.")
+
+echo "Finished the lib/Base/Base58 test."

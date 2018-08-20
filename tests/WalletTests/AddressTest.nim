@@ -1,5 +1,4 @@
 #Address test.
-
 #Base library.
 import ../../src/lib/Base
 
@@ -38,6 +37,8 @@ for _ in 0 ..< 10:
         ),
         "Address doesn't match the Public Key."
     )
-    
+
     #Verify toBN works.
     assert($(wallet.getPublicKey()) == Address.toBN(address).toString(16), "Address.toBN didn't return the correct BN.")
+
+echo "Finished the Wallet/Address test."

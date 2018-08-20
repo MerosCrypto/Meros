@@ -1,5 +1,4 @@
 #Test for all the Serialize/Parse functions.
-
 #Merit Serialize.
 import SerializeTests/SerializeMinersTest
 import SerializeTests/SerializeBlockTest
