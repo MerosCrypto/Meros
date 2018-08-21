@@ -21,7 +21,7 @@ Requirements:
 - Nimble
 
 ```
-nimble install https://github.com/EmberCrypto/nim-gmp
+nimble install https://github.com/EmberCrypto/BN
 nimble install nimcrypto secp256k1 nimx
 nim c src/main.nim
 ```
