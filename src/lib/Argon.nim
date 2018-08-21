@@ -1,10 +1,13 @@
 #Wrapper for the Argon2 C library that won the PHC competition.
 
-#Base lib for checking argument validity.
-import Base
-
 #Errors lib.
 import Errors
+
+#Util lib for padding strings.
+import Util
+
+#Base lib for checking argument validity.
+import Base
 
 #strutils stdlib for parsing Hex strings.
 import strutils
@@ -35,8 +38,8 @@ proc argon2d(
 #Take in data (128 char max) and a salt (64 char max), return a 64 character string.
 proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.raises: [ResultError, ValueError].} =
     var
-        data: string = dataArg
-        salt: string = saltArg
+        data: string = dataArg.pad(128, "00")
+        salt: string = saltArg.pad(64, "00")
         dataArr: array[64, uint8]
         saltArr: array[32, uint8]
         resArr: array[32, uint8]
@@ -47,12 +50,6 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.r
         raise newException(ValueError, "Invalid hex data/salt.")
     if (data.len > 128) or (salt.len > 64):
         raise newException(ValueError, "Invalid data/salt length.")
-
-    #Pad the arguments to always be 128/64 chars long.
-    while data.len < 128:
-        data = "00" & data
-    while salt.len < 64:
-        salt = "00" & salt
 
     #Parse the data/salt strings into array.
     for i in countup(0, 127, 2):

@@ -17,7 +17,7 @@ proc `[]`*[T](oset: OrderedSet[T], index: int): T {.raises: [ValueError].} =
             result = item
             return
 
-proc pad*(data: string, len: int, character: string = "0"): string =
+proc pad*(data: string, len: int, prefix: string = "0"): string =
     result = data
     while result.len < len:
-        result = character & result
+        result = prefix & result
