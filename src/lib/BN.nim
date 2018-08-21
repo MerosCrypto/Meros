@@ -1,11 +1,13 @@
-#Wrapper around stint.
-
-import stint
+#Wrapper around GMP.
+import gmp
+import gmp/utils
 
 type
     #Wrapper object.
-    BN* = ref object of RootObj
-        number: StUint[2048]
+    DestructableBN* = object
+        number: mpz_t
+
+    BN* = ref DestructableBN
 
     #Some basic numbers to stop hard coded BN literals.
     BNNumsType* = ref object of RootObj
@@ -16,21 +18,18 @@ type
         HIGH*: BN
 
 #Stringify function.
-proc `$`*(x: BN): string {.raises: [ValueError].} =
-    try:
-        result = $x.number
-    except DivByZeroError:
-        raise newException(ValueError, "Divide by zero.")
+proc `$`*(x: BN): string {.raises: [].} =
+    result = $x.number
 
 #Nim constructor from a string/nothing.
-proc newBN*(number: string = "0"): BN {.raises: [].} =
+proc newBN*(number: string = "0"): BN {.raises: [ValueError].} =
     result = BN()
-    result.number = number.parse(StUint[2048])
+    result.number = init_mpz(number, 10)
 
 #Nim constructor from a number.
 proc newBN*(number: SomeInteger): BN {.raises: [].} =
     result = BN()
-    result.number = number.stuint(2048)
+    result.number = number
 
 #Define some basic numbers.
 var BNNums*: BNNumsType = BNNumsType(
@@ -42,64 +41,64 @@ var BNNums*: BNNumsType = BNNumsType(
 )
 
 #Addition function.
-proc `+`*(x: BN, y: BN): BN {.raises: [].} =
-    result = BN()
-    result.number = x.number + y.number
+proc `+`*(x: BN, y: BN): BN {.raises: [ValueError].} =
+    result = newBN()
+    mpz_add(result.number, x.number, y.number)
 
 #+= operator.
-proc `+=`*(x: var BN, y: BN) {.raises: [].} =
+proc `+=`*(x: var BN, y: BN) {.raises: [ValueError].} =
     x.number = (x + y).number
 
 #Nim uses inc/dec instead of ++ and --. This is when BNNums is useful as hell.
-proc inc*(x: var BN) {.raises: [].} =
+proc inc*(x: var BN) {.raises: [ValueError].} =
     x += BNNums.ONE
 
 #Subtraction function.
-proc `-`*(x: BN, y: BN): BN {.raises: [].} =
-    result = BN()
-    result.number = x.number - y.number
+proc `-`*(x: BN, y: BN): BN {.raises: [ValueError].} =
+    result = newBN()
+    mpz_sub(result.number, x.number, y.number)
 
 #-= operator.
-proc `-=`*(x: var BN, y: BN) {.raises: [].} =
+proc `-=`*(x: var BN, y: BN) {.raises: [ValueError].} =
     x.number = (x - y).number
 
-proc dec*(x: var BN) {.raises: [].} =
+proc dec*(x: var BN) {.raises: [ValueError].} =
     x -= BNNums.ONE
 
 #Multiplication function.
-proc `*`*(x: BN, y: BN): BN {.raises: [].} =
-    result = BN()
-    result.number = x.number * y.number
+proc `*`*(x: BN, y: BN): BN {.raises: [ValueError].} =
+    result = newBN()
+    mpz_mul(result.number, x.number, y.number)
 
-proc `*=`*(x: var BN, y: BN) {.raises: [].} =
+proc `*=`*(x: var BN, y: BN) {.raises: [ValueError].} =
     x.number = (x * y).number
 
 #Exponent/power function.
-proc `^`*(x: BN, y: BN): BN {.raises: [].} =
-    result = BN()
-    result.number = x.number.pow(y.number)
+proc `^`*(x: BN, y: SomeInteger): BN {.raises: [ValueError].} =
+    result = newBN()
+    mpz_pow_ui(result.number, x.number, (culong) y)
 
-proc `pow`*(x: BN, y: BN): BN {.raises: [].} =
+proc `pow`*(x: BN, y: SomeInteger): BN {.raises: [].} =
     x ^ y
 
 #Division function.
 proc `/`*(x: BN, y: BN): BN {.raises: [ValueError].} =
-    result = newBN()
-    try:
-        result.number = x.number div y.number
-    except DivByZeroError:
+    if y.number == BNNums.ZERO.number:
         raise newException(ValueError, "Divide by zero.")
+
+    result = newBN()
+    mpz_tdiv_q(result.number, x.number, y.number)
 
 proc `div`*(x: BN, y: BN): BN {.raises: [ValueError].} =
     x / y
 
 #Modulus function.
 proc `%`*(x: BN, y: BN): BN {.raises: [ValueError].} =
-    result = newBN()
-    try:
-        result.number = x.number mod y.number
-    except DivByZeroError:
+    if y.number == BNNums.ZERO.number:
         raise newException(ValueError, "Divide by zero.")
+
+    result = newBN()
+    mpz_mod(result.number, x.number, y.number)
 
 proc `mod`*(x: BN, y: BN): BN {.raises: [ValueError].} =
     x % y
@@ -128,4 +127,7 @@ proc toInt*(x: BN): int {.raises: [ValueError].} =
     if x > BNNums.HIGH:
         raise newException(ValueError, "BN is too big to be converted to an int")
 
-    result = x.number.toInt()
+    result = mpz_get_si(x.number)
+
+proc `=destroy`(x: var DestructableBN) =
+    destroy(x.number)

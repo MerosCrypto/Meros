@@ -17,7 +17,7 @@ type Account* = ref object of RootObj
     #Balance of the address.
     balance: BN
 
-proc newAccountObj*(address: string): Account {.raises: [].} =
+proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
     Account(
         address: address,
         height: newBN(),

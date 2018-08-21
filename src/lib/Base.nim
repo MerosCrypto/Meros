@@ -93,7 +93,7 @@ proc toBN*(value: string, baseArg: int): BN {.raises: [ValueError].} =
         result +=
             (
                 base ^
-                newBN(value.len - i - 1)
+                (value.len - i - 1)
             ) * newBN(baseArg.digits.find(value[i]))
 
 proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError].} =
@@ -120,7 +120,7 @@ proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError].} =
         place: BN
         digit: int
     for i in countDown(numDigits, 0):
-        place = base ^ newBN(i)
+        place = base ^ i
         digit = (value div place).toInt()
         value = value mod place
         result.add(baseArg.digits[digit])
