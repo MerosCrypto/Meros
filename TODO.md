@@ -3,6 +3,7 @@
 Core:
 - Write tests.
 - Use custom errors.
+- Fix GMP memory leak.
 - Write a Lattice/Database State.
 - Parse functions (which requires knowing the state).
 - Difficulty Vote node.

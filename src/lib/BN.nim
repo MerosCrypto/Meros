@@ -4,10 +4,8 @@ import gmp/utils
 
 type
     #Wrapper object.
-    DestructableBN* = object
+    BN* = ref object of RootObj
         number: mpz_t
-
-    BN* = ref DestructableBN
 
     #Some basic numbers to stop hard coded BN literals.
     BNNumsType* = ref object of RootObj
@@ -128,6 +126,3 @@ proc toInt*(x: BN): int {.raises: [ValueError].} =
         raise newException(ValueError, "BN is too big to be converted to an int")
 
     result = mpz_get_si(x.number)
-
-proc `=destroy`(x: var DestructableBN) =
-    destroy(x.number)
