@@ -1,9 +1,9 @@
 # TODO
 
 Core:
-- Write tests.
+- Difficulty code.
 - Use custom errors.
-- Fix GMP memory leak.
+- Write tests.
 - Write a Lattice/Database State.
 - Parse functions (which requires knowing the state).
 - Difficulty Vote node.
@@ -22,10 +22,8 @@ Improvements:
 - Rewrite GMP package (last update was 2015).
 
 Bug fixes and behavior changes:
+- Fix GMP memory leak.
 - Put object definitions into dedicated files.
-- Smooth difficulty scaling (difficulty may also only be rescaling on block mining; this is inefficient).
-- Remove as many uses of the generic `Exception` as possible.
-- Standardize error messages.
 - Finalize Argon2 parameters.
 
 Documentation:
