@@ -5,5 +5,5 @@ import ./BN
 import times, strutils
 
 #Get time function. Just turns the epoch into a string and makes a BN off it.
-proc getTime*(): BN {.raises: [AssertionError].} =
+proc getTime*(): BN {.raises: [ValueError, AssertionError].} =
     result = newBN(($(epochTime())).split(".")[0])

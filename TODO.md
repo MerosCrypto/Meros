@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Use a faster BN lib.
 - Write tests.
 - Use custom errors.
 - Write a Lattice/Database State.
@@ -19,6 +18,7 @@ Features:
 
 Improvements:
 - Optimize SECP256K1Wrapper (memory copies, splices...).
+- Rewrite GMP package (last update was 2015).
 
 Bug fixes and behavior changes:
 - Put object definitions into dedicated files.
@@ -34,17 +34,13 @@ Documentation:
     - DB/Merit/Merkle.nim
     - DB/Merit/State.nim
 
-    - DB/Lattice/Verification.nim
     - DB/Lattice/Lattice.nim
 
     - DB/Database.nim
+    - DB/State.nim
 
     - Wallet/PublicKey.nim
     - Wallet/Wallet.nim
-
-    - UI/
-
-    - tests/
 - Use Documentation Comments.
 - Ember Whitepaper.
 

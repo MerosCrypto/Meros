@@ -13,7 +13,7 @@ import objects/AccountObj
 export AccountObj
 
 #Create a new Account.
-proc newAccount*(address: string): Account {.raises: [].} =
+proc newAccount*(address: string): Account {.raises: [ValueError].} =
     newAccountObj(address)
 
 #Add a Transaction.

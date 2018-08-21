@@ -32,7 +32,7 @@ proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError, Asser
         ]
     )
 
-proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
+proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [ValueError].} =
     inc(blockchain.height)
     blockchain.blocks.add(newBlock)
 
