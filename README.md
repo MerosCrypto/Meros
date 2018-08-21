@@ -21,16 +21,24 @@ Requirements:
 - Nimble
 
 ```
-git submodule update --init
-nimble install stint nimcrypto secp256k1 nimx
+nimble install https://github.com/EmberCrypto/nim-gmp
+nimble install nimcrypto secp256k1 nimx
 nim c src/main.nim
 ```
 
-If you're on Windows/Mac OS, you must also go to https://www.libsdl.org/download-2.0.php and download the SDL2 libraries for your platform.
-If you're on a Debian based system, run `sudo apt-get install libsdl2-2.0`.
-For other Linux systems, please look up how to install the SDL2 libraries.
+If you're on Windows:
+- Go to https://github.com/Legrandin/mpir-windows-builds and download the GMP dynamic libraries.
+- Go to https://www.libsdl.org/download-2.0.php and download the SDL2 dynamic libraries.
 
-main.nim doesn't do much. There is a miner and address generator under samples/ that can be swapped out with main.nim though in order to test/demo Ember. Right now, main.nim is a demo file for the Lattice.
+If you're on a Debian based system:
+```
+sudo apt-get install libgmp3-dev
+sudo apt-get install libsdl2-2.0
+```
+
+For MacOS/other Linux systems, please look up how to install the GMP/SDL2 libraries.
+
+main.nim is blank. There are multiple files that can be swapped out with it under samples/ to test/demo Ember though.
 
 #### Contributing
 
