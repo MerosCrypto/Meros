@@ -77,24 +77,28 @@ proc isBase*(value: string, base: int): bool {.raises: [].} =
             return
 
 
-proc toBN*(value: string, baseArg: int): BN {.raises: [ValueError].} =
-    if not value.isBase(baseArg):
+proc toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =
+    if not valueArg.isBase(baseArg):
         raise newException(ValueError, "Invalid Base number.")
 
     result = newBN()
     var
+        value: string = valueArg
         base: BN = newBN(baseArg)
         digit: char
+
+    if baseArg == 16:
+        for i in 0 ..< value.len:
+            if ('a' <= value[i]) and (value[i] <= 'f'):
+                value[i] = (char) ord(value[i]) - ord('a') + ord('A')
+
     for i in 0 ..< value.len:
         digit = value[i]
-        if (baseArg == 16) and (('a' <= digit) and (digit <= 'f')):
-            digit = (char) ord(digit) - ord('a') + ord('A')
-
         result +=
             (
                 base ^
                 (value.len - i - 1)
-            ) * newBN(baseArg.digits.find(value[i]))
+            ) * newBN(baseArg.digits.find(digit))
 
 proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError].} =
     var
