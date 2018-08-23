@@ -9,10 +9,11 @@ proc `^`*[T](f: proc(x: T): T, power: int): proc(x: T): T {.raises: [Exception].
             result = f(result)
 
 #Return a specific element of an OrderSet by it's index.
-proc `[]`*[T](oset: OrderedSet[T], index: int): T {.raises: [ValueError].} =
-    if index >= oset.len:
+proc `[]`*[T](oSet: OrderedSet[T], index: int): T {.raises: [ValueError].} =
+    if index >= oSet.len:
         raise newException(ValueError, "OrderedSet index is out of range.")
-    for i, item in oset:
+
+    for i, item in oSet:
         if i == index:
             result = item
             return

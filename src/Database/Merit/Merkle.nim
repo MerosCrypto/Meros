@@ -50,11 +50,11 @@ proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].}
 
     if (hashes.len mod 2) == 1:
         hashes.add(hashes[hashes.len-1])
-    for i in 0 ..< hashes.len:
+    for i, hash in hashes:
         if (i mod 2) == 0:
-            left = newLeaf(true, hashes[i])
+            left = newLeaf(true, hash)
         else:
-            right = newLeaf(true, hashes[i])
+            right = newLeaf(true, hash)
             branches.add(newBranch(left, right))
 
     while branches.len != 1:

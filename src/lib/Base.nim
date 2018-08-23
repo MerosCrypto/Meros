@@ -70,7 +70,7 @@ proc isBase*(value: string, base: int): bool {.raises: [].} =
     var loc: int
     for c in value:
         loc = base.digits.find(c)
-        if loc == -1 or loc >= base:
+        if loc == -1 or base <= loc:
             if (base == 16) and (('a' <= c) and (c <= 'f')):
                 continue
             result = false
@@ -88,12 +88,11 @@ proc toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =
         digit: char
 
     if baseArg == 16:
-        for i in 0 ..< value.len:
-            if ('a' <= value[i]) and (value[i] <= 'f'):
-                value[i] = (char) ord(value[i]) - ord('a') + ord('A')
+        for i, c in value:
+            if ('a' <= c) and (c <= 'f'):
+                value[i] = (char) ord(c) - ord('a') + ord('A')
 
-    for i in 0 ..< value.len:
-        digit = value[i]
+    for i, digit in value:
         result +=
             (
                 base ^

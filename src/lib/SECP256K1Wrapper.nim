@@ -74,8 +74,8 @@ proc `$!`*(pubKeyArg: secp256k1_pubkey): string {.raises: [ValueError].} =
     #Init the result.
     result = ""
     #Turn the byte array into a hex string.
-    for i in 0 ..< bytes.len:
-        result = result & bytes[i].toHex()
+    for b in bytes:
+        result = result & b.toHex()
 
 #Generates a signature from a hex string.
 proc secpSignature(sigArg: string): secp256k1_ecdsa_signature {.raises: [ValueError].} =
@@ -113,8 +113,8 @@ proc `$`(sigArg: secp256k1_ecdsa_signature): string {.raises: [ValueError].} =
 
     #Turn the byte array into a hex string.
     result = ""
-    for i in 0 ..< bytes.len:
-        result = result & bytes[i].toHex()
+    for b in bytes:
+        result = result & b.toHex()
 
 #Sign a message (hash).
 proc secpSign*(privKeyArg: array[32, cuchar], hashArg: string): string {.raises: [ValueError].} =
