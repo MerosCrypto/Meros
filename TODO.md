@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Difficulty code.
 - Use custom errors.
 - Write tests.
 - Write a Lattice/Database State.
@@ -20,9 +19,11 @@ Features:
 Improvements:
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
+- Don't round down; round to the closer number.
 
 Bug fixes and behavior changes:
-- Fix GMP memory leak.
+- Difficulty does a minimal amount of scaling with longer time periods.
+- Remove GMP's memory leak.
 - Put object definitions into dedicated files.
 - Finalize Argon2 parameters.
 

@@ -87,7 +87,7 @@ proc `/`*(x: BN, y: BN): BN {.raises: [ValueError].} =
         raise newException(ValueError, "Divide by zero.")
 
     result = newBN()
-    mpz_tdiv_q(result.number, x.number, y.number)
+    mpz_fdiv_q(result.number, x.number, y.number)
 
 proc `div`*(x: BN, y: BN): BN {.raises: [ValueError].} =
     x / y
