@@ -1,6 +1,7 @@
 # TODO
 
 Core:
+- Chain Params file.
 - Use custom errors.
 - Write tests.
 - Write a Lattice/Database State.
@@ -14,6 +15,12 @@ Core:
 Features:
 - Have Merit disappear after 365.25\*24\*6 (52596) blocks.
 - Have Merit Holders indexable by the order they got Merit in.
+- Have Difficulty retarget:
+    - Every block until the end of month 1.
+    - Every hour until the end of month 3.
+    - Every 6 hours until the end of month 6.
+    - Every 12 hours until the end of the year.
+    - Every day from then on.
 - Threaded/dedicated miner.
 
 Improvements:
