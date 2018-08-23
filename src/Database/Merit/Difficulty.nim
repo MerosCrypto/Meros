@@ -76,10 +76,12 @@ proc calculateNextDifficulty*(
     #Else if we didn't meet the target...
     elif blockCount < blocksPerPeriod:
         var
+            #Distance from the 'min' difficulty.
+            distance: BN = last.getDifficulty()
             #Rate (block count / block target).
             rate: BN = (newBN(blockCount) * BNNums.HUNDRED) / newBN(blocksPerPeriod)
             #Amount we're decreasing the last difficulty by.
-            change: BN = last.getDifficulty() * rate / BNNums.HUNDRED
+            change: BN = distance * rate / BNNums.HUNDRED
 
         #Set the difficulty.
         difficulty = last.getDifficulty() - change
