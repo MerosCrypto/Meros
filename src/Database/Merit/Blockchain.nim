@@ -30,8 +30,6 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Asserti
     let
         blocks: seq[Block] = blockchain.getBlocks()
         lastBlock: Block = blocks[blocks.len - 1]
-        difficulties: seq[Difficulty] = blockchain.getDifficulties()
-        lastDifficulty: Difficulty = difficulties[difficulties.len - 1]
 
     #If the last hash is off...
     if lastBlock.getArgon() != newBlock.getLast():
@@ -53,12 +51,18 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Asserti
         result = false
         return
 
+    #Get the difficulties.
+    var
+        difficulties: seq[Difficulty] = blockchain.getDifficulties()
+        difficulty: Difficulty = difficulties[difficulties.len - 1]
+
     #Generate difficulties so we can test the block against the latest difficulty.
-    while lastDifficulty.getEnd() < newBlock.getTime():
-        blockchain.add(calculateNextDifficulty(blockchain.getBlocks(), blockchain.getDifficulties(), 60, 6))
+    while difficulty.getEnd() < newBlock.getTime():
+        difficulty = calculateNextDifficulty(blockchain.getBlocks(), blockchain.getDifficulties(), 10, 6)
+        blockchain.add(difficulty)
 
     #If the difficulty wasn't beat...
-    if not lastDifficulty.verifyDifficulty(newBlock):
+    if not difficulty.verifyDifficulty(newBlock):
         result = false
         return
 
