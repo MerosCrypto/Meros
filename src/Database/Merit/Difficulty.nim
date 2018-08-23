@@ -15,6 +15,9 @@ import os
 import objects/DifficultyObj
 export DifficultyObj
 
+#Highest difficulty.
+let max: BN = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF".toBN(16)
+
 #Verifies a difficulty against a block.
 proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =
     result = true
@@ -35,56 +38,51 @@ proc calculateNextDifficulty*(
     difficulties: seq[Difficulty],
     periodInSeconds: int,
     blocksPerPeriod: int
-): Difficulty {.raises: [ValueError, AssertionError].} =
+): Difficulty {.raises: [ValueError].} =
     var
         #Last difficulty.
         last: Difficulty = difficulties[difficulties.len-1]
         #Blocks in the last period.
         blockCount: int = 0
-        rate: float64
         difficulty: BN
 
     #Iterate through every block.
-    for b in items(blocks):
-        #Continue if the b is out of the period.
-        if (b.getTime() < last.getStart()) or (last.getEnd() <= b.getTime()):
-            continue
+    var b: Block
+    #Stop at 0. This is a while loop because countdown wasn't behaving properly.
+    for i in countdown(blocks.len - 1, 0):
+        #Break if the block is out of the period.
+        if blocks[i].getTime() <= last.getStart():
+            break
+
         #Else, increment the block count for the last period.
         inc(blockCount)
 
-    #If the blocks per period target is less than the count...
-    if blocksPerPeriod < blockCount:
-        #The rate is the block count over the target blocks per period.
-        rate = blockCount / blocksPerPeriod
-    #Else, if there were as many blocks as the target...
-    elif blocksPerPeriod == blockCount:
+    #If there were as many blocks as the target...
+    if blocksPerPeriod == blockCount:
         #Use the same difficulty.
-        result = newDifficultyObj(
-            last.getEnd(),
-            last.getEnd() + newBN(periodInSeconds),
-            last.getDifficulty()
-        )
-        return
-    #Else, if the count was less than the blocks per period target...
-    elif blockCount < blocksPerPeriod:
-        #The rate is the target blocks per period over the block count.
-        rate = blocksPerPeriod / blockCount
-
-    #If the block count was 0 (divide by 0), set the rate to 10.
-    #This will cause the difficulty to be divided by 10.
-    if blockCount == 0:
-        rate = 10
-
-    #Get a BN out of the rate.
-    var bnRate: BN = newBN(($rate).split(".")[0])
-    #If the count was lower than the target...
-    if blockCount < blocksPerPeriod:
-        #The difficulty is the last one divided by the rate.
-        difficulty = last.getDifficulty() / bnRate
-    #Else, if the count was higher than the target...
+        difficulty = last.getDifficulty()
+    #Else if we exceeded the target...
     elif blockCount > blocksPerPeriod:
-        #The difficulty is the last one multiplied by the rate.
-        difficulty = last.getDifficulty() * bnRate
+        var
+            #Distance from the max difficulty.
+            distance: BN = max - last.getDifficulty()
+            #Inverse of the rate (block count / block target).
+            rate: BN = (newBN(blocksPerPeriod) * BNNums.HUNDRED) / newBN(blockCount)
+            #Amount we're increasing the last difficulty by.
+            change: BN = distance * rate / BNNums.HUNDRED
+
+        #Set the difficulty.
+        difficulty = last.getDifficulty() + change
+    #Else if we didn't meet the target...
+    elif blockCount < blocksPerPeriod:
+        var
+            #Rate (block count / block target).
+            rate: BN = (newBN(blockCount) * BNNums.HUNDRED) / newBN(blocksPerPeriod)
+            #Amount we're decreasing the last difficulty by.
+            change: BN = last.getDifficulty() * rate / BNNums.HUNDRED
+
+        #Set the difficulty.
+        difficulty = last.getDifficulty() - change
 
     #If the difficulty is lower than the starting difficulty, use that.
     if difficulty < difficulties[0].getDifficulty():

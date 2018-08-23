@@ -9,11 +9,12 @@ type
 
     #Some basic numbers to stop hard coded BN literals.
     BNNumsType* = ref object of RootObj
-        ZERO*: BN
-        ONE*:  BN
-        TWO*:  BN
-        TEN*:  BN
-        HIGH*: BN
+        ZERO*:     BN
+        ONE*:      BN
+        TWO*:      BN
+        TEN*:      BN
+        HUNDRED*:  BN
+        HIGH*:     BN
 
 #Stringify function.
 proc `$`*(x: BN): string {.raises: [].} =
@@ -31,11 +32,12 @@ proc newBN*(number: SomeInteger): BN {.raises: [].} =
 
 #Define some basic numbers.
 var BNNums*: BNNumsType = BNNumsType(
-    ZERO: newBN("0"),
-    ONE:  newBN("1"),
-    TWO:  newBN("2"),
-    TEN:  newBN("10"),
-    HIGH: newBN(int.high)
+    ZERO:     newBN(0),
+    ONE:      newBN(1),
+    TWO:      newBN(2),
+    TEN:      newBN(10),
+    HUNDRED:  newBN(100),
+    HIGH:     newBN(int.high)
 )
 
 #Addition function.
