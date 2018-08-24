@@ -8,8 +8,12 @@ import ../../Wallet/Address
 #Block object.
 import ../../Database/Merit/objects/BlockObj
 
-#Common serialization functions.
+#Common serialization functions and the Miners serialization.
 import common
+import SerializeMiners
+
+#String utils standard lib.
+import strutils
 
 #Serialize a Block.
 proc serialize*(blockArg: Block): string =
@@ -41,14 +45,10 @@ proc serialize*(blockArg: Block): string =
         blockArg.getPublisher().toBN(16).toString(255)
 
     if not blockArg.getProof().isNil():
-        #Add on the proof.
-        result &= delim & blockArg.getProof().toString(255)
-
-        #Miners.
-        for miner in blockArg.getMiners():
-            result &= delim &
-                Address.toBN(miner.miner).toString(255) !
-                $miner.amount
+        #Add on the proof/miners.
+        result &= delim &
+            blockArg.getProof().toString(255) !
+            blockArg.getMiners().serialize(blockArg.getNonce())
 
         #Signature.
         result &= delim & blockArg.getSignature().toBN(16).toString(255)

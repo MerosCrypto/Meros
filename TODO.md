@@ -25,6 +25,7 @@ Features:
 
 Improvements:
 - Make Node Descendant Types an enum.
+- Make Miners/Validations a proper object.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
 - Don't round down; round to the closer number.

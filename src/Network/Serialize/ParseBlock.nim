@@ -20,13 +20,15 @@ import ../../lib/Argon
 import ../../Database/Merit/objects/BlockObj
 import ../../Database/Merit/Merkle
 
-#delim character/serialize functions.
+#delim character/serialize/parse functions.
 import common
 import SerializeMiners
+import ParseMiners
 import SerializeBlock
 
-#String utils standard lib.
+#String and seq utils standard libs.
 import strutils
+import sequtils
 
 #Parse a block.
 proc parseBlock*(blockStr: string): Block {.raises: [Exception].} =
@@ -67,6 +69,10 @@ proc parseBlock*(blockStr: string): Block {.raises: [Exception].} =
         publisher: string = blockSeq[5 + (validations.len * 3)].toBN(255).toString(16).pad(64)
         #Proof.
         proof: BN = blockSeq[6 + (validations.len * 3)].toBN(255)
+        #seq from blockSeq that's just the miners.
+        minersSeq: seq[string] = blockSeq
+        #Serialized miners.
+        minersSerialized: string
         #Miners.
         miners: seq[
             tuple[
@@ -78,26 +84,28 @@ proc parseBlock*(blockStr: string): Block {.raises: [Exception].} =
                 miner: string,
                 amount: int
             ]
-        ](blockSeq.len - (8 + (validations.len * 3)))
+        ]()
         #Signature.
-        signature: string = blockSeq[blockSeq.len-1].toBN(255).toString(16).pad(64)
+        signature: string = blockSeq[blockSeq.len - 1].toBN(255).toString(16).pad(64)
 
     #Set the validations.
-    for i in countup(4, 4 + (blockSeq.len * 3), 3):
+    for i in countup(4, 4 + (validations.len * 3) - 1, 3):
         validations[int((i - 4) / 3)] = (
             validator: blockSeq[i].toBN(255).toString(16).pad(64),
-            start: blockSeq[i+1].toBN(255).toInt(),
-            last: blockSeq[i+2].toBN(255).toInt()
+            start: blockSeq[i + 1].toBN(255).toInt(),
+            last: blockSeq[i + 2].toBN(255).toInt()
         )
 
-    #Set the miners.
-    for i in countup(7 + (validations.len * 3), blockSeq.len-1, 2):
-        miners[int((i - 7) / 2)] = (
-            miner: blockSeq[i].toBN(255).toString(16).pad(64).newAddress(),
-            amount: blockSeq[i].toBN(255).toInt()
-        )
+    #Filter the blockSeq to just the miners.
+    #Set the first element to the nonce.
+    minersSeq[0] = nonce.toString(255)
+    #Delete all other data.
+    minersSeq.delete(1, 4 + (validations.len * 3) - 1)
+    minersSeq.delete(minersSeq.len - 1)
+    minersSerialized = minersSeq.join(delim)
+    miners = parseMiners(minersSerialized)
 
-    #Create the MerkleTree object
+    #Create the MerkleTree object.
 
     #Create the Block Object.
     result = newBlockObj(last, nonce, time, validations, tree, publisher, proof, miners, signature)
@@ -106,4 +114,4 @@ proc parseBlock*(blockStr: string): Block {.raises: [Exception].} =
     #Set the Argon hash.
     result.setArgon(Argon(result.getHash(), result.getProof().toString(16)))
     #Set the miners hash.
-    result.setMinersHash(SHA512(miners.serialize(nonce)))
+    result.setMinersHash(SHA512(minersSerialized))
