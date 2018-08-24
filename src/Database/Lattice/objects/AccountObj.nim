@@ -2,9 +2,10 @@
 import ../../../lib/BN
 import ../../../lib/Base
 
-#Node object and transaction object.
+#Node, Send, and Receive objects.
 import NodeObj
-import TransactionObj
+import SendObj
+import ReceiveObj
 
 #Account object.
 type Account* = ref object of RootObj
@@ -29,14 +30,15 @@ proc add*(account: Account, node: Node): bool {.raises: [ValueError].} =
     inc(account.height)
     account.nodes.add(node)
 
-    if node.getDescendant() == 1:
-        var tx: Transaction = cast[Transaction](node)
-        if tx.getInput() == account.address:
-            account.balance -= tx.getAmount()
-        elif tx.getOutput() == account.address:
-            account.balance += tx.getAmount()
+    case node.getDescendant():
+        of 1:
+            var send: Send = cast[Send](node)
+            account.balance -= send.getAmount()
+        of 2:
+            var recv: Receive = cast[Receive](node)
+            account.balance += recv.getAmount()
         else:
-            raise newException(ValueError, "Trying to add a node to an unrelated account.")
+            discard
 
 #Getters.
 proc getAddress*(account: Account): string {.raises: [].} =

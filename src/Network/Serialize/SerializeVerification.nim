@@ -18,7 +18,7 @@ proc serialize*(verif: Verification): string =
         verif.getNonce().toString(255) !
         Address.toBN(verif.getAddress()).toString(255) !
         verif.getIndex().toString(255) !
-        verif.getTransaction().toBN(16).toString(255)
+        verif.getSend().toBN(16).toString(255)
 
     if verif.getHash().len != 0:
         result =

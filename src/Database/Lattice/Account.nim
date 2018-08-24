@@ -3,7 +3,8 @@ import ../../lib/BN
 
 #Node object and descendants.
 import objects/NodeObj
-import objects/TransactionObj
+import objects/SendObj
+import objects/ReceiveObj
 import objects/DataObj
 import objects/VerificationObj
 import objects/MeritRemovalObj
@@ -16,8 +17,12 @@ export AccountObj
 proc newAccount*(address: string): Account {.raises: [ValueError].} =
     newAccountObj(address)
 
-#Add a Transaction.
-proc addTransaction(account: Account, tx: Transaction): bool {.raises: [].} =
+#Add a Send.
+proc addSend(account: Account, send: Send): bool {.raises: [].} =
+    discard
+
+#Add a Send.
+proc addReceive(account: Account, recv: Receive): bool {.raises: [].} =
     discard
 
 #Add Data.
@@ -41,17 +46,20 @@ proc addNode*(account: Account, node: Node): bool {.raises: [].} =
 
     #Work off the type of descendant.
     case node.getDescendant():
-        #If it's a Transaction...
+        #If it's a Send...
         of 1:
-            result = account.addTransaction(cast[Transaction](node))
-        #If it's Data...
+            result = account.addSend(cast[Send](node))
+        #If it's a Receive...
         of 2:
+            result = account.addReceive(cast[Receive](node))            
+        #If it's Data...
+        of 3:
             result = account.addData(cast[Data](node))
         #If it's a Verification...
-        of 3:
+        of 4:
             result = account.addVerification(cast[Verification](node))
         #If it's a Merit Removal..
-        of 4:
+        of 5:
             result = account.addMeritRemoval(cast[MeritRemoval](node))
         #Else, return false...
         else:

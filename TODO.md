@@ -24,6 +24,7 @@ Features:
 - Threaded/dedicated miner.
 
 Improvements:
+- Make Node Descendant Types an enum.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
 - Don't round down; round to the closer number.
