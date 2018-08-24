@@ -16,10 +16,8 @@ import common
 proc serialize*(mr: MeritRemoval): string =
     result =
         mr.getNonce().toString(255) !
-        (
-            mr.getFirst().getHash() &
-            mr.getSecond().getHash()
-        ).toBN(16).toString(255)
+        mr.getFirst().toBN(16).toString(255) !
+        mr.getSecond().toBN(16).toString(255)
 
     if mr.getHash().len != 0:
         result =

@@ -14,16 +14,15 @@ import ../../Wallet/Wallet
 #Import the Serialization library.
 import ../../Network/Serialize
 
-#Node object and Verification lib.
+#Node object.
 import objects/NodeObj
-import Verification
 
 #MeritRemoval object.
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
 #Create a new MeritRemoval object.
-proc newMeritRemoval*(first: Verification, second: Verification, nonce: BN): MeritRemoval {.raises: [ResultError, ValueError, Exception].} =
+proc newMeritRemoval*(first: string, second: string, nonce: BN): MeritRemoval {.raises: [ResultError, ValueError, Exception].} =
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)
 
