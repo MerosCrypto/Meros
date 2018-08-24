@@ -32,11 +32,11 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].}
         #Public Key | Nonce | Input Address | Input Nonce | Amount | Signature
         recvSeq: seq[string] = recvStr.split(delim)
         #Get the sender's Public Key.
-        sender: PublicKey = recvSeq[0].toBN(255).toString(16).pad(64).newPublicKey()
+        sender: PublicKey = recvSeq[0].toBN(255).toString(16).newPublicKey()
         #Get the nonce.
         nonce: BN = recvSeq[1].toBN(255)
         #Get the input Address.
-        inputAddress: string = recvSeq[2].toBN(255).toString(16).pad(64).newAddress()
+        inputAddress: string = recvSeq[2].toBN(255).toString(16).newAddress()
         #Get the input nonce.
         inputNonce: BN = recvSeq[3].toBN(255)
         #Get the amount.

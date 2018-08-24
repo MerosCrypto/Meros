@@ -42,7 +42,7 @@ proc newAddress*(key: string): string {.raises: [ValueError, Exception].} =
     result = "Emb" & result
 
 #Work with Public Keys objects, not just hex public keys.
-proc newAddress*(key: PublicKey): string {.raises: [ ValueError, Exception].} =
+proc newAddress*(key: PublicKey): string {.raises: [ValueError, Exception].} =
     result = newAddress($key)
 
 #Verifies if an address is valid.

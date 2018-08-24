@@ -30,13 +30,13 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Excep
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.split(delim)
         #Get the sender's public key.
-        sender: PublicKey = sendSeq[0].toBN(255).toString(16).pad(64).newPublicKey()
+        sender: PublicKey = sendSeq[0].toBN(255).toString(16).newPublicKey()
         #Set the input address based off the sender's public key.
         input: string = sender.newAddress()
         #Get the nonce.
         nonce: BN = sendSeq[1].toBN(255)
         #Get the output.
-        output: string = newAddress(sendSeq[2].toBN(255).toString(16).pad(64))
+        output: string = newAddress(sendSeq[2].toBN(255).toString(16))
         #Get the amount.
         amount: BN = sendSeq[3].toBN(255)
         #Get the proof.
@@ -49,7 +49,7 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Excep
         output,
         amount
     )
-    
+
     #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ValueError, "Couldn't set the Node's nonce.")
