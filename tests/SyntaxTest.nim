@@ -4,7 +4,7 @@
 import ../src/lib/Errors
 import ../src/lib/Util
 
-import ../src/lib/Random
+import ../src/lib/RandomWrapper
 import ../src/lib/Time
 
 import ../src/lib/BN
