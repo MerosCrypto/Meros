@@ -2,26 +2,25 @@
 import ../../../lib/BN
 import ../../../lib/Base
 
-type Node* = ref object of RootObj
-    #Type of descendant.
-    descendant: int
-    #Address behind the node.
-    sender: string
-    #Index on the account.
-    nonce: BN
-    #Node hash.
-    hash: string
-    #Signature.
-    signature: string
+type
+    DescendantType* {.pure.} = enum
+        NodeSend = 1,
+        NodeReceive = 2,
+        NodeData = 3,
+        Nodeverification = 4,
+        NodeMeritRemoval = 5
 
-#Set the Node .
-proc setDescendant*(node: Node, descendant: int): bool =
-    result = true
-    if node.descendant != 0:
-        result = false
-        return
-
-    node.descendant = descendant
+    Node* = ref object of RootObj
+        #Type of descendant.
+        descendant*: DescendantType
+        #Address behind the node.
+        sender: string
+        #Index on the account.
+        nonce: BN
+        #Node hash.
+        hash: string
+        #Signature.
+        signature: string
 
 #Set the sender.
 proc setSender*(node: Node, sender: string): bool =
@@ -60,8 +59,6 @@ proc setSignature*(node: Node, signature: string): bool =
     node.signature = signature
 
 #Getters.
-proc getDescendant*(node: Node): int =
-    node.descendant
 proc getSender*(node: Node): string =
     node.sender
 proc getNonce*(node: Node): BN =

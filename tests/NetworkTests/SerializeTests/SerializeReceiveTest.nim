@@ -38,38 +38,38 @@ for i in 1 .. 20:
 
     #Test the Node properties.
     assert(
-        recv.getDescendant() == recvParsed.getDescendant(),
-        "Descendant:\r\n" & $recv.getDescendant() & "\r\n\r\n" & $recvParsed.getDescendant()
+        recv.descendant == recvParsed.descendant,
+        "Descendant:\r\n" & $recv.descendant & "\r\n" & $recvParsed.descendant
     )
     assert(
         recv.getSender == recvParsed.getSender(),
-        "Sender:\r\n" & recv.getSender() & "\r\n\r\n" & recvParsed.getSender()
+        "Sender:\r\n" & recv.getSender() & "\r\n" & recvParsed.getSender()
     )
     assert(
         recv.getNonce() == recvParsed.getNonce(),
-        "Nonce:\r\n" & $recv.getNonce() & "\r\n\r\n" & $recvParsed.getNonce()
+        "Nonce:\r\n" & $recv.getNonce() & "\r\n" & $recvParsed.getNonce()
     )
     assert(
         recv.getHash() == recvParsed.getHash(),
-        "Hash:\r\n" & recv.getHash() & "\r\n\r\n" & recvParsed.getHash()
+        "Hash:\r\n" & recv.getHash() & "\r\n" & recvParsed.getHash()
     )
     assert(
         recv.getSignature() == recvParsed.getSignature(),
-        "Signature:\r\n" & recv.getSignature() & "\r\n\r\n" & recvParsed.getSignature()
+        "Signature:\r\n" & recv.getSignature() & "\r\n" & recvParsed.getSignature()
     )
 
     #Test the Receive properties.
     assert(
         recv.getInputAddress() == recvParsed.getInputAddress(),
-        "Input Address:\r\n" & recv.getInputAddress() & "\r\n\r\n" & recvParsed.getInputAddress()
+        "Input Address:\r\n" & recv.getInputAddress() & "\r\n" & recvParsed.getInputAddress()
     )
     assert(
         recv.getInputNonce() == recvParsed.getInputNonce(),
-        "Input Nonce:\r\n" & $recv.getInputNonce() & "\r\n\r\n" & $recvParsed.getInputNonce()
+        "Input Nonce:\r\n" & $recv.getInputNonce() & "\r\n" & $recvParsed.getInputNonce()
     )
     assert(
         recv.getAmount() == recvParsed.getAmount(),
-        "Amount:\r\n" & $recv.getAmount() & "\r\n\r\n" & $recvParsed.getAmount()
+        "Amount:\r\n" & $recv.getAmount() & "\r\n" & $recvParsed.getAmount()
     )
 
 echo "Finished the Network/Serialize/Receive test."

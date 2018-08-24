@@ -36,10 +36,6 @@ proc newData*(
         data
     )
 
-    #Set the descendant type.
-    if not result.setDescendant(3):
-        raise newException(ResultError, "Couldn't set the node's descendant type.")
-
     #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ResultError, "Setting the Data nonce failed.")

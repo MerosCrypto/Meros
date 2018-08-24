@@ -22,6 +22,7 @@ type Send* = ref object of Node
 #New Send object.
 proc newSendObj*(output: string, amount: BN): Send {.raises: [].} =
     Send(
+        descendant: NodeSend,
         output: output,
         amount: amount
     )

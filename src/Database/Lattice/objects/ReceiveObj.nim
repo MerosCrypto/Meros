@@ -17,6 +17,7 @@ type Receive* = ref object of Node
 #New Receive object.
 proc newReceiveObj*(inputAddress: string, inputNonce: BN, amount: BN): Receive {.raises: [].} =
     Receive(
+        descendant: NodeReceive,
         inputAddress: inputAddress,
         inputNonce: inputNonce,
         amount: amount

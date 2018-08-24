@@ -28,10 +28,6 @@ proc newVerification*(send: Send, nonce: BN): Verification {.raises: [ResultErro
         send.getHash()
     )
 
-    #Set the descendant type.
-    if not result.setDescendant(4):
-        raise newException(ResultError, "Couldn't set the node's descendant type.")
-
     #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ResultError, "Setting the Verification nonce failed.")

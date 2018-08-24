@@ -30,11 +30,11 @@ proc add*(account: Account, node: Node): bool {.raises: [ValueError].} =
     inc(account.height)
     account.nodes.add(node)
 
-    case node.getDescendant():
-        of 1:
+    case node.descendant:
+        of NodeSend:
             var send: Send = cast[Send](node)
             account.balance -= send.getAmount()
-        of 2:
+        of NodeReceive:
             var recv: Receive = cast[Receive](node)
             account.balance += recv.getAmount()
         else:

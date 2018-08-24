@@ -26,10 +26,6 @@ proc newMeritRemoval*(first: string, second: string, nonce: BN): MeritRemoval {.
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)
 
-    #Set the descendant type.
-    if not result.setDescendant(5):
-        raise newException(ResultError, "Couldn't set the node's descendant type.")
-
     #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ResultError, "Couldn't set the Merit Removal nonce.")

@@ -45,21 +45,21 @@ proc addNode*(account: Account, node: Node): bool {.raises: [].} =
         return
 
     #Work off the type of descendant.
-    case node.getDescendant():
+    case node.descendant:
         #If it's a Send...
-        of 1:
+        of NodeSend:
             result = account.addSend(cast[Send](node))
         #If it's a Receive...
-        of 2:
-            result = account.addReceive(cast[Receive](node))            
+        of NodeReceive:
+            result = account.addReceive(cast[Receive](node))
         #If it's Data...
-        of 3:
+        of NodeData:
             result = account.addData(cast[Data](node))
         #If it's a Verification...
-        of 4:
+        of NodeVerification:
             result = account.addVerification(cast[Verification](node))
         #If it's a Merit Removal..
-        of 5:
+        of NodeMeritRemoval:
             result = account.addMeritRemoval(cast[MeritRemoval](node))
         #Else, return false...
         else:

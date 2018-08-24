@@ -49,11 +49,7 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Excep
         output,
         amount
     )
-
-    #Set the descendant type.
-    if not result.setDescendant(1):
-        raise newException(ValueError, "Couldn't set the Node's descendant type.")
-
+    
     #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ValueError, "Couldn't set the Node's nonce.")

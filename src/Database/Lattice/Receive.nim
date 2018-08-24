@@ -50,10 +50,6 @@ proc newReceive*(
         amount
     )
 
-    #Set the descendant type.
-    if not result.setDescendant(2):
-        raise newException(ResultError, "Couldn't set the node's descendant type.")
-
     #Set the nonce.
     if not result.setNonce(nonce):
         raise newException(ResultError, "Setting the node's nonce failed.")
