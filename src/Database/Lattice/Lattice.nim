@@ -14,28 +14,10 @@ import MeritRemoval
 
 #Lattice Objects.
 import objects/LatticeObjs
+import objects/LatticeMasterObj
 #Export the Index object/function.
 export Index, newIndex, getAddress, getIndex
-
-#Lattice master object.
-type Lattice* = ref object of RootObj
-    #Difficulties.
-    difficulties: Difficulties
-    #Block Lattice object.
-    lattice: BlockLattice
-    #Lookup table.
-    lookup: HashLookup
-
-#Constructor.
-proc newLattice*(): Lattice {.raises: [ValueError].} =
-    var lattice: Lattice = Lattice(
-        difficulties: newDifficulties(),
-        lattice: newBlockLattice(),
-        lookup: newHashLookup()
-    )
-    lattice.difficulties.setTransaction(newBN("".pad(64, "88")))
-    lattice.difficulties.setData(newBN("".pad(64, "88")))
-    lattice.difficulties.setUsable()
+export newLattice
 
 #Add a Node.
 proc add*(lattice: Lattice, node: Node): bool {.raises: [].} =
@@ -63,19 +45,19 @@ proc add*(lattice: Lattice, mr: MeritRemoval): bool {.raises: [].} =
 
 #Get the Difficulties.
 proc getTransactionDifficulty*(lattice: Lattice): BN {.raises: [].} =
-    lattice.difficulties.getTransaction()
+    lattice.getDifficulties().getTransaction()
 proc getDataDifficulty*(lattice: Lattice): BN {.raises: [].} =
-    lattice.difficulties.getData()
+    lattice.getDifficulties().getData()
 
 #Getters for Nodes from the Lattice.
 proc getNode*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
-    lattice.lattice.getNode(index)
+    lattice.getLattice().getNode(index)
 proc `[]`*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
-    lattice.lattice.getNode(index)
+    lattice.getLattice().getNode(index)
 proc getNode*(lattice: Lattice, hash: string): Node {.raises: [ValueError].} =
-    lattice.lattice.getNode(lattice.lookup, hash)
+    lattice.getLattice().getNode(lattice.getLookup(), hash)
 
 #Iterates over every hash the lookup table has.
 iterator hashes*(lattice: Lattice): string {.raises: [].} =
-    for hash in lattice.lookup.hashes():
+    for hash in lattice.getLookup().hashes():
         yield hash
