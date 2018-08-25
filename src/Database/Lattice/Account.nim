@@ -1,5 +1,14 @@
-#BN lib.
+#Numerical libs.
 import ../../lib/BN
+import ../../lib/Base
+
+#Hashing libraries.
+import ../../lib/SHA512
+import ../../lib/Argon
+
+#Wallet libraries.
+import ../../Wallet/Wallet
+import ../../Wallet/Address
 
 #Node object and descendants.
 import objects/NodeObj
@@ -17,50 +26,68 @@ export AccountObj
 proc newAccount*(address: string): Account {.raises: [ValueError].} =
     newAccountObj(address)
 
-#Add a Send.
-proc addSend(account: Account, send: Send): bool {.raises: [].} =
-    discard
-
-#Add a Send.
-proc addReceive(account: Account, recv: Receive): bool {.raises: [].} =
-    discard
-
-#Add Data.
-proc addData(account: Account, data: Data): bool {.raises: [].} =
-    discard
-
-#Add a Verification.
-proc addVerification(account: Account, verif: Verification): bool {.raises: [].} =
-    discard
-
-#Add a Merit Removal.
-proc addMeritRemoval(account: Account, mr: MeritRemoval): bool {.raises: [].} =
-    discard
-
 #Add a node.
-proc addNode*(account: Account, node: Node): bool {.raises: [].} =
+proc add*(account: Account, node: Node): bool {.raises: [ValueError, Exception].} =
+    result = true
+
+    #Verify the sender.
+    if node.getSender() != account.getAddress():
+        result = false
+        return
+
     #Verify the nonce.
     if newBN(account.getNodes().len) != node.getNonce():
         result = false
         return
 
-    #Work off the type of descendant.
-    case node.descendant:
-        #If it's a Send...
-        of NodeSend:
-            result = account.addSend(cast[Send](node))
-        #If it's a Receive...
-        of NodeReceive:
-            result = account.addReceive(cast[Receive](node))
-        #If it's Data...
-        of NodeData:
-            result = account.addData(cast[Data](node))
-        #If it's a Verification...
-        of NodeVerification:
-            result = account.addVerification(cast[Verification](node))
-        #If it's a Merit Removal..
-        of NodeMeritRemoval:
-            result = account.addMeritRemoval(cast[MeritRemoval](node))
-        #Else, return false...
-        else:
-            result = false
+    #Verify the signature.
+    if not newPublicKey(
+        account.getAddress().toBN().toString(16)
+    ).verify(node.getHash(), node.getSignature()):
+        result = false
+        return
+
+    #Add the node.
+    account.addNode(node)
+
+#Add a Send.
+proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueError, Exception].} =
+    #Verify the work.
+    if send.getHash().toBN(16) < difficulty:
+        result = false
+        return
+
+    #Verify the output is a valid address.
+    if not Address.verify(send.getOutput()):
+        result = false
+        return
+
+    #Verify the account has enough money.
+    if account.getBalance() < send.getAmount():
+        result = false
+        return
+
+    #Add the Send.
+    result = account.add(cast[Node](send))
+
+#Add a Receive.
+proc add*(account: Account, recv: Receive): bool {.raises: [ValueError, Exception].} =
+    result = account.add(cast[Node](recv))
+
+#Add Data.
+proc add*(account: Account, data: Data, difficulty: BN): bool {.raises: [ValueError, Exception].} =
+    #Verify the work.
+    if data.getHash().toBN(16) < difficulty:
+        result = false
+        return
+
+    #Add the data.
+    result = account.add(cast[Node](data))
+
+#Add a Verification.
+proc add*(account: Account, verif: Verification): bool {.raises: [ValueError, Exception].} =
+    result = account.add(cast[Node](verif))
+
+#Add a Merit Removal.
+proc add*(account: Account, mr: MeritRemoval): bool {.raises: [ValueError, Exception].} =
+    result = account.add(cast[Node](mr))

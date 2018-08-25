@@ -18,6 +18,7 @@ type Account* = ref object of RootObj
     #Balance of the address.
     balance: BN
 
+#Creates a new account object.
 proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
     Account(
         address: address,
@@ -26,17 +27,21 @@ proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
         balance: newBN()
     )
 
-proc add*(account: Account, node: Node): bool {.raises: [ValueError].} =
+#Add a Node to an account.
+proc addNode*(account: Account, node: Node) {.raises: [ValueError].} =
+    #Increase the account height and add the node.
     inc(account.height)
     account.nodes.add(node)
 
     case node.descendant:
+        #If it's a Send Node...
         of NodeSend:
-            var send: Send = cast[Send](node)
-            account.balance -= send.getAmount()
+            #Update the balance.
+            account.balance -= cast[Send](node).getAmount()
+        #If it's a Receive Node...
         of NodeReceive:
-            var recv: Receive = cast[Receive](node)
-            account.balance += recv.getAmount()
+            #Update the balance.
+            account.balance += cast[Receive](node).getAmount()
         else:
             discard
 
