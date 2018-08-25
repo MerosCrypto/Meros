@@ -9,15 +9,15 @@ type Verification* = ref object of Node
     address: string
     index: BN
     #Send Hash.
-    send: string
+    verified: string
 
 #New Verification object.
-proc newVerificationObj*(address: string, index: BN, send: string): Verification =
+proc newVerificationObj*(address: string, index: BN, verified: string): Verification =
     Verification(
         descendant: NodeVerification,
         address: address,
         index: index,
-        send: send
+        verified: verified
     )
 
 #Getters.
@@ -25,5 +25,5 @@ proc getAddress*(verif: Verification): string =
     verif.address
 proc getIndex*(verif: Verification): BN =
     verif.index
-proc getSend*(verif: Verification): string =
-    verif.send
+proc getVerified*(verif: Verification): string =
+    verif.verified

@@ -21,11 +21,11 @@ import Send
 import objects/VerificationObj
 export VerificationObj
 
-proc newVerification*(send: Send, nonce: BN): Verification {.raises: [ResultError, ValueError, Exception].} =
+proc newVerification*(node: Node, nonce: BN): Verification {.raises: [ResultError, ValueError, Exception].} =
     result = newVerificationObj(
-        send.getSender(),
-        send.getNonce(),
-        send.getHash()
+        node.getSender(),
+        node.getNonce(),
+        node.getHash()
     )
 
     #Set the nonce.
