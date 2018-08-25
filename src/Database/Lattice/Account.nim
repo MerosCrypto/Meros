@@ -61,7 +61,41 @@ proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueEr
     result = account.add(cast[Node](send))
 
 #Add a Receive.
-proc add*(account: Account, recv: Receive, send: Node): bool {.raises: [ValueError, Exception].} =
+proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [ValueError, Exception].} =
+    #Verify the node is a Send.
+    if sendArg.descendant != NodeSend:
+        return false
+
+    #Cast it to a Send.
+    var send: Send = cast[Send](sendArg)
+
+    #Verify the Send's output address.
+    if account.getAddress() != send.getOutput():
+        return false
+
+    #Verify the Receive's input address.
+    if recv.getInputAddress() != send.getSender():
+        return false
+
+    #Verify the nonces match.
+    if recv.getInputNonce() != send.getNonce():
+        return false
+
+    #Verify the balances match.
+    if recv.getAmount() != send.getAmount():
+        return false
+
+    #Verify it's unclaimed.
+    for i in account.getNodes():
+        if i.descendant == NodeReceive:
+            var past: Receive = cast[Receive](i)
+            if (
+                (past.getInputAddress() == recv.getInputAddress()) and
+                (past.getInputNonce() == recv.getInputNonce())
+            ):
+                return false
+
+    #Add the Receive.
     result = account.add(cast[Node](recv))
 
 #Add Data.
