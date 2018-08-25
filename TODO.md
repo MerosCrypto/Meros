@@ -4,11 +4,9 @@ Core:
 - Chain Params file.
 - Use custom errors.
 - Write tests.
-- Write a Lattice/Database State.
-- Parse functions (which requires knowing the state).
+- Parse functions.
 - Difficulty Vote node.
-- Account, Lattice, and Database files.
-- Filesystem code.
+- Lattice and code.
 - Network.
 - UI.
 
@@ -24,10 +22,11 @@ Features:
 - Threaded/dedicated miner.
 
 Improvements:
-- Make Miners/Validations a proper object.
+- Make Miners/Validations proper objects.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
 - Don't round down; round to the closer number.
+- Get rid of `result = false; return` for `return false`.
 
 Bug fixes and behavior changes:
 - Difficulty does a minimal amount of scaling with longer time periods.
