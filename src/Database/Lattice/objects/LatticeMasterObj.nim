@@ -18,14 +18,19 @@ type Lattice* = ref object of RootObj
 
 #Constructor.
 proc newLattice*(): Lattice {.raises: [ValueError].} =
-    var lattice: Lattice = Lattice(
+    #Create the object.
+    result = Lattice(
         difficulties: newDifficulties(),
         lattice: newBlockLattice(),
         lookup: newHashLookup()
     )
-    lattice.difficulties.setTransaction(newBN("".pad(64, "88")))
-    lattice.difficulties.setData(newBN("".pad(64, "88")))
-    lattice.difficulties.setUsable()
+
+    #Set the difficulty values.
+    result.difficulties.setTransaction(newBN("".pad(64, "88")))
+    result.difficulties.setData(newBN("".pad(64, "88")))
+
+    #Add the minter account.
+    discard result.lattice.newAccount("minter")
 
 proc getDifficulties*(lattice: Lattice): Difficulties {.raises: [].} =
     lattice.difficulties

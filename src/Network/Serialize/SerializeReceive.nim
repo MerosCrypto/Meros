@@ -14,9 +14,14 @@ import common
 
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =
-    result =
-        recv.getNonce().toString(255) !
-        Address.toBN(recv.getInputAddress()).toString(255) !
+    result = recv.getNonce().toString(255) & delim
+
+    if recv.getInputAddress() == "minter":
+        result &= delim
+    else:
+        result &= Address.toBN(recv.getInputAddress()).toString(255) & delim
+
+    result &=
         recv.getInputNonce().toString(255) !
         recv.getAmount().toString(255)
 

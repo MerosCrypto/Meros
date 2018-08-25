@@ -35,9 +35,14 @@ proc add(account: Account, node: Node): bool {.raises: [ValueError, Exception].}
         return false
 
     #Verify the signature.
-    if not newPublicKey(
-        account.getAddress().toBN().toString(16)
-    ).verify(node.getHash(), node.getSignature()):
+    if (
+        (account.getAddress() != "minter") and
+        (
+            not newPublicKey(
+                account.getAddress().toBN().toString(16)
+            ).verify(node.getHash(), node.getSignature())
+        )
+    ):
         return false
 
     #Add the node.
@@ -45,6 +50,11 @@ proc add(account: Account, node: Node): bool {.raises: [ValueError, Exception].}
 
 #Add a Send.
 proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueError, Exception].} =
+    #Override for minter.
+    if send.getSender() == "minter":
+        #Add the Send node.
+        return account.add(cast[Node](send))
+
     #Verify the work.
     if send.getHash().toBN(16) < difficulty:
         return false

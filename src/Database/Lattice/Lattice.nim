@@ -1,4 +1,5 @@
-#Util lib.
+#Errors and Util lib.
+import ../../lib/Errors
 import ../../lib/Util
 
 #Numerical libs.
@@ -11,6 +12,13 @@ import Receive
 import Data
 import Verification
 import MeritRemoval
+#Export the Node and Node descendants.
+export NodeObj
+export Send
+export Receive
+export Data
+export Verification
+export MeritRemoval
 
 #Account lib.
 import Account
@@ -19,32 +27,33 @@ import Account
 import objects/LatticeObjs
 import objects/LatticeMasterObj
 #Export the Index object/function.
-export Index, newIndex, getAddress, getIndex
-export newLattice
+export Index, newIndex, getAddress, getNonce
+export LatticeMasterObj.Lattice, newLattice
 
 #Add a Node to the Hash Lookup.
-proc addToLookup(lattice: Lattice, node: Node): bool {.raises: [ValueError].} =
+proc addToLookup(lattice: Lattice, node: Node) {.raises: [].} =
     lattice
         .getLookup()
         .add(
             node.getHash(),
             newIndex(
                 node.getSender(),
-                node.getNonce().toInt()
+                node.getNonce()
             )
         )
 
 #Add a Node to the Lattice.
-proc add*(lattice: Lattice, node: Node) {.raises: [ValueError, Exception].} =
+proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.raises: [ValueError, Exception].} =
+    #Make sure only this node creates mint TXs.
+    if (
+        (node.getSender() == "minter") and
+        (not mintOverride)
+    ):
+        return false
+
     var
-        result: bool
-        account: Account = lattice
-            #Get the BlockLattice.
-            .getLattice()
-            #Get the account.
-            .getAccount(
-                node.getSender()
-            )
+        blockLattice = lattice.getLattice() #Get the Block Lattice.
+        account: Account = blockLattice.getAccount(node.getSender()) #Get the Account.
 
     case node.descendant:
         of NodeSend:
@@ -66,12 +75,11 @@ proc add*(lattice: Lattice, node: Node) {.raises: [ValueError, Exception].} =
                 #Receive Node.
                 recv,
                 #Supposed Send node.
-                lattice
-                    .getLattice()
+                blockLattice
                     .getNode(
                         newIndex(
                             recv.getInputAddress(),
-                            recv.getInputNonce().toInt()
+                            recv.getInputNonce()
                         )
                     )
             )
@@ -102,23 +110,37 @@ proc add*(lattice: Lattice, node: Node) {.raises: [ValueError, Exception].} =
                 mr
             )
 
-    #This function will raise an error over returning bools.
-    #The functions below it (in the hierarchy, not in the file) do the same.
-    #That's fine within the Lattice scope, but this file is in the global scope.
-    #It had to do one or the other, and I rather put a try/catch elsewhere than one here.
-    #Therefore, it's optional, not forced by the Lattice library.
-
-    #If that didn't work, raise a ValueError.
+    #If that didn't work, return.
     if not result:
-        raise newException(ValueError, "Node couldn't be added to the Lattice.")
+        return
 
     #Else, add the node to the lookup table.
-    result = lattice.addToLookup(node)
-    if not result:
-        #If that failed, raise a ValueError.
-        raise newException(ValueError, "Node couldn't be added to the Lookup Table. The Lookup Table now is missing nodes on the Lattice. This is possibly from a hash collision.")
+    lattice.addToLookup(node)
 
-    #Everything's good! `result` should be true, but this function returns void.
+proc mint*(lattice: Lattice, address: string, amount: BN): Index {.raises: [ResultError, ValueError, Exception].} =
+    #Get the Height in a new var that won't update.
+    var height: BN = newBN()
+    height[] = lattice.getLattice().getAccount("minter").getHeight()[]
+
+    #Create the Send Node.
+    var send: Send = newSend(
+        address,
+        amount,
+        height
+    )
+    #Mine it.
+    send.mine(newBN())
+
+    #Set the sender.
+    if not send.setSender("minter"):
+        raise newException(ResultError, "Couldn't set the minter as the sender.")
+
+    #Add it to the Lattice.
+    if not lattice.add(send, true):
+        raise newException(ResultError, "Couldn't add the mint node to the Lattice.")
+
+    #Return the Index.
+    result = newIndex("minter", height)
 
 #Get the Difficulties.
 proc getTransactionDifficulty*(lattice: Lattice): BN {.raises: [].} =

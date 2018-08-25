@@ -60,7 +60,7 @@ proc mine*(send: Send, networkDifficulty: BN) {.raises: [ResultError, ValueError
         proof: BN = newBN()
         hash: string = "00"
 
-    while hash.toBN(16) < networkDifficulty:
+    while hash.toBN(16) <= networkDifficulty:
         inc(proof)
         hash = Argon(send.getSHA512(), proof.toString(16), true)
 

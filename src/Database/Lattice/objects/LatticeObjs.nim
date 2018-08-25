@@ -14,11 +14,10 @@ type
     #Index object. Specifies a Node on the Lattice.
     Index* = ref object of RootObj
         address: string
-        index: int
+        nonce: BN
 
     #Lattice Difficulties object. Specifies the TX/Data  difficulties.
     Difficulties* = ref object of RootObj
-        usable: bool
         transaction: BN
         data: BN
 
@@ -35,14 +34,13 @@ type
     ]
 
 #Constructors.
-proc newIndex*(address: string, index: int): Index {.raises: [].} =
+proc newIndex*(address: string, nonce: BN): Index {.raises: [].} =
     Index(
         address: address,
-        index: index
+        nonce: nonce
     )
 proc newDifficulties*(): Difficulties {.raises: [ValueError].} =
-    Difficulties(
-        usable: false,
+    result = Difficulties(
         transaction: newBN(),
         data: newBN()
     )
@@ -56,8 +54,6 @@ proc setTransaction*(difficulties: Difficulties, tx: BN) {.raises: [].} =
     difficulties.transaction = tx
 proc setData*(difficulties: Difficulties, data: BN) {.raises: [].} =
     difficulties.data = data
-proc setUsable*(difficulties: Difficulties) {.raises: [].} =
-    difficulties.usable = true
 
 #Creates a new account on the lattice.
 proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueError].} =
@@ -68,19 +64,15 @@ proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueE
     lattice[address] = newAccountObj(address)
 
 #Adds a hash to the lookup.
-proc add*(lookup: HashLookup, hash: string, index: Index): bool {.raises: [].} =
-    result = true
-    if lookup.hasKey(hash):
-        return false
-
+proc add*(lookup: HashLookup, hash: string, index: Index) {.raises: [].} =
     lookup[hash] = index
 
 #Getters.
 #Gets the Index data.
 proc getAddress*(index: Index): string {.raises: [].} =
     index.address
-proc getIndex*(index: Index): int {.raises: [].} =
-    index.index
+proc getNonce*(index: Index): BN {.raises: [].} =
+    index.nonce
 
 #Gets the difficulties.
 proc getTransaction*(diff: Difficulties): BN {.raises: [].} =
@@ -90,8 +82,12 @@ proc getData*(diff: Difficulties): BN {.raises: [].} =
 
 #Gets an account.
 proc getAccount*(lattice: BlockLattice, address: string): Account {.raises: [ValueError].} =
+    #If the Lattice doesn't have a blockchain for that account...
     if not lattice.hasKey(address):
-        raise newException(ValueError, "Lattice does not have a blockchain for that address.")
+        #Create it, but if that fails...
+        if not lattice.newAccount(address):
+            #Raise an exception.
+            raise newException(ValueError, "Couldn't create an account on the Lattice.")
 
     result = lattice[address]
 #Gets a node by its index.
@@ -99,7 +95,7 @@ proc getNode*(lattice: BlockLattice, index: Index): Node {.raises: [ValueError].
     if not lattice.hasKey(index.address):
         raise newException(ValueError, "Lattice does not have a blockchain for that address.")
 
-    result = lattice[index.address][index.index]
+    result = lattice[index.address][index.nonce.toInt()]
 #Gets a node via [].
 proc `[]`*(lattice: BlockLattice, index: Index): Node {.raises: [ValueError].} =
     lattice.getNode(index)

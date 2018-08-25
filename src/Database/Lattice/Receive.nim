@@ -28,7 +28,10 @@ proc newReceive*(
     nonce: BN
 ): Receive {.raises: [ResultError, ValueError, Exception].} =
     #Verify the input address.
-    if not Wallet.verify(inputAddress):
+    if (
+        (not Wallet.verify(inputAddress)) and
+        (inputAddress != "minter")
+    ):
         raise newException(ValueError, "Receive address is not valid.")
 
     #Verify the input nonce.
