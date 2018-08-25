@@ -39,22 +39,22 @@ proc argon2d(
 proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.raises: [ResultError, ValueError].} =
     var
         data: string = dataArg.pad(128, "00")
-        salt: string = saltArg.pad(64, "00")
+        salt: string = saltArg.pad(128, "00")
         dataArr: array[64, uint8]
-        saltArr: array[32, uint8]
-        resArr: array[32, uint8]
+        saltArr: array[64, uint8]
+        resArr: array[64, uint8]
         res: string
 
     #Verify argument validity.
     if (not Base.isBase(data, 16)) or (not Base.isBase(salt, 16)):
         raise newException(ValueError, "Invalid hex data/salt.")
-    if (data.len > 128) or (salt.len > 64):
+    if (data.len > 128) or (salt.len > 128):
         raise newException(ValueError, "Invalid data/salt length.")
 
     #Parse the data/salt strings into array.
     for i in countup(0, 127, 2):
         dataArr[(int) i/2] = (uint8) parseHexInt(data[i .. i+1])
-    for i in countup(0, 63, 2):
+    for i in countup(0, 127, 2):
         saltArr[(int) i/2] = (uint8) parseHexInt(salt[i .. i+1])
 
     var
@@ -77,9 +77,9 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.r
         cast[ptr uint8](addr dataArr[0]),
         (uint32) 64,
         cast[ptr uint8](addr saltArr[0]),
-        (uint32) 32,
+        (uint32) 64,
         addr resArr[0],
-        (uint32) 32
+        (uint32) 64
     ) != 0:
         raise newException(ResultError, "Argon2d raised an error.")
 
