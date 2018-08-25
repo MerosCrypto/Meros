@@ -1,7 +1,10 @@
-import Send
-import Receive
-import Data
-import Verification
-import MeritRemoval
+#Import the Lattice Objects.
+import objects/LatticeObjs
 
-import Account
+type Lattice = ref object of RootObj
+    #Difficulties.
+    difficulties: Difficulties
+    #Block Lattice object.
+    lattice: BlockLattice
+    #Lookup table.
+    lookup: HashLookup

@@ -52,7 +52,10 @@ proc getHeight*(account: Account): BN {.raises: [].} =
     account.height
 proc getNodes*(account: Account): seq[Node] {.raises: [].} =
     account.nodes
-proc `[]`*(account: Account, index: int): Node {.raises: [].} =
-    account.nodes[index]
+proc `[]`*(account: Account, index: int): Node {.raises: [ValueError].} =
+    if index >= account.nodes.len:
+        raise newException(ValueError, "Account index out of bounds.")
+
+    result = account.nodes[index]
 proc getBalance*(account: Account): BN {.raises: [].} =
     account.balance

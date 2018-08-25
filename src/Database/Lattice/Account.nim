@@ -22,10 +22,6 @@ import objects/MeritRemovalObj
 import objects/AccountObj
 export AccountObj
 
-#Create a new Account.
-proc newAccount*(address: string): Account {.raises: [ValueError].} =
-    newAccountObj(address)
-
 #Add a node.
 proc add*(account: Account, node: Node): bool {.raises: [ValueError, Exception].} =
     result = true
