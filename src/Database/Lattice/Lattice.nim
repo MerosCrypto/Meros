@@ -5,12 +5,15 @@ import ../../lib/Util
 import ../../lib/BN
 
 #Node and node descendants.
-import objects/NodeOBj
+import objects/NodeObj
 import Send
 import Receive
 import Data
 import Verification
 import MeritRemoval
+
+#Account lib.
+import Account
 
 #Lattice Objects.
 import objects/LatticeObjs
@@ -19,35 +22,112 @@ import objects/LatticeMasterObj
 export Index, newIndex, getAddress, getIndex
 export newLattice
 
-#Add a Node.
-proc add*(lattice: Lattice, node: Node): bool {.raises: [].} =
-    discard
+#Add a Node to the Hash Lookup.
+proc addToLookup(lattice: Lattice, node: Node): bool {.raises: [ValueError].} =
+    lattice
+        .getLookup()
+        .add(
+            node.getHash(),
+            newIndex(
+                node.getSender(),
+                node.getNonce().toInt()
+            )
+        )
 
-#Add a Send Node.
-proc add*(lattice: Lattice, send: Send): bool {.raises: [].} =
-    discard
+#Add a Node to the Lattice.
+proc add*(lattice: Lattice, node: Node) {.raises: [ValueError, Exception].} =
+    var
+        result: bool
+        account: Account = lattice
+            #Get the BlockLattice.
+            .getLattice()
+            #Get the account.
+            .getAccount(
+                node.getSender()
+            )
 
-#Add a Receive Node.
-proc add*(lattice: Lattice, recv: Receive): bool {.raises: [].} =
-    discard
+    case node.descendant:
+        of NodeSend:
+            #Cast the node.
+            var send: Send = cast[Send](node)
 
-#Add a Data Node.
-proc add*(lattice: Lattice, data: Data): bool {.raises: [].} =
-    discard
+            #Add it.
+            result = account.add(
+                #Send Node.
+                send,
+                #Transaction Difficulty.
+                lattice.getDifficulties().getTransaction()
+            )
 
-#Add a Verification Node.
-proc add*(lattice: Lattice, verif: Verification): bool {.raises: [].} =
-    discard
+        of NodeReceive:
+            var recv: Receive = cast[Receive](node)
 
-#Add a MeritRemoval Node.
-proc add*(lattice: Lattice, mr: MeritRemoval): bool {.raises: [].} =
-    discard
+            result = account.add(
+                #Receive Node.
+                recv,
+                #Supposed Send node.
+                lattice
+                    .getLattice()
+                    .getNode(
+                        newIndex(
+                            recv.getInputAddress(),
+                            recv.getInputNonce().toInt()
+                        )
+                    )
+            )
+
+        of NodeData:
+            var data: Data = cast[Data](node)
+
+            result = account.add(
+                #Data Node.
+                data,
+                #Data Difficulty.
+                lattice.getDifficulties().getData()
+            )
+
+        of NodeVerification:
+            var verif: Verification = cast[Verification](node)
+
+            result = account.add(
+                #Verification Node.
+                verif
+            )
+
+        of NodeMeritRemoval:
+            var mr: MeritRemoval = cast[MeritRemoval](node)
+
+            result = account.add(
+                #Data Node.
+                mr
+            )
+
+    #This function will raise an error over returning bools.
+    #The functions below it (in the hierarchy, not in the file) do the same.
+    #That's fine within the Lattice scope, but this file is in the global scope.
+    #It had to do one or the other, and I rather put a try/catch elsewhere than one here.
+    #Therefore, it's optional, not forced by the Lattice library.
+
+    #If that didn't work, raise a ValueError.
+    if not result:
+        raise newException(ValueError, "Node couldn't be added to the Lattice.")
+
+    #Else, add the node to the lookup table.
+    if not lattice.addToLookup(node):
+        #If that failed, raise a ValueError.
+            raise newException(ValueError, "Node couldn't be added to the Lookup Table. The Lookup Table now is missing nodes on the Lattice. This is possibly from a hash collision.")
 
 #Get the Difficulties.
 proc getTransactionDifficulty*(lattice: Lattice): BN {.raises: [].} =
     lattice.getDifficulties().getTransaction()
 proc getDataDifficulty*(lattice: Lattice): BN {.raises: [].} =
     lattice.getDifficulties().getData()
+
+#Getters for Account info.
+proc getHeight*(lattice: Lattice, address: string): BN {.raises: [ValueError].} =
+    lattice.getLattice().getAccount(address).getHeight()
+proc getBalance*(lattice: Lattice, address: string): BN {.raises: [ValueError].} =
+    lattice.getLattice().getAccount(address).getBalance()
 
 #Getters for Nodes from the Lattice.
 proc getNode*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =

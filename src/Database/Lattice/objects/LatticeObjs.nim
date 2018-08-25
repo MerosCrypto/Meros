@@ -69,7 +69,7 @@ proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueE
     lattice[address] = newAccountObj(address)
 
 #Adds a hash to the lookup.
-proc addHash*(lookup: HashLookup, hash: string, index: Index): bool {.raises: [].} =
+proc add*(lookup: HashLookup, hash: string, index: Index): bool {.raises: [].} =
     result = true
     if lookup.hasKey(hash):
         result = false

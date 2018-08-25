@@ -23,7 +23,7 @@ import objects/AccountObj
 export AccountObj
 
 #Add a node.
-proc add*(account: Account, node: Node): bool {.raises: [ValueError, Exception].} =
+proc add(account: Account, node: Node): bool {.raises: [ValueError, Exception].} =
     result = true
 
     #Verify the sender.
@@ -67,7 +67,7 @@ proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueEr
     result = account.add(cast[Node](send))
 
 #Add a Receive.
-proc add*(account: Account, recv: Receive): bool {.raises: [ValueError, Exception].} =
+proc add*(account: Account, recv: Receive, send: Node): bool {.raises: [ValueError, Exception].} =
     result = account.add(cast[Node](recv))
 
 #Add Data.

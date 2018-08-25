@@ -1,16 +1,18 @@
 # TODO
 
 Core:
-- Chain Params file.
-- Use custom errors.
-- Write tests.
+- Account add functions.
 - Parse functions.
+- Track Verifications.
+- Track MeritRemovals and link them to the blockchain.
 - Difficulty Vote node.
-- Lattice and code.
+- Filesystem.
 - Network.
 - UI.
+- Write tests.
 
 Features:
+- Chain Params file.
 - Have Merit disappear after 365.25\*24\*6 (52596) blocks.
 - Have Merit Holders indexable by the order they got Merit in.
 - Have Difficulty retarget:
@@ -22,11 +24,12 @@ Features:
 - Threaded/dedicated miner.
 
 Improvements:
+- Get rid of `result = false; return` for `return false`.
+- Use custom errors.
 - Make Miners/Validations proper objects.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
 - Don't round down; round to the closer number.
-- Get rid of `result = false; return` for `return false`.
 
 Bug fixes and behavior changes:
 - Difficulty does a minimal amount of scaling with longer time periods.
