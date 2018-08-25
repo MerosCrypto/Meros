@@ -64,10 +64,8 @@ proc sign*(wallet: Wallet, recv: Receive): bool {.raises: [ValueError].} =
 
     #Set the sender behind the node.
     if not recv.setSender(wallet.getAddress()):
-        result = false
-        return
+        return false
 
     #Sign the hash of the Receive.
     if not recv.setSignature(wallet.sign(recv.getHash())):
-        result = false
-        return
+        return false

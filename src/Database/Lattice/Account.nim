@@ -28,20 +28,17 @@ proc add(account: Account, node: Node): bool {.raises: [ValueError, Exception].}
 
     #Verify the sender.
     if node.getSender() != account.getAddress():
-        result = false
-        return
+        return false
 
     #Verify the nonce.
     if newBN(account.getNodes().len) != node.getNonce():
-        result = false
-        return
+        return false
 
     #Verify the signature.
     if not newPublicKey(
         account.getAddress().toBN().toString(16)
     ).verify(node.getHash(), node.getSignature()):
-        result = false
-        return
+        return false
 
     #Add the node.
     account.addNode(node)
@@ -50,18 +47,15 @@ proc add(account: Account, node: Node): bool {.raises: [ValueError, Exception].}
 proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueError, Exception].} =
     #Verify the work.
     if send.getHash().toBN(16) < difficulty:
-        result = false
-        return
+        return false
 
     #Verify the output is a valid address.
     if not Address.verify(send.getOutput()):
-        result = false
-        return
+        return false
 
     #Verify the account has enough money.
     if account.getBalance() < send.getAmount():
-        result = false
-        return
+        return false
 
     #Add the Send.
     result = account.add(cast[Node](send))
@@ -74,8 +68,7 @@ proc add*(account: Account, recv: Receive, send: Node): bool {.raises: [ValueErr
 proc add*(account: Account, data: Data, difficulty: BN): bool {.raises: [ValueError, Exception].} =
     #Verify the work.
     if data.getHash().toBN(16) < difficulty:
-        result = false
-        return
+        return false
 
     #Add the data.
     result = account.add(cast[Node](data))

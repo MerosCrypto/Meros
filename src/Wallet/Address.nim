@@ -52,24 +52,20 @@ proc verify*(address: string): bool {.raises: [ValueError, Exception].} =
 
     #Check for the prefix.
     if address.substr(0, 2) != "Emb":
-        result = false
-        return
+        return false
 
     #Check to make sure it's a valid Base58 number.
     if not address.substr(3, address.len).isBase(58):
-        result = false
-        return
+        return false
 
     #Verify the public key format.
     let key: string = address.substr(3, address.len-5).toBN(58).toString(16)
     if (key.substr(0, 1) != "02") and (key.substr(0, 1) != "03"):
-        result = false
-        return
+        return false
 
     #Verify the checksum.
     if address.substr(address.len-4, address.len) != generateChecksum(key):
-        result = false
-        return
+        return false
 
 #If we have a key to check with, make an address for that key and compare with the given address.
 proc verify*(address: string, key: string): bool {.raises: [ValueError, Exception].} =

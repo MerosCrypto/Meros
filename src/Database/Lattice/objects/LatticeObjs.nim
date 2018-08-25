@@ -63,8 +63,7 @@ proc setUsable*(difficulties: Difficulties) {.raises: [].} =
 proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueError].} =
     result = true
     if lattice.hasKey(address):
-        result = false
-        return
+        return false
 
     lattice[address] = newAccountObj(address)
 
@@ -72,8 +71,7 @@ proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueE
 proc add*(lookup: HashLookup, hash: string, index: Index): bool {.raises: [].} =
     result = true
     if lookup.hasKey(hash):
-        result = false
-        return
+        return false
 
     lookup[hash] = index
 

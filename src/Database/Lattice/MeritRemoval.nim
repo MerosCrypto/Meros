@@ -40,10 +40,8 @@ proc sign*(wallet: Wallet, mr: MeritRemoval): bool {.raises: [ValueError].} =
 
     #Set the sender behind the node.
     if not mr.setSender(wallet.getAddress()):
-        result = false
-        return
+        return false
 
     #Sign the hash of the MR.
     if not mr.setSignature(wallet.sign(mr.getHash())):
-        result = false
-        return
+        return false

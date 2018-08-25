@@ -24,7 +24,6 @@ Features:
 - Threaded/dedicated miner.
 
 Improvements:
-- Get rid of `result = false; return` for `return false`.
 - Use custom errors.
 - Make Miners/Validations proper objects.
 - Optimize SECP256K1Wrapper (memory copies, splices...).

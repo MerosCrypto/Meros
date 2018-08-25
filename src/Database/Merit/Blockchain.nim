@@ -33,23 +33,19 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Asserti
 
     #If the last hash is off...
     if lastBlock.getArgon() != newBlock.getLast():
-        result = false
-        return
+        return false
 
     #If the nonce is off...
     if blockchain.getHeight() + BNNums.ONE != newBlock.getNonce():
-        result = false
-        return
+        return false
 
     #If the time is before the last block's...
     if newBlock.getTime() < lastBlock.getTime():
-        result = false
-        return
+        return false
 
     #If the time is ahead of 20 minutes from now...
     if (getTime() + newBN($(20*60))) < newBlock.getTime():
-        result = false
-        return
+        return false
 
     #Get the difficulties.
     var
@@ -63,7 +59,6 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Asserti
 
     #If the difficulty wasn't beat...
     if not difficulty.verifyDifficulty(newBlock):
-        result = false
-        return
+        return false
 
     blockchain.add(newBlock)

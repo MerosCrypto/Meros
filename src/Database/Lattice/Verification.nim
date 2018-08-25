@@ -42,10 +42,8 @@ proc sign*(wallet: Wallet, verif: Verification): bool {.raises: [ValueError].} =
 
     #Set the sender behind the node.
     if not verif.setSender(wallet.getAddress()):
-        result = false
-        return
+        return false
 
     #Sign the hash of the Verification.
     if not verif.setSignature(wallet.sign(verif.getHash())):
-        result = false
-        return
+        return false

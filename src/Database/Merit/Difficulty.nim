@@ -24,13 +24,11 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
 
     #If it's for the wrong time...
     if (diff.getStart() > newBlock.getTime()) or (diff.getEnd() <= newBlock.getTime()):
-        result = false
-        return
+        return false
 
     #If the Argon hash didn't beat the difficulty...
     if newBlock.getArgon().toBN(16) < diff.getDifficulty():
-        result = false
-        return
+        return false
 
 #Calculate the next difficulty using the blocks, difficulties, period Length, and blocks per period.
 proc calculateNextDifficulty*(

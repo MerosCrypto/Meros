@@ -113,9 +113,12 @@ proc add*(lattice: Lattice, node: Node) {.raises: [ValueError, Exception].} =
         raise newException(ValueError, "Node couldn't be added to the Lattice.")
 
     #Else, add the node to the lookup table.
-    if not lattice.addToLookup(node):
+    result = lattice.addToLookup(node)
+    if not result:
         #If that failed, raise a ValueError.
-            raise newException(ValueError, "Node couldn't be added to the Lookup Table. The Lookup Table now is missing nodes on the Lattice. This is possibly from a hash collision.")
+        raise newException(ValueError, "Node couldn't be added to the Lookup Table. The Lookup Table now is missing nodes on the Lattice. This is possibly from a hash collision.")
+
+    #Everything's good! `result` should be true, but this function returns void.
 
 #Get the Difficulties.
 proc getTransactionDifficulty*(lattice: Lattice): BN {.raises: [].} =

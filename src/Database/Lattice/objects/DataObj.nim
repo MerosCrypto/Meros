@@ -25,8 +25,7 @@ proc newDataObj*(data: seq[uint8]): Data {.raises: [].} =
 proc setSHA512*(data: Data, sha512: string): bool =
     result = true
     if data.sha512.len != 0:
-        result = false
-        return
+        return false
 
     data.sha512 = sha512
 
@@ -34,8 +33,7 @@ proc setSHA512*(data: Data, sha512: string): bool =
 proc setProof*(data: Data, proof: BN): bool =
     result = true
     if not data.proof.isNil:
-        result = false
-        return
+        return false
 
     data.proof = proof
 

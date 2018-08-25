@@ -65,10 +65,8 @@ proc sign*(wallet: Wallet, data: Data): bool {.raises: [ValueError].} =
 
     #Set the sender behind the node.
     if not data.setSender(wallet.getAddress()):
-        result = false
-        return
+        return false
 
     #Sign the hash of the Data.
     if not data.setSignature(wallet.sign(data.getHash())):
-        result = false
-        return
+        return false

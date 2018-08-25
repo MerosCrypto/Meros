@@ -75,15 +75,12 @@ proc sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError].} =
 
     #Make sure the proof exists.
     if send.getProof().isNil:
-        result = false
-        return
+        return false
 
     #Set the sender behind the node.
     if not send.setSender(wallet.getAddress()):
-        result = false
-        return
+        return false
 
     #Sign the hash of the Send.
     if not send.setSignature(wallet.sign(send.getHash())):
-        result = false
-        return
+        return false

@@ -64,8 +64,7 @@ proc isBase*(value: string, base: int): bool {.raises: [].} =
 
     if base == 16:
         if (value.len mod 2) != 0:
-            result = false
-            return
+            return false
 
     var loc: int
     for c in value:
@@ -73,8 +72,7 @@ proc isBase*(value: string, base: int): bool {.raises: [].} =
         if loc == -1 or base <= loc:
             if (base == 16) and (('a' <= c) and (c <= 'f')):
                 continue
-            result = false
-            return
+            return false
 
 
 proc toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =

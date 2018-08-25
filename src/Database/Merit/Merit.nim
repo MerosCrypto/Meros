@@ -28,8 +28,7 @@ proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [AssertionErro
     #Add the block to the Blockchain.
     if not merit.blockchain.addBlock(newBlock):
         #If that fails, return false.
-        result = false
-        return
+        return false
 
     #Have the state process the block.
     merit.state.processBlock(newBlock)
