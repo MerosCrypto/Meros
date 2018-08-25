@@ -7,7 +7,7 @@ type
         NodeSend = 1,
         NodeReceive = 2,
         NodeData = 3,
-        Nodeverification = 4,
+        NodeVerification = 4,
         NodeMeritRemoval = 5
 
     Node* = ref object of RootObj
@@ -23,47 +23,43 @@ type
         signature: string
 
 #Set the sender.
-proc setSender*(node: Node, sender: string): bool =
+proc setSender*(node: Node, sender: string): bool {.raises: [].} =
     result = true
     if node.sender.len != 0:
-        result = false
-        return
+        return false
 
     node.sender = sender
 
 #Set the Node nonce.
-proc setNonce*(node: Node, nonce: BN): bool =
+proc setNonce*(node: Node, nonce: BN): bool {.raises: [].} =
     result = true
     if not node.nonce.isNil:
-        result = false
-        return
+        return false
 
     node.nonce = nonce
 
 #Set the Node hash.
-proc setHash*(node: Node, hash: string): bool =
+proc setHash*(node: Node, hash: string): bool {.raises: [].} =
     result = true
     if node.hash.len != 0:
-        result = false
-        return
+        return false
 
     node.hash = hash
 
 #Set the Node signature.
-proc setSignature*(node: Node, signature: string): bool =
+proc setSignature*(node: Node, signature: string): bool {.raises: [].} =
     result = true
     if not ((node.signature.isNil) or (not signature.isBase(16))):
-        result = false
-        return
+        return false
 
     node.signature = signature
 
 #Getters.
-proc getSender*(node: Node): string =
+proc getSender*(node: Node): string {.raises: [].} =
     node.sender
-proc getNonce*(node: Node): BN =
+proc getNonce*(node: Node): BN {.raises: [].} =
     node.nonce
-proc getHash*(node: Node): string =
+proc getHash*(node: Node): string {.raises: [].} =
     node.hash
-proc getSignature*(node: Node): string =
+proc getSignature*(node: Node): string {.raises: [].} =
     node.signature
