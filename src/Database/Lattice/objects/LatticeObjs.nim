@@ -11,8 +11,14 @@ import AccountObj
 import tables
 
 type
-    #Lattice Difficulties object.
+    #Index object. Specifies a Node on the Lattice.
+    Index* = ref object of RootObj
+        address: string
+        index: int
+
+    #Lattice Difficulties object. Specifies the TX/Data  difficulties.
     Difficulties* = ref object of RootObj
+        usable: bool
         transaction: BN
         data: BN
 
@@ -22,11 +28,6 @@ type
         Account
     ]
 
-    #Index object.
-    Index* = ref object of RootObj
-        address: string
-        index: int
-
     #Hash Lookup object. Maps a hash to an index.
     HashLookup* = TableRef[
         string,
@@ -34,22 +35,29 @@ type
     ]
 
 #Constructors.
-proc newDifficulties*(tx: BN, data: BN): Difficulties =
-    Difficulties()
-proc newBlockLattice*(): BlockLattice =
-    newTable[string, Account]()
-proc newIndex*(address: string, index: int): Index =
+proc newIndex*(address: string, index: int): Index {.raises: [].} =
     Index(
         address: address,
         index: index
     )
-proc newHashLookup*(): HashLookup =
+proc newDifficulties*(): Difficulties {.raises: [ValueError].} =
+    Difficulties(
+        usable: false,
+        transaction: newBN(),
+        data: newBN()
+    )
+proc newBlockLattice*(): BlockLattice {.raises: [].} =
+    newTable[string, Account]()
+proc newHashLookup*(): HashLookup {.raises: [].} =
     newTable[string, Index]()
 
-#Update difficulty functions.
-proc updateDifficulties*(difficulties: Difficulties, tx: BN, data: BN) {.raises: [].} =
+#Set difficulty functions.
+proc setTransaction*(difficulties: Difficulties, tx: BN) {.raises: [].} =
     difficulties.transaction = tx
+proc setData*(difficulties: Difficulties, data: BN) {.raises: [].} =
     difficulties.data = data
+proc setUsable*(difficulties: Difficulties) {.raises: [].} =
+    difficulties.usable = true
 
 #Creates a new account on the lattice.
 proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueError].} =
@@ -69,6 +77,13 @@ proc addHash*(lookup: HashLookup, hash: string, index: Index): bool {.raises: []
 
     lookup[hash] = index
 
+#Getters.
+#Gets the Index data.
+proc getAddress*(index: Index): string {.raises: [].} =
+    index.address
+proc getIndex*(index: Index): int {.raises: [].} =
+    index.index
+
 #Gets the difficulties.
 proc getTransaction*(diff: Difficulties): BN {.raises: [].} =
     diff.transaction
@@ -76,7 +91,7 @@ proc getData*(diff: Difficulties): BN {.raises: [].} =
     diff.data
 
 #Gets an account.
-proc `[]`*(lattice: BlockLattice, address: string): Account {.raises: [ValueError].} =
+proc getAccount*(lattice: BlockLattice, address: string): Account {.raises: [ValueError].} =
     if not lattice.hasKey(address):
         raise newException(ValueError, "Lattice does not have a blockchain for that address.")
 
@@ -87,6 +102,9 @@ proc getNode*(lattice: BlockLattice, index: Index): Node {.raises: [ValueError].
         raise newException(ValueError, "Lattice does not have a blockchain for that address.")
 
     result = lattice[index.address][index.index]
+#Gets a node via [].
+proc `[]`*(lattice: BlockLattice, index: Index): Node {.raises: [ValueError].} =
+    lattice.getNode(index)
 #Gets a node by its hash.
 proc getNode*(lattice: BlockLattice, lookup: HashLookup, hash: string): Node {.raises: [ValueError].} =
     if not lookup.hasKey(hash):
@@ -94,13 +112,7 @@ proc getNode*(lattice: BlockLattice, lookup: HashLookup, hash: string): Node {.r
 
     result = lattice.getNode(lookup[hash])
 
-#Gets the Index data.
-proc getAddress*(index: Index): string {.raises: [].} =
-    index.address
-proc getIndex*(index: Index): int {.raises: [].} =
-    index.index
-
-#Iterates over every hash the lookup has.
+#Iterates over every hash the lookup table has.
 iterator hashes*(lookup: HashLookup): string {.raises: [].} =
     for hash in lookup.keys():
         yield hash
