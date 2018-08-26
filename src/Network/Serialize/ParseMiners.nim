@@ -16,11 +16,8 @@ proc parseMiners*(minersStr: string): seq[tuple[miner: string, amount: int]] =
     #Init the result.
     result = @[]
 
-    var
-        #Nonce | Address1 | Amount1 .. | AddressN | AmountN
-        minersSeq: seq[string] = minersStr.split(delim)
-        #Nonce.
-        nonce: BN = minersSeq[0].toBN(255)
+    #Nonce | Address1 | Amount1 .. | AddressN | AmountN
+    var minersSeq: seq[string] = minersStr.split(delim)
 
     #Add each miner/amount.
     for i in countup(1, minersSeq.len-1, 2):

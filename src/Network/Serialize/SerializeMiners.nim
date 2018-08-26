@@ -12,9 +12,12 @@ import common
 import strutils
 
 #Serialization function.
-proc serialize*(miners: seq[tuple[miner: string, amount: int]], nonce: BN): string =
+proc serialize*(miners: seq[tuple[miner: string, amount: int]], nonce: BN = nil): string =
     #Create the result.
-    result = nonce.toString(255) & delim
+    if nonce.isNil:
+        result = ""
+    else:
+        result = nonce.toString(255) & delim
 
     #Add each miner.
     for miner in 0 ..< miners.len:

@@ -44,11 +44,11 @@ proc serialize*(blockArg: Block): string =
         #Publisher.
         blockArg.getPublisher().toBN(16).toString(255)
 
-    if not blockArg.getProof().isNil():
-        #Add on the proof/miners.
+    if blockArg.getSignature() != nil:
         result &= delim &
+            #Proof.
             blockArg.getProof().toString(255) !
-            blockArg.getMiners().serialize(blockArg.getNonce())
-
-        #Signature.
-        result &= delim & blockArg.getSignature().toBN(16).toString(255)
+            #Miners.
+            blockArg.getMiners().serialize() !
+            #Signature.
+            blockArg.getSignature().toBN(16).toString(255)

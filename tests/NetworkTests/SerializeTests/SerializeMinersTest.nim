@@ -9,9 +9,13 @@ import ../../../src/Wallet/Wallet
 import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/ParseMiners
 
-#Random/algorithm standard libs.
+#Random/Time/Algorithm standard libs. They're used to randomize the testing data.
 import random
+import times
 import algorithm
+
+#Set the seed to be based on the time.
+randomize(getTime().toUnix())
 
 #Test 20 serializations.
 for i in 1 .. 10:

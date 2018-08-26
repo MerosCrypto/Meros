@@ -48,10 +48,7 @@ proc newBlockObj*(
     time: BN,
     validations: seq[tuple[validator: string, start: int, last: int]],
     merkle: MerkleTree,
-    publisher: string,
-    proof: BN,
-    miners: seq[tuple[miner: string, amount: int]],
-    signature: string
+    publisher: string
 ): Block {.raises: [].} =
     Block(
         last: last,
@@ -59,9 +56,7 @@ proc newBlockObj*(
         time: time,
         validations: validations,
         merkle: merkle,
-        publisher: publisher,
-        proof: proof,
-        miners: miners
+        publisher: publisher
     )
 
 #Creates a new block without caring about the data.
@@ -73,36 +68,63 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, AssertionErro
         getTime(),
         @[],
         newMerkleTree(@[]),
-        "",
-        newBN(),
-        @[],
         ""
     )
     #Calculate the hash.
     result.hash = SHA512(genesis)
+    #Set the proof.
+    result.proof = newBN()
     #Calculate the Argon hash.
     result.argon = Argon(result.hash, result.proof.toString(16))
+    #Set the miners.
+    result.miners = @[]
     #Calculate the miners hash.
     result.minersHash = SHA512("00")
+    #Set the signature.
+    result.signature = ""
 
 #Setters.
-proc setHash*(blockArg: Block, hash: string) {.raises: [ValueError].} =
+proc setHash*(blockArg: Block, hash: string): bool {.raises: [].} =
+    result = true
     if not blockArg.hash.isNil:
-        raise newException(ValueError, "Double setting of the block hash.")
+        return false
 
     blockArg.hash = hash
 
-proc setArgon*(blockArg: Block, argon: string) {.raises: [ValueError].} =
+proc setProof*(newBlock: Block, proof: BN): bool {.raises: [].} =
+    result = true
+    if not newBlock.proof.isNil:
+        return false
+
+    newBlock.proof = proof
+
+proc setArgon*(blockArg: Block, argon: string): bool {.raises: [].} =
+    result = true
     if not blockArg.argon.isNil:
-        raise newException(ValueError, "Double setting of the block argon.")
+        return false
 
     blockArg.argon = argon
 
-proc setMinersHash*(blockArg: Block, minersHash: string) {.raises: [ValueError].} =
+proc setMiners*(newBlock: Block, miners: seq[tuple[miner: string, amount: int]]): bool {.raises: [].} =
+    result = true
+    if not newBlock.miners.isNil:
+        return false
+
+    newBlock.miners = miners
+
+proc setMinersHash*(blockArg: Block, minersHash: string): bool {.raises: [].} =
+    result = true
     if not blockArg.minersHash.isNil:
-        raise newException(ValueError, "Double setting of the miners' hash.")
+        return false
 
     blockArg.minersHash = minersHash
+
+proc setSignature*(newBlock: Block, signature: string): bool {.raises: [].} =
+    result = true
+    if not newBlock.signature.isNil:
+        return false
+
+    newBlock.signature = signature
 
 #Getters.
 proc getLast*(blockArg: Block): string {.raises: [].} =

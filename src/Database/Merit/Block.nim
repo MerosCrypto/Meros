@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Import the numerical libraries.
 import ../../lib/BN
 import ../../lib/Base
@@ -37,7 +40,7 @@ proc newBlock*(
     proof: BN,
     miners: seq[tuple[miner: string, amount: int]],
     signature: string
-): Block {.raises: [ValueError, Exception].} =
+): Block {.raises: [ResultError, ValueError, Exception].} =
     #Verify the arguments.
     #Validations.
     for validation in validations:
@@ -66,17 +69,30 @@ proc newBlock*(
         time,
         validations,
         merkle,
-        publisher,
-        proof,
-        miners,
-        signature
+        publisher
     )
-    #Calculate the hash.
-    result.setHash(SHA512(result.serialize()))
-    #Calculate the Argon hash.
-    result.setArgon(Argon(result.getHash(), result.getProof().toString(16)))
-    #Calculate the miners hash.
-    result.setMinersHash(SHA512(miners.serialize(nonce)))
+
+    if not (
+        #Calculate the hash.
+        (result.setHash(SHA512(result.serialize()))) and
+        #Set the proof.
+        (result.setProof(proof)) and
+        #Calculate the Argon hash.
+        (result.setArgon(Argon(result.getHash(), result.getProof().toString(16))))
+    ):
+        raise newException(ResultError, "Couldn't set the hash/proof/argon..")
+
+    if not (
+        #Set the miners.
+        result.setMiners(miners) and
+        #Calculate the miners hash.
+        result.setMinersHash(SHA512(miners.serialize(nonce)))
+    ):
+        raise newException(ResultError, "Couldn't set the miners/miners hash..")
+
     #Verify the signature.
     if not newPublicKey(publisher).verify(result.getMinersHash(), signature):
         raise newException(ValueError, "Invalid miners' signature.")
+    #Set the signature.
+    if not result.setSignature(signature):
+        raise newException(ResultError, "Couldn't set the signature.")
