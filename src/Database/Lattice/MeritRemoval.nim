@@ -12,7 +12,7 @@ import ../../lib/Errors
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
-import ../../Network/Serialize
+import ../../Network/Serialize/SerializeMeritRemoval
 
 #Node object.
 import objects/NodeObj

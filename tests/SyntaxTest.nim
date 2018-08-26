@@ -22,7 +22,25 @@ import ../src/Database/Database
 import ../src/Wallet/Wallet
 
 #Network.
-import ../src/Network/Serialize
+import ../src/Network/Serialize/common
+
+import ../src/Network/Serialize/SerializeMiners
+import ../src/Network/Serialize/SerializeBlock
+
+import ../src/Network/Serialize/SerializeSend
+import ../src/Network/Serialize/SerializeReceive
+import ../src/Network/Serialize/SerializeData
+import ../src/Network/Serialize/SerializeVerification
+import ../src/Network/Serialize/SerializeMeritRemoval
+
+import ../src/Network/Serialize/ParseMiners
+import ../src/Network/Serialize/ParseBlock
+
+import ../src/Network/Serialize/ParseSend
+import ../src/Network/Serialize/ParseReceive
+import ../src/Network/Serialize/ParseData
+import ../src/Network/Serialize/ParseVerification
+import ../src/Network/Serialize/ParseMeritRemoval
 
 #UI.
 import ../src/UI/UI

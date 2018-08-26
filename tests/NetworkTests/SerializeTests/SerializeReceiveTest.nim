@@ -10,7 +10,8 @@ import ../../../src/Database/Lattice/objects/NodeObj
 import ../../../src/Database/Lattice/Receive
 
 #Serialize lib.
-import ../../../src/Network/Serialize
+import ../../../src/Network/Serialize/SerializeReceive
+import ../../../src/Network/Serialize/ParseReceive
 
 #Test 20 serializations.
 for i in 1 .. 20:

@@ -13,7 +13,7 @@ import ../../lib/Argon
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
-import ../../Network/Serialize
+import ../../Network/Serialize/SerializeData
 
 #Node object.
 import objects/NodeObj

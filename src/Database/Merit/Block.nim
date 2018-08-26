@@ -14,7 +14,8 @@ import ../../Wallet/Address
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
-import ../../Network/Serialize
+import ../../Network/Serialize/SerializeMiners
+import ../../Network/Serialize/SerializeBlock
 
 #Import the Merkle library and BlockObj.
 import Merkle

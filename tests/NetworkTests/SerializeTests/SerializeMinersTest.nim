@@ -6,7 +6,8 @@ import ../../../src/lib/Base
 import ../../../src/Wallet/Wallet
 
 #Serialize lib.
-import ../../../src/Network/Serialize
+import ../../../src/Network/Serialize/SerializeMiners
+import ../../../src/Network/Serialize/ParseMiners
 
 #Random/algorithm standard libs.
 import random

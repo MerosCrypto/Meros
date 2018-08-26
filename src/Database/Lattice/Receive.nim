@@ -11,7 +11,7 @@ import ../../lib/SHA512
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
-import ../../Network/Serialize
+import ../../Network/Serialize/SerializeReceive
 
 #Node object.
 import objects/NodeObj
