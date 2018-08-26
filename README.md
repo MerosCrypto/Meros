@@ -11,7 +11,7 @@
 ### Ember Whitepaper: Being  Written
 
 #### Current State
-This currency is not usable. It has a lot done but there's a lot more to do.
+This currency is not usable by the mass populace. That said, Ember recently had its first transaction! We're aiming to have a private testnet in a few weeks and a public one in a few months.
 
 #### Compiling
 
@@ -21,13 +21,14 @@ Requirements:
 - Nimble
 
 ```
+git submodule update --init
 nimble install https://github.com/EmberCrypto/BN
 nimble install nimcrypto secp256k1 nimx
 nim c src/main.nim
 ```
 
 If you're on Windows:
-- Go to https://github.com/Legrandin/mpir-windows-builds and download the GMP dynamic libraries.
+- Go to https://github.com/Legrandin/mpir-windows-builds and download the GMP dynamic libraries (which you'll have to rename).
 - Go to https://www.libsdl.org/download-2.0.php and download the SDL2 dynamic libraries.
 
 If you're on a Debian based system:

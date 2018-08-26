@@ -1,13 +1,13 @@
 # TODO
 
 Core:
+- Sockets.
 - Parse functions.
 - Track Verifications.
 - Track MeritRemovals and link them to the blockchain.
 - Difficulty Vote node.
 - Fork resolution for blocks of different types.
 - Filesystem.
-- Network.
 - UI.
 - Write tests.
 

@@ -39,7 +39,7 @@ proc main() =
         proof: BN = newBN()
         miners: seq[tuple[miner: string, amount: int]] = @[(
             miner: miner,
-            amount: 1000
+            amount: 100
         )]
 
     echo "First balance: " & $merit.getBalance(miner)
