@@ -30,18 +30,18 @@ for i in 1 .. 10:
             ]
         ] = @[]
         #Quantity.
-        quantity: int = (rand(999) + 1) #Returns to 1 to 1000.
+        quantity: int = (rand(99) + 1) #Returns to 1 to 100.
         #Amount temp variable.
         amount: int
         #Remaining amount.
-        remaining: int = 1000
+        remaining: int = 100
 
     #Test the lowest quantity.
     if i == 1:
         quantity = 1
     #Test the highest quantity.
     elif i == 10:
-        quantity = 1000
+        quantity = 100
 
     echo "Testing Miners Serialization/Parsing, iteration " & $i & ", with " & $quantity & " miners."
 

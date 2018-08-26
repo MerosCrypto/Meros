@@ -45,22 +45,23 @@ proc newBlock*(
     #Validations.
     for validation in validations:
         if Address.verify(validation.validator) == false:
-            raise newException(ValueError, "Invalid address.")
+            raise newException(ValueError, "Invalid validation address.")
         if validation.start < 0:
-            raise newException(ValueError, "Invalid start.")
+            raise newException(ValueError, "Invalid validation start.")
         if validation.last < 0:
-            raise newException(ValueError, "Invalid last.")
+            raise newException(ValueError, "Invalid validation last.")
     #Miners.
-    var
-        total: int = 0
+    var total: int = 0
+    if (miners.len < 1) or (100 < miners.len):
+        raise newException(ValueError, "Invalid miners quantity.")
     for miner in miners:
         total += miner.amount
         if Address.verify(miner.miner) == false:
-            raise newException(ValueError, "Invalid address.")
-        if (miner.amount < 1) or (1000 < miner.amount):
-            raise newException(ValueError, "Invalid amount.")
-    if total != 1000:
-        raise newException(ValueError, "Invalid total amount.")
+            raise newException(ValueError, "Invalid miner address.")
+        if (miner.amount < 1) or (100 < miner.amount):
+            raise newException(ValueError, "Invalid miner amount.")
+    if total != 100:
+        raise newException(ValueError, "Invalid total miner amount.")
 
     #Ceate the block.
     result = newBlockObj(

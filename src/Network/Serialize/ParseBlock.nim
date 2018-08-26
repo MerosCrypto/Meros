@@ -34,7 +34,7 @@ import strutils
 import sequtils
 
 #Parse a block.
-proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultError, Exception].} =
+proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultError, ValueError, Exception].} =
     var
         #Nonce | Last | Time | Validations Count
         #Address 1 | Start Index 1 | End Index 1
@@ -94,6 +94,10 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         ]()
         #Signature.
         signature: string = blockSeq[blockSeq.len - 1].toBN(255).toString(16).pad(64)
+
+    #Make sure less than 100 miners were included.
+    if blockSeq.len > (8 + (validations.len * 3) + 200):
+        raise newException(ValueError, "Parsed block had over 100 miners.")
 
     #Set the validations.
     #Declare the loop variables outside to stop redeclarations.
