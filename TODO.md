@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Account add functions.
 - Parse functions.
 - Track Verifications.
 - Track MeritRemovals and link them to the blockchain.
@@ -14,7 +13,7 @@ Core:
 
 Features:
 - Chain Params file.
-- Have Merit disappear after 365.25\*24\*6 (52596) blocks.
+- Have Merit disappear after 50000 (365.25\*24\*6 is 52596; just rounded down for ease) blocks.
 - Have Merit Holders indexable by the order they got Merit in.
 - Have Difficulty retarget:
     - Every block until the end of month 1.

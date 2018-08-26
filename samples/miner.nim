@@ -5,10 +5,8 @@ import lib/Base
 #Time lib.
 import lib/Time
 
-#SHA512 lib.
+#Hashing libs.
 import lib/SHA512
-
-#Argon2 lib.
 import lib/Argon
 
 #Merit lib.

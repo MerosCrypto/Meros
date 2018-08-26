@@ -1,8 +1,11 @@
+#Numerical libs.
 import lib/BN
 import lib/Base
 
+#Wallet lib.
 import Wallet/Wallet
 
+#Lattice lib.
 import Database/Lattice/Lattice
 
 var

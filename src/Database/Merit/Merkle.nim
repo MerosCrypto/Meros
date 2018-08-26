@@ -30,7 +30,9 @@ proc newBranch(left: Leaf, right: Leaf): Branch {.raises: [ValueError].} =
 
 proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].} =
     if hashesArg.len == 0:
-        result = MerkleTree(
+        return MerkleTree(
+            isLeaf: false,
+            hash: "",
             left: Leaf(
                 isLeaf: true,
                 hash: ""
@@ -40,7 +42,6 @@ proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].}
                 hash: ""
             )
         )
-        return
 
     var
         hashes: seq[string] = hashesArg
