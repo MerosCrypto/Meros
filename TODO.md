@@ -33,6 +33,7 @@ Improvements:
 Bug fixes and behavior changes:
 - Difficulty does a minimal amount of scaling with longer time periods.
 - Retarget based on block count, not time.
+- Have required work be based on account, not that TX, and infinitely precalculable.
 - Remove GMP's memory leak.
 - Put object definitions into dedicated files.
 - Finalize Argon2 parameters.

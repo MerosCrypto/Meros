@@ -14,6 +14,9 @@ proc newWallet*(priv: PrivateKey = newPrivateKey()): Wallet {.raises: [ValueErro
     result.pub = newPublicKey(result.priv)
     result.address = newAddress(result.pub)
 
+proc newWallet*(priv: string): Wallet {.raises: [ValueError, Exception].} =
+    newWallet(newPrivateKey(priv))
+
 proc newWallet*(priv: PrivateKey, pub: PublicKey): Wallet {.raises: [ValueError, Exception].} =
     result = newWallet(priv)
     if $result.pub != $pub:
