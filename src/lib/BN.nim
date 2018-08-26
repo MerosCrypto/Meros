@@ -30,6 +30,11 @@ proc newBN*(number: SomeInteger): BN {.raises: [].} =
     result = BN()
     result.number = number
 
+#Nim constructor from a BN.
+proc newBN*(number: BN): BN {.raises: [].} =
+    result = BN()
+    result[] = number[]
+
 #Define some basic numbers.
 var BNNums*: BNNumsType = BNNumsType(
     ZERO:     newBN(0),
