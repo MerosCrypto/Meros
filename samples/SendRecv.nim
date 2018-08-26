@@ -10,7 +10,8 @@ import Database/Lattice/Send
 import Database/Lattice/Receive
 
 #Serialization libs.
-import Network/Serialize
+import Network/Serialize/SerializeSend
+import Network/Serialize/SerializeReceive
 
 var
     sender: Wallet = newWallet()   #Sender's wallet.

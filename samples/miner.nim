@@ -16,7 +16,7 @@ import Database/Merit/Merit
 import Wallet/Wallet
 
 #Serialization libs.
-import Network/Serialize
+import Network/Serialize/SerializeMiners
 
 proc main() =
     var
@@ -49,7 +49,7 @@ proc main() =
         echo "Looping..."
 
         #Update the time.
-        time = getTime()
+        time = newBN(getTime())
 
         #Create a block.
         newBlock = newBlock(
@@ -76,7 +76,7 @@ proc main() =
 
         #Finally, update the last hash, increase the nonce, and reset the proof.
         last = newBlock.getArgon()
-        inc(nonce)
+        nonce = nonce + BNNums.ONE
         proof = newBN()
 
 main()
