@@ -79,6 +79,9 @@ for i in 1 .. 10:
         ]
     ] = miners.serialize(newBN()).parseMiners()
 
+    #Test the serialized versions.
+    assert(miners.serialize() == minersParsed.serialize())
+
     #Test the for equality.
     assert(miners == minersParsed)
 

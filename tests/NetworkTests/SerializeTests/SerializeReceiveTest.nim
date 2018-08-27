@@ -37,6 +37,9 @@ for i in 1 .. 20:
     #Serialize it and parse it back.
     var recvParsed: Receive = recv.serialize().parseReceive()
 
+    #Test the serialized versions.
+    assert(recv.serialize() == recvParsed.serialize())
+
     #Test the Node properties.
     assert(
         recv.descendant == recvParsed.descendant,

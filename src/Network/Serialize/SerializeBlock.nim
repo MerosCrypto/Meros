@@ -5,7 +5,8 @@ import ../../lib/Base
 #Address library.
 import ../../Wallet/Address
 
-#Block object.
+#Merkle lib and Block object.
+import ../../Database/Merit/Merkle
 import ../../Database/Merit/objects/BlockObj
 
 #Common serialization functions and the Miners serialization.
@@ -40,7 +41,7 @@ proc serialize*(blockArg: Block): string =
 
     result &=
         #Merkle Tree root.
-        blockArg.getMerkle().hash.toBN(16).toString(255) !
+        blockArg.getMerkle().getHash().toBN(16).toString(255) !
         #Publisher.
         blockArg.getPublisher().toBN(16).toString(255)
 

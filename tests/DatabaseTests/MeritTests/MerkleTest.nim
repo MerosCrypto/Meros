@@ -38,6 +38,6 @@ var
     ])
 
 #Test the results.
-assert(hash == merkle.hash, "MerkleTree hash inequals what it should equal.")
+assert(hash == merkle.getHash(), "MerkleTree hash inequals what it should equal.")
 
 echo "Finished the Database/Network/MerkleTree test."

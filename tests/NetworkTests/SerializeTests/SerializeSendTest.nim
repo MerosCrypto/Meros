@@ -35,6 +35,9 @@ for i in 1 .. 20:
     #Serialize it and parse it back.
     var sendParsed: Send = send.serialize().parseSend()
 
+    #Test the serialized versions.
+    assert(send.serialize() == sendParsed.serialize())
+
     #Test the Node properties.
     assert(send.descendant == sendParsed.descendant)
     assert(send.getSender() == sendParsed.getSender())

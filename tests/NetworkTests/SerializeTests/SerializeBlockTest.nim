@@ -13,8 +13,8 @@ import ../../../src/lib/Argon
 import ../../../src/Wallet/Wallet
 
 #Merit libs.
-import ../../../src/Database/Merit/Block
 import ../../../src/Database/Merit/Merkle
+import ../../../src/Database/Merit/Block
 
 #Lattice lib.
 import ../../../src/Database/Lattice/Lattice
@@ -83,7 +83,7 @@ for i in 1 .. 10:
     assert(newBlock.getTime() == blockParsed.getTime())
 
     assert(newBlock.getValidations() == blockParsed.getValidations())
-    assert(newBlock.getMerkle().hash == blockParsed.getMerkle().hash)
+    assert(newBlock.getMerkle().getHash() == blockParsed.getMerkle().getHash())
     assert(newBlock.getPublisher() == blockParsed.getPublisher())
 
     assert(newBlock.getProof() == blockParsed.getProof())

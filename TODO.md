@@ -40,7 +40,6 @@ Bug fixes and behavior changes:
 
 Documentation:
 - Add comments to:
-    - DB/Merit/Merkle.nim
     - DB/Merit/State.nim
 
     - DB/Lattice/Lattice.nim

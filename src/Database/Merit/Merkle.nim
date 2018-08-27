@@ -1,68 +1,60 @@
-import ../../lib/Base
-import ../../lib/SHA512
+#Merkle object.
+import objects/MerkleObj
+#Export the MerkleTree object.
+export MerkleTree
 
-type
-    Leaf = ref object of RootObj
-        isLeaf: bool
-        hash*: string
-
-    Branch = ref object of Leaf
+#Create a Markle Tree.
+proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].} =
+    var
+        #Extract the hashes from its arg.
+        hashes: seq[string] = hashesArg
+        #Create a seq of the branches.
+        branches: seq[Branch] = @[]
+        #Create a left/right leaf.
         left: Leaf
         right: Leaf
 
-    MerkleTree* = ref object of Branch
-
-proc newLeaf(isLeaf: bool, hash: string): Leaf {.raises: [].} =
-    Leaf(
-        isLeaf: isLeaf,
-        hash: hash
-    )
-
-proc newBranch(left: Leaf, right: Leaf): Branch {.raises: [ValueError].} =
-    Branch(
-        isLeaf: false,
-        hash: SHA512(
-            (left.hash & right.hash).toBN(16).toString(256)
-        ),
-        left: left,
-        right: right
-    )
-
-proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].} =
-    if hashesArg.len == 0:
-        return MerkleTree(
-            isLeaf: false,
-            hash: "",
-            left: Leaf(
-                isLeaf: true,
-                hash: ""
-            ),
-            right: Leaf(
-                isLeaf: true,
-                hash: ""
+    #If no hashes were passed in...
+    if hashes.len == 0:
+        return cast[MerkleTree](
+            newBranchObject(
+                newLeafObject(""),
+                newLeafObject(""),
+                true
             )
         )
 
-    var
-        hashes: seq[string] = hashesArg
-        branches: seq[Branch] = @[]
-        left: Leaf
-        right: Leaf
-
+    #Make sure we have an even amount of branches.
     if (hashes.len mod 2) == 1:
         hashes.add(hashes[hashes.len-1])
-    for i, hash in hashes:
-        if (i mod 2) == 0:
-            left = newLeaf(true, hash)
-        else:
-            right = newLeaf(true, hash)
-            branches.add(newBranch(left, right))
 
+    #Iterate over the hashes.
+    for i, hash in hashes:
+        #If this is a left branch, use the Left leaf.
+        if (i mod 2) == 0:
+            left = newLeafObject(hash)
+        else:
+            #If this is a Right branch, use the Right leaf.
+            right = newLeafObject(hash)
+            #Now that we have a left and a right leaf, make a Branch.
+            branches.add(newBranchObject(left, right))
+
+    #While there's branches...
     while branches.len != 1:
+        #If the branches are no longer even, add a copy of the last one.
         if (branches.len mod 2) == 1:
             branches.add(branches[branches.len-1])
-        for i in 0 ..< ((int) branches.len / 2):
-            branches[i] = newBranch(branches[i * 2], branches[(i * 2) + 1])
+
+        #Iterate through each pair of branches...
+        for i in 0 ..< int(branches.len / 2):
+            #Set the branch (on the left half of the seq) to involve two of the branches ahead of it.
+            branches[i] = newBranchObject(branches[i * 2], branches[(i * 2) + 1])
+        #Cut off the right half of the seq.
         branches.setLen((int) branches.len / 2)
 
+    #Set the Result to the remaining branch.
     result = cast[MerkleTree](branches[0])
+
+#Getters.
+proc getHash*(tree: MerkleTree): string {.raises: [].} =
+    cast[Branch](tree).getHash()
