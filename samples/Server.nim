@@ -45,22 +45,21 @@ proc handle(client: Socket) =
     echo "Handling a new client..."
 
     while true:
-        #Read lines...
-        var line = client.recvLine()
-        #Make sure it has a valid length.
+        #Read the socket data into the line var.
+        var line: string = client.recvLine()
         if line.len == 0:
-            break
+            return
 
-        echo "Received line with length " & $line.len & "."
-
-        #Parse/remove the header.
         var
-            header:  string = line.substr(0, 4)
-            network:    int = int(line[0])
-            minVersion: int = int(line[1])
-            maxVersion: int = int(line[2])
-            msgType:    int = int(line[3])
-            msgLength:  int = int(line[4])
+            #Extract the header.
+            header: string = line.substr(0, 4)
+            #Parse the header.
+            network:    int = int(header[0])
+            minVersion: int = int(header[1])
+            maxVersion: int = int(header[2])
+            msgType:    int = int(header[3])
+            msgLength:  int = int(header[4])
+        #Remove the header.
         line = line.substr(5, line.len)
 
         #Handle the different message types.

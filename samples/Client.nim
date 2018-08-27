@@ -86,9 +86,9 @@ if answer.toLower() == "send":
         $((char) 0) &
         $((char) 0) &
         $((char) 0)
-    serialized = $((char) 0) & send.serialize() & "\r\n"
+    serialized = header & send.serialize() & "\r\n"
 elif answer.toLower() == "receive":
-    echo "Who would you like to receive from to?"
+    echo "Who would you like to receive from?"
     address = stdin.readLine()
     echo "What nonce is the send block on their account?"
     inputNonce = newBN(stdin.readLine())
