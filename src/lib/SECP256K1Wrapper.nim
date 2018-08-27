@@ -38,7 +38,7 @@ proc secpPublicKey*(pubKeyArg: string): secp256k1_pubkey {.raises: [ValueError].
     #Get the bytes from the hex string.
     var pubKey: string = ""
     for i in countup(0, pubKeyArg.len - 1, 2):
-        pubKey = pubKey & ((char) parseHexInt(pubKeyArg[i .. i+1]))
+        pubKey = pubKey & char(parseHexInt(pubKeyArg[i .. i+1]))
 
     #Init the result.
     result = secp256k1_pubkey()
@@ -82,7 +82,7 @@ proc secpSignature(sigArg: string): secp256k1_ecdsa_signature {.raises: [ValueEr
     #Turn the hex string into a byte array.
     var sig: string = ""
     for i in countup(0, sigArg.len - 1, 2):
-        sig = sig & ((char) parseHexInt(sigArg[i .. i+1]))
+        sig = sig & char(parseHexInt(sigArg[i .. i+1]))
 
     #Init the result.
     result = secp256k1_ecdsa_signature()
@@ -151,6 +151,6 @@ proc secpVerify*(pubKeyArg: secp256k1_pubkey, hashArg: string, sigArg: string): 
     result = secp256k1_ecdsa_verify(
         context,
         addr sig,
-        cast[ptr cuchar]((cstring) hash),
+        cast[ptr cuchar](cstring(hash)),
         addr pubKey
     ) == 1

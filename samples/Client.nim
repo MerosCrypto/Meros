@@ -87,6 +87,7 @@ if answer.toLower() == "send":
         $((char) 0) &
         $((char) 0)
     serialized = header & send.serialize() & "\r\n"
+
 elif answer.toLower() == "receive":
     echo "Who would you like to receive from?"
     address = stdin.readLine()
@@ -112,6 +113,7 @@ elif answer.toLower() == "receive":
         $((char) 1) &
         $((char) 0)
     serialized = header & recv.serialize() & "\r\n"
+
 else:
     echo "I don't recognize that option."
     quit(-1)

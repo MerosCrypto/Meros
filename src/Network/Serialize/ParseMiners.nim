@@ -20,10 +20,10 @@ proc parseMiners*(minersStr: string): seq[tuple[miner: string, amount: int]] =
     var minersSeq: seq[string] = minersStr.split(delim)
 
     #Add each miner/amount.
-    for i in countup(1, minersSeq.len-1, 2):
+    for i in countup(1, minersSeq.len - 1, 2):
         result.add(
             (
                 miner: newAddress(minersSeq[i].toBN(255).toString(16)),
-                amount: minersSeq[i+1].toBN(255).toInt()
+                amount: minersSeq[i + 1].toBN(255).toInt()
             )
         )

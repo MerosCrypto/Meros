@@ -19,7 +19,7 @@ import strutils
 proc serialize*(data: Data): string =
     result = data.getNonce().toString(255)
     for i in data.getData():
-        result &= delim & $i.toHex()
+        result &= delim & i.toHex()
 
     if data.getHash().len != 0:
         result =

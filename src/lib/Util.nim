@@ -8,15 +8,7 @@ proc `^`*[T](f: proc(x: T): T, power: int): proc(x: T): T {.raises: [Exception].
         for _ in 1 .. power:
             result = f(result)
 
-#Return a specific element of an OrderSet by it's index.
-proc `[]`*[T](oSet: OrderedSet[T], index: int): T {.raises: [ValueError].} =
-    if index >= oSet.len:
-        raise newException(ValueError, "OrderedSet index is out of range.")
-
-    for i, item in oSet:
-        if i == index:
-            return item
-
+#Pads a string with a prefix to be a certain length.
 proc pad*(data: string, len: int, prefix: string = "0"): string =
     result = data
     while result.len < len:

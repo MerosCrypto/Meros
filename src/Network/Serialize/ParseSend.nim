@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Util lib.
+import ../../lib/Util
+
 #Numerical libs.
 import ../../lib/BN
 import ../../lib/Base

@@ -31,7 +31,7 @@ proc newPrivateKey*(): PrivateKey {.raises: [ResultError, Exception].} =
 proc newPrivateKey*(hex: string): PrivateKey {.raises: [ValueError].} =
     #Parse the hex string.
     for i in countup(0, 63, 2):
-        result[i div 2] = (cuchar) parseHexInt(hex[i .. i + 1])
+        result[i div 2] = cuchar(parseHexInt(hex[i .. i + 1]))
 
     #If it's an invalid key, throw an error.
     if secpPrivateKey(result) == false:

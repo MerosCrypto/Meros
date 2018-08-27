@@ -15,7 +15,7 @@ import objects/BlockchainObj
 export BlockchainObj
 
 #Create a new Blockchain.
-proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, AssertionError].} =
+proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError].} =
     #Set the current time as the time of creation.
     let creation: BN = getTime()
 
@@ -23,7 +23,7 @@ proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError, Assertio
     result = newBlockchainObj(genesis)
 
 #Adds a block to the blockchain.
-proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [AssertionError, Exception].} =
+proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Exception].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 

@@ -60,7 +60,7 @@ proc newBlockObj*(
     )
 
 #Creates a new block without caring about the data.
-proc newStartBlock*(genesis: string): Block {.raises: [ValueError, AssertionError].} =
+proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
     #Ceate the block.
     result = newBlockObj(
         "",

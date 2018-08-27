@@ -6,7 +6,7 @@ import Base
 
 #Hash exponentiation.
 import Util
-export Util
+export Util.`^`
 
 #Standard string utils lib.
 import strutils
@@ -22,6 +22,6 @@ proc SHA512*(bytesArg: string): string =
     ctx512.init()
 
     #Digest the byte array.
-    result = $sha512.digest(cast[ptr uint8](addr bytes[0]), (uint) bytes.len)
+    result = $sha512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len))
     #Clear the context.
     ctx512.clear()

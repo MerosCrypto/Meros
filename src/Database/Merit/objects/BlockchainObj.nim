@@ -19,7 +19,7 @@ type Blockchain* = ref object of RootObj
     difficulties: seq[Difficulty]
 
 #Create a Blockchain object.
-proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError, AssertionError].} =
+proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError].} =
     let creation: BN = getTime()
 
     result = Blockchain(

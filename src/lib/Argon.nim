@@ -53,9 +53,9 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.r
 
     #Parse the data/salt strings into array.
     for i in countup(0, 127, 2):
-        dataArr[(int) i/2] = (uint8) parseHexInt(data[i .. i+1])
+        dataArr[int(i / 2)] = uint8(parseHexInt(data[i .. i + 1]))
     for i in countup(0, 127, 2):
-        saltArr[(int) i/2] = (uint8) parseHexInt(salt[i .. i+1])
+        saltArr[int(i / 2)] = uint8(parseHexInt(salt[i .. i + 1]))
 
     var
         iterations: uint32
@@ -73,13 +73,13 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.r
     if argon2d(
         iterations,
         memory,
-        (uint32) 1,
+        uint32(1),
         cast[ptr uint8](addr dataArr[0]),
-        (uint32) 64,
+        uint32(64),
         cast[ptr uint8](addr saltArr[0]),
-        (uint32) 64,
+        uint32(64),
         addr resArr[0],
-        (uint32) 64
+        uint32(64)
     ) != 0:
         raise newException(ResultError, "Argon2d raised an error.")
 

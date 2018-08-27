@@ -2,7 +2,7 @@
 
 Core:
 - Async Sockets.
-- Parse functions.
+- Rest of the parse functions.
 - Track Verifications.
 - Track MeritRemovals and link them to the blockchain.
 - Difficulty Vote node.
@@ -29,7 +29,6 @@ Improvements:
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
 - Don't round down; round to the closer number.
-- Update cast styling from C's `(int) a` to `int(a)`.
 
 Bug fixes and behavior changes:
 - Difficulty does a minimal amount of scaling with longer time periods.
@@ -41,8 +40,6 @@ Bug fixes and behavior changes:
 
 Documentation:
 - Add comments to:
-    - lib/Base.nim
-
     - DB/Merit/Merkle.nim
     - DB/Merit/State.nim
 
