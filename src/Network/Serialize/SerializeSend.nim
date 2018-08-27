@@ -25,3 +25,5 @@ proc serialize*(send: Send): string {.raises: [ValueError, Exception].} =
             result !
             send.getProof().toString(255) !
             send.getSignature().toBN(16).toString(255)
+
+        result = result.toBN(256).toString(253)

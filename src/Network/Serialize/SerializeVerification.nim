@@ -25,3 +25,5 @@ proc serialize*(verif: Verification): string =
             Address.toBN(verif.getSender()).toString(255) !
             result !
             verif.getSignature().toBN(16).toString(255)
+
+        result = result.toBN(256).toString(253)

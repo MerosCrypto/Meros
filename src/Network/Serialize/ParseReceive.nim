@@ -30,7 +30,7 @@ import strutils
 proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].} =
     var
         #Public Key | Nonce | Input Address | Input Nonce | Amount | Signature
-        recvSeq: seq[string] = recvStr.split(delim)
+        recvSeq: seq[string] = recvStr.toBN(253).toString(256).split(delim)
         #Get the sender's Public Key.
         sender: PublicKey = recvSeq[0].toBN(255).toString(16).newPublicKey()
         #Get the nonce.

@@ -24,3 +24,5 @@ proc serialize*(mr: MeritRemoval): string =
             Address.toBN(mr.getSender()).toString(255) !
             result !
             mr.getSignature().toBN(16).toString(255)
+
+        result = result.toBN(256).toString(253)

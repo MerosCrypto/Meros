@@ -28,7 +28,7 @@ import strutils
 proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Exception].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
-        sendSeq: seq[string] = sendStr.split(delim)
+        sendSeq: seq[string] = sendStr.toBN(253).toString(256).split(delim)
         #Get the sender's public key.
         sender: PublicKey = sendSeq[0].toBN(255).toString(16).newPublicKey()
         #Set the input address based off the sender's public key.

@@ -30,3 +30,5 @@ proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =
             Address.toBN(recv.getSender()).toString(255) !
             result !
             recv.getSignature().toBN(16).toString(255)
+
+        result = result.toBN(256).toString(253)

@@ -40,7 +40,7 @@ var
     proof: BN = newBN(1)
     miners: seq[tuple[miner: string, amount: int]] = @[(
         miner: miner,
-        amount: 1000
+        amount: 100
     )]
     lattice: Lattice = newLattice()
 

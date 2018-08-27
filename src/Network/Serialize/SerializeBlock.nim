@@ -52,3 +52,5 @@ proc serialize*(blockArg: Block): string =
             blockArg.getMiners().serialize() !
             #Signature.
             blockArg.getSignature().toBN(16).toString(255)
+
+        result = result.toBN(256).toString(253)

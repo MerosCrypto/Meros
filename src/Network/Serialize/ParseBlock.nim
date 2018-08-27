@@ -43,7 +43,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         #Miner 1 | Amount 1
         #Miner N | Amount N
         #Signature
-        blockSeq: seq[string] = blockStr.split(delim)
+        blockSeq: seq[string] = blockStr.toBN(253).toString(256).split(delim)
         #Nonce.
         nonce: BN = blockSeq[0].toBN(255)
         #Last block hash.

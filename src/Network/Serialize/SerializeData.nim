@@ -27,3 +27,5 @@ proc serialize*(data: Data): string =
             result !
             data.getProof().toString(255) !
             data.getSignature().toBN(16).toString(255)
+
+        result = result.toBN(256).toString(253)
