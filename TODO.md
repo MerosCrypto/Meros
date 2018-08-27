@@ -1,7 +1,7 @@
 # TODO
 
 Core:
-- Sockets.
+- Async Sockets.
 - Parse functions.
 - Track Verifications.
 - Track MeritRemovals and link them to the blockchain.
@@ -29,6 +29,7 @@ Improvements:
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
 - Don't round down; round to the closer number.
+- Update cast styling from C's `(int) a` to `int(a)`.
 
 Bug fixes and behavior changes:
 - Difficulty does a minimal amount of scaling with longer time periods.
