@@ -13,6 +13,9 @@ import ../../Wallet/Wallet
 #Import the Serialization library.
 import ../../Network/Serialize/SerializeReceive
 
+#Index object.
+import objects/LatticeObjs
+
 #Node object.
 import objects/NodeObj
 
@@ -20,7 +23,7 @@ import objects/NodeObj
 import objects/ReceiveObj
 export ReceiveObj
 
-#Create a new  node.
+#Create a new Receive node.
 proc newReceive*(
     inputAddress: string,
     inputNonce: BN,
@@ -60,6 +63,15 @@ proc newReceive*(
     #Set the hash.
     if result.setHash(SHA512(result.serialize())) == false:
         raise newException(ResultError, "Couldn't set the node hash.")
+
+#Create a new Receive node.
+proc newReceive*(index: Index, amount: BN, nonce: BN): Receive {.raises: [ResultError, ValueError, Exception].} =
+    newReceive(
+        index.getAddress(),
+        index.getNonce(),
+        amount,
+        nonce
+    )
 
 #Sign a TX.
 proc sign*(wallet: Wallet, recv: Receive): bool {.raises: [ValueError].} =
