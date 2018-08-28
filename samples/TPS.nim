@@ -41,7 +41,6 @@ var
     )
     mintRecv: Receive = newReceive(        #Mint Receive.
         mintIndex,
-        newBN("1000000"),
         newBN()
     )
 
@@ -162,7 +161,6 @@ proc spam() {.async.} =
         recvs[i] = newReceive(
             minter.getAddress(),
             newBN(i + 1),
-            BNNums.ONE,
             newBN(i)
         )
         #Sign the Receive.

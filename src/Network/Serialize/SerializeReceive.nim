@@ -21,9 +21,7 @@ proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =
     else:
         result &= Address.toBN(recv.getInputAddress()).toString(255) & delim
 
-    result &=
-        recv.getInputNonce().toString(255) !
-        recv.getAmount().toString(255)
+    result &= recv.getInputNonce().toString(255)
 
     if recv.getHash().len != 0:
         result =

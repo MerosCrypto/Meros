@@ -11,16 +11,13 @@ type Receive* = ref object of Node
     inputAddress: string
     #Input nonce.
     inputNonce: BN
-    #Amount transacted.
-    amount: BN
 
 #New Receive object.
-proc newReceiveObj*(inputAddress: string, inputNonce: BN, amount: BN): Receive {.raises: [].} =
+proc newReceiveObj*(inputAddress: string, inputNonce: BN): Receive {.raises: [].} =
     Receive(
         descendant: NodeReceive,
         inputAddress: inputAddress,
-        inputNonce: inputNonce,
-        amount: amount
+        inputNonce: inputNonce
     )
 
 #Getters.
@@ -28,5 +25,3 @@ proc getInputAddress*(recv: Receive): string {.raises: [].} =
     recv.inputAddress
 proc getInputNonce*(recv: Receive): BN {.raises: [].} =
     recv.inputNonce
-proc getAmount*(recv: Receive): BN {.raises: [].} =
-    recv.amount

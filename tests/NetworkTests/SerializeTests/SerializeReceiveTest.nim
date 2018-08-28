@@ -28,7 +28,6 @@ for i in 1 .. 20:
     recv = newReceive(
         sender.getAddress(),
         newBN(),
-        newBN("10000000000"),
         newBN()
     )
     #Sign it.
@@ -70,10 +69,6 @@ for i in 1 .. 20:
     assert(
         recv.getInputNonce() == recvParsed.getInputNonce(),
         "Input Nonce:\r\n" & $recv.getInputNonce() & "\r\n" & $recvParsed.getInputNonce()
-    )
-    assert(
-        recv.getAmount() == recvParsed.getAmount(),
-        "Amount:\r\n" & $recv.getAmount() & "\r\n" & $recvParsed.getAmount()
     )
 
 echo "Finished the Network/Serialize/Receive test."

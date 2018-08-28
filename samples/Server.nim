@@ -25,7 +25,6 @@ var
     )
     mintRecv: Receive = newReceive(        #Mint Receive.
         mintIndex,
-        newBN("1000000"),
         newBN()
     )
 
@@ -102,7 +101,6 @@ proc handle(client: AsyncSocket) {.async.} =
                 echo "Adding a new Receive."
                 echo "From:   " & recv.getInputAddress()
                 echo "To:     " & recv.getSender()
-                echo "Amount: " & $recv.getAmount()
                 echo "\r\n"
 
                 #Print before-balance, if the Lattice accepts it, and the new balance.
@@ -111,7 +109,7 @@ proc handle(client: AsyncSocket) {.async.} =
                     $lattice.add(
                         recv
                     )
-                echo "New balance of " & recv.getSender() & ": " & $lattice.getBalance(recv.getSender())
+                echo "New balance of " & recv.getSender() & ": " & $lattice.getBalance(recv.getSender()) & "\r\n"
 
             #Unsupported message.
             else:

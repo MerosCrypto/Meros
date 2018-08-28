@@ -7,6 +7,9 @@ import NodeObj
 import SendObj
 import ReceiveObj
 
+#Lattice objects.
+import LatticeObjs
+
 #Account object.
 type Account* = ref object of RootObj
     #Chain owner.
@@ -28,7 +31,7 @@ proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
     )
 
 #Add a Node to an account.
-proc addNode*(account: Account, node: Node) {.raises: [ValueError].} =
+proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [ValueError].} =
     #Increase the account height and add the node.
     inc(account.height)
     account.nodes.add(node)
@@ -36,12 +39,18 @@ proc addNode*(account: Account, node: Node) {.raises: [ValueError].} =
     case node.descendant:
         #If it's a Send Node...
         of NodeSend:
+            #Cast it to a var.
+            var send: Send = cast[Send](node)
             #Update the balance.
-            account.balance -= cast[Send](node).getAmount()
+            account.balance -= send.getAmount()
         #If it's a Receive Node...
         of NodeReceive:
+            #Cast it to a var.
+            var recv: Receive = cast[Receive](node)
+            #Cast the matching Send.
+            var send: Send = cast[Send](dependent)
             #Update the balance.
-            account.balance += cast[Receive](node).getAmount()
+            account.balance += send.getAmount()
         else:
             discard
 

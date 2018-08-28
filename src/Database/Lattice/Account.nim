@@ -23,7 +23,7 @@ import objects/AccountObj
 export AccountObj
 
 #Add a node.
-proc add(account: Account, node: Node): bool {.raises: [ValueError, Exception].} =
+proc add(account: Account, node: Node, dependent: Node = nil): bool {.raises: [ValueError, Exception].} =
     result = true
 
     #Verify the sender.
@@ -46,7 +46,7 @@ proc add(account: Account, node: Node): bool {.raises: [ValueError, Exception].}
         return false
 
     #Add the node.
-    account.addNode(node)
+    account.addNode(node, dependent)
 
 #Add a Send.
 proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueError, Exception].} =
@@ -91,10 +91,6 @@ proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [Value
     if recv.getInputNonce() != send.getNonce():
         return false
 
-    #Verify the balances match.
-    if recv.getAmount() != send.getAmount():
-        return false
-
     #Verify it's unclaimed.
     for i in account.getNodes():
         if i.descendant == NodeReceive:
@@ -106,7 +102,7 @@ proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [Value
                 return false
 
     #Add the Receive.
-    result = account.add(cast[Node](recv))
+    result = account.add(cast[Node](recv), send)
 
 #Add Data.
 proc add*(account: Account, data: Data, difficulty: BN): bool {.raises: [ValueError, Exception].} =

@@ -27,7 +27,6 @@ export ReceiveObj
 proc newReceive*(
     inputAddress: string,
     inputNonce: BN,
-    amount: BN,
     nonce: BN
 ): Receive {.raises: [ResultError, ValueError, Exception].} =
     #Verify the input address.
@@ -41,10 +40,6 @@ proc newReceive*(
     if inputNonce < BNNums.ZERO:
         raise newException(ValueError, "Receive input nonce is negative.")
 
-    #Verify the amount.
-    if amount < BNNums.ZERO:
-        raise newException(ValueError, "Receive amount is negative.")
-
     #Verify the nonce.
     if nonce < BNNums.ZERO:
         raise newException(ValueError, "Receive nonce is negative.")
@@ -52,8 +47,7 @@ proc newReceive*(
     #Craft the result.
     result = newReceiveObj(
         inputAddress,
-        inputNonce,
-        amount
+        inputNonce
     )
 
     #Set the nonce.
@@ -65,11 +59,10 @@ proc newReceive*(
         raise newException(ResultError, "Couldn't set the node hash.")
 
 #Create a new Receive node.
-proc newReceive*(index: Index, amount: BN, nonce: BN): Receive {.raises: [ResultError, ValueError, Exception].} =
+proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ResultError, ValueError, Exception].} =
     newReceive(
         index.getAddress(),
         index.getNonce(),
-        amount,
         nonce
     )
 

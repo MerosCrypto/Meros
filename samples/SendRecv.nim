@@ -24,7 +24,6 @@ var
     recv: Receive = newReceive(    #Receive.
         sender.getAddress(),
         newBN(),
-        newBN("10000000000"),
         newBN()
     )
 
