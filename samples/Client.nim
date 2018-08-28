@@ -15,35 +15,40 @@ import Database/Lattice/Lattice
 import Network/Serialize/SerializeSend
 import Network/Serialize/SerializeReceive
 
-#Networking/OS standard lib.
-import net, os
+#Networking/OS standard libs.
+import asyncnet, asyncdispatch
 
 #String utils standard lib.
 import strutils
 
 var
-    #Answer to questions.
-    answer: string
+    answer: string                         #Answer to questions.
 
-    #TX data.
-    address: string
-    inputNonce: BN
-    amount: BN
-    nonce: BN
+    address: string                        #Address to send/receive from.
+    inputNonce: BN                         #Nonce of the Send to Receive from.
+    amount: BN                             #Amount we're sending/receiving.
+    nonce: BN                              #Nonce of the Node.
 
-    #Wallet.
-    wallet: Wallet
+    wallet: Wallet                         #Wallet.
 
-    #TX objects.
-    send: Send
-    recv: Receive
+    send: Send                             #Send object.
+    recv: Receive                          #Receive object.
 
-    #Header/serialized data string.
-    header: string
-    serialized: string
+    sendHeader: string =                   #Send header.
+        $(char(0)) &
+        $(char(0)) &
+        $(char(0)) &
+        $(char(0)) &
+        $(char(0))
+    recvHeader: string =                   #Receive header.
+        $(char(0)) &
+        $(char(0)) &
+        $(char(0)) &
+        $(char(1)) &
+        $(char(0))
+    serialized: string                     #Serialized string.
 
-    #Socket.
-    client: Socket = newSocket()
+    client: AsyncSocket = newAsyncSocket() #Socket.
 
 #Get the PrivateKey.
 echo "What's the Wallet's Private Key? If you don't have a Wallet, press enter to make one. "
@@ -60,11 +65,13 @@ if answer == "":
 #Create a Wallet from their Private Key.
 wallet = newWallet(answer)
 
-#DGet the TX type.
+#Get the TX type.
 echo "Would you like to Send or Receive a TX?"
 answer = stdin.readLine()
 
+#Handle a Send.
 if answer.toLower() == "send":
+    #Get the output/amount/nonce.
     echo "Who would you like to send to?"
     address = stdin.readLine()
     echo "How much would you like to send?"
@@ -72,23 +79,23 @@ if answer.toLower() == "send":
     echo "What nonce is this on your account?"
     nonce = newBN(stdin.readLine())
 
+    #Create the Send.
     send = newSend(
         address,
         amount,
         nonce
     )
+    #Mine the Send.
     send.mine("".pad(64, "88").toBN(16))
+    #Sign the Send.
     echo "Signing the Send retuned... " & $wallet.sign(send)
 
-    header =
-        $((char) 0) &
-        $((char) 0) &
-        $((char) 0) &
-        $((char) 0) &
-        $((char) 0)
-    serialized = header & send.serialize() & "\r\n"
+    #Create the serialized string.
+    serialized = sendHeader & send.serialize() & "\r\n"
 
+#Handle a Receive.
 elif answer.toLower() == "receive":
+    #Get the intput address/input nonce/amount/nonce.
     echo "Who would you like to receive from?"
     address = stdin.readLine()
     echo "What nonce is the send block on their account?"
@@ -98,26 +105,24 @@ elif answer.toLower() == "receive":
     echo "What nonce is this on your account?"
     nonce = newBN(stdin.readLine())
 
+    #Create the Receive.
     recv = newReceive(
         address,
         inputNonce,
         amount,
         nonce
     )
+    #Sign the Receive.
     echo "Signing the Receive retuned... " & $wallet.sign(recv)
 
-    header =
-        $((char) 0) &
-        $((char) 0) &
-        $((char) 0) &
-        $((char) 1) &
-        $((char) 0)
-    serialized = header & recv.serialize() & "\r\n"
+    #Create the serialized string.
+    serialized = recvHeader & recv.serialize() & "\r\n"
 
 else:
     echo "I don't recognize that option."
     quit(-1)
 
-client.connect("127.0.0.1", Port(5132))
-client.send(serialized)
-sleep(100)
+#Connect to the server.
+waitFor client.connect("127.0.0.1", Port(5132))
+#Send the serialized node.
+waitFor client.send(serialized)

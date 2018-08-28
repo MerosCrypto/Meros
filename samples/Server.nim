@@ -13,18 +13,17 @@ import Network/Serialize/ParseSend
 import Network/Serialize/ParseReceive
 
 #Networking standard lib.
-import net
+import asyncnet, asyncdispatch
 
 var
-    server: Socket = newSocket()     #Server Socket.
-    client: Socket = new Socket      #Client Socket.
-    minter: Wallet = newWallet()     #Wallet.
-    lattice: Lattice = newLattice()  #Lattice.
-    mintIndex: Index = lattice.mint( #Mint transaction.
+    server: AsyncSocket = newAsyncSocket() #Server Socket.
+    minter: Wallet = newWallet()           #Wallet.
+    lattice: Lattice = newLattice()        #Lattice.
+    mintIndex: Index = lattice.mint(       #Mint transaction.
         minter.getAddress(),
         newBN("1000000")
     )
-    mintRecv: Receive = newReceive(  #Mint Receive.
+    mintRecv: Receive = newReceive(        #Mint Receive.
         mintIndex,
         newBN("1000000"),
         newBN()
@@ -41,12 +40,12 @@ echo minter.getAddress() &
     "."
 
 #Handles a client.
-proc handle(client: Socket) =
+proc handle(client: AsyncSocket) {.async.} =
     echo "Handling a new client..."
 
     while true:
         #Read the socket data into the line var.
-        var line: string = client.recvLine()
+        var line: string = await client.recvLine()
         if line.len == 0:
             return
 
@@ -71,7 +70,7 @@ proc handle(client: Socket) =
                 try:
                     send = line.parseSend()
                 except:
-                    echo "Invalid Send."
+                    echo "Invalid Send. " & getCurrentExceptionMsg()
                     continue
 
                 #Print the message info.
@@ -96,7 +95,7 @@ proc handle(client: Socket) =
                 try:
                     recv = line.parseReceive()
                 except:
-                    echo "Invalid Receive."
+                    echo "Invalid Receive. " & getCurrentExceptionMsg()
                     continue
 
                 #Print the message info.
@@ -118,11 +117,11 @@ proc handle(client: Socket) =
             else:
                 echo "Unsupported message type."
 
+#Start listening.
 server.setSockOpt(OptReuseAddr, true)
 server.bindAddr(Port(5132))
 server.listen()
 
+#Accept new connections infinitely.
 while true:
-    server.accept(client)
-    handle(client)
-    client = new Socket
+    asyncCheck handle(waitFor server.accept())
