@@ -1,6 +1,5 @@
-#Numerical libs.
+#BN lib.
 import lib/BN
-import lib/Base
 
 #Wallet lib.
 import Wallet/Wallet
@@ -12,7 +11,7 @@ import Database/Lattice/Lattice
 import Network/Serialize/ParseSend
 import Network/Serialize/ParseReceive
 
-#Networking standard lib.
+#Networking standard libs.
 import asyncnet, asyncdispatch
 
 var

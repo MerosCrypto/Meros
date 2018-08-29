@@ -42,5 +42,7 @@ import ../src/Network/Serialize/ParseData
 import ../src/Network/Serialize/ParseVerification
 import ../src/Network/Serialize/ParseMeritRemoval
 
+import ../src/Network/Sockets
+
 #UI.
 import ../src/UI/UI
