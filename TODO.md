@@ -20,33 +20,30 @@ Features:
     - Every 6 hours until the end of month 6.
     - Every 12 hours until the end of the year.
     - Every day from then on.
-- Threaded/dedicated miner.
 
 Improvements:
 - Use custom errors.
-- Make Miners/Validations proper objects.
+- Replace awaits with yields.
+- Make Miners/Validations/Merit State proper objects.
 - Optimize SECP256K1Wrapper (memory copies, splices...).
 - Rewrite GMP package (last update was 2015).
-- Don't round down; round to the closer number.
+- Don't have BN round down; have it round to the closest number.
 
-Bug fixes and behavior changes:
-- Difficulty does a minimal amount of scaling with longer time periods.
+Behavior Changes:
 - Retarget based on block count, not time.
 - Have required work be based on account, not that TX, and infinitely precalculable.
-- Remove GMP's memory leak.
-- Put object definitions into dedicated files.
 - Finalize Argon2 parameters.
+
+Bug fixes:
+- Difficulty algorithm is rough and breaks on higher time intervals.
+- Remove GMP's memory leak.
 
 Documentation:
 - Add comments to:
     - DB/Merit/State.nim
 
-    - DB/Lattice/Lattice.nim
-
     - DB/Database.nim
-    - DB/State.nim
 
-    - Wallet/PublicKey.nim
     - Wallet/Wallet.nim
 - Use Documentation Comments.
 - Ember Whitepaper.
