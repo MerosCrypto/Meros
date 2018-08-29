@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Async Sockets.
 - Rest of the parse functions.
 - Track Verifications.
 - Track MeritRemovals and link them to the blockchain.
