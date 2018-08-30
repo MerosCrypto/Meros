@@ -119,8 +119,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
 
 proc mint*(lattice: Lattice, address: string, amount: BN): Index {.raises: [ResultError, ValueError, Exception].} =
     #Get the Height in a new var that won't update.
-    var height: BN = newBN()
-    height[] = lattice.getLattice().getAccount("minter").getHeight()[]
+    var height: BN = newBN(lattice.getLattice().getAccount("minter").getHeight())
 
     #Create the Send Node.
     var send: Send = newSend(
