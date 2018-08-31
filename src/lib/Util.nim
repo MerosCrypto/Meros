@@ -1,5 +1,3 @@
-import sets
-
 #Exponentiation of a function.
 #f^n(x) = f(f(f(... n times ... f(f(f(x))))))
 proc `^`*[T](f: proc(x: T): T, power: int): proc(x: T): T {.raises: [Exception].} =
