@@ -13,6 +13,8 @@
 #### Current State
 This currency is not usable by the mass populace. That said, Ember recently had its first transaction! We're aiming to have a private testnet in a few weeks and a public one in a few months.
 
+Only use this software on Linux for now.
+
 #### Compiling
 
 Requirements:

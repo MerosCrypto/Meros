@@ -45,7 +45,7 @@ proc serialize*(blockArg: Block): string =
         #Publisher.
         blockArg.getPublisher().toBN(16).toString(255)
 
-    if blockArg.getSignature() != nil:
+    if blockArg.getSignature().len != 0:
         result &= delim &
             #Proof.
             blockArg.getProof().toString(255) !

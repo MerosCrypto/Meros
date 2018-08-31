@@ -86,7 +86,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
 #Setters.
 proc setHash*(blockArg: Block, hash: string): bool {.raises: [].} =
     result = true
-    if not blockArg.hash.isNil:
+    if blockArg.hash.len != 0:
         return false
 
     blockArg.hash = hash
@@ -100,28 +100,28 @@ proc setProof*(newBlock: Block, proof: BN): bool {.raises: [].} =
 
 proc setArgon*(blockArg: Block, argon: string): bool {.raises: [].} =
     result = true
-    if not blockArg.argon.isNil:
+    if blockArg.argon.len != 0:
         return false
 
     blockArg.argon = argon
 
 proc setMiners*(newBlock: Block, miners: seq[tuple[miner: string, amount: int]]): bool {.raises: [].} =
     result = true
-    if not newBlock.miners.isNil:
+    if newBlock.miners.len != 0:
         return false
 
     newBlock.miners = miners
 
 proc setMinersHash*(blockArg: Block, minersHash: string): bool {.raises: [].} =
     result = true
-    if not blockArg.minersHash.isNil:
+    if blockArg.minersHash.len != 0:
         return false
 
     blockArg.minersHash = minersHash
 
 proc setSignature*(newBlock: Block, signature: string): bool {.raises: [].} =
     result = true
-    if not newBlock.signature.isNil:
+    if newBlock.signature.len != 0:
         return false
 
     newBlock.signature = signature

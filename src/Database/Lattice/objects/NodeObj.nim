@@ -49,7 +49,7 @@ proc setHash*(node: Node, hash: string): bool {.raises: [].} =
 #Set the Node signature.
 proc setSignature*(node: Node, signature: string): bool {.raises: [].} =
     result = true
-    if not ((node.signature.isNil) or (not signature.isBase(16))):
+    if (node.signature.len != 0) or (not signature.isBase(16)):
         return false
 
     node.signature = signature
