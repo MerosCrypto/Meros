@@ -14,7 +14,7 @@ import strutils
 #Serialization function.
 proc serialize*(miners: seq[tuple[miner: string, amount: int]], nonce: BN = BN()): string =
     #Create the result.
-    if nonce.isNil:
+    if nonce.getNil():
         result = ""
     else:
         result = nonce.toString(255) & delim

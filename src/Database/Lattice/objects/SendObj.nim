@@ -38,7 +38,7 @@ proc setSHA512*(send: Send, sha512: string): bool =
 #Set the proof.
 proc setProof*(send: Send, proof: BN): bool =
     result = true
-    if not send.proof.isNil:
+    if not send.proof.getNil():
         return false
 
     send.proof = proof

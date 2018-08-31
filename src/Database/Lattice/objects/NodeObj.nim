@@ -33,7 +33,7 @@ proc setSender*(node: Node, sender: string): bool {.raises: [].} =
 #Set the Node nonce.
 proc setNonce*(node: Node, nonce: BN): bool {.raises: [].} =
     result = true
-    if not node.nonce.isNil:
+    if not node.nonce.getNil():
         return false
 
     node.nonce = nonce

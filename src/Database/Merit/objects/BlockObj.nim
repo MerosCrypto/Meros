@@ -93,7 +93,7 @@ proc setHash*(blockArg: Block, hash: string): bool {.raises: [].} =
 
 proc setProof*(newBlock: Block, proof: BN): bool {.raises: [].} =
     result = true
-    if not newBlock.proof.isNil:
+    if not newBlock.proof.getNil():
         return false
 
     newBlock.proof = proof

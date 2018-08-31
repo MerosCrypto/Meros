@@ -151,7 +151,7 @@ proc toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =
             ) * newBN(digits.find(digit))
 
 #Convert a value to a string (in the specified base).
-proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError].} =
+proc toString*(valueArg: BN, baseArg: int): string {.raises: [].} =
     var
         #Extract the value and base from the arguments.
         value: BN = valueArg

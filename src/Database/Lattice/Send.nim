@@ -74,7 +74,7 @@ proc sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError].} =
     result = true
 
     #Make sure the proof exists.
-    if send.getProof().isNil:
+    if send.getProof().getNil():
         return false
 
     #Set the sender behind the node.

@@ -36,7 +36,7 @@ proc calculateNextDifficulty*(
     difficulties: seq[Difficulty],
     periodInSeconds: int,
     blocksPerPeriod: int
-): Difficulty {.raises: [ValueError].} =
+): Difficulty {.raises: [].} =
     var
         #Last difficulty.
         last: Difficulty = difficulties[difficulties.len-1]

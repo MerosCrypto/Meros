@@ -32,7 +32,7 @@ proc setSHA512*(data: Data, sha512: string): bool =
 #Set the proof.
 proc setProof*(data: Data, proof: BN): bool =
     result = true
-    if not data.proof.isNil:
+    if not data.proof.getNil():
         return false
 
     data.proof = proof
