@@ -5,7 +5,7 @@ import ../../lib/Errors
 import ../../lib/Util
 
 #Numerical libs.
-import ../../lib/BN
+import BN
 import ../../lib/Base
 
 #Wallet libraries.
@@ -119,7 +119,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
     #Set the first element to the nonce.
     minersSeq[0] = nonce.toString(255)
     #Delete all other data.
-    minersSeq.delete(1, 6 + (validations.len * 3))
+    minersSeq.delete(1, 7 + (validations.len * 3))
     minersSeq.delete(minersSeq.len - 1)
     minersSerialized = minersSeq.join(delim)
     miners = parseMiners(minersSerialized)
