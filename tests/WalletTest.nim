@@ -1,2 +1,3 @@
-#Wallet tests.
+#Wallet Tests.
+
 import WalletTests/AddressTest

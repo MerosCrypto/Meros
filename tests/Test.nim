@@ -1,4 +1,5 @@
-#Test. Runs every test.
+#Run every test...
+
 import libTest
 import WalletTest
 import DatabaseTest

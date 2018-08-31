@@ -1,4 +1,5 @@
-#Lattice tests.
+#Lattice Tests.
+
 import LatticeTests/NodeTest
 import LatticeTests/SendTest
 import LatticeTests/ReceiveTest
