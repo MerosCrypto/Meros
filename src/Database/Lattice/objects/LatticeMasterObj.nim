@@ -27,8 +27,8 @@ proc newLattice*(): Lattice {.raises: [ValueError].} =
     )
 
     #Set the difficulty values.
-    result.difficulties.setTransaction("".pad(64, "88").toBN(16))
-    result.difficulties.setData("".pad(64, "aa").toBN(16))
+    result.difficulties.setTransaction("".pad(64, "aa").toBN(16))
+    result.difficulties.setData("".pad(64, "cc").toBN(16))
 
     #Add the minter account.
     discard result.lattice.newAccount("minter")
