@@ -1,5 +1,5 @@
 #Numerical libs.
-import ../../lib/BN
+import BN
 
 #Message/ServerClient objects.
 import objects/Message

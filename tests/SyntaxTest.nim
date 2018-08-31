@@ -7,7 +7,6 @@ import ../src/lib/Util
 import ../src/lib/RandomWrapper
 import ../src/lib/Time
 
-import ../src/lib/BN
 import ../src/lib/Base
 
 import ../src/lib/SHA512

@@ -1,6 +1,7 @@
-#Base16 Test.
+#Base 16 Test.
+
 #Numerical libs.
-import ../../../src/lib/BN
+import BN
 import ../../../src/lib/Base
 
 #Test basic conversions.

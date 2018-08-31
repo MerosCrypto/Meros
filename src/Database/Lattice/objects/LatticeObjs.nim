@@ -1,5 +1,5 @@
 #BN lib.
-import ../../../lib/BN
+import BN
 
 #Node object.
 import NodeObj
@@ -39,7 +39,7 @@ proc newIndex*(address: string, nonce: BN): Index {.raises: [].} =
         address: address,
         nonce: nonce
     )
-proc newDifficulties*(): Difficulties {.raises: [ValueError].} =
+proc newDifficulties*(): Difficulties {.raises: [].} =
     result = Difficulties(
         transaction: newBN(),
         data: newBN()
@@ -56,7 +56,7 @@ proc setData*(difficulties: Difficulties, data: BN) {.raises: [].} =
     difficulties.data = data
 
 #Creates a new account on the lattice.
-proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueError].} =
+proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [].} =
     result = true
     if lattice.hasKey(address):
         return false

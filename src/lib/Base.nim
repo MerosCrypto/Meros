@@ -1,5 +1,5 @@
 #BN lib.
-import ./BN
+import BN
 
 #mapLiterals which enables using the raw ASCII values instead of the characters.
 import sequtils
@@ -120,8 +120,8 @@ proc isBase*(value: string, base: int): bool {.raises: [].} =
 proc toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =
     #If the value isn't of the base...
     if not valueArg.isBase(baseArg):
-        raise newException(ValueError, "Invalid Base number.")
         #Throw a ValueError.
+        raise newException(ValueError, "Invalid Base number.")
 
     #Create a new BN.
     result = newBN()
@@ -185,7 +185,7 @@ proc toString*(valueArg: BN, baseArg: int): string {.raises: [ValueError].} =
         #Set the place to the base raised to the digit location.
         place = base ^ i
         #Set the digit to the value divided by the place.
-        digit = (value div place).toInt()
+        digit = (value / place).toInt()
         #Remove the place from the value.
         value = value mod place
         #Ad the new digit to the result.

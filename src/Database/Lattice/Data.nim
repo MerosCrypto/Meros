@@ -2,7 +2,7 @@
 import ../../lib/Errors
 
 #Numerical libs.
-import ../../lib/BN
+import BN
 import ../../lib/Base
 
 #Hashing libs.

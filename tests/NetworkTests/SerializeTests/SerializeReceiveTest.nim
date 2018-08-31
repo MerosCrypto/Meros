@@ -1,5 +1,7 @@
+#Serialize Receive Tests.
+
 #Numerical libs.
-import ../../../src/lib/BN
+import BN
 import ../../../src/lib/Base
 
 #Wallet lib.

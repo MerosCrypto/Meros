@@ -2,7 +2,7 @@
 import ../../lib/Errors
 
 #Import the numerical libraries.
-import ../../lib/BN
+import BN
 import ../../lib/Base
 
 #Import the Time library.

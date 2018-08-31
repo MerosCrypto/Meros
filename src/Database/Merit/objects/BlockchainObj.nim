@@ -1,5 +1,5 @@
 #Numerical libs.
-import ../../../lib/BN
+import BN
 import ../../../lib/Base
 
 #Time lib.
@@ -36,7 +36,7 @@ proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError].} =
         ]
     )
 
-proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [ValueError].} =
+proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
     inc(blockchain.height)
     blockchain.blocks.add(newBlock)
 

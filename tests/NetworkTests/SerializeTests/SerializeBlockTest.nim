@@ -1,5 +1,7 @@
-#Number libs.
-import ../../../src/lib/BN
+#Serialize Block Tests.
+
+#Numerical libs.
+import BN
 import ../../../src/lib/Base
 
 #Time lib.
@@ -51,7 +53,7 @@ for i in 1 .. 10:
     echo "Testing Block Serialization/Parsing, iteration " & $i & "."
 
     #Update the time.
-    time = newBN(getTime())
+    time = getTime()
 
     #Create a block.
     newBlock = newBlock(

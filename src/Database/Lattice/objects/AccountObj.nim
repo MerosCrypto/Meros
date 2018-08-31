@@ -1,5 +1,5 @@
 #Numerical libs.
-import ../../../lib/BN
+import BN
 import ../../../lib/Base
 
 #Node, Send, and Receive objects.
@@ -22,7 +22,7 @@ type Account* = ref object of RootObj
     balance: BN
 
 #Creates a new account object.
-proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
+proc newAccountObj*(address: string): Account {.raises: [].} =
     Account(
         address: address,
         height: newBN(),
@@ -31,7 +31,7 @@ proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
     )
 
 #Add a Node to an account.
-proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [ValueError].} =
+proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
     #Increase the account height and add the node.
     inc(account.height)
     account.nodes.add(node)

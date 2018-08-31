@@ -1,7 +1,7 @@
 #Wrapper around the Nim time library that returns a BN.
 
 #BN lib.
-import ./BN
+import BN
 
 #Times standard lib.
 import times

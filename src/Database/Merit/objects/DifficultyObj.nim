@@ -1,5 +1,5 @@
 #BN lib.
-import ../../../lib/BN
+import BN
 
 #Difficulty object.
 type Difficulty* = ref object of RootObj

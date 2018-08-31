@@ -1,5 +1,5 @@
 #Numerical libs.
-import ../../lib/BN
+import BN
 import ../../lib/Base
 
 #Address library.
@@ -19,7 +19,7 @@ proc serialize*(send: Send): string {.raises: [ValueError, Exception].} =
         Address.toBN(send.getOutput()).toString(255) !
         send.getAmount().toString(255)
 
-    if send.getHash().len != 0:
+    if send.getSignature().len != 0:
         result =
             Address.toBN(send.getSender()).toString(255) !
             result !

@@ -2,7 +2,7 @@
 import ../../lib/Errors
 
 #BN lib.
-import ../../lib/BN
+import BN
 
 #SHA512 lib.
 import ../../lib/SHA512

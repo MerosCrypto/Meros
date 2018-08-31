@@ -1,5 +1,5 @@
-#Number libs.
-import ../../lib/BN
+#Numerical libs.
+import BN
 import ../../lib/Base
 
 #Block lib.

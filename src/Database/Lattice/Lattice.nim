@@ -2,8 +2,8 @@
 import ../../lib/Errors
 import ../../lib/Util
 
-#Numerical libs.
-import ../../lib/BN
+#BN lib.
+import BN
 
 #Node and node descendants.
 import objects/NodeObj
@@ -119,7 +119,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
 
 proc mint*(lattice: Lattice, address: string, amount: BN): Index {.raises: [ResultError, ValueError, Exception].} =
     #Get the Height in a new var that won't update.
-    var height: BN = newBN(lattice.getLattice().getAccount("minter").getHeight())
+    var height: BN = lattice.getLattice().getAccount("minter").getHeight()
 
     #Create the Send Node.
     var send: Send = newSend(

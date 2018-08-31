@@ -5,7 +5,7 @@ import ../../lib/Errors
 import ../../lib/Util
 
 #Numerical libs.
-import ../../lib/BN
+import BN
 import ../../lib/Base
 
 #Wallet libraries.

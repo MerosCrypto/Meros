@@ -1,5 +1,5 @@
 #Number libs.
-import ../lib/BN
+import BN
 import ../lib/Base
 
 #Hash lib.
@@ -76,7 +76,7 @@ proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError, Excep
     verify(address, $key)
 
 proc toBN*(address: string): BN {.raises: [ValueError, Exception].} =
-    if not verify(address):
+    if not address.verify():
         raise newException(ValueError, "Invalid Address.")
 
     result = address.substr(3, address.len-5).toBN(58)

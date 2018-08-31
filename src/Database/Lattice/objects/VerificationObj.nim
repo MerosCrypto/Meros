@@ -1,5 +1,5 @@
 #Numerical libs.
-import ../../../lib/BN
+import BN
 
 #Node/transaction object.
 import NodeObj

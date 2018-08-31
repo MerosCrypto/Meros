@@ -1,5 +1,5 @@
 #Numerical libraries.
-import ../../../lib/BN
+import BN
 import ../../../lib/Base
 
 #Time library.

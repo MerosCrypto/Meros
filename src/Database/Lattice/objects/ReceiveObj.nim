@@ -1,5 +1,5 @@
 #Numerical libs.
-import ../../../lib/BN
+import BN
 import ../../../lib/Base
 
 #Node object.

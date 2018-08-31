@@ -1,9 +1,10 @@
-#MerkleTree test.
+#Merkle Tree Test.
+
 #Hashing lib.
 import ../../../src/lib/SHA512
 
 #Numerical libs.
-import ../../../src/lib/BN
+import BN
 import ../../../src/lib/Base
 
 #Merkle lib.

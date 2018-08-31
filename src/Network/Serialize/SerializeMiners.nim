@@ -1,5 +1,5 @@
 #Import the numerical libraries.
-import ../../lib/BN
+import BN
 import ../../lib/Base
 
 #Import the Address library.
@@ -12,7 +12,7 @@ import common
 import strutils
 
 #Serialization function.
-proc serialize*(miners: seq[tuple[miner: string, amount: int]], nonce: BN = nil): string =
+proc serialize*(miners: seq[tuple[miner: string, amount: int]], nonce: BN = BN()): string =
     #Create the result.
     if nonce.isNil:
         result = ""
