@@ -1,5 +1,5 @@
 #BN lib.
-import lib/BN
+import BN
 
 #Wallet lib.
 import Wallet/Wallet
