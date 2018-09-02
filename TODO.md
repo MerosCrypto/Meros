@@ -32,7 +32,7 @@ Improvements:
 Behavior Changes:
 - Retarget based on block count, not time.
 - Have required work be based on account, not that TX, and infinitely precalculable.
-- Finalize Argon2 parameters.
+- Finalize Argon2's Block parameters.
 
 Bug fixes:
 - Difficulty algorithm is rough and breaks on higher time intervals.

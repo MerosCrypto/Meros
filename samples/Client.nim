@@ -38,10 +38,8 @@ var
         $(char(0)) &
         $(char(0)) &
         $(char(0)) &
-        $(char(0)) &
         $(char(0))
     recvHeader: string =                   #Receive header.
-        $(char(0)) &
         $(char(0)) &
         $(char(0)) &
         $(char(1)) &

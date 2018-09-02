@@ -52,10 +52,8 @@ var
         $(char(0)) &
         $(char(0)) &
         $(char(0)) &
-        $(char(0)) &
         $(char(0))
     recvHeader: string =                                 #Receive header.
-        $(char(0)) &
         $(char(0)) &
         $(char(0)) &
         $(char(1)) &
@@ -78,15 +76,14 @@ proc handle(client: AsyncSocket) {.async.} =
 
         var
             #Extract the header.
-            header: string = line.substr(0, 4)
+            header: string = line.substr(0, 3)
             #Parse the header.
-            network:    int = int(header[0])
-            minVersion: int = int(header[1])
-            maxVersion: int = int(header[2])
-            msgType:    int = int(header[3])
-            msgLength:  int = int(header[4])
+            network:   int = int(header[0])
+            version:   int = int(header[1])
+            msgType:   int = int(header[2])
+            msgLength: int = int(header[3])
         #Remove the header.
-        line = line.substr(5, line.len)
+        line = line.substr(4, line.len)
 
         #Handle the different message types.
         case msgType:
