@@ -25,6 +25,7 @@ Requirements:
 ```
 git submodule update --init
 nimble install https://github.com/EmberCrypto/BN
+nimble install ec_events
 nimble install nimcrypto secp256k1 nimx
 nim c src/main.nim
 ```
