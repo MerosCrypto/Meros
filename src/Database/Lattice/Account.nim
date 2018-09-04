@@ -2,8 +2,9 @@
 import BN
 import ../../lib/Base
 
-#Hashing libraries.
-import ../../lib/SHA512
+#Hash lib.
+import ../../lib/Hash
+#Argon lib.
 import ../../lib/Argon
 
 #Wallet libraries.

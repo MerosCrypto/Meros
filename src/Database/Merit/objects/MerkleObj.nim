@@ -1,8 +1,8 @@
 #Base lib.
 import ../../../lib/Base
 
-#SHA512 lib.
-import ../../../lib/SHA512
+#Hash lib.
+import ../../../lib/Hash
 
 #Object definitions.
 type

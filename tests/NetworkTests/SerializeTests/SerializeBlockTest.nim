@@ -7,8 +7,9 @@ import ../../../src/lib/Base
 #Time lib.
 import ../../../src/lib/Time
 
-#Hashing libs.
-import ../../../src/lib/SHA512
+#Hash lib.
+import ../../../src/lib/Hash
+#Argon lib.
 import ../../../src/lib/Argon
 
 #Wallet lib.

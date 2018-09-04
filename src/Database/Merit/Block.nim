@@ -1,26 +1,27 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Import the numerical libraries.
+#Numerical libs.
 import BN
 import ../../lib/Base
 
-#Import the Time library.
+#Time lib.
 import ../../lib/Time
 
-#Import the hashing libraries.
-import ../../lib/SHA512
+#Hash lib.
+import ../../lib/Hash
+#Argon lib.
 import ../../lib/Argon
 
-#Import the Wallet libraries.
+#Wallet libs.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
 
-#Import the Serialization library.
+#Serialization lib.
 import ../../Network/Serialize/SerializeMiners
 import ../../Network/Serialize/SerializeBlock
 
-#Import the Merkle library and BlockObj.
+#Merkle lib and BlockObj.
 import Merkle
 import objects/BlockObj
 #Export the BlockObj.

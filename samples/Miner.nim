@@ -5,8 +5,9 @@ import lib/Base
 #Time lib.
 import lib/Time
 
-#Hashing libs.
-import lib/SHA512
+#Hash lib.
+import lib/Hash
+#Argon lib.
 import lib/Argon
 
 #Merit lib.
@@ -49,7 +50,7 @@ proc main() =
         echo "Looping..."
 
         #Update the time.
-        time = newBN(getTime())
+        time = getTime()
 
         #Create a block.
         newBlock = newBlock(

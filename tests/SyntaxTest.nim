@@ -9,7 +9,7 @@ import ../src/lib/Time
 
 import ../src/lib/Base
 
-import ../src/lib/SHA512
+import ../src/lib/Hash
 import ../src/lib/Argon
 
 import ../src/lib/SECP256K1Wrapper

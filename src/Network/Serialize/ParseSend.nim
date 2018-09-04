@@ -12,8 +12,9 @@ import ../../lib/Base
 import ../../Wallet/Address
 import ../../Wallet/Wallet
 
-#Hashing libs.
-import ../../lib/SHA512
+#Hash lib.
+import ../../lib/Hash
+#Argon lib.
 import ../../lib/Argon
 
 #Node object and Send object.

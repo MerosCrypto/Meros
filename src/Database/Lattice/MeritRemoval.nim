@@ -2,8 +2,8 @@
 import BN
 import ../../lib/Base
 
-#SHA512 lib.
-import ../../lib/SHA512
+#Hash lib.
+import ../../lib/Hash
 
 #Errors lib.
 import ../../lib/Errors

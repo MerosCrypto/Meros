@@ -3,7 +3,7 @@ import BN
 import ../lib/Base
 
 #Hash lib.
-import ../lib/SHA512 as SHA512File
+import ../lib/Hash
 
 #Public Key lib.
 import PublicKey

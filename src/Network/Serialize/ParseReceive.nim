@@ -12,8 +12,8 @@ import ../../lib/Base
 import ../../Wallet/Address
 import ../../Wallet/Wallet
 
-#SHA512 lib.
-import ../../lib/SHA512
+#Hash lib.
+import ../../lib/Hash
 
 #Node object and Receive object.
 import ../../Database/Lattice/objects/NodeObj

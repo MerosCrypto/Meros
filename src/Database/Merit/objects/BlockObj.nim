@@ -5,8 +5,8 @@ import ../../../lib/Base
 #Time library.
 import ../../../lib/Time
 
-#SHA512 library.
-import ../../../lib/SHA512
+#Hash library.
+import ../../../lib/Hash
 
 #Argon library.
 import ../../../lib/Argon

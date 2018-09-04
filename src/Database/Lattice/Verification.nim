@@ -4,8 +4,8 @@ import ../../lib/Errors
 #BN lib.
 import BN
 
-#SHA512 lib.
-import ../../lib/SHA512
+#Hash lib.
+import ../../lib/Hash
 
 #Wallet libs.
 import ../../Wallet/Wallet
