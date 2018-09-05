@@ -1,12 +1,57 @@
-import nimx/window as WindowFile
-import nimx/text_field
+#Errors lib.
+import ../lib/Errors
 
-var
-    window: Window = newWindow(newRect(40, 40, 800, 600))
-    label: TextField = newLabel(newRect(20, 20, 150, 20))
+#SDL lib.
+import sdl2/sdl
 
-label.text = "Ember UI"
-window.addSubview(label)
+#UI object.
+type UI = ref object of RootObj
+    window: Window
+    renderer: Renderer
 
-runApplication:
-    discard
+proc newUI*(): UI {.raises: [ResultError].} =
+    #Init SDL.
+    if sdl.init(InitVideo) != 0:
+        raise newException(ResultError, "Couldn't init SDL.")
+
+    #Create the UI/the window.
+    result = UI(
+        window: createWindow(
+            "Ember Cryptocurrency",
+            WindowPosUndefined,
+            WindowPosUndefined,
+            500,
+            500,
+            0
+        )
+    )
+    #Verify the Window's integrity.
+    if result.window.isNil:
+        raise newException(ResultError, "Couldn't create the Window.")
+
+    #Create the Renderer.
+    result.renderer = createRenderer(
+        result.window,
+        -1,
+        RendererAccelerated or RendererPresentVsync
+    )
+    #Verify the Renderer's integrity.
+    if result.renderer.isNil:
+        raise newException(ResultError, "Couldn't create the Renderer.")
+
+    #Set the draw color.
+    if result.renderer.setRenderDrawColor(0xFF, 0xFF, 0xFF, 0xFF) != 0:
+        raise newException(ResultError, "Couldn't set the draw color.")
+
+    #Clear the renderer.
+    if result.renderer.renderClear() != 0:
+        raise newException(ResultError, "Could not clear the Renderer.")
+
+    #Render.
+    result.renderer.renderPresent()
+
+#Destroy function.
+proc destroy*(ui: UI) =
+    ui.renderer.destroyRenderer()
+    ui.window.destroyWindow()
+    sdl.quit()

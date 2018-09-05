@@ -23,7 +23,7 @@ Requirements:
 ```
 git submodule update --init
 nimble install https://github.com/EmberCrypto/BN ec_events
-nimble install nimcrypto keccak_tiny secp256k1 nimx
+nimble install nimcrypto keccak_tiny secp256k1 sdl2_nim
 nim c src/main.nim
 ```
 
@@ -34,7 +34,7 @@ If you're on Windows:
 If you're on a Debian based system:
 ```
 sudo apt-get install libgmp3-dev
-sudo apt-get install libsdl2-2.0
+sudo apt-get install libsdl2-dev
 ```
 
 For MacOS/other Linux systems, please look up how to install the GMP/SDL2 libraries.
