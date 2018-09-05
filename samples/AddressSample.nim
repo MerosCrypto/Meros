@@ -1,5 +1,5 @@
 #Wallet lib.
-import Wallet/Wallet
+import ../src/Wallet/Wallet
 
 #Declare the Wallet/Address vars here to not memory leak.
 var

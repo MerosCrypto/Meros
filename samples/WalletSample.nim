@@ -1,15 +1,15 @@
 #Number libs.
 import BN
-import lib/Base
+import ../src/lib/Base
 
 #Hash lib.
-import lib/Hash
+import ../src/lib/Hash
 
 #Block, blockchain, and State libs.
-import Database/Merit/Merit
+import ../src/Database/Merit/Merit
 
 #Wallet libs.
-import Wallet/Wallet
+import ../src/Wallet/Wallet
 
 #Demo.
 var

@@ -39,7 +39,7 @@ sudo apt-get install libsdl2-2.0
 
 For MacOS/other Linux systems, please look up how to install the GMP/SDL2 libraries.
 
-main.nim is blank. There are multiple files that can be swapped out with it under samples/ to test/demo Ember though.
+There are multiple samples under samples/ that can be directly compiled to demo Ember.
 
 #### Contributing
 

@@ -1,19 +1,19 @@
 #Util lib.
-import lib/Util
+import ../src/lib/Util
 
 #Numerical libs.
 import BN
-import lib/Base
+import ../src/lib/Base
 
 #Wallet lib.
-import Wallet/Wallet
+import ../src/Wallet/Wallet
 
 #Lattice lib.
-import Database/Lattice/Lattice
+import ../src/Database/Lattice/Lattice
 
 #Serialization libs.
-import Network/Serialize/SerializeSend
-import Network/Serialize/SerializeReceive
+import ../src/Network/Serialize/SerializeSend
+import ../src/Network/Serialize/SerializeReceive
 
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch

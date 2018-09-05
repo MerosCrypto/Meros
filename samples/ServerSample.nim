@@ -2,14 +2,14 @@
 import BN
 
 #Wallet lib.
-import Wallet/Wallet
+import ../src/Wallet/Wallet
 
 #Lattice lib.
-import Database/Lattice/Lattice
+import ../src/Database/Lattice/Lattice
 
 #Serialization libs.
-import Network/Serialize/ParseSend
-import Network/Serialize/ParseReceive
+import ../src/Network/Serialize/ParseSend
+import ../src/Network/Serialize/ParseReceive
 
 #Networking standard libs.
 import asyncnet, asyncdispatch

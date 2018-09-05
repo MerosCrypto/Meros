@@ -1,12 +1,12 @@
 #Numerical libs.
 import BN
-import lib/Base
+import ../src/lib/Base
 
 #Wallet lib.
-import Wallet/Wallet
+import ../src/Wallet/Wallet
 
 #Lattice lib.
-import Database/Lattice/Lattice
+import ../src/Database/Lattice/Lattice
 
 var
     sender: Wallet = newWallet()     #Sender Wallet.

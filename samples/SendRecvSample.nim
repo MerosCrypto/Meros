@@ -1,17 +1,17 @@
 #Numerical libs.
 import BN
-import lib/Base
+import ../src/lib/Base
 
 #Wallet lib.
-import Wallet/Wallet
+import ../src/Wallet/Wallet
 
 #Send/Receive nodes.
-import Database/Lattice/Send
-import Database/Lattice/Receive
+import ../src/Database/Lattice/Send
+import ../src/Database/Lattice/Receive
 
 #Serialization libs.
-import Network/Serialize/SerializeSend
-import Network/Serialize/SerializeReceive
+import ../src/Network/Serialize/SerializeSend
+import ../src/Network/Serialize/SerializeReceive
 
 var
     sender: Wallet = newWallet()   #Sender's wallet.

@@ -1,24 +1,25 @@
 #Number libs.
 import BN
-import lib/Base
+import ../src/lib/Base
 
 #Time lib.
-import lib/Time
+import ../src/lib/Time
 
 #Hash lib.
-import lib/Hash
+import ../src/lib/Hash
 #Argon lib.
-import lib/Argon
+import ../src/lib/Argon
 
 #Merit lib.
-import Database/Merit/Merit
+import ../src/Database/Merit/Merit
 
 #Wallet lib.
-import Wallet/Wallet
+import ../src/Wallet/Wallet
 
 #Serialization libs.
-import Network/Serialize/SerializeMiners
+import ../src/Network/Serialize/SerializeMiners
 
+#Main function is so these varriables can be GC'd.
 proc main() =
     var
         #Create a wallet to mine to.
