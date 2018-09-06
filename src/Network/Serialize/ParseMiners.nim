@@ -6,7 +6,7 @@ import ../../lib/Base
 import ../../Wallet/Address
 
 #Common serialization functions.
-import common
+import SerializeCommon
 
 #String utils standard library.
 import strutils

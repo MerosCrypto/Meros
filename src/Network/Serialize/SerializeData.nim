@@ -10,7 +10,7 @@ import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/DataObj
 
 #Common serialization functions.
-import common
+import SerializeCommon
 
 #String utils standard lib.
 import strutils

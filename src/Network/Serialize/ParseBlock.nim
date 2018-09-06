@@ -25,7 +25,7 @@ import ../../Database/Merit/objects/BlockObj
 import ../../Database/Merit/Merkle
 
 #delim character/serialize/parse functions.
-import common
+import SerializeCommon
 import SerializeMiners
 import ParseMiners
 import SerializeBlock

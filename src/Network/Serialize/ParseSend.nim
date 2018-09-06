@@ -22,7 +22,7 @@ import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/SendObj
 
 #delim character/serialize function.
-import common
+import SerializeCommon
 import SerializeSend
 
 #String utils standard lib.

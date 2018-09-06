@@ -10,7 +10,7 @@ import ../../Database/Merit/Merkle
 import ../../Database/Merit/objects/BlockObj
 
 #Common serialization functions and the Miners serialization.
-import common
+import SerializeCommon
 import SerializeMiners
 
 #String utils standard lib.

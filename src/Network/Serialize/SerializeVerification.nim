@@ -10,7 +10,7 @@ import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/VerificationObj
 
 #Common serialization functions.
-import common
+import SerializeCommon
 
 #Serialize a Verification.
 proc serialize*(verif: Verification): string =

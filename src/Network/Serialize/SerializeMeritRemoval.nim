@@ -10,7 +10,7 @@ import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/MeritRemovalObj
 
 #Common serialization functions.
-import common
+import SerializeCommon
 
 #Serialize a MeritRemoval.
 proc serialize*(mr: MeritRemoval): string =

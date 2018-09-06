@@ -10,7 +10,7 @@ import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/ReceiveObj
 
 #Common serialization functions.
-import common
+import SerializeCommon
 
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =

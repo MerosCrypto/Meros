@@ -20,7 +20,7 @@ import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/ReceiveObj
 
 #delim character/serialize function.
-import common
+import SerializeCommon
 import SerializeReceive
 
 #String utils standard lib.
