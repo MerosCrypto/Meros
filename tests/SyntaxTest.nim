@@ -21,7 +21,7 @@ import ../src/Database/Database
 import ../src/Wallet/Wallet
 
 #Network.
-import ../src/Network/Serialize/common
+import ../src/Network/Serialize/SerializeCommon
 
 import ../src/Network/Serialize/SerializeMiners
 import ../src/Network/Serialize/SerializeBlock
@@ -41,7 +41,7 @@ import ../src/Network/Serialize/ParseData
 import ../src/Network/Serialize/ParseVerification
 import ../src/Network/Serialize/ParseMeritRemoval
 
-import ../src/Network/Sockets
+import ../src/Network/Network
 
 #UI.
 import ../src/UI/UI
