@@ -5,6 +5,8 @@ import ServerObj
 import ec_events
 
 type Network* = ref object of RootObj
+    #Network ID.
+    id: int
     #Socket Event Emitter for the sublibraries.
     socketEvents: EventEmitter
     #Server.
@@ -14,10 +16,12 @@ type Network* = ref object of RootObj
 
 #Constructor.
 proc newNetworkObj*(
+    id: int,
     socketEvents: EventEmitter,
     server: Server
 ): Network {.raises: [].} =
     Network(
+        id: id,
         socketEvents: socketEvents,
         server: server
     )
@@ -29,3 +33,9 @@ proc setNodeEvents*(network: Network, ee: EventEmitter): bool {.raises: [].} =
         return false
 
     network.nodeEvents = ee
+
+#Getters.
+proc getID*(network: Network): int {.raises: [].} =
+    network.id
+proc getServer*(network: Network): Server {.raises: [].} =
+    network.server
