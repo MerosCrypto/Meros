@@ -29,16 +29,20 @@ proc handle(server: Server, client: ServerClient) {.async.} =
         if line.len == 0:
             continue
 
-        #Emit the new Message.
-        server.getEventEmitter().get(
-            proc (msg: Message),
-            "new"
-        )(
-            newMessage(
-                id,
-                line
+        #Emit the new Message. If that returns false...
+        if not (
+            await server.getEventEmitter().get(
+                proc (msg: Message): Future[bool],
+                "new"
+            )(
+                newMessage(
+                    id,
+                    line
+                )
             )
-        )
+        ):
+            #Disconnect the client.
+            server.disconnect(id)
 
 #Listen on a port.
 proc listen*(server: Server, port: int = 5132) {.async.} =
