@@ -4,11 +4,11 @@ import ../../../lib/Base
 
 type
     NodeType* = enum
-        Send = 1,
-        Receive = 2,
-        Data = 3,
-        Verification = 4,
-        MeritRemoval = 5
+        Send = 0,
+        Receive = 1,
+        Data = 2,
+        Verification = 3,
+        MeritRemoval = 4
 
     Node* = ref object of RootObj
         #Type of descendant.
