@@ -37,7 +37,11 @@ proc handle(server: Server, client: ServerClient) {.async.} =
             )(
                 newMessage(
                     id,
-                    line
+                    ord(line[0]),
+                    ord(line[1]),
+                    MessageType(line[2]),
+                    line.substr(0, 3),
+                    line.substr(4, line.len)
                 )
             )
         ):

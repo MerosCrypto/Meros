@@ -27,29 +27,26 @@ proc newNetwork*(id: int): Network =
     #On a new message...
     events.on(
         "new",
-        proc (msgArg: Message): Future[bool] {.async.} =
+        proc (msg: Message): Future[bool] {.async.} =
             #Set the result to true.
             result = true
 
-            #Extract the message.
-            var msg: string = msgArg.getMessage()
-
             #Validate the network ID.
-            if ord(msg[0]) != id:
+            if msg.getNetwork() != id:
                 return false
 
             #Validate the protocol.
-            if ord(msg[1]) < MIN_PROTOCOL:
+            if msg.getVersion() < MIN_PROTOCOL:
                 return false
-            if ord(msg[1]) > MAX_PROTOCOL:
+            if msg.getVersion() > MAX_PROTOCOL:
                 return false
 
             #Verify the message length.
-            if ord(msg[3]) + 4 != msg.len:
+            if ord(msg.getHeader()[3]) != msg.getMessage().len:
                 return false
 
             #Switch based off the message type.
-            case ord(msg[2]):
+            case msg.getContent():
                 else:
                     discard
     )
