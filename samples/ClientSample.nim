@@ -37,13 +37,11 @@ var
     sendHeader: string =                   #Send header.
         $(char(0)) &
         $(char(0)) &
-        $(char(0)) &
         $(char(0))
     recvHeader: string =                   #Receive header.
         $(char(0)) &
         $(char(0)) &
-        $(char(1)) &
-        $(char(0))
+        $(char(1))
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.
@@ -89,7 +87,11 @@ if answer.toLower() == "send":
     echo "Signing the Send retuned... " & $wallet.sign(send)
 
     #Create the serialized string.
-    serialized = sendHeader & send.serialize() & "\r\n"
+    serialized = send.serialize()
+    serialized =
+        sendHeader & char(serialized.len) &
+        serialized &
+        "\r\n"
 
 #Handle a Receive.
 elif answer.toLower() == "receive":
@@ -111,7 +113,11 @@ elif answer.toLower() == "receive":
     echo "Signing the Receive retuned... " & $wallet.sign(recv)
 
     #Create the serialized string.
-    serialized = recvHeader & recv.serialize() & "\r\n"
+    serialized = recv.serialize()
+    serialized =
+        recvHeader & char(serialized.len) &
+        serialized &
+        "\r\n"
 
 else:
     echo "I don't recognize that option."
