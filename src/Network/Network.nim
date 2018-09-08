@@ -1,3 +1,11 @@
+#Send libs.
+import ../Database/Lattice/Send
+import Serialize/ParseSend
+
+#Receive libs.
+import ../Database/Lattice/Receive
+import Serialize/ParseReceive
+
 #Message object.
 import objects/MessageObj
 
@@ -21,9 +29,18 @@ const
     #Maximum supported protocol.
     MAX_PROTOCOL: int = 0
 
-proc newNetwork*(id: int): Network =
+#Constructor.
+proc newNetwork*(id: int, nodeEvents: EventEmitter): Network =
     #Event emitter for the socket sublibraries.
     var events: EventEmitter = newEventEmitter()
+
+    #Create the Network object.
+    result = newNetworkObj(
+        id,
+        events,
+        newServer(events),
+        nodeEvents
+    )
 
     #On a new message...
     events.on(
@@ -46,26 +63,34 @@ proc newNetwork*(id: int): Network =
             if ord(msg.getHeader()[3]) != msg.getMessage().len:
                 return false
 
-            #Switch based off the message type.
-            case msg.getContent():
-                of MessageType.Send:
-                    discard
-                of MessageType.Receive:
-                    discard
-                of Data:
-                    discard
-                of Verification:
-                    discard
-                of MeritRemoval:
-                    discard
+            #Switch based off the message type (in a try to handle invalid messages).
+            try:
+                case msg.getContent():
+                    of MessageType.Send:
+                        nodeEvents.get(
+                            proc (send: Send),
+                            "send"
+                        )(
+                            msg.getMessage().parseSend()
+                        )
+                    of MessageType.Receive:
+                        nodeEvents.get(
+                            proc (recv: Receive),
+                            "recv"
+                        )(
+                            msg.getMessage().parseReceive()
+                        )
+                    of MessageType.Data:
+                        discard
+                    of MessageType.Verification:
+                        discard
+                    of MessageType.MeritRemoval:
+                        discard
+            except:
+                echo "Invalid Message."
     )
 
-    #Create the Network object.
-    result = newNetworkObj(
-        id,
-        events,
-        newServer(events)
-    )
-
+#Start listening.
+proc listen*(network: Network, port: int = 5132) =
     #Start the server.
-    asyncCheck result.getServer().listen()
+    asyncCheck network.getServer().listen(port)

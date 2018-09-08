@@ -51,7 +51,7 @@ proc handle(server: Server, client: ServerClient) {.async.} =
             break
 
 #Listen on a port.
-proc listen*(server: Server, port: int = 5132) {.async.} =
+proc listen*(server: Server, port: int) {.async.} =
     #Get the server socket.
     var socket: AsyncSocket = server.getSocket()
 

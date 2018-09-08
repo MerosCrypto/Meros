@@ -34,8 +34,7 @@ discard lattice.add(mintRecv)
 #Print the Private Key and address of the address holding the coins.
 echo minter.getAddress() &
     " was minted, and has received, one million coins. Its Private Key is " &
-    $minter.getPrivateKey() &
-    "."
+    $minter.getPrivateKey() & "."
 
 #Handles a client.
 proc handle(client: AsyncSocket) {.async.} =

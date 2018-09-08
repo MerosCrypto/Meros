@@ -18,24 +18,22 @@ type Network* = ref object of RootObj
 proc newNetworkObj*(
     id: int,
     socketEvents: EventEmitter,
-    server: Server
+    server: Server,
+    nodeEvents: EventEmitter
 ): Network {.raises: [].} =
     Network(
         id: id,
         socketEvents: socketEvents,
-        server: server
+        server: server,
+        nodeEvents: nodeEvents
     )
-
-#Setter for the nodeEvents var (which updates main).
-proc setNodeEvents*(network: Network, ee: EventEmitter): bool {.raises: [].} =
-    result = true
-    if not network.nodeEvents.isNil:
-        return false
-
-    network.nodeEvents = ee
 
 #Getters.
 proc getID*(network: Network): int {.raises: [].} =
     network.id
+proc getSocketEvents*(network: Network): EventEmitter {.raises: [].} =
+    network.socketEvents
 proc getServer*(network: Network): Server {.raises: [].} =
     network.server
+proc getNodeEvents*(network: Network): EventEmitter {.raises: [].} =
+    network.nodeEvents
