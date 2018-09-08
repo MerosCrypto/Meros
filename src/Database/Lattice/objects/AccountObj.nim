@@ -38,13 +38,13 @@ proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
 
     case node.descendant:
         #If it's a Send Node...
-        of NodeSend:
+        of NodeType.Send:
             #Cast it to a var.
             var send: Send = cast[Send](node)
             #Update the balance.
             account.balance -= send.getAmount()
         #If it's a Receive Node...
-        of NodeReceive:
+        of NodeType.Receive:
             #Cast it to a var.
             var recv: Receive = cast[Receive](node)
             #Cast the matching Send.

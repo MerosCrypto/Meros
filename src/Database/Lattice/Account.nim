@@ -74,7 +74,7 @@ proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueEr
 #Add a Receive.
 proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [ValueError, Exception].} =
     #Verify the node is a Send.
-    if sendArg.descendant != NodeSend:
+    if sendArg.descendant != NodeType.Send:
         return false
 
     #Cast it to a Send.
@@ -94,7 +94,7 @@ proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [Value
 
     #Verify it's unclaimed.
     for i in account.getNodes():
-        if i.descendant == NodeReceive:
+        if i.descendant == NodeType.Receive:
             var past: Receive = cast[Receive](i)
             if (
                 (past.getInputAddress() == recv.getInputAddress()) and

@@ -14,7 +14,7 @@ type Verification* = ref object of Node
 #New Verification object.
 proc newVerificationObj*(address: string, index: BN, verified: string): Verification =
     Verification(
-        descendant: NodeVerification,
+        descendant: NodeType.Verification,
         address: address,
         index: index,
         verified: verified

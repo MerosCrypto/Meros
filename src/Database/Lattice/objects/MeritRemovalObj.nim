@@ -11,7 +11,7 @@ type MeritRemoval* = ref object of Node
 #New MeritRemoval object.
 proc newMeritRemovalObj*(first: string, second: string): MeritRemoval {.raises: [].} =
     MeritRemoval(
-        descendant: NodeMeritRemoval,
+        descendant: NodeType.MeritRemoval,
         first: first,
         second: second
     )

@@ -15,7 +15,7 @@ type Receive* = ref object of Node
 #New Receive object.
 proc newReceiveObj*(inputAddress: string, inputNonce: BN): Receive {.raises: [].} =
     Receive(
-        descendant: NodeReceive,
+        descendant: NodeType.Receive,
         inputAddress: inputAddress,
         inputNonce: inputNonce
     )

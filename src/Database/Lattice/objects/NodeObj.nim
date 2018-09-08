@@ -3,16 +3,16 @@ import BN
 import ../../../lib/Base
 
 type
-    DescendantType* {.pure.} = enum
-        NodeSend = 1,
-        NodeReceive = 2,
-        NodeData = 3,
-        NodeVerification = 4,
-        NodeMeritRemoval = 5
+    NodeType* = enum
+        Send = 1,
+        Receive = 2,
+        Data = 3,
+        Verification = 4,
+        MeritRemoval = 5
 
     Node* = ref object of RootObj
         #Type of descendant.
-        descendant*: DescendantType
+        descendant*: NodeType
         #Address behind the node.
         sender: string
         #Index on the account.

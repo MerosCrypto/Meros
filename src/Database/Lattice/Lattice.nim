@@ -56,7 +56,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
         account: Account = blockLattice.getAccount(node.getSender()) #Get the Account.
 
     case node.descendant:
-        of NodeSend:
+        of NodeType.Send:
             #Cast the node.
             var send: Send = cast[Send](node)
 
@@ -68,7 +68,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
                 lattice.getDifficulties().getTransaction()
             )
 
-        of NodeReceive:
+        of NodeType.Receive:
             var recv: Receive = cast[Receive](node)
 
             result = account.add(
@@ -84,7 +84,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
                     )
             )
 
-        of NodeData:
+        of NodeType.Data:
             var data: Data = cast[Data](node)
 
             result = account.add(
@@ -94,7 +94,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
                 lattice.getDifficulties().getData()
             )
 
-        of NodeVerification:
+        of NodeType.Verification:
             var verif: Verification = cast[Verification](node)
 
             result = account.add(
@@ -102,7 +102,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
                 verif
             )
 
-        of NodeMeritRemoval:
+        of NodeType.MeritRemoval:
             var mr: MeritRemoval = cast[MeritRemoval](node)
 
             result = account.add(

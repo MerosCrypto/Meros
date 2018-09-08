@@ -17,7 +17,7 @@ type Data* = ref object of Node
 #New Data object.
 proc newDataObj*(data: seq[uint8]): Data {.raises: [].} =
     Data(
-        descendant: NodeData,
+        descendant: NodeType.Data,
         data: data
     )
 
