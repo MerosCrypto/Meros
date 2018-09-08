@@ -1,17 +1,18 @@
-#Import the Message object.
+#Message object.
 import objects/MessageObj
 
-#Import the socket sublibraries.
+#Socket sublibs.
 import Server
 import Client
 
-#Import the Network object.
+#Network object.
 import objects/NetworkObj
+export NetworkObj
 
-#Events library.
+#Events lib.
 import ec_events
 
-#Async standand lib.
+#Async standard lib.
 import asyncdispatch
 
 const
@@ -47,7 +48,15 @@ proc newNetwork*(id: int): Network =
 
             #Switch based off the message type.
             case msg.getContent():
-                else:
+                of MessageType.Send:
+                    discard
+                of MessageType.Receive:
+                    discard
+                of Data:
+                    discard
+                of Verification:
+                    discard
+                of MeritRemoval:
                     discard
     )
 
