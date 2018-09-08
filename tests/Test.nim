@@ -6,3 +6,5 @@ import DatabaseTest
 import NetworkTest
 
 import SyntaxTest
+
+echo "Finished all the tests."
