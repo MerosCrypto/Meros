@@ -48,7 +48,7 @@ proc disconnect*(server: Server, id: int) {.raises: [Exception].} =
         if c.getID() == id:
             c.close()
             server.clients.delete(i)
-            return
+            break
 
 #Getter for the Server socket.
 proc getSocket*(server: Server): AsyncSocket {.raises: [].} =

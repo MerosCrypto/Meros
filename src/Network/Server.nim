@@ -47,6 +47,8 @@ proc handle(server: Server, client: ServerClient) {.async.} =
         ):
             #Disconnect the client.
             server.disconnect(id)
+            #Break out of the loop.
+            break
 
 #Listen on a port.
 proc listen*(server: Server, port: int = 5132) {.async.} =
