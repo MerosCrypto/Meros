@@ -2,5 +2,5 @@
 var delim*: string = $(char(0))
 
 #Joins two string with the delimiter between the two string.
-proc `!`*(first: string, second: string): string =
+proc `!`*(first: string, second: string): string {.raises: [].} =
     first & delim & second

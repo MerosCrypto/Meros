@@ -13,7 +13,7 @@ import ../../Database/Lattice/objects/MeritRemovalObj
 import SerializeCommon
 
 #Serialize a MeritRemoval.
-proc serialize*(mr: MeritRemoval): string =
+proc serialize*(mr: MeritRemoval): string {.raises: [ValueError, Exception].} =
     result =
         mr.getNonce().toString(255) !
         mr.getFirst().toBN(16).toString(255) !

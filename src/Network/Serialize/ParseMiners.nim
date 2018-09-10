@@ -12,7 +12,7 @@ import SerializeCommon
 import strutils
 
 #Parse function.
-proc parseMiners*(minersStr: string): seq[tuple[miner: string, amount: int]] =
+proc parseMiners*(minersStr: string): seq[tuple[miner: string, amount: int]] {.raises: [ValueError, Exception].} =
     #Init the result.
     result = @[]
 

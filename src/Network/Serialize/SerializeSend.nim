@@ -2,10 +2,10 @@
 import BN
 import ../../lib/Base
 
-#Address library.
+#Address lib.
 import ../../Wallet/Address
 
-#Node object and send object.
+#Node and Send object.
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/SendObj
 

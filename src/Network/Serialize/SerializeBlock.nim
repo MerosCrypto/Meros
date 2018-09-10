@@ -17,7 +17,7 @@ import SerializeMiners
 import strutils
 
 #Serialize a Block.
-proc serialize*(blockArg: Block): string =
+proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
     #Create the result.
     result =
         #Nonce.

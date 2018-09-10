@@ -5,7 +5,7 @@ import ../../lib/Base
 #Address lib.
 import ../../Wallet/Address
 
-#Verification object.
+#Node and Verification object.
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/VerificationObj
 
@@ -13,7 +13,7 @@ import ../../Database/Lattice/objects/VerificationObj
 import SerializeCommon
 
 #Serialize a Verification.
-proc serialize*(verif: Verification): string =
+proc serialize*(verif: Verification): string {.raises: [ValueError, Exception].} =
     result =
         verif.getNonce().toString(255) !
         Address.toBN(verif.getAddress()).toString(255) !

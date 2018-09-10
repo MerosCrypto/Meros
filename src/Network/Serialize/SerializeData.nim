@@ -16,7 +16,7 @@ import SerializeCommon
 import strutils
 
 #Serialization function.
-proc serialize*(data: Data): string =
+proc serialize*(data: Data): string {.raises: [ValueError, Exception].} =
     result = data.getNonce().toString(255)
     for i in data.getData():
         result &= delim & i.toHex()

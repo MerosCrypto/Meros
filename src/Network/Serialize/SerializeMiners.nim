@@ -12,7 +12,10 @@ import SerializeCommon
 import strutils
 
 #Serialization function.
-proc serialize*(miners: seq[tuple[miner: string, amount: int]], nonce: BN = BN()): string =
+proc serialize*(
+    miners: seq[tuple[miner: string, amount: int]],
+    nonce: BN = BN()
+): string {.raises: [ValueError, Exception].} =
     #Create the result.
     if nonce.getNil():
         result = ""
