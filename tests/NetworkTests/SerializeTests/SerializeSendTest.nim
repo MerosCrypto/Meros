@@ -7,7 +7,7 @@ import ../../../src/lib/Base
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
-#Node object, and the Send lib.
+#Node object and the Send lib.
 import ../../../src/Database/Lattice/objects/NodeObj
 import ../../../src/Database/Lattice/Send
 
@@ -53,4 +53,4 @@ for i in 1 .. 20:
     assert(send.getSHA512() == sendParsed.getSHA512())
     assert(send.getProof() == sendParsed.getProof())
 
-echo "Finished the Network/Serialize/Receive test."
+echo "Finished the Network/Serialize/Send test."
