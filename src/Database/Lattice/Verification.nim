@@ -23,8 +23,6 @@ export VerificationObj
 
 proc newVerification*(node: Node, nonce: BN): Verification {.raises: [ResultError, ValueError, Exception].} =
     result = newVerificationObj(
-        node.getSender(),
-        node.getNonce(),
         node.getHash()
     )
 

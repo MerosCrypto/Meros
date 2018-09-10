@@ -16,8 +16,6 @@ import SerializeCommon
 proc serialize*(verif: Verification): string {.raises: [ValueError, Exception].} =
     result =
         verif.getNonce().toString(255) !
-        Address.toBN(verif.getAddress()).toString(255) !
-        verif.getIndex().toString(255) !
         verif.getVerified().toBN(16).toString(255)
 
     if verif.getHash().len != 0:
