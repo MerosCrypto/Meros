@@ -61,13 +61,14 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.r
         iterations: uint32
         memory: uint32
     if not reduced:
+        #Iterate 10000 times, using 200MB, with no parallelism.
         iterations = 10000
         memory = 18
     else:
+        #Iterate 1 times, using 256KB, with no parallelism.
         iterations = 1
         memory = 8
 
-    #Iterate 10000 times, using 200MB, with no parallelism.
     #The iteration quantity and memory usage values are for testing only.
     #They are not final and will be changed.
     if argon2d(
