@@ -41,7 +41,7 @@ proc newPrivateKey*(hex: string): PrivateKey {.raises: [ValueError].} =
 proc `$`*(key: PrivateKey): string {.raises: [].} =
     result = ""
     for i in 0 ..< 32:
-        result = result & key[i].toHex()
+        result = result & uint8(key[i]).toHex()
 
 #Sign a message via its hash.
 proc sign*(key: PrivateKey, hash: string): string {.raises: [ValueError].} =
