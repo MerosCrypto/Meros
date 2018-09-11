@@ -30,7 +30,7 @@ const
     MAX_PROTOCOL: int = 0
 
 #Constructor.
-proc newNetwork*(id: int, nodeEvents: EventEmitter): Network =
+proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError, Exception].} =
     #Event emitter for the socket sublibraries.
     var events: EventEmitter = newEventEmitter()
 

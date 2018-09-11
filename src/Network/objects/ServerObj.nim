@@ -21,7 +21,7 @@ type Server* = ref object of RootObj
     eventEmitter: EventEmitter
 
 #Constructor.
-proc newServer*(ee: EventEmitter): Server =
+proc newServer*(ee: EventEmitter): Server {.raises: [OSError, Exception].} =
     Server(
         socket: newAsyncSocket(),
         clientCount: 0,

@@ -5,7 +5,7 @@ import nimcrypto
 var empty: ptr uint8
 
 #RIPEMD 160 hash function.
-proc RipeMD_160*(bytesArg: string): string =
+proc RipeMD_160*(bytesArg: string): string {.raises: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 

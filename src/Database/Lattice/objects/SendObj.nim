@@ -28,7 +28,7 @@ proc newSendObj*(output: string, amount: BN): Send {.raises: [].} =
     )
 
 #Set the SHA512 hash.
-proc setSHA512*(send: Send, sha512: string): bool =
+proc setSHA512*(send: Send, sha512: string): bool {.raises: [].} =
     result = true
     if send.sha512.len != 0:
         return false
@@ -36,7 +36,7 @@ proc setSHA512*(send: Send, sha512: string): bool =
     send.sha512 = sha512
 
 #Set the proof.
-proc setProof*(send: Send, proof: BN): bool =
+proc setProof*(send: Send, proof: BN): bool {.raises: [].} =
     result = true
     if not send.proof.getNil():
         return false

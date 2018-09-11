@@ -70,12 +70,12 @@ proc listen*(server: Server, port: int) {.async.} =
         )
 
 #Sends a message to all clients.
-proc broadcast*(server: Server, msg: string) =
+proc broadcast*(server: Server, msg: string) {.raises: [Exception].} =
     for client in server.clients():
         asyncCheck client.send(msg)
 
 #Reply to a message.
-proc reply*(server: Server, msg: Message, toSend: string) =
+proc reply*(server: Server, msg: Message, toSend: string) {.raises: [Exception].} =
     asyncCheck server.getClient(msg.getClient()).send(toSend)
 
 proc disconnect*(server: Server, msg: Message) {.raises: [Exception].} =

@@ -5,7 +5,7 @@ import nimcrypto
 var empty: ptr uint8
 
 #SHA2 256 hash function.
-proc SHA2_256*(bytesArg: string): string =
+proc SHA2_256*(bytesArg: string): string {.raises: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -17,7 +17,7 @@ proc SHA2_256*(bytesArg: string): string =
     result = $sha256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len))
 
 #SHA2 512 hash function.
-proc SHA2_512*(bytesArg: string): string =
+proc SHA2_512*(bytesArg: string): string {.raises: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 

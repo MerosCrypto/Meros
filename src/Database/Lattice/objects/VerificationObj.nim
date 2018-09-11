@@ -9,12 +9,12 @@ type Verification* = ref object of Node
     verified: string
 
 #New Verification object.
-proc newVerificationObj*(verified: string): Verification =
+proc newVerificationObj*(verified: string): Verification {.raises: [].} =
     Verification(
         descendant: NodeType.Verification,
         verified: verified
     )
 
-#Getters.
-proc getVerified*(verif: Verification): string =
+#Getter.
+proc getVerified*(verif: Verification): string {.raises: [].} =
     verif.verified

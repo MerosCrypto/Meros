@@ -51,7 +51,7 @@ proc newUI*(): UI {.raises: [ResultError].} =
     result.renderer.renderPresent()
 
 #Destroy function.
-proc destroy*(ui: UI) =
+proc destroy*(ui: UI) {.raises: [].} =
     ui.renderer.destroyRenderer()
     ui.window.destroyWindow()
     sdl.quit()
