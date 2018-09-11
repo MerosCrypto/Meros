@@ -14,10 +14,10 @@ for _ in 0 ..< 500:
     address = wallet.getAddress()
 
     #Verify the address.
-    if address.verify() == false:
+    if not address.verify():
         raise newException(Exception, "Invalid Address Type 1")
     #Verify the address for the matching pub key.
-    if address.verify(wallet.getPublicKey()) == false:
+    if not address.verify(wallet.getPublicKey()):
         raise newException(Exception, "Invalid Address Type 2")
 
     #Print the generated address.

@@ -63,15 +63,15 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Excep
         raise newException(ValueError, "Couldn't set the Send SHA512.")
 
     #Set the hash.
-    if result.setHash(Argon(result.getSHA512(), proof, true)) == false:
+    if not result.setHash(Argon(result.getSHA512(), proof, true)):
         raise newException(ValueError, "Couldn't set the Node's hash.")
 
     #Verify the signature.
-    if sender.verify(result.getHash(), signature) == false:
+    if not sender.verify(result.getHash(), signature):
         raise newException(ValueError, "Received signature was invalid.")
 
     #Set the proof.
-    if result.setProof(proof.toBN(16)) == false:
+    if not result.setProof(proof.toBN(16)):
         raise newException(ValueError, "Couldn't set the Send's proof.")
 
     #Set the sender.

@@ -34,7 +34,7 @@ proc newPrivateKey*(hex: string): PrivateKey {.raises: [ValueError].} =
         result[i div 2] = cuchar(parseHexInt(hex[i .. i + 1]))
 
     #If it's an invalid key, throw an error.
-    if secpPrivateKey(result) == false:
+    if not secpPrivateKey(result):
         raise newException(ValueError, "Private Key is invalid.")
 
 #Stringify a private key.

@@ -65,9 +65,9 @@ proc mine*(send: Send, networkDifficulty: BN) {.raises: [ResultError, ValueError
         inc(proof)
         hash = Argon(send.getSHA512(), proof.toString(16), true)
 
-    if send.setProof(proof) == false:
+    if not send.setProof(proof):
         raise newException(ResultError, "Couldn't set the Send proof.")
-    if send.setHash(hash) == false:
+    if not send.setHash(hash):
         raise newException(ResultError, "Couldn't set the Send hash.")
 
 #Sign a TX.

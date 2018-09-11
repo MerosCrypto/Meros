@@ -13,6 +13,6 @@ assert("131" == "3G".toBN(58).toString(10), "Basic Base58 conversion failed.")
 assert("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".isBase(58), "Some Base58 letters weren't allowed.")
 
 #Test non-Base58 letters aren't allowed.
-assert("O".isBase(58) == false, "O (Oh) was allowed as a hex letter.")
+assert(not "O".isBase(58), "O (Oh) was allowed as a hex letter.")
 
 echo "Finished the lib/Base/Base58 test."

@@ -55,9 +55,9 @@ proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError
     while hash.toBN(16) < networkDifficulty:
         hash = Argon(data.getSHA512(), proof.toString(16), true)
 
-    if data.setProof(proof) == false:
+    if not data.setProof(proof):
         raise newException(ResultError, "Couldn't set the Data proof.")
-    if data.setHash(hash) == false:
+    if not data.setHash(hash):
         raise newException(ResultError, "Couldn't set the Data hash.")
 
 #Sign a TX.

@@ -53,11 +53,11 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].}
         raise newException(ValueError, "Couldn't set the Node's nonce.")
 
     #Set the hash.
-    if result.setHash(SHA512(result.serialize())) == false:
+    if not result.setHash(SHA512(result.serialize())):
         raise newException(ResultError, "Couldn't set the node hash.")
 
     #Verify the signature.
-    if sender.verify(result.getHash(), signature) == false:
+    if not sender.verify(result.getHash(), signature):
         raise newException(ValueError, "Received signature was invalid.")
 
     #Set the sender.

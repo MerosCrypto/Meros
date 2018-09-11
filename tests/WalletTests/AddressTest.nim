@@ -9,7 +9,7 @@ import ../../src/Wallet/Wallet
 
 #Test a couple of addresses.
 assert(
-    Address.verify("Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") == false, #Every Base58 char with no checksum.
+    not Address.verify("Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"), #Every Base58 char with no checksum.
     "Address.verify returned true with no prefix/an invalid checksum."
 )
 

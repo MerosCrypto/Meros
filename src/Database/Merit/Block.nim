@@ -45,7 +45,7 @@ proc newBlock*(
     #Verify the arguments.
     #Validations.
     for validation in validations:
-        if Address.verify(validation.validator) == false:
+        if not Address.verify(validation.validator):
             raise newException(ValueError, "Invalid validation address.")
         if validation.start < 0:
             raise newException(ValueError, "Invalid validation start.")
@@ -57,7 +57,7 @@ proc newBlock*(
         raise newException(ValueError, "Invalid miners quantity.")
     for miner in miners:
         total += miner.amount
-        if Address.verify(miner.miner) == false:
+        if not Address.verify(miner.miner):
             raise newException(ValueError, "Invalid miner address.")
         if (miner.amount < 1) or (100 < miner.amount):
             raise newException(ValueError, "Invalid miner amount.")

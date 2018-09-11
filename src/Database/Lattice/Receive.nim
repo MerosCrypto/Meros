@@ -55,7 +55,7 @@ proc newReceive*(
         raise newException(ResultError, "Setting the node's nonce failed.")
 
     #Set the hash.
-    if result.setHash(SHA512(result.serialize())) == false:
+    if not result.setHash(SHA512(result.serialize())):
         raise newException(ResultError, "Couldn't set the node hash.")
 
 #Create a new Receive node.
