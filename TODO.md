@@ -1,13 +1,13 @@
 # TODO
 
 Core:
+- Filesystem.
 - Network.
 - Rest of the parse functions.
 - Track Verifications.
 - Track MeritRemovals and link them to the blockchain.
 - Difficulty Vote node.
 - Fork resolution for blocks of different types.
-- Filesystem.
 - UI.
 - Write tests.
 
@@ -43,9 +43,7 @@ Bug fixes:
 Documentation:
 - Add comments to:
     - DB/Merit/State.nim
-
-    - DB/Database.nim
-
+    
     - Wallet/Wallet.nim
 - Use Documentation Comments.
 - Ember Whitepaper.
