@@ -7,8 +7,6 @@ import ../src/lib/Time
 
 #Hash lib.
 import ../src/lib/Hash
-#Argon lib.
-import ../src/lib/Argon
 
 #Merit lib.
 import ../src/Database/Merit/Merit
@@ -35,7 +33,7 @@ proc main() =
         #Block var; defined here to stop a memory leak.
         newBlock: Block
         #Last block hash, nonce, time, and proof vars.
-        last: string = Argon(SHA512(genesis), "00")
+        last: ArgonHash = Argon(SHA512(genesis).toString(), "00")
         nonce: BN = newBN(1)
         time: BN
         proof: BN = newBN()
@@ -63,7 +61,7 @@ proc main() =
             publisher,
             proof,
             miners,
-            wallet.sign(SHA512(miners.serialize(nonce)))
+            wallet.sign($SHA512(miners.serialize(nonce)))
         )
 
         #Try to add it.

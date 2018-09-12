@@ -2,7 +2,7 @@
 import ../src/lib/Util
 
 #Numerical libs.
-import ../src/BN
+import BN
 import ../src/lib/Base
 
 #Wallet lib.
@@ -46,8 +46,8 @@ var
 
     #Client vars.
     receiver: Wallet = newWallet()                       #Address to send to.
-    sends: seq[Send] = newSeq[Send](total)               #Send objects.
-    recvs: seq[Receive] = newSeq[Receive](total)         #Send objects.
+    sends: seq[Send] = @[]                               #Send objects.
+    recvs: seq[Receive] = @[]                            #Receive objects.
     sendHeader: string =                                 #Send header.
         $(char(0)) &
         $(char(0)) &
@@ -144,21 +144,26 @@ proc spam() {.async.} =
     #Generate the Send/Receive pairs.
     for i in 0 ..< total:
         #Generate the Send.
-        sends[i] = newSend(
-            receiver.getAddress(),
-            BNNums.ONE,
-            newBN(i + 1)
+        sends.add(
+            newSend(
+                receiver.getAddress(),
+                BNNums.ONE,
+                newBN(i + 1)
+            )
         )
+
         #Mine the Send.
         sends[i].mine(lattice.getTransactionDifficulty())
         #Sign the Send.
         discard minter.sign(sends[i])
 
         #Generate the Receive.
-        recvs[i] = newReceive(
-            minter.getAddress(),
-            newBN(i + 1),
-            newBN(i)
+        recvs.add(
+            newReceive(
+                minter.getAddress(),
+                newBN(i + 1),
+                newBN(i)
+            )
         )
         #Sign the Receive.
         discard receiver.sign(recvs[i])
