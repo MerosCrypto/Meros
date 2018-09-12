@@ -14,8 +14,6 @@ import ../../Wallet/Wallet
 
 #Hash lib.
 import ../../lib/Hash
-#Argon lib.
-import ../../lib/Argon
 
 #Node object and Send object.
 import ../../Database/Lattice/objects/NodeObj
@@ -63,11 +61,11 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Excep
         raise newException(ValueError, "Couldn't set the Send SHA512.")
 
     #Set the hash.
-    if not result.setHash(Argon(result.getSHA512(), proof, true)):
+    if not result.setHash(Argon(result.getSHA512().toString(), proof, true)):
         raise newException(ValueError, "Couldn't set the Node's hash.")
 
     #Verify the signature.
-    if not sender.verify(result.getHash(), signature):
+    if not sender.verify($result.getHash(), signature):
         raise newException(ValueError, "Received signature was invalid.")
 
     #Set the proof.

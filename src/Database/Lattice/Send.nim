@@ -7,8 +7,6 @@ import ../../lib/Base
 
 #Hash lib.
 import ../../lib/Hash
-#Argon lib.
-import ../../lib/Argon
 
 #Wallet libs.
 import ../../Wallet/Wallet
@@ -59,11 +57,11 @@ proc mine*(send: Send, networkDifficulty: BN) {.raises: [ResultError, ValueError
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: BN = newBN()
-        hash: string = "00"
+        hash: ArgonHash = Argon(send.getSHA512().toString(), proof.toString(256), true)
 
-    while hash.toBN(16) <= networkDifficulty:
+    while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(send.getSHA512(), proof.toString(16), true)
+        hash = Argon(send.getSHA512().toString(), proof.toString(256), true)
 
     if not send.setProof(proof):
         raise newException(ResultError, "Couldn't set the Send proof.")
@@ -83,5 +81,5 @@ proc sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError].} =
         return false
 
     #Sign the hash of the Send.
-    if not send.setSignature(wallet.sign(send.getHash())):
+    if not send.setSignature(wallet.sign($send.getHash())):
         return false

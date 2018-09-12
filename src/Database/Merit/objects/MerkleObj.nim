@@ -9,10 +9,11 @@ type
     #Leaf. The lowest type on the tree.
     Leaf* = ref object of RootObj
         isLeaf: bool
-        hash: string
+        hash: SHA512Hash
 
     #Branch. Everything from the leaves to the top.
     Branch* = ref object of Leaf
+        empty: bool
         left: Leaf
         right: Leaf
 
@@ -20,14 +21,14 @@ type
     MerkleTree* = ref object of Branch
 
 #Lead constructor.
-proc newLeafObject*(hash: string): Leaf {.raises: [].} =
+proc newLeafObject*(hash: SHA512Hash): Leaf {.raises: [].} =
     Leaf(
         isLeaf: true,
         hash: hash
     )
 
 #Branch constructor.
-proc newBranchObject*(left: Leaf, right: Leaf, empty = false): Branch {.raises: [ValueError].} =
+proc newBranchObject*(left: Leaf, right: Leaf, empty = false): Branch {.raises: [].} =
     result = Branch(
         isLeaf: false,
         left: left,
@@ -35,15 +36,16 @@ proc newBranchObject*(left: Leaf, right: Leaf, empty = false): Branch {.raises: 
     )
 
     if empty:
-        result.hash = ""
+        result.empty = true
+        result.hash = "".toSHA512Hash()
         return
 
     result.hash = SHA512(
-        (left.hash & right.hash).toBN(16).toString(256)
+        left.hash.toString() & right.hash.toString()
     )
 
 #Getters.
-proc getHash*(leaf: Leaf): string {.raises: [].} =
+proc getHash*(leaf: Leaf): SHA512Hash {.raises: [].} =
     leaf.hash
 proc getIsLeaf*(leaf: Leaf): bool {.raises: [].} =
     leaf.isLeaf

@@ -43,5 +43,5 @@ proc sign*(wallet: Wallet, mr: MeritRemoval): bool {.raises: [ValueError].} =
         return false
 
     #Sign the hash of the MR.
-    if not mr.setSignature(wallet.sign(mr.getHash())):
+    if not mr.setSignature(wallet.sign($mr.getHash())):
         return false

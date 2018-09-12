@@ -8,16 +8,13 @@ import ../../../lib/Time
 #Hash library.
 import ../../../lib/Hash
 
-#Argon library.
-import ../../../lib/Argon
-
 #Import the Merkle library.
 import ../Merkle
 
 #Define the Block class.
 type Block* = ref object of RootObj
     #Argon hash of the last block.
-    last: string
+    last: ArgonHash
     #Nonce, AKA index.
     nonce: BN
     #Timestamp.
@@ -30,20 +27,20 @@ type Block* = ref object of RootObj
     publisher: string
 
     #Hash.
-    hash: string
+    hash: SHA512Hash
     #Random hex number to make sure the Argon of the hash is over the difficulty.
     proof: BN
-    #Argon2d 64 character hash with the hash as the data and proof as the salt.
-    argon: string
+    #Argon2d hash with the SHA512 hash as the data and proof as the salt.
+    argon: ArgonHash
 
     #Who to attribute the Merit to (amount ranges from 0 to 1000).
     miners: seq[tuple[miner: string, amount: int]]
-    minersHash: string
+    minersHash: SHA512Hash
     signature: string
 
 #Constructor.
 proc newBlockObj*(
-    last: string,
+    last: ArgonHash,
     nonce: BN,
     time: BN,
     validations: seq[tuple[validator: string, start: int, last: int]],
@@ -63,7 +60,7 @@ proc newBlockObj*(
 proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
     #Ceate the block.
     result = newBlockObj(
-        "",
+        "".toArgonHash(),
         newBN(),
         getTime(),
         @[],
@@ -75,7 +72,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
     #Set the proof.
     result.proof = newBN()
     #Calculate the Argon hash.
-    result.argon = Argon(result.hash, result.proof.toString(16))
+    result.argon = Argon($result.hash, result.proof.toString(256))
     #Set the miners.
     result.miners = @[]
     #Calculate the miners hash.
@@ -84,11 +81,8 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
     result.signature = ""
 
 #Setters.
-proc setHash*(blockArg: Block, hash: string): bool {.raises: [].} =
+proc setHash*(blockArg: Block, hash: SHA512Hash): bool {.raises: [].} =
     result = true
-    if blockArg.hash.len != 0:
-        return false
-
     blockArg.hash = hash
 
 proc setProof*(newBlock: Block, proof: BN): bool {.raises: [].} =
@@ -98,11 +92,8 @@ proc setProof*(newBlock: Block, proof: BN): bool {.raises: [].} =
 
     newBlock.proof = proof
 
-proc setArgon*(blockArg: Block, argon: string): bool {.raises: [].} =
+proc setArgon*(blockArg: Block, argon: Argonhash): bool {.raises: [].} =
     result = true
-    if blockArg.argon.len != 0:
-        return false
-
     blockArg.argon = argon
 
 proc setMiners*(newBlock: Block, miners: seq[tuple[miner: string, amount: int]]): bool {.raises: [].} =
@@ -112,11 +103,8 @@ proc setMiners*(newBlock: Block, miners: seq[tuple[miner: string, amount: int]])
 
     newBlock.miners = miners
 
-proc setMinersHash*(blockArg: Block, minersHash: string): bool {.raises: [].} =
+proc setMinersHash*(blockArg: Block, minersHash: SHA512Hash): bool {.raises: [].} =
     result = true
-    if blockArg.minersHash.len != 0:
-        return false
-
     blockArg.minersHash = minersHash
 
 proc setSignature*(newBlock: Block, signature: string): bool {.raises: [].} =
@@ -127,7 +115,7 @@ proc setSignature*(newBlock: Block, signature: string): bool {.raises: [].} =
     newBlock.signature = signature
 
 #Getters.
-proc getLast*(blockArg: Block): string {.raises: [].} =
+proc getLast*(blockArg: Block): ArgonHash {.raises: [].} =
     blockArg.last
 proc getNonce*(blockArg: Block): BN {.raises: [].} =
     blockArg.nonce
@@ -139,15 +127,15 @@ proc getMerkle*(blockArg: Block): MerkleTree {.raises: [].} =
     blockArg.merkle
 proc getPublisher*(blockArg: Block): string {.raises: [].} =
     blockArg.publisher
-proc getHash*(blockArg: Block): string {.raises: [].} =
+proc getHash*(blockArg: Block): SHA512Hash {.raises: [].} =
     blockArg.hash
 proc getProof*(blockArg: Block): BN {.raises: [].} =
     blockArg.proof
-proc getArgon*(blockArg: Block): string {.raises: [].} =
+proc getArgon*(blockArg: Block): ArgonHash {.raises: [].} =
     blockArg.argon
 proc getMiners*(blockArg: Block): seq[tuple[miner: string, amount: int]] {.raises: [].} =
     blockArg.miners
-proc getMinersHash*(blockArg: Block): string {.raises: [].} =
+proc getMinersHash*(blockArg: Block): SHA512Hash {.raises: [].} =
     blockArg.minersHash
 proc getSignature*(blockArg: Block): string {.raises: [].} =
     blockArg.signature

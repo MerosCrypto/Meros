@@ -1,19 +1,23 @@
 #Wrapper for the Argon2 C library that won the PHC competition.
 
 #Errors lib.
-import Errors
+import ../Errors
 
 #Util lib for padding strings.
-import Util
+import ../Util
 
-#Base lib for checking argument validity.
-import Base
+#Hash master type.
+import HashCommon
 
-#strutils stdlib for parsing Hex strings.
+#String utils standard lib.
 import strutils
 
-#Include the argon2.h header.
-{.passC: "-Isrc/lib/Argon/include".}
+#Define the Hash Types.
+type ArgonHash* = Hash[512]
+
+#Include the headers.
+{.passC: "-Isrc/lib/Hash/Argon/include".}
+{.passC: "-Isrc/lib/Hash/Argon/src/blake2".}
 #Compile the relevant C files.
 {.compile: "Argon/src/core.c".}
 {.compile: "Argon/src/thread.c".}
@@ -33,29 +37,19 @@ proc argon2d(
     saltLen: uint32,
     res: ptr uint8,
     resLen: uint32
-): cint {.header: "../../src/lib/Argon/include/argon2.h", importc: "argon2d_hash_raw".}
+): cint {.header: "../../src/lib/Hash/Argon/include/argon2.h", importc: "argon2d_hash_raw".}
 
-#Take in data (128 char max) and a salt (64 char max), return a 64 character string.
-proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.raises: [ResultError, ValueError].} =
+#Take in data (128 char max) and a salt (128 char max); return a ArgonHash.
+proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): ArgonHash {.raises: [ResultError, ValueError].} =
     var
-        data: string = dataArg.pad(128, "00")
-        salt: string = saltArg.pad(128, "00")
+        data: string = dataArg.pad(128, "0")
+        salt: string = saltArg.pad(128, "0")
         dataArr: array[64, uint8]
         saltArr: array[64, uint8]
-        resArr: array[64, uint8]
-        res: string
 
     #Verify argument validity.
-    if (not Base.isBase(data, 16)) or (not Base.isBase(salt, 16)):
-        raise newException(ValueError, "Invalid hex data/salt.")
     if (data.len > 128) or (salt.len > 128):
         raise newException(ValueError, "Invalid data/salt length.")
-
-    #Parse the data/salt strings into array.
-    for i in countup(0, 127, 2):
-        dataArr[int(i / 2)] = uint8(parseHexInt(data[i .. i + 1]))
-    for i in countup(0, 127, 2):
-        saltArr[int(i / 2)] = uint8(parseHexInt(salt[i .. i + 1]))
 
     var
         iterations: uint32
@@ -79,12 +73,12 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): string {.r
         uint32(64),
         cast[ptr uint8](addr saltArr[0]),
         uint32(64),
-        addr resArr[0],
+        addr result.data[0],
         uint32(64)
     ) != 0:
         raise newException(ResultError, "Argon2d raised an error.")
 
-    #Set the result var.
-    result = ""
-    for i in resArr:
-        result = result & i.toHex()
+#String to ArgonHash.
+proc toArgonHash*(hex: string): ArgonHash =
+    for i in countup(0, hex.len - 1, 2):
+        result.data[int(i / 2)] = uint8(parseHexInt(hex[i .. i + 1]))

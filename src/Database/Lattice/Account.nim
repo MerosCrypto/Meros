@@ -4,8 +4,6 @@ import ../../lib/Base
 
 #Hash lib.
 import ../../lib/Hash
-#Argon lib.
-import ../../lib/Argon
 
 #Wallet libraries.
 import ../../Wallet/Wallet
@@ -41,7 +39,7 @@ proc add(account: Account, node: Node, dependent: Node = nil): bool {.raises: [V
         (
             not newPublicKey(
                 account.getAddress().toBN().toString(16)
-            ).verify(node.getHash(), node.getSignature())
+            ).verify($node.getHash(), node.getSignature())
         )
     ):
         return false
@@ -57,7 +55,7 @@ proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueEr
         return account.add(cast[Node](send))
 
     #Verify the work.
-    if send.getHash().toBN(16) < difficulty:
+    if send.getHash().toBN() < difficulty:
         return false
 
     #Verify the output is a valid address.
@@ -108,7 +106,7 @@ proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [Value
 #Add Data.
 proc add*(account: Account, data: Data, difficulty: BN): bool {.raises: [ValueError, Exception].} =
     #Verify the work.
-    if data.getHash().toBN(16) < difficulty:
+    if data.getHash().toBN() < difficulty:
         return false
 
     #Add the data.

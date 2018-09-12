@@ -12,23 +12,23 @@ import ../../../src/Database/Merit/Merkle
 
 var
     #First leaf.
-    a: string = SHA512("01".toBN(16).toString(256))
+    a: SHA512Hash = SHA512("01".toBN(16).toString(256))
     #Second leaf.
-    b: string = SHA512("0F".toBN(16).toString(256))
+    b: SHA512Hash = SHA512("0F".toBN(16).toString(256))
     #Third leaf.
-    c: string = SHA512("03".toBN(16).toString(256))
+    c: SHA512Hash = SHA512("03".toBN(16).toString(256))
 
     #First hash.
-    ab: string = SHA512(
-        (a & b).toBN(16).toString(256)
+    ab: SHA512Hash = SHA512(
+        a.toString() & b.toString()
     )
     #Second hash.
-    cc: string = SHA512(
-        (c & c).toBN(16).toString(256)
+    cc: SHA512Hash = SHA512(
+        c.toString() & c.toString()
     )
     #Root hash.
-    hash: string = SHA512(
-        (ab & cc).toBN(16).toString(256)
+    hash: SHA512Hash = SHA512(
+        ab.toString() & cc.toString()
     )
 
     #Create the MerkleTree.

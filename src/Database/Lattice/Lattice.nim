@@ -35,7 +35,7 @@ proc addToLookup(lattice: Lattice, node: Node) {.raises: [].} =
     lattice
         .getLookup()
         .add(
-            node.getHash(),
+            $node.getHash(),
             newIndex(
                 node.getSender(),
                 node.getNonce()

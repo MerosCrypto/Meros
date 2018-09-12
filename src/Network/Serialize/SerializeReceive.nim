@@ -23,7 +23,7 @@ proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =
 
     result &= recv.getInputNonce().toString(255)
 
-    if recv.getHash().len != 0:
+    if recv.getSignature().len != 0:
         result =
             Address.toBN(recv.getSender()).toString(255) !
             result !

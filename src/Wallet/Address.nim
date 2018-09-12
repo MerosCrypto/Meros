@@ -15,7 +15,7 @@ proc generateChecksum(key: string): string {.raises: [Exception].} =
         (SHA512^3)(
             key.toBN(16).toString(256)
         )
-        .toBN(16)
+        .toBN()
         .toString(58)
     result = result.substr(result.len - 4, result.len)
 

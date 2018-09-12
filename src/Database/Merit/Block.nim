@@ -10,8 +10,6 @@ import ../../lib/Time
 
 #Hash lib.
 import ../../lib/Hash
-#Argon lib.
-import ../../lib/Argon
 
 #Wallet libs.
 import ../../Wallet/Address
@@ -32,7 +30,7 @@ import strutils
 
 #New Block function. Creates a new block. Raises an error if there's an issue.
 proc newBlock*(
-    last: string,
+    last: ArgonHash,
     nonce: BN,
     time: BN,
     validations: seq[tuple[validator: string, start: int, last: int]],
@@ -80,7 +78,7 @@ proc newBlock*(
         #Set the proof.
         (result.setProof(proof)) and
         #Calculate the Argon hash.
-        (result.setArgon(Argon(result.getHash(), result.getProof().toString(16))))
+        (result.setArgon(Argon(result.getHash().toString(), result.getProof().toString(256))))
     ):
         raise newException(ResultError, "Couldn't set the hash/proof/argon..")
 
@@ -93,7 +91,7 @@ proc newBlock*(
         raise newException(ResultError, "Couldn't set the miners/miners hash..")
 
     #Verify the signature.
-    if not newPublicKey(publisher).verify(result.getMinersHash(), signature):
+    if not newPublicKey(publisher).verify($result.getMinersHash(), signature):
         raise newException(ValueError, "Invalid miners' signature.")
     #Set the signature.
     if not result.setSignature(signature):

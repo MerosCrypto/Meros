@@ -2,6 +2,9 @@
 import BN
 import ../../lib/Base
 
+#Hash lib.
+import ../../lib/Hash
+
 #Block lib.
 import Block
 
@@ -27,7 +30,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
         return false
 
     #If the Argon hash didn't beat the difficulty...
-    if newBlock.getArgon().toBN(16) < diff.getDifficulty():
+    if newBlock.getArgon().toBN() < diff.getDifficulty():
         return false
 
 #Calculate the next difficulty using the blocks, difficulties, period Length, and blocks per period.

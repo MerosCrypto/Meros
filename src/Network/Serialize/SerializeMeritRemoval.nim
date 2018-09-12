@@ -19,7 +19,7 @@ proc serialize*(mr: MeritRemoval): string {.raises: [ValueError, Exception].} =
         mr.getFirst().toBN(16).toString(255) !
         mr.getSecond().toBN(16).toString(255)
 
-    if mr.getHash().len != 0:
+    if mr.getSignature().len != 0:
         result =
             Address.toBN(mr.getSender()).toString(255) !
             result !

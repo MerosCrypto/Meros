@@ -2,6 +2,9 @@
 import BN
 import ../../../lib/Base
 
+#Hash lib.
+import ../../../lib/Hash
+
 type
     NodeType* = enum
         Send = 0,
@@ -18,7 +21,7 @@ type
         #Index on the account.
         nonce: BN
         #Node hash.
-        hash: string
+        hash: Hash[512]
         #Signature.
         signature: string
 
@@ -39,11 +42,8 @@ proc setNonce*(node: Node, nonce: BN): bool {.raises: [].} =
     node.nonce = nonce
 
 #Set the Node hash.
-proc setHash*(node: Node, hash: string): bool {.raises: [].} =
+proc setHash*(node: Node, hash: Hash[512]): bool {.raises: [].} =
     result = true
-    if node.hash.len != 0:
-        return false
-
     node.hash = hash
 
 #Set the Node signature.
@@ -59,7 +59,7 @@ proc getSender*(node: Node): string {.raises: [].} =
     node.sender
 proc getNonce*(node: Node): BN {.raises: [].} =
     node.nonce
-proc getHash*(node: Node): string {.raises: [].} =
+proc getHash*(node: Node): Hash[512] {.raises: [].} =
     node.hash
 proc getSignature*(node: Node): string {.raises: [].} =
     node.signature

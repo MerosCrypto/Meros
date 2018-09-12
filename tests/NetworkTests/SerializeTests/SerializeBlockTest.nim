@@ -9,8 +9,6 @@ import ../../../src/lib/Time
 
 #Hash lib.
 import ../../../src/lib/Hash
-#Argon lib.
-import ../../../src/lib/Argon
 
 #Wallet lib.
 import ../../../src/Wallet/Wallet
@@ -37,7 +35,7 @@ var
     #Block var; defined here to stop a memory leak.
     newBlock: Block
     #Last block hash, nonce, time, and proof vars.
-    last: string = Argon(SHA512("mainnet"), "00")
+    last: ArgonHash = Argon(SHA512("mainnet").toString(), "00")
     nonce: BN = newBN(1)
     time: BN
     proof: BN = newBN(1)
@@ -66,7 +64,7 @@ for i in 1 .. 10:
         publisher,
         proof,
         miners,
-        wallet.sign(SHA512(miners.serialize(nonce)))
+        wallet.sign($SHA512(miners.serialize(nonce)))
     )
 
     #Finally, update the last hash, increase the nonce, and reset the proof.

@@ -1,6 +1,9 @@
 #BN lib.
 import BN
 
+#Hash lib.
+import ../../../lib/Hash
+
 #Node object.
 import NodeObj
 

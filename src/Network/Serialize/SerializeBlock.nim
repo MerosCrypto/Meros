@@ -2,6 +2,9 @@
 import BN
 import ../../lib/Base
 
+#Hash lib.
+import ../../lib/Hash
+
 #Address library.
 import ../../Wallet/Address
 
@@ -23,7 +26,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
         #Nonce.
         blockArg.getNonce().toString(255) !
         #Last block.
-        blockArg.getLast().toBN(16).toString(255) !
+        blockArg.getLast().toBN().toString(255) !
         #Time.
         blockArg.getTime().toString(255) !
         #Amount of validations.
@@ -41,7 +44,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
 
     result &=
         #Merkle Tree root.
-        blockArg.getMerkle().getHash().toBN(16).toString(255) !
+        blockArg.getMerkle().getHash().toBN().toString(255) !
         #Publisher.
         blockArg.getPublisher().toBN(16).toString(255)
 

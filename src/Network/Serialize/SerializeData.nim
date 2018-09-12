@@ -21,7 +21,7 @@ proc serialize*(data: Data): string {.raises: [ValueError, Exception].} =
     for i in data.getData():
         result &= delim & i.toHex()
 
-    if data.getHash().len != 0:
+    if data.getSignature().len != 0:
         result =
             Address.toBN(data.getSender()).toString(255) !
             result !

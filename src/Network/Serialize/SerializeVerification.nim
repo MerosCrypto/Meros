@@ -2,6 +2,9 @@
 import BN
 import ../../lib/Base
 
+#Hash lib.
+import ../../lib/Hash
+
 #Address lib.
 import ../../Wallet/Address
 
@@ -16,9 +19,9 @@ import SerializeCommon
 proc serialize*(verif: Verification): string {.raises: [ValueError, Exception].} =
     result =
         verif.getNonce().toString(255) !
-        verif.getVerified().toBN(16).toString(255)
+        verif.getVerified().toBN().toString(255)
 
-    if verif.getHash().len != 0:
+    if verif.getSignature().len != 0:
         result =
             Address.toBN(verif.getSender()).toString(255) !
             result !

@@ -56,7 +56,7 @@ for i in 1 .. 20:
     )
     assert(
         recv.getHash() == recvParsed.getHash(),
-        "Hash:\r\n" & recv.getHash() & "\r\n" & recvParsed.getHash()
+        "Hash:\r\n" & $recv.getHash() & "\r\n" & $recvParsed.getHash()
     )
     assert(
         recv.getSignature() == recvParsed.getSignature(),

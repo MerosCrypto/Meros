@@ -57,7 +57,7 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].}
         raise newException(ResultError, "Couldn't set the node hash.")
 
     #Verify the signature.
-    if not sender.verify(result.getHash(), signature):
+    if not sender.verify($result.getHash(), signature):
         raise newException(ValueError, "Received signature was invalid.")
 
     #Set the sender.

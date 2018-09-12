@@ -14,8 +14,6 @@ import ../../Wallet/Wallet
 
 #Hash lib.
 import ../../lib/Hash
-#Argon lib.
-import ../../lib/Argon
 
 #Node object and Verification object.
 import ../../Database/Lattice/objects/NodeObj
@@ -46,7 +44,7 @@ proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, E
 
     #Create the Verification.
     result = newVerificationObj(
-        send
+        send.toArgonHash()
     )
 
     #Set the nonce.
@@ -62,7 +60,7 @@ proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, E
         raise newException(ValueError, "Couldn't set the Node's Sender.")
 
     #Verify the signature.
-    if not verifier.verify(result.getHash(), signature):
+    if not verifier.verify($result.getHash(), signature):
         raise newException(ValueError, "Received signature was invalid.")
 
     #Set the signature.

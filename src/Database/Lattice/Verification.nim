@@ -43,5 +43,5 @@ proc sign*(wallet: Wallet, verif: Verification): bool {.raises: [ValueError].} =
         return false
 
     #Sign the hash of the Verification.
-    if not verif.setSignature(wallet.sign(verif.getHash())):
+    if not verif.setSignature(wallet.sign($verif.getHash())):
         return false

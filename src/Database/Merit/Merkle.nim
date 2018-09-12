@@ -1,13 +1,16 @@
+#Hash lib.
+import ../../lib/Hash
+
 #Merkle object.
 import objects/MerkleObj
 #Export the MerkleTree object.
 export MerkleTree
 
 #Create a Markle Tree.
-proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].} =
+proc newMerkleTree*(hashesArg: seq[SHA512Hash]): MerkleTree {.raises: [].} =
     var
         #Extract the hashes from its arg.
-        hashes: seq[string] = hashesArg
+        hashes: seq[SHA512Hash] = hashesArg
         #Create a seq of the branches.
         branches: seq[Branch] = @[]
         #Create a left/right leaf.
@@ -18,8 +21,8 @@ proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].}
     if hashes.len == 0:
         return cast[MerkleTree](
             newBranchObject(
-                newLeafObject(""),
-                newLeafObject(""),
+                newLeafObject("".toSHA512Hash()),
+                newLeafObject("".toSHA512Hash()),
                 true
             )
         )
@@ -56,5 +59,5 @@ proc newMerkleTree*(hashesArg: seq[string]): MerkleTree {.raises: [ValueError].}
     result = cast[MerkleTree](branches[0])
 
 #Getters.
-proc getHash*(tree: MerkleTree): string {.raises: [].} =
+proc getHash*(tree: MerkleTree): SHA512Hash {.raises: [].} =
     cast[Branch](tree).getHash()

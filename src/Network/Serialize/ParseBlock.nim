@@ -8,14 +8,12 @@ import ../../lib/Util
 import BN
 import ../../lib/Base
 
+#Hash lib.
+import ../../lib/Hash
+
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
-
-#Hash lib.
-import ../../lib/Hash
-#Argon lib.
-import ../../lib/Argon
 
 #Lattice lib.
 import ../../Database/Lattice/Lattice
@@ -48,7 +46,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         #Nonce.
         nonce: BN = blockSeq[0].toBN(255)
         #Last block hash.
-        last: string = blockSeq[1].toBN(255).toString(16).pad(128)
+        last: ArgonHash = blockSeq[1].toBN(255).toString(16).pad(128).toArgonHash()
         #Time.
         time: BN = blockSeq[2].toBN(255)
         #Total Validations.
@@ -68,7 +66,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
             ]
         ](blockSeq[3].toBN(255).toInt())
         #Hashes of the validations.
-        hashes: seq[string] = @[]
+        hashes: seq[SHA512Hash] = @[]
         #Merkle hash.
         merkle: string = blockSeq[4 + (validations.len * 3)].toBN(255).toString(16).pad(128)
         #Merkle Tree.
@@ -148,7 +146,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         #Set the proof.
         result.setProof(proof) and
         #Set the Argon hash.
-        result.setArgon(Argon(result.getHash(), result.getProof().toString(16))) and
+        result.setArgon(Argon(result.getHash().toString(), result.getProof().toString(256))) and
         #Set the miners.
         result.setMiners(miners) and
         #Set the miners hash.

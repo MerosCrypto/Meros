@@ -2,6 +2,9 @@
 import BN
 import ../../../lib/Base
 
+#Hash lib.
+import ../../../lib/Hash
+
 #Node object.
 import NodeObj
 
@@ -14,7 +17,7 @@ type Send* = ref object of Node
     amount: BN
 
     #SHA512 hash.
-    sha512: string
+    sha512: SHA512Hash
 
     #Proof this isn't spam.
     proof: BN
@@ -28,11 +31,8 @@ proc newSendObj*(output: string, amount: BN): Send {.raises: [].} =
     )
 
 #Set the SHA512 hash.
-proc setSHA512*(send: Send, sha512: string): bool {.raises: [].} =
+proc setSHA512*(send: Send, sha512: SHA512Hash): bool {.raises: [].} =
     result = true
-    if send.sha512.len != 0:
-        return false
-
     send.sha512 = sha512
 
 #Set the proof.
@@ -48,7 +48,7 @@ proc getOutput*(send: Send): string {.raises: [].} =
     send.output
 proc getAmount*(send: Send): BN {.raises: [].} =
     send.amount
-proc getSHA512*(send: Send): string {.raises: [].} =
+proc getSHA512*(send: Send): SHA512Hash {.raises: [].} =
     send.sha512
 proc getProof*(send: Send): BN {.raises: [].} =
     send.proof
