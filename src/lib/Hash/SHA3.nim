@@ -1,8 +1,8 @@
 #Hash master type.
 import HashCommon
 
-#SHA3 Tiny lib.
-import keccak_tiny
+#nimcrypto lib.
+import nimcrypto
 
 #String utils standard lib.
 import strutils
@@ -13,15 +13,35 @@ type
     SHA3_512Hash* = HashCommon.Hash[512]
 
 #SHA3 256 hashing algorithm.
-proc SHA3_256*(input: string): SHA3_256Hash {.raises: [].} =
-    SHA3_256Hash(
-        data: keccak_tiny.sha3_256(input).data
+proc SHA3_256*(bytesArg: string): SHA3_256Hash {.raises: [].} =
+    #Copy the bytes argument.
+    var bytes: string = bytesArg
+
+    #If it's an empty string...
+    if bytes.len == 0:
+        return SHA3_256Hash(
+            data: sha3_256.digest(empty, uint(bytes.len)).data
+        )
+
+    #Digest the byte array.
+    result = SHA3_256Hash(
+        data: sha3_256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
     )
 
 #SHA3 512 hashing algorithm.
-proc SHA3_512*(input: string): SHA3_512Hash {.raises: [].} =
-    SHA3_512Hash(
-        data: keccak_tiny.sha3_512(input).data
+proc SHA3_512*(bytesArg: string): SHA3_512Hash {.raises: [].} =
+    #Copy the bytes argument.
+    var bytes: string = bytesArg
+
+    #If it's an empty string...
+    if bytes.len == 0:
+        return SHA3_512Hash(
+            data: sha3_512.digest(empty, uint(bytes.len)).data
+        )
+
+    #Digest the byte array.
+    result = SHA3_512Hash(
+        data: sha3_512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
     )
 
 #String to SHA3_256Hash.
