@@ -4,6 +4,9 @@
 import BN
 import ../../../src/lib/Base
 
+#Hash lib.
+import ../../../src/lib/Hash
+
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
@@ -15,6 +18,9 @@ import ../../../src/Database/Lattice/Send
 import ../../../src/Network/Serialize/SerializeSend
 import ../../../src/Network/Serialize/ParseSend
 
+#SetOnce lib.
+import SetOnce
+
 #Test 20 serializations.
 for i in 1 .. 20:
     echo "Testing Send Serialization/Parsing, iteration " & $i & "."
@@ -25,7 +31,7 @@ for i in 1 .. 20:
         receiver: Wallet = newWallet()
         #Send (for 1 EMB).
         send: Send = newSend(
-            receiver.getAddress(),
+            receiver.address,
             newBN("10000000000"),
             newBN()
         )
@@ -42,15 +48,15 @@ for i in 1 .. 20:
 
     #Test the Node properties.
     assert(send.descendant == sendParsed.descendant)
-    assert(send.getSender() == sendParsed.getSender())
-    assert(send.getNonce() == sendParsed.getNonce())
-    assert(send.getHash() == sendParsed.getHash())
-    assert(send.getSignature() == sendParsed.getSignature())
+    assert(send.sender == sendParsed.sender)
+    assert(send.nonce == sendParsed.nonce)
+    assert(send.hash == sendParsed.hash)
+    assert(send.signature == sendParsed.signature)
 
     #Test the Send properties.
-    assert(send.getOutput() == sendParsed.getOutput())
-    assert(send.getAmount() == sendParsed.getAmount())
-    assert(send.getSHA512() == sendParsed.getSHA512())
-    assert(send.getProof() == sendParsed.getProof())
+    assert(send.output == sendParsed.output)
+    assert(send.amount == sendParsed.amount)
+    assert(send.sha512 == sendParsed.sha512)
+    assert(send.proof == sendParsed.proof)
 
 echo "Finished the Network/Serialize/Send test."

@@ -13,6 +13,9 @@ import Network/Network
 #Event lib.
 import ec_events
 
+#SetOnce lib.
+import SetOnce
+
 #Async standard lib.
 import asyncdispatch
 
@@ -22,7 +25,7 @@ var
     minter: Wallet = newWallet()     #Wallet.
     lattice: Lattice = newLattice()  #Lattice.
     mintIndex: Index = lattice.mint( #Mint transaction.
-        minter.getAddress(),
+        minter.address,
         newBN("1000000")
     )
     mintRecv: Receive = newReceive(  #Mint Receive.
@@ -30,13 +33,13 @@ var
         newBN()
     )
 #Sign and add the Mint Receive.
-discard minter.sign(mintRecv)
+minter.sign(mintRecv)
 discard lattice.add(mintRecv)
 
 #Print the Private Key and address of the address holding the coins.
-echo minter.getAddress() &
+echo minter.address &
     " was minted, and has received, one million coins. Its Private Key is " &
-    $minter.getPrivateKey() & "."
+    $minter.privateKey.toValue() & "."
 
 #---------- Network ----------
 var
@@ -49,18 +52,18 @@ events.on(
     proc (send: Send) =
         #Print the message info.
         echo "Adding a new Send."
-        echo "From:   " & send.getSender()
-        echo "To:     " & send.getOutput()
-        echo "Amount: " & $send.getAmount()
+        echo "From:   " & send.sender
+        echo "To:     " & send.output
+        echo "Amount: " & $send.amount.toValue()
         echo "\r\n"
 
         #Print before-balance, if the Lattice accepts it, and the new balance.
-        echo "Balance of " & send.getSender() & ":     " & $lattice.getBalance(send.getSender())
+        echo "Balance of " & send.sender & ":     " & $lattice.getBalance(send.sender)
         echo "Adding: " &
             $lattice.add(
                 send
             )
-        echo "New balance of " & send.getSender() & ": " & $lattice.getBalance(send.getSender())
+        echo "New balance of " & send.sender & ": " & $lattice.getBalance(send.sender)
 )
 
 #Handle Receives.
@@ -69,17 +72,17 @@ events.on(
     proc (recv: Receive) =
         #Print the message info.
         echo "Adding a new Receive."
-        echo "From:   " & recv.getInputAddress()
-        echo "To:     " & recv.getSender()
+        echo "From:   " & recv.inputAddress
+        echo "To:     " & recv.sender
         echo "\r\n"
 
         #Print before-balance, if the Lattice accepts it, and the new balance.
-        echo "Balance of " & recv.getSender() & ":     " & $lattice.getBalance(recv.getSender())
+        echo "Balance of " & recv.sender & ":     " & $lattice.getBalance(recv.sender)
         echo "Adding: " &
             $lattice.add(
                 recv
             )
-        echo "New balance of " & recv.getSender() & ": " & $lattice.getBalance(recv.getSender()) & "\r\n"
+        echo "New balance of " & recv.sender & ": " & $lattice.getBalance(recv.sender) & "\r\n"
 )
 
 #Start listening.

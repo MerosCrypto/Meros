@@ -4,15 +4,18 @@ import ServerObj
 #Events library.
 import ec_events
 
+#SetOnce lib.
+import SetOnce
+
 type Network* = ref object of RootObj
     #Network ID.
-    id: int
+    id*: SetOnce[int]
     #Socket Event Emitter for the sublibraries.
-    socketEvents: EventEmitter
+    socketEvents*: SetOnce[EventEmitter]
     #Server.
-    server: Server
+    server*: SetOnce[Server]
     #Node Event Emitter for the node.
-    nodeEvents: EventEmitter
+    nodeEvents*: SetOnce[EventEmitter]
 
 #Constructor.
 proc newNetworkObj*(
@@ -20,20 +23,9 @@ proc newNetworkObj*(
     socketEvents: EventEmitter,
     server: Server,
     nodeEvents: EventEmitter
-): Network {.raises: [].} =
-    Network(
-        id: id,
-        socketEvents: socketEvents,
-        server: server,
-        nodeEvents: nodeEvents
-    )
-
-#Getters.
-proc getID*(network: Network): int {.raises: [].} =
-    network.id
-proc getSocketEvents*(network: Network): EventEmitter {.raises: [].} =
-    network.socketEvents
-proc getServer*(network: Network): Server {.raises: [].} =
-    network.server
-proc getNodeEvents*(network: Network): EventEmitter {.raises: [].} =
-    network.nodeEvents
+): Network {.raises: [ValueError].} =
+    result = Network()
+    result.id.value = id
+    result.socketEvents.value = socketEvents
+    result.server.value = server
+    result.nodeEvents.value = nodeEvents

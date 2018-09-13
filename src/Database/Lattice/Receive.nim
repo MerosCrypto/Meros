@@ -23,12 +23,15 @@ import objects/NodeObj
 import objects/ReceiveObj
 export ReceiveObj
 
+#SetOnce lib.
+import SetOnce
+
 #Create a new Receive node.
 proc newReceive*(
     inputAddress: string,
     inputNonce: BN,
     nonce: BN
-): Receive {.raises: [ResultError, ValueError, Exception].} =
+): Receive {.raises: [ValueError, Exception].} =
     #Verify the input address.
     if (
         (not Wallet.verify(inputAddress)) and
@@ -51,29 +54,22 @@ proc newReceive*(
     )
 
     #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ResultError, "Setting the node's nonce failed.")
+    result.nonce.value = nonce
 
     #Set the hash.
-    if not result.setHash(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the node hash.")
+    result.hash.value = SHA512(result.serialize())
 
 #Create a new Receive node.
-proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ResultError, ValueError, Exception].} =
+proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError, Exception].} =
     newReceive(
-        index.getAddress(),
-        index.getNonce(),
+        index.address.toValue(),
+        index.nonce.toValue(),
         nonce
     )
 
 #Sign a TX.
-proc sign*(wallet: Wallet, recv: Receive): bool {.raises: [ValueError].} =
-    result = true
-
+proc sign*(wallet: Wallet, recv: Receive) {.raises: [ValueError].} =
     #Set the sender behind the node.
-    if not recv.setSender(wallet.getAddress()):
-        return false
-
+    recv.sender.value = wallet.address
     #Sign the hash of the Receive.
-    if not recv.setSignature(wallet.sign($recv.getHash())):
-        return false
+    recv.signature.value = wallet.sign($recv.hash.toValue())

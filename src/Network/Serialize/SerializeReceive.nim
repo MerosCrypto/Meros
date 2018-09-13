@@ -12,21 +12,24 @@ import ../../Database/Lattice/objects/ReceiveObj
 #Common serialization functions.
 import SerializeCommon
 
+#SetOnce lib.
+import SetOnce
+
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =
-    result = recv.getNonce().toString(255) & delim
+    result = recv.nonce.toString(255) & delim
 
-    if recv.getInputAddress() == "minter":
+    if recv.inputAddress == "minter":
         result &= delim
     else:
-        result &= Address.toBN(recv.getInputAddress()).toString(255) & delim
+        result &= Address.toBN(recv.inputAddress).toString(255) & delim
 
-    result &= recv.getInputNonce().toString(255)
+    result &= recv.inputNonce.toString(255)
 
-    if recv.getSignature().len != 0:
+    if recv.signature.len != 0:
         result =
-            Address.toBN(recv.getSender()).toString(255) !
+            Address.toBN(recv.sender).toString(255) !
             result !
-            recv.getSignature().toBN(16).toString(255)
+            recv.signature.toBN(16).toString(255)
 
         result = result.toBN(256).toString(253)

@@ -7,6 +7,9 @@ import ../../src/lib/Base
 import ../../src/Wallet/Address
 import ../../src/Wallet/Wallet
 
+#SetOnce lib.
+import SetOnce
+
 #Test a couple of addresses.
 assert(
     not Address.verify("Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"), #Every Base58 char with no checksum.
@@ -21,25 +24,23 @@ var
 for _ in 0 ..< 10:
     #Create a new wallet.
     wallet = newWallet()
-    #Get the address.
-    address = wallet.getAddress()
 
     #Verify the address.
     assert(
-        Address.verify(address),
+        Address.verify(wallet.address),
         "Invalid Address."
     )
 
     #Verify the address for the matching pub key.
     assert(
         Address.verify(
-            address,
-            wallet.getPublicKey()
+            wallet.address.toValue(),
+            wallet.publicKey.toValue()
         ),
         "Address doesn't match the Public Key."
     )
 
     #Verify toBN works.
-    assert($(wallet.getPublicKey()) == Address.toBN(address).toString(16), "Address.toBN didn't return the correct BN.")
+    assert($wallet.publicKey.toValue() == Address.toBN(wallet.address).toString(16), "Address.toBN didn't return the correct BN.")
 
 echo "Finished the Wallet/Address test."

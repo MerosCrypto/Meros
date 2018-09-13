@@ -10,25 +10,28 @@ import ReceiveObj
 #Lattice objects.
 import LatticeObjs
 
+#SetOnce lib.
+import SetOnce
+
 #Account object.
 type Account* = ref object of RootObj
     #Chain owner.
-    address: string
+    address*: SetOnce[string]
     #Account height. BN for compatibility.
-    height: BN
+    height*: BN
     #seq of the TXs.
-    nodes: seq[Node]
+    nodes*: seq[Node]
     #Balance of the address.
-    balance: BN
+    balance*: BN
 
 #Creates a new account object.
-proc newAccountObj*(address: string): Account {.raises: [].} =
-    Account(
-        address: address,
+proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
+    result = Account(
         height: newBN(),
         nodes: @[],
         balance: newBN()
     )
+    result.address.value = address
 
 #Add a Node to an account.
 proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
@@ -36,13 +39,13 @@ proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
     inc(account.height)
     account.nodes.add(node)
 
-    case node.descendant:
+    case node.descendant.toValue():
         #If it's a Send Node...
         of NodeType.Send:
             #Cast it to a var.
             var send: Send = cast[Send](node)
             #Update the balance.
-            account.balance -= send.getAmount()
+            account.balance -= send.amount
         #If it's a Receive Node...
         of NodeType.Receive:
             #Cast it to a var.
@@ -50,21 +53,13 @@ proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
             #Cast the matching Send.
             var send: Send = cast[Send](dependent)
             #Update the balance.
-            account.balance += send.getAmount()
+            account.balance += send.amount
         else:
             discard
 
-#Getters.
-proc getAddress*(account: Account): string {.raises: [].} =
-    account.address
-proc getHeight*(account: Account): BN {.raises: [].} =
-    account.height
-proc getNodes*(account: Account): seq[Node] {.raises: [].} =
-    account.nodes
+#Helper getter that takes in an index.
 proc `[]`*(account: Account, index: int): Node {.raises: [ValueError].} =
     if index >= account.nodes.len:
         raise newException(ValueError, "Account index out of bounds.")
 
     result = account.nodes[index]
-proc getBalance*(account: Account): BN {.raises: [].} =
-    account.balance

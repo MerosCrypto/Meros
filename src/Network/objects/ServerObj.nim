@@ -7,30 +7,33 @@ import ServerClientObj
 #Events lib.
 import ec_events
 
+#SetOnce lib.
+import SetOnce
+
 #Socket standard lib.
 import asyncnet
 
 type Server* = ref object of RootObj
     #Server socket.
-    socket: AsyncSocket
+    socket*: SetOnce[AsyncSocket]
     #Client count.
     clientCount: int
     #Client list.
     clients: seq[ServerClient]
     #EventEmitter.
-    eventEmitter: EventEmitter
+    eventEmitter*: SetOnce[EventEmitter]
 
 #Constructor.
-proc newServer*(ee: EventEmitter): Server {.raises: [OSError, Exception].} =
-    Server(
-        socket: newAsyncSocket(),
+proc newServer*(ee: EventEmitter): Server {.raises: [OSError, ValueError, Exception].} =
+    result = Server(
         clientCount: 0,
-        clients: @[],
-        eventEmitter: ee
+        clients: @[]
     )
+    result.socket.value = newAsyncSocket()
+    result.eventEmitter.value = ee
 
 #Add a client.
-proc add*(server: Server, client: AsyncSocket): ServerClient {.raises: [].} =
+proc add*(server: Server, client: AsyncSocket): ServerClient {.raises: [ValueError].} =
     #Create a ServerClient around the socket.
     result = newServerClient(
         server.clientCount,
@@ -45,26 +48,18 @@ proc add*(server: Server, client: AsyncSocket): ServerClient {.raises: [].} =
 #disconnect a client.
 proc disconnect*(server: Server, id: int) {.raises: [Exception].} =
     for i, c in server.clients:
-        if c.getID() == id:
+        if c.id == id:
             c.close()
             server.clients.delete(i)
             break
 
-#Getter for the Server socket.
-proc getSocket*(server: Server): AsyncSocket {.raises: [].} =
-    server.socket
-
 #Gets a specific client.
 proc getClient*(server: Server, id: int): ServerClient {.raises: [].} =
     for i in server.clients:
-        if i.getID() == id:
+        if i.id == id:
             return i
 
 #Iterator over the clients.
 iterator clients*(server: Server): AsyncSocket {.raises: [].} =
     for i in server.clients:
         yield i
-
-#Getter for the EventEmitter.
-proc getEventEmitter*(server: Server): EventEmitter {.raises: [].} =
-    server.eventEmitter

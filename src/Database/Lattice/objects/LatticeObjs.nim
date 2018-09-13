@@ -1,5 +1,5 @@
 #BN lib.
-import BN
+import BN as BNFile
 
 #Hash lib.
 import ../../../lib/Hash
@@ -10,19 +10,22 @@ import NodeObj
 #Account object.
 import AccountObj
 
+#SetOnce lib.
+import SetOnce
+
 #Tables standard library.
 import tables
 
 type
     #Index object. Specifies a Node on the Lattice.
     Index* = ref object of RootObj
-        address: string
-        nonce: BN
+        address*: SetOnce[string]
+        nonce*: SetOnce[BN]
 
     #Lattice Difficulties object. Specifies the TX/Data  difficulties.
     Difficulties* = ref object of RootObj
-        transaction: BN
-        data: BN
+        transaction*: BN
+        data*: BN
 
     #Block Lattice object.
     BlockLattice* = TableRef[
@@ -37,11 +40,11 @@ type
     ]
 
 #Constructors.
-proc newIndex*(address: string, nonce: BN): Index {.raises: [].} =
-    Index(
-        address: address,
-        nonce: nonce
-    )
+proc newIndex*(address: string, nonce: BN): Index {.raises: [ValueError].} =
+    result = Index()
+    result.address.value = address
+    result.nonce.value = nonce
+
 proc newDifficulties*(): Difficulties {.raises: [].} =
     result = Difficulties(
         transaction: newBN(),
@@ -52,14 +55,8 @@ proc newBlockLattice*(): BlockLattice {.raises: [].} =
 proc newHashLookup*(): HashLookup {.raises: [].} =
     newTable[string, Index]()
 
-#Set difficulty functions.
-proc setTransaction*(difficulties: Difficulties, tx: BN) {.raises: [].} =
-    difficulties.transaction = tx
-proc setData*(difficulties: Difficulties, data: BN) {.raises: [].} =
-    difficulties.data = data
-
 #Creates a new account on the lattice.
-proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [].} =
+proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueError].} =
     result = true
     if lattice.hasKey(address):
         return false
@@ -71,18 +68,6 @@ proc add*(lookup: HashLookup, hash: string, index: Index) {.raises: [].} =
     lookup[hash] = index
 
 #Getters.
-#Gets the Index data.
-proc getAddress*(index: Index): string {.raises: [].} =
-    index.address
-proc getNonce*(index: Index): BN {.raises: [].} =
-    index.nonce
-
-#Gets the difficulties.
-proc getTransaction*(diff: Difficulties): BN {.raises: [].} =
-    diff.transaction
-proc getData*(diff: Difficulties): BN {.raises: [].} =
-    diff.data
-
 #Gets an account.
 proc getAccount*(lattice: BlockLattice, address: string): Account {.raises: [ValueError].} =
     #If the Lattice doesn't have a blockchain for that account...

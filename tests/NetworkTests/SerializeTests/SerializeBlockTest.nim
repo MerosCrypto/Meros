@@ -25,13 +25,12 @@ import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/SerializeBlock
 import ../../../src/Network/Serialize/ParseBlock
 
+#SetOnce lib.
+import SetOnce
+
 var
     #Create a wallet to mine to.
     wallet: Wallet = newWallet()
-    #Get the address.
-    miner: string = wallet.getAddress()
-    #Get the publisher.
-    publisher: string = $wallet.getPublicKey()
     #Block var; defined here to stop a memory leak.
     newBlock: Block
     #Last block hash, nonce, time, and proof vars.
@@ -40,7 +39,7 @@ var
     time: BN
     proof: BN = newBN(1)
     miners: seq[tuple[miner: string, amount: int]] = @[(
-        miner: miner,
+        miner: wallet.address.toValue(),
         amount: 100
     )]
     lattice: Lattice = newLattice()
@@ -52,7 +51,7 @@ for i in 1 .. 10:
     echo "Testing Block Serialization/Parsing, iteration " & $i & "."
 
     #Update the time.
-    time = getTime()
+    time = time
 
     #Create a block.
     newBlock = newBlock(
@@ -61,14 +60,14 @@ for i in 1 .. 10:
         time,
         @[],
         newMerkleTree(@[]),
-        publisher,
+        $(wallet.publicKey.toValue()),
         proof,
         miners,
         wallet.sign($SHA512(miners.serialize(nonce)))
     )
 
     #Finally, update the last hash, increase the nonce, and reset the proof.
-    last = newBlock.getArgon()
+    last = newBlock.argon
     nonce = nonce + BNNums.ONE
     proof = newBN(i)
 
@@ -79,20 +78,20 @@ for i in 1 .. 10:
     assert(newBlock.serialize() == blockParsed.serialize())
 
     #Test the Block properties.
-    assert(newBlock.getLast() == blockParsed.getLast())
-    assert(newBlock.getNonce() == blockParsed.getNonce())
-    assert(newBlock.getTime() == blockParsed.getTime())
+    assert(newBlock.last == blockParsed.last)
+    assert(newBlock.nonce == blockParsed.nonce)
+    assert(newBlock.time == blockParsed.time)
 
-    assert(newBlock.getValidations() == blockParsed.getValidations())
-    assert(newBlock.getMerkle().getHash() == blockParsed.getMerkle().getHash())
-    assert(newBlock.getPublisher() == blockParsed.getPublisher())
+    assert(newBlock.validations == blockParsed.validations)
+    assert(newBlock.merkle.hash == blockParsed.merkle.hash)
+    assert(newBlock.publisher == blockParsed.publisher)
 
-    assert(newBlock.getProof() == blockParsed.getProof())
-    assert(newBlock.getHash() == blockParsed.getHash())
-    assert(newBlock.getArgon() == blockParsed.getArgon())
+    assert(newBlock.proof == blockParsed.proof)
+    assert(newBlock.hash == blockParsed.hash)
+    assert(newBlock.argon == blockParsed.argon)
 
-    assert(newBlock.getMiners() == blockParsed.getMiners())
-    assert(newBlock.getMinersHash() == blockParsed.getMinersHash())
-    assert(newBlock.getSignature() == blockParsed.getSignature())
+    assert(newBlock.miners == blockParsed.miners)
+    assert(newBlock.minersHash == blockParsed.minersHash)
+    assert(newBlock.signature == blockParsed.signature)
 
 echo "Finished the Network/Serialize/Block test."

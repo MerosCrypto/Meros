@@ -23,6 +23,9 @@ import ../../Database/Lattice/objects/SendObj
 import SerializeCommon
 import SerializeSend
 
+#SetOnce lib.
+import SetOnce
+
 #String utils standard lib.
 import strutils
 
@@ -52,30 +55,18 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Excep
         amount
     )
 
+    #Set the sender.
+    result.sender.value = input
     #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ValueError, "Couldn't set the Node's nonce.")
-
+    result.nonce.value = nonce
     #Set the SHA512 hash.
-    if not result.setSHA512(SHA512(result.serialize())):
-        raise newException(ValueError, "Couldn't set the Send SHA512.")
-
+    result.sha512.value = SHA512(result.serialize())
+    #Set the proof.
+    result.proof.value = proof.toBN(16)
     #Set the hash.
-    if not result.setHash(Argon(result.getSHA512().toString(), proof, true)):
-        raise newException(ValueError, "Couldn't set the Node's hash.")
+    result.hash.value = Argon(result.sha512.toString(), proof, true)
 
     #Verify the signature.
-    if not sender.verify($result.getHash(), signature):
+    if not sender.verify($result.hash.toValue(), signature):
         raise newException(ValueError, "Received signature was invalid.")
-
-    #Set the proof.
-    if not result.setProof(proof.toBN(16)):
-        raise newException(ValueError, "Couldn't set the Send's proof.")
-
-    #Set the sender.
-    if not result.setSender(input):
-        raise newException(ValueError, "Couldn't set the Node's sender.")
-
-    #Set the signature.
-    if not result.setSignature(signature):
-        raise newException(ValueError, "Couldn't set the Node's signature.")
+    result.signature.value = signature

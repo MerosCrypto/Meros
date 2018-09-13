@@ -15,6 +15,9 @@ import ../src/Database/Lattice/Lattice
 import ../src/Network/Serialize/SerializeSend
 import ../src/Network/Serialize/SerializeReceive
 
+#SetOnce lib.
+import SetOnce
+
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch
 
@@ -54,8 +57,8 @@ answer = stdin.readLine()
 if answer == "":
     echo "Creating a new wallet..."
     wallet = newWallet()
-    echo "Your Address is:     " & wallet.getAddress() & "."
-    echo "Your Private Key is: " & $wallet.getPrivateKey() & "."
+    echo "Your Address is:     " & wallet.address & "."
+    echo "Your Private Key is: " & $wallet.privateKey.toValue() & "."
     quit(0)
 
 #Create a Wallet from their Private Key.
@@ -110,7 +113,7 @@ elif answer.toLower() == "receive":
         nonce
     )
     #Sign the Receive.
-    echo "Signing the Receive retuned... " & $wallet.sign(recv)
+    wallet.sign(recv)
 
     #Create the serialized string.
     serialized = recv.serialize()

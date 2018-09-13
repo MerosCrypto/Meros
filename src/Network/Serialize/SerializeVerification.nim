@@ -15,16 +15,19 @@ import ../../Database/Lattice/objects/VerificationObj
 #Common serialization functions.
 import SerializeCommon
 
+#SetOnce lib.
+import SetOnce
+
 #Serialize a Verification.
 proc serialize*(verif: Verification): string {.raises: [ValueError, Exception].} =
     result =
-        verif.getNonce().toString(255) !
-        verif.getVerified().toBN().toString(255)
+        verif.nonce.toString(255) !
+        verif.verified.toBN().toString(255)
 
-    if verif.getSignature().len != 0:
+    if verif.signature.len != 0:
         result =
-            Address.toBN(verif.getSender()).toString(255) !
+            Address.toBN(verif.sender).toString(255) !
             result !
-            verif.getSignature().toBN(16).toString(255)
+            verif.signature.toBN(16).toString(255)
 
         result = result.toBN(256).toString(253)

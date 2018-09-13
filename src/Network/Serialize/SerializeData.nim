@@ -12,20 +12,23 @@ import ../../Database/Lattice/objects/DataObj
 #Common serialization functions.
 import SerializeCommon
 
+#SetOnce lib.
+import SetOnce
+
 #String utils standard lib.
 import strutils
 
 #Serialization function.
 proc serialize*(data: Data): string {.raises: [ValueError, Exception].} =
-    result = data.getNonce().toString(255)
-    for i in data.getData():
+    result = data.nonce.toString(255)
+    for i in data.data:
         result &= delim & i.toHex()
 
-    if data.getSignature().len != 0:
+    if data.signature.len != 0:
         result =
-            Address.toBN(data.getSender()).toString(255) !
+            Address.toBN(data.sender).toString(255) !
             result !
-            data.getProof().toString(255) !
-            data.getSignature().toBN(16).toString(255)
+            data.proof.toString(255) !
+            data.signature.toBN(16).toString(255)
 
         result = result.toBN(256).toString(253)

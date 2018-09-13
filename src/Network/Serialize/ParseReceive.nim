@@ -23,6 +23,9 @@ import ../../Database/Lattice/objects/ReceiveObj
 import SerializeCommon
 import SerializeReceive
 
+#SetOnce lib.
+import SetOnce
+
 #String utils standard lib.
 import strutils
 
@@ -48,22 +51,16 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].}
         inputNonce
     )
 
-    #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ValueError, "Couldn't set the Node's nonce.")
-
-    #Set the hash.
-    if not result.setHash(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the node hash.")
-
-    #Verify the signature.
-    if not sender.verify($result.getHash(), signature):
-        raise newException(ValueError, "Received signature was invalid.")
 
     #Set the sender.
-    if not result.setSender(sender.newAddress()):
-        raise newException(ValueError, "Couldn't set the Node's sender.")
+    result.sender.value = sender.newAddress()
+    #Set the nonce.
+    result.nonce.value = nonce
+    #Set the hash.
+    result.hash.value = SHA512(result.serialize())
 
+    #Verify the signature.
+    if not sender.verify($result.hash.toValue(), signature):
+        raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
-    if not result.setSignature(signature):
-        raise newException(ValueError, "Couldn't set the Node's signature.")
+    result.signature.value = signature

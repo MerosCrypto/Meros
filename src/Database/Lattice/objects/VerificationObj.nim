@@ -7,17 +7,15 @@ import ../../../lib/Hash
 #Node/transaction object.
 import NodeObj
 
+#SetOnce lib.
+import SetOnce
+
 type Verification* = ref object of Node
     #Send Hash.
-    verified: Hash[512]
+    verified*: SetOnce[Hash[512]]
 
 #New Verification object.
-proc newVerificationObj*(verified: Hash[512]): Verification {.raises: [].} =
-    Verification(
-        descendant: NodeType.Verification,
-        verified: verified
-    )
-
-#Getter.
-proc getVerified*(verif: Verification): Hash[512] {.raises: [].} =
-    verif.verified
+proc newVerificationObj*(verified: Hash[512]): Verification {.raises: [ValueError].} =
+    result = Verification()
+    result.descendant.value = NodeType.Verification
+    result.verified.value = verified

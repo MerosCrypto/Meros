@@ -23,6 +23,9 @@ import ../../Database/Lattice/objects/VerificationObj
 import SerializeCommon
 import SerializeVerification
 
+#SetOnce lib.
+import SetOnce
+
 #String utils standard lib.
 import strutils
 
@@ -47,22 +50,15 @@ proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, E
         send.toArgonHash()
     )
 
-    #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ValueError, "Couldn't set the Node's nonce.")
-
-    #Set the hash.
-    if not result.setHash(SHA512(result.serialize())):
-        raise newException(ValueError, "Couldn't set the Node's hash.")
-
     #Set the Sender.
-    if not result.setSender(address):
-        raise newException(ValueError, "Couldn't set the Node's Sender.")
+    result.sender.value = address
+    #Set the nonce.
+    result.nonce.value = nonce
+    #Set the hash.
+    result.hash.value = SHA512(result.serialize())
 
     #Verify the signature.
-    if not verifier.verify($result.getHash(), signature):
+    if not verifier.verify($result.hash.toValue(), signature):
         raise newException(ValueError, "Received signature was invalid.")
-
     #Set the signature.
-    if not result.setSignature(signature):
-        raise newException(ValueError, "Couldn't set the Node's signature.")
+    result.signature.value = signature

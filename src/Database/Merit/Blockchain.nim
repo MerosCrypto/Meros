@@ -14,6 +14,9 @@ import Difficulty
 import objects/BlockchainObj
 export BlockchainObj
 
+#SetOnce lib.
+import SetOnce
+
 #Create a new Blockchain.
 proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError].} =
     #Set the current time as the time of creation.
@@ -28,33 +31,33 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Excepti
     result = true
 
     let
-        blocks: seq[Block] = blockchain.getBlocks()
+        blocks: seq[Block] = blockchain.blocks
         lastBlock: Block = blocks[blocks.len - 1]
 
     #If the last hash is off...
-    if lastBlock.getArgon() != newBlock.getLast():
+    if lastBlock.argon != newBlock.last:
         return false
 
     #If the nonce is off...
-    if blockchain.getHeight() + BNNums.ONE != newBlock.getNonce():
+    if blockchain.height + BNNums.ONE != newBlock.nonce:
         return false
 
     #If the time is before the last block's...
-    if newBlock.getTime() < lastBlock.getTime():
+    if newBlock.time < lastBlock.time:
         return false
 
     #If the time is ahead of 20 minutes from now...
-    if (getTime() + newBN($(20*60))) < newBlock.getTime():
+    if (getTime() + newBN($(20*60))) < newBlock.time:
         return false
 
     #Get the difficulties.
     var
-        difficulties: seq[Difficulty] = blockchain.getDifficulties()
+        difficulties: seq[Difficulty] = blockchain.difficulties
         difficulty: Difficulty = difficulties[difficulties.len - 1]
 
     #Generate difficulties so we can test the block against the latest difficulty.
-    while difficulty.getEnd() < newBlock.getTime():
-        difficulty = calculateNextDifficulty(blockchain.getBlocks(), blockchain.getDifficulties(), 10, 6)
+    while difficulty.endTime < newBlock.time:
+        difficulty = calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, 10, 6)
         blockchain.add(difficulty)
 
     #If the difficulty wasn't beat...

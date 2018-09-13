@@ -35,8 +35,8 @@ proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [Exception].} 
 
 #Getters.
 proc getHeight*(merit: Merit): BN {.raises: [].} =
-    merit.blockchain.getHeight()
+    merit.blockchain.height
 proc getBlocks*(merit: Merit): seq[Block] {.raises: [].} =
-    merit.blockchain.getBlocks()
+    merit.blockchain.blocks
 proc getBalance*(merit: Merit, account: string): BN {.raises: [ValueError].} =
     merit.state.getBalance(account)

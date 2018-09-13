@@ -19,6 +19,9 @@ import ../src/Network/Serialize/SerializeReceive
 import ../src/Network/Serialize/ParseSend
 import ../src/Network/Serialize/ParseReceive
 
+#SetOnce lib.
+import SetOnce
+
 #Networking standard libs.
 import asyncnet, asyncdispatch
 
@@ -36,7 +39,7 @@ var
     minter: Wallet = newWallet()           #Wallet.
     lattice: Lattice = newLattice()        #Lattice.
     mintIndex: Index = lattice.mint(       #Mint transaction.
-        minter.getAddress(),
+        minter.address,
         newBN("1000000")
     )
     mintRecv: Receive = newReceive(        #Mint Receive.
@@ -63,7 +66,7 @@ var
     client: AsyncSocket = newAsyncSocket()               #Client socket.
 
 #Sign and add the Mint Receive.
-discard minter.sign(mintRecv)
+minter.sign(mintRecv)
 discard lattice.add(mintRecv)
 
 #Handles a client.
@@ -146,27 +149,27 @@ proc spam() {.async.} =
         #Generate the Send.
         sends.add(
             newSend(
-                receiver.getAddress(),
+                receiver.address,
                 BNNums.ONE,
                 newBN(i + 1)
             )
         )
 
         #Mine the Send.
-        sends[i].mine(lattice.getTransactionDifficulty())
+        sends[i].mine(lattice.difficulties.transaction)
         #Sign the Send.
         discard minter.sign(sends[i])
 
         #Generate the Receive.
         recvs.add(
             newReceive(
-                minter.getAddress(),
+                minter.address,
                 newBN(i + 1),
                 newBN(i)
             )
         )
         #Sign the Receive.
-        discard receiver.sign(recvs[i])
+        receiver.sign(recvs[i])
 
         #Serialize them.
         serializedSends[i] = sendHeader & sends[i].serialize() & "\r\n"

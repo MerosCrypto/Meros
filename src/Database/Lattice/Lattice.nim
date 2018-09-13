@@ -27,18 +27,21 @@ import Account
 import objects/LatticeObjs
 import objects/LatticeMasterObj
 #Export the Index object/function.
-export Index, newIndex, getAddress, getNonce
+export Index, newIndex
 export LatticeMasterObj.Lattice, newLattice
 
+#SetOnce lib.
+import SetOnce
+
 #Add a Node to the Hash Lookup.
-proc addToLookup(lattice: Lattice, node: Node) {.raises: [].} =
+proc addToLookup(lattice: Lattice, node: Node) {.raises: [ValueError].} =
     lattice
-        .getLookup()
+        .lookup
         .add(
-            $node.getHash(),
+            $node.hash.toValue(),
             newIndex(
-                node.getSender(),
-                node.getNonce()
+                node.sender,
+                node.nonce.toValue()
             )
         )
 
@@ -46,16 +49,16 @@ proc addToLookup(lattice: Lattice, node: Node) {.raises: [].} =
 proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.raises: [ValueError, Exception].} =
     #Make sure only this node creates mint TXs.
     if (
-        (node.getSender() == "minter") and
+        (node.sender == "minter") and
         (not mintOverride)
     ):
         return false
 
     var
-        blockLattice = lattice.getLattice() #Get the Block Lattice.
-        account: Account = blockLattice.getAccount(node.getSender()) #Get the Account.
+        blockLattice = lattice.lattice #Get the Block Lattice.
+        account: Account = blockLattice.getAccount(node.sender) #Get the Account.
 
-    case node.descendant:
+    case node.descendant.toValue():
         of NodeType.Send:
             #Cast the node.
             var send: Send = cast[Send](node)
@@ -65,7 +68,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
                 #Send Node.
                 send,
                 #Transaction Difficulty.
-                lattice.getDifficulties().getTransaction()
+                lattice.difficulties.transaction
             )
 
         of NodeType.Receive:
@@ -78,8 +81,8 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
                 blockLattice
                     .getNode(
                         newIndex(
-                            recv.getInputAddress(),
-                            recv.getInputNonce()
+                            recv.inputAddress,
+                            recv.inputNonce.toValue()
                         )
                     )
             )
@@ -91,7 +94,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
                 #Data Node.
                 data,
                 #Data Difficulty.
-                lattice.getDifficulties().getData()
+                lattice.difficulties.data
             )
 
         of NodeType.Verification:
@@ -119,7 +122,7 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
 
 proc mint*(lattice: Lattice, address: string, amount: BN): Index {.raises: [ResultError, ValueError, Exception].} =
     #Get the Height in a new var that won't update.
-    var height: BN = lattice.getLattice().getAccount("minter").getHeight()
+    var height: BN = lattice.lattice.getAccount("minter").height
 
     #Create the Send Node.
     var send: Send = newSend(
@@ -131,8 +134,7 @@ proc mint*(lattice: Lattice, address: string, amount: BN): Index {.raises: [Resu
     send.mine(newBN())
 
     #Set the sender.
-    if not send.setSender("minter"):
-        raise newException(ResultError, "Couldn't set the minter as the sender.")
+    send.sender.value = "minter"
 
     #Add it to the Lattice.
     if not lattice.add(send, true):
@@ -141,27 +143,21 @@ proc mint*(lattice: Lattice, address: string, amount: BN): Index {.raises: [Resu
     #Return the Index.
     result = newIndex("minter", height)
 
-#Get the Difficulties.
-proc getTransactionDifficulty*(lattice: Lattice): BN {.raises: [].} =
-    lattice.getDifficulties().getTransaction()
-proc getDataDifficulty*(lattice: Lattice): BN {.raises: [].} =
-    lattice.getDifficulties().getData()
-
 #Getters for Account info.
 proc getHeight*(lattice: Lattice, address: string): BN {.raises: [ValueError].} =
-    lattice.getLattice().getAccount(address).getHeight()
+    lattice.lattice.getAccount(address).height
 proc getBalance*(lattice: Lattice, address: string): BN {.raises: [ValueError].} =
-    lattice.getLattice().getAccount(address).getBalance()
+    lattice.lattice.getAccount(address).balance
 
 #Getters for Nodes from the Lattice.
 proc getNode*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
-    lattice.getLattice().getNode(index)
+    lattice.lattice.getNode(index)
 proc `[]`*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
-    lattice.getLattice().getNode(index)
+    lattice.lattice.getNode(index)
 proc getNode*(lattice: Lattice, hash: string): Node {.raises: [ValueError].} =
-    lattice.getLattice().getNode(lattice.getLookup(), hash)
+    lattice.lattice.getNode(lattice.lookup, hash)
 
 #Iterates over every hash the lookup table has.
 iterator hashes*(lattice: Lattice): string {.raises: [].} =
-    for hash in lattice.getLookup().hashes():
+    for hash in lattice.lookup.hashes():
         yield hash

@@ -9,14 +9,17 @@ import ../../../lib/Time
 import BlockObj
 import DifficultyObj
 
+#SetOnce lib.
+import SetOnce
+
 #Blockchain object.
 type Blockchain* = ref object of RootObj
     #Height. BN for compatibility.
-    height: BN
+    height*: BN
     #seq of all the blocks.
-    blocks: seq[Block]
+    blocks*: seq[Block]
     #seq of all the difficulties.
-    difficulties: seq[Difficulty]
+    difficulties*: seq[Difficulty]
 
 #Create a Blockchain object.
 proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError].} =
@@ -42,11 +45,3 @@ proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
 
 proc add*(blockchain: Blockchain, difficulty: Difficulty) {.raises: [].} =
     blockchain.difficulties.add(difficulty)
-
-#Getters.
-proc getHeight*(blockchain: Blockchain): BN {.raises: [].} =
-    blockchain.height
-proc getBlocks*(blockchain: Blockchain): seq[Block] {.raises: [].} =
-    blockchain.blocks
-proc getDifficulties*(blockchain: Blockchain): seq[Difficulty] {.raises: [].} =
-    blockchain.difficulties

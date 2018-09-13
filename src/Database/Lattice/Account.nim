@@ -21,25 +21,28 @@ import objects/MeritRemovalObj
 import objects/AccountObj
 export AccountObj
 
+#SetOnce lib.
+import SetOnce
+
 #Add a node.
 proc add(account: Account, node: Node, dependent: Node = nil): bool {.raises: [ValueError, Exception].} =
     result = true
 
     #Verify the sender.
-    if node.getSender() != account.getAddress():
+    if node.sender.toValue() != account.address:
         return false
 
     #Verify the nonce.
-    if newBN(account.getNodes().len) != node.getNonce():
+    if newBN(account.nodes.len) != node.nonce:
         return false
 
     #Verify the signature.
     if (
-        (account.getAddress() != "minter") and
+        (account.address != "minter") and
         (
             not newPublicKey(
-                account.getAddress().toBN().toString(16)
-            ).verify($node.getHash(), node.getSignature())
+                account.address.toBN().toString(16)
+            ).verify($node.hash.toValue(), node.signature)
         )
     ):
         return false
@@ -50,20 +53,20 @@ proc add(account: Account, node: Node, dependent: Node = nil): bool {.raises: [V
 #Add a Send.
 proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueError, Exception].} =
     #Override for minter.
-    if send.getSender() == "minter":
+    if send.sender == "minter":
         #Add the Send node.
         return account.add(cast[Node](send))
 
     #Verify the work.
-    if send.getHash().toBN() < difficulty:
+    if send.hash.toBN() < difficulty:
         return false
 
     #Verify the output is a valid address.
-    if not Address.verify(send.getOutput()):
+    if not Address.verify(send.output):
         return false
 
     #Verify the account has enough money.
-    if account.getBalance() < send.getAmount():
+    if account.balance < send.amount:
         return false
 
     #Add the Send.
@@ -79,24 +82,24 @@ proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [Value
     var send: Send = cast[Send](sendArg)
 
     #Verify the Send's output address.
-    if account.getAddress() != send.getOutput():
+    if account.address != send.output:
         return false
 
     #Verify the Receive's input address.
-    if recv.getInputAddress() != send.getSender():
+    if recv.inputAddress != send.sender:
         return false
 
     #Verify the nonces match.
-    if recv.getInputNonce() != send.getNonce():
+    if recv.inputNonce != send.nonce:
         return false
 
     #Verify it's unclaimed.
-    for i in account.getNodes():
+    for i in account.nodes:
         if i.descendant == NodeType.Receive:
             var past: Receive = cast[Receive](i)
             if (
-                (past.getInputAddress() == recv.getInputAddress()) and
-                (past.getInputNonce() == recv.getInputNonce())
+                (past.inputAddress == recv.inputAddress) and
+                (past.inputNonce == recv.inputNonce)
             ):
                 return false
 
@@ -106,7 +109,7 @@ proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [Value
 #Add Data.
 proc add*(account: Account, data: Data, difficulty: BN): bool {.raises: [ValueError, Exception].} =
     #Verify the work.
-    if data.getHash().toBN() < difficulty:
+    if data.hash.toBN() < difficulty:
         return false
 
     #Add the data.

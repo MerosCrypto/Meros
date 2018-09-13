@@ -20,6 +20,9 @@ export NetworkObj
 #Events lib.
 import ec_events
 
+#SetOnce lib.
+import SetOnce
+
 #Async standard lib.
 import asyncdispatch
 
@@ -50,35 +53,35 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
             result = true
 
             #Validate the network ID.
-            if msg.getNetwork() != id:
+            if msg.network != id:
                 return false
 
             #Validate the protocol.
-            if msg.getVersion() < MIN_PROTOCOL:
+            if msg.version < MIN_PROTOCOL:
                 return false
-            if msg.getVersion() > MAX_PROTOCOL:
+            if msg.version > MAX_PROTOCOL:
                 return false
 
             #Verify the message length.
-            if ord(msg.getHeader()[3]) != msg.getMessage().len:
+            if ord(msg.header[3]) != msg.message.len:
                 return false
 
             #Switch based off the message type (in a try to handle invalid messages).
             try:
-                case msg.getContent():
+                case msg.content.toValue():
                     of MessageType.Send:
                         nodeEvents.get(
                             proc (send: Send),
                             "send"
                         )(
-                            msg.getMessage().parseSend()
+                            msg.message.parseSend()
                         )
                     of MessageType.Receive:
                         nodeEvents.get(
                             proc (recv: Receive),
                             "recv"
                         )(
-                            msg.getMessage().parseReceive()
+                            msg.message.parseReceive()
                         )
                     of MessageType.Data:
                         discard
@@ -93,4 +96,4 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
 #Start listening.
 proc listen*(network: Network, port: int = 5132) =
     #Start the server.
-    asyncCheck network.getServer().listen(port)
+    asyncCheck network.server.listen(port)

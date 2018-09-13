@@ -19,8 +19,9 @@ switch("excessiveStackTrace", "on")
 #Enable parallel building.
 switch("parallelBuild", "0")
 
-#Build for release (which eliminates dead code) and optimize for size (which is faster than `opt=speed` for Ember).
-switch("define", "release")
+#Define debug, remove dead code, and optimize for size (which is faster than `opt=speed` for Ember).
+switch("define", "debug")
+switch("deadCodeElim", "on")
 switch("opt", "size")
 
 #Enable hints.

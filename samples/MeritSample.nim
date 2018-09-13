@@ -17,15 +17,16 @@ import ../src/Wallet/Wallet
 #Serialization libs.
 import ../src/Network/Serialize/SerializeMiners
 
+#SetOnce lib.
+import SetOnce
+
 #Main function is so these varriables can be GC'd.
 proc main() =
     var
         #Create a wallet to mine to.
         wallet: Wallet = newWallet()
-        #Get the address.
-        miner: string = wallet.getAddress()
         #Get the publisher.
-        publisher: string = $wallet.getPublicKey()
+        publisher: string = $wallet.publicKey.toValue()
         #Gensis var.
         genesis: string = "mainnet"
         #Merit var.
@@ -38,11 +39,11 @@ proc main() =
         time: BN
         proof: BN = newBN()
         miners: seq[tuple[miner: string, amount: int]] = @[(
-            miner: miner,
+            miner: wallet.address.toValue(),
             amount: 100
         )]
 
-    echo "First balance: " & $merit.getBalance(miner)
+    echo "First balance: " & $merit.getBalance(wallet.address)
 
     #Mine the chain.
     while true:
@@ -72,10 +73,10 @@ proc main() =
 
         #If we didn't continue, the block was valid! Print that we mined a block!
         echo "Mined a block: " & $nonce
-        echo "The miner's Merit is " & $merit.getBalance(miner) & "."
+        echo "The miner's Merit is " & $merit.getBalance(wallet.address) & "."
 
         #Finally, update the last hash, increase the nonce, and reset the proof.
-        last = newBlock.getArgon()
+        last = newBlock.argon
         nonce = nonce + BNNums.ONE
         proof = newBN()
 

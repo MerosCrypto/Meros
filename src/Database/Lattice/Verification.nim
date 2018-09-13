@@ -21,27 +21,21 @@ import Send
 import objects/VerificationObj
 export VerificationObj
 
-proc newVerification*(node: Node, nonce: BN): Verification {.raises: [ResultError, ValueError, Exception].} =
+#SetOnce lib.
+import SetOnce
+
+proc newVerification*(node: Node, nonce: BN): Verification {.raises: [ValueError, Exception].} =
     result = newVerificationObj(
-        node.getHash()
+        node.hash
     )
-
     #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ResultError, "Setting the Verification nonce failed.")
-
+    result.nonce.value = nonce
     #Set the hash.
-    if not result.setHash(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the Verification hash.")
+    result.hash.value = SHA512(result.serialize())
 
 #Sign a TX.
-proc sign*(wallet: Wallet, verif: Verification): bool {.raises: [ValueError].} =
-    result = true
-
+proc sign*(wallet: Wallet, verif: Verification) {.raises: [ValueError].} =
     #Set the sender behind the node.
-    if not verif.setSender(wallet.getAddress()):
-        return false
-
+    verif.sender.value = wallet.address
     #Sign the hash of the Verification.
-    if not verif.setSignature(wallet.sign($verif.getHash())):
-        return false
+    verif.signature.value = wallet.sign($verif.hash.toValue())

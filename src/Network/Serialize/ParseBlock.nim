@@ -28,6 +28,9 @@ import SerializeMiners
 import ParseMiners
 import SerializeBlock
 
+#SetOnce lib.
+import SetOnce
+
 #String and seq utils standard libs.
 import strutils
 import sequtils
@@ -92,7 +95,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
             ]
         ]()
         #Signature.
-        signature: string = blockSeq[blockSeq.len - 1].toBN(255).toString(16).pad(64)
+        signature: string = blockSeq[blockSeq.len - 1].toBN(255).toString(16).pad(128)
 
     #Make sure less than 100 miners were included.
     if blockSeq.len > (8 + (validations.len * 3) + 200):
@@ -134,24 +137,25 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
                         validator,
                         newBN(v)
                     )
-                ).getHash()
+                ).hash
             )
     tree = newMerkleTree(hashes)
 
     #Create the Block Object.
     result = newBlockObj(last, nonce, time, validations, tree, publisher)
-    if not (
-        #Set the hash.
-        result.setHash(SHA512(result.serialize())) and
-        #Set the proof.
-        result.setProof(proof) and
-        #Set the Argon hash.
-        result.setArgon(Argon(result.getHash().toString(), result.getProof().toString(256))) and
-        #Set the miners.
-        result.setMiners(miners) and
-        #Set the miners hash.
-        result.setMinersHash(SHA512(minersSerialized)) and
-        #Set the signature.
-        result.setSignature(signature)
-    ):
-        raise newException(ResultError, "Couldn't set the hash/proof/argon/miners/signature.")
+    #Set the hash.
+    result.hash = SHA512(result.serialize())
+    #Set the proof.
+    result.proof = proof
+    #Set the Argon hash.
+    result.argon = Argon(result.hash.toString(), result.proof.toString(256))
+    #Set the miners.
+    result.miners.value = miners
+    #Set the miners hash.
+    result.minersHash.value = SHA512(minersSerialized)
+
+    #Verify the signature.
+    if not newPublicKey(publisher).verify($(result.minersHash.toValue()), signature):
+        raise newException(ValueError, "Received signature was invalid.")
+    #Set the signature.
+    result.signature.value = signature

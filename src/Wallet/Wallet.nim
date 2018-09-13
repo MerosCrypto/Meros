@@ -1,49 +1,36 @@
-import PrivateKey
-import PublicKey
+import PrivateKey as PrivateKeyFile
+import PublicKey as PublicKeyFile
 import Address
-export PrivateKey, PublicKey, Address
+export PrivateKeyFile, PublicKeyFile, Address
+
+import SetOnce
 
 type Wallet* = ref object of RootObj
-    priv: PrivateKey
-    pub: PublicKey
-    address: string
+    privateKey*: SetOnce[PrivateKey]
+    publicKey*: SetOnce[PublicKey]
+    address*: SetOnce[string]
 
-proc newWallet*(priv: PrivateKey = newPrivateKey()): Wallet {.raises: [ValueError, Exception].} =
+proc newWallet*(privateKey: PrivateKey = newPrivateKey()): Wallet {.raises: [ValueError, Exception].} =
     result = Wallet()
-    result.priv = priv
-    result.pub = newPublicKey(result.priv)
-    result.address = newAddress(result.pub)
+    result.privateKey.value = privateKey
+    result.publicKey.value = newPublicKey(result.privateKey)
+    result.address.value = newAddress(result.publicKey)
 
-proc newWallet*(priv: string): Wallet {.raises: [ValueError, Exception].} =
-    newWallet(newPrivateKey(priv))
+proc newWallet*(privateKey: string): Wallet {.raises: [ValueError, Exception].} =
+    newWallet(newPrivateKey(privateKey))
 
-proc newWallet*(priv: PrivateKey, pub: PublicKey): Wallet {.raises: [ValueError, Exception].} =
-    result = newWallet(priv)
-    if $result.pub != $pub:
+proc newWallet*(privateKey: PrivateKey, publicKey: PublicKey): Wallet {.raises: [ValueError, Exception].} =
+    result = newWallet(privateKey)
+    if $result.publicKey != $publicKey:
         raise newException(ValueError, "Invalid Public Key for this Private Key.")
 
-proc newWallet*(priv: PrivateKey, pub: PublicKey, address: string): Wallet {.raises: [ValueError, Exception].} =
-    result = newWallet(priv, pub)
+proc newWallet*(privateKey: PrivateKey, publicKey: PublicKey, address: string): Wallet {.raises: [ValueError, Exception].} =
+    result = newWallet(privateKey, publicKey)
     if result.address != address:
         raise newException(ValueError, "Invalid Address for this Public Key.")
 
-proc `$`*(wallet: Wallet): string {.raises: [ValueError].} =
-    result =
-        $wallet.priv & "|" &
-        $wallet.pub & "|" &
-        wallet.address
-
 proc sign*(wallet: Wallet, msg: string): string {.raises: [ValueError].} =
-    result = wallet.priv.sign(msg)
+    result = wallet.privateKey.sign(msg)
 
 proc verify*(wallet: Wallet, msg: string, sig: string): bool {.raises: [ValueError].} =
-    result = wallet.pub.verify(msg, sig)
-
-proc getPrivateKey*(wallet: Wallet): PrivateKey {.raises: [].} =
-    result = wallet.priv
-
-proc getPublicKey*(wallet: Wallet): PublicKey {.raises: [].} =
-    result = wallet.pub
-
-proc getAddress*(wallet: Wallet): string {.raises: [].} =
-    result = wallet.address
+    result = wallet.publicKey.verify(msg, sig)

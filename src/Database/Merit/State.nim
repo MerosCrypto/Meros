@@ -3,6 +3,8 @@ import BN as BNLib
 import Block
 import Blockchain
 
+import SetOnce
+
 import math
 import tables
 
@@ -17,13 +19,13 @@ proc getBalance*(state: State, account: string): BN {.raises: [ValueError].} =
         result = state[account][]
 
 proc processBlock*(state: State, newBlock: Block) {.raises: [ValueError].} =
-    let miners: seq[tuple[miner: string, amount: int]] = newBlock.getMiners()
+    let miners: seq[tuple[miner: string, amount: int]] = newBlock.miners
 
     for miner in miners:
         state[miner.miner] = (state.getBalance(miner.miner) + newBN(miner.amount)).toRef()
 
 proc processBlockchain*(state: State, blockchain: Blockchain) {.raises: [ValueError].} =
-    for i in blockchain.getBlocks():
+    for i in blockchain.blocks:
         state.processBlock(i)
 
 proc newState*(blockchain: Blockchain): State {.raises: [ValueError].} =

@@ -11,6 +11,9 @@ import ../../../src/Wallet/Wallet
 import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/ParseMiners
 
+#SetOnce lib.
+import SetOnce
+
 #Random/Time/Algorithm standard libs. They're used to randomize the testing data.
 import random
 import times
@@ -51,7 +54,7 @@ for i in 1 .. 10:
         #Generate a Wallet for them.
         wallets.add(newWallet())
         #Add the tuple/set their public key.
-        miners.add((miner: wallets[i].getAddress(), amount: 0))
+        miners.add((miner: wallets[i].address.toValue(), amount: 0))
 
         #Set the amount to pay the miner.
         amount = rand(remaining - 1) + 1

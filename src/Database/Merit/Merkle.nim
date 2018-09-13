@@ -6,8 +6,11 @@ import objects/MerkleObj
 #Export the MerkleTree object.
 export MerkleTree
 
+#SetOnce lib.
+import SetOnce
+
 #Create a Markle Tree.
-proc newMerkleTree*(hashesArg: seq[SHA512Hash]): MerkleTree {.raises: [].} =
+proc newMerkleTree*(hashesArg: seq[SHA512Hash]): MerkleTree {.raises: [ValueError].} =
     var
         #Extract the hashes from its arg.
         hashes: seq[SHA512Hash] = hashesArg
@@ -57,7 +60,3 @@ proc newMerkleTree*(hashesArg: seq[SHA512Hash]): MerkleTree {.raises: [].} =
 
     #Set the Result to the remaining branch.
     result = cast[MerkleTree](branches[0])
-
-#Getters.
-proc getHash*(tree: MerkleTree): SHA512Hash {.raises: [].} =
-    cast[Branch](tree).getHash()

@@ -25,6 +25,9 @@ import objects/BlockObj
 #Export the BlockObj.
 export BlockObj
 
+#SetOnce lib.
+import SetOnce
+
 #String utils standard library.
 import strutils
 
@@ -72,27 +75,19 @@ proc newBlock*(
         publisher
     )
 
-    if not (
-        #Calculate the hash.
-        (result.setHash(SHA512(result.serialize()))) and
-        #Set the proof.
-        (result.setProof(proof)) and
-        #Calculate the Argon hash.
-        (result.setArgon(Argon(result.getHash().toString(), result.getProof().toString(256))))
-    ):
-        raise newException(ResultError, "Couldn't set the hash/proof/argon..")
+    #Calculate the hash.
+    result.hash = SHA512(result.serialize())
+    #Set the proof.
+    result.proof = proof
+    #Calculate the Argon hash.
+    result.argon = Argon(result.hash.toString(), result.proof.toString(256))
 
-    if not (
-        #Set the miners.
-        result.setMiners(miners) and
-        #Calculate the miners hash.
-        result.setMinersHash(SHA512(miners.serialize(nonce)))
-    ):
-        raise newException(ResultError, "Couldn't set the miners/miners hash..")
-
+    #Set the miners.
+    result.miners.value = miners
+    #Calculate the miners hash.
+    result.minersHash.value = SHA512(miners.serialize(nonce))
     #Verify the signature.
-    if not newPublicKey(publisher).verify($result.getMinersHash(), signature):
+    if not publisher.newPublicKey().verify($(result.minersHash.toValue()), signature):
         raise newException(ValueError, "Invalid miners' signature.")
     #Set the signature.
-    if not result.setSignature(signature):
-        raise newException(ResultError, "Couldn't set the signature.")
+    result.signature.value = signature

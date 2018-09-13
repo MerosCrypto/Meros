@@ -16,6 +16,9 @@ import ../../Database/Merit/objects/BlockObj
 import SerializeCommon
 import SerializeMiners
 
+#SetOnce lib.
+import SetOnce
+
 #String utils standard lib.
 import strutils
 
@@ -24,16 +27,16 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
     #Create the result.
     result =
         #Nonce.
-        blockArg.getNonce().toString(255) !
+        blockArg.nonce.toString(255) !
         #Last block.
-        blockArg.getLast().toBN().toString(255) !
+        blockArg.last.toBN().toString(255) !
         #Time.
-        blockArg.getTime().toString(255) !
+        blockArg.time.toString(255) !
         #Amount of validations.
-        newBN(blockArg.getValidations().len).toString(255) & delim
+        newBN(blockArg.validations.len).toString(255) & delim
 
     #Add on each validation.
-    for validation in blockArg.getValidations():
+    for validation in blockArg.validations:
         result &=
             #Address.
             Address.toBN(validation.validator).toString(255) !
@@ -44,17 +47,17 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
 
     result &=
         #Merkle Tree root.
-        blockArg.getMerkle().getHash().toBN().toString(255) !
+        blockArg.merkle.hash.toBN().toString(255) !
         #Publisher.
-        blockArg.getPublisher().toBN(16).toString(255)
+        blockArg.publisher.toBN(16).toString(255)
 
-    if blockArg.getSignature().len != 0:
+    if blockArg.signature.len != 0:
         result &= delim &
             #Proof.
-            blockArg.getProof().toString(255) !
+            blockArg.proof.toString(255) !
             #Miners.
-            blockArg.getMiners().serialize() !
+            blockArg.miners.serialize() !
             #Signature.
-            blockArg.getSignature().toBN(16).toString(255)
+            blockArg.signature.toBN(16).toString(255)
 
         result = result.toBN(256).toString(253)

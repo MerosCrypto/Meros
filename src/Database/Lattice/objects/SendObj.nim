@@ -1,5 +1,5 @@
 #Numerical libs.
-import BN
+import BN as BNFile
 import ../../../lib/Base
 
 #Hash lib.
@@ -8,47 +8,26 @@ import ../../../lib/Hash
 #Node object.
 import NodeObj
 
+#SetOnce lib.
+import SetOnce
+
 #Send object.
 type Send* = ref object of Node
     #Data used to create the SHA512 hash.
     #Destination address.
-    output: string
+    output*: SetOnce[string]
     #Amount transacted.
-    amount: BN
+    amount*: SetOnce[BN]
 
     #SHA512 hash.
-    sha512: SHA512Hash
+    sha512*: SetOnce[SHA512Hash]
 
     #Proof this isn't spam.
-    proof: BN
+    proof*: SetOnce[BN]
 
 #New Send object.
-proc newSendObj*(output: string, amount: BN): Send {.raises: [].} =
-    Send(
-        descendant: NodeType.Send,
-        output: output,
-        amount: amount
-    )
-
-#Set the SHA512 hash.
-proc setSHA512*(send: Send, sha512: SHA512Hash): bool {.raises: [].} =
-    result = true
-    send.sha512 = sha512
-
-#Set the proof.
-proc setProof*(send: Send, proof: BN): bool {.raises: [].} =
-    result = true
-    if not send.proof.getNil():
-        return false
-
-    send.proof = proof
-
-#Getters.
-proc getOutput*(send: Send): string {.raises: [].} =
-    send.output
-proc getAmount*(send: Send): BN {.raises: [].} =
-    send.amount
-proc getSHA512*(send: Send): SHA512Hash {.raises: [].} =
-    send.sha512
-proc getProof*(send: Send): BN {.raises: [].} =
-    send.proof
+proc newSendObj*(output: string, amount: BN): Send {.raises: [ValueError].} =
+    result = Send()
+    result.descendant.value = NodeType.Send
+    result.output.value = output
+    result.amount.value = amount

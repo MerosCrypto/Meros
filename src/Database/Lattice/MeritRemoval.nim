@@ -21,27 +21,21 @@ import objects/NodeObj
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
+#SetOnce lib.
+import SetOnce
+
 #Create a new MeritRemoval object.
-proc newMeritRemoval*(first: string, second: string, nonce: BN): MeritRemoval {.raises: [ResultError, ValueError, Exception].} =
+proc newMeritRemoval*(first: Hash[512], second: Hash[512], nonce: BN): MeritRemoval {.raises: [ValueError, Exception].} =
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)
-
     #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ResultError, "Couldn't set the Merit Removal nonce.")
-
+    result.nonce.value = nonce
     #Set the hash.
-    if not result.setHash(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the Merit Removal hash.")
+    result.hash.value = SHA512(result.serialize())
 
 #Sign a MeritRemoval object.
-proc sign*(wallet: Wallet, mr: MeritRemoval): bool {.raises: [ValueError].} =
-    result = true
-
+proc sign*(wallet: Wallet, mr: MeritRemoval) {.raises: [ValueError].} =
     #Set the sender behind the node.
-    if not mr.setSender(wallet.getAddress()):
-        return false
-
+    mr.sender.value = wallet.address
     #Sign the hash of the MR.
-    if not mr.setSignature(wallet.sign($mr.getHash())):
-        return false
+    mr.signature.value = wallet.sign($mr.hash.toValue())

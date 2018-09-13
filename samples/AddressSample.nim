@@ -1,24 +1,23 @@
 #Wallet lib.
 import ../src/Wallet/Wallet
 
+#SetOnce lib.
+import SetOnce
+
 #Declare the Wallet/Address vars here to not memory leak.
-var
-    wallet: Wallet
-    address: string
+var wallet: Wallet
 
 #Run 500 times.
 for _ in 0 ..< 500:
     #Create a new wallet.
     wallet = newWallet()
-    #Get the address.
-    address = wallet.getAddress()
 
     #Verify the address.
-    if not address.verify():
+    if not wallet.address.verify():
         raise newException(Exception, "Invalid Address Type 1")
     #Verify the address for the matching pub key.
-    if not address.verify(wallet.getPublicKey()):
+    if not wallet.address.verify(wallet.publicKey.toValue()):
         raise newException(Exception, "Invalid Address Type 2")
 
     #Print the generated address.
-    echo address
+    echo wallet.address.toValue()

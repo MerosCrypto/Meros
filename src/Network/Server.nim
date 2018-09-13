@@ -13,13 +13,16 @@ export ServerObj.Server, newServer
 #Events lib.
 import ec_events
 
+#SetOnce lib.
+import SetOnce
+
 #Networking standard libs.
 import asyncnet, asyncdispatch
 
 #Handles a client.
 proc handle(server: Server, client: ServerClient) {.async.} =
     #Get the client ID.
-    var id: int = client.getID()
+    var id: int = client.id
 
     #While true...
     while true:
@@ -31,7 +34,7 @@ proc handle(server: Server, client: ServerClient) {.async.} =
 
         #Emit the new Message. If that returns false...
         if not (
-            await server.getEventEmitter().get(
+            await server.eventEmitter.get(
                 proc (msg: Message): Future[bool],
                 "new"
             )(
@@ -53,7 +56,7 @@ proc handle(server: Server, client: ServerClient) {.async.} =
 #Listen on a port.
 proc listen*(server: Server, port: int) {.async.} =
     #Get the server socket.
-    var socket: AsyncSocket = server.getSocket()
+    var socket: AsyncSocket = server.socket
 
     #Start listening.
     socket.setSockOpt(OptReuseAddr, true)
@@ -76,7 +79,7 @@ proc broadcast*(server: Server, msg: string) {.raises: [Exception].} =
 
 #Reply to a message.
 proc reply*(server: Server, msg: Message, toSend: string) {.raises: [Exception].} =
-    asyncCheck server.getClient(msg.getClient()).send(toSend)
+    asyncCheck server.getClient(msg.client).send(toSend)
 
 proc disconnect*(server: Server, msg: Message) {.raises: [Exception].} =
-    server.disconnect(msg.getClient())
+    server.disconnect(msg.client)

@@ -18,6 +18,9 @@ import ../../../src/Database/Lattice/Verification
 import ../../../src/Network/Serialize/SerializeVerification
 import ../../../src/Network/Serialize/ParseVerification
 
+#SetOnce lib.
+import SetOnce
+
 #Test 20 serializations.
 for i in 1 .. 20:
     echo "Testing Verification Serialization/Parsing, iteration " & $i & "."
@@ -29,7 +32,7 @@ for i in 1 .. 20:
         verifier: Wallet = newWallet()
         #Send (for 1 EMB).
         send: Send = newSend(
-            receiver.getAddress(),
+            receiver.address,
             newBN("10000000000"),
             newBN()
         )
@@ -40,7 +43,7 @@ for i in 1 .. 20:
 
     #Verify the Send.
     var verif: Verification = newVerification(send, BNNums.ZERO)
-    discard verifier.sign(verif)
+    verifier.sign(verif)
 
     #Serialize it and parse it back.
     var verifParsed: Verification = verif.serialize().parseVerification()
@@ -50,12 +53,12 @@ for i in 1 .. 20:
 
     #Test the Node properties.
     assert(verif.descendant == verifParsed.descendant)
-    assert(verif.getSender() == verifParsed.getSender())
-    assert(verif.getNonce() == verifParsed.getNonce())
-    assert(verif.getHash() == verifParsed.getHash())
-    assert(verif.getSignature() == verifParsed.getSignature())
+    assert(verif.sender == verifParsed.sender)
+    assert(verif.nonce == verifParsed.nonce)
+    assert(verif.hash == verifParsed.hash)
+    assert(verif.signature == verifParsed.signature)
 
     #Test the Verification properties.
-    assert(verif.getVerified() == verifParsed.getVerified())
+    assert(verif.verified == verifParsed.verified)
 
 echo "Finished the Network/Serialize/Verification test."

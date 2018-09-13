@@ -21,11 +21,14 @@ import objects/NodeObj
 import objects/DataObj
 export DataObj
 
+#SetOnce lib.
+import SetOnce
+
 #Create a new  node.
 proc newData*(
     data: seq[uint8],
     nonce: BN
-): Data {.raises: [ResultError, ValueError, Exception].} =
+): Data {.raises: [ValueError, Exception].} =
     #Verify the data argument.
     if data.len > 1024:
         raise newException(ValueError, "Data data was too long.")
@@ -36,37 +39,28 @@ proc newData*(
     )
 
     #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ResultError, "Setting the Data nonce failed.")
+    result.nonce.value = nonce
 
     #Set the hash.
-    if not result.setHash(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the Data hash.")
+    result.hash.value = SHA512(result.serialize())
 
 #'Mine' the data (beat the spam filter).
 proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: BN = newBN()
-        hash: ArgonHash = Argon(data.getSHA512(), proof.toString(256), true)
+        hash: ArgonHash = Argon(data.sha512, proof.toString(256), true)
 
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(data.getSHA512(), proof.toString(256), true)
+        hash = Argon(data.sha512, proof.toString(256), true)
 
-    if not data.setProof(proof):
-        raise newException(ResultError, "Couldn't set the Data proof.")
-    if not data.setHash(hash):
-        raise newException(ResultError, "Couldn't set the Data hash.")
+    data.proof.value = proof
+    data.hash.value = hash
 
 #Sign a TX.
-proc sign*(wallet: Wallet, data: Data): bool {.raises: [ValueError].} =
-    result = true
-
+proc sign*(wallet: Wallet, data: Data) {.raises: [ValueError].} =
     #Set the sender behind the node.
-    if not data.setSender(wallet.getAddress()):
-        return false
-
+    data.sender.value = wallet.address
     #Sign the hash of the Data.
-    if not data.setSignature(wallet.sign($data.getHash())):
-        return false
+    data.signature.value = wallet.sign($data.hash.toValue())

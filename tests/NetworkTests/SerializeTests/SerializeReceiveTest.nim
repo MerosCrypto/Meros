@@ -15,6 +15,9 @@ import ../../../src/Database/Lattice/Receive
 import ../../../src/Network/Serialize/SerializeReceive
 import ../../../src/Network/Serialize/ParseReceive
 
+#SetOnce lib.
+import SetOnce
+
 #Test 20 serializations.
 for i in 1 .. 20:
     echo "Testing Receive Serialization/Parsing, iteration " & $i & "."
@@ -28,12 +31,12 @@ for i in 1 .. 20:
 
     #Create a Receive (based on a send that doesn't exist for 1 EMB).
     recv = newReceive(
-        sender.getAddress(),
+        sender.address,
         newBN(),
         newBN()
     )
     #Sign it.
-    discard receiver.sign(recv)
+    receiver.sign(recv)
 
     #Serialize it and parse it back.
     var recvParsed: Receive = recv.serialize().parseReceive()
@@ -47,30 +50,30 @@ for i in 1 .. 20:
         "Descendant:\r\n" & $recv.descendant & "\r\n" & $recvParsed.descendant
     )
     assert(
-        recv.getSender == recvParsed.getSender(),
-        "Sender:\r\n" & recv.getSender() & "\r\n" & recvParsed.getSender()
+        recv.sender == recvParsed.sender,
+        "Sender:\r\n" & recv.sender & "\r\n" & recvParsed.sender
     )
     assert(
-        recv.getNonce() == recvParsed.getNonce(),
-        "Nonce:\r\n" & $recv.getNonce() & "\r\n" & $recvParsed.getNonce()
+        recv.nonce == recvParsed.nonce,
+        "Nonce:\r\n" & $recv.nonce & "\r\n" & $recvParsed.nonce
     )
     assert(
-        recv.getHash() == recvParsed.getHash(),
-        "Hash:\r\n" & $recv.getHash() & "\r\n" & $recvParsed.getHash()
+        recv.hash == recvParsed.hash,
+        "Hash:\r\n" & $recv.hash & "\r\n" & $recvParsed.hash
     )
     assert(
-        recv.getSignature() == recvParsed.getSignature(),
-        "Signature:\r\n" & recv.getSignature() & "\r\n" & recvParsed.getSignature()
+        recv.signature == recvParsed.signature,
+        "Signature:\r\n" & recv.signature & "\r\n" & recvParsed.signature
     )
 
     #Test the Receive properties.
     assert(
-        recv.getInputAddress() == recvParsed.getInputAddress(),
-        "Input Address:\r\n" & recv.getInputAddress() & "\r\n" & recvParsed.getInputAddress()
+        recv.inputAddress == recvParsed.inputAddress,
+        "Input Address:\r\n" & recv.inputAddress & "\r\n" & recvParsed.inputAddress
     )
     assert(
-        recv.getInputNonce() == recvParsed.getInputNonce(),
-        "Input Nonce:\r\n" & $recv.getInputNonce() & "\r\n" & $recvParsed.getInputNonce()
+        recv.inputNonce == recvParsed.inputNonce,
+        "Input Nonce:\r\n" & $recv.inputNonce & "\r\n" & $recvParsed.inputNonce
     )
 
 echo "Finished the Network/Serialize/Receive test."

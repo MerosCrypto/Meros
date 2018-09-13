@@ -13,16 +13,19 @@ import ../src/Database/Lattice/Receive
 import ../src/Network/Serialize/SerializeSend
 import ../src/Network/Serialize/SerializeReceive
 
+#SetOnce lib.
+import SetOnce
+
 var
     sender: Wallet = newWallet()   #Sender's wallet.
     receiver: Wallet = newWallet() #Receiver's wallet.
     send: Send = newSend(          #Send.
-        receiver.getAddress(),
+        receiver.address,
         newBN("10000000000"),
         newBN()
     )
     recv: Receive = newReceive(    #Receive.
-        sender.getAddress(),
+        sender.address,
         newBN(),
         newBN()
     )
@@ -32,7 +35,7 @@ send.mine("3333333333333333333333333333333333333333333333333333333333333333".toB
 discard sender.sign(send)
 
 #Sign the Receive.
-discard receiver.sign(recv)
+receiver.sign(recv)
 
 #Print info on them. The length is better than a garbage string.
 echo "The serialized Send is " & $send.serialize().len & " bytes long."

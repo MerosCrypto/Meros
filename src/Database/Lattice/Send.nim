@@ -21,6 +21,9 @@ import objects/NodeObj
 import objects/SendObj
 export SendObj
 
+#SetOnce lib.
+import SetOnce
+
 #Used to handle data strings.
 import strutils
 
@@ -29,7 +32,7 @@ proc newSend*(
     output: string,
     amount: BN,
     nonce: BN
-): Send {.raises: [ResultError, ValueError, Exception].} =
+): Send {.raises: [ValueError, Exception].} =
     #Verify output.
     if not Wallet.verify(output):
         raise newException(ValueError, "Send output address is not valid.")
@@ -45,41 +48,33 @@ proc newSend*(
     )
 
     #Set the nonce.
-    if not result.setNonce(nonce):
-        raise newException(ResultError, "Setting the Send nonce failed.")
+    result.nonce.value = nonce
 
-    #Set the hash.
-    if not result.setSHA512(SHA512(result.serialize())):
-        raise newException(ResultError, "Couldn't set the Send SHA512.")
+    #Set the SHA512.
+    result.sha512.value = SHA512(result.serialize())
 
 #'Mine' a TX (beat the spam filter).
 proc mine*(send: Send, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: BN = newBN()
-        hash: ArgonHash = Argon(send.getSHA512().toString(), proof.toString(256), true)
+        hash: ArgonHash = Argon(send.sha512.toString(), proof.toString(256), true)
 
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(send.getSHA512().toString(), proof.toString(256), true)
+        hash = Argon(send.sha512.toString(), proof.toString(256), true)
 
-    if not send.setProof(proof):
-        raise newException(ResultError, "Couldn't set the Send proof.")
-    if not send.setHash(hash):
-        raise newException(ResultError, "Couldn't set the Send hash.")
+    send.proof.value = proof
+    send.hash.value = hash
 
 #Sign a TX.
 proc sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError].} =
     result = true
 
     #Make sure the proof exists.
-    if send.getProof().getNil():
+    if send.proof.getNil():
         return false
-
     #Set the sender behind the node.
-    if not send.setSender(wallet.getAddress()):
-        return false
-
+    send.sender.value = wallet.address
     #Sign the hash of the Send.
-    if not send.setSignature(wallet.sign($send.getHash())):
-        return false
+    send.signature.value = wallet.sign($send.hash.toValue())

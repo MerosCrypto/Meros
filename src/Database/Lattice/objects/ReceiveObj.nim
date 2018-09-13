@@ -1,27 +1,23 @@
 #Numerical libs.
-import BN
+import BN as BNFile
 import ../../../lib/Base
 
 #Node object.
 import NodeObj
 
+#SetOnce lib.
+import SetOnce
+
 #Receive object.
 type Receive* = ref object of Node
     #Input address.
-    inputAddress: string
+    inputAddress*: SetOnce[string]
     #Input nonce.
-    inputNonce: BN
+    inputNonce*: SetOnce[BN]
 
 #New Receive object.
-proc newReceiveObj*(inputAddress: string, inputNonce: BN): Receive {.raises: [].} =
-    Receive(
-        descendant: NodeType.Receive,
-        inputAddress: inputAddress,
-        inputNonce: inputNonce
-    )
-
-#Getters.
-proc getInputAddress*(recv: Receive): string {.raises: [].} =
-    recv.inputAddress
-proc getInputNonce*(recv: Receive): BN {.raises: [].} =
-    recv.inputNonce
+proc newReceiveObj*(inputAddress: string, inputNonce: BN): Receive {.raises: [ValueError].} =
+    result = Receive()
+    result.descendant.value = NodeType.Receive
+    result.inputAddress.value = inputAddress
+    result.inputNonce.value = inputNonce
