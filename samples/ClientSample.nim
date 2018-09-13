@@ -85,7 +85,7 @@ if answer.toLower() == "send":
         nonce
     )
     #Mine the Send.
-    send.mine("".pad(64, "88").toBN(16))
+    send.mine("".pad(128, "aa").toBN(16))
     #Sign the Send.
     echo "Signing the Send retuned... " & $wallet.sign(send)
 

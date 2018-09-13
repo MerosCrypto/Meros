@@ -5,9 +5,6 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
-#Errors lib.
-import ../../lib/Errors
-
 #Wallet lib.
 import ../../Wallet/Wallet
 

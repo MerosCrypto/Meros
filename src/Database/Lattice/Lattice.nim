@@ -1,6 +1,5 @@
-#Errors and Util lib.
+#Errors.
 import ../../lib/Errors
-import ../../lib/Util
 
 #BN lib.
 import BN

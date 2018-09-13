@@ -1,6 +1,3 @@
-#Errors lib.
-import ../../lib/Errors
-
 #BN lib.
 import BN
 
