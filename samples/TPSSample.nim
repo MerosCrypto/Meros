@@ -84,6 +84,8 @@ proc handle(client: AsyncSocket) {.async.} =
             msgLength: int = int(header[3])
         #Remove the header.
         line = line.substr(4, line.len)
+        #Convert from Network encoding to raw.
+        line = line.toBN(253).toString(256)
 
         #Handle the different message types.
         case msgType:
@@ -168,9 +170,9 @@ proc spam() {.async.} =
         #Sign the Receive.
         receiver.sign(recvs[i])
 
-        #Serialize them.
-        serializedSends[i] = sendHeader & sends[i].serialize() & "\r\n"
-        serializedRecvs[i] = recvHeader & recvs[i].serialize() & "\r\n"
+        #Serialize them, and turn them into network encoded data.
+        serializedSends[i] = sendHeader & sends[i].serialize().toBN(256).toString(253) & "\r\n"
+        serializedRecvs[i] = recvHeader & recvs[i].serialize().toBN(256).toString(253) & "\r\n"
 
     #Print the time to generate the pairs.
     echo "Generated " & $total & " Send/Receive pairs in " & $(cpuTime() - start) & " seconds."

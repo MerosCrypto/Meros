@@ -1,5 +1,6 @@
-#Number lib.
+#Numerical libs.
 import BN
+import ../lib/Base
 
 #Message/ServerClient objects.
 import objects/MessageObj
@@ -44,7 +45,7 @@ proc handle(server: Server, client: ServerClient) {.async.} =
                     ord(line[1]),
                     MessageType(line[2]),
                     line.substr(0, 3),
-                    line.substr(4, line.len)
+                    line.substr(4, line.len).toBN(253).toString(256)
                 )
             )
         ):

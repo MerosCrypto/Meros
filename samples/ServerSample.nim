@@ -1,5 +1,6 @@
-#BN lib.
+#Numerical libs.
 import BN
+import ../src/lib/Base
 
 #Wallet lib.
 import ../src/Wallet/Wallet
@@ -59,6 +60,8 @@ proc handle(client: AsyncSocket) {.async.} =
             msgLength: int = int(header[3])
         #Remove the header.
         line = line.substr(4, line.len)
+        #Convert from Network encoding to raw.
+        line = line.toBN(253).toString(256)
 
         #Handle the different message types.
         case msgType:

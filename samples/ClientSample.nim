@@ -93,7 +93,7 @@ if answer.toLower() == "send":
     serialized = send.serialize()
     serialized =
         sendHeader & char(serialized.len) &
-        serialized &
+        serialized.toBN(256).toString(253) &
         "\r\n"
 
 #Handle a Receive.
@@ -119,7 +119,7 @@ elif answer.toLower() == "receive":
     serialized = recv.serialize()
     serialized =
         recvHeader & char(serialized.len) &
-        serialized &
+        serialized.toBN(256).toString(253) &
         "\r\n"
 
 else:
