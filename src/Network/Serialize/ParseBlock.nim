@@ -45,13 +45,13 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         #Miner 1 | Amount 1
         #Miner N | Amount N
         #Signature
-        blockSeq: seq[string] = blockStr.toBN(253).toString(256).split(delim)
+        blockSeq: seq[string] = blockStr.deserialize(13)
         #Nonce.
-        nonce: BN = blockSeq[0].toBN(255)
+        nonce: BN = blockSeq[0].toBN(256)
         #Last block hash.
-        last: ArgonHash = blockSeq[1].toBN(255).toString(16).pad(128).toArgonHash()
+        last: ArgonHash = blockSeq[1].toHex().pad(128).toArgonHash()
         #Time.
-        time: BN = blockSeq[2].toBN(255)
+        time: BN = blockSeq[2].toBN(256)
         #Total Validations.
         totalValidations: int = 0
         #Validations in the block.
@@ -67,21 +67,19 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
                 start: int,
                 last: int
             ]
-        ](blockSeq[3].toBN(255).toInt())
+        ](blockSeq[3].toBN(256).toInt())
         #Hashes of the validations.
         hashes: seq[SHA512Hash] = @[]
         #Merkle hash.
-        merkle: string = blockSeq[4 + (validations.len * 3)].toBN(255).toString(16).pad(128)
+        merkle: string = blockSeq[4 + (validations.len * 3)].toHex().pad(128)
         #Merkle Tree.
         tree: MerkleTree
         #Public Key of the Publisher.
-        publisher: string = blockSeq[5 + (validations.len * 3)].toBN(255).toString(16).pad(66)
+        publisher: string = blockSeq[5 + (validations.len * 3)].toHex().pad(66)
         #Proof.
-        proof: BN = blockSeq[6 + (validations.len * 3)].toBN(255)
-        #seq from blockSeq that's just the miners.
-        minersSeq: seq[string] = blockSeq
-        #Serialized miners.
-        minersSerialized: string
+        proof: string = blockSeq[6 + (validations.len * 3)]
+        #seq of the miners.
+        minersSeq: seq[string]
         #Miners.
         miners: seq[
             tuple[
@@ -95,7 +93,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
             ]
         ]()
         #Signature.
-        signature: string = blockSeq[blockSeq.len - 1].toBN(255).toString(16).pad(128)
+        signature: string = blockSeq[blockSeq.len - 1].toHex().pad(128)
 
     #Make sure less than 100 miners were included.
     if blockSeq.len > (8 + (validations.len * 3) + 200):
@@ -107,24 +105,24 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         firstValidation: int
         lastValidation: int
     for i in countup(4, 4 + (validations.len * 3) - 1, 3):
-        firstValidation = blockSeq[i + 1].toBN(255).toInt()
-        lastValidation = blockSeq[i + 2].toBN(255).toInt()
+        firstValidation = blockSeq[i + 1].toBN(256).toInt()
+        lastValidation = blockSeq[i + 2].toBN(256).toInt()
         totalValidations += lastValidation - firstValidation + 1
 
         validations[int((i - 4) / 3)] = (
-            validator: blockSeq[i].toBN(255).toString(16),
-            start: blockSeq[i + 1].toBN(255).toInt(),
-            last: blockSeq[i + 2].toBN(255).toInt()
+            validator: blockSeq[i].toHex(),
+            start: blockSeq[i + 1].toBN(256).toInt(),
+            last: blockSeq[i + 2].toBN(256).toInt()
         )
 
-    #Filter the blockSeq to just the miners.
-    #Set the first element to the nonce.
-    minersSeq[0] = nonce.toString(255)
-    #Delete all other data.
-    minersSeq.delete(1, 6 + (validations.len * 3))
-    minersSeq.delete(minersSeq.len - 1)
-    minersSerialized = minersSeq.join(delim)
-    miners = parseMiners(minersSerialized)
+    #Grab the miners out of the block.
+    var
+        minersStart: int
+        minersEnd: int
+    for i in 0 .. 4 + (validations.len * 3):
+        discard
+    var minersStr = !nonce.toString(256) & blockStr[minersStart .. minersEnd]
+    miners = minersStr.parseMiners()
 
     #Create the MerkleTree object.
     var validator: string
@@ -146,13 +144,13 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
     #Set the hash.
     result.hash = SHA512(result.serialize())
     #Set the proof.
-    result.proof = proof
+    result.proof = proof.toBN(256)
     #Set the Argon hash.
-    result.argon = Argon(result.hash.toString(), result.proof.toString(256))
+    result.argon = Argon(result.hash.toString(), proof)
     #Set the miners.
     result.miners.value = miners
     #Set the miners hash.
-    result.minersHash.value = SHA512(minersSerialized)
+    result.minersHash.value = SHA512(minersStr)
 
     #Verify the signature.
     if not newPublicKey(publisher).verify($(result.minersHash.toValue()), signature):

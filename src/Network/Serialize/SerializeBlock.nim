@@ -27,37 +27,35 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
     #Create the result.
     result =
         #Nonce.
-        blockArg.nonce.toString(255) !
+        !blockArg.nonce.toString(256) &
         #Last block.
-        blockArg.last.toBN().toString(255) !
+        !blockArg.last.toBN().toString(256) &
         #Time.
-        blockArg.time.toString(255) !
+        !blockArg.time.toString(256) &
         #Amount of validations.
-        newBN(blockArg.validations.len).toString(255) & delim
+        !newBN(blockArg.validations.len).toString(256)
 
     #Add on each validation.
     for validation in blockArg.validations:
         result &=
             #Address.
-            Address.toBN(validation.validator).toString(255) !
+            !Address.toBN(validation.validator).toString(256) &
             #Start index.
-            newBN(validation.start).toString(255) !
+            !newBN(validation.start).toString(256) &
             #End index.
-            newBN(validation.last).toString(255) & delim
+            !newBN(validation.last).toString(256)
 
     result &=
         #Merkle Tree root.
-        blockArg.merkle.hash.toBN().toString(255) !
+        !blockArg.merkle.hash.toBN().toString(256) &
         #Publisher.
-        blockArg.publisher.toBN(16).toString(255)
+        !blockArg.publisher.toBN(16).toString(256)
 
     if blockArg.signature.len != 0:
-        result &= delim &
+        result &=
             #Proof.
-            blockArg.proof.toString(255) !
+            !blockArg.proof.toString(256) &
             #Miners.
-            blockArg.miners.serialize() !
+            !blockArg.miners.serialize(blockArg.nonce.toValue()) &
             #Signature.
-            blockArg.signature.toBN(16).toString(255)
-
-        result = result.toBN(256).toString(253)
+            !blockArg.signature.toBN(16).toString(256)

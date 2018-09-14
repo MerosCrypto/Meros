@@ -2,7 +2,7 @@
 
 #Merit Serialize.
 import SerializeTests/SerializeMinersTest
-import SerializeTests/SerializeBlockTest
+#import SerializeTests/SerializeBlockTest
 
 #Lattice Serialize.
 import SerializeTests/SerializeSendTest
