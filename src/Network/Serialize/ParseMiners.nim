@@ -17,13 +17,13 @@ proc parseMiners*(minersStr: string): seq[tuple[miner: string, amount: int]] {.r
     result = @[]
 
     #Nonce | Address1 | Amount1 .. | AddressN | AmountN
-    var minersSeq: seq[string] = minersStr.split(delim)
+    var minersSeq: seq[string] = minersStr.deserialize(3)
 
     #Add each miner/amount.
     for i in countup(1, minersSeq.len - 1, 2):
         result.add(
             (
-                miner: newAddress(minersSeq[i].toBN(255).toString(16)),
-                amount: minersSeq[i + 1].toBN(255).toInt()
+                miner: newAddress(minersSeq[i].toHex()),
+                amount: int(minersSeq[i + 1][0])
             )
         )

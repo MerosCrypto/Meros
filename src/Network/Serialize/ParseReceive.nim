@@ -29,25 +29,24 @@ import strutils
 #Parse a Receive.
 proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].} =
     var
-        #Public Key | Nonce | Input Address | Input Nonce  | Signature
-        recvSeq: seq[string] = recvStr.toBN(253).toString(256).split(delim)
+        #Public Key | Nonce | Input Address | Input Nonce | Signature
+        recvSeq: seq[string] = recvStr.deserialize(5)
         #Get the sender's Public Key.
-        sender: PublicKey = recvSeq[0].toBN(255).toString(16).newPublicKey()
+        sender: PublicKey = newPublicKey(recvSeq[0].toHex())
         #Get the nonce.
-        nonce: BN = recvSeq[1].toBN(255)
+        nonce: BN = recvSeq[1].toBN(256)
         #Get the input Address.
-        inputAddress: string = recvSeq[2].toBN(255).toString(16).newAddress()
+        inputAddress: string = newAddress(recvSeq[2].toHex)
         #Get the input nonce.
-        inputNonce: BN = recvSeq[3].toBN(255)
+        inputNonce: BN = recvSeq[3].toBN(256)
         #Get the signature.
-        signature: string = recvSeq[4].toBN(255).toString(16).pad(128)
+        signature: string = recvSeq[4].toHex().pad(128)
 
     #Create the Receive.
     result = newReceiveObj(
         inputAddress,
         inputNonce
     )
-
 
     #Set the sender.
     result.sender.value = sender.newAddress()

@@ -21,13 +21,11 @@ import SetOnce
 #Serialize a Verification.
 proc serialize*(verif: Verification): string {.raises: [ValueError, Exception].} =
     result =
-        verif.nonce.toString(255) !
-        verif.verified.toBN().toString(255)
+        !verif.nonce.toString(256) &
+        !verif.verified.toBN().toString(256)
 
     if verif.signature.len != 0:
         result =
-            Address.toBN(verif.sender).toString(255) !
-            result !
-            verif.signature.toBN(16).toString(255)
-
-        result = result.toBN(256).toString(253)
+            !Address.toBN(verif.sender).toString(256) &
+            result &
+            !verif.signature.toBN(16).toString(256)

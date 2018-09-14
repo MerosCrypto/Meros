@@ -14,20 +14,13 @@ import strutils
 #Serialization function.
 proc serialize*(
     miners: seq[tuple[miner: string, amount: int]],
-    nonce: BN = BN()
+    nonce: BN
 ): string {.raises: [ValueError, Exception].} =
     #Create the result.
-    if nonce.getNil():
-        result = ""
-    else:
-        result = nonce.toString(255) & delim
+    result = !nonce.toString(256)
 
     #Add each miner.
     for miner in 0 ..< miners.len:
         result &=
-            Address.toBN(miners[miner].miner).toString(255) !
-            miners[miner].amount.toHex().toBN(16).toString(255)
-
-        #Don't add the delimiter to the end of the string.
-        if miner != (miners.len - 1):
-            result &= delim
+            !Address.toBN(miners[miner].miner).toString(256) &
+            $char(1) & $char(miners[miner].amount)

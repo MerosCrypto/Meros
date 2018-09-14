@@ -30,17 +30,17 @@ import strutils
 proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, Exception].} =
     var
         #Public Key | Nonce | Send Hash | Signature
-        verifSeq: seq[string] = verifStr.toBN(253).toString(256).split(delim)
+        verifSeq: seq[string] = verifStr.deserialize(4)
         #Get the Verifier's Public Key.
-        verifier: PublicKey = verifSeq[0].toBN(255).toString(16).newPublicKey()
+        verifier: PublicKey = newPublicKey(verifSeq[0].toHex())
         #Get the Verifier's address based off the Verifier's Public Key.
-        address: string = verifier.newAddress()
+        address: string = newAddress(verifier)
         #Get the nonce.
-        nonce: BN = verifSeq[1].toBN(255)
+        nonce: BN = verifSeq[1].toBN(256)
         #Get the send hash.
-        send: string = verifSeq[2].toBN(255).toString(16)
+        send: string = verifSeq[2].toHex()
         #Get the signature.
-        signature: string = verifSeq[3].toBN(255).toString(16).pad(128)
+        signature: string = verifSeq[3].toHex().pad(128)
 
     #Create the Verification.
     result = newVerificationObj(

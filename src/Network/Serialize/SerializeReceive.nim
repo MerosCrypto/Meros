@@ -17,19 +17,17 @@ import SetOnce
 
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =
-    result = recv.nonce.toString(255) & delim
+    result = !recv.nonce.toString(256)
 
     if recv.inputAddress == "minter":
-        result &= delim
+        result &= !""
     else:
-        result &= Address.toBN(recv.inputAddress).toString(255) & delim
+        result &= !Address.toBN(recv.inputAddress).toString(256)
 
-    result &= recv.inputNonce.toString(255)
+    result &= !recv.inputNonce.toString(256)
 
     if recv.signature.len != 0:
         result =
-            Address.toBN(recv.sender).toString(255) !
-            result !
-            recv.signature.toBN(16).toString(255)
-
-        result = result.toBN(256).toString(253)
+            !Address.toBN(recv.sender).toString(256) &
+            result &
+            !recv.signature.toBN(16).toString(256)
