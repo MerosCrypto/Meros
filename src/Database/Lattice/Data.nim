@@ -42,7 +42,7 @@ proc newData*(
     result.nonce.value = nonce
 
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    #result.hash.value = SHA512(result.serialize())
 
 #'Mine' the data (beat the spam filter).
 proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =

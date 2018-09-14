@@ -28,7 +28,7 @@ proc newMeritRemoval*(first: Hash[512], second: Hash[512], nonce: BN): MeritRemo
     #Set the nonce.
     result.nonce.value = nonce
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    #result.hash.value = SHA512(result.serialize())
 
 #Sign a MeritRemoval object.
 proc sign*(wallet: Wallet, mr: MeritRemoval) {.raises: [ValueError].} =
