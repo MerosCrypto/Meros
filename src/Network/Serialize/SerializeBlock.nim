@@ -52,10 +52,15 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
         !blockArg.publisher.toBN(16).toString(256)
 
     if blockArg.signature.len != 0:
+        #Proof.
+        result &= !blockArg.proof.toString(256)
+        
+        #Serialize the miners.
+        var minersSerialized = blockArg.miners.serialize(blockArg.nonce.toValue())
         result &=
-            #Proof.
-            !blockArg.proof.toString(256) &
-            #Miners.
-            !blockArg.miners.serialize(blockArg.nonce.toValue()) &
+            #Add the miners.
+            !minersSerialized &
+            #Serialized miners length.
+            !newBN(minersSerialized.len - 4).toString(256) &
             #Signature.
             !blockArg.signature.toBN(16).toString(256)

@@ -44,6 +44,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         #Merkle Tree | Publisher | Proof
         #Miner 1 | Amount 1
         #Miner N | Amount N
+        #Miners Length
         #Signature
         blockSeq: seq[string] = blockStr.deserialize(13)
         #Nonce.
@@ -78,8 +79,10 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         publisher: string = blockSeq[5 + (validations.len * 3)].toHex().pad(66)
         #Proof.
         proof: string = blockSeq[6 + (validations.len * 3)]
-        #seq of the miners.
-        minersSeq: seq[string]
+        #Miners length string.
+        minersLenStr: string = blockSeq[blockSeq.len - 2]
+        #Miners length.
+        minersLen: int = minersLenStr.toBN(256).toInt()
         #Miners.
         miners: seq[
             tuple[
@@ -117,11 +120,11 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
 
     #Grab the miners out of the block.
     var
-        minersStart: int
-        minersEnd: int
-    for i in 0 .. 4 + (validations.len * 3):
-        discard
+        #End is the string end minus the signature length minues the length of the string that says the miners length.
+        minersEnd: int = blockStr.len - 66 - (!minersLenStr).len
+        minersStart: int = minersEnd - minersLen - 1
     var minersStr = !nonce.toString(256) & blockStr[minersStart .. minersEnd]
+    #Parse the miners.
     miners = minersStr.parseMiners()
 
     #Create the MerkleTree object.
