@@ -11,6 +11,9 @@ import ../../lib/Time
 #Hash lib.
 import ../../lib/Hash
 
+#Merkle lib.
+import ../../lib/Merkle
+
 #Wallet libs.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
@@ -19,8 +22,7 @@ import ../../Wallet/Wallet
 import ../../Network/Serialize/SerializeMiners
 import ../../Network/Serialize/SerializeBlock
 
-#Merkle lib and BlockObj.
-import Merkle
+#BlockObj.
 import objects/BlockObj
 #Export the BlockObj.
 export BlockObj

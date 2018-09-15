@@ -1,5 +1,7 @@
 import BN as BNLib
 
+import ../../lib/Merkle
+
 import Block
 import Blockchain
 

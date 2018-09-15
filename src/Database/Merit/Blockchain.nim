@@ -5,8 +5,10 @@ import ../../lib/Base
 #Time lib.
 import ../../lib/Time
 
-#Merkle, Block, and Difficulty libs.
-import Merkle
+#Merkle lib.
+import ../../lib/Merkle
+
+#Block, and Difficulty libs.
 import Block
 import Difficulty
 

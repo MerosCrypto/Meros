@@ -10,11 +10,13 @@ import ../../../src/lib/Time
 #Hash lib.
 import ../../../src/lib/Hash
 
+#Merkle lib.
+import ../../../src/lib/Merkle
+
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
 #Merit libs.
-import ../../../src/Database/Merit/Merkle
 import ../../../src/Database/Merit/Block
 
 #Lattice lib.

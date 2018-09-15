@@ -2,14 +2,14 @@
 import BN as BNFile
 import ../../../lib/Base
 
-#Time library.
+#Time lib.
 import ../../../lib/Time
 
-#Hash library.
+#Hash lib.
 import ../../../lib/Hash
 
-#Merkle library.
-import ../Merkle
+#Merkle lib.
+import ../../../lib/Merkle
 
 #SetOnce lib.
 import SetOnce

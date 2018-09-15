@@ -11,6 +11,9 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
+#Merkle lib.
+import ../../lib/Merkle
+
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
@@ -18,9 +21,8 @@ import ../../Wallet/Wallet
 #Lattice lib.
 import ../../Database/Lattice/Lattice
 
-#Block and MerkleTree objects.
+#Block object.
 import ../../Database/Merit/objects/BlockObj
-import ../../Database/Merit/Merkle
 
 #delim character/serialize/parse functions.
 import SerializeCommon

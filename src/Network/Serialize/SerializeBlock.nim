@@ -5,11 +5,13 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
+#Merkle lib.
+import ../../../src/lib/Merkle
+
 #Address library.
 import ../../Wallet/Address
 
-#Merkle lib and Block object.
-import ../../Database/Merit/Merkle
+#Block object.
 import ../../Database/Merit/objects/BlockObj
 
 #Common serialization functions and the Miners serialization.
@@ -54,7 +56,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
     if blockArg.signature.len != 0:
         #Proof.
         result &= !blockArg.proof.toString(256)
-        
+
         #Serialize the miners.
         var minersSerialized = blockArg.miners.serialize(blockArg.nonce.toValue())
         result &=

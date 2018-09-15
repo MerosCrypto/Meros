@@ -1,8 +1,10 @@
 #Number lib.
 import BN
 
+#Merkle lib.
+import ../../lib/Merkle
+
 #Block/Blockchain/State libs.
-import Merkle
 import Block
 import Blockchain
 import State

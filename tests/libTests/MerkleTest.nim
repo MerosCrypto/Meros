@@ -1,14 +1,14 @@
 #Merkle Tree Test.
 
 #Hash lib.
-import ../../../src/lib/Hash
+import ../../src/lib/Hash
 
 #Numerical libs.
 import BN
-import ../../../src/lib/Base
+import ../../src/lib/Base
 
 #Merkle lib.
-import ../../../src/Database/Merit/Merkle
+import ../../src/lib/Merkle
 
 #SetOnce lib.
 import SetOnce
@@ -42,6 +42,6 @@ var
     ])
 
 #Test the results.
-assert(hash == merkle.hash, "MerkleTree hash inequals what it should equal.")
+assert(hash == merkle.hash, "MerkleTree hash is not what it should be.")
 
-echo "Finished the Database/Network/MerkleTree test."
+echo "Finished the lib/MerkleTree test."
