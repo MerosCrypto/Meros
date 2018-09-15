@@ -26,7 +26,7 @@ import SetOnce
 
 #Create a new  node.
 proc newData*(
-    data: seq[uint8],
+    data: string,
     nonce: BN
 ): Data {.raises: [ValueError, Exception].} =
     #Verify the data argument.
@@ -42,18 +42,18 @@ proc newData*(
     result.nonce.value = nonce
 
     #Set the hash.
-    #result.hash.value = SHA512(result.serialize())
+    result.hash.value = SHA512(result.serialize())
 
 #'Mine' the data (beat the spam filter).
 proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: BN = newBN()
-        hash: ArgonHash = Argon(data.sha512, proof.toString(256), true)
+        hash: ArgonHash = Argon(data.sha512.toString(), proof.toString(256), true)
 
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(data.sha512, proof.toString(256), true)
+        hash = Argon(data.sha512.toString(), proof.toString(256), true)
 
     data.proof.value = proof
     data.hash.value = hash
