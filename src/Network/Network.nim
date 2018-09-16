@@ -10,7 +10,8 @@ import Serialize/ParseReceive
 import objects/MessageObj
 import objects/ClientsObj
 import objects/NetworkObj
-#Export the Network object.
+#Export the Message and Network objects.
+export MessageObj
 export NetworkObj
 
 #Socket sublibs.
@@ -25,6 +26,9 @@ import SetOnce
 
 #Networking standard libs.
 import asyncnet, asyncdispatch
+
+#String utils standard lib.
+import strutils
 
 const
     #Minimum supported protocol.
@@ -72,16 +76,18 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
                 case msg.content.toValue():
                     of MessageType.Send:
                         nodeEvents.get(
-                            proc (send: Send),
+                            proc (msg: Message, send: Send),
                             "send"
                         )(
+                            msg,
                             msg.message.parseSend()
                         )
                     of MessageType.Receive:
                         nodeEvents.get(
-                            proc (recv: Receive),
+                            proc (msg: Message, recv: Receive),
                             "recv"
                         )(
+                            msg,
                             msg.message.parseReceive()
                         )
                     of MessageType.Data:
@@ -114,3 +120,16 @@ proc connect*(network: Network, ip: string, port: int = 5132) {.async.} =
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
     network.add(socket)
+
+#Function wrappers for the functions in Clients that take in Clients, not Network.
+#Sends a message to all clients.
+proc broadcast*(network: Network, msg: Message) {.raises: [Exception].} =
+    network.clients.broadcast(msg)
+#Reply to a message.
+proc reply*(network: Network, msg: Message, toSend: string) {.raises: [Exception].} =
+    network.clients.reply(msg, toSend)
+#Disconnect a client.
+proc disconnect*(network: Network, id: int) {.raises: [Exception].} =
+    network.clients.disconnect(id)
+proc disconnect*(network: Network, msg: Message) {.raises: [Exception].} =
+    network.clients.disconnect(msg.client)
