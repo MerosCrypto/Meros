@@ -1,5 +1,5 @@
-#Import the Server object.
-import ServerObj
+#Import the Clients object.
+import ClientsObj
 
 #Events library.
 import ec_events
@@ -7,25 +7,33 @@ import ec_events
 #SetOnce lib.
 import SetOnce
 
+#Asyncnet standard lib.
+import asyncnet
+
 type Network* = ref object of RootObj
     #Network ID.
     id*: SetOnce[int]
-    #Socket Event Emitter for the sublibraries.
-    socketEvents*: SetOnce[EventEmitter]
+    #Clients.
+    clients*: Clients
     #Server.
-    server*: SetOnce[Server]
-    #Node Event Emitter for the node.
+    server*: SetOnce[AsyncSocket]
+    #Event Emitter for the Clients/Server.
+    subEvents*: SetOnce[EventEmitter]
+    #Event Emitter for the node.
     nodeEvents*: SetOnce[EventEmitter]
 
 #Constructor.
 proc newNetworkObj*(
     id: int,
-    socketEvents: EventEmitter,
-    server: Server,
+    clients: Clients,
+    server: AsyncSocket,
+    subEvents: EventEmitter,
     nodeEvents: EventEmitter
 ): Network {.raises: [ValueError].} =
-    result = Network()
+    result = Network(
+        clients: clients
+    )
     result.id.value = id
-    result.socketEvents.value = socketEvents
     result.server.value = server
+    result.subEvents.value = subEvents
     result.nodeEvents.value = nodeEvents

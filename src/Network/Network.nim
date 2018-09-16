@@ -6,16 +6,16 @@ import Serialize/ParseSend
 import ../Database/Lattice/Receive
 import Serialize/ParseReceive
 
-#Message object.
+#Message/Clients/Network objects.
 import objects/MessageObj
+import objects/ClientsObj
+import objects/NetworkObj
+#Export the Network object.
+export NetworkObj
 
 #Socket sublibs.
 import Server
-import Client
-
-#Network object.
-import objects/NetworkObj
-export NetworkObj
+import Clients
 
 #Events lib.
 import ec_events
@@ -23,8 +23,8 @@ import ec_events
 #SetOnce lib.
 import SetOnce
 
-#Async standard lib.
-import asyncdispatch
+#Networking standard libs.
+import asyncnet, asyncdispatch
 
 const
     #Minimum supported protocol.
@@ -35,18 +35,19 @@ const
 #Constructor.
 proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError, Exception].} =
     #Event emitter for the socket sublibraries.
-    var events: EventEmitter = newEventEmitter()
+    var subEvents: EventEmitter = newEventEmitter()
 
     #Create the Network object.
     result = newNetworkObj(
         id,
-        events,
-        newServer(events),
+        newClients(),
+        newAsyncSocket(),
+        subEvents,
         nodeEvents
     )
 
     #On a new message...
-    events.on(
+    subEvents.on(
         "new",
         proc (msg: Message): Future[bool] {.async.} =
             #Set the result to true.
@@ -94,6 +95,13 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
     )
 
 #Start listening.
-proc listen*(network: Network, port: int = 5132) =
+proc start*(network: Network, port: int = 5132) {.raises: [ValueError, Exception].} =
+    #Listen for a new Server client.
+    network.subEvents.on(
+        "server",
+        proc (client: AsyncSocket) =
+            network.add(client)
+    )
+
     #Start the server.
-    asyncCheck network.server.listen(port)
+    asyncCheck network.listen(port)
