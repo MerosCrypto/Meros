@@ -57,8 +57,8 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Excepti
         difficulties: seq[Difficulty] = blockchain.difficulties
         difficulty: Difficulty = difficulties[difficulties.len - 1]
 
-    #Generate difficulties so we can test the block against the latest difficulty.
-    while difficulty.endTime < newBlock.time:
+    #If the difficulty needs to be updated...
+    if difficulty.endBlock <= newBlock.nonce:
         difficulty = calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, 10, 6)
         blockchain.add(difficulty)
 
