@@ -96,5 +96,7 @@ proc reply*(clients: Clients, msg: Message, toSend: string) {.raises: [Exception
     asyncCheck clients.getClient(msg.client).send(toSend)
 
 #Disconnect a client.
+proc disconnect*(clients: Clients, id: int) {.raises: [Exception].} =
+    clients.disconnect(id)
 proc disconnect*(clients: Clients, msg: Message) {.raises: [Exception].} =
     clients.disconnect(msg.client)

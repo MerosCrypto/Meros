@@ -105,3 +105,12 @@ proc start*(network: Network, port: int = 5132) {.raises: [ValueError, Exception
 
     #Start the server.
     asyncCheck network.listen(port)
+
+#Connect to another node.
+proc connect*(network: Network, ip: string, port: int = 5132) {.async.} =
+    #Create the socket.
+    var socket: AsyncSocket = newAsyncSocket()
+    #Connect.
+    await socket.connect(ip, Port(port))
+    #Add the node to the clients.
+    network.add(socket)
