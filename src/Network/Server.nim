@@ -22,15 +22,32 @@ import asyncnet, asyncdispatch
 
 #Handles a client.
 proc handle(server: Server, client: ServerClient) {.async.} =
-    #Get the client ID.
-    var id: int = client.id
+    var
+        #Get the client ID.
+        id: int = client.id
+        #Define the loop vars outside of the loop.
+        header: string
+        size: int
+        line: string
 
-    #While true...
     while true:
-        #Read the socket data into the line var.
-        var line: string = await client.recvLine()
-        #Ignore invalid lines.
-        if line.len == 0:
+        #Receive the header.
+        header = await client.recv(4)
+        #Verify the length.
+        if header.len != 4:
+            continue
+        #Define the size.
+        size = ord(header[3])
+        #While the size is 255 bytes (signifying it's even bigger than that)...
+        while ord(header[header.len - 1]) == 255:
+            #Get a new byte.
+            header &= await client.recv(1)
+            #Add it to the size.
+            size += ord(header[header.len - 1])
+        #Get the line.
+        line = await client.recv(size)
+        #Verify the length.
+        if line.len != size:
             continue
 
         #Emit the new Message. If that returns false...
@@ -41,11 +58,11 @@ proc handle(server: Server, client: ServerClient) {.async.} =
             )(
                 newMessage(
                     id,
-                    ord(line[0]),
-                    ord(line[1]),
-                    MessageType(line[2]),
-                    line.substr(0, 3),
-                    line.substr(4, line.len).toBN(253).toString(256)
+                    ord(header[0]),
+                    ord(header[1]),
+                    MessageType(header[2]),
+                    header,
+                    line
                 )
             )
         ):

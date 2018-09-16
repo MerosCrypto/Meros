@@ -91,10 +91,7 @@ if answer.toLower() == "send":
 
     #Create the serialized string.
     serialized = send.serialize()
-    serialized =
-        sendHeader & char(serialized.len) &
-        serialized.toBN(256).toString(253) &
-        "\r\n"
+    serialized = sendHeader & char(serialized.len) & serialized
 
 #Handle a Receive.
 elif answer.toLower() == "receive":
@@ -118,10 +115,7 @@ elif answer.toLower() == "receive":
     #Create the serialized string.
     serialized = recv.serialize()
     serialized =
-        recvHeader & char(serialized.len) &
-        serialized.toBN(256).toString(253) &
-        "\r\n"
-
+        recvHeader & char(serialized.len) & serialized
 else:
     echo "I don't recognize that option."
     quit(-1)

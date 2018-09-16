@@ -27,7 +27,7 @@ import times
 
 var
     #Testing vars.
-    total: int = 3000 #Total number of Send blocks to make.
+    total: int = 10000 #Total number of transactions to make.
     txCount: int = 0  #Count of the handled transactions.
     start: float      #Start time.
 
@@ -51,13 +51,11 @@ var
     sendHeader: string =                                 #Send header.
         $(char(0)) &
         $(char(0)) &
-        $(char(0)) &
         $(char(0))
     recvHeader: string =                                 #Receive header.
         $(char(0)) &
         $(char(0)) &
-        $(char(1)) &
-        $(char(0))
+        $(char(1))
     serializedSends: seq[string] = newSeq[string](total) #Serialized sends.
     serializedRecvs: seq[string] = newSeq[string](total) #Serialized Receives.
     client: AsyncSocket = newAsyncSocket()               #Client socket.
@@ -68,24 +66,35 @@ discard lattice.add(mintRecv)
 
 #Handles a client.
 proc handle(client: AsyncSocket) {.async.} =
-    while true:
-        #Read the socket data into the line var.
-        var line: string = await client.recvLine()
-        if line.len == 0:
-            return
+    #Define the loop variables outside of the loops.
+    var
+        header: string
+        line: string
+        network: int
+        version: int
+        msgType: int
+        msgLength: int
 
-        var
-            #Extract the header.
-            header: string = line.substr(0, 3)
-            #Parse the header.
-            network:   int = int(header[0])
-            version:   int = int(header[1])
-            msgType:   int = int(header[2])
-            msgLength: int = int(header[3])
-        #Remove the header.
-        line = line.substr(4, line.len)
-        #Convert from Network encoding to raw.
-        line = line.toBN(253).toString(256)
+    while true:
+        #Read the header.
+        header = await client.recv(4)
+        #Verify the length.
+        if header.len != 4:
+            echo "Invalid Header Length."
+            continue
+
+        #Parse the header.
+        network = ord(header[0])
+        version = ord(header[1])
+        msgType = ord(header[2])
+        msgLength = ord(header[3])
+
+        #Read the line.
+        line = await client.recv(msgLength)
+        #Verify the length.
+        if line.len != msgLength:
+            echo "Invalid Message Length."
+            continue
 
         #Handle the different message types.
         case msgType:
@@ -143,6 +152,9 @@ proc spam() {.async.} =
     #Start the timer.
     start = cpuTime()
 
+    #Define the serialized var.
+    var serialized: string
+
     #Generate the Send/Receive pairs.
     for i in 0 ..< total:
         #Generate the Send.
@@ -171,8 +183,10 @@ proc spam() {.async.} =
         receiver.sign(recvs[i])
 
         #Serialize them, and turn them into network encoded data.
-        serializedSends[i] = sendHeader & sends[i].serialize().toBN(256).toString(253) & "\r\n"
-        serializedRecvs[i] = recvHeader & recvs[i].serialize().toBN(256).toString(253) & "\r\n"
+        serialized = sends[i].serialize()
+        serializedSends[i] = sendHeader & $char(serialized.len) & serialized
+        serialized = recvs[i].serialize()
+        serializedRecvs[i] = recvHeader & $char(serialized.len) & serialized
 
     #Print the time to generate the pairs.
     echo "Generated " & $total & " Send/Receive pairs in " & $(cpuTime() - start) & " seconds."
