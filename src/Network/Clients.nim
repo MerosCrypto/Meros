@@ -87,16 +87,17 @@ proc add*(network: Network, socket: AsyncSocket) {.raises: [ValueError, Exceptio
     asyncCheck client.handle(network.subEvents)
 
 #Sends a message to all clients.
-proc broadcast*(clients: Clients, msg: string) {.raises: [Exception].} =
+proc broadcast*(clients: Clients, msg: Message) {.raises: [Exception].} =
     for client in clients.clients:
-        asyncCheck client.send(msg)
+        if not client.isClosed():
+            asyncCheck client.send($msg)
 
 #Reply to a message.
 proc reply*(clients: Clients, msg: Message, toSend: string) {.raises: [Exception].} =
-    asyncCheck clients.getClient(msg.client).send(toSend)
+    var client: Client = clients.getClient(msg.client)
+    if not client.isClosed():
+        asyncCheck client.send(toSend)
 
 #Disconnect a client.
-proc disconnect*(clients: Clients, id: int) {.raises: [Exception].} =
-    clients.disconnect(id)
 proc disconnect*(clients: Clients, msg: Message) {.raises: [Exception].} =
     clients.disconnect(msg.client)
