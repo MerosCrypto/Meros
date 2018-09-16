@@ -32,8 +32,8 @@ proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError].} =
         ],
         difficulties: @[
             newDifficultyObj(
-                creation,
-                creation + newBN(10),
+                BNNums.ZERO,
+                newBN(6),
                 "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16)
             )
         ]

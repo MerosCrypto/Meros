@@ -28,7 +28,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
     result = true
 
     #If it's for the wrong time...
-    if (diff.start > newBlock.time) or (diff.endTime <= newBlock.time):
+    if (diff.start > newBlock.nonce) or (diff.endBlock <= newBlock.nonce):
         return false
 
     #If the Argon hash didn't beat the difficulty...
@@ -95,7 +95,7 @@ proc calculateNextDifficulty*(
 
     #Create the new difficulty.
     result = newDifficultyObj(
-        last.endTime,
-        last.endTime + newBN(periodInSeconds),
+        last.endBlock,
+        last.endBlock + newBN(blocksPerPeriod),
         difficulty
     )
