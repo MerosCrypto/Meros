@@ -34,3 +34,7 @@ proc newMessage*(
     result.content.value = content
     result.header.value = header
     result.message.value = message
+
+#Stringify.
+proc `$`*(msg: Message): string =
+    msg.header & msg.message
