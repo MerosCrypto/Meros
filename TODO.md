@@ -31,7 +31,6 @@ Improvements:
 - Don't have BN round down; have it round to the closest number.
 
 Behavior Changes:
-- Don't use delimiters over data lengths (theoretically faster to read X than split).
 - Retarget based on block count, not time.
 - Have required work be based on account, not that TX, and infinitely precalculable.
 - Finalize Argon2's Block parameters.
@@ -43,7 +42,7 @@ Bug fixes:
 Documentation:
 - Add comments to:
     - DB/Merit/State.nim
-    
+
     - Wallet/Wallet.nim
 - Use Documentation Comments.
 - Ember Whitepaper.
