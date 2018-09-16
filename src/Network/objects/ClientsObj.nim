@@ -19,7 +19,7 @@ type Clients* = ref object of RootObj
 proc newClients*(): Clients {.raises: [].} =
     Clients(
         total: 0,
-        clients: newSeq[Client](5)
+        clients: newSeq[Client]()
     )
 
 #Getter.
