@@ -28,7 +28,7 @@ import SetOnce
 proc newData*(
     data: string,
     nonce: BN
-): Data {.raises: [ValueError, Exception].} =
+): Data {.raises: [ValueError].} =
     #Verify the data argument.
     if data.len > 1024:
         raise newException(ValueError, "Data data was too long.")
@@ -42,7 +42,7 @@ proc newData*(
     result.nonce.value = nonce
 
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    result.sha512.value = SHA512(data)
 
 #'Mine' the data (beat the spam filter).
 proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =
