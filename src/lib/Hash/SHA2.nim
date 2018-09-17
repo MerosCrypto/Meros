@@ -20,7 +20,7 @@ proc SHA2_256*(bytesArg: string): SHA2_256Hash {.raises: [].} =
     #If it's an empty string...
     if bytes.len == 0:
         return SHA2_256Hash(
-            data: sha256.digest(empty, uint(bytes.len)).data
+            data: sha256.digest(EmptyHash, uint(bytes.len)).data
         )
 
     #Digest the byte array.
@@ -36,7 +36,7 @@ proc SHA2_512*(bytesArg: string): SHA2_512Hash {.raises: [].} =
     #If it's an empty string...
     if bytes.len == 0:
         return SHA2_512Hash(
-            data: sha512.digest(empty, uint(bytes.len)).data
+            data: sha512.digest(EmptyHash, uint(bytes.len)).data
         )
 
     #Digest the byte array.
@@ -45,11 +45,9 @@ proc SHA2_512*(bytesArg: string): SHA2_512Hash {.raises: [].} =
     )
 
 #String to SHA2_256Hash.
-proc toSHA2_256Hash*(hex: string): SHA2_256Hash =
-    for i in countup(0, hex.len - 1, 2):
-        result.data[int(i / 2)] = uint8(parseHexInt(hex[i .. i + 1]))
+proc toSHA2_256Hash*(hash: string): SHA2_256Hash =
+    hash.toHash(256)
 
 #String to SHA2_512Hash.
-proc toSHA2_512Hash*(hex: string): SHA2_512Hash =
-    for i in countup(0, hex.len - 1, 2):
-        result.data[int(i / 2)] = uint8(parseHexInt(hex[i .. i + 1]))
+proc toSHA2_512Hash*(hash: string): SHA2_512Hash =
+    hash.toHash(512)

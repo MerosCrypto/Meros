@@ -79,6 +79,5 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): ArgonHash 
         raise newException(ResultError, "Argon2d raised an error.")
 
 #String to ArgonHash.
-proc toArgonHash*(hex: string): ArgonHash =
-    for i in countup(0, hex.len - 1, 2):
-        result.data[int(i / 2)] = uint8(parseHexInt(hex[i .. i + 1]))
+proc toArgonHash*(hash: string): ArgonHash {.raises: [ValueError].} =
+    hash.toHash(512)

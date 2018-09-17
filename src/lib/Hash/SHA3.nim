@@ -20,7 +20,7 @@ proc SHA3_256*(bytesArg: string): SHA3_256Hash {.raises: [].} =
     #If it's an empty string...
     if bytes.len == 0:
         return SHA3_256Hash(
-            data: sha3_256.digest(empty, uint(bytes.len)).data
+            data: sha3_256.digest(EmptyHash, uint(bytes.len)).data
         )
 
     #Digest the byte array.
@@ -36,7 +36,7 @@ proc SHA3_512*(bytesArg: string): SHA3_512Hash {.raises: [].} =
     #If it's an empty string...
     if bytes.len == 0:
         return SHA3_512Hash(
-            data: sha3_512.digest(empty, uint(bytes.len)).data
+            data: sha3_512.digest(EmptyHash, uint(bytes.len)).data
         )
 
     #Digest the byte array.
@@ -45,11 +45,9 @@ proc SHA3_512*(bytesArg: string): SHA3_512Hash {.raises: [].} =
     )
 
 #String to SHA3_256Hash.
-proc toSHA3_256Hash*(hex: string): SHA3_256Hash =
-    for i in countup(0, hex.len - 1, 2):
-        result.data[int(i / 2)] = uint8(parseHexInt(hex[i .. i + 1]))
+proc toSHA3_256Hash*(hash: string): SHA3_256Hash {.raises: [ValueError].} =
+    hash.toHash(256)
 
 #String to SHA3_512Hash.
-proc toSHA3_512Hash*(hex: string): SHA3_512Hash =
-    for i in countup(0, hex.len - 1, 2):
-        result.data[int(i / 2)] = uint8(parseHexInt(hex[i .. i + 1]))
+proc toSHA3_512Hash*(hash: string): SHA3_512Hash {.raises: [ValueError].} =
+    hash.toHash(512)

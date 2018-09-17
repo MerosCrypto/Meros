@@ -18,7 +18,7 @@ proc RipeMD_160*(bytesArg: string): RipeMD_160Hash {.raises: [].} =
     #If it's an empty string...
     if bytes.len == 0:
         return RipeMD_160Hash(
-            data: ripemd160.digest(empty, 0).data
+            data: ripemd160.digest(EmptyHash, 0).data
         )
 
     #Digest the byte array.
@@ -27,6 +27,5 @@ proc RipeMD_160*(bytesArg: string): RipeMD_160Hash {.raises: [].} =
     )
 
 #String to RipeMD_160Hash.
-proc toRipeMD_160Hash*(hex: string): RipeMD_160Hash =
-    for i in countup(0, hex.len - 1, 2):
-        result.data[int(i / 2)] = uint8(parseHexInt(hex[i .. i + 1]))
+proc toRipeMD_160Hash*(hash: string): RipeMD_160Hash {.raises: [ValueError].} =
+    hash.toHash(160)

@@ -38,7 +38,7 @@ proc newBranchObject*(left: Leaf, right: Leaf, empty = false): Branch {.raises: 
 
     if empty:
         result.empty.value = true
-        result.hash.value = "".toSHA512Hash()
+        result.hash.value = SHA512("")
         return
 
     result.hash.value = SHA512(
@@ -60,8 +60,8 @@ proc newMerkleTree*(hashesArg: seq[SHA512Hash]): MerkleTree {.raises: [ValueErro
     if hashes.len == 0:
         return cast[MerkleTree](
             newBranchObject(
-                newLeafObject("".toSHA512Hash()),
-                newLeafObject("".toSHA512Hash()),
+                newLeafObject(SHA512("")),
+                newLeafObject(SHA512("")),
                 true
             )
         )
