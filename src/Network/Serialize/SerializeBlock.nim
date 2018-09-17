@@ -14,7 +14,7 @@ import ../../Wallet/Address
 #Block object.
 import ../../Database/Merit/objects/BlockObj
 
-#Common serialization functions and the Miners serialization.
+#Serialize/Deserialize functions.
 import SerializeCommon
 import SerializeMiners
 

@@ -16,7 +16,7 @@ import ../../lib/Hash
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/VerificationObj
 
-#delim character/serialize function.
+#Serialize/Deserialize functions.
 import SerializeCommon
 import SerializeVerification
 

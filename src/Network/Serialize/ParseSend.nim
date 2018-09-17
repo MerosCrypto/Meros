@@ -19,7 +19,7 @@ import ../../lib/Hash
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/SendObj
 
-#delim character/serialize function.
+#Serialize/Deserialize functions.
 import SerializeCommon
 import SerializeSend
 
@@ -29,7 +29,7 @@ import SetOnce
 #String utils standard lib.
 import strutils
 
-#Parse a send.
+#Parse a Send.
 proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Exception].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
@@ -69,4 +69,5 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Excep
     #Verify the signature.
     if not sender.verify($result.hash.toValue(), signature):
         raise newException(ValueError, "Received signature was invalid.")
+    #Set the signature.
     result.signature.value = signature

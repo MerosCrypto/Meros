@@ -16,7 +16,7 @@ import ../../lib/Hash
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/ReceiveObj
 
-#delim character/serialize function.
+#Serialize/Deserialize functions.
 import SerializeCommon
 import SerializeReceive
 

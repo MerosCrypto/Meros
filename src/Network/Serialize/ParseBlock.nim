@@ -24,7 +24,7 @@ import ../../Database/Lattice/Lattice
 #Block object.
 import ../../Database/Merit/objects/BlockObj
 
-#delim character/serialize/parse functions.
+#Serialize/parse functions.
 import SerializeCommon
 import SerializeMiners
 import ParseMiners
@@ -37,7 +37,7 @@ import SetOnce
 import strutils
 import sequtils
 
-#Parse a block.
+#Parse a Block.
 proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultError, ValueError, Exception].} =
     var
         #Nonce | Last | Time | Validations Count
