@@ -48,9 +48,8 @@ for i in 1 .. 15:
     echo "Testing Data Serialization/Parsing, iteration " & $i & "."
 
     var
-        #Wallets.
-        sender: Wallet = newWallet()
-        receiver: Wallet = newWallet()
+        #Wallet.
+        wallet: Wallet = newWallet()
         #Data.
         data: Data = newData(
             tests[i - 1],
@@ -59,7 +58,7 @@ for i in 1 .. 15:
     #Mine the Data.
     data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
     #Sign it.
-    sender.sign(data)
+    wallet.sign(data)
 
     #Serialize it and parse it back.
     var dataParsed: Data = data.serialize().parseData()

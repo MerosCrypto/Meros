@@ -19,9 +19,8 @@ import ../../lib/Hash
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/DataObj
 
-#Serialize function.
+#Deerialize function.
 import SerializeCommon
-import SerializeData
 
 #SetOnce lib.
 import SetOnce
@@ -33,19 +32,19 @@ import strutils
 proc parseData*(sendStr: string): Data {.raises: [ResultError, ValueError, Exception].} =
     var
         #Public Key | Nonce | Data | Proof | Signature
-        sendSeq: seq[string] = sendStr.deserialize(6)
+        dataSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(sendSeq[0].toHex())
+        sender: PublicKey = newPublicKey(dataSeq[0].toHex())
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
-        nonce: BN = sendSeq[1].toBN(256)
+        nonce: BN = dataSeq[1].toBN(256)
         #Get the data.
-        data: string = sendSeq[2]
+        data: string = dataSeq[2]
         #Get the proof.
-        proof: string = sendSeq[3]
+        proof: string = dataSeq[3]
         #Get the signature.
-        signature: string = sendSeq[4].toHex().pad(128)
+        signature: string = dataSeq[4].toHex().pad(128)
 
     #Create the Data.
     result = newDataObj(

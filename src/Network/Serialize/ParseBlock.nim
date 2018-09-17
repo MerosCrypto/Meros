@@ -52,7 +52,7 @@ proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultErr
         #Nonce.
         nonce: BN = blockSeq[0].toBN(256)
         #Last block hash.
-        last: ArgonHash = blockSeq[1].toHex().pad(128).toArgonHash()
+        last: ArgonHash = blockSeq[1].pad(64, $char(0)).toArgonHash()
         #Time.
         time: BN = blockSeq[2].toBN(256)
         #Total Validations.
