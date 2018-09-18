@@ -53,6 +53,8 @@ proc calculateNextDifficulty*(
         endTime: BN = blocks[blocks.len - 1].time
         #Period time.
         actualTime: BN = endTime - start
+        #Possible values.
+        possible: BN = MAX - last.difficulty
 
     #Handle divide by zeros.
     if actualTime == BNNums.ZERO:
@@ -60,44 +62,33 @@ proc calculateNextDifficulty*(
 
     #If we went faster...
     if actualTime < targetTime:
-        echo actualTime
-        echo targetTime
+        #Set the change to be:
+            #The possible values multipled by
+                #The targetTime (bigger) minus the actualTime (smaller)
+                #Over the targetTime
+        #Since we need the difficulty to increase.
+        var change: BN = possible * (targetTime - actualTime) / targetTime
 
-        var
-            #Distance from the max difficulty.
-            distance: BN = MAX - last.difficulty
-            #Set the change to be:
-                #The distance multipled by
-                    #The targetTime (bigger) minus the actualTime (smaller)
-                    #Over the targetTime
-            #Since we need the difficulty to increase.
-            change: BN = distance * (targetTime - actualTime) / targetTime
-        echo distance
-        echo change
-
-        #If we're increasing the difficulty by more than 2x...
-        if distance / BNNums.TWO < change:
-            #Set the change to be 2x.
-            change = distance / BNNums.TWO
+        #If we're increasing the difficulty by more than 10%...
+        if possible / BNNums.TEN < change:
+            #Set the change to be 10%.
+            change = possible / BNNums.TEN
 
         #Set the difficulty.
         difficulty = last.difficulty + change
     #If we went slower...
     elif actualTime > targetTime:
-        var
-            #Distance from the 'min' difficulty.
-            distance: BN = last.difficulty
-            #Set the change to be:
-                #The distance
-                #Multipled by the targetTime (smaller)
-                #Divided by the actualTime (bigger)
-            #Since we need the difficulty to decrease.
-            change: BN = distance * targetTime / actualTime
+        #Set the change to be:
+            #The invalid values
+            #Multipled by the targetTime (smaller)
+            #Divided by the actualTime (bigger)
+        #Since we need the difficulty to decrease.
+        var change: BN = last.difficulty * targetTime / actualTime
 
-        #If we're decreasing the difficulty by more than 2x...
-        if last.difficulty / BNNums.TWO > change:
-            #Set the change to be 2x.
-            change = last.difficulty / BNNums.TWO
+        #If we're decreasing the difficulty by more than 10% of the possible values...
+        if possible / BNNums.TEN < change:
+            #Set the change to be 10% of the possible values.
+            change = possible / BNNums.TEN
 
         #Set the difficulty.
         difficulty = last.difficulty - change
@@ -112,6 +103,3 @@ proc calculateNextDifficulty*(
         last.endBlock + newBN(blocksPerPeriod),
         difficulty
     )
-
-    echo "Old Difficulty: " & last.difficulty.toString(16)
-    echo "New Difficulty: " & difficulty.toString(16)
