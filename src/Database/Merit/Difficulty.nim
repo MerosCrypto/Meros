@@ -39,6 +39,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
 proc calculateNextDifficulty*(
     blocks: seq[Block],
     difficulties: seq[Difficulty],
+    periodInSeconds: int,
     blocksPerPeriod: int
 ): Difficulty {.raises: [ValueError].} =
     var
