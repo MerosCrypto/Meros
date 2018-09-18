@@ -17,6 +17,7 @@ type ArgonHash* = Hash[512]
 
 #Include the headers.
 {.passC: "-Isrc/lib/Hash/Argon/include".}
+{.passC: "-Isrc/lib/Hash/Argon/src".}
 {.passC: "-Isrc/lib/Hash/Argon/src/blake2".}
 #Compile the relevant C files.
 {.compile: "Argon/src/core.c".}
@@ -42,10 +43,8 @@ proc argon2d(
 #Take in data (128 char max) and a salt (128 char max); return a ArgonHash.
 proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): ArgonHash {.raises: [ResultError, ValueError].} =
     var
-        data: string = dataArg.pad(128, "0")
-        salt: string = saltArg.pad(128, "0")
-        dataArr: array[64, uint8]
-        saltArr: array[64, uint8]
+        data: string = dataArg.pad(128, $char(0))
+        salt: string = saltArg.pad(128, $char(0))
 
     #Verify argument validity.
     if (data.len > 128) or (salt.len > 128):
@@ -69,10 +68,10 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): ArgonHash 
         iterations,
         memory,
         uint32(1),
-        cast[ptr uint8](addr dataArr[0]),
-        uint32(64),
-        cast[ptr uint8](addr saltArr[0]),
-        uint32(64),
+        cast[ptr uint8](addr data[0]),
+        uint32(128),
+        cast[ptr uint8](addr salt[0]),
+        uint32(128),
         addr result.data[0],
         uint32(64)
     ) != 0:

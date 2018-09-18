@@ -63,7 +63,7 @@ proc newBlockObj*(
 proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
     #Ceate the block.
     result = newBlockObj(
-        "".toArgonHash(),
+        Argon("", ""),
         newBN(),
         getTime(),
         @[],
