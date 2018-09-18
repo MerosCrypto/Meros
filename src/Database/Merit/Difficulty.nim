@@ -21,15 +21,11 @@ import strutils
 import os
 
 #Highest difficulty.
-let max: BN = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF".toBN(16)
+let MAX: BN = "F".repeat(128).toBN(16)
 
 #Verifies a difficulty against a block.
 proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =
     result = true
-
-    #If it's for the wrong time...
-    if (diff.start > newBlock.nonce) or (diff.endBlock <= newBlock.nonce):
-        return false
 
     #If the Argon hash didn't beat the difficulty...
     if newBlock.argon.toBN() < diff.difficulty:
@@ -39,52 +35,69 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
 proc calculateNextDifficulty*(
     blocks: seq[Block],
     difficulties: seq[Difficulty],
-    periodInSeconds: int,
+    targetTime: BN,
     blocksPerPeriod: int
 ): Difficulty {.raises: [ValueError].} =
+    #If it was the genesis block, keep the same difficulty.
+    if blocks.len == 1:
+        return difficulties[0]
+
     var
         #Last difficulty.
         last: Difficulty = difficulties[difficulties.len-1]
-        #Blocks in the last period.
-        blockCount: int = 0
-        difficulty: BN
+        #New difficulty.
+        difficulty: BN = last.difficulty
+        #Start time of the difficulty (the block before this difficulty).
+        start: BN = blocks[blocks.len - (blocksPerPeriod + 1)].time
+        #End time of the difficulty (the last block).
+        endTime: BN = blocks[blocks.len - 1].time
+        #Period time.
+        actualTime: BN = endTime - start
 
-    #Iterate through every block.
-    var b: Block
-    #Stop at 0. This is a while loop because countdown wasn't behaving properly.
-    for i in countdown(blocks.len - 1, 0):
-        #Break if the block is out of the period.
-        if blocks[i].time <= last.start:
-            break
+    #Handle divide by zeros.
+    if actualTime == BNNums.ZERO:
+        actualTime = BNNums.ONE
 
-        #Else, increment the block count for the last period.
-        inc(blockCount)
+    #If we went faster...
+    if actualTime < targetTime:
+        echo actualTime
+        echo targetTime
 
-    #If there were as many blocks as the target...
-    if blocksPerPeriod == blockCount:
-        #Use the same difficulty.
-        difficulty = last.difficulty
-    #Else if we exceeded the target...
-    elif blockCount > blocksPerPeriod:
         var
             #Distance from the max difficulty.
-            distance: BN = max - last.difficulty
-            #Inverse of the rate (block count / block target).
-            rate: BN = (newBN(blocksPerPeriod) * BNNums.HUNDRED) / newBN(blockCount)
-            #Amount we're increasing the last difficulty by.
-            change: BN = distance * rate / BNNums.HUNDRED
+            distance: BN = MAX - last.difficulty
+            #Set the change to be:
+                #The distance multipled by
+                    #The targetTime (bigger) minus the actualTime (smaller)
+                    #Over the targetTime
+            #Since we need the difficulty to increase.
+            change: BN = distance * (targetTime - actualTime) / targetTime
+        echo distance
+        echo change
+
+        #If we're increasing the difficulty by more than 2x...
+        if distance / BNNums.TWO < change:
+            #Set the change to be 2x.
+            change = distance / BNNums.TWO
 
         #Set the difficulty.
         difficulty = last.difficulty + change
-    #Else if we didn't meet the target...
-    elif blockCount < blocksPerPeriod:
+    #If we went slower...
+    elif actualTime > targetTime:
         var
             #Distance from the 'min' difficulty.
             distance: BN = last.difficulty
-            #Rate (block count / block target).
-            rate: BN = (newBN(blockCount) * BNNums.HUNDRED) / newBN(blocksPerPeriod)
-            #Amount we're decreasing the last difficulty by.
-            change: BN = distance * rate / BNNums.HUNDRED
+            #Set the change to be:
+                #The distance
+                #Multipled by the targetTime (smaller)
+                #Divided by the actualTime (bigger)
+            #Since we need the difficulty to decrease.
+            change: BN = distance * targetTime / actualTime
+
+        #If we're decreasing the difficulty by more than 2x...
+        if last.difficulty / BNNums.TWO > change:
+            #Set the change to be 2x.
+            change = last.difficulty / BNNums.TWO
 
         #Set the difficulty.
         difficulty = last.difficulty - change
@@ -99,3 +112,6 @@ proc calculateNextDifficulty*(
         last.endBlock + newBN(blocksPerPeriod),
         difficulty
     )
+
+    echo "Old Difficulty: " & last.difficulty.toString(16)
+    echo "New Difficulty: " & difficulty.toString(16)

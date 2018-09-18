@@ -84,7 +84,7 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Excepti
 
     #If the difficulty needs to be updated...
     if difficulty.endBlock <= newBlock.nonce:
-        difficulty = calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, BLOCK_TIME * blocksPerPeriod, blocksPerPeriod)
+        difficulty = calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, newBN(BLOCK_TIME * blocksPerPeriod), blocksPerPeriod)
         blockchain.add(difficulty)
 
     #If the difficulty wasn't beat...
