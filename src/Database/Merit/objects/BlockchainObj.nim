@@ -12,6 +12,9 @@ import DifficultyObj
 #SetOnce lib.
 import SetOnce
 
+#String utils standard lib.
+import strutils
+
 #Blockchain object.
 type Blockchain* = ref object of RootObj
     #Height. BN for compatibility.
@@ -33,8 +36,8 @@ proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError].} =
         difficulties: @[
             newDifficultyObj(
                 BNNums.ZERO,
-                newBN(6),
-                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16)
+                newBN(1),
+                "A".repeat(128).toBN(16)
             )
         ]
     )
