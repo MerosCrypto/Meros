@@ -34,7 +34,7 @@ proc main() =
         #Block var; defined here to stop a memory leak.
         newBlock: Block
         #Last block hash, nonce, time, and proof vars.
-        last: ArgonHash = Argon(SHA512(genesis).toString(), "00")
+        last: ArgonHash = merit.getBlocks()[0].argon
         nonce: BN = newBN(1)
         time: BN
         proof: BN = newBN()
@@ -47,7 +47,7 @@ proc main() =
 
     #Mine the chain.
     while true:
-        echo "Looping..."
+        echo "Looping with a proof of: " & $proof
 
         #Update the time.
         time = getTime()
