@@ -30,7 +30,6 @@ Behavior Changes:
 - Finalize Argon2's Block parameters.
 
 Bug fixes:
-- Difficulty algorithm is rough and breaks on higher time intervals.
 - Remove GMP's memory leak.
 
 Documentation:
