@@ -15,12 +15,6 @@ Features:
 - Chain Params file.
 - Have Merit disappear after 50000 (365.25\*24\*6 is 52596; just rounded down for ease) blocks.
 - Have Merit Holders indexable by the order they got Merit in.
-- Have Difficulty retarget:
-    - Every block until the end of month 1.
-    - Every hour until the end of month 3.
-    - Every 6 hours until the end of month 6.
-    - Every 12 hours until the end of the year.
-    - Every day from then on.
 
 Improvements:
 - Use custom errors.
