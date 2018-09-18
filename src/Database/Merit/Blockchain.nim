@@ -57,9 +57,27 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Excepti
         difficulties: seq[Difficulty] = blockchain.difficulties
         difficulty: Difficulty = difficulties[difficulties.len - 1]
 
+    var blocksPerNextDifficulty : int = 1 # every block
+
+    # tests for a month to three months
+    if blockchain.height >= newBN($(30 * 24 * 6)) and blockchain.height < newBN($(90 * 24 * 6)):
+        blocksPerNextDifficulty = 6 #one hour
+
+    # tests for 3 month to 6 months
+    if blockchain.height >= newBN($(90 * 24 * 6)) and blockchain.height < newBN($(180 * 24 * 6)):
+        blocksPerNextDifficulty = 36 # six hours
+
+    # tests for 6 month to a year
+    if blockchain.height >= newBN($(180 * 24 * 6)) and blockchain.height < newBN($(365 * 24 * 6)):
+        blocksPerNextDifficulty = 72 # every 12  hours
+
+    # tests for year and on
+    if blockchain.height >= newBN($(365 * 24 * 6)):
+        blocksPerNextDifficulty = 144 # every day
+
     #If the difficulty needs to be updated...
     if difficulty.endBlock <= newBlock.nonce:
-        difficulty = calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, 10, 6)
+        difficulty = calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, blocksPerNextDifficulty)
         blockchain.add(difficulty)
 
     #If the difficulty wasn't beat...
