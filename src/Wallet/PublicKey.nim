@@ -26,4 +26,4 @@ proc `$`*(key: PublicKey): string {.raises: [ValueError].} =
 
 #Verify a signature using a constructed Public Key.
 proc verify*(key: PublicKey, hash: string, sig: string): bool {.raises: [ValueError].} =
-    key.secpVerify(hash, sig)
+    key.secpVerify("EMB" & hash, sig)

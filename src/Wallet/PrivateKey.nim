@@ -45,4 +45,4 @@ proc `$`*(key: PrivateKey): string {.raises: [].} =
 
 #Sign a message via its hash.
 proc sign*(key: PrivateKey, hash: string): string {.raises: [ValueError].} =
-    result = key.secpSign(hash)
+    result = key.secpSign("EMB" & hash)
