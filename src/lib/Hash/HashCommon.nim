@@ -18,7 +18,7 @@ proc toHash*(hash: string, bits: static[int]): Hash[bits] {.raises: [ValueError]
         for i in countup(0, hash.len - 1, 2):
             result.data[i div 2] = uint8(parseHexInt(hash[i .. i + 1]))
     else:
-        raise newException(ValueError, "toHash not handled the right amount of data.")
+        raise newException(ValueError, "toHash not handed the right amount of data.")
 
 #To binary string.
 proc toString*(hash: Hash): string {.raises: [].} =

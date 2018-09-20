@@ -38,7 +38,7 @@ proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, E
         #Get the nonce.
         nonce: BN = verifSeq[1].toBN(256)
         #Get the send hash.
-        send: string = verifSeq[2].toHex()
+        send: string = verifSeq[2].toHex().pad(128)
         #Get the signature.
         signature: string = verifSeq[3].toHex().pad(128)
 
