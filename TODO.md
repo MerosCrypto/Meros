@@ -26,6 +26,7 @@ Improvements:
 - Don't have BN round down; have it round to the closest number.
 
 Behavior Changes:
+- Change addresses to use a modified version of the Bech32 standard.
 - Have required work be based on account, not that TX, and infinitely precalculable.
 - Finalize Argon2's Block parameters.
 
