@@ -45,7 +45,11 @@ proc addToLookup(lattice: Lattice, node: Node) {.raises: [ValueError].} =
         )
 
 #Add a Node to the Lattice.
-proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.raises: [ValueError, Exception].} =
+proc add*(
+    lattice: Lattice,
+    node: Node,
+    mintOverride: bool = false
+): bool {.raises: [ValueError].} =
     #Make sure only this node creates mint TXs.
     if (
         (node.sender == "minter") and
@@ -119,7 +123,11 @@ proc add*(lattice: Lattice, node: Node, mintOverride: bool = false): bool {.rais
     #Else, add the node to the lookup table.
     lattice.addToLookup(node)
 
-proc mint*(lattice: Lattice, address: string, amount: BN): Index {.raises: [ResultError, ValueError, Exception].} =
+proc mint*(
+    lattice: Lattice,
+    address: string,
+    amount: BN
+): Index {.raises: [ResultError, ValueError].} =
     #Get the Height in a new var that won't update.
     var height: BN = lattice.lattice.getAccount("minter").height
 

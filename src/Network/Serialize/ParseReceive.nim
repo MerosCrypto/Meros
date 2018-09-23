@@ -27,7 +27,7 @@ import SetOnce
 import strutils
 
 #Parse a Receive.
-proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, Exception].} =
+proc parseReceive*(recvStr: string): Receive {.raises: [ValueError].} =
     var
         #Public Key | Nonce | Input Address | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(5)

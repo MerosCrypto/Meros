@@ -21,7 +21,10 @@ export VerificationObj
 #SetOnce lib.
 import SetOnce
 
-proc newVerification*(node: Node, nonce: BN): Verification {.raises: [ValueError, Exception].} =
+proc newVerification*(
+    node: Node,
+    nonce: BN
+): Verification {.raises: [ValueError].} =
     result = newVerificationObj(
         node.hash
     )

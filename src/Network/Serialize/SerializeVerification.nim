@@ -19,7 +19,7 @@ import SerializeCommon
 import SetOnce
 
 #Serialize a Verification.
-proc serialize*(verif: Verification): string {.raises: [ValueError, Exception].} =
+proc serialize*(verif: Verification): string {.raises: [ValueError].} =
     result =
         !verif.nonce.toString(256) &
         !verif.verified.toBN().toString(256)

@@ -15,7 +15,7 @@ import strutils
 proc serialize*(
     miners: seq[tuple[miner: string, amount: int]],
     nonce: BN
-): string {.raises: [ValueError, Exception].} =
+): string {.raises: [ValueError].} =
     #Create the result.
     result = !nonce.toString(256)
 

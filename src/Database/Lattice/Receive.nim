@@ -28,7 +28,7 @@ proc newReceive*(
     inputAddress: string,
     inputNonce: BN,
     nonce: BN
-): Receive {.raises: [ValueError, Exception].} =
+): Receive {.raises: [ValueError].} =
     #Verify the input address.
     if (
         (not Wallet.verify(inputAddress)) and
@@ -57,7 +57,7 @@ proc newReceive*(
     result.hash.value = SHA512(result.serialize())
 
 #Create a new Receive node.
-proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError, Exception].} =
+proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError].} =
     newReceive(
         index.address.toValue(),
         index.nonce.toValue(),

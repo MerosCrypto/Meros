@@ -25,7 +25,7 @@ import SetOnce
 import strutils
 
 #Serialize a Block.
-proc serialize*(blockArg: Block): string {.raises: [ValueError, Exception].} =
+proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
     #Create the result.
     result =
         #Nonce.

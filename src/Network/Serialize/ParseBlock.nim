@@ -38,7 +38,10 @@ import strutils
 import sequtils
 
 #Parse a Block.
-proc parseBlock*(blockStr: string, lattice: Lattice): Block {.raises: [ResultError, ValueError, Exception].} =
+proc parseBlock*(
+    blockStr: string,
+    lattice: Lattice
+): Block {.raises: [ResultError, ValueError].} =
     var
         #Nonce | Last | Time | Validations Count
         #Address 1 | Start Index 1 | End Index 1

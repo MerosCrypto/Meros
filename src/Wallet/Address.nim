@@ -1,52 +1,68 @@
-#Number libs.
+#Numerical libs.
 import BN
 import ../lib/Base
 
-#Hash lib.
-import ../lib/Hash
+#Base32 lib.
+import ../lib/Base32
 
 #Public Key lib.
 import PublicKey
 
-#Generates a checksum for the public key.
-#The checksum is the last 4 characters of the Base58 version of the SHA512 cubed hash of the key.
-proc generateChecksum(key: string): string {.raises: [Exception].} =
-    result =
-        (SHA512^3)(
-            key.toBN(16).toString(256)
-        )
-        .toBN()
-        .toString(58)
-    result = result.substr(result.len - 4, result.len)
+#String utils standard lib.
+import strutils
 
-#Generates an address based on a public key.
+#Human readable data.
+const HRP: string = "EMB"
+
+#Generates a six character BCH code for the public key.
+proc generateBCH(data: Base32): string =
+    #Create the BCH.
+    #TODO.
+    result = ""
+
+#Generates a address using a modified form of Bech32 based on a public key.
 #An address is composed of the following:
-#   1. "Emb" prefix.
-#   2. Base58 encoded version of the public key.
-#   3. A checksum (described above).
-#The Emb prefix is for easy identification.
-#The public key is because we need it; Base58 encoding is to save space.
-#The checksum is to verify the user typed a valid address.
-proc newAddress*(key: string): string {.raises: [ValueError, Exception].} =
-    if (key.len != 66):
+#   1. "Emb" prefix (human readable data part).
+#   2. Base32 version of the public key.
+#   3. A BCH code.
+proc newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
+    #Verify the key length.
+    if key.len != 33:
         raise newException(ValueError, "Public Key isn't compressed.")
 
-    #Base58 encoded version of the compressed public key, plus a checksum of said public key.
+    #Get the Base32 version of Public Key.
+    let base32: Base32 = key.toBase32()
+
+    #Create the address.
     result =
-        key
-        .toBN(16)
-        .toString(58) &
-        generateChecksum(key)
+        "Emb" &
+        $base32 &
+        generateBCH(base32)
 
-    #Add the EMB prefix.
-    result = "Emb" & result
+#Work with binary/hex strings, not just arrays.
+proc newAddress*(keyArg: string): string {.raises: [ValueError].} =
+    #Verify the key length.
+    if (keyArg.len != 33) and (keyArg.len != 66):
+        raise newException(ValueError, "Public Key isn't compressed.")
 
-#Work with Public Keys objects, not just hex public keys.
-proc newAddress*(key: PublicKey): string {.raises: [ValueError, Exception].} =
-    result = newAddress($key)
+    #Extract the key.
+    var key: array[33, uint8]
+    if keyArg.len == 33:
+        for i in 0 ..< 33:
+            key[i] = uint8(keyArg[i])
+    else:
+        for i in countup(0, 65, 2):
+            key[i div 2] = uint8(parseHexInt(keyArg))
+
+    #Create a new address with the array.
+    result = newAddress(key)
+
+#Work with Public Keys objects, not just arrays.
+proc newAddress*(key: PublicKey): string {.raises: [ValueError].} =
+    result = newAddress(key.toArray())
 
 #Verifies if an address is valid.
-proc verify*(address: string): bool {.raises: [ValueError, Exception].} =
+proc verify*(address: string): bool {.raises: [ValueError].} =
     #Return true if there's no issue.
     result = true
 
@@ -54,32 +70,36 @@ proc verify*(address: string): bool {.raises: [ValueError, Exception].} =
     if address.substr(0, 2) != "Emb":
         return false
 
-    #Check to make sure it's a valid Base58 number.
-    if not address.substr(3, address.len).isBase(58):
+    #Check to make sure it's a valid Base32 number.
+    if not address.substr(3, address.len).isBase32():
         return false
 
     #Verify the public key format.
-    let key: string = address.substr(3, address.len-5).toBN(58).toString(16)
-    if (key.substr(0, 1) != "02") and (key.substr(0, 1) != "03"):
+    let key: seq[uint8] = address.substr(3, address.len-7).toBase32().toSeq()
+    if (key[0] != 2) and (key[0] != 3):
         return false
 
-    #Verify the checksum.
-    if address.substr(address.len-4, address.len) != generateChecksum(key):
-        return false
+    #Verify the BCH.
+    #TODO.
 
 #If we have a key to check with, make an address for that key and compare with the given address.
-proc verify*(address: string, key: string): bool {.raises: [ValueError, Exception].} =
+proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError].} =
     address == newAddress(key)
 
-#Work with Public Keys objects, not just hex public keys.
-proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError, Exception].} =
-    verify(address, $key)
-
-proc toBN*(address: string): BN {.raises: [ValueError, Exception].} =
+proc toBN*(address: string): BN {.raises: [ValueError].} =
+    #Verify the address.
     if not address.verify():
         raise newException(ValueError, "Invalid Address.")
 
-    result = address.substr(3, address.len-5).toBN(58)
+    #Define the key and a string to put the array into.
+    var
+        key: seq[uint8] = address.substr(3, address.len).toBase32().toSeq()
+        keyStr: string = ""
 
-proc toBN*(address: PublicKey): BN {.raises: [ValueError, Exception].} =
-    toBN(newAddress(address))
+    #Turn the seq into a string.
+    #We don't use b in key because Base32 is returning a trailing 0 for some reason.
+    for i in 0 ..< 33:
+        keyStr &= char(key[i])
+
+    #Create the BN.
+    result = keyStr.toBN(256)

@@ -36,28 +36,28 @@ var
     )
 
 echo "The coins were minted."
-echo "\r\n"
+echo ""
 
 #Sign and add the Mint Receive so the network has funds.
 sender.sign(mintRecv)
 echo "Adding the Mint Receive returned: " & $lattice.add(mintRecv)
-echo "\r\n"
+echo ""
 
 #Print the balances.
 echo "The sender has:   " & $lattice.getBalance(sender.address)
 echo "The receiver has: " & $lattice.getBalance(receiver.address)
-echo "\r\n"
+echo ""
 
 #Mine, sign, and add the Send.
 send.mine(lattice.difficulties.transaction)
 echo "Signing the Send returned: " & $sender.sign(send)
 echo "Adding the Send returned:  " & $lattice.add(send)
-echo "\r\n"
+echo ""
 
 #Sign and add the Receive.
 receiver.sign(recv)
 echo "Adding the Receive returned: " & $lattice.add(recv)
-echo "\r\n"
+echo ""
 
 #Print the final balances.
 echo "The sender has:   " & $lattice.getBalance(sender.address)

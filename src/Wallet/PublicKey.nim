@@ -18,12 +18,16 @@ proc newPublicKey*(privKey: PrivateKey): PublicKey {.raises: [ValueError].} =
 proc newPublicKey*(hex: string): PublicKey {.raises: [ValueError].} =
     result = secpPublicKey(hex)
 
+#Verify a signature using a constructed Public Key.
+proc verify*(key: PublicKey, hash: string, sig: string): bool {.raises: [ValueError].} =
+    key.secpVerify("EMB" & hash, sig)
+
 #Stringify a Public Key to it's compressed hex representation.
 proc `$`*(key: PublicKey): string {.raises: [ValueError].} =
     #Use the secondary stringify function in the SSECP256K1 Wrapper.
     #$! is so we don't infinitely call this same function.
     result = $!key
 
-#Verify a signature using a constructed Public Key.
-proc verify*(key: PublicKey, hash: string, sig: string): bool {.raises: [ValueError].} =
-    key.secpVerify("EMB" & hash, sig)
+#Convert a Public Key to a array[33, uint8].
+proc toArray*(key: PublicKey): array[33, uint8] =
+    SECP256K1Wrapper.toArray(key)

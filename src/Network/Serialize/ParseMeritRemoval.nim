@@ -30,7 +30,7 @@ import SetOnce
 import strutils
 
 #Parse a MeritRemoval.
-proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError, Exception].} =
+proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError].} =
     var
         #Public Key | Nonce | First | Second | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)

@@ -29,7 +29,7 @@ import SetOnce
 import strutils
 
 #Parse a Data.
-proc parseData*(sendStr: string): Data {.raises: [ResultError, ValueError, Exception].} =
+proc parseData*(sendStr: string): Data {.raises: [ResultError, ValueError].} =
     var
         #Public Key | Nonce | Data | Proof | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)

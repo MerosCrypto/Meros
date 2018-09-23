@@ -16,7 +16,7 @@ import SerializeCommon
 import SetOnce
 
 #Serialize a Receive.
-proc serialize*(recv: Receive): string {.raises: [ValueError, Exception].} =
+proc serialize*(recv: Receive): string {.raises: [ValueError].} =
     result = !recv.nonce.toString(256)
 
     if recv.inputAddress == "minter":

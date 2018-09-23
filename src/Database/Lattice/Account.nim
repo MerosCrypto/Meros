@@ -25,7 +25,11 @@ export AccountObj
 import SetOnce
 
 #Add a node.
-proc add(account: Account, node: Node, dependent: Node = nil): bool {.raises: [ValueError, Exception].} =
+proc add(
+    account: Account,
+    node: Node,
+    dependent: Node = nil
+): bool {.raises: [ValueError].} =
     result = true
 
     #Verify the sender.
@@ -51,7 +55,11 @@ proc add(account: Account, node: Node, dependent: Node = nil): bool {.raises: [V
     account.addNode(node, dependent)
 
 #Add a Send.
-proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueError, Exception].} =
+proc add*(
+    account: Account,
+    send: Send,
+    difficulty: BN
+): bool {.raises: [ValueError].} =
     #Override for minter.
     if send.sender == "minter":
         #Add the Send node.
@@ -73,7 +81,11 @@ proc add*(account: Account, send: Send, difficulty: BN): bool {.raises: [ValueEr
     result = account.add(cast[Node](send))
 
 #Add a Receive.
-proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [ValueError, Exception].} =
+proc add*(
+    account: Account,
+    recv: Receive,
+    sendArg: Node
+): bool {.raises: [ValueError].} =
     #Verify the node is a Send.
     if sendArg.descendant != NodeType.Send:
         return false
@@ -107,7 +119,11 @@ proc add*(account: Account, recv: Receive, sendArg: Node): bool {.raises: [Value
     result = account.add(cast[Node](recv), send)
 
 #Add Data.
-proc add*(account: Account, data: Data, difficulty: BN): bool {.raises: [ValueError, Exception].} =
+proc add*(
+    account: Account,
+    data: Data,
+    difficulty: BN
+): bool {.raises: [ValueError].} =
     #Verify the work.
     if data.hash.toBN() < difficulty:
         return false
@@ -116,9 +132,15 @@ proc add*(account: Account, data: Data, difficulty: BN): bool {.raises: [ValueEr
     result = account.add(cast[Node](data))
 
 #Add a Verification.
-proc add*(account: Account, verif: Verification): bool {.raises: [ValueError, Exception].} =
+proc add*(
+    account: Account,
+    verif: Verification
+): bool {.raises: [ValueError].} =
     result = account.add(cast[Node](verif))
 
 #Add a Merit Removal.
-proc add*(account: Account, mr: MeritRemoval): bool {.raises: [ValueError, Exception].} =
+proc add*(
+    account: Account,
+    mr: MeritRemoval
+): bool {.raises: [ValueError].} =
     result = account.add(cast[Node](mr))

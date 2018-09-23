@@ -27,7 +27,7 @@ import SetOnce
 import strutils
 
 #Parse a Verification.
-proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, Exception].} =
+proc parseVerification*(verifStr: string): Verification {.raises: [ValueError].} =
     var
         #Public Key | Nonce | Send Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(4)

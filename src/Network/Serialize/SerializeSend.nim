@@ -16,7 +16,7 @@ import SerializeCommon
 import SetOnce
 
 #Serialize a Send.
-proc serialize*(send: Send): string {.raises: [ValueError, Exception].} =
+proc serialize*(send: Send): string {.raises: [ValueError].} =
     result =
         !send.nonce.toString(256) &
         !Address.toBN(send.output).toString(256) &

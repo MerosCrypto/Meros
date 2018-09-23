@@ -52,24 +52,28 @@ proc secpPublicKey*(pubKeyArg: string): secp256k1_pubkey {.raises: [ValueError].
         #If that failed...
         raise newException(ValueError, "Invalid Public Key.")
 
-#Stringifies a public key.
-proc `$!`*(pubKeyArg: secp256k1_pubkey): string {.raises: [ValueError].} =
-    #Copy the pubKey arg, set the output, length, and create a byte array.
+#Turns a public key into a byte array.
+proc toArray*(pubKeyArg: secp256k1_pubkey): array[33, uint8] {.raises: [ValueError].} =
+    #Copy the pubKey arg and set the length.
     var
         pubKey: secp256k1_pubkey = pubKeyArg
         len: csize = 33
-        bytes: array[33, cuchar]
 
     #Serialize the public key in a compressed format.
     if secp256k1_ec_pubkey_serialize(
         context,
-        addr bytes[0],
+        cast[ptr cuchar](addr result[0]),
         addr len,
         addr pubKey,
         SECP256K1_EC_COMPRESSED
     ) != 1:
         #If that failed...
         raise newException(ValueError, "Invalid Public Key.")
+
+#Stringifies a public key.
+proc `$!`*(pubKey: secp256k1_pubkey): string {.raises: [ValueError].} =
+    #Get the public key's bytes.
+    var bytes: array[33, uint8] = pubKey.toArray()
 
     #Init the result.
     result = ""

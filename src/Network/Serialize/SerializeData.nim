@@ -16,7 +16,7 @@ import SerializeCommon
 import SetOnce
 
 #Serialize a Data.
-proc serialize*(data: Data): string {.raises: [ValueError, Exception].} =
+proc serialize*(data: Data): string {.raises: [ValueError].} =
     result =
         !data.nonce.toString(256) &
         !data.data

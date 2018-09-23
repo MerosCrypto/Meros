@@ -19,7 +19,7 @@ import SerializeCommon
 import SetOnce
 
 #Serialize a MeritRemoval.
-proc serialize*(mr: MeritRemoval): string {.raises: [ValueError, Exception].} =
+proc serialize*(mr: MeritRemoval): string {.raises: [ValueError].} =
     result =
         !mr.nonce.toString(256) &
         !mr.first.toString() &

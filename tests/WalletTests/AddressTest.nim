@@ -10,18 +10,12 @@ import ../../src/Wallet/Wallet
 #SetOnce lib.
 import SetOnce
 
-#Test a couple of addresses.
-assert(
-    not Address.verify("Emb123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"), #Every Base58 char with no checksum.
-    "Address.verify returned true with no prefix/an invalid checksum."
-)
-
 #Define a wallet and address outside of the loop to prevent memory leaks.
 var
     wallet: Wallet
     address: string
 #Run 10 times.
-for _ in 0 ..< 10:
+for _ in 0 ..< 20:
     #Create a new wallet.
     wallet = newWallet()
 

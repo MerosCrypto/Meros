@@ -37,7 +37,7 @@ proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError].} =
             newDifficultyObj(
                 BNNums.ZERO,
                 newBN(1),
-                "FB".repeat(64).toBN(16)
+                "E8".repeat(64).toBN(16)
             )
         ]
     )

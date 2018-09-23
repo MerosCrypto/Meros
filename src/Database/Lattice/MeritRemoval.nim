@@ -22,7 +22,11 @@ export MeritRemovalObj
 import SetOnce
 
 #Create a new MeritRemoval object.
-proc newMeritRemoval*(first: Hash[512], second: Hash[512], nonce: BN): MeritRemoval {.raises: [ValueError, Exception].} =
+proc newMeritRemoval*(
+    first: Hash[512],
+    second: Hash[512],
+    nonce: BN
+): MeritRemoval {.raises: [ValueError].} =
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)
     #Set the nonce.

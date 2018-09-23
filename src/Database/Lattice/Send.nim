@@ -32,7 +32,7 @@ proc newSend*(
     output: string,
     amount: BN,
     nonce: BN
-): Send {.raises: [ValueError, Exception].} =
+): Send {.raises: [ValueError].} =
     #Verify output.
     if not Wallet.verify(output):
         raise newException(ValueError, "Send output address is not valid.")

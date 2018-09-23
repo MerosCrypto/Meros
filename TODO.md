@@ -12,6 +12,7 @@ Core:
 - Finish tests.
 
 Features:
+- Immplement BCH codes into Address.nim.
 - Chain Params file.
 - Have Merit disappear after 50000 (365.25\*24\*6 is 52596; just rounded down for ease) blocks.
 - Have Merit Holders indexable by the order they got Merit in.
@@ -26,11 +27,12 @@ Improvements:
 - Don't have BN round down; have it round to the closest number.
 
 Behavior Changes:
-- Change addresses to use a modified version of the Bech32 standard.
 - Have required work be based on account, not that TX, and infinitely precalculable.
 - Finalize Argon2's Block parameters.
 
 Bug fixes:
+- Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue that needs to be fixed.
+- Send and Receive Serializations are broken.
 - Remove GMP's memory leak.
 
 Documentation:

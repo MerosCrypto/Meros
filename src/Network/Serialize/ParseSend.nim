@@ -30,7 +30,7 @@ import SetOnce
 import strutils
 
 #Parse a Send.
-proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Exception].} =
+proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.deserialize(6)
