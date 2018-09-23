@@ -52,7 +52,7 @@ proc newAddress*(keyArg: string): string {.raises: [ValueError].} =
             key[i] = uint8(keyArg[i])
     else:
         for i in countup(0, 65, 2):
-            key[i div 2] = uint8(parseHexInt(keyArg))
+            key[i div 2] = uint8(parseHexInt(keyArg[i .. i + 1]))
 
     #Create a new address with the array.
     result = newAddress(key)
