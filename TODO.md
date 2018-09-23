@@ -1,7 +1,6 @@
 # TODO
 
 Core:
-- Rest of the parse functions.
 - Track Verifications.
 - Track MeritRemovals.
 - Link the Lattice to Merit.
@@ -12,9 +11,8 @@ Core:
 - Finish tests.
 
 Features:
-- Immplement BCH codes into Address.nim.
+- Implement Bech32's BCH codes into Address.nim.
 - Chain Params file.
-- Have Merit disappear after 50000 (365.25\*24\*6 is 52596; just rounded down for ease) blocks.
 - Have Merit Holders indexable by the order they got Merit in.
 
 Improvements:
@@ -31,8 +29,8 @@ Behavior Changes:
 - Finalize Argon2's Block parameters.
 
 Bug fixes:
-- Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue that needs to be fixed.
-- Send and Receive Serializations are broken.
+- Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects usage in any way.
+- Fix Send and Receive Parsing (broken due to the new addresses).
 - Remove GMP's memory leak.
 
 Documentation:
