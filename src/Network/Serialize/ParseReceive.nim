@@ -36,7 +36,7 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError].} =
         #Get the nonce.
         nonce: BN = recvSeq[1].toBN(256)
         #Get the input Address.
-        inputAddress: string = newAddress(recvSeq[2].toHex)
+        inputAddress: string = newAddress(recvSeq[2])
         #Get the input nonce.
         inputNonce: BN = recvSeq[3].toBN(256)
         #Get the signature.

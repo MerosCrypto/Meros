@@ -39,7 +39,7 @@ for i in 1 .. 20:
     #Mine the Send.
     send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
     #Sign it.
-    discard sender.sign(send)
+    assert(sender.sign(send), "Couldn't sign the Verification.")
 
     #Verify the Send.
     var verif: Verification = newVerification(send, BNNums.ZERO)

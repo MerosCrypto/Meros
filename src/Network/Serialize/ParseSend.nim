@@ -41,7 +41,7 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError].} =
         #Get the nonce.
         nonce: BN = sendSeq[1].toBN(256)
         #Get the output.
-        output: string = newAddress(sendSeq[2].toHex())
+        output: string = newAddress(sendSeq[2])
         #Get the amount.
         amount: BN = sendSeq[3].toBN(256)
         #Get the proof.
