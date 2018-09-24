@@ -7,15 +7,17 @@ import ../../../lib/Hash
 #Node/transaction object.
 import NodeObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
-type Verification* = ref object of Node
-    #Send Hash.
-    verified*: SetOnce[Hash[512]]
+finalsd:
+    type Verification* = ref object of Node
+        #Send Hash.
+        verified* {.final.}: Hash[512]
 
 #New Verification object.
-proc newVerificationObj*(verified: Hash[512]): Verification {.raises: [ValueError].} =
-    result = Verification()
-    result.descendant.value = NodeType.Verification
-    result.verified.value = verified
+proc newVerificationObj*(verified: Hash[512]): Verification {.raises: [FinalAttributeError].} =
+    result = Verification(
+        verified: verified
+    )
+    result.descendant = NodeType.Verification

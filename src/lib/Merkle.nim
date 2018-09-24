@@ -4,44 +4,47 @@ import Base
 #Hash lib.
 import Hash
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Object definitions.
-type
-    #Leaf. The lowest type on the tree.
-    Leaf* = ref object of RootObj
-        isLeaf*: SetOnce[bool]
-        hash*: SetOnce[SHA512Hash]
+finalsd:
+    type
+        #Leaf. The lowest type on the tree.
+        Leaf* = ref object of RootObj
+            isLeaf* {.final.}: bool
+            hash* {.final.}: SHA512Hash
 
-    #Branch. Everything from the leaves to the top.
-    Branch* = ref object of Leaf
-        empty*: SetOnce[bool]
-        left*: SetOnce[Leaf]
-        right*: SetOnce[Leaf]
+        #Branch. Everything from the leaves to the top.
+        Branch* = ref object of Leaf
+            empty* {.final.}: bool
+            left* {.final.}: Leaf
+            right* {.final.}: Leaf
 
-    #MerkleTree. The master object.
-    MerkleTree* = ref object of Branch
+#MerkleTree. The master object.
+type MerkleTree* = ref object of Branch
 
 #Lead constructor.
-proc newLeafObject*(hash: SHA512Hash): Leaf {.raises: [ValueError].} =
-    result = Leaf()
-    result.isLeaf.value = true
-    result.hash.value = hash
+proc newLeafObject*(hash: SHA512Hash): Leaf {.raises: [].} =
+    result = Leaf(
+        isLeaf: true,
+        hash: hash
+    )
 
 #Branch constructor.
 proc newBranchObject*(left: Leaf, right: Leaf, empty = false): Branch {.raises: [ValueError].} =
-    result = Branch()
-    result.isLeaf.value = false
-    result.left.value = left
-    result.right.value = right
+    result = Branch(
+        isLeaf: false,
+        left: left,
+        right: right
+    )
 
     if empty:
-        result.empty.value = true
-        result.hash.value = SHA512("")
+        result.empty = true
+        result.hash = SHA512("")
         return
 
-    result.hash.value = SHA512(
+    result.hash = SHA512(
         left.hash.toString() & right.hash.toString()
     )
 

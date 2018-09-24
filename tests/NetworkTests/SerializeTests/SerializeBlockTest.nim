@@ -27,9 +27,6 @@ import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/SerializeBlock
 import ../../../src/Network/Serialize/ParseBlock
 
-#SetOnce lib.
-import SetOnce
-
 var
     #Create a wallet to mine to.
     wallet: Wallet = newWallet()
@@ -41,7 +38,7 @@ var
     time: BN
     proof: BN = newBN(1)
     miners: seq[tuple[miner: string, amount: int]] = @[(
-        miner: wallet.address.toValue(),
+        miner: wallet.address,
         amount: 100
     )]
     lattice: Lattice = newLattice()
@@ -62,7 +59,7 @@ for i in 1 .. 10:
         time,
         @[],
         newMerkleTree(@[]),
-        $(wallet.publicKey.toValue()),
+        $(wallet.publicKey),
         proof,
         miners,
         wallet.sign($SHA512(miners.serialize(nonce)))

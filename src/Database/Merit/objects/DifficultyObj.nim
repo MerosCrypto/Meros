@@ -1,21 +1,23 @@
 #BN lib.
 import BN as BNFile
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Difficulty object.
-type Difficulty* = ref object of RootObj
-    #Start of the period.
-    start*: SetOnce[BN]
-    #End of the period.
-    endBlock*: SetOnce[BN]
-    #Difficulty to beat.
-    difficulty*: SetOnce[BN]
+finalsd:
+    type Difficulty* = ref object of RootObj
+        #Start of the period.
+        start* {.final.}: BN
+        #End of the period.
+        endBlock* {.final.}: BN
+        #Difficulty to beat.
+        difficulty* {.final.}: BN
 
 #Create a new Difficulty object.
-proc newDifficultyObj*(start: BN, endBlock: BN, difficulty: BN): Difficulty {.raises: [ValueError].} =
-    result = Difficulty()
-    result.start.value = start
-    result.endBlock.value = endBlock
-    result.difficulty.value = difficulty
+proc newDifficultyObj*(start: BN, endBlock: BN, difficulty: BN): Difficulty {.raises: [].} =
+    result = Difficulty(
+        start: start,
+        endBlock: endBlock,
+        difficulty: difficulty
+    )

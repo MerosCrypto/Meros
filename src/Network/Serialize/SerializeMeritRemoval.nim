@@ -15,9 +15,6 @@ import ../../Database/Lattice/objects/MeritRemovalObj
 #Common serialization functions.
 import SerializeCommon
 
-#SetOnce lib.
-import SetOnce
-
 #Serialize a MeritRemoval.
 proc serialize*(mr: MeritRemoval): string {.raises: [ValueError].} =
     result =

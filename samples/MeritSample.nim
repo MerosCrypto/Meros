@@ -17,16 +17,13 @@ import ../src/Wallet/Wallet
 #Serialization libs.
 import ../src/Network/Serialize/SerializeMiners
 
-#SetOnce lib.
-import SetOnce
-
 #Main function is so these varriables can be GC'd.
 proc main() =
     var
         #Create a wallet to mine to.
         wallet: Wallet = newWallet()
         #Get the publisher.
-        publisher: string = $wallet.publicKey.toValue()
+        publisher: string = $wallet.publicKey
         #Gensis var.
         genesis: string = "mainnet"
         #Merit var.
@@ -39,7 +36,7 @@ proc main() =
         time: BN
         proof: BN = newBN()
         miners: seq[tuple[miner: string, amount: int]] = @[(
-            miner: wallet.address.toValue(),
+            miner: wallet.address,
             amount: 100
         )]
 

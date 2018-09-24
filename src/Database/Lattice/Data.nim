@@ -21,14 +21,14 @@ import objects/NodeObj
 import objects/DataObj
 export DataObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Create a new  node.
 proc newData*(
     data: string,
     nonce: BN
-): Data {.raises: [ValueError].} =
+): Data {.raises: [ValueError, FinalAttributeError].} =
     #Verify the data argument.
     if data.len > 1024:
         raise newException(ValueError, "Data data was too long.")
@@ -37,30 +37,30 @@ proc newData*(
     result = newDataObj(
         data
     )
-
     #Set the nonce.
-    result.nonce.value = nonce
-
+    result.nonce = nonce
     #Set the hash.
-    result.sha512.value = SHA512(data)
+    result.sha512 = SHA512(data)
 
 #'Mine' the data (beat the spam filter).
-proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError].} =
-    #Generate proofs until the reduced Argon2 hash beats the difficulty.
+proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError, FinalAttributeError].} =
+    #Create a proof of 0 and get the first Argon hash.
     var
         proof: BN = newBN()
         hash: ArgonHash = Argon(data.sha512.toString(), proof.toString(256), true)
 
+    #Generate proofs until the reduced Argon2 hash beats the difficulty.
     while hash.toBN() <= networkDifficulty:
         inc(proof)
         hash = Argon(data.sha512.toString(), proof.toString(256), true)
 
-    data.proof.value = proof
-    data.hash.value = hash
+    #Set the proof and hash.
+    data.proof = proof
+    data.hash = hash
 
 #Sign a TX.
-proc sign*(wallet: Wallet, data: Data) {.raises: [ValueError].} =
+proc sign*(wallet: Wallet, data: Data) {.raises: [ValueError, FinalAttributeError].} =
     #Set the sender behind the node.
-    data.sender.value = wallet.address
+    data.sender = wallet.address
     #Sign the hash of the Data.
-    data.signature.value = wallet.sign($data.hash.toValue())
+    data.signature = wallet.sign($data.hash)

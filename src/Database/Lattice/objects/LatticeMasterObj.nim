@@ -8,9 +8,6 @@ import ../../../lib/Base
 #Lattice objects.
 import LatticeObjs
 
-#SetOnce lib.
-import SetOnce
-
 #Lattice master object.
 type Lattice* = ref object of RootObj
     #Difficulties.

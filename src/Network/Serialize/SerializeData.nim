@@ -12,9 +12,6 @@ import ../../Database/Lattice/objects/DataObj
 #Common serialization functions.
 import SerializeCommon
 
-#SetOnce lib.
-import SetOnce
-
 #Serialize a Data.
 proc serialize*(data: Data): string {.raises: [ValueError].} =
     result =

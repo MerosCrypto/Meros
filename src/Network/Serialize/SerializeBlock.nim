@@ -18,9 +18,6 @@ import ../../Database/Merit/objects/BlockObj
 import SerializeCommon
 import SerializeMiners
 
-#SetOnce lib.
-import SetOnce
-
 #String utils standard lib.
 import strutils
 
@@ -58,7 +55,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
         result &= !blockArg.proof.toString(256)
 
         #Serialize the miners.
-        var minersSerialized = blockArg.miners.serialize(blockArg.nonce.toValue())
+        var minersSerialized = blockArg.miners.serialize(blockArg.nonce)
         result &=
             #Add the miners.
             !minersSerialized &

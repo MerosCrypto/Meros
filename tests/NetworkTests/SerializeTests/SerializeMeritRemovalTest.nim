@@ -21,9 +21,6 @@ import ../../../src/Database/Lattice/MeritRemoval
 import ../../../src/Network/Serialize/SerializeMeritRemoval
 import ../../../src/Network/Serialize/ParseMeritRemoval
 
-#SetOnce lib.
-import SetOnce
-
 #String utils standard lib.
 import strutils
 

@@ -12,9 +12,6 @@ import ../../Database/Lattice/objects/ReceiveObj
 #Common serialization functions.
 import SerializeCommon
 
-#SetOnce lib.
-import SetOnce
-
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError].} =
     result = !recv.nonce.toString(256)

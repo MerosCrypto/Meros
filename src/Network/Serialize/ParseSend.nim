@@ -23,14 +23,14 @@ import ../../Database/Lattice/objects/SendObj
 import SerializeCommon
 import SerializeSend
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #String utils standard lib.
 import strutils
 
 #Parse a Send.
-proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError].} =
+proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, FinalAttributeError].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.deserialize(6)
@@ -56,18 +56,18 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError].} =
     )
 
     #Set the sender.
-    result.sender.value = input
+    result.sender = input
     #Set the nonce.
-    result.nonce.value = nonce
+    result.nonce = nonce
     #Set the SHA512 hash.
-    result.sha512.value = SHA512(result.serialize())
+    result.sha512 = SHA512(result.serialize())
     #Set the proof.
-    result.proof.value = proof.toBN(256)
+    result.proof = proof.toBN(256)
     #Set the hash.
-    result.hash.value = Argon(result.sha512.toString(), proof, true)
+    result.hash = Argon(result.sha512.toString(), proof, true)
 
     #Verify the signature.
-    if not sender.verify($result.hash.toValue(), signature):
+    if not sender.verify($result.hash, signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
-    result.signature.value = signature
+    result.signature = signature

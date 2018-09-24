@@ -15,9 +15,6 @@ import ../../Database/Lattice/objects/VerificationObj
 #Common serialization functions.
 import SerializeCommon
 
-#SetOnce lib.
-import SetOnce
-
 #Serialize a Verification.
 proc serialize*(verif: Verification): string {.raises: [ValueError].} =
     result =

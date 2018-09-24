@@ -21,9 +21,6 @@ import Clients
 #Events lib.
 import ec_events
 
-#SetOnce lib.
-import SetOnce
-
 #Networking standard libs.
 import asyncnet, asyncdispatch
 
@@ -73,7 +70,7 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
 
             #Switch based off the message type (in a try to handle invalid messages).
             try:
-                case msg.content.toValue():
+                case msg.content:
                     of MessageType.Send:
                         nodeEvents.get(
                             proc (msg: Message, send: Send),

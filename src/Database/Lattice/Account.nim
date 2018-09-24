@@ -21,9 +21,6 @@ import objects/MeritRemovalObj
 import objects/AccountObj
 export AccountObj
 
-#SetOnce lib.
-import SetOnce
-
 #Add a node.
 proc add(
     account: Account,
@@ -33,7 +30,7 @@ proc add(
     result = true
 
     #Verify the sender.
-    if node.sender.toValue() != account.address:
+    if node.sender != account.address:
         return false
 
     #Verify the nonce.
@@ -46,7 +43,7 @@ proc add(
         (
             not newPublicKey(
                 account.address.toBN().toString(16)
-            ).verify($node.hash.toValue(), node.signature)
+            ).verify($node.hash, node.signature)
         )
     ):
         return false

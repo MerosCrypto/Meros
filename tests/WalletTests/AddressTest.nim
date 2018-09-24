@@ -7,9 +7,6 @@ import ../../src/lib/Base
 import ../../src/Wallet/Address
 import ../../src/Wallet/Wallet
 
-#SetOnce lib.
-import SetOnce
-
 #Define a wallet and address outside of the loop to prevent memory leaks.
 var
     wallet: Wallet
@@ -28,13 +25,13 @@ for _ in 0 ..< 20:
     #Verify the address for the matching pub key.
     assert(
         Address.verify(
-            wallet.address.toValue(),
-            wallet.publicKey.toValue()
+            wallet.address,
+            wallet.publicKey
         ),
         "Address doesn't match the Public Key."
     )
 
     #Verify toBN works.
-    assert($wallet.publicKey.toValue() == Address.toBN(wallet.address).toString(16), "Address.toBN didn't return the correct BN.")
+    assert($wallet.publicKey == Address.toBN(wallet.address).toString(16), "Address.toBN didn't return the correct BN.")
 
 echo "Finished the Wallet/Address test."

@@ -11,9 +11,6 @@ import ../src/Database/Merit/Merit
 #Wallet libs.
 import ../src/Wallet/Wallet
 
-#SetOnce lib.
-import SetOnce
-
 #Demo.
 var
     wallet: Wallet = newWallet()

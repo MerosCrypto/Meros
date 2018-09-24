@@ -20,14 +20,14 @@ import ../../Database/Lattice/objects/VerificationObj
 import SerializeCommon
 import SerializeVerification
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #String utils standard lib.
 import strutils
 
 #Parse a Verification.
-proc parseVerification*(verifStr: string): Verification {.raises: [ValueError].} =
+proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, FinalAttributeError].} =
     var
         #Public Key | Nonce | Send Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(4)
@@ -48,14 +48,14 @@ proc parseVerification*(verifStr: string): Verification {.raises: [ValueError].}
     )
 
     #Set the Sender.
-    result.sender.value = address
+    result.sender = address
     #Set the nonce.
-    result.nonce.value = nonce
+    result.nonce = nonce
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    result.hash = SHA512(result.serialize())
 
     #Verify the signature.
-    if not verifier.verify($result.hash.toValue(), signature):
+    if not verifier.verify($result.hash, signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
-    result.signature.value = signature
+    result.signature = signature

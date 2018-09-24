@@ -16,9 +16,6 @@ import ../src/Network/Serialize/SerializeReceive
 import ../src/Network/Serialize/ParseSend
 import ../src/Network/Serialize/ParseReceive
 
-#SetOnce lib.
-import SetOnce
-
 #Networking standard libs.
 import asyncnet, asyncdispatch
 

@@ -10,28 +10,29 @@ import ReceiveObj
 #Lattice objects.
 import LatticeObjs
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Account object.
-type Account* = ref object of RootObj
-    #Chain owner.
-    address*: SetOnce[string]
-    #Account height. BN for compatibility.
-    height*: BN
-    #seq of the TXs.
-    nodes*: seq[Node]
-    #Balance of the address.
-    balance*: BN
+finalsd:
+    type Account* = ref object of RootObj
+        #Chain owner.
+        address* {.final.}: string
+        #Account height. BN for compatibility.
+        height*: BN
+        #seq of the TXs.
+        nodes*: seq[Node]
+        #Balance of the address.
+        balance*: BN
 
 #Creates a new account object.
-proc newAccountObj*(address: string): Account {.raises: [ValueError].} =
+proc newAccountObj*(address: string): Account {.raises: [].} =
     result = Account(
+        address: address,
         height: newBN(),
         nodes: @[],
         balance: newBN()
     )
-    result.address.value = address
 
 #Add a Node to an account.
 proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
@@ -39,7 +40,7 @@ proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
     inc(account.height)
     account.nodes.add(node)
 
-    case node.descendant.toValue():
+    case node.descendant:
         #If it's a Send Node...
         of NodeType.Send:
             #Cast it to a var.

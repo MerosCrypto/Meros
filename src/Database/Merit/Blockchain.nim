@@ -16,9 +16,6 @@ import Difficulty
 import objects/BlockchainObj
 export BlockchainObj
 
-#SetOnce lib.
-import SetOnce
-
 const
     #Block time in seconds.
     BLOCK_TIME: int = 600
