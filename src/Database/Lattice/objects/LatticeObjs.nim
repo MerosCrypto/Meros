@@ -23,23 +23,22 @@ finalsd:
             address* {.final.}: string
             nonce* {.final.}: BN
 
-type
-    #Lattice Difficulties object. Specifies the TX/Data  difficulties.
-    Difficulties* = ref object of RootObj
-        transaction*: BN
-        data*: BN
+        #Lattice Difficulties object. Specifies the TX/Data  difficulties.
+        Difficulties* = ref object of RootObj
+            transaction*: BN
+            data*: BN
 
-    #Block Lattice object.
-    BlockLattice* = TableRef[
-        string,
-        Account
-    ]
+        #Block Lattice object.
+        BlockLattice* = TableRef[
+            string,
+            Account
+        ]
 
-    #Hash Lookup object. Maps a hash to an index.
-    HashLookup* = TableRef[
-        string,
-        Index
-    ]
+        #Hash Lookup object. Maps a hash to an index.
+        HashLookup* = TableRef[
+            string,
+            Index
+        ]
 
 #Constructors.
 proc newIndex*(address: string, nonce: BN): Index {.raises: [].} =

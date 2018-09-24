@@ -1,7 +1,7 @@
 #Base lib.
 import ../../lib/Base
 
-#Prepeds a string with its length.
+#Prepends a string with its length.
 proc `!`*(data: string): string {.raises: [].} =
     result = ""
 
