@@ -21,7 +21,7 @@ import SetOnce
 
 const
     #Block time in seconds.
-    BLOCK_TIME: int = 10
+    BLOCK_TIME: int = 600
     #Constant of the blocks per month.
     BLOCKS_PER_MONTH: int = 4320
 
