@@ -18,9 +18,6 @@ import ../../../src/Database/Lattice/Data
 import ../../../src/Network/Serialize/SerializeData
 import ../../../src/Network/Serialize/ParseData
 
-#SetOnce lib.
-import SetOnce
-
 #String utils standard lib.
 import strutils
 

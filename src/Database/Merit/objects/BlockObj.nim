@@ -11,35 +11,36 @@ import ../../../lib/Hash
 #Merkle lib.
 import ../../../lib/Merkle
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
-#Define the Block class.
-type Block* = ref object of RootObj
-    #Argon hash of the last block.
-    last*: SetOnce[ArgonHash]
-    #Nonce, AKA index.
-    nonce*: SetOnce[BN]
-    #Timestamp.
-    time*: BN
-    #Validations.
-    validations*: seq[tuple[validator: string, start: int, last: int]]
-    #Merkle tree.
-    merkle*: MerkleTree
-    #Publisher address.
-    publisher*: SetOnce[string]
+finals:
+    #Define the Block class.
+    type Block* = ref object of RootObj
+        #Argon hash of the last block.
+        last* {.final.}: ArgonHash
+        #Nonce, AKA index.
+        nonce* {.final.}: BN
+        #Timestamp.
+        time*: BN
+        #Validations.
+        validations*: seq[tuple[validator: string, start: int, last: int]]
+        #Merkle tree.
+        merkle*: MerkleTree
+        #Publisher address.
+        publisher* {.final.}: string
 
-    #Hash.
-    hash*: SHA512Hash
-    #Random hex number to make sure the Argon of the hash is over the difficulty.
-    proof*: BN
-    #Argon2d hash with the SHA512 hash as the data and proof as the salt.
-    argon*: ArgonHash
+        #Hash.
+        hash*: SHA512Hash
+        #Random hex number to make sure the Argon of the hash is over the difficulty.
+        proof*: BN
+        #Argon2d hash with the SHA512 hash as the data and proof as the salt.
+        argon*: ArgonHash
 
-    #Who to attribute the Merit to (amount ranges from 0 to 1000).
-    miners*: SetOnce[seq[tuple[miner: string, amount: int]]]
-    minersHash*: SetOnce[SHA512Hash]
-    signature*: SetOnce[string]
+        #Who to attribute the Merit to (amount ranges from 0 to 1000).
+        miners* {.final.}: seq[tuple[miner: string, amount: int]]
+        minersHash* {.final.}: SHA512Hash
+        signature* {.final.}: string
 
 #Constructor.
 proc newBlockObj*(
@@ -49,15 +50,15 @@ proc newBlockObj*(
     validations: seq[tuple[validator: string, start: int, last: int]],
     merkle: MerkleTree,
     publisher: string
-): Block {.raises: [ValueError].} =
+): Block {.raises: [].} =
     result = Block(
+        last: last,
+        nonce: nonce,
         time: time,
         validations: validations,
-        merkle: merkle
+        merkle: merkle,
+        publisher: publisher
     )
-    result.last.value = last
-    result.nonce.value = nonce
-    result.publisher.value = publisher
 
 #Creates a new block without caring about the data.
 proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
@@ -77,8 +78,8 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
     #Calculate the Argon hash.
     result.argon = Argon($result.hash, result.proof.toString(256))
     #Set the miners.
-    result.miners.value = @[]
+    result.miners = @[]
     #Calculate the miners hash.
-    result.minersHash.value = SHA512("00")
+    result.minersHash = SHA512("")
     #Set the signature.
-    result.signature.value = ""
+    result.signature = ""

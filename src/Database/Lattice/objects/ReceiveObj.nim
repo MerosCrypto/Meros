@@ -5,19 +5,21 @@ import ../../../lib/Base
 #Node object.
 import NodeObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Receive object.
-type Receive* = ref object of Node
-    #Input address.
-    inputAddress*: SetOnce[string]
-    #Input nonce.
-    inputNonce*: SetOnce[BN]
+finals:
+    type Receive* = ref object of Node
+        #Input address.
+        inputAddress* {.final.}: string
+        #Input nonce.
+        inputNonce* {.final.}: BN
 
 #New Receive object.
-proc newReceiveObj*(inputAddress: string, inputNonce: BN): Receive {.raises: [ValueError].} =
-    result = Receive()
-    result.descendant.value = NodeType.Receive
-    result.inputAddress.value = inputAddress
-    result.inputNonce.value = inputNonce
+proc newReceiveObj*(inputAddress: string, inputNonce: BN): Receive {.raises: [FinalAttributeError].} =
+    result = Receive(
+        inputAddress: inputAddress,
+        inputNonce: inputNonce
+    )
+    result.descendant = NodeType.Receive

@@ -18,9 +18,6 @@ import ../../../src/Database/Lattice/Verification
 import ../../../src/Network/Serialize/SerializeVerification
 import ../../../src/Network/Serialize/ParseVerification
 
-#SetOnce lib.
-import SetOnce
-
 #Test 20 serializations.
 for i in 1 .. 20:
     echo "Testing Verification Serialization/Parsing, iteration " & $i & "."

@@ -8,9 +8,6 @@ import ../src/Wallet/Wallet
 #Lattice lib.
 import ../src/Database/Lattice/Lattice
 
-#SetOnce lib.
-import SetOnce
-
 var
     sender: Wallet = newWallet()     #Sender Wallet.
     receiver: Wallet = newWallet()   #Receiver Wallet.
@@ -20,8 +17,7 @@ var
         newBN(int(10000000000))
     )                                #Index of the Mint TX.
     mintRecv: Receive = newReceive(  #Mint Receive.
-        mintIndex.address.toValue(),
-        mintIndex.nonce.toValue(),
+        mintIndex,
         newBN()
     )
     send: Send = newSend(            #Send.

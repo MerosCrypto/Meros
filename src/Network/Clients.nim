@@ -15,9 +15,6 @@ import objects/NetworkObj
 #Events lib.
 import ec_events
 
-#SetOnce lib.
-import SetOnce
-
 #Networking standard libs.
 import asyncnet, asyncdispatch
 

@@ -1,8 +1,8 @@
 #Client object.
 import ClientObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #sequtils standard lib.
 import sequtils
@@ -11,9 +11,10 @@ import sequtils
 import asyncnet
 
 #Clients object.
-type Clients* = ref object of RootObj
-    total*: int
-    clients*: seq[Client]
+finals:
+    type Clients* = ref object of RootObj
+        total*: int
+        clients*: seq[Client]
 
 #Constructor.
 proc newClients*(): Clients {.raises: [].} =

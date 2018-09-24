@@ -5,25 +5,26 @@ import ../../../lib/Base
 #Hash lib.
 import ../../../lib/Hash
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
-type
-    NodeType* = enum
-        Send = 0,
-        Receive = 1,
-        Data = 2,
-        Verification = 3,
-        MeritRemoval = 4
+#Enum of the various Node Types.
+type NodeType* = enum
+    Send = 0,
+    Receive = 1,
+    Data = 2,
+    Verification = 3,
+    MeritRemoval = 4
 
-    Node* = ref object of RootObj
+finals:
+    type Node* = ref object of RootObj
         #Type of descendant.
-        descendant*: SetOnce[NodeType]
+        descendant* {.final.}: NodeType
         #Address behind the node.
-        sender*: SetOnce[string]
+        sender* {.final.}: string
         #Index on the account.
-        nonce*: SetOnce[BN]
+        nonce* {.final.}: BN
         #Node hash.
-        hash*: SetOnce[Hash[512]]
+        hash* {.final.}: Hash[512]
         #Signature.
-        signature*: SetOnce[string]
+        signature* {.final.}: string

@@ -18,25 +18,26 @@ import objects/NodeObj
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Create a new MeritRemoval object.
 proc newMeritRemoval*(
     first: Hash[512],
     second: Hash[512],
     nonce: BN
-): MeritRemoval {.raises: [ValueError].} =
+): MeritRemoval {.raises: [ValueError, FinalAttributeError].} =
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)
+
     #Set the nonce.
-    result.nonce.value = nonce
+    result.nonce = nonce
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    result.hash = SHA512(result.serialize())
 
 #Sign a MeritRemoval object.
-proc sign*(wallet: Wallet, mr: MeritRemoval) {.raises: [ValueError].} =
+proc sign*(wallet: Wallet, mr: MeritRemoval) {.raises: [ValueError, FinalAttributeError].} =
     #Set the sender behind the node.
-    mr.sender.value = wallet.address
+    mr.sender = wallet.address
     #Sign the hash of the MR.
-    mr.signature.value = wallet.sign($mr.hash.toValue())
+    mr.signature = wallet.sign($mr.hash)

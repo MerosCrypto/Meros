@@ -10,9 +10,6 @@ import ../../src/lib/Base
 #Merkle lib.
 import ../../src/lib/Merkle
 
-#SetOnce lib.
-import SetOnce
-
 var
     #First leaf.
     a: SHA512Hash = SHA512("01".toBN(16).toString(256))

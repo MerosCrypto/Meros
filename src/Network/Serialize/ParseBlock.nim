@@ -30,8 +30,8 @@ import SerializeMiners
 import ParseMiners
 import SerializeBlock
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #String and seq utils standard libs.
 import strutils
@@ -41,7 +41,7 @@ import sequtils
 proc parseBlock*(
     blockStr: string,
     lattice: Lattice
-): Block {.raises: [ResultError, ValueError].} =
+): Block {.raises: [ResultError, ValueError, FinalAttributeError].} =
     var
         #Nonce | Last | Time | Validations Count
         #Address 1 | Start Index 1 | End Index 1
@@ -156,12 +156,12 @@ proc parseBlock*(
     #Set the Argon hash.
     result.argon = Argon(result.hash.toString(), proof)
     #Set the miners.
-    result.miners.value = miners
+    result.miners = miners
     #Set the miners hash.
-    result.minersHash.value = SHA512(minersStr)
+    result.minersHash = SHA512(minersStr)
 
     #Verify the signature.
-    if not newPublicKey(publisher).verify($(result.minersHash.toValue()), signature):
+    if not newPublicKey(publisher).verify($(result.minersHash), signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
-    result.signature.value = signature
+    result.signature = signature

@@ -19,18 +19,18 @@ import ../../lib/Hash
 import ../../Database/Lattice/objects/NodeObj
 import ../../Database/Lattice/objects/MeritRemovalObj
 
-#Serialize function.
+#Deserialize function.
 import SerializeCommon
 import SerializeMeritRemoval
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #String utils standard lib.
 import strutils
 
 #Parse a MeritRemoval.
-proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError].} =
+proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError, FinalAttributeError].} =
     var
         #Public Key | Nonce | First | Second | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)
@@ -53,14 +53,14 @@ proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError].} 
         second
     )
     #Set the sender.
-    result.sender.value = senderAddress
+    result.sender = senderAddress
     #Set the nonce.
-    result.nonce.value = nonce
+    result.nonce = nonce
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    result.hash = SHA512(result.serialize())
 
     #Verify the signature.
-    if not sender.verify($result.hash.toValue(), signature):
+    if not sender.verify($result.hash, signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
-    result.signature.value = signature
+    result.signature = signature

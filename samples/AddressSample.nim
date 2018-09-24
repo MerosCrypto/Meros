@@ -1,9 +1,6 @@
 #Wallet lib.
 import ../src/Wallet/Wallet
 
-#SetOnce lib.
-import SetOnce
-
 #Declare the Wallet/Address vars here to not memory leak.
 var wallet: Wallet
 
@@ -16,8 +13,8 @@ for _ in 0 ..< 500:
     if not wallet.address.verify():
         raise newException(Exception, "Invalid Address Type 1")
     #Verify the address for the matching pub key.
-    if not wallet.address.verify(wallet.publicKey.toValue()):
+    if not wallet.address.verify(wallet.publicKey):
         raise newException(Exception, "Invalid Address Type 2")
 
     #Print the generated address.
-    echo wallet.address.toValue()
+    echo wallet.address

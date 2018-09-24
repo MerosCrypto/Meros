@@ -18,24 +18,25 @@ import Send
 import objects/VerificationObj
 export VerificationObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
+#Create a new Verification.
 proc newVerification*(
     node: Node,
     nonce: BN
-): Verification {.raises: [ValueError].} =
+): Verification {.raises: [ValueError, FinalAttributeError].} =
     result = newVerificationObj(
         node.hash
     )
     #Set the nonce.
-    result.nonce.value = nonce
+    result.nonce = nonce
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    result.hash = SHA512(result.serialize())
 
 #Sign a TX.
-proc sign*(wallet: Wallet, verif: Verification) {.raises: [ValueError].} =
+proc sign*(wallet: Wallet, verif: Verification) {.raises: [ValueError, FinalAttributeError].} =
     #Set the sender behind the node.
-    verif.sender.value = wallet.address
+    verif.sender = wallet.address
     #Sign the hash of the Verification.
-    verif.signature.value = wallet.sign($verif.hash.toValue())
+    verif.signature = wallet.sign($verif.hash)

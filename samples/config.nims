@@ -20,7 +20,7 @@ switch("excessiveStackTrace", "on")
 switch("parallelBuild", "0")
 
 #Define debug, remove dead code, and optimize for size (which is faster than `opt=speed` for Ember).
-switch("define", "debug")
+switch("define", "release")
 switch("deadCodeElim", "on")
 switch("opt", "size")
 

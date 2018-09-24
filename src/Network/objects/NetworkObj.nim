@@ -4,23 +4,24 @@ import ClientsObj
 #Events library.
 import ec_events
 
-#SetOnce lib.
-import SetOnce
+#finals lib.
+import finals
 
 #Asyncnet standard lib.
 import asyncnet
 
-type Network* = ref object of RootObj
-    #Network ID.
-    id*: SetOnce[int]
-    #Clients.
-    clients*: Clients
-    #Server.
-    server*: SetOnce[AsyncSocket]
-    #Event Emitter for the Clients/Server.
-    subEvents*: SetOnce[EventEmitter]
-    #Event Emitter for the node.
-    nodeEvents*: SetOnce[EventEmitter]
+finals:
+    type Network* = ref object of RootObj
+        #Network ID.
+        id* {.final.}: int
+        #Clients.
+        clients*: Clients
+        #Server.
+        server* {.final.}: AsyncSocket
+        #Event Emitter for the Clients/Server.
+        subEvents* {.final.}: EventEmitter
+        #Event Emitter for the node.
+        nodeEvents* {.final.}: EventEmitter
 
 #Constructor.
 proc newNetworkObj*(
@@ -29,11 +30,11 @@ proc newNetworkObj*(
     server: AsyncSocket,
     subEvents: EventEmitter,
     nodeEvents: EventEmitter
-): Network {.raises: [ValueError].} =
+): Network {.raises: [].} =
     result = Network(
-        clients: clients
+        id: id,
+        clients: clients,
+        server: server,
+        subEvents: subEvents,
+        nodeEvents: nodeEvents
     )
-    result.id.value = id
-    result.server.value = server
-    result.subEvents.value = subEvents
-    result.nodeEvents.value = nodeEvents
