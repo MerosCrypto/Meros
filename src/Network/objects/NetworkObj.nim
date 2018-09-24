@@ -10,7 +10,7 @@ import finals
 #Asyncnet standard lib.
 import asyncnet
 
-finals:
+finalsd:
     type Network* = ref object of RootObj
         #Network ID.
         id* {.final.}: int

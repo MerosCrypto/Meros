@@ -10,7 +10,7 @@ import NodeObj
 #Finals lib.
 import finals
 
-finals:
+finalsd:
     type Verification* = ref object of Node
         #Send Hash.
         verified* {.final.}: Hash[512]

@@ -16,7 +16,7 @@ type NodeType* = enum
     Verification = 3,
     MeritRemoval = 4
 
-finals:
+finalsd:
     type Node* = ref object of RootObj
         #Type of descendant.
         descendant* {.final.}: NodeType

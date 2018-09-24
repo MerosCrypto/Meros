@@ -12,7 +12,7 @@ import NodeObj
 import finals
 
 #Data object.
-finals:
+finalsd:
     type Data* = ref object of Node
         #Data included in the TX.
         data* {.final.}: string

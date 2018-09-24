@@ -1,7 +1,7 @@
 #finals lib.
 import finals
 
-finals:
+finalsd:
     type
         #Message Type enum.
         MessageType* = enum

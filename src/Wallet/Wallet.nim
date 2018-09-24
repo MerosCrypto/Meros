@@ -5,7 +5,7 @@ export PrivateKeyFile, PublicKeyFile, Address
 
 import finals
 
-finals:
+finalsd:
     type Wallet* = ref object of RootObj
         privateKey* {.final.}: PrivateKey
         publicKey* {.final.}: PublicKey

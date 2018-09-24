@@ -12,7 +12,7 @@ import NodeObj
 import finals
 
 #Send object.
-finals:
+finalsd:
     type Send* = ref object of Node
         #Data used to create the SHA512 hash.
         #Destination address.

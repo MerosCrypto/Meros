@@ -8,7 +8,7 @@ import ../../../lib/Hash
 import finals
 
 #Merit Removal object.
-finals:
+finalsd:
     type MeritRemoval* = ref object of Node
         #Verification of a spend.
         first* {.final.}: Hash[512]

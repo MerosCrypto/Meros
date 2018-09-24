@@ -17,7 +17,7 @@ import finals
 import tables
 
 #Index object. Specifies a Node on the Lattice.
-finals:
+finalsd:
     type
         Index* = ref object of RootObj
             address* {.final.}: string

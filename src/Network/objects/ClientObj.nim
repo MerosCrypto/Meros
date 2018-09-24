@@ -5,7 +5,7 @@ import finals
 import asyncnet
 
 #Client object.
-finals:
+finalsd:
     type Client* = ref object of RootObj
         #ID.
         id* {.final.}: int

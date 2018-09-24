@@ -14,7 +14,7 @@ import LatticeObjs
 import finals
 
 #Account object.
-finals:
+finalsd:
     type Account* = ref object of RootObj
         #Chain owner.
         address* {.final.}: string

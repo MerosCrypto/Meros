@@ -14,7 +14,7 @@ import ../../../lib/Merkle
 #Finals lib.
 import finals
 
-finals:
+finalsd:
     #Define the Block class.
     type Block* = ref object of RootObj
         #Argon hash of the last block.

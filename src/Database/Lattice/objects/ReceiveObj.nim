@@ -9,7 +9,7 @@ import NodeObj
 import finals
 
 #Receive object.
-finals:
+finalsd:
     type Receive* = ref object of Node
         #Input address.
         inputAddress* {.final.}: string

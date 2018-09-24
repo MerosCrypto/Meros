@@ -11,7 +11,7 @@ import sequtils
 import asyncnet
 
 #Clients object.
-finals:
+finalsd:
     type Clients* = ref object of RootObj
         total*: int
         clients*: seq[Client]

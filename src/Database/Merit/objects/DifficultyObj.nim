@@ -5,7 +5,7 @@ import BN as BNFile
 import finals
 
 #Difficulty object.
-finals:
+finalsd:
     type Difficulty* = ref object of RootObj
         #Start of the period.
         start* {.final.}: BN

@@ -8,7 +8,7 @@ import Hash
 import finals
 
 #Object definitions.
-finals:
+finalsd:
     type
         #Leaf. The lowest type on the tree.
         Leaf* = ref object of RootObj
