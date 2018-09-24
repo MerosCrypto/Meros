@@ -11,7 +11,7 @@
 ### Ember Whitepaper: Being  Written
 
 #### Current State
-This currency is not usable by the mass populace. That said, Ember recently had its first transaction! We're aiming to have a private testnet in a few weeks and a public one in a few months.
+This currency is not usable by the mass populace. That said, Ember recently had its first transaction and was able to setup a test network! We're currently working on linking the consensus mechanism.
 
 #### Compiling
 
@@ -23,21 +23,19 @@ Requirements:
 ```
 git submodule update --init
 nimble install https://github.com/EmberCrypto/BN https://github.com/EmberCrypto/SetOnce ec_events
-nimble install nimcrypto secp256k1 rocksdb sdl2_nim
+nimble install nimcrypto secp256k1 rocksdb webview
 nim c src/main.nim
 ```
 
 If you're on Windows:
 - Go to https://github.com/Legrandin/mpir-windows-builds and download the GMP dynamic libraries (which you'll have to rename).
-- Go to https://www.libsdl.org/download-2.0.php and download the SDL2 dynamic libraries.
 
 If you're on a Debian based system:
 ```
 sudo apt-get install libgmp3-dev
-sudo apt-get install libsdl2-dev
 ```
 
-For MacOS/other Linux systems, please look up how to install the GMP/SDL2 libraries.
+For MacOS/other Linux systems, please look up how to install the GMP libraries.
 
 There are multiple samples under samples/ that can be directly compiled to demo Ember.
 

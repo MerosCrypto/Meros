@@ -2,13 +2,14 @@
 
 Core:
 - Track Verifications.
-- Track MeritRemovals.
 - Link the Lattice to Merit.
+- Track MeritRemovals.
 - UI.
 - Filesystem.
 - Difficulty Vote node.
 - Fork resolution for blocks of different types.
 - Finish tests.
+- Move Verifications out of the Lattice and onto the blockchain with BLS.
 
 Features:
 - Implement Bech32's BCH codes into Address.nim.
@@ -30,8 +31,7 @@ Behavior Changes:
 - Finalize Argon2's Block parameters.
 
 Bug fixes:
-- Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects usage in any way.
-- Fix Send and Receive Parsing (broken due to the new addresses).
+- Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
 - Remove GMP's memory leak.
 
 Documentation:
