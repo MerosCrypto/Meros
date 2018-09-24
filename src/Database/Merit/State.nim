@@ -26,8 +26,9 @@ proc processBlock*(state: State, newBlock: Block, blockchain: Blockchain) {.rais
         disgardMeritMiners: seq[tuple[miner: string, amount: int]] = blockchain.blocks[^50].miners
         miners: seq[tuple[miner: string, amount: int]] = newBlock.miners
 
-    for miner in miners:
-        state[miner.miner] = (state.getBalance(miner.miner) + newBN(miner.amount)).toRef()
+    if blockchain.height >= newBN(50000):
+        for miner in miners:
+            state[miner.miner] = (state.getBalance(miner.miner) + newBN(miner.amount)).toRef()
 
     for miner in disgardMeritMiners:
         state[miner.miner] = (state.getBalance(miner.miner) - newBN(miner.amount)).toRef()
