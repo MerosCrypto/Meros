@@ -25,22 +25,23 @@ import Account
 #Lattice Objects.
 import objects/LatticeObjs
 import objects/LatticeMasterObj
-#Export the Index object/function.
+#Export the Index object/constructor.
 export Index, newIndex
+#Export the Lattice object/constructor.
 export LatticeMasterObj.Lattice, newLattice
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Add a Node to the Hash Lookup.
-proc addToLookup(lattice: Lattice, node: Node) {.raises: [ValueError].} =
+proc addToLookup(lattice: Lattice, node: Node) {.raises: [].} =
     lattice
         .lookup
         .add(
-            $node.hash.toValue(),
+            $node.hash,
             newIndex(
                 node.sender,
-                node.nonce.toValue()
+                node.nonce
             )
         )
 
@@ -61,7 +62,7 @@ proc add*(
         blockLattice = lattice.lattice #Get the Block Lattice.
         account: Account = blockLattice.getAccount(node.sender) #Get the Account.
 
-    case node.descendant.toValue():
+    case node.descendant:
         of NodeType.Send:
             #Cast the node.
             var send: Send = cast[Send](node)
@@ -85,7 +86,7 @@ proc add*(
                     .getNode(
                         newIndex(
                             recv.inputAddress,
-                            recv.inputNonce.toValue()
+                            recv.inputNonce
                         )
                     )
             )
@@ -127,7 +128,7 @@ proc mint*(
     lattice: Lattice,
     address: string,
     amount: BN
-): Index {.raises: [ResultError, ValueError].} =
+): Index {.raises: [ResultError, ValueError, FinalAttributeError].} =
     #Get the Height in a new var that won't update.
     var height: BN = lattice.lattice.getAccount("minter").height
 
@@ -141,7 +142,7 @@ proc mint*(
     send.mine(newBN())
 
     #Set the sender.
-    send.sender.value = "minter"
+    send.sender = "minter"
 
     #Add it to the Lattice.
     if not lattice.add(send, true):

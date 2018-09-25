@@ -10,40 +10,42 @@ import NodeObj
 #Account object.
 import AccountObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Tables standard library.
 import tables
 
-type
-    #Index object. Specifies a Node on the Lattice.
-    Index* = ref object of RootObj
-        address*: SetOnce[string]
-        nonce*: SetOnce[BN]
+#Index object. Specifies a Node on the Lattice.
+finalsd:
+    type
+        Index* = ref object of RootObj
+            address* {.final.}: string
+            nonce* {.final.}: BN
 
-    #Lattice Difficulties object. Specifies the TX/Data  difficulties.
-    Difficulties* = ref object of RootObj
-        transaction*: BN
-        data*: BN
+        #Lattice Difficulties object. Specifies the TX/Data  difficulties.
+        Difficulties* = ref object of RootObj
+            transaction*: BN
+            data*: BN
 
-    #Block Lattice object.
-    BlockLattice* = TableRef[
-        string,
-        Account
-    ]
+        #Block Lattice object.
+        BlockLattice* = TableRef[
+            string,
+            Account
+        ]
 
-    #Hash Lookup object. Maps a hash to an index.
-    HashLookup* = TableRef[
-        string,
-        Index
-    ]
+        #Hash Lookup object. Maps a hash to an index.
+        HashLookup* = TableRef[
+            string,
+            Index
+        ]
 
 #Constructors.
-proc newIndex*(address: string, nonce: BN): Index {.raises: [ValueError].} =
-    result = Index()
-    result.address.value = address
-    result.nonce.value = nonce
+proc newIndex*(address: string, nonce: BN): Index {.raises: [].} =
+    result = Index(
+        address: address,
+        nonce: nonce
+    )
 
 proc newDifficulties*(): Difficulties {.raises: [].} =
     result = Difficulties(
@@ -56,7 +58,7 @@ proc newHashLookup*(): HashLookup {.raises: [].} =
     newTable[string, Index]()
 
 #Creates a new account on the lattice.
-proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [ValueError].} =
+proc newAccount*(lattice: BlockLattice, address: string): bool {.raises: [].} =
     result = true
     if lattice.hasKey(address):
         return false

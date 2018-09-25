@@ -13,9 +13,6 @@ import Network/Network
 #Event lib.
 import ec_events
 
-#SetOnce lib.
-import SetOnce
-
 #Async standard lib.
 import asyncdispatch
 
@@ -44,7 +41,7 @@ discard lattice.add(mintRecv)
 #Print the Private Key and address of the address holding the coins.
 echo minter.address &
     " was minted, and has received, one million coins. Its Private Key is " &
-    $minter.privateKey.toValue() & ".\r\n"
+    $minter.privateKey & ".\r\n"
 
 #---------- Network ----------
 var
@@ -59,7 +56,7 @@ events.on(
         echo "Adding a new Send."
         echo "From:   " & send.sender
         echo "To:     " & send.output
-        echo "Amount: " & $send.amount.toValue()
+        echo "Amount: " & $send.amount
         echo "\r\n"
 
         #Print before-balance, if the Lattice accepts it, and the new balance.

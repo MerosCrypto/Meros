@@ -11,9 +11,6 @@ import Block
 import objects/DifficultyObj
 export DifficultyObj
 
-#SetOnce lib.
-import SetOnce
-
 #String utils standard lib.
 import strutils
 
@@ -37,7 +34,7 @@ proc calculateNextDifficulty*(
     difficulties: seq[Difficulty],
     targetTime: BN,
     blocksPerPeriod: int
-): Difficulty {.raises: [ValueError].} =
+): Difficulty {.raises: [].} =
     #If it was the genesis block, keep the same difficulty.
     if blocks.len == 1:
         return difficulties[0]

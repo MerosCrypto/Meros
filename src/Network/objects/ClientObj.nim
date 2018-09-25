@@ -1,21 +1,23 @@
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Socket standard lib.
 import asyncnet
 
 #Client object.
-type Client* = ref object of RootObj
-    #ID.
-    id*: SetOnce[int]
-    #Socket.
-    socket*: SetOnce[AsyncSocket]
+finalsd:
+    type Client* = ref object of RootObj
+        #ID.
+        id* {.final.}: int
+        #Socket.
+        socket*  {.final.}: AsyncSocket
 
 #Constructor.
-proc newClient*(id: int, socket: AsyncSocket): Client {.raises: [ValueError].} =
-    result = Client()
-    result.id.value = id
-    result.socket.value = socket
+proc newClient*(id: int, socket: AsyncSocket): Client {.raises: [].} =
+    result = Client(
+        id: id,
+        socket: socket
+    )
 
 #Converter so we don't always have to .socket, but instead can directly use .recv().
 converter toSocket*(sc: Client): AsyncSocket {.raises: [].} =

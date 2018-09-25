@@ -15,9 +15,6 @@ import ../../../src/Database/Lattice/Receive
 import ../../../src/Network/Serialize/SerializeReceive
 import ../../../src/Network/Serialize/ParseReceive
 
-#SetOnce lib.
-import SetOnce
-
 #Test 20 serializations.
 for i in 1 .. 20:
     echo "Testing Receive Serialization/Parsing, iteration " & $i & "."

@@ -13,9 +13,6 @@ import ../src/Database/Lattice/Receive
 import ../src/Network/Serialize/SerializeSend
 import ../src/Network/Serialize/SerializeReceive
 
-#SetOnce lib.
-import SetOnce
-
 var
     sender: Wallet = newWallet()   #Sender's wallet.
     receiver: Wallet = newWallet() #Receiver's wallet.

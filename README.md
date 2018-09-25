@@ -22,8 +22,8 @@ Requirements:
 
 ```
 git submodule update --init
-nimble install https://github.com/EmberCrypto/BN https://github.com/EmberCrypto/SetOnce ec_events
-nimble install nimcrypto secp256k1 rocksdb webview
+nimble install https://github.com/EmberCrypto/BN ec_events
+nimble install finals nimcrypto secp256k1 rocksdb webview
 nim c src/main.nim
 ```
 

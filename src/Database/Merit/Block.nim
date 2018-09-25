@@ -27,8 +27,8 @@ import objects/BlockObj
 #Export the BlockObj.
 export BlockObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #String utils standard library.
 import strutils
@@ -44,7 +44,7 @@ proc newBlock*(
     proof: BN,
     miners: seq[tuple[miner: string, amount: int]],
     signature: string
-): Block {.raises: [ResultError, ValueError].} =
+): Block {.raises: [ResultError, ValueError, FinalAttributeError].} =
     #Verify the arguments.
     #Validations.
     for validation in validations:
@@ -85,11 +85,11 @@ proc newBlock*(
     result.argon = Argon(result.hash.toString(), result.proof.toString(256))
 
     #Set the miners.
-    result.miners.value = miners
+    result.miners = miners
     #Calculate the miners hash.
-    result.minersHash.value = SHA512(miners.serialize(nonce))
+    result.minersHash = SHA512(miners.serialize(nonce))
     #Verify the signature.
-    if not publisher.newPublicKey().verify($(result.minersHash.toValue()), signature):
+    if not publisher.newPublicKey().verify($result.minersHash, signature):
         raise newException(ValueError, "Invalid miners' signature.")
     #Set the signature.
-    result.signature.value = signature
+    result.signature = signature

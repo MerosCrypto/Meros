@@ -12,9 +12,6 @@ import ../../Database/Lattice/objects/SendObj
 #Common serialization functions.
 import SerializeCommon
 
-#SetOnce lib.
-import SetOnce
-
 #Serialize a Send.
 proc serialize*(send: Send): string {.raises: [ValueError].} =
     result =

@@ -18,9 +18,6 @@ import ../../../src/Database/Lattice/Send
 import ../../../src/Network/Serialize/SerializeSend
 import ../../../src/Network/Serialize/ParseSend
 
-#SetOnce lib.
-import SetOnce
-
 #Test 20 serializations.
 for i in 1 .. 20:
     echo "Testing Send Serialization/Parsing, iteration " & $i & "."

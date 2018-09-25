@@ -9,9 +9,6 @@ import ../../../lib/Time
 import BlockObj
 import DifficultyObj
 
-#SetOnce lib.
-import SetOnce
-
 #String utils standard lib.
 import strutils
 

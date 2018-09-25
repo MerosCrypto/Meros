@@ -20,14 +20,14 @@ import ../../Database/Lattice/objects/ReceiveObj
 import SerializeCommon
 import SerializeReceive
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #String utils standard lib.
 import strutils
 
 #Parse a Receive.
-proc parseReceive*(recvStr: string): Receive {.raises: [ValueError].} =
+proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, FinalAttributeError].} =
     var
         #Public Key | Nonce | Input Address | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(5)
@@ -49,14 +49,14 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError].} =
     )
 
     #Set the sender.
-    result.sender.value = sender.newAddress()
+    result.sender = sender.newAddress()
     #Set the nonce.
-    result.nonce.value = nonce
+    result.nonce = nonce
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    result.hash = SHA512(result.serialize())
 
     #Verify the signature.
-    if not sender.verify($result.hash.toValue(), signature):
+    if not sender.verify($result.hash, signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
-    result.signature.value = signature
+    result.signature = signature

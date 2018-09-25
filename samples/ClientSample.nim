@@ -15,9 +15,6 @@ import ../src/Database/Lattice/Lattice
 import ../src/Network/Serialize/SerializeSend
 import ../src/Network/Serialize/SerializeReceive
 
-#SetOnce lib.
-import SetOnce
-
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch
 
@@ -58,7 +55,7 @@ if answer == "":
     echo "Creating a new wallet..."
     wallet = newWallet()
     echo "Your Address is:     " & wallet.address & "."
-    echo "Your Private Key is: " & $wallet.privateKey.toValue() & "."
+    echo "Your Private Key is: " & $wallet.privateKey & "."
     quit(0)
 
 #Create a Wallet from their Private Key.

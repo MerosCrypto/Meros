@@ -5,8 +5,6 @@ import ../../lib/Merkle
 import Block
 import Blockchain
 
-import SetOnce
-
 import math
 import tables
 

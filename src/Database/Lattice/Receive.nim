@@ -20,15 +20,15 @@ import objects/NodeObj
 import objects/ReceiveObj
 export ReceiveObj
 
-#SetOnce lib.
-import SetOnce
+#Finals lib.
+import finals
 
 #Create a new Receive node.
 proc newReceive*(
     inputAddress: string,
     inputNonce: BN,
     nonce: BN
-): Receive {.raises: [ValueError].} =
+): Receive {.raises: [ValueError, FinalAttributeError].} =
     #Verify the input address.
     if (
         (not Wallet.verify(inputAddress)) and
@@ -51,22 +51,22 @@ proc newReceive*(
     )
 
     #Set the nonce.
-    result.nonce.value = nonce
+    result.nonce = nonce
 
     #Set the hash.
-    result.hash.value = SHA512(result.serialize())
+    result.hash = SHA512(result.serialize())
 
 #Create a new Receive node.
-proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError].} =
+proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError, FinalAttributeError].} =
     newReceive(
-        index.address.toValue(),
-        index.nonce.toValue(),
+        index.address,
+        index.nonce,
         nonce
     )
 
 #Sign a TX.
-proc sign*(wallet: Wallet, recv: Receive) {.raises: [ValueError].} =
+proc sign*(wallet: Wallet, recv: Receive) {.raises: [ValueError, FinalAttributeError].} =
     #Set the sender behind the node.
-    recv.sender.value = wallet.address
+    recv.sender = wallet.address
     #Sign the hash of the Receive.
-    recv.signature.value = wallet.sign($recv.hash.toValue())
+    recv.signature = wallet.sign($recv.hash)
