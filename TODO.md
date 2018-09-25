@@ -14,7 +14,6 @@ Core:
 Features:
 - Implement Bech32's BCH codes into Address.nim.
 - Chain Params file.
-- Have Merit disappear after 50000 (365.25\*24\*6 is 52596; just rounded down for ease) blocks.
 - Have Merit Holders indexable by the order they got Merit in.
 
 Improvements:
@@ -35,10 +34,7 @@ Bug fixes:
 - Remove GMP's memory leak.
 
 Documentation:
-- Add comments to:
-    - DB/Merit/State.nim
-
-    - Wallet/Wallet.nim
+- Add comments to Wallet/Wallet.nim.
 - Use Documentation Comments.
 - Ember Whitepaper.
 
