@@ -22,16 +22,15 @@ proc getBalance*(state: State, account: string): BN {.raises: [ValueError].} =
 
 proc processBlock*(state: State, newBlock: Block, blockchain: Blockchain) {.raises: [ValueError].} =
 
-    let
-        disgardMeritMiners: seq[tuple[miner: string, amount: int]] = blockchain.blocks[^50].miners
-        miners: seq[tuple[miner: string, amount: int]] = newBlock.miners
+    let miners: seq[tuple[miner: string, amount: int]] = newBlock.miners
 
-    if blockchain.height >= newBN(50000):
-        for miner in miners:
-            state[miner.miner] = (state.getBalance(miner.miner) + newBN(miner.amount)).toRef()
+    for miner in miners:
+        state[miner.miner] = (state.getBalance(miner.miner) + newBN(miner.amount)).toRef()
 
-    for miner in disgardMeritMiners:
-        state[miner.miner] = (state.getBalance(miner.miner) - newBN(miner.amount)).toRef()
+    if blockchain.height >= newBN(50001):
+        let deadMiners: seq[tuple[miner: string, amount: int]] = blockchain.blocks[^50001].miners   
+        for miner in deadMiners:
+            state[miner.miner] = (state.getBalance(miner.miner) - newBN(miner.amount)).toRef()
 
 proc processBlockchain*(state: State, blockchain: Blockchain) {.raises: [ValueError].} =
     for i in blockchain.blocks:
