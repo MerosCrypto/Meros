@@ -33,7 +33,7 @@ proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [Exception].} 
         return false
 
     #Have the state process the block.
-    merit.state.processBlock(newBlock, merit.blockchain)
+    merit.state.processBlock(merit.blockchain, newBlock)
 
 #Getters.
 proc getHeight*(merit: Merit): BN {.raises: [].} =
