@@ -1,14 +1,17 @@
 #BN lib.
 import BN
 
-#Wallet lib.
+#Wallet.
 import Wallet/Wallet
 
-#Lattice lib.
+#Lattice.
 import Database/Lattice/Lattice
 
-#Network lib.
+#Network.
 import Network/Network
+
+#UI.
+import UI/UI
 
 #Event lib.
 import ec_events
@@ -20,7 +23,6 @@ import asyncdispatch
 import strutils
 
 #---------- Lattice ----------
-
 var
     minter: Wallet = newWallet(
         "5893C9C209BE90DB9B72DA1F33FAA188CAD131280865B4814131C958F3732B12"
@@ -52,21 +54,14 @@ var
 events.on(
     "send",
     proc (msg: Message, send: Send) =
-        #Print the message info.
+        #Print that we're adding the node.
         echo "Adding a new Send."
-        echo "From:   " & send.sender
-        echo "To:     " & send.output
-        echo "Amount: " & $send.amount
-        echo "\r\n"
 
-        #Print before-balance, if the Lattice accepts it, and the new balance.
-        echo "Balance of " & send.sender & ":     " & $lattice.getBalance(send.sender)
-        var addResult: bool = lattice.add(
+        #Add the Send.
+        if lattice.add(
             send
-        )
-        if addResult:
+        ):
             echo "Successfully added the Send."
-            echo "New balance of " & send.sender & ": " & $lattice.getBalance(send.sender)
             network.broadcast(msg)
         else:
             echo "Failed to add the Send."
@@ -77,42 +72,64 @@ events.on(
 events.on(
     "recv",
     proc (msg: Message, recv: Receive) =
-        #Print the message info.
+        #Print that we're adding the node.
         echo "Adding a new Receive."
-        echo "From:   " & recv.inputAddress
-        echo "To:     " & recv.sender
-        echo "\r\n"
 
-        #Print before-balance, if the Lattice accepts it, and the new balance.
-        echo "Balance of " & recv.sender & ":     " & $lattice.getBalance(recv.sender)
-        var addResult: bool = lattice.add(
+        #Add the Receive.
+        if lattice.add(
             recv
-        )
-        if addResult:
+        ):
             echo "Successfully added the Receive."
-            echo "New balance of " & recv.sender & ": " & $lattice.getBalance(recv.sender)
             network.broadcast(msg)
         else:
             echo "Failed to add the Receive."
         echo ""
 )
 
-#Define a var for input.
-var input: string
-#Read the port to listen on.
-echo "Please enter the port to listen on."
-input = stdin.readLine()
-echo ""
-#Start listening.
-network.start(parseInt(input))
+#Handle Data.
+events.on(
+    "data",
+    proc (msg: Message, data: Data) =
+        #Print that we're adding the node.
+        echo "Adding a new Data."
 
-#Read in a port to connct to.
-echo "Please enter a port to connect to."
-input = stdin.readLine()
-echo ""
-if input != "":
-    #Connect to that port.
-    asyncCheck network.connect("127.0.0.1", parseInt(input))
+        #Add the Data.
+        if lattice.add(
+            data
+        ):
+            echo "Successfully added the Data."
+            network.broadcast(msg)
+        else:
+            echo "Failed to add the Data."
+        echo ""
+)
+
+#Handle Verifications.
+events.on(
+    "verif",
+    proc (msg: Message, verif: Verification) =
+        #Print that we're adding the node.
+        echo "Adding a new Verification."
+
+        #Add the Verification.
+        if lattice.add(
+            verif
+        ):
+            echo "Successfully added the Verification."
+            network.broadcast(msg)
+        else:
+            echo "Failed to add the Verification."
+        echo ""
+)
+
+#------------ UI ------------
+
+#Create the UI.
+var ui: UI = newUI(events, 500, 500)
+ui.run()
+
+#Start listening.
+network.start(5132)
 
 #Run forever.
 runForever()
