@@ -35,3 +35,9 @@ proc disconnect*(clients: Clients, id: int) {.raises: [Exception].} =
         if client.id == id:
             client.close()
             clients.clients.delete(i)
+
+#Disconnects every client.
+proc shutdown*(clients: Clients) {.raises: [Exception].} =
+    for i, client in clients.clients:
+        client.close()
+        clients.clients.delete(i)

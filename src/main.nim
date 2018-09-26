@@ -53,7 +53,7 @@ var
 #Handle Sends.
 events.on(
     "send",
-    proc (msg: Message, send: Send) =
+    proc (msg: Message, send: Send) {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Send."
 
@@ -71,7 +71,7 @@ events.on(
 #Handle Receives.
 events.on(
     "recv",
-    proc (msg: Message, recv: Receive) =
+    proc (msg: Message, recv: Receive) {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Receive."
 
@@ -89,7 +89,7 @@ events.on(
 #Handle Data.
 events.on(
     "data",
-    proc (msg: Message, data: Data) =
+    proc (msg: Message, data: Data) {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Data."
 
@@ -107,7 +107,7 @@ events.on(
 #Handle Verifications.
 events.on(
     "verif",
-    proc (msg: Message, verif: Verification) =
+    proc (msg: Message, verif: Verification) {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Verification."
 
@@ -123,6 +123,16 @@ events.on(
 )
 
 #------------ UI ------------
+
+#Handle the WebView closing.
+events.on(
+    "quit",
+    proc () {.raises: [Exception].} =
+        #Shut down the Network.
+        network.shutdown()
+        #Quit.
+        quit(0)
+)
 
 #Create the UI.
 var ui: UI = newUI(events, 500, 500)

@@ -102,7 +102,7 @@ proc start*(network: Network, port: int = 5132) {.raises: [ValueError, Exception
     #Listen for a new Server client.
     network.subEvents.on(
         "server",
-        proc (client: AsyncSocket) =
+        proc (client: AsyncSocket) {.raises: [ValueError, Exception].} =
             network.add(client)
     )
 
@@ -117,6 +117,13 @@ proc connect*(network: Network, ip: string, port: int = 5132) {.async.} =
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
     network.add(socket)
+
+#Shutdown network operations.
+proc shutdown*(network: Network) {.raises: [Exception].} =
+    #Stop the server.
+    network.server.close()
+    #Disconnect the clients.
+    network.clients.shutdown()
 
 #Function wrappers for the functions in Clients that take in Clients, not Network.
 #Sends a message to all clients.

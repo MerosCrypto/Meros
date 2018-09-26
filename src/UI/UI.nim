@@ -18,6 +18,7 @@ type UI* = ref object of RootObj
 
 #Constructor.
 proc newUI*(events: EventEmitter, width: int, height:  int): UI {.raises: [Exception].} =
+    #Create the result.
     result = UI(
         events: events,
         webview: newWebView(
@@ -27,6 +28,17 @@ proc newUI*(events: EventEmitter, width: int, height:  int): UI {.raises: [Excep
             height
         )
     )
+
+    #Bind a proc so we can transmit data.
+    result.webview.externalInvokeCB =
+        proc (webview: Webview, data: string) =
+            case data:
+                #If the WebView wants to quit...
+                of "quit":
+                    #Close WebView.
+                    webview.exit()
+                    #Emit the quit event.
+                    events.get(proc (), "quit")()
 
     if result.webview.eval(
         "document.write(\r\n" &
