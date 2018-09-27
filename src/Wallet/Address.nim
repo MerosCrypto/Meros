@@ -75,7 +75,7 @@ proc verify*(address: string): bool {.raises: [ValueError].} =
         return false
 
     #Verify the public key format.
-    let key: seq[uint8] = address.substr(3, address.len-7).toBase32().toSeq()
+    let key: seq[uint8] = address.substr(3, address.len).toBase32().toSeq()
     if (key[0] != 2) and (key[0] != 3):
         return false
 

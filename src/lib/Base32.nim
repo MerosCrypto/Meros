@@ -5,8 +5,7 @@ import math
 const CHARACTERS: string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
 #Define the Base32 type.
-type Base32* = ref object of RootObj
-    data: seq[uint8]
+type Base32* = distinct seq[uint8]
 
 #Checks if the string is a valid Base32 string.
 proc isBase32*(data: string): bool {.raises: [].} =
@@ -22,13 +21,11 @@ proc isBase32*(data: string): bool {.raises: [].} =
 
 #Binary array to Base32 object.
 proc toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
-    #Set the result variable.
-    result = Base32(
-        data: @[]
-    )
+    #Creae a result variable.
+    var res: seq[uint8] = @[]
 
     #How many times to run the loop.
-    var count: int = ((data.len * 8) div 5)
+    var count: int = (data.len * 8) div 5
     #If there's not an even amount of 5 bit numbers (which div doesn't handle as it truncates), add an extra count.
     if (data.len * 8) mod 5 != 0:
         inc(count)
@@ -54,7 +51,7 @@ proc toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
             temp += uint16(data[index + 1]) and 0xFF
 
         #Add the bits.
-        result.data.add(
+        res.add(
             uint8(
                 temp shl (bit mod 8) shr 11
             )
@@ -63,6 +60,8 @@ proc toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
         #Increase the bit by 5.
         bit += 5
 
+    #Set the result variable.
+    result = cast[Base32](res)
 
 #Base32 string to Base32 object.
 proc toBase32*(data: string): Base32 {.raises: [ValueError].} =
@@ -70,23 +69,27 @@ proc toBase32*(data: string): Base32 {.raises: [ValueError].} =
     if not data.isBase32():
         raise newException(ValueError, "String is not a valid Base 32 number.")
 
-    #Create the result object.
-    result = Base32(
-        data: @[]
-    )
+    #Create a result variable.
+    var res: seq[uint8] = @[]
 
     #Iterate over the data.
     for i in data:
         #Add the character's value.
-        result.data.add(uint8(CHARACTERS.find(i)))
+        res.add(uint8(CHARACTERS.find(i)))
+
+    #Set the result variable.
+    result = cast[Base32](res)
 
 #Base32 object to binary seq.
-proc toSeq*(data: Base32): seq[uint8] {.raises: [].} =
+proc toSeq*(dataArg: Base32): seq[uint8] {.raises: [].} =
+    #Extract the data.
+    var data: seq[uint8] = cast[seq[uint8]](dataArg)
+
     #Create the result with enough bytes for the data.
     result = newSeq[uint8](
         int(
             ceil(
-                data.data.len / 8 * 5
+                data.len / 8 * 5
             )
         )
     )
@@ -98,7 +101,7 @@ proc toSeq*(data: Base32): seq[uint8] {.raises: [].} =
         bit: int = 0
         #Space left in the previous byte.
         space: int
-    for i in data.data:
+    for i in data:
         #If we're adding the bits to only already existing bytes...
         if bit <= 3:
             #Shift the bits to the proper position and add them.
@@ -121,11 +124,14 @@ proc toSeq*(data: Base32): seq[uint8] {.raises: [].} =
             bytes += 1
 
 #Base32 object to Base32 string.
-proc `$`*(data: Base32): string {.raises: [].} =
+proc `$`*(dataArg: Base32): string {.raises: [].} =
+    #Extract the data.
+    var data: seq[uint8] = cast[seq[uint8]](dataArg)
+
     #Create the empty result string.
     result = ""
 
     #Iterate over every item in the seq.
-    for i in data.data:
+    for i in data:
         #Add the item.
         result &= CHARACTERS[int(i)]
