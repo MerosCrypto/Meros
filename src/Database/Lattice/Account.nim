@@ -116,6 +116,7 @@ proc add*(
     result = account.add(cast[Node](recv), send)
 
 #Add Data.
+discard """
 proc add*(
     account: Account,
     data: Data,
@@ -125,19 +126,23 @@ proc add*(
     if data.hash.toBN() < difficulty:
         return false
 
-    #Add the data.
+    #Add the Data.
     result = account.add(cast[Node](data))
+"""
 
 #Add a Verification.
 proc add*(
     account: Account,
     verif: Verification
 ): bool {.raises: [ValueError].} =
+    #Add the Verification.
     result = account.add(cast[Node](verif))
 
 #Add a Merit Removal.
+discard """
 proc add*(
     account: Account,
     mr: MeritRemoval
 ): bool {.raises: [ValueError].} =
     result = account.add(cast[Node](mr))
+"""

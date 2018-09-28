@@ -94,12 +94,14 @@ proc add*(
         of NodeType.Data:
             var data: Data = cast[Data](node)
 
+            discard """
             result = account.add(
                 #Data Node.
                 data,
                 #Data Difficulty.
                 lattice.difficulties.data
             )
+            """
 
         of NodeType.Verification:
             var verif: Verification = cast[Verification](node)
@@ -112,10 +114,12 @@ proc add*(
         of NodeType.MeritRemoval:
             var mr: MeritRemoval = cast[MeritRemoval](node)
 
+            discard """
             result = account.add(
                 #Data Node.
                 mr
             )
+            """
 
     #If that didn't work, return.
     if not result:

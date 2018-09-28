@@ -12,7 +12,7 @@ import finals
 
 finalsd:
     type Verification* = ref object of Node
-        #Send Hash.
+        #Node Hash.
         verified* {.final.}: Hash[512]
 
 #New Verification object.
