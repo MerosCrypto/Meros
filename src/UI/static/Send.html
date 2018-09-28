@@ -1,0 +1,26 @@
+<html>
+    <body>
+        <h1>Send</h1>
+
+        Destination: <input type='text' id='destination'></input>
+        <br>
+        Amount: <input type='text' id='amount'></input>
+        <br>
+        Nonce: <input type='text' id='nonce'></input>
+        <br>
+        <button onclick='generate()'>Generate</button>
+
+        <script>
+            function quit() {
+                window.external.invoke('quit');
+            }
+
+            function generate() {
+                var destination = document.getElementById('destination').value;
+                var amount = document.getElementById('amount').value;
+                var nonce = document.getElementById('nonce').value;
+                window.external.invoke('send ' + destination + ' ' + amount + ' ' + nonce);
+            }
+        </script>
+    </body>
+</html>
