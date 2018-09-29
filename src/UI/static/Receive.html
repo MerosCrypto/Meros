@@ -1,6 +1,11 @@
 <html>
     <body>
         <h1>Receive</h1>
+        <button onclick=\"UI.load('main')\">Main</button>
+        <button onclick=\"UI.load('send')\">Send</button>
+        <button onclick=\"UI.load('receive')\">Receive</button>
+        <button onclick=\"UI.quit()\">Quit</button>
+        <hr>
 
         Sender: <input type='text' id='sender'></input>
         <br>
@@ -8,19 +13,11 @@
         <br>
         Nonce: <input type='text' id='nonce'></input>
         <br>
-        <button onclick='generate()'>Generate</button>
-
-        <script>
-            function quit() {
-                window.external.invoke('quit');
-            }
-
-            function generate() {
-                var sender = document.getElementById('sender').value;
-                var inputNonce = document.getElementById('inputNonce').value;
-                var nonce = document.getElementById('nonce').value;
-                window.external.invoke('recv ' + sender + ' ' + inputNonce + ' ' + nonce);
-            }
-        </script>
+        <button onclick=\"
+            var sender = document.getElementById('sender').value;
+            var inputNonce = document.getElementById('inputNonce').value;
+            var nonce = document.getElementById('nonce').value;
+            Lattice.receive(sender + ' ' + inputNonce + ' ' + nonce);
+        \">Generate</button>
     </body>
 </html>
