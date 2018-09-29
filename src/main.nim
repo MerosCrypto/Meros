@@ -135,7 +135,7 @@ events.on(
 )
 
 #Create the UI.
-var ui: UI = newUI(events, 1000, 1000)
+var ui: UI = newUI(events, 800, 800)
 ui.run()
 
 #Start listening.

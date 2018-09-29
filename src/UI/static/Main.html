@@ -4,7 +4,12 @@
 
         If you don't have a private key, leave the field blank to create one.
         <br>
-        Private Key: <input type='text' id='privateKeyInput'></input> <button onclick=\"ui.setPrivateKey(document.getElementById('privateKeyInput').value);\">Set Private Key</button>
+        Private Key: <input type='text' id='privateKeyInput'></input> <button onclick=\"
+            Wallet.create(document.getElementById('privateKeyInput').value);
+            Wallet.storePrivateKey('privateKey');
+            Wallet.storePublicKey('publicKey');
+            Wallet.storeAddress('address');
+        \">Set Private Key</button>
         <br>
         <hr>
         <br>
