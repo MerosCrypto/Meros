@@ -17,6 +17,9 @@ import ec_events
 #WebView.
 import webview
 
+#Async standard lib.
+import asyncdispatch
+
 #String utils standard lib.
 import strutils
 
@@ -43,7 +46,7 @@ proc newUI*(events: EventEmitter, width: int, height: int): UI {.raises: [Except
         raise newException(Exception, "Couldn't evaluate JS in the WebView.")
 
 #Run function.
-proc run*(ui: UI) {.raises: [].} =
+proc run*(ui: UI) {.async.} =
     ui.webview.run()
 
 #Destructor.

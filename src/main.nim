@@ -53,7 +53,7 @@ var
 #Handle Sends.
 events.on(
     "send",
-    proc (msg: Message, send: Send) {.raises: [Exception].} =
+    proc (send: Send): bool {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Send."
 
@@ -62,16 +62,17 @@ events.on(
             send
         ):
             echo "Successfully added the Send."
-            network.broadcast(msg)
+            result = true
         else:
             echo "Failed to add the Send."
+            result = false
         echo ""
 )
 
 #Handle Receives.
 events.on(
     "recv",
-    proc (msg: Message, recv: Receive) {.raises: [Exception].} =
+    proc (recv: Receive): bool {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Receive."
 
@@ -80,16 +81,17 @@ events.on(
             recv
         ):
             echo "Successfully added the Receive."
-            network.broadcast(msg)
+            result = true
         else:
             echo "Failed to add the Receive."
+            result = false
         echo ""
 )
 
 #Handle Data.
 events.on(
     "data",
-    proc (msg: Message, data: Data) {.raises: [Exception].} =
+    proc (msg: Message, data: Data): bool {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Data."
 
@@ -98,16 +100,17 @@ events.on(
             data
         ):
             echo "Successfully added the Data."
-            network.broadcast(msg)
+            result = true
         else:
             echo "Failed to add the Data."
+            result = false
         echo ""
 )
 
 #Handle Verifications.
 events.on(
     "verif",
-    proc (msg: Message, verif: Verification) {.raises: [Exception].} =
+    proc (verif: Verification): bool {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Verification."
 
@@ -116,11 +119,15 @@ events.on(
             verif
         ):
             echo "Successfully added the Verification."
-            network.broadcast(msg)
+            result = true
         else:
             echo "Failed to add the Verification."
+            result = false
         echo ""
 )
+
+#Start listening.
+network.start(5132)
 
 #------------ UI ------------
 
@@ -136,10 +143,7 @@ events.on(
 
 #Create the UI.
 var ui: UI = newUI(events, 800, 800)
-ui.run()
-
-#Start listening.
-network.start(5132)
+asyncCheck ui.run()
 
 #Run forever.
 runForever()

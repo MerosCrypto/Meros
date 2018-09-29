@@ -39,13 +39,15 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
     var subEvents: EventEmitter = newEventEmitter()
 
     #Create the Network object.
-    result = newNetworkObj(
+    var network: Network = newNetworkObj(
         id,
         newClients(),
         newAsyncSocket(),
         subEvents,
         nodeEvents
     )
+    #Set the result to it.
+    result = network
 
     #On a new message...
     subEvents.on(
@@ -72,21 +74,21 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
             try:
                 case msg.content:
                     of MessageType.Send:
-                        nodeEvents.get(
-                            proc (msg: Message, send: Send),
+                        if nodeEvents.get(
+                            proc (send: Send): bool,
                             "send"
                         )(
-                            msg,
                             msg.message.parseSend()
-                        )
+                        ):
+                            network.clients.broadcast(msg)
                     of MessageType.Receive:
-                        nodeEvents.get(
-                            proc (msg: Message, recv: Receive),
+                        if nodeEvents.get(
+                            proc (recv: Receive): bool,
                             "recv"
                         )(
-                            msg,
                             msg.message.parseReceive()
-                        )
+                        ):
+                            network.clients.broadcast(msg)
                     of MessageType.Data:
                         discard
                     of MessageType.Verification:
@@ -98,7 +100,10 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
     )
 
 #Start listening.
-proc start*(network: Network, port: int = 5132) {.raises: [ValueError, Exception].} =
+proc start*(
+    network: Network,
+    port: int = 5132
+) {.raises: [ValueError, Exception].} =
     #Listen for a new Server client.
     network.subEvents.on(
         "server",
