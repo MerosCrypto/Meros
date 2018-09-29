@@ -7,9 +7,6 @@ import ../objects/UIObj
 #WebView lib.
 import webview
 
-#String utils standard lib.
-import strutils
-
 #Add the Wallet bindings to the UI.
 proc addTo*(ui: UI) {.raises: [Exception].} =
     #Create a Wallet from a Private Key.
@@ -36,7 +33,7 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )
 
-    #Get the Wallet's Public Key.
+    #Store the Wallet's Public Key in an element.
     ui.webview.bindProc(
         "Wallet",
         "storePublicKey",
@@ -47,7 +44,7 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )
 
-    #Get the Wallet's Address.
+    #Store the Wallet's Address in an element.
     ui.webview.bindProc(
         "Wallet",
         "storeAddress",

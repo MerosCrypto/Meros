@@ -20,12 +20,6 @@ import webview
 #String utils standard lib.
 import strutils
 
-#Constants of the HTML/CSS/JS.
-const
-    MAIN: string = staticRead("static/Main.html")
-    SEND: string = staticRead("static/Send.html")
-    RECEIVE: string = staticRead("static/Receive.html")
-
 #Constructor.
 proc newUI*(events: EventEmitter, width: int, height: int): UI {.raises: [Exception].} =
     #Create the UI.

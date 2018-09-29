@@ -7,11 +7,14 @@ import ec_events
 #WebView lib.
 import webview
 
+#String utils standard lib.
+import strutils
+
 #Add the UI bindings to the UI.
 proc addTo*(ui: UI) {.raises: [Exception].} =
     #Quit.
     ui.webview.bindProcNoArg(
-        "ui",
+        "UI",
         "quit",
         proc () {.raises: [Exception].} =
             #Close WebView.
@@ -22,7 +25,7 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
 
     #Print. If debug isn't defined, this does nothing.
     ui.webview.bindProc(
-        "ui",
+        "UI",
         "print",
         proc (msg: string) {.raises: [].} =
             when defined(debug):
@@ -31,8 +34,24 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
 
     #Load a new page.
     ui.webview.bindProc(
-        "ui",
+        "UI",
         "load",
-        proc (page: string) {.raises: [].} =
-            discard
+        proc (pageArg: string) {.raises: [Exception].} =
+            #Declare a var for the page.
+            var page: string
+
+            #Find out what page to load.
+            case pageArg:
+                of "main":
+                    page = MAIN
+                of "send":
+                    page = SEND
+                of "receive":
+                    page = RECEIVE
+
+            #Load the page.
+            if ui.webview.eval(
+                "document.body.innerHTML = (\"" & page.splitLines().join("\"+\"") & "\");"
+            ) != 0:
+                raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )
