@@ -5,7 +5,7 @@ import ../objects/GUIObj
 import ec_events
 
 #WebView lib.
-import webview
+import ec_webview
 
 #String utils standard lib.
 import strutils

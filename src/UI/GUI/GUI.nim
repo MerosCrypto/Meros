@@ -15,7 +15,7 @@ import Bindings/Bindings
 import ec_events
 
 #WebView.
-import webview
+import ec_webview
 
 #Async standard lib.
 import asyncdispatch
@@ -24,9 +24,13 @@ import asyncdispatch
 import strutils
 
 #Constructor.
-proc newGUI*(events: EventEmitter, width: int, height: int): GUI {.raises: [Exception].} =
+proc newGUI*(
+    events: EventEmitter,
+    width: int,
+    height: int
+) {.thread, raises: [Exception].} =
     #Create the GUI.
-    result = newGUI(
+    var gui: GUI = newGUI(
         events,
         newWebView(
             "Ember Core",
@@ -37,18 +41,13 @@ proc newGUI*(events: EventEmitter, width: int, height: int): GUI {.raises: [Exce
     )
 
     #Add the Bindings.
-    result.createBindings()
+    gui.createBindings()
 
     #Load the main page.
-    if result.webview.eval(
+    if gui.webview.eval(
         "document.body.innerHTML = (\"" & MAIN.splitLines().join("\"+\"") & "\");"
     ) != 0:
         raise newException(Exception, "Couldn't evaluate JS in the WebView.")
 
-#Run function.
-proc run*(ui: GUI) {.raises: [].} =
-    ui.webview.run()
-
-#Destructor.
-proc destroy*(ui: GUI) {.raises: [].} =
-    ui.webview.terminate()
+    #Run the GUI.
+    gui.webview.run()

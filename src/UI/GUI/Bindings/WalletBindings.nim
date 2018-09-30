@@ -5,7 +5,7 @@ import ../../../Wallet/Wallet
 import ../objects/GUIObj
 
 #WebView lib.
-import webview
+import ec_webview
 
 #Add the Wallet bindings to the GUI.
 proc addTo*(gui: GUI) {.raises: [Exception].} =

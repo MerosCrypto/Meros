@@ -19,6 +19,9 @@ import ec_events
 #Async standard lib.
 import asyncdispatch
 
+#Thread standard lib.
+import threadpool
+
 #String utils standard lib.
 import strutils
 
@@ -142,8 +145,7 @@ events.on(
 )
 
 #Create the GUI.
-#var gui: GUI = newGUI(events, 1000, 500)
-#gui.run()
+spawn newGUI(events, 1000, 500)
 
 #Run forever.
 runForever()

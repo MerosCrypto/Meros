@@ -8,7 +8,7 @@ import ec_events
 import finals
 
 #WebView.
-import webview
+import ec_webview
 
 #Constants of the HTML.
 const
