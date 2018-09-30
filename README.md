@@ -17,13 +17,13 @@ This currency is not usable by the mass populace. That said, Ember recently had 
 
 Requirements:
 
-- Nim devel
+- Nim 0.19.0
 - Nimble
 
 ```
 git submodule update --init
-nimble install https://github.com/EmberCrypto/BN ec_events
-nimble install finals nimcrypto secp256k1 rocksdb webview
+nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/WebView
+nimble install finals nimcrypto secp256k1 rocksdb
 nim c src/main.nim
 ```
 
