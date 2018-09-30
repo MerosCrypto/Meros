@@ -141,9 +141,9 @@ events.on(
         quit(0)
 )
 
-#Create the UI.
-var ui: UI = newUI(events, 800, 800)
-asyncCheck ui.run()
+#Create the GUI.
+#var gui: GUI = newGUI(events, 1000, 500)
+#gui.run()
 
 #Run forever.
 runForever()

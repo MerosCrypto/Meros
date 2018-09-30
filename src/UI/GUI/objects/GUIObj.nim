@@ -1,5 +1,5 @@
 #Import the Wallet lib.
-import ../../Wallet/Wallet
+import ../../../Wallet/Wallet
 
 #Events lib.
 import ec_events
@@ -16,19 +16,19 @@ const
     SEND*: string = staticRead("../static/Send.html")
     RECEIVE*: string = staticRead("../static/Receive.html")
 
-#UI.
+#GUI.
 finalsd:
-    type UI* = ref object of RootObj
+    type GUI* = ref object of RootObj
         events* {.final.}: EventEmitter
         webview* {.final.}: WebView
         wallet*: Wallet
 
 #Constructor.
-proc newUI*(
+proc newGUI*(
     events: EventEmitter,
     webview: WebView
-): UI {.raises: [].} =
-    UI(
+): GUI {.raises: [].} =
+    GUI(
         events: events,
         webview: webview
     )

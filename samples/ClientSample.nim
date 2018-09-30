@@ -108,16 +108,19 @@ elif answer.toLower() == "receive":
     )
     #Sign the Receive.
     wallet.sign(recv)
+    echo "Signed the Receive."
 
     #Create the serialized string.
     serialized = recv.serialize()
-    serialized =
-        recvHeader & char(serialized.len) & serialized
+    serialized = recvHeader & char(serialized.len) & serialized
 else:
     echo "I don't recognize that option."
     quit(-1)
 
 #Connect to the server.
+echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
+echo "Connected."
 #Send the serialized node.
 waitFor client.send(serialized)
+echo "Sent."

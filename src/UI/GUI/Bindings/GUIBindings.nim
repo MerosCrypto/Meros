@@ -1,5 +1,5 @@
-#UI object.
-import ../objects/UIObj
+#GUI object.
+import ../objects/GUIObj
 
 #EventEmitter lib.
 import ec_events
@@ -10,22 +10,22 @@ import webview
 #String utils standard lib.
 import strutils
 
-#Add the UI bindings to the UI.
-proc addTo*(ui: UI) {.raises: [Exception].} =
-    #Quit.
-    ui.webview.bindProcNoArg(
-        "UI",
+#Add the GUI bindings to the GUI.
+proc addTo*(gui: GUI) {.raises: [Exception].} =
+    #Qguit.
+    gui.webview.bindProcNoArg(
+        "GUI",
         "quit",
         proc () {.raises: [Exception].} =
             #Close WebView.
-            ui.webview.exit()
+            gui.webview.exit()
             #Emit the quit event.
-            ui.events.get(proc (), "quit")()
+            gui.events.get(proc (), "quit")()
     )
 
     #Print. If debug isn't defined, this does nothing.
-    ui.webview.bindProc(
-        "UI",
+    gui.webview.bindProc(
+        "GUI",
         "print",
         proc (msg: string) {.raises: [].} =
             when defined(debug):
@@ -33,8 +33,8 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
     )
 
     #Load a new page.
-    ui.webview.bindProc(
-        "UI",
+    gui.webview.bindProc(
+        "GUI",
         "load",
         proc (pageArg: string) {.raises: [Exception].} =
             #Declare a var for the page.
@@ -50,7 +50,7 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
                     page = RECEIVE
 
             #Load the page.
-            if ui.webview.eval(
+            if gui.webview.eval(
                 "document.body.innerHTML = (\"" & page.splitLines().join("\"+\"") & "\");"
             ) != 0:
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")

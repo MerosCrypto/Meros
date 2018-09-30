@@ -1,56 +1,56 @@
 #Wallet lib.
-import ../../Wallet/Wallet
+import ../../../Wallet/Wallet
 
-#UI object.
-import ../objects/UIObj
+#GUI object.
+import ../objects/GUIObj
 
 #WebView lib.
 import webview
 
-#Add the Wallet bindings to the UI.
-proc addTo*(ui: UI) {.raises: [Exception].} =
+#Add the Wallet bindings to the GUI.
+proc addTo*(gui: GUI) {.raises: [Exception].} =
     #Create a Wallet from a Private Key.
-    ui.webview.bindProc(
+    gui.webview.bindProc(
         "Wallet",
         "create",
         proc (key: string) {.raises: [ValueError, Exception].} =
             #If a key was passed, creae a Wallet from it.
             if key.len > 0:
-                ui.wallet = newWallet(key)
+                gui.wallet = newWallet(key)
             #Else, create a new Wallet.
             else:
-                ui.wallet = newWallet()
+                gui.wallet = newWallet()
     )
 
     #Store the Wallet's Private Key in an element.
-    ui.webview.bindProc(
+    gui.webview.bindProc(
         "Wallet",
         "storePrivateKey",
         proc (element: string) {.raises: [Exception].} =
-            if ui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & $ui.wallet.privateKey & "';"
+            if gui.webview.eval(
+                "document.getElementById('" & element & "').innerHTML = '" & $gui.wallet.privateKey & "';"
             ) != 0:
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )
 
     #Store the Wallet's Public Key in an element.
-    ui.webview.bindProc(
+    gui.webview.bindProc(
         "Wallet",
         "storePublicKey",
         proc (element: string) {.raises: [Exception].} =
-            if ui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & $ui.wallet.publicKey & "';"
+            if gui.webview.eval(
+                "document.getElementById('" & element & "').innerHTML = '" & $gui.wallet.publicKey & "';"
             ) != 0:
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )
 
     #Store the Wallet's Address in an element.
-    ui.webview.bindProc(
+    gui.webview.bindProc(
         "Wallet",
         "storeAddress",
         proc (element: string) {.raises: [Exception].} =
-            if ui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & ui.wallet.address & "';"
+            if gui.webview.eval(
+                "document.getElementById('" & element & "').innerHTML = '" & gui.wallet.address & "';"
             ) != 0:
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )

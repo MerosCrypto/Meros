@@ -1,15 +1,15 @@
 #Numerical libs.
 import BN
-import ../../lib/Base
+import ../../../lib/Base
 
 #Wallet lib.
-import ../..//Wallet/Wallet
+import ../../../Wallet/Wallet
 
 #Lattice lib.
-import ../../Database/Lattice/Lattice
+import ../../../Database/Lattice/Lattice
 
-#UI object.
-import ../objects/UIObj
+#GUI object.
+import ../objects/GUIObj
 
 #Events lib.
 import ec_events
@@ -23,10 +23,10 @@ import webview
 #String utils standard lib.
 import strutils
 
-#Add the Lattice bindings to the UI.
-proc addTo*(ui: UI) {.raises: [Exception].} =
+#Add the Lattice bindings to the GUI.
+proc addTo*(gui: GUI) {.raises: [Exception].} =
     #Send.
-    ui.webview.bindProc(
+    gui.webview.bindProc(
         "Lattice",
         "send",
         proc (dataArg: string) {.raises: [ValueError, FinalAttributeError, Exception].} =
@@ -46,21 +46,21 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
             #Mine the Send.
             send.mine("aa".repeat(64).toBN(16))
             #Sign the Send.
-            if not ui.wallet.sign(send):
-                raise newException(ValueError, "Failed to sign the UI's Send.")
+            if not gui.wallet.sign(send):
+                raise newException(ValueError, "Failed to sign the GUI's Send.")
 
             #Add it to the Lattice.
-            if not ui.events.get(
+            if not gui.events.get(
                 proc (send: Send): bool,
                 "send"
             )(
                 send
             ):
-                raise newException(ValueError, "Failed to add the UI's Send.")
+                raise newException(ValueError, "Failed to add the GUI's Send.")
     )
 
     #Receive.
-    ui.webview.bindProc(
+    gui.webview.bindProc(
         "Lattice",
         "receive",
         proc (dataArg: string) {.raises: [ValueError, FinalAttributeError, Exception].} =
@@ -78,14 +78,14 @@ proc addTo*(ui: UI) {.raises: [Exception].} =
                     nonce
                 )
             #Sign the Receive.
-            ui.wallet.sign(recv)
+            gui.wallet.sign(recv)
 
             #Add it to the Lattice.
-            if not ui.events.get(
+            if not gui.events.get(
                 proc (recv: Receive): bool,
                 "recv"
             )(
                 recv
             ):
-                raise newException(ValueError, "Failed to add the UI's Receive.")
+                raise newException(ValueError, "Failed to add the GUI's Receive.")
     )
