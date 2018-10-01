@@ -20,11 +20,15 @@ proc listen*(network: Network, port: int) {.async.} =
     network.server.listen()
 
     #Accept new connections infinitely.
-    while true:
-        #Tell the network lib of the new client.
-        network.subEvents.get(
-            proc (client: AsyncSocket),
-            "server"
-        )(
-            await network.server.accept()
-        )
+    while network.listening:
+        #This is in a try/catch since ending the server while accepting a new Client will throw an Exception.
+        try:
+            #Tell the Network lib of the new client.
+            network.subEvents.get(
+                proc (client: AsyncSocket),
+                "server"
+            )(
+                await network.server.accept()
+            )
+        except:
+            continue

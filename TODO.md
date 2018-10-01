@@ -30,7 +30,6 @@ Behavior Changes:
 - Finalize Argon2's Block parameters.
 
 Bug fixes:
-- On Windows, the Network accepts a single Client and then only handles it, instead of also accepting new ones.
 - Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
 - Remove GMP's memory leak.
 

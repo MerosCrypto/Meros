@@ -33,11 +33,13 @@ proc getClient*(clients: Clients, id: int): Client {.raises: [].} =
 proc disconnect*(clients: Clients, id: int) {.raises: [Exception].} =
     for i, client in clients.clients:
         if client.id == id:
+            client.closed = true
             client.close()
             clients.clients.delete(i)
 
 #Disconnects every client.
 proc shutdown*(clients: Clients) {.raises: [Exception].} =
     for i, client in clients.clients:
+        client.closed = true
         client.close()
         clients.clients.delete(i)

@@ -11,12 +11,15 @@ finalsd:
         id* {.final.}: int
         #Socket.
         socket*  {.final.}: AsyncSocket
+        #Closed or not.
+        closed*: bool
 
 #Constructor.
 proc newClient*(id: int, socket: AsyncSocket): Client {.raises: [].} =
     result = Client(
         id: id,
-        socket: socket
+        socket: socket,
+        closed: false
     )
 
 #Converter so we don't always have to .socket, but instead can directly use .recv().

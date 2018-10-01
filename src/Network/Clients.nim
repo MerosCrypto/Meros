@@ -28,11 +28,14 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
         size: int
         line: string
 
-    while true:
+    while not client.closed:
         #Receive the header.
         header = await client.recv(4)
         #Verify the length.
         if header.len != 4:
+            #If the header length was specifically 0, meaning a dc'ed client...
+            if header.len == 0:
+                return
             continue
         #Define the size.
         size = ord(header[3])
