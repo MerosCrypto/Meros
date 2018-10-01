@@ -29,30 +29,18 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
     gui.webview.bindProc(
         "Lattice",
         "send",
-        proc (dataArg: string) {.raises: [].} =
-            var
-                #Split the data.
-                data: seq[string] = dataArg.split(" ")
-                #Extract each argument.
-                destination: string = data[0]
-                amount: string = data[1]
-                nonce: string = data[2]
-
-            echo dataArg
+        proc (dataArg: string) {.raises: [DeadThreadError, Exception].} =
+            #Split the data.
+            var data: seq[string] = dataArg.split(" ")
+            gui.toRPC[].send("lattice.receive " & data[0] & data[1] & data[2])
     )
 
     #Receive.
     gui.webview.bindProc(
         "Lattice",
         "receive",
-        proc (dataArg: string) {.raises: [].} =
-            var
-                #Split the data.
-                data: seq[string] = dataArg.split(" ")
-                #Extract each argument.
-                sender: string = data[0]
-                inputNonce: BN = newBN(data[1])
-                nonce: BN = newBN(data[2])
-
-            echo dataArg
+        proc (dataArg: string) {.raises: [DeadThreadError, Exception].} =
+            #Split the data.
+            var data: seq[string] = dataArg.split(" ")
+            gui.toRPC[].send("lattice.receive " & data[0] & data[1] & data[2])
     )

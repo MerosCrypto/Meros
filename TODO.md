@@ -17,6 +17,7 @@ Features:
 - Have Merit Holders indexable by the order they got Merit in.
 
 Improvements:
+- Tell the GUI thread to close.
 - Use custom errors.
 - Replace awaits with yields.
 - Make Miners/Validations proper objects.

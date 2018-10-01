@@ -133,19 +133,22 @@ events.on(
 network.start(5132)
 
 #------------ UI ------------
+#UI object.
+var ui: UI = newUI(events, 1000, 500)
 
-#Handle the WebView closing.
+#Handle quit statements.
 events.on(
     "quit",
     proc () {.raises: [Exception].} =
+        #Shut down the UI.
+        ui.shutdown()
+
         #Shut down the Network.
         network.shutdown()
+
         #Quit.
         quit(0)
 )
-
-#Create the GUI.
-spawn newGUI(events, 1000, 500)
 
 #Run forever.
 runForever()

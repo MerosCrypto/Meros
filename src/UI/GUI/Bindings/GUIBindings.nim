@@ -12,7 +12,7 @@ import strutils
 
 #Add the GUI bindings to the GUI.
 proc addTo*(gui: GUI) {.raises: [Exception].} =
-    #Qguit.
+    #Quit.
     gui.webview.bindProcNoArg(
         "GUI",
         "quit",
@@ -20,7 +20,7 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
             #Close WebView.
             gui.webview.exit()
             #Emit the quit event.
-            gui.events.get(proc (), "quit")()
+            gui.toRPC[].send("quit")
     )
 
     #Print. If debug isn't defined, this does nothing.

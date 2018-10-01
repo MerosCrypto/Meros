@@ -13,13 +13,13 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
     gui.webview.bindProc(
         "Wallet",
         "create",
-        proc (key: string) {.raises: [ValueError, Exception].} =
+        proc (key: string) {.raises: [Exception].} =
             #If a key was passed, creae a Wallet from it.
             if key.len > 0:
-                gui.wallet = newWallet(key)
+                gui.toRPC[].send("wallet.set " & key)
             #Else, create a new Wallet.
             else:
-                gui.wallet = newWallet()
+                gui.toRPC[].send("wallet.set ")
     )
 
     #Store the Wallet's Private Key in an element.
@@ -27,8 +27,11 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
         "Wallet",
         "storePrivateKey",
         proc (element: string) {.raises: [Exception].} =
+            #Ask for the Private Key.
+            gui.toRPC[].send("wallet.get privatekey")
+            #Set the element to it.
             if gui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & $gui.wallet.privateKey & "';"
+                "document.getElementById('" & element & "').innerHTML = '" & gui.toGUI[].recv() & "';"
             ) != 0:
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )
@@ -38,8 +41,11 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
         "Wallet",
         "storePublicKey",
         proc (element: string) {.raises: [Exception].} =
+            #Ask for the Public Key.
+            gui.toRPC[].send("wallet.get publickey")
+            #Set the element to it.
             if gui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & $gui.wallet.publicKey & "';"
+                "document.getElementById('" & element & "').innerHTML = '" & gui.toGUI[].recv() & "';"
             ) != 0:
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )
@@ -49,8 +55,11 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
         "Wallet",
         "storeAddress",
         proc (element: string) {.raises: [Exception].} =
+            #Ask for the Address.
+            gui.toRPC[].send("wallet.get address")
+            #Set the element to it.
             if gui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & gui.wallet.address & "';"
+                "document.getElementById('" & element & "').innerHTML = '" & gui.toGUI[].recv() & "';"
             ) != 0:
                 raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )

@@ -16,19 +16,21 @@ const
     SEND*: string = staticRead("../static/Send.html")
     RECEIVE*: string = staticRead("../static/Receive.html")
 
-#GUI.
+#GUI object.
 finalsd:
     type GUI* = ref object of RootObj
-        events* {.final.}: EventEmitter
+        toRPC* {.final.}: ptr Channel[string]
+        toGUI* {.final.}: ptr Channel[string]
         webview* {.final.}: WebView
-        wallet*: Wallet
 
 #Constructor.
-proc newGUI*(
-    events: EventEmitter,
+proc newGUIObject*(
+    toRPC: ptr Channel[string],
+    toGUI: ptr Channel[string],
     webview: WebView
 ): GUI {.raises: [].} =
     GUI(
-        events: events,
+        toRPC: toRPC,
+        toGUI: toGUI,
         webview: webview
     )

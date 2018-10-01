@@ -25,13 +25,15 @@ import strutils
 
 #Constructor.
 proc newGUI*(
-    events: EventEmitter,
+    toRPC: ptr Channel[string],
+    toGUI: ptr Channel[string],
     width: int,
     height: int
 ) {.thread, raises: [Exception].} =
     #Create the GUI.
-    var gui: GUI = newGUI(
-        events,
+    var gui: GUI = newGUIObject(
+        toRPC,
+        toGUI,
         newWebView(
             "Ember Core",
             "",
