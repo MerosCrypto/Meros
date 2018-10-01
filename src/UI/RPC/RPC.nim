@@ -2,17 +2,27 @@
 import objects/RPCObj
 export RPCObj
 
+#RPC modules.
+import Modules/SystemModule
+import Modules/WalletModule
+import Modules/BlockchainModule
+import Modules/LatticeModule
+import Modules/NetworkModule
+
 #EventEmitter lib.
 import ec_events
 
 #Async standard lib.
 import asyncdispatch
 
+#JSON standard lib.
+import json
+
 #Constructor.
 proc newRPC*(
     events: EventEmitter,
-    toRPC: ptr Channel[string],
-    toGUI: ptr Channel[string]
+    toRPC: ptr Channel[JSONNode],
+    toGUI: ptr Channel[JSONNode]
 ): RPC =
     result = newRPCObject(
         events,
@@ -23,7 +33,7 @@ proc newRPC*(
 #Start up the RPC.
 proc start*(rpc: RPC) {.async.} =
     #Define the data outside of the loop.
-    var data: tuple[dataAvailable: bool, msg: string]
+    var data: tuple[dataAvailable: bool, msg: JSONNode]
 
     while rpc.listening:
         #Allow other async code to execute.
@@ -36,10 +46,20 @@ proc start*(rpc: RPC) {.async.} =
             continue
 
         #Handle the data.
-        echo data.msg
-
-        #Send back an empty response for now.
-        rpc.toGUI[].send("")
+        try:
+            case data.msg["module"].getStr():
+                of "system":
+                    rpc.systemModule(data.msg)
+                of "wallet":
+                    rpc.walletModule(data.msg)
+                of "blockchain":
+                    rpc.blockchainModule(data.msg)
+                of "lattice":
+                    rpc.latticeModule(data.msg)
+                of "network":
+                    rpc.networkModule(data.msg)
+        except:
+            echo getCurrentExceptionMsg()
 
 #Shutdown.
 proc shutdown*(rpc: RPC) {.raises: [].} =

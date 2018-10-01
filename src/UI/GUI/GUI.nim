@@ -23,10 +23,13 @@ import asyncdispatch
 #String utils standard lib.
 import strutils
 
+#JSON standard lib.
+import json
+
 #Constructor.
 proc newGUI*(
-    toRPC: ptr Channel[string],
-    toGUI: ptr Channel[string],
+    toRPC: ptr Channel[JSONNode],
+    toGUI: ptr Channel[JSONNode],
     width: int,
     height: int
 ) {.thread, raises: [Exception].} =

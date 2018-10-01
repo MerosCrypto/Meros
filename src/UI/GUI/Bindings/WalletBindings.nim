@@ -7,59 +7,72 @@ import ../objects/GUIObj
 #WebView lib.
 import ec_webview
 
+#String utils standard lib.
+import strutils
+
+#JSON standard lib.
+import json
+
 #Add the Wallet bindings to the GUI.
 proc addTo*(gui: GUI) {.raises: [Exception].} =
     #Create a Wallet from a Private Key.
     gui.webview.bindProc(
         "Wallet",
         "create",
-        proc (key: string) {.raises: [Exception].} =
+        proc (key: string) {.raises: [DeadThreadError, Exception].} =
             #If a key was passed, creae a Wallet from it.
             if key.len > 0:
-                gui.toRPC[].send("wallet.set " & key)
+                gui.toRPC[].send(%* {
+                    "module": "wallet",
+                    "method": "set",
+                    "args": [
+                        key
+                    ]
+                })
             #Else, create a new Wallet.
             else:
-                gui.toRPC[].send("wallet.set ")
+                gui.toRPC[].send(%* {
+                    "module": "wallet",
+                    "method": "set",
+                    "args": []
+                })
     )
 
     #Store the Wallet's Private Key in an element.
     gui.webview.bindProc(
         "Wallet",
-        "storePrivateKey",
-        proc (element: string) {.raises: [Exception].} =
-            #Ask for the Private Key.
-            gui.toRPC[].send("wallet.get privatekey")
-            #Set the element to it.
-            if gui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & gui.toGUI[].recv() & "';"
-            ) != 0:
-                raise newException(Exception, "Couldn't evaluate JS in the WebView.")
-    )
+        "store",
+        proc (fieldsArg: string) {.raises: [DeadThreadError, Exception].} =
+            #Ask for the Wallet info.
+            gui.toRPC[].send(%* {
+                "module": "wallet",
+                "method": "get",
+                "args": []
+            })
 
-    #Store the Wallet's Public Key in an element.
-    gui.webview.bindProc(
-        "Wallet",
-        "storePublicKey",
-        proc (element: string) {.raises: [Exception].} =
-            #Ask for the Public Key.
-            gui.toRPC[].send("wallet.get publickey")
-            #Set the element to it.
-            if gui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & gui.toGUI[].recv() & "';"
-            ) != 0:
-                raise newException(Exception, "Couldn't evaluate JS in the WebView.")
-    )
+            var
+                #Extract the fields.
+                fields: seq[string] = fieldsArg.split(" ")
+                privateKey: string = fields[0]
+                publicKey: string = fields[1]
+                address: string = fields[2]
+                #Receive the Wallet info.
+                wallet: JSONNode = gui.toGUI[].recv()
 
-    #Store the Wallet's Address in an element.
-    gui.webview.bindProc(
-        "Wallet",
-        "storeAddress",
-        proc (element: string) {.raises: [Exception].} =
-            #Ask for the Address.
-            gui.toRPC[].send("wallet.get address")
-            #Set the element to it.
-            if gui.webview.eval(
-                "document.getElementById('" & element & "').innerHTML = '" & gui.toGUI[].recv() & "';"
-            ) != 0:
-                raise newException(Exception, "Couldn't evaluate JS in the WebView.")
+            #Set the elements.
+            if privateKey.len != 0:
+                if gui.webview.eval(
+                    "document.getElementById('" & privateKey & "').innerHTML = '" & wallet["privateKey"].getStr() & "';"
+                ) != 0:
+                    raise newException(Exception, "Couldn't evaluate JS in the WebView.")
+            if publicKey.len != 0:
+                if gui.webview.eval(
+                    "document.getElementById('" & publicKey & "').innerHTML = '" & wallet["publicKey"].getStr() & "';"
+                ) != 0:
+                    raise newException(Exception, "Couldn't evaluate JS in the WebView.")
+            if address.len != 0:
+                if gui.webview.eval(
+                    "document.getElementById('" & address & "').innerHTML = '" & wallet["address"].getStr() & "';"
+                ) != 0:
+                    raise newException(Exception, "Couldn't evaluate JS in the WebView.")
     )

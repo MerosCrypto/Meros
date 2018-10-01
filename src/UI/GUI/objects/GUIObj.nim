@@ -10,6 +10,9 @@ import finals
 #WebView.
 import ec_webview
 
+#JSON standard lib.
+import json
+
 #Constants of the HTML.
 const
     MAIN*: string = staticRead("../static/Main.html")
@@ -19,14 +22,14 @@ const
 #GUI object.
 finalsd:
     type GUI* = ref object of RootObj
-        toRPC* {.final.}: ptr Channel[string]
-        toGUI* {.final.}: ptr Channel[string]
+        toRPC* {.final.}: ptr Channel[JSONNode]
+        toGUI* {.final.}: ptr Channel[JSONNode]
         webview* {.final.}: WebView
 
 #Constructor.
 proc newGUIObject*(
-    toRPC: ptr Channel[string],
-    toGUI: ptr Channel[string],
+    toRPC: ptr Channel[JSONNode],
+    toGUI: ptr Channel[JSONNode],
     webview: WebView
 ): GUI {.raises: [].} =
     GUI(

@@ -1,6 +1,7 @@
 # TODO
 
 Core:
+- Have the RPC send errors when it fails.
 - Track Verifications.
 - Link the Lattice to Merit.
 - Track MeritRemovals.

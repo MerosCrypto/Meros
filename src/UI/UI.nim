@@ -17,11 +17,14 @@ import asyncdispatch
 #Thread standard lib.
 import threadpool
 
+#JSON standard lib.
+import json
+
 #UI object.
 finalsd:
     type UI* = ref object of RootObj
-        toGUI {.final.}: Channel[string]
-        toRPC {.final.}: Channel[string]
+        toGUI {.final.}: Channel[JSONNode]
+        toRPC {.final.}: Channel[JSONNode]
         rpc {.final.}: RPC
 
 #Constructor.

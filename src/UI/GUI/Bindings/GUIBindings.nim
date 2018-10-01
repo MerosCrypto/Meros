@@ -10,6 +10,9 @@ import ec_webview
 #String utils standard lib.
 import strutils
 
+#JSON standard lib.
+import json
+
 #Add the GUI bindings to the GUI.
 proc addTo*(gui: GUI) {.raises: [Exception].} =
     #Quit.
@@ -20,7 +23,11 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
             #Close WebView.
             gui.webview.exit()
             #Emit the quit event.
-            gui.toRPC[].send("quit")
+            gui.toRPC[].send(%* {
+                "module": "system",
+                "method": "quit",
+                "args": []
+            })
     )
 
     #Print. If debug isn't defined, this does nothing.

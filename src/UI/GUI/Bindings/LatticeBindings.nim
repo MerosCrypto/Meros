@@ -23,6 +23,9 @@ import ec_webview
 #String utils standard lib.
 import strutils
 
+#JSON standard lib.
+import json
+
 #Add the Lattice bindings to the GUI.
 proc addTo*(gui: GUI) {.raises: [Exception].} =
     #Send.
@@ -30,9 +33,17 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
         "Lattice",
         "send",
         proc (dataArg: string) {.raises: [DeadThreadError, Exception].} =
-            #Split the data.
+            #Split the data up.
             var data: seq[string] = dataArg.split(" ")
-            gui.toRPC[].send("lattice.receive " & data[0] & data[1] & data[2])
+            gui.toRPC[].send(%* {
+                "module": "lattice",
+                "method": "send",
+                "args": [
+                    data[0],
+                    data[1],
+                    data[2]
+                ]
+            })
     )
 
     #Receive.
@@ -42,5 +53,13 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
         proc (dataArg: string) {.raises: [DeadThreadError, Exception].} =
             #Split the data.
             var data: seq[string] = dataArg.split(" ")
-            gui.toRPC[].send("lattice.receive " & data[0] & data[1] & data[2])
+            gui.toRPC[].send(%* {
+                "module": "lattice",
+                "method": "receive",
+                "args": [
+                    data[0],
+                    data[1],
+                    data[2]
+                ]
+            })
     )

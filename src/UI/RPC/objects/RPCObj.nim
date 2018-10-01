@@ -1,22 +1,29 @@
+#Wallet lib.
+import ../../../Wallet/Wallet
+
 #EventEmitter lib.
 import ec_events
 
 #Finals lib.
 import finals
 
+#JSON standard lib.
+import json
+
 #RPC object.
 finalsd:
     type RPC* = ref object of RootObj
         events* {.final.}: EventEmitter
-        toRPC* {.final.}: ptr Channel[string]
-        toGUI* {.final.}: ptr Channel[string]
+        toRPC* {.final.}: ptr Channel[JSONNode]
+        toGUI* {.final.}: ptr Channel[JSONNode]
+        wallet*: Wallet
         listening*: bool
 
 #Constructor.
 proc newRPCObject*(
     events: EventEmitter,
-    toRPC: ptr Channel[string],
-    toGUI: ptr Channel[string]
+    toRPC: ptr Channel[JSONNode],
+    toGUI: ptr Channel[JSONNode]
 ): RPC {.raises: [].} =
     RPC(
         events: events,
