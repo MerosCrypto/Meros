@@ -12,12 +12,14 @@ import ../src/Database/Lattice/Lattice
 import ../src/Network/Serialize/SerializeSend
 import ../src/Network/Serialize/SerializeReceive
 
-#Parsing libs.
-import ../src/Network/Serialize/ParseSend
-import ../src/Network/Serialize/ParseReceive
+#Network lib.
+import ../src/Network/Network
+
+#EventEmitter lib.
+import ec_events
 
 #Networking standard libs.
-import asyncnet, asyncdispatch
+import asyncdispatch, asyncnet
 
 #Times standard lib.
 import times
@@ -25,18 +27,19 @@ import times
 var
     #Testing vars.
     total: int = 10000 #Total number of transactions to make.
-    txCount: int = 0  #Count of the handled transactions.
-    start: float      #Start time.
+    txCount: int = 0   #Count of the handled transactions.
+    start: float       #Start time.
 
     #Server vars.
-    server: AsyncSocket = newAsyncSocket() #Server Socket.
-    minter: Wallet = newWallet()           #Wallet.
-    lattice: Lattice = newLattice()        #Lattice.
-    mintIndex: Index = lattice.mint(       #Mint transaction.
+    events: EventEmitter = newEventEmitter() #EventEmitter for the Network.
+    network: Network = newNetwork(0, events) #Network object.
+    minter: Wallet = newWallet()             #Wallet.
+    lattice: Lattice = newLattice()          #Lattice.
+    mintIndex: Index = lattice.mint(         #Mint transaction.
         minter.address,
         newBN("1000000")
     )
-    mintRecv: Receive = newReceive(        #Mint Receive.
+    mintRecv: Receive = newReceive(          #Mint Receive.
         mintIndex,
         newBN()
     )
@@ -61,88 +64,44 @@ var
 minter.sign(mintRecv)
 discard lattice.add(mintRecv)
 
-#Handles a client.
-proc handle(client: AsyncSocket) {.async.} =
-    #Define the loop variables outside of the loops.
-    var
-        header: string
-        line: string
-        network: int
-        version: int
-        msgType: int
-        msgLength: int
+#Handle Sends.
+events.on(
+    "send",
+    proc (send: Send): bool {.raises: [Exception].} =
+        #Add the Send.
+        if lattice.add(
+            send
+        ):
+            result = true
+        else:
+            result = false
+            echo "Send failed."
+)
 
-    while true:
-        #Read the header.
-        header = await client.recv(4)
-        #Verify the length.
-        if header.len != 4:
-            echo "Invalid Header Length."
-            continue
+#Handle Receives.
+events.on(
+    "recv",
+    proc (recv: Receive): bool {.raises: [Exception].} =
+        #Add the Receive.
+        if lattice.add(
+            recv
+        ):
+            result = true
 
-        #Parse the header.
-        network = ord(header[0])
-        version = ord(header[1])
-        msgType = ord(header[2])
-        msgLength = ord(header[3])
-
-        #Read the line.
-        line = await client.recv(msgLength)
-        #Verify the length.
-        if line.len != msgLength:
-            echo "Invalid Message Length."
-            continue
-
-        #Handle the different message types.
-        case msgType:
-            #Send Node.
-            of 0:
-                var send: Send
-                #Try to parse it.
-                try:
-                    send = line.parseSend()
-                except:
-                    echo "Invalid Send. " & getCurrentExceptionMsg()
-                    continue
-
-                #Add the Send.
-                if lattice.add(send):
-                    #Increase the TX count.
-                    inc(txCount)
-
-            of 1:
-                var recv: Receive
-                #Try to parse it.
-                try:
-                    recv = line.parseReceive()
-                except:
-                    echo "Invalid Receive. " & getCurrentExceptionMsg()
-                    continue
-
-                #Add the Receive.
-                if lattice.add(recv):
-                    #Increase the TX count.
-                    inc(txCount)
-
-                    #If this is the last TX...
-                    if txCount == total:
-                        #Print the TPS.
-                        echo "TPS: " & $(float(txCount) / (cpuTime() - start))
-
-            #Unsupported message.
-            else:
-                echo "Unsupported message type."
-
-#Start listening.
-server.setSockOpt(OptReuseAddr, true)
-server.bindAddr(Port(5132))
-server.listen()
-
-#Async function wrapper.
-proc accept() {.async.} =
-    #Accept new connections infinitely.
-    while true:
-        asyncCheck handle(await server.accept())
+            #Increase the TX count.
+            inc(txCount)
+            #If this is the last TX...
+            if txCount == total:
+                #Print the TPS.
+                echo "TPS: " & $(float(txCount) / (cpuTime() - start))
+                #Shutdown the network.
+                network.shutdown()
+                #Quit.
+                quit(0)
+        else:
+            result = false
+            echo "Receive failed."
+)
 
 #Async function to spam the server.
 proc spam() {.async.} =
@@ -200,7 +159,8 @@ proc spam() {.async.} =
     echo "Sent all " & $total & "."
 
 #Start the Server.
-asyncCheck accept()
+network.start(5132)
+
 #Generate the spam.
 asyncCheck spam()
 
