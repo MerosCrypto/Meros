@@ -150,7 +150,7 @@ proc mint*(
 
     #Add it to the Lattice.
     if not lattice.add(send, true):
-        raise newException(ResultError, "Couldn't add the mint node to the Lattice.")
+        raise newException(ResultError, "Couldn't add the Mint Node to the Lattice.")
 
     #Return the Index.
     result = newIndex("minter", height)

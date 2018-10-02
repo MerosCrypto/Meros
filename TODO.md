@@ -39,6 +39,7 @@ Behavior Changes:
 - Finalize Argon2's Block parameters.
 
 Bug fixes:
+- Receives from "minter" can't be broadcasted across the network.
 - Remove GMP's memory leak.
 - Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
 
