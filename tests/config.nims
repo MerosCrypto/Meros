@@ -4,11 +4,11 @@ if getCommand() == "c":
 
 #Necessary flags.
 switch("threads", "on")
+switch("assertions", "on")
 
 when defined(release):
-    #Disable assertions and checks.
-    switch("assertions", "off")
-    switch("checks", "off")
+    #Disable checks.
+    switch("checks", "on")
 
     #Disable extra crash reporting.
     switch("lineDir", "off")
@@ -19,8 +19,7 @@ else:
     #Define debug.
     switch("define", "debug")
 
-    #Enable assertions and checks.
-    switch("assertions", "on")
+    #Enable checks.
     switch("checks", "on")
 
     #Enable extra crash reporting.

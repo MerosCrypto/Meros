@@ -39,7 +39,6 @@ Behavior Changes:
 - Finalize Argon2's Block parameters.
 
 Bug fixes:
-- The Serialize Send test fails when release is defined.
 - Remove GMP's memory leak.
 - Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
 
