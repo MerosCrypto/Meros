@@ -125,8 +125,6 @@ proc connect*(network: Network, ip: string, port: int = 5132) {.async.} =
 
 #Shutdown network operations.
 proc shutdown*(network: Network) {.raises: [Exception].} =
-    #Mark the Server as not listening.
-    network.listening = false
     #Stop the server.
     network.server.close()
     #Disconnect the clients.

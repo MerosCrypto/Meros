@@ -22,8 +22,6 @@ finalsd:
         subEvents* {.final.}: EventEmitter
         #Event Emitter for the node.
         nodeEvents* {.final.}: EventEmitter
-        #Listening or not.
-        listening*: bool
 
 #Constructor.
 proc newNetworkObj*(
@@ -38,6 +36,5 @@ proc newNetworkObj*(
         clients: clients,
         server: server,
         subEvents: subEvents,
-        nodeEvents: nodeEvents,
-        listening: true
+        nodeEvents: nodeEvents
     )

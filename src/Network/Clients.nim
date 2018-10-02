@@ -28,14 +28,19 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
         size: int
         line: string
 
-    while not client.closed:
+    #While the client is still connected...
+    while not client.isClosed():
         #Receive the header.
         header = await client.recv(4)
         #Verify the length.
         if header.len != 4:
-            #If the header length was specifically 0, meaning a dc'ed client...
+            #If the header length is 0 because the client disconnected...
             if header.len == 0:
+                #Close the client.
+                client.close()
+                #Stop handling the Client.
                 return
+            #Continue so we can get a valid header.
             continue
         #Define the size.
         size = ord(header[3])
@@ -88,16 +93,34 @@ proc add*(network: Network, socket: AsyncSocket) {.raises: [ValueError, Exceptio
 
 #Sends a message to all clients.
 proc broadcast*(clients: Clients, msg: Message) {.raises: [Exception].} =
+    #Seq of the clients to disconnect.
+    var toDisconnect: seq[int] = @[]
+
+    #Iterate over each client.
     for client in clients.clients:
+        #Make sure the client is open.
         if not client.isClosed():
             asyncCheck client.send($msg)
+        #If it isn't, mark the client for disconnection.
+        else:
+            toDisconnect.add(client.id)
+
+    #Disconnect the clients marked for disconnection.
+    for client in toDisconnect:
+        clients.disconnect(client)
+
 
 #Reply to a message.
 proc reply*(clients: Clients, msg: Message, toSend: string) {.raises: [Exception].} =
+    #Get the client.
     var client: Client = clients.getClient(msg.client)
+    #Make sure the client is open.
     if not client.isClosed():
         asyncCheck client.send(toSend)
+    #If it isn't, disconnect the client.
+    else:
+        clients.disconnect(client.id)
 
-#Disconnect a client.
+#Disconnect a client based off the message it sent.
 proc disconnect*(clients: Clients, msg: Message) {.raises: [Exception].} =
     clients.disconnect(msg.client)

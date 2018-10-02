@@ -4,6 +4,8 @@ Core:
 - Have every RPC method return something.
 - Have the RPC send errors when it fails.
 
+- Broadcast Lattice entries created over the RPC.
+
 - Track Verifications.
 - Link the Lattice to Merit.
 - Track MeritRemovals.

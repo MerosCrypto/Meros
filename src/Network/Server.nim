@@ -20,7 +20,7 @@ proc listen*(network: Network, port: int) {.async.} =
     network.server.listen()
 
     #Accept new connections infinitely.
-    while network.listening:
+    while not network.server.isClosed():
         #This is in a try/catch since ending the server while accepting a new Client will throw an Exception.
         try:
             #Tell the Network lib of the new client.
