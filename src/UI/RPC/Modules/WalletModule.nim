@@ -12,8 +12,11 @@ import json
 
 #Set the Wallet's Private Key.
 #The RPC method is set. Set is a keyword. The Nim proc is therefore expanded to setPrivateKey.
-proc setPrivateKey*(rpc: RPC, privateKey: string) {.raises: [ValueError].} =
-    rpc.wallet = newWallet(privateKey)
+proc setPrivateKey*(rpc: RPC, privateKey: string) {.raises: [ValueError, Exception].} =
+    if privateKey.len == 0:
+        rpc.wallet = newWallet()
+    else:
+        rpc.wallet = newWallet(privateKey)
 
 #Get the Wallet info.
 proc get*(rpc: RPC) {.raises: [DeadThreadError, Exception].} =

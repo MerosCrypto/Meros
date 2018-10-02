@@ -20,22 +20,13 @@ proc addTo*(gui: GUI) {.raises: [Exception].} =
         "Wallet",
         "create",
         proc (key: string) {.raises: [DeadThreadError, Exception].} =
-            #If a key was passed, creae a Wallet from it.
-            if key.len > 0:
-                gui.toRPC[].send(%* {
-                    "module": "wallet",
-                    "method": "set",
-                    "args": [
-                        key
-                    ]
-                })
-            #Else, create a new Wallet.
-            else:
-                gui.toRPC[].send(%* {
-                    "module": "wallet",
-                    "method": "set",
-                    "args": []
-                })
+            gui.toRPC[].send(%* {
+                "module": "wallet",
+                "method": "set",
+                "args": [
+                    key
+                ]
+            })
     )
 
     #Store the Wallet's Private Key in an element.
