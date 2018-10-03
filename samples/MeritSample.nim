@@ -59,7 +59,7 @@ proc main() =
             publisher,
             proof,
             miners,
-            wallet.sign($SHA512(miners.serialize(nonce)))
+            wallet.sign(SHA512(miners.serialize(nonce)).toString())
         )
 
         #Try to add it.

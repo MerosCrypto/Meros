@@ -62,7 +62,7 @@ for i in 1 .. 10:
         $(wallet.publicKey),
         proof,
         miners,
-        wallet.sign($SHA512(miners.serialize(nonce)))
+        wallet.sign(SHA512(miners.serialize(nonce)).toString())
     )
 
     #Finally, update the last hash, increase the nonce, and reset the proof.
@@ -85,8 +85,8 @@ for i in 1 .. 10:
     assert(newBlock.merkle.hash == blockParsed.merkle.hash)
     assert(newBlock.publisher == blockParsed.publisher)
 
-    assert(newBlock.proof == blockParsed.proof)
     assert(newBlock.hash == blockParsed.hash)
+    assert(newBlock.proof == blockParsed.proof)
     assert(newBlock.argon == blockParsed.argon)
 
     assert(newBlock.miners == blockParsed.miners)

@@ -1,5 +1,7 @@
-#SECP256K1 Wrapper.
-import ../lib/SECP256K1Wrapper
+#ED25519.
+import ../lib/ED25519
+#Export PublicKey from ED25519.
+export ED25519.PublicKey
 
 #Private Key lib.
 import PrivateKey
@@ -7,27 +9,29 @@ import PrivateKey
 #String utils standard lib.
 import strutils
 
-#Define the PublicKey class to be the secp256k1_pubkey object.
-type PublicKey* = secp256k1_pubkey
-
 #Create a new Public Key from a private key.
-proc newPublicKey*(privKey: PrivateKey): PublicKey {.raises: [ValueError].} =
-    result = secpPublicKey(privKey)
+proc newPublicKey*(privKey: PrivateKey): PublicKey {.raises: [Exception].} =
+    result = ED25519.newPublicKey(privKey)
 
-#Create a new Public Key from a hex string.
-proc newPublicKey*(hex: string): PublicKey {.raises: [ValueError].} =
-    result = secpPublicKey(hex)
+#Create a new Public Key from a string.
+proc newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
+    #If it's binary...
+    if key.len == 32:
+        for i in 0 ..< 32:
+            result[i] = key[i]
+    #If it's hex...
+    elif key.len == 64:
+        for i in countup(0, 63, 2):
+            result[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
+    else:
+        raise newException(ValueError, "Invalid Public Key.")
 
 #Verify a signature using a constructed Public Key.
-proc verify*(key: PublicKey, hash: string, sig: string): bool {.raises: [ValueError].} =
-    key.secpVerify("EMB" & hash, sig)
+proc verify*(key: PublicKey, msg: string, sig: string): bool {.raises: [Exception].} =
+    ED25519.verify(key, "EMB" & msg, sig)
 
-#Stringify a Public Key to it's compressed hex representation.
-proc `$`*(key: PublicKey): string {.raises: [ValueError].} =
-    #Use the secondary stringify function in the SSECP256K1 Wrapper.
-    #$! is so we don't infinitely call this same function.
-    result = $!key
-
-#Convert a Public Key to a array[33, uint8].
-proc toArray*(key: PublicKey): array[33, uint8] =
-    SECP256K1Wrapper.toArray(key)
+#Stringify a Public Key to it's hex representation.
+proc `$`*(key: PublicKey): string {.raises: [].} =
+    result = ""
+    for i in 0 ..< 32:
+        result = result & uint8(key[i]).toHex()

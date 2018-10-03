@@ -26,4 +26,4 @@ proc serialize*(mr: MeritRemoval): string {.raises: [ValueError].} =
         result =
             !Address.toBN(mr.sender).toString(256) &
             result &
-            !mr.signature.toBN(16).toString(256)
+            !mr.signature

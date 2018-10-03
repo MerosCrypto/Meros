@@ -65,7 +65,7 @@ proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError, FinalA
     )
 
 #Sign a TX.
-proc sign*(wallet: Wallet, recv: Receive) {.raises: [ValueError, FinalAttributeError].} =
+proc sign*(wallet: Wallet, recv: Receive) {.raises: [FinalAttributeError, Exception].} =
     #Set the sender behind the node.
     recv.sender = wallet.address
     #Sign the hash of the Receive.

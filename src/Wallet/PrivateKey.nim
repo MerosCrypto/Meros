@@ -1,8 +1,7 @@
-#RNG lib.
-import ../lib/RandomWrapper
-
-#SECP256K1 lib.
-import ../lib/SECP256K1Wrapper
+#ED25519 lib.
+import ../lib/ED25519
+#Export PrivateKey from ED25519.
+export ED25519.PrivateKey
 
 #Custom Errors.
 import ../lib/Errors
@@ -10,39 +9,28 @@ import ../lib/Errors
 #string utils standard lib.
 import strutils
 
-#Private Key type.
-type PrivateKey* = array[32, cuchar]
-
 #Creates a new Private Key.
-proc newPrivateKey*(): PrivateKey {.raises: [ResultError, Exception].} =
-    #Run a max of ten times.
-    for _ in 0 ..< 10:
-        #Generate a random 256 bit key.
-        random(cast[ptr array[0, uint8]](addr result), 32)
-        #If the SECP256K1 lib says it's valid...
-        if secpPrivateKey(result):
-            #Return.
-            return
+proc newPrivateKey*(): PrivateKey {.raises: [Exception].} =
+    newKeyPair().priv
 
-    #If we never made a valid key, which should never happen, throw a Result Error.
-    raise newException(ResultError, "Couldn't generate a valid Private Key.")
-
-#Create a new PrivateKey based on a hex string.
-proc newPrivateKey*(hex: string): PrivateKey {.raises: [ValueError].} =
-    #Parse the hex string.
-    for i in countup(0, 63, 2):
-        result[i div 2] = cuchar(parseHexInt(hex[i .. i + 1]))
-
-    #If it's an invalid key, throw an error.
-    if not secpPrivateKey(result):
-        raise newException(ValueError, "Private Key is invalid.")
-
-#Stringify a private key.
+#Creates a new Private Key based on a string.
+proc newPrivateKey*(key: string): PrivateKey {.raises: [ValueError].} =
+    #If it's binary...
+    if key.len == 64:
+        for i in 0 ..< 64:
+            result[i] = key[i]
+    #If it's hex...
+    elif key.len == 128:
+        for i in countup(0, 127, 2):
+            result[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
+    else:
+        raise newException(ValueError, "Invalid Private Key.")
+#Stringify a Private Key.
 proc `$`*(key: PrivateKey): string {.raises: [].} =
     result = ""
-    for i in 0 ..< 32:
+    for i in 0 ..< 64:
         result = result & uint8(key[i]).toHex()
 
-#Sign a message via its hash.
-proc sign*(key: PrivateKey, hash: string): string {.raises: [ValueError].} =
-    result = key.secpSign("EMB" & hash)
+#Sign a message.
+proc sign*(key: PrivateKey, msg: string): string {.raises: [Exception].} =
+    result = ED25519.sign(key, "EMB" & msg)

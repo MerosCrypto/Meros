@@ -30,12 +30,12 @@ import finals
 import strutils
 
 #Parse a MeritRemoval.
-proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError, FinalAttributeError].} =
+proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError, FinalAttributeError, Exception].} =
     var
         #Public Key | Nonce | First | Second | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(dataSeq[0].toHex())
+        sender: PublicKey = newPublicKey(dataSeq[0].pad(32, $char(0)))
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
@@ -45,7 +45,7 @@ proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError, Fi
         #Get the hash of the second node.
         second: Hash[512] = dataSeq[3].pad(64, $char(0)).toHash(512)
         #Get the signature.
-        signature: string = dataSeq[4].toHex().pad(128)
+        signature: string = dataSeq[4].pad(64, $char(0))
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(

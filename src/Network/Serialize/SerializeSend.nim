@@ -24,4 +24,4 @@ proc serialize*(send: Send): string {.raises: [ValueError].} =
             !Address.toBN(send.sender).toString(256) &
             result &
             !send.proof.toString(256) &
-            !send.signature.toBN(16).toString(256)
+            !send.signature

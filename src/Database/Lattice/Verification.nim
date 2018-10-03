@@ -35,7 +35,7 @@ proc newVerification*(
     result.hash = SHA512(result.serialize())
 
 #Sign a TX.
-proc sign*(wallet: Wallet, verif: Verification) {.raises: [ValueError, FinalAttributeError].} =
+proc sign*(wallet: Wallet, verif: Verification) {.raises: [FinalAttributeError, Exception].} =
     #Set the sender behind the node.
     verif.sender = wallet.address
     #Sign the hash of the Verification.

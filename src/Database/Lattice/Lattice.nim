@@ -50,7 +50,7 @@ proc add*(
     lattice: Lattice,
     node: Node,
     mintOverride: bool = false
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, Exception].} =
     #Make sure only this node creates mint TXs.
     if (
         (node.sender == "minter") and
@@ -132,7 +132,7 @@ proc mint*(
     lattice: Lattice,
     address: string,
     amount: BN
-): Index {.raises: [ResultError, ValueError, FinalAttributeError].} =
+): Index {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
     #Get the Height in a new var that won't update.
     var height: BN = lattice.lattice.getAccount("minter").height
 

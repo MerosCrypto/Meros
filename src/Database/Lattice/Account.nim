@@ -26,7 +26,7 @@ proc add(
     account: Account,
     node: Node,
     dependent: Node = nil
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, Exception].} =
     result = true
 
     #Verify the sender.
@@ -56,7 +56,7 @@ proc add*(
     account: Account,
     send: Send,
     difficulty: BN
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, Exception].} =
     #Override for minter.
     if send.sender == "minter":
         #Add the Send node.
@@ -82,7 +82,7 @@ proc add*(
     account: Account,
     recv: Receive,
     sendArg: Node
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, Exception].} =
     #Verify the node is a Send.
     if sendArg.descendant != NodeType.Send:
         return false
@@ -121,7 +121,7 @@ proc add*(
     account: Account,
     data: Data,
     difficulty: BN
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, Exception].} =
     #Verify the work.
     if data.hash.toBN() < difficulty:
         return false
@@ -134,7 +134,7 @@ proc add*(
 proc add*(
     account: Account,
     verif: Verification
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, Exception].} =
     #Add the Verification.
     result = account.add(cast[Node](verif))
 
@@ -143,6 +143,6 @@ discard """
 proc add*(
     account: Account,
     mr: MeritRemoval
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, Exception].} =
     result = account.add(cast[Node](mr))
 """

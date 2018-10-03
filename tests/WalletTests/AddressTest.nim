@@ -11,8 +11,10 @@ import ../../src/Wallet/Wallet
 var
     wallet: Wallet
     address: string
-#Run 10 times.
-for _ in 0 ..< 20:
+#Run 20 times.
+for i in 1 .. 20:
+    echo "Testing Address creation, iteration " & $i & "."
+
     #Create a new wallet.
     wallet = newWallet()
 

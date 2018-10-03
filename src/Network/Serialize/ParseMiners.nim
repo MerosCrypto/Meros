@@ -1,8 +1,11 @@
-#Import the numerical libraries.
+#Util lib.
+import ../../lib/Util
+
+#Numerical libraries.
 import BN
 import ../../lib/Base
 
-#Import the Address library.
+#Address library.
 import ../../Wallet/Address
 
 #Common serialization functions.
@@ -23,7 +26,7 @@ proc parseMiners*(minersStr: string): seq[tuple[miner: string, amount: int]] {.r
     for i in countup(1, minersSeq.len - 1, 2):
         result.add(
             (
-                miner: newAddress(minersSeq[i]),
+                miner: newAddress(minersSeq[i].pad(32, $char(0))),
                 amount: int(minersSeq[i + 1][0])
             )
         )

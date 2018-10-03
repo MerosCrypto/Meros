@@ -62,4 +62,4 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
             #Serialized miners length.
             !newBN(minersSerialized.len - 4).toString(256) &
             #Signature.
-            !blockArg.signature.toBN(16).toString(256)
+            !blockArg.signature

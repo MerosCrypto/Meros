@@ -29,12 +29,12 @@ import finals
 import strutils
 
 #Parse a Data.
-proc parseData*(sendStr: string): Data {.raises: [ResultError, ValueError, FinalAttributeError].} =
+proc parseData*(sendStr: string): Data {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
     var
         #Public Key | Nonce | Data | Proof | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(dataSeq[0].toHex())
+        sender: PublicKey = newPublicKey(dataSeq[0].pad(32, $char(0)))
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
@@ -44,7 +44,7 @@ proc parseData*(sendStr: string): Data {.raises: [ResultError, ValueError, Final
         #Get the proof.
         proof: string = dataSeq[3]
         #Get the signature.
-        signature: string = dataSeq[4].toHex().pad(128)
+        signature: string = dataSeq[4].pad(64, $char(0))
 
     #Create the Data.
     result = newDataObj(
