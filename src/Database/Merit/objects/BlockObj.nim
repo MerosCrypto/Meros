@@ -1,5 +1,8 @@
-#Numerical libraries.
-import BN as BNFile
+#Errors lib.
+import ../../../lib/Errors
+
+#Numerical libs.
+import BN
 import ../../../lib/Base
 
 #Time lib.
@@ -61,7 +64,7 @@ proc newBlockObj*(
     )
 
 #Creates a new block without caring about the data.
-proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
+proc newStartBlock*(genesis: string): Block {.raises: [ResultError, ValueError].} =
     #Ceate the block.
     result = newBlockObj(
         Argon("", ""),

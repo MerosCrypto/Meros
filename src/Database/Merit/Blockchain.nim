@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Numerical libs.
 import BN
 import ../../lib/Base
@@ -23,7 +26,7 @@ const
     BLOCKS_PER_MONTH: int = 4320
 
 #Create a new Blockchain.
-proc newBlockchain*(genesis: string): Blockchain {.raises: [ValueError].} =
+proc newBlockchain*(genesis: string): Blockchain {.raises: [ResultError, ValueError].} =
     #Set the current time as the time of creation.
     let creation: BN = getTime()
 

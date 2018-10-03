@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Numerical libs.
 import BN
 import ../../../lib/Base
@@ -22,7 +25,7 @@ type Blockchain* = ref object of RootObj
     difficulties*: seq[Difficulty]
 
 #Create a Blockchain object.
-proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ValueError].} =
+proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ResultError, ValueError].} =
     let creation: BN = getTime()
 
     result = Blockchain(

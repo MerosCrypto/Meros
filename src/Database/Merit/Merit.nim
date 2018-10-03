@@ -1,4 +1,7 @@
-#Number lib.
+#Errors lib.
+import ../../lib/Errors
+
+#BN lib.
 import BN
 
 #Merkle lib.
@@ -18,7 +21,7 @@ type Merit* = ref object of RootObj
     state: State
 
 #Creates A Merit object based on a Gensis string.
-proc newMerit*(genesis: string): Merit {.raises: [ValueError].} =
+proc newMerit*(genesis: string): Merit {.raises: [ResultError, ValueError].} =
     result = Merit(
         blockchain: newBlockchain(genesis),
         state: newState()
