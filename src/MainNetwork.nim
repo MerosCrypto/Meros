@@ -24,7 +24,6 @@ events.on(
         echo ""
 )
 
-import Network/Serialize/SerializeReceive
 #Handle Receives.
 events.on(
     "recv",
@@ -42,8 +41,6 @@ events.on(
             echo "Failed to add the Receive."
             result = false
         echo ""
-
-        echo recv.serialize().toHex()
 )
 
 #Handle Data.
