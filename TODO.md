@@ -28,7 +28,6 @@ Improvements:
 
 - Make Miners/Validations proper objects.
 - Optimize serialize/parse.
-- Optimize SECP256K1Wrapper (memory copies, splices...).
 
 - Use the effects system with async.
 - Use custom errors.
