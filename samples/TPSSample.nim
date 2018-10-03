@@ -104,7 +104,7 @@ events.on(
 )
 
 #Async function to spam the server.
-proc spam() {.async.} =
+proc spam() {.async, raises: [Exception].} =
     #Start the timer.
     start = cpuTime()
 

@@ -29,8 +29,8 @@ Improvements:
 - Make Miners/Validations proper objects.
 - Optimize serialize/parse.
 
-- Use the effects system with async.
 - Use custom errors.
+- Remove as any uses of generic `Exception` as possible.
 
 - Chain Params file.
 

@@ -52,7 +52,7 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
     #On a new message...
     subEvents.on(
         "new",
-        proc (msg: Message): Future[bool] {.async.} =
+        proc (msg: Message): Future[bool] {.async, raises: [Exception].} =
             #Set the result to true.
             result = true
 
@@ -115,7 +115,14 @@ proc start*(
     asyncCheck network.listen(port)
 
 #Connect to another node.
-proc connect*(network: Network, ip: string, port: int = 5132) {.async.} =
+proc connect*(
+    network: Network,
+    ip: string,
+    port: int = 5132
+) {.
+    async,
+    raises: [Exception]
+.} =
     #Create the socket.
     var socket: AsyncSocket = newAsyncSocket()
     #Connect.

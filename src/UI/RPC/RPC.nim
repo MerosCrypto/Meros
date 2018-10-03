@@ -31,7 +31,7 @@ proc newRPC*(
     )
 
 #Start up the RPC.
-proc start*(rpc: RPC) {.async.} =
+proc start*(rpc: RPC) {.async, raises: [Exception].} =
     #Define the data outside of the loop.
     var data: tuple[dataAvailable: bool, msg: JSONNode]
 
