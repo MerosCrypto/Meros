@@ -42,7 +42,7 @@ int encode_string(char *dst, size_t dst_len, argon2_context *ctx,
 * length), and ctx.pwd and ctx.pwdlen which must hold a valid password.
 *
 * Invalid input string causes an error. On success, the ctx is valid and all
-* fields have been initialized.
+* fields have been argon_initialized.
 *
 * Returned value is ARGON2_OK on success, other ARGON2_ codes on error.
 */

@@ -29,7 +29,7 @@
 
 /*
  * Function fills a new memory block and optionally XORs the old block over the new one.
- * @next_block must be initialized.
+ * @next_block must be argon_initialized.
  * @param prev_block Pointer to the previous block
  * @param ref_block Pointer to the reference block
  * @param next_block Pointer to the block to be constructed

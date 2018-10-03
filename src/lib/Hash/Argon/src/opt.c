@@ -27,7 +27,7 @@
 
 /*
  * Function fills a new memory block and optionally XORs the old block over the new one.
- * Memory must be initialized.
+ * Memory must be argon_initialized.
  * @param state Pointer to the just produced block. Content will be updated(!)
  * @param ref_block Pointer to the reference block
  * @param next_block Pointer to the block to be XORed over. May coincide with @ref_block
@@ -146,7 +146,7 @@ static void fill_block(__m128i *state, const block *ref_block,
 #endif
 
 static void next_addresses(block *address_block, block *input_block) {
-    /*Temporary zero-initialized blocks*/
+    /*Temporary zero-argon_initialized blocks*/
 #if defined(__AVX512F__)
     __m512i zero_block[ARGON2_512BIT_WORDS_IN_BLOCK];
     __m512i zero2_block[ARGON2_512BIT_WORDS_IN_BLOCK];
