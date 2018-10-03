@@ -12,7 +12,6 @@ Core:
 - Difficulty Vote node.
 - Fork resolution for blocks of different types.
 
-- Move from SECP256k1 to ED25519.
 - Move Verifications out of the Lattice and onto the blockchain with BLS.
 
 - Filesystem.
@@ -24,6 +23,9 @@ Features:
 
 Improvements:
 - Tell the GUI thread to close.
+
+- Have Wallet use Key Pairs over Private Keys.
+- Make sure we aren't signing hex strings but their raw binary versions.
 
 - Make Miners/Validations proper objects.
 - Optimize serialize/parse.
@@ -51,3 +53,4 @@ Documentation:
 Community Service:
 - Create a Nimble library out of Base.
 - Create a Nimble library out of Argon.
+- Create a Nimble library out of libsodium.
