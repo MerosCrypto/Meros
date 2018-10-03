@@ -185,7 +185,7 @@ typedef void (*deallocate_fptr)(uint8_t *memory, size_t bytes_to_allocate);
  * 4 parallel lanes.
  * You want to erase the password, but you're OK with last pass not being
  * erased. You want to use the default memory allocator.
- * Then you initialize:
+ * Then you argon_initialize:
  Argon2_Context(out,8,pwd,32,salt,16,NULL,0,NULL,0,5,1<<20,4,4,NULL,NULL,true,false,false,false)
  */
 typedef struct Argon2_Context {
@@ -329,7 +329,7 @@ ARGON2_PUBLIC int argon2_hash(const uint32_t t_cost, const uint32_t m_cost,
 
 /**
  * Verifies a password against an encoded string
- * Encoded string is restricted as in validate_inputs()
+ * Encoded string is restricted as in argon_validate_inputs()
  * @param encoded String encoding parameters, salt, hash
  * @param pwd Pointer to password
  * @pre   Returns ARGON2_OK if successful

@@ -59,8 +59,8 @@ proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError
     data.hash = hash
 
 #Sign a TX.
-proc sign*(wallet: Wallet, data: Data) {.raises: [ValueError, FinalAttributeError].} =
+proc sign*(wallet: Wallet, data: Data) {.raises: [FinalAttributeError, Exception].} =
     #Set the sender behind the node.
     data.sender = wallet.address
     #Sign the hash of the Data.
-    data.signature = wallet.sign($data.hash)
+    data.signature = wallet.sign(data.hash.toString())

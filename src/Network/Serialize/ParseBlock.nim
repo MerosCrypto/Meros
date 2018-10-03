@@ -41,7 +41,7 @@ import sequtils
 proc parseBlock*(
     blockStr: string,
     lattice: Lattice
-): Block {.raises: [ResultError, ValueError, FinalAttributeError].} =
+): Block {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
     var
         #Nonce | Last | Time | Validations Count
         #Address 1 | Start Index 1 | End Index 1
@@ -81,7 +81,7 @@ proc parseBlock*(
         #Merkle Tree.
         tree: MerkleTree
         #Public Key of the Publisher.
-        publisher: string = blockSeq[5 + (validations.len * 3)].toHex().pad(66)
+        publisher: string = blockSeq[5 + (validations.len * 3)].pad(32, $char(0))
         #Proof.
         proof: string = blockSeq[6 + (validations.len * 3)]
         #Miners length string.
@@ -101,7 +101,7 @@ proc parseBlock*(
             ]
         ]()
         #Signature.
-        signature: string = blockSeq[blockSeq.len - 1].toHex().pad(128)
+        signature: string = blockSeq[blockSeq.len - 1].pad(64, $char(0))
 
     #Make sure less than 100 miners were included.
     if blockSeq.len > (8 + (validations.len * 3) + 200):
@@ -125,7 +125,7 @@ proc parseBlock*(
 
     #Grab the miners out of the block.
     var
-        #End is the string end minus the signature length minues the length of the string that says the miners length.
+        #End is the string end minus the signature length minus the length of the string that says the miners length.
         minersEnd: int = blockStr.len - 66 - (!minersLenStr).len
         minersStart: int = minersEnd - minersLen - 1
     var minersStr = !nonce.toString(256) & blockStr[minersStart .. minersEnd]
@@ -135,7 +135,7 @@ proc parseBlock*(
     #Create the MerkleTree object.
     var validator: string
     for i in 0 ..< validations.len:
-        validator = newAddress(validations[i].validator)
+        validator = newAddress(validations[i].validator.pad(32, $char(0)))
         for v in validations[i].start .. validations[i].last:
             hashes.add(
                 lattice.getNode(
@@ -148,7 +148,7 @@ proc parseBlock*(
     tree = newMerkleTree(hashes)
 
     #Create the Block Object.
-    result = newBlockObj(last, nonce, time, validations, tree, publisher)
+    result = newBlockObj(last, nonce, time, validations, tree, publisher.toHex())
     #Set the hash.
     result.hash = SHA512(result.serialize())
     #Set the proof.
@@ -161,7 +161,7 @@ proc parseBlock*(
     result.minersHash = SHA512(minersStr)
 
     #Verify the signature.
-    if not newPublicKey(publisher).verify($(result.minersHash), signature):
+    if not newPublicKey(publisher).verify(result.minersHash.toString(), signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature

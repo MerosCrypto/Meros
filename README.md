@@ -19,25 +19,26 @@ Requirements:
 
 - Nim 0.19.0
 - Nimble
+- LibSodium
 
 ```
-git submodule update --init
 nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/WebView
-nimble install finals nimcrypto secp256k1 rocksdb
+nimble install finals nimcrypto rocksdb
 nim c src/main.nim
 ```
 
 If you're on Windows:
-- Go to https://github.com/Legrandin/mpir-windows-builds and download the GMP dynamic libraries (which you'll have to rename).
+- Go to https://github.com/Legrandin/mpir-windows-builds and download the GMP dynamic libraries (which you'll have to rename) and place them in your `/build` folder.
+- Go to https://download.libsodium.org/libsodium/releases/libsodium-1.0.16.tar.gz and download the LibSodium DLL (for your `/build` folder) and the LibSodium library file (for installation on your system).
 
 If you're on a Debian based system:
 ```
-sudo apt-get install libgmp3-dev
+sudo apt-get install libgmp3-dev libsodium-dev
 ```
 
-For MacOS/other Linux systems, please look up how to install the GMP libraries.
+For MacOS/other Linux systems, please look up how to install the GMP/LibSodium libraries.
 
-There are multiple samples under samples/ that can be directly compiled to demo Ember.
+There are multiple samples under `samples/` that can be directly compiled to demo Ember.
 
 #### Contributing
 

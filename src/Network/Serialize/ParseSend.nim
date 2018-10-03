@@ -30,12 +30,12 @@ import finals
 import strutils
 
 #Parse a Send.
-proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, FinalAttributeError].} =
+proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's public key.
-        sender: PublicKey = newPublicKey(sendSeq[0].toHex())
+        sender: PublicKey = newPublicKey(sendSeq[0].pad(32, $char(0)))
         #Set the input address based off the sender's public key.
         input: string = sender.newAddress()
         #Get the nonce.
@@ -47,7 +47,7 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Final
         #Get the proof.
         proof: string = sendSeq[4]
         #Get the signature.
-        signature: string = sendSeq[5].toHex().pad(128)
+        signature: string = sendSeq[5].pad(64, $char(0))
 
     #Create the Send.
     result = newSendObj(
@@ -67,7 +67,7 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Final
     result.hash = Argon(result.sha512.toString(), proof, true)
 
     #Verify the signature.
-    if not sender.verify($result.hash, signature):
+    if not sender.verify(result.hash.toString(), signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature

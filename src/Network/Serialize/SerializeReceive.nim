@@ -27,4 +27,4 @@ proc serialize*(recv: Receive): string {.raises: [ValueError].} =
         result =
             !Address.toBN(recv.sender).toString(256) &
             result &
-            !recv.signature.toBN(16).toString(256)
+            !recv.signature

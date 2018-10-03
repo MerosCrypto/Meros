@@ -8,10 +8,11 @@ import ../src/lib/RandomWrapper
 import ../src/lib/Time
 
 import ../src/lib/Base
+import ../src/lib/Base32
 
 import ../src/lib/Hash
 
-import ../src/lib/SECP256K1Wrapper
+import ../src/lib/ED25519
 
 #Database.
 import ../src/Database/Database

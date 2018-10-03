@@ -2,11 +2,11 @@
 import BN
 import ../lib/Base
 
+#ED25519 lib (for the Public Key object).
+import ../lib/ED25519
+
 #Base32 lib.
 import ../lib/Base32
-
-#Public Key lib.
-import PublicKey
 
 #String utils standard lib.
 import strutils
@@ -27,8 +27,8 @@ proc generateBCH(data: Base32): string =
 #   3. A BCH code.
 proc newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
     #Verify the key length.
-    if key.len != 33:
-        raise newException(ValueError, "Public Key isn't compressed.")
+    if key.len != 32:
+        raise newException(ValueError, "Public Key isn't the proper length.")
 
     #Get the Base32 version of Public Key.
     let base32: Base32 = key.toBase32()
@@ -42,16 +42,18 @@ proc newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
 #Work with binary/hex strings, not just arrays.
 proc newAddress*(keyArg: string): string {.raises: [ValueError].} =
     #Verify the key length.
-    if (keyArg.len != 33) and (keyArg.len != 66):
-        raise newException(ValueError, "Public Key isn't compressed.")
+    if (keyArg.len != 32) and (keyArg.len != 64):
+        raise newException(ValueError, "Public Key isn't the proper length.")
 
     #Extract the key.
-    var key: array[33, uint8]
-    if keyArg.len == 33:
-        for i in 0 ..< 33:
+    var key: array[32, uint8]
+    #If it's binary formatted...
+    if keyArg.len == 32:
+        for i in 0 ..< 32:
             key[i] = uint8(keyArg[i])
+    #If it's hex formatted...
     else:
-        for i in countup(0, 65, 2):
+        for i in countup(0, 63, 2):
             key[i div 2] = uint8(parseHexInt(keyArg[i .. i + 1]))
 
     #Create a new address with the array.
@@ -59,10 +61,10 @@ proc newAddress*(keyArg: string): string {.raises: [ValueError].} =
 
 #Work with Public Keys objects, not just arrays.
 proc newAddress*(key: PublicKey): string {.raises: [ValueError].} =
-    result = newAddress(key.toArray())
+    result = newAddress(cast[array[32, uint8]](key))
 
 #Verifies if an address is valid.
-proc verify*(address: string): bool {.raises: [ValueError].} =
+proc verify*(address: string): bool {.raises: [].} =
     #Return true if there's no issue.
     result = true
 
@@ -72,11 +74,6 @@ proc verify*(address: string): bool {.raises: [ValueError].} =
 
     #Check to make sure it's a valid Base32 number.
     if not address.substr(3, address.len).isBase32():
-        return false
-
-    #Verify the public key format.
-    let key: seq[uint8] = address.substr(3, address.len).toBase32().toSeq()
-    if (key[0] != 2) and (key[0] != 3):
         return false
 
     #Verify the BCH.
@@ -98,7 +95,7 @@ proc toBN*(address: string): BN {.raises: [ValueError].} =
 
     #Turn the seq into a string.
     #We don't use b in key because Base32 is returning a trailing 0 for some reason.
-    for i in 0 ..< 33:
+    for i in 0 ..< 32:
         keyStr &= char(key[i])
 
     #Create the BN.

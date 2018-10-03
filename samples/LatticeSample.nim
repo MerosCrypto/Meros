@@ -14,7 +14,7 @@ var
     lattice: Lattice = newLattice()  #Lattice.
     mintIndex: Index = lattice.mint(
         sender.address,
-        newBN(int(10000000000))
+        newBN(1000000)
     )                                #Index of the Mint TX.
     mintRecv: Receive = newReceive(  #Mint Receive.
         mintIndex,
@@ -22,7 +22,7 @@ var
     )
     send: Send = newSend(            #Send.
         receiver.address,
-        newBN(int(10000000000)),
+        newBN(1000000),
         newBN(1)
     )
     recv: Receive = newReceive(      #Receive.

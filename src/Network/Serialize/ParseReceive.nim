@@ -27,12 +27,12 @@ import finals
 import strutils
 
 #Parse a Receive.
-proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, FinalAttributeError].} =
+proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, FinalAttributeError, Exception].} =
     var
         #Public Key | Nonce | Input Address | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(5)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(recvSeq[0].toHex())
+        sender: PublicKey = newPublicKey(recvSeq[0].pad(32, $char(0)))
         #Get the nonce.
         nonce: BN = recvSeq[1].toBN(256)
         #Get the input Address.
@@ -40,7 +40,7 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, FinalAttribu
         #Get the input nonce.
         inputNonce: BN = recvSeq[3].toBN(256)
         #Get the signature.
-        signature: string = recvSeq[4].toHex().pad(128)
+        signature: string = recvSeq[4].pad(64, $char(0))
 
     #Create the Receive.
     result = newReceiveObj(
@@ -56,7 +56,7 @@ proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, FinalAttribu
     result.hash = SHA512(result.serialize())
 
     #Verify the signature.
-    if not sender.verify($result.hash, signature):
+    if not sender.verify(result.hash.toString(), signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature

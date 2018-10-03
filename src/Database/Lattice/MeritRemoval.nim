@@ -36,8 +36,8 @@ proc newMeritRemoval*(
     result.hash = SHA512(result.serialize())
 
 #Sign a MeritRemoval object.
-proc sign*(wallet: Wallet, mr: MeritRemoval) {.raises: [ValueError, FinalAttributeError].} =
+proc sign*(wallet: Wallet, mr: MeritRemoval) {.raises: [FinalAttributeError, Exception].} =
     #Set the sender behind the node.
     mr.sender = wallet.address
     #Sign the hash of the MR.
-    mr.signature = wallet.sign($mr.hash)
+    mr.signature = wallet.sign(mr.hash.toString())

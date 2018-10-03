@@ -44,7 +44,7 @@ proc newBlock*(
     proof: BN,
     miners: seq[tuple[miner: string, amount: int]],
     signature: string
-): Block {.raises: [ResultError, ValueError, FinalAttributeError].} =
+): Block {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
     #Verify the arguments.
     #Validations.
     for validation in validations:
@@ -89,7 +89,7 @@ proc newBlock*(
     #Calculate the miners hash.
     result.minersHash = SHA512(miners.serialize(nonce))
     #Verify the signature.
-    if not publisher.newPublicKey().verify($result.minersHash, signature):
+    if not publisher.newPublicKey().verify(result.minersHash.toString(), signature):
         raise newException(ValueError, "Invalid miners' signature.")
     #Set the signature.
     result.signature = signature
