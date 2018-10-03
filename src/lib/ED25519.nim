@@ -30,7 +30,7 @@ proc newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [Exception]} =
 #Nim function for signing a message.
 proc sign*(key: PrivateKey, msgArg: string): string {.raises: [Exception]} =
     #Extract the message arg.
-    var msg: string = msgArg
+    var msg: string = "EMB" & msgArg
 
     #Declare the State.
     var state: ED25519State
@@ -53,7 +53,7 @@ proc sign*(key: PrivateKey, msgArg: string): string {.raises: [Exception]} =
 proc verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [Exception]} =
     #Extract the args.
     var
-        msg: string = msgArg
+        msg: string = "EMB" & msgArg
         sig: string = sigArg
 
     #Declare the State.

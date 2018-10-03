@@ -16,7 +16,7 @@ proc setPrivateKey*(rpc: RPC, privateKey: string) {.raises: [ValueError, Excepti
     if privateKey.len == 0:
         rpc.wallet = newWallet()
     else:
-        rpc.wallet = newWallet(privateKey)
+        rpc.wallet = newWallet(newPrivateKey(privateKey))
 
 #Get the Wallet info.
 proc get*(rpc: RPC) {.raises: [DeadThreadError, Exception].} =

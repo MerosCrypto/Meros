@@ -2,11 +2,11 @@
 import BN
 import ../lib/Base
 
+#ED25519 lib (for the Public Key object).
+import ../lib/ED25519
+
 #Base32 lib.
 import ../lib/Base32
-
-#Public Key lib.
-import PublicKey
 
 #String utils standard lib.
 import strutils

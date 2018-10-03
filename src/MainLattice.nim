@@ -3,7 +3,9 @@ include MainImports
 #---------- Lattice ----------
 var
     minter: Wallet = newWallet(
-        "5893C9C209BE90DB9B72DA1F33FAA188CAD131280865B4814131C958F3732B12"
+        newPrivateKey(
+            "35383933433943323039424539304442394237324441314633334641413138384341443133313238303836354234383134313331433935384633373332423132"
+        )
     )                                #Wallet.
     lattice: Lattice = newLattice()  #Lattice.
     mintIndex: Index = lattice.mint( #Gensis Send.

@@ -24,8 +24,7 @@ Features:
 Improvements:
 - Tell the GUI thread to close.
 
-- Have Wallet use Key Pairs over Private Keys.
-- Make sure we aren't signing hex strings but their raw binary versions.
+- Standardize where we use binary/hex/addresses.
 
 - Make Miners/Validations proper objects.
 - Optimize serialize/parse.
@@ -46,11 +45,10 @@ Bug fixes:
 - Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
 
 Documentation:
-- Add comments to Wallet/Wallet.nim.
 - Use Documentation Comments.
 - Ember Whitepaper.
 
 Community Service:
 - Create a Nimble library out of Base.
 - Create a Nimble library out of Argon.
-- Create a Nimble library out of libsodium.
+- Create a Nimble library out of ED25519.
