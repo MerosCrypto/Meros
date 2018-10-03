@@ -40,4 +40,4 @@ proc sign*(wallet: Wallet, mr: MeritRemoval) {.raises: [FinalAttributeError, Exc
     #Set the sender behind the node.
     mr.sender = wallet.address
     #Sign the hash of the MR.
-    mr.signature = wallet.sign($mr.hash)
+    mr.signature = wallet.sign(mr.hash.toString())

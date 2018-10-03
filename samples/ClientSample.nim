@@ -59,7 +59,7 @@ if answer == "":
     quit(0)
 
 #Create a Wallet from their Private Key.
-wallet = newWallet(answer)
+wallet = newWallet(newPrivateKey(answer))
 
 #Get the TX type.
 echo "Would you like to Send or Receive a TX?"

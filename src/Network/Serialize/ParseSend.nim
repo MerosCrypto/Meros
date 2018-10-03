@@ -67,7 +67,7 @@ proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, Final
     result.hash = Argon(result.sha512.toString(), proof, true)
 
     #Verify the signature.
-    if not sender.verify($result.hash, signature):
+    if not sender.verify(result.hash.toString(), signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature

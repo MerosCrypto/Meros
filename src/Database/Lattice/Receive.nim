@@ -69,4 +69,4 @@ proc sign*(wallet: Wallet, recv: Receive) {.raises: [FinalAttributeError, Except
     #Set the sender behind the node.
     recv.sender = wallet.address
     #Sign the hash of the Receive.
-    recv.signature = wallet.sign($recv.hash)
+    recv.signature = wallet.sign(recv.hash.toString())

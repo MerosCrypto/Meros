@@ -76,7 +76,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError].} =
     #Set the proof.
     result.proof = newBN()
     #Calculate the Argon hash.
-    result.argon = Argon($result.hash, result.proof.toString(256))
+    result.argon = Argon(result.hash.toString(), result.proof.toString(256))
     #Set the miners.
     result.miners = @[]
     #Calculate the miners hash.

@@ -39,4 +39,4 @@ proc sign*(wallet: Wallet, verif: Verification) {.raises: [FinalAttributeError, 
     #Set the sender behind the node.
     verif.sender = wallet.address
     #Sign the hash of the Verification.
-    verif.signature = wallet.sign($verif.hash)
+    verif.signature = wallet.sign(verif.hash.toString())

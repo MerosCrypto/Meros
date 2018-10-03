@@ -43,7 +43,7 @@ proc add(
         (
             not newPublicKey(
                 account.address.toBN().toString(16)
-            ).verify($node.hash, node.signature)
+            ).verify(node.hash.toString(), node.signature)
         )
     ):
         return false

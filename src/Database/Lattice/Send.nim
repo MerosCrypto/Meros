@@ -77,4 +77,4 @@ proc sign*(wallet: Wallet, send: Send): bool {.raises: [FinalAttributeError, Exc
     #Set the sender behind the node.
     send.sender = wallet.address
     #Sign the hash of the Send.
-    send.signature = wallet.sign($send.hash)
+    send.signature = wallet.sign(send.hash.toString())

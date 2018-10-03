@@ -14,7 +14,7 @@ import ../src/Wallet/Wallet
 #Demo.
 var
     wallet: Wallet = newWallet()
-    hash: string = $SHA512("test")
+    hash: string = SHA512("test").toString()
     sig: string = wallet.sign(hash)
     res: bool = wallet.publicKey.verify(hash, sig)
 

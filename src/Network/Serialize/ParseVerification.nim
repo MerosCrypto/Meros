@@ -55,7 +55,7 @@ proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, F
     result.hash = SHA512(result.serialize())
 
     #Verify the signature.
-    if not verifier.verify($result.hash, signature):
+    if not verifier.verify(result.hash.toString(), signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature

@@ -63,4 +63,4 @@ proc sign*(wallet: Wallet, data: Data) {.raises: [FinalAttributeError, Exception
     #Set the sender behind the node.
     data.sender = wallet.address
     #Sign the hash of the Data.
-    data.signature = wallet.sign($data.hash)
+    data.signature = wallet.sign(data.hash.toString())
