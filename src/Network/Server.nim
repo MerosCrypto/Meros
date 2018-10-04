@@ -26,7 +26,7 @@ proc listen*(network: Network, port: int) {.async, raises: [Exception].} =
             #Tell the Network lib of the new client.
             network.subEvents.get(
                 proc (client: AsyncSocket),
-                "server"
+                "client"
             )(
                 await network.server.accept()
             )

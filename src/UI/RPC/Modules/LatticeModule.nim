@@ -37,7 +37,7 @@ proc send*(rpc: RPC, address: string, amount: BN, nonce: BN) {.raises: [Exceptio
     #Add it.
     rpc.events.get(
         proc (send: Send),
-        "send"
+        "lattice.send"
     )(send)
 
 #Create a Receive Node.
@@ -54,7 +54,7 @@ proc receive*(rpc: RPC, address: string, inputNonce: BN, nonce: BN) {.raises: [E
     #Add it.
     rpc.events.get(
         proc (recv: Receive),
-        "recv"
+        "lattice.receive"
     )(recv)
 
 #Handler.

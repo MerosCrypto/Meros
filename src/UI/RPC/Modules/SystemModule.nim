@@ -11,7 +11,7 @@ import json
 proc quit*(rpc: RPC) {.raises: [Exception].} =
     rpc.events.get(
         proc (),
-        "quit"
+        "system.quit"
     )()
 
 #Handler.

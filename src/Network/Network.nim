@@ -51,7 +51,7 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
 
     #On a new message...
     subEvents.on(
-        "new",
+        "message",
         proc (msg: Message): Future[bool] {.async, raises: [Exception].} =
             #Set the result to true.
             result = true
@@ -76,7 +76,7 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
                     of MessageType.Send:
                         if nodeEvents.get(
                             proc (send: Send): bool,
-                            "send"
+                            "lattice.send"
                         )(
                             msg.message.parseSend()
                         ):
@@ -84,7 +84,7 @@ proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError,
                     of MessageType.Receive:
                         if nodeEvents.get(
                             proc (recv: Receive): bool,
-                            "recv"
+                            "lattice.receive"
                         )(
                             msg.message.parseReceive()
                         ):
@@ -106,7 +106,7 @@ proc start*(
 ) {.raises: [ValueError, Exception].} =
     #Listen for a new Server client.
     network.subEvents.on(
-        "server",
+        "client",
         proc (client: AsyncSocket) {.raises: [ValueError, Exception].} =
             network.add(client)
     )

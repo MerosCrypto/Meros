@@ -66,7 +66,7 @@ discard lattice.add(mintRecv)
 
 #Handle Sends.
 events.on(
-    "send",
+    "lattice.send",
     proc (send: Send): bool {.raises: [Exception].} =
         #Add the Send.
         if lattice.add(
@@ -80,7 +80,7 @@ events.on(
 
 #Handle Receives.
 events.on(
-    "recv",
+    "lattice.receive",
     proc (recv: Receive): bool {.raises: [Exception].} =
         #Add the Receive.
         if lattice.add(

@@ -5,19 +5,19 @@ var
     events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.
 
     #Lattice.
-    lattice: Lattice = newLattice()
-    genesisSend: Index
+    lattice: Lattice = newLattice()          #Lattice.
+    genesisSend: Index                       #Genesis Send. Puts the first coins on the network.
 
     #Network.
-    network: Network
+    network: Network                         #Network.
 
     #UI.
-    ui: UI
+    ui: UI                                   #RPC and GUI.
 
 #Handle node level events.
 #Properly shutdown.
 events.on(
-    "quit",
+    "system.quit",
     proc () {.raises: [Exception].} =
         #Shut down the UI.
         ui.shutdown()

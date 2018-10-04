@@ -60,7 +60,7 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
         if not (
             await eventEmitter.get(
                 proc (msg: Message): Future[bool],
-                "new"
+                "message"
             )(
                 newMessage(
                     id,
