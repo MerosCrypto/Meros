@@ -12,23 +12,40 @@ import ../../../lib/Time
 import BlockObj
 import DifficultyObj
 
+#Finals lib.
+import finals
+
 #String utils standard lib.
 import strutils
 
 #Blockchain object.
-type Blockchain* = ref object of RootObj
-    #Height. BN for compatibility.
-    height*: BN
-    #seq of all the blocks.
-    blocks*: seq[Block]
-    #seq of all the difficulties.
-    difficulties*: seq[Difficulty]
+finalsd:
+    type Blockchain* = ref object of RootObj
+        #Block time.
+        blockTime* {.final.}: int
+        #Blocks per month. Helper piece of data.
+        blocksPerMonth* {.final.}: int
+
+        #Height. BN for compatibility.
+        height*: BN
+        #seq of all the blocks.
+        blocks*: seq[Block]
+        #seq of all the difficulties.
+        difficulties*: seq[Difficulty]
 
 #Create a Blockchain object.
-proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ResultError, ValueError].} =
+proc newBlockchainObj*(
+    genesis: string,
+    blockTime: int,
+    blocksPerMonth: int,
+    startDifficulty: BN
+): Blockchain {.raises: [ResultError, ValueError].} =
     let creation: BN = getTime()
 
     result = Blockchain(
+        blockTime: blockTime,
+        blocksPerMonth: blocksPerMonth,
+
         height: newBN(),
         blocks: @[
             newStartBlock(genesis)
@@ -37,7 +54,7 @@ proc newBlockchainObj*(genesis: string): Blockchain {.raises: [ResultError, Valu
             newDifficultyObj(
                 BNNums.ZERO,
                 newBN(1),
-                "E8".repeat(64).toBN(16)
+                startDifficulty
             )
         ]
     )

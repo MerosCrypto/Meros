@@ -21,6 +21,9 @@ import ec_events
 #Networking standard libs.
 import asyncdispatch, asyncnet
 
+#String utils standard lib.
+import strutils
+
 #Times standard lib.
 import times
 
@@ -31,15 +34,15 @@ var
     start: float       #Start time.
 
     #Server vars.
-    events: EventEmitter = newEventEmitter() #EventEmitter for the Network.
-    network: Network = newNetwork(0, events) #Network object.
-    minter: Wallet = newWallet()             #Wallet.
-    lattice: Lattice = newLattice()          #Lattice.
-    mintIndex: Index = lattice.mint(         #Mint transaction.
+    events: EventEmitter = newEventEmitter()           #EventEmitter for the Network.
+    network: Network = newNetwork(0, events)           #Network object.
+    minter: Wallet = newWallet()                       #Wallet.
+    lattice: Lattice = newLattice("aa".repeat(64), "") #Lattice.
+    mintIndex: Index = lattice.mint(                   #Mint transaction.
         minter.address,
         newBN("1000000")
     )
-    mintRecv: Receive = newReceive(          #Mint Receive.
+    mintRecv: Receive = newReceive(                    #Mint Receive.
         mintIndex,
         newBN()
     )

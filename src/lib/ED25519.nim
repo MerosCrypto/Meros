@@ -6,6 +6,9 @@ export PrivateKey, PublicKey
 #Standard string utils lib.
 import strutils
 
+#SIGN_PREFIX applied to every message.
+const SIGN_PREFIX {.strdefine.}: string = "EMB"
+
 #Nim function for creating a Key Pair.
 proc newKeyPair*(): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [Exception]} =
     #Call the C function and verify the result.
@@ -30,7 +33,7 @@ proc newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [Exception]} =
 #Nim function for signing a message.
 proc sign*(key: PrivateKey, msgArg: string): string {.raises: [Exception]} =
     #Extract the message arg.
-    var msg: string = "EMB" & msgArg
+    var msg: string = SIGN_PREFIX & msgArg
 
     #Declare the State.
     var state: ED25519State
@@ -53,7 +56,7 @@ proc sign*(key: PrivateKey, msgArg: string): string {.raises: [Exception]} =
 proc verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [Exception]} =
     #Extract the args.
     var
-        msg: string = "EMB" & msgArg
+        msg: string = SIGN_PREFIX & msgArg
         sig: string = sigArg
 
     #Declare the State.

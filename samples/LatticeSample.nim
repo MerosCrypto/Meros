@@ -8,24 +8,27 @@ import ../src/Wallet/Wallet
 #Lattice lib.
 import ../src/Database/Lattice/Lattice
 
+#String utils standard lib.
+import strutils
+
 var
-    sender: Wallet = newWallet()     #Sender Wallet.
-    receiver: Wallet = newWallet()   #Receiver Wallet.
-    lattice: Lattice = newLattice()  #Lattice.
+    sender: Wallet = newWallet()                        #Sender Wallet.
+    receiver: Wallet = newWallet()                      #Receiver Wallet.
+    lattice: Lattice = newLattice("bb".repeat(64), "")  #Lattice.
     mintIndex: Index = lattice.mint(
         sender.address,
         newBN(1000000)
-    )                                #Index of the Mint TX.
-    mintRecv: Receive = newReceive(  #Mint Receive.
+    )                                                   #Index of the Mint TX.
+    mintRecv: Receive = newReceive(                     #Mint Receive.
         mintIndex,
         newBN()
     )
-    send: Send = newSend(            #Send.
+    send: Send = newSend(                               #Send.
         receiver.address,
         newBN(1000000),
         newBN(1)
     )
-    recv: Receive = newReceive(      #Receive.
+    recv: Receive = newReceive(                         #Receive.
         sender.address,
         newBN(1),
         newBN()

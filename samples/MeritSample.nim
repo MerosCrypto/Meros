@@ -17,6 +17,9 @@ import ../src/Wallet/Wallet
 #Serialization libs.
 import ../src/Network/Serialize/SerializeMiners
 
+#String utils standard lib.
+import strutils
+
 #Main function is so these varriables can be GC'd.
 proc main() =
     var
@@ -27,7 +30,7 @@ proc main() =
         #Gensis var.
         genesis: string = "mainnet"
         #Merit var.
-        merit: Merit = newMerit(genesis)
+        merit: Merit = newMerit(genesis, 10, 259200, "cc".repeat(64), 50)
         #Block var; defined here to stop a memory leak.
         newBlock: Block
         #Last block hash, nonce, time, and proof vars.

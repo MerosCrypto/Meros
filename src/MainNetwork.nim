@@ -4,7 +4,7 @@ include MainLattice
 network = newNetwork(NETWORK_ID, events)
 
 #Start listening.
-network.start(5132)
+network.start(NETWORK_PORT)
 
 #Handle network events.
 #Broadcast a message. This is used to send data out.
@@ -14,7 +14,7 @@ events.on(
         network.broadcast(
             newMessage(
                 NETWORK_ID,
-                PROTOCOL,
+                NETWORK_PROTOCOL,
                 msgType,
                 msg
             )

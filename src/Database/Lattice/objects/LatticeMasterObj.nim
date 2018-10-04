@@ -18,7 +18,7 @@ type Lattice* = ref object of RootObj
     lookup*: HashLookup
 
 #Constructor.
-proc newLattice*(): Lattice {.raises: [ValueError].} =
+proc newLattice*(txDiff: string, dataDiff: string): Lattice {.raises: [ValueError].} =
     #Create the object.
     result = Lattice(
         difficulties: newDifficulties(),
@@ -27,8 +27,8 @@ proc newLattice*(): Lattice {.raises: [ValueError].} =
     )
 
     #Set the difficulty values.
-    result.difficulties.transaction = "".pad(128, "d0").toBN(16)
-    result.difficulties.data = "".pad(128, "e0").toBN(16)
+    result.difficulties.transaction = txDiff.toBN(16)
+    result.difficulties.data = dataDiff.toBN(16)
 
     #Add the minter account.
     discard result.lattice.newAccount("minter")

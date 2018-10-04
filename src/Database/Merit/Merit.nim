@@ -20,11 +20,17 @@ type Merit* = ref object of RootObj
     blockchain: Blockchain
     state: State
 
-#Creates A Merit object based on a Gensis string.
-proc newMerit*(genesis: string): Merit {.raises: [ResultError, ValueError].} =
+#Constructor.
+proc newMerit*(
+    genesis: string,
+    blockTime: int,
+    blocksPerMonth: int,
+    startDifficulty: string,
+    live: int
+): Merit {.raises: [ResultError, ValueError].} =
     result = Merit(
-        blockchain: newBlockchain(genesis),
-        state: newState()
+        blockchain: newBlockchain(genesis, blockTime, blocksPerMonth, newBN(startDifficulty)),
+        state: newState(live)
     )
 
 #Add a block.

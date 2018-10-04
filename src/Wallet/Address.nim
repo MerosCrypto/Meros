@@ -12,7 +12,7 @@ import ../lib/Base32
 import strutils
 
 #Human readable data.
-const HRP: string = "EMB"
+const ADDRESS_HRP {.strdefine.}: string = "Emb"
 
 #Generates a six character BCH code for the public key.
 proc generateBCH(data: Base32): string =
@@ -35,7 +35,7 @@ proc newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
 
     #Create the address.
     result =
-        "Emb" &
+        ADDRESS_HRP &
         $base32 &
         generateBCH(base32)
 
@@ -69,11 +69,11 @@ proc verify*(address: string): bool {.raises: [].} =
     result = true
 
     #Check for the prefix.
-    if address.substr(0, 2) != "Emb":
+    if address.substr(0, ADDRESS_HRP.len - 1) != ADDRESS_HRP:
         return false
 
     #Check to make sure it's a valid Base32 number.
-    if not address.substr(3, address.len).isBase32():
+    if not address.substr(ADDRESS_HRP.len, address.len).isBase32():
         return false
 
     #Verify the BCH.
@@ -90,7 +90,7 @@ proc toBN*(address: string): BN {.raises: [ValueError].} =
 
     #Define the key and a string to put the array into.
     var
-        key: seq[uint8] = address.substr(3, address.len).toBase32().toSeq()
+        key: seq[uint8] = address.substr(ADDRESS_HRP.len, address.len).toBase32().toSeq()
         keyStr: string = ""
 
     #Turn the seq into a string.

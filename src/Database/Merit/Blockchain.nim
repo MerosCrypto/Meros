@@ -19,22 +19,21 @@ import Difficulty
 import objects/BlockchainObj
 export BlockchainObj
 
-const
-    #Block time in seconds.
-    BLOCK_TIME: int = 600
-    #Constant of the blocks per month.
-    BLOCKS_PER_MONTH: int = 4320
-
 #Create a new Blockchain.
-proc newBlockchain*(genesis: string): Blockchain {.raises: [ResultError, ValueError].} =
+proc newBlockchain*(
+    genesis: string,
+    blockTime: int,
+    blocksPerMonth: int,
+    startDifficulty: BN
+): Blockchain {.raises: [ResultError, ValueError].} =
     #Set the current time as the time of creation.
     let creation: BN = getTime()
 
     #Init the object.
-    result = newBlockchainObj(genesis)
+    result = newBlockchainObj(genesis, blockTime, blocksPerMonth, startDifficulty)
 
 #Adds a block to the blockchain.
-proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Exception].} =
+proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueError].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 
@@ -67,16 +66,16 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Excepti
 
     #Set the period length.
     #If we're in the first month, the period length is one block.
-    if blockchain.height < newBN(BLOCKS_PER_MONTH):
+    if blockchain.height < newBN(blockchain.blocksPerMonth):
         blocksPerPeriod = 1
     #If we're in the first three months, the period length is one hour.
-    elif blockchain.height < newBN(BLOCKS_PER_MONTH * 3):
+    elif blockchain.height < newBN(blockchain.blocksPerMonth * 3):
         blocksPerPeriod = 6
     #If we're in the first six months, the period length is six hours.
-    elif blockchain.height < newBN(BLOCKS_PER_MONTH * 6):
+    elif blockchain.height < newBN(blockchain.blocksPerMonth * 6):
         blocksPerPeriod = 36
     #If we're in the first year, the period length is twelve hours.
-    elif blockchain.height < newBN(BLOCKS_PER_MONTH * 12):
+    elif blockchain.height < newBN(blockchain.blocksPerMonth * 12):
         blocksPerPeriod = 72
     #Else, if it's over an year, the period length is a day.
     else:
@@ -84,7 +83,12 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [Excepti
 
     #If the difficulty needs to be updated...
     if difficulty.endBlock <= newBlock.nonce:
-        difficulty = calculateNextDifficulty(blockchain.blocks, blockchain.difficulties, newBN(BLOCK_TIME * blocksPerPeriod), blocksPerPeriod)
+        difficulty = calculateNextDifficulty(
+            blockchain.blocks,
+            blockchain.difficulties,
+            newBN(blockchain.blockTime * blocksPerPeriod),
+            blocksPerPeriod
+        )
         blockchain.add(difficulty)
 
     #If the difficulty wasn't beat...

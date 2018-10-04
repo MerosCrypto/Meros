@@ -1,10 +1,9 @@
 # TODO
 
 Core:
+- Have the RPC dynamically get the difficulty.
 - Have every RPC method return something.
 - Have the RPC send errors when it fails.
-
-- Broadcast Lattice entries created over the RPC.
 
 - Track Verifications.
 - Link the Lattice to Merit.
@@ -32,7 +31,8 @@ Improvements:
 - Use custom errors.
 - Remove as any uses of generic `Exception` as possible.
 
-- Chain Params file.
+- Remove blocksPerMonth.
+- Make the port to listen on a runtime option.
 
 Behavior Changes:
 - Have required work be based on account, not that TX, and infinitely precalculable.

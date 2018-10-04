@@ -1,11 +1,15 @@
 include MainGlobals
 
 #Create the Lattice.
-lattice = newLattice()
+lattice = newLattice(
+    TRANSACTION_DIFFICULTY,
+    DATA_DIFFICULTY
+)
+
 #Create the Genesis Send.
 genesisSend = lattice.mint(
-    "Emb0h3nyv8uplrx68677ca6t0t4x6qhsue90y50ntwq3dfj5hxw246s",
-    newBN("1000000")
+    MINT_ADDRESS,
+    newBN(MINT_AMOUNT)
 )
 
 #Handle Sends.
@@ -14,7 +18,7 @@ events.on(
     proc (send: Send): bool {.raises: [Exception].} =
         #Print that we're adding the node.
         echo "Adding a new Send."
-
+        
         #Add the Send.
         if lattice.add(
             send
@@ -99,7 +103,5 @@ events.on(
 )
 
 #Print the Private Key and address of the address holding the coins.
-echo "Emb0h3nyv8uplrx68677ca6t0t4x6qhsue90y50ntwq3dfj5hxw246s was sent one million coins from \"minter\".\r\n" &
-    "Its Private Key is " &
-    "7A3E64ADDB86DA2F3D1BEF18F6D2C80BA5C5EF9673DE8A0F5787DF8E6DD237427DE33230FC0FC66D1F5EF63BA5BD7536817873257928F9ADC08B532A5CCE5575" &
-    ".\r\n"
+echo MINT_ADDRESS & " was sent " & MINT_AMOUNT & " coins from \"minter\".\r\n" &
+    "Its Private Key is " & MINT_KEY & ".\r\n"

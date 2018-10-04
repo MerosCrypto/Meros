@@ -41,7 +41,7 @@ var
         miner: wallet.address,
         amount: 100
     )]
-    lattice: Lattice = newLattice()
+    lattice: Lattice = newLattice("", "")
 
 import strutils, sequtils
 

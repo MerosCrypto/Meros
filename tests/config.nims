@@ -5,6 +5,8 @@ if getCommand() == "c":
 #Necessary flags.
 switch("threads", "on")
 switch("assertions", "on")
+switch("define", "ADDRESS_HRP=Emb")
+switch("define", "SIGN_PREFIX=EMB")
 
 when defined(release):
     #Disable checks.
