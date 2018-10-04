@@ -22,14 +22,6 @@ export RipeMD
 import Hash/Keccak
 export Keccak
 
-#Hash exponentiation.
-#f^n(x) = f(f(f(... n times ... f(f(f(x))))))
-proc `^`*[T](algo: proc(x: string): T, power: int): proc(x: string): T {.raises: [Exception].} =
-    result = proc(x: string): T {.raises: [Exception].} =
-        result = algo(x)
-        for _ in 2 .. power:
-            result = algo(result.toString())
-
 #Define SHA3 as the default SHA hash family.
 type
     SHA256Hash* = SHA3_256Hash

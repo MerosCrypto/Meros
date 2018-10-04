@@ -11,10 +11,15 @@ for _ in 0 ..< 500:
 
     #Verify the address.
     if not wallet.address.verify():
-        raise newException(Exception, "Invalid Address Type 1")
+        echo wallet.address
+        echo "Invalid Address Type 1."
+        quit()
     #Verify the address for the matching pub key.
     if not wallet.address.verify(wallet.publicKey):
-        raise newException(Exception, "Invalid Address Type 2")
+        echo wallet.address
+        echo $wallet.publicKey
+        echo "Invalid Address Type 2."
+        quit()
 
     #Print the generated address.
     echo wallet.address

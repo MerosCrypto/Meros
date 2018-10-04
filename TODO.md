@@ -28,9 +28,6 @@ Improvements:
 - Make Miners/Validations proper objects.
 - Optimize serialize/parse.
 
-- Use custom errors.
-- Remove as any uses of generic `Exception` as possible.
-
 - Remove blocksPerMonth.
 - Make the port to listen on a runtime option.
 
