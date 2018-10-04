@@ -37,15 +37,18 @@ proc add(
     if newBN(account.nodes.len) != node.nonce:
         return false
 
-    #Verify the signature.
+    #If it's a valid minter node...
     if (
-        (account.address != "minter") and
-        (
-            not newPublicKey(
-                account.address.toBN().toString(16)
-            ).verify(node.hash.toString(), node.signature)
-        )
+        (account.address == "minter") and
+        (node.descendant == NodeType.SEND)
     ):
+        #Override as there's no signatures for minters.
+        discard
+    #Else, if it's an invalid signature...
+    elif not newPublicKey(
+        account.address.toBN().toString(256)
+    ).verify(node.hash.toString(), node.signature):
+        #Return false.
         return false
 
     #Add the node.

@@ -1,20 +1,91 @@
-include MainImports
+include MainGlobals
 
-#---------- Lattice ----------
-var
-    minter: Wallet = newWallet(
-        newPrivateKey(
-            "35383933433943323039424539304442394237324441314633334641413138384341443133313238303836354234383134313331433935384633373332423132"
-        )
-    )                                #Wallet.
-    lattice: Lattice = newLattice()  #Lattice.
-    mintIndex: Index = lattice.mint( #Gensis Send.
-        minter.address,
-        newBN("1000000")
-    )
+#Create the Lattice.
+lattice = newLattice()
+#Create the Genesis Send.
+genesisSend = lattice.mint(
+    "Emb0h3nyv8uplrx68677ca6t0t4x6qhsue90y50ntwq3dfj5hxw246s",
+    newBN("1000000")
+)
+
+#Handle Sends.
+events.on(
+    "send",
+    proc (send: Send): bool {.raises: [Exception].} =
+        #Print that we're adding the node.
+        echo "Adding a new Send."
+
+        #Add the Send.
+        if lattice.add(
+            send
+        ):
+            echo "Successfully added the Send."
+            result = true
+        else:
+            echo "Failed to add the Send."
+            result = false
+        echo ""
+)
+
+#Handle Receives.
+events.on(
+    "recv",
+    proc (recv: Receive): bool {.raises: [Exception].} =
+        #Print that we're adding the node.
+        echo "Adding a new Receive."
+
+        #Add the Receive.
+        if lattice.add(
+            recv
+        ):
+            echo "Successfully added the Receive."
+            result = true
+        else:
+            echo "Failed to add the Receive."
+            result = false
+        echo ""
+)
+
+#Handle Data.
+events.on(
+    "data",
+    proc (msg: Message, data: Data): bool {.raises: [Exception].} =
+        #Print that we're adding the node.
+        echo "Adding a new Data."
+
+        #Add the Data.
+        if lattice.add(
+            data
+        ):
+            echo "Successfully added the Data."
+            result = true
+        else:
+            echo "Failed to add the Data."
+            result = false
+        echo ""
+)
+
+#Handle Verifications.
+events.on(
+    "verif",
+    proc (verif: Verification): bool {.raises: [Exception].} =
+        #Print that we're adding the node.
+        echo "Adding a new Verification."
+
+        #Add the Verification.
+        if lattice.add(
+            verif
+        ):
+            echo "Successfully added the Verification."
+            result = true
+        else:
+            echo "Failed to add the Verification."
+            result = false
+        echo ""
+)
 
 #Print the Private Key and address of the address holding the coins.
-echo minter.address &
+echo "Emb0h3nyv8uplrx68677ca6t0t4x6qhsue90y50ntwq3dfj5hxw246s" &
     " was sent one million coins from \"minter\". Its Private Key is " &
-    $minter.privateKey &
+    "7A3E64ADDB86DA2F3D1BEF18F6D2C80BA5C5EF9673DE8A0F5787DF8E6DD237427DE33230FC0FC66D1F5EF63BA5BD7536817873257928F9ADC08B532A5CCE5575" &
     ".\r\n"

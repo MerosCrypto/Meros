@@ -25,10 +25,10 @@ import Account
 #Lattice Objects.
 import objects/LatticeObjs
 import objects/LatticeMasterObj
-#Export the Index object/constructor.
-export Index, newIndex
-#Export the Lattice object/constructor.
-export LatticeMasterObj.Lattice, newLattice
+#Export the Lattice Objects.
+export LatticeObjs
+#Export the Lattice Master Object.
+export LatticeMasterObj
 
 #Finals lib.
 import finals

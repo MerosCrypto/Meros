@@ -1,6 +1,7 @@
 #The Main files include each other sequentially.
 #It starts with MainImports.
-#MainImports is included by MainLattice.
+#MainImports is included by MainGlobals.
+#MainGlobals is included by MainLattice.
 #MainLattice is included by MainNetwork.
 #MainNetwork is included by MainUI.
 #It ends with include MainUI.
