@@ -11,13 +11,10 @@
         <br>
         Input Nonce: <input type='text' id='inputNonce'></input>
         <br>
-        Nonce: <input type='text' id='nonce'></input>
-        <br>
         <button onclick=\"
             var sender = document.getElementById('sender').value;
             var inputNonce = document.getElementById('inputNonce').value;
-            var nonce = document.getElementById('nonce').value;
-            Lattice.receive(sender + ' ' + inputNonce + ' ' + nonce);
+            Lattice.receive(sender + ' ' + inputNonce);
         \">Generate</button>
     </body>
 </html>

@@ -84,6 +84,20 @@ events.on(
         echo ""
 )
 
+#Handle requests for an account's height.
+events.on(
+    "lattice.getHeight",
+    proc (account: string): BN {.raises: [ValueError].} =
+        lattice.getHeight(account)
+)
+
+#Handle requests for an account's balance.
+events.on(
+    "lattice.getBalance",
+    proc (account: string): BN {.raises: [ValueError].} =
+        lattice.getBalance(account)
+)
+
 #Print the Private Key and address of the address holding the coins.
 echo "Emb0h3nyv8uplrx68677ca6t0t4x6qhsue90y50ntwq3dfj5hxw246s" &
     " was sent one million coins from \"minter\". Its Private Key is " &
