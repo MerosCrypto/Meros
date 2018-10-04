@@ -10,13 +10,18 @@ import tables
 
 #State object. It uses ref BN to prevent a compiler crash.
 type State* = ref object of RootObj
-    live: int
+    #Blocks until Merit is dead.
+    deadBlocks: int
+    #Live Merit.
+    live*: int
+    #Address -> Merit
     data: ref Table[string, ref BN]
 
 #Constructor.
-proc newState*(live: int): State {.raises: [].} =
+proc newState*(deadBlocks: int): State {.raises: [].} =
     State(
-        live: live,
+        deadBlocks: deadBlocks,
+        live: 0,
         data: newTable[string, ref BN]()
     )
 
@@ -37,14 +42,16 @@ proc processBlock*(state: State, blockchain: Blockchain, newBlock: Block) {.rais
     #For each miner, add their Merit to the State.
     for miner in miners:
         state.data[miner.miner] = (state.getBalance(miner.miner) + newBN(miner.amount)).toRef()
+        state.live += miner.amount
 
     #If the Blockchain's height is over 50k, meaning there is a block to remove from the state...
-    if blockchain.height > newBN(state.live):
+    if blockchain.height > newBN(state.deadBlocks):
         #Get the block that should be removed.
-        miners = blockchain.blocks[^(state.live + 1)].miners
+        miners = blockchain.blocks[^(state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
         for miner in miners:
             state.data[miner.miner] = (state.getBalance(miner.miner) - newBN(miner.amount)).toRef()
+            state.live -= miner.amount
 
 #Process every block in a blockchain.
 proc processBlockchain*(state: State, blockchain: Blockchain) {.raises: [ValueError].} =
@@ -52,6 +59,6 @@ proc processBlockchain*(state: State, blockchain: Blockchain) {.raises: [ValueEr
         state.processBlock(blockchain, i)
 
 #Constructor. It's at the bottom so we can call processBlockchain.
-proc newState*(blockchain: Blockchain, live: int): State {.raises: [ValueError].} =
-    result = newState(live)
+proc newState*(blockchain: Blockchain, deadBlocks: int): State {.raises: [ValueError].} =
+    result = newState(deadBlocks)
     result.processBlockchain(blockchain)
