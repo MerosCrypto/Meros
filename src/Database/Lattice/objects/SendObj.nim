@@ -26,7 +26,10 @@ finalsd:
         proof* {.final.}: BN
 
 #New Send object.
-proc newSendObj*(output: string, amount: BN): Send {.raises: [FinalAttributeError].} =
+proc newSendObj*(
+    output: string,
+    amount: BN
+): Send {.raises: [FinalAttributeError].} =
     result = Send(
         output: output,
         amount: amount

@@ -35,8 +35,8 @@ for i in 1 .. 20:
         first: Hash[512]
         second: Hash[512]
     #Set the hashes with random values.
-    random(cast[ptr array[0, uint8]](addr first), 64)
-    random(cast[ptr array[0, uint8]](addr second), 64)
+    random(addr first.data[0], 64)
+    random(addr second.data[0], 64)
     #MeritRemoval.
     var mr: MeritRemoval = newMeritRemoval(
         first,

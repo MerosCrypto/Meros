@@ -8,14 +8,18 @@ import ec_events
 import json
 
 #Shuts down every part of the software.
-proc shutdown(rpc: RPC) {.raises: [Exception].} =
-    rpc.events.get(
-        proc (),
-        "system.quit"
-    )()
+proc shutdown(rpc: RPC) {.raises: [].} =
+    try:
+        rpc.events.get(
+            proc (),
+            "system.quit"
+        )()
+    except:
+        echo "SAFE SHUTDOWN FAILED!"
+        quit(-1)
 
 #Handler.
-proc `systemModule`*(rpc: RPC, json: JSONNode) {.raises: [Exception].} =
+proc `systemModule`*(rpc: RPC, json: JSONNode) {.raises: [KeyError].} =
     #Switch based off the method.
     case json["method"].getStr():
         of "quit":

@@ -50,7 +50,7 @@ proc add*(
     lattice: Lattice,
     node: Node,
     mintOverride: bool = false
-): bool {.raises: [ValueError, Exception].} =
+): bool {.raises: [ValueError, SodiumError].} =
     #Make sure only this node creates mint TXs.
     if (
         (node.sender == "minter") and
@@ -132,7 +132,13 @@ proc mint*(
     lattice: Lattice,
     address: string,
     amount: BN
-): Index {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
+): Index {.raises: [
+    ValueError,
+    ArgonError,
+    SodiumError,
+    MintError,
+    FinalAttributeError
+].} =
     #Get the Height in a new var that won't update.
     var height: BN = lattice.lattice.getAccount("minter").height
 
@@ -150,15 +156,23 @@ proc mint*(
 
     #Add it to the Lattice.
     if not lattice.add(send, true):
-        raise newException(ResultError, "Couldn't add the Mint Node to the Lattice.")
+        raise newException(MintError, "Couldn't add the Mint Node to the Lattice.")
 
     #Return the Index.
     result = newIndex("minter", height)
 
-#Getters for Account info.
-proc getHeight*(lattice: Lattice, address: string): BN {.raises: [ValueError].} =
+#Get an account's height.
+proc getHeight*(
+    lattice: Lattice,
+    address: string
+): BN {.raises: [ValueError].} =
     lattice.lattice.getAccount(address).height
-proc getBalance*(lattice: Lattice, address: string): BN {.raises: [ValueError].} =
+
+#Get an account's balance.
+proc getBalance*(
+    lattice: Lattice,
+    address: string
+): BN {.raises: [ValueError].} =
     lattice.lattice.getAccount(address).balance
 
 #Getters for Nodes from the Lattice.

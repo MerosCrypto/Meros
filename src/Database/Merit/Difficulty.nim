@@ -33,7 +33,7 @@ proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
 proc calculateNextDifficulty*(
     blocks: seq[Block],
     difficulties: seq[Difficulty],
-    targetTime: BN,
+    targetTime: int,
     blocksPerPeriod: int
 ): Difficulty {.raises: [].} =
     #If it was the genesis block, keep the same difficulty.
@@ -46,17 +46,17 @@ proc calculateNextDifficulty*(
         #New difficulty.
         difficulty: BN = last.difficulty
         #Start time of the difficulty (the block before this difficulty).
-        start: BN = blocks[blocks.len - (blocksPerPeriod + 1)].time
+        start: int = blocks[blocks.len - (blocksPerPeriod + 1)].time
         #End time of the difficulty (the last block).
-        endTime: BN = blocks[blocks.len - 1].time
+        endTime: int = blocks[blocks.len - 1].time
         #Period time.
-        actualTime: BN = endTime - start
+        actualTime: int = endTime - start
         #Possible values.
         possible: BN = MAX - last.difficulty
 
     #Handle divide by zeros.
-    if actualTime == BNNums.ZERO:
-        actualTime = BNNums.ONE
+    if actualTime == 0:
+        actualTime = 1
 
     #If we went faster...
     if actualTime < targetTime:
@@ -65,7 +65,7 @@ proc calculateNextDifficulty*(
                 #The targetTime (bigger) minus the actualTime (smaller)
                 #Over the targetTime
         #Since we need the difficulty to increase.
-        var change: BN = possible * (targetTime - actualTime) / targetTime
+        var change: BN = possible * newBN((targetTime - actualTime) div targetTime)
 
         #If we're increasing the difficulty by more than 10%...
         if possible / BNNums.TEN < change:
@@ -81,7 +81,7 @@ proc calculateNextDifficulty*(
             #Multipled by the targetTime (smaller)
             #Divided by the actualTime (bigger)
         #Since we need the difficulty to decrease.
-        var change: BN = last.difficulty * targetTime / actualTime
+        var change: BN = last.difficulty * newBN(targetTime div actualTime)
 
         #If we're decreasing the difficulty by more than 10% of the possible values...
         if possible / BNNums.TEN < change:

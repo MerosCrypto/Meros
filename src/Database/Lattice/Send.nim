@@ -54,7 +54,10 @@ proc newSend*(
     result.sha512 = SHA512(result.serialize())
 
 #'Mine' a TX (beat the spam filter).
-proc mine*(send: Send, networkDifficulty: BN) {.raises: [ResultError, ValueError, FinalAttributeError].} =
+proc mine*(
+    send: Send,
+    networkDifficulty: BN
+) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: BN = newBN()
@@ -68,7 +71,7 @@ proc mine*(send: Send, networkDifficulty: BN) {.raises: [ResultError, ValueError
     send.hash = hash
 
 #Sign a TX.
-proc sign*(wallet: Wallet, send: Send): bool {.raises: [FinalAttributeError, Exception].} =
+proc sign*(wallet: Wallet, send: Send): bool {.raises: [SodiumError, FinalAttributeError].} =
     result = true
 
     #Make sure the proof exists.

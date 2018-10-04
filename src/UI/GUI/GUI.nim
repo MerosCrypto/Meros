@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #BN lib.
 import BN
 
@@ -32,18 +35,23 @@ proc newGUI*(
     toGUI: ptr Channel[JSONNode],
     width: int,
     height: int
-) {.thread, raises: [Exception].} =
-    #Create the GUI.
-    var gui: GUI = newGUIObject(
-        toRPC,
-        toGUI,
-        newWebView(
-            "Ember Core",
-            "",
-            width,
-            height
+) {.thread, raises: [WebViewError].} =
+    #Create a var for the GUI.
+    var gui: GUI
+    try:
+        #Create the GUI.
+        gui = newGUIObject(
+            toRPC,
+            toGUI,
+            newWebView(
+                "Ember Core",
+                "",
+                width,
+                height
+            )
         )
-    )
+    except:
+        raise newException(WebViewError, "Couldn't create the WebView.")
 
     #Add the Bindings.
     gui.createBindings()
@@ -52,7 +60,10 @@ proc newGUI*(
     if gui.webview.eval(
         "document.body.innerHTML = (\"" & MAIN.splitLines().join("\"+\"") & "\");"
     ) != 0:
-        raise newException(Exception, "Couldn't evaluate JS in the WebView.")
+        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
 
-    #Run the GUI.
-    gui.webview.run()
+    try:
+        #Run the GUI.
+        gui.webview.run()
+    except:
+        raise newException(WebViewError, "Couldn't run the WebView.")

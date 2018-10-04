@@ -1,3 +1,6 @@
+#Errors lib.
+import ../lib/Errors
+
 #Send libs.
 import ../Database/Lattice/Send
 import Serialize/ParseSend
@@ -78,7 +81,10 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
             break
 
 #Function which adds a Client from a socket.
-proc add*(network: Network, socket: AsyncSocket) {.raises: [ValueError, Exception].} =
+proc add*(
+    network: Network,
+    socket: AsyncSocket
+) {.raises: [AsyncError].} =
     #Create the client.
     var client = newClient(
         network.clients.total,
@@ -89,10 +95,16 @@ proc add*(network: Network, socket: AsyncSocket) {.raises: [ValueError, Exceptio
     #Increment the total so the next ID doesn't overlap.
     inc(network.clients.total)
     #Handle it.
-    asyncCheck client.handle(network.subEvents)
+    try:
+        asyncCheck client.handle(network.subEvents)
+    except:
+        raise newException(AsyncError, "Couldn't handle a Client.")
 
 #Sends a message to all clients.
-proc broadcast*(clients: Clients, msg: Message) {.raises: [Exception].} =
+proc broadcast*(
+    clients: Clients,
+    msg: Message
+) {.raises: [AsyncError, SocketError].} =
     #Seq of the clients to disconnect.
     var toDisconnect: seq[int] = @[]
 
@@ -100,7 +112,10 @@ proc broadcast*(clients: Clients, msg: Message) {.raises: [Exception].} =
     for client in clients.clients:
         #Make sure the client is open.
         if not client.isClosed():
-            asyncCheck client.send($msg)
+            try:
+                asyncCheck client.send($msg)
+            except:
+                raise newException(AsyncError, "Couldn't broacast to a Client.")
         #If it isn't, mark the client for disconnection.
         else:
             toDisconnect.add(client.id)
@@ -109,18 +124,27 @@ proc broadcast*(clients: Clients, msg: Message) {.raises: [Exception].} =
     for client in toDisconnect:
         clients.disconnect(client)
 
-
 #Reply to a message.
-proc reply*(clients: Clients, msg: Message, toSend: string) {.raises: [Exception].} =
+proc reply*(
+    clients: Clients,
+    msg: Message,
+    toSend: string
+) {.raises: [AsyncError, SocketError].} =
     #Get the client.
     var client: Client = clients.getClient(msg.client)
     #Make sure the client is open.
     if not client.isClosed():
-        asyncCheck client.send(toSend)
+        try:
+            asyncCheck client.send(toSend)
+        except:
+            raise newException(AsyncError, "Couldn't reply to a Client.")
     #If it isn't, disconnect the client.
     else:
         clients.disconnect(client.id)
 
 #Disconnect a client based off the message it sent.
-proc disconnect*(clients: Clients, msg: Message) {.raises: [Exception].} =
+proc disconnect*(
+    clients: Clients,
+    msg: Message
+) {.raises: [SocketError].} =
     clients.disconnect(msg.client)

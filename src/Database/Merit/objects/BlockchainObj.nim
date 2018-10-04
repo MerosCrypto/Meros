@@ -39,9 +39,7 @@ proc newBlockchainObj*(
     blockTime: int,
     blocksPerMonth: int,
     startDifficulty: BN
-): Blockchain {.raises: [ResultError, ValueError].} =
-    let creation: BN = getTime()
-
+): Blockchain {.raises: [ValueError, ArgonError].} =
     result = Blockchain(
         blockTime: blockTime,
         blocksPerMonth: blocksPerMonth,

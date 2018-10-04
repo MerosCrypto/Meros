@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #GUI object.
 import ../objects/GUIObj
 
@@ -7,7 +10,7 @@ import WalletBindings
 import LatticeBindings
 
 #Create the bindings.
-proc createBindings*(gui: GUI) {.raises: [Exception].} =
+proc createBindings*(gui: GUI) {.raises: [WebViewError].} =
     #Add the GUI bindings.
     GUIBindings.addTo(gui)
     #Add the Wallet bindings.

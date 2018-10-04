@@ -35,7 +35,7 @@ var
     #Last block hash, nonce, time, and proof vars.
     last: ArgonHash = Argon(SHA512("mainnet").toString(), "00")
     nonce: BN = newBN(1)
-    time: BN
+    time: int
     proof: BN = newBN(1)
     miners: seq[tuple[miner: string, amount: int]] = @[(
         miner: wallet.address,
@@ -50,7 +50,7 @@ for i in 1 .. 10:
     echo "Testing Block Serialization/Parsing, iteration " & $i & "."
 
     #Update the time.
-    time = time
+    time = getTime()
 
     #Create a block.
     newBlock = newBlock(

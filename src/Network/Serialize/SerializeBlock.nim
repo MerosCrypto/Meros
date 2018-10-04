@@ -30,7 +30,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
         #Last block.
         !blockArg.last.toBN().toString(256) &
         #Time.
-        !blockArg.time.toString(256) &
+        !newBN(blockArg.time).toString(256) &
         #Amount of validations.
         !newBN(blockArg.validations.len).toString(256)
 

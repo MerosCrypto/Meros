@@ -32,7 +32,11 @@ proc newLeafObject*(hash: SHA512Hash): Leaf {.raises: [].} =
     )
 
 #Branch constructor.
-proc newBranchObject*(left: Leaf, right: Leaf, empty = false): Branch {.raises: [ValueError].} =
+proc newBranchObject*(
+    left: Leaf,
+    right: Leaf,
+    empty = false
+): Branch {.raises: [].} =
     result = Branch(
         isLeaf: false,
         left: left,
@@ -49,7 +53,9 @@ proc newBranchObject*(left: Leaf, right: Leaf, empty = false): Branch {.raises: 
     )
 
 #Create a Markle Tree.
-proc newMerkleTree*(hashesArg: seq[SHA512Hash]): MerkleTree {.raises: [ValueError].} =
+proc newMerkleTree*(
+    hashesArg: seq[SHA512Hash]
+): MerkleTree {.raises: [].} =
     var
         #Extract the hashes from its arg.
         hashes: seq[SHA512Hash] = hashesArg

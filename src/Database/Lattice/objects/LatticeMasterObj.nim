@@ -18,7 +18,10 @@ type Lattice* = ref object of RootObj
     lookup*: HashLookup
 
 #Constructor.
-proc newLattice*(txDiff: string, dataDiff: string): Lattice {.raises: [ValueError].} =
+proc newLattice*(
+    txDiff: string,
+    dataDiff: string
+): Lattice {.raises: [ValueError].} =
     #Create the object.
     result = Lattice(
         difficulties: newDifficulties(),

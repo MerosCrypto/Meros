@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Util lib.
 import ../../lib/Util
 
@@ -27,7 +30,13 @@ import finals
 import strutils
 
 #Parse a Receive.
-proc parseReceive*(recvStr: string): Receive {.raises: [ValueError, FinalAttributeError, Exception].} =
+proc parseReceive*(
+    recvStr: string
+): Receive {.raises: [
+    ValueError,
+    SodiumError,
+    FinalAttributeError
+].} =
     var
         #Public Key | Nonce | Input Address | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(5)

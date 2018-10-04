@@ -30,7 +30,13 @@ import finals
 import strutils
 
 #Parse a MeritRemoval.
-proc parseMeritRemoval*(sendStr: string): MeritRemoval {.raises: [ValueError, FinalAttributeError, Exception].} =
+proc parseMeritRemoval*(
+    sendStr: string
+): MeritRemoval {.raises: [
+    ValueError,
+    SodiumError,
+    FinalAttributeError
+].} =
     var
         #Public Key | Nonce | First | Second | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)

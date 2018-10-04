@@ -15,10 +15,10 @@ genesisSend = lattice.mint(
 #Handle Sends.
 events.on(
     "lattice.send",
-    proc (send: Send): bool {.raises: [Exception].} =
+    proc (send: Send): bool {.raises: [ValueError, SodiumError].} =
         #Print that we're adding the node.
         echo "Adding a new Send."
-        
+
         #Add the Send.
         if lattice.add(
             send
@@ -34,7 +34,7 @@ events.on(
 #Handle Receives.
 events.on(
     "lattice.receive",
-    proc (recv: Receive): bool {.raises: [Exception].} =
+    proc (recv: Receive): bool {.raises: [ValueError, SodiumError].} =
         #Print that we're adding the node.
         echo "Adding a new Receive."
 
@@ -53,7 +53,7 @@ events.on(
 #Handle Data.
 events.on(
     "lattice.data",
-    proc (msg: Message, data: Data): bool {.raises: [Exception].} =
+    proc (msg: Message, data: Data): bool {.raises: [ValueError, SodiumError].} =
         #Print that we're adding the node.
         echo "Adding a new Data."
 
@@ -72,7 +72,7 @@ events.on(
 #Handle Verifications.
 events.on(
     "lattice.verification",
-    proc (verif: Verification): bool {.raises: [Exception].} =
+    proc (verif: Verification): bool {.raises: [ValueError, SodiumError].} =
         #Print that we're adding the node.
         echo "Adding a new Verification."
 

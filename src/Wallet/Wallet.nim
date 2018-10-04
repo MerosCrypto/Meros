@@ -1,3 +1,6 @@
+#Errors lib.
+import ../lib/Errors
+
 #ED25519 lib.
 import ../lib/ED25519
 #Export the key objects.
@@ -63,7 +66,7 @@ proc `$`*(key: PublicKey): string {.raises: [].} =
         result = result & uint8(key[i]).toHex()
 
 #Constructor.
-proc newWallet*(): Wallet {.raises: [Exception].} =
+proc newWallet*(): Wallet {.raises: [ValueError, SodiumError].} =
     #Generate a new key pair.
     var pair: tuple[priv: PrivateKey, pub: PublicKey] = newKeyPair()
 
@@ -77,7 +80,7 @@ proc newWallet*(): Wallet {.raises: [Exception].} =
 #Constructor.
 proc newWallet*(
     privateKey: PrivateKey
-): Wallet {.raises: [Exception].} =
+): Wallet {.raises: [ValueError, SodiumError].} =
     #Create a new Wallet based off the passed in Private Key.
     result = Wallet(
         privateKey: privateKey,
@@ -90,7 +93,7 @@ proc newWallet*(
 proc newWallet*(
     privateKey: PrivateKey,
     publicKey: PublicKey
-): Wallet {.raises: [ValueError, Exception].} =
+): Wallet {.raises: [ValueError, SodiumError].} =
     #Create a Wallet based off the Private Key.
     result = newWallet(privateKey)
     #Verify the integrity via the Public Key.
@@ -102,7 +105,7 @@ proc newWallet*(
     privateKey: PrivateKey,
     publicKey: PublicKey,
     address: string
-): Wallet {.raises: [ValueError, Exception].} =
+): Wallet {.raises: [ValueError, SodiumError].} =
     #Create a Wallet based off the Private Key (and verify the integrity via the Public Key).
     result = newWallet(privateKey, publicKey)
     #Verify the integrity via the Address.
@@ -110,17 +113,25 @@ proc newWallet*(
         raise newException(ValueError, "Invalid Address for this Public Key.")
 
 #Sign a message.
-proc sign*(key: PrivateKey, msg: string): string {.raises: [Exception].} =
+proc sign*(key: PrivateKey, msg: string): string {.raises: [SodiumError].} =
     ED25519.sign(key, msg)
 
 #Sign a message via a Wallet.
-proc sign*(wallet: Wallet, msg: string): string {.raises: [Exception].} =
+proc sign*(wallet: Wallet, msg: string): string {.raises: [SodiumError].} =
     wallet.privateKey.sign(msg)
 
 #Verify a message.
-proc verify*(key: PublicKey, msg: string, sig: string): bool {.raises: [Exception].} =
+proc verify*(
+    key: PublicKey,
+    msg: string,
+    sig: string
+): bool {.raises: [SodiumError].} =
     ED25519.verify(key, msg, sig)
 
 #Verify a message via a Wallet.
-proc verify*(wallet: Wallet, msg: string, sig: string): bool {.raises: [Exception].} =
+proc verify*(
+    wallet: Wallet,
+    msg: string,
+    sig: string
+): bool {.raises: [SodiumError].} =
     wallet.publicKey.verify(msg, sig)

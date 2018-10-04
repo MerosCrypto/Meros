@@ -45,9 +45,9 @@ proc SHA2_512*(bytesArg: string): SHA2_512Hash {.raises: [].} =
     )
 
 #String to SHA2_256Hash.
-proc toSHA2_256Hash*(hash: string): SHA2_256Hash =
+proc toSHA2_256Hash*(hash: string): SHA2_256Hash {.raises: [ValueError].} =
     hash.toHash(256)
 
 #String to SHA2_512Hash.
-proc toSHA2_512Hash*(hash: string): SHA2_512Hash =
+proc toSHA2_512Hash*(hash: string): SHA2_512Hash {.raises: [ValueError].} =
     hash.toHash(512)

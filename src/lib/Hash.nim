@@ -35,7 +35,7 @@ type
     SHA256Hash* = SHA3_256Hash
     SHA512Hash* = SHA3_512Hash
 var
-    SHA256*: proc (input: string): SHA256Hash {.raises: [ValueError].} = SHA3_256
-    SHA512*: proc (input: string): SHA512Hash {.raises: [ValueError].} = SHA3_512
+    SHA256*: proc (input: string): SHA256Hash {.raises: [].} = SHA3_256
+    SHA512*: proc (input: string): SHA512Hash {.raises: [].} = SHA3_512
     toSHA256Hash*: proc (input: string): SHA256Hash {.raises: [ValueError].} = toSHA3_256Hash
     toSHA512Hash*: proc (input: string): SHA512Hash {.raises: [ValueError].} = toSHA3_512Hash

@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #BN lib.
 import BN
 
@@ -35,7 +38,10 @@ proc newVerification*(
     result.hash = SHA512(result.serialize())
 
 #Sign a TX.
-proc sign*(wallet: Wallet, verif: Verification) {.raises: [FinalAttributeError, Exception].} =
+proc sign*(
+    wallet: Wallet,
+    verif: Verification
+) {.raises: [SodiumError, FinalAttributeError].} =
     #Set the sender behind the node.
     verif.sender = wallet.address
     #Sign the hash of the Verification.

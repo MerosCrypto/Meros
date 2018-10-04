@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Client object.
 import ClientObj
 
@@ -30,14 +33,20 @@ proc getClient*(clients: Clients, id: int): Client {.raises: [].} =
             return client
 
 #Disconnect.
-proc disconnect*(clients: Clients, id: int) {.raises: [Exception].} =
+proc disconnect*(clients: Clients, id: int) {.raises: [SocketError].} =
     for i, client in clients.clients:
         if client.id == id:
-            client.close()
+            try:
+                client.close()
+            except:
+                raise newException(SocketError, "Could not disconnect a Client.")
             clients.clients.delete(i)
 
 #Disconnects every client.
-proc shutdown*(clients: Clients) {.raises: [Exception].} =
+proc shutdown*(clients: Clients) {.raises: [SocketError].} =
     for i, client in clients.clients:
-        client.close()
+        try:
+            client.close()
+        except:
+            raise newException(SocketError, "Could not disconnect a Client.")
         clients.clients.delete(i)

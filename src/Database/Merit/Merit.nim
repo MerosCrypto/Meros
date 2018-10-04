@@ -27,15 +27,16 @@ proc newMerit*(
     blocksPerMonth: int,
     startDifficulty: string,
     live: int
-): Merit {.raises: [ResultError, ValueError].} =
+): Merit {.raises: [ValueError, ArgonError].} =
     result = Merit(
         blockchain: newBlockchain(genesis, blockTime, blocksPerMonth, newBN(startDifficulty)),
         state: newState(live)
     )
 
 #Add a block.
-proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [Exception].} =
+proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [ValueError].} =
     result = true
+    
     #Add the block to the Blockchain.
     if not merit.blockchain.addBlock(newBlock):
         #If that fails, return false.

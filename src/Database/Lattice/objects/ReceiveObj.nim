@@ -17,7 +17,10 @@ finalsd:
         inputNonce* {.final.}: BN
 
 #New Receive object.
-proc newReceiveObj*(inputAddress: string, inputNonce: BN): Receive {.raises: [FinalAttributeError].} =
+proc newReceiveObj*(
+    inputAddress: string,
+    inputNonce: BN
+): Receive {.raises: [FinalAttributeError].} =
     result = Receive(
         inputAddress: inputAddress,
         inputNonce: inputNonce

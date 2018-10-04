@@ -23,7 +23,7 @@ proc newRPC*(
     events: EventEmitter,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
-): RPC =
+): RPC {.raises: [].} =
     result = newRPCObject(
         events,
         toRPC,
@@ -31,7 +31,7 @@ proc newRPC*(
     )
 
 #Start up the RPC.
-proc start*(rpc: RPC) {.async, raises: [Exception].} =
+proc start*(rpc: RPC) {.async.} =
     #Define the data outside of the loop.
     var data: tuple[dataAvailable: bool, msg: JSONNode]
 

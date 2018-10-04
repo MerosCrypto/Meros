@@ -1,3 +1,6 @@
+#Errors lib.
+import ../lib/Errors
+
 #RPC.
 import RPC/RPC
 export RPC
@@ -32,7 +35,7 @@ proc newUI*(
     events: EventEmitter,
     width: int,
     height: int
-): UI {.raises: [Exception].} =
+): UI {.raises: [AsyncError, WebViewError].} =
     #Create the UI object.
     result = UI()
 
@@ -42,8 +45,11 @@ proc newUI*(
 
     #Create the RPC.
     result.rpc = newRPC(events, addr result.toRPC, addr result.toGUI)
-    #Start the RPC.
-    asyncCheck result.rpc.start()
+    try:
+        #Start the RPC.
+        asyncCheck result.rpc.start()
+    except:
+        raise newException(AsyncError, "Couldn't start the RPC.")
 
     #Spawn the GUI.
     spawn newGUI(addr result.toRPC, addr result.toGUI, width, height)

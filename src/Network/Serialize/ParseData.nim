@@ -29,7 +29,14 @@ import finals
 import strutils
 
 #Parse a Data.
-proc parseData*(sendStr: string): Data {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
+proc parseData*(
+    sendStr: string
+): Data {.raises: [
+    ValueError,
+    ArgonError,
+    SodiumError,
+    FinalAttributeError
+].} =
     var
         #Public Key | Nonce | Data | Proof | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)

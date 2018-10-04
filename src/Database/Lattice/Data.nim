@@ -43,7 +43,10 @@ proc newData*(
     result.sha512 = SHA512(data)
 
 #'Mine' the data (beat the spam filter).
-proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError, FinalAttributeError].} =
+proc mine*(
+    data: Data,
+    networkDifficulty: BN
+) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
     #Create a proof of 0 and get the first Argon hash.
     var
         proof: BN = newBN()
@@ -59,7 +62,10 @@ proc mine*(data: Data, networkDifficulty: BN) {.raises: [ResultError, ValueError
     data.hash = hash
 
 #Sign a TX.
-proc sign*(wallet: Wallet, data: Data) {.raises: [FinalAttributeError, Exception].} =
+proc sign*(
+    wallet: Wallet,
+    data: Data
+) {.raises: [SodiumError, FinalAttributeError].} =
     #Set the sender behind the node.
     data.sender = wallet.address
     #Sign the hash of the Data.

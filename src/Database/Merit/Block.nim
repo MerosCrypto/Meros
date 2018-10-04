@@ -37,14 +37,19 @@ import strutils
 proc newBlock*(
     last: ArgonHash,
     nonce: BN,
-    time: BN,
+    time: int,
     validations: seq[tuple[validator: string, start: int, last: int]],
     merkle: MerkleTree,
     publisher: string,
     proof: BN,
     miners: seq[tuple[miner: string, amount: int]],
     signature: string
-): Block {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
+): Block {.raises: [
+    ValueError,
+    ArgonError,
+    SodiumError,
+    FinalAttributeError
+].} =
     #Verify the arguments.
     #Validations.
     for validation in validations:
@@ -54,6 +59,7 @@ proc newBlock*(
             raise newException(ValueError, "Invalid validation start.")
         if validation.last < 0:
             raise newException(ValueError, "Invalid validation last.")
+
     #Miners.
     var total: int = 0
     if (miners.len < 1) or (100 < miners.len):

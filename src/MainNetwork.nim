@@ -10,7 +10,7 @@ network.start(NETWORK_PORT)
 #Broadcast a message. This is used to send data out.
 events.on(
     "network.broadcast",
-    proc (msgType: MessageType, msg: string) =
+    proc (msgType: MessageType, msg: string) {.raises: [AsyncError, SocketError].}=
         network.broadcast(
             newMessage(
                 NETWORK_ID,

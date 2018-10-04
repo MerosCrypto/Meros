@@ -18,7 +18,7 @@ var
 #Properly shutdown.
 events.on(
     "system.quit",
-    proc () {.raises: [Exception].} =
+    proc () {.raises: [SocketError].} =
         #Shut down the UI.
         ui.shutdown()
 

@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Util lib.
 import ../../lib/Util
 
@@ -27,7 +30,13 @@ import finals
 import strutils
 
 #Parse a Verification.
-proc parseVerification*(verifStr: string): Verification {.raises: [ValueError, FinalAttributeError, Exception].} =
+proc parseVerification*(
+    verifStr: string
+): Verification {.raises: [
+    ValueError,
+    SodiumError,
+    FinalAttributeError
+].} =
     var
         #Public Key | Nonce | Send Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(4)

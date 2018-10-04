@@ -36,7 +36,7 @@ proc main() =
         #Last block hash, nonce, time, and proof vars.
         last: ArgonHash = merit.getBlocks()[0].argon
         nonce: BN = newBN(1)
-        time: BN
+        time: int
         proof: BN = newBN()
         miners: seq[tuple[miner: string, amount: int]] = @[(
             miner: wallet.address,

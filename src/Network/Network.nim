@@ -1,3 +1,6 @@
+#Errors lib.
+import ../lib/Errors
+
 #Send libs.
 import ../Database/Lattice/Send
 import Serialize/ParseSend
@@ -34,95 +37,109 @@ const
     MAX_PROTOCOL: int = 0
 
 #Constructor.
-proc newNetwork*(id: int, nodeEvents: EventEmitter): Network {.raises: [OSError, Exception].} =
-    #Event emitter for the socket sublibraries.
-    var subEvents: EventEmitter = newEventEmitter()
+proc newNetwork*(
+    id: int,
+    nodeEvents: EventEmitter
+): Network {.raises: [AsyncError, SocketError].} =
+    var
+        #Event emitter for the socket sublibraries.
+        subEvents: EventEmitter = newEventEmitter()
+        #Socket for the server.
+        server: AsyncSocket
+
+    try:
+        server = newAsyncSocket()
+    except:
+        raise newException(SocketError, "Couldn't create the Network's server socket.")
 
     #Create the Network object.
     var network: Network = newNetworkObj(
         id,
         newClients(),
-        newAsyncSocket(),
+        server,
         subEvents,
         nodeEvents
     )
     #Set the result to it.
     result = network
 
-    #On a new message...
-    subEvents.on(
-        "message",
-        proc (msg: Message): Future[bool] {.async, raises: [Exception].} =
-            #Set the result to true.
-            result = true
+    try:
+        #On a new message...
+        subEvents.on(
+            "message",
+            proc (msg: Message): Future[bool] {.async.} =
+                #Set the result to true.
+                result = true
 
-            #Validate the network ID.
-            if msg.network != id:
-                return false
+                #Validate the network ID.
+                if msg.network != id:
+                    return false
 
-            #Validate the protocol.
-            if msg.version < MIN_PROTOCOL:
-                return false
-            if msg.version > MAX_PROTOCOL:
-                return false
+                #Validate the protocol.
+                if msg.version < MIN_PROTOCOL:
+                    return false
+                if msg.version > MAX_PROTOCOL:
+                    return false
 
-            #Verify the message length.
-            if ord(msg.header[3]) != msg.message.len:
-                return false
+                #Verify the message length.
+                if ord(msg.header[3]) != msg.message.len:
+                    return false
 
-            #Switch based off the message type (in a try to handle invalid messages).
-            try:
-                case msg.content:
-                    of MessageType.Send:
-                        if nodeEvents.get(
-                            proc (send: Send): bool,
-                            "lattice.send"
-                        )(
-                            msg.message.parseSend()
-                        ):
-                            network.clients.broadcast(msg)
-                    of MessageType.Receive:
-                        if nodeEvents.get(
-                            proc (recv: Receive): bool,
-                            "lattice.receive"
-                        )(
-                            msg.message.parseReceive()
-                        ):
-                            network.clients.broadcast(msg)
-                    of MessageType.Data:
-                        discard
-                    of MessageType.Verification:
-                        discard
-                    of MessageType.MeritRemoval:
-                        discard
-            except:
-                echo "Invalid Message."
-    )
+                #Switch based off the message type (in a try to handle invalid messages).
+                try:
+                    case msg.content:
+                        of MessageType.Send:
+                            if nodeEvents.get(
+                                proc (send: Send): bool,
+                                "lattice.send"
+                            )(
+                                msg.message.parseSend()
+                            ):
+                                network.clients.broadcast(msg)
+                        of MessageType.Receive:
+                            if nodeEvents.get(
+                                proc (recv: Receive): bool,
+                                "lattice.receive"
+                            )(
+                                msg.message.parseReceive()
+                            ):
+                                network.clients.broadcast(msg)
+                        of MessageType.Data:
+                            discard
+                        of MessageType.Verification:
+                            discard
+                        of MessageType.MeritRemoval:
+                            discard
+                except:
+                    echo "Invalid Message."
+        )
+    except:
+        raise newException(AsyncError, "Couldn't add the Network's message event.")
 
 #Start listening.
 proc start*(
     network: Network,
     port: int = 5132
-) {.raises: [ValueError, Exception].} =
+) {.raises: [AsyncError, SocketError].} =
     #Listen for a new Server client.
     network.subEvents.on(
         "client",
-        proc (client: AsyncSocket) {.raises: [ValueError, Exception].} =
+        proc (client: AsyncSocket) {.raises: [AsyncError].} =
             network.add(client)
     )
 
-    #Start the server.
-    asyncCheck network.listen(port)
+    try:
+        #Start the server.
+        asyncCheck network.listen(port)
+    except:
+        raise newException(SocketError, "Couldn't start the Network's server socket.")
 
 #Connect to another node.
 proc connect*(
     network: Network,
     ip: string,
     port: int = 5132
-) {.
-    async,
-    raises: [Exception]
-.} =
+) {.async.} =
     #Create the socket.
     var socket: AsyncSocket = newAsyncSocket()
     #Connect.
@@ -131,21 +148,24 @@ proc connect*(
     network.add(socket)
 
 #Shutdown network operations.
-proc shutdown*(network: Network) {.raises: [Exception].} =
-    #Stop the server.
-    network.server.close()
+proc shutdown*(network: Network) {.raises: [SocketError].} =
+    try:
+        #Stop the server.
+        network.server.close()
+    except:
+        raise newException(SocketError, "Couldn't close the Network's server socket.")
     #Disconnect the clients.
     network.clients.shutdown()
 
 #Function wrappers for the functions in Clients that take in Clients, not Network.
 #Sends a message to all clients.
-proc broadcast*(network: Network, msg: Message) {.raises: [Exception].} =
+proc broadcast*(network: Network, msg: Message) {.raises: [AsyncError, SocketError].} =
     network.clients.broadcast(msg)
 #Reply to a message.
-proc reply*(network: Network, msg: Message, toSend: string) {.raises: [Exception].} =
+proc reply*(network: Network, msg: Message, toSend: string) {.raises: [AsyncError, SocketError].} =
     network.clients.reply(msg, toSend)
 #Disconnect a client.
-proc disconnect*(network: Network, id: int) {.raises: [Exception].} =
+proc disconnect*(network: Network, id: int) {.raises: [SocketError].} =
     network.clients.disconnect(id)
-proc disconnect*(network: Network, msg: Message) {.raises: [Exception].} =
+proc disconnect*(network: Network, msg: Message) {.raises: [SocketError].} =
     network.clients.disconnect(msg.client)

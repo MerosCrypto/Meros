@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #GUI object.
 import ../objects/GUIObj
 
@@ -14,51 +17,58 @@ import strutils
 import json
 
 #Add the GUI bindings to the GUI.
-proc addTo*(gui: GUI) {.raises: [Exception].} =
-    #Quit.
-    gui.webview.bindProcNoArg(
-        "GUI",
-        "quit",
-        proc () {.raises: [Exception].} =
-            #Close WebView.
-            gui.webview.exit()
-            #Emit the quit event.
-            gui.toRPC[].send(%* {
-                "module": "system",
-                "method": "quit",
-                "args": []
-            })
-    )
+proc addTo*(gui: GUI) {.raises: [WebViewError].} =
+    try:
+        #Quit.
+        gui.webview.bindProcNoArg(
+            "GUI",
+            "quit",
+            proc () {.raises: [ChannelError].} =
+                #Close WebView.
+                gui.webview.exit()
 
-    #Print. If debug isn't defined, this does nothing.
-    gui.webview.bindProc(
-        "GUI",
-        "print",
-        proc (msg: string) {.raises: [].} =
-            when defined(debug):
-                echo msg
-    )
+                try:
+                    #Emit the quit event.
+                    gui.toRPC[].send(%* {
+                        "module": "system",
+                        "method": "quit",
+                        "args": []
+                    })
+                except:
+                    raise newException(ChannelError, "Couldn't send system.quit over the channel.")
+        )
 
-    #Load a new page.
-    gui.webview.bindProc(
-        "GUI",
-        "load",
-        proc (pageArg: string) {.raises: [Exception].} =
-            #Declare a var for the page.
-            var page: string
+        #Print. If debug isn't defined, this does nothing.
+        gui.webview.bindProc(
+            "GUI",
+            "print",
+            proc (msg: string) {.raises: [].} =
+                when defined(debug):
+                    echo msg
+        )
 
-            #Find out what page to load.
-            case pageArg:
-                of "main":
-                    page = MAIN
-                of "send":
-                    page = SEND
-                of "receive":
-                    page = RECEIVE
+        #Load a new page.
+        gui.webview.bindProc(
+            "GUI",
+            "load",
+            proc (pageArg: string) {.raises: [WebViewError].} =
+                #Declare a var for the page.
+                var page: string
 
-            #Load the page.
-            if gui.webview.eval(
-                "document.body.innerHTML = (\"" & page.splitLines().join("\"+\"") & "\");"
-            ) != 0:
-                raise newException(Exception, "Couldn't evaluate JS in the WebView.")
-    )
+                #Find out what page to load.
+                case pageArg:
+                    of "main":
+                        page = MAIN
+                    of "send":
+                        page = SEND
+                    of "receive":
+                        page = RECEIVE
+
+                #Load the page.
+                if gui.webview.eval(
+                    "document.body.innerHTML = (\"" & page.splitLines().join("\"+\"") & "\");"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+        )
+    except:
+        raise newException(WebViewError, "Couldn't bind procs to WebView.")

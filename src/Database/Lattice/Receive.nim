@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #BN lib.
 import BN
 
@@ -57,7 +60,10 @@ proc newReceive*(
     result.hash = SHA512(result.serialize())
 
 #Create a new Receive node.
-proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError, FinalAttributeError].} =
+proc newReceive*(
+    index: Index,
+    nonce: BN
+): Receive {.raises: [ValueError, FinalAttributeError].} =
     newReceive(
         index.address,
         index.nonce,
@@ -65,7 +71,13 @@ proc newReceive*(index: Index, nonce: BN): Receive {.raises: [ValueError, FinalA
     )
 
 #Sign a TX.
-proc sign*(wallet: Wallet, recv: Receive) {.raises: [FinalAttributeError, Exception].} =
+proc sign*(
+    wallet: Wallet,
+    recv: Receive
+) {.raises: [
+    SodiumError,
+    FinalAttributeError
+].} =
     #Set the sender behind the node.
     recv.sender = wallet.address
     #Sign the hash of the Receive.

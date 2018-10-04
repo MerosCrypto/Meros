@@ -30,7 +30,14 @@ import finals
 import strutils
 
 #Parse a Send.
-proc parseSend*(sendStr: string): Send {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
+proc parseSend*(
+    sendStr: string
+): Send {.raises: [
+    ValueError,
+    ArgonError,
+    SodiumError,
+    FinalAttributeError
+].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.deserialize(6)

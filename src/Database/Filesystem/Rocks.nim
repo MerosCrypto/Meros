@@ -1,8 +1,8 @@
+#Errors lib.
+import ../../lib/Errors
+
 #RocksDB wrapper.
 import rocksdb
-
-#CPU info standard lib.
-import cpuinfo
 
 #DB object.
 type DB = ref object of RootObj
@@ -18,32 +18,40 @@ type DB = ref object of RootObj
     db: rocksdb_t
 
 #Construcor.
-proc newDB*(path: string): DB {.raises: [Exception].} =
+proc newDB*(path: string): DB {.raises: [MemoryError].} =
     result = DB(
         path: path,
         options: rocksdb_options_create(),
         write: rocksdb_writeoptions_create(),
         read: rocksdb_readoptions_create(),
     )
-    #Set the number of CPUs to use.
-    rocksdb_options_increase_parallelism(result.options, int32(countProcessors()))
     #Open the DB.
     var err: cstring
     result.db = rocksdb_open(result.options, path, addr err)
-    #HANDLE ERROR.
-    dealloc(err)
+    #TODO: HANDLE ERROR.
+
+    #Deallocate the error.
+    try:
+        dealloc(err)
+    except:
+        raise newException(MemoryError, "Couldn't deallocate an error string from RocksDB.")
 
 #Write a key/value to the DB.
-proc write*(db: DB, key: string, value: string) {.raises: [Exception].} =
+proc write*(db: DB, key: string, value: string) {.raises: [MemoryError].} =
     #Error var.
     var err: cstring
     #Write the key/value pair.
     rocksdb_put(db.db, db.write, key, key.len, value, value.len, addr err)
-    #HANDLE ERROR.
-    dealloc(err)
+    #TODO: HANDLE ERROR.
+
+    #Deallocate the error.
+    try:
+        dealloc(err)
+    except:
+        raise newException(MemoryError, "Couldn't deallocate an error string from RocksDB.")
 
 #Read a key/value pair from the DB.
-proc read*(db: DB, key: string): string {.raises: [Exception].} =
+proc read*(db: DB, key: string): string {.raises: [MemoryError].} =
     var
         #Error var.
         err: cstring
@@ -52,9 +60,13 @@ proc read*(db: DB, key: string): string {.raises: [Exception].} =
         #RocksDB doesn't return a null terminator.
         unterminated: cstring = rocksdb_get(db.db, db.read, key, key.len, addr len, addr err)
     #HANDLE ERROR.
-    dealloc(err)
 
-    ##If there was no error...
+    #Deallocate the error.
+    try:
+        dealloc(err)
+    except:
+        raise newException(MemoryError, "Couldn't deallocate an error string from RocksDB.")
+
     #Create a string of the same length.
     result = newString(len)
     #Copy the memory in.
@@ -66,5 +78,6 @@ proc close*(db: DB) {.raises: [].} =
     rocksdb_writeoptions_destroy(db.write)
     rocksdb_readoptions_destroy(db.read)
     rocksdb_options_destroy(db.options)
+
     #Close the DB itself.
     rocksdb_close(db.db)

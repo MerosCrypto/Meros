@@ -25,12 +25,13 @@ proc newBlockchain*(
     blockTime: int,
     blocksPerMonth: int,
     startDifficulty: BN
-): Blockchain {.raises: [ResultError, ValueError].} =
-    #Set the current time as the time of creation.
-    let creation: BN = getTime()
-
-    #Init the object.
-    result = newBlockchainObj(genesis, blockTime, blocksPerMonth, startDifficulty)
+): Blockchain {.raises: [ValueError, ArgonError].} =
+    newBlockchainObj(
+        genesis,
+        blockTime,
+        blocksPerMonth,
+        startDifficulty
+    )
 
 #Adds a block to the blockchain.
 proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueError].} =
@@ -54,7 +55,7 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueEr
         return false
 
     #If the time is ahead of 20 minutes from now...
-    if (getTime() + newBN(1200)) < newBlock.time:
+    if (getTime() + 1200) < newBlock.time:
         return false
 
     var
@@ -86,7 +87,7 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueEr
         difficulty = calculateNextDifficulty(
             blockchain.blocks,
             blockchain.difficulties,
-            newBN(blockchain.blockTime * blocksPerPeriod),
+            blockchain.blockTime * blocksPerPeriod,
             blocksPerPeriod
         )
         blockchain.add(difficulty)

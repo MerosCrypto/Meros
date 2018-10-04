@@ -25,7 +25,7 @@ finalsd:
         #Nonce, AKA index.
         nonce* {.final.}: BN
         #Timestamp.
-        time*: BN
+        time*: int
         #Validations.
         validations*: seq[tuple[validator: string, start: int, last: int]]
         #Merkle tree.
@@ -49,7 +49,7 @@ finalsd:
 proc newBlockObj*(
     last: ArgonHash,
     nonce: BN,
-    time: BN,
+    time: int,
     validations: seq[tuple[validator: string, start: int, last: int]],
     merkle: MerkleTree,
     publisher: string
@@ -64,7 +64,7 @@ proc newBlockObj*(
     )
 
 #Creates a new block without caring about the data.
-proc newStartBlock*(genesis: string): Block {.raises: [ResultError, ValueError].} =
+proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].} =
     #Ceate the block.
     result = newBlockObj(
         Argon("", ""),

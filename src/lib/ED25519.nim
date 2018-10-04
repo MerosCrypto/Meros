@@ -1,3 +1,6 @@
+#Errors lib.
+import Errors
+
 #LibSodium lib.
 import libsodium
 #Export the Private/Public Key objects.
@@ -10,16 +13,16 @@ import strutils
 const SIGN_PREFIX {.strdefine.}: string = "EMB"
 
 #Nim function for creating a Key Pair.
-proc newKeyPair*(): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [Exception]} =
+proc newKeyPair*(): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
     #Call the C function and verify the result.
     if sodiumKeyPair(
         addr result.pub[0],
         addr result.priv[0]
     ) != 0:
-        raise newException(Exception, "Sodium could not create a Key Pair.")
+        raise newException(SodiumError, "Sodium could not create a Key Pair.")
 
 #Nim function for creating a Public Key.
-proc newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [Exception]} =
+proc newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [SodiumError]} =
     #Extract the Private Key arg.
     var key: PrivateKey = keyArg
 
@@ -28,32 +31,32 @@ proc newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [Exception]} =
         addr result[0],
         addr key[0]
     ) != 0:
-        raise newException(Exception, "Sodium could not create a Public Key.")
+        raise newException(SodiumError, "Sodium could not create a Public Key.")
 
 #Nim function for signing a message.
-proc sign*(key: PrivateKey, msgArg: string): string {.raises: [Exception]} =
+proc sign*(key: PrivateKey, msgArg: string): string {.raises: [SodiumError]} =
     #Extract the message arg.
     var msg: string = SIGN_PREFIX & msgArg
 
     #Declare the State.
     var state: ED25519State
     if sodiumInitState(addr state) != 0:
-        raise newException(Exception, "Sodium could not initiate a State.")
+        raise newException(SodiumError, "Sodium could not initiate a State.")
 
     #Update the State with the message.
     if sodiumUpdateState(addr state, addr msg[0], cast[culong](msg.len)) != 0:
-        raise newException(Exception, "Sodium could not update a State.")
+        raise newException(SodiumError, "Sodium could not update a State.")
 
     #Create the signature.
     var sig: array[64, char]
     if sodiumSign(addr state, addr sig[0], nil, key) != 0:
-        raise newException(Exception, "Sodium could not sign a message.")
+        raise newException(SodiumError, "Sodium could not sign a message.")
 
     #Return the signature.
     return sig.join()
 
 #Nim function for verifying a message.
-proc verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [Exception]} =
+proc verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [SodiumError]} =
     #Extract the args.
     var
         msg: string = SIGN_PREFIX & msgArg
@@ -62,11 +65,11 @@ proc verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [Ex
     #Declare the State.
     var state: ED25519State
     if sodiumInitState(addr state) != 0:
-        raise newException(Exception, "Sodium could not initiate a State.")
+        raise newException(SodiumError, "Sodium could not initiate a State.")
 
     #Update the State with the message.
     if sodiumUpdateState(addr state, addr msg[0], cast[culong](msg.len)) != 0:
-        raise newException(Exception, "Sodium could not update a State.")
+        raise newException(SodiumError, "Sodium could not update a State.")
 
     #Verify the signature.
     if sodiumVerify(addr state, addr sig[0], key) != 0:

@@ -41,7 +41,12 @@ import sequtils
 proc parseBlock*(
     blockStr: string,
     lattice: Lattice
-): Block {.raises: [ResultError, ValueError, FinalAttributeError, Exception].} =
+): Block {.raises: [
+    ValueError,
+    ArgonError,
+    SodiumError,
+    FinalAttributeError
+].} =
     var
         #Nonce | Last | Time | Validations Count
         #Address 1 | Start Index 1 | End Index 1
@@ -57,7 +62,7 @@ proc parseBlock*(
         #Last block hash.
         last: ArgonHash = blockSeq[1].pad(64, $char(0)).toArgonHash()
         #Time.
-        time: BN = blockSeq[2].toBN(256)
+        time: int = blockSeq[2].toBN(256).toInt()
         #Total Validations.
         totalValidations: int = 0
         #Validations in the block.

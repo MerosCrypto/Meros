@@ -35,7 +35,11 @@ proc newAccountObj*(address: string): Account {.raises: [].} =
     )
 
 #Add a Node to an account.
-proc addNode*(account: Account, node: Node, dependent: Node) {.raises: [].} =
+proc addNode*(
+    account: Account,
+    node: Node,
+    dependent: Node
+) {.raises: [].} =
     #Increase the account height and add the node.
     inc(account.height)
     account.nodes.add(node)

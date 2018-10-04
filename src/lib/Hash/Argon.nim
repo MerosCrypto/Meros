@@ -38,10 +38,17 @@ proc argon2d(
     saltLen: uint32,
     res: ptr uint8,
     resLen: uint32
-): cint {.header: "../../src/lib/Hash/Argon/include/argon2.h", importc: "argon2d_hash_raw".}
+): cint {.
+    header: "../../src/lib/Hash/Argon/include/argon2.h",
+    importc: "argon2d_hash_raw"
+.}
 
 #Take in data (128 char max) and a salt (128 char max); return a ArgonHash.
-proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): ArgonHash {.raises: [ResultError, ValueError].} =
+proc Argon*(
+    dataArg: string,
+    saltArg: string,
+    reduced: bool = false
+): ArgonHash {.raises: [ArgonError, ValueError].} =
     var
         data: string = dataArg.pad(128, $char(0))
         salt: string = saltArg.pad(128, $char(0))
@@ -75,7 +82,7 @@ proc Argon*(dataArg: string, saltArg: string, reduced: bool = false): ArgonHash 
         addr result.data[0],
         uint32(64)
     ) != 0:
-        raise newException(ResultError, "Argon2d raised an error.")
+        raise newException(ArgonError, "Argon2d raised an error.")
 
 #String to ArgonHash.
 proc toArgonHash*(hash: string): ArgonHash {.raises: [ValueError].} =
