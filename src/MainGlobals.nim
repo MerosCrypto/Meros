@@ -1,5 +1,10 @@
 include MainImports
 
+#Constants. This acts as a sort-of chain params.
+const
+    NETWORK_ID: int = 0
+    PROTOCOL: int = 0
+
 #Global variables used throught Main.
 var
     events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.

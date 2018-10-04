@@ -99,7 +99,7 @@ events.on(
 )
 
 #Print the Private Key and address of the address holding the coins.
-echo "Emb0h3nyv8uplrx68677ca6t0t4x6qhsue90y50ntwq3dfj5hxw246s" &
-    " was sent one million coins from \"minter\". Its Private Key is " &
+echo "Emb0h3nyv8uplrx68677ca6t0t4x6qhsue90y50ntwq3dfj5hxw246s was sent one million coins from \"minter\".\r\n" &
+    "Its Private Key is " &
     "7A3E64ADDB86DA2F3D1BEF18F6D2C80BA5C5EF9673DE8A0F5787DF8E6DD237427DE33230FC0FC66D1F5EF63BA5BD7536817873257928F9ADC08B532A5CCE5575" &
     ".\r\n"

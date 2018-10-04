@@ -20,7 +20,7 @@ finalsd:
             header* {.final.}: string
             message* {.final.}: string
 
-#Constructor.
+#Constructor for incoming data.
 proc newMessage*(
     client: int,
     network: int,
@@ -29,12 +29,27 @@ proc newMessage*(
     header: string,
     message: string
 ): Message {.raises: [].} =
-    result = Message(
+    Message(
         client: client,
         network: network,
         version: version,
         content: content,
         header: header,
+        message: message
+    )
+
+#Constructor for outgoing data.
+proc newMessage*(
+    network: int,
+    version: int,
+    content: MessageType,
+    message: string
+): Message {.raises: [].} =
+    Message(
+        network: network,
+        version: version,
+        content: content,
+        header: char(network) & char(version) & char(content) & char(message.len),
         message: message
     )
 

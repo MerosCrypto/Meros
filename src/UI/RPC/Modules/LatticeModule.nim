@@ -3,10 +3,17 @@ import BN
 import ../../../lib/Base
 
 #Wallet lib.
-import ../../..//Wallet/Wallet
+import ../../../Wallet/Wallet
 
 #Lattice lib.
 import ../../../Database/Lattice/Lattice
+
+#Message lib.
+import ../../../Network/objects/MessageObj
+
+#Serialization libs.
+import ../../../Network/Serialize/SerializeSend
+import ../../../Network/Serialize/SerializeReceive
 
 #RPC object.
 import ../objects/RPCObj
@@ -35,10 +42,15 @@ proc send(rpc: RPC, address: string, amount: BN, nonce: BN) {.raises: [Exception
         raise newException(Exception, "Couldn't sign the send.")
 
     #Add it.
-    rpc.events.get(
-        proc (send: Send),
+    if rpc.events.get(
+        proc (send: Send): bool,
         "lattice.send"
-    )(send)
+    )(send):
+        #If it worked, broadcast the Send.
+        rpc.events.get(
+            proc (msgType: MessageType, msg: string),
+            "network.broadcast"
+        )(MessageType.Send, send.serialize())
 
 #Create a Receive Node.
 proc receive(rpc: RPC, address: string, inputNonce: BN, nonce: BN) {.raises: [Exception].} =
@@ -52,10 +64,15 @@ proc receive(rpc: RPC, address: string, inputNonce: BN, nonce: BN) {.raises: [Ex
     rpc.wallet.sign(recv)
 
     #Add it.
-    rpc.events.get(
-        proc (recv: Receive),
+    if rpc.events.get(
+        proc (recv: Receive): bool,
         "lattice.receive"
-    )(recv)
+    )(recv):
+        #If it worked, broadcast the Receive.
+        rpc.events.get(
+            proc (msgType: MessageType, msg: string),
+            "network.broadcast"
+        )(MessageType.Receive, recv.serialize())
 
 #Get the height of an account.
 proc getHeight(rpc: RPC, account: string) {.raises: [ValueError, Exception].} =
