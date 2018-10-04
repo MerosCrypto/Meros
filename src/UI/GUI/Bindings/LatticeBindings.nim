@@ -28,17 +28,14 @@ import json
 
 #Get the nonce to use with new transactions.
 proc getNonce*(gui: GUI): string {.raises: [Exception].} =
-    echo 1
     #Ask for the Wallet info.
     gui.toRPC[].send(%* {
         "module": "wallet",
         "method": "get",
         "args": []
     })
-    echo 2
     #Get the wallet info.
     var address: string = gui.toGUI[].recv()["address"].getStr()
-    echo 3
 
     #Ask for the Wallet's height.
     gui.toRPC[].send(%* {
@@ -48,10 +45,8 @@ proc getNonce*(gui: GUI): string {.raises: [Exception].} =
             address
         ]
     })
-    echo 4
     #Set the result to the Wallet's height (AKA the next nonce).
     result = gui.toGUI[].recv()["height"].getStr()
-    echo 5
 
 #Add the Lattice bindings to the GUI.
 proc addTo*(gui: GUI) {.raises: [Exception].} =
