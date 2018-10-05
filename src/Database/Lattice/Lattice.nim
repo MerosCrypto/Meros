@@ -4,6 +4,11 @@ import ../../lib/Errors
 #BN lib.
 import BN
 
+#Index object.
+import objects/IndexObj
+#Export the Index object.
+export IndexObj
+
 #Node and node descendants.
 import objects/NodeObj
 import Send

@@ -4,6 +4,9 @@ import BN as BNFile
 #Hash lib.
 import ../../../lib/Hash
 
+#Index object.
+import IndexObj
+
 #Node object.
 import NodeObj
 
@@ -16,13 +19,8 @@ import finals
 #Tables standard library.
 import tables
 
-#Index object. Specifies a Node on the Lattice.
 finalsd:
     type
-        Index* = ref object of RootObj
-            address* {.final.}: string
-            nonce* {.final.}: BN
-
         #Lattice Difficulties object. Specifies the TX/Data  difficulties.
         Difficulties* = ref object of RootObj
             transaction*: BN
@@ -41,12 +39,6 @@ finalsd:
         ]
 
 #Constructors.
-proc newIndex*(address: string, nonce: BN): Index {.raises: [].} =
-    result = Index(
-        address: address,
-        nonce: nonce
-    )
-
 proc newDifficulties*(): Difficulties {.raises: [].} =
     result = Difficulties(
         transaction: newBN(),

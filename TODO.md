@@ -21,6 +21,8 @@ Features:
 - Have Merit Holders indexable by the order they got Merit in.
 
 Improvements:
+- Use `func` wherever possible.
+
 - Tell the GUI thread to close.
 
 - Standardize where we use binary/hex/addresses.

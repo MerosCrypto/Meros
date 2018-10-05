@@ -14,7 +14,7 @@ import ../../Wallet/Wallet
 import ../../Network/Serialize/SerializeReceive
 
 #Index object.
-import objects/LatticeObjs
+import objects/IndexObj
 
 #Node object.
 import objects/NodeObj

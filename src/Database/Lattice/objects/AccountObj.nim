@@ -7,9 +7,6 @@ import NodeObj
 import SendObj
 import ReceiveObj
 
-#Lattice objects.
-import LatticeObjs
-
 #Finals lib.
 import finals
 
