@@ -94,9 +94,12 @@ proc add*(
             var verif: Verification = cast[Verification](node)
 
             result = account.add(
-                #Verification Node.
                 verif
             )
+
+            #If that worked, add the Verification in the Lattice's tracker.
+            if result:
+                lattice.addVerification(verif.verified, verif.sender)
 
         of NodeType.MeritRemoval:
             var mr: MeritRemoval = cast[MeritRemoval](node)

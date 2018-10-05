@@ -25,16 +25,22 @@ type Lattice* = ref object of RootObj
     #Difficulties.
     difficulties*: tuple[transaction: BN, data: BN]
 
-    #Block Lattice object.
-    lattice*: TableRef[
-        string,
-        Account
-    ]
-
-    #Lookup table.
+    #Lookup table (hash -> index).
     lookup*: TableRef[
         string,
         Index
+    ]
+
+    #Verifications (hash -> list of addresses who signed off on it).
+    verifications: TableRef[
+        string,
+        seq[string]
+    ]
+
+    #Accounts (address -> account).
+    accounts*: TableRef[
+        string,
+        Account
     ]
 
 #Lattice constructor
@@ -45,24 +51,13 @@ proc newLattice*(
     #Create the object.
     result = Lattice(
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
-        lattice: newTable[string, Account](),
-        lookup: newTable[string, Index]()
+        lookup: newTable[string, Index](),
+        verifications: newTable[string, seq[string]](),
+        accounts: newTable[string, Account]()
     )
 
     #Add the minter account.
-    result.lattice["minter"] = newAccountObj("minter")
-
-#Creates a new Account on the Lattice.
-proc addAccount*(
-    lattice: Lattice,
-    address: string
-): bool {.raises: [].} =
-    result = true
-    #Make sure the account doesn't already exist.
-    if lattice.lattice.hasKey(address):
-        return false
-
-    lattice.lattice[address] = newAccountObj(address)
+    result.accounts["minter"] = newAccountObj("minter")
 
 #Add a hash to the lookup.
 proc addHash*(
@@ -72,25 +67,52 @@ proc addHash*(
 ) {.raises: [].} =
     lattice.lookup[$hash] = index
 
+#Add a verification to the verifications table.
+proc addVerification*(
+    lattice: Lattice,
+    hashArg: Hash[512],
+    address: string
+) {.raises: [KeyError].} =
+    #Turn the hash into a string.
+    var hash: string = $hashArg
+
+    #Create a blank seq if there's not already a seq.
+    if not lattice.verifications.hasKey(hash):
+        lattice.verifications[hash] = @[]
+
+    #Add the verification.
+    lattice.verifications[hash].add(address)
+
+#Creates a new Account on the Lattice.
+proc addAccount*(
+    lattice: Lattice,
+    address: string
+) {.raises: [].} =
+    #Make sure the account doesn't already exist.
+    if lattice.accounts.hasKey(address):
+        return
+
+    lattice.accounts[address] = newAccountObj(address)
+
 #Gets an account.
 proc getAccount*(
     lattice: Lattice,
     address: string
 ): Account {.raises: [ValueError].} =
-    #Call newAccount, which will only create an account if one doesn't exist.
-    discard lattice.addAccount(address)
+    #Call addAccount, which will only create an account if one doesn't exist.
+    lattice.addAccount(address)
 
     #Return the account.
-    result = lattice.lattice[address]
+    result = lattice.accounts[address]
 
 #Gets a Node by its Index.
 proc `[]`*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
-    if not lattice.lattice.hasKey(index.address):
+    if not lattice.accounts.hasKey(index.address):
         raise newException(ValueError, "Lattice does not have an Account for that address.")
-    if lattice.lattice[index.address].height <= index.nonce:
+    if lattice.accounts[index.address].height <= index.nonce:
         raise newException(ValueError, "The Account for that address doesn't have a Node for that nonce.")
 
-    result = lattice.lattice[index.address][index.nonce.toInt()]
+    result = lattice.accounts[index.address][index.nonce.toInt()]
 
 #Gets a Node by its hash.
 proc getNode*(lattice: Lattice, hash: string): Node {.raises: [ValueError].} =

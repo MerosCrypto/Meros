@@ -15,7 +15,9 @@ import ../src/lib/Hash
 import ../src/lib/ED25519
 
 #Database.
-import ../src/Database/Database
+import ../src/Database/Filesystem/Filesystem
+import ../src/Database/Lattice/Lattice
+import ../src/Database/Merit/Merit
 
 #Wallet.
 import ../src/Wallet/Wallet

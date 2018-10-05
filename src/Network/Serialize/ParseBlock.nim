@@ -143,12 +143,12 @@ proc parseBlock*(
         validator = newAddress(validations[i].validator.pad(32, $char(0)))
         for v in validations[i].start .. validations[i].last:
             hashes.add(
-                lattice.getNode(
+                lattice[
                     newIndex(
                         validator,
                         newBN(v)
                     )
-                ).hash
+                ].hash
             )
     tree = newMerkleTree(hashes)
 
