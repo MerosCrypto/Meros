@@ -92,14 +92,14 @@ events.on(
 events.on(
     "lattice.getHeight",
     proc (account: string): BN {.raises: [ValueError].} =
-        lattice.getHeight(account)
+        lattice.getAccount(account).height
 )
 
 #Handle requests for an account's balance.
 events.on(
     "lattice.getBalance",
     proc (account: string): BN {.raises: [ValueError].} =
-        lattice.getBalance(account)
+        lattice.getAccount(account).balance
 )
 
 #Print the Private Key and address of the address holding the coins.

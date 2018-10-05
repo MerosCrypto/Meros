@@ -28,27 +28,11 @@ export MeritRemoval
 import Account
 
 #Lattice Objects.
-import objects/LatticeObjs
-import objects/LatticeMasterObj
-#Export the Lattice Objects.
-export LatticeObjs
-#Export the Lattice Master Object.
-export LatticeMasterObj
+import objects/LatticeObj
+export LatticeObj
 
 #Finals lib.
 import finals
-
-#Add a Node to the Hash Lookup.
-proc addToLookup(lattice: Lattice, node: Node) {.raises: [].} =
-    lattice
-        .lookup
-        .add(
-            $node.hash,
-            newIndex(
-                node.sender,
-                node.nonce
-            )
-        )
 
 #Add a Node to the Lattice.
 proc add*(
@@ -63,9 +47,8 @@ proc add*(
     ):
         return false
 
-    var
-        blockLattice = lattice.lattice #Get the Block Lattice.
-        account: Account = blockLattice.getAccount(node.sender) #Get the Account.
+    #Get the Account.
+    var account: Account = lattice.getAccount(node.sender)
 
     case node.descendant:
         of NodeType.Send:
@@ -87,13 +70,12 @@ proc add*(
                 #Receive Node.
                 recv,
                 #Supposed Send node.
-                blockLattice
-                    .getNode(
-                        newIndex(
-                            recv.inputAddress,
-                            recv.inputNonce
-                        )
+                lattice[
+                    newIndex(
+                        recv.inputAddress,
+                        recv.inputNonce
                     )
+                ]
             )
 
         of NodeType.Data:
@@ -131,7 +113,13 @@ proc add*(
         return
 
     #Else, add the node to the lookup table.
-    lattice.addToLookup(node)
+    lattice.addHash(
+        node.hash,
+        newIndex(
+            node.sender,
+            node.nonce
+        )
+    )
 
 proc mint*(
     lattice: Lattice,
@@ -145,7 +133,7 @@ proc mint*(
     FinalAttributeError
 ].} =
     #Get the Height in a new var that won't update.
-    var height: BN = lattice.lattice.getAccount("minter").height
+    var height: BN = lattice.getAccount("minter").height
 
     #Create the Send Node.
     var send: Send = newSend(
@@ -165,30 +153,3 @@ proc mint*(
 
     #Return the Index.
     result = newIndex("minter", height)
-
-#Get an account's height.
-proc getHeight*(
-    lattice: Lattice,
-    address: string
-): BN {.raises: [ValueError].} =
-    lattice.lattice.getAccount(address).height
-
-#Get an account's balance.
-proc getBalance*(
-    lattice: Lattice,
-    address: string
-): BN {.raises: [ValueError].} =
-    lattice.lattice.getAccount(address).balance
-
-#Getters for Nodes from the Lattice.
-proc getNode*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
-    lattice.lattice.getNode(index)
-proc `[]`*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
-    lattice.lattice.getNode(index)
-proc getNode*(lattice: Lattice, hash: string): Node {.raises: [ValueError].} =
-    lattice.lattice.getNode(lattice.lookup, hash)
-
-#Iterates over every hash the lookup table has.
-iterator hashes*(lattice: Lattice): string {.raises: [].} =
-    for hash in lattice.lookup.hashes():
-        yield hash
