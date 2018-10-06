@@ -4,9 +4,11 @@ import ../lib/Errors
 #RPC.
 import RPC/RPC
 export RPC
+
 #GUI.
-import GUI/GUI
-export GUI
+when not defined(nogui):
+    import GUI/GUI
+    export GUI
 
 #EventEmitter lib.
 import ec_events
@@ -51,8 +53,10 @@ proc newUI*(
     except:
         raise newException(AsyncError, "Couldn't start the RPC.")
 
-    #Spawn the GUI.
-    spawn newGUI(addr result.toRPC, addr result.toGUI, width, height)
+
+    when not defined(nogui):
+        #Spawn the GUI.
+        spawn newGUI(addr result.toRPC, addr result.toGUI, width, height)
 
 #Shutdown.
 func shutdown*(ui: UI) {.raises: [].} =
