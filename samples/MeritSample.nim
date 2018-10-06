@@ -34,7 +34,7 @@ proc main() =
         #Block var; defined here to stop a memory leak.
         newBlock: Block
         #Last block hash, nonce, time, and proof vars.
-        last: ArgonHash = merit.getBlocks()[0].argon
+        last: ArgonHash = merit.blockchain.blocks[0].argon
         nonce: BN = newBN(1)
         time: int
         proof: BN = newBN()
@@ -43,7 +43,7 @@ proc main() =
             amount: 100
         )]
 
-    echo "First balance: " & $merit.getBalance(wallet.address)
+    echo "First balance: " & $merit.state.getBalance(wallet.address)
 
     #Mine the chain.
     while true:
@@ -73,7 +73,7 @@ proc main() =
 
         #If we didn't continue, the block was valid! Print that we mined a block!
         echo "Mined a block: " & $nonce
-        echo "The miner's Merit is " & $merit.getBalance(wallet.address) & "."
+        echo "The miner's Merit is " & $merit.state.getBalance(wallet.address) & "."
 
         #Finally, update the last hash, increase the nonce, and reset the proof.
         last = newBlock.argon
