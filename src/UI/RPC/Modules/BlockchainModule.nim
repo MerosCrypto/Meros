@@ -5,5 +5,5 @@ import ../objects/RPCObj
 import json
 
 #Handler.
-proc `blockchainModule`*(rpc: RPC, json: JSONNode) {.raises: [].} =
+func `blockchainModule`*(rpc: RPC, json: JSONNode) {.raises: [].} =
     discard

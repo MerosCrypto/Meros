@@ -44,7 +44,7 @@ type Lattice* = ref object of RootObj
     ]
 
 #Lattice constructor
-proc newLattice*(
+func newLattice*(
     txDiff: string,
     dataDiff: string
 ): Lattice {.raises: [ValueError].} =
@@ -60,7 +60,7 @@ proc newLattice*(
     result.accounts["minter"] = newAccountObj("minter")
 
 #Add a hash to the lookup.
-proc addHash*(
+func addHash*(
     lattice: Lattice,
     hash: Hash[512],
     index: Index
@@ -68,7 +68,7 @@ proc addHash*(
     lattice.lookup[$hash] = index
 
 #Add a verification to the verifications table.
-proc addVerification*(
+func addVerification*(
     lattice: Lattice,
     hashArg: Hash[512],
     address: string
@@ -84,7 +84,7 @@ proc addVerification*(
     lattice.verifications[hash].add(address)
 
 #Creates a new Account on the Lattice.
-proc addAccount*(
+func addAccount*(
     lattice: Lattice,
     address: string
 ) {.raises: [].} =
@@ -95,7 +95,7 @@ proc addAccount*(
     lattice.accounts[address] = newAccountObj(address)
 
 #Gets an account.
-proc getAccount*(
+func getAccount*(
     lattice: Lattice,
     address: string
 ): Account {.raises: [ValueError].} =

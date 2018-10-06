@@ -123,7 +123,7 @@ proc add*(
 
 #Add Data.
 discard """
-proc add*(
+func add*(
     account: Account,
     data: Data,
     difficulty: BN
@@ -146,7 +146,7 @@ proc add*(
 
 #Add a Merit Removal.
 discard """
-proc add*(
+func add*(
     account: Account,
     mr: MeritRemoval
 ): bool {.raises: [ValueError].} =

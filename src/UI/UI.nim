@@ -55,6 +55,6 @@ proc newUI*(
     spawn newGUI(addr result.toRPC, addr result.toGUI, width, height)
 
 #Shutdown.
-proc shutdown*(ui: UI) {.raises: [].} =
+func shutdown*(ui: UI) {.raises: [].} =
     #Shutdown the RPC.
     ui.rpc.shutdown()

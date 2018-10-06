@@ -62,7 +62,7 @@ proc mine*(
     data.hash = hash
 
 #Sign a TX.
-proc sign*(
+func sign*(
     wallet: Wallet,
     data: Data
 ) {.raises: [SodiumError, FinalAttributeError].} =

@@ -18,7 +18,7 @@ type State* = ref object of RootObj
     data: ref Table[string, ref BN]
 
 #Constructor.
-proc newState*(deadBlocks: int): State {.raises: [].} =
+func newState*(deadBlocks: int): State {.raises: [].} =
     State(
         deadBlocks: deadBlocks,
         live: 0,

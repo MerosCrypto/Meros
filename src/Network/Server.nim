@@ -25,7 +25,7 @@ proc listen*(network: Network, port: int) {.async.} =
         try:
             #Tell the Network lib of the new client.
             network.subEvents.get(
-                proc (client: AsyncSocket),
+                func (client: AsyncSocket),
                 "client"
             )(
                 await network.server.accept()

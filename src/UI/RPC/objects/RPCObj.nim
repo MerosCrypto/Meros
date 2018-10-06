@@ -20,7 +20,7 @@ finalsd:
         listening*: bool
 
 #Constructor.
-proc newRPCObject*(
+func newRPCObject*(
     events: EventEmitter,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]

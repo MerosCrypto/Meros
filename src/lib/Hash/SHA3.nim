@@ -45,9 +45,9 @@ proc SHA3_512*(bytesArg: string): SHA3_512Hash {.raises: [].} =
     )
 
 #String to SHA3_256Hash.
-proc toSHA3_256Hash*(hash: string): SHA3_256Hash {.raises: [ValueError].} =
+func toSHA3_256Hash*(hash: string): SHA3_256Hash {.raises: [ValueError].} =
     hash.toHash(256)
 
 #String to SHA3_512Hash.
-proc toSHA3_512Hash*(hash: string): SHA3_512Hash {.raises: [ValueError].} =
+func toSHA3_512Hash*(hash: string): SHA3_512Hash {.raises: [ValueError].} =
     hash.toHash(512)

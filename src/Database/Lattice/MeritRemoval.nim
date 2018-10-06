@@ -39,7 +39,7 @@ proc newMeritRemoval*(
     result.hash = SHA512(result.serialize())
 
 #Sign a MeritRemoval object.
-proc sign*(
+func sign*(
     wallet: Wallet,
     mr: MeritRemoval
 ) {.raises: [SodiumError, FinalAttributeError].} =

@@ -10,8 +10,8 @@ finalsd:
         address* {.final.}: string
         nonce* {.final.}: BN
 
-#Construcor.    
-proc newIndex*(address: string, nonce: BN): Index {.raises: [].} =
+#Construcor.
+func newIndex*(address: string, nonce: BN): Index {.raises: [].} =
     result = Index(
         address: address,
         nonce: nonce

@@ -26,7 +26,7 @@ finalsd:
         proof* {.final.}: BN
 
 #New Send object.
-proc newSendObj*(
+func newSendObj*(
     output: string,
     amount: BN
 ): Send {.raises: [FinalAttributeError].} =

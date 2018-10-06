@@ -13,7 +13,7 @@ import strutils
 const SIGN_PREFIX {.strdefine.}: string = "EMB"
 
 #Nim function for creating a Key Pair.
-proc newKeyPair*(): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
+func newKeyPair*(): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
     #Call the C function and verify the result.
     if sodiumKeyPair(
         addr result.pub[0],
@@ -22,7 +22,7 @@ proc newKeyPair*(): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumErr
         raise newException(SodiumError, "Sodium could not create a Key Pair.")
 
 #Nim function for creating a Public Key.
-proc newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [SodiumError]} =
+func newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [SodiumError]} =
     #Extract the Private Key arg.
     var key: PrivateKey = keyArg
 
@@ -34,7 +34,7 @@ proc newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [SodiumError]} =
         raise newException(SodiumError, "Sodium could not create a Public Key.")
 
 #Nim function for signing a message.
-proc sign*(key: PrivateKey, msgArg: string): string {.raises: [SodiumError]} =
+func sign*(key: PrivateKey, msgArg: string): string {.raises: [SodiumError]} =
     #Extract the message arg.
     var msg: string = SIGN_PREFIX & msgArg
 
@@ -56,7 +56,7 @@ proc sign*(key: PrivateKey, msgArg: string): string {.raises: [SodiumError]} =
     return sig.join()
 
 #Nim function for verifying a message.
-proc verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [SodiumError]} =
+func verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [SodiumError]} =
     #Extract the args.
     var
         msg: string = SIGN_PREFIX & msgArg

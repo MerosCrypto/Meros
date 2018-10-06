@@ -19,7 +19,7 @@ import asyncdispatch
 import json
 
 #Constructor.
-proc newRPC*(
+func newRPC*(
     events: EventEmitter,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
@@ -62,5 +62,5 @@ proc start*(rpc: RPC) {.async.} =
             echo getCurrentExceptionMsg()
 
 #Shutdown.
-proc shutdown*(rpc: RPC) {.raises: [].} =
+func shutdown*(rpc: RPC) {.raises: [].} =
     rpc.listening = false

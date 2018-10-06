@@ -22,7 +22,7 @@ import os
 let MAX: BN = "F".repeat(128).toBN(16)
 
 #Verifies a difficulty against a block.
-proc verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =
+func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =
     result = true
 
     #If the Argon hash didn't beat the difficulty...

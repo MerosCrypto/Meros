@@ -28,7 +28,7 @@ finalsd:
         address* {.final.}: string
 
 #Create a new Private Key from a string.
-proc newPrivateKey*(key: string): PrivateKey {.raises: [ValueError].} =
+func newPrivateKey*(key: string): PrivateKey {.raises: [ValueError].} =
     #If it's binary...
     if key.len == 64:
         for i in 0 ..< 64:
@@ -41,7 +41,7 @@ proc newPrivateKey*(key: string): PrivateKey {.raises: [ValueError].} =
         raise newException(ValueError, "Invalid Private Key.")
 
 #Create a new Public Key from a string.
-proc newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
+func newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
     #If it's binary...
     if key.len == 32:
         for i in 0 ..< 32:
@@ -54,19 +54,19 @@ proc newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
         raise newException(ValueError, "Invalid Public Key.")
 
 #Stringify a Private Key.
-proc `$`*(key: PrivateKey): string {.raises: [].} =
+func `$`*(key: PrivateKey): string {.raises: [].} =
     result = ""
     for i in 0 ..< 64:
         result = result & uint8(key[i]).toHex()
 
 #Stringify a Public Key to it's hex representation.
-proc `$`*(key: PublicKey): string {.raises: [].} =
+func `$`*(key: PublicKey): string {.raises: [].} =
     result = ""
     for i in 0 ..< 32:
         result = result & uint8(key[i]).toHex()
 
 #Constructor.
-proc newWallet*(): Wallet {.raises: [ValueError, SodiumError].} =
+func newWallet*(): Wallet {.raises: [ValueError, SodiumError].} =
     #Generate a new key pair.
     var pair: tuple[priv: PrivateKey, pub: PublicKey] = newKeyPair()
 
@@ -78,7 +78,7 @@ proc newWallet*(): Wallet {.raises: [ValueError, SodiumError].} =
     )
 
 #Constructor.
-proc newWallet*(
+func newWallet*(
     privateKey: PrivateKey
 ): Wallet {.raises: [ValueError, SodiumError].} =
     #Create a new Wallet based off the passed in Private Key.
@@ -90,7 +90,7 @@ proc newWallet*(
     result.address = newAddress(result.publicKey)
 
 #Constructor.
-proc newWallet*(
+func newWallet*(
     privateKey: PrivateKey,
     publicKey: PublicKey
 ): Wallet {.raises: [ValueError, SodiumError].} =
@@ -101,7 +101,7 @@ proc newWallet*(
         raise newException(ValueError, "Invalid Public Key for this Private Key.")
 
 #Constructor.
-proc newWallet*(
+func newWallet*(
     privateKey: PrivateKey,
     publicKey: PublicKey,
     address: string
@@ -113,15 +113,15 @@ proc newWallet*(
         raise newException(ValueError, "Invalid Address for this Public Key.")
 
 #Sign a message.
-proc sign*(key: PrivateKey, msg: string): string {.raises: [SodiumError].} =
+func sign*(key: PrivateKey, msg: string): string {.raises: [SodiumError].} =
     ED25519.sign(key, msg)
 
 #Sign a message via a Wallet.
-proc sign*(wallet: Wallet, msg: string): string {.raises: [SodiumError].} =
+func sign*(wallet: Wallet, msg: string): string {.raises: [SodiumError].} =
     wallet.privateKey.sign(msg)
 
 #Verify a message.
-proc verify*(
+func verify*(
     key: PublicKey,
     msg: string,
     sig: string
@@ -129,7 +129,7 @@ proc verify*(
     ED25519.verify(key, msg, sig)
 
 #Verify a message via a Wallet.
-proc verify*(
+func verify*(
     wallet: Wallet,
     msg: string,
     sig: string

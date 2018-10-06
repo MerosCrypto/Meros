@@ -13,12 +13,12 @@ finalsd:
         socket* {.final.}: AsyncSocket
 
 #Constructor.
-proc newClient*(id: int, socket: AsyncSocket): Client {.raises: [].} =
+func newClient*(id: int, socket: AsyncSocket): Client {.raises: [].} =
     result = Client(
         id: id,
         socket: socket
     )
 
 #Converter so we don't always have to .socket, but instead can directly use .recv().
-converter toSocket*(sc: Client): AsyncSocket {.raises: [].} =
-    sc.socket
+converter toSocket*(client: Client): AsyncSocket {.raises: [].} =
+    client.socket

@@ -10,7 +10,7 @@ type Hash*[bits: static[int]] = object
     data*: array[bits div 8, uint8]
 
 #toHash function.
-proc toHash*(hash: string, bits: static[int]): Hash[bits] {.raises: [ValueError].} =
+func toHash*(hash: string, bits: static[int]): Hash[bits] {.raises: [ValueError].} =
     if hash.len == bits div 8:
         for i in 0 ..< hash.len:
             result.data[i] = uint8(hash[i])
@@ -21,19 +21,19 @@ proc toHash*(hash: string, bits: static[int]): Hash[bits] {.raises: [ValueError]
         raise newException(ValueError, "toHash not handed the right amount of data.")
 
 #To binary string.
-proc toString*(hash: Hash): string {.raises: [].} =
+func toString*(hash: Hash): string {.raises: [].} =
     result = ""
     for b in hash.data:
         result &= char(b)
 
 #To hex string.
-proc `$`*(hash: Hash): string  {.raises: [].} =
+func `$`*(hash: Hash): string  {.raises: [].} =
     result = ""
     for b in hash.data:
         result &= b.toHex()
 
 #To BN.
-proc toBN*(hash: Hash): BN  {.raises: [ValueError].} =
+func toBN*(hash: Hash): BN  {.raises: [ValueError].} =
     ($hash).toBN(16)
 
 #Empty uint8 'array'.

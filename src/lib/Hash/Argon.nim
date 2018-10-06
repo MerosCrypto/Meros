@@ -28,7 +28,7 @@ type ArgonHash* = Hash[512]
 {.compile: "Argon/src/argon2.c".}
 
 #C function.
-proc argon2d(
+func argon2d(
     iterations: uint32,
     memory: uint32,
     parallelism: uint32,
@@ -44,7 +44,7 @@ proc argon2d(
 .}
 
 #Take in data (128 char max) and a salt (128 char max); return a ArgonHash.
-proc Argon*(
+func Argon*(
     dataArg: string,
     saltArg: string,
     reduced: bool = false
@@ -85,5 +85,5 @@ proc Argon*(
         raise newException(ArgonError, "Argon2d raised an error.")
 
 #String to ArgonHash.
-proc toArgonHash*(hash: string): ArgonHash {.raises: [ValueError].} =
+func toArgonHash*(hash: string): ArgonHash {.raises: [ValueError].} =
     hash.toHash(512)

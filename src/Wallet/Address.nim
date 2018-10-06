@@ -15,7 +15,7 @@ import strutils
 const ADDRESS_HRP {.strdefine.}: string = "Emb"
 
 #Generates a six character BCH code for the public key.
-proc generateBCH(data: Base32): string =
+func generateBCH(data: Base32): string =
     #Create the BCH.
     #TODO.
     result = ""
@@ -25,7 +25,7 @@ proc generateBCH(data: Base32): string =
 #   1. "Emb" prefix (human readable data part).
 #   2. Base32 version of the public key.
 #   3. A BCH code.
-proc newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
+func newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
     #Verify the key length.
     if key.len != 32:
         raise newException(ValueError, "Public Key isn't the proper length.")
@@ -40,7 +40,7 @@ proc newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
         generateBCH(base32)
 
 #Work with binary/hex strings, not just arrays.
-proc newAddress*(keyArg: string): string {.raises: [ValueError].} =
+func newAddress*(keyArg: string): string {.raises: [ValueError].} =
     #Verify the key length.
     if (keyArg.len != 32) and (keyArg.len != 64):
         raise newException(ValueError, "Public Key isn't the proper length.")
@@ -60,11 +60,11 @@ proc newAddress*(keyArg: string): string {.raises: [ValueError].} =
     result = newAddress(key)
 
 #Work with Public Keys objects, not just arrays.
-proc newAddress*(key: PublicKey): string {.raises: [ValueError].} =
+func newAddress*(key: PublicKey): string {.raises: [ValueError].} =
     result = newAddress(cast[array[32, uint8]](key))
 
 #Verifies if an address is valid.
-proc verify*(address: string): bool {.raises: [].} =
+func verify*(address: string): bool {.raises: [].} =
     #Return true if there's no issue.
     result = true
 
@@ -80,10 +80,10 @@ proc verify*(address: string): bool {.raises: [].} =
     #TODO.
 
 #If we have a key to check with, make an address for that key and compare with the given address.
-proc verify*(address: string, key: PublicKey): bool {.raises: [ValueError].} =
+func verify*(address: string, key: PublicKey): bool {.raises: [ValueError].} =
     address == newAddress(key)
 
-proc toBN*(address: string): BN {.raises: [ValueError].} =
+func toBN*(address: string): BN {.raises: [ValueError].} =
     #Verify the address.
     if not address.verify():
         raise newException(ValueError, "Invalid Address.")

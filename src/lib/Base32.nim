@@ -8,7 +8,7 @@ const CHARACTERS: string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 type Base32* = distinct seq[uint8]
 
 #Checks if the string is a valid Base32 string.
-proc isBase32*(data: string): bool {.raises: [].} =
+func isBase32*(data: string): bool {.raises: [].} =
     #Default return value of true.
     result = true
 
@@ -20,7 +20,7 @@ proc isBase32*(data: string): bool {.raises: [].} =
             return false
 
 #Binary array to Base32 object.
-proc toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
+func toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
     #Creae a result variable.
     var res: seq[uint8] = @[]
 
@@ -64,7 +64,7 @@ proc toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
     result = cast[Base32](res)
 
 #Base32 string to Base32 object.
-proc toBase32*(data: string): Base32 {.raises: [ValueError].} =
+func toBase32*(data: string): Base32 {.raises: [ValueError].} =
     #Verify that the data string is a Base 32 string.
     if not data.isBase32():
         raise newException(ValueError, "String is not a valid Base 32 number.")
@@ -81,7 +81,7 @@ proc toBase32*(data: string): Base32 {.raises: [ValueError].} =
     result = cast[Base32](res)
 
 #Base32 object to binary seq.
-proc toSeq*(dataArg: Base32): seq[uint8] {.raises: [].} =
+func toSeq*(dataArg: Base32): seq[uint8] {.raises: [].} =
     #Extract the data.
     var data: seq[uint8] = cast[seq[uint8]](dataArg)
 
@@ -124,7 +124,7 @@ proc toSeq*(dataArg: Base32): seq[uint8] {.raises: [].} =
             bytes += 1
 
 #Base32 object to Base32 string.
-proc `$`*(dataArg: Base32): string {.raises: [].} =
+func `$`*(dataArg: Base32): string {.raises: [].} =
     #Extract the data.
     var data: seq[uint8] = cast[seq[uint8]](dataArg)
 

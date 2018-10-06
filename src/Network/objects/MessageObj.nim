@@ -21,7 +21,7 @@ finalsd:
             message* {.final.}: string
 
 #Constructor for incoming data.
-proc newMessage*(
+func newMessage*(
     client: int,
     network: int,
     version: int,
@@ -39,7 +39,7 @@ proc newMessage*(
     )
 
 #Constructor for outgoing data.
-proc newMessage*(
+func newMessage*(
     network: int,
     version: int,
     content: MessageType,
@@ -54,5 +54,5 @@ proc newMessage*(
     )
 
 #Stringify.
-proc `$`*(msg: Message): string {.raises: [].} =
+func `$`*(msg: Message): string {.raises: [].} =
     msg.header & msg.message

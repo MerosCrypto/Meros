@@ -23,8 +23,8 @@ finalsd:
         balance*: BN
 
 #Creates a new account object.
-proc newAccountObj*(address: string): Account {.raises: [].} =
-    result = Account(
+func newAccountObj*(address: string): Account {.raises: [].} =
+    Account(
         address: address,
         height: newBN(),
         nodes: @[],
@@ -60,7 +60,7 @@ proc addNode*(
             discard
 
 #Helper getter that takes in an index.
-proc `[]`*(account: Account, index: int): Node {.raises: [ValueError].} =
+func `[]`*(account: Account, index: int): Node {.raises: [ValueError].} =
     if index >= account.nodes.len:
         raise newException(ValueError, "Account index out of bounds.")
 

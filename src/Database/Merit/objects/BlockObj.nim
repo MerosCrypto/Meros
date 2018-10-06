@@ -46,7 +46,7 @@ finalsd:
         signature* {.final.}: string
 
 #Constructor.
-proc newBlockObj*(
+func newBlockObj*(
     last: ArgonHash,
     nonce: BN,
     time: int,
@@ -54,7 +54,7 @@ proc newBlockObj*(
     merkle: MerkleTree,
     publisher: string
 ): Block {.raises: [].} =
-    result = Block(
+    Block(
         last: last,
         nonce: nonce,
         time: time,

@@ -45,9 +45,9 @@ proc Keccak_512*(bytesArg: string): Keccak_512Hash {.raises: [].} =
     )
 
 #String to Keccak_256Hash.
-proc toKeccak_256Hash*(hash: string): Keccak_256Hash {.raises: [ValueError].} =
+func toKeccak_256Hash*(hash: string): Keccak_256Hash {.raises: [ValueError].} =
     hash.toHash(256)
 
 #String to Keccak_512Hash.
-proc toKeccak_512Hash*(hash: string): Keccak_512Hash {.raises: [ValueError].} =
+func toKeccak_512Hash*(hash: string): Keccak_512Hash {.raises: [ValueError].} =
     hash.toHash(512)

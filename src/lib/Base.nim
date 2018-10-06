@@ -36,7 +36,7 @@ const
     ], char)
 
 #Gets the digits behind a base.
-proc digits(base: int): seq[char] {.raises: [].} =
+func digits(base: int): seq[char] {.raises: [].} =
     #IF the base is 16 or below...
     if base <= 16:
         return Hex
@@ -48,7 +48,7 @@ proc digits(base: int): seq[char] {.raises: [].} =
         return Raw
 
 #Verifies a string is of a certain base.
-proc isBase*(value: string, base: int): bool {.raises: [].} =
+func isBase*(value: string, base: int): bool {.raises: [].} =
     #Default value of true.
     result = true
 
@@ -75,7 +75,7 @@ proc isBase*(value: string, base: int): bool {.raises: [].} =
             return false
 
 #Turn a string into a BN.
-proc toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =
+func toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =
     #If the value isn't of the base...
     if not valueArg.isBase(baseArg):
         #Throw a ValueError.

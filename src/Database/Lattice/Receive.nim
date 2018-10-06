@@ -71,7 +71,7 @@ proc newReceive*(
     )
 
 #Sign a TX.
-proc sign*(
+func sign*(
     wallet: Wallet,
     recv: Receive
 ) {.raises: [

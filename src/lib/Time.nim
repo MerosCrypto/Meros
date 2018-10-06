@@ -4,5 +4,5 @@
 import times
 
 #Gets the epoch.
-proc getTime*(): int {.raises: [].} =
+func getTime*(): int {.raises: [].} =
     int(times.getTime().toUnix())

@@ -40,7 +40,7 @@ proc newBlockchainObj*(
     blocksPerMonth: int,
     startDifficulty: BN
 ): Blockchain {.raises: [ValueError, ArgonError].} =
-    result = Blockchain(
+    Blockchain(
         blockTime: blockTime,
         blocksPerMonth: blocksPerMonth,
 
@@ -61,5 +61,5 @@ proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
     inc(blockchain.height)
     blockchain.blocks.add(newBlock)
 
-proc add*(blockchain: Blockchain, difficulty: Difficulty) {.raises: [].} =
+func add*(blockchain: Blockchain, difficulty: Difficulty) {.raises: [].} =
     blockchain.difficulties.add(difficulty)

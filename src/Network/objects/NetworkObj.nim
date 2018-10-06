@@ -24,7 +24,7 @@ finalsd:
         nodeEvents* {.final.}: EventEmitter
 
 #Constructor.
-proc newNetworkObj*(
+func newNetworkObj*(
     id: int,
     clients: Clients,
     server: AsyncSocket,

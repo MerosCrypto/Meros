@@ -2,7 +2,7 @@
 import ../../lib/Base
 
 #Prepends a string with its length.
-proc `!`*(data: string): string {.raises: [].} =
+func `!`*(data: string): string {.raises: [].} =
     result = ""
 
     var
@@ -21,7 +21,7 @@ proc `!`*(data: string): string {.raises: [].} =
     result &= data
 
 #Deseralizes a string by getting the length of the next byte, slicing that out, and moving on.
-proc deserialize*(data: string, estimated: int): seq[string] {.raises: [].} =
+func deserialize*(data: string, estimated: int): seq[string] {.raises: [].} =
     #Allocate the seq.
     result = newSeq[string](estimated)
 

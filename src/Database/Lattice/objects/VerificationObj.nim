@@ -16,7 +16,7 @@ finalsd:
         verified* {.final.}: Hash[512]
 
 #New Verification object.
-proc newVerificationObj*(
+func newVerificationObj*(
     verified: Hash[512]
 ): Verification {.raises: [FinalAttributeError].} =
     result = Verification(

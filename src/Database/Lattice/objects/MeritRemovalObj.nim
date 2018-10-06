@@ -16,7 +16,7 @@ finalsd:
         second* {.final.}: Hash[512]
 
 #New MeritRemoval object.
-proc newMeritRemovalObj*(
+func newMeritRemovalObj*(
     first: Hash[512],
     second: Hash[512]
 ): MeritRemoval {.raises: [FinalAttributeError].} =

@@ -25,7 +25,7 @@ finalsd:
 type MerkleTree* = ref object of Branch
 
 #Lead constructor.
-proc newLeafObject*(hash: SHA512Hash): Leaf {.raises: [].} =
+func newLeafObject*(hash: SHA512Hash): Leaf {.raises: [].} =
     result = Leaf(
         isLeaf: true,
         hash: hash

@@ -27,7 +27,7 @@ finalsd:
         webview* {.final.}: WebView
 
 #Constructor.
-proc newGUIObject*(
+func newGUIObject*(
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode],
     webview: WebView

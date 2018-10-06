@@ -20,14 +20,14 @@ finalsd:
         clients*: seq[Client]
 
 #Constructor.
-proc newClients*(): Clients {.raises: [].} =
+func newClients*(): Clients {.raises: [].} =
     Clients(
         total: 0,
         clients: newSeq[Client]()
     )
 
 #Getter.
-proc getClient*(clients: Clients, id: int): Client {.raises: [].} =
+func getClient*(clients: Clients, id: int): Client {.raises: [].} =
     for client in clients.clients:
         if client.id == id:
             return client

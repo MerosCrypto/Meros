@@ -27,5 +27,5 @@ proc RipeMD_160*(bytesArg: string): RipeMD_160Hash {.raises: [].} =
     )
 
 #String to RipeMD_160Hash.
-proc toRipeMD_160Hash*(hash: string): RipeMD_160Hash {.raises: [ValueError].} =
+func toRipeMD_160Hash*(hash: string): RipeMD_160Hash {.raises: [ValueError].} =
     hash.toHash(160)

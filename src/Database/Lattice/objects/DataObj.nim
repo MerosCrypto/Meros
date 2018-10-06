@@ -22,7 +22,7 @@ finalsd:
         proof* {.final.}: BN
 
 #New Data object.
-proc newDataObj*(data: string): Data {.raises: [FinalAttributeError].} =
+func newDataObj*(data: string): Data {.raises: [FinalAttributeError].} =
     result = Data(
         data: data
     )

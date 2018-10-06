@@ -62,7 +62,7 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
         #Emit the new Message. If that returns false...
         if not (
             await eventEmitter.get(
-                proc (msg: Message): Future[bool],
+                func (msg: Message): Future[bool],
                 "message"
             )(
                 newMessage(

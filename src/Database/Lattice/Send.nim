@@ -71,7 +71,7 @@ proc mine*(
     send.hash = hash
 
 #Sign a TX.
-proc sign*(wallet: Wallet, send: Send): bool {.raises: [SodiumError, FinalAttributeError].} =
+func sign*(wallet: Wallet, send: Send): bool {.raises: [SodiumError, FinalAttributeError].} =
     result = true
 
     #Make sure the proof exists.

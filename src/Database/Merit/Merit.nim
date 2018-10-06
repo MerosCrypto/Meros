@@ -36,7 +36,7 @@ proc newMerit*(
 #Add a block.
 proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [ValueError].} =
     result = true
-    
+
     #Add the block to the Blockchain.
     if not merit.blockchain.addBlock(newBlock):
         #If that fails, return false.
@@ -46,9 +46,9 @@ proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [ValueError].}
     merit.state.processBlock(merit.blockchain, newBlock)
 
 #Getters.
-proc getHeight*(merit: Merit): BN {.raises: [].} =
+func getHeight*(merit: Merit): BN {.raises: [].} =
     merit.blockchain.height
-proc getBlocks*(merit: Merit): seq[Block] {.raises: [].} =
+func getBlocks*(merit: Merit): seq[Block] {.raises: [].} =
     merit.blockchain.blocks
 proc getBalance*(merit: Merit, account: string): BN {.raises: [ValueError].} =
     merit.state.getBalance(account)

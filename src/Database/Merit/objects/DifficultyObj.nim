@@ -15,8 +15,8 @@ finalsd:
         difficulty* {.final.}: BN
 
 #Create a new Difficulty object.
-proc newDifficultyObj*(start: BN, endBlock: BN, difficulty: BN): Difficulty {.raises: [].} =
-    result = Difficulty(
+func newDifficultyObj*(start: BN, endBlock: BN, difficulty: BN): Difficulty {.raises: [].} =
+    Difficulty(
         start: start,
         endBlock: endBlock,
         difficulty: difficulty

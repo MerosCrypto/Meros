@@ -14,7 +14,7 @@ type
     PublicKey* = array[32, cuchar]
 
 #Sodium function for creating a key pair.
-proc sodiumKeyPair*(
+func sodiumKeyPair*(
     pub: ptr cuchar,
     priv: ptr cuchar
 ): int {.
@@ -23,7 +23,7 @@ proc sodiumKeyPair*(
 .}
 
 #Sodium function for creating a Public Key.
-proc sodiumPublicKey*(
+func sodiumPublicKey*(
     pub: ptr cuchar,
     priv: ptr cuchar
 ): int {.
@@ -32,13 +32,13 @@ proc sodiumPublicKey*(
 .}
 
 #Sodium function for initiating a state.
-proc sodiumInitState*(state: ptr ED25519State): int {.
+func sodiumInitState*(state: ptr ED25519State): int {.
     header: "../../src/lib/libsodium/sodium.h",
     importc: "crypto_sign_ed25519ph_init"
 .}
 
 #Sodium function for updating a state.
-proc sodiumUpdateState*(
+func sodiumUpdateState*(
     state: ptr ED25519State,
     msg: ptr char,
     len: culong
@@ -48,7 +48,7 @@ proc sodiumUpdateState*(
 .}
 
 #Sodium function for signing a message.
-proc sodiumSign*(
+func sodiumSign*(
     state: ptr ED25519State,
     sig: ptr char,
     len: ptr culong,
@@ -59,7 +59,7 @@ proc sodiumSign*(
 .}
 
 #Sodium function for verifying a message.
-proc sodiumVerify*(
+func sodiumVerify*(
     state: ptr ED25519State,
     sig: ptr char,
     pub: PublicKey

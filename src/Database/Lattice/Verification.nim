@@ -38,7 +38,7 @@ proc newVerification*(
     result.hash = SHA512(result.serialize())
 
 #Sign a TX.
-proc sign*(
+func sign*(
     wallet: Wallet,
     verif: Verification
 ) {.raises: [SodiumError, FinalAttributeError].} =
