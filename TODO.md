@@ -1,12 +1,12 @@
 # TODO
 
 Core:
+- MainMerit.
+
 - Have the RPC dynamically get the difficulty.
 - Have every RPC method return something.
 - Have the RPC send errors when it fails.
 
-- Track Verifications.
-- Link the Lattice to Merit.
 - Track MeritRemovals.
 - Difficulty Vote node.
 - Fork resolution for blocks of different types.
@@ -24,6 +24,8 @@ Features:
 
 Improvements:
 - Make more things `func`.
+
+- Make sure `KeyError` is listed under `raises`.
 
 - Tell the GUI thread to close.
 

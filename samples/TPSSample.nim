@@ -65,7 +65,7 @@ var
 
 #Sign and add the Mint Receive.
 minter.sign(mintRecv)
-discard lattice.add(mintRecv)
+discard lattice.add(nil, mintRecv)
 
 #Handle Sends.
 events.on(
@@ -73,6 +73,7 @@ events.on(
     proc (send: Send): bool {.raises: [Exception].} =
         #Add the Send.
         if lattice.add(
+            nil,
             send
         ):
             result = true
@@ -87,6 +88,7 @@ events.on(
     proc (recv: Receive): bool {.raises: [Exception].} =
         #Add the Receive.
         if lattice.add(
+            nil,
             recv
         ):
             result = true

@@ -4,6 +4,9 @@ include MainConstants
 var
     events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.
 
+    #Merit.
+    merit: Merit                             #Blockchain and state.
+
     #Lattice.
     lattice: Lattice                         #Lattice.
     genesisSend: Index                       #Genesis Send. Puts the first coins on the network.

@@ -1,4 +1,4 @@
-include MainGlobals
+include MainMerit
 
 #Create the Lattice.
 lattice = newLattice(
@@ -21,6 +21,7 @@ events.on(
 
         #Add the Send.
         if lattice.add(
+            merit,
             send
         ):
             echo "Successfully added the Send."
@@ -40,6 +41,7 @@ events.on(
 
         #Add the Receive.
         if lattice.add(
+            merit,
             recv
         ):
             echo "Successfully added the Receive."
@@ -59,6 +61,7 @@ events.on(
 
         #Add the Data.
         if lattice.add(
+            merit,
             data
         ):
             echo "Successfully added the Data."
@@ -78,6 +81,7 @@ events.on(
 
         #Add the Verification.
         if lattice.add(
+            merit,
             verif
         ):
             echo "Successfully added the Verification."

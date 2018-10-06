@@ -4,6 +4,9 @@ import ../../lib/Errors
 #BN lib.
 import BN
 
+#Merit lib.
+import ../Merit/Merit
+
 #Index object.
 import objects/IndexObj
 #Export the Index object.
@@ -37,6 +40,7 @@ import finals
 #Add a Node to the Lattice.
 proc add*(
     lattice: Lattice,
+    merit: Merit,
     node: Node,
     mintOverride: bool = false
 ): bool {.raises: [ValueError, SodiumError].} =
@@ -99,7 +103,7 @@ proc add*(
 
             #If that worked, add the Verification in the Lattice's tracker.
             if result:
-                lattice.addVerification(verif.verified, verif.sender)
+                lattice.addVerification(merit, verif.verifies, verif.sender)
 
         of NodeType.MeritRemoval:
             var mr: MeritRemoval = cast[MeritRemoval](node)
@@ -151,7 +155,7 @@ proc mint*(
     send.sender = "minter"
 
     #Add it to the Lattice.
-    if not lattice.add(send, true):
+    if not lattice.add(nil, send, true):
         raise newException(MintError, "Couldn't add the Mint Node to the Lattice.")
 
     #Return the Index.

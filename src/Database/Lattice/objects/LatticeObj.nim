@@ -8,6 +8,9 @@ import ../../../lib/Base
 #Hash lib.
 import ../../../lib/Hash
 
+#Merit lib.
+import ../../Merit/Merit
+
 #Index object.
 import IndexObj
 
@@ -68,11 +71,12 @@ func addHash*(
     lattice.lookup[$hash] = index
 
 #Add a verification to the verifications table.
-func addVerification*(
+proc addVerification*(
     lattice: Lattice,
+    merit: Merit,
     hashArg: Hash[512],
     address: string
-) {.raises: [KeyError].} =
+) {.raises: [KeyError, ValueError].} =
     #Turn the hash into a string.
     var hash: string = $hashArg
 
@@ -82,6 +86,20 @@ func addVerification*(
 
     #Add the verification.
     lattice.verifications[hash].add(address)
+
+    #Calculate the weight.
+    var weight: BN = newBN()
+    for i in lattice.verifications[hash]:
+        weight += merit.state.getBalance(i)
+    #If the Node has at least 50.1% of the weight...
+    if (
+        (weight * newBN(100)) /
+        newBN(merit.state.live)
+    ) >= newBN(501):
+        #Get the Index of the Node.
+        var index: Index = lattice.lookup[hash]
+        lattice.accounts[index.address][index.nonce.toInt()].verified = true
+    echo hash & " was verified."
 
 #Creates a new Account on the Lattice.
 func addAccount*(

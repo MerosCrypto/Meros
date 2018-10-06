@@ -5,6 +5,8 @@ include MainImports
 #This is because they're for libraries which can't have their constants defined in a foreign file.
 const
     #Merit constants.
+    GENESIS: string =            #Genesis string.
+        "EMB_MAINNET"
     BLOCK_DIFFICULTY: string =   #Blockchain difficulty at the start.
         "D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0"
     BLOCK_TIME: int = 600        #Block time in seconds.
