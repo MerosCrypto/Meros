@@ -31,3 +31,5 @@ finalsd:
             hash* {.final.}: Hash[512]
             #Signature.
             signature* {.final.}: string
+            #Verified.
+            verified*: bool

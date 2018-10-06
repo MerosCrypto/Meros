@@ -19,7 +19,7 @@ import SerializeCommon
 proc serialize*(verif: Verification): string {.raises: [ValueError].} =
     result =
         !verif.nonce.toString(256) &
-        !verif.verified.toBN().toString(256)
+        !verif.verifies.toBN().toString(256)
 
     if verif.signature.len != 0:
         result =

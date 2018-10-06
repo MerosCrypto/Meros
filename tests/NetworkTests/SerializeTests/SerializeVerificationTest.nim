@@ -56,6 +56,6 @@ for i in 1 .. 20:
     assert(verif.signature == verifParsed.signature)
 
     #Test the Verification properties.
-    assert(verif.verified == verifParsed.verified)
+    assert(verif.verifies == verifParsed.verifies)
 
 echo "Finished the Network/Serialize/Verification test."

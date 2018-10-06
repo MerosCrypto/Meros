@@ -13,13 +13,13 @@ import finals
 finalsd:
     type Verification* = ref object of Node
         #Node Hash.
-        verified* {.final.}: Hash[512]
+        verifies* {.final.}: Hash[512]
 
 #New Verification object.
 func newVerificationObj*(
-    verified: Hash[512]
+    verifies: Hash[512]
 ): Verification {.raises: [FinalAttributeError].} =
     result = Verification(
-        verified: verified
+        verifies: verifies
     )
     result.descendant = NodeType.Verification
