@@ -4,9 +4,6 @@
 import BN
 import ../../../src/lib/Base
 
-#Random lib.
-import ../../../src/lib/RandomWrapper
-
 #Hash lib.
 import ../../../src/lib/Hash
 
@@ -20,6 +17,9 @@ import ../../../src/Database/Lattice/MeritRemoval
 #Serialize lib.
 import ../../../src/Network/Serialize/SerializeMeritRemoval
 import ../../../src/Network/Serialize/ParseMeritRemoval
+
+#Random standard lib.
+import random
 
 #String utils standard lib.
 import strutils
@@ -35,8 +35,12 @@ for i in 1 .. 20:
         first: Hash[512]
         second: Hash[512]
     #Set the hashes with random values.
-    random(addr first.data[0], 64)
-    random(addr second.data[0], 64)
+    for i in 0 ..< 64:
+        first.data[i] = uint8(rand(255))
+    #Set the hashes with random values.
+    for i in 0 ..< 64:
+        second.data[i] = uint8(rand(255))
+
     #MeritRemoval.
     var mr: MeritRemoval = newMeritRemoval(
         first,

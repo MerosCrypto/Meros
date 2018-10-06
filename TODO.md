@@ -11,7 +11,9 @@ Core:
 - Difficulty Vote node.
 - Fork resolution for blocks of different types.
 
-- Move Verifications out of the Lattice and onto the blockchain with BLS.
+- Have Verifications take a Ed25519 sig and a BLS sig.
+- Move Verifications off of the Lattice into memory.
+- Finalize Verifications on the blockchain with BLS.
 
 - Filesystem.
 - Finish tests.
@@ -21,7 +23,7 @@ Features:
 - Have Merit Holders indexable by the order they got Merit in.
 
 Improvements:
-- Use `func` wherever possible.
+- Make more things `func`.
 
 - Tell the GUI thread to close.
 
@@ -40,7 +42,7 @@ Behavior Changes:
 Bug fixes:
 - Receives from "minter" can't be broadcasted across the network.
 - Remove GMP's memory leak.
-- Fix trailing zeroes in Base32 seqs. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
+- Fix trailing zeroes in Base32 seqs. This is due to right padding the result instead of left padding them. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
 
 Documentation:
 - Use Documentation Comments.
