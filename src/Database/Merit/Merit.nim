@@ -1,8 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
-#BN lib.
+#Numerical libs.
 import BN
+import ../../lib/Base
 
 #Merkle lib.
 import ../../lib/Merkle
@@ -31,7 +32,7 @@ proc newMerit*(
     live: int
 ): Merit {.raises: [ValueError, ArgonError].} =
     result = Merit(
-        blockchain: newBlockchain(genesis, blockTime, blocksPerMonth, newBN(startDifficulty)),
+        blockchain: newBlockchain(genesis, blockTime, blocksPerMonth, startDifficulty.toBN(16)),
         state: newState(live)
     )
 
