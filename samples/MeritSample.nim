@@ -2,8 +2,8 @@
 import BN
 import ../src/lib/Base
 
-#Time lib.
-import ../src/lib/Time
+#Util lib.
+import ../src/lib/Util
 
 #Hash lib.
 import ../src/lib/Hash

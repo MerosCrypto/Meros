@@ -1,11 +1,11 @@
 #Serialize Block Tests.
 
+#Util lib.
+import ../../../src/lib/Util
+
 #Numerical libs.
 import BN
 import ../../../src/lib/Base
-
-#Time lib.
-import ../../../src/lib/Time
 
 #Hash lib.
 import ../../../src/lib/Hash

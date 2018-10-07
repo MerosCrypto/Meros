@@ -1,9 +1,17 @@
-#Left-pads a string, with a certain value, until the string is a certain length.
+#Times standard lib.
+import times
+
+#Gets the epoch and returns it as an int.
+proc getTime*(): int {.raises: [].} =
+    int(times.getTime().toUnix())
+
+#Left-pads data, with a char or string, until the data is a certain length.
 func pad*(
     data: string,
     len: int,
-    prefix: string | char = "0"
+    prefix: char | string = "0"
 ): string {.raises: [].} =
     result = data
+
     while result.len < len:
         result = prefix & result

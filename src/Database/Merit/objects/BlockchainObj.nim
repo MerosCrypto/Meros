@@ -1,12 +1,12 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Util lib.
+import ../../../lib/Util
+
 #Numerical libs.
 import BN
 import ../../../lib/Base
-
-#Time lib.
-import ../../../lib/Time
 
 #Block and Difficulty objects.
 import BlockObj
