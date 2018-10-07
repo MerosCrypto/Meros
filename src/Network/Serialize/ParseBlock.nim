@@ -60,7 +60,7 @@ proc parseBlock*(
         #Nonce.
         nonce: BN = blockSeq[0].toBN(256)
         #Last block hash.
-        last: ArgonHash = blockSeq[1].pad(64, $char(0)).toArgonHash()
+        last: ArgonHash = blockSeq[1].pad(64, char(0)).toArgonHash()
         #Time.
         time: int = blockSeq[2].toBN(256).toInt()
         #Total Validations.
@@ -86,7 +86,7 @@ proc parseBlock*(
         #Merkle Tree.
         tree: MerkleTree
         #Public Key of the Publisher.
-        publisher: string = blockSeq[5 + (validations.len * 3)].pad(32, $char(0))
+        publisher: string = blockSeq[5 + (validations.len * 3)].pad(32, char(0))
         #Proof.
         proof: string = blockSeq[6 + (validations.len * 3)]
         #Miners length string.
@@ -106,7 +106,7 @@ proc parseBlock*(
             ]
         ]()
         #Signature.
-        signature: string = blockSeq[blockSeq.len - 1].pad(64, $char(0))
+        signature: string = blockSeq[blockSeq.len - 1].pad(64, char(0))
 
     #Make sure less than 100 miners were included.
     if blockSeq.len > (8 + (validations.len * 3) + 200):
@@ -140,7 +140,7 @@ proc parseBlock*(
     #Create the MerkleTree object.
     var validator: string
     for i in 0 ..< validations.len:
-        validator = newAddress(validations[i].validator.pad(32, $char(0)))
+        validator = newAddress(validations[i].validator.pad(32, char(0)))
         for v in validations[i].start .. validations[i].last:
             hashes.add(
                 lattice[

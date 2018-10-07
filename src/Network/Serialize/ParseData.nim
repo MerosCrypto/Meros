@@ -41,7 +41,7 @@ proc parseData*(
         #Public Key | Nonce | Data | Proof | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(dataSeq[0].pad(32, $char(0)))
+        sender: PublicKey = newPublicKey(dataSeq[0].pad(32, char(0)))
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
@@ -51,7 +51,7 @@ proc parseData*(
         #Get the proof.
         proof: string = dataSeq[3]
         #Get the signature.
-        signature: string = dataSeq[4].pad(64, $char(0))
+        signature: string = dataSeq[4].pad(64, char(0))
 
     #Create the Data.
     result = newDataObj(

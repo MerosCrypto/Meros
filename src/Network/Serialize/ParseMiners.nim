@@ -28,7 +28,7 @@ func parseMiners*(
     for i in countup(1, minersSeq.len - 1, 2):
         result.add(
             (
-                miner: newAddress(minersSeq[i].pad(32, $char(0))),
+                miner: newAddress(minersSeq[i].pad(32, char(0))),
                 amount: int(minersSeq[i + 1][0])
             )
         )

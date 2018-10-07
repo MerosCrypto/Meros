@@ -52,13 +52,13 @@ var
     sends: seq[Send] = @[]                               #Send objects.
     recvs: seq[Receive] = @[]                            #Receive objects.
     sendHeader: string =                                 #Send header.
-        $(char(0)) &
-        $(char(0)) &
-        $(char(0))
+        char(0) &
+        char(0) &
+        char(0)
     recvHeader: string =                                 #Receive header.
-        $(char(0)) &
-        $(char(0)) &
-        $(char(1))
+        char(0) &
+        char(0) &
+        char(1)
     serializedSends: seq[string] = newSeq[string](total) #Serialized sends.
     serializedRecvs: seq[string] = newSeq[string](total) #Serialized Receives.
     client: AsyncSocket = newAsyncSocket()               #Client socket.
@@ -145,9 +145,9 @@ proc spam() {.async, raises: [Exception].} =
 
         #Serialize them, and turn them into network encoded data.
         serialized = sends[i].serialize()
-        serializedSends[i] = sendHeader & $char(serialized.len) & serialized
+        serializedSends[i] = sendHeader & char(serialized.len) & serialized
         serialized = recvs[i].serialize()
-        serializedRecvs[i] = recvHeader & $char(serialized.len) & serialized
+        serializedRecvs[i] = recvHeader & char(serialized.len) & serialized
 
     #Print the time to generate the pairs.
     echo "Generated " & $total & " Send/Receive pairs in " & $(cpuTime() - start) & " seconds."

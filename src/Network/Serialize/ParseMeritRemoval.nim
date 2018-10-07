@@ -41,17 +41,17 @@ proc parseMeritRemoval*(
         #Public Key | Nonce | First | Second | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(dataSeq[0].pad(32, $char(0)))
+        sender: PublicKey = newPublicKey(dataSeq[0].pad(32, char(0)))
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
         nonce: BN = dataSeq[1].toBN(256)
         #Get the hash of the first node.
-        first: Hash[512] = dataSeq[2].pad(64, $char(0)).toHash(512)
+        first: Hash[512] = dataSeq[2].pad(64, char(0)).toHash(512)
         #Get the hash of the second node.
-        second: Hash[512] = dataSeq[3].pad(64, $char(0)).toHash(512)
+        second: Hash[512] = dataSeq[3].pad(64, char(0)).toHash(512)
         #Get the signature.
-        signature: string = dataSeq[4].pad(64, $char(0))
+        signature: string = dataSeq[4].pad(64, char(0))
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(

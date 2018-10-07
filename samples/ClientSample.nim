@@ -35,13 +35,13 @@ var
     recv: Receive                          #Receive object.
 
     sendHeader: string =                   #Send header.
-        $(char(0)) &
-        $(char(0)) &
-        $(char(0))
+        char(0) &
+        char(0) &
+        char(0)
     recvHeader: string =                   #Receive header.
-        $(char(0)) &
-        $(char(0)) &
-        $(char(1))
+        char(0) &
+        char(0) &
+        char(1)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.

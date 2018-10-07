@@ -41,7 +41,7 @@ proc parseVerification*(
         #Public Key | Nonce | Send Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(4)
         #Get the Verifier's Public Key.
-        verifier: PublicKey = newPublicKey(verifSeq[0].pad(32, $char(0)))
+        verifier: PublicKey = newPublicKey(verifSeq[0].pad(32, char(0)))
         #Get the Verifier's address based off the Verifier's Public Key.
         address: string = newAddress(verifier)
         #Get the nonce.
@@ -49,7 +49,7 @@ proc parseVerification*(
         #Get the send hash.
         send: string = verifSeq[2].toHex().pad(128)
         #Get the signature.
-        signature: string = verifSeq[3].pad(64, $char(0))
+        signature: string = verifSeq[3].pad(64, char(0))
 
     #Create the Verification.
     result = newVerificationObj(

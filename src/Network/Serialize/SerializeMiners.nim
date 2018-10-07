@@ -23,4 +23,4 @@ proc serialize*(
     for miner in 0 ..< miners.len:
         result &=
             !Address.toBN(miners[miner].miner).toString(256) &
-            $char(1) & $char(miners[miner].amount)
+            char(1) & char(miners[miner].amount)
