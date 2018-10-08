@@ -30,17 +30,17 @@ proc main() =
         #Gensis var.
         genesis: string = "mainnet"
         #Merit var.
-        merit: Merit = newMerit(genesis, 10, 259200, "cc".repeat(64), 50)
+        merit: Merit = newMerit(genesis, 10, "cc".repeat(64), 50)
         #Block var; defined here to stop a memory leak.
         newBlock: Block
         #Last block hash, nonce, time, and proof vars.
         last: ArgonHash = merit.blockchain.blocks[0].argon
-        nonce: BN = newBN(1)
-        time: int
-        proof: BN = newBN()
-        miners: seq[tuple[miner: string, amount: int]] = @[(
+        nonce: int = 1
+        time: uint
+        proof: uint = 0
+        miners: seq[tuple[miner: string, amount: uint]] = @[(
             miner: wallet.address,
-            amount: 100
+            amount: uint(100)
         )]
 
     echo "First balance: " & $merit.state.getBalance(wallet.address)
@@ -77,7 +77,7 @@ proc main() =
 
         #Finally, update the last hash, increase the nonce, and reset the proof.
         last = newBlock.argon
-        nonce = nonce + BNNums.ONE
-        proof = newBN()
+        inc(nonce)
+        proof = 0
 
 main()

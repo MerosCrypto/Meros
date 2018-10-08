@@ -13,11 +13,11 @@ import strutils
 
 #Serialization function.
 proc serialize*(
-    miners: seq[tuple[miner: string, amount: int]],
-    nonce: BN
+    miners: seq[tuple[miner: string, amount: uint]],
+    nonce: int
 ): string {.raises: [ValueError].} =
     #Create the result.
-    result = !nonce.toString(256)
+    result = !newBN(nonce).toString(256)
 
     #Add each miner.
     for miner in 0 ..< miners.len:

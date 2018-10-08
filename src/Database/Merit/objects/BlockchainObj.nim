@@ -23,11 +23,9 @@ finalsd:
     type Blockchain* = ref object of RootObj
         #Block time.
         blockTime* {.final.}: int
-        #Blocks per month. Helper piece of data.
-        blocksPerMonth* {.final.}: int
 
-        #Height. BN for compatibility.
-        height*: BN
+        #Height.
+        height*: int
         #seq of all the blocks.
         blocks*: seq[Block]
         #seq of all the difficulties.
@@ -37,27 +35,25 @@ finalsd:
 proc newBlockchainObj*(
     genesis: string,
     blockTime: int,
-    blocksPerMonth: int,
     startDifficulty: BN
 ): Blockchain {.raises: [ValueError, ArgonError].} =
     Blockchain(
         blockTime: blockTime,
-        blocksPerMonth: blocksPerMonth,
 
-        height: newBN(),
+        height: 0,
         blocks: @[
             newStartBlock(genesis)
         ],
         difficulties: @[
             newDifficultyObj(
-                BNNums.ZERO,
-                newBN(1),
+                0,
+                1,
                 startDifficulty
             )
         ]
     )
 
-proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
+func add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
     inc(blockchain.height)
     blockchain.blocks.add(newBlock)
 

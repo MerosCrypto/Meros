@@ -26,7 +26,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
     #Create the result.
     result =
         #Nonce.
-        !blockArg.nonce.toString(256) &
+        !newBN(blockArg.nonce).toString(256) &
         #Last block.
         !blockArg.last.toBN().toString(256) &
         #Time.
@@ -52,10 +52,10 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
 
     if blockArg.signature.len != 0:
         #Proof.
-        result &= !blockArg.proof.toString(256)
+        result &= !newBN(blockArg.proof).toString(256)
 
         #Serialize the miners.
-        var minersSerialized = blockArg.miners.serialize(blockArg.nonce)
+        var minersSerialized: string = blockArg.miners.serialize(blockArg.nonce)
         result &=
             #Add the miners.
             !minersSerialized &

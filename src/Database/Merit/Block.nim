@@ -36,13 +36,13 @@ import strutils
 #New Block function. Creates a new block. Raises an error if there's an issue.
 proc newBlock*(
     last: ArgonHash,
-    nonce: BN,
-    time: int,
-    validations: seq[tuple[validator: string, start: int, last: int]],
+    nonce: int,
+    time: uint,
+    validations: seq[tuple[validator: string, start: uint, last: uint]],
     merkle: MerkleTree,
     publisher: string,
-    proof: BN,
-    miners: seq[tuple[miner: string, amount: int]],
+    proof: uint,
+    miners: seq[tuple[miner: string, amount: uint]],
     signature: string
 ): Block {.raises: [
     ValueError,
@@ -61,14 +61,14 @@ proc newBlock*(
             raise newException(ValueError, "Invalid validation last.")
 
     #Miners.
-    var total: int = 0
+    var total: uint = 0
     if (miners.len < 1) or (100 < miners.len):
         raise newException(ValueError, "Invalid miners quantity.")
     for miner in miners:
         total += miner.amount
         if not Address.verify(miner.miner):
             raise newException(ValueError, "Invalid miner address.")
-        if (miner.amount < 1) or (100 < miner.amount):
+        if (miner.amount < 1) or (uint(100) < miner.amount):
             raise newException(ValueError, "Invalid miner amount.")
     if total != 100:
         raise newException(ValueError, "Invalid total miner amount.")
@@ -88,7 +88,7 @@ proc newBlock*(
     #Set the proof.
     result.proof = proof
     #Calculate the Argon hash.
-    result.argon = Argon(result.hash.toString(), result.proof.toString(256))
+    result.argon = Argon(result.hash.toString(), newBN(result.proof).toString(256))
 
     #Set the miners.
     result.miners = miners

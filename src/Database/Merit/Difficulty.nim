@@ -33,7 +33,7 @@ func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
 proc calculateNextDifficulty*(
     blocks: seq[Block],
     difficulties: seq[Difficulty],
-    targetTime: int,
+    targetTime: uint,
     blocksPerPeriod: int
 ): Difficulty {.raises: [].} =
     #If it was the genesis block, keep the same difficulty.
@@ -45,12 +45,12 @@ proc calculateNextDifficulty*(
         last: Difficulty = difficulties[difficulties.len-1]
         #New difficulty.
         difficulty: BN = last.difficulty
-        #Start time of the difficulty (the block before this difficulty).
-        start: int = blocks[blocks.len - (blocksPerPeriod + 1)].time
-        #End time of the difficulty (the last block).
-        endTime: int = blocks[blocks.len - 1].time
+        #Start block of the difficulty.
+        start: uint = blocks[blocks.len - int(blocksPerPeriod + 1)].time
+        #End block of the difficulty.
+        endTime: uint = blocks[blocks.len - 1].time
         #Period time.
-        actualTime: int = endTime - start
+        actualTime: uint = endTime - start
         #Possible values.
         possible: BN = MAX - last.difficulty
 
@@ -98,6 +98,6 @@ proc calculateNextDifficulty*(
     #Create the new difficulty.
     result = newDifficultyObj(
         last.endBlock,
-        last.endBlock + newBN(blocksPerPeriod),
+        last.endBlock + blocksPerPeriod,
         difficulty
     )

@@ -10,7 +10,6 @@ const
     BLOCK_DIFFICULTY: string =   #Blockchain difficulty at the start.
         "D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0"
     BLOCK_TIME: int = 600        #Block time in seconds.
-    BLOCKS_PER_MONTH: int = 4320 #Blocks per month. This must match up with BLOCK_TIME.
     LIVE_MERIT: int = 50000      #Blocks before Merit dies.
 
     #Lattice constants.

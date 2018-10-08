@@ -28,7 +28,7 @@ for i in 1 .. 10:
         miners: seq[
             tuple[
                 miner: string,
-                amount: int
+                amount: uint
             ]
         ] = @[]
         #Quantity.
@@ -51,7 +51,7 @@ for i in 1 .. 10:
         #Generate a Wallet for them.
         wallets.add(newWallet())
         #Add the tuple/set their public key.
-        miners.add((miner: wallets[i].address, amount: 0))
+        miners.add((miner: wallets[i].address, amount: uint(0)))
 
         #Set the amount to pay the miner.
         amount = rand(remaining - 1) + 1
@@ -63,13 +63,13 @@ for i in 1 .. 10:
                 amount = remaining
 
         #Set the miner's amount.
-        miners[i].amount = amount
+        miners[i].amount = uint(amount)
         #Subtract the amount from remaining.
         remaining -= amount
 
     #Randomly order the miners.
     miners.sort(
-        proc (x: tuple[miner: string, amount: int], y: tuple[miner: string, amount: int]): int =
+        proc (x: tuple[miner: string, amount: uint], y: tuple[miner: string, amount: uint]): int =
             rand(1000)
     )
 
@@ -77,12 +77,12 @@ for i in 1 .. 10:
     var minersParsed: seq[
         tuple[
             miner: string,
-            amount: int
+            amount: uint
         ]
-    ] = miners.serialize(newBN()).parseMiners()
+    ] = miners.serialize(0).parseMiners()
 
     #Test the serialized versions.
-    assert(miners.serialize(newBN()) == minersParsed.serialize(newBN()))
+    assert(miners.serialize(0) == minersParsed.serialize(0))
 
     #Test the for equality.
     assert(miners == minersParsed)

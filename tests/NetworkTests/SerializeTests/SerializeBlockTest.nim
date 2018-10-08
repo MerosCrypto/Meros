@@ -34,12 +34,12 @@ var
     newBlock: Block
     #Last block hash, nonce, time, and proof vars.
     last: ArgonHash = Argon(SHA512("mainnet").toString(), "00")
-    nonce: BN = newBN(1)
-    time: int
-    proof: BN = newBN(1)
-    miners: seq[tuple[miner: string, amount: int]] = @[(
+    nonce: int = 1
+    time: uint
+    proof: uint = 1
+    miners: seq[tuple[miner: string, amount: uint]] = @[(
         miner: wallet.address,
-        amount: 100
+        amount: uint(100)
     )]
     lattice: Lattice = newLattice("", "")
 
@@ -67,8 +67,8 @@ for i in 1 .. 10:
 
     #Finally, update the last hash, increase the nonce, and reset the proof.
     last = newBlock.argon
-    nonce = nonce + BNNums.ONE
-    proof = newBN(i)
+    nonce = nonce + 1
+    proof = uint(i)
 
     #Serialize it and parse it back.
     var blockParsed: Block = newBlock.serialize().parseBlock(lattice)

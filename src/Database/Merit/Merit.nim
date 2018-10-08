@@ -27,17 +27,16 @@ type Merit* = ref object of RootObj
 proc newMerit*(
     genesis: string,
     blockTime: int,
-    blocksPerMonth: int,
     startDifficulty: string,
     live: int
 ): Merit {.raises: [ValueError, ArgonError].} =
     result = Merit(
-        blockchain: newBlockchain(genesis, blockTime, blocksPerMonth, startDifficulty.toBN(16)),
+        blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
         state: newState(live)
     )
 
 #Add a block.
-proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [ValueError].} =
+proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [KeyError, ValueError].} =
     result = true
 
     #Add the block to the Blockchain.

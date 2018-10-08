@@ -17,7 +17,7 @@ import strutils
 #Parse function.
 func parseMiners*(
     minersStr: string
-): seq[tuple[miner: string, amount: int]] {.raises: [ValueError].} =
+): seq[tuple[miner: string, amount: uint]] {.raises: [ValueError].} =
     #Init the result.
     result = @[]
 
@@ -29,6 +29,6 @@ func parseMiners*(
         result.add(
             (
                 miner: newAddress(minersSeq[i].pad(32, char(0))),
-                amount: int(minersSeq[i + 1][0])
+                amount: uint(minersSeq[i + 1][0])
             )
         )

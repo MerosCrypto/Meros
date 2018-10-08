@@ -88,14 +88,14 @@ proc addVerification*(
     lattice.verifications[hash].add(address)
 
     #Calculate the weight.
-    var weight: BN = newBN()
+    var weight: uint = 0
     for i in lattice.verifications[hash]:
         weight += merit.state.getBalance(i)
     #If the Node has at least 50.1% of the weight...
     if (
-        (weight * newBN(100)) /
-        newBN(merit.state.live)
-    ) >= newBN(501):
+        (weight * 100) div
+        merit.state.live
+    ) >= uint(501):
         #Get the Index of the Node.
         var index: Index = lattice.lookup[hash]
         lattice.accounts[index.address][index.nonce.toInt()].verified = true

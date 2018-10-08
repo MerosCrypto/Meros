@@ -58,25 +58,25 @@ proc parseBlock*(
         #Signature
         blockSeq: seq[string] = blockStr.deserialize(13)
         #Nonce.
-        nonce: BN = blockSeq[0].toBN(256)
+        nonce: int = blockSeq[0].toBN(256).toInt()
         #Last block hash.
         last: ArgonHash = blockSeq[1].pad(64, char(0)).toArgonHash()
         #Time.
-        time: int = blockSeq[2].toBN(256).toInt()
+        time: uint = uint(blockSeq[2].toBN(256).toInt())
         #Total Validations.
         totalValidations: int = 0
         #Validations in the block.
         validations: seq[
             tuple[
                 validator: string,
-                start: int,
-                last: int
+                start: uint,
+                last: uint
             ]
         ] = newSeq[
             tuple[
                 validator: string,
-                start: int,
-                last: int
+                start: uint,
+                last: uint
             ]
         ](blockSeq[3].toBN(256).toInt())
         #Hashes of the validations.
@@ -97,12 +97,12 @@ proc parseBlock*(
         miners: seq[
             tuple[
                 miner: string,
-                amount: int
+                amount: uint
             ]
         ] = newSeq[
             tuple[
                 miner: string,
-                amount: int
+                amount: uint
             ]
         ]()
         #Signature.
@@ -124,8 +124,8 @@ proc parseBlock*(
 
         validations[int((i - 4) / 3)] = (
             validator: blockSeq[i].toHex(),
-            start: blockSeq[i + 1].toBN(256).toInt(),
-            last: blockSeq[i + 2].toBN(256).toInt()
+            start: uint(blockSeq[i + 1].toBN(256).toInt()),
+            last: uint(blockSeq[i + 2].toBN(256).toInt())
         )
 
     #Grab the miners out of the block.
@@ -133,7 +133,7 @@ proc parseBlock*(
         #End is the string end minus the signature length minus the length of the string that says the miners length.
         minersEnd: int = blockStr.len - 66 - (!minersLenStr).len
         minersStart: int = minersEnd - minersLen - 1
-    var minersStr = !nonce.toString(256) & blockStr[minersStart .. minersEnd]
+    var minersStr = !(newBN(nonce).toString(256)) & blockStr[minersStart .. minersEnd]
     #Parse the miners.
     miners = minersStr.parseMiners()
 
@@ -157,7 +157,7 @@ proc parseBlock*(
     #Set the hash.
     result.hash = SHA512(result.serialize())
     #Set the proof.
-    result.proof = proof.toBN(256)
+    result.proof = uint(proof.toBN(256).toInt())
     #Set the Argon hash.
     result.argon = Argon(result.hash.toString(), proof)
     #Set the miners.

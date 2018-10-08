@@ -1,6 +1,3 @@
-#BigNumber lib.
-import BN as BNLib
-
 #Block and Blockchain libs.
 import Block
 import Blockchain
@@ -8,67 +5,71 @@ import Blockchain
 #Tables standard lib.
 import tables
 
-#State object. It uses ref BN to prevent a compiler crash.
-type State* = ref object of RootObj
-    #Blocks until Merit is dead.
-    deadBlocks: int
-    #Live Merit.
-    live*: int
-    #Address -> Merit
-    data: ref Table[string, ref BN]
+#Finals lib.
+import finals
+
+#State object.
+finalsd:
+    type State* = ref object of RootObj
+        #Blocks until Merit is dead.
+        deadBlocks* {.final.}: int
+        #Live Merit.
+        live*: uint
+        #Address -> Merit
+        data {.final.}: ref Table[string, uint]
 
 #Constructor.
 func newState*(deadBlocks: int): State {.raises: [].} =
     State(
         deadBlocks: deadBlocks,
         live: 0,
-        data: newTable[string, ref BN]()
+        data: newTable[string, uint]()
     )
 
 #Get the Merit of an account.
-proc getBalance*(state: State, account: string): BN {.raises: [ValueError].} =
+func getBalance*(state: State, account: string): uint {.raises: [KeyError].} =
     #Set the result to 0 (in case there isn't an entry in the table).
-    result = BNNums.Zero
+    result = 0
 
     #If there is an entry, set the result to it.
     if state.data.hasKey(account):
-        result = state.data[account][]
+        result = state.data[account]
 
 #Process a block.
-proc processBlock*(
+func processBlock*(
     state: State,
     blockchain: Blockchain,
     newBlock: Block
-) {.raises: [ValueError].} =
+) {.raises: [KeyError].} =
     #Grab the miners.
-    var miners: seq[tuple[miner: string, amount: int]] = newBlock.miners
+    var miners: seq[tuple[miner: string, amount: uint]] = newBlock.miners
 
     #For each miner, add their Merit to the State.
     for miner in miners:
-        state.data[miner.miner] = (state.getBalance(miner.miner) + newBN(miner.amount)).toRef()
+        state.data[miner.miner] = state.getBalance(miner.miner) + miner.amount
         state.live += miner.amount
 
     #If the Blockchain's height is over 50k, meaning there is a block to remove from the state...
-    if blockchain.height > newBN(state.deadBlocks):
+    if blockchain.height > state.deadBlocks:
         #Get the block that should be removed.
         miners = blockchain.blocks[^(state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
         for miner in miners:
-            state.data[miner.miner] = (state.getBalance(miner.miner) - newBN(miner.amount)).toRef()
+            state.data[miner.miner] = state.getBalance(miner.miner) - miner.amount
             state.live -= miner.amount
 
 #Process every block in a blockchain.
-proc processBlockchain*(
+func processBlockchain*(
     state: State,
     blockchain: Blockchain
-) {.raises: [ValueError].} =
+) {.raises: [KeyError].} =
     for i in blockchain.blocks:
         state.processBlock(blockchain, i)
 
 #Constructor. It's at the bottom so we can call processBlockchain.
-proc newState*(
+func newState*(
     blockchain: Blockchain,
     deadBlocks: int
-): State {.raises: [ValueError].} =
+): State {.raises: [KeyError].} =
     result = newState(deadBlocks)
     result.processBlockchain(blockchain)

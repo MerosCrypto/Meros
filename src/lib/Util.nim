@@ -2,8 +2,8 @@
 import times
 
 #Gets the epoch and returns it as an int.
-proc getTime*(): int {.raises: [].} =
-    int(times.getTime().toUnix())
+proc getTime*(): uint {.raises: [].} =
+    uint(times.getTime().toUnix())
 
 #Left-pads data, with a char or string, until the data is a certain length.
 func pad*(

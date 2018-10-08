@@ -23,11 +23,11 @@ finalsd:
         #Argon hash of the last block.
         last* {.final.}: ArgonHash
         #Nonce, AKA index.
-        nonce* {.final.}: BN
+        nonce* {.final.}: int
         #Timestamp.
-        time*: int
+        time*: uint
         #Validations.
-        validations*: seq[tuple[validator: string, start: int, last: int]]
+        validations*: seq[tuple[validator: string, start: uint, last: uint]]
         #Merkle tree.
         merkle*: MerkleTree
         #Publisher address.
@@ -36,21 +36,21 @@ finalsd:
         #Hash.
         hash*: SHA512Hash
         #Random hex number to make sure the Argon of the hash is over the difficulty.
-        proof*: BN
+        proof*: uint
         #Argon2d hash with the SHA512 hash as the data and proof as the salt.
         argon*: ArgonHash
 
         #Who to attribute the Merit to (amount ranges from 0 to 1000).
-        miners* {.final.}: seq[tuple[miner: string, amount: int]]
+        miners* {.final.}: seq[tuple[miner: string, amount: uint]]
         minersHash* {.final.}: SHA512Hash
         signature* {.final.}: string
 
 #Constructor.
 func newBlockObj*(
     last: ArgonHash,
-    nonce: BN,
-    time: int,
-    validations: seq[tuple[validator: string, start: int, last: int]],
+    nonce: int,
+    time: uint,
+    validations: seq[tuple[validator: string, start: uint, last: uint]],
     merkle: MerkleTree,
     publisher: string
 ): Block {.raises: [].} =
@@ -68,7 +68,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].}
     #Ceate the block.
     result = newBlockObj(
         Argon("", ""),
-        newBN(),
+        0,
         getTime(),
         @[],
         newMerkleTree(@[]),
@@ -77,9 +77,9 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].}
     #Calculate the hash.
     result.hash = SHA512(genesis)
     #Set the proof.
-    result.proof = newBN()
+    result.proof = 0
     #Calculate the Argon hash.
-    result.argon = Argon(result.hash.toString(), result.proof.toString(256))
+    result.argon = Argon(result.hash.toString(), $char(result.proof))
     #Set the miners.
     result.miners = @[]
     #Calculate the miners hash.
