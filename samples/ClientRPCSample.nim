@@ -15,8 +15,10 @@ toUgly(
     data,
     %* {
         "module": "wallet",
-        "method": "get",
-        "args": []
+        "method": "set",
+        "args": [
+            "7A3E64ADDB86DA2F3D1BEF18F6D2C80BA5C5EF9673DE8A0F5787DF8E6DD237427DE33230FC0FC66D1F5EF63BA5BD7536817873257928F9ADC08B532A5CCE5575"
+        ]
     }
 )
 
