@@ -10,9 +10,6 @@ import ../../../src/lib/Base
 #Hash lib.
 import ../../../src/lib/Hash
 
-#Merkle lib.
-import ../../../src/lib/Merkle
-
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
@@ -59,13 +56,13 @@ for i in 1 .. 10:
         last,
         nonce,
         time,
-        @[],
-        newMerkleTree(@[]),
+        newVerificationsObj(),
         $(wallet.publicKey),
         proof,
         miners,
         wallet.sign(SHA512(miners.serialize(nonce)).toString())
     )
+    newBlock.verifications.bls = ""
 
     #Finally, update the last hash, increase the nonce, and reset the proof.
     last = newBlock.argon
@@ -83,8 +80,10 @@ for i in 1 .. 10:
     assert(newBlock.nonce == blockParsed.nonce)
     assert(newBlock.time == blockParsed.time)
 
-    assert(newBlock.verifications == blockParsed.verifications)
-    assert(newBlock.merkle.hash == blockParsed.merkle.hash)
+    assert(newBlock.verifications.verifications.len == blockParsed.verifications.verifications.len)
+    for i in 0 ..< newBlock.verifications.verifications.len:
+        assert(newBlock.verifications.verifications[i].sender == blockParsed.verifications.verifications[i].sender)
+        assert(newBlock.verifications.verifications[i].hash == blockParsed.verifications.verifications[i].hash)
     assert(newBlock.publisher == blockParsed.publisher)
 
     assert(newBlock.hash == blockParsed.hash)

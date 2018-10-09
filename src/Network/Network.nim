@@ -1,8 +1,8 @@
 #Errors lib.
 import ../lib/Errors
 
-#Verification libs.
-import ../Database/Merit/Verification
+#Verification lib.
+import ../Database/Merit/Verifications
 import Serialize/ParseVerification
 
 #Send libs.

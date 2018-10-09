@@ -15,7 +15,7 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 
 #Verification object.
-import ../../Database/Merit/objects/VerificationObj
+import ../../Database/Merit/objects/VerificationsObj
 
 #Serialize/Deserialize functions.
 import SerializeCommon

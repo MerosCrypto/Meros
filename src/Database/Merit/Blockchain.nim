@@ -8,9 +8,6 @@ import ../../lib/Util
 import BN
 import ../../lib/Base
 
-#Merkle lib.
-import ../../lib/Merkle
-
 #Block, and Difficulty libs.
 import Block
 import Difficulty

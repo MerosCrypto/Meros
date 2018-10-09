@@ -5,13 +5,12 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
-#Merkle lib.
-import ../../../src/lib/Merkle
-
 #Address library.
 import ../../Wallet/Address
 
-#Block object.
+#Merit objects.
+import ../../Database/Merit/objects/MinersObj
+import ../../Database/Merit/objects/VerificationsObj
 import ../../Database/Merit/objects/BlockObj
 
 #Serialize/Deserialize functions.
@@ -32,23 +31,20 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
         #Time.
         !newBN(blockArg.time).toString(256) &
         #Amount of verifications.
-        !newBN(blockArg.verifications.len).toString(256)
+        !newBN(blockArg.verifications.verifications.len).toString(256)
 
     #Add on each verification.
-    for verification in blockArg.verifications:
+    for verification in blockArg.verifications.verifications:
         result &=
             #Address.
-            !Address.toBN(verification.validator).toString(256) &
+            !Address.toBN(verification.sender).toString(256) &
             #Start index.
-            !newBN(verification.start).toString(256) &
-            #End index.
-            !newBN(verification.last).toString(256)
+            !verification.hash.toString()
+    #Add on the BLS sig.
+    result &= !blockArg.verifications.bls
 
-    result &=
-        #Merkle Tree root.
-        !blockArg.merkle.hash.toBN().toString(256) &
-        #Publisher.
-        !blockArg.publisher.toBN(16).toString(256)
+    #Publisher.
+    result &= !blockArg.publisher.toBN(16).toString(256)
 
     if blockArg.signature.len != 0:
         #Proof.

@@ -1,7 +1,9 @@
 # TODO
 
 Core:
-- Redo `Block`s to use `Verification`s.
+- Add in Chia's BLS lib.
+- `Verifications` does nothing about its signature.
+
 - Handle `Block`s over the `Network`.
 - Handle `Block`s in `MainMerit`.
 
@@ -12,10 +14,6 @@ Core:
 
 - `MeritRemoval` node.
 - `Difficulty Vote` node.
-
-- BLS.
-- Enable the BLS part of `Verification`.
-- Use `BLS` in `Block`s.
 
 - Finish the Tests.
 
@@ -30,8 +28,9 @@ Features:
 - Make the port to listen on a runtime option.
 
 Improvements:
+- Move `SerializeVerifications` and `ParseVerifications` out of `SerializeBlock`/`ParseBlock`.
+
 - Make nonce an `uint`.
-- Make a proper `Validations` objects.
 
 - Replace `newBN(x).toString(256)` with bit shifts under `Util.nim`.
 - Optimize `serialize` and `parse`.

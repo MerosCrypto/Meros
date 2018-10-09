@@ -11,9 +11,6 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
-#Merkle lib.
-import ../../lib/Merkle
-
 #Wallet libs.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
@@ -22,8 +19,9 @@ import ../../Wallet/Wallet
 import ../../Network/Serialize/SerializeMiners
 import ../../Network/Serialize/SerializeBlock
 
-#Miners object.
+#Miners and Verifications objects.
 import objects/MinersObj
+import objects/VerificationsObj
 
 #Block object.
 import objects/BlockObj
@@ -41,8 +39,7 @@ proc newBlock*(
     last: ArgonHash,
     nonce: int,
     time: uint,
-    validations: seq[tuple[validator: string, start: uint, last: uint]],
-    merkle: MerkleTree,
+    verifications: Verifications,
     publisher: string,
     proof: uint,
     miners: Miners,
@@ -54,14 +51,10 @@ proc newBlock*(
     FinalAttributeError
 ].} =
     #Verify the arguments.
-    #Validations.
-    for validation in validations:
-        if not Address.verify(validation.validator):
-            raise newException(ValueError, "Invalid validation address.")
-        if validation.start < 0:
-            raise newException(ValueError, "Invalid validation start.")
-        if validation.last < 0:
-            raise newException(ValueError, "Invalid validation last.")
+    #Verifications.
+    for verification in verifications.verifications:
+        if not Address.verify(verification.sender):
+            raise newException(ValueError, "Invalid verification address.")
 
     #Miners.
     var total: uint = 0
@@ -81,8 +74,7 @@ proc newBlock*(
         last,
         nonce,
         time,
-        validations,
-        merkle,
+        verifications,
         publisher
     )
 

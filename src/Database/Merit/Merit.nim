@@ -5,19 +5,15 @@ import ../../lib/Errors
 import BN
 import ../../lib/Base
 
-#Merkle lib.
-import ../../lib/Merkle
-export Merkle
-
 #Miners object and the Verification/Block/Blockchain/State libs.
 import objects/MinersObj
-import Verification
+import Verifications
 import Block
 import Blockchain
 import State
 
 export MinersObj
-export Verification
+export Verifications
 export Block
 export Blockchain
 export State

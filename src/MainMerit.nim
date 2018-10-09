@@ -24,8 +24,7 @@ block:
             merit.blockchain.blocks[0].argon,
             1,
             getTime(),
-            @[],
-            newMerkleTree(@[]),
+            newVerificationsObj(),
             $wallet.publicKey,
             proof,
             miners,
@@ -48,7 +47,7 @@ block:
 #Handle Verifications.
 events.on(
     "merit.verification",
-    proc (verif: MemoryVerification): bool {.raises: [ValueError].} =
+    proc (verif: Verification): bool {.raises: [ValueError].} =
         #Print that we're adding the node.
         echo "Adding a new MemoryVerification."
 

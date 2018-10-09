@@ -9,7 +9,7 @@ import ../../lib/Hash
 import ../../Wallet/Address
 
 #Verification object.
-import ../../Database/Merit/objects/VerificationObj
+import ../../Database/Merit/objects/VerificationsObj
 
 #Common serialization functions.
 import SerializeCommon

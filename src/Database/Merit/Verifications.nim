@@ -8,8 +8,8 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 
 #Verification object.
-import objects/VerificationObj
-export VerificationObj
+import objects/VerificationsObj
+export VerificationsObj
 
 #Finals lib.
 import finals

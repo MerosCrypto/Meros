@@ -7,7 +7,7 @@ import ../../../src/lib/Hash
 import ../../../src/Wallet/Wallet
 
 #Verification lib.
-import ../../../src/Database/Merit/Verification
+import ../../../src/Database/Merit/Verifications
 
 #Serialize lib.
 import ../../../src/Network/Serialize/SerializeVerification

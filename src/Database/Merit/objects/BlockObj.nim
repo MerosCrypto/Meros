@@ -11,11 +11,9 @@ import ../../../lib/Base
 #Hash lib.
 import ../../../lib/Hash
 
-#Merkle lib.
-import ../../../lib/Merkle
-
-#Miners object.
+#Miners and Verifications objects.
 import MinersObj
+import VerificationsObj
 
 #Finals lib.
 import finals
@@ -31,9 +29,7 @@ finalsd:
         time*: uint
 
         #Verifications.
-        verifications*: seq[tuple[validator: string, start: uint, last: uint]]
-        #Merkle tree.
-        merkle*: MerkleTree
+        verifications*: Verifications
         #Publisher address.
         publisher* {.final.}: string
 
@@ -54,8 +50,7 @@ func newBlockObj*(
     last: ArgonHash,
     nonce: int,
     time: uint,
-    verifications: seq[tuple[validator: string, start: uint, last: uint]],
-    merkle: MerkleTree,
+    verifications: Verifications,
     publisher: string
 ): Block {.raises: [].} =
     Block(
@@ -63,7 +58,6 @@ func newBlockObj*(
         nonce: nonce,
         time: time,
         verifications: verifications,
-        merkle: merkle,
         publisher: publisher
     )
 
@@ -74,8 +68,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].}
         Argon("", ""),
         0,
         getTime(),
-        @[],
-        newMerkleTree(@[]),
+        newVerificationsObj(),
         "".pad(128, "00")
     )
     #Calculate the hash.
