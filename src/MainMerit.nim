@@ -11,9 +11,11 @@ block:
         #Block var.
         newBlock: Block
         proof: uint = 0
-        miners: seq[tuple[miner: string, amount: uint]] = @[(
-            miner: wallet.address,
-            amount: uint(100)
+        miners: Miners = @[(
+            newMinerObj(
+                wallet.address,
+                100
+            )
         )]
 
     while true:

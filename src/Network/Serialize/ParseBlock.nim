@@ -21,7 +21,8 @@ import ../../Wallet/Wallet
 #Lattice lib.
 import ../../Database/Lattice/Lattice
 
-#Block object.
+#Miners and Block object.
+import ../../Database/Merit/objects/MinersObj
 import ../../Database/Merit/objects/BlockObj
 
 #Serialize/parse functions.
@@ -94,17 +95,7 @@ proc parseBlock*(
         #Miners length.
         minersLen: int = minersLenStr.toBN(256).toInt()
         #Miners.
-        miners: seq[
-            tuple[
-                miner: string,
-                amount: uint
-            ]
-        ] = newSeq[
-            tuple[
-                miner: string,
-                amount: uint
-            ]
-        ]()
+        miners: Miners
         #Signature.
         signature: string = blockSeq[blockSeq.len - 1].pad(64, char(0))
 

@@ -31,7 +31,7 @@ Features:
 
 Improvements:
 - Make nonce an `uint`.
-- Make `miners` and `validations` proper objects.
+- Make a proper `Validations` objects.
 
 - Replace `newBN(x).toString(256)` with bit shifts under `Util.nim`.
 - Optimize `serialize` and `parse`.

@@ -8,6 +8,9 @@ import ../../lib/Base
 #Address library.
 import ../../Wallet/Address
 
+#Miners object.
+import ../../Database/Merit/objects/MinersObj
+
 #Common serialization functions.
 import SerializeCommon
 
@@ -17,7 +20,7 @@ import strutils
 #Parse function.
 func parseMiners*(
     minersStr: string
-): seq[tuple[miner: string, amount: uint]] {.raises: [ValueError].} =
+): Miners {.raises: [ValueError].} =
     #Init the result.
     result = @[]
 
@@ -27,8 +30,8 @@ func parseMiners*(
     #Add each miner/amount.
     for i in countup(1, minersSeq.len - 1, 2):
         result.add(
-            (
-                miner: newAddress(minersSeq[i].pad(32, char(0))),
-                amount: uint(minersSeq[i + 1][0])
+            newMinerObj(
+                newAddress(minersSeq[i].pad(32, char(0))),
+                uint(minersSeq[i + 1][0])
             )
         )

@@ -16,8 +16,8 @@ import ../../../src/lib/Merkle
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
-#Merit libs.
-import ../../../src/Database/Merit/Block
+#Merit lib.
+import ../../../src/Database/Merit/Merit
 
 #Lattice lib.
 import ../../../src/Database/Lattice/Lattice
@@ -37,10 +37,12 @@ var
     nonce: int = 1
     time: uint
     proof: uint = 1
-    miners: seq[tuple[miner: string, amount: uint]] = @[(
-        miner: wallet.address,
-        amount: uint(100)
-    )]
+    miners: Miners = @[
+        newMinerObj(
+            wallet.address,
+            100
+        )
+    ]
     lattice: Lattice = newLattice("", "")
 
 import strutils, sequtils
@@ -89,7 +91,11 @@ for i in 1 .. 10:
     assert(newBlock.proof == blockParsed.proof)
     assert(newBlock.argon == blockParsed.argon)
 
-    assert(newBlock.miners == blockParsed.miners)
+    assert(newBlock.miners.len == blockParsed.miners.len)
+    for i in 0 ..< newBlock.miners.len:
+        assert(newBlock.miners[i].miner == blockParsed.miners[i].miner)
+        assert(newBlock.miners[i].amount == blockParsed.miners[i].amount)
+
     assert(newBlock.minersHash == blockParsed.minersHash)
     assert(newBlock.signature == blockParsed.signature)
 

@@ -1,3 +1,6 @@
+#Miners object.
+import objects/MinersObj
+
 #Block and Blockchain libs.
 import Block
 import Blockchain
@@ -42,7 +45,7 @@ func processBlock*(
     newBlock: Block
 ) {.raises: [KeyError].} =
     #Grab the miners.
-    var miners: seq[tuple[miner: string, amount: uint]] = newBlock.miners
+    var miners: Miners = newBlock.miners
 
     #For each miner, add their Merit to the State.
     for miner in miners:

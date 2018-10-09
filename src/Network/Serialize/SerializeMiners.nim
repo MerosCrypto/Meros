@@ -5,6 +5,9 @@ import ../../lib/Base
 #Import the Address library.
 import ../../Wallet/Address
 
+#Miners object.
+import ../../Database/Merit/objects/MinersObj
+
 #Common serialization functions.
 import SerializeCommon
 
@@ -13,7 +16,7 @@ import strutils
 
 #Serialization function.
 proc serialize*(
-    miners: seq[tuple[miner: string, amount: uint]],
+    miners: Miners,
     nonce: int
 ): string {.raises: [ValueError].} =
     #Create the result.

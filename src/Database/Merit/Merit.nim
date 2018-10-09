@@ -9,12 +9,14 @@ import ../../lib/Base
 import ../../lib/Merkle
 export Merkle
 
-#Verification/Block/Blockchain/State libs.
+#Miners object and the Verification/Block/Blockchain/State libs.
+import objects/MinersObj
 import Verification
 import Block
 import Blockchain
 import State
 
+export MinersObj
 export Verification
 export Block
 export Blockchain

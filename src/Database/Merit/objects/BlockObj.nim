@@ -14,6 +14,9 @@ import ../../../lib/Hash
 #Merkle lib.
 import ../../../lib/Merkle
 
+#Miners object.
+import MinersObj
+
 #Finals lib.
 import finals
 
@@ -40,8 +43,8 @@ finalsd:
         #Argon2d hash with the SHA512 hash as the data and proof as the salt.
         argon*: ArgonHash
 
-        #Who to attribute the Merit to (amount ranges from 0 to 1000).
-        miners* {.final.}: seq[tuple[miner: string, amount: uint]]
+        #Who to attribute the Merit to (amount ranges from 0 to 100).
+        miners* {.final.}: Miners
         minersHash* {.final.}: SHA512Hash
         signature* {.final.}: string
 

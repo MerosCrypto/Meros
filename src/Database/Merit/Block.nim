@@ -22,9 +22,12 @@ import ../../Wallet/Wallet
 import ../../Network/Serialize/SerializeMiners
 import ../../Network/Serialize/SerializeBlock
 
-#BlockObj.
+#Miners object.
+import objects/MinersObj
+
+#Block object.
 import objects/BlockObj
-#Export the BlockObj.
+#Export the Block object.
 export BlockObj
 
 #Finals lib.
@@ -42,7 +45,7 @@ proc newBlock*(
     merkle: MerkleTree,
     publisher: string,
     proof: uint,
-    miners: seq[tuple[miner: string, amount: uint]],
+    miners: Miners,
     signature: string
 ): Block {.raises: [
     ValueError,

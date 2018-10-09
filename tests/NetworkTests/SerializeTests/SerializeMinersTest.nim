@@ -4,8 +4,11 @@
 import BN
 import ../../../src/lib/Base
 
-#Wallet and Address libs.
+#Wallet lib.
 import ../../../src/Wallet/Wallet
+
+#Miners object.
+import ../../../src/Database/Merit/objects/MinersObj
 
 #Serialize lib.
 import ../../../src/Network/Serialize/SerializeMiners
@@ -16,6 +19,8 @@ import random
 import times
 import algorithm
 
+import strutils
+
 #Set the seed to be based on the time.
 randomize(getTime().toUnix())
 
@@ -25,12 +30,7 @@ for i in 1 .. 10:
         #Wallets.
         wallets: seq[Wallet] = @[]
         #Miners.
-        miners: seq[
-            tuple[
-                miner: string,
-                amount: uint
-            ]
-        ] = @[]
+        miners: Miners = @[]
         #Quantity.
         quantity: int = (rand(99) + 1) #Returns to 1 to 100.
         #Amount temp variable.
@@ -50,41 +50,44 @@ for i in 1 .. 10:
     for i in 0 ..< quantity:
         #Generate a Wallet for them.
         wallets.add(newWallet())
-        #Add the tuple/set their public key.
-        miners.add((miner: wallets[i].address, amount: uint(0)))
 
         #Set the amount to pay the miner.
         amount = rand(remaining - 1) + 1
-        #Make sure everyone gets at least 1 and we don't go over 1000.
+        #Make sure everyone gets at least 1 and we don't go over 100.
         if (remaining - amount) < (quantity - i):
             amount = 1
             #But if this is the last account...
             if i == quantity - 1:
                 amount = remaining
 
-        #Set the miner's amount.
-        miners[i].amount = uint(amount)
+        #Add the Miner.
+        miners.add(newMinerObj(
+            wallets[i].address,
+            uint(amount)
+        ))
+
         #Subtract the amount from remaining.
         remaining -= amount
 
     #Randomly order the miners.
     miners.sort(
-        proc (x: tuple[miner: string, amount: uint], y: tuple[miner: string, amount: uint]): int =
+        proc (x: Miner, y: Miner): int =
             rand(1000)
     )
 
     #Serialize it and parse it back.
-    var minersParsed: seq[
-        tuple[
-            miner: string,
-            amount: uint
-        ]
-    ] = miners.serialize(0).parseMiners()
+    var minersParsed: Miners = miners.serialize(0).parseMiners()
 
     #Test the serialized versions.
     assert(miners.serialize(0) == minersParsed.serialize(0))
 
-    #Test the for equality.
-    assert(miners == minersParsed)
+    #Test the length.
+    assert(miners.len == minersParsed.len)
+
+    #Test each miner for equality.
+    for i in 0 ..< miners.len:
+        assert(miners[i].miner == minersParsed[i].miner)
+        assert(miners[i].amount == minersParsed[i].amount)
+
 
 echo "Finished the Network/Serialize/Miners test."
