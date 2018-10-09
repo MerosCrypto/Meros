@@ -90,7 +90,7 @@ proc newNetwork*(
                     case msg.content:
                         of MessageType.Send:
                             if nodeEvents.get(
-                                func (send: Send): bool,
+                                proc (send: Send): bool,
                                 "lattice.send"
                             )(
                                 msg.message.parseSend()
@@ -98,7 +98,7 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
                         of MessageType.Receive:
                             if nodeEvents.get(
-                                func (recv: Receive): bool,
+                                proc (recv: Receive): bool,
                                 "lattice.receive"
                             )(
                                 msg.message.parseReceive()

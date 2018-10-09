@@ -62,12 +62,12 @@ proc send(
     try:
         #Add it.
         if rpc.events.get(
-            func (send: Send): bool,
+            proc (send: Send): bool,
             "lattice.send"
         )(send):
             #If it worked, broadcast the Send.
             rpc.events.get(
-                func (msgType: MessageType, msg: string),
+                proc (msgType: MessageType, msg: string),
                 "network.broadcast"
             )(MessageType.Send, send.serialize())
     except:
@@ -97,13 +97,13 @@ proc receive(
     try:
         #Add it.
         if rpc.events.get(
-            func (recv: Receive): bool,
+            proc (recv: Receive): bool,
             "lattice.receive"
         )(recv):
             try:
                 #If it worked, broadcast the Receive.
                 rpc.events.get(
-                    func (msgType: MessageType, msg: string),
+                    proc (msgType: MessageType, msg: string),
                     "network.broadcast"
                 )(MessageType.Receive, recv.serialize())
             except:
@@ -124,7 +124,7 @@ proc getHeight(
 
     try:
         height = rpc.events.get(
-            func (account: string): BN,
+            proc (account: string): BN,
             "lattice.getHeight"
         )(account)
     except:
@@ -150,7 +150,7 @@ proc getBalance(
     var balance: BN
     try:
         balance = rpc.events.get(
-            func (account: string): BN,
+            proc (account: string): BN,
             "lattice.getBalance"
         )(account)
     except:

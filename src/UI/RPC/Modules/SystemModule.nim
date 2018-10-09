@@ -11,7 +11,7 @@ import json
 proc shutdown(rpc: RPC) {.raises: [].} =
     try:
         rpc.events.get(
-            func (),
+            proc (),
             "system.quit"
         )()
     except:
