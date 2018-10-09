@@ -30,7 +30,7 @@ import strutils
 #Parse a Verification.
 proc parseVerification*(
     verifStr: string
-): Verification {.raises: [
+): MemoryVerification {.raises: [
     ValueError,
     SodiumError,
     FinalAttributeError
@@ -46,7 +46,7 @@ proc parseVerification*(
         edSignature: string = verifSeq[2].pad(64, char(0))
 
     #Create the Verification.
-    result = newVerificationObj(
+    result = newMemoryVerificationObj(
         node.toHash(512)
     )
     result.sender = newAddress(verifier)

@@ -1,4 +1,5 @@
 #Merit Tests.
 
-import MeritTests/DifficultyTest
+import MeritTests/VerificationTest
 import MeritTests/BlockTest
+import MeritTests/DifficultyTest

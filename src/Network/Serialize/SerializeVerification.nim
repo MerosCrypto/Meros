@@ -14,8 +14,8 @@ import ../../Database/Merit/objects/VerificationObj
 #Common serialization functions.
 import SerializeCommon
 
-#Serialize a Verification.
-proc serialize*(verif: Verification): string {.raises: [ValueError].} =
+#Serialize a MemoryVerification.
+proc serialize*(verif: MemoryVerification): string {.raises: [ValueError].} =
     result =
         !Address.toBN(verif.sender).toString(256) &
         !verif.hash.toString() &

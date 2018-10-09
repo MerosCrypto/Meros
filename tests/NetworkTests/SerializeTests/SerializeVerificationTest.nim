@@ -30,11 +30,11 @@ for i in 1 .. 20:
         hash.data[i] = uint8(rand(255))
 
     #Verify the Verification.
-    var verif: Verification = newVerification(hash)
+    var verif: MemoryVerification = newMemoryVerification(hash)
     verifier.sign(verif)
 
     #Serialize it and parse it back.
-    var verifParsed: Verification = verif.serialize().parseVerification()
+    var verifParsed: MemoryVerification = verif.serialize().parseVerification()
 
     #Test the serialized versions.
     assert(verif.serialize() == verifParsed.serialize())

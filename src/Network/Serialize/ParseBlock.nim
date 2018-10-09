@@ -49,7 +49,7 @@ proc parseBlock*(
     FinalAttributeError
 ].} =
     var
-        #Nonce | Last | Time | Validations Count
+        #Nonce | Last | Time | Verifications Count
         #Address 1 | Start Index 1 | End Index 1
         #Address N | Start Index N | End Index N
         #Merkle Tree | Publisher | Proof
@@ -64,10 +64,10 @@ proc parseBlock*(
         last: ArgonHash = blockSeq[1].pad(64, char(0)).toArgonHash()
         #Time.
         time: uint = uint(blockSeq[2].toBN(256).toInt())
-        #Total Validations.
-        totalValidations: int = 0
-        #Validations in the block.
-        validations: seq[
+        #Total Verifications.
+        totalVerifications: int = 0
+        #Verifications in the block.
+        verifications: seq[
             tuple[
                 validator: string,
                 start: uint,
@@ -80,16 +80,16 @@ proc parseBlock*(
                 last: uint
             ]
         ](blockSeq[3].toBN(256).toInt())
-        #Hashes of the validations.
+        #Hashes of the verifications.
         hashes: seq[SHA512Hash] = @[]
         #Merkle hash.
-        merkle: string = blockSeq[4 + (validations.len * 3)].toHex().pad(128)
+        merkle: string = blockSeq[4 + (verifications.len * 3)].toHex().pad(128)
         #Merkle Tree.
         tree: MerkleTree
         #Public Key of the Publisher.
-        publisher: string = blockSeq[5 + (validations.len * 3)].pad(32, char(0))
+        publisher: string = blockSeq[5 + (verifications.len * 3)].pad(32, char(0))
         #Proof.
-        proof: string = blockSeq[6 + (validations.len * 3)]
+        proof: string = blockSeq[6 + (verifications.len * 3)]
         #Miners length string.
         minersLenStr: string = blockSeq[blockSeq.len - 2]
         #Miners length.
@@ -100,20 +100,20 @@ proc parseBlock*(
         signature: string = blockSeq[blockSeq.len - 1].pad(64, char(0))
 
     #Make sure less than 100 miners were included.
-    if blockSeq.len > (8 + (validations.len * 3) + 200):
+    if blockSeq.len > (8 + (verifications.len * 3) + 200):
         raise newException(ValueError, "Parsed block had over 100 miners.")
 
-    #Set the validations.
+    #Set the verifications.
     #Declare the loop variables outside to stop redeclarations.
     var
-        firstValidation: int
-        lastValidation: int
-    for i in countup(4, 4 + (validations.len * 3) - 1, 3):
-        firstValidation = blockSeq[i + 1].toBN(256).toInt()
-        lastValidation = blockSeq[i + 2].toBN(256).toInt()
-        totalValidations += lastValidation - firstValidation + 1
+        firstVerification: int
+        lastVerification: int
+    for i in countup(4, 4 + (verifications.len * 3) - 1, 3):
+        firstVerification = blockSeq[i + 1].toBN(256).toInt()
+        lastVerification = blockSeq[i + 2].toBN(256).toInt()
+        totalVerifications += lastVerification - firstVerification + 1
 
-        validations[int((i - 4) / 3)] = (
+        verifications[int((i - 4) / 3)] = (
             validator: blockSeq[i].toHex(),
             start: uint(blockSeq[i + 1].toBN(256).toInt()),
             last: uint(blockSeq[i + 2].toBN(256).toInt())
@@ -130,9 +130,9 @@ proc parseBlock*(
 
     #Create the MerkleTree object.
     var validator: string
-    for i in 0 ..< validations.len:
-        validator = newAddress(validations[i].validator.pad(32, char(0)))
-        for v in validations[i].start .. validations[i].last:
+    for i in 0 ..< verifications.len:
+        validator = newAddress(verifications[i].validator.pad(32, char(0)))
+        for v in verifications[i].start .. verifications[i].last:
             hashes.add(
                 lattice[
                     newIndex(
@@ -144,7 +144,7 @@ proc parseBlock*(
     tree = newMerkleTree(hashes)
 
     #Create the Block Object.
-    result = newBlockObj(last, nonce, time, validations, tree, publisher.toHex())
+    result = newBlockObj(last, nonce, time, verifications, tree, publisher.toHex())
     #Set the hash.
     result.hash = SHA512(result.serialize())
     #Set the proof.

@@ -48,9 +48,9 @@ block:
 #Handle Verifications.
 events.on(
     "merit.verification",
-    proc (verif: Verification): bool {.raises: [ValueError].} =
+    proc (verif: MemoryVerification): bool {.raises: [ValueError].} =
         #Print that we're adding the node.
-        echo "Adding a new Verification."
+        echo "Adding a new MemoryVerification."
 
         #Add the Verification to the Lattice.
         lattice.verify(merit, verif.hash, verif.sender)

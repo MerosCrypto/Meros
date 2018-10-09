@@ -31,18 +31,18 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
         !blockArg.last.toBN().toString(256) &
         #Time.
         !newBN(blockArg.time).toString(256) &
-        #Amount of validations.
-        !newBN(blockArg.validations.len).toString(256)
+        #Amount of verifications.
+        !newBN(blockArg.verifications.len).toString(256)
 
-    #Add on each validation.
-    for validation in blockArg.validations:
+    #Add on each verification.
+    for verification in blockArg.verifications:
         result &=
             #Address.
-            !Address.toBN(validation.validator).toString(256) &
+            !Address.toBN(verification.validator).toString(256) &
             #Start index.
-            !newBN(validation.start).toString(256) &
+            !newBN(verification.start).toString(256) &
             #End index.
-            !newBN(validation.last).toString(256)
+            !newBN(verification.last).toString(256)
 
     result &=
         #Merkle Tree root.

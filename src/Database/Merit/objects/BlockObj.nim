@@ -29,8 +29,9 @@ finalsd:
         nonce* {.final.}: int
         #Timestamp.
         time*: uint
-        #Validations.
-        validations*: seq[tuple[validator: string, start: uint, last: uint]]
+
+        #Verifications.
+        verifications*: seq[tuple[validator: string, start: uint, last: uint]]
         #Merkle tree.
         merkle*: MerkleTree
         #Publisher address.
@@ -53,7 +54,7 @@ func newBlockObj*(
     last: ArgonHash,
     nonce: int,
     time: uint,
-    validations: seq[tuple[validator: string, start: uint, last: uint]],
+    verifications: seq[tuple[validator: string, start: uint, last: uint]],
     merkle: MerkleTree,
     publisher: string
 ): Block {.raises: [].} =
@@ -61,7 +62,7 @@ func newBlockObj*(
         last: last,
         nonce: nonce,
         time: time,
-        validations: validations,
+        verifications: verifications,
         merkle: merkle,
         publisher: publisher
     )
@@ -75,7 +76,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].}
         getTime(),
         @[],
         newMerkleTree(@[]),
-        "".pad(128, "0")
+        "".pad(128, "00")
     )
     #Calculate the hash.
     result.hash = SHA512(genesis)

@@ -15,15 +15,15 @@ export VerificationObj
 import finals
 
 #Create a new Verification.
-proc newVerification*(
+proc newMemoryVerification*(
     hash: Hash[512]
-): Verification {.raises: [].} =
-    newVerificationObj(hash)
+): MemoryVerification {.raises: [].} =
+    newMemoryVerificationObj(hash)
 
 #Sign a TX.
 func sign*(
     wallet: Wallet,
-    verif: Verification
+    verif: MemoryVerification
 ) {.raises: [SodiumError, FinalAttributeError].} =
     #Set the sender.
     verif.sender = wallet.address

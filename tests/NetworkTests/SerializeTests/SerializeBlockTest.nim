@@ -83,7 +83,7 @@ for i in 1 .. 10:
     assert(newBlock.nonce == blockParsed.nonce)
     assert(newBlock.time == blockParsed.time)
 
-    assert(newBlock.validations == blockParsed.validations)
+    assert(newBlock.verifications == blockParsed.verifications)
     assert(newBlock.merkle.hash == blockParsed.merkle.hash)
     assert(newBlock.publisher == blockParsed.publisher)
 

@@ -28,7 +28,7 @@ var
 
     wallet: Wallet                         #Wallet.
 
-    verif: Verification                    #Verification.
+    verif: MemoryVerification              #Verification.
 
     header: string =                       #Verification header.
         char(0) &
@@ -50,7 +50,7 @@ echo "What Node do you want to verify?"
 answer = stdin.readLine()
 
 #Create the Verification object.
-verif = newVerificationObj(answer.toHash(512))
+verif = newMemoryVerificationObj(answer.toHash(512))
 
 #Sign the Verification.
 wallet.sign(verif)

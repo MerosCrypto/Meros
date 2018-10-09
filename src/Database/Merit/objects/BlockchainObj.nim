@@ -21,7 +21,7 @@ import strutils
 #Blockchain object.
 finalsd:
     type Blockchain* = ref object of RootObj
-        #Block time.
+        #Block time (part of the chain params).
         blockTime* {.final.}: int
 
         #Height.

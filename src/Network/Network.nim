@@ -94,7 +94,7 @@ proc newNetwork*(
                     case msg.content:
                         of MessageType.Verification:
                             if nodeEvents.get(
-                                proc (verif: Verification): bool,
+                                proc (verif: MemoryVerification): bool,
                                 "merit.verification"
                             )(
                                 msg.message.parseVerification()
