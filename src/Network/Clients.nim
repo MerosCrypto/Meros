@@ -110,6 +110,10 @@ proc broadcast*(
 
     #Iterate over each client.
     for client in clients.clients:
+        #Skip the Client who sent us this.
+        if client.id == msg.client:
+            continue
+        
         #Make sure the client is open.
         if not client.isClosed():
             try:

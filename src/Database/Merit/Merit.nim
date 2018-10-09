@@ -9,11 +9,13 @@ import ../../lib/Base
 import ../../lib/Merkle
 export Merkle
 
-#Block/Blockchain/State libs.
+#Verification/Block/Blockchain/State libs.
+import Verification
 import Block
 import Blockchain
 import State
 
+export Verification
 export Block
 export Blockchain
 export State

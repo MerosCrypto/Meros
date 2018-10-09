@@ -1,37 +1,40 @@
 # TODO
 
 Core:
-- Handle Blocks over the Network.
-- Add a way to generate Blocks with very specific data.
+- Redo `Block`s to use `Verification`s.
+- Handle `Block`s over the `Network`.
+- Handle `Block`s in `MainMerit`.
 
-- MainMerit.
-
-- Implement Bech32's BCH codes into Address.nim.
+- Implement Bech32's BCH codes into `Address`.
 - Have Merit Holders indexable by the order they got Merit in.
 
 - Tell the GUI thread to close.
 
-- Track MeritRemovals.
-- Difficulty Vote node.
+- `MeritRemoval` node.
+- `Difficulty Vote` node.
 
-- Have Verifications take a Ed25519 sig and a BLS sig.
-- Move Verifications off of the Lattice into memory.
-- Finalize Verifications on the blockchain with BLS.
+- BLS.
+- Enable the BLS part of `Verification`.
+- Use `BLS` in `Block`s.
 
 - Finish the Tests.
 
 Features:
+- `Account` history over the GUI.
+- `Verification`s over the GUI.
+
 - Have the RPC dynamically get the difficulty.
 - Have every RPC method return something.
 - Have the RPC send errors when it fails.
+
 - Make the port to listen on a runtime option.
 
 Improvements:
 - Make nonce an `uint`.
-- Make Miners/Validations proper objects.
+- Make `miners` and `validations` proper objects.
 
 - Replace `newBN(x).toString(256)` with bit shifts under `Util.nim`.
-- Optimize serialize/parse.
+- Optimize `serialize` and `parse`.
 
 - Standardize where we use binary/hex/addresses.
 

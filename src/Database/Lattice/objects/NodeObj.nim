@@ -16,8 +16,7 @@ finalsd:
             Send = 0,
             Receive = 1,
             Data = 2,
-            Verification = 3,
-            MeritRemoval = 4
+            MeritRemoval = 3
 
         #Node object.
         Node* = ref object of RootObj

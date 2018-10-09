@@ -72,7 +72,7 @@ proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].}
         getTime(),
         @[],
         newMerkleTree(@[]),
-        ""
+        "".pad(128, "0")
     )
     #Calculate the hash.
     result.hash = SHA512(genesis)

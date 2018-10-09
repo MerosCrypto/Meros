@@ -17,7 +17,6 @@ import objects/NodeObj
 import objects/SendObj
 import objects/ReceiveObj
 import objects/DataObj
-import objects/VerificationObj
 import objects/MeritRemovalObj
 
 #Account object.
@@ -135,14 +134,6 @@ func add*(
     #Add the Data.
     result = account.add(cast[Node](data))
 """
-
-#Add a Verification.
-proc add*(
-    account: Account,
-    verif: Verification
-): bool {.raises: [ValueError, SodiumError].} =
-    #Add the Verification.
-    result = account.add(cast[Node](verif))
 
 #Add a Merit Removal.
 discard """

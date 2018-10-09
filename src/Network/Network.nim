@@ -1,6 +1,10 @@
 #Errors lib.
 import ../lib/Errors
 
+#Verification libs.
+import ../Database/Merit/Verification
+import Serialize/ParseVerification
+
 #Send libs.
 import ../Database/Lattice/Send
 import Serialize/ParseSend
@@ -88,6 +92,18 @@ proc newNetwork*(
                 #Switch based off the message type (in a try to handle invalid messages).
                 try:
                     case msg.content:
+                        of MessageType.Verification:
+                            if nodeEvents.get(
+                                proc (verif: Verification): bool,
+                                "merit.verification"
+                            )(
+                                msg.message.parseVerification()
+                            ):
+                                network.clients.broadcast(msg)
+
+                        of MessageType.Block:
+                            discard
+
                         of MessageType.Send:
                             if nodeEvents.get(
                                 proc (send: Send): bool,
@@ -96,6 +112,7 @@ proc newNetwork*(
                                 msg.message.parseSend()
                             ):
                                 network.clients.broadcast(msg)
+
                         of MessageType.Receive:
                             if nodeEvents.get(
                                 proc (recv: Receive): bool,
@@ -104,10 +121,10 @@ proc newNetwork*(
                                 msg.message.parseReceive()
                             ):
                                 network.clients.broadcast(msg)
+
                         of MessageType.Data:
                             discard
-                        of MessageType.Verification:
-                            discard
+
                         of MessageType.MeritRemoval:
                             discard
                 except:

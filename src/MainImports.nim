@@ -1,8 +1,14 @@
 #Errors lib.
 import lib/Errors
 
+#Util lib.
+import lib/Util
+
 #BN lib.
 import BN
+
+#Hash lib.
+import lib/Hash
 
 #Wallet.
 import Wallet/Wallet
@@ -15,6 +21,9 @@ import Database/Lattice/Lattice
 
 #Network.
 import Network/Network
+
+#Serialization libs.
+import Network/Serialize/SerializeMiners
 
 #UI.
 import UI/UI

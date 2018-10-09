@@ -37,16 +37,16 @@ var
     sendHeader: string =                   #Send header.
         char(0) &
         char(0) &
-        char(0)
+        char(2)
     recvHeader: string =                   #Receive header.
         char(0) &
         char(0) &
-        char(1)
+        char(3)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.
 
-#Get the PrivateKey.
+#Get the Private Key.
 echo "What's the Wallet's Private Key? If you don't have a Wallet, press enter to make one. "
 answer = stdin.readLine()
 
@@ -61,7 +61,7 @@ if answer == "":
 #Create a Wallet from their Private Key.
 wallet = newWallet(newPrivateKey(answer))
 
-#Get the TX type.
+#Get the Node type.
 echo "Would you like to Send or Receive a TX?"
 answer = stdin.readLine()
 

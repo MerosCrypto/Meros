@@ -4,6 +4,9 @@ import ../../lib/Errors
 #BN lib.
 import BN
 
+#Hash lib.
+import ../../lib/Hash
+
 #Merit lib.
 import ../Merit/Merit
 
@@ -12,19 +15,17 @@ import objects/IndexObj
 #Export the Index object.
 export IndexObj
 
-#Node and node descendants.
+#Node and Node descendants.
 import objects/NodeObj
 import Send
 import Receive
 import Data
-import Verification
 import MeritRemoval
 #Export the Node and Node descendants.
 export NodeObj
 export Send
 export Receive
 export Data
-export Verification
 export MeritRemoval
 
 #Account lib.
@@ -93,17 +94,6 @@ proc add*(
                 lattice.difficulties.data
             )
             """
-
-        of NodeType.Verification:
-            var verif: Verification = cast[Verification](node)
-
-            result = account.add(
-                verif
-            )
-
-            #If that worked, add the Verification in the Lattice's tracker.
-            if result:
-                lattice.addVerification(merit, verif.verifies, verif.sender)
 
         of NodeType.MeritRemoval:
             var mr: MeritRemoval = cast[MeritRemoval](node)

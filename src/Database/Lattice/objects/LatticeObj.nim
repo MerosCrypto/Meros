@@ -70,8 +70,8 @@ func addHash*(
 ) {.raises: [].} =
     lattice.lookup[$hash] = index
 
-#Add a verification to the verifications table.
-proc addVerification*(
+#Add a Verification to the Verifications' table.
+proc verify*(
     lattice: Lattice,
     merit: Merit,
     hashArg: Hash[512],

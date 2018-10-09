@@ -1,18 +1,14 @@
-#Number libs.
-import BN
-import ../src/lib/Base
-
 #Util lib.
 import ../src/lib/Util
 
 #Hash lib.
 import ../src/lib/Hash
 
-#Merit lib.
-import ../src/Database/Merit/Merit
-
 #Wallet lib.
 import ../src/Wallet/Wallet
+
+#Merit lib.
+import ../src/Database/Merit/Merit
 
 #Serialization libs.
 import ../src/Network/Serialize/SerializeMiners

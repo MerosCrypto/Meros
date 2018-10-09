@@ -5,11 +5,12 @@ finalsd:
     type
         #Message Type enum.
         MessageType* = enum
-            Send = 0,
-            Receive = 1,
-            Data = 2,
-            Verification = 3,
-            MeritRemoval = 4
+            Verification = 0,
+            Block = 1,
+            Send = 2,
+            Receive = 3,
+            Data = 4,
+            MeritRemoval = 5
 
         #Message obkect.
         Message* = ref object of RootObj

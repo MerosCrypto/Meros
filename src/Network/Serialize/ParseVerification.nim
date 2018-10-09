@@ -8,16 +8,14 @@ import ../../lib/Util
 import BN
 import ../../lib/Base
 
-#Wallet libraries.
-import ../../Wallet/Address
-import ../../Wallet/Wallet
-
 #Hash lib.
 import ../../lib/Hash
 
-#Node object and Verification object.
-import ../../Database/Lattice/objects/NodeObj
-import ../../Database/Lattice/objects/VerificationObj
+#Wallet lib.
+import ../../Wallet/Wallet
+
+#Verification object.
+import ../../Database/Merit/objects/VerificationObj
 
 #Serialize/Deserialize functions.
 import SerializeCommon
@@ -38,33 +36,23 @@ proc parseVerification*(
     FinalAttributeError
 ].} =
     var
-        #Public Key | Nonce | Send Hash | Signature
-        verifSeq: seq[string] = verifStr.deserialize(4)
+        #Public Key | Node Hash | ED25519 Signature
+        verifSeq: seq[string] = verifStr.deserialize(3)
         #Get the Verifier's Public Key.
         verifier: PublicKey = newPublicKey(verifSeq[0].pad(32, char(0)))
-        #Get the Verifier's address based off the Verifier's Public Key.
-        address: string = newAddress(verifier)
-        #Get the nonce.
-        nonce: BN = verifSeq[1].toBN(256)
-        #Get the send hash.
-        send: string = verifSeq[2].toHex().pad(128)
-        #Get the signature.
-        signature: string = verifSeq[3].pad(64, char(0))
+        #Get the Node hash.
+        node: string = verifSeq[1].pad(64, char(0))
+        #Get the Ed25519 signature.
+        edSignature: string = verifSeq[2].pad(64, char(0))
 
     #Create the Verification.
     result = newVerificationObj(
-        send.toArgonHash()
+        node.toHash(512)
     )
+    result.sender = newAddress(verifier)
 
-    #Set the Sender.
-    result.sender = address
-    #Set the nonce.
-    result.nonce = nonce
-    #Set the hash.
-    result.hash = SHA512(result.serialize())
-
-    #Verify the signature.
-    if not verifier.verify(result.hash.toString(), signature):
+    #Verify the Ed25519 signature.
+    if not verifier.verify(result.hash.toString(), edSignature):
         raise newException(ValueError, "Received signature was invalid.")
-    #Set the signature.
-    result.signature = signature
+    #Set the Ed25519 signature.
+    result.edSignature = edSignature

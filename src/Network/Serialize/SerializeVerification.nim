@@ -8,9 +8,8 @@ import ../../lib/Hash
 #Address lib.
 import ../../Wallet/Address
 
-#Node and Verification object.
-import ../../Database/Lattice/objects/NodeObj
-import ../../Database/Lattice/objects/VerificationObj
+#Verification object.
+import ../../Database/Merit/objects/VerificationObj
 
 #Common serialization functions.
 import SerializeCommon
@@ -18,11 +17,6 @@ import SerializeCommon
 #Serialize a Verification.
 proc serialize*(verif: Verification): string {.raises: [ValueError].} =
     result =
-        !verif.nonce.toString(256) &
-        !verif.verifies.toBN().toString(256)
-
-    if verif.signature.len != 0:
-        result =
-            !Address.toBN(verif.sender).toString(256) &
-            result &
-            !verif.signature
+        !Address.toBN(verif.sender).toString(256) &
+        !verif.hash.toString() &
+        !verif.edSignature

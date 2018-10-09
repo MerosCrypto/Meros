@@ -54,11 +54,11 @@ var
     sendHeader: string =                                 #Send header.
         char(0) &
         char(0) &
-        char(0)
+        char(2)
     recvHeader: string =                                 #Receive header.
         char(0) &
         char(0) &
-        char(1)
+        char(3)
     serializedSends: seq[string] = newSeq[string](total) #Serialized sends.
     serializedRecvs: seq[string] = newSeq[string](total) #Serialized Receives.
     client: AsyncSocket = newAsyncSocket()               #Client socket.

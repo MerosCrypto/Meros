@@ -72,26 +72,6 @@ events.on(
         echo ""
 )
 
-#Handle Verifications.
-events.on(
-    "lattice.verification",
-    proc (verif: Verification): bool {.raises: [ValueError, SodiumError].} =
-        #Print that we're adding the node.
-        echo "Adding a new Verification."
-
-        #Add the Verification.
-        if lattice.add(
-            merit,
-            verif
-        ):
-            echo "Successfully added the Verification."
-            result = true
-        else:
-            echo "Failed to add the Verification."
-            result = false
-        echo ""
-)
-
 #Handle requests for an account's height.
 events.on(
     "lattice.getHeight",
