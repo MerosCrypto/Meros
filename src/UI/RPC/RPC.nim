@@ -41,22 +41,25 @@ proc handle*(
     rpc: RPC,
     msg: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [].} =
+) {.raises: [KeyError].} =
     #Handle the data.
-    try:
-        case msg["module"].getStr():
-            of "system":
-                rpc.systemModule(msg, reply)
-            of "wallet":
-                rpc.walletModule(msg, reply)
-            of "blockchain":
-                rpc.blockchainModule(msg, reply)
-            of "lattice":
-                rpc.latticeModule(msg, reply)
-            of "network":
-                rpc.networkModule(msg, reply)
-    except:
-        echo getCurrentExceptionMsg()
+    case msg["module"].getStr():
+        of "system":
+            rpc.systemModule(msg, reply)
+        of "wallet":
+            rpc.walletModule(msg, reply)
+        of "blockchain":
+            rpc.blockchainModule(msg, reply)
+        of "lattice":
+            rpc.latticeModule(msg, reply)
+        of "network":
+            rpc.networkModule(msg, reply)
+        else:
+            reply(
+                %* {
+                    "error": "Unrecognized module."
+                }
+            )
 
 #Start up the RPC (Channels; for the GUI).
 proc start*(rpc: RPC) {.async.} =
@@ -115,7 +118,11 @@ proc listen*(rpc: RPC, port: int) {.async.} =
                 try:
                     json = parseJSON(data)
                 except:
-                    echo "Invalid RPC payload."
+                    json = %* {
+                        "error": "Invalid RPC payload."
+                    }
+                    toUgly(data, json)
+                    asyncCheck client.send(data & "\r\n")
                     continue
 
                 #Handle the data.
@@ -125,7 +132,7 @@ proc listen*(rpc: RPC, port: int) {.async.} =
                         #Convert the returned JSON to a string.
                         var resStr: string
                         toUgly(resStr, res)
-                        
+
                         #Send it.
                         asyncCheck client.send(resStr & "\r\n")
                 )

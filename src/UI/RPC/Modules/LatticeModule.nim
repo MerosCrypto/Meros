@@ -168,44 +168,46 @@ proc `latticeModule`*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [
-    ValueError,
-    ArgonError,
-    SodiumError,
-    PersonalError,
-    EventError,
-    FinalAttributeError
-].} =
-    #Switch based off the method.
-    case json["method"].getStr():
-        of "send":
-            reply(
-                rpc.send(
+) {.raises: [].} =
+    #Declare a var for the response.
+    var res: JSONNode
+
+    #Put this in a try/catch in case the method fails.
+    try:
+        #Switch based off the method.
+        case json["method"].getStr():
+            of "send":
+                res = rpc.send(
                     json["args"][0].getStr(),
                     newBN(json["args"][1].getStr()),
                     newBN(json["args"][2].getStr())
                 )
-            )
 
-        of "receive":
-            reply(
-                rpc.receive(
+            of "receive":
+                res = rpc.receive(
                     json["args"][0].getStr(),
                     newBN(json["args"][1].getStr()),
                     newBN(json["args"][2].getStr())
                 )
-            )
 
-        of "getHeight":
-            reply(
-                rpc.getHeight(
+            of "getHeight":
+                res = rpc.getHeight(
                     json["args"][0].getStr()
                 )
-            )
 
-        of "getBalance":
-            reply(
-                rpc.getBalance(
+            of "getBalance":
+                res = rpc.getBalance(
                     json["args"][0].getStr()
                 )
-            )
+
+            else:
+                res = %* {
+                    "error": "Invalid method."
+                }
+    except:
+        #If there was an issue, make the response the error message.
+        res = %* {
+            "error": getCurrentExceptionMsg()
+        }
+
+    reply(res)
