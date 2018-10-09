@@ -5,5 +5,9 @@ import ../objects/RPCObj
 import json
 
 #Handler.
-func `networkModule`*(rpc: RPC, json: JSONNode) {.raises: [].} =
+func `networkModule`*(
+    rpc: RPC,
+    json: JSONNode,
+    reply: proc (json: JSONNode)
+) {.raises: [].} =
     discard

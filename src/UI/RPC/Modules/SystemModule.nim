@@ -19,7 +19,11 @@ proc shutdown(rpc: RPC) {.raises: [].} =
         quit(-1)
 
 #Handler.
-proc `systemModule`*(rpc: RPC, json: JSONNode) {.raises: [KeyError].} =
+proc `systemModule`*(
+    rpc: RPC,
+    json: JSONNode,
+    reply: proc (json: JSONNode)
+) {.raises: [KeyError].} =
     #Switch based off the method.
     case json["method"].getStr():
         of "quit":

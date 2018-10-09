@@ -1,8 +1,17 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Wallet lib.
 import ../../../Wallet/Wallet
 
 #EventEmitter lib.
 import ec_events
+
+#Async standard lib.
+import asyncdispatch
+
+#Networking standard lib.
+import asyncnet
 
 #Finals lib.
 import finals
@@ -16,18 +25,23 @@ finalsd:
         events* {.final.}: EventEmitter
         toRPC* {.final.}: ptr Channel[JSONNode]
         toGUI* {.final.}: ptr Channel[JSONNode]
+        server* {.final.}: AsyncSocket
         wallet*: Wallet
         listening*: bool
 
 #Constructor.
-func newRPCObject*(
+proc newRPCObject*(
     events: EventEmitter,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
-): RPC {.raises: [].} =
-    RPC(
-        events: events,
-        toRPC: toRPC,
-        toGUI: toGUI,
-        listening: true
-    )
+): RPC {.raises: [SocketError].} =
+    try:
+        result = RPC(
+            events: events,
+            toRPC: toRPC,
+            toGUI: toGUI,
+            server: newAsyncSocket(),
+            listening: true
+        )
+    except:
+        raise newException(SocketError, "Couldn't start the RPC Socket.")

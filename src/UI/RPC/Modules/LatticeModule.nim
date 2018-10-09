@@ -39,7 +39,7 @@ proc send(
     address: string,
     amount: BN,
     nonce: BN
-) {.raises: [
+): JSONNode {.raises: [
     ValueError,
     ArgonError,
     SodiumError,
@@ -73,13 +73,15 @@ proc send(
     except:
         raise newException(EventError, "Couldn't get and call lattice.send.")
 
+    result = %* {}
+
 #Create a Receive Node.
 proc receive(
     rpc: RPC,
     address: string,
     inputNonce: BN,
     nonce: BN
-) {.raises: [
+): JSONNode {.raises: [
     ValueError,
     SodiumError,
     EventError,
@@ -111,14 +113,13 @@ proc receive(
     except:
         raise newException(EventError, "Couldn't get and call lattice.receive.")
 
+    result = %* {}
+
 #Get the height of an account.
 proc getHeight(
     rpc: RPC,
     account: string
-) {.raises: [
-    EventError,
-    ChannelError
-].} =
+): JSONNode {.raises: [EventError].} =
     #Get the height.
     var height: BN
 
@@ -130,22 +131,16 @@ proc getHeight(
     except:
         raise newException(EventError, "Couldn't get and call lattice.getHeight.")
 
-    try:
-        #Send back the height.
-        rpc.toGUI[].send(%* {
-            "height": $height
-        })
-    except:
-        raise newException(ChannelError, "Could not send the height over the channel.")
+    #Send back the height.
+    result = %* {
+        "height": $height
+    }
 
 #Get the balance of an account.
 proc getBalance(
     rpc: RPC,
     account: string
-) {.raises: [
-    ChannelError,
-    EventError
-].} =
+): JSONNode {.raises: [EventError].} =
     #Get the balance.
     var balance: BN
     try:
@@ -156,49 +151,54 @@ proc getBalance(
     except:
         raise newException(EventError, "Couldn't get and call lattice.getBalance.")
 
-    try:
-        #Send back the balance.
-        rpc.toGUI[].send(%* {
-            "balance": $balance
-        })
-    except:
-        raise newException(ChannelError, "Could not send the balance over the channel.")
+    #Send back the balance.
+    result = %* {
+        "balance": $balance
+    }
 
 #Handler.
 proc `latticeModule`*(
     rpc: RPC,
-    json: JSONNode
+    json: JSONNode,
+    reply: proc (json: JSONNode)
 ) {.raises: [
     ValueError,
     ArgonError,
     SodiumError,
     PersonalError,
-    ChannelError,
     EventError,
     FinalAttributeError
 ].} =
     #Switch based off the method.
     case json["method"].getStr():
         of "send":
-            rpc.send(
-                json["args"][0].getStr(),
-                newBN(json["args"][1].getStr()),
-                newBN(json["args"][2].getStr())
+            reply(
+                rpc.send(
+                    json["args"][0].getStr(),
+                    newBN(json["args"][1].getStr()),
+                    newBN(json["args"][2].getStr())
+                )
             )
 
         of "receive":
-            rpc.receive(
-                json["args"][0].getStr(),
-                newBN(json["args"][1].getStr()),
-                newBN(json["args"][2].getStr())
+            reply(
+                rpc.receive(
+                    json["args"][0].getStr(),
+                    newBN(json["args"][1].getStr()),
+                    newBN(json["args"][2].getStr())
+                )
             )
 
         of "getHeight":
-            rpc.getHeight(
-                json["args"][0].getStr()
+            reply(
+                rpc.getHeight(
+                    json["args"][0].getStr()
+                )
             )
 
         of "getBalance":
-            rpc.getBalance(
-                json["args"][0].getStr()
+            reply(
+                rpc.getBalance(
+                    json["args"][0].getStr()
+                )
             )

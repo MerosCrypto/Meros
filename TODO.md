@@ -2,7 +2,7 @@
 
 Core:
 - Add in Chia's BLS lib.
-- `Verifications` does nothing about its signature.
+- Properly use the signature field of `Verifications`.
 
 - Handle `Block`s over the `Network`.
 - Handle `Block`s in `MainMerit`.
@@ -18,6 +18,8 @@ Core:
 - Finish the Tests.
 
 Features:
+- Logging.
+
 - `Account` history over the GUI.
 - `Verification`s over the GUI.
 
@@ -25,15 +27,15 @@ Features:
 - Have every RPC method return something.
 - Have the RPC send errors when it fails.
 
-- Make the port to listen on a runtime option.
+- Make the ports to listen on runtime options.
 
 Improvements:
-- Move `SerializeVerifications` and `ParseVerifications` out of `SerializeBlock`/`ParseBlock`.
-
 - Make nonce an `uint`.
 
 - Replace `newBN(x).toString(256)` with bit shifts under `Util.nim`.
 - Optimize `serialize` and `parse`.
+
+- Move `SerializeVerifications` and `ParseVerifications` out of `SerializeBlock`/`ParseBlock`.
 
 - Standardize where we use binary/hex/addresses.
 

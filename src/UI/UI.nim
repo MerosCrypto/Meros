@@ -36,8 +36,9 @@ finalsd:
 proc newUI*(
     events: EventEmitter,
     width: int,
-    height: int
-): UI {.raises: [AsyncError, WebViewError].} =
+    height: int,
+    port: int
+): UI {.raises: [AsyncError, SocketError, WebViewError].} =
     #Create the UI object.
     result = UI()
 
@@ -50,9 +51,10 @@ proc newUI*(
     try:
         #Start the RPC.
         asyncCheck result.rpc.start()
+        #Start listening.
+        asyncCheck result.rpc.listen(port)
     except:
         raise newException(AsyncError, "Couldn't start the RPC.")
-
 
     when not defined(nogui):
         #Spawn the GUI.

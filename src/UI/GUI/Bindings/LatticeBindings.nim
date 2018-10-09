@@ -81,6 +81,8 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             gui.getNonce()
                         ]
                     })
+                    #Receive the empty response.
+                    discard gui.toGUI[].recv()
                 except:
                     raise newException(ChannelError, "Couldn't send lattice.send over the channel.")
         )
@@ -104,6 +106,8 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             gui.getNonce()
                         ]
                     })
+                    #Receive the empty response.
+                    discard gui.toGUI[].recv()
                 except:
                     raise newException(ChannelError, "Couldn't send lattice.receive over the channel.")
         )

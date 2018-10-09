@@ -32,6 +32,8 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             key
                         ]
                     })
+                    #Receive the empty response.
+                    discard gui.toGUI[].recv()
                 except:
                     raise newException(ChannelError, "Couldn't send wallet.set over the channel.")
         )

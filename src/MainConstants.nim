@@ -29,3 +29,6 @@ const
     NETWORK_ID: int = 0       #Network ID.
     NETWORK_PROTOCOL: int = 0 #Protocol version.
     NETWORK_PORT: int = 5132  #Port to listen on.
+
+    #UI constants.
+    RPC_PORT: int = 5133
