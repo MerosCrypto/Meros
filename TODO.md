@@ -20,11 +20,11 @@ Core:
 Features:
 - Logging.
 
+- Show the existing wallet on reload of `Main.html`.
 - `Account` history over the GUI.
 - `Verification`s over the GUI.
 
 - Have the RPC dynamically get the difficulty.
-- Have every RPC method return something.
 - Have the RPC send errors when it fails.
 
 - Make the ports to listen on runtime options.

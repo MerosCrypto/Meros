@@ -23,7 +23,9 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
         gui.webview.bindProc(
             "Wallet",
             "create",
-            proc (key: string) {.raises: [ChannelError].} =
+            proc (key: string) {.raises: [KeyError, ChannelError, WebViewError].} =
+                #Var for the response.
+                var wallet: JSONNode
                 try:
                     gui.toRPC[].send(%* {
                         "module": "wallet",
@@ -32,59 +34,25 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             key
                         ]
                     })
-                    #Receive the empty response.
-                    discard gui.toGUI[].recv()
-                except:
-                    raise newException(ChannelError, "Couldn't send wallet.set over the channel.")
-        )
 
-        #Store the Wallet's Private Key in an element.
-        gui.webview.bindProc(
-            "Wallet",
-            "store",
-            proc (fieldsArg: string) {.raises: [ValueError, ChannelError, WebViewError].} =
-                try:
-                    #Ask for the Wallet info.
-                    gui.toRPC[].send(%* {
-                        "module": "wallet",
-                        "method": "get",
-                        "args": []
-                    })
-                except:
-                    raise newException(ChannelError, "Couldn't send wallet.get over the channel.")
-
-                var
-                    #Extract the fields.
-                    fields: seq[string] = fieldsArg.split(" ")
-                    privateKey: string = fields[0]
-                    publicKey: string = fields[1]
-                    address: string = fields[2]
-                    #Create a var for the Wallet.
-                    wallet: JSONNode
-                try:
                     #Receive the Wallet info.
                     wallet = gui.toGUI[].recv()
                 except:
-                    raise newException(ChannelError, "Couldn't receive the Wallet info via the channel.")
+                    raise newException(ChannelError, "Couldn't set the Wallet's Private Key.")
 
                 #Set the elements.
-                if privateKey.len != 0:
-                    if gui.webview.eval(
-                        "document.getElementById('" & privateKey & "').innerHTML = '" & wallet["privateKey"].getStr() & "';"
-                    ) != 0:
-                        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
-
-                if publicKey.len != 0:
-                    if gui.webview.eval(
-                        "document.getElementById('" & publicKey & "').innerHTML = '" & wallet["publicKey"].getStr() & "';"
-                    ) != 0:
-                        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
-
-                if address.len != 0:
-                    if gui.webview.eval(
-                        "document.getElementById('" & address & "').innerHTML = '" & wallet["address"].getStr() & "';"
-                    ) != 0:
-                        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                if gui.webview.eval(
+                    "document.getElementById('privateKey').innerHTML = '" & wallet["privateKey"].getStr() & "';"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                if gui.webview.eval(
+                    "document.getElementById('publicKey').innerHTML = '" & wallet["publicKey"].getStr() & "';"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                if gui.webview.eval(
+                    "document.getElementById('address').innerHTML = '" & wallet["address"].getStr() & "';"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
         )
     except:
         raise newException(WebViewError, "Couldn't bind procs to WebView.")

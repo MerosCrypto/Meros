@@ -5,6 +5,9 @@ import ../../../lib/Errors
 import BN
 import ../../../lib/Base
 
+#Hash lib.
+import ../../../lib/Hash
+
 #Wallet lib.
 import ../../../Wallet/Wallet
 
@@ -73,7 +76,9 @@ proc send(
     except:
         raise newException(EventError, "Couldn't get and call lattice.send.")
 
-    result = %* {}
+    result = %* {
+        "hash": $send.hash
+    }
 
 #Create a Receive Node.
 proc receive(
@@ -113,7 +118,9 @@ proc receive(
     except:
         raise newException(EventError, "Couldn't get and call lattice.receive.")
 
-    result = %* {}
+    result = %* {
+        "hash": $recv.hash
+    }
 
 #Get the height of an account.
 proc getHeight(

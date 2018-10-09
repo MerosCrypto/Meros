@@ -81,8 +81,12 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             gui.getNonce()
                         ]
                     })
-                    #Receive the empty response.
-                    discard gui.toGUI[].recv()
+
+                    #Receive the hash and print it.
+                    if gui.webview.eval(
+                        "document.getElementById('hash').innerHTML = '" & gui.toGUI[].recv()["hash"].getStr() & "';"
+                    ) != 0:
+                        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
                 except:
                     raise newException(ChannelError, "Couldn't send lattice.send over the channel.")
         )
@@ -106,8 +110,12 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             gui.getNonce()
                         ]
                     })
-                    #Receive the empty response.
-                    discard gui.toGUI[].recv()
+
+                    #Receive the hash and print it.
+                    if gui.webview.eval(
+                        "document.getElementById('hash').innerHTML = '" & gui.toGUI[].recv()["hash"].getStr() & "';"
+                    ) != 0:
+                        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
                 except:
                     raise newException(ChannelError, "Couldn't send lattice.receive over the channel.")
         )

@@ -13,6 +13,14 @@ import finals
 #JSON standard lib.
 import json
 
+#Get the Wallet info.
+proc get(rpc: RPC): JSONNode {.raises: [].} =
+    %* {
+        "privateKey": $rpc.wallet.privateKey,
+        "publicKey": $rpc.wallet.publicKey,
+        "address": rpc.wallet.address
+    }
+
 #Set the Wallet's Private Key.
 #The RPC method is set. Set is a keyword. The Nim func is therefore expanded to setPrivateKey.
 func setPrivateKey(rpc: RPC, privateKey: string): JSONNode {.raises: [ValueError, SodiumError].} =
@@ -21,15 +29,7 @@ func setPrivateKey(rpc: RPC, privateKey: string): JSONNode {.raises: [ValueError
     else:
         rpc.wallet = newWallet(newPrivateKey(privateKey))
 
-    result = %* {}
-
-#Get the Wallet info.
-proc get(rpc: RPC): JSONNode {.raises: [].} =
-    %* {
-        "privateKey": $rpc.wallet.privateKey,
-        "publicKey": $rpc.wallet.publicKey,
-        "address": rpc.wallet.address
-    }
+    result = rpc.get()
 
 #Handler.
 proc `walletModule`*(
