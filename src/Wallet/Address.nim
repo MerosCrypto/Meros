@@ -11,14 +11,69 @@ import ../lib/Base32
 #String utils standard lib.
 import strutils
 
+#Seq utils standard lib.
+import sequtils
+
 #Human readable data.
 const ADDRESS_HRP {.strdefine.}: string = "Emb"
 
-#Generates a six character BCH code for the public key.
-func generateBCH(data: Base32): string =
-    #Create the BCH.
-    #TODO.
-    result = ""
+#Hex constants used for the BCH code.
+const BCH_VALUES: array[5, uint32] = [
+    uint32(0x3b6a57b2),
+    uint32(0x26508e6d),
+    uint32(0x1ea119fa),
+    uint32(0x3d4233dd),
+    uint32(0x2a1462b3)
+]
+
+#BCH Polymod function.
+func polymod(values: seq[uint8]): uint32 {.raises: [].} =
+    result = 1
+    var b: uint32
+    for value in values:
+        b = result shr 25
+        result = ((result and 0x1ffffff) shl 5) xor value
+        for i in 0 .. 4:
+            if ((b shr i) and 1) == 1:
+                result = result xor BCH_VALUES[i]
+            else:
+                result = result xor 0
+
+#Expands the HRP.
+#This could a const of sorts but then we can't use func.
+#It's better this way.
+func expandHRP(): seq[uint8] =
+    result = @[]
+    for c in ADDRESS_HRP:
+        result.add(uint8(ord(c) shr 5))
+    result.add(0)
+    for c in ADDRESS_HRP:
+        result.add(uint8(ord(c) and 31))
+
+#Generates a BCH code.
+func generateBCH*(data: seq[uint8]): seq[uint8] {.raises: [].} =
+    let polymod: uint32 = polymod(
+        expandHRP()
+        .concat(data)
+        .concat(@[
+            uint8(0),
+            uint8(0),
+            uint8(0),
+            uint8(0),
+            uint8(0),
+            uint8(0)
+        ])
+    ) xor 1
+
+    result = @[]
+    for i in 0 .. 5:
+        result.add(
+            uint8((polymod shr (5 * (5 - i))) and 31)
+        )
+
+#Verifies a BCH code by taking in the HRP and data (with the BCH code in the data).
+func verifyBCH(data: seq[uint8]): bool {.raises: [].} =
+    polymod(expandHRP().concat(data)) == 1
 
 #Generates a address using a modified form of Bech32 based on a public key.
 #An address is composed of the following:
@@ -37,7 +92,11 @@ func newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
     result =
         ADDRESS_HRP &
         $base32 &
-        generateBCH(base32)
+        $cast[Base32](
+            generateBCH(
+                cast[seq[uint8]](base32)
+            )
+        )
 
 #Work with binary/hex strings, not just arrays.
 func newAddress*(keyArg: string): string {.raises: [ValueError].} =
@@ -64,7 +123,7 @@ func newAddress*(key: PublicKey): string {.raises: [ValueError].} =
     result = newAddress(cast[array[32, uint8]](key))
 
 #Verifies if an address is valid.
-func verify*(address: string): bool {.raises: [].} =
+func verify*(address: string): bool {.raises: [ValueError].} =
     #Return true if there's no issue.
     result = true
 
@@ -78,6 +137,15 @@ func verify*(address: string): bool {.raises: [].} =
 
     #Verify the BCH.
     #TODO.
+    if not verifyBCH(
+        cast[seq[uint8]](
+            address.substr(
+                ADDRESS_HRP.len,
+                address.len
+            ).toBase32()
+        )
+    ):
+        return false
 
 #If we have a key to check with, make an address for that key and compare with the given address.
 func verify*(address: string, key: PublicKey): bool {.raises: [ValueError].} =

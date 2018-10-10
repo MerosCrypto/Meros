@@ -14,6 +14,7 @@ for _ in 0 ..< 500:
         echo wallet.address
         echo "Invalid Address Type 1."
         quit()
+
     #Verify the address for the matching pub key.
     if not wallet.address.verify(wallet.publicKey):
         echo wallet.address
