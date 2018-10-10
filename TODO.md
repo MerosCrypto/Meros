@@ -7,7 +7,6 @@ Core:
 - Handle `Block`s over the `Network`.
 - Handle `Block`s in `MainMerit`.
 
-- Implement Bech32's BCH codes into `Address`.
 - Have Merit Holders indexable by the order they got Merit in.
 
 - Tell the GUI thread to close.
@@ -29,7 +28,7 @@ Features:
 - Make the ports to listen on runtime options.
 
 Improvements:
-- Make nonce an `uint`.
+- Remove extraneous uints from Lattice.
 
 - Replace `newBN(x).toString(256)` with bit shifts under `Util.nim`.
 - Optimize `serialize` and `parse`.
@@ -49,7 +48,7 @@ Bug fixes:
 - Receives from "minter" can't be broadcasted across the network.
 - Remove GMP's memory leak.
 - Ember will crash if sent a JSON array that's too short.
-- Fix trailing zeroes in Base32 seqs. This is due to right padding the result instead of left padding them. As Base32 is only used for addresses, which works off a set length, this is not an issue which affects CURRENT usage in any way.
+- Fix trailing zeroes in Base32 seqs. This is due to right padding the result instead of left padding them. This is not an issue which affects CURRENT usage in any way.
 - Tests still fail with some edge cases. This is likely due to missing pads.
 
 Documentation:

@@ -37,7 +37,7 @@ import strutils
 #New Block function. Creates a new block. Raises an error if there's an issue.
 proc newBlock*(
     last: ArgonHash,
-    nonce: int,
+    nonce: uint,
     time: uint,
     verifications: Verifications,
     publisher: string,

@@ -40,7 +40,6 @@ func newVerificationObj*(
         hash: hash
     )
 
-
 #New BlockVerification object.
 func newBlockVerificationObj*(
     hash: Hash[512]
@@ -48,7 +47,6 @@ func newBlockVerificationObj*(
     BlockVerification(
         hash: hash
     )
-
 
 #New MemoryVerification object.
 func newMemoryVerificationObj*(

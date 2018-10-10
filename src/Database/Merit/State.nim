@@ -15,14 +15,14 @@ import finals
 finalsd:
     type State* = ref object of RootObj
         #Blocks until Merit is dead.
-        deadBlocks* {.final.}: int
+        deadBlocks* {.final.}: uint
         #Live Merit.
         live*: uint
         #Address -> Merit
         data {.final.}: ref Table[string, uint]
 
 #Constructor.
-func newState*(deadBlocks: int): State {.raises: [].} =
+func newState*(deadBlocks: uint): State {.raises: [].} =
     State(
         deadBlocks: deadBlocks,
         live: 0,
@@ -55,7 +55,7 @@ func processBlock*(
     #If the Blockchain's height is over 50k, meaning there is a block to remove from the state...
     if blockchain.height > state.deadBlocks:
         #Get the block that should be removed.
-        miners = blockchain.blocks[^(state.deadBlocks + 1)].miners
+        miners = blockchain.blocks[^int(state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
         for miner in miners:
             state.data[miner.miner] = state.getBalance(miner.miner) - miner.amount
@@ -72,7 +72,7 @@ func processBlockchain*(
 #Constructor. It's at the bottom so we can call processBlockchain.
 func newState*(
     blockchain: Blockchain,
-    deadBlocks: int
+    deadBlocks: uint
 ): State {.raises: [KeyError].} =
     result = newState(deadBlocks)
     result.processBlockchain(blockchain)

@@ -31,7 +31,7 @@ var
     newBlock: Block
     #Last block hash, nonce, time, and proof vars.
     last: ArgonHash = Argon(SHA512("mainnet").toString(), "00")
-    nonce: int = 1
+    nonce: uint = 1
     time: uint
     proof: uint = 1
     miners: Miners = @[

@@ -31,7 +31,7 @@ proc main() =
         newBlock: Block
         #Last block hash, nonce, time, and proof vars.
         last: ArgonHash = merit.blockchain.blocks[0].argon
-        nonce: int = 1
+        nonce: uint = 1
         time: uint
         proof: uint = 0
         miners: Miners = @[(

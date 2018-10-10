@@ -34,7 +34,7 @@ proc calculateNextDifficulty*(
     blocks: seq[Block],
     difficulties: seq[Difficulty],
     targetTime: uint,
-    blocksPerPeriod: int
+    blocksPerPeriod: uint
 ): Difficulty {.raises: [].} =
     #If it was the genesis block, keep the same difficulty.
     if blocks.len == 1:

@@ -19,7 +19,7 @@ export BlockchainObj
 #Create a new Blockchain.
 proc newBlockchain*(
     genesis: string,
-    blockTime: int,
+    blockTime: uint,
     startDifficulty: BN
 ): Blockchain {.raises: [ValueError, ArgonError].} =
     newBlockchainObj(
@@ -35,7 +35,7 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueEr
 
     let
         #Blocks Per Month.
-        blocksPerMonth: int = 2592000 div blockchain.blockTime
+        blocksPerMonth: uint = uint(2592000) div blockchain.blockTime
         #Grab the Blocks.
         blocks: seq[Block] = blockchain.blocks
 
@@ -52,7 +52,7 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueEr
         return false
 
     #Set the period length.
-    var blocksPerPeriod: int
+    var blocksPerPeriod: uint
     #If we're in the first month, the period length is one block.
     if blockchain.height < blocksPerMonth:
         blocksPerPeriod = 1
@@ -75,7 +75,7 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueEr
             calculateNextDifficulty(
                 blockchain.blocks,
                 blockchain.difficulties,
-                uint(blockchain.blockTime * blocksPerPeriod),
+                blockchain.blockTime * blocksPerPeriod,
                 blocksPerPeriod
             )
         )

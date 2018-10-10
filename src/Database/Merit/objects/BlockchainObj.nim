@@ -22,10 +22,10 @@ import strutils
 finalsd:
     type Blockchain* = ref object of RootObj
         #Block time (part of the chain params).
-        blockTime* {.final.}: int
+        blockTime* {.final.}: uint
 
         #Height.
-        height*: int
+        height*: uint
         #seq of all the blocks.
         blocks*: seq[Block]
         #seq of all the difficulties.
@@ -34,7 +34,7 @@ finalsd:
 #Create a Blockchain object.
 proc newBlockchainObj*(
     genesis: string,
-    blockTime: int,
+    blockTime: uint,
     startDifficulty: BN
 ): Blockchain {.raises: [ValueError, ArgonError].} =
     Blockchain(

@@ -24,7 +24,7 @@ finalsd:
         #Argon hash of the last block.
         last* {.final.}: ArgonHash
         #Nonce, AKA index.
-        nonce* {.final.}: int
+        nonce* {.final.}: uint
         #Timestamp.
         time*: uint
 
@@ -48,7 +48,7 @@ finalsd:
 #Constructor.
 func newBlockObj*(
     last: ArgonHash,
-    nonce: int,
+    nonce: uint,
     time: uint,
     verifications: Verifications,
     publisher: string

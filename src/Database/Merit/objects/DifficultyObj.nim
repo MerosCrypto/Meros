@@ -8,14 +8,14 @@ import finals
 finalsd:
     type Difficulty* = ref object of RootObj
         #Start of the period.
-        start* {.final.}: int
+        start* {.final.}: uint
         #End of the period.
-        endBlock* {.final.}: int
+        endBlock* {.final.}: uint
         #Difficulty to beat.
         difficulty* {.final.}: BN
 
 #Create a new Difficulty object.
-func newDifficultyObj*(start: int, endBlock: int, difficulty: BN): Difficulty {.raises: [].} =
+func newDifficultyObj*(start: uint, endBlock: uint, difficulty: BN): Difficulty {.raises: [].} =
     Difficulty(
         start: start,
         endBlock: endBlock,

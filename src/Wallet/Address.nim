@@ -136,7 +136,6 @@ func verify*(address: string): bool {.raises: [ValueError].} =
         return false
 
     #Verify the BCH.
-    #TODO.
     if not verifyBCH(
         cast[seq[uint8]](
             address.substr(
@@ -151,6 +150,7 @@ func verify*(address: string): bool {.raises: [ValueError].} =
 func verify*(address: string, key: PublicKey): bool {.raises: [ValueError].} =
     address == newAddress(key)
 
+#Converts an address to a BN.
 func toBN*(address: string): BN {.raises: [ValueError].} =
     #Verify the address.
     if not address.verify():
@@ -162,7 +162,7 @@ func toBN*(address: string): BN {.raises: [ValueError].} =
         keyStr: string = ""
 
     #Turn the seq into a string.
-    #We don't use b in key because Base32 is returning a trailing 0 for some reason.
+    #We use 0 ..< 32 to ignore the BCH code.
     for i in 0 ..< 32:
         keyStr &= char(key[i])
 

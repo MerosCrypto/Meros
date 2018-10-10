@@ -57,7 +57,7 @@ proc parseBlock*(
         #Signature
         blockSeq: seq[string] = blockStr.deserialize(13)
         #Nonce.
-        nonce: int = blockSeq[0].toBN(256).toInt()
+        nonce: uint = uint(blockSeq[0].toBN(256).toInt())
         #Last block hash.
         last: ArgonHash = blockSeq[1].pad(64, char(0)).toArgonHash()
         #Time.

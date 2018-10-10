@@ -12,7 +12,7 @@ import ../src/lib/Hash
 import ../src/Wallet/Wallet
 
 #Lattice lib.
-import ../src/Database/Merit/Verification
+import ../src/Database/Merit/Verifications
 
 #Serialization libs.
 import ../src/Network/Serialize/SerializeVerification

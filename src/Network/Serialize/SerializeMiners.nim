@@ -17,7 +17,7 @@ import strutils
 #Serialization function.
 proc serialize*(
     miners: Miners,
-    nonce: int
+    nonce: uint
 ): string {.raises: [ValueError].} =
     #Create the result.
     result = !newBN(nonce).toString(256)
