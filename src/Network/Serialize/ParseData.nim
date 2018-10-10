@@ -45,7 +45,7 @@ proc parseData*(
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
-        nonce: BN = dataSeq[1].toBN(256)
+        nonce: uint = uint(dataSeq[1].toBN(256).toInt())
         #Get the data.
         data: string = dataSeq[2]
         #Get the proof.
@@ -64,7 +64,7 @@ proc parseData*(
     #Set the SHA512 hash.
     result.sha512 = SHA512(data)
     #Set the proof.
-    result.proof = proof.toBN(256)
+    result.proof = uint(proof.toBN(256).toInt())
     #Set the hash.
     result.hash = Argon(result.sha512.toString(), proof, true)
 

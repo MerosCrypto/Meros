@@ -1,6 +1,5 @@
-#Numerical libs.
+#BN lib.
 import BN
-import ../../../lib/Base
 
 #Node, Send, and Receive objects.
 import NodeObj
@@ -16,7 +15,7 @@ finalsd:
         #Chain owner.
         address* {.final.}: string
         #Account height. BN for compatibility.
-        height*: BN
+        height*: uint
         #seq of the TXs.
         nodes*: seq[Node]
         #Balance of the address.
@@ -26,7 +25,7 @@ finalsd:
 func newAccountObj*(address: string): Account {.raises: [].} =
     Account(
         address: address,
-        height: newBN(),
+        height: 0,
         nodes: @[],
         balance: newBN()
     )
@@ -60,8 +59,8 @@ proc addNode*(
             discard
 
 #Helper getter that takes in an index.
-func `[]`*(account: Account, index: int): Node {.raises: [ValueError].} =
-    if index >= account.nodes.len:
+func `[]`*(account: Account, index: uint): Node {.raises: [ValueError].} =
+    if index >= uint(account.nodes.len):
         raise newException(ValueError, "Account index out of bounds.")
 
-    result = account.nodes[index]
+    result = account.nodes[int(index)]

@@ -41,7 +41,7 @@ proc send(
     rpc: RPC,
     address: string,
     amount: BN,
-    nonce: BN
+    nonce: uint
 ): JSONNode {.raises: [
     ValueError,
     ArgonError,
@@ -84,8 +84,8 @@ proc send(
 proc receive(
     rpc: RPC,
     address: string,
-    inputNonce: BN,
-    nonce: BN
+    inputNonce: uint,
+    nonce: uint
 ): JSONNode {.raises: [
     ValueError,
     SodiumError,
@@ -128,11 +128,10 @@ proc getHeight(
     account: string
 ): JSONNode {.raises: [EventError].} =
     #Get the height.
-    var height: BN
-
+    var height: uint
     try:
         height = rpc.events.get(
-            proc (account: string): BN,
+            proc (account: string): uint,
             "lattice.getHeight"
         )(account)
     except:
@@ -180,14 +179,14 @@ proc `latticeModule`*(
                 res = rpc.send(
                     json["args"][0].getStr(),
                     newBN(json["args"][1].getStr()),
-                    newBN(json["args"][2].getStr())
+                    parseUInt(json["args"][2].getStr())
                 )
 
             of "receive":
                 res = rpc.receive(
                     json["args"][0].getStr(),
-                    newBN(json["args"][1].getStr()),
-                    newBN(json["args"][2].getStr())
+                    parseUInt(json["args"][1].getStr()),
+                    parseUInt(json["args"][2].getStr())
                 )
 
             of "getHeight":

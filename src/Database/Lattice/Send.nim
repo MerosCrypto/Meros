@@ -31,7 +31,7 @@ import strutils
 proc newSend*(
     output: string,
     amount: BN,
-    nonce: BN
+    nonce: uint
 ): Send {.raises: [ValueError, FinalAttributeError].} =
     #Verify output.
     if not Wallet.verify(output):
@@ -67,16 +67,17 @@ proc mine*(
         inc(proof)
         hash = Argon(send.sha512.toString(), proof.toString(256), true)
 
-    send.proof = proof
+    send.proof = uint(proof.toInt())
     send.hash = hash
 
 #Sign a TX.
-func sign*(wallet: Wallet, send: Send): bool {.raises: [SodiumError, FinalAttributeError].} =
+func sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError, SodiumError, FinalAttributeError].} =
     result = true
 
-    #Make sure the proof exists.
-    if send.proof.getNil():
+    #Make sure the Send was mined.
+    if send.hash.toBN() == newBN():
         return false
+    
     #Set the sender behind the node.
     send.sender = wallet.address
     #Sign the hash of the Send.

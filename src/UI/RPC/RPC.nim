@@ -87,7 +87,7 @@ proc start*(rpc: RPC) {.async.} =
         )
 
 #Start up the RPC (Socket; for remote connections).
-proc listen*(rpc: RPC, port: int) {.async.} =
+proc listen*(rpc: RPC, port: uint) {.async.} =
     #Start listening.
     rpc.server.setSockOpt(OptReuseAddr, true)
     rpc.server.bindAddr(Port(port))

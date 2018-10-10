@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../lib/Errors
 
-#BN lib.
-import BN
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -29,8 +26,8 @@ import finals
 #Create a new Receive node.
 proc newReceive*(
     inputAddress: string,
-    inputNonce: BN,
-    nonce: BN
+    inputNonce: uint,
+    nonce: uint
 ): Receive {.raises: [ValueError, FinalAttributeError].} =
     #Verify the input address.
     if (
@@ -38,14 +35,6 @@ proc newReceive*(
         (inputAddress != "minter")
     ):
         raise newException(ValueError, "Receive address is not valid.")
-
-    #Verify the input nonce.
-    if inputNonce < BNNums.ZERO:
-        raise newException(ValueError, "Receive input nonce is negative.")
-
-    #Verify the nonce.
-    if nonce < BNNums.ZERO:
-        raise newException(ValueError, "Receive nonce is negative.")
 
     #Craft the result.
     result = newReceiveObj(
@@ -62,7 +51,7 @@ proc newReceive*(
 #Create a new Receive node.
 proc newReceive*(
     index: Index,
-    nonce: BN
+    nonce: uint
 ): Receive {.raises: [ValueError, FinalAttributeError].} =
     newReceive(
         index.address,

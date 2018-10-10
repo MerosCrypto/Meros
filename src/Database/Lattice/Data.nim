@@ -27,7 +27,7 @@ import finals
 #Create a new  node.
 proc newData*(
     data: string,
-    nonce: BN
+    nonce: uint
 ): Data {.raises: [ValueError, FinalAttributeError].} =
     #Verify the data argument.
     if data.len > 1024:
@@ -58,14 +58,20 @@ proc mine*(
         hash = Argon(data.sha512.toString(), proof.toString(256), true)
 
     #Set the proof and hash.
-    data.proof = proof
+    data.proof = uint(proof.toInt())
     data.hash = hash
 
 #Sign a TX.
 func sign*(
     wallet: Wallet,
     data: Data
-) {.raises: [SodiumError, FinalAttributeError].} =
+): bool {.raises: [ValueError, SodiumError, FinalAttributeError].} =
+    result = true
+
+    #Make sure the Data was mined.
+    if data.hash.toBN() == newBN():
+        return false
+
     #Set the sender behind the node.
     data.sender = wallet.address
     #Sign the hash of the Data.

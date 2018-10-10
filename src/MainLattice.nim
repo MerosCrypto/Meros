@@ -75,7 +75,7 @@ events.on(
 #Handle requests for an account's height.
 events.on(
     "lattice.getHeight",
-    proc (account: string): BN {.raises: [ValueError].} =
+    proc (account: string): uint {.raises: [ValueError].} =
         lattice.getAccount(account).height
 )
 

@@ -8,12 +8,12 @@ import asyncnet
 finalsd:
     type Client* = ref object of RootObj
         #ID.
-        id* {.final.}: int
+        id* {.final.}: uint
         #Socket.
         socket* {.final.}: AsyncSocket
 
 #Constructor.
-func newClient*(id: int, socket: AsyncSocket): Client {.raises: [].} =
+func newClient*(id: uint, socket: AsyncSocket): Client {.raises: [].} =
     result = Client(
         id: id,
         socket: socket

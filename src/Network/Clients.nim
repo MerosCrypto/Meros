@@ -25,7 +25,7 @@ import asyncnet, asyncdispatch
 proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
     var
         #Get the client ID.
-        id: int = client.id
+        id: uint = client.id
         #Define the loop vars outside of the loop.
         header: string
         size: int
@@ -67,8 +67,8 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
             )(
                 newMessage(
                     id,
-                    ord(header[0]),
-                    ord(header[1]),
+                    uint(ord(header[0])),
+                    uint(ord(header[1])),
                     MessageType(header[2]),
                     header,
                     line
@@ -106,14 +106,14 @@ proc broadcast*(
     msg: Message
 ) {.raises: [AsyncError, SocketError].} =
     #Seq of the clients to disconnect.
-    var toDisconnect: seq[int] = @[]
+    var toDisconnect: seq[uint] = @[]
 
     #Iterate over each client.
     for client in clients.clients:
         #Skip the Client who sent us this.
         if client.id == msg.client:
             continue
-        
+
         #Make sure the client is open.
         if not client.isClosed():
             try:

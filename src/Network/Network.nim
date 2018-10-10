@@ -36,13 +36,13 @@ import strutils
 
 const
     #Minimum supported protocol.
-    MIN_PROTOCOL: int = 0
+    MIN_PROTOCOL: uint = 0
     #Maximum supported protocol.
-    MAX_PROTOCOL: int = 0
+    MAX_PROTOCOL: uint = 0
 
 #Constructor.
 proc newNetwork*(
-    id: int,
+    id: uint,
     nodeEvents: EventEmitter
 ): Network {.raises: [AsyncError, SocketError].} =
     var
@@ -136,7 +136,7 @@ proc newNetwork*(
 #Start listening.
 proc start*(
     network: Network,
-    port: int = 5132
+    port: uint
 ) {.raises: [AsyncError, SocketError].} =
     #Listen for a new Server client.
     network.subEvents.on(
@@ -182,7 +182,7 @@ proc broadcast*(network: Network, msg: Message) {.raises: [AsyncError, SocketErr
 proc reply*(network: Network, msg: Message, toSend: string) {.raises: [AsyncError, SocketError].} =
     network.clients.reply(msg, toSend)
 #Disconnect a client.
-proc disconnect*(network: Network, id: int) {.raises: [SocketError].} =
+proc disconnect*(network: Network, id: uint) {.raises: [SocketError].} =
     network.clients.disconnect(id)
 proc disconnect*(network: Network, msg: Message) {.raises: [SocketError].} =
     network.clients.disconnect(msg.client)

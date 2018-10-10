@@ -43,11 +43,11 @@ proc parseReceive*(
         #Get the sender's Public Key.
         sender: PublicKey = newPublicKey(recvSeq[0].pad(32, char(0)))
         #Get the nonce.
-        nonce: BN = recvSeq[1].toBN(256)
+        nonce: uint = uint(recvSeq[1].toBN(256).toInt())
         #Get the input Address.
         inputAddress: string = newAddress(recvSeq[2])
         #Get the input nonce.
-        inputNonce: BN = recvSeq[3].toBN(256)
+        inputNonce: uint = uint(recvSeq[3].toBN(256).toInt())
         #Get the signature.
         signature: string = recvSeq[4].pad(64, char(0))
 

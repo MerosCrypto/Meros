@@ -98,7 +98,7 @@ proc verify*(
     ) >= uint(501):
         #Get the Index of the Node.
         var index: Index = lattice.lookup[hash]
-        lattice.accounts[index.address][index.nonce.toInt()].verified = true
+        lattice.accounts[index.address][index.nonce].verified = true
     echo hash & " was verified."
 
 #Creates a new Account on the Lattice.
@@ -130,7 +130,7 @@ proc `[]`*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
     if lattice.accounts[index.address].height <= index.nonce:
         raise newException(ValueError, "The Account for that address doesn't have a Node for that nonce.")
 
-    result = lattice.accounts[index.address][index.nonce.toInt()]
+    result = lattice.accounts[index.address][index.nonce]
 
 #Gets a Node by its hash.
 proc getNode*(lattice: Lattice, hash: string): Node {.raises: [ValueError].} =

@@ -130,7 +130,7 @@ proc mint*(
     FinalAttributeError
 ].} =
     #Get the Height in a new var that won't update.
-    var height: BN = lattice.getAccount("minter").height
+    var height: uint = lattice.getAccount("minter").height
 
     #Create the Send Node.
     var send: Send = newSend(

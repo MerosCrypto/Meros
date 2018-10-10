@@ -36,7 +36,7 @@ proc add(
         return false
 
     #Verify the nonce.
-    if newBN(account.nodes.len) != node.nonce:
+    if uint(account.nodes.len) != node.nonce:
         return false
 
     #If it's a valid minter node...

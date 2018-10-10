@@ -21,17 +21,17 @@ var
     )                                                   #Index of the Mint TX.
     mintRecv: Receive = newReceive(                     #Mint Receive.
         mintIndex,
-        newBN()
+        0
     )
     send: Send = newSend(                               #Send.
         receiver.address,
         newBN(1000000),
-        newBN(1)
+        1
     )
     recv: Receive = newReceive(                         #Receive.
         sender.address,
-        newBN(1),
-        newBN()
+        1,
+        0
     )
 
 echo "The coins were minted."

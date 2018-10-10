@@ -16,7 +16,7 @@ import asyncnet
 #Clients object.
 finalsd:
     type Clients* = ref object of RootObj
-        total*: int
+        total*: uint
         clients*: seq[Client]
 
 #Constructor.
@@ -27,13 +27,13 @@ func newClients*(): Clients {.raises: [].} =
     )
 
 #Getter.
-func getClient*(clients: Clients, id: int): Client {.raises: [].} =
+func getClient*(clients: Clients, id: uint): Client {.raises: [].} =
     for client in clients.clients:
         if client.id == id:
             return client
 
 #Disconnect.
-proc disconnect*(clients: Clients, id: int) {.raises: [SocketError].} =
+proc disconnect*(clients: Clients, id: uint) {.raises: [SocketError].} =
     for i, client in clients.clients:
         if client.id == id:
             try:

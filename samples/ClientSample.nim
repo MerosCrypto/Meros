@@ -25,9 +25,9 @@ var
     answer: string                         #Answer to questions.
 
     address: string                        #Address to send/receive from.
-    inputNonce: BN                         #Nonce of the Send to Receive from.
+    inputNonce: uint                       #Nonce of the Send to Receive from.
     amount: BN                             #Amount we're sending.
-    nonce: BN                              #Nonce of the Node.
+    nonce: uint                            #Nonce of the Node.
 
     wallet: Wallet                         #Wallet.
 
@@ -73,7 +73,7 @@ if answer.toLower() == "send":
     echo "How much would you like to send?"
     amount = newBN(stdin.readLine())
     echo "What nonce is this on your account?"
-    nonce = newBN(stdin.readLine())
+    nonce = parseUInt(stdin.readLine())
 
     #Create the Send.
     send = newSend(
@@ -96,9 +96,9 @@ elif answer.toLower() == "receive":
     echo "Who would you like to receive from?"
     address = stdin.readLine()
     echo "What nonce is the send block on their account?"
-    inputNonce = newBN(stdin.readLine())
+    inputNonce = parseUInt(stdin.readLine())
     echo "What nonce is this on your account?"
-    nonce = newBN(stdin.readLine())
+    nonce = parseUInt(stdin.readLine())
 
     #Create the Receive.
     recv = newReceive(

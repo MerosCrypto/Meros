@@ -1,6 +1,5 @@
-#Numerical libs.
-import BN as BNFile
-import ../../../lib/Base
+#BN lib.
+import BN
 
 #Hash lib.
 import ../../../lib/Hash
@@ -23,7 +22,7 @@ finalsd:
         #SHA512 hash.
         sha512* {.final.}: SHA512Hash
         #Proof this isn't spam.
-        proof* {.final.}: BN
+        proof* {.final.}: uint
 
 #New Send object.
 func newSendObj*(

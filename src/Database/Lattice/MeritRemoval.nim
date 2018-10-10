@@ -1,10 +1,6 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Numerical libs.
-import BN
-import ../../lib/Base
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -28,7 +24,7 @@ import finals
 proc newMeritRemoval*(
     first: Hash[512],
     second: Hash[512],
-    nonce: BN
+    nonce: uint
 ): MeritRemoval {.raises: [ValueError, FinalAttributeError].} =
     #Create the MeritRemoval.
     result = newMeritRemovalObj(first, second)

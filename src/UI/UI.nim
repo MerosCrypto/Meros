@@ -37,7 +37,7 @@ proc newUI*(
     events: EventEmitter,
     width: int,
     height: int,
-    port: int
+    port: uint
 ): UI {.raises: [AsyncError, SocketError, WebViewError].} =
     #Create the UI object.
     result = UI()

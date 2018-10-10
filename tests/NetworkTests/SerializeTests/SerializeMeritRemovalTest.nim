@@ -45,7 +45,7 @@ for i in 1 .. 20:
     var mr: MeritRemoval = newMeritRemoval(
         first,
         second,
-        newBN()
+        0
     )
     #Sign it.
     wallet.sign(mr)

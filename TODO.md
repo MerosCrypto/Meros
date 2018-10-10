@@ -28,8 +28,6 @@ Features:
 - Make the ports to listen on runtime options.
 
 Improvements:
-- Remove extraneous uints from Lattice.
-
 - Replace `newBN(x).toString(256)` with bit shifts under `Util.nim`.
 - Optimize `serialize` and `parse`.
 

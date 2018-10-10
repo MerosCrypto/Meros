@@ -45,7 +45,7 @@ proc parseMeritRemoval*(
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
-        nonce: BN = dataSeq[1].toBN(256)
+        nonce: uint = uint(dataSeq[1].toBN(256).toInt())
         #Get the hash of the first node.
         first: Hash[512] = dataSeq[2].pad(64, char(0)).toHash(512)
         #Get the hash of the second node.

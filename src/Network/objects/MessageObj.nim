@@ -14,18 +14,18 @@ finalsd:
 
         #Message obkect.
         Message* = ref object of RootObj
-            client* {.final.}: int
-            network* {.final.}: int
-            version* {.final.}: int
+            client* {.final.}: uint
+            network* {.final.}: uint
+            version* {.final.}: uint
             content* {.final.}: MessageType
             header* {.final.}: string
             message* {.final.}: string
 
 #Constructor for incoming data.
 func newMessage*(
-    client: int,
-    network: int,
-    version: int,
+    client: uint,
+    network: uint,
+    version: uint,
     content: MessageType,
     header: string,
     message: string
@@ -41,8 +41,8 @@ func newMessage*(
 
 #Constructor for outgoing data.
 func newMessage*(
-    network: int,
-    version: int,
+    network: uint,
+    version: uint,
     content: MessageType,
     message: string
 ): Message {.raises: [].} =

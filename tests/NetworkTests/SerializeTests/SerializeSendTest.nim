@@ -30,7 +30,7 @@ for i in 1 .. 20:
         send: Send = newSend(
             receiver.address,
             newBN("10000000000"),
-            newBN()
+            0
         )
     #Mine the Send.
     send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))

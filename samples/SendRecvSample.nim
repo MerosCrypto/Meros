@@ -19,12 +19,12 @@ var
     send: Send = newSend(          #Send.
         receiver.address,
         newBN("10000000000"),
-        newBN()
+        0
     )
     recv: Receive = newReceive(    #Receive.
         sender.address,
-        newBN(),
-        newBN()
+        0,
+        0
     )
 
 #Mine and sign the Send.

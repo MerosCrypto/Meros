@@ -50,12 +50,12 @@ for i in 1 .. 15:
         #Data.
         data: Data = newData(
             tests[i - 1],
-            newBN()
+            0
         )
     #Mine the Data.
     data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
     #Sign it.
-    wallet.sign(data)
+    assert(wallet.sign(data))
 
     #Serialize it and parse it back.
     var dataParsed: Data = data.serialize().parseData()

@@ -1,7 +1,3 @@
-#Numerical libs.
-import BN as BNFile
-import ../../../lib/Base
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -19,7 +15,7 @@ finalsd:
         #SHA512 hash.
         sha512* {.final.}: SHA512Hash
         #Proof this isn't spam.
-        proof* {.final.}: BN
+        proof* {.final.}: uint
 
 #New Data object.
 func newDataObj*(data: string): Data {.raises: [FinalAttributeError].} =

@@ -44,7 +44,7 @@ var
     )
     mintRecv: Receive = newReceive(                    #Mint Receive.
         mintIndex,
-        newBN()
+        0
     )
 
     #Client vars.
@@ -123,7 +123,7 @@ proc spam() {.async, raises: [Exception].} =
             newSend(
                 receiver.address,
                 BNNums.ONE,
-                newBN(i + 1)
+                uint(i + 1)
             )
         )
 
@@ -136,8 +136,8 @@ proc spam() {.async, raises: [Exception].} =
         recvs.add(
             newReceive(
                 minter.address,
-                newBN(i + 1),
-                newBN(i)
+                uint(i + 1),
+                uint(i)
             )
         )
         #Sign the Receive.

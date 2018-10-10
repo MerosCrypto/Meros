@@ -1,13 +1,8 @@
-#Numerical libs.
-import BN as BNFile
-import ../../../lib/Base
-
 #Hash lib.
 import ../../../lib/Hash
 
 #Finals lib.
 import finals
-
 
 finalsd:
     type
@@ -25,7 +20,7 @@ finalsd:
             #Address behind the node.
             sender* {.final.}: string
             #Index on the account.
-            nonce* {.final.}: BN
+            nonce* {.final.}: uint
             #Node hash.
             hash* {.final.}: Hash[512]
             #Signature.

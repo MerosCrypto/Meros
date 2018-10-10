@@ -29,8 +29,8 @@ for i in 1 .. 20:
     #Create a Receive (based on a send that doesn't exist for 1 EMB).
     recv = newReceive(
         sender.address,
-        newBN(),
-        newBN()
+        0,
+        0
     )
     #Sign it.
     receiver.sign(recv)

@@ -1,7 +1,3 @@
-#Numerical libs.
-import BN as BNFile
-import ../../../lib/Base
-
 #Node object.
 import NodeObj
 
@@ -14,12 +10,12 @@ finalsd:
         #Input address.
         inputAddress* {.final.}: string
         #Input nonce.
-        inputNonce* {.final.}: BN
+        inputNonce* {.final.}: uint
 
 #New Receive object.
 func newReceiveObj*(
     inputAddress: string,
-    inputNonce: BN
+    inputNonce: uint
 ): Receive {.raises: [FinalAttributeError].} =
     result = Receive(
         inputAddress: inputAddress,

@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../lib/Errors
 
-#BN lib.
-import BN
-
 #Import the Wallet lib.
 import ../../Wallet/Wallet
 

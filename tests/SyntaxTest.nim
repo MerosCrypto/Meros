@@ -7,9 +7,11 @@ import ../src/lib/Util
 import ../src/lib/Base
 import ../src/lib/Base32
 
-import ../src/lib/Hash
-
+import ../src/lib/libsodium
 import ../src/lib/ED25519
+
+import ../src/lib/Hash
+import ../src/lib/Merkle
 
 #Database.
 import ../src/Database/Filesystem/Filesystem

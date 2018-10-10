@@ -15,7 +15,7 @@ import SerializeCommon
 #Serialize a Send.
 proc serialize*(send: Send): string {.raises: [ValueError].} =
     result =
-        !send.nonce.toString(256) &
+        !newBN(send.nonce).toString(256) &
         !Address.toBN(send.output).toString(256) &
         !send.amount.toString(256)
 
@@ -23,5 +23,5 @@ proc serialize*(send: Send): string {.raises: [ValueError].} =
         result =
             !Address.toBN(send.sender).toString(256) &
             result &
-            !send.proof.toString(256) &
+            !newBN(send.proof).toString(256) &
             !send.signature

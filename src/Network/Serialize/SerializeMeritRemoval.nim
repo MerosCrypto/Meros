@@ -18,7 +18,7 @@ import SerializeCommon
 #Serialize a MeritRemoval.
 proc serialize*(mr: MeritRemoval): string {.raises: [ValueError].} =
     result =
-        !mr.nonce.toString(256) &
+        !newBN(mr.nonce).toString(256) &
         !mr.first.toString() &
         !mr.second.toString()
 

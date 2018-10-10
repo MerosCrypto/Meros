@@ -24,11 +24,11 @@ const
         "B7D8923A5747ED30B3C896A19E1E661B7786D3ACC97AE20B91236855C87AFB45"
     MINT_AMOUNT: string =            #Amount of coins for the Genesis Send.
         "1000000"
-    
+
     #Network constants.
-    NETWORK_ID: int = 0       #Network ID.
-    NETWORK_PROTOCOL: int = 0 #Protocol version.
-    NETWORK_PORT: int = 5132  #Port to listen on.
+    NETWORK_ID: uint = 0       #Network ID.
+    NETWORK_PROTOCOL: uint = 0 #Protocol version.
+    NETWORK_PORT: uint = 5132  #Port to listen on.
 
     #UI constants.
-    RPC_PORT: int = 5133
+    RPC_PORT: uint = 5133

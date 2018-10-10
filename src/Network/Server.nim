@@ -9,7 +9,7 @@ import ec_events
 import asyncnet, asyncdispatch
 
 #Listen on a port.
-proc listen*(network: Network, port: int) {.async.} =
+proc listen*(network: Network, port: uint) {.async.} =
     #Start listening.
     network.server.setSockOpt(OptReuseAddr, true)
     network.server.bindAddr(Port(port))
