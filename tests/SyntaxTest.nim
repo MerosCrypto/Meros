@@ -3,6 +3,7 @@
 #Lib.
 import ../src/lib/Errors
 import ../src/lib/Util
+import ../src/lib/Logger
 
 import ../src/lib/Base
 import ../src/lib/Base32

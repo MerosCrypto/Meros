@@ -68,7 +68,7 @@ proc start*(rpc: RPC) {.async.} =
 
     while rpc.listening:
         #Allow other async code to execute.
-        await sleepAsync(10)
+        await sleepAsync(1)
 
         #Try to get a message from the channel.
         data = rpc.toRPC[].tryRecv()

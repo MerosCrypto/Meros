@@ -15,7 +15,7 @@ export VerificationsObj
 import finals
 
 #Create a new Verification.
-proc newMemoryVerification*(
+func newMemoryVerification*(
     hash: Hash[512]
 ): MemoryVerification {.raises: [].} =
     newMemoryVerificationObj(hash)

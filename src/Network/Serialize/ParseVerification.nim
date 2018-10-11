@@ -24,7 +24,7 @@ import finals
 import strutils
 
 #Parse a Verification.
-proc parseVerification*(
+func parseVerification*(
     verifStr: string
 ): MemoryVerification {.raises: [
     ValueError,
