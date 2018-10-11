@@ -34,7 +34,7 @@ func `$`*(hash: Hash): string  {.raises: [].} =
 
 #To BN.
 func toBN*(hash: Hash): BN  {.raises: [ValueError].} =
-    ($hash).toBN(16)
+    hash.toString().toBN(256)
 
 #Empty uint8 'array'.
 var EmptyHash*: ptr uint8
