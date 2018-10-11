@@ -18,15 +18,19 @@ var
     ui: UI                                   #RPC and GUI.
 
 #Handle node level events.
+
 #Properly shutdown.
 events.on(
     "system.quit",
-    proc () {.raises: [SocketError].} =
+    proc () {.raises: [ChannelError, SocketError].} =
         #Shut down the UI.
         ui.shutdown()
 
         #Shut down the Network.
         network.shutdown()
+
+        #The GUI checks to shut down every 100 seconds. 200 is a safety measure.
+        sleep(200)
 
         #Quit.
         quit(0)

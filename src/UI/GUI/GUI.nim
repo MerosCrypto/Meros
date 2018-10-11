@@ -26,17 +26,44 @@ import strutils
 #JSON standard lib.
 import json
 
+#Thread vars needed by loop.
+var
+    gui {.threadvar.}: GUI
+    fromMain: ptr Channel[string]
+
+#Loop. Called by WebView 10 times a second.
+proc loop() {.raises: [ChannelError, WebViewError].} =
+    #Get a message if one exists.
+    var msg: tuple[dataAvailable: bool, msg: string]
+    try:
+        msg = fromMain[].tryRecv()
+    except:
+        raise newException(ChannelError, "The GUI couldn't try to receive data from fromMain.")
+
+    #If there is a message...
+    if msg.dataAvailable:
+        #Switch on it.
+        case msg.msg:
+            #If it said to shutdown, shutdown.
+            of "shutdown":
+                try:
+                    gui.webview.exit()
+                except:
+                    raise newException(WebViewError, "Couldn't shutdown the WebView.")
+
 #Constructor.
 proc newGUI*(
+    fromMainArg: ptr Channel[string],
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode],
     width: int,
     height: int
-) {.thread, raises: [WebViewError].} =
-    #Create a var for the GUI.
-    var gui: GUI
+) {.thread, raises: [ChannelError, WebViewError].} =
+    #Set the fromMain channel.
+    fromMain = fromMainArg
+
+    #Create the GUI.
     try:
-        #Create the GUI.
         gui = newGUIObject(
             toRPC,
             toGUI,
@@ -51,7 +78,7 @@ proc newGUI*(
         raise newException(WebViewError, "Couldn't create the WebView.")
 
     #Add the Bindings.
-    gui.createBindings()
+    gui.createBindings(loop)
 
     #Load the main page.
     if gui.webview.eval(
@@ -60,6 +87,14 @@ proc newGUI*(
         raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
 
     try:
+        #Schedule a function to start the loop.
+        gui.webview.dispatch(
+            proc () {.raises: [WebViewError].} =
+                if gui.webview.eval(
+                    "setInterval(GUI.loop, 100);"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+        )
         #Run the GUI.
         gui.webview.run()
     except:

@@ -17,7 +17,7 @@ import strutils
 import json
 
 #Add the GUI bindings to the GUI.
-proc addTo*(gui: GUI) {.raises: [WebViewError].} =
+proc addTo*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
     try:
         #Quit.
         gui.webview.bindProcNoArg(
@@ -36,6 +36,13 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                     })
                 except:
                     raise newException(ChannelError, "Couldn't send system.quit over the channel.")
+        )
+
+        #Loop function to allow the GUI thread to do something other than WebView.
+        gui.webview.bindProcNoArg(
+            "GUI",
+            "loop",
+            loop
         )
 
         #Print. If debug isn't defined, this does nothing.

@@ -11,8 +11,6 @@
 
 - Have Merit Holders indexable by the order they got Merit in.
 
-- Tell the GUI thread to close.
-
 - `MeritRemoval` node.
 - `Difficulty Vote` node.
 

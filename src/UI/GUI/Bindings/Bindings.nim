@@ -10,9 +10,9 @@ import WalletBindings
 import LatticeBindings
 
 #Create the bindings.
-proc createBindings*(gui: GUI) {.raises: [WebViewError].} =
+proc createBindings*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
     #Add the GUI bindings.
-    GUIBindings.addTo(gui)
+    GUIBindings.addTo(gui, loop)
     #Add the Wallet bindings.
     WalletBindings.addTo(gui)
     #Add the Lattice bindings.

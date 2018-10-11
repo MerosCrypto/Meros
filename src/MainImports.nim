@@ -31,6 +31,9 @@ import UI/UI
 #Event lib.
 import ec_events
 
+#OS standard lib.
+import os
+
 #Async standard lib.
 import asyncdispatch
 

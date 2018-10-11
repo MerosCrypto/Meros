@@ -28,8 +28,9 @@ import json
 #UI object.
 finalsd:
     type UI* = ref object of RootObj
-        toGUI {.final.}: Channel[JSONNode]
+        fromMain {.final.}: Channel[string]
         toRPC {.final.}: Channel[JSONNode]
+        toGUI {.final.}: Channel[JSONNode]
         rpc {.final.}: RPC
 
 #Constructor.
@@ -38,11 +39,12 @@ proc newUI*(
     width: int,
     height: int,
     port: uint
-): UI {.raises: [AsyncError, SocketError, WebViewError].} =
+): UI {.raises: [AsyncError, ChannelError, SocketError, WebViewError].} =
     #Create the UI object.
     result = UI()
 
     #Open the channels.
+    result.fromMain.open()
     result.toRPC.open()
     result.toGUI.open()
 
@@ -58,9 +60,15 @@ proc newUI*(
 
     when not defined(nogui):
         #Spawn the GUI.
-        spawn newGUI(addr result.toRPC, addr result.toGUI, width, height)
+        spawn newGUI(addr result.fromMain, addr result.toRPC, addr result.toGUI, width, height)
 
 #Shutdown.
-func shutdown*(ui: UI) {.raises: [].} =
+proc shutdown*(ui: UI) {.raises: [ChannelError].} =
+    #Shutdown the GUI.
+    try:
+        ui.fromMain.send("shutdown")
+    except:
+        raise newException(ChannelError, "Couldn't send shutdown to the GUI.")
+    
     #Shutdown the RPC.
     ui.rpc.shutdown()
