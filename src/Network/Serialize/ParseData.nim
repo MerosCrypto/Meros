@@ -4,10 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../lib/Base
-
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
@@ -45,7 +41,7 @@ proc parseData*(
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
-        nonce: uint = uint(dataSeq[1].toBN(256).toInt())
+        nonce: uint = uint(dataSeq[1].fromBinary())
         #Get the data.
         data: string = dataSeq[2]
         #Get the proof.
@@ -64,7 +60,7 @@ proc parseData*(
     #Set the SHA512 hash.
     result.sha512 = SHA512(data)
     #Set the proof.
-    result.proof = uint(proof.toBN(256).toInt())
+    result.proof = uint(proof.fromBinary())
     #Set the hash.
     result.hash = Argon(result.sha512.toString(), proof, true)
 

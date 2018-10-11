@@ -4,10 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../lib/Base
-
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
@@ -45,7 +41,7 @@ proc parseMeritRemoval*(
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
-        nonce: uint = uint(dataSeq[1].toBN(256).toInt())
+        nonce: uint = uint(dataSeq[1].fromBinary())
         #Get the hash of the first node.
         first: Hash[512] = dataSeq[2].pad(64, char(0)).toHash(512)
         #Get the hash of the second node.

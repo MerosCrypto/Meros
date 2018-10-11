@@ -1,9 +1,5 @@
 #Serialize Miners Tests.
 
-#Numerical libs.
-import BN
-import ../../../src/lib/Base
-
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 

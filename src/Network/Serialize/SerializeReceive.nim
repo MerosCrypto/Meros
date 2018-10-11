@@ -1,5 +1,7 @@
-#Numerical libs.
-import BN
+#Util lib.
+import ../../lib/Util
+
+#Base lib.
 import ../../lib/Base
 
 #Address library.
@@ -14,14 +16,14 @@ import SerializeCommon
 
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError].} =
-    result = !newBN(recv.nonce).toString(256)
+    result = !recv.nonce.toBinary()
 
     if recv.inputAddress == "minter":
         result &= !""
     else:
         result &= !Address.toBN(recv.inputAddress).toString(256)
 
-    result &= !newBN(recv.inputNonce).toString(256)
+    result &= !recv.inputNonce.toBinary()
 
     if recv.signature.len != 0:
         result =

@@ -1,7 +1,6 @@
 #Serialize Data Test.
 
-#Numerical libs.
-import BN
+#Base lib.
 import ../../../src/lib/Base
 
 #Hash lib.

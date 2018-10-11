@@ -1,9 +1,11 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Numerical libs.
+#Util lib.
+import ../../lib/Util
+
+#BNl lib.
 import BN
-import ../../lib/Base
 
 #Hash lib.
 import ../../lib/Hash
@@ -49,16 +51,16 @@ proc mine*(
 ) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
     #Create a proof of 0 and get the first Argon hash.
     var
-        proof: BN = newBN()
-        hash: ArgonHash = Argon(data.sha512.toString(), proof.toString(256), true)
+        proof: uint = 0
+        hash: ArgonHash = Argon(data.sha512.toString(), proof.toBinary(), true)
 
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(data.sha512.toString(), proof.toString(256), true)
+        hash = Argon(data.sha512.toString(), proof.toBinary(), true)
 
     #Set the proof and hash.
-    data.proof = uint(proof.toInt())
+    data.proof = proof
     data.hash = hash
 
 #Sign a TX.

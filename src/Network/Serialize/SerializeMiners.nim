@@ -1,5 +1,7 @@
-#Import the numerical libraries.
-import BN
+#Util lib.
+import ../../lib/Util
+
+#Base lib.
 import ../../lib/Base
 
 #Import the Address library.
@@ -20,7 +22,7 @@ proc serialize*(
     nonce: uint
 ): string {.raises: [ValueError].} =
     #Create the result.
-    result = !newBN(nonce).toString(256)
+    result = !nonce.toBinary()
 
     #Add each miner.
     for miner in 0 ..< miners.len:

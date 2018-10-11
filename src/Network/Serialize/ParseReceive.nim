@@ -4,10 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../lib/Base
-
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
@@ -43,11 +39,11 @@ proc parseReceive*(
         #Get the sender's Public Key.
         sender: PublicKey = newPublicKey(recvSeq[0].pad(32, char(0)))
         #Get the nonce.
-        nonce: uint = uint(recvSeq[1].toBN(256).toInt())
+        nonce: uint = uint(recvSeq[1].fromBinary())
         #Get the input Address.
         inputAddress: string = newAddress(recvSeq[2])
         #Get the input nonce.
-        inputNonce: uint = uint(recvSeq[3].toBN(256).toInt())
+        inputNonce: uint = uint(recvSeq[3].fromBinary())
         #Get the signature.
         signature: string = recvSeq[4].pad(64, char(0))
 

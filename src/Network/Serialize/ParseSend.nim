@@ -46,7 +46,7 @@ proc parseSend*(
         #Set the input address based off the sender's public key.
         input: string = sender.newAddress()
         #Get the nonce.
-        nonce: uint = uint(sendSeq[1].toBN(256).toInt())
+        nonce: uint = uint(sendSeq[1].fromBinary())
         #Get the output.
         output: string = newAddress(sendSeq[2])
         #Get the amount.
@@ -69,7 +69,7 @@ proc parseSend*(
     #Set the SHA512 hash.
     result.sha512 = SHA512(result.serialize())
     #Set the proof.
-    result.proof = uint(proof.toBN(256).toInt())
+    result.proof = uint(proof.fromBinary())
     #Set the hash.
     result.hash = Argon(result.sha512.toString(), proof, true)
 

@@ -1,5 +1,7 @@
-#Numerical libs.
-import BN
+#Util lib.
+import ../../lib/Util
+
+#Base lib.
 import ../../lib/Base
 
 #Hash lib.
@@ -25,13 +27,13 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
     #Create the result.
     result =
         #Nonce.
-        !newBN(blockArg.nonce).toString(256) &
+        !blockArg.nonce.toBinary() &
         #Last block.
-        !blockArg.last.toBN().toString(256) &
+        !blockArg.last.toString() &
         #Time.
-        !newBN(blockArg.time).toString(256) &
+        !blockArg.time.toBinary() &
         #Amount of verifications.
-        !newBN(blockArg.verifications.verifications.len).toString(256)
+        !blockArg.verifications.verifications.len.toBinary()
 
     #Add on each verification.
     for verification in blockArg.verifications.verifications:
@@ -48,7 +50,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
 
     if blockArg.signature.len != 0:
         #Proof.
-        result &= !newBN(blockArg.proof).toString(256)
+        result &= !blockArg.proof.toBinary()
 
         #Serialize the miners.
         var minersSerialized: string = blockArg.miners.serialize(blockArg.nonce)
@@ -56,6 +58,6 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
             #Add the miners.
             !minersSerialized &
             #Serialized miners length.
-            !newBN(minersSerialized.len - 4).toString(256) &
+            !(minersSerialized.len - 4).toBinary() &
             #Signature.
             !blockArg.signature

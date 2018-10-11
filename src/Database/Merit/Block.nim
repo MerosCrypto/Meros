@@ -4,10 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../lib/Base
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -83,7 +79,7 @@ proc newBlock*(
     #Set the proof.
     result.proof = proof
     #Calculate the Argon hash.
-    result.argon = Argon(result.hash.toString(), newBN(result.proof).toString(256))
+    result.argon = Argon(result.hash.toString(), result.proof.toBinary())
 
     #Set the miners.
     result.miners = miners

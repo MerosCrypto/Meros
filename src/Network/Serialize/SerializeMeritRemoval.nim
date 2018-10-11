@@ -1,5 +1,7 @@
-#Numerical libs.
-import BN
+#Util lib.
+import ../../lib/Util
+
+#Base lib.
 import ../../lib/Base
 
 #Hash lib.
@@ -18,7 +20,7 @@ import SerializeCommon
 #Serialize a MeritRemoval.
 proc serialize*(mr: MeritRemoval): string {.raises: [ValueError].} =
     result =
-        !newBN(mr.nonce).toString(256) &
+        !mr.nonce.toBinary() &
         !mr.first.toString() &
         !mr.second.toString()
 

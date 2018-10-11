@@ -1,9 +1,11 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Numerical libs.
+#Util lib.
+import ../../lib/Util
+
+#BN lib.
 import BN
-import ../../lib/Base
 
 #Hash lib.
 import ../../lib/Hash
@@ -60,14 +62,14 @@ proc mine*(
 ) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
-        proof: BN = newBN()
-        hash: ArgonHash = Argon(send.sha512.toString(), proof.toString(256), true)
+        proof: uint = 0
+        hash: ArgonHash = Argon(send.sha512.toString(), proof.toBinary(), true)
 
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(send.sha512.toString(), proof.toString(256), true)
+        hash = Argon(send.sha512.toString(), proof.toBinary(), true)
 
-    send.proof = uint(proof.toInt())
+    send.proof = proof
     send.hash = hash
 
 #Sign a TX.
@@ -77,7 +79,7 @@ func sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError, SodiumError,
     #Make sure the Send was mined.
     if send.hash.toBN() == newBN():
         return false
-    
+
     #Set the sender behind the node.
     send.sender = wallet.address
     #Sign the hash of the Send.

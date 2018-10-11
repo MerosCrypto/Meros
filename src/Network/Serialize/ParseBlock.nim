@@ -4,10 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../lib/Base
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -57,13 +53,13 @@ proc parseBlock*(
         #Signature
         blockSeq: seq[string] = blockStr.deserialize(13)
         #Nonce.
-        nonce: uint = uint(blockSeq[0].toBN(256).toInt())
+        nonce: uint = uint(blockSeq[0].fromBinary())
         #Last block hash.
         last: ArgonHash = blockSeq[1].pad(64, char(0)).toArgonHash()
         #Time.
-        time: uint = uint(blockSeq[2].toBN(256).toInt())
+        time: uint = uint(blockSeq[2].fromBinary())
         #Total Verifications.
-        verificationCount: int = blockSeq[3].toBN(256).toInt()
+        verificationCount: int = blockSeq[3].fromBinary()
         #Verifications in the block.
         verifications: Verifications = newVerificationsObj()
         #BLS signature of the Verifications.
@@ -75,7 +71,7 @@ proc parseBlock*(
         #Miners length string.
         minersLenStr: string = blockSeq[^2]
         #Miners length.
-        minersLen: int = minersLenStr.toBN(256).toInt()
+        minersLen: int = minersLenStr.fromBinary()
         #Miners.
         miners: Miners
         #Signature.
@@ -96,7 +92,7 @@ proc parseBlock*(
         #End is the string end minus the signature length minus the length of the string that says the miners length.
         minersEnd: int = blockStr.len - 66 - (!minersLenStr).len
         minersStart: int = minersEnd - minersLen - 1
-    var minersStr = !(newBN(nonce).toString(256)) & blockStr[minersStart .. minersEnd]
+    var minersStr = !nonce.toBinary() & blockStr[minersStart .. minersEnd]
     #Parse the miners.
     miners = minersStr.parseMiners()
 
@@ -105,7 +101,7 @@ proc parseBlock*(
     #Set the hash.
     result.hash = SHA512(result.serialize())
     #Set the proof.
-    result.proof = uint(proof.toBN(256).toInt())
+    result.proof = uint(proof.fromBinary())
     #Set the Argon hash.
     result.argon = Argon(result.hash.toString(), proof)
     #Set the miners.

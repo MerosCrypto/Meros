@@ -1,5 +1,7 @@
-#Numerical libs.
-import BN
+#Util lib.
+import ../../lib/Util
+
+#Base lib.
 import ../../lib/Base
 
 #Address lib.
@@ -15,7 +17,7 @@ import SerializeCommon
 #Serialize a Send.
 proc serialize*(send: Send): string {.raises: [ValueError].} =
     result =
-        !newBN(send.nonce).toString(256) &
+        !send.nonce.toBinary() &
         !Address.toBN(send.output).toString(256) &
         !send.amount.toString(256)
 
@@ -23,5 +25,5 @@ proc serialize*(send: Send): string {.raises: [ValueError].} =
         result =
             !Address.toBN(send.sender).toString(256) &
             result &
-            !newBN(send.proof).toString(256) &
+            !send.proof.toBinary() &
             !send.signature

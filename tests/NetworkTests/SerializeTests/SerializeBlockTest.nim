@@ -3,10 +3,6 @@
 #Util lib.
 import ../../../src/lib/Util
 
-#Numerical libs.
-import BN
-import ../../../src/lib/Base
-
 #Hash lib.
 import ../../../src/lib/Hash
 

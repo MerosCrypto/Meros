@@ -1,5 +1,7 @@
-#Numericals libs.
-import BN
+#Util lib.
+import ../../lib/Util
+
+#Base lib.
 import ../../lib/Base
 
 #Address lib.
@@ -15,12 +17,12 @@ import SerializeCommon
 #Serialize a Data.
 proc serialize*(data: Data): string {.raises: [ValueError].} =
     result =
-        !newBN(data.nonce).toString(256) &
+        !data.nonce.toBinary() &
         !data.data
 
     if data.signature.len != 0:
         result =
             !Address.toBN(data.sender).toString(256) &
             result &
-            !newBN(data.proof).toString(256) &
+            !data.proof.toBinary() &
             !data.signature
