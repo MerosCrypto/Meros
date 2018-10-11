@@ -1,5 +1,4 @@
-#Numerical libs.
-import BN
+#Base lib.
 import ../../lib/Base
 
 #Hash lib.

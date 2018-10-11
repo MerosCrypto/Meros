@@ -1,8 +1,7 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Numerical libs.
-import BN
+#Base lib.
 import ../../lib/Base
 
 #Miners object and the Verification/Block/Blockchain/State libs.

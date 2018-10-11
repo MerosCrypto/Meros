@@ -4,10 +4,6 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../../lib/Base
-
 #Hash lib.
 import ../../../lib/Hash
 

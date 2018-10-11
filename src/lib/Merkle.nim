@@ -1,6 +1,3 @@
-#Base lib.
-import Base
-
 #Hash lib.
 import Hash
 

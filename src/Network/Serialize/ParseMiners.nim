@@ -1,10 +1,6 @@
 #Util lib.
 import ../../lib/Util
 
-#Numerical libraries.
-import BN
-import ../../lib/Base
-
 #Address library.
 import ../../Wallet/Address
 

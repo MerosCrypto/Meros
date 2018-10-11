@@ -1,5 +1,5 @@
 #BN lib.
-import BN as BNFile
+import BN
 
 #Finals lib.
 import finals

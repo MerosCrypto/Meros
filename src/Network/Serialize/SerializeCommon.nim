@@ -1,6 +1,3 @@
-#Base lib.
-import ../../lib/Base
-
 #Prepends a string with its length.
 func `!`*(data: string): string {.raises: [].} =
     result = ""

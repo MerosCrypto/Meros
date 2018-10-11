@@ -4,9 +4,8 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
+#BN lib.
 import BN
-import ../../lib/Base
 
 #Block, and Difficulty libs.
 import Block

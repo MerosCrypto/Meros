@@ -3,8 +3,7 @@
 #Hash lib.
 import ../../src/lib/Hash
 
-#Numerical libs.
-import BN
+#Base lib.
 import ../../src/lib/Base
 
 #Merkle lib.
