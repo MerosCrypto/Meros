@@ -34,6 +34,9 @@ proc urgent*(logger: Logger, statement: string) {.raises: [IOerror].} =
     #Print the statement. This will be changed to a dialog box in the future.
     echo statement
 
+    #Acquire the urgent lock.
+    acquire(logger.urgentLock)
+
     #Log it in a file.
     logger.urgent.writeLine(statement)
 
