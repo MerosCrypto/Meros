@@ -1,6 +1,8 @@
 # TODO
 
-Core:
+### Core:
+- Add in proper logging.
+
 - Add in Chia's BLS lib.
 - Properly use the signature field of `Verifications`.
 
@@ -16,9 +18,7 @@ Core:
 
 - Finish the Tests.
 
-Features:
-- Logging.
-
+### Features:
 - Show the existing wallet on reload of `Main.html`.
 - `Account` history over the GUI.
 - `Verification`s over the GUI.
@@ -27,33 +27,42 @@ Features:
 
 - Make the ports to listen on runtime options.
 
-Improvements:
-- Replace `newBN(x).toString(256)` with bit shifts under `Util.nim`.
-- Optimize `serialize` and `parse`.
+### Improvements:
+- Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
 - Move `SerializeVerifications` and `ParseVerifications` out of `SerializeBlock`/`ParseBlock`.
+- Optimize the speed of `serialize` and `parse`.
+- Stop whatever's causing series of uneeded 0s in serialized objects.
 
 - Standardize where we use binary/hex/addresses.
 
 - Make more things `func`.
 - Make sure `KeyError` is listed under `raises`.
 
-Behavior Changes:
+### Behavior Changes:
 - Have required work be based on account, not that TX, and infinitely precalculable.
 - Finalize Argon2's Block parameters.
 
-Bug fixes:
-- Receives from "minter" can't be broadcasted across the network.
-- Remove GMP's memory leak.
-- Ember will crash if sent a JSON array that's too short.
-- Fix trailing zeroes in Base32 seqs. This is due to right padding the result instead of left padding them. This is not an issue which affects CURRENT usage in any way.
-- Tests still fail with some edge cases. This is likely due to missing pads.
+### Bug fixes:
 
-Documentation:
+    Wallet:
+        - Base32 seqs sometimes have trailing 0s. This is due to right padding the result instead of left padding it. This is not an issue which affects CURRENT usage in any way.
+        - Address's `.toBN()` occasionally returns the wrong BN.
+
+    Network:
+        - Receives from "minter" can't be broadcasted across the network.
+        - Block parsing fails due to a series of 0s in the regenerated `minersStr`.
+    UI:
+        - Ember crashes when the RPC gets a JSON array that's too short.
+
+    Other:
+        - GMP has a memory leak.
+
+### Documentation:
 - Use Documentation Comments.
 - Ember Whitepaper.
 
-Community Service:
+### Community Service:
 - Create a Nimble library out of Base.
 - Create a Nimble library out of Argon.
 - Create a Nimble library out of ED25519.
