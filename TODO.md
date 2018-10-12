@@ -1,9 +1,6 @@
 # TODO
 
 ### Core:
-- Have `Lattice.verify` return false if the verified Node doesn't exist.
-- Have Merit reject blocks if the Verifications verified non-existant Lattice Nodes.
-
 - Utilize logging.
 
 - Add in Chia's BLS lib.

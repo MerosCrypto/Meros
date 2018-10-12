@@ -48,24 +48,31 @@ block:
 events.on(
     "merit.verification",
     proc (verif: Verification): bool {.raises: [ValueError].} =
-        result = true
-
         #Print that we're adding the Verification.
         echo "Adding a new Verification."
 
         #Add the Verification to the Lattice.
-        lattice.verify(merit, verif.hash, verif.sender)
-        echo "Successfully added the Verification."
+        result = lattice.verify(merit, verif.hash, verif.sender)
+        if result:
+            echo "Successfully added the Verification."
+        else:
+            echo "Failed to add the Verification."
 )
 
 #Handle full blocks.
 events.on(
     "merit.block",
-    proc (newBlock: Block): bool {.raises: [].} =
+    proc (newBlock: Block): bool {.raises: [KeyError, ValueError].} =
         result = true
 
         #Print that we're adding the Block.
         echo "Adding a new Block."
+
+        #Verify the Verifications.
+        for verif in newBlock.verifications.verifications:
+            if not lattice.lookup.hasKey(verif.hash.toString()):
+                echo "Failed to add the Block."
+                return false
 
         #Add the Block to the Merit.
         if merit.processBlock(newBlock):
@@ -73,5 +80,7 @@ events.on(
             for verif in newBlock.verifications.verifications:
                 lattice.verify(merit, verif.hash, verif.sender)
 
-        echo "Successfully added the Block."
+            echo "Successfully added the Block."
+        else:
+            echo "Failed to add the Block."
 )

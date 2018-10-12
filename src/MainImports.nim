@@ -39,3 +39,6 @@ import asyncdispatch
 
 #String utils standard lib.
 import strutils
+
+#Tables standard lib.
+import tables
