@@ -16,18 +16,24 @@ for i in 1 .. 20:
     echo "Testing Receive Serialization/Parsing, iteration " & $i & "."
 
     var
-        #Wallets.
-        sender: Wallet = newWallet()
+        #People.
+        sender: string = newWallet().address
         receiver: Wallet = newWallet()
         #Receive.
         recv: Receive
+    
+    #If this is the 20th Receive, set the sender to "minter".
+    if i == 20:
+        echo "This is the Receive from minter."
+        sender = "minter"
 
-    #Create a Receive (based on a send that doesn't exist for 1 EMB).
+    #Create the Receive.
     recv = newReceive(
-        sender.address,
+        sender,
         0,
         0
     )
+
     #Sign it.
     receiver.sign(recv)
 

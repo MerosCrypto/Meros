@@ -86,7 +86,7 @@ proc newBlock*(
     #Calculate the miners hash.
     result.minersHash = SHA512(miners.serialize(nonce))
     #Verify the signature.
-    if not publisher.newPublicKey().verify(result.minersHash.toString(), signature):
+    if not newPublicKey(publisher).verify(result.minersHash.toString(), signature):
         raise newException(ValueError, "Invalid miners' signature.")
     #Set the signature.
     result.signature = signature

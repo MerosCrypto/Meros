@@ -44,7 +44,7 @@ proc parseSend*(
         #Get the sender's public key.
         sender: PublicKey = newPublicKey(sendSeq[0].pad(32, char(0)))
         #Set the input address based off the sender's public key.
-        input: string = sender.newAddress()
+        input: string = newAddress(sender)
         #Get the nonce.
         nonce: uint = uint(sendSeq[1].fromBinary())
         #Get the output.

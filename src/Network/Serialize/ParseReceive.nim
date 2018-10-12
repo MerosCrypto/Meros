@@ -41,11 +41,17 @@ proc parseReceive*(
         #Get the nonce.
         nonce: uint = uint(recvSeq[1].fromBinary())
         #Get the input Address.
-        inputAddress: string = newAddress(recvSeq[2])
+        inputAddress: string = recvSeq[2]
         #Get the input nonce.
         inputNonce: uint = uint(recvSeq[3].fromBinary())
         #Get the signature.
         signature: string = recvSeq[4].pad(64, char(0))
+
+    #Parse Receives from the minter properly.
+    if inputAddress == "":
+        inputAddress = "minter"
+    else:
+        inputAddress = newAddress(inputAddress)
 
     #Create the Receive.
     result = newReceiveObj(
@@ -54,7 +60,7 @@ proc parseReceive*(
     )
 
     #Set the sender.
-    result.sender = sender.newAddress()
+    result.sender = newAddress(sender)
     #Set the nonce.
     result.nonce = nonce
     #Set the hash.

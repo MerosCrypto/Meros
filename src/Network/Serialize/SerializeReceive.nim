@@ -19,7 +19,7 @@ proc serialize*(recv: Receive): string {.raises: [ValueError].} =
     result = !recv.nonce.toBinary()
 
     if recv.inputAddress == "minter":
-        result &= !""
+        result &= char(0)
     else:
         result &= !Address.toBN(recv.inputAddress).toString(256)
 

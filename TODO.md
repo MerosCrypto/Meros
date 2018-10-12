@@ -50,8 +50,7 @@
         - `Address.toBN()` occasionally returns the wrong BN.
 
     Network:
-        - Receives from "minter" can't be broadcasted across the network.
-        - Networking code isn't endian safe.
+        - Networking code breaks across different endians.
 
     UI:
         - Ember crashes when the RPC gets a JSON array that's too short.
