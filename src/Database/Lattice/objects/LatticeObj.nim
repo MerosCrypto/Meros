@@ -76,15 +76,24 @@ proc verify*(
     merit: Merit,
     hashArg: Hash[512],
     address: string
-) {.raises: [KeyError, ValueError].} =
+): bool {.raises: [KeyError, ValueError].} =
     #Turn the hash into a string.
     var hash: string = $hashArg
+
+    #Verify the Node exists.
+    if not lattice.lookup.hasKey(hash):
+        return false
+    result = true
 
     #Create a blank seq if there's not already a seq.
     if not lattice.verifications.hasKey(hash):
         lattice.verifications[hash] = @[]
 
-    #Add the verification.
+    #Return if the Verification already exists.
+    if lattice.verifications[hash].contains(address):
+        return
+
+    #Add the Verification.
     lattice.verifications[hash].add(address)
 
     #Calculate the weight.
