@@ -58,6 +58,6 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
             #Add the miners.
             !minersSerialized &
             #Serialized miners length.
-            !(minersSerialized.len - 4).toBinary() &
+            !(minersSerialized.len - 11).toBinary() &
             #Signature.
             !blockArg.signature

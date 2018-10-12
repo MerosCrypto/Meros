@@ -53,7 +53,7 @@
 
     Network:
         - Receives from "minter" can't be broadcasted across the network.
-        - Block parsing fails due to a series of 0s in the regenerated `minersStr`.
+
     UI:
         - Ember crashes when the RPC gets a JSON array that's too short.
 
