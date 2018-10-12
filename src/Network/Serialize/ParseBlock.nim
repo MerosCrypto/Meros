@@ -34,8 +34,7 @@ import sequtils
 
 #Parse a Block.
 proc parseBlock*(
-    blockStr: string,
-    lattice: Lattice
+    blockStr: string
 ): Block {.raises: [
     ValueError,
     ArgonError,

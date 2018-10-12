@@ -12,9 +12,6 @@ import ../../../src/Wallet/Wallet
 #Merit lib.
 import ../../../src/Database/Merit/Merit
 
-#Lattice lib.
-import ../../../src/Database/Lattice/Lattice
-
 #Serialization libs.
 import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/SerializeBlock
@@ -36,7 +33,6 @@ var
             100
         )
     ]
-    lattice: Lattice = newLattice("", "")
 
 import strutils, sequtils
 
@@ -66,7 +62,7 @@ for i in 1 .. 10:
     proof = uint(i)
 
     #Serialize it and parse it back.
-    var blockParsed: Block = newBlock.serialize().parseBlock(lattice)
+    var blockParsed: Block = newBlock.serialize().parseBlock()
 
     #Test the serialized versions.
     assert(newBlock.serialize() == blockParsed.serialize())

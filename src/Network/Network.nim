@@ -1,17 +1,19 @@
 #Errors lib.
 import ../lib/Errors
 
-#Verification lib.
-import ../Database/Merit/Verifications
+#Merit lib.
+import ../Database/Merit/Merit
+
+#Latice lib.
+import ../Database/Lattice/Lattice
+
+#Parsing libs.
 import Serialize/ParseVerification
-
-#Send libs.
-import ../Database/Lattice/Send
+import Serialize/ParseBlock
 import Serialize/ParseSend
-
-#Receive libs.
-import ../Database/Lattice/Receive
 import Serialize/ParseReceive
+#import Serialize/ParseData
+#import Serialize/ParseMeritRemoval
 
 #Message/Clients/Network objects.
 import objects/MessageObj
@@ -102,7 +104,13 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Block:
-                            discard
+                            if nodeEvents.get(
+                                proc (newBlock: Block): bool,
+                                "merit.block"
+                            )(
+                                msg.message.parseBlock()
+                            ):
+                                network.clients.broadcast(msg)
 
                         of MessageType.Send:
                             if nodeEvents.get(

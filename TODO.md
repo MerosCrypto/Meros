@@ -1,13 +1,13 @@
 # TODO
 
 ### Core:
+- Have `Lattice.verify` return false if the verified Node doesn't exist.
+- Have Merit reject blocks if the Verifications verified non-existant Lattice Nodes.
+
 - Utilize logging.
 
 - Add in Chia's BLS lib.
 - Properly use the signature field of `Verifications`.
-
-- Handle `Block`s over the `Network`.
-- Handle `Block`s in `MainMerit`.
 
 - Have Merit Holders indexable by the order they got Merit in.
 
@@ -29,9 +29,10 @@
 - Make the ports to listen on runtime options.
 
 ### Improvements:
+- Add `Block.sign()`.
+
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
-- Rename `Serialize` `$`.
 - Move `SerializeVerifications` and `ParseVerifications` out of `SerializeBlock`/`ParseBlock`.
 - Optimize the speed of `serialize` and `parse`.
 - Stop whatever's causing series of unneeded 0s in serialized objects.
@@ -53,6 +54,7 @@
 
     Network:
         - Receives from "minter" can't be broadcasted across the network.
+        - Networking code isn't endian safe.
 
     UI:
         - Ember crashes when the RPC gets a JSON array that's too short.
