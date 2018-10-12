@@ -11,34 +11,11 @@
 ### Ember Whitepaper: Being  Written
 
 #### Current State
-This currency is not usable by the mass populace. That said, Ember recently had its first transaction and was able to setup a test network! We're currently working on linking the consensus mechanism.
+Ember is not yet usable by the mass populace, and doesn't currently have a public test net. That said, Ember is handling transactions, and we could setup a test network. We have yet to due to the amount of change that's happening every day.
 
 #### Compiling
 
-Requirements:
-
-- Nim 0.19.0
-- Nimble
-- LibSodium
-
-```
-nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/WebView
-nimble install finals nimcrypto rocksdb
-nim c src/main.nim
-```
-
-If you're on Windows:
-- Go to https://github.com/Legrandin/mpir-windows-builds and download the GMP dynamic libraries (which you'll have to rename) and place them in your `/build` folder.
-- Go to https://download.libsodium.org/libsodium/releases/libsodium-1.0.16.tar.gz and download the LibSodium DLL (for your `/build` folder) and the LibSodium library file (for installation on your system).
-
-If you're on a Debian based system:
-```
-sudo apt-get install libgmp3-dev libsodium-dev
-```
-
-For MacOS/other Linux systems, please look up how to install the GMP/LibSodium libraries.
-
-There are multiple samples under `samples/` that can be directly compiled to demo Ember.
+For guides on how to compile Ember, please see https://github.com/EmberCrypto/Ember/tree/master/docs/Compilation.
 
 #### Contributing
 

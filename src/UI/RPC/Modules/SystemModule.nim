@@ -28,3 +28,8 @@ proc `systemModule`*(
     case json["method"].getStr():
         of "quit":
             rpc.shutdown()
+
+        else:
+            reply(%* {
+                "error": "Invalid method."
+            })

@@ -14,6 +14,8 @@
 - Finish the Tests.
 
 ### Features:
+- Have Wallet use seeds, not Private Keys.
+
 - Have `Logger.urgent` open a dialog box.
 
 - Show the existing wallet on reload of `Main.html`.
@@ -52,13 +54,11 @@
     Network:
         - Networking code breaks across different endians.
 
-    UI:
-        - Ember crashes when the RPC gets a JSON array that's too short.
-
     Other:
         - GMP has a memory leak.
 
 ### Documentation:
+- Document the protocol.
 - Use Documentation Comments.
 - Ember Whitepaper.
 
