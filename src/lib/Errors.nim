@@ -2,7 +2,7 @@
 
 type
     #lib Errors.
-    RandomError* = object of Exception   #Used when the RNG failed.
+    RandomError* = object of Exception   #Used when the RNG fails.
     ArgonError* = object of Exception    #Used when Argon fails.
     SodiumError* = object of Exception   #Used when LibSodium fails.
 

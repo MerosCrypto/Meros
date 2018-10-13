@@ -19,25 +19,26 @@ func get(rpc: RPC): JSONNode {.raises: [PersonalError].} =
         raise newException(PersonalError, "RPC doesn't have a Wallet.")
 
     result = %* {
-        "privateKey": $rpc.wallet.privateKey,
+        "seed": $rpc.wallet.seed,
         "publicKey": $rpc.wallet.publicKey,
         "address": rpc.wallet.address
     }
 
-#Set the Wallet's Private Key.
+#Set the Wallet's Seed.
 #The RPC method is set. Set is a keyword. The Nim func is therefore expanded to setPrivateKey.
-func setPrivateKey(
+proc setSeed(
     rpc: RPC,
-    privateKey: string
+    seed: string
 ): JSONNode {.raises: [
     ValueError,
+    RandomError,
     SodiumError,
     PersonalError
 ].} =
-    if privateKey.len == 0:
+    if seed.len == 0:
         rpc.wallet = newWallet()
     else:
-        rpc.wallet = newWallet(newPrivateKey(privateKey))
+        rpc.wallet = newWallet(newSeed(seed))
 
     result = rpc.get()
 
@@ -55,7 +56,7 @@ proc `walletModule`*(
         #Switch based off the method.
         case json["method"].getStr():
             of "set":
-                res = rpc.setPrivateKey(json["args"][0].getStr())
+                res = rpc.setSeed(json["args"][0].getStr())
 
             of "get":
                 res = rpc.get()

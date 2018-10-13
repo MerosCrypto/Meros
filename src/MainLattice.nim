@@ -86,6 +86,6 @@ events.on(
         lattice.getAccount(account).balance
 )
 
-#Print the Private Key and address of the address holding the coins.
+#Print the Seed and address of the address holding the coins.
 echo MINT_ADDRESS & " was sent " & MINT_AMOUNT & " coins from \"minter\".\r\n" &
-    "Its Private Key is " & MINT_KEY & ".\r\n"
+    "Its seed is " & MINT_SEED & ".\r\n"

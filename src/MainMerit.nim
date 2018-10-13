@@ -41,7 +41,7 @@ block:
         break
 
     echo wallet.address & " has 100 Merit."
-    echo "Its Private Key is " & $wallet.privateKey & "."
+    echo "Its Seed is " & $wallet.seed & "."
     echo ""
 
 #Handle Verifications.

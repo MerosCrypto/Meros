@@ -14,8 +14,6 @@
 - Finish the Tests.
 
 ### Features:
-- Have Wallet use seeds, not Private Keys.
-
 - Have `Logger.urgent` open a dialog box.
 
 - Show the existing wallet on reload of `Main.html`.

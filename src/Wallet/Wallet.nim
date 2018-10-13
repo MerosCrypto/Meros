@@ -4,7 +4,7 @@ import ../lib/Errors
 #ED25519 lib.
 import ../lib/ED25519
 #Export the key objects.
-export PrivateKey, PublicKey
+export Seed, PrivateKey, PublicKey
 
 #Address lib.
 import Address
@@ -20,6 +20,8 @@ import strutils
 finalsd:
     #Wallet object.
     type Wallet* = ref object of RootObj
+        #Seed.
+        seed* {.final.}: Seed
         #Private Key.
         privateKey* {.final.}: PrivateKey
         #Public Key.
@@ -27,18 +29,18 @@ finalsd:
         #Address.
         address* {.final.}: string
 
-#Create a new Private Key from a string.
-func newPrivateKey*(key: string): PrivateKey {.raises: [ValueError].} =
+#Create a new Seed from a string.
+func newSeed*(seed: string): Seed {.raises: [ValueError].} =
     #If it's binary...
-    if key.len == 64:
-        for i in 0 ..< 64:
-            result[i] = key[i]
+    if seed.len == 32:
+        for i in 0 ..< 32:
+            result[i] = seed[i]
     #If it's hex...
-    elif key.len == 128:
-        for i in countup(0, 127, 2):
-            result[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
+    elif seed.len == 64:
+        for i in countup(0, 63, 2):
+            result[i div 2] = cuchar(parseHexInt(seed[i .. i + 1]))
     else:
-        raise newException(ValueError, "Invalid Private Key.")
+        raise newException(ValueError, "Invalid Seed.")
 
 #Create a new Public Key from a string.
 func newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
@@ -53,25 +55,22 @@ func newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
     else:
         raise newException(ValueError, "Invalid Public Key.")
 
-#Stringify a Private Key.
-func `$`*(key: PrivateKey): string {.raises: [].} =
+#Stringify a Seed/PublicKey.
+func `$`*(key: Seed | PublicKey): string {.raises: [].} =
     result = ""
-    for i in 0 ..< 64:
-        result = result & uint8(key[i]).toHex()
-
-#Stringify a Public Key to it's hex representation.
-func `$`*(key: PublicKey): string {.raises: [].} =
-    result = ""
-    for i in 0 ..< 32:
-        result = result & uint8(key[i]).toHex()
+    for b in key:
+        result = result & uint8(b).toHex()
 
 #Constructor.
-func newWallet*(): Wallet {.raises: [ValueError, SodiumError].} =
+func newWallet*(
+    seed: Seed = newSeed()
+): Wallet {.raises: [ValueError, SodiumError].} =
     #Generate a new key pair.
-    var pair: tuple[priv: PrivateKey, pub: PublicKey] = newKeyPair()
+    var pair: tuple[priv: PrivateKey, pub: PublicKey] = newKeyPair(seed)
 
-    #Create a new Wallet based off that key pair.
+    #Create a new Wallet based off the seed/key pair.
     result = Wallet(
+        seed: seed,
         privateKey: pair.priv,
         publicKey: pair.pub,
         address: newAddress(pair.pub)
@@ -79,38 +78,15 @@ func newWallet*(): Wallet {.raises: [ValueError, SodiumError].} =
 
 #Constructor.
 func newWallet*(
-    privateKey: PrivateKey
-): Wallet {.raises: [ValueError, SodiumError].} =
-    #Create a new Wallet based off the passed in Private Key.
-    result = Wallet(
-        privateKey: privateKey,
-        publicKey:  newPublicKey(privateKey)
-    )
-    #Set the address based off the created Public Key.
-    result.address = newAddress(result.publicKey)
-
-#Constructor.
-func newWallet*(
-    privateKey: PrivateKey,
-    publicKey: PublicKey
-): Wallet {.raises: [ValueError, SodiumError].} =
-    #Create a Wallet based off the Private Key.
-    result = newWallet(privateKey)
-    #Verify the integrity via the Public Key.
-    if result.publicKey != publicKey:
-        raise newException(ValueError, "Invalid Public Key for this Private Key.")
-
-#Constructor.
-func newWallet*(
-    privateKey: PrivateKey,
-    publicKey: PublicKey,
+    seed: Seed,
     address: string
 ): Wallet {.raises: [ValueError, SodiumError].} =
-    #Create a Wallet based off the Private Key (and verify the integrity via the Public Key).
-    result = newWallet(privateKey, publicKey)
+    #Create a Wallet based off the Seed (and verify the integrity via the Address).
+    result = newWallet(seed)
+
     #Verify the integrity via the Address.
     if result.address != address:
-        raise newException(ValueError, "Invalid Address for this Public Key.")
+        raise newException(ValueError, "Invalid Address for this Wallet.")
 
 #Sign a message.
 func sign*(key: PrivateKey, msg: string): string {.raises: [SodiumError].} =

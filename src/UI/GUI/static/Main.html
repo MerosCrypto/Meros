@@ -7,17 +7,17 @@
         <button onclick=\"GUI.quit()\">Quit</button>
         <hr>
 
-        If you don't have a private key, leave the field blank to create one.
+        If you don't have a seed, leave the field blank to create one.
         <br>
-        Private Key: <input type='text' id='privateKeyInput'></input> <button onclick=\"
-            Wallet.create(document.getElementById('privateKeyInput').value);
-        \">Set Private Key</button>
+        Seed: <input type='text' id='seedInput'></input> <button onclick=\"
+            Wallet.create(document.getElementById('seedInput').value);
+        \">Set Seed</button>
 
         <br>
         <hr>
         <br>
 
-        <div id='privateKey'></div>
+        <div id='seed'></div>
         <br>
         <div id='publicKey'></div>
         <br>

@@ -29,11 +29,11 @@ var
     client: AsyncSocket = newAsyncSocket() #Socket.
 
 #Get the Private Key.
-echo "What's the Wallet's Private Key?"
+echo "What's the Wallet's Seed?"
 answer = stdin.readLine()
 
-#Create a Wallet from their Private Key.
-wallet = newWallet(newPrivateKey(answer))
+#Create a Wallet from their Seed.
+wallet = newWallet(newSeed(answer))
 
 #Get the Node's hash.
 echo "What Node do you want to verify?"

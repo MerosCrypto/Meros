@@ -18,10 +18,9 @@ const
     DATA_DIFFICULTY: string =        #Data difficulty at the start.
         "E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0E0"
     MINT_ADDRESS: string =           #Address to send the Genesis Coins to.
-        "Embklvfywjhglknpv7gj6seu8nxrdmcd5ave9awyzu3yd59tjr6ldzsn5l0tn"
-    MINT_KEY: string =               #Private Key of the address Genesis Coins were sent to.
-        "9A39A71D891557EC2C10F164D322D6A60460D59F39800BCCFB10A6D8C3F1B541" &
-        "B7D8923A5747ED30B3C896A19E1E661B7786D3ACC97AE20B91236855C87AFB45"
+        "Emb6v2efdjg79w20z9z29sp52af76najafjtrtl7z5jf7e0zmlwd20qf4jcl9"
+    MINT_SEED: string =              #Seed of the address the Genesis Coins were sent to.
+        "F0594F2052E00039236FD163971C150BBAC1687AF42580AEADC3D75BC3B4427F"
     MINT_AMOUNT: string =            #Amount of coins for the Genesis Send.
         "1000000"
 

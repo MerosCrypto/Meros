@@ -4,34 +4,38 @@ import Errors
 #LibSodium lib.
 import libsodium
 #Export the Private/Public Key objects.
-export PrivateKey, PublicKey
+export Seed, PrivateKey, PublicKey
 
 #Standard string utils lib.
 import strutils
 
+#Nimcrypto lib.
+import nimcrypto
+
 #SIGN_PREFIX applied to every message.
 const SIGN_PREFIX {.strdefine.}: string = "EMB"
 
+#Seed constructor.
+proc newSeed*(): Seed {.raises: [RandomError].} =
+    try:
+        #Use nimcrypto to fill the Seed with random bytes.
+        if randomBytes(result) != 32:
+            raise newException(RandomError, "Couldn't get enough bytes for the Seed.")
+    except:
+        raise newException(RandomError, getCurrentExceptionMsg())
+
 #Nim function for creating a Key Pair.
-func newKeyPair*(): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
+func newKeyPair*(seedArg: Seed): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
+    #Extract the Seed.
+    var seed: Seed = seedArg
+
     #Call the C function and verify the result.
     if sodiumKeyPair(
         addr result.pub[0],
-        addr result.priv[0]
+        addr result.priv[0],
+        addr seed[0]
     ) != 0:
         raise newException(SodiumError, "Sodium could not create a Key Pair.")
-
-#Nim function for creating a Public Key.
-func newPublicKey*(keyArg: PrivateKey): PublicKey {.raises: [SodiumError]} =
-    #Extract the Private Key arg.
-    var key: PrivateKey = keyArg
-
-    #Call the C function and verify the result.
-    if sodiumPublicKey(
-        addr result[0],
-        addr key[0]
-    ) != 0:
-        raise newException(SodiumError, "Sodium could not create a Public Key.")
 
 #Nim function for signing a message.
 func sign*(key: PrivateKey, msgArg: string): string {.raises: [SodiumError]} =

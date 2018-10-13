@@ -23,7 +23,7 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
         gui.webview.bindProc(
             "Wallet",
             "create",
-            proc (key: string) {.raises: [KeyError, ChannelError, WebViewError].} =
+            proc (seed: string) {.raises: [KeyError, ChannelError, WebViewError].} =
                 #Var for the response.
                 var wallet: JSONNode
                 try:
@@ -31,18 +31,18 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                         "module": "wallet",
                         "method": "set",
                         "args": [
-                            key
+                            seed
                         ]
                     })
 
                     #Receive the Wallet info.
                     wallet = gui.toGUI[].recv()
                 except:
-                    raise newException(ChannelError, "Couldn't set the Wallet's Private Key.")
+                    raise newException(ChannelError, "Couldn't set the Wallet's Seed.")
 
                 #Set the elements.
                 if gui.webview.eval(
-                    "document.getElementById('privateKey').innerHTML = '" & wallet["privateKey"].getStr() & "';"
+                    "document.getElementById('seed').innerHTML = '" & wallet["seed"].getStr() & "';"
                 ) != 0:
                     raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
                 if gui.webview.eval(

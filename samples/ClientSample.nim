@@ -46,20 +46,20 @@ var
 
     client: AsyncSocket = newAsyncSocket() #Socket.
 
-#Get the Private Key.
-echo "What's the Wallet's Private Key? If you don't have a Wallet, press enter to make one. "
+#Get the Seed.
+echo "What's the Wallet's Seed? If you don't have a Wallet, press enter to make one. "
 answer = stdin.readLine()
 
 #If they don't have a wallet, create a new one.
 if answer == "":
     echo "Creating a new wallet..."
     wallet = newWallet()
-    echo "Your Address is:     " & wallet.address & "."
-    echo "Your Private Key is: " & $wallet.privateKey & "."
+    echo "Your Address is: " & wallet.address & "."
+    echo "Your Seed is:    " & $wallet.seed & "."
     quit(0)
 
-#Create a Wallet from their Private Key.
-wallet = newWallet(newPrivateKey(answer))
+#Create a Wallet from their Seed.
+wallet = newWallet(newSeed(answer))
 
 #Get the Node type.
 echo "Would you like to Send or Receive a TX?"

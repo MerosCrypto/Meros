@@ -10,25 +10,18 @@ type
         header: "../../src/lib/libsodium/sodium.h",
         importc: "crypto_sign_ed25519ph_state"
     .} = object
+    Seed* = array[32, cuchar]
     PrivateKey* = array[64, cuchar]
     PublicKey* = array[32, cuchar]
 
 #Sodium function for creating a key pair.
 func sodiumKeyPair*(
     pub: ptr cuchar,
-    priv: ptr cuchar
+    priv: ptr cuchar,
+    seed: ptr cuchar
 ): int {.
     header: "../../src/lib/libsodium/sodium.h",
-    importc: "crypto_sign_ed25519_keypair"
-.}
-
-#Sodium function for creating a Public Key.
-func sodiumPublicKey*(
-    pub: ptr cuchar,
-    priv: ptr cuchar
-): int {.
-    header: "../../src/lib/libsodium/sodium.h",
-    importc: "crypto_sign_ed25519_sk_to_pk"
+    importc: "crypto_sign_ed25519_seed_keypair"
 .}
 
 #Sodium function for initiating a state.
