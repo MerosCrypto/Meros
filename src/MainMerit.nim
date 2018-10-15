@@ -86,7 +86,8 @@ proc mainMerit*() {.raises: [
                 if merit.processBlock(newBlock):
                     #Add each Verification.
                     for verif in newBlock.verifications.verifications:
-                        lattice.verify(merit, verif.hash, verif.sender)
+                        #Discard the result since we already made sure the hash exists.
+                        discard lattice.verify(merit, verif.hash, verif.sender)
 
                     echo "Successfully added the Block."
                 else:
