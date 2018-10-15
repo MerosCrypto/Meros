@@ -12,5 +12,15 @@
 #Include the last file in the sequence.
 include MainUI
 
-#Run forever.
-runForever()
+#Spawn the core stuff on a thread since the UI must be on the main thread.
+proc main() {.thread.} =
+    mainMerit()
+    mainLattice()
+    mainNetwork()
+    mainRPC()
+
+    runForever()
+spawn main()
+
+#Spawn the GUI.
+mainGUI()

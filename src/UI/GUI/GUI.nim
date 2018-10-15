@@ -28,7 +28,7 @@ import json
 
 #Thread vars needed by loop.
 var
-    gui {.threadvar.}: GUI
+    gui: GUI
     fromMain: ptr Channel[string]
 
 #Loop. Called by WebView 10 times a second.
@@ -58,7 +58,7 @@ proc newGUI*(
     toGUI: ptr Channel[JSONNode],
     width: int,
     height: int
-) {.thread, raises: [ChannelError, WebViewError].} =
+) {.raises: [ChannelError, WebViewError].} =
     #Set the fromMain channel.
     fromMain = fromMainArg
 
