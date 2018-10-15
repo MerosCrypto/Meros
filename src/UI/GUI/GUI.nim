@@ -80,21 +80,23 @@ proc newGUI*(
     #Add the Bindings.
     gui.createBindings(loop)
 
-    #Load the main page.
-    if gui.webview.eval(
-        "document.body.innerHTML = (\"" & MAIN.splitLines().join("\"+\"") & "\");"
-    ) != 0:
-        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
-
     try:
-        #Schedule a function to start the loop.
+        #Schedule a function to load the main page/start the loop.
         gui.webview.dispatch(
             proc () {.raises: [WebViewError].} =
+                #Load the main page.
+                if gui.webview.eval(
+                    "document.body.innerHTML = (\"" & MAIN.splitLines().join("\"+\"") & "\");"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't load the main page into the WebView.")
+
+                #Start the loop.
                 if gui.webview.eval(
                     "setInterval(GUI.loop, 100);"
                 ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                    raise newException(WebViewError, "Couldn't start the Nim loop from the WebView.")
         )
+
         #Run the GUI.
         gui.webview.run()
     except:
