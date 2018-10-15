@@ -37,6 +37,7 @@
 - Standardize where we use binary/hex/addresses.
 
 - Make more things `func`.
+- Remove `{.gcsafe.}`.
 - Make sure `KeyError` is listed under `raises`.
 
 ### Behavior Changes:

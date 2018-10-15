@@ -25,7 +25,7 @@ proc addTo*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
             "quit",
             proc () {.raises: [ChannelError].} =
                 #Close WebView.
-                gui.webview.exit()
+                gui.webview.terminate()
 
                 try:
                     #Emit the quit event.
