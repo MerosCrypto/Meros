@@ -5,7 +5,7 @@
 Ember requires Nim, Nimble, GMP, and LibSodium.
 
 ```
-sudo apt-get install curl git libgmp3-dev libsodium-dev
+sudo apt-get install curl git libgmp3-dev libsodium-dev gtk+-3.0 webkit2gtk-4.0
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 0.19.0
 nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/WebView
