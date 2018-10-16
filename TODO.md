@@ -57,7 +57,7 @@
         - GMP has a memory leak.
 
 ### Documentation:
-- Document the protocol.
+- Document the message types.
 - Use Documentation Comments.
 - Ember Whitepaper.
 
