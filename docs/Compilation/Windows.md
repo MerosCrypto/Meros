@@ -2,16 +2,17 @@
 
 ### Dependencies
 
-Ember requires Git, GCC/G++(through MinGW or TDM), Nim, Nimble, GMP, and LibSodium.
+Ember requires Git, GCC/G++ (through MinGW or TDM), Nim, Nimble, GMP, Chia's BLS library, and LibSodium.
 
 - For how to install Nim/Nimble, see https://nim-lang.org/install_windows.html.
 - For GMP, go to https://github.com/Legrandin/mpir-windows-builds. Download the MPIR DLL for your platform, and put it in your `/build` directory as `libgmp.dll`.
+- For BLS, see https://github.com/EmberCrypto/BLS.
 - For LibSodium, download https://download.libsodium.org/libsodium/releases/libsodium-1.0.16-mingw.tar.gz. Extract the files and open the folder for your arch. Place `bin/libsodium-23.dll` in your `/build` directory. Place `lib/libsodium.a` in your compiler's static library folder.
 
 Now, install the Nimble packages.
 
 ```
-nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/WebView
+nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/BLS https://github.com/EmberCrypto/WebView
 nimble install finals nimcrypto rocksdb
 ```
 
