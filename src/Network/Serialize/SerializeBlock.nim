@@ -19,6 +19,9 @@ import ../../Database/Merit/objects/BlockObj
 import SerializeCommon
 import SerializeMiners
 
+#BLS lib.
+import BLS
+
 #String utils standard lib.
 import strutils
 
@@ -38,12 +41,12 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
     #Add on each verification.
     for verification in blockArg.verifications.verifications:
         result &=
-            #Address.
-            !Address.toBN(verification.sender).toString(256) &
-            #Start index.
+            #Verifier.
+            !verification.verifier.toString() &
+            #Hash.
             !verification.hash.toString()
     #Add on the BLS sig.
-    result &= !blockArg.verifications.bls
+    result &= !blockArg.verifications.aggregate.toString()
 
     #Publisher.
     result &= !blockArg.publisher.toBN(16).toString(256)

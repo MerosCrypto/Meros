@@ -1,50 +1,41 @@
 #Hash lib.
 import ../../../lib/Hash
 
+#Miner libs.
+import ../Miner/MinerWallet
+
 #Finals lib.
 import finals
+
+#BLS lib.
+import BLS
 
 finalsd:
     type
         #Verification object.
         Verification* = ref object of RootObj
-            #Sender.
-            sender* {.final.}: string
+            #BLS Key.
+            verifier* {.final.}: PublicKey
             #Node Hash.
             hash* {.final.}: Hash[512]
 
-        #Verification object for Blocks.
-        #It includes the BLS signature for aggregation in the block.
-        BlockVerification* = ref object of Verification
-            #BLS signature.
-            blsSignature* {.final.}: string
-
         #Verification object for the mempool.
-        #It includes the Ed25519 sig which is faster than the BLS sig.
-        MemoryVerification* = ref object of BlockVerification
-            #Ed25519 signature.
-            edSignature* {.final.}: string
+        MemoryVerification* = ref object of Verification
+            #BLS signature for aggregation in a block.
+            signature* {.final.}: Signature
 
-        #A group of sender/hash pairs with the final aggregate signature.
+        #A group of verifier/hash pairs with the final aggregate signature.
         Verifications* = ref object of RootObj
             #Verifications.
-            verifications*: seq[Verification]
+            verifications*: seq[MemoryVerification]
             #Aggregate signature.
-            bls* {.final.}: string
+            aggregate*: Signature
 
 #New Verification object.
 func newVerificationObj*(
     hash: Hash[512]
 ): Verification {.raises: [].} =
     Verification(
-        hash: hash
-    )
-
-#New BlockVerification object.
-func newBlockVerificationObj*(
-    hash: Hash[512]
-): BlockVerification {.raises: [].} =
-    BlockVerification(
         hash: hash
     )
 
@@ -61,3 +52,13 @@ func newVerificationsObj*(): Verifications {.raises: [].} =
     Verifications(
         verifications: @[]
     )
+
+#Calculate the signature.
+func calculateSig*(verifs: Verifications) {.raises: [].} =
+    #Declare a seq for the Signatures.
+    var sigs: seq[Signature]
+    #Put every signature in the seq.
+    for verif in verifs.verifications:
+        sigs.add(verif.signature)
+    #Set the aggregate.
+    verifs.aggregate = sigs.aggregate()

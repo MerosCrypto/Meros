@@ -7,9 +7,6 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#Wallet lib.
-import ../../Wallet/Wallet
-
 #Verification object.
 import ../../Database/Merit/objects/VerificationsObj
 
@@ -20,6 +17,9 @@ import SerializeVerification
 #Finals lib.
 import finals
 
+#BLS lib.
+import BLS
+
 #String utils standard lib.
 import strutils
 
@@ -28,27 +28,29 @@ func parseVerification*(
     verifStr: string
 ): MemoryVerification {.raises: [
     ValueError,
-    SodiumError,
     FinalAttributeError
 ].} =
     var
-        #Public Key | Node Hash | ED25519 Signature
+        #Public Key | Node Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(3)
         #Get the Verifier's Public Key.
-        verifier: PublicKey = newPublicKey(verifSeq[0].pad(32, char(0)))
+        verifier: PublicKey = newPublicKeyFromBytes(verifSeq[0].pad(48, char(0)))
         #Get the Node hash.
         node: string = verifSeq[1].pad(64, char(0))
-        #Get the Ed25519 signature.
-        edSignature: string = verifSeq[2].pad(64, char(0))
+        #Get the BLS signature.
+        sig: Signature = newSignatureFromBytes(verifSeq[2].pad(96, char(0)))
 
     #Create the Verification.
     result = newMemoryVerificationObj(
         node.toHash(512)
     )
-    result.sender = newAddress(verifier)
+    result.verifier = verifier
 
-    #Verify the Ed25519 signature.
-    if not verifier.verify(result.hash.toString(), edSignature):
+    #Verify the BLS signature.
+    sig.setAggregationInfo(
+        newAggregationInfoFromMsg(verifier, result.hash.toString())
+    )
+    if not sig.verify():
         raise newException(ValueError, "Received signature was invalid.")
-    #Set the Ed25519 signature.
-    result.edSignature = edSignature
+    #Set the signature.
+    result.signature = sig

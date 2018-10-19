@@ -3,11 +3,12 @@
 ### Core:
 - Utilize logging.
 
-- Add in Chia's BLS lib.
-- Properly use the signature field of `Verifications`.
+- Verify BLS Public Keys.
+- Miner object.
 
 - Have Merit Holders indexable by the order they got Merit in.
 
+- `MinterRecieve` node.
 - `MeritRemoval` node.
 - `Difficulty Vote` node.
 

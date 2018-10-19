@@ -49,8 +49,7 @@ proc newBlock*(
     #Verify the arguments.
     #Verifications.
     for verification in verifications.verifications:
-        if not Address.verify(verification.sender):
-            raise newException(ValueError, "Invalid verification address.")
+        discard
 
     #Miners.
     var total: uint = 0
@@ -58,8 +57,6 @@ proc newBlock*(
         raise newException(ValueError, "Invalid miners quantity.")
     for miner in miners:
         total += miner.amount
-        if not Address.verify(miner.miner):
-            raise newException(ValueError, "Invalid miner address.")
         if (miner.amount < 1) or (uint(100) < miner.amount):
             raise newException(ValueError, "Invalid miner amount.")
     if total != 100:

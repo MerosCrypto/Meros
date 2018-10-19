@@ -32,6 +32,9 @@ import finals
 import strutils
 import sequtils
 
+#BLS lib.
+import BLS
+
 #Parse a Block.
 proc parseBlock*(
     blockStr: string
@@ -61,8 +64,8 @@ proc parseBlock*(
         verificationCount: int = blockSeq[3].fromBinary()
         #Verifications in the block.
         verifications: Verifications = newVerificationsObj()
-        #BLS signature of the Verifications.
-        bls: string = blockSeq[4 + (verificationCount * 2)]
+        #Aggregate signature of the Verifications.
+        aggregate: string = blockSeq[4 + (verificationCount * 2)].pad(96, char(0))
         #Public Key of the Publisher.
         publisher: string = blockSeq[5 + (verificationCount * 2)].pad(32, char(0))
         #Proof.
@@ -79,12 +82,12 @@ proc parseBlock*(
     #Create the Verifications.
     for i in countup(4, 4 + (verificationCount * 2) - 1, 2):
         verifications.verifications.add(
-            newVerificationObj(
+            newMemoryVerificationObj(
                 blockSeq[i + 1].toHash(512)
             )
         )
-        verifications.verifications[^1].sender = newAddress(blockSeq[i])
-    verifications.bls = bls
+        verifications.verifications[^1].verifier = newPublicKeyFromBytes(blockSeq[i])
+    verifications.aggregate = newSignatureFromBytes(aggregate)
 
     #Grab the miners out of the block.
     var

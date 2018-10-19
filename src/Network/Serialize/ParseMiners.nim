@@ -10,6 +10,9 @@ import ../../Database/Merit/objects/MinersObj
 #Common serialization functions.
 import SerializeCommon
 
+#BLS lib.
+import BLS
+
 #String utils standard library.
 import strutils
 
@@ -27,7 +30,7 @@ func parseMiners*(
     for i in countup(1, minersSeq.len - 1, 2):
         result.add(
             newMinerObj(
-                newAddress(minersSeq[i].pad(32, char(0))),
+                newPublicKeyFromBytes(minersSeq[i]),
                 uint(minersSeq[i + 1][0])
             )
         )

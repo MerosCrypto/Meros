@@ -5,11 +5,14 @@ import objects/MinersObj
 import Block
 import Blockchain
 
-#Tables standard lib.
-import tables
-
 #Finals lib.
 import finals
+
+#BLS lib.
+import BLS
+
+#Tables standard lib.
+import tables
 
 #State object.
 finalsd:
@@ -39,7 +42,7 @@ func getBalance*(state: State, account: string): uint {.raises: [KeyError].} =
         result = state.data[account]
 
 #Process a block.
-func processBlock*(
+proc processBlock*(
     state: State,
     blockchain: Blockchain,
     newBlock: Block
@@ -49,7 +52,7 @@ func processBlock*(
 
     #For each miner, add their Merit to the State.
     for miner in miners:
-        state.data[miner.miner] = state.getBalance(miner.miner) + miner.amount
+        state.data[miner.miner.toString()] = state.getBalance(miner.miner.toString()) + miner.amount
         state.live += miner.amount
 
     #If the Blockchain's height is over 50k, meaning there is a block to remove from the state...
@@ -58,11 +61,11 @@ func processBlock*(
         miners = blockchain.blocks[^int(state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
         for miner in miners:
-            state.data[miner.miner] = state.getBalance(miner.miner) - miner.amount
+            state.data[miner.miner.toString()] = state.getBalance(miner.miner.toString()) - miner.amount
             state.live -= miner.amount
 
 #Process every block in a blockchain.
-func processBlockchain*(
+proc processBlockchain*(
     state: State,
     blockchain: Blockchain
 ) {.raises: [KeyError].} =
@@ -70,7 +73,7 @@ func processBlockchain*(
         state.processBlock(blockchain, i)
 
 #Constructor. It's at the bottom so we can call processBlockchain.
-func newState*(
+proc newState*(
     blockchain: Blockchain,
     deadBlocks: uint
 ): State {.raises: [KeyError].} =

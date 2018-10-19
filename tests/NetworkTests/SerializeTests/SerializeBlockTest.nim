@@ -17,6 +17,14 @@ import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/SerializeBlock
 import ../../../src/Network/Serialize/ParseBlock
 
+#BLS lib.
+import BLS
+
+#Random lib.
+import random
+
+import strutils
+
 var
     #Create a wallet to mine to.
     wallet: Wallet = newWallet()
@@ -27,14 +35,16 @@ var
     nonce: uint = 1
     time: uint
     proof: uint = 1
-    miners: Miners = @[
-        newMinerObj(
-            wallet.address,
-            100
-        )
-    ]
-
-import strutils, sequtils
+    #Miner's Wallet.
+    miner: MinerWallet
+    #Miners object.
+    miners: Miners
+    #Hash for the Verification.
+    hash: Hash[512]
+    #Verification.
+    verif: Verification
+    #Verifications.
+    verifs: Verifications
 
 #Mine Blocks.
 for i in 1 .. 10:
@@ -43,18 +53,43 @@ for i in 1 .. 10:
     #Update the time.
     time = getTime()
 
+    #Create a new MinerWallet.
+    miner = newMinerWallet()
+
+    #Create the Miners object.
+    miners = @[
+       newMinerObj(
+           miner.publicKey,
+           100
+       )
+    ]
+
+    #Set the hash to a random vaue.
+    for i in 0 ..< 64:
+        hash.data[i] = uint8(rand(255))
+    #Create a Verification.
+    var verif: MemoryVerification = newMemoryVerification(hash)
+    miner.sign(verif)
+
+    #Create a new Verifications object.
+    verifs = newVerificationsObj()
+    #Add the Verification.
+    verifs.verifications.add(verif)
+
+    #Calculate the Verifications sig.
+    verifs.calculateSig()
+
     #Create a block.
     newBlock = newBlock(
         last,
         nonce,
         time,
-        newVerificationsObj(),
+        verifs,
         $(wallet.publicKey),
         proof,
         miners,
         wallet.sign(SHA512(miners.serialize(nonce)).toString())
     )
-    newBlock.verifications.bls = ""
 
     #Finally, update the last hash, increase the nonce, and reset the proof.
     last = newBlock.argon
@@ -74,7 +109,7 @@ for i in 1 .. 10:
 
     assert(newBlock.verifications.verifications.len == blockParsed.verifications.verifications.len)
     for i in 0 ..< newBlock.verifications.verifications.len:
-        assert(newBlock.verifications.verifications[i].sender == blockParsed.verifications.verifications[i].sender)
+        assert(newBlock.verifications.verifications[i].verifier == blockParsed.verifications.verifications[i].verifier)
         assert(newBlock.verifications.verifications[i].hash == blockParsed.verifications.verifications[i].hash)
     assert(newBlock.publisher == blockParsed.publisher)
 

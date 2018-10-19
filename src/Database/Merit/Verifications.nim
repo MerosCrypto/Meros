@@ -4,8 +4,8 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
-#Wallet libs.
-import ../../Wallet/Wallet
+#MinerWallet lib.
+import Miner/MinerWallet
 
 #Verification object.
 import objects/VerificationsObj
@@ -14,18 +14,21 @@ export VerificationsObj
 #Finals lib.
 import finals
 
+#BLS lib.
+import BLS
+
 #Create a new Verification.
 func newMemoryVerification*(
     hash: Hash[512]
 ): MemoryVerification {.raises: [].} =
     newMemoryVerificationObj(hash)
 
-#Sign a TX.
+#Sign a Verification.
 func sign*(
-    wallet: Wallet,
+    miner: MinerWallet,
     verif: MemoryVerification
-) {.raises: [SodiumError, FinalAttributeError].} =
-    #Set the sender.
-    verif.sender = wallet.address
+) {.raises: [FinalAttributeError].} =
+    #Set the verifier.
+    verif.verifier = miner.publicKey
     #Sign the hash of the Verification.
-    verif.edSignature = wallet.sign(verif.hash.toString())
+    verif.signature = miner.sign(verif.hash.toString())

@@ -3,15 +3,18 @@
 #Hash lib.
 import ../../../src/lib/Hash
 
-#Wallet lib.
-import ../../../src/Wallet/Wallet
+#MinerWallet lib.
+import ../../../src/Database/Merit/Miner/MinerWallet
 
-#Verification lib.
+#Verifications lib.
 import ../../../src/Database/Merit/Verifications
 
 #Serialize lib.
 import ../../../src/Network/Serialize/SerializeVerification
 import ../../../src/Network/Serialize/ParseVerification
+
+#BLS lib.
+import BLS
 
 #Random standard lib.
 import random
@@ -22,14 +25,13 @@ for i in 1 .. 20:
 
     var
         #Create a Wallet for signing the Verification.
-        verifier: Wallet = newWallet()
+        verifier: MinerWallet = newMinerWallet()
         #Create a hash.
         hash: Hash[512]
     #Set the hash to a random vaue.
     for i in 0 ..< 64:
         hash.data[i] = uint8(rand(255))
-
-    #Verify the Verification.
+    #Add the Verification.
     var verif: MemoryVerification = newMemoryVerification(hash)
     verifier.sign(verif)
 
@@ -40,8 +42,8 @@ for i in 1 .. 20:
     assert(verif.serialize() == verifParsed.serialize())
 
     #Test the Verification's properties.
-    assert(verif.sender == verifParsed.sender)
+    assert(verif.verifier == verifParsed.verifier)
     assert(verif.hash == verifParsed.hash)
-    assert(verif.edSignature == verifParsed.edSignature)
+    assert(verif.signature == verifParsed.signature)
 
 echo "Finished the Network/Serialize/Verification test."

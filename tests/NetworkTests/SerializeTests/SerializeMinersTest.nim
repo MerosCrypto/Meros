@@ -1,7 +1,7 @@
 #Serialize Miners Tests.
 
 #Wallet lib.
-import ../../../src/Wallet/Wallet
+import ../../../src/Database/Merit/Miner/MinerWallet
 
 #Miners object.
 import ../../../src/Database/Merit/objects/MinersObj
@@ -9,6 +9,9 @@ import ../../../src/Database/Merit/objects/MinersObj
 #Serialize lib.
 import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/ParseMiners
+
+#BLS lib.
+import BLS
 
 #Random/Time/Algorithm standard libs. They're used to randomize the testing data.
 import random
@@ -24,7 +27,7 @@ randomize(getTime().toUnix())
 for i in 1 .. 10:
     var
         #Wallets.
-        wallets: seq[Wallet] = @[]
+        wallets: seq[MinerWallet] = @[]
         #Miners.
         miners: Miners = @[]
         #Quantity.
@@ -45,7 +48,7 @@ for i in 1 .. 10:
 
     for i in 0 ..< quantity:
         #Generate a Wallet for them.
-        wallets.add(newWallet())
+        wallets.add(newMinerWallet())
 
         #Set the amount to pay the miner.
         amount = rand(remaining - 1) + 1
@@ -58,7 +61,7 @@ for i in 1 .. 10:
 
         #Add the Miner.
         miners.add(newMinerObj(
-            wallets[i].address,
+            wallets[i].publicKey,
             uint(amount)
         ))
 

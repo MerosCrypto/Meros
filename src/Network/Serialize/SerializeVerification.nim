@@ -13,9 +13,12 @@ import ../../Database/Merit/objects/VerificationsObj
 #Common serialization functions.
 import SerializeCommon
 
+#BLS lib.
+import BLS
+
 #Serialize a MemoryVerification.
-proc serialize*(verif: MemoryVerification): string {.raises: [ValueError].} =
+proc serialize*(verif: MemoryVerification): string {.raises: [].} =
     result =
-        !Address.toBN(verif.sender).toString(256) &
+        !verif.verifier.toString() &
         !verif.hash.toString() &
-        !verif.edSignature
+        !verif.signature.toString()
