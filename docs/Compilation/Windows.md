@@ -2,7 +2,7 @@
 
 ### Dependencies
 
-Ember requires Git, GCC/G++ (through MinGW or TDM), Nim, Nimble, GMP, Chia's BLS library, and LibSodium.
+Ember requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work but are untested), Nim, Nimble, GMP, Chia's BLS library, and LibSodium.
 
 - For how to install Nim/Nimble, see https://nim-lang.org/install_windows.html.
 - For GMP, go to https://github.com/Legrandin/mpir-windows-builds. Download the MPIR DLL for your platform, and put it in your `/build` directory as `libgmp.dll`.

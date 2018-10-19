@@ -4,18 +4,20 @@ import ../../lib/Errors
 #Base lib.
 import ../../lib/Base
 
-#Miners object and the Verification/Block/Blockchain/State libs.
+#Miners object, Verification/Block/Blockchain/State, and MinerWallet libs.
 import objects/MinersObj
 import Verifications
 import Block
 import Blockchain
 import State
+import Miner/MinerWallet
 
 export MinersObj
 export Verifications
 export Block
 export Blockchain
 export State
+export MinerWallet
 
 #Merit master object for a blockchain and state.
 type Merit* = ref object of RootObj
