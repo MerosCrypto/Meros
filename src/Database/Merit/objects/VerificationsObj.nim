@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Hash lib.
 import ../../../lib/Hash
 
@@ -10,13 +13,16 @@ import finals
 #BLS lib.
 import BLS
 
+#String utils standard lib.
+import strutils
+
 finalsd:
     type
         #Verification object.
         Verification* = ref object of RootObj
             #BLS Key.
             verifier* {.final.}: PublicKey
-            #Node Hash.
+            #Entry Hash.
             hash* {.final.}: Hash[512]
 
         #Verification object for the mempool.
@@ -54,7 +60,16 @@ func newVerificationsObj*(): Verifications {.raises: [].} =
     )
 
 #Calculate the signature.
-func calculateSig*(verifs: Verifications) {.raises: [].} =
+func calculateSig*(verifs: Verifications) {.raises: [BLSError].} =
+    #If there's no verifications...
+    if verifs.verifications.len == 0:
+        #Set a 0'd out signature.
+        try:
+            verifs.aggregate = newSignatureFromBytes(char(0).repeat(96))
+        except:
+            raise newException(BLSError, "Couldn't aggregate the signature for the Verifications.")
+        return
+
     #Declare a seq for the Signatures.
     var sigs: seq[Signature]
     #Put every signature in the seq.
