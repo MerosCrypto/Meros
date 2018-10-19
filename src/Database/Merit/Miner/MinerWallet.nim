@@ -43,13 +43,7 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
         publicKey: priv.getPublicKey()
     )
 
-proc newMinerWallet*(key: string): MinerWallet {.raises: [BLSError].} =
-    var priv: BLSPrivateKey
-    try:
-        priv = newBLSPrivateKeyFromBytes(key)
-    except:
-        raise newException(BLSError, "Couldn't create the Private Key.")
-
+proc newMinerWallet*(priv: BLSPrivateKey): MinerWallet {.raises: [].} =
     result = MinerWallet(
         privateKey: priv,
         publicKey: priv.getPublicKey()

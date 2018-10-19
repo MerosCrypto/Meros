@@ -6,13 +6,13 @@ Ember requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work b
 
 - For how to install Nim/Nimble, see https://nim-lang.org/install_windows.html.
 - For GMP, go to https://github.com/Legrandin/mpir-windows-builds. Download the MPIR DLL for your platform, and put it in your `/build` directory as `libgmp.dll`.
-- For BLS, see https://github.com/EmberCrypto/BLS.
+- For BLS, see https://github.com/EmberCrypto/ec_bls.
 - For LibSodium, download https://download.libsodium.org/libsodium/releases/libsodium-1.0.16-mingw.tar.gz. Extract the files and open the folder for your arch. Place `bin/libsodium-23.dll` in your `/build` directory. Place `lib/libsodium.a` in your compiler's static library folder.
 
 Now, install the Nimble packages.
 
 ```
-nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/BLS https://github.com/EmberCrypto/WebView
+nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/ec_bls https://github.com/EmberCrypto/WebView
 nimble install finals nimcrypto rocksdb
 ```
 

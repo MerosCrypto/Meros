@@ -29,8 +29,6 @@
 - Make the ports to listen on runtime options.
 
 ### Improvements:
-- Make `newMinerWallet` take a Private Key; not a string.
-
 - Redo how Blocks are handled (monolithic constructors; start block mess; no `Block.sign()`).
 
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
