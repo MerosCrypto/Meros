@@ -27,7 +27,7 @@ var
     address: string                        #Address to send/receive from.
     inputNonce: uint                       #Nonce of the Send to Receive from.
     amount: BN                             #Amount we're sending.
-    nonce: uint                            #Nonce of the Node.
+    nonce: uint                            #Nonce of the Entry.
 
     wallet: Wallet                         #Wallet.
 
@@ -61,7 +61,7 @@ if answer == "":
 #Create a Wallet from their Seed.
 wallet = newWallet(newSeed(answer))
 
-#Get the Node type.
+#Get the Entry type.
 echo "Would you like to Send or Receive a TX?"
 answer = stdin.readLine()
 
@@ -102,8 +102,10 @@ elif answer.toLower() == "receive":
 
     #Create the Receive.
     recv = newReceive(
-        address,
-        inputNonce,
+        newIndex(
+            address,
+            inputNonce
+        ),
         nonce
     )
     #Sign the Receive.
@@ -121,6 +123,6 @@ else:
 echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
 echo "Connected."
-#Send the serialized node.
+#Send the serialized Entry.
 waitFor client.send(serialized)
 echo "Sent."

@@ -85,7 +85,7 @@ for i in 1 .. 10:
         nonce,
         time,
         verifs,
-        $(wallet.publicKey),
+        wallet.publicKey,
         proof,
         miners,
         wallet.sign(SHA512(miners.serialize(nonce)).toString())

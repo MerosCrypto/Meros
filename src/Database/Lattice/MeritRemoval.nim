@@ -10,8 +10,8 @@ import ../../Wallet/Wallet
 #Import the Serialization library.
 import ../../Network/Serialize/SerializeMeritRemoval
 
-#Node object.
-import objects/NodeObj
+#Entry object.
+import objects/EntryObj
 
 #MeritRemoval object.
 import objects/MeritRemovalObj
@@ -39,7 +39,7 @@ func sign*(
     wallet: Wallet,
     mr: MeritRemoval
 ) {.raises: [SodiumError, FinalAttributeError].} =
-    #Set the sender behind the node.
+    #Set the sender behind the Entry.
     mr.sender = wallet.address
     #Sign the hash of the MR.
     mr.signature = wallet.sign(mr.hash.toString())

@@ -1,24 +1,22 @@
-#Node object.
-import NodeObj
+#Entry object.
+import EntryObj
+
+import IndexObj
 
 #Finals lib.
 import finals
 
 #Receive object.
 finalsd:
-    type Receive* = ref object of Node
-        #Input address.
-        inputAddress* {.final.}: string
-        #Input nonce.
-        inputNonce* {.final.}: uint
+    type Receive* = ref object of Entry
+        #Index.
+        index* {.final.}: Index
 
 #New Receive object.
 func newReceiveObj*(
-    inputAddress: string,
-    inputNonce: uint
+    index: Index
 ): Receive {.raises: [FinalAttributeError].} =
     result = Receive(
-        inputAddress: inputAddress,
-        inputNonce: inputNonce
+        index: index
     )
-    result.descendant = NodeType.Receive
+    result.descendant = EntryType.Receive

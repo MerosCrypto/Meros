@@ -15,14 +15,14 @@ import objects/IndexObj
 #Export the Index object.
 export IndexObj
 
-#Node and Node descendants.
-import objects/NodeObj
+#Entry and Entry descendants.
+import objects/EntryObj
 import Send
 import Receive
 import Data
 import MeritRemoval
-#Export the Node and Node descendants.
-export NodeObj
+#Export the Entry and Entry descendants.
+export EntryObj
 export Send
 export Receive
 export Data
@@ -38,69 +38,66 @@ export LatticeObj
 #Finals lib.
 import finals
 
-#Add a Node to the Lattice.
+#Add a Entry to the Lattice.
 proc add*(
     lattice: Lattice,
     merit: Merit,
-    node: Node,
+    entry: Entry,
     mintOverride: bool = false
 ): bool {.raises: [ValueError, SodiumError].} =
-    #Make sure only this node creates mint TXs.
+    #Make sure the sender is only minter when mintOverride is true.
     if (
-        (node.sender == "minter") and
+        (entry.sender == "minter") and
         (not mintOverride)
     ):
         return false
 
     #Get the Account.
-    var account: Account = lattice.getAccount(node.sender)
+    var account: Account = lattice.getAccount(entry.sender)
 
-    case node.descendant:
-        of NodeType.Send:
-            #Cast the node.
-            var send: Send = cast[Send](node)
+    case entry.descendant:
+        of EntryType.Send:
+            #Cast the Entry.
+            var send: Send = cast[Send](entry)
 
             #Add it.
             result = account.add(
-                #Send Node.
+                #Send Entry.
                 send,
                 #Transaction Difficulty.
                 lattice.difficulties.transaction
             )
 
-        of NodeType.Receive:
-            var recv: Receive = cast[Receive](node)
+        of EntryType.Receive:
+            var recv: Receive = cast[Receive](entry)
 
             result = account.add(
-                #Receive Node.
+                #Receive Entry.
                 recv,
-                #Supposed Send node.
+                #Supposed Send Entry.
                 lattice[
-                    newIndex(
-                        recv.inputAddress,
-                        recv.inputNonce
-                    )
+                    recv.index
                 ]
             )
 
-        of NodeType.Data:
-            var data: Data = cast[Data](node)
+        of EntryType.Data:
+            var data: Data = cast[Data](entry)
 
             discard """
             result = account.add(
-                #Data Node.
+                #Data Entry.
                 data,
                 #Data Difficulty.
                 lattice.difficulties.data
             )
             """
 
-        of NodeType.MeritRemoval:
-            var mr: MeritRemoval = cast[MeritRemoval](node)
+        of EntryType.MeritRemoval:
+            var mr: MeritRemoval = cast[MeritRemoval](entry)
 
             discard """
             result = account.add(
-                #Data Node.
+                #Data Entry.
                 mr
             )
             """
@@ -109,12 +106,12 @@ proc add*(
     if not result:
         return
 
-    #Else, add the node to the lookup table.
+    #Else, add the Entry to the lookup table.
     lattice.addHash(
-        node.hash,
+        entry.hash,
         newIndex(
-            node.sender,
-            node.nonce
+            entry.sender,
+            entry.nonce
         )
     )
 
@@ -132,7 +129,7 @@ proc mint*(
     #Get the Height in a new var that won't update.
     var height: uint = lattice.getAccount("minter").height
 
-    #Create the Send Node.
+    #Create the Send Entry.
     var send: Send = newSend(
         address,
         amount,
@@ -146,7 +143,7 @@ proc mint*(
 
     #Add it to the Lattice.
     if not lattice.add(nil, send, true):
-        raise newException(MintError, "Couldn't add the Mint Node to the Lattice.")
+        raise newException(MintError, "Couldn't add the Mint Entry to the Lattice.")
 
     #Return the Index.
     result = newIndex("minter", height)

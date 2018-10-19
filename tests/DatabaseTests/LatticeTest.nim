@@ -1,6 +1,6 @@
 #Lattice Tests.
 
-import LatticeTests/NodeTest
+import LatticeTests/EntryTest
 import LatticeTests/SendTest
 import LatticeTests/ReceiveTest
 import LatticeTests/DataTest

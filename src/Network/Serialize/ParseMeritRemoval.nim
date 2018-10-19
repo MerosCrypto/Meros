@@ -11,8 +11,8 @@ import ../../Wallet/Wallet
 #Hash lib.
 import ../../lib/Hash
 
-#Node object and MeritRemoval object.
-import ../../Database/Lattice/objects/NodeObj
+#Entry object and MeritRemoval object.
+import ../../Database/Lattice/objects/EntryObj
 import ../../Database/Lattice/objects/MeritRemovalObj
 
 #Deserialize function.
@@ -42,9 +42,9 @@ proc parseMeritRemoval*(
         senderAddress: string = newAddress(sender)
         #Get the nonce.
         nonce: uint = uint(dataSeq[1].fromBinary())
-        #Get the hash of the first node.
+        #Get the hash of the first Entry.
         first: Hash[512] = dataSeq[2].pad(64, char(0)).toHash(512)
-        #Get the hash of the second node.
+        #Get the hash of the second Entry.
         second: Hash[512] = dataSeq[3].pad(64, char(0)).toHash(512)
         #Get the signature.
         signature: string = dataSeq[4].pad(64, char(0))

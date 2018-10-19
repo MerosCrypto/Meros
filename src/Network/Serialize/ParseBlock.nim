@@ -99,7 +99,7 @@ proc parseBlock*(
     miners = minersStr.parseMiners()
 
     #Create the Block Object.
-    result = newBlockObj(last, nonce, time, verifications, publisher.toHex())
+    result = newBlockObj(last, nonce, time, verifications, newPublicKey(publisher))
     #Set the hash.
     result.hash = SHA512(result.serialize())
     #Set the proof.

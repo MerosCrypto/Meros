@@ -19,10 +19,10 @@ import strutils
 #Main function is so these varriables can be GC'd.
 proc main() =
     var
-        #Create a wallet to mine to.
+        #Create a Wallet.
         wallet: Wallet = newWallet()
-        #Get the publisher.
-        publisher: string = $wallet.publicKey
+        #Create a Wallet for signing Verifications.
+        miner: MinerWallet = newMinerWallet()
         #Gensis var.
         genesis: string = "mainnet"
         #Merit var.
@@ -36,12 +36,15 @@ proc main() =
         proof: uint = 0
         miners: Miners = @[(
             newMinerObj(
-                wallet.address,
+                miner.publicKey,
                 100
             )
         )]
+        #Verifications object.
+        verifs: Verifications = newVerificationsObj()
+    verifs.calculateSig()
 
-    echo "First balance: " & $merit.state.getBalance(wallet.address)
+    echo "First balance: " & $merit.state.getBalance(miner.publicKey)
 
     #Mine the chain.
     while true:
@@ -55,8 +58,8 @@ proc main() =
             last,
             nonce,
             time,
-            newVerificationsObj(),
-            publisher,
+            verifs,
+            wallet.publicKey,
             proof,
             miners,
             wallet.sign(SHA512(miners.serialize(nonce)).toString())
@@ -70,7 +73,7 @@ proc main() =
 
         #If we didn't continue, the block was valid! Print that we mined a block!
         echo "Mined a block: " & $nonce
-        echo "The miner's Merit is " & $merit.state.getBalance(wallet.address) & "."
+        echo "The miner's Merit is " & $merit.state.getBalance(miner.publicKey) & "."
 
         #Finally, update the last hash, increase the nonce, and reset the proof.
         last = newBlock.argon

@@ -9,8 +9,8 @@ import ../../../src/lib/Hash
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
-#Node object and the Data lib.
-import ../../../src/Database/Lattice/objects/NodeObj
+#Entry object and the Data lib.
+import ../../../src/Database/Lattice/objects/EntryObj
 import ../../../src/Database/Lattice/Data
 
 #Serialize lib.
@@ -62,7 +62,7 @@ for i in 1 .. 15:
     #Test the serialized versions.
     assert(data.serialize() == dataParsed.serialize())
 
-    #Test the Node properties.
+    #Test the Entry properties.
     assert(data.descendant == dataParsed.descendant)
     assert(data.sender == dataParsed.sender)
     assert(data.nonce == dataParsed.nonce)

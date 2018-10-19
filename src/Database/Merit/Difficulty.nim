@@ -68,9 +68,9 @@ proc calculateNextDifficulty*(
         var change: BN = possible * newBN((targetTime - actualTime) div targetTime)
 
         #If we're increasing the difficulty by more than 10%...
-        if possible / BNNums.TEN < change:
+        if possible / newBN(10) < change:
             #Set the change to be 10%.
-            change = possible / BNNums.TEN
+            change = possible / newBN(10)
 
         #Set the difficulty.
         difficulty = last.difficulty + change
@@ -84,9 +84,9 @@ proc calculateNextDifficulty*(
         var change: BN = last.difficulty * newBN(targetTime div actualTime)
 
         #If we're decreasing the difficulty by more than 10% of the possible values...
-        if possible / BNNums.TEN < change:
+        if possible / newBN(10) < change:
             #Set the change to be 10% of the possible values.
-            change = possible / BNNums.TEN
+            change = possible / newBN(10)
 
         #Set the difficulty.
         difficulty = last.difficulty - change

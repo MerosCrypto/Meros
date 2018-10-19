@@ -33,13 +33,13 @@ func newState*(deadBlocks: uint): State {.raises: [].} =
     )
 
 #Get the Merit of an account.
-func getBalance*(state: State, account: string): uint {.raises: [KeyError].} =
+func getBalance*(state: State, account: PublicKey): uint {.raises: [KeyError].} =
     #Set the result to 0 (in case there isn't an entry in the table).
     result = 0
 
     #If there is an entry, set the result to it.
-    if state.data.hasKey(account):
-        result = state.data[account]
+    if state.data.hasKey(account.toString()):
+        result = state.data[account.toString()]
 
 #Process a block.
 proc processBlock*(
@@ -52,7 +52,7 @@ proc processBlock*(
 
     #For each miner, add their Merit to the State.
     for miner in miners:
-        state.data[miner.miner.toString()] = state.getBalance(miner.miner.toString()) + miner.amount
+        state.data[miner.miner.toString()] = state.getBalance(miner.miner) + miner.amount
         state.live += miner.amount
 
     #If the Blockchain's height is over 50k, meaning there is a block to remove from the state...
@@ -61,7 +61,7 @@ proc processBlock*(
         miners = blockchain.blocks[^int(state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
         for miner in miners:
-            state.data[miner.miner.toString()] = state.getBalance(miner.miner.toString()) - miner.amount
+            state.data[miner.miner.toString()] = state.getBalance(miner.miner) - miner.amount
             state.live -= miner.amount
 
 #Process every block in a blockchain.

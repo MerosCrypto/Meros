@@ -1,16 +1,16 @@
 #Hash lib.
 import ../../../lib/Hash
 
-#Node object.
-import NodeObj
+#Entry object.
+import EntryObj
 
 #Finals lib.
 import finals
 
 #Data object.
 finalsd:
-    type Data* = ref object of Node
-        #Data included in the TX.
+    type Data* = ref object of Entry
+        #Data included in the Entry.
         data* {.final.}: string
         #SHA512 hash.
         sha512* {.final.}: SHA512Hash
@@ -22,4 +22,4 @@ func newDataObj*(data: string): Data {.raises: [FinalAttributeError].} =
     result = Data(
         data: data
     )
-    result.descendant = NodeType.Data
+    result.descendant = EntryType.Data

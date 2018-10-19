@@ -36,7 +36,7 @@ proc newBlock*(
     nonce: uint,
     time: uint,
     verifications: Verifications,
-    publisher: string,
+    publisher: PublicKey,
     proof: uint,
     miners: Miners,
     signature: string
@@ -83,7 +83,7 @@ proc newBlock*(
     #Calculate the miners hash.
     result.minersHash = SHA512(miners.serialize(nonce))
     #Verify the signature.
-    if not newPublicKey(publisher).verify(result.minersHash.toString(), signature):
+    if not publisher.verify(result.minersHash.toString(), signature):
         raise newException(ValueError, "Invalid miners' signature.")
     #Set the signature.
     result.signature = signature

@@ -7,8 +7,8 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
-#Address library.
-import ../../Wallet/Address
+#Wallet lib.
+import ../../Wallet/Wallet
 
 #Merit objects.
 import ../../Database/Merit/objects/MinersObj
@@ -49,7 +49,7 @@ proc serialize*(blockArg: Block): string {.raises: [ValueError].} =
     result &= !blockArg.verifications.aggregate.toString()
 
     #Publisher.
-    result &= !blockArg.publisher.toBN(16).toString(256)
+    result &= !($blockArg.publisher).toBN(16).toString(256)
 
     if blockArg.signature.len != 0:
         #Proof.

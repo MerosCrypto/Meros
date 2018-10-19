@@ -6,8 +6,8 @@ import ../../../src/lib/Hash
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
-#Node object and the MeritRemoval lib.
-import ../../../src/Database/Lattice/objects/NodeObj
+#Entry object and the MeritRemoval lib.
+import ../../../src/Database/Lattice/objects/EntryObj
 import ../../../src/Database/Lattice/MeritRemoval
 
 #Serialize lib.
@@ -52,7 +52,7 @@ for i in 1 .. 20:
     #Test the serialized versions.
     assert(mr.serialize() == mrParsed.serialize())
 
-    #Test the Node properties.
+    #Test the Entry properties.
     assert(mr.descendant == mrParsed.descendant)
     assert(mr.sender == mrParsed.sender)
     assert(mr.nonce == mrParsed.nonce)

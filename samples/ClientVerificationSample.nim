@@ -1,11 +1,8 @@
 #Hash lib.
 import ../src/lib/Hash
 
-#Wallet lib.
-import ../src/Wallet/Wallet
-
-#Lattice lib.
-import ../src/Database/Merit/Verifications
+#Merit lib.
+import ../src/Database/Merit/Merit
 
 #Serialization libs.
 import ../src/Network/Serialize/SerializeVerification
@@ -16,7 +13,7 @@ import asyncnet, asyncdispatch
 var
     answer: string                         #Answer to questions.
 
-    wallet: Wallet                         #Wallet.
+    wallet: MinerWallet                    #Wallet.
 
     verif: MemoryVerification              #Verification.
 
@@ -29,14 +26,14 @@ var
     client: AsyncSocket = newAsyncSocket() #Socket.
 
 #Get the Private Key.
-echo "What's the Wallet's Seed?"
+echo "What's the Miner Wallet's Private Key?"
 answer = stdin.readLine()
 
 #Create a Wallet from their Seed.
-wallet = newWallet(newSeed(answer))
+wallet = newMinerWallet(answer)
 
-#Get the Node's hash.
-echo "What Node do you want to verify?"
+#Get the Entry's hash.
+echo "What Entry do you want to verify?"
 answer = stdin.readLine()
 
 #Create the Verification object.
@@ -52,7 +49,7 @@ serialized = verif.serialize()
 echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
 echo "Connected."
-#Send the serialized node.
+#Send the serialized Entry.
 echo serialized.len
 waitFor client.send(header & char(serialized.len) & serialized)
 echo "Sent."

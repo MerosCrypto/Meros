@@ -5,7 +5,10 @@ import ../src/lib/Base
 #Wallet lib.
 import ../src/Wallet/Wallet
 
-#Send/Receive nodes.
+#Index object.
+import ../src/Database/Lattice/objects/IndexObj
+
+#Send/Receive Entries.
 import ../src/Database/Lattice/Send
 import ../src/Database/Lattice/Receive
 
@@ -22,13 +25,15 @@ var
         0
     )
     recv: Receive = newReceive(    #Receive.
-        sender.address,
-        0,
+        newIndex(
+            sender.address,
+            0
+        ),
         0
     )
 
 #Mine and sign the Send.
-send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
+send.mine("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16))
 discard sender.sign(send)
 
 #Sign the Receive.

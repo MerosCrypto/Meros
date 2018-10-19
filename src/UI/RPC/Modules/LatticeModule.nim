@@ -36,7 +36,7 @@ import strutils
 #JSON standard lib.
 import json
 
-#Create a Send Node.
+#Create a Send Entry.
 proc send(
     rpc: RPC,
     address: string,
@@ -80,7 +80,7 @@ proc send(
         "hash": $send.hash
     }
 
-#Create a Receive Node.
+#Create a Receive Entry.
 proc receive(
     rpc: RPC,
     address: string,
@@ -94,8 +94,10 @@ proc receive(
 ].} =
     #Create the Receive.
     var recv: Receive = newReceive(
-        address,
-        inputNonce,
+        newIndex(
+            address,
+            inputNonce,
+        ),
         nonce
     )
     #Sign the Receive.

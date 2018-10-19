@@ -12,8 +12,11 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 import ../../Wallet/Address
 
-#Node object and descendants.
-import objects/NodeObj
+#Index object.
+import objects/IndexObj
+
+#Entry object and descendants.
+import objects/EntryObj
 import objects/SendObj
 import objects/ReceiveObj
 import objects/DataObj
@@ -23,38 +26,38 @@ import objects/MeritRemovalObj
 import objects/AccountObj
 export AccountObj
 
-#Add a node.
+#Add a Entry.
 proc add(
     account: Account,
-    node: Node,
-    dependent: Node = nil
+    entry: Entry,
+    dependent: Entry = nil
 ): bool {.raises: [ValueError, SodiumError].} =
     result = true
 
     #Verify the sender.
-    if node.sender != account.address:
+    if entry.sender != account.address:
         return false
 
     #Verify the nonce.
-    if uint(account.nodes.len) != node.nonce:
+    if uint(account.entries.len) != entry.nonce:
         return false
 
-    #If it's a valid minter node...
+    #If it's a valid minter Entry...
     if (
         (account.address == "minter") and
-        (node.descendant == NodeType.SEND)
+        (entry.descendant == EntryType.SEND)
     ):
         #Override as there's no signatures for minters.
         discard
     #Else, if it's an invalid signature...
     elif not newPublicKey(
         account.address.toBN().toString(256)
-    ).verify(node.hash.toString(), node.signature):
+    ).verify(entry.hash.toString(), entry.signature):
         #Return false.
         return false
 
-    #Add the node.
-    account.addNode(node, dependent)
+    #Add the Entry.
+    account.addEntry(entry, dependent)
 
 #Add a Send.
 proc add*(
@@ -64,8 +67,8 @@ proc add*(
 ): bool {.raises: [ValueError, SodiumError].} =
     #Override for minter.
     if send.sender == "minter":
-        #Add the Send node.
-        return account.add(cast[Node](send))
+        #Add the Send Entry.
+        return account.add(cast[Entry](send))
 
     #Verify the work.
     if send.hash.toBN() < difficulty:
@@ -80,16 +83,16 @@ proc add*(
         return false
 
     #Add the Send.
-    result = account.add(cast[Node](send))
+    result = account.add(cast[Entry](send))
 
 #Add a Receive.
 proc add*(
     account: Account,
     recv: Receive,
-    sendArg: Node
+    sendArg: Entry
 ): bool {.raises: [ValueError, SodiumError].} =
-    #Verify the node is a Send.
-    if sendArg.descendant != NodeType.Send:
+    #Verify the entry is a Send.
+    if sendArg.descendant != EntryType.Send:
         return false
 
     #Cast it to a Send.
@@ -100,25 +103,25 @@ proc add*(
         return false
 
     #Verify the Receive's input address.
-    if recv.inputAddress != send.sender:
+    if recv.index.address != send.sender:
         return false
 
     #Verify the nonces match.
-    if recv.inputNonce != send.nonce:
+    if recv.index.nonce != send.nonce:
         return false
 
     #Verify it's unclaimed.
-    for i in account.nodes:
-        if i.descendant == NodeType.Receive:
+    for i in account.entries:
+        if i.descendant == EntryType.Receive:
             var past: Receive = cast[Receive](i)
             if (
-                (past.inputAddress == recv.inputAddress) and
-                (past.inputNonce == recv.inputNonce)
+                (past.index.address == recv.index.address) and
+                (past.index.nonce == recv.index.nonce)
             ):
                 return false
 
     #Add the Receive.
-    result = account.add(cast[Node](recv), send)
+    result = account.add(cast[Entry](recv), send)
 
 #Add Data.
 discard """
@@ -132,7 +135,7 @@ func add*(
         return false
 
     #Add the Data.
-    result = account.add(cast[Node](data))
+    result = account.add(cast[Entry](data))
 """
 
 #Add a Merit Removal.
@@ -141,5 +144,5 @@ func add*(
     account: Account,
     mr: MeritRemoval
 ): bool {.raises: [ValueError].} =
-    result = account.add(cast[Node](mr))
+    result = account.add(cast[Entry](mr))
 """

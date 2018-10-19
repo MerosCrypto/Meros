@@ -16,8 +16,8 @@ import ../../Wallet/Wallet
 #Import the Serialization library.
 import ../../Network/Serialize/SerializeSend
 
-#Node object.
-import objects/NodeObj
+#Entry object.
+import objects/EntryObj
 
 #Send object.
 import objects/SendObj
@@ -40,7 +40,7 @@ proc newSend*(
         raise newException(ValueError, "Send output address is not valid.")
 
     #Verify the amount.
-    if amount < BNNums.ZERO:
+    if amount < newBN(0):
         raise newException(ValueError, "Send amount is negative.")
 
     #Craft the result.
@@ -80,7 +80,7 @@ func sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError, SodiumError,
     if send.hash.toBN() == newBN():
         return false
 
-    #Set the sender behind the node.
+    #Set the sender behind the Entry.
     send.sender = wallet.address
     #Sign the hash of the Send.
     send.signature = wallet.sign(send.hash.toString())

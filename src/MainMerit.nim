@@ -4,6 +4,7 @@ proc mainMerit*() {.raises: [
     ValueError,
     RandomError,
     ArgonError,
+    BLSError,
     SodiumError,
     FinalAttributeError
 ].} =
@@ -14,17 +15,22 @@ proc mainMerit*() {.raises: [
         #Mine a single block so there's Merit in the system.
         block:
             var
-                #Create a wallet to mine to.
+                #Create a wallet.
                 wallet: Wallet = newWallet()
+                #Create a miner's wallet.
+                miner: MinerWallet = newMinerWallet()
                 #Block var.
                 newBlock: Block
                 proof: uint = 0
                 miners: Miners = @[(
                     newMinerObj(
-                        wallet.address,
+                        miner.publicKey,
                         100
                     )
                 )]
+                #Verifications.
+                verifs: Verifications = newVerificationsObj()
+            verifs.calculateSig()
 
             while true:
                 #Create a block.
@@ -32,8 +38,8 @@ proc mainMerit*() {.raises: [
                     merit.blockchain.blocks[0].argon,
                     1,
                     getTime(),
-                    newVerificationsObj(),
-                    $wallet.publicKey,
+                    verifs,
+                    wallet.publicKey,
                     proof,
                     miners,
                     wallet.sign(SHA512(miners.serialize(1)).toString())
@@ -48,8 +54,8 @@ proc mainMerit*() {.raises: [
                 #Exit out of the loop once we've mined one block.
                 break
 
-            echo wallet.address & " has 100 Merit."
-            echo "Its Seed is " & $wallet.seed & "."
+            echo $miner.publicKey & " has earned 100 Merit."
+            echo "Its Private Key is " & $miner.privateKey & "."
             echo ""
 
         #Handle Verifications.
@@ -60,7 +66,7 @@ proc mainMerit*() {.raises: [
                 echo "Adding a new Verification."
 
                 #Add the Verification to the Lattice.
-                result = lattice.verify(merit, verif.hash, verif.sender)
+                result = lattice.verify(merit, verif.hash, verif.verifier)
                 if result:
                     echo "Successfully added the Verification."
                 else:
@@ -87,7 +93,7 @@ proc mainMerit*() {.raises: [
                     #Add each Verification.
                     for verif in newBlock.verifications.verifications:
                         #Discard the result since we already made sure the hash exists.
-                        discard lattice.verify(merit, verif.hash, verif.sender)
+                        discard lattice.verify(merit, verif.hash, verif.verifier)
 
                     echo "Successfully added the Block."
                 else:

@@ -2,7 +2,7 @@
 import finals
 
 finalsd:
-    #Index object. Specifies a Node on the Lattice.
+    #Index object. Specifies a Entry on the Lattice.
     type Index* = ref object of RootObj
         address* {.final.}: string
         nonce* {.final.}: uint

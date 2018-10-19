@@ -28,8 +28,10 @@ var
         1
     )
     recv: Receive = newReceive(                         #Receive.
-        sender.address,
-        1,
+        newIndex(
+            sender.address,
+            1
+        ),
         0
     )
 

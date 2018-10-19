@@ -10,8 +10,8 @@ import ../../lib/Hash
 #Address lib.
 import ../../Wallet/Address
 
-#Node and MeritRemoval object.
-import ../../Database/Lattice/objects/NodeObj
+#Entry and MeritRemoval object.
+import ../../Database/Lattice/objects/EntryObj
 import ../../Database/Lattice/objects/MeritRemovalObj
 
 #Common serialization functions.

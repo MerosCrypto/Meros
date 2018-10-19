@@ -7,12 +7,18 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
+#Wallet lib.
+import ../../../Wallet/Wallet
+
 #Miners and Verifications objects.
 import MinersObj
 import VerificationsObj
 
 #Finals lib.
 import finals
+
+#String utils standard lib.
+import strutils
 
 finalsd:
     #Define the Block class.
@@ -26,8 +32,8 @@ finalsd:
 
         #Verifications.
         verifications*: Verifications
-        #Publisher address.
-        publisher* {.final.}: string
+        #Publisher.
+        publisher* {.final.}: PublicKey
 
         #Hash.
         hash*: SHA512Hash
@@ -47,7 +53,7 @@ func newBlockObj*(
     nonce: uint,
     time: uint,
     verifications: Verifications,
-    publisher: string
+    publisher: PublicKey
 ): Block {.raises: [].} =
     Block(
         last: last,
@@ -60,12 +66,13 @@ func newBlockObj*(
 #Creates a new block without caring about the data.
 proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].} =
     #Ceate the block.
+    var blankPublisher: array[32, cuchar]
     result = newBlockObj(
         Argon("", ""),
         0,
         getTime(),
         newVerificationsObj(),
-        "".pad(128, "00")
+        blankPublisher
     )
     #Calculate the hash.
     result.hash = SHA512(genesis)

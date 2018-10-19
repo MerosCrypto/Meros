@@ -11,8 +11,9 @@ import ../../Wallet/Wallet
 #Hash lib.
 import ../../lib/Hash
 
-#Node object and Receive object.
-import ../../Database/Lattice/objects/NodeObj
+#Index, Entry, and Receive object.
+import ../../Database/Lattice/objects/IndexObj
+import ../../Database/Lattice/objects/EntryObj
 import ../../Database/Lattice/objects/ReceiveObj
 
 #Serialize/Deserialize functions.
@@ -55,8 +56,10 @@ proc parseReceive*(
 
     #Create the Receive.
     result = newReceiveObj(
-        inputAddress,
-        inputNonce
+        newIndex(
+            inputAddress,
+            inputNonce
+        )
     )
 
     #Set the sender.

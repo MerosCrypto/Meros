@@ -16,8 +16,8 @@ import ../../Wallet/Wallet
 #Import the Serialization library.
 import ../../Network/Serialize/SerializeData
 
-#Node object.
-import objects/NodeObj
+#Entry object.
+import objects/EntryObj
 
 #Data object.
 import objects/DataObj
@@ -26,7 +26,7 @@ export DataObj
 #Finals lib.
 import finals
 
-#Create a new  node.
+#Create a new Entry.
 proc newData*(
     data: string,
     nonce: uint
@@ -74,7 +74,7 @@ func sign*(
     if data.hash.toBN() == newBN():
         return false
 
-    #Set the sender behind the node.
+    #Set the sender behind the Entry.
     data.sender = wallet.address
     #Sign the hash of the Data.
     data.signature = wallet.sign(data.hash.toString())

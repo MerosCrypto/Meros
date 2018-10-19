@@ -121,7 +121,7 @@ proc spam() {.async, raises: [Exception].} =
         sends.add(
             newSend(
                 receiver.address,
-                BNNums.ONE,
+                newBN(1),
                 uint(i + 1)
             )
         )
@@ -134,8 +134,10 @@ proc spam() {.async, raises: [Exception].} =
         #Generate the Receive.
         recvs.add(
             newReceive(
-                minter.address,
-                uint(i + 1),
+                newIndex(
+                    minter.address,
+                    uint(i + 1)
+                ),
                 uint(i)
             )
         )

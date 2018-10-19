@@ -108,7 +108,7 @@ proc toString*(valueArg: BN, baseArg: int): string {.raises: [].} =
         digits = baseArg.digits
 
     #If the value is zero, set the result to the 0 of the base.
-    if value == BNNums.ZERO:
+    if value == newBN(0):
         #If the base arg is 16, double pad it.
         if baseArg == 16:
             return "00"

@@ -14,11 +14,14 @@ import ../../Merit/Merit
 #Index object.
 import IndexObj
 
-#Node object.
-import NodeObj
+#Entry object.
+import EntryObj
 
 #Account object.
 import AccountObj
+
+#BLS lib.
+import BLS
 
 #Tables standard library.
 import tables
@@ -37,7 +40,7 @@ type Lattice* = ref object of RootObj
     #Verifications (hash -> list of addresses who signed off on it).
     verifications: TableRef[
         string,
-        seq[string]
+        seq[PublicKey]
     ]
 
     #Accounts (address -> account).
@@ -55,7 +58,7 @@ func newLattice*(
     result = Lattice(
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
         lookup: newTable[string, Index](),
-        verifications: newTable[string, seq[string]](),
+        verifications: newTable[string, seq[PublicKey]](),
         accounts: newTable[string, Account]()
     )
 
@@ -75,12 +78,12 @@ proc verify*(
     lattice: Lattice,
     merit: Merit,
     hashArg: Hash[512],
-    address: string
+    verifier: PublicKey
 ): bool {.raises: [KeyError, ValueError].} =
     #Turn the hash into a string.
     var hash: string = $hashArg
 
-    #Verify the Node exists.
+    #Verify the Entry exists.
     if not lattice.lookup.hasKey(hash):
         return false
     result = true
@@ -90,22 +93,22 @@ proc verify*(
         lattice.verifications[hash] = @[]
 
     #Return if the Verification already exists.
-    if lattice.verifications[hash].contains(address):
+    if lattice.verifications[hash].contains(verifier):
         return
 
     #Add the Verification.
-    lattice.verifications[hash].add(address)
+    lattice.verifications[hash].add(verifier)
 
     #Calculate the weight.
     var weight: uint = 0
     for i in lattice.verifications[hash]:
         weight += merit.state.getBalance(i)
-    #If the Node has at least 50.1% of the weight...
+    #If the Entry has at least 50.1% of the weight...
     if (
         (weight * 100) div
         merit.state.live
     ) >= uint(501):
-        #Get the Index of the Node.
+        #Get the Index of the Entry.
         var index: Index = lattice.lookup[hash]
         lattice.accounts[index.address][index.nonce].verified = true
     echo hash & " was verified."
@@ -132,18 +135,18 @@ func getAccount*(
     #Return the account.
     result = lattice.accounts[address]
 
-#Gets a Node by its Index.
-proc `[]`*(lattice: Lattice, index: Index): Node {.raises: [ValueError].} =
+#Gets a Entry by its Index.
+proc `[]`*(lattice: Lattice, index: Index): Entry {.raises: [ValueError].} =
     if not lattice.accounts.hasKey(index.address):
         raise newException(ValueError, "Lattice does not have an Account for that address.")
     if lattice.accounts[index.address].height <= index.nonce:
-        raise newException(ValueError, "The Account for that address doesn't have a Node for that nonce.")
+        raise newException(ValueError, "The Account for that address doesn't have a Entry for that nonce.")
 
     result = lattice.accounts[index.address][index.nonce]
 
-#Gets a Node by its hash.
-proc getNode*(lattice: Lattice, hash: string): Node {.raises: [ValueError].} =
+#Gets a Entry by its hash.
+proc getEntry*(lattice: Lattice, hash: string): Entry {.raises: [ValueError].} =
     if not lattice.lookup.hasKey(hash):
-        raise newException(ValueError, "Lattice does not have a node for that hash.")
+        raise newException(ValueError, "Lattice does not have a Entry for that hash.")
 
     result = lattice[lattice.lookup[hash]]

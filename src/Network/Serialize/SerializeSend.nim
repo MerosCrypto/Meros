@@ -7,8 +7,8 @@ import ../../lib/Base
 #Address lib.
 import ../../Wallet/Address
 
-#Node and Send object.
-import ../../Database/Lattice/objects/NodeObj
+#Entry and Send object.
+import ../../Database/Lattice/objects/EntryObj
 import ../../Database/Lattice/objects/SendObj
 
 #Common serialization functions.

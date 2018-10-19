@@ -11,8 +11,8 @@ import ../../Wallet/Wallet
 #Hash lib.
 import ../../lib/Hash
 
-#Node object and Data object.
-import ../../Database/Lattice/objects/NodeObj
+#Entry object and Data object.
+import ../../Database/Lattice/objects/EntryObj
 import ../../Database/Lattice/objects/DataObj
 
 #Deserialize function.

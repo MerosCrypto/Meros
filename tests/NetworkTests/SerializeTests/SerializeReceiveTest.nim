@@ -3,8 +3,11 @@
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
-#Node object, and the Send/Receive libs.
-import ../../../src/Database/Lattice/objects/NodeObj
+#Index and Entry object.
+import ../../../src/Database/Lattice/objects/IndexObj
+import ../../../src/Database/Lattice/objects/EntryObj
+
+#Receive lib.
 import ../../../src/Database/Lattice/Receive
 
 #Serialize lib.
@@ -21,7 +24,7 @@ for i in 1 .. 20:
         receiver: Wallet = newWallet()
         #Receive.
         recv: Receive
-    
+
     #If this is the 20th Receive, set the sender to "minter".
     if i == 20:
         echo "This is the Receive from minter."
@@ -29,8 +32,10 @@ for i in 1 .. 20:
 
     #Create the Receive.
     recv = newReceive(
-        sender,
-        0,
+        newIndex(
+            sender,
+            0,
+        ),
         0
     )
 
@@ -43,7 +48,7 @@ for i in 1 .. 20:
     #Test the serialized versions.
     assert(recv.serialize() == recvParsed.serialize())
 
-    #Test the Node properties.
+    #Test the Entry properties.
     assert(
         recv.descendant == recvParsed.descendant,
         "Descendant:\r\n" & $recv.descendant & "\r\n" & $recvParsed.descendant
@@ -67,12 +72,12 @@ for i in 1 .. 20:
 
     #Test the Receive properties.
     assert(
-        recv.inputAddress == recvParsed.inputAddress,
-        "Input Address:\r\n" & recv.inputAddress & "\r\n" & recvParsed.inputAddress
+        recv.index.address == recvParsed.index.address,
+        "Input Address:\r\n" & recv.index.address & "\r\n" & recvParsed.index.address
     )
     assert(
-        recv.inputNonce == recvParsed.inputNonce,
-        "Input Nonce:\r\n" & $recv.inputNonce & "\r\n" & $recvParsed.inputNonce
+        recv.index.nonce == recvParsed.index.nonce,
+        "Input Nonce:\r\n" & $recv.index.nonce & "\r\n" & $recvParsed.index.nonce
     )
 
 echo "Finished the Network/Serialize/Receive test."

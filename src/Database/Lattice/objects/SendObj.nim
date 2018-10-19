@@ -4,15 +4,15 @@ import BN
 #Hash lib.
 import ../../../lib/Hash
 
-#Node object.
-import NodeObj
+#Entry object.
+import EntryObj
 
 #Finals lib.
 import finals
 
 #Send object.
 finalsd:
-    type Send* = ref object of Node
+    type Send* = ref object of Entry
         #Data used to create the SHA512 hash.
         #Destination address.
         output* {.final.}: string
@@ -33,4 +33,4 @@ func newSendObj*(
         output: output,
         amount: amount
     )
-    result.descendant = NodeType.Send
+    result.descendant = EntryType.Send

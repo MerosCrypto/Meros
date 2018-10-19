@@ -24,3 +24,6 @@ spawn main()
 
 #Spawn the GUI.
 mainGUI()
+
+#Sync up with the main thread.
+sync()

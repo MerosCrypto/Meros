@@ -4,9 +4,6 @@ import ../src/lib/Base
 #Hash lib.
 import ../src/lib/Hash
 
-#Block, blockchain, and State libs.
-import ../src/Database/Merit/Merit
-
 #Wallet libs.
 import ../src/Wallet/Wallet
 

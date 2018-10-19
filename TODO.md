@@ -1,17 +1,19 @@
 # TODO
 
 ### Core:
-- Utilize logging.
-
 - Verify BLS Public Keys.
-- Miner object.
-
 - Have Merit Holders indexable by the order they got Merit in.
+- Miner.
 
-- `MinterRecieve` node.
-- `MeritRemoval` node.
-- `Difficulty Vote` node.
+- Minting.
+- `MinterReceive` node.
 
+- Merit Removal system.
+- Difficulty Voting system.
+
+- Database.
+
+- Utilize logging.
 - Finish the Tests.
 
 ### Features:
@@ -27,7 +29,9 @@
 - Make the ports to listen on runtime options.
 
 ### Improvements:
-- Add `Block.sign()`.
+- Make `newMinerWallet` take a Private Key; not a string.
+
+- Redo how Blocks are handled (monolithic constructors; start block mess; no `Block.sign()`).
 
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
@@ -35,15 +39,20 @@
 - Optimize the speed of `serialize` and `parse`.
 - Stop whatever's causing series of unneeded 0s in serialized objects.
 
-- Standardize where we use binary/hex/addresses.
+- Standardize where we use binary/hex/addresses in `Database/Lattice`.
 
 - Make more things `func`.
 - Remove `{.gcsafe.}`.
 - Make sure `KeyError` is listed under `raises`.
 
 ### Behavior Changes:
-- Have required work be based on account, not that TX, and infinitely precalculable.
-- Finalize Argon2's Block parameters.
+
+    Decided:
+        - Have required work be based on account, not on TX, and infinitely precalculable.
+        - Finalize Argon2's Block parameters.
+
+    Undecided:
+        - Have Verifications also use Ed25519/have BLS signatures be asked for.
 
 ### Bug fixes:
 
@@ -59,6 +68,7 @@
 
 ### Documentation:
 - Document the message types.
+- Document the RPC.
 - Use Documentation Comments.
 - Ember Whitepaper.
 

@@ -24,7 +24,7 @@ proc mainLattice*() {.raises: [
         events.on(
             "lattice.send",
             proc (send: Send): bool {.raises: [ValueError, SodiumError].} =
-                #Print that we're adding the node.
+                #Print that we're adding the Entry.
                 echo "Adding a new Send."
 
                 #Add the Send.
@@ -44,7 +44,7 @@ proc mainLattice*() {.raises: [
         events.on(
             "lattice.receive",
             proc (recv: Receive): bool {.raises: [ValueError, SodiumError].} =
-                #Print that we're adding the node.
+                #Print that we're adding the Entry.
                 echo "Adding a new Receive."
 
                 #Add the Receive.
@@ -64,7 +64,7 @@ proc mainLattice*() {.raises: [
         events.on(
             "lattice.data",
             proc (msg: Message, data: Data): bool {.raises: [ValueError, SodiumError].} =
-                #Print that we're adding the node.
+                #Print that we're adding the Entry.
                 echo "Adding a new Data."
 
                 #Add the Data.
@@ -95,5 +95,5 @@ proc mainLattice*() {.raises: [
         )
 
         #Print the Seed and address of the address holding the coins.
-        echo MINT_ADDRESS & " was sent " & MINT_AMOUNT & " coins from \"minter\".\r\n" &
-            "Its seed is " & MINT_SEED & ".\r\n"
+        echo MINT_ADDRESS & " was sent " & MINT_AMOUNT & " EMB from \"minter\".\r\n" &
+            "Its Seed is " & MINT_SEED & ".\r\n"

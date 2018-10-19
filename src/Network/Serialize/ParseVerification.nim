@@ -31,18 +31,18 @@ func parseVerification*(
     FinalAttributeError
 ].} =
     var
-        #Public Key | Node Hash | Signature
+        #Public Key | Entry Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(3)
         #Get the Verifier's Public Key.
         verifier: PublicKey = newPublicKeyFromBytes(verifSeq[0].pad(48, char(0)))
-        #Get the Node hash.
-        node: string = verifSeq[1].pad(64, char(0))
+        #Get the Entry hash.
+        entry: string = verifSeq[1].pad(64, char(0))
         #Get the BLS signature.
         sig: Signature = newSignatureFromBytes(verifSeq[2].pad(96, char(0)))
 
     #Create the Verification.
     result = newMemoryVerificationObj(
-        node.toHash(512)
+        entry.toHash(512)
     )
     result.verifier = verifier
 

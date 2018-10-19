@@ -13,8 +13,8 @@ import ../../Network/Serialize/SerializeReceive
 #Index object.
 import objects/IndexObj
 
-#Node object.
-import objects/NodeObj
+#Entry object.
+import objects/EntryObj
 
 #Receive object.
 import objects/ReceiveObj
@@ -23,41 +23,26 @@ export ReceiveObj
 #Finals lib.
 import finals
 
-#Create a new Receive node.
+#Create a new Receive Entry.
 proc newReceive*(
-    inputAddress: string,
-    inputNonce: uint,
+    index: Index,
     nonce: uint
 ): Receive {.raises: [ValueError, FinalAttributeError].} =
     #Verify the input address.
     if (
-        (not Wallet.verify(inputAddress)) and
-        (inputAddress != "minter")
+        (not Wallet.verify(index.address)) and
+        (index.address != "minter")
     ):
         raise newException(ValueError, "Receive address is not valid.")
 
     #Craft the result.
-    result = newReceiveObj(
-        inputAddress,
-        inputNonce
-    )
+    result = newReceiveObj(index)
 
     #Set the nonce.
     result.nonce = nonce
 
     #Set the hash.
     result.hash = SHA512(result.serialize())
-
-#Create a new Receive node.
-proc newReceive*(
-    index: Index,
-    nonce: uint
-): Receive {.raises: [ValueError, FinalAttributeError].} =
-    newReceive(
-        index.address,
-        index.nonce,
-        nonce
-    )
 
 #Sign a TX.
 func sign*(
@@ -67,7 +52,7 @@ func sign*(
     SodiumError,
     FinalAttributeError
 ].} =
-    #Set the sender behind the node.
+    #Set the sender behind the Entry.
     recv.sender = wallet.address
     #Sign the hash of the Receive.
     recv.signature = wallet.sign(recv.hash.toString())
