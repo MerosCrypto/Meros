@@ -14,7 +14,7 @@ import ../../Database/Merit/objects/VerificationsObj
 import SerializeCommon
 
 #BLS lib.
-import BLS
+import ../../lib/BLS
 
 #Serialize a MemoryVerification.
 proc serialize*(verif: MemoryVerification): string {.raises: [].} =

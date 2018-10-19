@@ -37,7 +37,7 @@ proc parseData*(
         #Public Key | Nonce | Data | Proof | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(dataSeq[0].pad(32, char(0)))
+        sender: EdPublicKey = newEdPublicKey(dataSeq[0].pad(32, char(0)))
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.

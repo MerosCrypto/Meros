@@ -4,14 +4,14 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
+#BLS lib.
+import ../../../lib/BLS
+
 #Miner libs.
 import ../Miner/MinerWallet
 
 #Finals lib.
 import finals
-
-#BLS lib.
-import BLS
 
 #String utils standard lib.
 import strutils
@@ -21,21 +21,21 @@ finalsd:
         #Verification object.
         Verification* = ref object of RootObj
             #BLS Key.
-            verifier* {.final.}: PublicKey
+            verifier* {.final.}: BLSPublicKey
             #Entry Hash.
             hash* {.final.}: Hash[512]
 
         #Verification object for the mempool.
         MemoryVerification* = ref object of Verification
             #BLS signature for aggregation in a block.
-            signature* {.final.}: Signature
+            signature* {.final.}: BLSSignature
 
         #A group of verifier/hash pairs with the final aggregate signature.
         Verifications* = ref object of RootObj
             #Verifications.
             verifications*: seq[MemoryVerification]
             #Aggregate signature.
-            aggregate*: Signature
+            aggregate*: BLSSignature
 
 #New Verification object.
 func newVerificationObj*(
@@ -60,18 +60,18 @@ func newVerificationsObj*(): Verifications {.raises: [].} =
     )
 
 #Calculate the signature.
-func calculateSig*(verifs: Verifications) {.raises: [BLSError].} =
+proc calculateSig*(verifs: Verifications) {.raises: [BLSError].} =
     #If there's no verifications...
     if verifs.verifications.len == 0:
         #Set a 0'd out signature.
         try:
-            verifs.aggregate = newSignatureFromBytes(char(0).repeat(96))
+            verifs.aggregate = newBLSSignature(char(0).repeat(96))
         except:
             raise newException(BLSError, "Couldn't aggregate the signature for the Verifications.")
         return
 
     #Declare a seq for the Signatures.
-    var sigs: seq[Signature]
+    var sigs: seq[BLSSignature]
     #Put every signature in the seq.
     for verif in verifs.verifications:
         sigs.add(verif.signature)

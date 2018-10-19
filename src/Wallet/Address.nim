@@ -119,7 +119,7 @@ func newAddress*(keyArg: string): string {.raises: [ValueError].} =
     result = newAddress(key)
 
 #Work with Public Keys objects, not just arrays.
-func newAddress*(key: PublicKey): string {.raises: [ValueError].} =
+func newAddress*(key: EdPublicKey): string {.raises: [ValueError].} =
     result = newAddress(cast[array[32, uint8]](key))
 
 #Verifies if an address is valid.
@@ -147,7 +147,7 @@ func verify*(address: string): bool {.raises: [ValueError].} =
         return false
 
 #If we have a key to check with, make an address for that key and compare with the given address.
-func verify*(address: string, key: PublicKey): bool {.raises: [ValueError].} =
+func verify*(address: string, key: EdPublicKey): bool {.raises: [ValueError].} =
     address == newAddress(key)
 
 #Converts an address to a BN.

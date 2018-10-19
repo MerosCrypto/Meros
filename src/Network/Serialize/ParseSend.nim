@@ -42,7 +42,7 @@ proc parseSend*(
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's public key.
-        sender: PublicKey = newPublicKey(sendSeq[0].pad(32, char(0)))
+        sender: EdPublicKey = newEdPublicKey(sendSeq[0].pad(32, char(0)))
         #Set the input address based off the sender's public key.
         input: string = newAddress(sender)
         #Get the nonce.

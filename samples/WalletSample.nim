@@ -12,7 +12,7 @@ var
     wallet: Wallet = newWallet()
     hash: string = SHA512("test").toString()
     sig: string = wallet.sign(hash)
-    pubKey: PublicKey = newPublicKey(wallet.address.toBN().toString(256))
+    pubKey: EdPublicKey = newEdPublicKey(wallet.address.toBN().toString(256))
     res: bool = pubKey.verify(hash, sig)
 
 echo res

@@ -14,7 +14,7 @@ import ../../../src/Network/Serialize/SerializeVerification
 import ../../../src/Network/Serialize/ParseVerification
 
 #BLS lib.
-import BLS
+import ../../../src/lib/BLS
 
 #Random standard lib.
 import random

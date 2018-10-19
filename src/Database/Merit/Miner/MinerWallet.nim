@@ -1,16 +1,14 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#nimcrypto; used to generate a valid seed.
-import nimcrypto
-
 #BLS lib.
-import BLS
-#Export the key objects.
-export PrivateKey, PublicKey, Signature
+import ../../../lib/BLS
 
 #Finals lib.
 import finals
+
+#nimcrypto; used to generate a valid seed.
+import nimcrypto
 
 #String utils standard lib.
 import strutils
@@ -19,9 +17,9 @@ finalsd:
     #Miner object.
     type MinerWallet* = ref object of RootObj
         #Private Key.
-        privateKey* {.final.}: PrivateKey
+        privateKey* {.final.}: BLSPrivateKey
         #Public Key.
-        publicKey* {.final.}: PublicKey
+        publicKey* {.final.}: BLSPublicKey
 
 #Constructors.
 proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
@@ -34,9 +32,9 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
     except:
         raise newException(RandomError, getCurrentExceptionMsg())
 
-    var priv: PrivateKey
+    var priv: BLSPrivateKey
     try:
-        priv = newPrivateKeyFromSeed(seed)
+        priv = newBLSPrivateKeyFromSeed(seed)
     except:
         raise newException(BLSError, "Couldn't create a Private Key. " & getCurrentExceptionMsg())
 
@@ -46,11 +44,11 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
     )
 
 proc newMinerWallet*(key: string): MinerWallet {.raises: [BLSError].} =
-    var priv: PrivateKey
+    var priv: BLSPrivateKey
     try:
-        priv = newPrivateKeyFromSeed(key)
+        priv = newBLSPrivateKeyFromBytes(key)
     except:
-        raise newException(BLSError, "Couldn't create a Private Key.")
+        raise newException(BLSError, "Couldn't create the Private Key.")
 
     result = MinerWallet(
         privateKey: priv,
@@ -58,24 +56,28 @@ proc newMinerWallet*(key: string): MinerWallet {.raises: [BLSError].} =
     )
 
 #Sign a message via a MinerWallet.
-func sign*(miner: MinerWallet, msg: string): Signature {.raises: [].} =
+func sign*(miner: MinerWallet, msg: string): BLSSignature {.raises: [].} =
     miner.privateKey.sign(msg)
 
 #Verify a message.
-func verify*(
+proc verify*(
     miner: MinerWallet,
     msg: string,
     sigArg: string
 ): bool {.raises: [BLSError].} =
     #Create the Signature.
-    var sig: Signature
+    var sig: BLSSignature
     try:
-        sig = newSignatureFromBytes(sigArg)
+        sig = newBLSSignature(sigArg)
     except:
-        raise newException(BLSError, "Couldn't load a BLS Signature from bytes.")
+        raise newException(BLSError, "Couldn't load the BLS Signature.")
 
     #Create the Aggregation Info.
-    var agInfo: AggregationInfo = newAggregationInfoFromMsg(miner.publicKey, msg)
+    var agInfo: BLSAggregationInfo
+    try:
+        agInfo = newBLSAggregationInfo(miner.publicKey, msg)
+    except:
+        raise newException(BLSError, "Couldn't load the BLS Aggregation Info.")
 
     #Add the Aggregation Info to the signature.
     sig.setAggregationInfo(agInfo)

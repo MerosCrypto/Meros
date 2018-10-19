@@ -1,21 +1,21 @@
+#BLS lib.
+import ../../../lib/BLS
+
 #Finals lib.
 import finals
-
-#BLS lib.
-import BLS
 
 finalsd:
     type
         #Miner object.
         Miner* = object of RootObj
-            miner* {.final.}: PublicKey
+            miner* {.final.}: BLSPublicKey
             amount* {.final.}: uint
-        
+
         #Miners object.
         Miners* = seq[Miner]
 
 func newMinerObj*(
-    miner: PublicKey,
+    miner: BLSPublicKey,
     amount: uint
 ): Miner {.raises: [].} =
     Miner(

@@ -11,7 +11,7 @@ import ../../../src/Network/Serialize/SerializeMiners
 import ../../../src/Network/Serialize/ParseMiners
 
 #BLS lib.
-import BLS
+import ../../../src/lib/BLS
 
 #Random/Time/Algorithm standard libs. They're used to randomize the testing data.
 import random

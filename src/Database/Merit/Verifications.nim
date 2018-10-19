@@ -4,6 +4,9 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
+#BLS lib.
+import ../../lib/BLS
+
 #MinerWallet lib.
 import Miner/MinerWallet
 
@@ -13,9 +16,6 @@ export VerificationsObj
 
 #Finals lib.
 import finals
-
-#BLS lib.
-import BLS
 
 #Create a new Verification.
 func newMemoryVerification*(

@@ -3,8 +3,11 @@ import Errors
 
 #LibSodium lib.
 import libsodium
-#Export the Private/Public Key objects.
-export Seed, PrivateKey, PublicKey
+#Export the Private/Public Key objects (with a prefix).
+type
+    EdSeed* = Seed
+    EdPrivateKey* = PrivateKey
+    EdPublicKey* = PublicKey
 
 #Standard string utils lib.
 import strutils
@@ -16,7 +19,7 @@ import nimcrypto
 const SIGN_PREFIX {.strdefine.}: string = "EMB"
 
 #Seed constructor.
-proc newSeed*(): Seed {.raises: [RandomError].} =
+proc newEdSeed*(): Seed {.raises: [RandomError].} =
     try:
         #Use nimcrypto to fill the Seed with random bytes.
         if randomBytes(result) != 32:
@@ -25,7 +28,7 @@ proc newSeed*(): Seed {.raises: [RandomError].} =
         raise newException(RandomError, getCurrentExceptionMsg())
 
 #Nim function for creating a Key Pair.
-func newKeyPair*(seedArg: Seed): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
+func newEdKeyPair*(seedArg: Seed): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
     #Extract the Seed.
     var seed: Seed = seedArg
 

@@ -59,7 +59,7 @@ if answer == "":
     quit(0)
 
 #Create a Wallet from their Seed.
-wallet = newWallet(newSeed(answer))
+wallet = newWallet(newEdSeed(answer))
 
 #Get the Entry type.
 echo "Would you like to Send or Receive a TX?"

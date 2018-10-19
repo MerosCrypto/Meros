@@ -8,7 +8,7 @@ import ../../Database/Merit/objects/MinersObj
 import SerializeCommon
 
 #BLS lib.
-import BLS
+import ../../lib/BLS
 
 #String utils standard library.
 import strutils

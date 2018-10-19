@@ -35,7 +35,7 @@ import ec_events
 import finals
 
 #BLS lib.
-import BLS
+import lib/BLS
 
 #OS standard lib.
 import os

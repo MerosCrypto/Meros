@@ -1,3 +1,6 @@
+#BLS lib.
+import ../../lib/BLS
+
 #Miners object.
 import objects/MinersObj
 
@@ -7,9 +10,6 @@ import Blockchain
 
 #Finals lib.
 import finals
-
-#BLS lib.
-import BLS
 
 #Tables standard lib.
 import tables
@@ -33,7 +33,7 @@ func newState*(deadBlocks: uint): State {.raises: [].} =
     )
 
 #Get the Merit of an account.
-func getBalance*(state: State, account: PublicKey): uint {.raises: [KeyError].} =
+func getBalance*(state: State, account: BLSPublicKey): uint {.raises: [KeyError].} =
     #Set the result to 0 (in case there isn't an entry in the table).
     result = 0
 

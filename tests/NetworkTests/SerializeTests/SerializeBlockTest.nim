@@ -18,7 +18,7 @@ import ../../../src/Network/Serialize/SerializeBlock
 import ../../../src/Network/Serialize/ParseBlock
 
 #BLS lib.
-import BLS
+import ../../../src/lib/BLS
 
 #Random lib.
 import random

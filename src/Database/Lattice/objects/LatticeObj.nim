@@ -21,7 +21,7 @@ import EntryObj
 import AccountObj
 
 #BLS lib.
-import BLS
+import ../../../lib/BLS
 
 #Tables standard library.
 import tables
@@ -40,7 +40,7 @@ type Lattice* = ref object of RootObj
     #Verifications (hash -> list of addresses who signed off on it).
     verifications: TableRef[
         string,
-        seq[PublicKey]
+        seq[BLSPublicKey]
     ]
 
     #Accounts (address -> account).
@@ -58,7 +58,7 @@ func newLattice*(
     result = Lattice(
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
         lookup: newTable[string, Index](),
-        verifications: newTable[string, seq[PublicKey]](),
+        verifications: newTable[string, seq[BLSPublicKey]](),
         accounts: newTable[string, Account]()
     )
 
@@ -78,7 +78,7 @@ proc verify*(
     lattice: Lattice,
     merit: Merit,
     hashArg: Hash[512],
-    verifier: PublicKey
+    verifier: BLSPublicKey
 ): bool {.raises: [KeyError, ValueError].} =
     #Turn the hash into a string.
     var hash: string = $hashArg

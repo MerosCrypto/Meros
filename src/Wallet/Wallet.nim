@@ -3,8 +3,8 @@ import ../lib/Errors
 
 #ED25519 lib.
 import ../lib/ED25519
-#Export the key objects.
-export Seed, PrivateKey, PublicKey
+#Export the critical objects.
+export EdSeed, EdPrivateKey, EdPublicKey
 
 #Address lib.
 import Address
@@ -21,16 +21,16 @@ finalsd:
     #Wallet object.
     type Wallet* = ref object of RootObj
         #Seed.
-        seed* {.final.}: Seed
+        seed* {.final.}: EdSeed
         #Private Key.
-        privateKey* {.final.}: PrivateKey
+        privateKey* {.final.}: EdPrivateKey
         #Public Key.
-        publicKey* {.final.}: PublicKey
+        publicKey* {.final.}: EdPublicKey
         #Address.
         address* {.final.}: string
 
 #Create a new Seed from a string.
-func newSeed*(seed: string): Seed {.raises: [ValueError].} =
+func newEdSeed*(seed: string): EdSeed {.raises: [ValueError].} =
     #If it's binary...
     if seed.len == 32:
         for i in 0 ..< 32:
@@ -43,7 +43,7 @@ func newSeed*(seed: string): Seed {.raises: [ValueError].} =
         raise newException(ValueError, "Invalid Seed.")
 
 #Create a new Public Key from a string.
-func newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
+func newEdPublicKey*(key: string): EdPublicKey {.raises: [ValueError].} =
     #If it's binary...
     if key.len == 32:
         for i in 0 ..< 32:
@@ -56,17 +56,17 @@ func newPublicKey*(key: string): PublicKey {.raises: [ValueError].} =
         raise newException(ValueError, "Invalid Public Key.")
 
 #Stringify a Seed/PublicKey.
-func `$`*(key: Seed | PublicKey): string {.raises: [].} =
+func `$`*(key: EdSeed | EdPublicKey): string {.raises: [].} =
     result = ""
     for b in key:
         result = result & uint8(b).toHex()
 
 #Constructor.
 func newWallet*(
-    seed: Seed = newSeed()
+    seed: EdSeed = newEdSeed()
 ): Wallet {.raises: [ValueError, SodiumError].} =
     #Generate a new key pair.
-    var pair: tuple[priv: PrivateKey, pub: PublicKey] = newKeyPair(seed)
+    var pair: tuple[priv: EdPrivateKey, pub: EdPublicKey] = newEdKeyPair(seed)
 
     #Create a new Wallet based off the seed/key pair.
     result = Wallet(
@@ -78,7 +78,7 @@ func newWallet*(
 
 #Constructor.
 func newWallet*(
-    seed: Seed,
+    seed: EdSeed,
     address: string
 ): Wallet {.raises: [ValueError, SodiumError].} =
     #Create a Wallet based off the Seed (and verify the integrity via the Address).
@@ -89,7 +89,7 @@ func newWallet*(
         raise newException(ValueError, "Invalid Address for this Wallet.")
 
 #Sign a message.
-func sign*(key: PrivateKey, msg: string): string {.raises: [SodiumError].} =
+func sign*(key: EdPrivateKey, msg: string): string {.raises: [SodiumError].} =
     ED25519.sign(key, msg)
 
 #Sign a message via a Wallet.
@@ -98,7 +98,7 @@ func sign*(wallet: Wallet, msg: string): string {.raises: [SodiumError].} =
 
 #Verify a message.
 func verify*(
-    key: PublicKey,
+    key: EdPublicKey,
     msg: string,
     sig: string
 ): bool {.raises: [SodiumError].} =

@@ -38,7 +38,7 @@ proc parseReceive*(
         #Public Key | Nonce | Input Address | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(5)
         #Get the sender's Public Key.
-        sender: PublicKey = newPublicKey(recvSeq[0].pad(32, char(0)))
+        sender: EdPublicKey = newEdPublicKey(recvSeq[0].pad(32, char(0)))
         #Get the nonce.
         nonce: uint = uint(recvSeq[1].fromBinary())
         #Get the input Address.

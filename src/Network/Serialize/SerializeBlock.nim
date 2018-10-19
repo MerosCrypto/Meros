@@ -20,7 +20,7 @@ import SerializeCommon
 import SerializeMiners
 
 #BLS lib.
-import BLS
+import ../../lib/BLS
 
 #String utils standard lib.
 import strutils

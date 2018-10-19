@@ -18,27 +18,40 @@ import SerializeVerification
 import finals
 
 #BLS lib.
-import BLS
+import ../../lib/BLS
 
 #String utils standard lib.
 import strutils
 
 #Parse a Verification.
-func parseVerification*(
+proc parseVerification*(
     verifStr: string
 ): MemoryVerification {.raises: [
     ValueError,
+    BLSError,
     FinalAttributeError
 ].} =
     var
         #Public Key | Entry Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(3)
-        #Get the Verifier's Public Key.
-        verifier: PublicKey = newPublicKeyFromBytes(verifSeq[0].pad(48, char(0)))
+        #Verifier's Public Key.
+        verifier: BLSPublicKey
         #Get the Entry hash.
         entry: string = verifSeq[1].pad(64, char(0))
-        #Get the BLS signature.
-        sig: Signature = newSignatureFromBytes(verifSeq[2].pad(96, char(0)))
+        #BLS signature.
+        sig: BLSSignature
+
+    #Set the verifier's Public Key.
+    try:
+        verifier = newBLSPublicKey(verifSeq[0].pad(48, char(0)))
+    except:
+        raise newException(BLSError, "Couldn't load the BLS Public Key.")
+
+    #Set the BLS signature.
+    try:
+        sig = newBLSSignature(verifSeq[2].pad(96, char(0)))
+    except:
+        raise newException(BLSError, "Couldn't load the BLS Signature.")
 
     #Create the Verification.
     result = newMemoryVerificationObj(
@@ -47,9 +60,12 @@ func parseVerification*(
     result.verifier = verifier
 
     #Verify the BLS signature.
-    sig.setAggregationInfo(
-        newAggregationInfoFromMsg(verifier, result.hash.toString())
-    )
+    try:
+        sig.setAggregationInfo(
+            newBLSAggregationInfo(verifier, result.hash.toString())
+        )
+    except:
+        raise newException(BLSError, "Couldn't load create the BLS Aggregation Info.")
     if not sig.verify():
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.

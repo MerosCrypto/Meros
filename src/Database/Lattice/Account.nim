@@ -50,7 +50,7 @@ proc add(
         #Override as there's no signatures for minters.
         discard
     #Else, if it's an invalid signature...
-    elif not newPublicKey(
+    elif not newEdPublicKey(
         account.address.toBN().toString(256)
     ).verify(entry.hash.toString(), entry.signature):
         #Return false.

@@ -33,7 +33,7 @@ finalsd:
         #Verifications.
         verifications*: Verifications
         #Publisher.
-        publisher* {.final.}: PublicKey
+        publisher* {.final.}: EdPublicKey
 
         #Hash.
         hash*: SHA512Hash
@@ -53,7 +53,7 @@ func newBlockObj*(
     nonce: uint,
     time: uint,
     verifications: Verifications,
-    publisher: PublicKey
+    publisher: EdPublicKey
 ): Block {.raises: [].} =
     Block(
         last: last,

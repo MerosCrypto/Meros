@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Util lib.
 import ../../lib/Util
 
@@ -11,15 +14,15 @@ import ../../Database/Merit/objects/MinersObj
 import SerializeCommon
 
 #BLS lib.
-import BLS
+import ../../lib/BLS
 
 #String utils standard library.
 import strutils
 
 #Parse function.
-func parseMiners*(
+proc parseMiners*(
     minersStr: string
-): Miners {.raises: [ValueError].} =
+): Miners {.raises: [BLSError].} =
     #Init the result.
     result = @[]
 
@@ -28,9 +31,16 @@ func parseMiners*(
 
     #Add each miner/amount.
     for i in countup(1, minersSeq.len - 1, 2):
+        var key: BLSPublicKey
+        #Create the Public Key.
+        try:
+            key = newBLSPublicKey(minersSeq[i])
+        except:
+            raise newException(BLSError, "Couldn't load the BLS Public Key.")
+
         result.add(
             newMinerObj(
-                newPublicKeyFromBytes(minersSeq[i]),
+                key,
                 uint(minersSeq[i + 1][0])
             )
         )

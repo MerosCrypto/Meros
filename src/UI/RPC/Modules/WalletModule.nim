@@ -38,7 +38,7 @@ proc setSeed(
     if seed.len == 0:
         rpc.wallet = newWallet()
     else:
-        rpc.wallet = newWallet(newSeed(seed))
+        rpc.wallet = newWallet(newEdSeed(seed))
 
     result = rpc.get()
 

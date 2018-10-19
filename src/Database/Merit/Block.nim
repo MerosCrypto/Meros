@@ -36,7 +36,7 @@ proc newBlock*(
     nonce: uint,
     time: uint,
     verifications: Verifications,
-    publisher: PublicKey,
+    publisher: EdPublicKey,
     proof: uint,
     miners: Miners,
     signature: string

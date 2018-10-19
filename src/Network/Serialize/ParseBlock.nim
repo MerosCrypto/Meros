@@ -33,7 +33,7 @@ import strutils
 import sequtils
 
 #BLS lib.
-import BLS
+import ../../lib/BLS
 
 #Parse a Block.
 proc parseBlock*(
@@ -41,6 +41,7 @@ proc parseBlock*(
 ): Block {.raises: [
     ValueError,
     ArgonError,
+    BLSError,
     SodiumError,
     FinalAttributeError
 ].} =
@@ -86,8 +87,14 @@ proc parseBlock*(
                 blockSeq[i + 1].toHash(512)
             )
         )
-        verifications.verifications[^1].verifier = newPublicKeyFromBytes(blockSeq[i])
-    verifications.aggregate = newSignatureFromBytes(aggregate)
+        try:
+            verifications.verifications[^1].verifier = newBLSPublicKey(blockSeq[i])
+        except:
+            raise newException(BLSError, "Couldn't load the BLS Public Key.")
+    try:
+        verifications.aggregate = newBLSSignature(aggregate)
+    except:
+        raise newException(BLSError, "Couldn't load the BLS Signature.")
 
     #Grab the miners out of the block.
     var
@@ -99,7 +106,7 @@ proc parseBlock*(
     miners = minersStr.parseMiners()
 
     #Create the Block Object.
-    result = newBlockObj(last, nonce, time, verifications, newPublicKey(publisher))
+    result = newBlockObj(last, nonce, time, verifications, newEdPublicKey(publisher))
     #Set the hash.
     result.hash = SHA512(result.serialize())
     #Set the proof.
@@ -112,7 +119,7 @@ proc parseBlock*(
     result.minersHash = SHA512(minersStr)
 
     #Verify the signature.
-    if not newPublicKey(publisher).verify(result.minersHash.toString(), signature):
+    if not newEdPublicKey(publisher).verify(result.minersHash.toString(), signature):
         raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature
