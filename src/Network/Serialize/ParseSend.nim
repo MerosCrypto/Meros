@@ -48,7 +48,7 @@ proc parseSend*(
         #Get the nonce.
         nonce: uint = uint(sendSeq[1].fromBinary())
         #Get the output.
-        output: string = newAddress(sendSeq[2])
+        output: string = newAddress(sendSeq[2].pad(32, char(0)))
         #Get the amount.
         amount: BN = sendSeq[3].toBN(256)
         #Get the proof.
