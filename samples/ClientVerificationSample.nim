@@ -1,6 +1,9 @@
 #Hash lib.
 import ../src/lib/Hash
 
+#BLS lib.
+import ../src/lib/BLS
+
 #Merit lib.
 import ../src/Database/Merit/Merit
 
@@ -29,8 +32,8 @@ var
 echo "What's the Miner Wallet's Private Key?"
 answer = stdin.readLine()
 
-#Create a Wallet from their Seed.
-wallet = newMinerWallet(answer)
+#Create a Wallet from their Private Key.
+wallet = newMinerWallet(newBLSPrivateKeyFromBytes(answer))
 
 #Get the Entry's hash.
 echo "What Entry do you want to verify?"
