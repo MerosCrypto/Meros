@@ -36,9 +36,6 @@ events.on(
         #Shut down the Network.
         network.shutdown()
 
-        #Make sure we're down to one thread.
-        sync()
-
         #Quit.
         quit(0)
 )

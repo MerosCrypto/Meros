@@ -76,7 +76,7 @@ proc mainMerit*() {.raises: [
         #Handle full blocks.
         events.on(
             "merit.block",
-            proc (newBlock: Block): bool {.raises: [KeyError, ValueError].} =
+            proc (newBlock: Block): bool {.raises: [KeyError, ValueError, BLSError, SodiumError].} =
                 result = true
 
                 #Print that we're adding the Block.
