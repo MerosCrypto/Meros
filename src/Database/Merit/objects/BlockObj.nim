@@ -32,8 +32,6 @@ finalsd:
 
         #Verifications.
         verifications*: Verifications
-        #Publisher.
-        publisher* {.final.}: EdPublicKey
 
         #Hash.
         hash*: SHA512Hash
@@ -45,6 +43,10 @@ finalsd:
         #Who to attribute the Merit to (amount ranges from 0 to 100).
         miners* {.final.}: Miners
         minersHash* {.final.}: SHA512Hash
+
+        #Publisher.
+        publisher* {.final.}: EdPublicKey
+        #Signature of the Miners Hash.
         signature* {.final.}: string
 
 #Constructor.

@@ -37,11 +37,19 @@ proc newMerit*(
     )
 
 #Add a block.
-proc processBlock*(merit: Merit, newBlock: Block): bool {.raises: [KeyError, ValueError].} =
+proc processBlock*(
+    merit: Merit,
+    newBlock: Block
+): bool {.raises: [
+    KeyError,
+    ValueError,
+    BLSError,
+    SodiumError
+].} =
     result = true
 
     #Add the block to the Blockchain.
-    if not merit.blockchain.addBlock(newBlock):
+    if not merit.blockchain.processBlock(newBlock):
         #If that fails, return false.
         return false
 

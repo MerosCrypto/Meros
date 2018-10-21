@@ -58,22 +58,3 @@ func newVerificationsObj*(): Verifications {.raises: [].} =
     Verifications(
         verifications: @[]
     )
-
-#Calculate the signature.
-proc calculateSig*(verifs: Verifications) {.raises: [BLSError].} =
-    #If there's no verifications...
-    if verifs.verifications.len == 0:
-        #Set a 0'd out signature.
-        try:
-            verifs.aggregate = newBLSSignature(char(0).repeat(96))
-        except:
-            raise newException(BLSError, "Couldn't aggregate the signature for the Verifications.")
-        return
-
-    #Declare a seq for the Signatures.
-    var sigs: seq[BLSSignature]
-    #Put every signature in the seq.
-    for verif in verifs.verifications:
-        sigs.add(verif.signature)
-    #Set the aggregate.
-    verifs.aggregate = sigs.aggregate()

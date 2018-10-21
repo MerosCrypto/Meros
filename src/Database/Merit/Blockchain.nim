@@ -4,12 +4,22 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
+#Hash lib.
+import ../../lib/Hash
+
 #BN lib.
 import BN
 
-#Block, and Difficulty libs.
-import Block
+#BLS lib.
+import ../../lib/BLS
+
+#Wallet libs.
+import ../../Wallet/Wallet
+
+#Difficulty, Verifications, and Block libs.
 import Difficulty
+import Verifications
+import Block
 
 #Blockchain object.
 import objects/BlockchainObj
@@ -28,7 +38,10 @@ proc newBlockchain*(
     )
 
 #Adds a block to the blockchain.
-proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueError].} =
+proc processBlock*(
+    blockchain: Blockchain,
+    newBlock: Block
+): bool {.raises: [ValueError, BLSError, SodiumError].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 
@@ -48,6 +61,17 @@ proc addBlock*(blockchain: Blockchain, newBlock: Block): bool {.raises: [ValueEr
 
     #If the time is before the last block's...
     if newBlock.time < blocks[^1].time:
+        return false
+
+    #If the aggregate signature is wrong...
+    if not newBlock.verifications.verify():
+        return false
+
+    #If the miner signature is wrong...
+    if not newBlock.publisher.verify(
+        newBlock.minersHash.toString(),
+        newBlock.signature
+    ):
         return false
 
     #Set the period length.
