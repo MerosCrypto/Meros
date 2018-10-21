@@ -52,18 +52,6 @@
     Undecided:
         - Have Verifications also use Ed25519/have BLS signatures be asked for.
 
-### Bug fixes:
-
-    Wallet:
-        - Base32 seqs sometimes have trailing 0s. This is due to right padding the result instead of left padding it. This is not an issue which affects CURRENT usage in any way.
-        - `Address.toBN()` occasionally returns the wrong BN.
-
-    Network:
-        - Networking code breaks across different endians.
-
-    Other:
-        - GMP has a memory leak.
-
 ### Documentation:
 - Document the message types.
 - Document the RPC.
