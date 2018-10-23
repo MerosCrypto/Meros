@@ -32,8 +32,8 @@ proc newData*(
     nonce: uint
 ): Data {.raises: [ValueError, FinalAttributeError].} =
     #Verify the data argument.
-    if data.len > 1024:
-        raise newException(ValueError, "Data data was too long.")
+    if data.len > 256:
+        raise newException(ValueError, "Data's data was greater than 1/4 KB..")
 
     #Craft the result.
     result = newDataObj(
