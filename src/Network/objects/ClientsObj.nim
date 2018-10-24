@@ -22,7 +22,7 @@ finalsd:
 #Constructor.
 func newClients*(): Clients {.raises: [].} =
     Clients(
-        total: 0,
+        total: 1,
         clients: newSeq[Client]()
     )
 
