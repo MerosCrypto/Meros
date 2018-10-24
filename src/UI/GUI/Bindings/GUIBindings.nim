@@ -28,7 +28,7 @@ proc addTo*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
                 gui.webview.terminate()
 
                 try:
-                    #Emit the quit event.
+                    #Send the quit event.
                     gui.toRPC[].send(%* {
                         "module": "system",
                         "method": "quit",

@@ -53,7 +53,7 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
             header &= await client.recv(1)
             #Add it to the size.
             size += ord(header[header.len - 1])
-        #Get the line.
+        #Get the actual message.
         line = await client.recv(size)
         #Verify the length.
         if line.len != size:

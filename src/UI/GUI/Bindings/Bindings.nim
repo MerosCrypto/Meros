@@ -8,6 +8,7 @@ import ../objects/GUIObj
 import GUIBindings
 import WalletBindings
 import LatticeBindings
+import NetworkBindings
 
 #Create the bindings.
 proc createBindings*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
@@ -17,3 +18,5 @@ proc createBindings*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
     WalletBindings.addTo(gui)
     #Add the Lattice bindings.
     LatticeBindings.addTo(gui)
+    #Add the Network bindings.
+    NetworkBindings.addTo(gui)

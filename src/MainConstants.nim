@@ -1,7 +1,7 @@
 include MainImports
 
 #Constants. This acts as a sort-of "chain params".
-#Some constants are defined in Nimscript and loaded via strdefine.
+#Some constants are defined in Nimscript and loaded via intdefine/strdefine.
 #This is because they're for libraries which can't have their constants defined in a foreign file.
 const
     #Merit constants.

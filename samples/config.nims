@@ -6,6 +6,7 @@ if getCommand() == "c":
 switch("threads", "on")
 switch("define", "ADDRESS_HRP=Emb")
 switch("define", "SIGN_PREFIX=EMB")
+switch("define", "DEFAULT_PORT=5132")
 
 when defined(release):
     #Disable assertions and checks.

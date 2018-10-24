@@ -163,7 +163,7 @@ proc start*(
 proc connect*(
     network: Network,
     ip: string,
-    port: int = 5132
+    port: int
 ) {.async.} =
     #Create the socket.
     var socket: AsyncSocket = newAsyncSocket()
