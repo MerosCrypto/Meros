@@ -8,7 +8,7 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
-#Wallet libraries.
+#Wallet libs.
 import ../../Wallet/Wallet
 import ../../Wallet/Address
 

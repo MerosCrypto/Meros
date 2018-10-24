@@ -34,13 +34,18 @@ var tests: seq[string] = @[
     "Write the tests they said.",
     "Make up phrases they said.",
     "Well here are the phrases.",
-    "I make the phrases, I pick them.",
-    "This is 1024 characters long.   ".repeat(32),
-    "This is the 15th tests because I wanted a nice number."
+    "-----",
+    "#^&^%^&*",
+    "Phrase.",
+    "Another phrase.",
+    "Yet another phrase.",
+    "This is 32 characters long.     ",
+    "This is 256 characters long.    ".repeat(8),
+    "This is the 20th test because I wanted a nice number."
 ]
 
-#Test 15 serializations.
-for i in 1 .. 15:
+#Test 20 serializations.
+for i in 1 .. 20:
     echo "Testing Data Serialization/Parsing, iteration " & $i & "."
 
     var
@@ -51,6 +56,7 @@ for i in 1 .. 15:
             tests[i - 1],
             0
         )
+    
     #Mine the Data.
     data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
     #Sign it.

@@ -24,7 +24,7 @@ import strutils
 randomize(getTime().toUnix())
 
 #Test 20 serializations.
-for i in 1 .. 10:
+for i in 1 .. 20:
     var
         #Wallets.
         wallets: seq[MinerWallet] = @[]
@@ -41,7 +41,7 @@ for i in 1 .. 10:
     if i == 1:
         quantity = 1
     #Test the highest quantity.
-    elif i == 10:
+    elif i == 20:
         quantity = 100
 
     echo "Testing Miners Serialization/Parsing, iteration " & $i & ", with " & $quantity & " miners."

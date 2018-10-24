@@ -46,8 +46,8 @@ var
     #Verifications.
     verifs: Verifications
 
-#Mine Blocks.
-for i in 1 .. 10:
+#Test 20 serializations.
+for i in 1 .. 20:
     echo "Testing Block Serialization/Parsing, iteration " & $i & "."
 
     #Update the time.
