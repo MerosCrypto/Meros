@@ -77,11 +77,10 @@ func addHash*(
 proc verify*(
     lattice: Lattice,
     merit: Merit,
-    hashArg: Hash[512],
-    verifier: BLSPublicKey
+    verif: Verification
 ): bool {.raises: [KeyError, ValueError].} =
     #Turn the hash into a string.
-    var hash: string = $hashArg
+    var hash: string = verif.hash.toString()
 
     #Verify the Entry exists.
     if not lattice.lookup.hasKey(hash):
@@ -93,11 +92,11 @@ proc verify*(
         lattice.verifications[hash] = @[]
 
     #Return if the Verification already exists.
-    if lattice.verifications[hash].contains(verifier):
+    if lattice.verifications[hash].contains(verif.verifier):
         return
 
     #Add the Verification.
-    lattice.verifications[hash].add(verifier)
+    lattice.verifications[hash].add(verif.verifier)
 
     #Calculate the weight.
     var weight: uint = 0

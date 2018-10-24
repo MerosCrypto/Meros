@@ -11,6 +11,9 @@ proc mainMerit*() {.raises: [
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(GENESIS, BLOCK_TIME, BLOCK_DIFFICULTY, LIVE_MERIT)
+        #If we're mining...
+        if miner:
+            merit.setMinerWallet(paramStr(2))
 
         #Mine a single block so there's Merit in the system.
         block:
@@ -66,7 +69,7 @@ proc mainMerit*() {.raises: [
                 echo "Adding a new Verification."
 
                 #Add the Verification to the Lattice.
-                result = lattice.verify(merit, verif.hash, verif.verifier)
+                result = lattice.verify(merit, verif)
                 if result:
                     echo "Successfully added the Verification."
                 else:
@@ -93,7 +96,7 @@ proc mainMerit*() {.raises: [
                     #Add each Verification.
                     for verif in newBlock.verifications.verifications:
                         #Discard the result since we already made sure the hash exists.
-                        discard lattice.verify(merit, verif.hash, verif.verifier)
+                        discard lattice.verify(merit, verif)
 
                     echo "Successfully added the Block."
                 else:

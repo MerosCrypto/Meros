@@ -6,6 +6,7 @@ var
 
     #Merit.
     merit {.threadvar.}: Merit #Blockchain and state.
+    miner {.threadvar.}: bool  #Miner boolean.
 
     #Lattice.
     lattice {.threadvar.}: Lattice   #Lattice.
@@ -18,7 +19,11 @@ var
     fromMain: Channel[string] #Channel from the 'main' thread to the UI thread.
     toRPC: Channel[JSONNode]  #Channel to the RPC from the GUI.
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
-    rpc {.threadvar.}: RPC                  #RPC object.
+    rpc {.threadvar.}: RPC    #RPC object.
+
+#If the miner argument was passed...
+if paramStr(1) == "--miner":
+    miner = true
 
 #Properly shutdown.
 events.on(

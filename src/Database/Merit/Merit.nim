@@ -1,8 +1,14 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Hash lib.
+import ../../lib/Hash
+
 #Base lib.
 import ../../lib/Base
+
+#BLS lib.
+import ../../lib/BLS
 
 #Miners object, Verification/Block/Blockchain/State, and MinerWallet libs.
 import objects/MinersObj
@@ -23,6 +29,7 @@ export MinerWallet
 type Merit* = ref object of RootObj
     blockchain*: Blockchain
     state*: State
+    miner*: MinerWallet
 
 #Constructor.
 proc newMerit*(
@@ -35,6 +42,22 @@ proc newMerit*(
         blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
         state: newState(live)
     )
+
+#Set the MinerWallet.
+proc setMinerWallet*(merit: Merit, keyArg: string) {.raises: [BLSError].} =
+    var key: BLSPrivateKey
+    try:
+        key = newBLSPrivateKeyFromBytes(keyArg)
+    except:
+        raise newException(BLSError, "Invalid BLS Private Key.")
+
+    merit.miner = newMinerWallet(key)
+
+#Create a Verification.
+proc verify*(merit: Merit, hash: Hash[512]): MemoryVerification =
+    result = newMemoryVerification(hash)
+    result.verifier = merit.miner.publicKey
+    result.signature = merit.miner.sign(hash.toString())
 
 #Add a block.
 proc processBlock*(

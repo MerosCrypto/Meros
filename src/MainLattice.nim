@@ -1,5 +1,22 @@
 include MainMerit
 
+proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].} =
+    if miner:
+        #Verify the Entry.
+        var verif: MemoryVerification = merit.verify(entry.hash)
+        discard lattice.verify(merit, verif)
+
+        discard """
+        #Broadcast the Verification.
+        events.get(
+            proc (msgType: MessageType, msg: string),
+            "network.broadcast"
+        )(
+            MessageType.Verification,
+            verif.serialize()
+        )
+        """
+
 proc mainLattice*() {.raises: [
     ValueError,
     ArgonError,
@@ -23,7 +40,11 @@ proc mainLattice*() {.raises: [
         #Handle Sends.
         events.on(
             "lattice.send",
-            proc (send: Send): bool {.raises: [ValueError, SodiumError].} =
+            proc (send: Send): bool {.raises: [
+                ValueError,
+                SodiumError,
+                FinalAttributeError
+            ].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Send."
 
@@ -32,18 +53,25 @@ proc mainLattice*() {.raises: [
                     merit,
                     send
                 ):
-                    echo "Successfully added the Send."
                     result = true
+                    echo "Successfully added the Send."
+
+                    verify(send)
+
                 else:
-                    echo "Failed to add the Send."
                     result = false
+                    echo "Failed to add the Send."
                 echo ""
         )
 
         #Handle Receives.
         events.on(
             "lattice.receive",
-            proc (recv: Receive): bool {.raises: [ValueError, SodiumError].} =
+            proc (recv: Receive): bool {.raises: [
+                ValueError,
+                SodiumError,
+                FinalAttributeError
+            ].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Receive."
 
@@ -52,18 +80,27 @@ proc mainLattice*() {.raises: [
                     merit,
                     recv
                 ):
-                    echo "Successfully added the Receive."
                     result = true
+                    echo "Successfully added the Receive."
+
+                    verify(recv)
                 else:
-                    echo "Failed to add the Receive."
                     result = false
+                    echo "Failed to add the Receive."
                 echo ""
         )
 
         #Handle Data.
         events.on(
             "lattice.data",
-            proc (msg: Message, data: Data): bool {.raises: [ValueError, SodiumError].} =
+            proc (
+                msg: Message,
+                data: Data
+            ): bool {.raises: [
+                ValueError,
+                SodiumError,
+                FinalAttributeError
+            ].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Data."
 
@@ -72,11 +109,13 @@ proc mainLattice*() {.raises: [
                     merit,
                     data
                 ):
-                    echo "Successfully added the Data."
                     result = true
+                    echo "Successfully added the Data."
+
+                    verify(data)
                 else:
-                    echo "Failed to add the Data."
                     result = false
+                    echo "Failed to add the Data."
                 echo ""
         )
 
