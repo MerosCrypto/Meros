@@ -1,15 +1,24 @@
 # TODO
 
 ### Core:
-- Verify BLS Public Keys.
-- Have Merit Holders indexable by the order they got Merit in.
+- Auto-Receive.
 - Miner.
 
-- Minting.
+- Verify BLS Public Keys.
+- Inactive Merit.
+- Have Merit Holders indexable by the order they got Merit in.
+- Miner.
+- Resolve Merit forks
+
+- EMB Minting.
 - `MinterReceive` node.
+- Resolve Lattice forks (right now, unverified Nodes are treated as Verified...).
 
 - Merit Removal system.
 - Difficulty Voting system.
+
+- Handshake when connecting to Nodes.
+- Ask for missing data (syncing).
 
 - Database.
 
@@ -17,11 +26,16 @@
 - Finish the Tests.
 
 ### Features:
+- Only add meaningful verifications.
+- Only verify if you have Merit.
+
+- Command line options.
+
 - Have `Logger.urgent` open a dialog box.
 
 - Show the existing wallet on reload of `Main.html`.
 - `Account` history over the GUI.
-- `Verification`s over the GUI.
+- Network page on the GUI.
 
 - Have the RPC dynamically get the difficulty.
 
