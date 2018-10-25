@@ -2,11 +2,9 @@ include MainGlobals
 
 proc mainMerit*() {.raises: [
     ValueError,
-    RandomError,
     ArgonError,
     BLSError,
-    SodiumError,
-    FinalAttributeError
+    SodiumError
 ].} =
     {.gcsafe.}:
         #Create the Merit.
@@ -14,52 +12,6 @@ proc mainMerit*() {.raises: [
         #If we're mining...
         if miner:
             merit.setMinerWallet(minerKey)
-
-        #Mine a single block so there's Merit in the system.
-        block:
-            var
-                #Create a wallet.
-                wallet: Wallet = newWallet()
-                #Create a miner's wallet.
-                miner: MinerWallet = newMinerWallet()
-                #Block var.
-                newBlock: Block
-                proof: uint = 0
-                miners: Miners = @[(
-                    newMinerObj(
-                        miner.publicKey,
-                        100
-                    )
-                )]
-                #Verifications.
-                verifs: Verifications = newVerificationsObj()
-            verifs.calculateSig()
-
-            while true:
-                #Create a block.
-                newBlock = newBlock(
-                    merit.blockchain.blocks[0].argon,
-                    1,
-                    getTime(),
-                    verifs,
-                    wallet.publicKey,
-                    proof,
-                    miners,
-                    wallet.sign(SHA512(miners.serialize(1)).toString())
-                )
-
-                #Try to add it.
-                if not merit.processBlock(newBlock):
-                    #If it's invalid, increase the proof and continue.
-                    inc(proof)
-                    continue
-
-                #Exit out of the loop once we've mined one block.
-                break
-
-            echo $miner.publicKey & " has earned 100 Merit."
-            echo "Its Private Key is " & $miner.privateKey & "."
-            echo ""
 
         #Handle Verifications.
         events.on(

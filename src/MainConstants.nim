@@ -5,12 +5,12 @@ include MainImports
 #This is because they're for libraries which can't have their constants defined in a foreign file.
 const
     #Merit constants.
-    GENESIS: string =            #Genesis string.
-        "EMB_MAINNET"
-    BLOCK_DIFFICULTY: string =   #Blockchain difficulty at the start.
+    GENESIS: string =          #Genesis string.
+        "EMB_DEVELOPER_TESTNET"
+    BLOCK_DIFFICULTY: string = #Blockchain difficulty at the start.
         "D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0"
-    BLOCK_TIME: uint = 600        #Block time in seconds.
-    LIVE_MERIT: uint = 50000      #Blocks before Merit dies.
+    BLOCK_TIME: uint = 600     #Block time in seconds.
+    LIVE_MERIT: uint = 1000    #Blocks before Merit dies.
 
     #Lattice constants.
     TRANSACTION_DIFFICULTY: string = #Transaction difficulty at the start.
