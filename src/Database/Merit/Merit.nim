@@ -38,7 +38,7 @@ proc newMerit*(
     startDifficulty: string,
     live: uint
 ): Merit {.raises: [ValueError, ArgonError].} =
-    result = Merit(
+    Merit(
         blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
         state: newState(live)
     )

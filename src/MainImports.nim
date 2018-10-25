@@ -24,6 +24,11 @@ import Network/Network
 
 #Serialization libs.
 import Network/Serialize/SerializeMiners
+import Network/Serialize/SerializeVerification
+
+import Network/Serialize/SerializeSend
+import Network/Serialize/SerializeReceive
+import Network/Serialize/SerializeData
 
 #UI.
 import UI/UI

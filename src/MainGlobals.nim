@@ -5,8 +5,9 @@ var
     events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.
 
     #Merit.
-    merit {.threadvar.}: Merit #Blockchain and state.
-    miner {.threadvar.}: bool  #Miner boolean.
+    merit {.threadvar.}: Merit     #Blockchain and state.
+    miner: bool      #Miner boolean.
+    minerKey: string #Miner's BLS Private Key.
 
     #Lattice.
     lattice {.threadvar.}: Lattice   #Lattice.
@@ -21,9 +22,16 @@ var
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
     rpc {.threadvar.}: RPC    #RPC object.
 
-#If the miner argument was passed...
-if paramStr(1) == "--miner":
-    miner = true
+#If there are params...
+if paramCount() > 0:
+    #If the miner argument was passed...
+    if paramStr(1) == "--miner":
+        miner = true
+
+        if paramCount() > 1:
+            minerKey = paramStr(2)
+        else:
+            raise newException(ValueError, "No BLS Private Key was passed with --miner.")
 
 #Properly shutdown.
 events.on(

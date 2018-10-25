@@ -23,6 +23,9 @@ import AccountObj
 #BLS lib.
 import ../../../lib/BLS
 
+#String utils standard lib.
+import strutils
+
 #Tables standard library.
 import tables
 
@@ -71,7 +74,7 @@ func addHash*(
     hash: Hash[512],
     index: Index
 ) {.raises: [].} =
-    lattice.lookup[$hash] = index
+    lattice.lookup[hash.toString()] = index
 
 #Add a Verification to the Verifications' table.
 proc verify*(
@@ -104,13 +107,13 @@ proc verify*(
         weight += merit.state.getBalance(i)
     #If the Entry has at least 50.1% of the weight...
     if (
-        (weight * 100) div
+        (weight * 1000) div
         merit.state.live
     ) >= uint(501):
         #Get the Index of the Entry.
         var index: Index = lattice.lookup[hash]
         lattice.accounts[index.address][index.nonce].verified = true
-    echo hash & " was verified."
+        echo hash.toHex() & " was verified."
 
 #Creates a new Account on the Lattice.
 func addAccount*(

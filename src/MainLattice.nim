@@ -4,18 +4,20 @@ proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].
     if miner:
         #Verify the Entry.
         var verif: MemoryVerification = merit.verify(entry.hash)
+        #Discard because it is known to be valid.
         discard lattice.verify(merit, verif)
 
-        discard """
         #Broadcast the Verification.
-        events.get(
-            proc (msgType: MessageType, msg: string),
-            "network.broadcast"
-        )(
-            MessageType.Verification,
-            verif.serialize()
-        )
-        """
+        try:
+            events.get(
+                proc (msgType: MessageType, msg: string),
+                "network.broadcast"
+            )(
+                MessageType.Verification,
+                verif.serialize()
+            )
+        except:
+            echo "Failed to broadcast the Verification."
 
 proc mainLattice*() {.raises: [
     ValueError,
@@ -40,7 +42,7 @@ proc mainLattice*() {.raises: [
         #Handle Sends.
         events.on(
             "lattice.send",
-            proc (send: Send): bool {.raises: [
+            proc (send: Send): proc () {.raises: [
                 ValueError,
                 SodiumError,
                 FinalAttributeError
@@ -53,13 +55,21 @@ proc mainLattice*() {.raises: [
                     merit,
                     send
                 ):
-                    result = true
                     echo "Successfully added the Send."
 
+                    #If it worked, broadcast the Send.
+                    try:
+                        rpc.events.get(
+                            proc (msgType: MessageType, msg: string),
+                            "network.broadcast"
+                        )(MessageType.Send, send.serialize())
+                    except:
+                        echo "Failed to broadcast the Send."
+
+                    #Create a Verification.
                     verify(send)
 
                 else:
-                    result = false
                     echo "Failed to add the Send."
                 echo ""
         )
@@ -67,7 +77,7 @@ proc mainLattice*() {.raises: [
         #Handle Receives.
         events.on(
             "lattice.receive",
-            proc (recv: Receive): bool {.raises: [
+            proc (recv: Receive) {.raises: [
                 ValueError,
                 SodiumError,
                 FinalAttributeError
@@ -80,12 +90,21 @@ proc mainLattice*() {.raises: [
                     merit,
                     recv
                 ):
-                    result = true
                     echo "Successfully added the Receive."
 
+                    #If it worked, broadcast the Receive.
+                    try:
+                        rpc.events.get(
+                            proc (msgType: MessageType, msg: string),
+                            "network.broadcast"
+                        )(MessageType.Receive, recv.serialize())
+                    except:
+                        echo "Failed to broadcast the Receive."
+
+                    #Create a Verification.
                     verify(recv)
+
                 else:
-                    result = false
                     echo "Failed to add the Receive."
                 echo ""
         )
@@ -96,7 +115,7 @@ proc mainLattice*() {.raises: [
             proc (
                 msg: Message,
                 data: Data
-            ): bool {.raises: [
+            ) {.raises: [
                 ValueError,
                 SodiumError,
                 FinalAttributeError
@@ -109,12 +128,20 @@ proc mainLattice*() {.raises: [
                     merit,
                     data
                 ):
-                    result = true
                     echo "Successfully added the Data."
 
+                    #If it worked, broadcast the Data.
+                    try:
+                        rpc.events.get(
+                            proc (msgType: MessageType, msg: string),
+                            "network.broadcast"
+                        )(MessageType.Data, data.serialize())
+                    except:
+                        echo "Failed to broadcast the Data."
+
+                    #Create a Verification.
                     verify(data)
                 else:
-                    result = false
                     echo "Failed to add the Data."
                 echo ""
         )

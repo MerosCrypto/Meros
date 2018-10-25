@@ -64,15 +64,10 @@ proc send(
 
     try:
         #Add it.
-        if rpc.events.get(
-            proc (send: Send): bool,
+        rpc.events.get(
+            proc (send: Send),
             "lattice.send"
-        )(send):
-            #If it worked, broadcast the Send.
-            rpc.events.get(
-                proc (msgType: MessageType, msg: string),
-                "network.broadcast"
-            )(MessageType.Send, send.serialize())
+        )(send)
     except:
         raise newException(EventError, "Couldn't get and call lattice.send.")
 
@@ -105,18 +100,10 @@ proc receive(
 
     try:
         #Add it.
-        if rpc.events.get(
-            proc (recv: Receive): bool,
+        rpc.events.get(
+            proc (recv: Receive),
             "lattice.receive"
-        )(recv):
-            try:
-                #If it worked, broadcast the Receive.
-                rpc.events.get(
-                    proc (msgType: MessageType, msg: string),
-                    "network.broadcast"
-                )(MessageType.Receive, recv.serialize())
-            except:
-                raise newException(EventError, "Couldn't get and call network.broadcast.")
+        )(recv)
     except:
         raise newException(EventError, "Couldn't get and call lattice.receive.")
 

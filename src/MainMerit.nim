@@ -13,7 +13,7 @@ proc mainMerit*() {.raises: [
         merit = newMerit(GENESIS, BLOCK_TIME, BLOCK_DIFFICULTY, LIVE_MERIT)
         #If we're mining...
         if miner:
-            merit.setMinerWallet(paramStr(2))
+            merit.setMinerWallet(minerKey)
 
         #Mine a single block so there's Merit in the system.
         block:
