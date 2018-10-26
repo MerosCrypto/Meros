@@ -4,12 +4,12 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
+#Hash lib.
+import ../../lib/Hash
+
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
-
-#Hash lib.
-import ../../lib/Hash
 
 #Entry object and Data object.
 import ../../Database/Lattice/objects/EntryObj
@@ -30,14 +30,13 @@ proc parseData*(
 ): Data {.raises: [
     ValueError,
     ArgonError,
-    SodiumError,
     FinalAttributeError
 ].} =
     var
         #Public Key | Nonce | Data | Proof | Signature
         dataSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's Public Key.
-        sender: EdPublicKey = newEdPublicKey(dataSeq[0].pad(32, char(0)))
+        sender: EdPublicKey = newEdPublicKey(dataSeq[0].pad(32))
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
@@ -47,7 +46,7 @@ proc parseData*(
         #Get the proof.
         proof: string = dataSeq[3]
         #Get the signature.
-        signature: string = dataSeq[4].pad(64, char(0))
+        signature: string = dataSeq[4].pad(64)
 
     #Create the Data.
     result = newDataObj(
@@ -64,8 +63,5 @@ proc parseData*(
     #Set the hash.
     result.hash = Argon(result.sha512.toString(), proof, true)
 
-    #Verify the signature.
-    if not sender.verify(result.hash.toString(), signature):
-        raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature

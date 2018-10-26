@@ -50,8 +50,8 @@ func Argon*(
     reduced: bool = false
 ): ArgonHash {.raises: [ArgonError, ValueError].} =
     var
-        data: string = dataArg.pad(128, char(0))
-        salt: string = saltArg.pad(128, char(0))
+        data: string = dataArg.pad(128)
+        salt: string = saltArg.pad(128)
 
     #Verify argument validity.
     if (data.len > 128) or (salt.len > 128):

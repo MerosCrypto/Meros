@@ -9,7 +9,7 @@ proc getTime*(): uint {.raises: [].} =
 func pad*(
     data: string,
     len: int,
-    prefix: char | string = "0"
+    prefix: char | string = char(0)
 ): string {.raises: [].} =
     result = data
 

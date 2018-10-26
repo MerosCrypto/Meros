@@ -4,12 +4,12 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
+#Hash lib.
+import ../../lib/Hash
+
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
-
-#Hash lib.
-import ../../lib/Hash
 
 #Index, Entry, and Receive object.
 import ../../Database/Lattice/objects/IndexObj
@@ -38,7 +38,7 @@ proc parseReceive*(
         #Public Key | Nonce | Input Address | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(5)
         #Get the sender's Public Key.
-        sender: EdPublicKey = newEdPublicKey(recvSeq[0].pad(32, char(0)))
+        sender: EdPublicKey = newEdPublicKey(recvSeq[0].pad(32))
         #Get the nonce.
         nonce: uint = uint(recvSeq[1].fromBinary())
         #Get the input Address.
@@ -46,7 +46,7 @@ proc parseReceive*(
         #Get the input nonce.
         inputNonce: uint = uint(recvSeq[3].fromBinary())
         #Get the signature.
-        signature: string = recvSeq[4].pad(64, char(0))
+        signature: string = recvSeq[4].pad(64)
 
     #Create the input address.
     inputAddress = newAddress(inputAddress)

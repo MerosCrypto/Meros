@@ -37,19 +37,19 @@ proc parseVerification*(
         #Verifier's Public Key.
         verifier: BLSPublicKey
         #Get the Entry hash.
-        entry: string = verifSeq[1].pad(64, char(0))
+        entry: string = verifSeq[1].pad(64)
         #BLS signature.
         sig: BLSSignature
 
     #Set the verifier's Public Key.
     try:
-        verifier = newBLSPublicKey(verifSeq[0].pad(48, char(0)))
+        verifier = newBLSPublicKey(verifSeq[0].pad(48))
     except:
         raise newException(BLSError, "Couldn't load the BLS Public Key.")
 
     #Set the BLS signature.
     try:
-        sig = newBLSSignature(verifSeq[2].pad(96, char(0)))
+        sig = newBLSSignature(verifSeq[2].pad(96))
     except:
         raise newException(BLSError, "Couldn't load the BLS Signature.")
 

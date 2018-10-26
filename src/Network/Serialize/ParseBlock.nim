@@ -58,7 +58,7 @@ proc parseBlock*(
         #Nonce.
         nonce: uint = uint(blockSeq[0].fromBinary())
         #Last block hash.
-        last: ArgonHash = blockSeq[1].pad(64, char(0)).toArgonHash()
+        last: ArgonHash = blockSeq[1].pad(64).toArgonHash()
         #Time.
         time: uint = uint(blockSeq[2].fromBinary())
         #Total Verifications.
@@ -66,9 +66,9 @@ proc parseBlock*(
         #Verifications in the block.
         verifications: Verifications = newVerificationsObj()
         #Aggregate signature of the Verifications.
-        aggregate: string = blockSeq[4 + (verificationCount * 2)].pad(96, char(0))
+        aggregate: string = blockSeq[4 + (verificationCount * 2)].pad(96)
         #Public Key of the Publisher.
-        publisher: string = blockSeq[5 + (verificationCount * 2)].pad(32, char(0))
+        publisher: string = blockSeq[5 + (verificationCount * 2)].pad(32)
         #Proof.
         proof: string = blockSeq[6 + (verificationCount * 2)]
         #Miners length string.
@@ -78,7 +78,7 @@ proc parseBlock*(
         #Miners.
         miners: Miners
         #Signature.
-        signature: string = blockSeq[^1].pad(64, char(0))
+        signature: string = blockSeq[^1].pad(64)
 
     #Create the Verifications.
     for i in countup(4, 4 + (verificationCount * 2) - 1, 2):

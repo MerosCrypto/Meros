@@ -8,12 +8,12 @@ import ../../lib/Util
 import BN
 import ../../lib/Base
 
+#Hash lib.
+import ../../lib/Hash
+
 #Wallet libraries.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
-
-#Hash lib.
-import ../../lib/Hash
 
 #Entry object and Send object.
 import ../../Database/Lattice/objects/EntryObj
@@ -35,26 +35,25 @@ proc parseSend*(
 ): Send {.raises: [
     ValueError,
     ArgonError,
-    SodiumError,
     FinalAttributeError
 ].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.deserialize(6)
         #Get the sender's public key.
-        sender: EdPublicKey = newEdPublicKey(sendSeq[0].pad(32, char(0)))
+        sender: EdPublicKey = newEdPublicKey(sendSeq[0].pad(32))
         #Set the input address based off the sender's public key.
         input: string = newAddress(sender)
         #Get the nonce.
         nonce: uint = uint(sendSeq[1].fromBinary())
         #Get the output.
-        output: string = newAddress(sendSeq[2].pad(32, char(0)))
+        output: string = newAddress(sendSeq[2].pad(32))
         #Get the amount.
         amount: BN = sendSeq[3].toBN(256)
         #Get the proof.
         proof: string = sendSeq[4]
         #Get the signature.
-        signature: string = sendSeq[5].pad(64, char(0))
+        signature: string = sendSeq[5].pad(64)
 
     #Create the Send.
     result = newSendObj(
@@ -73,8 +72,5 @@ proc parseSend*(
     #Set the hash.
     result.hash = Argon(result.sha512.toString(), proof, true)
 
-    #Verify the signature.
-    if not sender.verify(result.hash.toString(), signature):
-        raise newException(ValueError, "Received signature was invalid.")
     #Set the signature.
     result.signature = signature
