@@ -1,6 +1,10 @@
 #BN lib.
 import BN
 
+#BLS and Miner Wallet libs.
+import ../src/lib/BLS
+import ../src/Database/Merit/Miner/MinerWallet
+
 #Wallet lib.
 import ../src/Wallet/Wallet
 
@@ -11,15 +15,16 @@ import ../src/Database/Lattice/Lattice
 import strutils
 
 var
+    miner: MinerWallet = newMinerWallet()               #Miner Wallet.
     sender: Wallet = newWallet()                        #Sender Wallet.
     receiver: Wallet = newWallet()                      #Receiver Wallet.
     lattice: Lattice = newLattice("bb".repeat(64), "")  #Lattice.
-    mintIndex: Index = lattice.mint(
-        sender.address,
+    mintNonce: uint = lattice.mint(                     #Nonce of the Mint.
+        miner.publicKey.toString(),
         newBN(1000000)
-    )                                                   #Index of the Mint TX.
-    mintRecv: Receive = newReceive(                     #Mint Receive.
-        mintIndex,
+    )
+    mintClaim: Claim = newClaim(                        #Mint Claim.
+        mintNonce,
         0
     )
     send: Send = newSend(                               #Send.
@@ -38,9 +43,9 @@ var
 echo "The coins were minted."
 echo ""
 
-#Sign and add the Mint Receive so the network has funds.
-sender.sign(mintRecv)
-echo "Adding the Mint Receive returned: " & $lattice.add(nil, mintRecv)
+#Sign and add the Mint Claim so the network has funds.
+mintClaim.sign(miner, sender)
+echo "Adding the Mint Claim returned: " & $lattice.add(nil, mintClaim)
 echo ""
 
 #Print the balances.

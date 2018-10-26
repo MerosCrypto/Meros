@@ -8,6 +8,9 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
+#BLS lib.
+import ../../lib/BLS
+
 #Wallet libs.
 import ../../Wallet/Wallet
 import ../../Wallet/Address
@@ -17,6 +20,8 @@ import objects/IndexObj
 
 #Entry object and descendants.
 import objects/EntryObj
+import objects/MintObj
+import objects/ClaimObj
 import objects/SendObj
 import objects/ReceiveObj
 import objects/DataObj
@@ -45,7 +50,7 @@ proc add(
     #If it's a valid minter Entry...
     if (
         (account.address == "minter") and
-        (entry.descendant == EntryType.SEND)
+        (entry.descendant == EntryType.Mint)
     ):
         #Override as there's no signatures for minters.
         discard
@@ -59,17 +64,48 @@ proc add(
     #Add the Entry.
     account.addEntry(entry, dependent)
 
+#Add a Mint.
+proc add*(
+    account: Account,
+    mint: Mint
+): bool {.raises: [ValueError, SodiumError].} =
+    account.add(cast[Entry](mint))
+
+#Add a Claim.
+proc add*(
+    account: Account,
+    claim: Claim,
+    mint: Mint
+): bool {.raises: [ValueError, BLSError, SodiumError].} =
+    #Verify the BLS signature is for this mint and this person.
+    try:
+        claim.bls.setAggregationInfo(
+            newBLSAggregationInfo(
+                newBLSPublicKey(mint.output),
+                $mint.nonce & "." & account.address
+            )
+        )
+    except:
+        raise newException(BLSError, "Couldn't create a Public Key from the Mint/add the aggregation info to the Claim.")
+    if not claim.bls.verify():
+        return false
+
+    #Verify it's unclaimed.
+    for i in account.entries:
+        if i.descendant == EntryType.Claim:
+            var past: Claim = cast[Claim](i)
+            if claim.mintNonce == past.mintNonce:
+                return false
+
+    #Add the Claim.
+    result = account.add(cast[Entry](claim), mint)
+
 #Add a Send.
 proc add*(
     account: Account,
     send: Send,
     difficulty: BN
 ): bool {.raises: [ValueError, SodiumError].} =
-    #Override for minter.
-    if send.sender == "minter":
-        #Add the Send Entry.
-        return account.add(cast[Entry](send))
-
     #Verify the work.
     if send.hash.toBN() < difficulty:
         return false

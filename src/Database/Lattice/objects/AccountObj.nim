@@ -1,10 +1,10 @@
 #BN lib.
 import BN
 
-#Entry, Send, and Receive objects.
+#Entry, Mint, and Send objects.
 import EntryObj
+import MintObj
 import SendObj
-import ReceiveObj
 
 #Finals lib.
 import finals
@@ -49,12 +49,15 @@ proc addEntry*(
             account.balance -= send.amount
         #If it's a Receive Entry...
         of EntryType.Receive:
-            #Cast it to a var.
-            var recv: Receive = cast[Receive](entry)
-            #Cast the matching Send.
+            #Cast the dependent to a Send.
             var send: Send = cast[Send](dependent)
             #Update the balance.
             account.balance += send.amount
+        of EntryType.Claim:
+            #Cast the dependent to a Mint.
+            var mint: Mint = cast[Mint](dependent)
+            #Update the balance.
+            account.balance += mint.amount
         else:
             discard
 

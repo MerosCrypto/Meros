@@ -1,6 +1,10 @@
 #BN lib.
 import BN
 
+#BLS and Miner Wallet libs.
+import ../src/lib/BLS
+import ../src/Database/Merit/Miner/MinerWallet
+
 #Wallet lib.
 import ../src/Wallet/Wallet
 
@@ -35,14 +39,15 @@ var
     #Server vars.
     events: EventEmitter = newEventEmitter()           #EventEmitter for the Network.
     network: Network = newNetwork(0, events)           #Network object.
-    minter: Wallet = newWallet()                       #Wallet.
+    miner: MinerWallet = newMinerWallet()              #Miner Wallet.
+    sender: Wallet = newWallet()
     lattice: Lattice = newLattice("aa".repeat(64), "") #Lattice.
-    mintIndex: Index = lattice.mint(                   #Mint transaction.
-        minter.address,
+    mintNonce: uint = lattice.mint(                    #Mint transaction.
+        miner.publicKey.toString(),
         newBN("1000000")
     )
-    mintRecv: Receive = newReceive(                    #Mint Receive.
-        mintIndex,
+    mintClaim: Claim = newClaim(                       #Mint Claim.
+        0,
         0
     )
 
@@ -63,8 +68,8 @@ var
     client: AsyncSocket = newAsyncSocket()               #Client socket.
 
 #Sign and add the Mint Receive.
-minter.sign(mintRecv)
-discard lattice.add(nil, mintRecv)
+mintClaim.sign(miner, sender)
+discard lattice.add(nil, mintClaim)
 
 #Handle Sends.
 events.on(
@@ -129,13 +134,13 @@ proc spam() {.async, raises: [Exception].} =
         #Mine the Send.
         sends[i].mine(lattice.difficulties.transaction)
         #Sign the Send.
-        discard minter.sign(sends[i])
+        discard sender.sign(sends[i])
 
         #Generate the Receive.
         recvs.add(
             newReceive(
                 newIndex(
-                    minter.address,
+                    sender.address,
                     uint(i + 1)
                 ),
                 uint(i)

@@ -6,6 +6,7 @@ import ../../lib/Hash
 
 #Wallet libs.
 import ../../Wallet/Wallet
+import ../../Wallet/Address
 
 #Import the Serialization library.
 import ../../Network/Serialize/SerializeReceive
@@ -29,10 +30,7 @@ proc newReceive*(
     nonce: uint
 ): Receive {.raises: [ValueError, FinalAttributeError].} =
     #Verify the input address.
-    if (
-        (not Wallet.verify(index.address)) and
-        (index.address != "minter")
-    ):
+    if not Address.verify(index.address):
         raise newException(ValueError, "Receive address is not valid.")
 
     #Craft the result.

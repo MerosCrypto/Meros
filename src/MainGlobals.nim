@@ -10,8 +10,8 @@ var
     minerKey: string #Miner's BLS Private Key.
 
     #Lattice.
-    lattice {.threadvar.}: Lattice   #Lattice.
-    genesisSend {.threadvar.}: Index #Genesis Send. Puts the first coins on the network.
+    lattice {.threadvar.}: Lattice  #Lattice.
+    genesisMint {.threadvar.}: uint #Genesis Send. Puts the first coins on the network.
 
     #Network.
     network {.threadvar.}: Network #Network.

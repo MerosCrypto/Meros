@@ -11,14 +11,15 @@
 - Resolve Merit forks
 
 - EMB Minting.
-- `MinterReceive` node.
 - Resolve Lattice forks (right now, unverified Nodes are treated as Verified...).
-
-- Merit Removal system.
-- Difficulty Voting system.
 
 - Handshake when connecting to Nodes.
 - Ask for missing data (syncing).
+- Handle Claims over the Network/`ParseClaim`.
+
+- Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
+- Merit Removal system.
+- Difficulty Voting system.
 
 - Database.
 
@@ -33,11 +34,13 @@
 
 - Have `Logger.urgent` open a dialog box.
 
-- Show the existing wallet on reload of `Main.html`.
-- `Account` history over the GUI.
-- Network page on the GUI.
-
+- RPC creation of Claims.
 - Have the RPC dynamically get the difficulty.
+
+- Show the existing wallet on reload of `Main.html`.
+- Claim creation via the GUI.
+- `Account` history viewing via the GUI.
+- Network page on the GUI.
 
 - Make `Logger.extraneous` enabled via a runtime option.
 - Make the ports to listen on runtime options.

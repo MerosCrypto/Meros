@@ -8,10 +8,12 @@ finalsd:
     type
         #Enum of the various Entry Types.
         EntryType* = enum
-            Send = 0,
-            Receive = 1,
-            Data = 2,
-            MeritRemoval = 3
+            Mint = 0,
+            Claim = 1,
+            Send = 2,
+            Receive = 3,
+            Data = 4,
+            MeritRemoval = 5
 
         #Entry object.
         Entry* = ref object of RootObj
@@ -21,7 +23,7 @@ finalsd:
             sender* {.final.}: string
             #Index on the account.
             nonce* {.final.}: uint
-            #Entry hash.
+            #Hash.
             hash* {.final.}: Hash[512]
             #Signature.
             signature* {.final.}: string

@@ -17,14 +17,10 @@ import SerializeCommon
 
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError].} =
-    result = !recv.nonce.toBinary()
-
-    if recv.index.address == "minter":
-        result &= char(0)
-    else:
-        result &= !Address.toBN(recv.index.address).toString(256)
-
-    result &= !recv.index.nonce.toBinary()
+    result =
+        !recv.nonce.toBinary() &
+        !Address.toBN(recv.index.address).toString(256) &
+        !recv.index.nonce.toBinary()
 
     if recv.signature.len != 0:
         result =

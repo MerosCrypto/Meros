@@ -48,11 +48,8 @@ proc parseReceive*(
         #Get the signature.
         signature: string = recvSeq[4].pad(64, char(0))
 
-    #Parse Receives from the minter properly.
-    if inputAddress == "":
-        inputAddress = "minter"
-    else:
-        inputAddress = newAddress(inputAddress)
+    #Create the input address.
+    inputAddress = newAddress(inputAddress)
 
     #Create the Receive.
     result = newReceiveObj(

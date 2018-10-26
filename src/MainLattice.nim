@@ -21,9 +21,9 @@ proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].
 
 proc mainLattice*() {.raises: [
     ValueError,
-    ArgonError,
-    SodiumError,
     MintError,
+    BLSError,
+    SodiumError,
     FinalAttributeError
 ].} =
     {.gcsafe.}:
@@ -33,9 +33,9 @@ proc mainLattice*() {.raises: [
             DATA_DIFFICULTY
         )
 
-        #Create the Genesis Send.
-        genesisSend = lattice.mint(
-            MINT_ADDRESS,
+        #Create the Genesis Mint.
+        genesisMint = lattice.mint(
+            MINT_PUBKEY,
             newBN(MINT_AMOUNT)
         )
 
@@ -79,6 +79,7 @@ proc mainLattice*() {.raises: [
             "lattice.receive",
             proc (recv: Receive) {.raises: [
                 ValueError,
+                BLSError,
                 SodiumError,
                 FinalAttributeError
             ].} =
@@ -117,6 +118,7 @@ proc mainLattice*() {.raises: [
                 data: Data
             ) {.raises: [
                 ValueError,
+                BLSError,
                 SodiumError,
                 FinalAttributeError
             ].} =
@@ -161,5 +163,5 @@ proc mainLattice*() {.raises: [
         )
 
         #Print the Seed and address of the address holding the coins.
-        echo MINT_ADDRESS & " was sent " & MINT_AMOUNT & " EMB from \"minter\".\r\n" &
-            "Its Seed is " & MINT_SEED & ".\r\n"
+        echo MINT_PUBKEY & " was sent " & MINT_AMOUNT & " EMB from \"minter\".\r\n" &
+            "Its Private Key is " & MINT_PRIVKEY & ".\r\n"

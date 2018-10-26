@@ -12,6 +12,7 @@ import ../../lib/Hash
 
 #Wallet libs.
 import ../../Wallet/Wallet
+import ../../Wallet/Address
 
 #Import the Serialization library.
 import ../../Network/Serialize/SerializeSend
@@ -36,12 +37,12 @@ proc newSend*(
     nonce: uint
 ): Send {.raises: [ValueError, FinalAttributeError].} =
     #Verify output.
-    if not Wallet.verify(output):
+    if not Address.verify(output):
         raise newException(ValueError, "Send output address is not valid.")
 
     #Verify the amount.
-    if amount < newBN(0):
-        raise newException(ValueError, "Send amount is negative.")
+    if amount <= newBN(0):
+        raise newException(ValueError, "Send amount is negative or zero.")
 
     #Craft the result.
     result = newSendObj(

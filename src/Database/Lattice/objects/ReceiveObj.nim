@@ -1,6 +1,7 @@
 #Entry object.
 import EntryObj
 
+#Index object.
 import IndexObj
 
 #Finals lib.
