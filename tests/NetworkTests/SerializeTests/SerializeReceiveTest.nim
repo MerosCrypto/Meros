@@ -25,11 +25,6 @@ for i in 1 .. 20:
         #Receive.
         recv: Receive
 
-    #If this is the 20th Receive, set the sender to "minter".
-    if i == 20:
-        echo "This is the Receive from minter."
-        sender = "minter"
-
     #Create the Receive.
     recv = newReceive(
         newIndex(

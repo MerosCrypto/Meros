@@ -5,6 +5,8 @@ import SerializeTests/SerializeMinersTest
 import SerializeTests/SerializeBlockTest
 
 #Lattice Serialize.
+import SerializeTests/SerializeMintTest
+import SerializeTests/SerializeClaimTest
 import SerializeTests/SerializeSendTest
 import SerializeTests/SerializeReceiveTest
 import SerializeTests/SerializeDataTest
