@@ -13,7 +13,7 @@ finalsd:
         #Nonce of the mint being claimed.
         mintNonce* {.final.}: uint
         #BLS Signature that proves you're the person the Mint was to.
-        bls*: BLSSignature
+        bls* {.final.}: BLSSignature
 
 #New Claim object.
 func newClaimObj*(

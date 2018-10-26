@@ -1,21 +1,20 @@
 # TODO
 
 ### Core:
-- Auto-Receive.
+- Auto-Receive/Claim.
 - Miner.
 
 - Verify BLS Public Keys.
 - Inactive Merit.
 - Have Merit Holders indexable by the order they got Merit in.
-- Miner.
-- Resolve Merit forks
+- Resolve Merit forks.
 
 - EMB Minting.
 - Resolve Lattice forks (right now, unverified Nodes are treated as Verified...).
 
 - Handshake when connecting to Nodes.
 - Ask for missing data (syncing).
-- Handle Claims over the Network/`ParseClaim`.
+- Handle Claims over the Network.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Merit Removal system.
@@ -23,12 +22,13 @@
 
 - Database.
 
-- Utilize logging.
-- Finish the Tests.
+- Utilize Logger.
+- Check Signatures in Serialize Tests.
+- Tests.
 
 ### Features:
 - Only add meaningful verifications.
-- Only verify if you have Merit.
+- Only verify if you actually have Merit; not just if you're Mining.
 
 - Command line options.
 
