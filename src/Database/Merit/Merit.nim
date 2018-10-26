@@ -45,13 +45,7 @@ proc newMerit*(
 
 #Set the MinerWallet.
 proc setMinerWallet*(merit: Merit, keyArg: string) {.raises: [BLSError].} =
-    var key: BLSPrivateKey
-    try:
-        key = newBLSPrivateKeyFromBytes(keyArg)
-    except:
-        raise newException(BLSError, "Invalid BLS Private Key.")
-
-    merit.miner = newMinerWallet(key)
+    merit.miner = newMinerWallet(newBLSPrivateKeyFromBytes(keyArg))
 
 #Create a Verification.
 proc verify*(merit: Merit, hash: Hash[512]): MemoryVerification =

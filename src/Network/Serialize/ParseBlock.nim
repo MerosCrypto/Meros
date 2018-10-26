@@ -87,14 +87,8 @@ proc parseBlock*(
                 blockSeq[i + 1].toHash(512)
             )
         )
-        try:
-            verifications.verifications[^1].verifier = newBLSPublicKey(blockSeq[i])
-        except:
-            raise newException(BLSError, "Couldn't load the BLS Public Key.")
-    try:
-        verifications.aggregate = newBLSSignature(aggregate)
-    except:
-        raise newException(BLSError, "Couldn't load the BLS Signature.")
+        verifications.verifications[^1].verifier = newBLSPublicKey(blockSeq[i])
+    verifications.aggregate = newBLSSignature(aggregate)
 
     #Grab the miners out of the block.
     var

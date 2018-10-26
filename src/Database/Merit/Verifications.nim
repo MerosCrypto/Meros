@@ -63,13 +63,10 @@ proc verify*(verifs: Verifications): bool {.raises: [BLSError].} =
 
     #Create the Aggregation Infos.
     var agInfos: seq[BLSAggregationInfo] = @[]
-    try:
-        for verif in verifs.verifications:
-            agInfos.add(
-                newBLSAggregationInfo(verif.verifier, verif.hash.toString())
-            )
-    except:
-        raise newException(BLSError, "Couldn't create the aggregation info.")
+    for verif in verifs.verifications:
+        agInfos.add(
+            newBLSAggregationInfo(verif.verifier, verif.hash.toString())
+        )
 
     #Add the aggregated Aggregation Infos to the signature.
     verifs.aggregate.setAggregationInfo(agInfos.aggregate())

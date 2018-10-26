@@ -1,7 +1,12 @@
 #BLS wrapper that adds a prefix to the types.
 
+#Errors lib.
+import Errors
+
+#BLS Nimble package.
 import ec_bls
 
+#Type definitions.
 type
     BLSPrivateKey* = PrivateKey
     BLSPublicKey* = PublicKey
@@ -9,27 +14,53 @@ type
     BLSAggregationInfo* = AggregationInfo
 
 #Constructors.
-let
-    newBLSPrivateKeyFromSeed*: func (
-        key: string
-    ): PrivateKey = newPrivateKeyFromSeed
+proc newBLSPrivateKeyFromSeed*(key: string): BLSPrivateKey {.raises: [BLSError].} =
+    try:
+        result = newPrivateKeyFromSeed(key)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't create a BLS Private Key from a Seed: " & getCurrentExceptionMsg()
+        )
 
-    newBLSPrivateKeyFromBytes*: func (
-        key: string
-    ): PrivateKey = newPrivateKeyFromBytes
+proc newBLSPrivateKeyFromBytes*(key: string): BLSPrivateKey {.raises: [BLSError].} =
+    try:
+        result = newPrivateKeyFromBytes(key)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't create a BLS Private Key from its Bytes: " & getCurrentExceptionMsg()
+        )
 
-    newBLSPublicKey*: func (
-        key: string
-    ): PublicKey = newPublicKeyFromBytes
+proc newBLSPublicKey*(key: string): BLSPublicKey {.raises: [BLSError].} =
+    try:
+        result = newPublicKeyFromBytes(key)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't create a BLS Public Key from its Bytes: " & getCurrentExceptionMsg()
+        )
 
-    newBLSSignature*: func (
-        sig: string
-    ): Signature = newSignatureFromBytes
+proc newBLSSignature*(sig: string): BLSSignature {.raises: [BLSError].} =
+    try:
+        result = newSignatureFromBytes(sig)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't create a BLS Signature from its Bytes: " & getCurrentExceptionMsg()
+        )
 
-    newBLSAggregationInfo*: func (
-        key: BLSPublicKey,
-        msg: string
-    ): AggregationInfo = newAggregationInfoFromMsg
+proc newBLSAggregationInfo*(
+    key: BLSPublicKey,
+    msg: string
+): BLSAggregationInfo {.raises: [BLSError].} =
+    try:
+        result = newAggregationInfoFromMsg(key, msg)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't create a BLS AggregationInfo from a Message: " & getCurrentExceptionMsg()
+        )
 
 #Getters.
 export getPublicKey
@@ -51,4 +82,31 @@ export setAggregationInfo
 export verify
 
 #Aggregation functions.
-export aggregate
+proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.raises: [BLSError].} =
+    try:
+        result = ec_bls.aggregate(keys)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't aggregate the BLS Public Keys: " & getCurrentExceptionMsg()
+        )
+
+proc aggregate*(
+    agInfos: seq[BLSAggregationInfo]
+): BLSAggregationInfo {.raises: [BLSError].} =
+    try:
+        result = ec_bls.aggregate(agInfos)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't aggregate the BLS AggregationInfos: " & getCurrentExceptionMsg()
+        )
+
+proc aggregate*(sigs: seq[BLSSignature]): BLSSignature {.raises: [BLSError].} =
+    try:
+        result = ec_bls.aggregate(sigs)
+    except:
+        raise newException(
+            BLSError,
+            "Couldn't aggregate the BLS Signatures: " & getCurrentExceptionMsg()
+        )

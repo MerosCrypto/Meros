@@ -31,12 +31,8 @@ proc parseMiners*(
 
     #Add each miner/amount.
     for i in countup(1, minersSeq.len - 1, 2):
-        var key: BLSPublicKey
         #Create the Public Key.
-        try:
-            key = newBLSPublicKey(minersSeq[i])
-        except:
-            raise newException(BLSError, "Couldn't load the BLS Public Key.")
+        var key: BLSPublicKey = newBLSPublicKey(minersSeq[i])
 
         result.add(
             newMinerObj(

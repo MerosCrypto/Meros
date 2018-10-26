@@ -32,11 +32,7 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
     except:
         raise newException(RandomError, getCurrentExceptionMsg())
 
-    var priv: BLSPrivateKey
-    try:
-        priv = newBLSPrivateKeyFromSeed(seed)
-    except:
-        raise newException(BLSError, "Couldn't create a Private Key. " & getCurrentExceptionMsg())
+    var priv: BLSPrivateKey = newBLSPrivateKeyFromSeed(seed)
 
     result = MinerWallet(
         privateKey: priv,
@@ -44,7 +40,7 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
     )
 
 proc newMinerWallet*(priv: BLSPrivateKey): MinerWallet {.raises: [].} =
-    result = MinerWallet(
+    MinerWallet(
         privateKey: priv,
         publicKey: priv.getPublicKey()
     )
@@ -60,18 +56,10 @@ proc verify*(
     sigArg: string
 ): bool {.raises: [BLSError].} =
     #Create the Signature.
-    var sig: BLSSignature
-    try:
-        sig = newBLSSignature(sigArg)
-    except:
-        raise newException(BLSError, "Couldn't load the BLS Signature.")
+    var sig: BLSSignature = newBLSSignature(sigArg)
 
     #Create the Aggregation Info.
-    var agInfo: BLSAggregationInfo
-    try:
-        agInfo = newBLSAggregationInfo(miner.publicKey, msg)
-    except:
-        raise newException(BLSError, "Couldn't load the BLS Aggregation Info.")
+    var agInfo: BLSAggregationInfo = newBLSAggregationInfo(miner.publicKey, msg)
 
     #Add the Aggregation Info to the signature.
     sig.setAggregationInfo(agInfo)

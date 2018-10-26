@@ -35,23 +35,11 @@ proc parseVerification*(
         #Public Key | Entry Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(3)
         #Verifier's Public Key.
-        verifier: BLSPublicKey
+        verifier: BLSPublicKey = newBLSPublicKey(verifSeq[0].pad(48))
         #Get the Entry hash.
         entry: string = verifSeq[1].pad(64)
         #BLS signature.
-        sig: BLSSignature
-
-    #Set the verifier's Public Key.
-    try:
-        verifier = newBLSPublicKey(verifSeq[0].pad(48))
-    except:
-        raise newException(BLSError, "Couldn't load the BLS Public Key.")
-
-    #Set the BLS signature.
-    try:
-        sig = newBLSSignature(verifSeq[2].pad(96))
-    except:
-        raise newException(BLSError, "Couldn't load the BLS Signature.")
+        sig: BLSSignature = newBLSSignature(verifSeq[2].pad(96))
 
     #Create the Verification.
     result = newMemoryVerificationObj(
@@ -60,13 +48,11 @@ proc parseVerification*(
     result.verifier = verifier
 
     #Verify the BLS signature.
-    try:
-        sig.setAggregationInfo(
-            newBLSAggregationInfo(verifier, result.hash.toString())
-        )
-    except:
-        raise newException(BLSError, "Couldn't load create the BLS Aggregation Info.")
+    sig.setAggregationInfo(
+        newBLSAggregationInfo(verifier, result.hash.toString())
+    )
     if not sig.verify():
         raise newException(ValueError, "Received signature was invalid.")
+
     #Set the signature.
     result.signature = sig
