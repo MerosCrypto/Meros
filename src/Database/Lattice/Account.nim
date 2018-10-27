@@ -160,19 +160,17 @@ proc add*(
     result = account.add(cast[Entry](recv), send)
 
 #Add Data.
-discard """
-func add*(
+proc add*(
     account: Account,
     data: Data,
     difficulty: BN
-): bool {.raises: [ValueError].} =
+): bool {.raises: [ValueError, SodiumError].} =
     #Verify the work.
     if data.hash.toBN() < difficulty:
         return false
 
     #Add the Data.
     result = account.add(cast[Entry](data))
-"""
 
 #Add a Merit Removal.
 discard """

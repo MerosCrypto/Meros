@@ -103,14 +103,12 @@ proc add*(
         of EntryType.Data:
             var data: Data = cast[Data](entry)
 
-            discard """
             result = account.add(
                 #Data Entry.
                 data,
                 #Data Difficulty.
                 lattice.difficulties.data
             )
-            """
 
         of EntryType.MeritRemoval:
             var mr: MeritRemoval = cast[MeritRemoval](entry)
