@@ -7,10 +7,10 @@ finalsd:
         MessageType* = enum
             Verification = 0,
             Block = 1,
-            Send = 2,
-            Receive = 3,
-            Data = 4,
-            MeritRemoval = 5
+            Claim = 2,
+            Send = 3,
+            Receive = 4,
+            Data = 5
 
         #Message obkect.
         Message* = ref object of RootObj

@@ -39,6 +39,36 @@ proc mainLattice*() {.raises: [
             newBN(MINT_AMOUNT)
         )
 
+        #Handle Claims.
+        events.on(
+            "lattice.claim",
+            proc (claim: Claim): proc() {.raises: [].} =
+                #Print that we're adding the Entry.
+                echo "Adding a new Claim."
+
+                #Add the Claim.
+                if lattice.add(
+                    merit,
+                    claim
+                ):
+                    echo "Successfully added the Claim."
+
+                    #If it worked, broadcast the Claim.
+                    try:
+                        rpc.events.get(
+                            proc (msgType: MessageType, msg: string),
+                            "network.broadcast"
+                        )(MessageType.Claim, claim.serialize())
+                    except:
+                        echo "Failed to broadcast the Claim."
+
+                    #Create a Verification.
+                    verify(claim)
+                else:
+                    echo "Failed to add the Claim."
+                echo ""
+        )
+
         #Handle Sends.
         events.on(
             "lattice.send",
@@ -68,7 +98,6 @@ proc mainLattice*() {.raises: [
 
                     #Create a Verification.
                     verify(send)
-
                 else:
                     echo "Failed to add the Send."
                 echo ""
@@ -104,7 +133,6 @@ proc mainLattice*() {.raises: [
 
                     #Create a Verification.
                     verify(recv)
-
                 else:
                     echo "Failed to add the Receive."
                 echo ""

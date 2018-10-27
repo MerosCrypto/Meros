@@ -26,6 +26,7 @@ import Network/Network
 import Network/Serialize/SerializeMiners
 import Network/Serialize/SerializeVerification
 
+import Network/Serialize/SerializeClaim
 import Network/Serialize/SerializeSend
 import Network/Serialize/SerializeReceive
 import Network/Serialize/SerializeData

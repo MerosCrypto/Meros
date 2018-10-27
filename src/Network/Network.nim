@@ -10,10 +10,10 @@ import ../Database/Lattice/Lattice
 #Parsing libs.
 import Serialize/ParseVerification
 import Serialize/ParseBlock
+import Serialize/ParseClaim
 import Serialize/ParseSend
 import Serialize/ParseReceive
-#import Serialize/ParseData
-#import Serialize/ParseMeritRemoval
+import Serialize/ParseData
 
 #Message/Clients/Network objects.
 import objects/MessageObj
@@ -112,29 +112,38 @@ proc newNetwork*(
                             ):
                                 network.clients.broadcast(msg)
 
+                        of MessageType.Claim:
+                            nodeEvents.get(
+                                proc (claim: Claim),
+                                "lattice.claim"
+                            )(
+                                msg.message.parseClaim()
+                            )
+
                         of MessageType.Send:
-                            if nodeEvents.get(
-                                proc (send: Send): bool,
+                            nodeEvents.get(
+                                proc (send: Send),
                                 "lattice.send"
                             )(
                                 msg.message.parseSend()
-                            ):
-                                network.clients.broadcast(msg)
+                            )
 
                         of MessageType.Receive:
-                            if nodeEvents.get(
-                                proc (recv: Receive): bool,
+                            nodeEvents.get(
+                                proc (recv: Receive),
                                 "lattice.receive"
                             )(
                                 msg.message.parseReceive()
-                            ):
-                                network.clients.broadcast(msg)
+                            )
 
                         of MessageType.Data:
-                            discard
+                            nodeEvents.get(
+                                proc (data: Data),
+                                "lattice.data"
+                            )(
+                                msg.message.parseData()
+                            )
 
-                        of MessageType.MeritRemoval:
-                            discard
                 except:
                     echo "Invalid Message."
         )
