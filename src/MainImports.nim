@@ -43,15 +43,6 @@ import finals
 #BLS lib.
 import lib/BLS
 
-#OS standard lib.
-import os
-
-#Async standard lib.
-import asyncdispatch
-
-#Thread standard lib.
-import threadpool
-
 #String utils standard lib.
 import strutils
 
@@ -60,3 +51,12 @@ import json
 
 #Tables standard lib.
 import tables
+
+#OS standard lib.
+import os
+
+#Async standard lib.
+import asyncdispatch
+
+#Thread standard lib.
+import threadpool

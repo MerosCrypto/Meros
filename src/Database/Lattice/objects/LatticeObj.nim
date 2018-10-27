@@ -106,10 +106,7 @@ proc verify*(
     for i in lattice.verifications[hash]:
         weight += merit.state.getBalance(i)
     #If the Entry has at least 50.1% of the weight...
-    if (
-        (weight * 1000) div
-        merit.state.live
-    ) >= uint(501):
+    if weight > ((merit.state.live div uint(2)) + 1):
         #Get the Index of the Entry.
         var index: Index = lattice.lookup[hash]
         lattice.accounts[index.address][index.nonce].verified = true

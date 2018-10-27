@@ -4,6 +4,9 @@
 - Auto-Receive/Claim.
 - Miner.
 
+- Don't allow double Verifications on the Blockchain.
+- Don't allow Verifications of old Entries (6 blocks).
+
 - Verify BLS Public Keys.
 - Inactive Merit.
 - Have Merit Holders indexable by the order they got Merit in.
@@ -14,7 +17,6 @@
 
 - Handshake when connecting to Nodes.
 - Ask for missing data (syncing).
-- Handle Claims over the Network.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Merit Removal system.
@@ -24,6 +26,7 @@
 
 - Utilize Logger.
 - Check Signatures in Serialize Tests.
+- Epochs Test.
 - Tests.
 
 ### Features:
@@ -46,6 +49,7 @@
 - Make the ports to listen on runtime options.
 
 ### Improvements:
+- Improve Network's encapsulation.
 - Redo how Blocks are handled (monolithic constructors; start block mess; no `Block.sign()`).
 
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.

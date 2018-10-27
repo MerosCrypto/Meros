@@ -3,8 +3,10 @@ include MainGlobals
 proc mainMerit*() {.raises: [
     ValueError,
     ArgonError,
+    MintError,
     BLSError,
-    SodiumError
+    SodiumError,
+    FinalAttributeError
 ].} =
     {.gcsafe.}:
         #Create the Merit.
@@ -31,7 +33,14 @@ proc mainMerit*() {.raises: [
         #Handle full blocks.
         events.on(
             "merit.block",
-            proc (newBlock: Block): bool {.raises: [KeyError, ValueError, BLSError, SodiumError].} =
+            proc (newBlock: Block): bool {.raises: [
+                KeyError,
+                ValueError,
+                MintError,
+                BLSError,
+                SodiumError,
+                FinalAttributeError
+            ].} =
                 result = true
 
                 #Print that we're adding the Block.
@@ -44,13 +53,25 @@ proc mainMerit*() {.raises: [
                         return false
 
                 #Add the Block to the Merit.
-                if merit.processBlock(newBlock):
-                    #Add each Verification.
-                    for verif in newBlock.verifications.verifications:
-                        #Discard the result since we already made sure the hash exists.
-                        discard lattice.verify(merit, verif)
-
-                    echo "Successfully added the Block."
-                else:
+                var rewards: Rewards
+                try:
+                    rewards = merit.processBlock(newBlock)
+                except:
                     echo "Failed to add the Block."
+                    return false
+
+                #Add each Verification.
+                for verif in newBlock.verifications.verifications:
+                    #Discard the result since we already made sure the hash exists.
+                    discard lattice.verify(merit, verif)
+
+                #Create the Mints (which ends up minting a total of of 50000 EMB).
+                for reward in rewards:
+                    #Discard the nonce of the created Mint.
+                    discard lattice.mint(
+                        reward.key,
+                        newBN(reward.score) * newBN(50)
+                    )
+
+                echo "Successfully added the Block."
         )
