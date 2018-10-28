@@ -1,3 +1,6 @@
-#Epochs Test.
+#Import each of the Epochs Tests.
+import EpochsTests/EpochsTest0
+import EpochsTests/EpochsTest1
+import EpochsTests/EpochsTest2
 
-echo "The Database/Merit/Epochs test is empty."
+echo "Finished the Database/Merit/Epochs tests."

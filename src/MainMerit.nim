@@ -70,7 +70,7 @@ proc mainMerit*() {.raises: [
                     #Discard the nonce of the created Mint.
                     discard lattice.mint(
                         reward.key,
-                        newBN(reward.score) * newBN(50)
+                        newBN(reward.score) * newBN(50) #This is a BN because 50 will end up as a much bigger number (decimals).
                     )
 
                 echo "Successfully added the Block."

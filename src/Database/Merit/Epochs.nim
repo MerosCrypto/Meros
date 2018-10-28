@@ -10,7 +10,7 @@ import objects/VerificationsObj
 #State lib.
 import State
 
-#Epoch object.
+#Epoch objects.
 import objects/EpochsObj
 export EpochsObj
 
@@ -40,7 +40,7 @@ proc calculate*(
 
     var
         #Score of a person. This is their combined normalized Entry values.
-        scores: TableRef[string, uint]
+        scores: TableRef[string, uint] = newTable[string, uint]()
         #Total Merit behind an Entry.
         total: uint
 
@@ -151,7 +151,8 @@ proc shift*(epochs: var Epochs, verifs: Verifications): Epoch {.raises: [KeyErro
 
         #If it wasn't found, create a seq for it in the newest Epoch.
         if not found:
-            newEpoch[verif.hash.toString()] = newSeq[BLSPublicKey]()
+            newEpoch[verif.hash.toString()] = newSeq[BLSPublicKey](1)
+            newEpoch[verif.hash.toString()][0] = verif.verifier
 
     #Add the newest Epoch.
     epochs.add(newEpoch)

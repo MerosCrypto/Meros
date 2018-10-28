@@ -4,9 +4,6 @@
 - Auto-Receive/Claim.
 - Miner.
 
-- Don't allow double Verifications on the Blockchain.
-- Don't allow Verifications of old Entries (6 blocks).
-
 - Verify BLS Public Keys.
 - Inactive Merit.
 - Have Merit Holders indexable by the order they got Merit in.
@@ -26,7 +23,6 @@
 
 - Utilize Logger.
 - Check Signatures in Serialize Tests.
-- Epochs Test.
 - Tests.
 
 ### Features:
