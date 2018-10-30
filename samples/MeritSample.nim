@@ -66,7 +66,9 @@ proc main() =
         )
 
         #Try to add it.
-        if not merit.processBlock(newBlock):
+        try:
+            discard merit.processBlock(newBlock):
+        except:
             #If it's invalid, increase the proof and continue.
             inc(proof)
             continue
