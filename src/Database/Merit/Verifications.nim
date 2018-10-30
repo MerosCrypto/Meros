@@ -8,7 +8,7 @@ import ../../lib/Hash
 import ../../lib/BLS
 
 #MinerWallet lib.
-import Miner/MinerWallet
+import MinerWallet
 
 #Verification object.
 import objects/VerificationsObj

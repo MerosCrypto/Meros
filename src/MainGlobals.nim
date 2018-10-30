@@ -5,13 +5,16 @@ var
     events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.
 
     #Merit.
-    merit {.threadvar.}: Merit     #Blockchain and state.
-    miner: bool      #Miner boolean.
-    minerKey: string #Miner's BLS Private Key.
+    merit {.threadvar.}: Merit #Blockchain and state.
 
     #Lattice.
     lattice {.threadvar.}: Lattice  #Lattice.
     genesisMint {.threadvar.}: uint #Genesis Send. Puts the first coins on the network.
+
+    #Personal.
+    miner: bool                  #Miner boolean.
+    minerWallet: MinerWallet     #Miner Wallet.
+    wallet {.threadvar.}: Wallet #Wallet.
 
     #Network.
     network {.threadvar.}: Network #Network.
@@ -29,7 +32,7 @@ if paramCount() > 0:
         miner = true
 
         if paramCount() > 1:
-            minerKey = paramStr(2)
+            minerWallet = newMinerWallet(newBLSPrivateKeyFromBytes(paramStr(2)))
         else:
             raise newException(ValueError, "No BLS Private Key was passed with --miner.")
 

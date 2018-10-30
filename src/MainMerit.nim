@@ -1,6 +1,6 @@
 include MainGlobals
 
-proc mainMerit*() {.raises: [
+proc mainMerit() {.raises: [
     ValueError,
     ArgonError,
     MintError,
@@ -11,9 +11,6 @@ proc mainMerit*() {.raises: [
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(GENESIS, BLOCK_TIME, BLOCK_DIFFICULTY, LIVE_MERIT)
-        #If we're mining...
-        if miner:
-            merit.setMinerWallet(minerKey)
 
         #Handle Verifications.
         events.on(

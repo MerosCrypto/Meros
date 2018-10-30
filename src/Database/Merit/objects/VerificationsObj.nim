@@ -7,9 +7,6 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Miner libs.
-import ../Miner/MinerWallet
-
 #Finals lib.
 import finals
 

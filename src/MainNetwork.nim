@@ -1,6 +1,6 @@
-include MainLattice
+include MainPersonal
 
-proc mainNetwork*() {.raises: [
+proc mainNetwork() {.raises: [
     AsyncError,
     SocketError
 ].} =

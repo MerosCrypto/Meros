@@ -1,7 +1,7 @@
 #Serialize Miners Tests.
 
 #Wallet lib.
-import ../../../src/Database/Merit/Miner/MinerWallet
+import ../../../src/Database/Merit/MinerWallet
 
 #Miners object.
 import ../../../src/Database/Merit/objects/MinersObj

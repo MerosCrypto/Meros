@@ -16,6 +16,7 @@ include MainUI
 proc main() {.thread.} =
     mainMerit()
     mainLattice()
+    mainPersonal()
     mainNetwork()
     mainRPC()
 

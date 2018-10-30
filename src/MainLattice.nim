@@ -1,10 +1,14 @@
 include MainMerit
 
+#Creates and publishes a Verification.
 proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].} =
-    if miner:
+    #Make sure we're a Miner with Merit.
+    if (miner) and (merit.state.getBalance(minerWallet.publicKey) > uint(0)):
         #Verify the Entry.
-        var verif: MemoryVerification = merit.verify(entry.hash)
-        #Discard because it is known to be valid.
+        var verif: MemoryVerification = newMemoryVerification(entry.hash)
+        minerWallet.sign(verif)
+
+        #Discard lattice.verify because it is known to return true.
         discard lattice.verify(merit, verif)
 
         #Broadcast the Verification.
@@ -19,7 +23,7 @@ proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].
         except:
             echo "Failed to broadcast the Verification."
 
-proc mainLattice*() {.raises: [
+proc mainLattice() {.raises: [
     ValueError,
     MintError,
     BLSError,

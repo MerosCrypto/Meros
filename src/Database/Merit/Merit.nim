@@ -10,16 +10,18 @@ import ../../lib/Base
 #BLS lib.
 import ../../lib/BLS
 
-#Miners object, Verification/Block/Blockchain/State/Epochs/MinerWallet libs.
+#Miners object.
 import objects/MinersObj
+export MinersObj
+
+#Every Merit lib except Difficulty.
 import Verifications
 import Block
 import Blockchain
 import State
 import Epochs
-import Miner/MinerWallet
+import MinerWallet
 
-export MinersObj
 export Verifications
 export Block
 export Blockchain
@@ -35,7 +37,6 @@ type Merit* = ref object of RootObj
     blockchain*: Blockchain
     state*: State
     epochs: Epochs
-    miner*: MinerWallet
 
 #Constructor.
 proc newMerit*(
@@ -49,16 +50,6 @@ proc newMerit*(
         state: newState(live),
         epochs: newEpochs()
     )
-
-#Set the MinerWallet.
-proc setMinerWallet*(merit: Merit, keyArg: string) {.raises: [BLSError].} =
-    merit.miner = newMinerWallet(newBLSPrivateKeyFromBytes(keyArg))
-
-#Create a Verification.
-proc verify*(merit: Merit, hash: Hash[512]): MemoryVerification =
-    result = newMemoryVerification(hash)
-    result.verifier = merit.miner.publicKey
-    result.signature = merit.miner.sign(hash.toString())
 
 #Add a block.
 proc processBlock*(

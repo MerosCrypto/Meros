@@ -4,7 +4,7 @@
 import ../../../src/lib/Hash
 
 #MinerWallet lib.
-import ../../../src/Database/Merit/Miner/MinerWallet
+import ../../../src/Database/Merit/MinerWallet
 
 #Verifications lib.
 import ../../../src/Database/Merit/Verifications
