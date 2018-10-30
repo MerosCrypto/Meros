@@ -19,3 +19,6 @@ assert(i16 == int16(i16.toBinary().fromBinary()))
 assert(u16 == uint16(u16.toBinary().fromBinary()))
 assert(i32 == int32(i32.toBinary().fromBinary()))
 assert(u32 == uint32(u32.toBinary().fromBinary()))
+
+#Make sure that leading 0 bytes are ignored.
+assert(0.toBinary() == "")

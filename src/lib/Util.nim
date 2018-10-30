@@ -29,9 +29,6 @@ func toBinary*(
         #Have we encountered a non 0 byte yet?
         filler: bool = true
 
-    #Create the result string.
-    result = newString(bytes)
-
     #Iterate over each byte.
     for i in 0 ..< bytes:
         #Update left/right.
@@ -51,7 +48,7 @@ func toBinary*(
             filler = false
 
         #Put the byte in the string.
-        result[i] = char(b)
+        result &= char(b)
 
 #Converts a binary string to a number.
 func fromBinary*(
