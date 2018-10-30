@@ -32,9 +32,9 @@ var
     newBlock: Block
     #Last block hash, nonce, time, and proof vars.
     last: ArgonHash = Argon(SHA512("mainnet").toString(), "00")
-    nonce: uint = 1
+    nonce: uint = uint(rand(100000))
     time: uint
-    proof: uint = 1
+    proof: uint = uint(rand(100000))
     #Miner's Wallet.
     miner: MinerWallet
     #Miners object.
@@ -91,10 +91,10 @@ for i in 1 .. 20:
         wallet.sign(SHA512(miners.serialize(nonce)).toString())
     )
 
-    #Finally, update the last hash, increase the nonce, and reset the proof.
+    #Finally, update the last hash, set a random nonce, and set a random proof.
     last = newBlock.argon
-    nonce = nonce + 1
-    proof = uint(i)
+    nonce = uint(rand(100000))
+    proof = uint(rand(100000))
 
     #Serialize it and parse it back.
     var blockParsed: Block = newBlock.serialize().parseBlock()

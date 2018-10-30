@@ -94,8 +94,9 @@ proc parseBlock*(
     var
         #End is the string end minus the signature length minus the length of the string that says the miners length.
         minersEnd: int = blockStr.len - 66 - (!minersLenStr).len
-        minersStart: int = minersEnd - minersLen - 1
-    var minersStr = !nonce.toBinary() & blockStr[minersStart .. minersEnd]
+        #Start is the end minus the length, plus 1.
+        minersStart: int = minersEnd - minersLen + 1
+    var minersStr = blockStr[minersStart .. minersEnd]
     #Parse the miners.
     miners = minersStr.parseMiners()
 
