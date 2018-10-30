@@ -22,9 +22,7 @@ proc RipeMD_160*(bytesArg: string): RipeMD_160Hash {.raises: [].} =
         )
 
     #Digest the byte array.
-    result = RipeMD_160Hash(
-        data: ripemd160.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
-    )
+    result.data = ripemd160.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to RipeMD_160Hash.
 func toRipeMD_160Hash*(hash: string): RipeMD_160Hash {.raises: [ValueError].} =

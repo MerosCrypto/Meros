@@ -12,7 +12,7 @@ Ember requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work b
 Now, install the Nimble packages.
 
 ```
-nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/ec_bls https://github.com/EmberCrypto/WebView
+nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/Argon2 https://github.com/EmberCrypto/ec_bls https://github.com/EmberCrypto/WebView
 nimble install finals nimcrypto rocksdb
 ```
 

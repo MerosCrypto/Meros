@@ -24,9 +24,7 @@ proc Keccak_256*(bytesArg: string): Keccak_256Hash {.raises: [].} =
         )
 
     #Digest the byte array.
-    result = Keccak_256Hash(
-        data: keccak256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
-    )
+    result.data = keccak256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #Keccak 512 hashing algorithm.
 proc Keccak_512*(bytesArg: string): Keccak_512Hash {.raises: [].} =
@@ -40,9 +38,7 @@ proc Keccak_512*(bytesArg: string): Keccak_512Hash {.raises: [].} =
         )
 
     #Digest the byte array.
-    result = Keccak_512Hash(
-        data: keccak512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
-    )
+    result.data = keccak512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to Keccak_256Hash.
 func toKeccak_256Hash*(hash: string): Keccak_256Hash {.raises: [ValueError].} =

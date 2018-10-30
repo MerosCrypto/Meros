@@ -24,9 +24,7 @@ proc SHA3_256*(bytesArg: string): SHA3_256Hash {.raises: [].} =
         )
 
     #Digest the byte array.
-    result = SHA3_256Hash(
-        data: sha3_256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
-    )
+    result.data = sha3_256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #SHA3 512 hashing algorithm.
 proc SHA3_512*(bytesArg: string): SHA3_512Hash {.raises: [].} =
@@ -40,9 +38,7 @@ proc SHA3_512*(bytesArg: string): SHA3_512Hash {.raises: [].} =
         )
 
     #Digest the byte array.
-    result = SHA3_512Hash(
-        data: sha3_512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
-    )
+    result.data = sha3_512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to SHA3_256Hash.
 func toSHA3_256Hash*(hash: string): SHA3_256Hash {.raises: [ValueError].} =

@@ -76,6 +76,4 @@
 - Ember Whitepaper.
 
 ### Community Service:
-- Create a Nimble library out of Base.
-- Create a Nimble library out of Argon.
 - Create a Nimble library out of ED25519.

@@ -66,7 +66,7 @@ func newBlockObj*(
     )
 
 #Creates a new block without caring about the data.
-proc newStartBlock*(genesis: string): Block {.raises: [ValueError, ArgonError].} =
+proc newStartBlock*(genesis: string): Block {.raises: [ArgonError].} =
     #Ceate the block.
     var blankPublisher: array[32, cuchar]
     result = newBlockObj(

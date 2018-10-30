@@ -30,7 +30,7 @@ proc newBlockchain*(
     genesis: string,
     blockTime: uint,
     startDifficulty: BN
-): Blockchain {.raises: [ValueError, ArgonError].} =
+): Blockchain {.raises: [ArgonError].} =
     newBlockchainObj(
         genesis,
         blockTime,
