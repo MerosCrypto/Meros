@@ -27,7 +27,6 @@
 
 ### Features:
 - Only add meaningful verifications.
-- Only verify if you actually have Merit; not just if you're Mining.
 
 - Command line options.
 
@@ -57,7 +56,6 @@
 - Standardize where we use binary/hex/addresses in `Database/Lattice`.
 
 - Make more things `func`.
-- Remove `{.gcsafe.}`.
 - Make sure `KeyError` is listed under `raises`.
 
 ### Behavior Changes:

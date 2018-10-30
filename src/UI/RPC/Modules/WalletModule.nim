@@ -7,6 +7,9 @@ import ../../../Wallet/Wallet
 #RPC object.
 import ../objects/RPCObj
 
+#EventEmitter lib.
+import ec_events
+
 #Finals lib.
 import finals
 
@@ -14,14 +17,22 @@ import finals
 import json
 
 #Get the Wallet info.
-func get(rpc: RPC): JSONNode {.raises: [PersonalError].} =
-    if rpc.wallet == nil:
-        raise newException(PersonalError, "RPC doesn't have a Wallet.")
+func getWallet(rpc: RPC): JSONNode {.raises: [EventError, PersonalError].} =
+    var wallet: Wallet
+    try:
+        wallet = rpc.events.get(
+            proc (): Wallet,
+            "personal.getWallet"
+        )()
+    except:
+        raise newException(EventError, "Couldn't get and call personal.get.")
+    if wallet == nil:
+        raise newException(PersonalError, "Personal doesn't have a Wallet.")
 
     result = %* {
-        "seed": $rpc.wallet.seed,
-        "publicKey": $rpc.wallet.publicKey,
-        "address": rpc.wallet.address
+        "seed": $wallet.seed,
+        "publicKey": $wallet.publicKey,
+        "address": wallet.address
     }
 
 #Set the Wallet's Seed.
@@ -30,17 +41,15 @@ proc setSeed(
     rpc: RPC,
     seed: string
 ): JSONNode {.raises: [
-    ValueError,
-    RandomError,
-    SodiumError,
-    PersonalError
+    EventError,
 ].} =
-    if seed.len == 0:
-        rpc.wallet = newWallet()
-    else:
-        rpc.wallet = newWallet(newEdSeed(seed))
-
-    result = rpc.get()
+    try:
+        rpc.events.get(
+            proc (seed: string),
+            "personal.setSeed"
+        )(seed)
+    except:
+        raise newException(EventError, "Couldn't get and call personal.setSeed.")
 
 #Handler.
 proc `walletModule`*(
@@ -55,11 +64,11 @@ proc `walletModule`*(
     try:
         #Switch based off the method.
         case json["method"].getStr():
-            of "set":
+            of "setSeed":
                 res = rpc.setSeed(json["args"][0].getStr())
 
-            of "get":
-                res = rpc.get()
+            of "getWallet":
+                res = rpc.getWallet()
 
             else:
                 res = %* {

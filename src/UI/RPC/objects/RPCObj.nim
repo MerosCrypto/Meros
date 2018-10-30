@@ -26,7 +26,6 @@ finalsd:
         toRPC* {.final.}: ptr Channel[JSONNode]
         toGUI* {.final.}: ptr Channel[JSONNode]
         server* {.final.}: AsyncSocket
-        wallet*: Wallet
         listening*: bool
 
 #Constructor.

@@ -45,7 +45,6 @@ proc send(
 ): JSONNode {.raises: [
     ValueError,
     ArgonError,
-    SodiumError,
     PersonalError,
     EventError,
     FinalAttributeError
@@ -58,9 +57,21 @@ proc send(
     )
     #Mine the Send.
     send.mine("aa".repeat(64).toBN(16))
+
     #Sign the Send.
-    if not rpc.wallet.sign(send):
-        raise newException(PersonalError, "RPC couldn't create and sign a send.")
+    var sign: proc(send: Send): bool
+    try:
+        sign = rpc.events.get(
+            proc (send: Send): bool,
+            "personal.signSend"
+        )
+    except:
+        raise newException(EventError, "Couldn't get and call personal.signSend.")
+    try:
+        if not send.sign():
+            raise newException(Exception, "")
+    except:
+        raise newException(PersonalError, "Couldn't sign the Send.")
 
     try:
         #Add it.
@@ -83,7 +94,7 @@ proc receive(
     nonce: uint
 ): JSONNode {.raises: [
     ValueError,
-    SodiumError,
+    PersonalError,
     EventError,
     FinalAttributeError
 ].} =
@@ -95,8 +106,21 @@ proc receive(
         ),
         nonce
     )
+
     #Sign the Receive.
-    rpc.wallet.sign(recv)
+    var sign: proc(recv: Receive): bool
+    try:
+        sign = rpc.events.get(
+            proc (recv: Receive): bool,
+            "personal.signReceive"
+        )
+    except:
+        raise newException(EventError, "Couldn't get and call personal.signReceive.")
+    try:
+        if not recv.sign():
+            raise newException(Exception, "")
+    except:
+        raise newException(PersonalError, "Couldn't sign the Receive.")
 
     try:
         #Add it.
