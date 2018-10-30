@@ -26,6 +26,7 @@ proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].
 proc mainLattice() {.raises: [
     ValueError,
     MintError,
+    EventError,
     BLSError,
     SodiumError,
     FinalAttributeError
@@ -78,6 +79,8 @@ proc mainLattice() {.raises: [
             "lattice.send",
             proc (send: Send): proc () {.raises: [
                 ValueError,
+                EventError,
+                BLSError,
                 SodiumError,
                 FinalAttributeError
             ].} =
@@ -99,6 +102,29 @@ proc mainLattice() {.raises: [
                         )(MessageType.Send, send.serialize())
                     except:
                         echo "Failed to broadcast the Send."
+
+                    #If the Send is for us, Receive it.
+                    if wallet != nil:
+                        if send.output == wallet.address:
+                            #Create the Receive.
+                            var recv: Receive = newReceive(
+                                newIndex(
+                                    send.sender,
+                                    send.nonce
+                                ),
+                                lattice.getAccount(wallet.address).height
+                            )
+                            #Sign it.
+                            wallet.sign(recv)
+
+                            #Emit it.
+                            try:
+                                events.get(
+                                    proc (recv: Receive),
+                                    "lattice.receive"
+                                )(recv)
+                            except:
+                                raise newException(EventError, "Couldn't get and call lattice.receive.")
 
                     #Create a Verification.
                     verify(send)

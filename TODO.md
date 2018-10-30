@@ -1,7 +1,7 @@
 # TODO
 
 ### Core:
-- Auto-Receive/Claim.
+- Auto-Claim.
 - Miner.
 
 - Verify BLS Public Keys.
