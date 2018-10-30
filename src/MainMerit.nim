@@ -4,6 +4,7 @@ proc mainMerit() {.raises: [
     ValueError,
     ArgonError,
     MintError,
+    EventError,
     BLSError,
     SodiumError,
     FinalAttributeError
@@ -34,6 +35,7 @@ proc mainMerit() {.raises: [
                 KeyError,
                 ValueError,
                 MintError,
+                EventError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError
@@ -63,12 +65,34 @@ proc mainMerit() {.raises: [
                     discard lattice.verify(merit, verif)
 
                 #Create the Mints (which ends up minting a total of of 50000 EMB).
+                #Nonce of the Mint.
+                var mintNonce: uint
                 for reward in rewards:
-                    #Discard the nonce of the created Mint.
-                    discard lattice.mint(
+                    mintNonce = lattice.mint(
                         reward.key,
                         newBN(reward.score) * newBN(50) #This is a BN because 50 will end up as a much bigger number (decimals).
                     )
+
+                    #If we have wallets...
+                    if (wallet != nil) and (minerWallet != nil):
+                        #Check if we're the one getting the reward.
+                        if minerWallet.publicKey.toString() == reward.key:
+                            #Claim the Reward.
+                            var claim: Claim = newClaim(
+                                mintNonce,
+                                lattice.getAccount(wallet.address).height
+                            )
+                            #Sign the claim.
+                            claim.sign(minerWallet, wallet)
+
+                            #Emit it.
+                            try:
+                                events.get(
+                                    proc (claim: Claim),
+                                    "lattice.claim"
+                                )(claim)
+                            except:
+                                raise newException(EventError, "Couldn't get and call lattice.receive.")
 
                 echo "Successfully added the Block."
         )

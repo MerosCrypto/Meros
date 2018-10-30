@@ -1,7 +1,6 @@
 # TODO
 
 ### Core:
-- Auto-Claim.
 - Miner.
 
 - Verify BLS Public Keys.
@@ -24,6 +23,8 @@
 - Utilize Logger.
 - Check Signatures in Serialize Tests.
 - Tests.
+
+- Test Minting/Auto-Claim/Auto-Receive (requires a test network).
 
 ### Features:
 - Only add meaningful verifications.
