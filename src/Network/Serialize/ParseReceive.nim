@@ -35,21 +35,18 @@ proc parseReceive*(
     FinalAttributeError
 ].} =
     var
-        #Public Key | Nonce | Input Address | Input Nonce | Signature
+        #Public Key | Nonce | Input Key | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(5)
         #Get the sender's Public Key.
         sender: EdPublicKey = newEdPublicKey(recvSeq[0].pad(32))
         #Get the nonce.
         nonce: uint = uint(recvSeq[1].fromBinary())
-        #Get the input Address.
-        inputAddress: string = recvSeq[2]
+        #Get the Input Address.
+        inputAddress: string = newAddress(recvSeq[2].pad(32))
         #Get the input nonce.
         inputNonce: uint = uint(recvSeq[3].fromBinary())
         #Get the signature.
         signature: string = recvSeq[4].pad(64)
-
-    #Create the input address.
-    inputAddress = newAddress(inputAddress)
 
     #Create the Receive.
     result = newReceiveObj(
