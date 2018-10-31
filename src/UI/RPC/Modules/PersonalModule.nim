@@ -52,7 +52,7 @@ proc setSeed(
         raise newException(EventError, "Couldn't get and call personal.setSeed.")
 
 #Handler.
-proc `walletModule`*(
+proc `personalModule`*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)

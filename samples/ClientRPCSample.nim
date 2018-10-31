@@ -14,7 +14,7 @@ var
 toUgly(
     data,
     %* {
-        "module": "wallet",
+        "module": "personal",
         "method": "setSeed",
         "args": [
             "F0594F2052E00039236FD163971C150BBAC1687AF42580AEADC3D75BC3B4427F"
