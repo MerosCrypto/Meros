@@ -23,13 +23,15 @@ proc mainMerit() {.raises: [
         #Handle Verifications.
         events.on(
             "merit.verification",
-            proc (verif: Verification): bool {.raises: [ValueError].} =
+            proc (verif: MemoryVerification): bool {.raises: [ValueError].} =
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification."
 
                 #Add the Verification to the Lattice.
                 result = lattice.verify(merit, verif)
                 if result:
+                    #Add the Verification to the unarchived set.
+                    lattice.unarchive(verif)
                     echo "Successfully added the Verification."
                 else:
                     echo "Failed to add the Verification."
@@ -70,6 +72,8 @@ proc mainMerit() {.raises: [
                 for verif in newBlock.verifications.verifications:
                     #Discard the result since we already made sure the hash exists.
                     discard lattice.verify(merit, verif)
+                    #Archive the verification.
+                    lattice.archive(verif)
 
                 #Create the Mints (which ends up minting a total of of 50000 EMB).
                 #Nonce of the Mint.

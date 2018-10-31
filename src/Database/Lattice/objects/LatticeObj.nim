@@ -23,9 +23,6 @@ import AccountObj
 #BLS lib.
 import ../../../lib/BLS
 
-#String utils standard lib.
-import strutils
-
 #Tables standard library.
 import tables
 
@@ -41,10 +38,16 @@ type Lattice* = ref object of RootObj
     ]
 
     #Verifications (hash -> list of addresses who signed off on it).
-    verifications: TableRef[
+    verifications*: TableRef[
         string,
         seq[BLSPublicKey]
     ]
+
+    #Unarchived Verifications.
+    unarchived*: seq[MemoryVerification]
+
+    #State of the Verifications. 0 is unset. 1 is unarchived. 2 is archived.
+    archived*: TableRef[string, int]
 
     #Accounts (address -> account).
     accounts*: TableRef[
@@ -62,6 +65,8 @@ func newLattice*(
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
         lookup: newTable[string, Index](),
         verifications: newTable[string, seq[BLSPublicKey]](),
+        unarchived: @[],
+        archived: newTable[string, int](),
         accounts: newTable[string, Account]()
     )
 
@@ -76,41 +81,41 @@ func addHash*(
 ) {.raises: [].} =
     lattice.lookup[hash.toString()] = index
 
-#Add a Verification to the Verifications' table.
-proc verify*(
+#Unarchived Verification.
+func unarchive*(
     lattice: Lattice,
-    merit: Merit,
-    verif: Verification
-): bool {.raises: [KeyError, ValueError].} =
-    #Turn the hash into a string.
-    var hash: string = verif.hash.toString()
-
-    #Verify the Entry exists.
-    if not lattice.lookup.hasKey(hash):
-        return false
-    result = true
-
-    #Create a blank seq if there's not already a seq.
-    if not lattice.verifications.hasKey(hash):
-        lattice.verifications[hash] = @[]
-
-    #Return if the Verification already exists.
-    if lattice.verifications[hash].contains(verif.verifier):
+    verif: MemoryVerification
+) {.raises: [KeyError].} =
+    #Make sure the Verif is new.
+    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] != 0:
         return
 
-    #Add the Verification.
-    lattice.verifications[hash].add(verif.verifier)
+    #Add to unarchived.
+    lattice.unarchived.add(verif)
 
-    #Calculate the weight.
-    var weight: uint = 0
-    for i in lattice.verifications[hash]:
-        weight += merit.state.getBalance(i)
-    #If the Entry has at least 50.1% of the weight...
-    if weight > ((merit.state.live div uint(2)) + 1):
-        #Get the Index of the Entry.
-        var index: Index = lattice.lookup[hash]
-        lattice.accounts[index.address][index.nonce].verified = true
-        echo hash.toHex() & " was verified."
+    #Set it as unarchived.
+    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 1
+
+#Archive a Verification.
+func archive*(
+    lattice: Lattice,
+    verif: MemoryVerification
+) {.raises: [KeyError].} =
+    #Make sure the Verif isn't already archived.
+    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 2:
+        return
+
+    #Remove from unarchived.
+    for i in 0 ..< lattice.unarchived.len:
+        if (
+            (verif.hash == lattice.unarchived[i].hash) and
+            (verif.verifier == lattice.unarchived[i].verifier)
+        ):
+            lattice.unarchived.delete(i)
+            break
+
+    #Set it as archived.
+    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 2
 
 #Creates a new Account on the Lattice.
 func addAccount*(

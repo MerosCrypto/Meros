@@ -10,6 +10,8 @@ proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].
 
         #Discard lattice.verify because it is known to return true.
         discard lattice.verify(merit, verif)
+        #Add the Verification to the unarchived set.
+        lattice.unarchive(verif)
 
         #Broadcast the Verification.
         try:
