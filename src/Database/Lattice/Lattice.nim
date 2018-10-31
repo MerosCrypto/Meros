@@ -38,6 +38,9 @@ import Account
 import objects/LatticeObj
 export LatticeObj
 
+#String utils standard lib.
+import strutils
+
 #Tables standard lib.
 import tables
 
@@ -157,3 +160,39 @@ proc mint*(
     #Add it to the Lattice.
     if not lattice.add(nil, mint, true):
         raise newException(MintError, "Couldn't add the Mint Entry to the Lattice.")
+
+#Add a Verification to the Verifications' table.
+proc verify*(
+    lattice: Lattice,
+    merit: Merit,
+    verif: Verification,
+): bool {.raises: [KeyError, ValueError].} =
+    #Turn the hash into a string.
+    var hash: string = verif.hash.toString()
+
+    #Verify the Entry exists.
+    if not lattice.lookup.hasKey(hash):
+        return false
+    result = true
+
+    #Create a blank seq if there's not already a seq.
+    if not lattice.verifications.hasKey(hash):
+        lattice.verifications[hash] = @[]
+
+    #Return if the Verification already exists.
+    if lattice.verifications[hash].contains(verif.verifier):
+        return
+
+    #Add the Verification.
+    lattice.verifications[hash].add(verif.verifier)
+
+    #Calculate the weight.
+    var weight: uint = 0
+    for i in lattice.verifications[hash]:
+        weight += merit.state.getBalance(i)
+    #If the Entry has at least 50.1% of the weight...
+    if weight > ((merit.state.live div uint(2)) + 1):
+        #Get the Index of the Entry.
+        var index: Index = lattice.lookup[hash]
+        lattice.accounts[index.address][index.nonce].verified = true
+        echo hash.toHex() & " was verified."
