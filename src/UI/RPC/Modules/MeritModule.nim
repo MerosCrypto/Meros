@@ -5,7 +5,7 @@ import ../objects/RPCObj
 import json
 
 #Handler.
-func `blockchainModule`*(
+func `meritModule`*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)

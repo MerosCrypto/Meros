@@ -8,7 +8,7 @@ export RPCObj
 #RPC modules.
 import Modules/SystemModule
 import Modules/WalletModule
-import Modules/BlockchainModule
+import Modules/MeritModule
 import Modules/LatticeModule
 import Modules/NetworkModule
 
@@ -48,8 +48,8 @@ proc handle*(
             rpc.systemModule(msg, reply)
         of "wallet":
             rpc.walletModule(msg, reply)
-        of "blockchain":
-            rpc.blockchainModule(msg, reply)
+        of "merit":
+            rpc.meritModule(msg, reply)
         of "lattice":
             rpc.latticeModule(msg, reply)
         of "network":
