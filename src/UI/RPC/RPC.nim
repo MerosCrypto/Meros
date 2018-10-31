@@ -7,7 +7,7 @@ export RPCObj
 
 #RPC modules.
 import Modules/SystemModule
-import Modules/WalletModule
+import Modules/PersonalModule
 import Modules/MeritModule
 import Modules/LatticeModule
 import Modules/NetworkModule
@@ -46,8 +46,8 @@ proc handle*(
     case msg["module"].getStr():
         of "system":
             rpc.systemModule(msg, reply)
-        of "wallet":
-            rpc.walletModule(msg, reply)
+        of "personal":
+            rpc.personalModule(msg, reply)
         of "merit":
             rpc.meritModule(msg, reply)
         of "lattice":
@@ -128,7 +128,20 @@ proc listen*(rpc: RPC, port: uint) {.async.} =
                 #Handle the data.
                 rpc.handle(
                     json,
-                    proc (res: JSONNode) =
+                    proc (resArg: JSONNode) =
+                        #Declare a var to send back.
+                        var res: JSONNode
+
+                        #If resArg is nil...
+                        if resArg == nil:
+                            #Set a default response of success.
+                            res = %* {
+                                "success": true
+                            }
+                        #Else, use the resArg.
+                        else:
+                            res = resArg
+
                         #Convert the returned JSON to a string.
                         var resStr: string
                         toUgly(resStr, res)

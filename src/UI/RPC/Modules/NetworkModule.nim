@@ -24,12 +24,12 @@ proc connect*(
 ): JSONNode {.raises: [EventError].} =
     try:
         #Connect to a new node.
-        if rpc.events.get(
+        if not rpc.events.get(
             proc (ip: string, port: int): bool,
             "network.connect"
         )(ip, port):
             result = %* {
-                "success": true
+                "success": false
             }
     except:
         raise newException(EventError, "Couldn't get and call network.connect.")
