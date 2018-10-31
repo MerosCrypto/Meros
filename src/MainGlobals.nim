@@ -39,7 +39,7 @@ if paramCount() > 0:
 #Properly shutdown.
 events.on(
     "system.quit",
-    proc () {.raises: [ChannelError, SocketError].} =
+    proc () {.raises: [ChannelError, AsyncError, SocketError].} =
         #Shutdown the GUI.
         try:
             fromMain.send("shutdown")

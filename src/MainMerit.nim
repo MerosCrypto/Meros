@@ -13,6 +13,13 @@ proc mainMerit() {.raises: [
         #Create the Merit.
         merit = newMerit(GENESIS, BLOCK_TIME, BLOCK_DIFFICULTY, LIVE_MERIT)
 
+        #Handle requests for the current Difficulty.
+        events.on(
+            "merit.getDifficulty",
+            proc (): BN {.raises: [].} =
+                merit.blockchain.difficulties[^1].difficulty
+        )
+
         #Handle Verifications.
         events.on(
             "merit.verification",

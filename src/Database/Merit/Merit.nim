@@ -14,7 +14,8 @@ import ../../lib/BLS
 import objects/MinersObj
 export MinersObj
 
-#Every Merit lib except Difficulty.
+#Every Merit lib.
+import Difficulty
 import Verifications
 import Block
 import Blockchain
@@ -22,6 +23,7 @@ import State
 import Epochs
 import MinerWallet
 
+export Difficulty
 export Verifications
 export Block
 export Blockchain

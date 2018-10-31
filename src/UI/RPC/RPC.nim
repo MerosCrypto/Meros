@@ -115,7 +115,7 @@ proc handle*(rpc: RPC, client: AsyncSocket) {.async.} =
         #Handle the data.
         rpc.handle(
             json,
-            proc (resArg: JSONNode) =
+            proc (resArg: JSONNode) {.raises: [KeyError, AsyncError].} =
                 #Declare a var to send back.
                 var res: JSONNode
 
@@ -134,7 +134,10 @@ proc handle*(rpc: RPC, client: AsyncSocket) {.async.} =
                 toUgly(resStr, res)
 
                 #Send it.
-                asyncCheck client.send(resStr & "\r\n")
+                try:
+                    asyncCheck client.send(resStr & "\r\n")
+                except:
+                    raise newException(AsyncError, "Couldn't send to a RPC Client.")
         )
 
 #Start up the RPC (Socket; for remote connections).
@@ -157,12 +160,15 @@ proc listen*(rpc: RPC, port: uint) {.async.} =
             continue
 
 #Shutdown.
-proc shutdown*(rpc: RPC) {.raises: [].} =
+proc shutdown*(rpc: RPC) {.raises: [AsyncError].} =
     #Set listening to false.
     rpc.listening = false
-    
-    #Close the server.
-    rpc.server.close()
-    #Close each client.
-    for client in rpc.clients:
-        client.close()
+
+    try:
+        #Close the server.
+        rpc.server.close()
+        #Close each client.
+        for client in rpc.clients:
+            client.close()
+    except:
+        raise newException(AsyncError, "Couldn't close the RPC's server and client sockets.")

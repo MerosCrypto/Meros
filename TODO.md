@@ -33,7 +33,6 @@
 - Make `Logger.extraneous` enabled via a runtime option.
 
 - `getUnarchivedVerifications` RPC route.
-- `getBlockDifficulty` RPC Route.
 - RPC creation of Claims.
 - Have the RPC dynamically get the mining difficulty (it's currently hardcoded).
 
