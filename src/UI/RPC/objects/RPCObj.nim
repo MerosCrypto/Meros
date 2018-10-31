@@ -26,6 +26,7 @@ finalsd:
         toRPC* {.final.}: ptr Channel[JSONNode]
         toGUI* {.final.}: ptr Channel[JSONNode]
         server* {.final.}: AsyncSocket
+        clients*: seq[AsyncSocket]
         listening*: bool
 
 #Constructor.
@@ -40,6 +41,7 @@ proc newRPCObject*(
             toRPC: toRPC,
             toGUI: toGUI,
             server: newAsyncSocket(),
+            clients: @[],
             listening: true
         )
     except:

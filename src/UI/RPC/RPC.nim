@@ -86,6 +86,57 @@ proc start*(rpc: RPC) {.async.} =
                     raise newException(ChannelError, "Couldn't send data to the GUI.")
         )
 
+#Handle a Socket Client.
+proc handle*(rpc: RPC, client: AsyncSocket) {.async.} =
+    #Define new vars for the client and data.
+    var
+        data: string
+        json: JSONNode
+
+    #Handle the client.
+    while not client.isClosed():
+        #Read in a line.
+        data = await client.recvLine()
+        #If the line length is 0, the client is invalid. Stop handling it.
+        if data.len == 0:
+            break
+
+        #Parse the JSON.
+        try:
+            json = parseJSON(data)
+        except:
+            json = %* {
+                "error": "Invalid RPC payload."
+            }
+            toUgly(data, json)
+            asyncCheck client.send(data & "\r\n")
+            continue
+
+        #Handle the data.
+        rpc.handle(
+            json,
+            proc (resArg: JSONNode) =
+                #Declare a var to send back.
+                var res: JSONNode
+
+                #If resArg is nil...
+                if resArg == nil:
+                    #Set a default response of success.
+                    res = %* {
+                        "success": true
+                    }
+                #Else, use the resArg.
+                else:
+                    res = resArg
+
+                #Convert the returned JSON to a string.
+                var resStr: string
+                toUgly(resStr, res)
+
+                #Send it.
+                asyncCheck client.send(resStr & "\r\n")
+        )
+
 #Start up the RPC (Socket; for remote connections).
 proc listen*(rpc: RPC, port: uint) {.async.} =
     #Start listening.
@@ -93,65 +144,25 @@ proc listen*(rpc: RPC, port: uint) {.async.} =
     rpc.server.bindAddr(Port(port))
     rpc.server.listen()
 
-    #Define a new var for the client and data.
-    var
-        client: AsyncSocket
-        data: string
-        json: JSONNode
-
     #Accept new connections infinitely.
     while (rpc.listening) and (not rpc.server.isClosed()):
         #This is in a try/catch since ending the server while accepting a new Client will throw an Exception.
         try:
             #Accept a new client.
-            client = await rpc.server.accept()
+            rpc.clients.add(await rpc.server.accept())
 
-            #Handle the client.
-            while not client.isClosed():
-                #Read in a line.
-                data = await client.recvLine()
-                #If the line length is 0, the client is invalid. Stop handling it.
-                if data.len == 0:
-                    break
-
-                #Parse the JSON.
-                try:
-                    json = parseJSON(data)
-                except:
-                    json = %* {
-                        "error": "Invalid RPC payload."
-                    }
-                    toUgly(data, json)
-                    asyncCheck client.send(data & "\r\n")
-                    continue
-
-                #Handle the data.
-                rpc.handle(
-                    json,
-                    proc (resArg: JSONNode) =
-                        #Declare a var to send back.
-                        var res: JSONNode
-
-                        #If resArg is nil...
-                        if resArg == nil:
-                            #Set a default response of success.
-                            res = %* {
-                                "success": true
-                            }
-                        #Else, use the resArg.
-                        else:
-                            res = resArg
-
-                        #Convert the returned JSON to a string.
-                        var resStr: string
-                        toUgly(resStr, res)
-
-                        #Send it.
-                        asyncCheck client.send(resStr & "\r\n")
-                )
+            #Handle it.
+            asyncCheck rpc.handle(rpc.clients[^1])
         except:
             continue
 
 #Shutdown.
-func shutdown*(rpc: RPC) {.raises: [].} =
+proc shutdown*(rpc: RPC) {.raises: [].} =
+    #Set listening to false.
     rpc.listening = false
+    
+    #Close the server.
+    rpc.server.close()
+    #Close each client.
+    for client in rpc.clients:
+        client.close()
