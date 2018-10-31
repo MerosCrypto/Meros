@@ -29,7 +29,7 @@ proc connect*(
             "network.connect"
         )(ip, port):
             result = %* {
-                "success": false
+                "error": "Couldn't connect to the IP/Port."
             }
     except:
         raise newException(EventError, "Couldn't get and call network.connect.")

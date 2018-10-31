@@ -11,7 +11,7 @@
 ### Ember Whitepaper: Being  Written
 
 #### Current State
-Ember is not yet usable by the mass populace, and doesn't currently have a public test net. That said, Ember is handling transactions, and we could setup a test network. We have yet to due to the amount of change that's happening every day.
+Ember is still under development, and doesn't currently have a public testnet. That said, Ember is handling transactions, and we are working on setting up a Developer Testnet. We aim to have one within a week or two.
 
 #### Compiling
 

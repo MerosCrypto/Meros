@@ -1,48 +1,46 @@
 # TODO
 
 ### Core:
-- Miner.
-
 - Verify BLS Public Keys.
+- Improve the Difficulty algorithm.
 - Inactive Merit.
 - Have Merit Holders indexable by the order they got Merit in.
 - Resolve Merit forks.
 
-- EMB Minting.
-- Resolve Lattice forks (right now, unverified Nodes are treated as Verified...).
+- Only add meaningful verifications.
+- Resolve Lattice forks (right now, unverified Nodes are treated as Verified when it comes to their permeance...).
 
 - Handshake when connecting to Nodes.
 - Ask for missing data (syncing).
-
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
+
 - Merit Removal system.
 - Difficulty Voting system.
 
 - Database.
 
-- Utilize Logger.
 - Check Signatures in Serialize Tests.
 - Tests.
 
 - Test Minting/Auto-Claim/Auto-Receive (requires a test network).
 
 ### Features:
-- Only add meaningful verifications.
-
 - Command line options.
+- Make the ports to listen on runtime options.
 
+- Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
+- Make `Logger.extraneous` enabled via a runtime option.
 
+- `getUnarchivedVerifications` RPC route.
+- `getBlockDifficulty` RPC Route.
 - RPC creation of Claims.
-- Have the RPC dynamically get the difficulty.
+- Have the RPC dynamically get the mining difficulty (it's currently hardcoded).
 
 - Show the existing wallet on reload of `Main.html`.
 - Claim creation via the GUI.
 - `Account` history viewing via the GUI.
 - Network page on the GUI.
-
-- Make `Logger.extraneous` enabled via a runtime option.
-- Make the ports to listen on runtime options.
 
 ### Improvements:
 - Improve Network's encapsulation.
@@ -60,7 +58,6 @@
 - Make sure `KeyError` is listed under `raises`.
 
 ### Behavior Changes:
-
     Decided:
         - Have required work be based on account, not on TX, and infinitely precalculable.
         - Finalize Argon2's Block parameters.
@@ -70,8 +67,7 @@
 
 ### Documentation:
 - Document the message types.
-- Document the RPC.
-- Use Documentation Comments.
+- Use Nim Documentation Comments.
 - Ember Whitepaper.
 
 ### Community Service:
