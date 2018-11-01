@@ -1,25 +1,11 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Numerical libs.
+#BN lib.
 import BN
-import ../../../lib/Base
-
-#Hash lib.
-import ../../../lib/Hash
-
-#Wallet lib.
-import ../../../Wallet/Wallet
 
 #Lattice lib.
 import ../../../Database/Lattice/Lattice
-
-#Message lib.
-import ../../../Network/objects/MessageObj
-
-#Serialization libs.
-import ../../../Network/Serialize/SerializeSend
-import ../../../Network/Serialize/SerializeReceive
 
 #RPC object.
 import ../objects/RPCObj
@@ -30,110 +16,8 @@ import ec_events
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
 #JSON standard lib.
 import json
-
-#Create a Send Entry.
-proc send(
-    rpc: RPC,
-    address: string,
-    amount: BN,
-    nonce: uint
-): JSONNode {.raises: [
-    ValueError,
-    ArgonError,
-    PersonalError,
-    EventError,
-    FinalAttributeError
-].} =
-    #Create the Send.
-    var send: Send = newSend(
-        address,
-        amount,
-        nonce
-    )
-    #Mine the Send.
-    send.mine("aa".repeat(64).toBN(16))
-
-    #Sign the Send.
-    var sign: proc(send: Send): bool
-    try:
-        sign = rpc.events.get(
-            proc (send: Send): bool,
-            "personal.signSend"
-        )
-    except:
-        raise newException(EventError, "Couldn't get and call personal.signSend.")
-    try:
-        if not send.sign():
-            raise newException(Exception, "")
-    except:
-        raise newException(PersonalError, "Couldn't sign the Send.")
-
-    try:
-        #Add it.
-        rpc.events.get(
-            proc (send: Send),
-            "lattice.send"
-        )(send)
-    except:
-        raise newException(EventError, "Couldn't get and call lattice.send.")
-
-    result = %* {
-        "hash": $send.hash
-    }
-
-#Create a Receive Entry.
-proc receive(
-    rpc: RPC,
-    address: string,
-    inputNonce: uint,
-    nonce: uint
-): JSONNode {.raises: [
-    ValueError,
-    PersonalError,
-    EventError,
-    FinalAttributeError
-].} =
-    #Create the Receive.
-    var recv: Receive = newReceive(
-        newIndex(
-            address,
-            inputNonce,
-        ),
-        nonce
-    )
-
-    #Sign the Receive.
-    var sign: proc(recv: Receive): bool
-    try:
-        sign = rpc.events.get(
-            proc (recv: Receive): bool,
-            "personal.signReceive"
-        )
-    except:
-        raise newException(EventError, "Couldn't get and call personal.signReceive.")
-    try:
-        if not recv.sign():
-            raise newException(Exception, "")
-    except:
-        raise newException(PersonalError, "Couldn't sign the Receive.")
-
-    try:
-        #Add it.
-        rpc.events.get(
-            proc (recv: Receive),
-            "lattice.receive"
-        )(recv)
-    except:
-        raise newException(EventError, "Couldn't get and call lattice.receive.")
-
-    result = %* {
-        "hash": $recv.hash
-    }
 
 #Get the height of an account.
 proc getHeight(
@@ -188,20 +72,6 @@ proc `latticeModule`*(
     try:
         #Switch based off the method.
         case json["method"].getStr():
-            of "send":
-                res = rpc.send(
-                    json["args"][0].getStr(),
-                    newBN(json["args"][1].getStr()),
-                    parseUInt(json["args"][2].getStr())
-                )
-
-            of "receive":
-                res = rpc.receive(
-                    json["args"][0].getStr(),
-                    parseUInt(json["args"][1].getStr()),
-                    parseUInt(json["args"][2].getStr())
-                )
-
             of "getHeight":
                 res = rpc.getHeight(
                     json["args"][0].getStr()

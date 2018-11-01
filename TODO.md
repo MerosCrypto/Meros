@@ -32,6 +32,7 @@
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
 
+- Have RPC handle things in order OR use an ID system.
 - `getUnarchivedVerifications` RPC route.
 - RPC creation of Claims.
 - Have the RPC dynamically get the mining difficulty (it's currently hardcoded).
