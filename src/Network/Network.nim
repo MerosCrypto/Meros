@@ -113,32 +113,32 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Claim:
-                            nodeEvents.get(
-                                proc (claim: Claim),
+                            discard nodeEvents.get(
+                                proc (claim: Claim): bool,
                                 "lattice.claim"
                             )(
                                 msg.message.parseClaim()
                             )
 
                         of MessageType.Send:
-                            nodeEvents.get(
-                                proc (send: Send),
+                            discard nodeEvents.get(
+                                proc (send: Send): bool,
                                 "lattice.send"
                             )(
                                 msg.message.parseSend()
                             )
 
                         of MessageType.Receive:
-                            nodeEvents.get(
-                                proc (recv: Receive),
+                            discard nodeEvents.get(
+                                proc (recv: Receive): bool,
                                 "lattice.receive"
                             )(
                                 msg.message.parseReceive()
                             )
 
                         of MessageType.Data:
-                            nodeEvents.get(
-                                proc (data: Data),
+                            discard nodeEvents.get(
+                                proc (data: Data): bool,
                                 "lattice.data"
                             )(
                                 msg.message.parseData()

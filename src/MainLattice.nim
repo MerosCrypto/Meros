@@ -49,7 +49,7 @@ proc mainLattice() {.raises: [
         #Handle Claims.
         events.on(
             "lattice.claim",
-            proc (claim: Claim): proc() {.raises: [].} =
+            proc (claim: Claim): bool {.raises: [ValueError, BLSError, SodiumError, FinalAttributeError].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Claim."
 
@@ -58,6 +58,7 @@ proc mainLattice() {.raises: [
                     merit,
                     claim
                 ):
+                    result = true
                     echo "Successfully added the Claim."
 
                     #If it worked, broadcast the Claim.
@@ -72,6 +73,7 @@ proc mainLattice() {.raises: [
                     #Create a Verification.
                     verify(claim)
                 else:
+                    result = false
                     echo "Failed to add the Claim."
                 echo ""
         )
@@ -79,7 +81,7 @@ proc mainLattice() {.raises: [
         #Handle Sends.
         events.on(
             "lattice.send",
-            proc (send: Send): proc () {.raises: [
+            proc (send: Send): bool {.raises: [
                 ValueError,
                 EventError,
                 BLSError,
@@ -94,6 +96,7 @@ proc mainLattice() {.raises: [
                     merit,
                     send
                 ):
+                    result = true
                     echo "Successfully added the Send."
 
                     #If it worked, broadcast the Send.
@@ -131,6 +134,7 @@ proc mainLattice() {.raises: [
                     #Create a Verification.
                     verify(send)
                 else:
+                    result = false
                     echo "Failed to add the Send."
                 echo ""
         )
@@ -138,7 +142,7 @@ proc mainLattice() {.raises: [
         #Handle Receives.
         events.on(
             "lattice.receive",
-            proc (recv: Receive) {.raises: [
+            proc (recv: Receive): bool {.raises: [
                 ValueError,
                 BLSError,
                 SodiumError,
@@ -152,6 +156,7 @@ proc mainLattice() {.raises: [
                     merit,
                     recv
                 ):
+                    result = true
                     echo "Successfully added the Receive."
 
                     #If it worked, broadcast the Receive.
@@ -166,6 +171,7 @@ proc mainLattice() {.raises: [
                     #Create a Verification.
                     verify(recv)
                 else:
+                    result = false
                     echo "Failed to add the Receive."
                 echo ""
         )
@@ -176,7 +182,7 @@ proc mainLattice() {.raises: [
             proc (
                 msg: Message,
                 data: Data
-            ) {.raises: [
+            ): bool {.raises: [
                 ValueError,
                 BLSError,
                 SodiumError,
@@ -190,6 +196,7 @@ proc mainLattice() {.raises: [
                     merit,
                     data
                 ):
+                    result = true
                     echo "Successfully added the Data."
 
                     #If it worked, broadcast the Data.
@@ -204,6 +211,7 @@ proc mainLattice() {.raises: [
                     #Create a Verification.
                     verify(data)
                 else:
+                    result = false
                     echo "Failed to add the Data."
                 echo ""
         )

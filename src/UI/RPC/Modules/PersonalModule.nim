@@ -100,8 +100,8 @@ proc send(
 
     try:
         #Add it.
-        rpc.events.get(
-            proc (send: Send),
+        discard rpc.events.get(
+            proc (send: Send): bool,
             "lattice.send"
         )(send)
     except:
@@ -150,7 +150,7 @@ proc receive(
     try:
         #Add it.
         rpc.events.get(
-            proc (recv: Receive),
+            discard proc (recv: Receive): bool,
             "lattice.receive"
         )(recv)
     except:

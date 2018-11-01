@@ -98,12 +98,13 @@ proc mainMerit() {.raises: [
 
                             #Emit it.
                             try:
-                                events.get(
-                                    proc (claim: Claim),
+                                if not events.get(
+                                    proc (claim: Claim): bool,
                                     "lattice.claim"
-                                )(claim)
+                                )(claim):
+                                    raise newException(Exception, "")
                             except:
-                                raise newException(EventError, "Couldn't get and call lattice.receive.")
+                                raise newException(EventError, "Couldn't get and call lattice.claim.")
 
                 echo "Successfully added the Block."
         )
