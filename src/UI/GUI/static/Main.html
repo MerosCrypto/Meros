@@ -10,7 +10,8 @@
         If you don't have a seed, leave the field blank to create one.
         <br>
         Seed: <input type='text' id='seedInput'></input> <button onclick=\"
-            Wallet.create(document.getElementById('seedInput').value);
+            Personal.setSeed(document.getElementById('seedInput').value);
+            Personal.getWallet();
         \">Set Seed</button>
 
         <br>

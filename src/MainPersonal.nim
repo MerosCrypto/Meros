@@ -29,6 +29,6 @@ proc mainPersonal() {.raises: [ValueError, RandomError, SodiumError, FinalAttrib
         #Sign a Receive.
         events.on(
             "personal.signReceive",
-            proc (recv: Receive): bool {.raises: [SodiumError, FinalAttributeError].} =
+            proc (recv: Receive) {.raises: [SodiumError, FinalAttributeError].} =
                 wallet.sign(recv)
         )

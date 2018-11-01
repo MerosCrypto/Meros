@@ -5,6 +5,9 @@ import ../../../lib/Errors
 import BN
 import ../../../lib/Base
 
+#Hash lib.
+import ../../../lib/Hash
+
 #Wallet lib.
 import ../../../Wallet/Wallet
 
@@ -119,7 +122,6 @@ proc receive(
     nonce: uint
 ): JSONNode {.raises: [
     ValueError,
-    PersonalError,
     EventError,
     FinalAttributeError
 ].} =
@@ -133,24 +135,20 @@ proc receive(
     )
 
     #Sign the Receive.
-    var sign: proc(recv: Receive): bool
+    var sign: proc(recv: Receive)
     try:
         sign = rpc.events.get(
-            proc (recv: Receive): bool,
+            proc (recv: Receive),
             "personal.signReceive"
         )
+        recv.sign()
     except:
         raise newException(EventError, "Couldn't get and call personal.signReceive.")
-    try:
-        if not recv.sign():
-            raise newException(Exception, "")
-    except:
-        raise newException(PersonalError, "Couldn't sign the Receive.")
 
     try:
         #Add it.
-        rpc.events.get(
-            discard proc (recv: Receive): bool,
+        discard rpc.events.get(
+            proc (recv: Receive): bool,
             "lattice.receive"
         )(recv)
     except:

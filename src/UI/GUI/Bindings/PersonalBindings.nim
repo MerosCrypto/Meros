@@ -87,9 +87,9 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
         gui.webview.bindProc(
             "Personal",
             "setSeed",
-            proc (seed: string) {.raises: [KeyError, ChannelError, WebViewError].} =
+            proc (seed: string) {.raises: [ChannelError].} =
                 #Var for the response.
-                var wallet: JSONNode
+                var res: JSONNode
                 try:
                     gui.toRPC[].send(%* {
                         "module": "personal",
@@ -99,36 +99,24 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                         ]
                     })
 
-                    #Receive the Wallet info.
-                    wallet = gui.toGUI[].recv()
+                    #Receive whether or not it worked.
+                    res = gui.toGUI[].recv()
                 except:
                     raise newException(ChannelError, "Couldn't set the Wallet's Seed.")
-
-                #Set the elements.
-                if gui.webview.eval(
-                    "document.getElementById('seed').innerHTML = '" & wallet["seed"].getStr() & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
-                if gui.webview.eval(
-                    "document.getElementById('publicKey').innerHTML = '" & wallet["publicKey"].getStr() & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
-                if gui.webview.eval(
-                    "document.getElementById('address').innerHTML = '" & wallet["address"].getStr() & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
         )
 
         #Send.
         gui.webview.bindProc(
             "Personal",
             "send",
-            proc (dataArg: string) {.raises: [ChannelError].} =
+            proc (dataArg: string) {.raises: [ChannelError, WebViewError].} =
                 #Split the data up.
                 var data: seq[string] = dataArg.split(" ")
 
-                #Create the Send.
+                #Var for the response.
+                var hash: string
                 try:
+                    #Create the Send.
                     gui.toRPC[].send(%* {
                         "module": "personal",
                         "method": "send",
@@ -138,24 +126,28 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             gui.getNonce()
                         ]
                     })
-
-                    #Receive the hash and print it.
-                    if gui.webview.eval(
-                        "document.getElementById('hash').innerHTML = '" & gui.toGUI[].recv()["hash"].getStr() & "';"
-                    ) != 0:
-                        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                    
+                    hash = gui.toGUI[].recv()["hash"].getStr()
                 except:
                     raise newException(ChannelError, "Couldn't send personal.send over the channel.")
+
+                #Receive the hash and print it.
+                if gui.webview.eval(
+                    "document.getElementById('hash').innerHTML = '" & hash & "';"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
         )
 
         #Receive.
         gui.webview.bindProc(
             "Personal",
             "receive",
-            proc (dataArg: string) {.raises: [ChannelError].} =
+            proc (dataArg: string) {.raises: [ChannelError, WebViewError].} =
                 #Split the data.
                 var data: seq[string] = dataArg.split(" ")
 
+                #Var for the response.
+                var hash: string
                 try:
                     #Create the Receive.
                     gui.toRPC[].send(%* {
@@ -167,14 +159,16 @@ proc addTo*(gui: GUI) {.raises: [WebViewError].} =
                             gui.getNonce()
                         ]
                     })
-
-                    #Receive the hash and print it.
-                    if gui.webview.eval(
-                        "document.getElementById('hash').innerHTML = '" & gui.toGUI[].recv()["hash"].getStr() & "';"
-                    ) != 0:
-                        raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                    
+                    hash = gui.toGUI[].recv()["hash"].getStr()
                 except:
-                    raise newException(ChannelError, "Couldn't send lattice.receive over the channel.")
+                    raise newException(ChannelError, "Couldn't send personal.receive over the channel.")
+
+                #Receive the hash and print it.
+                if gui.webview.eval(
+                    "document.getElementById('hash').innerHTML = '" & hash & "';"
+                ) != 0:
+                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
         )
     except:
         raise newException(WebViewError, "Couldn't bind procs to WebView.")
