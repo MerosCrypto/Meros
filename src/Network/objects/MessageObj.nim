@@ -12,7 +12,7 @@ finalsd:
             Receive = 4,
             Data = 5
 
-        #Message obkect.
+        #Message object.
         Message* = ref object of RootObj
             client* {.final.}: uint
             network* {.final.}: uint
