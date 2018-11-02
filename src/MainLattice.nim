@@ -230,6 +230,13 @@ proc mainLattice() {.raises: [
                 lattice.getAccount(account).balance
         )
 
+        #Handle requests for the Unarchived Verifications.
+        events.on(
+            "lattice.getUnarchivedVerifications",
+            proc (): seq[MemoryVerification] =
+                lattice.unarchived
+        )
+
         #Print the Seed and address of the address holding the coins.
         echo MINT_PUBKEY & " was sent " & MINT_AMOUNT & " EMB from \"minter\".\r\n" &
             "Its Private Key is " & MINT_PRIVKEY & ".\r\n"

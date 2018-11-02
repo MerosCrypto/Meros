@@ -7,7 +7,6 @@
 - Have Merit Holders indexable by the order they got Merit in.
 - Resolve Merit forks.
 
-- Only add meaningful verifications.
 - Resolve Lattice forks (right now, unverified Nodes are treated as Verified when it comes to their permeance...).
 
 - Handshake when connecting to Nodes.
@@ -19,7 +18,7 @@
 
 - Database.
 
-- Check Signatures in Serialize Tests.
+- Check Signatures in Serialize Tests since we no longer do it in Serialize.
 - Tests.
 
 - Test Minting/Auto-Claim/Auto-Receive (requires a test network).
@@ -33,7 +32,6 @@
 - Make `Logger.extraneous` enabled via a runtime option.
 
 - Have RPC handle things in order OR use an ID system.
-- `getUnarchivedVerifications` RPC route.
 - RPC creation of Claims.
 - Have the RPC dynamically get the mining difficulty (it's currently hardcoded).
 

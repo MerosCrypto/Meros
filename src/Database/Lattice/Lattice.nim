@@ -167,6 +167,10 @@ proc verify*(
     merit: Merit,
     verif: Verification,
 ): bool {.raises: [KeyError, ValueError].} =
+    #Make sure the verifier has weight.
+    if merit.state.getBalance(verif.verifier) == uint(0):
+        return false
+
     #Turn the hash into a string.
     var hash: string = verif.hash.toString()
 
