@@ -1,18 +1,18 @@
 #Serialize Receive Tests.
 
 #Wallet lib.
-import ../../../src/Wallet/Wallet
+import ../../../../src/Wallet/Wallet
 
 #Index and Entry object.
-import ../../../src/Database/Lattice/objects/IndexObj
-import ../../../src/Database/Lattice/objects/EntryObj
+import ../../../../src/Database/Lattice/objects/IndexObj
+import ../../../../src/Database/Lattice/objects/EntryObj
 
 #Receive lib.
-import ../../../src/Database/Lattice/Receive
+import ../../../../src/Database/Lattice/Receive
 
 #Serialize lib.
-import ../../../src/Network/Serialize/SerializeReceive
-import ../../../src/Network/Serialize/ParseReceive
+import ../../../../src/Network/Serialize/Lattice/SerializeReceive
+import ../../../../src/Network/Serialize/Lattice/ParseReceive
 
 #Test 20 serializations.
 for i in 1 .. 20:
@@ -75,4 +75,4 @@ for i in 1 .. 20:
         "Input Nonce:\r\n" & $recv.index.nonce & "\r\n" & $recvParsed.index.nonce
     )
 
-echo "Finished the Network/Serialize/Receive test."
+echo "Finished the Network/Serialize/Lattice/Receive test."

@@ -23,13 +23,13 @@ import Database/Lattice/Lattice
 import Network/Network
 
 #Serialization libs.
-import Network/Serialize/SerializeMiners
-import Network/Serialize/SerializeVerification
+import Network/Serialize/Merit/SerializeMiners
+import Network/Serialize/Merit/SerializeVerifications
 
-import Network/Serialize/SerializeClaim
-import Network/Serialize/SerializeSend
-import Network/Serialize/SerializeReceive
-import Network/Serialize/SerializeData
+import Network/Serialize/Lattice/SerializeClaim
+import Network/Serialize/Lattice/SerializeSend
+import Network/Serialize/Lattice/SerializeReceive
+import Network/Serialize/Lattice/SerializeData
 
 #UI.
 import UI/UI

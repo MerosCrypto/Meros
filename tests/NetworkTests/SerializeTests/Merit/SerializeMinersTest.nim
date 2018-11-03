@@ -1,17 +1,17 @@
 #Serialize Miners Tests.
 
-#Wallet lib.
-import ../../../src/Database/Merit/MinerWallet
-
 #Miners object.
-import ../../../src/Database/Merit/objects/MinersObj
+import ../../../../src/Database/Merit/objects/MinersObj
+
+#MinerWallet lib.
+import ../../../../src/Database/Merit/MinerWallet
 
 #Serialize lib.
-import ../../../src/Network/Serialize/SerializeMiners
-import ../../../src/Network/Serialize/ParseMiners
+import ../../../../src/Network/Serialize/Merit/SerializeMiners
+import ../../../../src/Network/Serialize/Merit/ParseMiners
 
 #BLS lib.
-import ../../../src/lib/BLS
+import ../../../../src/lib/BLS
 
 #Random/Time/Algorithm standard libs. They're used to randomize the testing data.
 import random
@@ -75,10 +75,10 @@ for i in 1 .. 20:
     )
 
     #Serialize it and parse it back.
-    var minersParsed: Miners = miners.serialize(0).parseMiners()
+    var minersParsed: Miners = miners.serialize().parseMiners()
 
     #Test the serialized versions.
-    assert(miners.serialize(0) == minersParsed.serialize(0))
+    assert(miners.serialize() == minersParsed.serialize())
 
     #Test the length.
     assert(miners.len == minersParsed.len)
@@ -89,4 +89,4 @@ for i in 1 .. 20:
         assert(miners[i].amount == minersParsed[i].amount)
 
 
-echo "Finished the Network/Serialize/Miners test."
+echo "Finished the Network/Serialize/Merit/Miners test."

@@ -3,11 +3,11 @@ import ../lib/Errors
 
 #Send libs.
 import ../Database/Lattice/Send
-import Serialize/ParseSend
+import Serialize/Lattice/ParseSend
 
 #Receive libs.
 import ../Database/Lattice/Receive
-import Serialize/ParseReceive
+import Serialize/Lattice/ParseReceive
 
 #Message/Client/Clients/Network objects.
 import objects/ClientObj

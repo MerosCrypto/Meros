@@ -8,12 +8,12 @@ import ../Database/Merit/Merit
 import ../Database/Lattice/Lattice
 
 #Parsing libs.
-import Serialize/ParseVerification
-import Serialize/ParseBlock
-import Serialize/ParseClaim
-import Serialize/ParseSend
-import Serialize/ParseReceive
-import Serialize/ParseData
+import Serialize/Merit/ParseVerifications
+import Serialize/Merit/ParseBlock
+import Serialize/Lattice/ParseClaim
+import Serialize/Lattice/ParseSend
+import Serialize/Lattice/ParseReceive
+import Serialize/Lattice/ParseData
 
 #Message/Clients/Network objects.
 import objects/MessageObj

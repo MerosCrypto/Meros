@@ -1,18 +1,18 @@
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Base lib.
-import ../../lib/Base
+import ../../../lib/Base
 
 #Address lib.
-import ../../Wallet/Address
+import ../../../Wallet/Address
 
 #Entry and Send object.
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/objects/SendObj
+import ../../../Database/Lattice/objects/EntryObj
+import ../../../Database/Lattice/objects/SendObj
 
 #Common serialization functions.
-import SerializeCommon
+import ../SerializeCommon
 
 #Serialize a Send.
 proc serialize*(send: Send): string {.raises: [ValueError].} =

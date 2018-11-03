@@ -1,24 +1,23 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
+
+#BLS lib.
+import ../../../lib/BLS
 
 #Verification object.
-import ../../Database/Merit/objects/VerificationsObj
+import ../../../Database/Merit/objects/VerificationsObj
 
 #Serialize/Deserialize functions.
-import SerializeCommon
-import SerializeVerification
+import ../SerializeCommon
 
 #Finals lib.
 import finals
-
-#BLS lib.
-import ../../lib/BLS
 
 #String utils standard lib.
 import strutils
@@ -47,12 +46,28 @@ proc parseVerification*(
     )
     result.verifier = verifier
 
-    #Verify the BLS signature.
-    sig.setAggregationInfo(
-        newBLSAggregationInfo(verifier, result.hash.toString())
-    )
-    if not sig.verify():
-        raise newException(ValueError, "Received signature was invalid.")
-
     #Set the signature.
     result.signature = sig
+
+#Parse Verifications.
+proc parseVerifications*(
+    verifsStr: string,
+    signature: BLSSignature
+): Verifications {.raises: [
+    ValueError,
+    BLSError,
+    FinalAttributeError
+].} =
+    #Create the result.
+    result = newVerificationsObj()
+
+    #Deserialize the data.
+    var verifsSeq: seq[string] = verifsStr.deserialize()
+
+    for i in countup(0, verifsSeq.len - 1, 2):
+        result.verifications.add(
+            newMemoryVerificationObj(
+                verifsSeq[i].pad(64).toHash(512)
+            )
+        )
+        result.verifications[^1].verifier = newBLSPublicKey(verifsSeq[i+1].pad(48))

@@ -14,7 +14,7 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
-import ../../Network/Serialize/SerializeData
+import ../../Network/Serialize/Lattice/SerializeData
 
 #Entry object.
 import objects/EntryObj

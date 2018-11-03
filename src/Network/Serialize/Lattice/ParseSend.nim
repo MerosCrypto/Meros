@@ -1,26 +1,26 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Numerical libs.
 import BN
-import ../../lib/Base
+import ../../../lib/Base
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
 
 #Wallet libraries.
-import ../../Wallet/Address
-import ../../Wallet/Wallet
+import ../../../Wallet/Address
+import ../../../Wallet/Wallet
 
 #Entry object and Send object.
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/objects/SendObj
+import ../../../Database/Lattice/objects/EntryObj
+import ../../../Database/Lattice/objects/SendObj
 
 #Serialize/Deserialize functions.
-import SerializeCommon
+import ../SerializeCommon
 import SerializeSend
 
 #Finals lib.

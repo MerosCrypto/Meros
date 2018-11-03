@@ -9,7 +9,7 @@ import ../../Wallet/Wallet
 import ../../Wallet/Address
 
 #Import the Serialization library.
-import ../../Network/Serialize/SerializeReceive
+import ../../Network/Serialize/Lattice/SerializeReceive
 
 #Index object.
 import objects/IndexObj

@@ -1,21 +1,21 @@
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Base lib.
-import ../../lib/Base
+import ../../../lib/Base
 
 #BLS lib.
-import ../../lib/BLS
+import ../../../lib/BLS
 
 #Address library.
-import ../../Wallet/Address
+import ../../../Wallet/Address
 
 #Entry and Claim objects.
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/objects/ClaimObj
+import ../../../Database/Lattice/objects/EntryObj
+import ../../../Database/Lattice/objects/ClaimObj
 
 #Common serialization functions.
-import SerializeCommon
+import ../SerializeCommon
 
 #Serialize a Claim.
 proc serialize*(claim: Claim): string {.raises: [ValueError].} =

@@ -1,22 +1,22 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
 
 #Wallet libraries.
-import ../../Wallet/Address
-import ../../Wallet/Wallet
+import ../../../Wallet/Address
+import ../../../Wallet/Wallet
 
 #Entry object and MeritRemoval object.
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/objects/MeritRemovalObj
+import ../../../Database/Lattice/objects/EntryObj
+import ../../../Database/Lattice/objects/MeritRemovalObj
 
 #Deserialize function.
-import SerializeCommon
+import ../SerializeCommon
 import SerializeMeritRemoval
 
 #Finals lib.

@@ -1,18 +1,18 @@
 #Serialize MeritRemoval Test.
 
 #Hash lib.
-import ../../../src/lib/Hash
+import ../../../../src/lib/Hash
 
 #Wallet lib.
-import ../../../src/Wallet/Wallet
+import ../../../../src/Wallet/Wallet
 
 #Entry object and the MeritRemoval lib.
-import ../../../src/Database/Lattice/objects/EntryObj
-import ../../../src/Database/Lattice/MeritRemoval
+import ../../../../src/Database/Lattice/objects/EntryObj
+import ../../../../src/Database/Lattice/MeritRemoval
 
 #Serialize lib.
-import ../../../src/Network/Serialize/SerializeMeritRemoval
-import ../../../src/Network/Serialize/ParseMeritRemoval
+import ../../../../src/Network/Serialize/Lattice/SerializeMeritRemoval
+import ../../../../src/Network/Serialize/Lattice/ParseMeritRemoval
 
 #Random standard lib.
 import random
@@ -63,4 +63,4 @@ for i in 1 .. 20:
     assert(mr.first == mrParsed.first)
     assert(mr.second == mrParsed.second)
 
-echo "Finished the Network/Serialize/MeritRemoval test."
+echo "Finished the Network/Serialize/Lattice/MeritRemoval test."

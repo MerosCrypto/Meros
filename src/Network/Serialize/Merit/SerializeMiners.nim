@@ -1,26 +1,22 @@
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Miners object.
-import ../../Database/Merit/objects/MinersObj
+import ../../../Database/Merit/objects/MinersObj
 
 #Common serialization functions.
-import SerializeCommon
+import ../SerializeCommon
 
 #BLS lib.
-import ../../lib/BLS
+import ../../../lib/BLS
 
 #String utils standard library.
 import strutils
 
 #Serialization function.
-proc serialize*(
-    miners: Miners,
-    nonce: uint
+func serialize*(
+    miners: Miners
 ): string {.raises: [].} =
-    #Create the result.
-    result = !nonce.toBinary()
-
     #Add each miner.
     for miner in 0 ..< miners.len:
         result &=

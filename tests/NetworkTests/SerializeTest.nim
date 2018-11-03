@@ -1,14 +1,15 @@
 #Test for all the Serialize/Parse functions.
 
 #Merit Serialize.
-import SerializeTests/SerializeMinersTest
-import SerializeTests/SerializeBlockTest
+import SerializeTests/Merit/SerializeBlockHeaderTest
+import SerializeTests/Merit/SerializeVerificationsTest
+import SerializeTests/Merit/SerializeMinersTest
+import SerializeTests/Merit/SerializeBlockTest
 
 #Lattice Serialize.
-import SerializeTests/SerializeMintTest
-import SerializeTests/SerializeClaimTest
-import SerializeTests/SerializeSendTest
-import SerializeTests/SerializeReceiveTest
-import SerializeTests/SerializeDataTest
-import SerializeTests/SerializeVerificationTest
-import SerializeTests/SerializeMeritRemovalTest
+import SerializeTests/Lattice/SerializeMintTest
+import SerializeTests/Lattice/SerializeClaimTest
+import SerializeTests/Lattice/SerializeSendTest
+import SerializeTests/Lattice/SerializeReceiveTest
+import SerializeTests/Lattice/SerializeDataTest
+import SerializeTests/Lattice/SerializeMeritRemovalTest

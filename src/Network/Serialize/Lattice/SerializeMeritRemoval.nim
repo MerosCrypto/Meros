@@ -1,21 +1,21 @@
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Base lib.
-import ../../lib/Base
+import ../../../lib/Base
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
 
 #Address lib.
-import ../../Wallet/Address
+import ../../../Wallet/Address
 
 #Entry and MeritRemoval object.
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/objects/MeritRemovalObj
+import ../../../Database/Lattice/objects/EntryObj
+import ../../../Database/Lattice/objects/MeritRemovalObj
 
 #Common serialization functions.
-import SerializeCommon
+import ../SerializeCommon
 
 #Serialize a MeritRemoval.
 proc serialize*(mr: MeritRemoval): string {.raises: [ValueError].} =

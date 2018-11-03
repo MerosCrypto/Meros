@@ -23,9 +23,16 @@ proc mainMerit() {.raises: [
         #Handle Verifications.
         events.on(
             "merit.verification",
-            proc (verif: MemoryVerification): bool {.raises: [ValueError].} =
+            proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].} =
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification."
+
+                #Verify the signature.
+                verif.signature.setAggregationInfo(
+                    newBLSAggregationInfo(verif.verifier, verif.hash.toString())
+                )
+                if not verif.signature.verify():
+                    return false
 
                 #Add the Verification to the Lattice.
                 result = lattice.verify(merit, verif)

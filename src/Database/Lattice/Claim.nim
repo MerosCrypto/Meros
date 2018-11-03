@@ -12,7 +12,7 @@ import ../Merit/MinerWallet
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
-import ../../Network/Serialize/SerializeClaim
+import ../../Network/Serialize/Lattice/SerializeClaim
 
 #Entry object.
 import objects/EntryObj

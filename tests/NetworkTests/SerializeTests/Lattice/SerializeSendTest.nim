@@ -2,21 +2,21 @@
 
 #Numerical libs.
 import BN
-import ../../../src/lib/Base
+import ../../../../src/lib/Base
 
 #Hash lib.
-import ../../../src/lib/Hash
+import ../../../../src/lib/Hash
 
 #Wallet lib.
-import ../../../src/Wallet/Wallet
+import ../../../../src/Wallet/Wallet
 
 #Entry object and the Send lib.
-import ../../../src/Database/Lattice/objects/EntryObj
-import ../../../src/Database/Lattice/Send
+import ../../../../src/Database/Lattice/objects/EntryObj
+import ../../../../src/Database/Lattice/Send
 
 #Serialize lib.
-import ../../../src/Network/Serialize/SerializeSend
-import ../../../src/Network/Serialize/ParseSend
+import ../../../../src/Network/Serialize/Lattice/SerializeSend
+import ../../../../src/Network/Serialize/Lattice/ParseSend
 
 #Test 20 serializations.
 for i in 1 .. 20:
@@ -56,4 +56,4 @@ for i in 1 .. 20:
     assert(send.sha512 == sendParsed.sha512)
     assert(send.proof == sendParsed.proof)
 
-echo "Finished the Network/Serialize/Send test."
+echo "Finished the Network/Serialize/Lattice/Send test."

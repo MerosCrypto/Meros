@@ -1,25 +1,25 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
 
 #BLS lib.
-import ../../lib/BLS
+import ../../../lib/BLS
 
 #Wallet libraries.
-import ../../Wallet/Address
-import ../../Wallet/Wallet
+import ../../../Wallet/Address
+import ../../../Wallet/Wallet
 
 #Entry, and Claim object.
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/Claim
+import ../../../Database/Lattice/objects/EntryObj
+import ../../../Database/Lattice/Claim
 
 #Serialize/Deserialize functions.
-import SerializeCommon
+import ../SerializeCommon
 import SerializeClaim
 
 #Finals lib.

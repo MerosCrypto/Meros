@@ -18,7 +18,10 @@ func `!`*(data: string): string {.raises: [].} =
     result &= data
 
 #Deseralizes a string by getting the length of the next byte, slicing that out, and moving on.
-func deserialize*(data: string, estimated: int): seq[string] {.raises: [].} =
+func deserialize*(
+    data: string,
+    estimated: int = 0
+): seq[string] {.raises: [].} =
     #Allocate the seq.
     result = newSeq[string](estimated)
 

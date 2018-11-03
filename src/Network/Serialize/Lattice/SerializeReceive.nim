@@ -1,19 +1,19 @@
 #Util lib.
-import ../../lib/Util
+import ../../../lib/Util
 
 #Base lib.
-import ../../lib/Base
+import ../../../lib/Base
 
 #Address library.
-import ../../Wallet/Address
+import ../../../Wallet/Address
 
 #Index, Entry, and Receive objects.
-import ../../Database/Lattice/objects/IndexObj
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/objects/ReceiveObj
+import ../../../Database/Lattice/objects/IndexObj
+import ../../../Database/Lattice/objects/EntryObj
+import ../../../Database/Lattice/objects/ReceiveObj
 
 #Common serialization functions.
-import SerializeCommon
+import ../SerializeCommon
 
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError].} =

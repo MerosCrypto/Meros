@@ -8,7 +8,7 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
-import ../../Network/Serialize/SerializeMeritRemoval
+import ../../Network/Serialize/Lattice/SerializeMeritRemoval
 
 #Entry object.
 import objects/EntryObj

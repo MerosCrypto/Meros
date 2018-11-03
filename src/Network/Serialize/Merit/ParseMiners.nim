@@ -1,20 +1,20 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Util lib.
-import ../../lib/Util
-
-#Address library.
-import ../../Wallet/Address
-
-#Miners object.
-import ../../Database/Merit/objects/MinersObj
-
-#Common serialization functions.
-import SerializeCommon
+import ../../../lib/Util
 
 #BLS lib.
-import ../../lib/BLS
+import ../../../lib/BLS
+
+#Address library.
+import ../../../Wallet/Address
+
+#Miners object.
+import ../../../Database/Merit/objects/MinersObj
+
+#Common serialization functions.
+import ../SerializeCommon
 
 #String utils standard library.
 import strutils
@@ -26,17 +26,14 @@ proc parseMiners*(
     #Init the result.
     result = @[]
 
-    #Nonce | Address1 | Amount1 .. | AddressN | AmountN
+    #Address1 | Amount1 .. | AddressN | AmountN
     var minersSeq: seq[string] = minersStr.deserialize(3)
 
     #Add each miner/amount.
-    for i in countup(1, minersSeq.len - 1, 2):
-        #Create the Public Key.
-        var key: BLSPublicKey = newBLSPublicKey(minersSeq[i])
-
+    for i in countup(0, minersSeq.len - 1, 2):
         result.add(
             newMinerObj(
-                key,
+                newBLSPublicKey(minersSeq[i]),
                 uint(minersSeq[i + 1][0])
             )
         )

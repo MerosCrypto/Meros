@@ -1,21 +1,21 @@
 #Serialize Data Test.
 
 #Base lib.
-import ../../../src/lib/Base
+import ../../../../src/lib/Base
 
 #Hash lib.
-import ../../../src/lib/Hash
+import ../../../../src/lib/Hash
 
 #Wallet lib.
-import ../../../src/Wallet/Wallet
+import ../../../../src/Wallet/Wallet
 
 #Entry object and the Data lib.
-import ../../../src/Database/Lattice/objects/EntryObj
-import ../../../src/Database/Lattice/Data
+import ../../../../src/Database/Lattice/objects/EntryObj
+import ../../../../src/Database/Lattice/Data
 
 #Serialize lib.
-import ../../../src/Network/Serialize/SerializeData
-import ../../../src/Network/Serialize/ParseData
+import ../../../../src/Network/Serialize/Lattice/SerializeData
+import ../../../../src/Network/Serialize/Lattice/ParseData
 
 #String utils standard lib.
 import strutils
@@ -56,7 +56,7 @@ for i in 1 .. 20:
             tests[i - 1],
             0
         )
-    
+
     #Mine the Data.
     data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
     #Sign it.
@@ -80,4 +80,4 @@ for i in 1 .. 20:
     assert(data.sha512 == dataParsed.sha512)
     assert(data.proof == dataParsed.proof)
 
-echo "Finished the Network/Serialize/Data test."
+echo "Finished the Network/Serialize/Lattice/Data test."

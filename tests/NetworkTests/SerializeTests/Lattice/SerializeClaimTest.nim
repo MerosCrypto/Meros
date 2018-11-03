@@ -1,23 +1,23 @@
 #Serialize Claim Tests.
 
 #BLS lib.
-import ../../../src/lib/BLS
+import ../../../../src/lib/BLS
 
 #MinerWallet lib.
-import ../../../src/Database/Merit/MinerWallet
+import ../../../../src/Database/Merit/MinerWallet
 
 #Wallet lib.
-import ../../../src/Wallet/Wallet
+import ../../../../src/Wallet/Wallet
 
 #Entry object.
-import ../../../src/Database/Lattice/objects/EntryObj
+import ../../../../src/Database/Lattice/objects/EntryObj
 
 #Claim lib.
-import ../../../src/Database/Lattice/Claim
+import ../../../../src/Database/Lattice/Claim
 
 #Serialize lib.
-import ../../../src/Network/Serialize/SerializeClaim
-import ../../../src/Network/Serialize/ParseClaim
+import ../../../../src/Network/Serialize/Lattice/SerializeClaim
+import ../../../../src/Network/Serialize/Lattice/ParseClaim
 
 #Test 20 serializations.
 for i in 1 .. 20:
@@ -77,4 +77,4 @@ for i in 1 .. 20:
         "BLS Signature:\r\n" & $claim.bls & "\r\n" & $claimParsed.bls
     )
 
-echo "Finished the Network/Serialize/Claim test."
+echo "Finished the Network/Serialize/Lattice/Claim test."

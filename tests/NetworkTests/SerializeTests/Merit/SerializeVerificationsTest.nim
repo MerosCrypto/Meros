@@ -1,25 +1,25 @@
 #Serialize Verification Test.
 
 #Hash lib.
-import ../../../src/lib/Hash
+import ../../../../src/lib/Hash
 
 #MinerWallet lib.
-import ../../../src/Database/Merit/MinerWallet
+import ../../../../src/Database/Merit/MinerWallet
 
 #Verifications lib.
-import ../../../src/Database/Merit/Verifications
+import ../../../../src/Database/Merit/Verifications
 
 #Serialize lib.
-import ../../../src/Network/Serialize/SerializeVerification
-import ../../../src/Network/Serialize/ParseVerification
+import ../../../../src/Network/Serialize/Merit/SerializeVerifications
+import ../../../../src/Network/Serialize/Merit/ParseVerifications
 
 #BLS lib.
-import ../../../src/lib/BLS
+import ../../../../src/lib/BLS
 
 #Random standard lib.
 import random
 
-#Test 20 serializations.
+#Test 20 Verification serializations.
 for i in 1 .. 20:
     echo "Testing Verification Serialization/Parsing, iteration " & $i & "."
 
@@ -46,4 +46,4 @@ for i in 1 .. 20:
     assert(verif.hash == verifParsed.hash)
     assert(verif.signature == verifParsed.signature)
 
-echo "Finished the Network/Serialize/Verification test."
+echo "Finished the Network/Serialize/Merit/Verification test."

@@ -1,0 +1,29 @@
+#Util lib.
+import ../../../lib/Util
+
+#Hash lib.
+import ../../../lib/Hash
+
+#Merkle lib.
+import ../../../lib/Merkle
+
+#BLS lib.
+import ../../../lib/BLS
+
+#Wallet lib.
+import ../../../Wallet/Wallet
+
+#BlockHeader object.
+import ../../../Database/Merit/objects/BlockHeaderObj
+
+#Common serialization functions.
+import ../SerializeCommon
+
+#Serialize a Block Header.
+func serialize*(header: BlockHeader): string {.raises: [].} =
+    result =
+        !header.nonce.toBinary() &
+        !header.last.toString() &
+        !header.verifications.toString() &
+        !header.miners.toString() &
+        !header.time.toBinary()
