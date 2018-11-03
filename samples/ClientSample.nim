@@ -12,8 +12,8 @@ import ../src/Wallet/Wallet
 import ../src/Database/Lattice/Lattice
 
 #Serialization libs.
-import ../src/Network/Serialize/SerializeSend
-import ../src/Network/Serialize/SerializeReceive
+import ../src/Network/Serialize/Lattice/SerializeSend
+import ../src/Network/Serialize/Lattice/SerializeReceive
 
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch

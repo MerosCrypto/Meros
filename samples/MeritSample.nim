@@ -11,7 +11,7 @@ import ../src/Wallet/Wallet
 import ../src/Database/Merit/Merit
 
 #Serialization libs.
-import ../src/Network/Serialize/SerializeMiners
+import ../src/Network/Serialize/Merit/SerializeMiners
 
 #String utils standard lib.
 import strutils
@@ -19,67 +19,62 @@ import strutils
 #Main function is so these varriables can be GC'd.
 proc main() =
     var
-        #Create a Wallet.
-        wallet: Wallet = newWallet()
         #Create a Wallet for signing Verifications.
         miner: MinerWallet = newMinerWallet()
-        #Gensis var.
+        #Gensis string.
         genesis: string = "mainnet"
-        #Merit var.
+        #Merit.
         merit: Merit = newMerit(genesis, 10, "cc".repeat(64), 50)
-        #Block var; defined here to stop a memory leak.
+        #Block.
         newBlock: Block
-        #Last block hash, nonce, time, and proof vars.
-        last: ArgonHash = merit.blockchain.blocks[0].argon
+        #Noce and the last block hash.
         nonce: uint = 1
-        time: uint
-        proof: uint = 0
+        last: ArgonHash = merit.blockchain.blocks[0].argon
+        #Verifications object.
+        verifs: Verifications = newVerificationsObj()
+        #Miners object.
         miners: Miners = @[(
             newMinerObj(
                 miner.publicKey,
                 100
             )
         )]
-        #Verifications object.
-        verifs: Verifications = newVerificationsObj()
+    #Calculate the Verifications' signature.
     verifs.calculateSig()
 
     echo "First balance: " & $merit.state.getBalance(miner.publicKey)
 
     #Mine the chain.
     while true:
-        echo "Looping with a proof of: " & $proof
-
-        #Update the time.
-        time = getTime()
-
         #Create a block.
         newBlock = newBlock(
-            last,
             nonce,
-            time,
+            last,
             verifs,
-            wallet.publicKey,
-            proof,
-            miners,
-            wallet.sign(SHA512(miners.serialize(nonce)).toString())
+            miners
         )
 
-        #Try to add it.
-        try:
-            discard merit.processBlock(newBlock):
-        except:
-            #If it's invalid, increase the proof and continue.
-            inc(proof)
-            continue
+        #Mine it.
+        while true:
+            try:
+                #Add it.
+                discard merit.processBlock(newBlock)
+                #If we succeded, break.
+                break
+            except:
+                #If we failed, print the proof we tried.
+                echo "Proof " & $newBlock.proof & " failed."
+                #Increase the proof.
+                inc(newBlock)
 
-        #If we didn't continue, the block was valid! Print that we mined a block!
+        #Print that we mined a block.
         echo "Mined a block: " & $nonce
+        #Print our balance.
         echo "The miner's Merit is " & $merit.state.getBalance(miner.publicKey) & "."
 
-        #Finally, update the last hash, increase the nonce, and reset the proof.
-        last = newBlock.argon
+        #Increase the nonce.
         inc(nonce)
-        proof = 0
+        #Update last.
+        last = newBlock.argon
 
 main()

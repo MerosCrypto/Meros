@@ -3,7 +3,7 @@ import BN
 
 #BLS and Miner Wallet libs.
 import ../src/lib/BLS
-import ../src/Database/Merit/Miner/MinerWallet
+import ../src/Database/Merit/MinerWallet
 
 #Wallet lib.
 import ../src/Wallet/Wallet
@@ -12,8 +12,8 @@ import ../src/Wallet/Wallet
 import ../src/Database/Lattice/Lattice
 
 #Serialization libs.
-import ../src/Network/Serialize/SerializeSend
-import ../src/Network/Serialize/SerializeReceive
+import ../src/Network/Serialize/Lattice/SerializeSend
+import ../src/Network/Serialize/Lattice/SerializeReceive
 
 #Network lib.
 import ../src/Network/Network

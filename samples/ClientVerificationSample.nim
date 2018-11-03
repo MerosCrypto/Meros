@@ -8,7 +8,7 @@ import ../src/lib/BLS
 import ../src/Database/Merit/Merit
 
 #Serialization libs.
-import ../src/Network/Serialize/SerializeVerification
+import ../src/Network/Serialize/Merit/SerializeVerifications
 
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch

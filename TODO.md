@@ -12,6 +12,7 @@
 - Handshake when connecting to Nodes.
 - Ask for missing data (syncing).
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
+- Make sure there's no leading bytes in serialized elements.
 
 - Merit Removal system.
 - Difficulty Voting system.
@@ -19,6 +20,7 @@
 - Database.
 
 - Check Signatures in Serialize Tests since we no longer do it in Serialize.
+- SerializeBlock Test.
 - Tests.
 
 - Test Minting/Auto-Claim/Auto-Receive (requires a test network).
@@ -41,13 +43,15 @@
 - Network page on the GUI.
 
 ### Improvements:
+- We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Improve Network's encapsulation.
-- Redo how Blocks are handled (monolithic constructors; start block mess; no `Block.sign()`).
+
+- Merkle Tree appending.
 
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
 - Move `SerializeVerifications` and `ParseVerifications` out of `SerializeBlock`/`ParseBlock`.
-- Optimize the speed of `serialize` and `parse`.
+- Optimize the speed of `serialize` and `parse` (reserializing every parsed element?).
 - Stop whatever's causing series of unneeded 0s in serialized objects.
 
 - Standardize where we use binary/hex/addresses in `Database/Lattice`.

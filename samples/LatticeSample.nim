@@ -3,7 +3,7 @@ import BN
 
 #BLS and Miner Wallet libs.
 import ../src/lib/BLS
-import ../src/Database/Merit/Miner/MinerWallet
+import ../src/Database/Merit/MinerWallet
 
 #Wallet lib.
 import ../src/Wallet/Wallet
