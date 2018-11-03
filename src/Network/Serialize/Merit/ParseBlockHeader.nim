@@ -31,10 +31,10 @@ proc parseBlockHeader*(
 
     #Create the BlockHeader.
     result = BlockHeader(
-        verifications: newBLSSignature(headersSeq[1].pad(96)),
-        miners: headersSeq[2].pad(64).toSHA512Hash(),
-        time: uint(headersSeq[3].fromBinary())
+        verifications: newBLSSignature(headersSeq[2].pad(96)),
+        miners: headersSeq[3].pad(64).toSHA512Hash(),
+        time: uint(headersSeq[4].fromBinary())
     )
     #Set the fields marked final we couldn't set inside the constructor.
     result.nonce = uint(headersSeq[0].fromBinary())
-    result.last = headersSeq[0].pad(64).toArgonHash()
+    result.last = headersSeq[1].pad(64).toArgonHash()

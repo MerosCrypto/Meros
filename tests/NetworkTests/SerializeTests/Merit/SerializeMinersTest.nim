@@ -1,5 +1,8 @@
 #Serialize Miners Tests.
 
+#BLS lib.
+import ../../../../src/lib/BLS
+
 #Miners object.
 import ../../../../src/Database/Merit/objects/MinersObj
 
@@ -9,9 +12,6 @@ import ../../../../src/Database/Merit/MinerWallet
 #Serialize lib.
 import ../../../../src/Network/Serialize/Merit/SerializeMiners
 import ../../../../src/Network/Serialize/Merit/ParseMiners
-
-#BLS lib.
-import ../../../../src/lib/BLS
 
 #Random/Time/Algorithm standard libs. They're used to randomize the testing data.
 import random

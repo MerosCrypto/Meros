@@ -19,7 +19,7 @@
 
 - Database.
 
-- Check Signatures in Serialize Tests since we no longer do it in Serialize.
+- SerializeVerifications Test (we only test Verification serializing; not Verifications).
 - SerializeBlock Test.
 - Tests.
 
