@@ -7,21 +7,15 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#Wallet libs.
-import ../../Wallet/Address
-import ../../Wallet/Wallet
-
-#Serialization lib.
-import ../../Network/Serialize/SerializeMiners
-import ../../Network/Serialize/SerializeBlock
-
-#Miners and Verifications objects.
-import objects/MinersObj
+#Verifications and Miners objects.
 import objects/VerificationsObj
+import objects/MinersObj
 
-#Block object.
+#BlockHeader and Block objects.
+import objects/BlockHeaderObj
 import objects/BlockObj
-#Export the Block object.
+#Export the BlockHeader and Block objects.
+export BlockHeaderObj
 export BlockObj
 
 #Finals lib.
@@ -32,58 +26,52 @@ import strutils
 
 #New Block function. Creates a new block. Raises an error if there's an issue.
 proc newBlock*(
-    last: ArgonHash,
     nonce: uint,
-    time: uint,
+    last: ArgonHash,
     verifications: Verifications,
-    publisher: EdPublicKey,
-    proof: uint,
     miners: Miners,
-    signature: string
+    time: uint = getTime(),
+    proof: uint = 0
 ): Block {.raises: [
     ValueError,
-    ArgonError,
-    SodiumError,
-    FinalAttributeError
+    ArgonError
 ].} =
-    #Verify the arguments.
-    #Verifications.
-    for verification in verifications.verifications:
-        discard
+    #TODO: Verify the verifiers in the Verifications.
 
-    #Miners.
+    #Verify the Miners.
     var total: uint = 0
     if (miners.len < 1) or (100 < miners.len):
-        raise newException(ValueError, "Invalid miners quantity.")
+        raise newException(ValueError, "Invalid Miners quantity.")
     for miner in miners:
         total += miner.amount
         if (miner.amount < 1) or (uint(100) < miner.amount):
-            raise newException(ValueError, "Invalid miner amount.")
+            raise newException(ValueError, "Invalid Miner amount.")
     if total != 100:
-        raise newException(ValueError, "Invalid total miner amount.")
+        raise newException(ValueError, "Invalid total Miner amount.")
 
     #Ceate the block.
     result = newBlockObj(
-        last,
         nonce,
-        time,
+        last,
         verifications,
-        publisher
+        miners,
+        time,
+        proof
     )
 
-    #Calculate the hash.
-    result.hash = SHA512(result.serialize())
-    #Set the proof.
-    result.proof = proof
-    #Calculate the Argon hash.
-    result.argon = Argon(result.hash.toString(), result.proof.toBinary())
+#Set the Verifications.
+proc setVerifications*(newBlock: Block, verifications: Verifications) =
+    newBlock.verifications = verifications
+    newBlock.header.setVerifications(verifications)
 
-    #Set the miners.
-    result.miners = miners
-    #Calculate the miners hash.
-    result.minersHash = SHA512(miners.serialize(nonce))
-    #Verify the signature.
-    if not publisher.verify(result.minersHash.toString(), signature):
-        raise newException(ValueError, "Invalid miners' signature.")
-    #Set the signature.
-    result.signature = signature
+proc setMiners*(newBlock: Block, miners: Miners) =
+    newBlock.miners = miners
+    newBlock.header.setMiners(miners)
+
+#Increase the proof.
+proc inc*(newBlock: Block) =
+    #Increase the proof.
+    inc(newBlock.proof)
+
+    #Recalculate the Argon hash.
+    newBlock.argon = Argon(newBlock.hash.toString(), newBlock.proof.toBinary())

@@ -46,9 +46,9 @@ proc calculateNextDifficulty*(
         #New difficulty.
         difficulty: BN = last.difficulty
         #Start block of the difficulty.
-        start: uint = blocks[blocks.len - int(blocksPerPeriod + 1)].time
+        start: uint = blocks[blocks.len - int(blocksPerPeriod + 1)].header.time
         #End block of the difficulty.
-        endTime: uint = blocks[blocks.len - 1].time
+        endTime: uint = blocks[blocks.len - 1].header.time
         #Period time.
         actualTime: uint = endTime - start
         #Possible values.

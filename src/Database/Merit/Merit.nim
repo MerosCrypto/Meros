@@ -46,7 +46,7 @@ proc newMerit*(
     blockTime: uint,
     startDifficulty: string,
     live: uint
-): Merit {.raises: [ValueError, ArgonError].} =
+): Merit {.raises: [ValueError, ArgonError, BLSError].} =
     Merit(
         blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
         state: newState(live),
@@ -61,7 +61,6 @@ proc processBlock*(
     KeyError,
     ValueError,
     BLSError,
-    SodiumError,
     FinalAttributeError
 ].} =
     #Add the block to the Blockchain.

@@ -10,9 +10,14 @@ import ../../../lib/Hash
 #Wallet lib.
 import ../../../Wallet/Wallet
 
-#Miners and Verifications objects.
-import MinersObj
+#Block Header, Verifications, and Miners objects.
+import BlockHeaderObj
 import VerificationsObj
+import MinersObj
+
+#Serialization libs.
+import ../../../Network/Serialize/Merit/SerializeBlockHeader
+import ../../../Network/Serialize/Merit/SerializeMiners
 
 #Finals lib.
 import finals
@@ -23,68 +28,45 @@ import strutils
 finalsd:
     #Define the Block class.
     type Block* = ref object of RootObj
-        #Argon hash of the last block.
-        last* {.final.}: ArgonHash
-        #Nonce, AKA index.
-        nonce* {.final.}: uint
-        #Timestamp.
-        time*: uint
+        #Block Header.
+        header*: BlockHeader
+        #Random number to prove work was done.
+        proof*: uint
+        #Header Hash.
+        hash*: SHA512Hash
+        #Argon2d hash (Argon2d(hash, proof) must be greater than the difficulty).
+        argon*: ArgonHash
 
         #Verifications.
         verifications*: Verifications
-
-        #Hash.
-        hash*: SHA512Hash
-        #Random hex number to make sure the Argon of the hash is over the difficulty.
-        proof*: uint
-        #Argon2d hash with the SHA512 hash as the data and proof as the salt.
-        argon*: ArgonHash
-
         #Who to attribute the Merit to (amount ranges from 0 to 100).
         miners* {.final.}: Miners
-        minersHash* {.final.}: SHA512Hash
-
-        #Publisher.
-        publisher* {.final.}: EdPublicKey
-        #Signature of the Miners Hash.
-        signature* {.final.}: string
 
 #Constructor.
-func newBlockObj*(
-    last: ArgonHash,
+proc newBlockObj*(
     nonce: uint,
-    time: uint,
+    last: ArgonHash,
     verifications: Verifications,
-    publisher: EdPublicKey
-): Block {.raises: [].} =
-    Block(
-        last: last,
-        nonce: nonce,
-        time: time,
+    miners: Miners,
+    time: uint,
+    proof: uint
+): Block {.raises: [ArgonError].} =
+    #Create the Block.
+    result = Block(
+        header: newBlockheaderObj(
+            nonce,
+            last,
+            verifications,
+            miners,
+            time
+        ),
+        proof: proof,
         verifications: verifications,
-        publisher: publisher
+        miners: miners
     )
 
-#Creates a new block without caring about the data.
-proc newStartBlock*(genesis: string): Block {.raises: [ArgonError].} =
-    #Ceate the block.
-    var blankPublisher: array[32, cuchar]
-    result = newBlockObj(
-        Argon("", ""),
-        0,
-        getTime(),
-        newVerificationsObj(),
-        blankPublisher
-    )
-    #Calculate the hash.
-    result.hash = SHA512(genesis)
-    #Set the proof.
-    result.proof = 0
-    #Calculate the Argon hash.
-    result.argon = Argon(result.hash.toString(), $char(result.proof))
-    #Set the miners.
-    result.miners = @[]
-    #Calculate the miners hash.
-    result.minersHash = SHA512("")
-    #Set the signature.
-    result.signature = ""
+    #Set the Header hash.
+    result.hash = SHA512(result.header.serialize())
+
+    #Set the Argon hash.
+    result.argon = Argon(result.hash.toString(), proof.toBinary())
