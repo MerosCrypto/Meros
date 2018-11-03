@@ -1,9 +1,9 @@
 #Run every test...
 
-import libTest
-import WalletTest
-import DatabaseTest
-import NetworkTest
+import libTests
+import WalletTests
+import DatabaseTests
+import NetworkTests
 
 import SyntaxTest
 
