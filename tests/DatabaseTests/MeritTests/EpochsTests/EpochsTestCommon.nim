@@ -10,7 +10,7 @@ import ../../../../src/Wallet/Wallet
 import ../../../../src/Database/Merit/Merit
 
 #Miners Serialization lib.
-import ../../../../src/Network/Serialize/SerializeMiners
+import ../../../../src/Network/Serialize/Merit/SerializeMiners
 
 #String utils standard lib.
 import strutils
@@ -24,12 +24,8 @@ proc blankBlock*(miners: Miners): Block =
     verifs.calculateSig()
 
     result = newBlock(
-        "00".repeat(64).toHash(512),
-        1,
         0,
+        char(0).repeat(64).toHash(512),
         verifs,
-        wallet.publicKey,
-        0,
-        miners,
-        wallet.sign(SHA512(miners.serialize(1)).toString())
+        miners
     )
