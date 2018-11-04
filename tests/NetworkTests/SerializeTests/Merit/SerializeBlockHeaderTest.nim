@@ -27,12 +27,14 @@ import random
 randomize(int(getTime()))
 
 #Test 20 serializations.
-for nonce in 1 .. 20:
-    echo "Testing BlockHeader Serialization/Parsing, iteration " & $nonce & "."
+for i in 1 .. 20:
+    echo "Testing BlockHeader Serialization/Parsing, iteration " & $i & "."
 
     var
         #Header.
         header: BlockHeader = BlockHeader()
+        #Nonce.
+        nonce: uint = uint(rand(65000))
         #Last Block's Hash.
         last: ArgonHash
         #Miner Wallet.
@@ -45,9 +47,9 @@ for nonce in 1 .. 20:
         time: uint = getTime()
 
     #Randomze the hashes.
-    for i in 0 ..< 64:
-        last.data[i] = uint8(rand(255))
-        miners.data[i] = uint8(rand(255))
+    for b in 0 ..< 64:
+        last.data[b] = uint8(rand(255))
+        miners.data[b] = uint8(rand(255))
 
     #Create a Random BLS signature.
     verifs = miner.sign(last.toString())

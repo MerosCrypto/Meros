@@ -52,7 +52,7 @@ proc parseVerification*(
 #Parse Verifications.
 proc parseVerifications*(
     verifsStr: string,
-    signature: BLSSignature
+    aggregate: BLSSignature
 ): Verifications {.raises: [
     ValueError,
     BLSError,
@@ -64,10 +64,14 @@ proc parseVerifications*(
     #Deserialize the data.
     var verifsSeq: seq[string] = verifsStr.deserialize()
 
+    #Parse each Verification.
     for i in countup(0, verifsSeq.len - 1, 2):
         result.verifications.add(
             newMemoryVerificationObj(
-                verifsSeq[i].pad(64).toHash(512)
+                verifsSeq[i+1].pad(64).toHash(512)
             )
         )
-        result.verifications[^1].verifier = newBLSPublicKey(verifsSeq[i+1].pad(48))
+        result.verifications[^1].verifier = newBLSPublicKey(verifsSeq[i].pad(48))
+
+    #Set the aggregate.
+    result.aggregate = aggregate

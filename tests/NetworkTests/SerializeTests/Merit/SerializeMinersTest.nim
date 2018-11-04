@@ -31,7 +31,7 @@ for i in 1 .. 20:
         #Miners.
         miners: Miners = @[]
         #Quantity.
-        quantity: int = (rand(99) + 1) #Returns to 1 to 100.
+        quantity: int = (rand(99) + 1) #Returns between 1 to 100.
         #Amount temp variable.
         amount: int
         #Remaining amount.
@@ -55,9 +55,9 @@ for i in 1 .. 20:
         #Make sure everyone gets at least 1 and we don't go over 100.
         if (remaining - amount) < (quantity - i):
             amount = 1
-            #But if this is the last account...
-            if i == quantity - 1:
-                amount = remaining
+        #But if this is the last account...
+        if i == quantity - 1:
+            amount = remaining
 
         #Add the Miner.
         miners.add(newMinerObj(

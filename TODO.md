@@ -6,6 +6,7 @@
 - Inactive Merit.
 - Have Merit Holders indexable by the order they got Merit in.
 - Resolve Merit forks.
+- Have cutoff Rewards carry over.
 
 - Resolve Lattice forks (right now, unverified Nodes are treated as Verified when it comes to their permeance...).
 
@@ -19,8 +20,6 @@
 
 - Database.
 
-- SerializeVerifications Test (we only test Verification serializing; not Verifications).
-- SerializeBlock Test.
 - Tests.
 
 - Test Minting/Auto-Claim/Auto-Receive (requires a test network).
