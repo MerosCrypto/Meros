@@ -4,9 +4,6 @@ import ../src/lib/Util
 #Hash lib.
 import ../src/lib/Hash
 
-#Wallet lib.
-import ../src/Wallet/Wallet
-
 #Merit lib.
 import ../src/Database/Merit/Merit
 

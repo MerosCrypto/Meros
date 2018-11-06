@@ -1,7 +1,13 @@
 include MainMerit
 
 #Creates and publishes a Verification.
-proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].} =
+proc verify(entry: Entry) {.raises: [
+    KeyError,
+    ValueError,
+    AsyncError,
+    SocketError,
+    FinalAttributeError
+].} =
     #Make sure we're a Miner with Merit.
     if (miner) and (merit.state.getBalance(minerWallet.publicKey) > uint(0)):
         #Verify the Entry.
@@ -27,6 +33,8 @@ proc mainLattice() {.raises: [
     ValueError,
     MintError,
     EventError,
+    AsyncError,
+    SocketError,
     BLSError,
     SodiumError,
     FinalAttributeError
@@ -75,7 +83,14 @@ proc mainLattice() {.raises: [
         #Handle Claims.
         events.on(
             "lattice.claim",
-            proc (claim: Claim): bool {.raises: [ValueError, BLSError, SodiumError, FinalAttributeError].} =
+            proc (claim: Claim): bool {.raises: [
+                ValueError,
+                AsyncError,
+                SocketError,
+                BLSError,
+                SodiumError,
+                FinalAttributeError
+            ].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Claim."
 
@@ -110,6 +125,8 @@ proc mainLattice() {.raises: [
             proc (send: Send): bool {.raises: [
                 ValueError,
                 EventError,
+                AsyncError,
+                SocketError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError
@@ -170,6 +187,8 @@ proc mainLattice() {.raises: [
             "lattice.receive",
             proc (recv: Receive): bool {.raises: [
                 ValueError,
+                AsyncError,
+                SocketError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError
@@ -210,6 +229,8 @@ proc mainLattice() {.raises: [
                 data: Data
             ): bool {.raises: [
                 ValueError,
+                AsyncError,
+                SocketError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError

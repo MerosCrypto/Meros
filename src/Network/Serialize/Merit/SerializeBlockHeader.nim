@@ -10,9 +10,6 @@ import ../../../lib/Merkle
 #BLS lib.
 import ../../../lib/BLS
 
-#Wallet lib.
-import ../../../Wallet/Wallet
-
 #BlockHeader object.
 import ../../../Database/Merit/objects/BlockHeaderObj
 

@@ -43,7 +43,10 @@ finalsd:
         time*: uint
 
 #Set Verifications function.
-proc setVerifications*(header: BlockHeader, verifications: Verifications) =
+proc setVerifications*(
+    header: BlockHeader,
+    verifications: Verifications
+) {.raises: [].} =
     header.verifications = verifications.aggregate
 
 #Calculate the Miners's Merkle Hash.
@@ -58,7 +61,10 @@ proc calculateMerkle*(miners: Miners): SHA512Hash {.raises: [].} =
     result = newMerkleTree(hashes).hash
 
 #Set Miners function.
-proc setMiners*(header: BlockHeader, miners: Miners) =
+proc setMiners*(
+    header: BlockHeader,
+    miners: Miners
+) {.raises: [].} =
     header.miners = miners.calculateMerkle()
 
 #Constructor.
