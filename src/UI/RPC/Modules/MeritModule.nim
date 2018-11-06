@@ -17,11 +17,17 @@ import ../../../Database/Merit/objects/MinersObj
 #Block lib.
 import ../../../Database/Merit/Block
 
+#ParseBlock lib.
+import ../../../Network/Serialize/Merit/ParseBlock
+
 #RPC object.
 import ../objects/RPCObj
 
 #EventEmitter lib.
 import ec_events
+
+#String utils standard lib.
+import strutils
 
 #JSON standard lib.
 import json
@@ -101,6 +107,17 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
             "amount": int(miner.amount)
         })
 
+#Publish a Block.
+proc publishBlock(rpc: RPC, data: string): JSONNode {.raises: [EventError].} =
+    try:
+        if not rpc.events.get(
+            proc (newBlock: Block): bool,
+            "merit.block"
+        )(parseHexStr(data).parseBlock()):
+            raise newException(Exception, "Failed to add the Block.")
+    except:
+        raise newException(EventError, "Couldn't get and call merit.getDifficulty.")
+
 #Handler.
 proc `meritModule`*(
     rpc: RPC,
@@ -123,6 +140,11 @@ proc `meritModule`*(
             of "getBlock":
                 res = rpc.getBlock(
                     uint(json["args"][0].getInt())
+                )
+
+            of "publishBlock":
+                res = rpc.publishBlock(
+                    json["args"][0].getStr()
                 )
 
             else:

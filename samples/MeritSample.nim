@@ -13,7 +13,7 @@ import ../src/Network/Serialize/Merit/SerializeMiners
 #String utils standard lib.
 import strutils
 
-#Main function is so these varriables can be GC'd.
+#Main function is so these variables can be GC'd.
 proc main() =
     var
         #Create a Wallet for signing Verifications.
@@ -24,7 +24,7 @@ proc main() =
         merit: Merit = newMerit(genesis, 10, "cc".repeat(64), 50)
         #Block.
         newBlock: Block
-        #Noce and the last block hash.
+        #Nomce and the last block hash.
         nonce: uint = 1
         last: ArgonHash = merit.blockchain.blocks[0].argon
         #Verifications object.
