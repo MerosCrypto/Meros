@@ -10,9 +10,12 @@
 
 - Resolve Lattice forks (right now, unverified Nodes are treated as Verified when it comes to their permeance...).
 
-- Sync missing Lattice Entries.
+- Sync missing Blocks outside of the Handshake.
+- Ask for missing Entries.
+- Handle EntryMissing.
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Make sure there's no leading bytes in serialized elements.
+- Remove Network ID/Protocol version from the Header since they're in the Handshake.
 
 - Merit Removal system.
 - Difficulty Voting system.
@@ -21,7 +24,7 @@
 
 - Tests.
 
-- Test Minting/Auto-Claim/Auto-Receive (requires a test network).
+- Test Minting/Auto-Claim/Auto-Receive/Syncing (requires a test network).
 
 ### Features:
 - Command line options.
@@ -49,7 +52,7 @@
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
 - Optimize the speed of `serialize` and `parse` (reserializing every parsed element?).
-- Don't rebroadcast Blocks from the Handshake.
+- Don't rebroadcast Blocks from the handshake/Entries we ask for.
 
 - Make more things `func`.
 - Make sure `KeyError` is listed under `raises`.

@@ -14,16 +14,14 @@ proc verify(entry: Entry) {.raises: [KeyError, ValueError, FinalAttributeError].
         lattice.unarchive(verif)
 
         #Broadcast the Verification.
-        try:
-            events.get(
-                proc (msgType: MessageType, msg: string),
-                "network.broadcast"
-            )(
+        network.broadcast(
+            newMessage(
+                NETWORK_ID,
+                NETWORK_PROTOCOL,
                 MessageType.Verification,
                 verif.serialize()
             )
-        except:
-            echo "Failed to broadcast the Verification."
+        )
 
 proc mainLattice() {.raises: [
     ValueError,
@@ -44,6 +42,34 @@ proc mainLattice() {.raises: [
         genesisMint = lattice.mint(
             MINT_PUBKEY,
             newBN(MINT_AMOUNT)
+        )
+
+        #Handle requests for an account's height.
+        events.on(
+            "lattice.getHeight",
+            proc (account: string): uint {.raises: [ValueError].} =
+                lattice.getAccount(account).height
+        )
+
+        #Handle requests for an account's balance.
+        events.on(
+            "lattice.getBalance",
+            proc (account: string): BN {.raises: [ValueError].} =
+                lattice.getAccount(account).balance
+        )
+
+        #Handle requests for an entry.
+        events.on(
+            "lattice.getEntry",
+            proc (hash: string): Entry {.raises: [KeyError, ValueError].} =
+                lattice[hash]
+        )
+
+        #Handle requests for the Unarchived Verifications.
+        events.on(
+            "lattice.getUnarchivedVerifications",
+            proc (): seq[MemoryVerification] =
+                lattice.unarchived
         )
 
         #Handle Claims.
@@ -214,27 +240,6 @@ proc mainLattice() {.raises: [
                     result = false
                     echo "Failed to add the Data."
                 echo ""
-        )
-
-        #Handle requests for an account's height.
-        events.on(
-            "lattice.getHeight",
-            proc (account: string): uint {.raises: [ValueError].} =
-                lattice.getAccount(account).height
-        )
-
-        #Handle requests for an account's balance.
-        events.on(
-            "lattice.getBalance",
-            proc (account: string): BN {.raises: [ValueError].} =
-                lattice.getAccount(account).balance
-        )
-
-        #Handle requests for the Unarchived Verifications.
-        events.on(
-            "lattice.getUnarchivedVerifications",
-            proc (): seq[MemoryVerification] =
-                lattice.unarchived
         )
 
         #Print the Seed and address of the address holding the coins.

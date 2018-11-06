@@ -149,7 +149,7 @@ proc `[]`*(lattice: Lattice, index: Index): Entry {.raises: [ValueError].} =
     result = lattice.accounts[index.address][index.nonce]
 
 #Gets a Entry by its hash.
-proc getEntry*(lattice: Lattice, hash: string): Entry {.raises: [ValueError].} =
+proc `[]`*(lattice: Lattice, hash: string): Entry {.raises: [KeyError, ValueError].} =
     if not lattice.lookup.hasKey(hash):
         raise newException(ValueError, "Lattice does not have a Entry for that hash.")
 

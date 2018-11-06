@@ -7,6 +7,10 @@ import ../Database/Merit/Merit
 #Latice lib.
 import ../Database/Lattice/Lattice
 
+#Serialization libs.
+import Serialize/SerializeCommon
+import Serialize/Lattice/SerializeEntry
+
 #Parsing libs.
 import Serialize/Merit/ParseVerifications
 import Serialize/Merit/ParseBlock
@@ -140,6 +144,50 @@ proc newNetwork*(
                             )(
                                 msg.message.parseData()
                             )
+
+                        of MessageType.EntryRequest:
+                            #Entry and header variables.
+                            var
+                                entry: Entry
+                                header: string =
+                                    char(network.id) &
+                                    char(network.protocol)
+
+                            try:
+                                #Get the Entry the Client wants.
+                                entry = network.nodeEvents.get(
+                                    proc (hash: string): Entry,
+                                    "lattice.getEntry"
+                                )(msg.message)
+                            except:
+                                #If that failed, return EntryMissing.
+                                header &= char(MessageType.EntryMissing)
+                                network.clients.reply(msg, header & !msg.message)
+                                return
+
+                            #If we did get an Entry...
+                            #Add the Message Type.
+                            case entry.descendant:
+                                of EntryType.Mint:
+                                    #We do not Serialize Mints for Network transmission.
+                                    discard
+                                of EntryType.Claim:
+                                    header &= char(MessageType.Claim)
+                                of EntryType.Send:
+                                    header &= char(MessageType.Send)
+                                of EntryType.Receive:
+                                    header &= char(MessageType.Receive)
+                                of EntryType.Data:
+                                    header &= char(MessageType.Data)
+                                of EntryType.MeritRemoval:
+                                    #Ignore this for now.
+                                    discard
+
+                            #Send over the Entry.
+                            network.clients.reply(msg, header & !entry.serialize())
+
+                        of MessageType.EntryMissing:
+                            discard
 
                 except:
                     echo "Invalid Message."
