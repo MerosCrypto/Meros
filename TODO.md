@@ -53,6 +53,9 @@
 
 - Optimize the speed of `serialize` and `parse` (reserializing every parsed element?).
 - Don't rebroadcast Blocks from the handshake/Entries we ask for.
+- Stop duplicate Clients.
+
+- Have the RPC use numbers for the nonces.
 
 - Make more things `func`.
 - Make sure `KeyError` is listed under `raises`.

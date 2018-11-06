@@ -11,3 +11,19 @@
 - Seed (string)
 It returns a single field.
 - `success` (bool)
+
+### `send`
+`send` will create and publish a Send using the Wallet on the Node. It takes in three arguments:
+- Destination Address (string)
+- Amount (string)
+- Nonce (string)
+It returns a single field.
+- `hash` (string)
+
+### `receive`
+`receive` will create and publish a Receive using the Wallet on the Node. It takes in three arguments:
+- Input Address (string)
+- Input Nonce (string)
+- Nonce (string)
+It returns a single field.
+- `hash` (string)
