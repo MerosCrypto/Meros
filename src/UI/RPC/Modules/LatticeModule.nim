@@ -4,6 +4,9 @@ import ../../../lib/Errors
 #BN lib.
 import BN
 
+#Hash lib.
+import ../../../lib/Hash
+
 #BLS lib.
 import ../../../lib/BLS
 
@@ -21,6 +24,9 @@ import ec_events
 
 #Finals lib.
 import finals
+
+#String utils standard lib.
+import strutils
 
 #JSON standard lib.
 import json
@@ -65,6 +71,56 @@ proc getBalance(
         "balance": $balance
     }
 
+#Get an entry by its hash.
+proc getEntry(
+    rpc: RPC,
+    hash: string
+): JSONNode {.raises: [KeyError, EventError].} =
+    #Get the entry.
+    var entry: Entry
+    try:
+        entry = rpc.events.get(
+            proc (hash: string): Entry,
+            "lattice.getEntry"
+        )(hash)
+    except:
+        raise newException(EventError, "Couldn't get and call lattice.getEntry.")
+
+    #Set the Entry fields.
+    result = %* {
+        "descendant": $entry.descendant,
+        "sender": entry.sender,
+        "nonce": int(entry.nonce),
+        "hash": $entry.hash,
+        "signature": $entry.signature,
+        "verified": entry.verified
+    }
+
+    #Set the descendant fields.
+    case entry.descendant:
+        of EntryType.Mint:
+            result["output"] = % cast[Mint](entry).output
+            result["amount"] = % $cast[Mint](entry).amount
+        of EntryType.Claim:
+            result["mintNonce"] = % int(cast[Claim](entry).mintNonce)
+            result["bls"]       = % $cast[Claim](entry).bls
+        of EntryType.Send:
+            result["output"] = % cast[Send](entry).output
+            result["amount"] = % $cast[Send](entry).amount
+            result["sha512"] = % $cast[Send](entry).sha512
+            result["proof"]  = % int(cast[Send](entry).proof)
+        of EntryType.Receive:
+            result["index"] = %* {}
+            result["index"]["address"] = % cast[Receive](entry).index.address
+            result["index"]["nonce"]   = % int(cast[Receive](entry).index.nonce)
+        of EntryType.Data:
+            result["data"]   = % cast[Data](entry).data.toHex()
+            result["sha512"] = % $cast[Data](entry).sha512
+            result["proof"]  = % int(cast[Data](entry).proof)
+        of EntryType.MeritRemoval:
+            #Ignore MRs for now.
+            discard
+
 #Get unarchived verifications.
 proc getUnarchivedVerifications(rpc: RPC): JSONNode {.raises: [EventError].} =
     var verifs: seq[MemoryVerification]
@@ -105,6 +161,11 @@ proc `latticeModule`*(
 
             of "getBalance":
                 res = rpc.getBalance(
+                    json["args"][0].getStr()
+                )
+
+            of "getEntry":
+                res = rpc.getEntry(
                     json["args"][0].getStr()
                 )
 

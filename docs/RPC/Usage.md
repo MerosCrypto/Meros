@@ -8,3 +8,5 @@ Every request has three fields.
 - `args`, an array of the arguments you're passing to the method.
 
 Every call will have a response. If the call failed, the response will have a `error` field. The only call which doesn't report if it failed is `system.quit`.
+
+Bytes will always be sent via their hex representation.

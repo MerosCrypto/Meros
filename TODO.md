@@ -44,6 +44,8 @@
 - Network page on the GUI.
 
 ### Improvements:
+- Use sugerror's reraise for all our Exception wrapping.
+
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Improve Network's encapsulation.
 

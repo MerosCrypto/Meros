@@ -23,8 +23,9 @@ import Send
 import Receive
 import Data
 import MeritRemoval
-#Export the Entry and Entry descendants (except Mint).
+#Export the Entry and Entry descendants.
 export EntryObj
+export Mint
 export Claim
 export Send
 export Receive
