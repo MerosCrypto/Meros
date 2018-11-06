@@ -12,6 +12,7 @@ import ../src/Wallet/Wallet
 import ../src/Database/Lattice/Lattice
 
 #Serialization libs.
+import ../src/Network/Serialize/SerializeCommon
 import ../src/Network/Serialize/Lattice/SerializeSend
 import ../src/Network/Serialize/Lattice/SerializeReceive
 
@@ -38,7 +39,7 @@ var
 
     #Server vars.
     events: EventEmitter = newEventEmitter()           #EventEmitter for the Network.
-    network: Network = newNetwork(0, events)           #Network object.
+    network: Network = newNetwork(0, 0, events)        #Network object.
     miner: MinerWallet = newMinerWallet()              #Miner Wallet.
     sender: Wallet = newWallet()
     lattice: Lattice = newLattice("aa".repeat(64), "") #Lattice.
@@ -58,11 +59,11 @@ var
     sendHeader: string =                                 #Send header.
         char(0) &
         char(0) &
-        char(3)
+        char(4)
     recvHeader: string =                                 #Receive header.
         char(0) &
         char(0) &
-        char(4)
+        char(5)
     serializedSends: seq[string] = newSeq[string](total) #Serialized sends.
     serializedRecvs: seq[string] = newSeq[string](total) #Serialized Receives.
     client: AsyncSocket = newAsyncSocket()               #Client socket.
@@ -70,6 +71,13 @@ var
 #Sign and add the Mint Receive.
 mintClaim.sign(miner, sender)
 discard lattice.add(nil, mintClaim)
+
+#Handle the call to merit.getHeight.
+events.on(
+    "merit.getHeight",
+    proc (): uint {.raises: [].} =
+        0
+)
 
 #Handle Sends.
 events.on(
@@ -162,6 +170,13 @@ proc spam() {.async, raises: [Exception].} =
 
     #Connect to the server.
     await client.connect("127.0.0.1", Port(5132))
+    #Handshake with the server.
+    await client.send(
+        char(network.id) &
+        char(network.protocol) &
+        char(MessageType.Handshake) &
+        !($char(0))
+    )
     #Iterate over the serialized Sends/Receives.
     for i in 0 ..< total:
         await client.send(serializedSends[i])

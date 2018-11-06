@@ -36,15 +36,10 @@ import asyncnet, asyncdispatch
 #String utils standard lib.
 import strutils
 
-const
-    #Minimum supported protocol.
-    MIN_PROTOCOL: uint = 0
-    #Maximum supported protocol.
-    MAX_PROTOCOL: uint = 0
-
 #Constructor.
 proc newNetwork*(
     id: uint,
+    protocol: uint,
     nodeEvents: EventEmitter
 ): Network {.raises: [AsyncError, SocketError].} =
     var
@@ -61,6 +56,7 @@ proc newNetwork*(
     #Create the Network object.
     var network: Network = newNetworkObj(
         id,
+        protocol,
         newClients(),
         server,
         subEvents,
@@ -82,9 +78,7 @@ proc newNetwork*(
                     return false
 
                 #Validate the protocol.
-                if msg.version < MIN_PROTOCOL:
-                    return false
-                if msg.version > MAX_PROTOCOL:
+                if msg.protocol != protocol:
                     return false
 
                 #Verify the message length.
@@ -94,6 +88,9 @@ proc newNetwork*(
                 #Switch based off the message type (in a try to handle invalid messages).
                 try:
                     case msg.content:
+                        of MessageType.Handshake:
+                            discard
+
                         of MessageType.Verification:
                             if nodeEvents.get(
                                 proc (verif: MemoryVerification): bool,
@@ -148,7 +145,7 @@ proc newNetwork*(
                     echo "Invalid Message."
         )
     except:
-        raise newException(AsyncError, "Couldn't add the Network's message event.")
+        raise newException(AsyncError, "Couldn't add the Network's Message Event.")
 
 #Start listening.
 proc start*(
@@ -159,14 +156,17 @@ proc start*(
     network.subEvents.on(
         "client",
         proc (client: AsyncSocket) {.raises: [AsyncError].} =
-            network.add(client)
+            try:
+                asyncCheck network.add(client)
+            except:
+                raise newException(AsyncError, "Couldn't add a Client to the Network.")
     )
 
     try:
         #Start the server.
         asyncCheck network.listen(port)
     except:
-        raise newException(SocketError, "Couldn't start the Network's server socket.")
+        raise newException(SocketError, "Couldn't start the Network's Server Socket.")
 
 #Connect to another node.
 proc connect*(
@@ -179,7 +179,7 @@ proc connect*(
     #Connect.
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
-    network.add(socket)
+    await network.add(socket)
 
 #Shutdown network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =

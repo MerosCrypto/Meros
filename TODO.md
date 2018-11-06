@@ -10,8 +10,7 @@
 
 - Resolve Lattice forks (right now, unverified Nodes are treated as Verified when it comes to their permeance...).
 
-- Handshake when connecting to Nodes.
-- Ask for missing data (syncing).
+- Sync missing Lattice Entries.
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Make sure there's no leading bytes in serialized elements.
 
@@ -49,17 +48,15 @@
 
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
-- Move `SerializeVerifications` and `ParseVerifications` out of `SerializeBlock`/`ParseBlock`.
 - Optimize the speed of `serialize` and `parse` (reserializing every parsed element?).
-- Stop whatever's causing series of unneeded 0s in serialized objects.
-
-- Standardize where we use binary/hex/addresses in `Database/Lattice`.
+- Don't rebroadcast Blocks from the Handshake.
 
 - Make more things `func`.
 - Make sure `KeyError` is listed under `raises`.
 
 ### Behavior Changes:
     Decided:
+        - Have Sends/Datas SHA512 signed, not their Argon, so remote services can handle the work.
         - Have required work be based on account, not on TX, and infinitely precalculable.
         - Finalize Argon2's Block parameters.
 
@@ -67,7 +64,7 @@
         - Have Verifications also use Ed25519/have BLS signatures be asked for.
 
 ### Documentation:
-- Document the message types.
+- Document the Message Types.
 - Use Nim Documentation Comments.
 - Ember Whitepaper.
 

@@ -23,7 +23,7 @@ var
     header: string =                       #Verification header.
         char(0) &
         char(0) &
-        char(0)
+        char(1)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.

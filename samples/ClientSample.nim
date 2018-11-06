@@ -37,11 +37,11 @@ var
     sendHeader: string =                   #Send header.
         char(0) &
         char(0) &
-        char(3)
+        char(4)
     recvHeader: string =                   #Receive header.
         char(0) &
         char(0) &
-        char(4)
+        char(5)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.

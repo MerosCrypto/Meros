@@ -14,6 +14,8 @@ finalsd:
     type Network* = ref object of RootObj
         #Network ID.
         id* {.final.}: uint
+        #Protocol version.
+        protocol* {.final.}: uint
         #Clients.
         clients*: Clients
         #Server.
@@ -26,6 +28,7 @@ finalsd:
 #Constructor.
 func newNetworkObj*(
     id: uint,
+    protocol: uint,
     clients: Clients,
     server: AsyncSocket,
     subEvents: EventEmitter,
@@ -33,6 +36,7 @@ func newNetworkObj*(
 ): Network {.raises: [].} =
     result = Network(
         id: id,
+        protocol: protocol,
         clients: clients,
         server: server,
         subEvents: subEvents,

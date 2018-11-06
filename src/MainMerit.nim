@@ -13,11 +13,25 @@ proc mainMerit() {.raises: [
         #Create the Merit.
         merit = newMerit(GENESIS, BLOCK_TIME, BLOCK_DIFFICULTY, LIVE_MERIT)
 
+        #Handle requests for the current height.
+        events.on(
+            "merit.getHeight",
+            proc (): uint {.raises: [].} =
+                merit.blockchain.height
+        )
+
         #Handle requests for the current Difficulty.
         events.on(
             "merit.getDifficulty",
             proc (): BN {.raises: [].} =
                 merit.blockchain.difficulties[^1].difficulty
+        )
+
+        #Handle requests for a Block.
+        events.on(
+            "merit.getBlock",
+            proc (nonce: uint): Block {.raises: [].} =
+                merit.blockchain.blocks[int(nonce)]
         )
 
         #Handle Verifications.

@@ -5,18 +5,19 @@ finalsd:
     type
         #Message Type enum.
         MessageType* = enum
-            Verification = 0,
-            Block = 1,
-            Claim = 2,
-            Send = 3,
-            Receive = 4,
-            Data = 5
+            Handshake = 0,
+            Verification = 1,
+            Block = 2,
+            Claim = 3,
+            Send = 4,
+            Receive = 5,
+            Data = 6
 
         #Message object.
         Message* = ref object of RootObj
             client* {.final.}: uint
             network* {.final.}: uint
-            version* {.final.}: uint
+            protocol* {.final.}: uint
             content* {.final.}: MessageType
             header* {.final.}: string
             message* {.final.}: string
@@ -25,7 +26,7 @@ finalsd:
 func newMessage*(
     client: uint,
     network: uint,
-    version: uint,
+    protocol: uint,
     content: MessageType,
     header: string,
     message: string
@@ -33,7 +34,7 @@ func newMessage*(
     Message(
         client: client,
         network: network,
-        version: version,
+        protocol: protocol,
         content: content,
         header: header,
         message: message
@@ -42,15 +43,15 @@ func newMessage*(
 #Constructor for outgoing data.
 func newMessage*(
     network: uint,
-    version: uint,
+    protocol: uint,
     content: MessageType,
     message: string
 ): Message {.raises: [].} =
     Message(
         network: network,
-        version: version,
+        protocol: protocol,
         content: content,
-        header: char(network) & char(version) & char(content) & char(message.len),
+        header: char(network) & char(protocol) & char(content) & char(message.len),
         message: message
     )
 

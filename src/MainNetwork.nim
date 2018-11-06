@@ -6,7 +6,7 @@ proc mainNetwork() {.raises: [
 ].} =
     {.gcsafe.}:
         #Create the Network..
-        network = newNetwork(NETWORK_ID, events)
+        network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, events)
 
         #Start listening.
         network.start(NETWORK_PORT)

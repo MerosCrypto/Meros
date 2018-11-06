@@ -1,6 +1,12 @@
 #Errors lib.
 import ../lib/Errors
 
+#Util lib.
+import ../lib/Util
+
+#Block lib.
+import ../Database/Merit/Block
+
 #Send libs.
 import ../Database/Lattice/Send
 import Serialize/Lattice/ParseSend
@@ -15,11 +21,82 @@ import objects/ClientsObj
 import objects/MessageObj
 import objects/NetworkObj
 
+#Serialize libs.
+import Serialize/SerializeCommon
+import Serialize/Merit/SerializeBlock
+
 #Events lib.
 import ec_events
 
 #Networking standard libs.
 import asyncnet, asyncdispatch
+
+#Handshake.
+proc handshake(
+    network: Network,
+    socket: AsyncSocket
+) {.async.} =
+    #Get the Blockchain height.
+    var
+        #Our Blockchain Height.
+        ourHeight: uint
+        #Their Blockchain Height.
+        theirHeight: uint
+    try:
+        ourHeight = network.nodeEvents.get(
+            proc (): uint,
+            "merit.getHeight"
+        )()
+    except:
+        raise newException(EventError, "Couldn't get and call merit.getHeight.")
+
+    #Handshake.
+    await socket.send(
+        char(network.id) &
+        char(network.protocol) &
+        char(MessageType.Handshake) &
+        !ourHeight.toBinary()
+    )
+
+    #Get their Handshake back.
+    var header: string = await socket.recv(4)
+    #Verify their Header.
+    #Network ID.
+    if uint(header[0]) != network.id:
+        return
+    #Protocol version.
+    if uint(header[1]) != network.protocol:
+        return
+    #Message Type.
+    if int(header[2]) != ord(MessageType.Handshake):
+        return
+    #Message length.
+    if uint(header[3]) == 255:
+        return
+    #Get their Blockchain height.
+    theirHeight = uint(
+        (await socket.recv(
+            int(header[3])
+        )).fromBinary()
+    )
+
+    #If we have more Blocks, send them what we have.
+    if ourHeight > theirHeight:
+        for height in theirHeight ..< ourHeight:
+            #Grab the Block.
+            var syncBlock: Block
+            syncBlock = network.nodeEvents.get(
+                proc (nonce: uint): Block,
+                "merit.getBlock"
+            )(height)
+
+            #Send it.
+            await socket.send(
+                char(network.id) &
+                char(network.protocol) &
+                char(MessageType.Handshake) &
+                !syncBlock.serialize()
+            )
 
 #Handles a client.
 proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
@@ -84,7 +161,10 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
 proc add*(
     network: Network,
     socket: AsyncSocket
-) {.raises: [AsyncError].} =
+) {.async.} =
+    #Handshake with the Socket.
+    await network.handshake(socket)
+
     #Create the client.
     var client = newClient(
         network.clients.total,
@@ -96,7 +176,7 @@ proc add*(
     inc(network.clients.total)
     #Handle it.
     try:
-        asyncCheck client.handle(network.subEvents)
+        await client.handle(network.subEvents)
     except:
         raise newException(AsyncError, "Couldn't handle a Client.")
 
