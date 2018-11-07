@@ -48,7 +48,7 @@ proc newBlockchainObj*(
     result = Blockchain(
         blockTime: blockTime,
 
-        height: 0,
+        height: 1,
         blocks: @[
             newBlockObj(
                 0,

@@ -53,7 +53,7 @@ proc processBlock*(
 
     #Verify the Block Header.
     #If the nonce is off...
-    if newBlock.header.nonce != blockchain.height + 1:
+    if newBlock.header.nonce != blockchain.height:
         return false
 
     #If the last hash is off...

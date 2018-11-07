@@ -116,7 +116,7 @@ proc publishBlock(rpc: RPC, data: string): JSONNode {.raises: [EventError].} =
         )(parseHexStr(data).parseBlock()):
             raise newException(Exception, "Failed to add the Block.")
     except:
-        raise newException(EventError, "Couldn't get and call merit.getDifficulty.")
+        raise newException(EventError, "Couldn't get and call merit.publishBlock.")
 
 #Handler.
 proc `meritModule`*(
