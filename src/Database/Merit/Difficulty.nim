@@ -65,7 +65,7 @@ proc calculateNextDifficulty*(
                 #The targetTime (bigger) minus the actualTime (smaller)
                 #Over the targetTime
         #Since we need the difficulty to increase.
-        var change: BN = possible * newBN((targetTime - actualTime) div targetTime)
+        var change: BN = (possible * newBN(targetTime - actualTime)) div newBN(targetTime)
 
         #If we're increasing the difficulty by more than 10%...
         if possible / newBN(10) < change:
