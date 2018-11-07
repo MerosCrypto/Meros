@@ -30,8 +30,8 @@ proc newBlock*(
     last: ArgonHash,
     verifications: Verifications,
     miners: Miners,
-    time: uint = getTime(),
-    proof: uint = 0
+    proof: uint = 0,
+    time: uint = getTime()
 ): Block {.raises: [
     ValueError,
     ArgonError
@@ -55,8 +55,8 @@ proc newBlock*(
         last,
         verifications,
         miners,
-        time,
-        proof
+        proof,
+        time
     )
 
 #Set the Verifications.
