@@ -41,19 +41,19 @@ proc handle*(
     rpc: RPC,
     msg: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [KeyError].} =
+) {.async.} =
     #Handle the data.
     case msg["module"].getStr():
         of "system":
-            rpc.systemModule(msg, reply)
+            await rpc.systemModule(msg, reply)
         of "personal":
-            rpc.personalModule(msg, reply)
+            await rpc.personalModule(msg, reply)
         of "merit":
-            rpc.meritModule(msg, reply)
+            await rpc.meritModule(msg, reply)
         of "lattice":
-            rpc.latticeModule(msg, reply)
+            await rpc.latticeModule(msg, reply)
         of "network":
-            rpc.networkModule(msg, reply)
+            await rpc.networkModule(msg, reply)
         else:
             reply(
                 %* {
@@ -77,7 +77,7 @@ proc start*(rpc: RPC) {.async.} =
             continue
 
         #Handle the data.
-        rpc.handle(
+        asyncCheck rpc.handle(
             data.msg,
             proc (json: JSONNode) {.raises: [ChannelError].} =
                 try:
@@ -113,7 +113,7 @@ proc handle*(rpc: RPC, client: AsyncSocket) {.async.} =
             continue
 
         #Handle the data.
-        rpc.handle(
+        asyncCheck rpc.handle(
             json,
             proc (resArg: JSONNode) {.raises: [KeyError, AsyncError].} =
                 #Declare a var to send back.

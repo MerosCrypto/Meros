@@ -26,6 +26,9 @@ import ../objects/RPCObj
 #EventEmitter lib.
 import ec_events
 
+#Async standard lib.
+import asyncdispatch
+
 #String utils standard lib.
 import strutils
 
@@ -108,10 +111,10 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
         })
 
 #Publish a Block.
-proc publishBlock(rpc: RPC, data: string): JSONNode {.raises: [EventError].} =
+proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     try:
-        if not rpc.events.get(
-            proc (newBlock: Block): bool,
+        if not await rpc.events.get(
+            proc (newBlock: Block): Future[bool],
             "merit.block"
         )(parseHexStr(data).parseBlock()):
             raise newException(Exception, "Failed to add the Block.")
@@ -119,11 +122,11 @@ proc publishBlock(rpc: RPC, data: string): JSONNode {.raises: [EventError].} =
         raise newException(EventError, "Couldn't get and call merit.publishBlock.")
 
 #Handler.
-proc `meritModule`*(
+proc meritModule*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [].} =
+) {.async.} =
     #Declare a var for the response.
     var res: JSONNode
 
@@ -143,7 +146,7 @@ proc `meritModule`*(
                 )
 
             of "publishBlock":
-                res = rpc.publishBlock(
+                res = await rpc.publishBlock(
                     json["args"][0].getStr()
                 )
 

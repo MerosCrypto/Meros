@@ -23,6 +23,9 @@ import ec_events
 #Finals lib.
 import finals
 
+#Async standard lib.
+import asyncdispatch
+
 #String utils standard lib.
 import strutils
 
@@ -159,11 +162,11 @@ proc receive(
     }
 
 #Handler.
-proc `personalModule`*(
+proc personalModule*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [].} =
+) {.async.} =
     #Declare a var for the response.
     var res: JSONNode
 

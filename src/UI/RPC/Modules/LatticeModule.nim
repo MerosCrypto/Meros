@@ -25,6 +25,9 @@ import ec_events
 #Finals lib.
 import finals
 
+#Async standard lib.
+import asyncdispatch
+
 #String utils standard lib.
 import strutils
 
@@ -142,11 +145,11 @@ proc getUnarchivedVerifications(rpc: RPC): JSONNode {.raises: [EventError].} =
         })
 
 #Handler.
-proc `latticeModule`*(
+proc latticeModule*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [].} =
+) {.async.} =
     #Declare a var for the response.
     var res: JSONNode
 

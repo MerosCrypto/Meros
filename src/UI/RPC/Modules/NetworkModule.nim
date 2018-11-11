@@ -7,6 +7,9 @@ import ../objects/RPCObj
 #EventEmitter lib.
 import ec_events
 
+#Async standard lib.
+import asyncdispatch
+
 #String utils standard lib.
 import strutils
 
@@ -35,11 +38,11 @@ proc connect*(
         raise newException(EventError, "Couldn't get and call network.connect.")
 
 #Handler.
-proc `networkModule`*(
+proc networkModule*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [].} =
+) {.async.} =
     #Declare a var for the response.
     var res: JSONNode
 

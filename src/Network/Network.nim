@@ -105,8 +105,8 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Block:
-                            if nodeEvents.get(
-                                proc (newBlock: Block): bool,
+                            if await nodeEvents.get(
+                                proc (newBlock: Block): Future[bool],
                                 "merit.block"
                             )(
                                 msg.message.parseBlock()
