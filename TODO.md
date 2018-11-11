@@ -24,7 +24,7 @@
 
 - Tests.
 
-- Test Minting/Auto-Claim/Auto-Receive/Syncing (requires a test network).
+- Test Minting/Auto-Claim/Auto-Receive (requires a test network).
 
 ### Features:
 - Command line options.
