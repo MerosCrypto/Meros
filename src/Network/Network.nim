@@ -1,6 +1,9 @@
 #Errors lib.
 import ../lib/Errors
 
+#Hash lib.
+import ../lib/Hash
+
 #Merit lib.
 import ../Database/Merit/Merit
 
@@ -39,6 +42,9 @@ import asyncnet, asyncdispatch
 
 #String utils standard lib.
 import strutils
+
+#Tables standard lib.
+import tables
 
 #Constructor.
 proc newNetwork*(
@@ -114,36 +120,36 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Claim:
-                            discard nodeEvents.get(
+                            var claim = msg.message.parseClaim()
+                            if nodeEvents.get(
                                 proc (claim: Claim): bool,
                                 "lattice.claim"
-                            )(
-                                msg.message.parseClaim()
-                            )
+                            )(claim):
+                                network.requests[claim.hash.toString()] = true
 
                         of MessageType.Send:
-                            discard nodeEvents.get(
+                            var send = msg.message.parseSend()
+                            if nodeEvents.get(
                                 proc (send: Send): bool,
                                 "lattice.send"
-                            )(
-                                msg.message.parseSend()
-                            )
+                            )(send):
+                                network.requests[send.hash.toString()] = true
 
                         of MessageType.Receive:
-                            discard nodeEvents.get(
+                            var recv = msg.message.parseReceive()
+                            if nodeEvents.get(
                                 proc (recv: Receive): bool,
                                 "lattice.receive"
-                            )(
-                                msg.message.parseReceive()
-                            )
+                            )(recv):
+                                network.requests[recv.hash.toString()] = true
 
                         of MessageType.Data:
-                            discard nodeEvents.get(
+                            var data = msg.message.parseData()
+                            if nodeEvents.get(
                                 proc (data: Data): bool,
                                 "lattice.data"
-                            )(
-                                msg.message.parseData()
-                            )
+                            )(data):
+                                network.requests[data.hash.toString()] = true
 
                         of MessageType.EntryRequest:
                             #Entry and header variables.
@@ -160,9 +166,7 @@ proc newNetwork*(
                                     "lattice.getEntry"
                                 )(msg.message)
                             except:
-                                #If that failed, return EntryMissing.
-                                header &= char(MessageType.EntryMissing)
-                                network.clients.reply(msg, header & !msg.message)
+                                #If that failed, do nothing.
                                 return
 
                             #If we did get an Entry...
@@ -185,9 +189,6 @@ proc newNetwork*(
 
                             #Send over the Entry.
                             network.clients.reply(msg, header & !entry.serialize())
-
-                        of MessageType.EntryMissing:
-                            discard
 
                 except:
                     echo "Invalid Message."
@@ -228,6 +229,38 @@ proc connect*(
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
     await network.add(socket)
+
+#Request an Entry from the other Nodes.
+proc requestEntry*(
+    network: Network,
+    hash: string
+) {.async.} =
+    #Say that we haven't found the Entry yet.
+    network.requests[hash] = false
+
+    #Broadcast our request.
+    network.clients.broadcast(
+        newMessage(
+            network.id,
+            network.protocol,
+            MessageType.EntryRequest,
+            hash
+        )
+    )
+
+    #Run for a maximum of one second.
+    for _ in 0 ..< 1000:
+        await sleepAsync(1)
+
+        #Check to see if we got the entry.
+        if network.requests[hash]:
+            #If we did, return.
+            return
+
+    #This is in a if true block so the async macro doesn't think this whole proc is unreachable.
+    if true:
+        #If we exited the loop, meaning we never got that hash...
+        raise newException(Exception, "Never got the requested Entry.")
 
 #Shutdown network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =

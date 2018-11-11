@@ -16,7 +16,6 @@ finalsd:
             Receive = 5,
             Data = 6,
             EntryRequest = 7
-            EntryMissing = 8
 
         #Message object.
         Message* = ref object of RootObj

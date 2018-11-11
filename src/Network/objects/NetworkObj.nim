@@ -7,6 +7,9 @@ import ec_events
 #finals lib.
 import finals
 
+#Tables standard lib.
+import tables
+
 #Asyncnet standard lib.
 import asyncnet
 
@@ -24,6 +27,8 @@ finalsd:
         subEvents* {.final.}: EventEmitter
         #Event Emitter for the node.
         nodeEvents* {.final.}: EventEmitter
+        #Requests of things we're looking for.
+        requests*: ref Table[string, bool]
 
 #Constructor.
 func newNetworkObj*(
@@ -40,7 +45,8 @@ func newNetworkObj*(
         clients: clients,
         server: server,
         subEvents: subEvents,
-        nodeEvents: nodeEvents
+        nodeEvents: nodeEvents,
+        requests: newTable[string, bool]()
     )
     result.ffinalizeID()
     result.ffinalizeProtocol()

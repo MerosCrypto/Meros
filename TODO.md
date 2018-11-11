@@ -11,8 +11,6 @@
 - Resolve Lattice forks (right now, unverified Nodes are treated as Verified when it comes to their permeance...).
 
 - Sync missing Blocks outside of the Handshake.
-- Ask for missing Entries.
-- Handle EntryMissing.
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Make sure there's no leading bytes in serialized elements.
 - Remove Network ID/Protocol version from the Header since they're in the Handshake.
@@ -24,7 +22,7 @@
 
 - Tests.
 
-- Test Minting/Auto-Claim/Auto-Receive (requires a test network).
+- Test Minting/Auto-Claim/Auto-Receive/Lattice syncing (requires a test network).
 
 ### Features:
 - Command line options.

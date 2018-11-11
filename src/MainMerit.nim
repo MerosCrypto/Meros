@@ -3,12 +3,8 @@ include MainGlobals
 proc mainMerit() {.raises: [
     ValueError,
     ArgonError,
-    MintError,
     AsyncError,
-    EventError,
-    BLSError,
-    SodiumError,
-    FinalAttributeError
+    BLSError
 ].} =
     {.gcsafe.}:
         #Create the Merit.
@@ -72,8 +68,16 @@ proc mainMerit() {.raises: [
                     #Verify the Verifications.
                     for verif in newBlock.verifications.verifications:
                         if not lattice.lookup.hasKey(verif.hash.toString()):
-                            echo "Failed to add the Block."
-                            return false
+                            #Ask our peers if they have it.
+                            try:
+                                await network.requestEntry(verif.hash.toString())
+                            except:
+                                #If this worked, the Exception message should be "".
+                                if getCurrentExceptionMsg() == "":
+                                    continue
+                                else:
+                                    echo "Failed to add the Block."
+                                    return false
 
                     #Add the Block to the Merit.
                     var rewards: Rewards
