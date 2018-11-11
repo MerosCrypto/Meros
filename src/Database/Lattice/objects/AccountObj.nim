@@ -16,8 +16,8 @@ finalsd:
         address* {.final.}: string
         #Account height. BN for compatibility.
         height*: uint
-        #seq of the TXs.
-        entries*: seq[Entry]
+        #seq of the Entries.
+        entries*: seq[seq[Entry]]
         #Balance of the address.
         balance*: BN
 
@@ -34,37 +34,38 @@ func newAccountObj*(address: string): Account {.raises: [].} =
 #Add a Entry to an account.
 proc addEntry*(
     account: Account,
-    entry: Entry,
-    dependent: Entry
-) {.raises: [].} =
-    #Increase the account height and add the Entry.
-    inc(account.height)
-    account.entries.add(entry)
+    entry: Entry
+) {.raises: [ValueError].} =
+    if entry.nonce < account.height:
+        #Make sure we're not overwriting a verified Entry.
+        if account.entries[int(entry.nonce)][0].verified:
+            raise newException(ValueError, "Account has a verified Entry at this position.")
 
-    case entry.descendant:
-        #If it's a Send Entry...
-        of EntryType.Send:
-            #Cast it to a var.
-            var send: Send = cast[Send](entry)
-            #Update the balance.
-            account.balance -= send.amount
-        #If it's a Receive Entry...
-        of EntryType.Receive:
-            #Cast the dependent to a Send.
-            var send: Send = cast[Send](dependent)
-            #Update the balance.
-            account.balance += send.amount
-        of EntryType.Claim:
-            #Cast the dependent to a Mint.
-            var mint: Mint = cast[Mint](dependent)
-            #Update the balance.
-            account.balance += mint.amount
-        else:
-            discard
+        #Make sure we're not adding it twice.
+        for e in account.entries[int(entry.nonce)]:
+            if e.hash == entry.hash:
+                raise newException(ValueError, "Account already has this Entry.")
+
+    #Add the Entry to the proper seq.
+    if entry.nonce < account.height:
+        #Add to an existing seq.
+        account.entries[int(entry.nonce)].add(entry)
+    elif entry.nonce == account.height:
+        #Increase the account height.
+        inc(account.height)
+        #Create a new seq and add it there.
+        account.entries.add(@[
+            entry
+        ])
+    else:
+        raise newException(ValueError, "Account has holes in its chain.")
 
 #Helper getter that takes in an index.
 func `[]`*(account: Account, index: uint): Entry {.raises: [ValueError].} =
     if index >= uint(account.entries.len):
         raise newException(ValueError, "Account index out of bounds.")
 
-    result = account.entries[int(index)]
+    if account.entries[int(index)].len != 1:
+        raise newException(ValueError, "Conflicting Entries at that position with no verified Entry.")
+
+    result = account.entries[int(index)][0]

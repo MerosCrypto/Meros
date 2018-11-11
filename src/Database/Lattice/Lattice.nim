@@ -42,6 +42,9 @@ export LatticeObj
 #String utils standard lib.
 import strutils
 
+#Seq utils standard lib.
+import sequtils
+
 #Tables standard lib.
 import tables
 
@@ -197,7 +200,48 @@ proc verify*(
         weight += merit.state.getBalance(i)
     #If the Entry has at least 50.1% of the weight...
     if weight > ((merit.state.live div uint(2)) + 1):
-        #Get the Index of the Entry.
-        var index: Index = lattice.lookup[hash]
-        lattice.accounts[index.address][index.nonce].verified = true
+        #Get the Index/Entry.
+        var
+            index: Index = lattice.lookup[hash]
+            entry: Entry
+
+        #Only keep the confirmed Entry.
+        lattice.accounts[index.address].entries[int(index.nonce)].keepIf(
+            proc (e: Entry): bool =
+                verif.hash == e.hash
+        )
+
+        #Get said Entry.
+        entry = lattice.accounts[index.address][index.nonce]
+
+        #Set it to verified.
+        entry.verified = true
         echo hash.toHex() & " was verified."
+
+        #Update the balance now that the Entry is confirmed.
+        case entry.descendant:
+            #If it's a Send Entry...
+            of EntryType.Send:
+                #Cast it to a var.
+                var send: Send = cast[Send](entry)
+                #Update the balance.
+                lattice.accounts[index.address].balance -= send.amount
+            #If it's a Receive Entry...
+            of EntryType.Receive:
+                var
+                    #Cast it to a var.
+                    recv: Receive = cast[Receive](entry)
+                    #Get the Send it's Receiving.
+                    send: Send = cast[Send](lattice.accounts[recv.index.address][recv.index.nonce])
+                #Update the balance.
+                lattice.accounts[index.address].balance += send.amount
+            of EntryType.Claim:
+                var
+                    #Cast it to a var.
+                    claim: Claim = cast[Claim](entry)
+                    #Get the Mint it's Claiming.
+                    mint: Mint = cast[Mint](lattice.accounts["minter"][claim.mintNonce])
+                #Update the balance.
+                lattice.accounts[index.address].balance += mint.amount
+            else:
+                discard

@@ -34,8 +34,7 @@ export AccountObj
 #Add a Entry.
 proc add(
     account: Account,
-    entry: Entry,
-    dependent: Entry = nil
+    entry: Entry
 ): bool {.raises: [ValueError, SodiumError].} =
     result = true
 
@@ -62,7 +61,7 @@ proc add(
         return false
 
     #Add the Entry.
-    account.addEntry(entry, dependent)
+    account.addEntry(entry)
 
 #Add a Mint.
 proc add*(
@@ -92,13 +91,13 @@ proc add*(
 
     #Verify it's unclaimed.
     for i in account.entries:
-        if i.descendant == EntryType.Claim:
+        if i[0].descendant == EntryType.Claim:
             var past: Claim = cast[Claim](i)
             if claim.mintNonce == past.mintNonce:
                 return false
 
     #Add the Claim.
-    result = account.add(cast[Entry](claim), mint)
+    result = account.add(cast[Entry](claim))
 
 #Add a Send.
 proc add*(
@@ -148,7 +147,7 @@ proc add*(
 
     #Verify it's unclaimed.
     for i in account.entries:
-        if i.descendant == EntryType.Receive:
+        if i[0].descendant == EntryType.Receive:
             var past: Receive = cast[Receive](i)
             if (
                 (past.index.address == recv.index.address) and
@@ -157,7 +156,7 @@ proc add*(
                 return false
 
     #Add the Receive.
-    result = account.add(cast[Entry](recv), send)
+    result = account.add(cast[Entry](recv))
 
 #Add Data.
 proc add*(
