@@ -18,7 +18,9 @@ func newMinerObj*(
     miner: BLSPublicKey,
     amount: uint
 ): Miner {.raises: [].} =
-    Miner(
+    result = Miner(
         miner: miner,
         amount: amount
     )
+    result.ffinalizeMiner()
+    result.ffinalizeAmount()

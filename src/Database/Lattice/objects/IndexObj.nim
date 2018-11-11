@@ -13,3 +13,5 @@ func newIndex*(address: string, nonce: uint): Index {.raises: [].} =
         address: address,
         nonce: nonce
     )
+    result.ffinalizeAddress()
+    result.ffinalizeNonce()

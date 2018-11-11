@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Client object.
 import ClientObj
 
-#Finals lib.
-import finals
-
 #sequtils standard lib.
 import sequtils
 
@@ -14,10 +11,9 @@ import sequtils
 import asyncnet
 
 #Clients object.
-finalsd:
-    type Clients* = ref object of RootObj
-        total*: uint
-        clients*: seq[Client]
+type Clients* = ref object of RootObj
+    total*: uint
+    clients*: seq[Client]
 
 #Constructor.
 func newClients*(): Clients {.raises: [].} =

@@ -33,4 +33,7 @@ func newSendObj*(
         output: output,
         amount: amount
     )
+    result.ffinalizeOutput()
+    result.ffinalizeAmount()
+
     result.descendant = EntryType.Send

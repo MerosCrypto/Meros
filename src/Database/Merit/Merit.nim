@@ -60,8 +60,7 @@ proc processBlock*(
 ): Rewards {.raises: [
     KeyError,
     ValueError,
-    BLSError,
-    FinalAttributeError
+    BLSError
 ].} =
     #Add the block to the Blockchain.
     if not merit.blockchain.processBlock(newBlock):

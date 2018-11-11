@@ -38,17 +38,19 @@ finalsd:
 func newVerificationObj*(
     hash: Hash[512]
 ): Verification {.raises: [].} =
-    Verification(
+    result = Verification(
         hash: hash
     )
+    result.ffinalizeHash()
 
 #New MemoryVerification object.
 func newMemoryVerificationObj*(
     hash: Hash[512]
 ): MemoryVerification {.raises: [].} =
-    MemoryVerification(
+    result = MemoryVerification(
         hash: hash
     )
+    result.ffinalizeHash()
 
 #New Verifications object.
 func newVerificationsObj*(): Verifications {.raises: [].} =

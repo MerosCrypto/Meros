@@ -23,12 +23,13 @@ finalsd:
 
 #Creates a new account object.
 func newAccountObj*(address: string): Account {.raises: [].} =
-    Account(
+    result = Account(
         address: address,
         height: 0,
         entries: @[],
         balance: newBN()
     )
+    result.ffinalizeAddress()
 
 #Add a Entry to an account.
 proc addEntry*(

@@ -31,8 +31,7 @@ proc calculate*(
     epoch: Epoch,
     state: State
 ): Rewards {.raises: [
-    KeyError,
-    FinalAttributeError
+    KeyError
 ].} =
     #If the epoch is empty, do nothing.
     if epoch.len == 0:

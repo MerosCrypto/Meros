@@ -42,3 +42,8 @@ func newNetworkObj*(
         subEvents: subEvents,
         nodeEvents: nodeEvents
     )
+    result.ffinalizeID()
+    result.ffinalizeProtocol()
+    result.ffinalizeServer()
+    result.ffinalizeSubEvents()
+    result.ffinalizeNodeEvents()

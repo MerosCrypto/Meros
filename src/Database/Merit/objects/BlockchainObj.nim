@@ -68,6 +68,7 @@ proc newBlockchainObj*(
             )
         ]
     )
+    result.ffinalizeBlockTime()
 
 func add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
     inc(blockchain.height)

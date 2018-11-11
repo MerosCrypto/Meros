@@ -81,6 +81,8 @@ proc newBlockHeaderObj*(
         last: last,
         time: time
     )
+    result.ffinalizeNonce()
+    result.ffinalizeLast()
 
     #Set the Verifications.
     result.setVerifications(verifications)

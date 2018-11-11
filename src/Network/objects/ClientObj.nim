@@ -18,6 +18,8 @@ func newClient*(id: uint, socket: AsyncSocket): Client {.raises: [].} =
         id: id,
         socket: socket
     )
+    result.ffinalizeID()
+    result.ffinalizeSocket()
 
 #Converter so we don't always have to .socket, but instead can directly use .recv().
 converter toSocket*(client: Client): AsyncSocket {.raises: [].} =

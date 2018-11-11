@@ -16,8 +16,11 @@ finalsd:
 
 #Create a new Difficulty object.
 func newDifficultyObj*(start: uint, endBlock: uint, difficulty: BN): Difficulty {.raises: [].} =
-    Difficulty(
+    result = Difficulty(
         start: start,
         endBlock: endBlock,
         difficulty: difficulty
     )
+    result.ffinalizeStart()
+    result.ffinalizeEndBlock()
+    result.ffinalizeDifficulty()

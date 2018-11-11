@@ -24,6 +24,17 @@ finalsd:
             header* {.final.}: string
             message* {.final.}: string
 
+#Finalize the Message.
+func finalize(
+    msg: Message
+) {.raises: [].} =
+    msg.ffinalizeClient()
+    msg.ffinalizeNetwork()
+    msg.ffinalizeProtocol()
+    msg.ffinalizeContent()
+    msg.ffinalizeHeader()
+    msg.ffinalizeMessage()
+
 #Constructor for incoming data.
 func newMessage*(
     client: uint,
@@ -33,7 +44,7 @@ func newMessage*(
     header: string,
     message: string
 ): Message {.raises: [].} =
-    Message(
+    result = Message(
         client: client,
         network: network,
         protocol: protocol,
@@ -41,6 +52,7 @@ func newMessage*(
         header: header,
         message: message
     )
+    result.finalize()
 
 #Constructor for outgoing data.
 func newMessage*(
@@ -49,13 +61,14 @@ func newMessage*(
     content: MessageType,
     message: string
 ): Message {.raises: [].} =
-    Message(
+    result = Message(
         network: network,
         protocol: protocol,
         content: content,
         header: char(network) & char(protocol) & char(content) & char(message.len),
         message: message
     )
+    result.finalize()
 
 #Stringify.
 func `$`*(msg: Message): string {.raises: [].} =

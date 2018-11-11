@@ -44,5 +44,9 @@ proc newRPCObject*(
             clients: @[],
             listening: true
         )
+        result.ffinalizeEvents()
+        result.ffinalizeToRPC()
+        result.ffinalizeToGUI()
+        result.ffinalizeServer()
     except:
         raise newException(SocketError, "Couldn't start the RPC Socket.")

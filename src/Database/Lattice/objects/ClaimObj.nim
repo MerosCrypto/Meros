@@ -22,4 +22,6 @@ func newClaimObj*(
     result = Claim(
         mintNonce: mintNonce
     )
+    result.ffinalizeMintNonce()
+    
     result.descendant = EntryType.Claim

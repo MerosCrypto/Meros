@@ -22,22 +22,21 @@ import finals
 #String utils standard lib.
 import strutils
 
-finalsd:
-    #Define the Block class.
-    type Block* = ref object of RootObj
-        #Block Header.
-        header*: BlockHeader
-        #Random number to prove work was done.
-        proof*: uint
-        #Header Hash.
-        hash*: SHA512Hash
-        #Argon2d hash (Argon2d(hash, proof) must be greater than the difficulty).
-        argon*: ArgonHash
+#Define the Block class.
+type Block* = ref object of RootObj
+    #Block Header.
+    header*: BlockHeader
+    #Random number to prove work was done.
+    proof*: uint
+    #Header Hash.
+    hash*: SHA512Hash
+    #Argon2d hash (Argon2d(hash, proof) must be greater than the difficulty).
+    argon*: ArgonHash
 
-        #Verifications.
-        verifications*: Verifications
-        #Who to attribute the Merit to (amount ranges from 0 to 100).
-        miners* {.final.}: Miners
+    #Verifications.
+    verifications*: Verifications
+    #Who to attribute the Merit to (amount ranges from 0 to 100).
+    miners*: Miners
 
 #Constructor.
 proc newBlockObj*(

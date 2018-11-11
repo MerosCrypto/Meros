@@ -27,6 +27,8 @@ func newLeafObject*(hash: SHA512Hash): Leaf {.raises: [].} =
         isLeaf: true,
         hash: hash
     )
+    result.ffinalizeIsLeaf()
+    result.ffinalizeHash()
 
 #Branch constructor.
 proc newBranchObject*(
@@ -39,15 +41,20 @@ proc newBranchObject*(
         left: left,
         right: right
     )
+    result.ffinalizeIsLeaf()
+    result.ffinalizeLeft()
+    result.ffinalizeRight()
 
     if empty:
         result.empty = true
         result.hash = SHA512("")
-        return
+    else:
+        result.hash = SHA512(
+            left.hash.toString() & right.hash.toString()
+        )
 
-    result.hash = SHA512(
-        left.hash.toString() & right.hash.toString()
-    )
+    result.ffinalizeEmpty()
+    result.ffinalizeHash()
 
 #Create a Markle Tree.
 proc newMerkleTree*(

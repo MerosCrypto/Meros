@@ -32,8 +32,11 @@ func newGUIObject*(
     toGUI: ptr Channel[JSONNode],
     webview: WebView
 ): GUI {.raises: [].} =
-    GUI(
+    result = GUI(
         toRPC: toRPC,
         toGUI: toGUI,
         webview: webview
     )
+    result.ffinalizeToRPC()
+    result.ffinalizeToGUI()
+    result.ffinalizeWebView()
