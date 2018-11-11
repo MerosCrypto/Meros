@@ -86,7 +86,7 @@ proc newNetwork*(
                     return false
 
                 #Verify the message length.
-                if ord(msg.header[3]) != msg.message.len:
+                if msg.len != uint(msg.message.len):
                     return false
 
                 #Switch based off the message type (in a try to handle invalid messages).
