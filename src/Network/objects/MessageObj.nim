@@ -1,3 +1,6 @@
+#Util.
+import ../../lib/Util
+
 #finals lib.
 import finals
 
@@ -21,6 +24,7 @@ finalsd:
             network* {.final.}: uint
             protocol* {.final.}: uint
             content* {.final.}: MessageType
+            len* {.final.}: uint
             header* {.final.}: string
             message* {.final.}: string
 
@@ -32,6 +36,7 @@ func finalize(
     msg.ffinalizeNetwork()
     msg.ffinalizeProtocol()
     msg.ffinalizeContent()
+    msg.ffinalizeLen()
     msg.ffinalizeHeader()
     msg.ffinalizeMessage()
 
@@ -41,6 +46,7 @@ func newMessage*(
     network: uint,
     protocol: uint,
     content: MessageType,
+    len: uint,
     header: string,
     message: string
 ): Message {.raises: [].} =
@@ -49,6 +55,7 @@ func newMessage*(
         network: network,
         protocol: protocol,
         content: content,
+        len: len,
         header: header,
         message: message
     )
@@ -61,11 +68,22 @@ func newMessage*(
     content: MessageType,
     message: string
 ): Message {.raises: [].} =
+    #Serialize the length.
+    var
+        len: int = message.len
+        length: string = ""
+    while len > 255:
+        len = len mod 255
+        length &= char(255)
+    length &= char(len)
+
+    #Create the Message.
     result = Message(
         network: network,
         protocol: protocol,
         content: content,
-        header: char(network) & char(protocol) & char(content) & char(message.len),
+        len: uint(message.len),
+        header: char(network) & char(protocol) & char(content) & length,
         message: message
     )
     result.finalize()

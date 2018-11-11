@@ -69,6 +69,7 @@
         - Finalize Argon2's Block parameters.
 
     Undecided:
+        - Don't push 255, 255, remainder for the length; push the amount of length bytes and then the raw binary (exponential over additive).
         - Have Verifications also use Ed25519/have BLS signatures be asked for.
 
 ### Documentation:
