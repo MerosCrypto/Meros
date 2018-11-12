@@ -224,10 +224,7 @@ proc mainLattice() {.raises: [
         #Handle Data.
         events.on(
             "lattice.data",
-            proc (
-                msg: Message,
-                data: Data
-            ): bool {.raises: [
+            proc (data: Data): bool {.raises: [
                 ValueError,
                 AsyncError,
                 SocketError,

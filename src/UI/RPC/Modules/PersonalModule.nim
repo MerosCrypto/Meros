@@ -106,10 +106,11 @@ proc send(
 
     try:
         #Add it.
-        discard rpc.events.get(
+        if not rpc.events.get(
             proc (send: Send): bool,
             "lattice.send"
-        )(send)
+        )(send):
+            raise newException(Exception, "")
     except:
         raise newException(EventError, "Couldn't get and call lattice.send.")
 
@@ -150,15 +151,65 @@ proc receive(
 
     try:
         #Add it.
-        discard rpc.events.get(
+        if not rpc.events.get(
             proc (recv: Receive): bool,
             "lattice.receive"
-        )(recv)
+        )(recv):
+            raise newException(Exception, "")
     except:
         raise newException(EventError, "Couldn't get and call lattice.receive.")
 
     result = %* {
         "hash": $recv.hash
+    }
+
+#Create a Data Entry.
+proc data(
+    rpc: RPC,
+    dataArg: string,
+    nonce: uint
+): JSONNode {.raises: [
+    ValueError,
+    ArgonError,
+    PersonalError,
+    EventError,
+    FinalAttributeError
+].} =
+    #Create the Data.
+    var data: Data = newData(
+        dataArg,
+        nonce
+    )
+    #Mine the Data.
+    data.mine("E0".repeat(64).toBN(16))
+
+    #Sign the Data.
+    var sign: proc(data: Data): bool
+    try:
+        sign = rpc.events.get(
+            proc (data: Data): bool,
+            "personal.signData"
+        )
+    except:
+        raise newException(EventError, "Couldn't get and call personal.signData.")
+    try:
+        if not data.sign():
+            raise newException(Exception, "")
+    except:
+        raise newException(PersonalError, "Couldn't sign the Send.")
+
+    try:
+        #Add it.
+        if not rpc.events.get(
+            proc (data: Data): bool,
+            "lattice.data"
+        )(data):
+            raise newException(Exception, "")
+    except:
+        raise newException(EventError, "Couldn't get and call lattice.data.")
+
+    result = %* {
+        "hash": $data.hash
     }
 
 #Handler.
@@ -192,6 +243,12 @@ proc personalModule*(
                     json["args"][0].getStr(),
                     parseUInt(json["args"][1].getStr()),
                     parseUInt(json["args"][2].getStr())
+                )
+
+            of "data":
+                res = rpc.data(
+                    parseHexStr(json["args"][0].getStr()),
+                    parseUInt(json["args"][1].getStr())
                 )
 
             else:
