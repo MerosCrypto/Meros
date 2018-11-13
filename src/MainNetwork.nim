@@ -13,15 +13,18 @@ proc mainNetwork() {.raises: [
 
         #Handle network events.
         #Connect to another node.
-        events.on(
-            "network.connect",
-            proc (ip: string, port: int): bool {.raises: [].} =
-                try:
-                    asyncCheck network.connect(ip, port)
-                    result = true
-                except:
-                    result = false
-        )
+        try:
+            events.on(
+                "network.connect",
+                proc (ip: string, port: int): Future[bool] {.async.} =
+                    try:
+                        await network.connect(ip, port)
+                        result = true
+                    except:
+                        result = false
+            )
+        except:
+            raise newException(AsyncError, "Couldn't add an Async proc to the EventEmitter.")
 
         #Broadcast a message. This is used to send data out.
         events.on(

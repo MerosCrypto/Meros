@@ -24,11 +24,11 @@ proc connect*(
     rpc: RPC,
     ip: string,
     port: int
-): JSONNode {.raises: [EventError].} =
+): Future[JSONNode] {.async.} =
     try:
         #Connect to a new node.
-        if not rpc.events.get(
-            proc (ip: string, port: int): bool,
+        if not await rpc.events.get(
+            proc (ip: string, port: int): Future[bool],
             "network.connect"
         )(ip, port):
             result = %* {
@@ -51,7 +51,7 @@ proc networkModule*(
         #Switch based off the method.
         case json["method"].getStr():
             of "connect":
-                res = rpc.connect(
+                res = await rpc.connect(
                     json["args"][0].getStr(),
                     if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
                 )
