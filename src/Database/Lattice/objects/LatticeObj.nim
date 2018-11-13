@@ -85,7 +85,7 @@ func addHash*(
 func unarchive*(
     lattice: Lattice,
     verif: MemoryVerification
-) {.raises: [KeyError].} =
+) {.raises: [].} =
     #Make sure the Verif is new.
     if lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString()):
         return

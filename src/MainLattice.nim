@@ -31,7 +31,6 @@ proc verify(entry: Entry) {.raises: [
 
 proc mainLattice() {.raises: [
     ValueError,
-    MintError,
     EventError,
     AsyncError,
     SocketError,
@@ -44,12 +43,6 @@ proc mainLattice() {.raises: [
         lattice = newLattice(
             TRANSACTION_DIFFICULTY,
             DATA_DIFFICULTY
-        )
-
-        #Create the Genesis Mint.
-        genesisMint = lattice.mint(
-            MINT_PUBKEY,
-            newBN(MINT_AMOUNT)
         )
 
         #Handle requests for an account's height.
@@ -259,7 +252,3 @@ proc mainLattice() {.raises: [
                     echo "Failed to add the Data."
                 echo ""
         )
-
-        #Print the Seed and address of the address holding the coins.
-        echo MINT_PUBKEY & " was sent " & MINT_AMOUNT & " EMB from \"minter\".\r\n" &
-            "Its Private Key is " & MINT_PRIVKEY & ".\r\n"

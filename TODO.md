@@ -20,8 +20,6 @@
 
 - Tests.
 
-- Test Minting/Auto-Receive/Lattice syncing.
-
 ### Features:
 - Command line options.
 - Make the ports to listen on runtime options.
