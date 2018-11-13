@@ -151,6 +151,16 @@ proc `[]`*(lattice: Lattice, index: Index): Entry {.raises: [ValueError].} =
 #Gets a Entry by its hash.
 proc `[]`*(lattice: Lattice, hash: string): Entry {.raises: [KeyError, ValueError].} =
     if not lattice.lookup.hasKey(hash):
+        #Do not change this Exception message. It is checked for when syncing.
         raise newException(ValueError, "Lattice does not have a Entry for that hash.")
 
-    result = lattice[lattice.lookup[hash]]
+    var
+        index: Index = lattice.lookup[hash]
+        entries: seq[Entry] = lattice.accounts[index.address].entries[int(index.nonce)]
+
+    for entry in entries:
+        if entry.hash.toString() == hash:
+            return entry
+
+    #If there's no Entry there, that means it was deleted because a different Entry got confirmed.
+    raise newException(ValueError, "That hash has been orphaned.")
