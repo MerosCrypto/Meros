@@ -65,19 +65,31 @@ proc mainMerit() {.raises: [
                     #Print that we're adding the Block.
                     echo "Adding a new Block."
 
-                    #Verify the Verifications.
+                    #Entries we don't have but need.
+                    var entries: seq[string] = @[]
+                    #Make sure we have all the Entries.
                     for verif in newBlock.verifications.verifications:
                         if not lattice.lookup.hasKey(verif.hash.toString()):
-                            #Ask our peers if they have it.
+                            entries.add(verif.hash.toString())
+                    #If we're missing some...
+                    if entries.len != 0:
+                        #Get the missing Entries.
+                        for entry in entries:
                             try:
-                                await network.requestEntry(verif.hash.toString())
+                                await network.requestEntry(entry)
                             except:
-                                #If this worked, the Exception message should be "".
-                                if getCurrentExceptionMsg() == "":
-                                    continue
-                                else:
-                                    echo "Failed to add the Block."
-                                    return false
+                                echo "Failed to add the Block."
+                                return false
+                        #Call this proc now that we have all the Entries.
+                        return await events.get(
+                            proc (newBlock: Block): Future[bool],
+                            "merit.block"
+                        )(newBlock)
+
+                    #Verify the Verifications.
+                    if not newBlock.verifications.verify():
+                        echo "Failed to add the Block."
+                        return false
 
                     #Add the Block to the Merit.
                     var rewards: Rewards
