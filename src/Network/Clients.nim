@@ -82,12 +82,10 @@ proc handshake(
 
     #If we have more Blocks, send them what we have.
     if ourHeight > theirHeight:
-        for height in theirHeight ..< ourHeight:
-            #Grab the Block.
-            var syncBlock: Block = network.nodeEvents.get(
-                proc (nonce: uint): Block,
-                "merit.getBlock"
-            )(height)
+        #Define a proc to send the Block.
+        proc sendBlock(syncBlock: Block, delay: int) {.async.} =
+            #Sleep for the delay.
+            await sleepAsync(delay)
 
             #Send it.
             await socket.send(
@@ -95,6 +93,16 @@ proc handshake(
                 char(network.protocol) &
                 char(MessageType.Block) &
                 !syncBlock.serialize()
+            )
+
+        #Iterate over each block.
+        for height in theirHeight ..< ourHeight:
+            asyncCheck sendBlock(
+                network.nodeEvents.get(
+                    proc (nonce: uint): Block,
+                    "merit.getBlock"
+                )(height),
+                10000 * int(height - theirHeight)
             )
 
 #Handles a client.
