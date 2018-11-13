@@ -8,8 +8,6 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Resolve Lattice forks (right now, unverified Nodes are treated as Verified when it comes to their permeance...).
-
 - Sync missing Blocks outside of the Handshake.
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Make sure there's no leading bytes in serialized elements.
@@ -22,7 +20,7 @@
 
 - Tests.
 
-- Test Minting/Auto-Claim/Auto-Receive/Lattice syncing (requires a test network).
+- Test Minting/Auto-Receive/Lattice syncing.
 
 ### Features:
 - Command line options.

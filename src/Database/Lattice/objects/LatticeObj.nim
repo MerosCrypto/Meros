@@ -46,7 +46,7 @@ type Lattice* = ref object of RootObj
     #Unarchived Verifications.
     unarchived*: seq[MemoryVerification]
 
-    #State of the Verifications. 0 is unset. 1 is unarchived. 2 is archived.
+    #State of the Verifications. null is unset. 0 is unarchived. 1 is archived.
     archived*: TableRef[string, int]
 
     #Accounts (address -> account).
@@ -87,14 +87,14 @@ func unarchive*(
     verif: MemoryVerification
 ) {.raises: [KeyError].} =
     #Make sure the Verif is new.
-    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] != 0:
+    if lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString()):
         return
 
     #Add to unarchived.
     lattice.unarchived.add(verif)
 
     #Set it as unarchived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 1
+    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 0
 
 #Archive a Verification.
 func archive*(
@@ -102,10 +102,10 @@ func archive*(
     verif: MemoryVerification
 ) {.raises: [KeyError].} =
     #Make sure the Verif isn't already archived.
-    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 2:
+    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 1:
         return
 
-    #Remove from unarchived.
+    #Remove it from unarchived.
     for i in 0 ..< lattice.unarchived.len:
         if (
             (verif.hash == lattice.unarchived[i].hash) and
@@ -115,7 +115,7 @@ func archive*(
             break
 
     #Set it as archived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 2
+    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 1
 
 #Creates a new Account on the Lattice.
 func addAccount*(
