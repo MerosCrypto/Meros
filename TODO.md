@@ -8,6 +8,7 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
+- Handshake Over message to signal we're done syncing.
 - Sync missing Blocks outside of the Handshake.
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Make sure there's no leading bytes in serialized elements.

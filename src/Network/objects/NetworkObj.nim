@@ -27,8 +27,6 @@ finalsd:
         subEvents* {.final.}: EventEmitter
         #Event Emitter for the node.
         nodeEvents* {.final.}: EventEmitter
-        #Requests of things we're looking for.
-        requests*: ref Table[string, bool]
 
 #Constructor.
 func newNetworkObj*(
@@ -45,8 +43,7 @@ func newNetworkObj*(
         clients: clients,
         server: server,
         subEvents: subEvents,
-        nodeEvents: nodeEvents,
-        requests: newTable[string, bool]()
+        nodeEvents: nodeEvents
     )
     result.ffinalizeID()
     result.ffinalizeProtocol()

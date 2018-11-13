@@ -15,7 +15,8 @@ finalsd:
             Send = 4,
             Receive = 5,
             Data = 6,
-            EntryRequest = 7
+            BlockRequest = 7
+            EntryRequest = 8
 
         #Message object.
         Message* = ref object of RootObj

@@ -1,6 +1,9 @@
 #Errors lib.
 import ../lib/Errors
 
+#Util lib.
+import ../lib/Util
+
 #Hash lib.
 import ../lib/Hash
 
@@ -12,6 +15,7 @@ import ../Database/Lattice/Lattice
 
 #Serialization libs.
 import Serialize/SerializeCommon
+import Serialize/Merit/SerializeBlock
 import Serialize/Lattice/SerializeEntry
 
 #Parsing libs.
@@ -111,8 +115,8 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Block:
-                            if await nodeEvents.get(
-                                proc (newBlock: Block): Future[bool],
+                            if nodeEvents.get(
+                                proc (newBlock: Block): bool,
                                 "merit.block"
                             )(
                                 msg.message.parseBlock()
@@ -120,36 +124,51 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Claim:
-                            var claim = msg.message.parseClaim()
+                            var claim: Claim = msg.message.parseClaim()
                             if nodeEvents.get(
                                 proc (claim: Claim): bool,
                                 "lattice.claim"
                             )(claim):
-                                network.requests[claim.hash.toString()] = true
+                                network.clients.broadcast(msg)
 
                         of MessageType.Send:
-                            var send = msg.message.parseSend()
+                            var send: Send = msg.message.parseSend()
                             if nodeEvents.get(
                                 proc (send: Send): bool,
                                 "lattice.send"
                             )(send):
-                                network.requests[send.hash.toString()] = true
+                                network.clients.broadcast(msg)
 
                         of MessageType.Receive:
-                            var recv = msg.message.parseReceive()
+                            var recv: Receive = msg.message.parseReceive()
                             if nodeEvents.get(
                                 proc (recv: Receive): bool,
                                 "lattice.receive"
                             )(recv):
-                                network.requests[recv.hash.toString()] = true
+                                network.clients.broadcast(msg)
 
                         of MessageType.Data:
-                            var data = msg.message.parseData()
+                            var data: Data = msg.message.parseData()
                             if nodeEvents.get(
                                 proc (data: Data): bool,
                                 "lattice.data"
                             )(data):
-                                network.requests[data.hash.toString()] = true
+                                network.clients.broadcast(msg)
+
+                        of MessageType.BlockRequest:
+                            var nonce: uint = uint(msg.message.fromBinary)
+                            network.clients.reply(
+                                msg,
+                                char(network.id) &
+                                char(network.protocol) &
+                                char(MessageType.Block) &
+                                !(
+                                    nodeEvents.get(
+                                        proc (nonce: uint): Block,
+                                        "merit.getBlock"
+                                    )(nonce).serialize()
+                                )
+                            )
 
                         of MessageType.EntryRequest:
                             #Entry and header variables.
@@ -229,38 +248,6 @@ proc connect*(
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
     await network.add(socket)
-
-#Request an Entry from the other Nodes.
-proc requestEntry*(
-    network: Network,
-    hash: string
-) {.async.} =
-    #Say that we haven't found the Entry yet.
-    network.requests[hash] = false
-
-    #Broadcast our request.
-    network.clients.broadcast(
-        newMessage(
-            network.id,
-            network.protocol,
-            MessageType.EntryRequest,
-            hash
-        )
-    )
-
-    #Run for a maximum of one second.
-    for _ in 0 ..< 1000:
-        await sleepAsync(1)
-
-        #Check to see if we got the entry.
-        if network.requests[hash]:
-            #If we did, return.
-            return
-
-    #This is in a if true block so the async macro doesn't think this whole proc is unreachable.
-    if true:
-        #If we exited the loop, meaning we never got that hash...
-        raise newException(Exception, "Never got the requested Entry.")
 
 #Shutdown network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =

@@ -4,16 +4,22 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
-#Block lib.
+#Hash lib.
+import ../lib/Hash
+
+#Block libs.
+import ../Database/Merit/Verifications
 import ../Database/Merit/Block
 
-#Send libs.
-import ../Database/Lattice/Send
-import Serialize/Lattice/ParseSend
+#Lattice libs.
+import ../Database/Lattice/Lattice
 
-#Receive libs.
-import ../Database/Lattice/Receive
+#Parse libs.
+import Serialize/Merit/ParseBlock
+import Serialize/Lattice/ParseClaim
+import Serialize/Lattice/ParseSend
 import Serialize/Lattice/ParseReceive
+import Serialize/Lattice/ParseData
 
 #Message/Client/Clients/Network objects.
 import objects/ClientObj
@@ -30,6 +36,43 @@ import ec_events
 
 #Networking standard libs.
 import asyncnet, asyncdispatch
+
+#Receive a header and message from a socket.
+proc recv(socket: AsyncSocket): Future[tuple[header: string, msg: string]] {.async.} =
+    var
+        header: string
+        size: int
+        msg: string
+
+    #Receive the header.
+    header = await socket.recv(4)
+    #Verify the length.
+    if header.len != 4:
+        #If the header length is 0 because the client disconnected...
+        if header.len == 0:
+            #Close the client.
+            socket.close()
+            #Stop handling the Client.
+            return
+        #Continue so we can get a valid header.
+        raise newException(SocketError, "Didn't get a full header.")
+
+    #Define the size.
+    size = ord(header[3])
+    #While the size is 255 bytes (signifying it's even bigger than that)...
+    while ord(header[header.len - 1]) == 255:
+        #Get a new byte.
+        header &= await socket.recv(1)
+        #Add it to the size.
+        size += ord(header[header.len - 1])
+    #Get the actual message.
+    msg = await socket.recv(size)
+    #Verify the length.
+    if msg.len != size:
+        raise newException(SocketError, "Didn't get a full message.")
+
+    #Return a tuple of the header and the message.
+    return (header, msg)
 
 #Handshake.
 proc handshake(
@@ -59,88 +102,132 @@ proc handshake(
     )
 
     #Get their Handshake back.
-    var header: string = await socket.recv(4)
+    var handshake: tuple[header: string, msg: string] = await socket.recv()
+
     #Verify their Header.
     #Network ID.
-    if uint(header[0]) != network.id:
+    if uint(handshake.header[0]) != network.id:
         return
     #Protocol version.
-    if uint(header[1]) != network.protocol:
+    if uint(handshake.header[1]) != network.protocol:
         return
     #Message Type.
-    if int(header[2]) != ord(MessageType.Handshake):
+    if int(handshake.header[2]) != ord(MessageType.Handshake):
         return
     #Message length.
-    if uint(header[3]) == 255:
+    if int(handshake.header[3]) > 4:
         return
     #Get their Blockchain height.
     theirHeight = uint(
-        (await socket.recv(
-            int(header[3])
-        )).fromBinary()
+        handshake.msg.fromBinary()
     )
 
-    #If we have more Blocks, send them what we have.
-    if ourHeight > theirHeight:
-        #Define a proc to send the Block.
-        proc sendBlock(syncBlock: Block, delay: int) {.async.} =
-            #Sleep for the delay.
-            await sleepAsync(delay)
+    #If we have less Blocks, get what we need.
+    if ourHeight < theirHeight:
+        #Declare the proc to get an entry.
+        var getEntry: proc (hash: string): Entry
 
-            #Send it.
+        getEntry = network.nodeEvents.get(
+            proc (hash: string): Entry,
+            "lattice.getEntry"
+        )
+
+        #Ask for each Block.
+        for height in ourHeight ..< theirHeight:
+            #Send the Request.
             await socket.send(
                 char(network.id) &
                 char(network.protocol) &
-                char(MessageType.Block) &
-                !syncBlock.serialize()
+                char(MessageType.BlockRequest) &
+                !height.toBinary()
             )
 
-        #Iterate over each block.
-        for height in theirHeight ..< ourHeight:
-            asyncCheck sendBlock(
-                network.nodeEvents.get(
-                    proc (nonce: uint): Block,
-                    "merit.getBlock"
-                )(height),
-                10000 * int(height - theirHeight)
-            )
+            #Parse it.
+            var syncBlock: Block
+            try:
+                syncBlock = (await socket.recv()).msg.parseBlock()
+            except:
+                return
+
+            #Make sure we have all the Entries verified in it.
+            var entries: seq[string] = @[]
+            for verif in syncBlock.verifications.verifications:
+                try:
+                    discard getEntry(verif.hash.toString())
+                except:
+                    if getCurrentExceptionMsg() == "Lattice does not have a Entry for that hash.":
+                        entries.add(verif.hash.toString())
+
+            #Ask for missing Entries.
+            for entry in entries:
+                #Send the Request.
+                await socket.send(
+                    char(network.id) &
+                    char(network.protocol) &
+                    char(MessageType.EntryRequest) &
+                    !entry
+                )
+
+                #Get the response.
+                var res: tuple[header: string, msg: string] = await socket.recv()
+
+                #Add it.
+                case MessageType(res.header[3]):
+                    of MessageType.Claim:
+                        var claim: Claim = res.msg.parseClaim()
+                        if not network.nodeEvents.get(
+                            proc (claim: Claim): bool,
+                            "lattice.claim"
+                        )(claim):
+                            return
+
+                    of MessageType.Send:
+                        var send: Send = res.msg.parseSend()
+                        if not network.nodeEvents.get(
+                            proc (send: Send): bool,
+                            "lattice.send"
+                        )(send):
+                            return
+
+                    of MessageType.Receive:
+                        var recv: Receive = res.msg.parseReceive()
+                        if not network.nodeEvents.get(
+                            proc (recv: Receive): bool,
+                            "lattice.receive"
+                        )(recv):
+                            return
+
+                    of MessageType.Data:
+                        var data: Data = res.msg.parseData()
+                        if not network.nodeEvents.get(
+                            proc (data: Data): bool,
+                            "lattice.data"
+                        )(data):
+                            return
+
+                    else:
+                        return
+
+            #Add the block.
+            if not network.nodeEvents.get(
+                proc (newBlock: Block): bool,
+                "merit.block"
+            )(syncBlock):
+                return
 
 #Handles a client.
 proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
     var
-        #Get the client ID.
+        #Client ID.
         id: uint = client.id
-        #Define the loop vars outside of the loop.
-        header: string
-        size: int
-        line: string
+        #Message loop variable.
+        msg: tuple[header: string, msg: string]
 
     #While the client is still connected...
     while not client.isClosed():
-        #Receive the header.
-        header = await client.recv(4)
-        #Verify the length.
-        if header.len != 4:
-            #If the header length is 0 because the client disconnected...
-            if header.len == 0:
-                #Close the client.
-                client.close()
-                #Stop handling the Client.
-                return
-            #Continue so we can get a valid header.
-            continue
-        #Define the size.
-        size = ord(header[3])
-        #While the size is 255 bytes (signifying it's even bigger than that)...
-        while ord(header[header.len - 1]) == 255:
-            #Get a new byte.
-            header &= await client.recv(1)
-            #Add it to the size.
-            size += ord(header[header.len - 1])
-        #Get the actual message.
-        line = await client.recv(size)
-        #Verify the length.
-        if line.len != size:
+        try:
+            msg = await client.recv()
+        except:
             continue
 
         #Emit the new Message. If that returns false...
@@ -151,12 +238,12 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
             )(
                 newMessage(
                     id,
-                    uint(ord(header[0])),
-                    uint(ord(header[1])),
-                    MessageType(header[2]),
-                    uint(size),
-                    header,
-                    line
+                    uint(msg.header[0]),
+                    uint(msg.header[1]),
+                    MessageType(msg.header[2]),
+                    uint(msg.msg.len),
+                    msg.header,
+                    msg.msg
                 )
             )
         ):
@@ -174,7 +261,7 @@ proc add*(
     await network.handshake(socket)
 
     #Create the client.
-    var client = newClient(
+    var client: Client = newClient(
         network.clients.total,
         socket
     )
