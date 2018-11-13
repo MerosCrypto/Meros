@@ -87,7 +87,7 @@ proc getEntry(
             "lattice.getEntry"
         )(hash)
     except:
-        raise newException(EventError, "Couldn't get and call lattice.getEntry.")
+        raise newException(EventError, "Couldn't get and call lattice.getEntry. " & getCurrentExceptionMsg())
 
     #Set the Entry fields.
     result = %* {
@@ -169,7 +169,7 @@ proc latticeModule*(
 
             of "getEntry":
                 res = rpc.getEntry(
-                    json["args"][0].getStr()
+                    json["args"][0].getStr().parseHexStr()
                 )
 
             of "getUnarchivedVerifications":

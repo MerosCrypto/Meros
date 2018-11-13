@@ -87,7 +87,7 @@ proc calculate*(
             )
         )
 
-    #Make sure we're dealing with a maximum of 100 result.
+    #Make sure we're dealing with a maximum of 100 results.
     if epoch.len > 100:
         #Sort them by greatest score.
         result.sort(
