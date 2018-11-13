@@ -34,6 +34,12 @@ var
     send: Send                             #Send object.
     recv: Receive                          #Receive object.
 
+    handshake: string =                    #Handshake that says we're at Block 255.
+        char(0) &
+        char(0) &
+        char(0) &
+        char(1) & char(255)
+
     sendHeader: string =                   #Send header.
         char(0) &
         char(0) &
@@ -123,6 +129,9 @@ else:
 echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
 echo "Connected."
+#Send the Handshake.
+waitFor client.send(handshake)
+echo "Handshaked."
 #Send the serialized Entry.
 waitFor client.send(serialized)
 echo "Sent."
