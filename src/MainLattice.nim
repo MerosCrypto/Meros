@@ -10,6 +10,10 @@ proc verify(entry: Entry) {.raises: [
 ].} =
     #Make sure we're a Miner with Merit.
     if (miner) and (merit.state.getBalance(minerWallet.publicKey) > uint(0)):
+        #Make sure we didn't already Verify an Entry at this position.
+        if lattice.accounts[entry.sender].entries[int(entry.nonce)].len != 1:
+            return
+
         #Verify the Entry.
         var verif: MemoryVerification = newMemoryVerification(entry.hash)
         minerWallet.sign(verif)
