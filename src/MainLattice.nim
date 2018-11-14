@@ -96,15 +96,6 @@ proc mainLattice() {.raises: [
                     result = true
                     echo "Successfully added the Claim."
 
-                    #If it worked, broadcast the Claim.
-                    try:
-                        rpc.events.get(
-                            proc (msgType: MessageType, msg: string),
-                            "network.broadcast"
-                        )(MessageType.Claim, claim.serialize())
-                    except:
-                        echo "Failed to broadcast the Claim."
-
                     #Create a Verification.
                     verify(claim)
                 else:
@@ -135,14 +126,8 @@ proc mainLattice() {.raises: [
                     result = true
                     echo "Successfully added the Send."
 
-                    #If it worked, broadcast the Send.
-                    try:
-                        rpc.events.get(
-                            proc (msgType: MessageType, msg: string),
-                            "network.broadcast"
-                        )(MessageType.Send, send.serialize())
-                    except:
-                        echo "Failed to broadcast the Send."
+                    #Create a Verification.
+                    verify(send)
 
                     #If the Send is for us, Receive it.
                     if wallet != nil:
@@ -167,8 +152,16 @@ proc mainLattice() {.raises: [
                             except:
                                 raise newException(EventError, "Couldn't get and call lattice.receive.")
 
-                    #Create a Verification.
-                    verify(send)
+                            #Broadcast it.
+                            network.broadcast(
+                                newMessage(
+                                    NETWORK_ID,
+                                    NETWORK_PROTOCOL,
+                                    MessageType.Receive,
+                                    recv.serialize()
+                                )
+                            )
+
                 else:
                     result = false
                     echo "Failed to add the Send."
@@ -195,15 +188,6 @@ proc mainLattice() {.raises: [
                 ):
                     result = true
                     echo "Successfully added the Receive."
-
-                    #If it worked, broadcast the Receive.
-                    try:
-                        rpc.events.get(
-                            proc (msgType: MessageType, msg: string),
-                            "network.broadcast"
-                        )(MessageType.Receive, recv.serialize())
-                    except:
-                        echo "Failed to broadcast the Receive."
 
                     #Create a Verification.
                     verify(recv)
@@ -233,15 +217,6 @@ proc mainLattice() {.raises: [
                 ):
                     result = true
                     echo "Successfully added the Data."
-
-                    #If it worked, broadcast the Data.
-                    try:
-                        rpc.events.get(
-                            proc (msgType: MessageType, msg: string),
-                            "network.broadcast"
-                        )(MessageType.Data, data.serialize())
-                    except:
-                        echo "Failed to broadcast the Data."
 
                     #Create a Verification.
                     verify(data)

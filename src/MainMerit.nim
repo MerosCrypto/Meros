@@ -7,6 +7,7 @@ proc mainMerit() {.raises: [
     BLSError,
     SodiumError,
     MintError,
+    AsyncError,
     EventError,
     FinalAttributeError
 ].} =
@@ -39,6 +40,8 @@ proc mainMerit() {.raises: [
         events.on(
             "merit.verification",
             proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].} =
+                result = true
+
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification."
 
@@ -51,12 +54,12 @@ proc mainMerit() {.raises: [
 
                 #Add the Verification to the Lattice.
                 result = lattice.verify(merit, verif)
-                if result:
-                    #Add the Verification to the unarchived set.
-                    lattice.unarchive(verif)
-                    echo "Successfully added the Verification."
-                else:
+                if not result:
                     echo "Failed to add the Verification."
+
+                #Add the Verification to the unarchived set.
+                lattice.unarchive(verif)
+                echo "Successfully added the Verification."
         )
 
         #Handle full blocks.
@@ -68,6 +71,7 @@ proc mainMerit() {.raises: [
                 BLSError,
                 SodiumError,
                 MintError,
+                AsyncError,
                 EventError,
                 FinalAttributeError
             ].} =
@@ -138,5 +142,24 @@ proc mainMerit() {.raises: [
                             except:
                                 raise newException(EventError, "Couldn't get and call lattice.claim.")
 
+                            #Broadcast it.
+                            network.broadcast(
+                                newMessage(
+                                    NETWORK_ID,
+                                    NETWORK_PROTOCOL,
+                                    MessageType.Claim,
+                                    claim.serialize()
+                                )
+                            )
+
                 echo "Successfully added the Block."
+
+                #Broadcast the Block.
+                try:
+                    rpc.events.get(
+                        proc (msgType: MessageType, msg: string),
+                        "network.broadcast"
+                    )(MessageType.Block, newBlock.serialize())
+                except:
+                    echo "Failed to broadcast the Block."
         )

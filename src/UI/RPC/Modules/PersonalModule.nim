@@ -14,6 +14,14 @@ import ../../../Wallet/Wallet
 #Lattice lib.
 import ../../../Database/Lattice/Lattice
 
+#Message object.
+import ../../../Network/objects/MessageObj
+
+#Serialization libs.
+import ../../../Network/Serialize/Lattice/SerializeSend
+import ../../../Network/Serialize/Lattice/SerializeReceive
+import ../../../Network/Serialize/Lattice/SerializeData
+
 #RPC object.
 import ../objects/RPCObj
 
@@ -114,6 +122,16 @@ proc send(
     except:
         raise newException(EventError, "Couldn't get and call lattice.send.")
 
+    #Broadcast the Send.
+    try:
+        rpc.events.get(
+            proc (msgType: MessageType, msg: string),
+            "network.broadcast"
+        )(MessageType.Send, send.serialize())
+    except:
+        echo "Failed to broadcast the Send."
+
+
     result = %* {
         "hash": $send.hash
     }
@@ -158,6 +176,15 @@ proc receive(
             raise newException(Exception, "")
     except:
         raise newException(EventError, "Couldn't get and call lattice.receive.")
+
+    #Broadcast the Receive.
+    try:
+        rpc.events.get(
+            proc (msgType: MessageType, msg: string),
+            "network.broadcast"
+        )(MessageType.Receive, recv.serialize())
+    except:
+        echo "Failed to broadcast the Receive."
 
     result = %* {
         "hash": $recv.hash
@@ -207,6 +234,15 @@ proc data(
             raise newException(Exception, "")
     except:
         raise newException(EventError, "Couldn't get and call lattice.data.")
+
+    #Broadcast the Data.
+    try:
+        rpc.events.get(
+            proc (msgType: MessageType, msg: string),
+            "network.broadcast"
+        )(MessageType.Data, data.serialize())
+    except:
+        echo "Failed to broadcast the Data."
 
     result = %* {
         "hash": $data.hash

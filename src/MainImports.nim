@@ -25,6 +25,7 @@ import Network/Network
 #Serialization libs.
 import Network/Serialize/Merit/SerializeMiners
 import Network/Serialize/Merit/SerializeVerifications
+import Network/Serialize/Merit/SerializeBlock
 
 import Network/Serialize/Lattice/SerializeClaim
 import Network/Serialize/Lattice/SerializeSend

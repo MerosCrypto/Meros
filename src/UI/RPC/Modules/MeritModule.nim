@@ -17,6 +17,9 @@ import ../../../Database/Merit/objects/MinersObj
 #Block lib.
 import ../../../Database/Merit/Block
 
+#Message object.
+import ../../../Network/objects/MessageObj
+
 #ParseBlock lib.
 import ../../../Network/Serialize/Merit/ParseBlock
 
@@ -112,14 +115,27 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
 
 #Publish a Block.
 proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
+    var success: bool = false
     try:
         if not rpc.events.get(
             proc (newBlock: Block): bool,
             "merit.block"
-        )(parseHexStr(data).parseBlock()):
+        )(data.parseBlock()):
             raise newException(Exception, "Failed to add the Block.")
+        else:
+            success = true
     except:
         raise newException(EventError, "Couldn't get and call merit.publishBlock.")
+
+    #If that worked, bBroadcast the Block.
+    if success:
+        try:
+            rpc.events.get(
+                proc (msgType: MessageType, msg: string),
+                "network.broadcast"
+            )(MessageType.Block, data)
+        except:
+            echo "Failed to broadcast the Block."
 
 #Handler.
 proc meritModule*(
@@ -147,7 +163,7 @@ proc meritModule*(
 
             of "publishBlock":
                 res = await rpc.publishBlock(
-                    json["args"][0].getStr()
+                    parseHexStr(json["args"][0].getStr())
                 )
 
             else:
