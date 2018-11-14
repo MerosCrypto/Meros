@@ -5,7 +5,6 @@ proc verify(entry: Entry) {.raises: [
     KeyError,
     ValueError,
     AsyncError,
-    SocketError,
     FinalAttributeError
 ].} =
     #Make sure we're a Miner with Merit.
@@ -37,7 +36,6 @@ proc mainLattice() {.raises: [
     ValueError,
     EventError,
     AsyncError,
-    SocketError,
     BLSError,
     SodiumError,
     FinalAttributeError
@@ -83,7 +81,6 @@ proc mainLattice() {.raises: [
             proc (claim: Claim): bool {.raises: [
                 ValueError,
                 AsyncError,
-                SocketError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError
@@ -123,7 +120,6 @@ proc mainLattice() {.raises: [
                 ValueError,
                 EventError,
                 AsyncError,
-                SocketError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError
@@ -185,7 +181,6 @@ proc mainLattice() {.raises: [
             proc (recv: Receive): bool {.raises: [
                 ValueError,
                 AsyncError,
-                SocketError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError
@@ -224,7 +219,6 @@ proc mainLattice() {.raises: [
             proc (data: Data): bool {.raises: [
                 ValueError,
                 AsyncError,
-                SocketError,
                 BLSError,
                 SodiumError,
                 FinalAttributeError

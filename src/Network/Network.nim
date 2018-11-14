@@ -247,7 +247,7 @@ proc connect*(
     #Connect.
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
-    await network.add(socket)
+    asyncCheck network.add(socket)
 
 #Shutdown network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =
@@ -261,13 +261,13 @@ proc shutdown*(network: Network) {.raises: [SocketError].} =
 
 #Function wrappers for the functions in Clients that take in Clients, not Network.
 #Sends a message to all clients.
-proc broadcast*(network: Network, msg: Message) {.raises: [AsyncError, SocketError].} =
+proc broadcast*(network: Network, msg: Message) {.raises: [AsyncError].} =
     network.clients.broadcast(msg)
 #Reply to a message.
-proc reply*(network: Network, msg: Message, toSend: string) {.raises: [AsyncError, SocketError].} =
+proc reply*(network: Network, msg: Message, toSend: string) {.raises: [AsyncError].} =
     network.clients.reply(msg, toSend)
 #Disconnect a client.
-proc disconnect*(network: Network, id: uint) {.raises: [SocketError].} =
+proc disconnect*(network: Network, id: uint) {.raises: [].} =
     network.clients.disconnect(id)
-proc disconnect*(network: Network, msg: Message) {.raises: [SocketError].} =
+proc disconnect*(network: Network, msg: Message) {.raises: [].} =
     network.clients.disconnect(msg.client)

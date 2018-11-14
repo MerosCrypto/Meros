@@ -78,7 +78,9 @@ proc recv(socket: AsyncSocket): Future[tuple[header: string, msg: string]] {.asy
 proc handshake(
     network: Network,
     socket: AsyncSocket
-) {.async.} =
+): Future[bool] {.async.} =
+    result = true
+
     #Get the Blockchain height.
     var
         #Our Blockchain Height.
@@ -107,16 +109,16 @@ proc handshake(
     #Verify their Header.
     #Network ID.
     if uint(handshake.header[0]) != network.id:
-        return
+        return false
     #Protocol version.
     if uint(handshake.header[1]) != network.protocol:
-        return
+        return false
     #Message Type.
     if int(handshake.header[2]) != ord(MessageType.Handshake):
-        return
+        return false
     #Message length.
     if int(handshake.header[3]) > 4:
-        return
+        return false
     #Get their Blockchain height.
     theirHeight = uint(
         handshake.msg.fromBinary()
@@ -147,7 +149,7 @@ proc handshake(
             try:
                 syncBlock = (await socket.recv()).msg.parseBlock()
             except:
-                return
+                return false
 
             #Make sure we have all the Entries verified in it.
             var entries: seq[string] = @[]
@@ -179,7 +181,7 @@ proc handshake(
                             proc (claim: Claim): bool,
                             "lattice.claim"
                         )(claim):
-                            return
+                            return false
 
                     of MessageType.Send:
                         var send: Send = res.msg.parseSend()
@@ -187,7 +189,7 @@ proc handshake(
                             proc (send: Send): bool,
                             "lattice.send"
                         )(send):
-                            return
+                            return false
 
                     of MessageType.Receive:
                         var recv: Receive = res.msg.parseReceive()
@@ -195,7 +197,7 @@ proc handshake(
                             proc (recv: Receive): bool,
                             "lattice.receive"
                         )(recv):
-                            return
+                            return false
 
                     of MessageType.Data:
                         var data: Data = res.msg.parseData()
@@ -203,17 +205,17 @@ proc handshake(
                             proc (data: Data): bool,
                             "lattice.data"
                         )(data):
-                            return
+                            return false
 
                     else:
-                        return
+                        return false
 
             #Add the block.
             if not network.nodeEvents.get(
                 proc (newBlock: Block): bool,
                 "merit.block"
             )(syncBlock):
-                return
+                return false
 
 #Handles a client.
 proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
@@ -258,7 +260,8 @@ proc add*(
     socket: AsyncSocket
 ) {.async.} =
     #Handshake with the Socket.
-    await network.handshake(socket)
+    if not await network.handshake(socket):
+        return
 
     #Create the client.
     var client: Client = newClient(
@@ -269,17 +272,23 @@ proc add*(
     network.clients.clients.add(client)
     #Increment the total so the next ID doesn't overlap.
     inc(network.clients.total)
+
     #Handle it.
     try:
         await client.handle(network.subEvents)
     except:
-        raise newException(AsyncError, "Couldn't handle a Client.")
+        #Due to async, the Exception we had here wasn't being handled.
+        #Because it wasn't being handled, the Node crashed.
+        #The Node shouldn't crash when a random Node disconnects.
+
+        #Delete this client from Clients.
+        network.clients.disconnect(client.id)
 
 #Sends a message to all clients.
 proc broadcast*(
     clients: Clients,
     msg: Message
-) {.raises: [AsyncError, SocketError].} =
+) {.raises: [AsyncError].} =
     #Seq of the clients to disconnect.
     var toDisconnect: seq[uint] = @[]
 
@@ -308,7 +317,7 @@ proc reply*(
     clients: Clients,
     msg: Message,
     toSend: string
-) {.raises: [AsyncError, SocketError].} =
+) {.raises: [AsyncError].} =
     #Get the client.
     var client: Client = clients.getClient(msg.client)
     #Make sure the client is open.
@@ -325,5 +334,5 @@ proc reply*(
 proc disconnect*(
     clients: Clients,
     msg: Message
-) {.raises: [SocketError].} =
+) {.raises: [].} =
     clients.disconnect(msg.client)

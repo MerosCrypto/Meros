@@ -29,7 +29,7 @@ proc mainNetwork() {.raises: [
         #Broadcast a message. This is used to send data out.
         events.on(
             "network.broadcast",
-            proc (msgType: MessageType, msg: string) {.raises: [AsyncError, SocketError].} =
+            proc (msgType: MessageType, msg: string) {.raises: [AsyncError].} =
                 network.broadcast(
                     newMessage(
                         NETWORK_ID,
