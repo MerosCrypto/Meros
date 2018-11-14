@@ -34,11 +34,11 @@ var
     send: Send                             #Send object.
     recv: Receive                          #Receive object.
 
-    handshake: string =                    #Handshake that says we're at Block 255.
+    handshake: string =                    #Handshake that says we're at Block 0.
         char(0) &
         char(0) &
         char(0) &
-        char(1) & char(255)
+        char(1) & char(0)
 
     sendHeader: string =                   #Send header.
         char(0) &
@@ -101,7 +101,7 @@ elif answer.toLower() == "receive":
     #Get the intput address/input nonce/amount/nonce.
     echo "Who would you like to receive from?"
     address = stdin.readLine()
-    echo "What nonce is the send block on their account?"
+    echo "What nonce is the Send Entry on their account?"
     inputNonce = parseUInt(stdin.readLine())
     echo "What nonce is this on your account?"
     nonce = parseUInt(stdin.readLine())
@@ -129,9 +129,11 @@ else:
 echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
 echo "Connected."
+
 #Send the Handshake.
 waitFor client.send(handshake)
 echo "Handshaked."
+
 #Send the serialized Entry.
 waitFor client.send(serialized)
 echo "Sent."

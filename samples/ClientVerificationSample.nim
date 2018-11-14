@@ -20,6 +20,12 @@ var
 
     verif: MemoryVerification              #Verification.
 
+    handshake: string =                    #Handshake that says we're at Block 0.
+        char(0) &
+        char(0) &
+        char(0) &
+        char(1) & char(0)
+
     header: string =                       #Verification header.
         char(0) &
         char(0) &
@@ -52,6 +58,11 @@ serialized = verif.serialize()
 echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
 echo "Connected."
+
+#Send the Handshake.
+waitFor client.send(handshake)
+echo "Handshaked."
+
 #Send the serialized Entry.
 echo serialized.len
 waitFor client.send(header & char(serialized.len) & serialized)
