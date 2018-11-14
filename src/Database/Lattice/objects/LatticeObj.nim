@@ -102,7 +102,10 @@ func archive*(
     verif: MemoryVerification
 ) {.raises: [KeyError].} =
     #Make sure the Verif isn't already archived.
-    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 1:
+    if (
+        (lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString())) and
+        (lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 1)
+    ):
         return
 
     #Remove it from unarchived.

@@ -126,14 +126,6 @@ proc handshake(
 
     #If we have less Blocks, get what we need.
     if ourHeight < theirHeight:
-        #Declare the proc to get an entry.
-        var getEntry: proc (hash: string): Entry
-
-        getEntry = network.nodeEvents.get(
-            proc (hash: string): Entry,
-            "lattice.getEntry"
-        )
-
         #Ask for each Block.
         for height in ourHeight ..< theirHeight:
             #Send the Request.
@@ -155,7 +147,10 @@ proc handshake(
             var entries: seq[string] = @[]
             for verif in syncBlock.verifications.verifications:
                 try:
-                    discard getEntry(verif.hash.toString())
+                    discard network.nodeEvents.get(
+                        proc (hash: string): Entry,
+                        "lattice.getEntry"
+                    )(verif.hash.toString())
                 except:
                     if getCurrentExceptionMsg() == "Lattice does not have a Entry for that hash.":
                         entries.add(verif.hash.toString())
@@ -174,7 +169,7 @@ proc handshake(
                 var res: tuple[header: string, msg: string] = await socket.recv()
 
                 #Add it.
-                case MessageType(res.header[3]):
+                case MessageType(res.header[2]):
                     of MessageType.Claim:
                         var claim: Claim = res.msg.parseClaim()
                         if not network.nodeEvents.get(
