@@ -95,7 +95,7 @@ proc getEntry(
         "sender": entry.sender,
         "nonce": int(entry.nonce),
         "hash": $entry.hash,
-        "signature": $entry.signature,
+        "signature": ($entry.signature).toHex(),
         "verified": entry.verified
     }
 
