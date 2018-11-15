@@ -9,6 +9,10 @@ finalsd:
     type Client* = ref object of RootObj
         #ID.
         id* {.final.}: uint
+        #Shaking.
+        shaking*: bool
+        #Syncing.
+        syncing*: bool
         #Socket.
         socket* {.final.}: AsyncSocket
 
@@ -16,6 +20,8 @@ finalsd:
 func newClient*(id: uint, socket: AsyncSocket): Client {.raises: [].} =
     result = Client(
         id: id,
+        shaking: true,
+        syncing: false,
         socket: socket
     )
     result.ffinalizeID()

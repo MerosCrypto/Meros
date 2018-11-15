@@ -26,17 +26,22 @@ import Serialize/Lattice/ParseSend
 import Serialize/Lattice/ParseReceive
 import Serialize/Lattice/ParseData
 
-#Message/Clients/Network objects.
+#Message/Client/Clients/Network objects.
 import objects/MessageObj
+import objects/ClientObj
 import objects/ClientsObj
 import objects/NetworkObj
 #Export the Message and Network objects.
 export MessageObj
 export NetworkObj
+#Export the Client to Socket converter.
+export ClientObj.toSocket
 
 #Socket sublibs.
 import Server
 import Clients
+#Export the sync function.
+export Clients.sync
 
 #Events lib.
 import ec_events
@@ -102,9 +107,6 @@ proc newNetwork*(
                 #Switch based off the message type (in a try to handle invalid messages).
                 try:
                     case msg.content:
-                        of MessageType.Handshake:
-                            discard
-
                         of MessageType.Verification:
                             if nodeEvents.get(
                                 proc (verif: MemoryVerification): bool,
@@ -115,8 +117,8 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Block:
-                            if nodeEvents.get(
-                                proc (newBlock: Block): bool,
+                            if await nodeEvents.get(
+                                proc (newBlock: Block): Future[bool],
                                 "merit.block"
                             )(
                                 msg.message.parseBlock()
@@ -208,6 +210,9 @@ proc newNetwork*(
 
                             #Send over the Entry.
                             network.clients.reply(msg, header & !entry.serialize())
+
+                        else:
+                            discard
 
                 except:
                     echo "Invalid Message."

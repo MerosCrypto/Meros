@@ -74,13 +74,96 @@ proc recv(socket: AsyncSocket): Future[tuple[header: string, msg: string]] {.asy
     #Return a tuple of the header and the message.
     return (header, msg)
 
+#Sync all data referenced by a Block using the socket.
+proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool] {.async.} =
+    result = true
+
+    #Make sure we have all the Entries verified in it.
+    var entries: seq[string] = @[]
+    for verif in newBlock.verifications.verifications:
+        try:
+            discard network.nodeEvents.get(
+                proc (hash: string): Entry,
+                "lattice.getEntry"
+            )(verif.hash.toString())
+        except:
+            if getCurrentExceptionMsg() == "Lattice does not have a Entry for that hash.":
+                entries.add(verif.hash.toString())
+
+    #Send syncing.
+    await socket.send(
+        char(network.id) &
+        char(network.protocol) &
+        char(MessageType.Syncing) &
+        char(0)
+    )
+
+    #This is in a try block so we always send SyncingOver.
+    try:
+        #Ask for missing Entries.
+        for entry in entries:
+            #Send the Request.
+            await socket.send(
+                char(network.id) &
+                char(network.protocol) &
+                char(MessageType.EntryRequest) &
+                !entry
+            )
+
+            #Get the response.
+            var res: tuple[header: string, msg: string] = await socket.recv()
+            #Add it.
+            case MessageType(res.header[2]):
+                of MessageType.Claim:
+                    var claim: Claim = res.msg.parseClaim()
+                    if not network.nodeEvents.get(
+                        proc (claim: Claim): bool,
+                        "lattice.claim"
+                    )(claim):
+                        return false
+
+                of MessageType.Send:
+                    var send: Send = res.msg.parseSend()
+                    if not network.nodeEvents.get(
+                        proc (send: Send): bool,
+                        "lattice.send"
+                    )(send):
+                        return false
+
+                of MessageType.Receive:
+                    var recv: Receive = res.msg.parseReceive()
+                    if not network.nodeEvents.get(
+                        proc (recv: Receive): bool,
+                        "lattice.receive"
+                    )(recv):
+                        return false
+
+                of MessageType.Data:
+                    var data: Data = res.msg.parseData()
+                    if not network.nodeEvents.get(
+                        proc (data: Data): bool,
+                        "lattice.data"
+                    )(data):
+                        return false
+
+                else:
+                    return false
+    except:
+        result = false
+
+    #Send SyncingOver.
+    await socket.send(
+        char(network.id) &
+        char(network.protocol) &
+        char(MessageType.SyncingOver) &
+        char(0)
+    )
+
 #Handshake.
 proc handshake(
     network: Network,
     socket: AsyncSocket
-): Future[bool] {.async.} =
-    result = true
-
+): Future[int] {.async.} =
     #Get the Blockchain height.
     var
         #Our Blockchain Height.
@@ -109,20 +192,26 @@ proc handshake(
     #Verify their Header.
     #Network ID.
     if uint(handshake.header[0]) != network.id:
-        return false
+        return 0
     #Protocol version.
     if uint(handshake.header[1]) != network.protocol:
-        return false
+        return 0
     #Message Type.
     if int(handshake.header[2]) != ord(MessageType.Handshake):
-        return false
+        return 0
     #Message length.
     if int(handshake.header[3]) > 4:
-        return false
+        return 0
     #Get their Blockchain height.
     theirHeight = uint(
         handshake.msg.fromBinary()
     )
+
+    #If the result is 1, they need more info but we don't.
+    #If the result is 2, both sides are good.
+    result = 2
+    if theirHeight < ourHeight:
+        result = 1
 
     #If we have less Blocks, get what we need.
     if ourHeight < theirHeight:
@@ -137,80 +226,31 @@ proc handshake(
             )
 
             #Parse it.
-            var syncBlock: Block
+            var newBlock: Block
+
             try:
-                syncBlock = (await socket.recv()).msg.parseBlock()
+                newBlock = (await socket.recv()).msg.parseBlock()
             except:
-                return false
+                return 0
 
-            #Make sure we have all the Entries verified in it.
-            var entries: seq[string] = @[]
-            for verif in syncBlock.verifications.verifications:
-                try:
-                    discard network.nodeEvents.get(
-                        proc (hash: string): Entry,
-                        "lattice.getEntry"
-                    )(verif.hash.toString())
-                except:
-                    if getCurrentExceptionMsg() == "Lattice does not have a Entry for that hash.":
-                        entries.add(verif.hash.toString())
-
-            #Ask for missing Entries.
-            for entry in entries:
-                #Send the Request.
-                await socket.send(
-                    char(network.id) &
-                    char(network.protocol) &
-                    char(MessageType.EntryRequest) &
-                    !entry
-                )
-
-                #Get the response.
-                var res: tuple[header: string, msg: string] = await socket.recv()
-
-                #Add it.
-                case MessageType(res.header[2]):
-                    of MessageType.Claim:
-                        var claim: Claim = res.msg.parseClaim()
-                        if not network.nodeEvents.get(
-                            proc (claim: Claim): bool,
-                            "lattice.claim"
-                        )(claim):
-                            return false
-
-                    of MessageType.Send:
-                        var send: Send = res.msg.parseSend()
-                        if not network.nodeEvents.get(
-                            proc (send: Send): bool,
-                            "lattice.send"
-                        )(send):
-                            return false
-
-                    of MessageType.Receive:
-                        var recv: Receive = res.msg.parseReceive()
-                        if not network.nodeEvents.get(
-                            proc (recv: Receive): bool,
-                            "lattice.receive"
-                        )(recv):
-                            return false
-
-                    of MessageType.Data:
-                        var data: Data = res.msg.parseData()
-                        if not network.nodeEvents.get(
-                            proc (data: Data): bool,
-                            "lattice.data"
-                        )(data):
-                            return false
-
-                    else:
-                        return false
+            #Get all the Entries it verifies.
+            if not await newBlock.sync(network, socket):
+                return 0
 
             #Add the block.
-            if not network.nodeEvents.get(
-                proc (newBlock: Block): bool,
+            if not await network.nodeEvents.get(
+                proc (newBlock: Block): Future[bool],
                 "merit.block"
-            )(syncBlock):
-                return false
+            )(newBlock):
+                return
+
+        #Handshake over.
+        await socket.send(
+            char(network.id) &
+            char(network.protocol) &
+            char(MessageType.HandshakeOver) &
+            !ourHeight.toBinary()
+        )
 
 #Handles a client.
 proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
@@ -226,6 +266,22 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
             msg = await client.recv()
         except:
             continue
+
+        case MessageType(msg.header[2]):
+            of MessageType.Syncing:
+                client.syncing = true
+                continue
+
+            of MessageType.SyncingOver:
+                client.syncing = false
+                continue
+
+            of MessageType.HandshakeOver:
+                client.shaking = false
+                continue
+
+            else:
+                discard
 
         #Emit the new Message. If that returns false...
         if not (
@@ -255,7 +311,8 @@ proc add*(
     socket: AsyncSocket
 ) {.async.} =
     #Handshake with the Socket.
-    if not await network.handshake(socket):
+    var handshakeCode: int = await network.handshake(socket)
+    if handshakeCode == 0:
         return
 
     #Create the client.
@@ -263,6 +320,11 @@ proc add*(
         network.clients.total,
         socket
     )
+
+    #If the handshake said both parties are equally synced...
+    if handshakeCode == 2:
+        client.shaking = false
+
     #Add it to the seq.
     network.clients.clients.add(client)
     #Increment the total so the next ID doesn't overlap.
@@ -291,6 +353,10 @@ proc broadcast*(
     for client in clients.clients:
         #Skip the Client who sent us this.
         if client.id == msg.client:
+            continue
+
+        #Skip Clients who are shaking/syncing.
+        if client.shaking or client.syncing:
             continue
 
         #Make sure the client is open.
