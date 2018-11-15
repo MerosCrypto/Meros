@@ -31,8 +31,9 @@ import objects/MessageObj
 import objects/ClientObj
 import objects/ClientsObj
 import objects/NetworkObj
-#Export the Message and Network objects.
+#Export the Message, Clients, and Network objects.
 export MessageObj
+export ClientsObj
 export NetworkObj
 #Export the Client to Socket converter.
 export ClientObj.toSocket
@@ -253,6 +254,56 @@ proc connect*(
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
     asyncCheck network.add(socket)
+
+#Get a Block.
+proc requestBlock*(
+    network: Network,
+    nonce: uint
+): Future[bool] {.async.} =
+    try:
+        #Send syncing.
+        await network.clients.clients[0].send(
+            char(network.id) &
+            char(network.protocol) &
+            char(MessageType.Syncing) &
+            char(0)
+        )
+
+        #Send the Request.
+        await network.clients.clients[0].send(
+            char(network.id) &
+            char(network.protocol) &
+            char(MessageType.BlockRequest) &
+            !nonce.toBinary()
+        )
+
+        #Parse it.
+        var newBlock: Block
+        try:
+            newBlock = (await network.clients.clients[0].recv()).msg.parseBlock()
+        except:
+            return false
+
+        #Get all the Entries it verifies.
+        if not await newBlock.sync(network, network.clients.clients[0]):
+            return false
+
+        #Add the block.
+        return await network.nodeEvents.get(
+            proc (newBlock: Block): Future[bool],
+            "merit.block"
+        )(newBlock)
+
+    except:
+        result = false
+
+    #Send syncing over.
+    await network.clients.clients[0].send(
+        char(network.id) &
+        char(network.protocol) &
+        char(MessageType.Syncing) &
+        char(0)
+    )
 
 #Shutdown network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =

@@ -65,10 +65,20 @@ proc mainMerit() {.raises: [
                     result = true
 
                     #Print that we're adding the Block.
-                    echo "Adding a new Block."
+                    echo "Adding a new Block. " & $newBlock.header.nonce
 
-                    #If we're connected to other people, sync the Block.
+                    #If we're connected to other people, sync missing info.
                     if network.clients.clients.len > 0:
+                        #Missing previous Blocks.
+                        if newBlock.header.nonce > uint(merit.blockchain.blocks.len):
+                            #Iterate over the missing Blocks.
+                            for nonce in uint(merit.blockchain.blocks.len) ..< newBlock.header.nonce:
+                                #Get and test it.
+                                if not await network.requestBlock(nonce):
+                                    echo "Failed to add the Block."
+                                    return false
+
+                        #Missing entries.
                         if not await newBlock.sync(network, network.clients.clients[0]):
                             echo "Failed to add the Block."
                             return false
@@ -94,8 +104,11 @@ proc mainMerit() {.raises: [
                         lattice.archive(verif)
 
                     #Create the Mints (which ends up minting a total of of 50000 EMB).
-                    #Nonce of the Mint.
-                    var mintNonce: uint
+                    var
+                        #Nonce of the Mint.
+                        mintNonce: uint
+                        #Any Claim we may create.
+                        claim: Claim
                     for reward in rewards:
                         mintNonce = lattice.mint(
                             reward.key,
@@ -124,26 +137,29 @@ proc mainMerit() {.raises: [
                                 except:
                                     raise newException(EventError, "Couldn't get and call lattice.claim.")
 
-                                #Broadcast it.
-                                network.broadcast(
-                                    newMessage(
-                                        NETWORK_ID,
-                                        NETWORK_PROTOCOL,
-                                        MessageType.Claim,
-                                        claim.serialize()
-                                    )
-                                )
-
                     echo "Successfully added the Block."
 
                     #Broadcast the Block.
-                    try:
-                        rpc.events.get(
-                            proc (msgType: MessageType, msg: string),
-                            "network.broadcast"
-                        )(MessageType.Block, newBlock.serialize())
-                    except:
-                        echo "Failed to broadcast the Block."
+                    network.broadcast(
+                        newMessage(
+                            NETWORK_ID,
+                            NETWORK_PROTOCOL,
+                            MessageType.Block,
+                            newBlock.serialize()
+                        )
+                    )
+
+                    #If we made a Claim...
+                    if not claim.isNil:
+                        #Broadcast the Claim.
+                        network.broadcast(
+                            newMessage(
+                                NETWORK_ID,
+                                NETWORK_PROTOCOL,
+                                MessageType.Claim,
+                                claim.serialize()
+                            )
+                        )
             )
         except:
             raise newException(AsyncError, "Couldn't add merit.block (async) to the EventEmitter.")

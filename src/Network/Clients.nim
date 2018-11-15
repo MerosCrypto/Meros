@@ -37,8 +37,11 @@ import ec_events
 #Networking standard libs.
 import asyncnet, asyncdispatch
 
+#Seq utils standard lib.
+import sequtils
+
 #Receive a header and message from a socket.
-proc recv(socket: AsyncSocket): Future[tuple[header: string, msg: string]] {.async.} =
+proc recv*(socket: AsyncSocket): Future[tuple[header: string, msg: string]] {.async.} =
     var
         header: string
         size: int
@@ -89,6 +92,7 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
         except:
             if getCurrentExceptionMsg() == "Lattice does not have a Entry for that hash.":
                 entries.add(verif.hash.toString())
+    entries = deduplicate(entries)
 
     #Send syncing.
     await socket.send(
@@ -227,7 +231,6 @@ proc handshake(
 
             #Parse it.
             var newBlock: Block
-
             try:
                 newBlock = (await socket.recv()).msg.parseBlock()
             except:

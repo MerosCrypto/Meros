@@ -42,15 +42,14 @@
 - Use sugerror's reraise for all our Exception wrapping.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
-- Improve Network's encapsulation.
-
 - Merkle Tree appending.
-
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
-- Optimize the speed of `serialize` and `parse` (reserializing every parsed element?).
-- Don't rebroadcast Blocks from the handshake/Entries we ask for.
 - Stop duplicate Clients.
+- Don't rebroadcast Blocks that we synced.
+- Use requestBlock in the Handshake.
+- Improve Network's encapsulation.
+- Optimize the speed of `serialize` and `parse` (reserializing every parsed element?).
 
 - Have the RPC use numbers for the nonces.
 
