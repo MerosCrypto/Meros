@@ -83,6 +83,12 @@ proc mainMerit() {.raises: [
                             echo "Failed to add the Block."
                             return false
 
+                    #Verify we have all the Entries.
+                    for verif in newBlock.verifications.verifications:
+                        if not lattice.lookup.hasKey(verif.hash.toString()):
+                            echo "Failed to add the Block."
+                            return false
+
                     #Verify the Verifications.
                     if not newBlock.verifications.verify():
                         echo "Failed to add the Block."
