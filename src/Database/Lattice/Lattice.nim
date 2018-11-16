@@ -181,7 +181,6 @@ proc verify*(
     #Verify the Entry exists.
     if not lattice.lookup.hasKey(hash):
         return false
-    result = true
 
     #Create a blank seq if there's not already a seq.
     if not lattice.verifications.hasKey(hash):
@@ -189,7 +188,9 @@ proc verify*(
 
     #Return if the Verification already exists.
     if lattice.verifications[hash].contains(verif.verifier):
-        return
+        return false
+    
+    result = true
 
     #Add the Verification.
     lattice.verifications[hash].add(verif.verifier)
