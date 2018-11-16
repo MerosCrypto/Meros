@@ -78,7 +78,7 @@ proc mainMerit() {.raises: [
                                     echo "Failed to add the Block."
                                     return false
 
-                        #Missing entries.
+                        #Missing Entries.
                         if not await newBlock.sync(network, network.clients.clients[0]):
                             echo "Failed to add the Block."
                             return false

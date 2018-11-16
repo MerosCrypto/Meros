@@ -260,6 +260,7 @@ proc requestBlock*(
     network: Network,
     nonce: uint
 ): Future[bool] {.async.} =
+    #Try block is here so if anything fails, we still send Stop Syncing.
     try:
         #Send syncing.
         await network.clients.clients[0].send(
@@ -295,15 +296,17 @@ proc requestBlock*(
         )(newBlock)
 
     except:
-        result = false
+        #Raise whatever Exception occurred.
+        raise
 
-    #Send syncing over.
-    await network.clients.clients[0].send(
-        char(network.id) &
-        char(network.protocol) &
-        char(MessageType.Syncing) &
-        char(0)
-    )
+    finally:
+        #Send syncing over.
+        await network.clients.clients[0].send(
+            char(network.id) &
+            char(network.protocol) &
+            char(MessageType.SyncingOver) &
+            char(0)
+        )
 
 #Shutdown network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =

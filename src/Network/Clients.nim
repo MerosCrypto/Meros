@@ -94,16 +94,16 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
                 entries.add(verif.hash.toString())
     entries = deduplicate(entries)
 
-    #Send syncing.
-    await socket.send(
-        char(network.id) &
-        char(network.protocol) &
-        char(MessageType.Syncing) &
-        char(0)
-    )
-
-    #This is in a try block so we always send SyncingOver.
+    #Try block is here so if anything fails, we still send Stop Syncing.
     try:
+        #Send syncing.
+        await socket.send(
+            char(network.id) &
+            char(network.protocol) &
+            char(MessageType.Syncing) &
+            char(0)
+        )
+
         #Ask for missing Entries.
         for entry in entries:
             #Send the Request.
@@ -153,15 +153,16 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
                 else:
                     return false
     except:
-        result = false
+        raise
 
-    #Send SyncingOver.
-    await socket.send(
-        char(network.id) &
-        char(network.protocol) &
-        char(MessageType.SyncingOver) &
-        char(0)
-    )
+    finally:
+        #Send SyncingOver.
+        await socket.send(
+            char(network.id) &
+            char(network.protocol) &
+            char(MessageType.SyncingOver) &
+            char(0)
+        )
 
 #Handshake.
 proc handshake(
