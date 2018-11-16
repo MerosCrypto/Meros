@@ -87,7 +87,7 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
         try:
             discard network.nodeEvents.get(
                 proc (hash: string): Entry,
-                "lattice.getEntry"
+                "lattice.getEntryByHash"
             )(verif.hash.toString())
         except:
             if getCurrentExceptionMsg() == "Lattice does not have a Entry for that hash.":

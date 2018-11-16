@@ -61,11 +61,16 @@ proc mainLattice() {.raises: [
                 lattice.getAccount(account).balance
         )
 
-        #Handle requests for an entry.
+        #Handle requests for an Entry.
         events.on(
-            "lattice.getEntry",
+            "lattice.getEntryByHash",
             proc (hash: string): Entry {.raises: [KeyError, ValueError].} =
                 lattice[hash]
+        )
+        events.on(
+            "lattice.getEntryByIndex",
+            proc (index: Index): Entry {.raises: [ValueError].} =
+                lattice[index]
         )
 
         #Handle requests for the Unarchived Verifications.

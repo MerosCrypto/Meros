@@ -185,7 +185,7 @@ proc newNetwork*(
                                 #Get the Entry the Client wants.
                                 entry = network.nodeEvents.get(
                                     proc (hash: string): Entry,
-                                    "lattice.getEntry"
+                                    "lattice.getEntryByHash"
                                 )(msg.message)
                             except:
                                 #If that failed, do nothing.

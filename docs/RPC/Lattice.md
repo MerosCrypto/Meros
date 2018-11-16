@@ -12,9 +12,46 @@ It returns:
 It returns:
 - `balance` (string)
 
-### `getEntry`
-`getEntry` will fetch and return an Entry. It takes in one argument:
+### `getEntryByHash`
+`getEntryByHash` will fetch and return an Entry. It takes in one argument:
 - Hash (string)
+It returns:
+    For every entry:
+    - `descendant` (string)
+    - `sender` (string)
+    - `nonce` (int)
+    - `hash` (string)
+    - `signature` (string)
+    - `verified` (bool)
+
+    When `descendant` == "Mint":
+        - `output` (string)
+        - `amount` (string)
+
+    When `descendant` == "Claim":
+        - `mintNonce` (int)
+        - `bls` (string)
+
+    When `descendant` == "Send":
+        - `output` (string)
+        - `amount` (string)
+        - `sha512` (string)
+        - `proof` (int)
+
+    When `descendant` == "Receive":
+        - `index` (object)
+            - `address` (string)
+            - `nonce` (int)
+
+    When `descendant` == "Data":
+        - `data` (string)
+        - `sha512` (string)
+        - `proof` (int)
+
+### `getEntryByIndex`
+`getEntryByIndex` will fetch and return an Entry. It takes in two arguments:
+- Address (string)
+- nonce (int)
 It returns:
     For every entry:
     - `descendant` (string)
