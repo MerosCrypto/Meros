@@ -8,11 +8,11 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Handshake Over message to signal we're done syncing.
-- Sync missing Blocks outside of the Handshake.
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Make sure there's no leading bytes in serialized elements.
 - Remove Network ID/Protocol version from the Header since they're in the Handshake.
+- Remove direct references to clients[0].
+- Add Node karma.
 
 - Merit Removal system.
 - Difficulty Voting system.
@@ -32,6 +32,8 @@
 - Have RPC handle things in order OR use an ID system.
 - RPC creation of Claims.
 - Have the RPC dynamically get the mining difficulty (it's currently hardcoded).
+- Have the RPC dynamically get the nonce (it's currently an argument).
+- RPC getEntry using an index.
 
 - Show the existing wallet on reload of `Main.html`.
 - Claim creation via the GUI.
@@ -49,9 +51,6 @@
 - Don't rebroadcast Blocks that we synced.
 - Use requestBlock in the Handshake.
 - Improve Network's encapsulation.
-- Optimize the speed of `serialize` and `parse` (reserializing every parsed element?).
-
-- Have the RPC use numbers for the nonces.
 
 - Make more things `func`.
 - Make sure `KeyError` is listed under `raises`.
