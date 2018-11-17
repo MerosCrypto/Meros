@@ -40,6 +40,12 @@ var
         char(0) &
         char(1) & char(0)
 
+    handshakeOver: string =                #Handshake over message.
+        char(0) &
+        char(0) &
+        char(5) &
+        char(0)
+
     sendHeader: string =                   #Send header.
         char(0) &
         char(0) &
@@ -132,6 +138,7 @@ echo "Connected."
 
 #Send the Handshake.
 waitFor client.send(handshake)
+waitFor client.send(handshakeOver)
 echo "Handshaked."
 
 #Send the serialized Entry.
