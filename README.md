@@ -11,7 +11,7 @@
 ### Ember Whitepaper: Being  Written
 
 #### Current State
-Ember is still under development, and doesn't currently have a public testnet. That said, Ember is handling transactions, and we are working on setting up a Developer Testnet. We aim to have one within a week or two.
+Ember is still under development and is running a Developer Testnet. Anyone can participate if they compile their own Node.
 
 #### Compiling
 
