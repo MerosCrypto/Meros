@@ -7,6 +7,9 @@ import BN
 #Hash lib.
 import ../../lib/Hash
 
+#BLS lib.
+import ../../lib/BLS
+
 #Merit lib.
 import ../Merit/Merit
 
@@ -187,9 +190,10 @@ proc verify*(
         lattice.verifications[hash] = @[]
 
     #Return if the Verification already exists.
-    if lattice.verifications[hash].contains(verif.verifier):
-        return false
-    
+    for verifier in lattice.verifications[hash]:
+        if verifier == verif.verifier:
+            return false
+
     result = true
 
     #Add the Verification.
