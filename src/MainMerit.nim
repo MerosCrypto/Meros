@@ -35,8 +35,6 @@ proc mainMerit() {.raises: [
         events.on(
             "merit.verification",
             proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].} =
-                result = true
-
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification."
 
