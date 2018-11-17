@@ -148,7 +148,7 @@ proc add*(
     #Verify it's unclaimed.
     for i in account.entries:
         if i[0].descendant == EntryType.Receive:
-            var past: Receive = cast[Receive](i)
+            var past: Receive = cast[Receive](i[0])
             if (
                 (past.index.address == recv.index.address) and
                 (past.index.nonce == recv.index.nonce)

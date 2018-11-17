@@ -101,18 +101,14 @@ proc add*(
         of EntryType.Receive:
             var recv: Receive = cast[Receive](entry)
 
-            try:
-                result = account.add(
-                    #Receive Entry.
-                    recv,
-                    #Supposed Send Entry.
-                    lattice[
-                        recv.index
-                    ]
-                )
-            except:
-                echo getCurrentExceptionMsg()
-                return false
+            result = account.add(
+                #Receive Entry.
+                recv,
+                #Supposed Send Entry.
+                lattice[
+                    recv.index
+                ]
+            )
 
         of EntryType.Data:
             var data: Data = cast[Data](entry)
