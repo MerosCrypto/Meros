@@ -12,6 +12,7 @@
 - Make sure there's no leading bytes in serialized elements.
 - Remove Network ID/Protocol version from the Header since they're in the Handshake.
 - Remove direct references to clients[0].
+- Sync elements not on the Blockchain.
 - Add Node karma.
 
 - Merit Removal system.
@@ -33,7 +34,7 @@
 - RPC creation of Claims.
 - Have the RPC dynamically get the mining difficulty (it's currently hardcoded).
 - Have the RPC dynamically get the nonce (it's currently an argument).
-- RPC getEntry using an index.
+- `network.rebroadcast(address, nonce)` RPC method.
 
 - Show the existing wallet on reload of `Main.html`.
 - Claim creation via the GUI.
