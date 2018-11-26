@@ -48,7 +48,7 @@ var
     claimHeader: string =                   #Claim header.
         char(0) &
         char(0) &
-        char(3)
+        char(8)
     serialized: string                     #Serialized string.
 
     socket: AsyncSocket = newAsyncSocket() #Socket.
@@ -82,7 +82,7 @@ serialized = claimHeader & char(serialized.len) & serialized
 
 #Connect to the server.
 echo "Connecting..."
-waitFor socket.connect("127.0.0.1", Port(5134))
+waitFor socket.connect("127.0.0.1", Port(5132))
 echo "Connected."
 
 #Send the Handshake.
