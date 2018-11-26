@@ -90,11 +90,12 @@ proc add*(
         return false
 
     #Verify it's unclaimed.
-    for i in account.entries:
-        if i[0].descendant == EntryType.Claim:
-            var past: Claim = cast[Claim](i)
-            if claim.mintNonce == past.mintNonce:
-                return false
+    for entries in account.entries:
+        for entry in entries:
+            if entry.descendant == EntryType.Claim:
+                var past: Claim = cast[Claim](entry)
+                if claim.mintNonce == past.mintNonce:
+                    return false
 
     #Add the Claim.
     result = account.add(cast[Entry](claim))
@@ -147,13 +148,14 @@ proc add*(
 
     #Verify it's unclaimed.
     for entries in account.entries:
-        if entries[0].descendant == EntryType.Receive:
-            var past: Receive = cast[Receive](entries[0])
-            if (
-                (past.index.address == recv.index.address) and
-                (past.index.nonce == recv.index.nonce)
-            ):
-                return false
+        for entry in entries:
+            if entry.descendant == EntryType.Receive:
+                var past: Receive = cast[Receive](entry)
+                if (
+                    (past.index.address == recv.index.address) and
+                    (past.index.nonce == recv.index.nonce)
+                ):
+                    return false
 
     #Add the Receive.
     result = account.add(cast[Entry](recv))

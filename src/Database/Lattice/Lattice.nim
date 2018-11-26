@@ -145,7 +145,7 @@ proc add*(
 
 proc mint*(
     lattice: Lattice,
-    address: string,
+    key: string,
     amount: BN
 ): uint {.raises: [
     ValueError,
@@ -159,7 +159,7 @@ proc mint*(
 
     #Create the Mint Entry.
     var mint: Mint = newMint(
-        address,
+        key,
         amount,
         result
     )
