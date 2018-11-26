@@ -12,7 +12,9 @@
 - Make sure there's no leading bytes in serialized elements.
 - Remove Network ID/Protocol version from the Header since they're in the Handshake.
 - Remove direct references to clients[0].
-- Sync elements not on the Blockchain.
+- Sync Entries not on the Blockchain.
+- Sync Verifications not on the Blockchain.
+- Add peer finding.
 - Add Node karma.
 
 - Merit Removal system.
@@ -31,8 +33,6 @@
 - Make `Logger.extraneous` enabled via a runtime option.
 
 - Have RPC handle things in order OR use an ID system.
-- RPC creation of Claims.
-- Have the RPC dynamically get the mining difficulty (it's currently hardcoded).
 - Have the RPC dynamically get the nonce (it's currently an argument).
 - `network.rebroadcast(address, nonce)` RPC method.
 
@@ -50,7 +50,6 @@
 
 - Stop duplicate Clients.
 - Don't rebroadcast Blocks that we synced.
-- Use requestBlock in the Handshake.
 - Improve Network's encapsulation.
 
 - Make more things `func`.
