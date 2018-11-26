@@ -12,14 +12,15 @@ finalsd:
             Syncing = 1,
             BlockRequest = 2,
             EntryRequest = 3
-            SyncingOver = 4,
-            HandshakeOver = 5,
-            Verification = 6,
-            Block = 7,
-            Claim = 8,
-            Send = 9,
-            Receive = 10,
-            Data = 11
+            DataMissing = 4,
+            SyncingOver = 5,
+            HandshakeOver = 6,
+            Verification = 7,
+            Block = 8,
+            Claim = 9,
+            Send = 10,
+            Receive = 11,
+            Data = 12
 
         #Message object.
         Message* = ref object of RootObj

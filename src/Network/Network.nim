@@ -159,19 +159,36 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.BlockRequest:
-                            var nonce: uint = uint(msg.message.fromBinary)
-                            network.clients.reply(
-                                msg,
-                                char(network.id) &
-                                char(network.protocol) &
-                                char(MessageType.Block) &
-                                !(
+                            var
+                                requested: uint = uint(msg.message.fromBinary)
+                                nonce: uint =
                                     nodeEvents.get(
-                                        proc (nonce: uint): Block,
-                                        "merit.getBlock"
-                                    )(nonce).serialize()
+                                        proc (): uint,
+                                        "merit.getHeight"
+                                    )()
+
+                            if nonce <= requested:
+                                #If they're requesting a Block we don't have, return DataMissing.
+                                network.clients.reply(
+                                    msg,
+                                    char(network.id) &
+                                    char(network.protocol) &
+                                    char(MessageType.DataMissing) &
+                                    char(0)
                                 )
-                            )
+                            else:
+                                network.clients.reply(
+                                    msg,
+                                    char(network.id) &
+                                    char(network.protocol) &
+                                    char(MessageType.Block) &
+                                    !(
+                                        nodeEvents.get(
+                                            proc (nonce: uint): Block,
+                                            "merit.getBlock"
+                                        )(nonce).serialize()
+                                    )
+                                )
 
                         of MessageType.EntryRequest:
                             #Entry and header variables.
@@ -188,8 +205,14 @@ proc newNetwork*(
                                     "lattice.getEntryByHash"
                                 )(msg.message)
                             except:
-                                #If that failed, do nothing.
-                                return
+                                #If that failed, return DataMissing.
+                                network.clients.reply(
+                                    msg,
+                                    char(network.id) &
+                                    char(network.protocol) &
+                                    char(MessageType.DataMissing) &
+                                    char(0)
+                                )
 
                             #If we did get an Entry...
                             #Add the Message Type.

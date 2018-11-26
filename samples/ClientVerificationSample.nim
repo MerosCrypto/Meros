@@ -29,13 +29,13 @@ var
     handshakeOver: string =                #Handshake over message.
         char(0) &
         char(0) &
-        char(5) &
+        char(6) &
         char(0)
 
     header: string =                       #Verification header.
         char(0) &
         char(0) &
-        char(6)
+        char(7)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.

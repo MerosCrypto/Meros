@@ -42,13 +42,13 @@ var
     handshakeOver: string =                #Handshake over message.
         char(0) &
         char(0) &
-        char(5) &
+        char(6) &
         char(0)
 
     claimHeader: string =                   #Claim header.
         char(0) &
         char(0) &
-        char(8)
+        char(9)
     serialized: string                     #Serialized string.
 
     socket: AsyncSocket = newAsyncSocket() #Socket.

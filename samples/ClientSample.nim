@@ -43,17 +43,17 @@ var
     handshakeOver: string =                #Handshake over message.
         char(0) &
         char(0) &
-        char(5) &
+        char(6) &
         char(0)
 
     sendHeader: string =                   #Send header.
         char(0) &
         char(0) &
-        char(9)
+        char(10)
     recvHeader: string =                   #Receive header.
         char(0) &
         char(0) &
-        char(10)
+        char(11)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.
