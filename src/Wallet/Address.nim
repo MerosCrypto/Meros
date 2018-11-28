@@ -156,15 +156,14 @@ func toBN*(address: string): BN {.raises: [ValueError].} =
     if not address.verify():
         raise newException(ValueError, "Invalid Address.")
 
-    #Define the key and a string to put the array into.
     var
-        key: seq[uint8] = address.substr(ADDRESS_HRP.len, address.len).toBase32().toSeq()
+        #Get the key by removing the HRP. removing the BCH code, converting the string to Base32, and the Base32 to Base256.
+        key: seq[uint8] = address.substr(ADDRESS_HRP.len, address.len - 7).toBase32().toSeq()
         keyStr: string = ""
 
     #Turn the seq into a string.
-    #We use 0 ..< 32 to ignore the BCH code.
-    for i in 0 ..< 32:
-        keyStr &= char(key[i])
+    for c in key:
+        keyStr &= char(c)
 
     #Create the BN.
     result = keyStr.toBN(256)

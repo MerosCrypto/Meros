@@ -24,33 +24,30 @@ func toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
     #Creae a result variable.
     var res: seq[uint8] = @[]
 
-    #How many times to run the loop.
-    var count: int = (data.len * 8) div 5
-    #If there's not an even amount of 5 bit numbers (which div doesn't handle as it truncates), add an extra count.
-    if (data.len * 8) mod 5 != 0:
-        inc(count)
-
     var
-        #Byte we're using.
-        index: int
-        #Bit we're on.
+        #How many times to run the loop.
+        count: int = int(
+            ceil(
+                (data.len * 8) / 5
+            )
+        )
+        #Base256 bit we're on.
         bit: int = 0
-        #Temporary variable for the byte/the byte and the next one.
-        temp: uint16
+        #Base256 byte we're on.
+        index: int
+        #Temporary variable for the data.
+        temp: uint16 = 0
 
     #For each 5 bit variable...
     for _ in 0 ..< count:
         #Set the index.
         index = bit div 8
 
-        #Set the temp variable.
+        #Set temp.
         temp = uint16(data[index]) shl 8
-
-        #If this bit set overflows into the next byte, and we can grab the next int...
-        if (index < int((bit + 5) / 8)) and (index + 1 != data.len):
-            temp += uint16(data[index + 1]) and 0xFF
-
-        #Add the bits.
+        if index + 1 < data.len:
+            temp += data[index + 1]
+        #Add the byte.
         res.add(
             uint8(
                 temp shl (bit mod 8) shr 11
@@ -59,6 +56,20 @@ func toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
 
         #Increase the bit by 5.
         bit += 5
+
+    #Offset to correct for junk trailing zeros.
+    #We do this because we can detect if leading zeros are junk but not if trailing ones are.
+    #Also BTC compatibility.
+    var offset: int = 5 - ((data.len * 8) mod 5)
+    #If there is an offset...
+    if offset != 5:
+        #Shift every byte by the offset so the junk zeros at the end are now at the start.
+        for i in countdown((res.len - 1), 0):
+            res[i] = res[i] shr offset
+            #if this isn't the first number...
+            if i != 0:
+                #Grab the last bits from the previous number and add them.
+                res[i] += res[i-1] shl (8 - offset) shr 3
 
     #Set the result variable.
     result = cast[Base32](res)
@@ -82,25 +93,25 @@ func toBase32*(data: string): Base32 {.raises: [ValueError].} =
 
 #Base32 object to binary seq.
 func toSeq*(dataArg: Base32): seq[uint8] {.raises: [].} =
-    #Extract the data.
-    var data: seq[uint8] = cast[seq[uint8]](dataArg)
+    var
+        #Extract the data.
+        data: seq[uint8] = cast[seq[uint8]](dataArg)
+        #Needed amount of bytes.
+        needed: int = int(
+            data.len / 8 * 5
+        )
 
     #Create the result with enough bytes for the data.
-    result = newSeq[uint8](
-        int(
-            ceil(
-                data.len / 8 * 5
-            )
-        )
-    )
+    result = newSeq[uint8](needed)
 
     var
         #Bytes we've handled.
         bytes: int = 0
         #Bit we're working off of in the byte.
-        bit: int = 0
+        bit: int = (needed * 8) - (data.len * 5)
         #Space left in the previous byte.
         space: int
+
     for i in data:
         #If we're adding the bits to only already existing bytes...
         if bit <= 3:
