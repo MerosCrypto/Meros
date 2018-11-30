@@ -4,8 +4,6 @@
 
 <a href="https://discord.gg/nZmdWGA"><img src="https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png" height=92 width=92/></a>
 
-[![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/EmberCrypto/Lobby)
-
 ### [Outline](https://medium.com/@EmberCrypto/ember-cryptocurrency-d0df75e8170f)
 ### [Merit Caching Whitepaper](https://github.com/EmberCrypto/Merit-Caching)
 ### Ember Whitepaper: Being  Written
