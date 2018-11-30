@@ -148,25 +148,23 @@ proc mainLattice() {.raises: [
                             #Sign it.
                             wallet.sign(recv)
 
-                            #Emit it.
                             try:
-                                events.get(
-                                    proc (recv: Receive),
+                                #Emit it.
+                                if events.get(
+                                    proc (recv: Receive): bool,
                                     "lattice.receive"
-                                )(recv)
+                                )(recv):
+                                    #Broadcast it.
+                                    network.broadcast(
+                                        newMessage(
+                                            NETWORK_ID,
+                                            NETWORK_PROTOCOL,
+                                            MessageType.Receive,
+                                            recv.serialize()
+                                        )
+                                    )
                             except:
                                 raise newException(EventError, "Couldn't get and call lattice.receive.")
-
-                            #Broadcast it.
-                            network.broadcast(
-                                newMessage(
-                                    NETWORK_ID,
-                                    NETWORK_PROTOCOL,
-                                    MessageType.Receive,
-                                    recv.serialize()
-                                )
-                            )
-
                 else:
                     result = false
                     echo "Failed to add the Send."
