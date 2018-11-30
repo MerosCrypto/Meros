@@ -315,7 +315,11 @@ proc add*(
     socket: AsyncSocket
 ) {.async.} =
     #Handshake with the Socket.
-    var handshakeCode: int = await network.handshake(socket)
+    var handshakeCode: int
+    try:
+        handshakeCode = await network.handshake(socket)
+    except:
+        handshakeCode = 0
     if handshakeCode == 0:
         return
 
