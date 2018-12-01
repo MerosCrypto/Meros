@@ -21,4 +21,4 @@ func serialize*(
     for miner in 0 ..< miners.len:
         result &=
             !miners[miner].miner.toString() &
-            char(1) & char(miners[miner].amount)
+            !miners[miner].amount.toBinary()

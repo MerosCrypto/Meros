@@ -9,7 +9,6 @@
 - Have cutoff Rewards carry over.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
-- Make sure there's no leading bytes in serialized elements.
 - Remove Network ID/Protocol version from the Header since they're in the Handshake.
 - Remove direct references to clients[0].
 - Sync Entries not on the Blockchain.

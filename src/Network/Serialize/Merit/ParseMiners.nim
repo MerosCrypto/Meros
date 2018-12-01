@@ -33,7 +33,7 @@ proc parseMiners*(
     for i in countup(0, minersSeq.len - 1, 2):
         result.add(
             newMinerObj(
-                newBLSPublicKey(minersSeq[i]),
-                uint(minersSeq[i + 1][0])
+                newBLSPublicKey(minersSeq[i].pad(48)),
+                uint(minersSeq[i + 1].fromBinary())
             )
         )

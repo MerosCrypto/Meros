@@ -1,5 +1,12 @@
 #Prepends a string with its length.
-func `!`*(data: string): string {.raises: [].} =
+func `!`*(dataArg: string): string {.raises: [].} =
+    #Extract the data argument.
+    var data: string = dataArg
+    #Strip leading 0s.
+
+    while (data.len > 0) and (data[0] == char(0)):
+        data = data.substr(1, data.len)
+
     result = ""
 
     var
