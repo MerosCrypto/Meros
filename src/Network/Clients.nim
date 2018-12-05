@@ -312,8 +312,18 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
 #Function which adds a Client from a socket.
 proc add*(
     network: Network,
+    ip: string,
+    port: uint,
     socket: AsyncSocket
 ) {.async.} =
+    #Make sure we aren't already connected to them.
+    for client in network.clients.clients:
+        if (
+            (client.ip == ip) and
+            (client.port == port)
+        ):
+            return
+
     #Handshake with the Socket.
     var handshakeCode: int
     try:
@@ -325,6 +335,8 @@ proc add*(
 
     #Create the client.
     var client: Client = newClient(
+        ip,
+        port,
         network.clients.total,
         socket
     )

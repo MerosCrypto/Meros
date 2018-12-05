@@ -21,10 +21,10 @@ proc listen*(network: Network, port: uint) {.async.} =
         try:
             #Tell the Network lib of the new client.
             network.subEvents.get(
-                proc (client: AsyncSocket),
+                proc (client: tuple[address: string, client: AsyncSocket]),
                 "client"
             )(
-                await network.server.accept()
+                await network.server.acceptAddr()
             )
         except:
             continue

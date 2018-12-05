@@ -252,9 +252,9 @@ proc start*(
     #Listen for a new Server client.
     network.subEvents.on(
         "client",
-        proc (client: AsyncSocket) {.raises: [AsyncError].} =
+        proc (client: tuple[address: string, client: AsyncSocket]) {.raises: [AsyncError].} =
             try:
-                asyncCheck network.add(client)
+                asyncCheck network.add(client.address, port, client.client)
             except:
                 raise newException(AsyncError, "Couldn't add a Client to the Network.")
     )
@@ -269,14 +269,14 @@ proc start*(
 proc connect*(
     network: Network,
     ip: string,
-    port: int
+    port: uint
 ) {.async.} =
     #Create the socket.
     var socket: AsyncSocket = newAsyncSocket()
     #Connect.
     await socket.connect(ip, Port(port))
     #Add the node to the clients.
-    asyncCheck network.add(socket)
+    asyncCheck network.add(ip, port, socket)
 
 #Get a Block.
 proc requestBlock*(

@@ -47,7 +47,6 @@
 - Merkle Tree appending.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
-- Stop duplicate Clients.
 - Don't rebroadcast Blocks that we synced.
 - Improve Network's encapsulation.
 

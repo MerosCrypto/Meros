@@ -16,7 +16,7 @@ proc mainNetwork() {.raises: [
         try:
             events.on(
                 "network.connect",
-                proc (ip: string, port: int): Future[bool] {.async.} =
+                proc (ip: string, port: uint): Future[bool] {.async.} =
                     try:
                         await network.connect(ip, port)
                         result = true

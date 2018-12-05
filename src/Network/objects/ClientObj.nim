@@ -7,6 +7,10 @@ import asyncnet
 #Client object.
 finalsd:
     type Client* = ref object of RootObj
+        #IP.
+        ip* {.final.}: string
+        #Port.
+        port* {.final.}: uint
         #ID.
         id* {.final.}: uint
         #Shaking.
@@ -17,8 +21,10 @@ finalsd:
         socket* {.final.}: AsyncSocket
 
 #Constructor.
-func newClient*(id: uint, socket: AsyncSocket): Client {.raises: [].} =
+func newClient*(ip: string, port: uint, id: uint, socket: AsyncSocket): Client {.raises: [].} =
     result = Client(
+        ip: ip,
+        port: port,
         id: id,
         shaking: true,
         syncing: false,
