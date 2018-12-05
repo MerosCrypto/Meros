@@ -93,18 +93,6 @@ proc newNetwork*(
                 #Set the result to true.
                 result = true
 
-                #Validate the network ID.
-                if msg.network != id:
-                    return false
-
-                #Validate the protocol.
-                if msg.protocol != protocol:
-                    return false
-
-                #Verify the message length.
-                if msg.len != uint(msg.message.len):
-                    return false
-
                 #Switch based off the message type (in a try to handle invalid messages).
                 try:
                     case msg.content:
@@ -171,16 +159,12 @@ proc newNetwork*(
                                 #If they're requesting a Block we don't have, return DataMissing.
                                 network.clients.reply(
                                     msg,
-                                    char(network.id) &
-                                    char(network.protocol) &
                                     char(MessageType.DataMissing) &
                                     char(0)
                                 )
                             else:
                                 network.clients.reply(
                                     msg,
-                                    char(network.id) &
-                                    char(network.protocol) &
                                     char(MessageType.Block) &
                                     !(
                                         nodeEvents.get(
@@ -194,9 +178,7 @@ proc newNetwork*(
                             #Entry and header variables.
                             var
                                 entry: Entry
-                                header: string =
-                                    char(network.id) &
-                                    char(network.protocol)
+                                msgType: char
 
                             try:
                                 #Get the Entry the Client wants.
@@ -208,8 +190,6 @@ proc newNetwork*(
                                 #If that failed, return DataMissing.
                                 network.clients.reply(
                                     msg,
-                                    char(network.id) &
-                                    char(network.protocol) &
                                     char(MessageType.DataMissing) &
                                     char(0)
                                 )
@@ -221,19 +201,19 @@ proc newNetwork*(
                                     #We do not Serialize Mints for Network transmission.
                                     discard
                                 of EntryType.Claim:
-                                    header &= char(MessageType.Claim)
+                                    msgType = char(MessageType.Claim)
                                 of EntryType.Send:
-                                    header &= char(MessageType.Send)
+                                    msgType = char(MessageType.Send)
                                 of EntryType.Receive:
-                                    header &= char(MessageType.Receive)
+                                    msgType = char(MessageType.Receive)
                                 of EntryType.Data:
-                                    header &= char(MessageType.Data)
+                                    msgType = char(MessageType.Data)
                                 of EntryType.MeritRemoval:
                                     #Ignore this for now.
                                     discard
 
                             #Send over the Entry.
-                            network.clients.reply(msg, header & !entry.serialize())
+                            network.clients.reply(msg, msgType & !entry.serialize())
 
                         else:
                             discard
@@ -287,16 +267,12 @@ proc requestBlock*(
     try:
         #Send syncing.
         await network.clients.clients[0].send(
-            char(network.id) &
-            char(network.protocol) &
             char(MessageType.Syncing) &
             char(0)
         )
 
         #Send the Request.
         await network.clients.clients[0].send(
-            char(network.id) &
-            char(network.protocol) &
             char(MessageType.BlockRequest) &
             !nonce.toBinary()
         )
@@ -325,8 +301,6 @@ proc requestBlock*(
     finally:
         #Send syncing over.
         await network.clients.clients[0].send(
-            char(network.id) &
-            char(network.protocol) &
             char(MessageType.SyncingOver) &
             char(0)
         )

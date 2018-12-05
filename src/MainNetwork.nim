@@ -32,8 +32,6 @@ proc mainNetwork() {.raises: [
             proc (msgType: MessageType, msg: string) {.raises: [AsyncError].} =
                 network.broadcast(
                     newMessage(
-                        NETWORK_ID,
-                        NETWORK_PROTOCOL,
                         msgType,
                         msg
                     )

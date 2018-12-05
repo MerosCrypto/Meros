@@ -146,8 +146,6 @@ proc mainMerit() {.raises: [
                     #Broadcast the Block.
                     network.broadcast(
                         newMessage(
-                            NETWORK_ID,
-                            NETWORK_PROTOCOL,
                             MessageType.Block,
                             newBlock.serialize()
                         )
@@ -158,8 +156,6 @@ proc mainMerit() {.raises: [
                         #Broadcast the Claim.
                         network.broadcast(
                             newMessage(
-                                NETWORK_ID,
-                                NETWORK_PROTOCOL,
                                 MessageType.Claim,
                                 claim.serialize()
                             )

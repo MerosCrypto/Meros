@@ -8,8 +8,10 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
+- Have Verifications placed on their own Database in real time.
+- Redo Blocks to only contain references to Verifications on their Database (BLS.START.END).
+
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
-- Remove Network ID/Protocol version from the Header since they're in the Handshake.
 - Remove direct references to clients[0].
 - Sync Entries not on the Blockchain.
 - Sync Verifications not on the Blockchain.

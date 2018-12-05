@@ -41,16 +41,20 @@ import asyncnet, asyncdispatch
 import sequtils
 
 #Receive a header and message from a socket.
-proc recv*(socket: AsyncSocket): Future[tuple[header: string, msg: string]] {.async.} =
+proc recv*(socket: AsyncSocket, handshake: bool = false): Future[tuple[header: string, msg: string]] {.async.} =
     var
+        headerLen: int = 2
         header: string
         size: int
         msg: string
 
+    if handshake:
+        headerLen = 4
+
     #Receive the header.
-    header = await socket.recv(4)
+    header = await socket.recv(headerLen)
     #Verify the length.
-    if header.len != 4:
+    if header.len != headerLen:
         #If the header length is 0 because the client disconnected...
         if header.len == 0:
             #Close the client.
@@ -61,7 +65,7 @@ proc recv*(socket: AsyncSocket): Future[tuple[header: string, msg: string]] {.as
         raise newException(SocketError, "Didn't get a full header.")
 
     #Define the size.
-    size = ord(header[3])
+    size = ord(header[headerLen - 1])
     #While the size is 255 bytes (signifying it's even bigger than that)...
     while ord(header[header.len - 1]) == 255:
         #Get a new byte.
@@ -98,8 +102,6 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
     try:
         #Send syncing.
         await socket.send(
-            char(network.id) &
-            char(network.protocol) &
             char(MessageType.Syncing) &
             char(0)
         )
@@ -108,8 +110,6 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
         for entry in entries:
             #Send the Request.
             await socket.send(
-                char(network.id) &
-                char(network.protocol) &
                 char(MessageType.EntryRequest) &
                 !entry
             )
@@ -117,7 +117,7 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
             #Get the response.
             var res: tuple[header: string, msg: string] = await socket.recv()
             #Add it.
-            case MessageType(res.header[2]):
+            case MessageType(res.header[0]):
                 of MessageType.Claim:
                     var claim: Claim = res.msg.parseClaim()
                     if not network.nodeEvents.get(
@@ -158,8 +158,6 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
     finally:
         #Send SyncingOver.
         await socket.send(
-            char(network.id) &
-            char(network.protocol) &
             char(MessageType.SyncingOver) &
             char(0)
         )
@@ -192,7 +190,7 @@ proc handshake(
     )
 
     #Get their Handshake back.
-    var handshake: tuple[header: string, msg: string] = await socket.recv()
+    var handshake: tuple[header: string, msg: string] = await socket.recv(true)
 
     #Verify their Header.
     #Network ID.
@@ -224,8 +222,6 @@ proc handshake(
         for height in ourHeight ..< theirHeight:
             #Send the Request.
             await socket.send(
-                char(network.id) &
-                char(network.protocol) &
                 char(MessageType.BlockRequest) &
                 !height.toBinary()
             )
@@ -250,8 +246,6 @@ proc handshake(
 
         #Handshake over.
         await socket.send(
-            char(network.id) &
-            char(network.protocol) &
             char(MessageType.HandshakeOver) &
             !ourHeight.toBinary()
         )
@@ -271,7 +265,7 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
         except:
             continue
 
-        case MessageType(msg.header[2]):
+        case MessageType(msg.header[0]):
             of MessageType.Syncing:
                 client.syncing = true
                 continue
@@ -295,9 +289,7 @@ proc handle(client: Client, eventEmitter: EventEmitter) {.async.} =
             )(
                 newMessage(
                     id,
-                    uint(msg.header[0]),
-                    uint(msg.header[1]),
-                    MessageType(msg.header[2]),
+                    MessageType(msg.header[0]),
                     uint(msg.msg.len),
                     msg.header,
                     msg.msg

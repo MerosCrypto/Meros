@@ -25,8 +25,6 @@ finalsd:
         #Message object.
         Message* = ref object of RootObj
             client* {.final.}: uint
-            network* {.final.}: uint
-            protocol* {.final.}: uint
             content* {.final.}: MessageType
             len* {.final.}: uint
             header* {.final.}: string
@@ -37,8 +35,6 @@ func finalize(
     msg: Message
 ) {.raises: [].} =
     msg.ffinalizeClient()
-    msg.ffinalizeNetwork()
-    msg.ffinalizeProtocol()
     msg.ffinalizeContent()
     msg.ffinalizeLen()
     msg.ffinalizeHeader()
@@ -47,8 +43,6 @@ func finalize(
 #Constructor for incoming data.
 func newMessage*(
     client: uint,
-    network: uint,
-    protocol: uint,
     content: MessageType,
     len: uint,
     header: string,
@@ -56,8 +50,6 @@ func newMessage*(
 ): Message {.raises: [].} =
     result = Message(
         client: client,
-        network: network,
-        protocol: protocol,
         content: content,
         len: len,
         header: header,
@@ -67,8 +59,6 @@ func newMessage*(
 
 #Constructor for outgoing data.
 func newMessage*(
-    network: uint,
-    protocol: uint,
     content: MessageType,
     message: string
 ): Message {.raises: [].} =
@@ -83,11 +73,9 @@ func newMessage*(
 
     #Create the Message.
     result = Message(
-        network: network,
-        protocol: protocol,
         content: content,
         len: uint(message.len),
-        header: char(network) & char(protocol) & char(content) & length,
+        header: char(content) & length,
         message: message
     )
     result.finalize()

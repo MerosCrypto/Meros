@@ -25,8 +25,6 @@ proc verify(entry: Entry) {.raises: [
         #Broadcast the Verification.
         network.broadcast(
             newMessage(
-                NETWORK_ID,
-                NETWORK_PROTOCOL,
                 MessageType.Verification,
                 verif.serialize()
             )
@@ -157,8 +155,6 @@ proc mainLattice() {.raises: [
                                     #Broadcast it.
                                     network.broadcast(
                                         newMessage(
-                                            NETWORK_ID,
-                                            NETWORK_PROTOCOL,
                                             MessageType.Receive,
                                             recv.serialize()
                                         )
