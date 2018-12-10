@@ -1,8 +1,8 @@
 #Errors lib.
-import ../../lib/Errors
+import ../lib/Errors
 
 #BLS lib.
-import ../../lib/BLS
+import ../lib/BLS
 
 #Finals lib.
 import finals
