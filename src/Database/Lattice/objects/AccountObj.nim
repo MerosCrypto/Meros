@@ -14,9 +14,9 @@ finalsd:
     type Account* = ref object of RootObj
         #Chain owner.
         address* {.final.}: string
-        #Account height. BN for compatibility.
+        #Account height.
         height*: uint
-        #seq of the Entries.
+        #seq of the Entries (actually a seq of seqs so we can handle unconfirmed Entries).
         entries*: seq[seq[Entry]]
         #Balance of the address.
         balance*: BN

@@ -1,41 +1,26 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
 
 #BLS lib.
-import ../../lib/BLS
-
-#MinerWallet lib.
-import MinerWallet
-
-#Verification object.
-import objects/VerificationsObj
-export VerificationsObj
+import ../../../lib/BLS
 
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
+#Verifier object.
+finalsd:
+    type Verifier* = ref object of RootObj
+        #Chain owner.
+        key* {.final.}: string
+        #Verifier height.
+        height*: uint
+        #seq of the Verifications.
+        verifications*: seq[Verification]
 
-#Create a new Verification.
-func newMemoryVerification*(
-    hash: Hash[512]
-): MemoryVerification {.raises: [].} =
-    newMemoryVerificationObj(hash)
-
-#Sign a Verification.
-func sign*(
-    miner: MinerWallet,
-    verif: MemoryVerification
-) {.raises: [FinalAttributeError].} =
-    #Set the verifier.
-    verif.verifier = miner.publicKey
-    #Sign the hash of the Verification.
-    verif.signature = miner.sign(verif.hash.toString())
-
+discard """
 #Calculate the aggregate signature.
 proc calculateSig*(verifs: Verifications) {.raises: [BLSError].} =
     #If there's no verifications...
@@ -73,3 +58,4 @@ proc verify*(verifs: Verifications): bool {.raises: [BLSError].} =
 
     #Verify the signature.
     result = verifs.aggregate.verify()
+"""

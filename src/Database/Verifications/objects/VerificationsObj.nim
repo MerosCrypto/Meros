@@ -21,25 +21,21 @@ finalsd:
             verifier* {.final.}: BLSPublicKey
             #Entry Hash.
             hash* {.final.}: Hash[512]
+            #Block the Verification was archived in.
+            archived: uint
 
         #Verification object for the mempool.
         MemoryVerification* = ref object of Verification
             #BLS signature for aggregation in a block.
             signature* {.final.}: BLSSignature
 
-        #A group of verifier/hash pairs with the final aggregate signature.
-        Verifications* = ref object of RootObj
-            #Verifications.
-            verifications*: seq[MemoryVerification]
-            #Aggregate signature.
-            aggregate*: BLSSignature
-
 #New Verification object.
 func newVerificationObj*(
     hash: Hash[512]
 ): Verification {.raises: [].} =
     result = Verification(
-        hash: hash
+        hash: hash,
+        archived: 0
     )
     result.ffinalizeHash()
 
@@ -48,12 +44,30 @@ func newMemoryVerificationObj*(
     hash: Hash[512]
 ): MemoryVerification {.raises: [].} =
     result = MemoryVerification(
-        hash: hash
+        hash: hash,
+        archived: 0
     )
     result.ffinalizeHash()
 
-#New Verifications object.
-func newVerificationsObj*(): Verifications {.raises: [].} =
-    Verifications(
-        verifications: @[]
+#Mark a Verification as archived.
+func archive*(verif: Verification, archived: uint): Verification =
+    #We recreate the Verification in order to make sure it isn't a MemoryVerification.
+    result = Verification(
+        verifier: verif.verifier,
+        hash: verif.hash,
+        archived: archived
     )
+    result.ffinalizeVerifier()
+    result.ffinalizeHash()
+    result.ffinalizeArchived()
+
+
+#Sign a Verification.
+func sign*(
+    miner: MinerWallet,
+    verif: MemoryVerification
+) {.raises: [FinalAttributeError].} =
+    #Set the verifier.
+    verif.verifier = miner.publicKey
+    #Sign the hash of the Verification.
+    verif.signature = miner.sign(verif.hash.toString())
