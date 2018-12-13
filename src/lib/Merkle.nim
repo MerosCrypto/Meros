@@ -101,11 +101,10 @@ There are some unstated gotchas that we use throughout this file.
 
 # -- Creation -- #
 
-proc rehash(tree: Merkle)
-
 func newLeaf(hash: string): Merkle {.raises: [].} =
     result = Merkle(isLeaf: true, hash: hash)
 
+proc rehash(tree: Merkle) {.raises: [].}  # Forward declaration for use in next proc
 proc newBranch(left: Merkle, right: Merkle): Merkle {.raises: [].} =
     result = Merkle(isLeaf: false, hash: "", left: left, right: right)
     result.rehash()
@@ -116,8 +115,6 @@ proc newChainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
     ## Thus is used when adding a new hash to a full tree, as illustrated in
     ## the big-ass comment way above (upon adding leaf E)
     if depth == 0:
-      return nil
-    if depth == 1:
         return newLeaf(hash)
     else:
         return newBranch(newChainOfDepth(depth - 1, hash), nil)
@@ -136,9 +133,9 @@ func isFull(tree: Merkle): bool {.raises: [].} =
     return tree.left.isFull and tree.right.isFull
 
 func depth(tree: Merkle): int {.raises: [].} =
-    ## Depth of a Merkle tree. We consider a leaf to have depth 1 rather than 0.
+    ## Depth of a Merkle tree. We consider a leaf to have depth 0, so the empty tree has depth -1
     if tree.isLeaf:
-        return 1
+        return 0
     else:
         return 1 + tree.left.depth
 
@@ -149,16 +146,16 @@ proc rehash(tree: Merkle) {.raises: [].} =
     if tree.isLeaf:
         return
     if tree.right.isNil:
-        tree.hash = SHA512(tree.left.hash & tree.left.hash).toString
+        tree.hash = SHA512(tree.left.hash & tree.left.hash).toString()
     else:
-        tree.hash = SHA512(tree.left.hash & tree.right.hash).toString
+        tree.hash = SHA512(tree.left.hash & tree.right.hash).toString()
 
 # -- Exposed API -- #
 
 proc add*(tree: var Merkle, hash: string) {.raises: [].} =
     ## O(log n) method to add a hash to the tree
     if tree.isNil:
-      tree = newLeaf(hash)
+        tree = newLeaf(hash)
     elif tree.isFull:
         let sibling = newChainOfDepth(tree.depth, hash)
         let parent = newBranch(tree, sibling)
@@ -179,8 +176,8 @@ proc newMerkle*(hashes: varargs[string]): Merkle {.raises: [].} =
         result.add(hash)
 
 proc hash*(tree: Merkle): string {.raises: [].} =
-  ## We need to allow accessing only by proxy in order
-  ## to account for the nil case, i.e., an empty tree
-  if tree.isNil:
-    return "".pad(64)
-  return tree.hash
+    ## We need to allow accessing only by proxy in order
+    ## to account for the nil case, i.e., an empty tree
+    if tree.isNil:
+        return "".pad(64)
+    return tree.hash
