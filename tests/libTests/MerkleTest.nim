@@ -1,5 +1,8 @@
 #Merkle Tree Test.
 
+#Util lib.
+import ../../src/lib/Util
+
 #Hash lib.
 import ../../src/lib/Hash
 
@@ -11,33 +14,44 @@ import ../../src/lib/Merkle
 
 var
     #First leaf.
-    a: SHA512Hash = SHA512("01".toBN(16).toString(256))
+    a: string = SHA512("a").toString()
     #Second leaf.
-    b: SHA512Hash = SHA512("0F".toBN(16).toString(256))
+    b: string = SHA512("b").toString()
     #Third leaf.
-    c: SHA512Hash = SHA512("03".toBN(16).toString(256))
+    c: string = SHA512("c").toString()
 
     #First hash.
-    ab: SHA512Hash = SHA512(
-        a.toString() & b.toString()
-    )
+    ab: string = SHA512(
+        a & b
+    ).toString()
     #Second hash.
-    cc: SHA512Hash = SHA512(
-        c.toString() & c.toString()
-    )
+    cc: string = SHA512(
+        c & c
+    ).toString()
     #Root hash.
-    hash: SHA512Hash = SHA512(
-        ab.toString() & cc.toString()
-    )
+    hash: string = SHA512(
+        ab & cc
+    ).toString()
 
-    #Create the MerkleTree.
-    merkle: MerkleTree = newMerkleTree(@[
-        a,
-        b,
-        c
-    ])
+    #Create the Merkle Tree.
+    merkle: Merkle = newMerkle(a, b, c)
 
 #Test the results.
-assert(hash == merkle.hash, "MerkleTree hash is not what it should be.")
+assert(hash == merkle.hash, "Merkle hash is not what it should be.")
 
-echo "Finished the lib/MerkleTree test."
+#Test nil Merle trees.
+assert(newMerkle().hash == "".pad(64))
+
+#Test adding hashes.
+merkle = newMerkle(a)
+merkle.add(b)
+merkle.add(c)
+assert(merkle.hash == hash)
+
+merkle = newMerkle()
+merkle.add(a)
+merkle.add(b)
+merkle.add(c)
+assert(merkle.hash == hash)
+
+echo "Finished the lib/Merkle test."
