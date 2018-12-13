@@ -31,12 +31,12 @@ There are some unstated gotchas that we use throughout this file.
 
 3. The tree invariant: That
    (I) All leafs to the left of a non-nil leaf are non-nil,
-   and all leafs to the right of a nil-nil are nil, and
+   and all leafs to the right of a nil leaf are nil, and
    (II) All leaf nodes exist on the same depth.
 
-   All the 'source' hashes of a Merkle tree, i.e., the leaves,
-   can be conceptualized as existing in a sequence. Thus
-   consider the 'source' hashes A, B, C, and D:
+   All the 'source' or 'argument' hashes of a Merkle tree, i.e.,
+   the leaves, can be conceptualized as existing in a sequence.
+   Thus consider the 'source' hashes A, B, C, and D:
 
        A B C D
 
@@ -171,7 +171,7 @@ proc add*(tree: var Merkle, hash: string) {.raises: [].} =
 
     tree.rehash()
 
-proc newMerkle*(hashes: openarray[string]): Merkle =
+proc newMerkle*(hashes: varargs[string]): Merkle =
     ## O(n log n) method to create a tree from given hashes.
     ## Could be O(log n) in theory; if you want that, make it yourself.
     if hashes.len == 0:
