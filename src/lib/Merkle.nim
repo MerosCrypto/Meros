@@ -65,6 +65,7 @@ func depth(tree: Merkle): int {.raises: [].} =
     if tree.isLeaf:
         return 1
 
+    #We use tree.left because the left tree will alaways be non-nil.
     return 1 + tree.left.depth
 
 #Creates a Merkle Tree out of a single hash, filling in duplicates.
