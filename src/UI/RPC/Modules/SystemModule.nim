@@ -4,6 +4,9 @@ import ../objects/RPCObj
 #EventEmitter lib.
 import ec_events
 
+#Async standard lib.
+import asyncdispatch
+
 #JSON standard lib.
 import json
 
@@ -23,11 +26,11 @@ proc shutdown(rpc: RPC, reply: proc (json: JSONNode)) {.raises: [].} =
         quit(-1)
 
 #Handler.
-proc `systemModule`*(
+proc systemModule*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [KeyError].} =
+) {.async.} =
     #Switch based off the method.
     case json["method"].getStr():
         of "quit":

@@ -38,12 +38,16 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
         privateKey: priv,
         publicKey: priv.getPublicKey()
     )
+    result.ffinalizePrivateKey()
+    result.ffinalizePublicKey()
 
 proc newMinerWallet*(priv: BLSPrivateKey): MinerWallet {.raises: [].} =
-    MinerWallet(
+    result = MinerWallet(
         privateKey: priv,
         publicKey: priv.getPublicKey()
     )
+    result.ffinalizePrivateKey()
+    result.ffinalizePublicKey()
 
 #Sign a message via a MinerWallet.
 func sign*(miner: MinerWallet, msg: string): BLSSignature {.raises: [].} =

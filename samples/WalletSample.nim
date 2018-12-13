@@ -7,12 +7,12 @@ import ../src/lib/Hash
 #Wallet libs.
 import ../src/Wallet/Wallet
 
-#Demo.
-var
-    wallet: Wallet = newWallet()
-    hash: string = SHA512("test").toString()
-    sig: string = wallet.sign(hash)
-    pubKey: EdPublicKey = newEdPublicKey(wallet.address.toBN().toString(256))
-    res: bool = pubKey.verify(hash, sig)
+#Wallet.
+var wallet: Wallet = newWallet()
 
-echo res
+#Print the info.
+echo "Seed:"
+echo wallet.seed
+echo "----"
+echo "Address:"
+echo wallet.address

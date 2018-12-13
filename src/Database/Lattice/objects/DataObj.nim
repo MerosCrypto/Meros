@@ -22,4 +22,6 @@ func newDataObj*(data: string): Data {.raises: [FinalAttributeError].} =
     result = Data(
         data: data
     )
+    result.ffinalizeData()
+    
     result.descendant = EntryType.Data

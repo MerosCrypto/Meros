@@ -24,4 +24,7 @@ func newMeritRemovalObj*(
         first: first,
         second: second
     )
+    result.ffinalizeFirst()
+    result.ffinalizeSecond()
+
     result.descendant = EntryType.MeritRemoval

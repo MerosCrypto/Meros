@@ -15,7 +15,7 @@ finalsd:
         #Reward object. Declares a BLS Public Key (as a string) and a number which adds up to 1000.
         Reward* = object of RootObj
             key* {.final.}: string
-            score* {.final.}: uint
+            score*: uint #This is not final since we double set score; once with a raw value, once with a normalized value.
         #Seq of Rewards.
         Rewards* = seq[Reward]
 
@@ -25,11 +25,12 @@ finalsd:
         Epochs* = seq[Epoch]
 
 #Constructors.
-proc newReward*(key: string, score: uint): Reward =
-    Reward(
+proc newReward*(key: string, score: uint): Reward {.raises: [].} =
+    result = Reward(
         key: key,
         score: score
     )
+    result.ffinalizeKey()
 
 proc newRewards*(): Rewards {.raises: [].} =
     newSeq[Reward]()

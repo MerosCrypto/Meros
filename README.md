@@ -4,14 +4,12 @@
 
 <a href="https://discord.gg/nZmdWGA"><img src="https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png" height=92 width=92/></a>
 
-[![Gitter Chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/EmberCrypto/Lobby)
-
 ### [Outline](https://medium.com/@EmberCrypto/ember-cryptocurrency-d0df75e8170f)
 ### [Merit Caching Whitepaper](https://github.com/EmberCrypto/Merit-Caching)
 ### Ember Whitepaper: Being  Written
 
 #### Current State
-Ember is still under development, and doesn't currently have a public testnet. That said, Ember is handling transactions, and we are working on setting up a Developer Testnet. We aim to have one within a week or two.
+Ember is still under development and is running a Developer Testnet. Anyone can participate if they compile their own Node.
 
 #### Compiling
 

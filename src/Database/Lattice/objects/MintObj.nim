@@ -28,6 +28,8 @@ func newMintObj*(
         output: output,
         amount: amount
     )
+    result.ffinalizeOutput()
+    result.ffinalizeAmount()
 
     #Set the constant entry fields.
     result.sender = "minter"

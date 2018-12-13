@@ -7,6 +7,9 @@ import ../objects/RPCObj
 #EventEmitter lib.
 import ec_events
 
+#Async standard lib.
+import asyncdispatch
+
 #String utils standard lib.
 import strutils
 
@@ -14,18 +17,18 @@ import strutils
 import json
 
 #Default network port.
-const DEFAULT_PORT {.intdefine.}: int = 5132
+const DEFAULT_PORT {.intdefine.}: uint = 5132
 
 #Connect to a new node.
 proc connect*(
     rpc: RPC,
     ip: string,
-    port: int
-): JSONNode {.raises: [EventError].} =
+    port: uint
+): Future[JSONNode] {.async.} =
     try:
         #Connect to a new node.
-        if not rpc.events.get(
-            proc (ip: string, port: int): bool,
+        if not await rpc.events.get(
+            proc (ip: string, port: uint): Future[bool],
             "network.connect"
         )(ip, port):
             result = %* {
@@ -35,11 +38,11 @@ proc connect*(
         raise newException(EventError, "Couldn't get and call network.connect.")
 
 #Handler.
-proc `networkModule`*(
+proc networkModule*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.raises: [].} =
+) {.async.} =
     #Declare a var for the response.
     var res: JSONNode
 
@@ -48,9 +51,9 @@ proc `networkModule`*(
         #Switch based off the method.
         case json["method"].getStr():
             of "connect":
-                res = rpc.connect(
+                res = await rpc.connect(
                     json["args"][0].getStr(),
-                    if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
+                    if json["args"].len == 2: uint(json["args"][1].getInt()) else: DEFAULT_PORT
                 )
 
             else:

@@ -22,19 +22,18 @@ func Argon*(
         iterations: uint32
         memory: uint32
     if not reduced:
-        #Iterate 10000 times, using 200MB, with no parallelism.
-        iterations = 10000
-        memory = 18
-    else:
-        #Iterate 1 times, using 256KB, with no parallelism.
+        #Use 128 MB of RAM.
         iterations = 1
+        memory = 131072
+    else:
+        #Use 8KB of RAM.
         memory = 8
 
     try:
         result.data = Argon2d(
             data,
             salt,
-            iterations,
+            1,
             memory,
             1
         ).data

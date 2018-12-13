@@ -13,8 +13,8 @@ import ../src/Database/Lattice/Send
 import ../src/Database/Lattice/Receive
 
 #Serialization libs.
-import ../src/Network/Serialize/SerializeSend
-import ../src/Network/Serialize/SerializeReceive
+import ../src/Network/Serialize/Lattice/SerializeSend
+import ../src/Network/Serialize/Lattice/SerializeReceive
 
 var
     sender: Wallet = newWallet()   #Sender's wallet.

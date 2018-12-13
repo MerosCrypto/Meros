@@ -12,8 +12,8 @@ import ../src/Wallet/Wallet
 import ../src/Database/Lattice/Lattice
 
 #Serialization libs.
-import ../src/Network/Serialize/SerializeSend
-import ../src/Network/Serialize/SerializeReceive
+import ../src/Network/Serialize/Lattice/SerializeSend
+import ../src/Network/Serialize/Lattice/SerializeReceive
 
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch
@@ -34,14 +34,26 @@ var
     send: Send                             #Send object.
     recv: Receive                          #Receive object.
 
+    handshake: string =                    #Handshake that says we're at Block 0.
+        char(0) &
+        char(0) &
+        char(0) &
+        char(1) & char(0)
+
+    handshakeOver: string =                #Handshake over message.
+        char(0) &
+        char(0) &
+        char(6) &
+        char(0)
+
     sendHeader: string =                   #Send header.
         char(0) &
         char(0) &
-        char(3)
+        char(10)
     recvHeader: string =                   #Receive header.
         char(0) &
         char(0) &
-        char(4)
+        char(11)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.
@@ -95,7 +107,7 @@ elif answer.toLower() == "receive":
     #Get the intput address/input nonce/amount/nonce.
     echo "Who would you like to receive from?"
     address = stdin.readLine()
-    echo "What nonce is the send block on their account?"
+    echo "What nonce is the Send Entry on their account?"
     inputNonce = parseUInt(stdin.readLine())
     echo "What nonce is this on your account?"
     nonce = parseUInt(stdin.readLine())
@@ -123,6 +135,12 @@ else:
 echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
 echo "Connected."
+
+#Send the Handshake.
+waitFor client.send(handshake)
+waitFor client.send(handshakeOver)
+echo "Handshaked."
+
 #Send the serialized Entry.
 waitFor client.send(serialized)
 echo "Sent."

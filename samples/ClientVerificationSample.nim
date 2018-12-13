@@ -8,7 +8,7 @@ import ../src/lib/BLS
 import ../src/Database/Merit/Merit
 
 #Serialization libs.
-import ../src/Network/Serialize/SerializeVerification
+import ../src/Network/Serialize/Merit/SerializeVerifications
 
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch
@@ -20,10 +20,22 @@ var
 
     verif: MemoryVerification              #Verification.
 
+    handshake: string =                    #Handshake that says we're at Block 0.
+        char(0) &
+        char(0) &
+        char(0) &
+        char(1) & char(0)
+
+    handshakeOver: string =                #Handshake over message.
+        char(0) &
+        char(0) &
+        char(6) &
+        char(0)
+
     header: string =                       #Verification header.
         char(0) &
         char(0) &
-        char(0)
+        char(7)
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.
@@ -52,6 +64,12 @@ serialized = verif.serialize()
 echo "Connecting..."
 waitFor client.connect("127.0.0.1", Port(5132))
 echo "Connected."
+
+#Send the Handshake.
+waitFor client.send(handshake)
+waitFor client.send(handshakeOver)
+echo "Handshaked."
+
 #Send the serialized Entry.
 echo serialized.len
 waitFor client.send(header & char(serialized.len) & serialized)

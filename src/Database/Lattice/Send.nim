@@ -15,7 +15,7 @@ import ../../Wallet/Wallet
 import ../../Wallet/Address
 
 #Import the Serialization library.
-import ../../Network/Serialize/SerializeSend
+import ../../Network/Serialize/Lattice/SerializeSend
 
 #Entry object.
 import objects/EntryObj

@@ -20,4 +20,6 @@ func newReceiveObj*(
     result = Receive(
         index: index
     )
+    result.ffinalizeIndex()
+
     result.descendant = EntryType.Receive

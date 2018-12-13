@@ -23,13 +23,14 @@ import Database/Lattice/Lattice
 import Network/Network
 
 #Serialization libs.
-import Network/Serialize/SerializeMiners
-import Network/Serialize/SerializeVerification
+import Network/Serialize/Merit/SerializeMiners
+import Network/Serialize/Merit/SerializeVerifications
+import Network/Serialize/Merit/SerializeBlock
 
-import Network/Serialize/SerializeClaim
-import Network/Serialize/SerializeSend
-import Network/Serialize/SerializeReceive
-import Network/Serialize/SerializeData
+import Network/Serialize/Lattice/SerializeClaim
+import Network/Serialize/Lattice/SerializeSend
+import Network/Serialize/Lattice/SerializeReceive
+import Network/Serialize/Lattice/SerializeData
 
 #UI.
 import UI/UI
@@ -43,15 +44,6 @@ import finals
 #BLS lib.
 import lib/BLS
 
-#String utils standard lib.
-import strutils
-
-#JSON standard lib.
-import json
-
-#Tables standard lib.
-import tables
-
 #OS standard lib.
 import os
 
@@ -60,3 +52,12 @@ import asyncdispatch
 
 #Thread standard lib.
 import threadpool
+
+#String utils standard lib.
+import strutils
+
+#JSON standard lib.
+import json
+
+#Tables standard lib.
+import tables

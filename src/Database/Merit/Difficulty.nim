@@ -46,9 +46,9 @@ proc calculateNextDifficulty*(
         #New difficulty.
         difficulty: BN = last.difficulty
         #Start block of the difficulty.
-        start: uint = blocks[blocks.len - int(blocksPerPeriod + 1)].time
+        start: uint = blocks[blocks.len - int(blocksPerPeriod + 1)].header.time
         #End block of the difficulty.
-        endTime: uint = blocks[blocks.len - 1].time
+        endTime: uint = blocks[blocks.len - 1].header.time
         #Period time.
         actualTime: uint = endTime - start
         #Possible values.
@@ -65,7 +65,7 @@ proc calculateNextDifficulty*(
                 #The targetTime (bigger) minus the actualTime (smaller)
                 #Over the targetTime
         #Since we need the difficulty to increase.
-        var change: BN = possible * newBN((targetTime - actualTime) div targetTime)
+        var change: BN = (possible * newBN(targetTime - actualTime)) div newBN(targetTime)
 
         #If we're increasing the difficulty by more than 10%...
         if possible / newBN(10) < change:

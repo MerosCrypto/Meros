@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Client object.
 import ClientObj
 
-#Finals lib.
-import finals
-
 #sequtils standard lib.
 import sequtils
 
@@ -14,10 +11,9 @@ import sequtils
 import asyncnet
 
 #Clients object.
-finalsd:
-    type Clients* = ref object of RootObj
-        total*: uint
-        clients*: seq[Client]
+type Clients* = ref object of RootObj
+    total*: uint
+    clients*: seq[Client]
 
 #Constructor.
 func newClients*(): Clients {.raises: [].} =
@@ -33,13 +29,14 @@ func getClient*(clients: Clients, id: uint): Client {.raises: [].} =
             return client
 
 #Disconnect.
-proc disconnect*(clients: Clients, id: uint) {.raises: [SocketError].} =
+proc disconnect*(clients: Clients, id: uint) {.raises: [].} =
     for i, client in clients.clients:
         if client.id == id:
             try:
                 client.close()
             except:
-                raise newException(SocketError, "Could not disconnect a Client.")
+                #If we can't close the Client, we should still delete it from Clients.
+                discard
             clients.clients.delete(i)
 
 #Disconnects every client.

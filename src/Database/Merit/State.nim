@@ -22,15 +22,16 @@ finalsd:
         #Live Merit.
         live*: uint
         #Address -> Merit
-        data {.final.}: ref Table[string, uint]
+        data: ref Table[string, uint]
 
 #Constructor.
 func newState*(deadBlocks: uint): State {.raises: [].} =
-    State(
+    result = State(
         deadBlocks: deadBlocks,
         live: 0,
         data: newTable[string, uint]()
     )
+    result.ffinalizeDeadBlocks()
 
 #Get the Merit of an account.
 func getBalance*(state: State, account: BLSPublicKey): uint {.raises: [KeyError].} =

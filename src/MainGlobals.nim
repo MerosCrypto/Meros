@@ -9,7 +9,6 @@ var
 
     #Lattice.
     lattice {.threadvar.}: Lattice  #Lattice.
-    genesisMint {.threadvar.}: uint #Genesis Send. Puts the first coins on the network.
 
     #Personal.
     miner: bool                  #Miner boolean.

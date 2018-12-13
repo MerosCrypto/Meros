@@ -46,7 +46,7 @@ type Lattice* = ref object of RootObj
     #Unarchived Verifications.
     unarchived*: seq[MemoryVerification]
 
-    #State of the Verifications. 0 is unset. 1 is unarchived. 2 is archived.
+    #State of the Verifications. null is unset. 0 is unarchived. 1 is archived.
     archived*: TableRef[string, int]
 
     #Accounts (address -> account).
@@ -85,16 +85,16 @@ func addHash*(
 func unarchive*(
     lattice: Lattice,
     verif: MemoryVerification
-) {.raises: [KeyError].} =
+) {.raises: [].} =
     #Make sure the Verif is new.
-    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] != 0:
+    if lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString()):
         return
 
     #Add to unarchived.
     lattice.unarchived.add(verif)
 
     #Set it as unarchived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 1
+    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 0
 
 #Archive a Verification.
 func archive*(
@@ -102,10 +102,13 @@ func archive*(
     verif: MemoryVerification
 ) {.raises: [KeyError].} =
     #Make sure the Verif isn't already archived.
-    if lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 2:
+    if (
+        (lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString())) and
+        (lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 1)
+    ):
         return
 
-    #Remove from unarchived.
+    #Remove it from unarchived.
     for i in 0 ..< lattice.unarchived.len:
         if (
             (verif.hash == lattice.unarchived[i].hash) and
@@ -115,7 +118,7 @@ func archive*(
             break
 
     #Set it as archived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 2
+    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 1
 
 #Creates a new Account on the Lattice.
 func addAccount*(
@@ -149,8 +152,18 @@ proc `[]`*(lattice: Lattice, index: Index): Entry {.raises: [ValueError].} =
     result = lattice.accounts[index.address][index.nonce]
 
 #Gets a Entry by its hash.
-proc getEntry*(lattice: Lattice, hash: string): Entry {.raises: [ValueError].} =
+proc `[]`*(lattice: Lattice, hash: string): Entry {.raises: [KeyError, ValueError].} =
     if not lattice.lookup.hasKey(hash):
+        #Do not change this Exception message. It is checked for when syncing.
         raise newException(ValueError, "Lattice does not have a Entry for that hash.")
 
-    result = lattice[lattice.lookup[hash]]
+    var
+        index: Index = lattice.lookup[hash]
+        entries: seq[Entry] = lattice.accounts[index.address].entries[int(index.nonce)]
+
+    for entry in entries:
+        if entry.hash.toString() == hash:
+            return entry
+
+    #If there's no Entry there, that means it was deleted because a different Entry got confirmed.
+    raise newException(ValueError, "That hash has been orphaned.")

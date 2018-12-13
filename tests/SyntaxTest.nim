@@ -27,27 +27,27 @@ import ../src/Database/Merit/Merit
 #Network.
 import ../src/Network/Serialize/SerializeCommon
 
-import ../src/Network/Serialize/SerializeMiners
-import ../src/Network/Serialize/SerializeBlock
+import ../src/Network/Serialize/Merit/SerializeVerifications
+import ../src/Network/Serialize/Merit/SerializeMiners
+import ../src/Network/Serialize/Merit/SerializeBlock
 
-import ../src/Network/Serialize/SerializeMint
-import ../src/Network/Serialize/SerializeClaim
-import ../src/Network/Serialize/SerializeSend
-import ../src/Network/Serialize/SerializeReceive
-import ../src/Network/Serialize/SerializeData
-import ../src/Network/Serialize/SerializeVerification
-import ../src/Network/Serialize/SerializeMeritRemoval
+import ../src/Network/Serialize/Lattice/SerializeMint
+import ../src/Network/Serialize/Lattice/SerializeClaim
+import ../src/Network/Serialize/Lattice/SerializeSend
+import ../src/Network/Serialize/Lattice/SerializeReceive
+import ../src/Network/Serialize/Lattice/SerializeData
+import ../src/Network/Serialize/Lattice/SerializeMeritRemoval
 
-import ../src/Network/Serialize/ParseMiners
-import ../src/Network/Serialize/ParseBlock
+import ../src/Network/Serialize/Merit/ParseVerifications
+import ../src/Network/Serialize/Merit/ParseMiners
+import ../src/Network/Serialize/Merit/ParseBlock
 
-import ../src/Network/Serialize/ParseMint
-import ../src/Network/Serialize/ParseClaim
-import ../src/Network/Serialize/ParseSend
-import ../src/Network/Serialize/ParseReceive
-import ../src/Network/Serialize/ParseData
-import ../src/Network/Serialize/ParseVerification
-import ../src/Network/Serialize/ParseMeritRemoval
+import ../src/Network/Serialize/Lattice/ParseMint
+import ../src/Network/Serialize/Lattice/ParseClaim
+import ../src/Network/Serialize/Lattice/ParseSend
+import ../src/Network/Serialize/Lattice/ParseReceive
+import ../src/Network/Serialize/Lattice/ParseData
+import ../src/Network/Serialize/Lattice/ParseMeritRemoval
 
 import ../src/Network/Network
 

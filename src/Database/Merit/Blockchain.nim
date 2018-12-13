@@ -13,8 +13,8 @@ import BN
 #BLS lib.
 import ../../lib/BLS
 
-#Wallet libs.
-import ../../Wallet/Wallet
+#Miners object.
+import objects/MinersObj
 
 #Difficulty, Verifications, and Block libs.
 import Difficulty
@@ -30,7 +30,7 @@ proc newBlockchain*(
     genesis: string,
     blockTime: uint,
     startDifficulty: BN
-): Blockchain {.raises: [ArgonError].} =
+): Blockchain {.raises: [ValueError, ArgonError, BLSError].} =
     newBlockchainObj(
         genesis,
         blockTime,
@@ -41,7 +41,7 @@ proc newBlockchain*(
 proc processBlock*(
     blockchain: Blockchain,
     newBlock: Block
-): bool {.raises: [ValueError, BLSError, SodiumError].} =
+): bool {.raises: [ValueError, BLSError].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 
@@ -51,28 +51,42 @@ proc processBlock*(
         #Grab the Blocks.
         blocks: seq[Block] = blockchain.blocks
 
-    #If the last hash is off...
-    if newBlock.last != blocks[^1].argon:
+    #Verify the Block Header.
+    #If the nonce is off...
+    if newBlock.header.nonce != blockchain.height:
         return false
 
-    #If the nonce is off...
-    if newBlock.nonce != blockchain.height + 1:
+    #If the last hash is off...
+    if newBlock.header.last != blocks[^1].argon:
         return false
 
     #If the time is before the last block's...
-    if newBlock.time < blocks[^1].time:
+    if newBlock.header.time < blocks[^1].header.time:
         return false
 
-    #If the aggregate signature is wrong...
+    #Verify the Block Header's Verifications signature matches the Block's Verifications signature.
+    if newBlock.header.verifications != newBlock.verifications.aggregate:
+        return false
+
+    #Verify the Block Header's Merkle Hash of the Miners matches the Block's Miners.
+    if newBlock.header.miners != newBlock.miners.calculateMerkle():
+        return false
+
+    #Verify the Block itself.
+    #Verify the Verifications's Aggregate Signature.
     if not newBlock.verifications.verify():
         return false
 
-    #If the miner signature is wrong...
-    if not newBlock.publisher.verify(
-        newBlock.minersHash.toString(),
-        newBlock.signature
-    ):
-        return false
+    #Verify the Miners.
+    var total: uint = 0
+    if (newBlock.miners.len < 1) or (100 < newBlock.miners.len):
+        raise newException(ValueError, "Invalid Miners quantity.")
+    for miner in newBlock.miners:
+        total += miner.amount
+        if (miner.amount < 1) or (uint(100) < miner.amount):
+            raise newException(ValueError, "Invalid Miner amount.")
+    if total != 100:
+        raise newException(ValueError, "Invalid total Miner amount.")
 
     #Set the period length.
     var blocksPerPeriod: uint
@@ -93,7 +107,7 @@ proc processBlock*(
         blocksPerPeriod = 144
 
     #If the difficulty needs to be updated...
-    if blockchain.difficulties[^1].endBlock <= newBlock.nonce:
+    if blockchain.difficulties[^1].endBlock <= newBlock.header.nonce:
         blockchain.add(
             calculateNextDifficulty(
                 blockchain.blocks,

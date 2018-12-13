@@ -1,5 +1,12 @@
 #Prepends a string with its length.
-func `!`*(data: string): string {.raises: [].} =
+func `!`*(dataArg: string): string {.raises: [].} =
+    #Extract the data argument.
+    var data: string = dataArg
+    #Strip leading 0s.
+
+    while (data.len > 0) and (data[0] == char(0)):
+        data = data.substr(1, data.len)
+
     result = ""
 
     var
@@ -18,7 +25,10 @@ func `!`*(data: string): string {.raises: [].} =
     result &= data
 
 #Deseralizes a string by getting the length of the next byte, slicing that out, and moving on.
-func deserialize*(data: string, estimated: int): seq[string] {.raises: [].} =
+func deserialize*(
+    data: string,
+    estimated: int = 0
+): seq[string] {.raises: [].} =
     #Allocate the seq.
     result = newSeq[string](estimated)
 

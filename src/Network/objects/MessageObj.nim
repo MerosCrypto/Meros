@@ -1,3 +1,6 @@
+#Util.
+import ../../lib/Util
+
 #finals lib.
 import finals
 
@@ -5,54 +8,77 @@ finalsd:
     type
         #Message Type enum.
         MessageType* = enum
-            Verification = 0,
-            Block = 1,
-            Claim = 2,
-            Send = 3,
-            Receive = 4,
-            Data = 5
+            Handshake = 0,
+            Syncing = 1,
+            BlockRequest = 2,
+            EntryRequest = 3
+            DataMissing = 4,
+            SyncingOver = 5,
+            HandshakeOver = 6,
+            Verification = 7,
+            Block = 8,
+            Claim = 9,
+            Send = 10,
+            Receive = 11,
+            Data = 12
 
-        #Message obkect.
+        #Message object.
         Message* = ref object of RootObj
             client* {.final.}: uint
-            network* {.final.}: uint
-            version* {.final.}: uint
             content* {.final.}: MessageType
+            len* {.final.}: uint
             header* {.final.}: string
             message* {.final.}: string
+
+#Finalize the Message.
+func finalize(
+    msg: Message
+) {.raises: [].} =
+    msg.ffinalizeClient()
+    msg.ffinalizeContent()
+    msg.ffinalizeLen()
+    msg.ffinalizeHeader()
+    msg.ffinalizeMessage()
 
 #Constructor for incoming data.
 func newMessage*(
     client: uint,
-    network: uint,
-    version: uint,
     content: MessageType,
+    len: uint,
     header: string,
     message: string
 ): Message {.raises: [].} =
-    Message(
+    result = Message(
         client: client,
-        network: network,
-        version: version,
         content: content,
+        len: len,
         header: header,
         message: message
     )
+    result.finalize()
 
 #Constructor for outgoing data.
 func newMessage*(
-    network: uint,
-    version: uint,
     content: MessageType,
     message: string
 ): Message {.raises: [].} =
-    Message(
-        network: network,
-        version: version,
+    #Serialize the length.
+    var
+        len: int = message.len
+        length: string = ""
+    while len > 255:
+        len = len mod 255
+        length &= char(255)
+    length &= char(len)
+
+    #Create the Message.
+    result = Message(
         content: content,
-        header: char(network) & char(version) & char(content) & char(message.len),
+        len: uint(message.len),
+        header: char(content) & length,
         message: message
     )
+    result.finalize()
 
 #Stringify.
 func `$`*(msg: Message): string {.raises: [].} =

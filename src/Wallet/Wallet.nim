@@ -75,6 +75,10 @@ func newWallet*(
         publicKey: pair.pub,
         address: newAddress(pair.pub)
     )
+    result.ffinalizeSeed()
+    result.ffinalizePrivateKey()
+    result.ffinalizePublicKey()
+    result.ffinalizeAddress()
 
 #Constructor.
 func newWallet*(
