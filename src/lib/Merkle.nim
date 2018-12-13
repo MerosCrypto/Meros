@@ -110,7 +110,7 @@ proc newBranch(left: Merkle, right: Merkle): Merkle {.raises: [].} =
     result.rehash()
 
 proc newChainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
-    ## O(log n) method to create a Merkle tree populated only by leftmost items,
+    ## O(log n) proc to create a Merkle tree populated only by leftmost items,
     ## terminating in a leaf.
     ## Thus is used when adding a new hash to a full tree, as illustrated in
     ## the big-ass comment way above (upon adding leaf E)
@@ -153,7 +153,7 @@ proc rehash(tree: Merkle) {.raises: [].} =
 # -- Exposed API -- #
 
 proc add*(tree: var Merkle, hash: string) {.raises: [].} =
-    ## O(log n) method to add a hash to the tree
+    ## O(log n) proc to add a hash to the tree
     if tree.isNil:
         tree = newLeaf(hash)
     elif tree.isFull:
@@ -170,7 +170,7 @@ proc add*(tree: var Merkle, hash: string) {.raises: [].} =
     tree.rehash()
 
 proc newMerkle*(hashes: varargs[string]): Merkle {.raises: [].} =
-    ## O(n log n) method to create a tree from given hashes.
+    ## O(n log n) proc to create a tree from given hashes.
     ## Could be O(log n) in theory; if you want that, make it yourself.
     for hash in hashes:
         result.add(hash)
