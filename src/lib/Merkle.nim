@@ -1,4 +1,5 @@
 import Hash
+import Util
 
 type Merkle* = ref object
     # Though the API user will only interact with
@@ -9,10 +10,10 @@ type Merkle* = ref object
     of true:
         discard
     of false:
-        left*: Merkle
-        right*: Merkle
+        left: Merkle
+        right: Merkle
 
-    hash*: string
+    hash: string
 
 #[
 
@@ -25,11 +26,7 @@ There are some unstated gotchas that we use throughout this file.
    the exposed API and must only be accounted for
    internally.
 
-2. All Merkle trees are assumed to be nonempty. This is because
-   it is out of the scope of the intended usecase, is conceptually
-   tricky, and would result in hairier code.
-
-3. The tree invariant: That
+2. The tree invariant: That
    (I) All leafs to the left of a non-nil leaf are non-nil,
    and all leafs to the right of a nil leaf are nil, and
    (II) All leaf nodes exist on the same depth.
@@ -136,21 +133,13 @@ func isFull(tree: Merkle): bool {.raises: [].} =
         return false
     return tree.left.isFull and tree.right.isFull
 
-func `$`(tree: Merkle): string {.raises: [].} =
-    # Meant for use only in testing
-    if tree.isLeaf:
-        return tree.hash
-    elif tree.right.isNil:
-        return "(" & $tree.left & ", nil)"
-    else:
-        return "(" & $tree.left & ", " & $tree.right & ")"
-
 proc chainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
-    ## O(depth) method to create a Merkle tree populated only by leftmost items,
+    ## O(log n) method to create a Merkle tree populated only by leftmost items,
     ## terminating in a leaf.
     ## Thus is used when adding a new hash to a full tree, as illustrated in
     ## the big-ass comment way above (upon adding leaf E)
-    assert depth >= 1  # A Merkle tree cannot be empty and thus must have a depth >= 1
+    if depth == 0:
+      return nil
     if depth == 1:
         return newLeaf(hash)
     else:
@@ -158,7 +147,9 @@ proc chainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
 
 proc add*(tree: var Merkle, hash: string) {.raises: [].} =
     ## O(log n) method to add a hash to the tree
-    if tree.isFull:
+    if tree.isNil:
+      tree = newLeaf(hash)
+    elif tree.isFull:
         let sibling = chainOfDepth(tree.depth, hash)
         let parent = newBranch(tree, sibling)
         tree = parent
@@ -171,12 +162,15 @@ proc add*(tree: var Merkle, hash: string) {.raises: [].} =
 
     tree.rehash()
 
-proc newMerkle*(hashes: varargs[string]): Merkle =
+proc hash*(tree: Merkle): string {.raises: [].} =
+  ## We need to allow accessing only by proxy in order
+  ## to account for the nil case, i.e., an empty tree
+  if tree.isNil:
+    return "".pad(64)
+  return tree.hash
+
+proc newMerkle*(hashes: varargs[string]): Merkle {.raises: [].} =
     ## O(n log n) method to create a tree from given hashes.
     ## Could be O(log n) in theory; if you want that, make it yourself.
-    if hashes.len == 0:
-        raise IndexError.newException("Merkle trees require 1 or more hashes")
-
-    result = newLeaf(hashes[0])
-    for hash in hashes[1 ..< hashes.len]:
+    for hash in hashes:
         result.add(hash)

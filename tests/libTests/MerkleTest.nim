@@ -6,8 +6,13 @@ import ../../src/lib/Hash
 #Merkle lib.
 import ../../src/lib/Merkle
 
+#Util lib
+import ../../src/lib/Util
+
 proc hash(s1, s2: string): string =
     SHA512(s1 & s2).toString
+
+assert(newMerkle().hash == "".pad(64))
 
 assert(newMerkle(["a", "b", "c", "d"]).hash == hash(hash("a", "b"), hash("c", "d")) )
 
