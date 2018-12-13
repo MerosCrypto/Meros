@@ -106,6 +106,7 @@ func isBranch(tree: Merkle): bool {.raises: [].} =
     return not tree.isLeaf
 
 func depth(tree: Merkle): int {.raises: [].} =
+    ## Depth of a Merkle tree. We consider a leaf to have depth 1 rather than 0.
     if tree.isLeaf:
         return 1
     else:
@@ -114,7 +115,7 @@ func depth(tree: Merkle): int {.raises: [].} =
 func newLeaf(hash: string): Merkle {.raises: [].} =
     result = Merkle(isLeaf: true, hash: hash)
 
-proc reHash(tree: Merkle) {.raises: [].} =
+proc rehash(tree: Merkle) {.raises: [].} =
     ## Recalculate the hash of a tree, based on its children if it's a branch.
     if tree.isLeaf:
         return
@@ -125,7 +126,7 @@ proc reHash(tree: Merkle) {.raises: [].} =
 
 proc newBranch(left: Merkle, right: Merkle): Merkle {.raises: [].} =
     result = Merkle(isLeaf: false, hash: "", left: left, right: right)
-    result.reHash()
+    result.rehash()
 
 func isFull(tree: Merkle): bool {.raises: [].} =
     ## Are all 2^depth leaf nodes populated?
@@ -168,7 +169,7 @@ proc add*(tree: var Merkle, hash: string) {.raises: [].} =
     else:
         tree.right.add(hash)
 
-    tree.reHash()
+    tree.rehash()
 
 proc newMerkle*(hashes: openarray[string]): Merkle =
     ## O(n log n) method to create a tree from given hashes.
