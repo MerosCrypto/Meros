@@ -16,6 +16,13 @@ finalsd:
         #seq of the Verifications.
         verifications*: seq[Verification]
 
+#Add a Verification to a Verifier.
+proc add*(verifier: Verifier, verif: Verification) {.raises: [].} =
+    #Increase the height.
+    inc(verifier.height)
+    #Add the Verification to the seq.
+    verifier.verifications.add(verif)
+
 # [] operators.
 func `[]`(verifier: Verifier, index: int): Verification {.raises: [].} =
     verifier.verifications[index]
