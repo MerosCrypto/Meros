@@ -99,8 +99,41 @@ There are some unstated gotchas that we use throughout this file.
 
 ]#
 
+# -- Creation -- #
+
+proc rehash(tree: Merkle)
+
+func newLeaf(hash: string): Merkle {.raises: [].} =
+    result = Merkle(isLeaf: true, hash: hash)
+
+proc newBranch(left: Merkle, right: Merkle): Merkle {.raises: [].} =
+    result = Merkle(isLeaf: false, hash: "", left: left, right: right)
+    result.rehash()
+
+proc newChainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
+    ## O(log n) method to create a Merkle tree populated only by leftmost items,
+    ## terminating in a leaf.
+    ## Thus is used when adding a new hash to a full tree, as illustrated in
+    ## the big-ass comment way above (upon adding leaf E)
+    if depth == 0:
+      return nil
+    if depth == 1:
+        return newLeaf(hash)
+    else:
+        return newBranch(newChainOfDepth(depth - 1, hash), nil)
+
+# -- Properties -- #
+
 func isBranch(tree: Merkle): bool {.raises: [].} =
     return not tree.isLeaf
+
+func isFull(tree: Merkle): bool {.raises: [].} =
+    ## Are all 2^depth leaf nodes populated?
+    if tree.isLeaf:
+        return true
+    if tree.right.isNil:
+        return false
+    return tree.left.isFull and tree.right.isFull
 
 func depth(tree: Merkle): int {.raises: [].} =
     ## Depth of a Merkle tree. We consider a leaf to have depth 1 rather than 0.
@@ -109,8 +142,7 @@ func depth(tree: Merkle): int {.raises: [].} =
     else:
         return 1 + tree.left.depth
 
-func newLeaf(hash: string): Merkle {.raises: [].} =
-    result = Merkle(isLeaf: true, hash: hash)
+# -- Manipulation -- #
 
 proc rehash(tree: Merkle) {.raises: [].} =
     ## Recalculate the hash of a tree, based on its children if it's a branch.
@@ -121,46 +153,30 @@ proc rehash(tree: Merkle) {.raises: [].} =
     else:
         tree.hash = SHA512(tree.left.hash & tree.right.hash).toString
 
-proc newBranch(left: Merkle, right: Merkle): Merkle {.raises: [].} =
-    result = Merkle(isLeaf: false, hash: "", left: left, right: right)
-    result.rehash()
-
-func isFull(tree: Merkle): bool {.raises: [].} =
-    ## Are all 2^depth leaf nodes populated?
-    if tree.isLeaf:
-        return true
-    if tree.right.isNil:
-        return false
-    return tree.left.isFull and tree.right.isFull
-
-proc chainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
-    ## O(log n) method to create a Merkle tree populated only by leftmost items,
-    ## terminating in a leaf.
-    ## Thus is used when adding a new hash to a full tree, as illustrated in
-    ## the big-ass comment way above (upon adding leaf E)
-    if depth == 0:
-      return nil
-    if depth == 1:
-        return newLeaf(hash)
-    else:
-        return newBranch(chainOfDepth(depth - 1, hash), nil)
+# -- Exposed API -- #
 
 proc add*(tree: var Merkle, hash: string) {.raises: [].} =
     ## O(log n) method to add a hash to the tree
     if tree.isNil:
       tree = newLeaf(hash)
     elif tree.isFull:
-        let sibling = chainOfDepth(tree.depth, hash)
+        let sibling = newChainOfDepth(tree.depth, hash)
         let parent = newBranch(tree, sibling)
         tree = parent
     elif tree.left.isBranch and not tree.left.isFull:
         tree.left.add(hash)
     elif tree.right.isNil:
-        tree.right = chainOfDepth(tree.depth - 1, hash)
+        tree.right = newChainOfDepth(tree.depth - 1, hash)
     else:
         tree.right.add(hash)
 
     tree.rehash()
+
+proc newMerkle*(hashes: varargs[string]): Merkle {.raises: [].} =
+    ## O(n log n) method to create a tree from given hashes.
+    ## Could be O(log n) in theory; if you want that, make it yourself.
+    for hash in hashes:
+        result.add(hash)
 
 proc hash*(tree: Merkle): string {.raises: [].} =
   ## We need to allow accessing only by proxy in order
@@ -168,9 +184,3 @@ proc hash*(tree: Merkle): string {.raises: [].} =
   if tree.isNil:
     return "".pad(64)
   return tree.hash
-
-proc newMerkle*(hashes: varargs[string]): Merkle {.raises: [].} =
-    ## O(n log n) method to create a tree from given hashes.
-    ## Could be O(log n) in theory; if you want that, make it yourself.
-    for hash in hashes:
-        result.add(hash)
