@@ -3,41 +3,38 @@
 #Hash lib.
 import ../../src/lib/Hash
 
-#Base lib.
-import ../../src/lib/Base
-
 #Merkle lib.
 import ../../src/lib/Merkle
 
-var
-    #First leaf.
-    a: SHA512Hash = SHA512("01".toBN(16).toString(256))
-    #Second leaf.
-    b: SHA512Hash = SHA512("0F".toBN(16).toString(256))
-    #Third leaf.
-    c: SHA512Hash = SHA512("03".toBN(16).toString(256))
+proc hash(s1, s2: string): string =
+    SHA512(s1 & s2).toString
 
-    #First hash.
-    ab: SHA512Hash = SHA512(
-        a.toString() & b.toString()
-    )
-    #Second hash.
-    cc: SHA512Hash = SHA512(
-        c.toString() & c.toString()
-    )
-    #Root hash.
-    hash: SHA512Hash = SHA512(
-        ab.toString() & cc.toString()
-    )
+assert(newMerkle(["a", "b", "c", "d"]).hash == hash(hash("a", "b"), hash("c", "d")) )
 
-    #Create the MerkleTree.
-    merkle: MerkleTree = newMerkleTree(@[
-        a,
-        b,
-        c
-    ])
+assert(newMerkle(["1", "2", "3", "4", "5", "6", "7", "8"]).hash ==
+        hash(hash(hash("1", "2"), hash("3", "4")), hash(hash("5", "6"), hash("7", "8"))) )
 
-#Test the results.
-assert(hash == merkle.hash, "MerkleTree hash is not what it should be.")
+assert(newMerkle(["1", "2", "3"]).hash == hash(hash("1", "2"), hash("3", "3")) )
+
+block:
+    var m = newMerkle(["naughty"])
+    assert m.hash == "naughty"
+
+    m.add("children")
+    let h1 = hash("naughty", "children")
+    assert m.hash == h1
+
+    m.add("get")
+    assert m.hash == hash(h1, hash("get", "get"))
+
+    m.add("coal")
+    let h2 = hash(h1, hash("get", "coal"))
+    assert m.hash == h2
+
+    m.add("for")
+    assert m.hash == hash(h2, hash(hash("for", "for"), hash("for", "for")))
+
+    m.add("christmas")
+    assert m.hash == hash(h2, hash(hash("for", "christmas"), hash("for", "christmas")))
 
 echo "Finished the lib/MerkleTree test."
