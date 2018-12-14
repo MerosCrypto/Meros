@@ -12,7 +12,7 @@ import ../../Wallet/Address
 import ../../Network/Serialize/Lattice/SerializeReceive
 
 #Index object.
-import objects/IndexObj
+import ../common/objects/IndexObj
 
 #Entry object.
 import objects/EntryObj

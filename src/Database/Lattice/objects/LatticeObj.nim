@@ -12,7 +12,7 @@ import ../../../lib/Hash
 import ../../Merit/Merit
 
 #Index object.
-import IndexObj
+import ../../common/objects/IndexObj
 
 #Entry object.
 import EntryObj

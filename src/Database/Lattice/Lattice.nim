@@ -14,7 +14,7 @@ import ../../lib/BLS
 import ../Merit/Merit
 
 #Index object.
-import objects/IndexObj
+import ../common/objects/IndexObj
 #Export the Index object.
 export IndexObj
 

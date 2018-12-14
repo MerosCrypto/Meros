@@ -12,7 +12,7 @@ import ../../../Wallet/Address
 import ../../../Wallet/Wallet
 
 #Index, Entry, and Receive object.
-import ../../../Database/Lattice/objects/IndexObj
+import ../../../Database/common/objects/IndexObj
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/ReceiveObj
 

@@ -8,7 +8,7 @@ import ../../../lib/Base
 import ../../../Wallet/Address
 
 #Index, Entry, and Receive objects.
-import ../../../Database/Lattice/objects/IndexObj
+import ../../../Database/common/objects/IndexObj
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/ReceiveObj
 

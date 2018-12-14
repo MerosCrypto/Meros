@@ -16,7 +16,7 @@ import ../../Wallet/Wallet
 import ../../Wallet/Address
 
 #Index object.
-import objects/IndexObj
+import ../common/objects/IndexObj
 
 #Entry object and descendants.
 import objects/EntryObj

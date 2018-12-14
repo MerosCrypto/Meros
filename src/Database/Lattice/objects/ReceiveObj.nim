@@ -2,7 +2,7 @@
 import EntryObj
 
 #Index object.
-import IndexObj
+import ../../common/objects/IndexObj
 
 #Finals lib.
 import finals
