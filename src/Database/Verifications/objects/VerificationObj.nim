@@ -19,6 +19,8 @@ finalsd:
         Verification* = ref object of RootObj
             #BLS Key.
             verifier* {.final.}: BLSPublicKey
+            #Nonce.
+            nonce* {.final.}: uint
             #Entry Hash.
             hash* {.final.}: Hash[512]
             #Block the Verification was archived in.
@@ -65,9 +67,12 @@ func archive*(verif: Verification, archived: uint): Verification =
 #Sign a Verification.
 func sign*(
     miner: MinerWallet,
-    verif: MemoryVerification
+    verif: MemoryVerification,
+    nonce: uint
 ) {.raises: [FinalAttributeError].} =
     #Set the verifier.
     verif.verifier = miner.publicKey
+    #Set the nonce.
+    verif.nonce = nonce
     #Sign the hash of the Verification.
     verif.signature = miner.sign(verif.hash.toString())
