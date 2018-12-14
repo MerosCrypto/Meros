@@ -7,6 +7,9 @@ type
     BLSError*      = object of Exception #Used when BLS fails.
     SodiumError*   = object of Exception #Used when LibSodium fails.
 
+    #Database/common Errors.
+    IndexError*    = object of Exception #KeyError, yet not `of ValueError`.
+
     #Database/Filesystem Errors.
     MemoryError*   = object of Exception #Used when alloc/dealloc fails.
 

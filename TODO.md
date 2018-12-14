@@ -43,17 +43,18 @@
 - Network page on the GUI.
 
 ### Improvements:
-- Use sugerror's reraise for all our Exception wrapping.
+- Replace bools as status codes with Exceptions.
+- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with SignatureError.
+- Make sure `KeyError` is listed under `raises`.
+- Use `sugerror`'s `reraise` for all our Exception wrapping.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
-- Merkle Tree appending.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
 - Don't rebroadcast Blocks that we synced.
 - Improve Network's encapsulation.
 
 - Make more things `func`.
-- Make sure `KeyError` is listed under `raises`.
 
 ### Behavior Changes:
     Decided:
