@@ -1,5 +1,5 @@
 #BLS lib.
-import ../.././lib/BLS
+import ../../../lib/BLS
 
 #Verification object.
 import VerificationObj
@@ -19,6 +19,16 @@ finalsd:
         #seq of the Verifications.
         verifications*: seq[Verification]
 
+#Constructor.
+func newVerifierObj(key: string): Verifier =
+    result = Verifier(
+        key: key,
+        height: 0,
+        archived: 0,
+        verifications: @[]
+    )
+    result.ffinalize(key)
+
 #Add a Verification to a Verifier.
 proc add*(verifier: Verifier, verif: Verification) {.raises: [].} =
     #Verify the Verification's Verifier.
@@ -29,6 +39,8 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [].} =
     if verif.nonce != verifier.height:
         if verif.hash != verifier.verifications[verif.nonce].hash:
             #MERIT REMOVAL.
+        #Already added.
+        raise new(IndexError, "Verification has already been added.")
 
     #Increase the height.
     inc(verifier.height)
