@@ -19,21 +19,18 @@ func Argon*(
     #The iteration quantity and memory usage values are for testing only.
     #They are not final and will be changed.
     var
-        iterations: uint32
-        memory: uint32
+        #Reduced paramters:
+        iterations: uint32 = 1
+        memory: uint32 = 8 #8 KB of memory.
     if not reduced:
-        #Use 128 MB of RAM.
-        iterations = 1
-        memory = 131072
-    else:
-        #Use 8KB of RAM.
-        memory = 8
+        #Regular paramters.
+        memory = 131072 #128 MB of memory.
 
     try:
         result.data = Argon2d(
             data,
             salt,
-            1,
+            iterations,
             memory,
             1
         ).data
