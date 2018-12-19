@@ -15,6 +15,7 @@
 - Remove direct references to clients[0].
 - Sync Entries not on the Blockchain.
 - Sync Verifications not on the Blockchain.
+- Sync gaps (if we get an Entry with nonce 8 but we only have up to 6; applies to both the Lattice and Verifications).
 - Add peer finding.
 - Add Node karma.
 
@@ -44,8 +45,9 @@
 
 ### Improvements:
 - Replace bools as status codes with Exceptions.
-- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with SignatureError.
-- Make sure `KeyError` is listed under `raises`.
+- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
+- Add `DataExistsError` for when data has already been added.
+- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `IndexError`.
 - Use `sugerror`'s `reraise` for all our Exception wrapping.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
