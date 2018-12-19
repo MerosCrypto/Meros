@@ -211,13 +211,13 @@ proc verify*(
             entry: Entry
 
         #Only keep the confirmed Entry.
-        lattice.accounts[index.address].entries[int(index.nonce)].keepIf(
+        lattice.accounts[index.key].entries[int(index.nonce)].keepIf(
             proc (e: Entry): bool =
                 verif.hash == e.hash
         )
 
         #Get said Entry.
-        entry = lattice.accounts[index.address][index.nonce]
+        entry = lattice.accounts[index.key][index.nonce]
 
         #Set it to verified.
         entry.verified = true
@@ -230,16 +230,16 @@ proc verify*(
                 #Cast it to a var.
                 var send: Send = cast[Send](entry)
                 #Update the balance.
-                lattice.accounts[index.address].balance -= send.amount
+                lattice.accounts[index.key].balance -= send.amount
             #If it's a Receive Entry...
             of EntryType.Receive:
                 var
                     #Cast it to a var.
                     recv: Receive = cast[Receive](entry)
                     #Get the Send it's Receiving.
-                    send: Send = cast[Send](lattice.accounts[recv.index.address][recv.index.nonce])
+                    send: Send = cast[Send](lattice.accounts[recv.index.key][recv.index.nonce])
                 #Update the balance.
-                lattice.accounts[index.address].balance += send.amount
+                lattice.accounts[index.key].balance += send.amount
             of EntryType.Claim:
                 var
                     #Cast it to a var.
@@ -247,6 +247,6 @@ proc verify*(
                     #Get the Mint it's Claiming.
                     mint: Mint = cast[Mint](lattice.accounts["minter"][claim.mintNonce])
                 #Update the balance.
-                lattice.accounts[index.address].balance += mint.amount
+                lattice.accounts[index.key].balance += mint.amount
             else:
                 discard

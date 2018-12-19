@@ -139,7 +139,7 @@ proc add*(
         return false
 
     #Verify the Receive's input address.
-    if recv.index.address != send.sender:
+    if recv.index.key != send.sender:
         return false
 
     #Verify the nonces match.
@@ -152,7 +152,7 @@ proc add*(
             if entry.descendant == EntryType.Receive:
                 var past: Receive = cast[Receive](entry)
                 if (
-                    (past.index.address == recv.index.address) and
+                    (past.index.key == recv.index.key) and
                     (past.index.nonce == recv.index.nonce)
                 ):
                     return false

@@ -2,16 +2,16 @@
 import finals
 
 finalsd:
-    #Index object. Specifies a Entry on the Lattice.
+    #Index object. Specifies a position on a Table of chains (Lattice or Verifications objects).
     type Index* = ref object of RootObj
-        address* {.final.}: string
+        key* {.final.}: string #Key, as in Key/Value, not Public Key.
         nonce* {.final.}: uint
 
 #Construcor.
-func newIndex*(address: string, nonce: uint): Index {.raises: [].} =
+func newIndex*(key: string, nonce: uint): Index {.raises: [].} =
     result = Index(
-        address: address,
+        key: key,
         nonce: nonce
     )
-    result.ffinalizeAddress()
+    result.ffinalizeKey()
     result.ffinalizeNonce()

@@ -144,12 +144,12 @@ func getAccount*(
 
 #Gets a Entry by its Index.
 proc `[]`*(lattice: Lattice, index: Index): Entry {.raises: [ValueError].} =
-    if not lattice.accounts.hasKey(index.address):
+    if not lattice.accounts.hasKey(index.key):
         raise newException(ValueError, "Lattice does not have an Account for that address.")
-    if lattice.accounts[index.address].height <= index.nonce:
+    if lattice.accounts[index.key].height <= index.nonce:
         raise newException(ValueError, "The Account for that address doesn't have a Entry for that nonce.")
 
-    result = lattice.accounts[index.address][index.nonce]
+    result = lattice.accounts[index.key][index.nonce]
 
 #Gets a Entry by its hash.
 proc `[]`*(lattice: Lattice, hash: string): Entry {.raises: [KeyError, ValueError].} =
@@ -159,7 +159,7 @@ proc `[]`*(lattice: Lattice, hash: string): Entry {.raises: [KeyError, ValueErro
 
     var
         index: Index = lattice.lookup[hash]
-        entries: seq[Entry] = lattice.accounts[index.address].entries[int(index.nonce)]
+        entries: seq[Entry] = lattice.accounts[index.key].entries[int(index.nonce)]
 
     for entry in entries:
         if entry.hash.toString() == hash:
