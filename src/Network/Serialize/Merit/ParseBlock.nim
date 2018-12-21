@@ -13,10 +13,12 @@ import ../../../lib/BLS
 #Lattice lib.
 import ../../../Database/Lattice/Lattice
 
-#Verifications, Miners, and Block object.
+#Verifications and Miners objects.
 import ../../../Database/Merit/objects/VerificationsObj
 import ../../../Database/Merit/objects/MinersObj
-import ../../../Database/Merit/objects/BlockObj
+
+#Block lib.
+import ../../../Database/Merit/Block
 
 #Deserialize/parse functions.
 import ../SerializeCommon
