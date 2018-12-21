@@ -69,6 +69,7 @@
         - Have Verifications also use Ed25519/have BLS signatures be asked for.
 
 ### Documentation:
+- If a piece of code had a GitHub Issue, put a link to the Issue in a comment. Shed some light on the decision making process.
 - Document the Message Types.
 - Use Nim Documentation Comments.
 - Ember Whitepaper.
