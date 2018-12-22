@@ -16,7 +16,7 @@ proc calculateSig*(verifs: seq[Verification]): BLSSignature {.raises: [BLSError]
     if verifs.len == 0:
         #Set a 0'd out signature.
         try:
-            verifs.aggregate = newBLSSignature(char(0).repeat(96))
+            verifs.aggregate = nil
         except:
             raise newException(BLSError, "Couldn't aggregate the signature for the Verifications.")
         return
@@ -33,7 +33,7 @@ proc calculateSig*(verifs: seq[Verification]): BLSSignature {.raises: [BLSError]
 proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSError].} =
     #If there's no verifications...
     if verifs.len == 0:
-        return (sig == newBLSSignature(char(0).repeat(96)))
+        return sig == nil
 
     #Create the Aggregation Infos.
     var agInfos: seq[BLSAggregationInfo] = @[]
