@@ -42,7 +42,7 @@ proc calculateSig*(verifs: Verifications) {.raises: [BLSError].} =
     if verifs.verifications.len == 0:
         #Set a 0'd out signature.
         try:
-            verifs.aggregate = newBLSSignature(char(0).repeat(96))
+            verifs.aggregate = nil
         except:
             raise newException(BLSError, "Couldn't aggregate the signature for the Verifications.")
         return
