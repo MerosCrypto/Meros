@@ -60,13 +60,14 @@ proc newBlock*(
     )
 
 #Set the Verifications.
-proc setVerifications*(newBlock: Block, verifications: Verifications) =
+proc `verifications=`*(newBlock: Block, verifications: Verifications) =
     newBlock.verifications = verifications
-    newBlock.header.setVerifications(verifications)
+    newBlock.header.verifications = verifications
 
-proc setMiners*(newBlock: Block, miners: Miners) =
+#Set the Miners.
+proc `miners=`*(newBlock: Block, miners: Miners) =
     newBlock.miners = miners
-    newBlock.header.setMiners(miners)
+    newBlock.header.miners = miners
 
 #Increase the proof.
 proc inc*(newBlock: Block) =

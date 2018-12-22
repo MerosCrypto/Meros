@@ -46,7 +46,7 @@ proc newBlockObj*(
     miners: Miners,
     proof: uint,
     time: uint
-): Block {.raises: [ArgonError].} =
+): Block {.raises: [ValueError, ArgonError].} =
     #Create the Block.
     result = Block(
         header: newBlockheaderObj(
