@@ -6,14 +6,17 @@ export VerificationObj
 import finals
 
 #Mark a Verification as archived.
-func archive*(verif: Verification, archived: uint): Verification =
-    #We recreate the Verification in order to make sure it isn't a MemoryVerification.
-    result = newVerificationObj(
+func archive*(verif: Verification, archived: uint) {.raises: [].} =
+    #Recreate the Verification in order to make sure it isn't a MemoryVerification.
+    var archive = newVerificationObj(
         verif.hash
     )
-    result.verifier = verif.verifier
-    result.nonce = verif.nonce
-    result.archived = archived
+    archive.verifier = verif.verifier
+    archive.nonce = verif.nonce
+    archive.archived = archived
+
+    #Set the input to the archive.
+    verif = archive
 
 #Sign a Verification.
 func sign*(

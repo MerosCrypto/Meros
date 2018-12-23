@@ -30,7 +30,7 @@ func newVerifierObj(key: string): Verifier =
     result.ffinalize(key)
 
 #Add a Verification to a Verifier.
-proc add*(verifier: Verifier, verif: Verification) {.raises: [].} =
+proc add*(verifier: Verifier, verif: Verification) {.raises: [IndexError].} =
     #Verify the Verification's Verifier.
     if verif.verifier != verifier.key:
         raise newException(IndexError, "Verification's Verifier doesn't match the Verifier we're adding it to.")

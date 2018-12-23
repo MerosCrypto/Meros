@@ -30,9 +30,19 @@ import finals
 proc add*(
     verifs: Verifications,
     verif: Verification
-): bool {.raises: [].} =
-    discard
+) {.raises: [IndexError].} =
+    verifs[verif.verifier].add(verif)
 
 #For each provided Index, archive all Verifications from the account's last archived to the provided nonce.
-proc archive*(indexes: seq[Index]) {.raises: [].} =
-    discard
+proc archive*(verifs: Verifications, indexes: seq[Index], archived: uint) {.raises: [].} =
+    #Declare the start variable outside of the loop.
+    var start: uint
+
+    #Iterate over every Index.
+    for index in indexes:
+        #Calculate the start.
+        start = verifs[index.key].archived + 1
+        #Iterate over every Verification.
+        for i in start .. index.nonce:
+            #Archive the Verification.
+            verifs[index].archive(archived)
