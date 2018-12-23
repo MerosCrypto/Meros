@@ -50,29 +50,3 @@ func newMemoryVerificationObj*(
         archived: 0
     )
     result.ffinalizeHash()
-
-#Mark a Verification as archived.
-func archive*(verif: Verification, archived: uint): Verification =
-    #We recreate the Verification in order to make sure it isn't a MemoryVerification.
-    result = Verification(
-        verifier: verif.verifier,
-        hash: verif.hash,
-        archived: archived
-    )
-    result.ffinalizeVerifier()
-    result.ffinalizeHash()
-    result.ffinalizeArchived()
-
-
-#Sign a Verification.
-func sign*(
-    miner: MinerWallet,
-    verif: MemoryVerification,
-    nonce: uint
-) {.raises: [FinalAttributeError].} =
-    #Set the verifier.
-    verif.verifier = miner.publicKey
-    #Set the nonce.
-    verif.nonce = nonce
-    #Sign the hash of the Verification.
-    verif.signature = miner.sign(verif.hash.toString())
