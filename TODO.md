@@ -8,8 +8,9 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Have Verifications placed on their own Database in real time.
+- Handle Verifications events/reroute Networking.
 - Redo Blocks to only contain references to Verifications on their Database (BLS.START.END).
+- Update the RPC.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Remove direct references to clients[0].
