@@ -39,8 +39,17 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [].} =
     if verif.nonce != verifier.height:
         if verif.hash != verifier.verifications[verif.nonce].hash:
             #MERIT REMOVAL.
+            discard
         #Already added.
         raise new(IndexError, "Verification has already been added.")
+
+    #Verify this isn't a double spend.
+    for oldVerif in verifier.verifications:
+        if oldVerif.key == verif.key:
+            if oldVerif.nonce == verif.nonce:
+                if oldVerif.hash != verif.hash:
+                    #MERIT REMOVAL.
+                    discard
 
     #Increase the height.
     inc(verifier.height)
