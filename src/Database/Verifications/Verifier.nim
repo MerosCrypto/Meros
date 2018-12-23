@@ -47,3 +47,7 @@ proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSE
 
     #Verify the signature.
     result = sig.verify()
+
+#Archive a Verification.
+proc archive*(verifier: Verifier, nonce: uint, archived: uint) {.raises: [].} =
+    verifier[nonce].archive(archived)

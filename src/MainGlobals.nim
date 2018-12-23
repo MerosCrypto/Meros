@@ -4,6 +4,9 @@ include MainConstants
 var
     events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.
 
+    #Verifications.
+    verifications {.threadvar.}: Verifications
+
     #Merit.
     merit {.threadvar.}: Merit #Blockchain and state.
 

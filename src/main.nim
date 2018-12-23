@@ -14,6 +14,7 @@ include MainUI
 
 #Spawn the core stuff on a thread since the UI must be on the main thread.
 proc main() {.thread.} =
+    mainVerifications()
     mainMerit()
     mainLattice()
     mainPersonal()
