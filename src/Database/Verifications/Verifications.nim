@@ -13,18 +13,24 @@ import ../../lib/BLS
 #Index object.
 import ../common/objects/IndexObj
 
-#Verification and Verifier lib.
+#Verification and Verifier libs.
 import Verification
 import Verifier
 
+export Verification
+export Verifier
+
 #Verifications object.
-import objects/Verifications
+import objects/VerificationsObj
+export VerificationsObj
 
 #Tables standard lib.
 import tables
 
 #Finals lib.
 import finals
+
+var newVerifications*: proc (): Verifications = newVerificationsObj
 
 #Add a Verification.
 proc add*(

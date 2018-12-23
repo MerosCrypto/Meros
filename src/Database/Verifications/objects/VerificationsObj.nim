@@ -32,7 +32,7 @@ import tables
 type Verifications* = TableRef[string, Verifier]
 
 #Verifications constructor.
-func newVerifications*(): Verifications {.raises: [ValueError].} =
+func newVerificationsObj*(): Verifications {.raises: [ValueError].} =
     newTable[string, Verifier]()
 
 #Creates a new Verifier on the Verifications.
