@@ -52,18 +52,6 @@ proc `verifications=`*(
 ) {.raises: [].} =
     header.verifications = verifications
 
-proc setVerifications(
-    header: BlockHeader,
-    verifications: Verifications
-) {.raises: [].} =
-    header.verifications = verifications.aggregate
-
-proc `verifications=`*(
-    header: BlockHeader,
-    verifications: Verifications
-) {.raises: [].} =
-    header.setVerifications(verifications)
-
 #Calculate the Miners's Merkle Hash.
 proc calculateMerkle*(miners: Miners): SHA512Hash {.raises: [ValueError].} =
     #Create a Markle Tree of the Miners.
@@ -101,32 +89,14 @@ proc `miners=`*(
 proc newBlockHeaderObj*(
     nonce: uint,
     last: ArgonHash,
-    verifications: BLSSignature,
     miners: SHA512Hash,
     time: uint,
 ): BlockHeader {.raises: [].} =
-    #Create the Block Header.
     result = BlockHeader(
         nonce: nonce,
         last: last,
-        verifications: verifications,
         miners: miners,
         time: time
     )
     result.ffinalizeNonce()
     result.ffinalizeLast()
-
-proc newBlockHeaderObj*(
-    nonce: uint,
-    last: ArgonHash,
-    verifications: Verifications,
-    miners: Miners,
-    time: uint,
-): BlockHeader {.raises: [ValueError].} =
-    newBlockHeaderObj(
-        nonce,
-        last,
-        verifications.aggregate,
-        miners.calculateMerkle(),
-        time
-    )

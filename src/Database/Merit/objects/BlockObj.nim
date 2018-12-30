@@ -34,7 +34,7 @@ type Block* = ref object of RootObj
     argon*: ArgonHash
 
     #Verifications.
-    verifications*: Verifications
+    verifications*: seq[Index]
     #Who to attribute the Merit to (amount ranges from 0 to 100).
     miners*: Miners
 
@@ -52,14 +52,26 @@ proc newBlockObj*(
         header: newBlockheaderObj(
             nonce,
             last,
-            verifications,
             miners,
             time
         ),
         proof: proof,
-        verifications: verifications,
         miners: miners
     )
+
+    #Calculate who has new Verifications.
+    var indexes: seq[Index] = @[]
+    for verifier in verifications.keys():
+        if verifications[verifier].archived != verifications[verifier].height - 1:
+            indexes.push(newIndex(verifier, verifications[verifier].height - 1))
+
+    #Caclulate the aggregate.
+    var signatures: seq[BLSSignature]
+    for index in indexes:
+        signatures.add(
+            verifications[verifier][verifications[verifier].archived .. index.nonce].calculateSig()
+        )
+    result.header.verifications = signatures.calculateSig()
 
     #Set the Header hash.
     result.hash = SHA512(result.header.serialize())

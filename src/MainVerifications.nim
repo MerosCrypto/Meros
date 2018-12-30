@@ -5,7 +5,7 @@ proc mainVerifications*() {.raises: [].} =
 
     #Handle Verifications.
     events.on(
-        "verifications.verification",
+        "verifications.memory_verification",
         proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification."
@@ -16,6 +16,9 @@ proc mainVerifications*() {.raises: [].} =
             )
             if not verif.signature.verify():
                 return false
+
+            #Add the Verification to the Verifications.
+            verifications.add(verif)
 
             #Add the Verification to the Lattice.
             result = lattice.verify(merit, verif)
