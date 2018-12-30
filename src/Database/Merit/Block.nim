@@ -53,21 +53,11 @@ proc newBlock*(
     result = newBlockObj(
         nonce,
         last,
-        verifications,
         miners,
         proof,
         time
     )
-
-#Set the Verifications.
-proc `verifications=`*(newBlock: Block, verifications: Verifications) =
-    newBlock.verifications = verifications
-    newBlock.header.verifications = verifications
-
-#Set the Miners.
-proc `miners=`*(newBlock: Block, miners: Miners) =
-    newBlock.miners = miners
-    newBlock.header.miners = miners
+    result.verifications = verifications
 
 #Increase the proof.
 proc inc*(newBlock: Block) =

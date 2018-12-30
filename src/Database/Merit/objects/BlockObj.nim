@@ -38,11 +38,32 @@ type Block* = ref object of RootObj
     #Who to attribute the Merit to (amount ranges from 0 to 100).
     miners*: Miners
 
+#Set the Verifications.
+proc `verifications=`(data: Block, verifications: Verifications) {.raises: [].} =
+    #Calculate who has new Verifications.
+    var indexes: seq[Index] = @[]
+    for verifier in verifications.keys():
+        if verifications[verifier].archived != verifications[verifier].height - 1:
+            indexes.push(newIndex(verifier, verifications[verifier].height - 1))
+    result.verifications = indexes
+
+    #Caclulate the aggregate.
+    var signatures: seq[BLSSignature]
+    for index in indexes:
+        signatures.add(
+            verifications[verifier][verifications[verifier].archived .. index.nonce].calculateSig()
+        )
+    result.header.verifications = signatures.calculateSig()
+
+#Set the Miners.
+proc `miners=`*(newBlock: Block, miners: Miners) =
+    newBlock.miners = miners
+    newBlock.header.miners = miners
+
 #Constructor.
 proc newBlockObj*(
     nonce: uint,
     last: ArgonHash,
-    verifications: Verifications,
     miners: Miners,
     proof: uint,
     time: uint
@@ -58,20 +79,6 @@ proc newBlockObj*(
         proof: proof,
         miners: miners
     )
-
-    #Calculate who has new Verifications.
-    var indexes: seq[Index] = @[]
-    for verifier in verifications.keys():
-        if verifications[verifier].archived != verifications[verifier].height - 1:
-            indexes.push(newIndex(verifier, verifications[verifier].height - 1))
-
-    #Caclulate the aggregate.
-    var signatures: seq[BLSSignature]
-    for index in indexes:
-        signatures.add(
-            verifications[verifier][verifications[verifier].archived .. index.nonce].calculateSig()
-        )
-    result.header.verifications = signatures.calculateSig()
 
     #Set the Header hash.
     result.hash = SHA512(result.header.serialize())
