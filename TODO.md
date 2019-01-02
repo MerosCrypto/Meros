@@ -8,10 +8,11 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Update Networking.
+- Update Syncing.
 - Handle Verifications events in MainVerifications.
 - Update MainMerit and MainLattice.
 - Update RPC/docs.
+- Tests.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Remove direct references to clients[0].

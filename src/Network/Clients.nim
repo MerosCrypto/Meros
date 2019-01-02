@@ -8,7 +8,7 @@ import ../lib/Util
 import ../lib/Hash
 
 #Block libs.
-import ../Database/Merit/Verifications
+import ../Database/Verifications/Verifications
 import ../Database/Merit/Block
 
 #Lattice libs.

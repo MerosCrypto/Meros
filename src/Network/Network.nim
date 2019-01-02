@@ -96,12 +96,12 @@ proc newNetwork*(
                 #Switch based off the message type (in a try to handle invalid messages).
                 try:
                     case msg.content:
-                        of MessageType.Verification:
+                        of MessageType.MemoryVerification:
                             if nodeEvents.get(
                                 proc (verif: MemoryVerification): bool,
-                                "merit.verification"
+                                "verifications.memory_verification"
                             )(
-                                msg.message.parseVerification()
+                                msg.message.parseMemoryVerification()
                             ):
                                 network.clients.broadcast(msg)
 

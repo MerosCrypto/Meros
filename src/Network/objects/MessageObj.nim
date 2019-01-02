@@ -15,7 +15,7 @@ finalsd:
             DataMissing = 4,
             SyncingOver = 5,
             HandshakeOver = 6,
-            Verification = 7,
+            MemoryVerification = 7,
             Block = 8,
             Claim = 9,
             Send = 10,
