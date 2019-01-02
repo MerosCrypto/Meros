@@ -23,15 +23,15 @@ import finals
 import strutils
 
 #Parse a Verification.
-proc parseVerification*(
+proc parseMemoryVerification*(
     verifStr: string
-): Verification {.raises: [
+): MemoryVerification {.raises: [
     ValueError,
     BLSError,
     FinalAttributeError
 ].} =
     var
-        #Public Key | Nonce | Entry Hash
+        #Public Key | Nonce | Entry Hash | Signature
         verifSeq: seq[string] = verifStr.deserialize(4)
         #Verifier's Public Key.
         verifier: BLSPublicKey = newBLSPublicKey(verifSeq[0].pad(48))
@@ -39,6 +39,8 @@ proc parseVerification*(
         nonce: uint = verifSeq[1].fromBinary()
         #Get the Entry hash.
         entry: string = verifSeq[1].pad(64)
+        #BLS signature.
+        sig: BLSSignature = newBLSSignature(verifSeq[2].pad(96))
 
     #Create the Verification.
     result = newMemoryVerificationObj(
@@ -46,3 +48,4 @@ proc parseVerification*(
     )
     result.verifier = verifier
     result.nonce = nonce
+    result.signature = sig

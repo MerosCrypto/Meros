@@ -8,7 +8,6 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Update Serialization/Parsing.
 - Update Networking.
 - Handle Verifications events in MainVerifications.
 - Update MainMerit and MainLattice.
