@@ -127,7 +127,7 @@ proc calculate*(
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-proc shift*(epochs: var Epochs, verifs: Verifications): Epoch {.raises: [KeyError].} =
+proc shift*(epochs: var Epochs, verifs: Verifications, indexes: Indexes): Epoch {.raises: [KeyError].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch()
@@ -135,23 +135,24 @@ proc shift*(epochs: var Epochs, verifs: Verifications): Epoch {.raises: [KeyErro
         found: bool
 
     #Loop over each Verification.
-    for verif in verifs.verifications:
-        #Set found to false.
-        found = false
+    for index in indexess:
+        for verif in verifs[index.key][verifs[index.key].archived <.. index.nonce]:
+            #Set found to false.
+            found = false
 
-        #Iterate over each Epoch to find which has the Entry.
-        for epoch in epochs:
-            #If this Epoch has it, set found to true, and add it.
-            if epoch.hasKey(verif.hash.toString()):
-                found = true
-                epoch[verif.hash.toString()].add(verif.verifier)
-                #Don't waste time by searching the others.
-                continue
+            #Iterate over each Epoch to find which has the Entry.
+            for epoch in epochs:
+                #If this Epoch has it, set found to true, and add it.
+                if epoch.hasKey(verif.hash.toString()):
+                    found = true
+                    epoch[verif.hash.toString()].add(verif.verifier)
+                    #Don't waste time by searching the others.
+                    break
 
-        #If it wasn't found, create a seq for it in the newest Epoch.
-        if not found:
-            newEpoch[verif.hash.toString()] = newSeq[BLSPublicKey](1)
-            newEpoch[verif.hash.toString()][0] = verif.verifier
+            #If it wasn't found, create a seq for it in the newest Epoch.
+            if not found:
+                newEpoch[verif.hash.toString()] = newSeq[BLSPublicKey](1)
+                newEpoch[verif.hash.toString()][0] = verif.verifier
 
     #Add the newest Epoch.
     epochs.add(newEpoch)

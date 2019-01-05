@@ -90,16 +90,10 @@ proc mainMerit() {.raises: [
                         #Add the Verifier's aggregation info to the seq.
                         agInfos.add(verifierAgInfos.aggregate())
 
-                    #Set the signature's aggregate info and verify it.
-                    newBlock.header.verifications.setAggregationInfo(agInfos.aggregate())
-                    if not newBlock.header.verifications.verify():
-                        echo "Failed to add the Block."
-                        return false
-
                     #Add the Block to the Merit.
                     var rewards: Rewards
                     try:
-                        rewards = merit.processBlock(newBlock)
+                        rewards = merit.processBlock(verifications, newBlock)
                     except:
                         echo "Failed to add the Block."
                         return false
