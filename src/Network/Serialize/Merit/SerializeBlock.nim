@@ -11,7 +11,6 @@ import ../../../lib/Hash
 import ../../../lib/BLS
 
 #Merit objects.
-import ../../../Database/Merit/objects/VerificationsObj
 import ../../../Database/Merit/objects/BlockHeaderObj
 import ../../../Database/Merit/objects/MinersObj
 import ../../../Database/Merit/objects/BlockObj
@@ -19,7 +18,7 @@ import ../../../Database/Merit/objects/BlockObj
 #Serialize/Deserialize functions.
 import ../SerializeCommon
 import SerializeBlockHeader
-import SerializeVerifications
+import ../Verifications/SerializeVerifications
 import SerializeMiners
 
 #String utils standard lib.
@@ -30,6 +29,5 @@ func serialize*(blockArg: Block): string {.raises: [].} =
     #Create the serialized Block.
     result =
         !blockArg.header.serialize() &
-        !blockArg.proof.toBinary() &
         !blockArg.verifications.serialize() &
         !blockArg.miners.serialize()
