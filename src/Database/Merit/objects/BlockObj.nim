@@ -26,26 +26,27 @@ import strutils
 type Block* = ref object of RootObj
     #Block Header.
     header*: BlockHeader
-    #Random number to prove work was done.
-    proof*: uint
-    #Header Hash.
-    hash*: SHA512Hash
-    #Argon2d hash (Argon2d(hash, proof) must be greater than the difficulty).
-    argon*: ArgonHash
+    #Hash of the Block Header.
+    hash*: ArgonHash
 
     #Verifications.
     verifications*: seq[Index]
-    #Who to attribute the Merit to (amount ranges from 0 to 100).
+    #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
     miners*: Miners
 
 #Set the Verifications.
-proc `verifications=`(data: Block, verifications: Verifications) {.raises: [].} =
-    #Calculate who has new Verifications.
-    var indexes: seq[Index] = @[]
-    for verifier in verifications.keys():
-        if verifications[verifier].archived != verifications[verifier].height - 1:
-            indexes.push(newIndex(verifier, verifications[verifier].height - 1))
-    result.verifications = indexes
+proc setVerifications(data: Block, verifications: Verifications, indexes: seq[Index]) {.raises: [ValueError].} =
+    #Verify the indexes.
+    for index in indexes:
+        if not verifications.hasKey(index.key):
+            raise newException(ValueError, "Invalid verifier.")
+
+        if index.nonce <= verifications[index.key].archived:
+            raise newException(ValueError, "Nonce already archived.")
+
+        if index.nonce >= verifications[index.key].len:
+            raise newException(ValueError, "Archiving non-existant Verifications.")
+    data.verifications = indexes
 
     #Caclulate the aggregate.
     var signatures: seq[BLSSignature]
@@ -64,9 +65,10 @@ proc `miners=`*(newBlock: Block, miners: Miners) =
 proc newBlockObj*(
     nonce: uint,
     last: ArgonHash,
+    verifications: seq[Index],
     miners: Miners,
-    proof: uint,
-    time: uint
+    time: uint,
+    proof: uint = 0
 ): Block {.raises: [ValueError, ArgonError].} =
     #Create the Block.
     result = Block(
@@ -74,14 +76,12 @@ proc newBlockObj*(
             nonce,
             last,
             miners,
-            time
+            time,
+            proof
         ),
-        proof: proof,
+        verifications: verifications,
         miners: miners
     )
 
     #Set the Header hash.
-    result.hash = SHA512(result.header.serialize())
-
-    #Set the Argon hash.
-    result.argon = Argon(result.hash.toString(), proof.toBinary())
+    result.hash = Argon(result.header.serialize())

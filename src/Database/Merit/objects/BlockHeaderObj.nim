@@ -41,16 +41,8 @@ finalsd:
 
         #Timestamp.
         time*: uint
-
-#Verifications accessors.
-proc verifications*(header: BlockHeader): BLSSignature =
-    header.verifications
-
-proc `verifications=`*(
-    header: BlockHeader,
-    verifications: BLSSignature
-) {.raises: [].} =
-    header.verifications = verifications
+        #Proof.
+        proof*: uint
 
 #Calculate the Miners's Merkle Hash.
 proc calculateMerkle*(miners: Miners): SHA512Hash {.raises: [ValueError].} =
@@ -91,12 +83,14 @@ proc newBlockHeaderObj*(
     last: ArgonHash,
     miners: SHA512Hash,
     time: uint,
+    proof: uint
 ): BlockHeader {.raises: [].} =
     result = BlockHeader(
         nonce: nonce,
         last: last,
         miners: miners,
-        time: time
+        time: time,
+        proof: proof
     )
     result.ffinalizeNonce()
     result.ffinalizeLast()

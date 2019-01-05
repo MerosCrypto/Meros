@@ -7,8 +7,7 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#Verifications and Miners objects.
-import objects/VerificationsObj
+#Miners object.
 import objects/MinersObj
 
 #BlockHeader and Block objects.
@@ -28,16 +27,14 @@ import strutils
 proc newBlock*(
     nonce: uint,
     last: ArgonHash,
-    verifications: Verifications,
+    verifications: seq[Index],
     miners: Miners,
-    proof: uint = 0,
-    time: uint = getTime()
+    time: uint = getTime(),
+    proof: uint = 0
 ): Block {.raises: [
     ValueError,
     ArgonError
 ].} =
-    #TODO: Verify the verifiers in the Verifications.
-
     #Verify the Miners.
     var total: uint = 0
     if (miners.len < 1) or (100 < miners.len):
@@ -54,15 +51,15 @@ proc newBlock*(
         nonce,
         last,
         miners,
-        proof,
-        time
+        time,
+        proof
     )
     result.verifications = verifications
 
 #Increase the proof.
 proc inc*(newBlock: Block) =
     #Increase the proof.
-    inc(newBlock.proof)
+    inc(newBlock.header.proof)
 
-    #Recalculate the Argon hash.
-    newBlock.argon = Argon(newBlock.hash.toString(), newBlock.proof.toBinary())
+    #Recalculate the hash.
+    newBlock.hash = Argon(newBlock.header.serialize())

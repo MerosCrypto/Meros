@@ -109,8 +109,8 @@ for i in 1 .. 20:
         last,
         verifs,
         miners,
+        uint(rand(2000000000)),
         uint(rand(65000)),
-        uint(rand(2000000000))
     )
 
     #Serialize it and parse it back.
