@@ -8,9 +8,10 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
+- Update `merit.block` (event).
+- Update `MainLattice.verify` (proc).
+- Move Unarchived Verifications out of the Lattice.
 - Update Syncing.
-- Handle Verifications events in MainVerifications.
-- Update MainMerit and MainLattice.
 - Update RPC/docs.
 - Tests.
 
