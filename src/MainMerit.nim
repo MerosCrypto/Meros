@@ -52,19 +52,47 @@ proc mainMerit() {.raises: [
                                     echo "Failed to add the Block."
                                     return false
 
-                        #Missing Entries.
+                        #Missing Verifications/Entries.
                         if not await newBlock.sync(network, network.clients.clients[0]):
                             echo "Failed to add the Block."
                             return false
 
-                    #Verify we have all the Entries.
-                    for verif in newBlock.verifications.verifications:
-                        if not lattice.lookup.hasKey(verif.hash.toString()):
+                    #Verify we have all the Verifications and Entries, as well as verify the signature.
+                    var agInfos: seq[BLSAggregationInfo] = @[]
+                    for index in newBlock.verifications:
+                        #Verify we have the Verifier.
+                        if not verifications.hasKey(index.key):
                             echo "Failed to add the Block."
                             return false
 
-                    #Verify the Verifications.
-                    if not newBlock.verifications.verify():
+                        #Verify this isn't archiving archived Verifications.
+                        if index.nonce <= verifications[index.key].archived:
+                            echo "Failed to add the Block."
+                            return false
+
+                        #Verify we have all the Verifications.
+                        if index.nonce >= verifications[index.key].len:
+                            echo "Failed to add the Block."
+                            return false
+
+                        #Declare an aggregation info seq for each verifier.
+                        var verifierAgInfos: seq[BLSAggregationInfo] = @[]
+                        for verif in verifications[index.key][verifications[index.key].archived <.. index.nonce]:
+                            #Make sure the Lattice has this Entry.
+                            if not lattice.lookup.hasKey(verif.hash.toString()):
+                                echo "Failed to add the Block."
+                                return false
+
+                            #Create an aggregation info for this verification.
+                            verifierAgInfos.add(
+                                newBLSAggregationInfo(verif.verifier, verif.hash.toString())
+                            )
+                        #Add the Verifier's aggregation info to the seq.
+                        agInfos.add(verifierAgInfos.aggregate())
+
+                    #Set the signature's aggregate info and verify it.
+                    newBlock.header.verifications.setAggregationInfo(agInfos.aggregate())
+                    if not newBlock.header.verifications.verify():
                         echo "Failed to add the Block."
                         return false
 
@@ -77,11 +105,10 @@ proc mainMerit() {.raises: [
                         return false
 
                     #Add each Verification.
-                    for verif in newBlock.verifications.verifications:
-                        #Discard the result since we already made sure the hash exists.
-                        discard lattice.verify(merit, verif)
-                        #Archive the verification.
-                        lattice.archive(verif)
+                    for index in newBlock.verifications:
+                        for verif in verifications[index.key][verifications[index.key].archived <.. index.nonce]:
+                            #Discard the result since we already made sure the hash exists.
+                            discard lattice.verify(merit, verif)
 
                     #Create the Mints (which ends up minting a total of of 50000 EMB).
                     var

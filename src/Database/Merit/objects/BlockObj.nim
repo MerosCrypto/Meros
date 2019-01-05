@@ -34,28 +34,6 @@ type Block* = ref object of RootObj
     #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
     miners*: Miners
 
-#Set the Verifications.
-proc setVerifications(data: Block, verifications: Verifications, indexes: seq[Index]) {.raises: [ValueError].} =
-    #Verify the indexes.
-    for index in indexes:
-        if not verifications.hasKey(index.key):
-            raise newException(ValueError, "Invalid verifier.")
-
-        if index.nonce <= verifications[index.key].archived:
-            raise newException(ValueError, "Nonce already archived.")
-
-        if index.nonce >= verifications[index.key].len:
-            raise newException(ValueError, "Archiving non-existant Verifications.")
-    data.verifications = indexes
-
-    #Caclulate the aggregate.
-    var signatures: seq[BLSSignature]
-    for index in indexes:
-        signatures.add(
-            verifications[verifier][verifications[verifier].archived .. index.nonce].calculateSig()
-        )
-    result.header.verifications = signatures.calculateSig()
-
 #Set the Miners.
 proc `miners=`*(newBlock: Block, miners: Miners) =
     newBlock.miners = miners
@@ -63,9 +41,10 @@ proc `miners=`*(newBlock: Block, miners: Miners) =
 
 #Constructor.
 proc newBlockObj*(
+    verifications: Verifications,
     nonce: uint,
     last: ArgonHash,
-    verifications: seq[Index],
+    indexes: seq[Index],
     miners: Miners,
     time: uint,
     proof: uint = 0
@@ -79,9 +58,17 @@ proc newBlockObj*(
             time,
             proof
         ),
-        verifications: verifications,
+        verifications: indexes,
         miners: miners
     )
+
+    #Set the verifications aggregate signature.
+    var signatures: seq[BLSSignature]
+    for index in indexes:
+        signatures.add(
+            verifications[verifier][verifications[verifier].archived .. index.nonce].calculateSig()
+        )
+    result.header.verifications = signatures.calculateSig()
 
     #Set the Header hash.
     result.hash = Argon(result.header.serialize())

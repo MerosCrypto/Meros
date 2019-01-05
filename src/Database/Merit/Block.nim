@@ -50,11 +50,11 @@ proc newBlock*(
     result = newBlockObj(
         nonce,
         last,
+        verifications.
         miners,
         time,
         proof
     )
-    result.verifications = verifications
 
 #Increase the proof.
 proc inc*(newBlock: Block) =

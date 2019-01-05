@@ -8,7 +8,7 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Update `merit.block` (event).
+- Update `merit.processBlock` (proc).
 - Update `MainLattice.verify` (proc).
 - Move Unarchived Verifications out of the Lattice.
 - Update Syncing.
