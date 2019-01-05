@@ -19,8 +19,6 @@ proc verify(entry: Entry) {.raises: [
 
         #Discard lattice.verify because it is known to return true.
         discard lattice.verify(merit, verif)
-        #Add the Verification to the unarchived set.
-        lattice.unarchive(verif)
 
         #Broadcast the Verification.
         network.broadcast(
@@ -70,14 +68,7 @@ proc mainLattice() {.raises: [
             proc (index: Index): Entry {.raises: [ValueError].} =
                 lattice[index]
         )
-
-        #Handle requests for the Unarchived Verifications.
-        events.on(
-            "lattice.getUnarchivedVerifications",
-            proc (): seq[MemoryVerification] =
-                lattice.unarchived
-        )
-
+        
         #Handle Claims.
         events.on(
             "lattice.claim",

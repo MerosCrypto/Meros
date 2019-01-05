@@ -43,12 +43,6 @@ type Lattice* = ref object of RootObj
         seq[BLSPublicKey]
     ]
 
-    #Unarchived Verifications.
-    unarchived*: seq[MemoryVerification]
-
-    #State of the Verifications. null is unset. 0 is unarchived. 1 is archived.
-    archived*: TableRef[string, int]
-
     #Accounts (address -> account).
     accounts*: TableRef[
         string,
@@ -65,7 +59,6 @@ func newLattice*(
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
         lookup: newTable[string, Index](),
         verifications: newTable[string, seq[BLSPublicKey]](),
-        unarchived: @[],
         archived: newTable[string, int](),
         accounts: newTable[string, Account]()
     )
@@ -80,45 +73,6 @@ func addHash*(
     index: Index
 ) {.raises: [].} =
     lattice.lookup[hash.toString()] = index
-
-#Unarchived Verification.
-func unarchive*(
-    lattice: Lattice,
-    verif: MemoryVerification
-) {.raises: [].} =
-    #Make sure the Verif is new.
-    if lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString()):
-        return
-
-    #Add to unarchived.
-    lattice.unarchived.add(verif)
-
-    #Set it as unarchived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 0
-
-#Archive a Verification.
-func archive*(
-    lattice: Lattice,
-    verif: MemoryVerification
-) {.raises: [KeyError].} =
-    #Make sure the Verif isn't already archived.
-    if (
-        (lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString())) and
-        (lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 1)
-    ):
-        return
-
-    #Remove it from unarchived.
-    for i in 0 ..< lattice.unarchived.len:
-        if (
-            (verif.hash == lattice.unarchived[i].hash) and
-            (verif.verifier == lattice.unarchived[i].verifier)
-        ):
-            lattice.unarchived.delete(i)
-            break
-
-    #Set it as archived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 1
 
 #Creates a new Account on the Lattice.
 func addAccount*(

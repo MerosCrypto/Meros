@@ -8,8 +8,7 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Update `MainLattice.verify` (proc).
-- Move Unarchived Verifications out of the Lattice.
+- In MainVerifications, sync missing Entries.
 - Update Syncing.
 - Update RPC/docs.
 - Tests.

@@ -152,26 +152,6 @@ proc getEntryByIndex(
 
     result = entry.toJSON()
 
-#Get unarchived verifications.
-proc getUnarchivedVerifications(rpc: RPC): JSONNode {.raises: [EventError].} =
-    var verifs: seq[MemoryVerification]
-    try:
-        verifs = rpc.events.get(
-            proc (): seq[MemoryVerification],
-            "lattice.getUnarchivedVerifications"
-        )()
-    except:
-        raise newException(EventError, "Couldn't get and call lattice.getUnarchivedVerifications.")
-
-    #Create the result array.
-    result = %* []
-    for verif in verifs:
-        result.add(%* {
-            "verifier": $verif.verifier,
-            "hash": $verif.hash,
-            "signature": $verif.signature
-        })
-
 #Handler.
 proc latticeModule*(
     rpc: RPC,

@@ -15,6 +15,7 @@ proc mainVerifications*() {.raises: [].} =
                 newBLSAggregationInfo(verif.verifier, verif.hash.toString())
             )
             if not verif.signature.verify():
+                echo "Failed to add the Verification."
                 return false
 
             #Add the Verification to the Verifications.
@@ -23,9 +24,5 @@ proc mainVerifications*() {.raises: [].} =
             #Add the Verification to the Lattice.
             result = lattice.verify(merit, verif)
             if not result:
-                echo "Failed to add the Verification."
-
-            #Add the Verification to the unarchived set.
-            lattice.unarchive(verif)
-            echo "Successfully added the Verification."
+                echo "Missing whatever we just added a Verification for."
     )
