@@ -18,7 +18,7 @@ import ../../Merit/Merit
 import ../../common/objects/IndexObj
 
 #Verification object.
-import VerificatonObj
+import VerificationObj
 
 #Verifier object.
 import VerifierObj
@@ -32,42 +32,42 @@ import tables
 type Verifications* = TableRef[string, Verifier]
 
 #Verifications constructor.
-func newVerificationsObj*(): Verifications {.raises: [ValueError].} =
+func newVerificationsObj*(): Verifications {.raises: [].} =
     newTable[string, Verifier]()
 
 #Creates a new Verifier on the Verifications.
 func add*(
-    verifications: Verifications,
+    verifs: Verifications,
     verifier: string
 ) {.raises: [].} =
     #Make sure the verifier doesn't already exist.
-    if verifications.hasKey(verifier):
+    if verifs.hasKey(verifier):
         return
 
     #Create a new Verifier.
-    verifications[verifier] = newVerifierObj(verifier)
+    verifs[verifier] = newVerifierObj(verifier)
 
 #Gets a Verifier by their key.
 func `[]`*(
-    verifications: Verifications,
+    verifs: Verifications,
     verifier: string
-): Verifier {.raises: [ValueError].} =
+): Verifier {.raises: [].} =
     #Call add, which will only create a new Verifier if one doesn't exist.
-    verifications.add(verifier)
+    verifs.add(verifier)
 
     #Return the verifier.
-    result = verifications[verifier]
+    result = verifs[verifier]
 
 #Gets a Verification by its Index.
 proc `[]`*(
-    Verifications: Verifications,
+    verifs: Verifications,
     index: Index
 ): Verification {.raises: [ValueError].} =
     #Check for the existence of the verifier.
-    if not verifications.hasKey(index.key):
+    if not verifs.hasKey(index.key):
         raise newException(ValueError, "Verifications does not have an Verifier for that key.")
     #Check the nonce isn't out of bounds.
-    if verifications[index.key].height <= index.nonce:
+    if verifs[index.key].height <= index.nonce:
         raise newException(ValueError, "That verifier doesn't have a Verification for that nonce.")
 
-    result = verifications[verifier][index.nonce]
+    result = verifs[index.key][index.nonce]

@@ -7,9 +7,11 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#Block Header, Verifications, and Miners objects.
+#Verificationss lib.
+import ../../Verifications/Verifications
+
+#Block Header and Miners objects.
 import BlockHeaderObj
-import VerificationsObj
 import MinersObj
 
 #Serialization libs.

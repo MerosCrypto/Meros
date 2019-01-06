@@ -10,8 +10,8 @@ import BN
 #Hash lib.
 import ../../../lib/Hash
 
-#Verifications library.
-import ../Verifications
+#Verifications lib.
+import ../../Verifications/Verifications
 
 #Difficulty and Block objects.
 import DifficultyObj

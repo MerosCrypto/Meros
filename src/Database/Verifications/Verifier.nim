@@ -7,19 +7,21 @@ import ../../lib/Hash
 #BLS lib.
 import ../../lib/BLS
 
+#Verifier object.
+import objects/VerifierObj
+export VerifierObj
+
+#Verification lib.
+import Verification
+
 #Finals lib.
 import finals
 
 #Calculate the aggregate signature.
-proc calculateSig*(verifs: seq[Verification]): BLSSignature {.raises: [BLSError].} =
+proc calculateSig*(verifs: seq[MemoryVerification]): BLSSignature {.raises: [BLSError].} =
     #If there's no verifications...
     if verifs.len == 0:
-        #Set a 0'd out signature.
-        try:
-            verifs.aggregate = nil
-        except:
-            raise newException(BLSError, "Couldn't aggregate the signature for the Verifications.")
-        return
+        return nil
 
     #Declare a seq for the Signatures.
     var sigs: seq[BLSSignature]
@@ -47,7 +49,3 @@ proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSE
 
     #Verify the signature.
     result = sig.verify()
-
-#Archive a Verification.
-proc archive*(verifier: Verifier, nonce: uint, archived: uint) {.raises: [].} =
-    verifier[nonce].archive(archived)

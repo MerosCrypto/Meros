@@ -16,7 +16,6 @@ import ../common/objects/IndexObj
 #Verification and Verifier libs.
 import Verification
 import Verifier
-
 export Verification
 export Verifier
 
@@ -37,10 +36,13 @@ proc add*(
     verifs: Verifications,
     verif: Verification
 ) {.raises: [EmbIndexError].} =
-    verifs[verif.verifier].add(verif)
+    if not verifs.hasKey(verif.verifier.toString()):
+        verifs[verif.verifier.toString()] = newVerifierObj(verif.verifier.toString())
+
+    verifs[verif.verifier.toString()].add(verif)
 
 #For each provided Index, archive all Verifications from the account's last archived to the provided nonce.
-proc archive*(verifs: Verifications, indexes: seq[Index], archived: uint) {.raises: [].} =
+proc archive*(verifs: Verifications, indexes: seq[Index], archived: uint) {.raises: [FinalAttributeError].} =
     #Declare the start variable outside of the loop.
     var start: uint
 
@@ -51,4 +53,7 @@ proc archive*(verifs: Verifications, indexes: seq[Index], archived: uint) {.rais
         #Iterate over every Verification.
         for i in start .. index.nonce:
             #Archive the Verification.
-            verifs[index].archive(archived)
+            verifs[index.key][i].archived = archived
+
+        #Update the Verifier.
+        verifs[index.key].archived = index.nonce

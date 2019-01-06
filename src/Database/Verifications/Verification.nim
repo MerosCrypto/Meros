@@ -1,22 +1,21 @@
+#Errors lib.
+import ../../lib/Errors
+
+#Util lib.
+import ../../lib/Util
+
+#Hash lib.
+import ../../lib/Hash
+
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
+
 #Verification object.
 import objects/VerificationObj
 export VerificationObj
 
 #Finals lib.
 import finals
-
-#Mark a Verification as archived.
-func archive*(verif: Verification, archived: uint) {.raises: [].} =
-    #Recreate the Verification in order to make sure it isn't a MemoryVerification.
-    var archive = newVerificationObj(
-        verif.hash
-    )
-    archive.verifier = verif.verifier
-    archive.nonce = verif.nonce
-    archive.archived = archived
-
-    #Set the input to the archive.
-    verif = archive
 
 #Sign a Verification.
 func sign*(

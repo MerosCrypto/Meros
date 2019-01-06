@@ -16,8 +16,10 @@ import ../../../lib/BLS
 #Wallet lib.
 import ../../../Wallet/Wallet
 
-#Verifications and Miners objects.
-import VerificationsObj
+#Verifications lib.
+import ../../Verifications/Verifications
+
+#Miners object.
 import MinersObj
 
 #Finals lib.

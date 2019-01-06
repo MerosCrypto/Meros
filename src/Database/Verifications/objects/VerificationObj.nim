@@ -24,7 +24,7 @@ finalsd:
             #Entry Hash.
             hash* {.final.}: Hash[512]
             #Block the Verification was archived in.
-            archived: uint
+            archived* {.final.}: uint
 
         #Verification object for the mempool.
         MemoryVerification* = ref object of Verification

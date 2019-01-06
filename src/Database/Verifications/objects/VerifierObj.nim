@@ -1,3 +1,9 @@
+#Errors lib.
+import ../../../lib/Errors
+
+#Hash lib.
+import ../../../lib/Hash
+
 #BLS lib.
 import ../../../lib/BLS
 
@@ -20,32 +26,32 @@ finalsd:
         verifications*: seq[Verification]
 
 #Constructor.
-func newVerifierObj(key: string): Verifier =
+func newVerifierObj*(key: string): Verifier =
     result = Verifier(
         key: key,
         height: 0,
         archived: 0,
         verifications: @[]
     )
-    result.ffinalize(key)
+    result.ffinalizeKey()
 
 #Add a Verification to a Verifier.
-proc add*(verifier: Verifier, verif: Verification) {.raises: [IndexError].} =
+proc add*(verifier: Verifier, verif: Verification) {.raises: [EmbIndexError].} =
     #Verify the Verification's Verifier.
-    if verif.verifier != verifier.key:
-        raise newException(IndexError, "Verification's Verifier doesn't match the Verifier we're adding it to.")
+    if verif.verifier.toString() != verifier.key:
+        raise newException(EmbIndexError, "Verification's Verifier doesn't match the Verifier we're adding it to.")
 
     #Verify the Verification's Nonce.
     if verif.nonce != verifier.height:
-        if verif.hash != verifier.verifications[verif.nonce].hash:
+        if verif.hash != verifier.verifications[int(verif.nonce)].hash:
             #MERIT REMOVAL.
             discard
         #Already added.
-        raise new(IndexError, "Verification has already been added.")
+        raise newException(EmbIndexError, "Verification has already been added.")
 
     #Verify this isn't a double spend.
     for oldVerif in verifier.verifications:
-        if oldVerif.key == verif.key:
+        if oldVerif.verifier == verif.verifier:
             if oldVerif.nonce == verif.nonce:
                 if oldVerif.hash != verif.hash:
                     #MERIT REMOVAL.
@@ -53,14 +59,15 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [IndexError].} =
 
     #Increase the height.
     inc(verifier.height)
+
     #Add the Verification to the seq.
     verifier.verifications.add(verif)
 
 #Add a MemoryVerification to a Verifier.
-proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError].} =
+proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError, EmbIndexError].} =
     #Verify the signature.
-    verif.setAggregateInfo(
-        newBLSAggregationInfo(verif.verifier.toString(), verif.hash.toString())
+    verif.signature.setAggregationInfo(
+        newBLSAggregationInfo(verif.verifier, verif.hash.toString())
     )
     if not verif.signature.verify():
         raise newException(BLSError, "Failed to verify the Verification's signature.")
@@ -69,8 +76,8 @@ proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError].} 
     verifier.add(cast[Verification](verif))
 
 # [] operators.
-func `[]`(verifier: Verifier, index: int): Verification {.raises: [].} =
-    verifier.verifications[index]
+func `[]`*(verifier: Verifier, index: uint): Verification {.raises: [].} =
+    verifier.verifications[int(index)]
 
-func `[]`(verifier: Verifier, slice: Slice[int]): seq[Verification] {.raises: [].} =
+func `[]`*(verifier: Verifier, slice: Slice[int]): seq[Verification] {.raises: [].} =
     verifier.verifications[slice]
