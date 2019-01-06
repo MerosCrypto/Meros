@@ -36,7 +36,7 @@ var newVerifications*: proc (): Verifications = newVerificationsObj
 proc add*(
     verifs: Verifications,
     verif: Verification
-) {.raises: [IndexError].} =
+) {.raises: [EmbIndexError].} =
     verifs[verif.verifier].add(verif)
 
 #For each provided Index, archive all Verifications from the account's last archived to the provided nonce.

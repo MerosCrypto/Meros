@@ -50,7 +50,7 @@
 - Replace bools as status codes with Exceptions.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Add `DataExistsError` for when data has already been added.
-- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `IndexError`.
+- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `EmbIndexError`.
 - Use `sugerror`'s `reraise` for all our Exception wrapping.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.

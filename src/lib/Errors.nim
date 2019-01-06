@@ -8,7 +8,7 @@ type
     SodiumError*   = object of Exception #Used when LibSodium fails.
 
     #Database/common Errors.
-    IndexError*    = object of Exception #KeyError, yet not `of ValueError`.
+    EmbIndexError*    = object of Exception #KeyError, yet not `of ValueError`. It's prefixed with Emb since Nim provides an EmbIndexError.
 
     #Database/Filesystem Errors.
     MemoryError*   = object of Exception #Used when alloc/dealloc fails.
