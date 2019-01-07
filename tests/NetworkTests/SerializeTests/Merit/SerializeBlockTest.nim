@@ -8,16 +8,18 @@ import ../../../../src/lib/Hash
 
 #BLS/MinerWallet libs.
 import ../../../../src/lib/BLS
-import ../../../../src/Database/Merit/MinerWallet
+import ../../../../src/Wallet/MinerWallet
+
+#Verifications lib.
+import ../../../../src/Database/Verifications/Verifications
 
 #Miners object.
 import ../../../../src/Database/Merit/objects/MinersObj
 
-#Verifications and Block libs.
-import ../../../../src/Database/Merit/Verifications
+#Block lib.
 import ../../../../src/Database/Merit/Block
 
-#Serialize lib.
+#Serialize libs.
 import ../../../../src/Network/Serialize/Merit/SerializeBlock
 import ../../../../src/Network/Serialize/Merit/ParseBlock
 

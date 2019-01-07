@@ -42,18 +42,16 @@ proc newBlockchainObj*(
     blockTime: uint,
     startDifficulty: BN
 ): Blockchain {.raises: [ValueError, ArgonError, BLSError].} =
-    var verifs: Verifications = newVerificationsObj()
-    verifs.calculateSig()
-
     result = Blockchain(
         blockTime: blockTime,
 
         height: 1,
         blocks: @[
             newBlockObj(
+                nil,
                 0,
                 genesis.pad(64).toArgonHash(),
-                verifs,
+                @[],
                 @[],
                 0,
                 0

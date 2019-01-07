@@ -4,6 +4,7 @@
 # - A block apart
 # Result in 500/500 when the Entry first appeared.
 
+discard """
 #BN lib.
 import BN
 
@@ -105,3 +106,4 @@ assert(rewards[0].score == 500)
 assert(rewards[1].score == 500)
 
 echo "Finished the Database/Merit/Epochs Test #2."
+"""

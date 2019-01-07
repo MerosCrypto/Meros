@@ -10,14 +10,14 @@ import ../../../../src/lib/Hash
 import ../../../../src/lib/BLS
 
 #MinerWallet lib.
-import ../../../../src/Database/Merit/MinerWallet
+import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
-import ../../../../src/Database/Merit/Verifications
+import ../../../../src/Database/Verifications/Verifications
 
 #Serialize lib.
-import ../../../../src/Network/Serialize/Merit/SerializeVerifications
-import ../../../../src/Network/Serialize/Merit/ParseVerifications
+import ../../../../src/Network/Serialize/Verifications/SerializeVerifications
+import ../../../../src/Network/Serialize/Verifications/ParseVerifications
 
 #Random standard lib.
 import random
@@ -25,6 +25,7 @@ import random
 #Set the seed to be based on the time.
 randomize(int(getTime()))
 
+discard """
 #Test 20 Verification serializations.
 for i in 1 .. 20:
     echo "Testing Verification Serialization/Parsing, iteration " & $i & "."
@@ -45,7 +46,7 @@ for i in 1 .. 20:
     var verifParsed: MemoryVerification = verif.serialize().parseVerification()
 
     #Test the serialized versions.
-    assert(verif.serialize() == verifParsed.serialize())
+    assert(verif.serialize() == verifParsed.seriMeritalize())
 
     #Test the Verification's properties.
     assert(verif.verifier == verifParsed.verifier)
@@ -97,3 +98,4 @@ for i in 1 .. 20:
     assert(verifs.aggregate == verifsParsed.aggregate)
 
 echo "Finished the Network/Serialize/Merit/Verifications test."
+"""

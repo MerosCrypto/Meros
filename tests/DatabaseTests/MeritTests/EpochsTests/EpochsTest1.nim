@@ -1,5 +1,6 @@
 #Epochs Test 1. Verifies that 1 Verification = 1000.
 
+discard """
 #BN lib.
 import BN
 
@@ -68,3 +69,4 @@ assert(rewards[0].key == key.getPublicKey().toString())
 assert(rewards[0].score == 1000)
 
 echo "Finished the Database/Merit/Epochs Test #1."
+"""

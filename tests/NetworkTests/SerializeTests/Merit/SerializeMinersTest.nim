@@ -7,7 +7,7 @@ import ../../../../src/lib/BLS
 import ../../../../src/Database/Merit/objects/MinersObj
 
 #MinerWallet lib.
-import ../../../../src/Database/Merit/MinerWallet
+import ../../../../src/Wallet/MinerWallet
 
 #Serialize lib.
 import ../../../../src/Network/Serialize/Merit/SerializeMiners

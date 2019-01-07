@@ -7,6 +7,12 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
+#Verifications lib.
+import ../Verifications/Verifications
+
+#Index object.
+import ../common/objects/IndexObj
+
 #Miners object.
 import objects/MinersObj
 
@@ -17,6 +23,9 @@ import objects/BlockObj
 export BlockHeaderObj
 export BlockObj
 
+#Serialization lib.
+import ../../Network/Serialize/Merit/SerializeBlockHeader
+
 #Finals lib.
 import finals
 
@@ -25,6 +34,7 @@ import strutils
 
 #New Block function. Creates a new block. Raises an error if there's an issue.
 proc newBlock*(
+    verifs: Verifications,
     nonce: uint,
     last: ArgonHash,
     verifications: seq[Index],
@@ -33,7 +43,8 @@ proc newBlock*(
     proof: uint = 0
 ): Block {.raises: [
     ValueError,
-    ArgonError
+    ArgonError,
+    BLSError
 ].} =
     #Verify the Miners.
     var total: uint = 0
@@ -48,9 +59,10 @@ proc newBlock*(
 
     #Ceate the block.
     result = newBlockObj(
+        verifs,
         nonce,
         last,
-        verifications.
+        verifications,
         miners,
         time,
         proof
@@ -62,4 +74,4 @@ proc inc*(newBlock: Block) =
     inc(newBlock.header.proof)
 
     #Recalculate the hash.
-    newBlock.hash = Argon(newBlock.header.serialize())
+    newBlock.hash = Argon(newBlock.header.serialize(), newBlock.header.proof.toBinary())

@@ -11,9 +11,6 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Merit lib.
-import ../../Merit/Merit
-
 #Index object.
 import ../../common/objects/IndexObj
 

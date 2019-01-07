@@ -1,3 +1,6 @@
+#Util lib.
+import ../../lib/Util
+
 #Hash lib.
 import ../../lib/Hash
 
@@ -5,7 +8,10 @@ import ../../lib/Hash
 import ../../lib/BLS
 
 #Verifications objects.
-import objects/VerificationsObj
+import ../Verifications/Verifications
+
+#Index object.
+import ../common/objects/IndexObj
 
 #State lib.
 import State
@@ -127,7 +133,7 @@ proc calculate*(
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-proc shift*(epochs: var Epochs, verifs: Verifications, indexes: Indexes): Epoch {.raises: [KeyError].} =
+proc shift*(epochs: var Epochs, verifs: Verifications, indexes: seq[Index]): Epoch {.raises: [KeyError].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch()
@@ -135,7 +141,7 @@ proc shift*(epochs: var Epochs, verifs: Verifications, indexes: Indexes): Epoch 
         found: bool
 
     #Loop over each Verification.
-    for index in indexess:
+    for index in indexes:
         for verif in verifs[index.key][verifs[index.key].archived <.. index.nonce]:
             #Set found to false.
             found = false

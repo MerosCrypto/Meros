@@ -37,7 +37,7 @@ finalsd:
         last* {.final.}: ArgonHash
 
         #Aggregate Signatue of the Verifications.
-        verifications: BLSSignature
+        verifications*: BLSSignature
         #Merkle tree hash of the Miners.
         miners: SHA512Hash
 
@@ -83,6 +83,7 @@ proc `miners=`*(
 proc newBlockHeaderObj*(
     nonce: uint,
     last: ArgonHash,
+    verifs: BLSSignature,
     miners: SHA512Hash,
     time: uint,
     proof: uint
@@ -90,6 +91,7 @@ proc newBlockHeaderObj*(
     result = BlockHeader(
         nonce: nonce,
         last: last,
+        verifications: verifs,
         miners: miners,
         time: time,
         proof: proof

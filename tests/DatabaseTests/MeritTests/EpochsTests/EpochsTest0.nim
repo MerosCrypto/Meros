@@ -1,5 +1,6 @@
 #Epochs Test 0. Verifies that no Verifications = No Rewards.
 
+discard """
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 
@@ -12,3 +13,4 @@ var
 assert(rewards.len == 0)
 
 echo "Finished the Database/Merit/Epochs Test #0."
+"""

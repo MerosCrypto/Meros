@@ -61,3 +61,6 @@ func fromBinary*(
     for b in 0 ..< number.len:
         #Add the byte after it's been properly shifted.
         result += int(number[b]) shl ((number.len - b - 1) * 8)
+
+func `<..`*(a: int|uint, b: int|uint): Slice[uint] {.raises: [].} =
+    (uint(a) + 1) .. uint(b)

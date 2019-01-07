@@ -7,7 +7,13 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#Verificationss lib.
+#BLS lib.
+import ../../../lib/BLS
+
+#Index object.
+import ../../common/objects/IndexObj
+
+#Verifications lib.
 import ../../Verifications/Verifications
 
 #Block Header and Miners objects.
@@ -43,20 +49,21 @@ proc `miners=`*(newBlock: Block, miners: Miners) =
 
 #Constructor.
 proc newBlockObj*(
-    verifications: Verifications,
+    verifs: Verifications,
     nonce: uint,
     last: ArgonHash,
     indexes: seq[Index],
     miners: Miners,
     time: uint,
     proof: uint = 0
-): Block {.raises: [ValueError, ArgonError].} =
+): Block {.raises: [ValueError, ArgonError, BLSError].} =
     #Create the Block.
     result = Block(
         header: newBlockheaderObj(
             nonce,
             last,
-            miners,
+            nil,
+            miners.calculateMerkle(),
             time,
             proof
         ),
@@ -64,13 +71,16 @@ proc newBlockObj*(
         miners: miners
     )
 
-    #Set the verifications aggregate signature.
-    var signatures: seq[BLSSignature]
-    for index in indexes:
-        signatures.add(
-            verifications[verifier][verifications[verifier].archived .. index.nonce].calculateSig()
-        )
-    result.header.verifications = signatures.calculateSig()
+    if verifs.isNil:
+        result.header.verifications = nil
+    else:
+        #Set the verifications aggregate signature.
+        var signatures: seq[BLSSignature]
+        for index in indexes:
+            signatures.add(
+                verifs[index.key]{verifs[index.key].archived .. index.nonce}.calculateSig()
+            )
+        result.header.verifications = signatures.aggregate()
 
     #Set the Header hash.
-    result.hash = Argon(result.header.serialize())
+    result.hash = Argon(result.header.serialize(), result.header.proof.toBinary())

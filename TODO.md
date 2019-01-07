@@ -8,7 +8,7 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- In MainVerifications, sync missing Entries.
+- SerializeVerifications.
 - Update Syncing.
 - Update RPC/docs.
 - Tests.

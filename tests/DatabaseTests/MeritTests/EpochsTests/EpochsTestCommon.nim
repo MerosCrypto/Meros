@@ -1,5 +1,6 @@
 #Epoch Tests's Common Functions.
 
+discard """
 #Hash lib.
 import ../../../../src/lib/Hash
 
@@ -29,3 +30,4 @@ proc blankBlock*(miners: Miners): Block =
         verifs,
         miners
     )
+"""

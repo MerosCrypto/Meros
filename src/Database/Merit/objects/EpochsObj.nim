@@ -1,9 +1,6 @@
 #BLS lib.
 import ../../../lib/BLS
 
-#Verification Object.
-import VerificationsObj
-
 #Tables standard lib.
 import tables
 

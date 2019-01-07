@@ -16,9 +16,8 @@ import ../../lib/BLS
 #Miners object.
 import objects/MinersObj
 
-#Difficulty, Verifications, and Block libs.
+#Difficulty and Block libs.
 import Difficulty
-import Verifications
 import Block
 
 #Blockchain object.
@@ -41,7 +40,7 @@ proc newBlockchain*(
 proc processBlock*(
     blockchain: Blockchain,
     newBlock: Block
-): bool {.raises: [ValueError, BLSError].} =
+): bool {.raises: [ValueError].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 
@@ -57,7 +56,7 @@ proc processBlock*(
         return false
 
     #If the last hash is off...
-    if newBlock.header.last != blocks[^1].argon:
+    if newBlock.header.last != blocks[^1].hash:
         return false
 
     #If the time is before the last block's...

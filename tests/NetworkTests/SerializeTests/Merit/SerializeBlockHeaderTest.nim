@@ -8,10 +8,10 @@ import ../../../../src/lib/Hash
 
 #BLS/MinerWallet libs.
 import ../../../../src/lib/BLS
-import ../../../../src/Database/Merit/MinerWallet
+import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
-import ../../../../src/Database/Merit/Verifications
+import ../../../../src/Database/Verifications/Verifications
 
 #BlockHeader object.
 import ../../../../src/Database/Merit/objects/BlockHeaderObj
