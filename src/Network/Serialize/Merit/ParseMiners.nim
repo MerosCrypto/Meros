@@ -26,8 +26,8 @@ proc parseMiners*(
     #Init the result.
     result = @[]
 
-    #Address1 | Amount1 .. | AddressN | AmountN
-    var minersSeq: seq[string] = minersStr.deserialize(3)
+    #Address1 | Amount1 .. AddressN | AmountN
+    var minersSeq: seq[string] = minersStr.deserialize(2)
 
     #Add each miner/amount.
     for i in countup(0, minersSeq.len - 1, 2):
