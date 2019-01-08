@@ -7,6 +7,9 @@ import ../lib/Util
 #Hash lib.
 import ../lib/Hash
 
+#Verifications lib.
+import ../Database/Verifications/Verifications
+
 #Merit lib.
 import ../Database/Merit/Merit
 
@@ -19,7 +22,7 @@ import Serialize/Merit/SerializeBlock
 import Serialize/Lattice/SerializeEntry
 
 #Parsing libs.
-import Serialize/Merit/ParseVerifications
+import Serialize/Verifications/ParseMemoryVerification
 import Serialize/Merit/ParseBlock
 import Serialize/Lattice/ParseClaim
 import Serialize/Lattice/ParseSend
@@ -97,20 +100,24 @@ proc newNetwork*(
                 try:
                     case msg.content:
                         of MessageType.MemoryVerification:
+                            var verif: MemoryVerification = msg.message.parseMemoryVerification()
                             if nodeEvents.get(
                                 proc (verif: MemoryVerification): bool,
                                 "verifications.memory_verification"
-                            )(
-                                msg.message.parseMemoryVerification()
-                            ):
+                            )(verif):
                                 network.clients.broadcast(msg)
 
                         of MessageType.Block:
+                            var verifs: Verifications = network.nodeEvents.get(
+                                proc (): Verifications,
+                                "verifications.getVerifications"
+                            )()
+
                             if await nodeEvents.get(
                                 proc (newBlock: Block): Future[bool],
                                 "merit.block"
                             )(
-                                msg.message.parseBlock()
+                                msg.message.parseBlock(verifs)
                             ):
                                 network.clients.broadcast(msg)
 
@@ -163,6 +170,11 @@ proc newNetwork*(
                                     char(0)
                                 )
                             else:
+                                var verifs: Verifications = network.nodeEvents.get(
+                                    proc (): Verifications,
+                                    "verifications.getVerifications"
+                                )()
+
                                 network.clients.reply(
                                     msg,
                                     char(MessageType.Block) &
@@ -170,7 +182,7 @@ proc newNetwork*(
                                         nodeEvents.get(
                                             proc (nonce: uint): Block,
                                             "merit.getBlock"
-                                        )(nonce).serialize()
+                                        )(nonce).serialize(verifs)
                                     )
                                 )
 
@@ -208,9 +220,6 @@ proc newNetwork*(
                                     msgType = char(MessageType.Receive)
                                 of EntryType.Data:
                                     msgType = char(MessageType.Data)
-                                of EntryType.MeritRemoval:
-                                    #Ignore this for now.
-                                    discard
 
                             #Send over the Entry.
                             network.clients.reply(msg, msgType & !entry.serialize())
@@ -280,7 +289,12 @@ proc requestBlock*(
         #Parse it.
         var newBlock: Block
         try:
-            newBlock = (await network.clients.clients[0].recv()).msg.parseBlock()
+            var verifs: Verifications = network.nodeEvents.get(
+                proc (): Verifications,
+                "verifications.getVerifications"
+            )()
+
+            newBlock = (await network.clients.clients[0].recv()).msg.parseBlock(verifs)
         except:
             return false
 

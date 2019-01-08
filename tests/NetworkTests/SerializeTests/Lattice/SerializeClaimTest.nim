@@ -4,7 +4,7 @@
 import ../../../../src/lib/BLS
 
 #MinerWallet lib.
-import ../../../../src/Database/Merit/MinerWallet
+import ../../../../src/Wallet/MinerWallet
 
 #Wallet lib.
 import ../../../../src/Wallet/Wallet

@@ -19,7 +19,7 @@ import ../SerializeCommon
 proc serialize*(recv: Receive): string {.raises: [ValueError].} =
     result =
         !recv.nonce.toBinary() &
-        !Address.toBN(recv.index.address).toString(256) &
+        !Address.toBN(recv.index.key).toString(256) &
         !recv.index.nonce.toBinary()
 
     if recv.signature.len != 0:

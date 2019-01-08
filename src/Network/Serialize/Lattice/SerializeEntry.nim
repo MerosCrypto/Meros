@@ -4,14 +4,12 @@ import ../../../Database/Lattice/objects/ClaimObj
 import ../../../Database/Lattice/objects/SendObj
 import ../../../Database/Lattice/objects/ReceiveObj
 import ../../../Database/Lattice/objects/DataObj
-import ../../../Database/Lattice/objects/MeritRemovalObj
 
 #Serialize libs.
 import SerializeClaim
 import SerializeSend
 import SerializeReceive
 import SerializeData
-import SerializeMeritRemoval
 
 #Serialize an Entry.
 proc serialize*(entry: Entry): string =
@@ -28,5 +26,3 @@ proc serialize*(entry: Entry): string =
             result = cast[Receive](entry).serialize()
         of EntryType.Data:
             result = cast[Data](entry).serialize()
-        of EntryType.MeritRemoval:
-            result = cast[MeritRemoval](entry).serialize()

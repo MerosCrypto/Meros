@@ -10,6 +10,9 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
+#Verifications lib.
+import ../../../Database/Verifications/Verifications
+
 #Merit objects.
 import ../../../Database/Merit/objects/BlockHeaderObj
 import ../../../Database/Merit/objects/MinersObj
@@ -25,9 +28,9 @@ import SerializeMiners
 import strutils
 
 #Serialize a Block.
-func serialize*(blockArg: Block): string {.raises: [].} =
+proc serialize*(blockArg: Block, verifs: Verifications): string {.raises: [].} =
     #Create the serialized Block.
     result =
         !blockArg.header.serialize() &
-        !blockArg.verifications.serialize() &
+        !blockArg.verifications.serialize(verifs) &
         !blockArg.miners.serialize()

@@ -32,6 +32,7 @@ import algorithm
 #Set the seed to be based on the time.
 randomize(int(getTime()))
 
+discard """
 for i in 1 .. 20:
     echo "Testing Block Serialization/Parsing, iteration " & $i & "."
 
@@ -145,3 +146,4 @@ for i in 1 .. 20:
         assert(newBlock.miners[m].amount == blockParsed.miners[m].amount)
 
 echo "Finished the Network/Serialize/Merit/Block test."
+"""

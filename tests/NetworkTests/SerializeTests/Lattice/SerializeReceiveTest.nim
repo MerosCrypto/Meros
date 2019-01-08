@@ -3,8 +3,10 @@
 #Wallet lib.
 import ../../../../src/Wallet/Wallet
 
-#Index and Entry object.
-import ../../../../src/Database/Lattice/objects/IndexObj
+#Index object.
+import ../../../../src/Database/common/objects/IndexObj
+
+#Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
 
 #Receive lib.
@@ -67,8 +69,8 @@ for i in 1 .. 20:
 
     #Test the Receive properties.
     assert(
-        recv.index.address == recvParsed.index.address,
-        "Input Address:\r\n" & recv.index.address & "\r\n" & recvParsed.index.address
+        recv.index.key == recvParsed.index.key,
+        "Input Address:\r\n" & recv.index.key & "\r\n" & recvParsed.index.key
     )
     assert(
         recv.index.nonce == recvParsed.index.nonce,

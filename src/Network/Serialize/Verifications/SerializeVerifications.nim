@@ -25,7 +25,10 @@ import ../../../Database/Verifications/Verifications
 import ../SerializeCommon
 
 #Serialize Verifications.
-func serialize*(verifs: Verifications, indexes: seq[Index]): string {.raises: [].} =
+proc serialize*(
+    indexes: seq[Index],
+    verifs: Verifications
+): string {.raises: [].} =
     #Declare a seq for the hashes.
     var hashes: seq[string]
 
@@ -39,7 +42,7 @@ func serialize*(verifs: Verifications, indexes: seq[Index]): string {.raises: []
         #Clear hashes.
         hashes = newSeq[string](index.nonce)
         #Grab every Verificaion until this nonce, for this Verifier.
-        for verif in verifs[index.key][0 .. index.nonce]:
+        for verif in verifs[index.key][uint(0) .. index.nonce]:
             #Add its hash to the seq.
             hashes.add(verif.hash.toString())
         #Append the Merkle hash to the result.

@@ -25,7 +25,6 @@ import objects/ClaimObj
 import objects/SendObj
 import objects/ReceiveObj
 import objects/DataObj
-import objects/MeritRemovalObj
 
 #Account object.
 import objects/AccountObj

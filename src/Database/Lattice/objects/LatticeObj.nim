@@ -59,7 +59,6 @@ func newLattice*(
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
         lookup: newTable[string, Index](),
         verifications: newTable[string, seq[BLSPublicKey]](),
-        archived: newTable[string, int](),
         accounts: newTable[string, Account]()
     )
 

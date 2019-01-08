@@ -10,9 +10,6 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Verification obj.
-import ../../../Database/Merit/objects/VerificationsObj
-
 #Lattice lib.
 import ../../../Database/Lattice/Lattice
 
@@ -62,15 +59,12 @@ proc toJSON*(
             result["proof"]  = % int(cast[Send](entry).proof)
         of EntryType.Receive:
             result["index"] = %* {}
-            result["index"]["address"] = % cast[Receive](entry).index.address
+            result["index"]["key"] = % cast[Receive](entry).index.key
             result["index"]["nonce"]   = % int(cast[Receive](entry).index.nonce)
         of EntryType.Data:
             result["data"]   = % cast[Data](entry).data.toHex()
             result["sha512"] = % $cast[Data](entry).sha512
             result["proof"]  = % int(cast[Data](entry).proof)
-        of EntryType.MeritRemoval:
-            #Ignore MRs for now.
-            discard
 
 #Get the height of an account.
 proc getHeight(
@@ -185,9 +179,6 @@ proc latticeModule*(
                     json["args"][0].getStr(),
                     json["args"][1].getInt()
                 )
-
-            of "getUnarchivedVerifications":
-                res = rpc.getUnarchivedVerifications()
 
             else:
                 res = %* {

@@ -10,8 +10,10 @@ import ../../../lib/Hash
 #BlS lib.
 import ../../../lib/BLS
 
-#Verifications and Miners objects.
-import ../../../Database/Merit/objects/VerificationsObj
+#Verifications lib.
+import ../../../Database/Verifications/Verifications
+
+#Miners object.
 import ../../../Database/Merit/objects/MinersObj
 
 #Block lib.
@@ -90,20 +92,12 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
             "verifications": $gotBlock.header.verifications,
             "miners": $gotBlock.header.miners,
 
-            "time": int(gotBlock.header.time)
+            "time": int(gotBlock.header.time),
+            "proof": int(gotBlock.header.proof)
         },
-        "proof": int(gotBlock.proof),
         "hash": $gotBlock.hash,
-        "argon": $gotBlock.argon
+        "verifications": ""
     }
-
-    #Add the Verifications.
-    result["verifications"] = %* []
-    for verif in gotBlock.verifications.verifications:
-        result["verifications"].add(%* {
-            "verifier": $verif.verifier,
-            "hash": $verif.hash
-        })
 
     #Add the Miners.
     result["miners"] = %* []
@@ -117,10 +111,15 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
 proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     var success: bool = false
     try:
+        var verifs: Verifications = rpc.events.get(
+            proc (): Verifications,
+            "verifications.getVerifications"
+        )()
+
         if not await rpc.events.get(
             proc (newBlock: Block): Future[bool],
             "merit.block"
-        )(data.parseBlock()):
+        )(data.parseBlock(verifs)):
             raise newException(Exception, "Failed to add the Block.")
         else:
             success = true

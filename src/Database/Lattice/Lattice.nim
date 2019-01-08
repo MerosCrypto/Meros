@@ -10,13 +10,16 @@ import ../../lib/Hash
 #BLS lib.
 import ../../lib/BLS
 
-#Merit lib.
-import ../Merit/Merit
-
 #Index object.
 import ../common/objects/IndexObj
 #Export the Index object.
 export IndexObj
+
+#Verifications lib.
+import ../Verifications/Verifications
+
+#Merit lib.
+import ../Merit/Merit
 
 #Entry and Entry descendants.
 import objects/EntryObj
@@ -25,7 +28,6 @@ import Claim
 import Send
 import Receive
 import Data
-import MeritRemoval
 #Export the Entry and Entry descendants.
 export EntryObj
 export Mint
@@ -33,7 +35,6 @@ export Claim
 export Send
 export Receive
 export Data
-export MeritRemoval
 
 #Account lib.
 import Account
@@ -119,16 +120,6 @@ proc add*(
                 #Data Difficulty.
                 lattice.difficulties.data
             )
-
-        of EntryType.MeritRemoval:
-            var mr: MeritRemoval = cast[MeritRemoval](entry)
-
-            discard """
-            result = account.add(
-                #Data Entry.
-                mr
-            )
-            """
 
     #If that didn't work, return.
     if not result:

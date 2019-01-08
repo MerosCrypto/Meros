@@ -83,6 +83,7 @@ proc recv*(socket: AsyncSocket, handshake: bool = false): Future[tuple[header: s
 
 #Sync all data referenced by a Block using the socket.
 proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool] {.async.} =
+    discard """
     result = true
 
     #Make sure we have all the Entries verified in it.
@@ -161,6 +162,7 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
             char(MessageType.SyncingOver) &
             char(0)
         )
+    """
 
 #Handshake.
 proc handshake(
@@ -218,6 +220,12 @@ proc handshake(
 
     #If we have less Blocks, get what we need.
     if ourHeight < theirHeight:
+        #Grab our Verifications.
+        var verifs: Verifications = network.nodeEvents.get(
+            proc (): Verifications,
+            "verifications.getVerifications"
+        )()
+
         #Ask for each Block.
         for height in ourHeight ..< theirHeight:
             #Send the Request.
@@ -229,7 +237,7 @@ proc handshake(
             #Parse it.
             var newBlock: Block
             try:
-                newBlock = (await socket.recv()).msg.parseBlock()
+                newBlock = (await socket.recv()).msg.parseBlock(verifs)
             except:
                 return 0
 

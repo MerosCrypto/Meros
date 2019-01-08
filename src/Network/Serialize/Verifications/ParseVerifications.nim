@@ -30,7 +30,7 @@ import strutils
 proc parseVerifications*(
     indexesStr: string,
     verifs: Verifications
-): seq[Index] {.raises: [BLSError].} =
+): seq[Index] {.raises: [ValueError].} =
     #Init the result.
     result = @[]
 
@@ -53,7 +53,7 @@ proc parseVerifications*(
         #Clear hashes.
         hashes = newSeq[string](index.nonce)
         #Grab every Verificaion until this nonce, for this Verifier.
-        for verif in verifs[index.key][0 .. index.nonce]:
+        for verif in verifs[index.key][uint(0) .. index.nonce]:
             #Add its hash to the seq.
             hashes.add(verif.hash.toString())
         #Test the Merkle against what's in the serialized string.

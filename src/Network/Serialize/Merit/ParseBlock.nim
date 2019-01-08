@@ -10,8 +10,11 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Lattice lib.
-import ../../../Database/Lattice/Lattice
+#Index object.
+import ../../../Database/common/objects/IndexObj
+
+#Verifications lib.
+import ../../../Database/Verifications/Verifications
 
 #Miners object.
 import ../../../Database/Merit/objects/MinersObj
@@ -30,12 +33,12 @@ import finals
 
 #Parse a Block.
 proc parseBlock*(
-    blockStr: string
+    blockStr: string,
+    verifs: Verifications,
 ): Block {.raises: [
     ValueError,
     ArgonError,
-    BLSError,
-    FinalAttributeError
+    BLSError
 ].} =
     #Header | Verifications | Miners
     var blockSeq: seq[string] = blockStr.deserialize(3)
@@ -43,14 +46,15 @@ proc parseBlock*(
     #Parse the elements.
     var
         header: BlockHeader = blockSeq[0].parseBlockHeader()
-        verifs: seq[Index] = blockSeq[1].parseVerifications()
+        indexes: seq[Index] = blockSeq[1].parseVerifications(verifs)
         miners: Miners = blockSeq[2].parseMiners()
 
     #Create the Block Object.
     result = newBlock(
+        verifs,
         header.nonce,
         header.last,
-        verifs,
+        indexes,
         miners,
         header.time,
         header.proof

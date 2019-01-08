@@ -36,7 +36,7 @@ proc parseVerification*(
         #Verifier's Public Key.
         verifier: BLSPublicKey = newBLSPublicKey(verifSeq[0].pad(48))
         #Nonce.
-        nonce: uint = verifSeq[1].fromBinary()
+        nonce: uint = uint(verifSeq[1].fromBinary())
         #Get the Entry hash.
         entry: string = verifSeq[1].pad(64)
 

@@ -26,3 +26,10 @@ proc mainVerifications*() {.raises: [].} =
             if not result:
                 echo "Missing whatever we just added a Verification for."
     )
+
+    #Provide access to the ref.
+    events.on(
+        "verifications.getVerifications",
+        proc (): Verifications {.raises: [].} =
+            verifications
+    )

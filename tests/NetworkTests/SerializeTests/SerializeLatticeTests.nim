@@ -5,4 +5,3 @@ import Lattice/SerializeClaimTest
 import Lattice/SerializeSendTest
 import Lattice/SerializeReceiveTest
 import Lattice/SerializeDataTest
-import Lattice/SerializeMeritRemovalTest
