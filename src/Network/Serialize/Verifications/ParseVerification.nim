@@ -38,7 +38,7 @@ proc parseVerification*(
         #Nonce.
         nonce: uint = uint(verifSeq[1].fromBinary())
         #Get the Entry hash.
-        entry: string = verifSeq[1].pad(64)
+        entry: string = verifSeq[2].pad(64)
 
     #Create the Verification.
     result = newMemoryVerificationObj(
