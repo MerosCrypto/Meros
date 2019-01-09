@@ -28,7 +28,7 @@ import SerializeMiners
 import strutils
 
 #Serialize a Block.
-proc serialize*(blockArg: Block, verifs: Verifications): string {.raises: [].} =
+proc serialize*(blockArg: Block, verifs: Verifications): string {.raises: [KeyError].} =
     #Create the serialized Block.
     result =
         !blockArg.header.serialize() &

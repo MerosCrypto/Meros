@@ -59,3 +59,6 @@ proc parseVerifications*(
         #Test the Merkle against what's in the serialized string.
         if newMerkle(hashes).hash != indexesSeq[i + 2].pad(64):
             raise newException(ValueError, "Our Verifications didn't match the serialized Merkle.")
+
+        #Push the index to the rest.
+        result.add(index)

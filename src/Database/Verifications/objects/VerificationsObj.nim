@@ -48,12 +48,12 @@ func add*(
 func `[]`*(
     verifs: Verifications,
     verifier: string
-): Verifier {.raises: [].} =
+): Verifier {.raises: [KeyError].} =
     #Call add, which will only create a new Verifier if one doesn't exist.
     verifs.add(verifier)
 
-    #Return the verifier.
-    result = verifs[verifier]
+    #Return the verifier. We can either make Verifications distinct, use this weird format (stopping recursion), or change this operator.
+    result = tables.`[]`(verifs, verifier)
 
 #Gets a Verification by its Index.
 proc `[]`*(

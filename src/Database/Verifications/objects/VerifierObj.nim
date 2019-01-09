@@ -85,5 +85,5 @@ func `[]`*(verifier: Verifier, slice: Slice[uint]): seq[Verification] {.raises: 
 func `{}`*(verifier: Verifier, slice: Slice[uint]): seq[MemoryVerification] {.raises: [].} =
     var verifs: seq[Verification] = verifier.verifications[slice]
     result = newSeq[MemoryVerification](verifs.len)
-    for verif in verifs:
-        result.add(cast[MemoryVerification](verif))
+    for v in 0 ..< verifs.len:
+        result[v] = cast[MemoryVerification](verifs[v])

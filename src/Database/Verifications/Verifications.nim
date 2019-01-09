@@ -35,14 +35,14 @@ var newVerifications*: proc (): Verifications = newVerificationsObj
 proc add*(
     verifs: Verifications,
     verif: Verification
-) {.raises: [EmbIndexError].} =
+) {.raises: [KeyError, EmbIndexError].} =
     if not verifs.hasKey(verif.verifier.toString()):
         verifs[verif.verifier.toString()] = newVerifierObj(verif.verifier.toString())
 
     verifs[verif.verifier.toString()].add(verif)
 
 #For each provided Index, archive all Verifications from the account's last archived to the provided nonce.
-proc archive*(verifs: Verifications, indexes: seq[Index], archived: uint) {.raises: [FinalAttributeError].} =
+proc archive*(verifs: Verifications, indexes: seq[Index], archived: uint) {.raises: [KeyError, FinalAttributeError].} =
     #Declare the start variable outside of the loop.
     var start: uint
 

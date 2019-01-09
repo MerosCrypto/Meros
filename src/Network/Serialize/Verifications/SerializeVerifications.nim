@@ -28,7 +28,7 @@ import ../SerializeCommon
 proc serialize*(
     indexes: seq[Index],
     verifs: Verifications
-): string {.raises: [].} =
+): string {.raises: [KeyError].} =
     #Declare a seq for the hashes.
     var hashes: seq[string]
 

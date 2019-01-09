@@ -71,7 +71,7 @@ proc newBlockObj*(
         miners: miners
     )
 
-    if verifs.isNil:
+    if indexes.len == 0:
         result.header.verifications = nil
     else:
         #Set the verifications aggregate signature.

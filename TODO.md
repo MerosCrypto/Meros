@@ -12,7 +12,6 @@
 - Update Syncing.
 - Update RPC/docs.
 - SerializeVerifications Test.
-- SerializeBlock Test.
 - Epoch Tests.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
@@ -66,12 +65,12 @@
 ### Behavior Changes:
     Decided:
         - Have Sends/Datas SHA512 signed, not their Argon, so remote services can handle the work.
-        - Have required work be based on account, not on TX, and infinitely precalculable.
-        - Finalize Argon2's Block parameters.
+        - Have required work be based on account, not on TX, and precalculable to a point.
+        - Replace Argon2.
 
     Undecided:
+        - Use ED25519 everywhere; BLS saves space but since we handle the Verifications when they come in, it doesn't save time.
         - Don't push 255, 255, remainder for the length; push the amount of length bytes and then the raw binary (exponential over additive).
-        - Have Verifications also use Ed25519/have BLS signatures be asked for.
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
