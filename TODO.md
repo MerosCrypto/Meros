@@ -11,7 +11,7 @@
 - SerializeVerification may be pointless; SerializeVerifications doesn't use it and the only individual Verification we broadcast is MemoryVerification,
 - Update Syncing.
 - Update RPC/docs.
-- Serialize/Verifications Tests.
+- SerializeVerifications Test.
 - SerializeBlock Test.
 - Epoch Tests.
 
