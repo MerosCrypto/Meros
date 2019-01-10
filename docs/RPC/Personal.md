@@ -2,9 +2,9 @@
 
 ### `getWallet`
 `getWallet` will fetch and return the Wallet on the Node. It takes in zero arguments and returns:
-- `seed` (string)
+- `seed`      (string)
 - `publicKey` (string)
-- `address` (string)
+- `address`   (string)
 
 ### `setSeed`
 `setSeed` will create a new Wallet using the passed in Seed, and set the Node's Wallet to it. It takes in one argument.
@@ -16,21 +16,21 @@ It returns:
 `send` will create and publish a Send using the Wallet on the Node. It takes in three arguments:
 - Destination Address (string)
 - Amount (string)
-- Nonce (string)
+- Nonce  (string)
 It returns:
 - `hash` (string)
 
 ### `receive`
 `receive` will create and publish a Receive using the Wallet on the Node. It takes in three arguments:
 - Input Address (string)
-- Input Nonce (string)
-- Nonce (string)
+- Input Nonce   (string)
+- Nonce         (string)
 It returns:
 - `hash` (string)
 
 ### `data`
 `data` will create and publish a Data using the Wallet on the Node. It takes in two arguments:
-- data (string)
+- data  (string)
 - Nonce (string)
 It returns:
 - `hash` (string)

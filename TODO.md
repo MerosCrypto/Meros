@@ -11,7 +11,7 @@
 - SerializeVerification may be pointless; SerializeVerifications doesn't use it and the only individual Verification we broadcast is MemoryVerification,
 - Update Syncing.
 - Update DBDump Sample.
-- Update RPC/docs.
+- Update RPC.
 - Epoch Tests.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
