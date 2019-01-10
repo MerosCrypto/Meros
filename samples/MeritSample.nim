@@ -4,6 +4,15 @@ import ../src/lib/Util
 #Hash lib.
 import ../src/lib/Hash
 
+#MinerWallet lib.
+import ../src/Wallet/MinerWallet
+
+#Index object.
+import ../src/Database/common/objects/IndexObj
+
+#Verifications lib.
+import ../src/Database/Verifications/Verifications
+
 #Merit lib.
 import ../src/Database/Merit/Merit
 
@@ -16,19 +25,23 @@ import strutils
 #Main function is so these variables can be GC'd.
 proc main() =
     var
-        #Create a Wallet for signing Verifications.
+        #Create a Wallet to mine to.
         miner: MinerWallet = newMinerWallet()
         #Gensis string.
-        genesis: string = "mainnet"
+        genesis: string = "sample"
+
+        #Verifications.
+        verifs: Verifications = newVerifications()
         #Merit.
         merit: Merit = newMerit(genesis, 10, "cc".repeat(64), 50)
+
         #Block.
         newBlock: Block
         #Nomce and the last block hash.
         nonce: uint = 1
-        last: ArgonHash = merit.blockchain.blocks[0].argon
-        #Verifications object.
-        verifs: Verifications = newVerificationsObj()
+        last: ArgonHash = merit.blockchain.blocks[0].hash
+        #Indexes.
+        indexes: seq[Index] = @[]
         #Miners object.
         miners: Miners = @[(
             newMinerObj(
@@ -36,8 +49,7 @@ proc main() =
                 100
             )
         )]
-    #Calculate the Verifications' signature.
-    verifs.calculateSig()
+
 
     echo "First balance: " & $merit.state.getBalance(miner.publicKey)
 
@@ -45,9 +57,10 @@ proc main() =
     while true:
         #Create a block.
         newBlock = newBlock(
+            verifs,
             nonce,
             last,
-            verifs,
+            indexes,
             miners
         )
 
@@ -55,12 +68,12 @@ proc main() =
         while true:
             try:
                 #Add it.
-                discard merit.processBlock(newBlock)
+                discard merit.processBlock(verifs, newBlock)
                 #If we succeded, break.
                 break
             except:
                 #If we failed, print the proof we tried.
-                echo "Proof " & $newBlock.proof & " failed."
+                echo "Proof " & $newBlock.header.proof & " failed."
                 #Increase the proof.
                 inc(newBlock)
 
@@ -72,6 +85,6 @@ proc main() =
         #Increase the nonce.
         inc(nonce)
         #Update last.
-        last = newBlock.argon
+        last = newBlock.hash
 
 main()

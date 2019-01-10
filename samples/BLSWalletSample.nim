@@ -2,7 +2,7 @@
 import ../src/lib/BLS
 
 #Miner Wallet lib.
-import ../src/Database/Merit/MinerWallet
+import ../src/Wallet/MinerWallet
 
 #Create the Miner Wallet.
 var miner: MinerWallet = newMinerWallet()

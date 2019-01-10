@@ -46,14 +46,8 @@ var
         char(6) &
         char(0)
 
-    sendHeader: string =                   #Send header.
-        char(0) &
-        char(0) &
-        char(10)
-    recvHeader: string =                   #Receive header.
-        char(0) &
-        char(0) &
-        char(11)
+    sendType: char = char(11)              #Send Message Type.
+    recvType: char = char(12)              #Receive Message Type.
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.
@@ -100,7 +94,7 @@ if answer.toLower() == "send":
 
     #Create the serialized string.
     serialized = send.serialize()
-    serialized = sendHeader & char(serialized.len) & serialized
+    serialized = sendType & char(serialized.len) & serialized
 
 #Handle a Receive.
 elif answer.toLower() == "receive":
@@ -126,7 +120,7 @@ elif answer.toLower() == "receive":
 
     #Create the serialized string.
     serialized = recv.serialize()
-    serialized = recvHeader & char(serialized.len) & serialized
+    serialized = recvType & char(serialized.len) & serialized
 else:
     echo "I don't recognize that option."
     quit(-1)

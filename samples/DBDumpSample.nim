@@ -12,6 +12,7 @@ var
     rpc: EmberRPC = waitFor newEmberRPC()
     #DB.
     db: JSONNode = %* {
+        "verifications": {},
         "blockchain": [],
         "lattice": {}
     }
