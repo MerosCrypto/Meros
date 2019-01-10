@@ -1,6 +1,8 @@
 # TODO
 
 ### Core:
+- Optimize `verifications.getMerkle` by having every Verifier keep track of their own Merkle, and just cutting off the tail.
+- Remove `verifications.getVerifications` (event).
 - Verify BLS Public Keys.
 - Improve the Difficulty algorithm.
 - Inactive Merit.
@@ -8,10 +10,9 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- SerializeVerification may be pointless; SerializeVerifications doesn't use it and the only individual Verification we broadcast is MemoryVerification,
 - Update Syncing.
 - Update DBDump Sample.
-- Update RPC.
+- Update the Nim RPC lib and Miner.
 - Epoch Tests.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).

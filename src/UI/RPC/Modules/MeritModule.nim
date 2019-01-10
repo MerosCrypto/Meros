@@ -10,6 +10,9 @@ import ../../../lib/Hash
 #BlS lib.
 import ../../../lib/BLS
 
+#Index object.
+import ../../../Database/common/objects/IndexObj
+
 #Verifications lib.
 import ../../../Database/Verifications/Verifications
 
@@ -95,9 +98,16 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
             "time": int(gotBlock.header.time),
             "proof": int(gotBlock.header.proof)
         },
-        "hash": $gotBlock.hash,
-        "verifications": ""
+        "hash": $gotBlock.hash
     }
+
+    #Add the Verifications.
+    result["verifications"] = %* []
+    for index in gotBlock.verifications:
+        result["verifications"].add(%* {
+            "verifier": $index.key,
+            "nonce": int(index.nonce)
+        })
 
     #Add the Miners.
     result["miners"] = %* []
