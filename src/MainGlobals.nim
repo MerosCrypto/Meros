@@ -16,6 +16,7 @@ var
     #Personal.
     miner: bool                  #Miner boolean.
     minerWallet: MinerWallet     #Miner Wallet.
+    verifyLock: Lock             #Verify Lock.
     wallet {.threadvar.}: Wallet #Wallet.
 
     #Network.

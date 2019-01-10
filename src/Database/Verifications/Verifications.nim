@@ -29,7 +29,8 @@ import tables
 #Finals lib.
 import finals
 
-var newVerifications*: proc (): Verifications = newVerificationsObj
+proc newVerifications*(): Verifications =
+    newVerificationsObj()
 
 #Add a Verification.
 proc add*(

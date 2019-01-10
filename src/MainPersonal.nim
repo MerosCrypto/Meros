@@ -33,9 +33,8 @@ proc mainPersonal() {.raises: [ValueError, RandomError, SodiumError, FinalAttrib
                 wallet.sign(recv)
         )
 
-        #Sign a Data.
+        #Sign a Data. We directly pass the function because Nim was complaining for no reason.
         events.on(
             "personal.signData",
-            proc (data: Data): bool {.raises: [ValueError, SodiumError, FinalAttributeError].} =
-                wallet.sign(data)
+            Data.sign
         )

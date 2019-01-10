@@ -71,7 +71,7 @@ proc mainMerit() {.raises: [
                             return false
 
                         #Verify we have all the Verifications.
-                        if index.nonce >= verifications[index.key].len:
+                        if index.nonce >= verifications[index.key].height:
                             echo "Failed to add the Block."
                             return false
 
@@ -144,7 +144,7 @@ proc mainMerit() {.raises: [
                     network.broadcast(
                         newMessage(
                             MessageType.Block,
-                            newBlock.serialize()
+                            newBlock.serialize(verifications)
                         )
                     )
 
