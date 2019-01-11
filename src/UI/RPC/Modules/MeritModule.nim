@@ -136,7 +136,7 @@ proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     except:
         raise newException(EventError, "Couldn't get and call merit.publishBlock.")
 
-    #If that worked, bBroadcast the Block.
+    #If that worked, broadcast the Block.
     if success:
         try:
             rpc.events.get(

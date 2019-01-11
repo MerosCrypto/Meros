@@ -26,3 +26,7 @@ It returns:
 - `miners`        (array of objects, each as follows)
     - `miner`         (string)
     - `amount`        (string)
+
+### `publishBlock`
+`publishBlock` will add the Block to the local Blockchain, and if it's valid, publish it. It takes in one argument.
+- Block (string).

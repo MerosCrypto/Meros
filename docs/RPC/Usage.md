@@ -7,6 +7,6 @@ Every request has three fields.
 - `method`, a string of the method you're calling. To see what methods are available, please see the docs for each individual module.
 - `args`, an array of the arguments you're passing to the method.
 
-Every call will have a response. If the call failed, the response will have a `error` field. The only call which doesn't report if it failed is `system.quit`.
+Every call will have a response. If the call doesn't return anything, the response will contain a `success` boolean, with a value of true. If the call failed, the response will have a `error` field. The only call which doesn't report if it failed is `system.quit`.
 
 Bytes will always be sent via their hex representation.
