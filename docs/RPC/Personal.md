@@ -30,7 +30,7 @@ It returns:
 
 ### `data`
 `data` will create and publish a Data using the Wallet on the Node. It takes in two arguments:
-- data  (string)
+- Data  (string)
 - Nonce (string)
 It returns:
 - `hash` (string)

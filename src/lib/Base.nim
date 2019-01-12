@@ -80,8 +80,6 @@ func toBN*(valueArg: string, baseArg: int): BN {.raises: [ValueError].} =
         base: BN = newBN(baseArg)
         #Get the digits of the base.
         digits: seq[char] = baseArg.digits
-        #Digit.
-        digit: char
 
     #If it's Hex...
     if baseArg == 16:

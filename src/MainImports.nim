@@ -23,8 +23,7 @@ import Database/Verifications/Verifications
 #Merit.
 import Database/Merit/Merit
 
-#Lattice. Data is directly imported to solve a problem with personal.signData.
-import Database/Lattice/Data
+#Lattice.
 import Database/Lattice/Lattice
 
 #Network.
