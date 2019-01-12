@@ -85,7 +85,7 @@ proc getUnarchivedVerifications(
             "verifier": indexes[i].key.toHex(),
             "nonce": int(indexes[i].nonce),
             "merkle": merkles[i].toHex(),
-            "aggregate": $aggregates[i]
+            "signature": $aggregates[i]
         })
 
 #Handler.
