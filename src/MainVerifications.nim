@@ -18,7 +18,7 @@ proc mainVerifications() {.raises: [KeyError, ValueError, EmbIndexError, BLSErro
                 #Calculate who has new Verifications.
                 result = @[]
                 for verifier in verifications.keys():
-                    if verifications[verifier].archived != verifications[verifier].height - 1:
+                    if verifications[verifier].archived != verifications[verifier].height:
                        result.add(newIndex(verifier, verifications[verifier].height - 1))
         )
 

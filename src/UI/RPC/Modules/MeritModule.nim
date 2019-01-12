@@ -105,7 +105,7 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
     result["verifications"] = %* []
     for index in gotBlock.verifications:
         result["verifications"].add(%* {
-            "verifier": $index.key,
+            "verifier": index.key.toHex(),
             "nonce": int(index.nonce)
         })
 

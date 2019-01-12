@@ -66,7 +66,7 @@ proc mainMerit() {.raises: [
                             return false
 
                         #Verify this isn't archiving archived Verifications.
-                        if index.nonce <= verifications[index.key].archived:
+                        if index.nonce < verifications[index.key].archived:
                             echo "Failed to add the Block."
                             return false
 
@@ -98,11 +98,8 @@ proc mainMerit() {.raises: [
                         echo "Failed to add the Block."
                         return false
 
-                    #Add each Verification.
-                    for index in newBlock.verifications:
-                        for verif in verifications[index.key][verifications[index.key].archived <.. index.nonce]:
-                            #Discard the result since we already made sure the hash exists.
-                            discard lattice.verify(merit, verif)
+                    #Archive the Verifications mentioned in the Block.
+                    verifications.archive(newBlock.verifications, newBlock.header.nonce)
 
                     #Create the Mints (which ends up minting a total of of 50000 EMB).
                     var
