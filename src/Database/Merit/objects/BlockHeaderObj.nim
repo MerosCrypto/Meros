@@ -13,9 +13,6 @@ import ../../../lib/Merkle
 #BLS lib.
 import ../../../lib/BLS
 
-#Wallet lib.
-import ../../../Wallet/Wallet
-
 #Verifications lib.
 import ../../Verifications/Verifications
 

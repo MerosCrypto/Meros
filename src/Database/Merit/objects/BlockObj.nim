@@ -71,9 +71,7 @@ proc newBlockObj*(
         miners: miners
     )
 
-    if indexes.len == 0:
-        result.header.verifications = nil
-    else:
+    if indexes.len > 0:
         #Set the verifications aggregate signature.
         var signatures: seq[BLSSignature]
         for index in indexes:
