@@ -26,12 +26,12 @@ proc mainVerifications*() {.raises: [KeyError, ValueError, EmbIndexError, BLSErr
         events.on(
             "verifications.getMerkle",
             proc (
-                verifier: string,
+                verifierStr: string,
                 nonce: uint
             ): string {.raises: [KeyError].} =
                 var
                     #Grab the Verifier.
-                    verifier: Verifier = verifications[verifier]
+                    verifier: Verifier = verifications[verifierStr]
                     #Create a Merkle.
                     merkle: Merkle = newMerkle()
 
@@ -41,6 +41,27 @@ proc mainVerifications*() {.raises: [KeyError, ValueError, EmbIndexError, BLSErr
 
                 #Return the hash.
                 return merkle.hash
+        )
+
+        #Provide access to pending aggregate signatures.
+        events.on(
+            "verifications.getPendingAggregate",
+            proc (
+                verifierStr: string,
+                nonce: uint
+            ): BLSSignature {.raises: [KeyError, BLSError].} =
+                var
+                    #Grab the Verifier.
+                    verifier: Verifier = verifications[verifierStr]
+                    #Create a seq of signatures.
+                    sigs: seq[BLSSignature] = @[]
+
+                #Iterate over every unarchived verification, up to and including the nonce.
+                for verif in verifier{verifier.archived .. nonce}:
+                    sigs.add(verif.signature)
+
+                #Return the hash.
+                return sigs.aggregate()
         )
 
         #Handle Verifications.

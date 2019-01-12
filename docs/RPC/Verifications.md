@@ -5,3 +5,4 @@
 - `verifier`  (string)
 - `nonce`     (int)
 - `merkle`    (string)
+- `signature` (string)

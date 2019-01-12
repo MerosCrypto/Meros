@@ -48,8 +48,9 @@ proc getUnarchivedVerifications(
     except:
         raise newException(EventError, "Couldn't get and call verifications.getUnarchivedIndexes.")
 
-    #Get the merkles.
+    #Get the merkles and aggregates.
     var merkles: seq[string] = newSeq[string](indexes.len)
+    var aggregates: seq[BLSSignature] = newSeq[BLSSignature](indexes.len)
     for i in 0 ..< indexes.len:
         try:
             merkles[i] = rpc.events.get(
@@ -63,6 +64,18 @@ proc getUnarchivedVerifications(
             )
         except:
             raise newException(EventError, "Couldn't get and call verifications.getMerkle.")
+        try:
+            aggregates[i] = rpc.events.get(
+                proc (
+                    verifier: string,
+                    nonce: uint
+                ): BLSSignature, "verifications.getPendingAggregate"
+            )(
+                indexes[i].key,
+                indexes[i].nonce
+            )
+        except:
+            raise newException(EventError, "Couldn't get and call verifications.getPendingAggregate.")
 
     #Create the JSON.
     result = %* []
@@ -71,7 +84,8 @@ proc getUnarchivedVerifications(
         result.add(%* {
             "verifier": indexes[i].key.toHex(),
             "nonce": int(indexes[i].nonce),
-            "merkle": merkles[i].toHex()
+            "merkle": merkles[i].toHex(),
+            "aggregate": $aggregates[i]
         })
 
 #Handler.

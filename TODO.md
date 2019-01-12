@@ -12,7 +12,7 @@
 
 - Update Syncing.
 - Update DBDump Sample.
-- Update the Nim RPC lib and Miner.
+- Expose more of the Verifications RPC.
 - Epoch Tests.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
