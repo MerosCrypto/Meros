@@ -4,6 +4,9 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
+#Merkle lib.
+import ../../lib/Merkle
+
 #BLS lib.
 import ../../lib/BLS
 
@@ -16,6 +19,17 @@ import Verification
 
 #Finals lib.
 import finals
+
+#Calculate the Merkle.
+proc calculateMerkle*(verifier: Verifier, nonce: uint): string {.raises: [].} =
+    #Create a seq for the hashes.
+    var hashes: seq[string] = newSeq[string](nonce)
+    #Grab every Verificaion up to, but including, this nonce, for this Verifier.
+    for verif in verifier[uint(0) .. nonce]:
+        #Add its hash to the seq.
+        hashes.add(verif.hash.toString())
+    #Create the Merkle Tree and return the hash.
+    result = newMerkle(hashes).hash
 
 #Calculate the aggregate signature.
 proc calculateSig*(verifs: seq[MemoryVerification]): BLSSignature {.raises: [BLSError].} =

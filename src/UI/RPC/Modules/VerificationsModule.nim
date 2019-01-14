@@ -10,8 +10,8 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Index object.
-import ../../../Database/common/objects/IndexObj
+#VerifierIndex object.
+import ../../../Database/Merit/objects/VerifierIndexObj
 
 #Verifications lib.
 import ../../../Database/Verifications/Verifications
@@ -39,31 +39,18 @@ proc getUnarchivedVerifications(
     rpc: RPC
 ): JSONNode {.raises: [EventError].} =
     #Get the indexes.
-    var indexes: seq[Index]
+    var indexes: seq[VerifierIndex]
     try:
         indexes = rpc.events.get(
-            proc (): seq[Index],
+            proc (): seq[VerifierIndex],
             "verifications.getUnarchivedIndexes"
         )()
     except:
         raise newException(EventError, "Couldn't get and call verifications.getUnarchivedIndexes.")
 
-    #Get the merkles and aggregates.
-    var merkles: seq[string] = newSeq[string](indexes.len)
+    #Get the aggregates.
     var aggregates: seq[BLSSignature] = newSeq[BLSSignature](indexes.len)
     for i in 0 ..< indexes.len:
-        try:
-            merkles[i] = rpc.events.get(
-                proc (
-                    verifier: string,
-                    nonce: uint
-                ): string, "verifications.getMerkle"
-            )(
-                indexes[i].key,
-                indexes[i].nonce
-            )
-        except:
-            raise newException(EventError, "Couldn't get and call verifications.getMerkle.")
         try:
             aggregates[i] = rpc.events.get(
                 proc (
@@ -84,7 +71,7 @@ proc getUnarchivedVerifications(
         result.add(%* {
             "verifier": indexes[i].key.toHex(),
             "nonce": int(indexes[i].nonce),
-            "merkle": merkles[i].toHex(),
+            "merkle": indexes[i].merkle.toHex(),
             "signature": $aggregates[i]
         })
 

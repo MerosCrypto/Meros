@@ -108,16 +108,11 @@ proc newNetwork*(
                                 network.clients.broadcast(msg)
 
                         of MessageType.Block:
-                            var verifs: Verifications = network.nodeEvents.get(
-                                proc (): Verifications,
-                                "verifications.getVerifications"
-                            )()
-
                             if await nodeEvents.get(
                                 proc (newBlock: Block): Future[bool],
                                 "merit.block"
                             )(
-                                msg.message.parseBlock(verifs)
+                                msg.message.parseBlock()
                             ):
                                 network.clients.broadcast(msg)
 
@@ -170,11 +165,6 @@ proc newNetwork*(
                                     char(0)
                                 )
                             else:
-                                var verifs: Verifications = network.nodeEvents.get(
-                                    proc (): Verifications,
-                                    "verifications.getVerifications"
-                                )()
-
                                 network.clients.reply(
                                     msg,
                                     char(MessageType.Block) &
@@ -182,7 +172,7 @@ proc newNetwork*(
                                         nodeEvents.get(
                                             proc (nonce: uint): Block,
                                             "merit.getBlock"
-                                        )(nonce).serialize(verifs)
+                                        )(nonce).serialize()
                                     )
                                 )
 
@@ -289,12 +279,7 @@ proc requestBlock*(
         #Parse it.
         var newBlock: Block
         try:
-            var verifs: Verifications = network.nodeEvents.get(
-                proc (): Verifications,
-                "verifications.getVerifications"
-            )()
-
-            newBlock = (await network.clients.clients[0].recv()).msg.parseBlock(verifs)
+            newBlock = (await network.clients.clients[0].recv()).msg.parseBlock()
         except:
             return false
 

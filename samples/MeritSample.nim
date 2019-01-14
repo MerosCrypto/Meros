@@ -56,7 +56,7 @@ proc main() =
     #Mine the chain.
     while true:
         #Create a block.
-        newBlock = newBlock(
+        newBlock = newBlockObj(
             verifs,
             nonce,
             last,

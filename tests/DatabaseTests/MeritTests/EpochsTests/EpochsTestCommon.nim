@@ -24,7 +24,7 @@ proc blankBlock*(miners: Miners): Block =
         verifs: Verifications = newVerificationsObj()
     verifs.calculateSig()
 
-    result = newBlock(
+    result = newBlockObj(
         0,
         char(0).repeat(64).toHash(512),
         verifs,

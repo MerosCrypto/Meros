@@ -2,5 +2,6 @@
 
 #Merit Serialize.
 import Merit/SerializeBlockHeaderTest
+import Merit/SerializeVerificationsTest
 import Merit/SerializeMinersTest
 import Merit/SerializeBlockTest

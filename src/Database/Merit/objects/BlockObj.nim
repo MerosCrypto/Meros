@@ -10,14 +10,9 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Index object.
-import ../../common/objects/IndexObj
-
-#Verifications lib.
-import ../../Verifications/Verifications
-
-#Block Header and Miners objects.
+#Block Header, VerifierIndex, and Miners objects.
 import BlockHeaderObj
+import VerifierIndexObj
 import MinersObj
 
 #Serialization libs.
@@ -38,7 +33,7 @@ type Block* = ref object of RootObj
     hash*: ArgonHash
 
     #Verifications.
-    verifications*: seq[Index]
+    verifications*: seq[VerifierIndex]
     #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
     miners*: Miners
 
@@ -49,20 +44,32 @@ proc `miners=`*(newBlock: Block, miners: Miners) =
 
 #Constructor.
 proc newBlockObj*(
-    verifs: Verifications,
     nonce: uint,
     last: ArgonHash,
-    indexes: seq[Index],
+    aggregate: BLSSignature,
+    indexes: seq[VerifierIndex],
     miners: Miners,
     time: uint,
     proof: uint = 0
-): Block {.raises: [ValueError, ArgonError, BLSError].} =
+): Block {.raises: [ValueError, ArgonError].} =
+    #Verify the Miners, unless this is the genesis Block.
+    if nonce != 0:
+        var total: uint = 0
+        if (miners.len < 1) or (100 < miners.len):
+            raise newException(ValueError, "Invalid Miners quantity.")
+        for miner in miners:
+            total += miner.amount
+            if (miner.amount < 1) or (uint(100) < miner.amount):
+                raise newException(ValueError, "Invalid Miner amount.")
+        if total != 100:
+            raise newException(ValueError, "Invalid total Miner amount.")
+
     #Create the Block.
     result = Block(
         header: newBlockheaderObj(
             nonce,
             last,
-            nil,
+            aggregate,
             miners.calculateMerkle(),
             time,
             proof
@@ -70,15 +77,6 @@ proc newBlockObj*(
         verifications: indexes,
         miners: miners
     )
-
-    if indexes.len > 0:
-        #Set the verifications aggregate signature.
-        var signatures: seq[BLSSignature]
-        for index in indexes:
-            signatures.add(
-                verifs[index.key]{verifs[index.key].archived .. index.nonce}.calculateSig()
-            )
-        result.header.verifications = signatures.aggregate()
 
     #Set the Header hash.
     result.hash = Argon(result.header.serialize(), result.header.proof.toBinary())

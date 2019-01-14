@@ -1,19 +1,17 @@
 # TODO
 
+### Verifications Redo:
+- Move Merkle checking from parseBlock to merit.block.
+- Update Syncing.
+- Update DBDump Sample.
+- Epoch Tests.
+
 ### Core:
-- Optimize `verifications.getMerkle` by having every Verifier keep track of their own Merkle, and just cutting off the tail.
-- Remove `verifications.getVerifications` (event).
-- Verify BLS Public Keys.
 - Improve the Difficulty algorithm.
 - Inactive Merit.
 - Have Merit Holders indexable by the order they got Merit in.
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
-
-- Update Syncing.
-- Update DBDump Sample.
-- Expose more of the Verifications RPC.
-- Epoch Tests.
 
 - Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
 - Remove direct references to clients[0].
@@ -42,6 +40,7 @@
 - Have RPC handle things in order OR use an ID system.
 - Have the RPC dynamically get the nonce (it's currently an argument).
 - `network.rebroadcast(address, nonce)` RPC method.
+- Expose more of the Verifications RPC.
 
 - Show the existing wallet on reload of `Main.html`.
 - Claim creation via the GUI.
@@ -58,7 +57,10 @@
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
-- Don't rebroadcast Blocks that we synced.
+- Optimize `verifier.calculateMerkle()` by having every Verifier keep track of their own Merkle, and just cutting off the tail.
+- `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
+
+- Don't rebroadcast Blocks that we're syncing.
 - Improve Network's encapsulation.
 
 - Make more things `func`.

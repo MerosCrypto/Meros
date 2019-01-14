@@ -1,46 +1,29 @@
 include MainGlobals
 
-proc mainVerifications() {.raises: [KeyError, ValueError, EmbIndexError, BLSError].} =
+proc mainVerifications() {.raises: [
+    KeyError,
+    ValueError,
+    EmbIndexError,
+    BLSError,
+    FinalAttributeError
+].} =
     {.gcsafe.}:
         verifications = newVerifications()
 
-        #Provide access to the ref.
-        events.on(
-            "verifications.getVerifications",
-            proc (): Verifications {.raises: [].} =
-                verifications
-        )
-
-        #Provide access to the unarchived verificaations.
+        #Provide access to the VerifierIndexes of verifiers with unarchived Verifications.
         events.on(
             "verifications.getUnarchivedIndexes",
-            proc (): seq[Index] {.raises: [KeyError].} =
+            proc (): seq[VerifierIndex] {.raises: [KeyError, FinalAttributeError].} =
                 #Calculate who has new Verifications.
                 result = @[]
                 for verifier in verifications.keys():
                     if verifications[verifier].archived != verifications[verifier].height:
-                       result.add(newIndex(verifier, verifications[verifier].height - 1))
-        )
-
-        #Provide access to merkles.
-        events.on(
-            "verifications.getMerkle",
-            proc (
-                verifierStr: string,
-                nonce: uint
-            ): string {.raises: [KeyError].} =
-                var
-                    #Grab the Verifier.
-                    verifier: Verifier = verifications[verifierStr]
-                    #Create a Merkle.
-                    merkle: Merkle = newMerkle()
-
-                #Iterate over every verif, up to but including the nonce.
-                for v in 0 .. int(nonce):
-                    merkle.add(verifier.verifications[v].hash.toString())
-
-                #Return the hash.
-                return merkle.hash
+                        var nonce: uint = verifications[verifier].height - 1
+                        result.add(newVerifierIndex(
+                            verifier,
+                            nonce,
+                            verifications[verifier].calculateMerkle(nonce)
+                        ))
         )
 
         #Provide access to pending aggregate signatures.

@@ -121,15 +121,10 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
 proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     var success: bool = false
     try:
-        var verifs: Verifications = rpc.events.get(
-            proc (): Verifications,
-            "verifications.getVerifications"
-        )()
-
         if not await rpc.events.get(
             proc (newBlock: Block): Future[bool],
             "merit.block"
-        )(data.parseBlock(verifs)):
+        )(data.parseBlock()):
             raise newException(Exception, "Failed to add the Block.")
         else:
             success = true

@@ -7,7 +7,7 @@ finalsd:
         key* {.final.}: string #Key, as in Key/Value, not Public Key.
         nonce* {.final.}: uint
 
-#Construcor.
+#Constructor.
 func newIndex*(key: string, nonce: uint): Index {.raises: [].} =
     result = Index(
         key: key,

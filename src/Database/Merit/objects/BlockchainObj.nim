@@ -41,16 +41,16 @@ proc newBlockchainObj*(
     genesis: string,
     blockTime: uint,
     startDifficulty: BN
-): Blockchain {.raises: [ValueError, ArgonError, BLSError].} =
+): Blockchain {.raises: [ValueError, ArgonError].} =
     result = Blockchain(
         blockTime: blockTime,
 
         height: 1,
         blocks: @[
             newBlockObj(
-                nil,
                 0,
                 genesis.pad(64).toArgonHash(),
+                nil,
                 @[],
                 @[],
                 0,

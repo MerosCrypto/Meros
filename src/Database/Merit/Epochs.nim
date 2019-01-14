@@ -10,8 +10,8 @@ import ../../lib/BLS
 #Verifications objects.
 import ../Verifications/Verifications
 
-#Index object.
-import ../common/objects/IndexObj
+#VerifierIndex object.
+import objects/VerifierIndexObj
 
 #State lib.
 import State
@@ -133,7 +133,7 @@ proc calculate*(
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-proc shift*(epochs: var Epochs, verifs: Verifications, indexes: seq[Index]): Epoch {.raises: [KeyError].} =
+proc shift*(epochs: var Epochs, verifs: Verifications, indexes: seq[VerifierIndex]): Epoch {.raises: [KeyError].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch()

@@ -220,12 +220,6 @@ proc handshake(
 
     #If we have less Blocks, get what we need.
     if ourHeight < theirHeight:
-        #Grab our Verifications.
-        var verifs: Verifications = network.nodeEvents.get(
-            proc (): Verifications,
-            "verifications.getVerifications"
-        )()
-
         #Ask for each Block.
         for height in ourHeight ..< theirHeight:
             #Send the Request.
@@ -237,7 +231,7 @@ proc handshake(
             #Parse it.
             var newBlock: Block
             try:
-                newBlock = (await socket.recv()).msg.parseBlock(verifs)
+                newBlock = (await socket.recv()).msg.parseBlock()
             except:
                 return 0
 

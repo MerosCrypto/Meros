@@ -13,6 +13,10 @@ import ../../lib/BLS
 #Verifications lib.
 import ../Verifications/Verifications
 
+#VerifierIndex object.
+import objects/VerifierIndexObj
+export VerifierIndexObj
+
 #Miners object.
 import objects/MinersObj
 export MinersObj
@@ -45,7 +49,7 @@ proc newMerit*(
     blockTime: uint,
     startDifficulty: string,
     live: uint
-): Merit {.raises: [ValueError, ArgonError, BLSError].} =
+): Merit {.raises: [ValueError, ArgonError].} =
     Merit(
         blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
         state: newState(live),

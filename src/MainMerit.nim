@@ -3,8 +3,7 @@ include MainVerifications
 proc mainMerit() {.raises: [
     ValueError,
     AsyncError,
-    ArgonError,
-    BLSError
+    ArgonError
 ].} =
     {.gcsafe.}:
         #Create the Merit.
@@ -141,7 +140,7 @@ proc mainMerit() {.raises: [
                     network.broadcast(
                         newMessage(
                             MessageType.Block,
-                            newBlock.serialize(verifications)
+                            newBlock.serialize()
                         )
                     )
 

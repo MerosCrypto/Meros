@@ -57,3 +57,5 @@ for i in 1 .. 20:
     assert(verif.nonce == verifParsed.nonce)
     assert(verif.hash == verifParsed.hash)
     assert(verifParsed.archived == 0) #Archived should be set by each node, not serialized. This confirms that.
+
+echo "Finished the Network/Serialize/Verifications/MemoryVerification test."
