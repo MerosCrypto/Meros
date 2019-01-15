@@ -1,11 +1,8 @@
 # TODO
 
 ### Verifications Redo:
-- Fix Rewards.
 - Update Syncing.
-- Update the miner.
 - Update DBDump Sample.
-- Epoch Tests.
 - Test the Client and ClientClaim samples.
 
 ### Core:

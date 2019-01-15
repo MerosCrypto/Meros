@@ -1,6 +1,5 @@
 #Epoch Tests's Common Functions.
 
-discard """
 #Hash lib.
 import ../../../../src/lib/Hash
 
@@ -10,24 +9,15 @@ import ../../../../src/Wallet/Wallet
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 
-#Miners Serialization lib.
-import ../../../../src/Network/Serialize/Merit/SerializeMiners
-
 #String utils standard lib.
 import strutils
 
-#Generates a block.
+#Generates an empty block.
 proc blankBlock*(miners: Miners): Block =
-    #Create a junk Wallet/Verifications object.
-    var
-        wallet: Wallet = newWallet()
-        verifs: Verifications = newVerificationsObj()
-    verifs.calculateSig()
-
-    result = newBlockObj(
+    newBlockObj(
         0,
         char(0).repeat(64).toHash(512),
-        verifs,
+        nil,
+        @[],
         miners
     )
-"""

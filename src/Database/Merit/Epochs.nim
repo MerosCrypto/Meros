@@ -142,7 +142,7 @@ proc shift*(epochs: var Epochs, verifs: Verifications, indexes: seq[VerifierInde
 
     #Loop over each Verification.
     for index in indexes:
-        for verif in verifs[index.key][verifs[index.key].archived <.. index.nonce]:
+        for verif in verifs[index.key][verifs[index.key].archived .. index.nonce]:
             #Set found to false.
             found = false
 
