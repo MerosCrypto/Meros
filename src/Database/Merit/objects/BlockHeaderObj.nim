@@ -13,9 +13,6 @@ import ../../../lib/Merkle
 #BLS lib.
 import ../../../lib/BLS
 
-#Verifications lib.
-import ../../Verifications/Verifications
-
 #Miners object.
 import MinersObj
 
