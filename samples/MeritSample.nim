@@ -7,20 +7,11 @@ import ../src/lib/Hash
 #MinerWallet lib.
 import ../src/Wallet/MinerWallet
 
-#Index object.
-import ../src/Database/common/objects/IndexObj
-
 #Verifications lib.
 import ../src/Database/Verifications/Verifications
 
 #Merit lib.
 import ../src/Database/Merit/Merit
-
-#Serialization libs.
-import ../src/Network/Serialize/Merit/SerializeMiners
-
-#String utils standard lib.
-import strutils
 
 #Main function is so these variables can be GC'd.
 proc main() =
@@ -33,15 +24,13 @@ proc main() =
         #Verifications.
         verifs: Verifications = newVerifications()
         #Merit.
-        merit: Merit = newMerit(genesis, 10, "cc".repeat(64), 50)
+        merit: Merit = newMerit(genesis, 10, "".pad(64, "cc"), 50)
 
         #Block.
         newBlock: Block
         #Nomce and the last block hash.
         nonce: uint = 1
         last: ArgonHash = merit.blockchain.blocks[0].hash
-        #Indexes.
-        indexes: seq[Index] = @[]
         #Miners object.
         miners: Miners = @[(
             newMinerObj(
@@ -57,10 +46,10 @@ proc main() =
     while true:
         #Create a block.
         newBlock = newBlockObj(
-            verifs,
             nonce,
             last,
-            indexes,
+            nil,
+            @[],
             miners
         )
 

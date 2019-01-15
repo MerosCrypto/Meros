@@ -49,7 +49,7 @@ proc newBlockObj*(
     aggregate: BLSSignature,
     indexes: seq[VerifierIndex],
     miners: Miners,
-    time: uint,
+    time: uint = getTime(),
     proof: uint = 0
 ): Block {.raises: [ValueError, ArgonError].} =
     #Verify the Miners, unless this is the genesis Block.

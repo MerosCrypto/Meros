@@ -1,10 +1,12 @@
 # TODO
 
 ### Verifications Redo:
-- Move Merkle checking from parseBlock to merit.block.
+- Fix Rewards.
 - Update Syncing.
+- Update the miner.
 - Update DBDump Sample.
 - Epoch Tests.
+- Test the Client and ClientClaim samples.
 
 ### Core:
 - Improve the Difficulty algorithm.

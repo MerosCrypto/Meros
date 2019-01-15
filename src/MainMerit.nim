@@ -74,6 +74,11 @@ proc mainMerit() {.raises: [
                             echo "Failed to add the Block."
                             return false
 
+                        #Check the merkle.
+                        if verifications[index.key].calculateMerkle(index.nonce) != index.merkle:
+                            echo "Failed to add the Block."
+                            return false
+
                         #Declare an aggregation info seq for each verifier.
                         var verifierAgInfos: seq[BLSAggregationInfo] = @[]
                         for verif in verifications[index.key][verifications[index.key].archived <.. index.nonce]:
