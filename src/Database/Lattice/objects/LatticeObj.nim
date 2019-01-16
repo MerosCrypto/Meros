@@ -12,7 +12,7 @@ import ../../../lib/Hash
 import ../../Merit/Merit
 
 #Index object.
-import IndexObj
+import ../../common/objects/IndexObj
 
 #Entry object.
 import EntryObj
@@ -43,12 +43,6 @@ type Lattice* = ref object of RootObj
         seq[BLSPublicKey]
     ]
 
-    #Unarchived Verifications.
-    unarchived*: seq[MemoryVerification]
-
-    #State of the Verifications. null is unset. 0 is unarchived. 1 is archived.
-    archived*: TableRef[string, int]
-
     #Accounts (address -> account).
     accounts*: TableRef[
         string,
@@ -65,8 +59,6 @@ func newLattice*(
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
         lookup: newTable[string, Index](),
         verifications: newTable[string, seq[BLSPublicKey]](),
-        unarchived: @[],
-        archived: newTable[string, int](),
         accounts: newTable[string, Account]()
     )
 
@@ -80,45 +72,6 @@ func addHash*(
     index: Index
 ) {.raises: [].} =
     lattice.lookup[hash.toString()] = index
-
-#Unarchived Verification.
-func unarchive*(
-    lattice: Lattice,
-    verif: MemoryVerification
-) {.raises: [].} =
-    #Make sure the Verif is new.
-    if lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString()):
-        return
-
-    #Add to unarchived.
-    lattice.unarchived.add(verif)
-
-    #Set it as unarchived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 0
-
-#Archive a Verification.
-func archive*(
-    lattice: Lattice,
-    verif: MemoryVerification
-) {.raises: [KeyError].} =
-    #Make sure the Verif isn't already archived.
-    if (
-        (lattice.archived.hasKey(verif.hash.toString() & verif.verifier.toString())) and
-        (lattice.archived[verif.hash.toString() & verif.verifier.toString()] == 1)
-    ):
-        return
-
-    #Remove it from unarchived.
-    for i in 0 ..< lattice.unarchived.len:
-        if (
-            (verif.hash == lattice.unarchived[i].hash) and
-            (verif.verifier == lattice.unarchived[i].verifier)
-        ):
-            lattice.unarchived.delete(i)
-            break
-
-    #Set it as archived.
-    lattice.archived[verif.hash.toString() & verif.verifier.toString()] = 1
 
 #Creates a new Account on the Lattice.
 func addAccount*(
@@ -144,12 +97,12 @@ func getAccount*(
 
 #Gets a Entry by its Index.
 proc `[]`*(lattice: Lattice, index: Index): Entry {.raises: [ValueError].} =
-    if not lattice.accounts.hasKey(index.address):
+    if not lattice.accounts.hasKey(index.key):
         raise newException(ValueError, "Lattice does not have an Account for that address.")
-    if lattice.accounts[index.address].height <= index.nonce:
+    if lattice.accounts[index.key].height <= index.nonce:
         raise newException(ValueError, "The Account for that address doesn't have a Entry for that nonce.")
 
-    result = lattice.accounts[index.address][index.nonce]
+    result = lattice.accounts[index.key][index.nonce]
 
 #Gets a Entry by its hash.
 proc `[]`*(lattice: Lattice, hash: string): Entry {.raises: [KeyError, ValueError].} =
@@ -159,7 +112,7 @@ proc `[]`*(lattice: Lattice, hash: string): Entry {.raises: [KeyError, ValueErro
 
     var
         index: Index = lattice.lookup[hash]
-        entries: seq[Entry] = lattice.accounts[index.address].entries[int(index.nonce)]
+        entries: seq[Entry] = lattice.accounts[index.key].entries[int(index.nonce)]
 
     for entry in entries:
         if entry.hash.toString() == hash:

@@ -7,9 +7,12 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#Block Header, Verifications, and Miners objects.
+#BLS lib.
+import ../../../lib/BLS
+
+#Block Header, VerifierIndex, and Miners objects.
 import BlockHeaderObj
-import VerificationsObj
+import VerifierIndexObj
 import MinersObj
 
 #Serialization libs.
@@ -26,43 +29,54 @@ import strutils
 type Block* = ref object of RootObj
     #Block Header.
     header*: BlockHeader
-    #Random number to prove work was done.
-    proof*: uint
-    #Header Hash.
-    hash*: SHA512Hash
-    #Argon2d hash (Argon2d(hash, proof) must be greater than the difficulty).
-    argon*: ArgonHash
+    #Hash of the Block Header.
+    hash*: ArgonHash
 
     #Verifications.
-    verifications*: Verifications
-    #Who to attribute the Merit to (amount ranges from 0 to 100).
+    verifications*: seq[VerifierIndex]
+    #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
     miners*: Miners
+
+#Set the Miners.
+proc `miners=`*(newBlock: Block, miners: Miners) =
+    newBlock.miners = miners
+    newBlock.header.miners = miners
 
 #Constructor.
 proc newBlockObj*(
     nonce: uint,
     last: ArgonHash,
-    verifications: Verifications,
+    aggregate: BLSSignature,
+    indexes: seq[VerifierIndex],
     miners: Miners,
-    proof: uint,
-    time: uint
+    time: uint = getTime(),
+    proof: uint = 0
 ): Block {.raises: [ValueError, ArgonError].} =
+    #Verify the Miners, unless this is the genesis Block.
+    if nonce != 0:
+        var total: uint = 0
+        if (miners.len < 1) or (100 < miners.len):
+            raise newException(ValueError, "Invalid Miners quantity.")
+        for miner in miners:
+            total += miner.amount
+            if (miner.amount < 1) or (uint(100) < miner.amount):
+                raise newException(ValueError, "Invalid Miner amount.")
+        if total != 100:
+            raise newException(ValueError, "Invalid total Miner amount.")
+
     #Create the Block.
     result = Block(
         header: newBlockheaderObj(
             nonce,
             last,
-            verifications,
-            miners,
-            time
+            aggregate,
+            miners.calculateMerkle(),
+            time,
+            proof
         ),
-        proof: proof,
-        verifications: verifications,
+        verifications: indexes,
         miners: miners
     )
 
     #Set the Header hash.
-    result.hash = SHA512(result.header.serialize())
-
-    #Set the Argon hash.
-    result.argon = Argon(result.hash.toString(), proof.toBinary())
+    result.hash = Argon(result.header.serialize(), result.header.proof.toBinary())

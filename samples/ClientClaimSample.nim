@@ -10,7 +10,7 @@ import ../src/lib/BLS
 
 #Wallet libs.
 import ../src/Wallet/Wallet
-import ../src/Database/Merit/MinerWallet
+import ../src/Wallet/MinerWallet
 
 #Lattice lib.
 import ../src/Database/Lattice/Lattice
@@ -45,10 +45,7 @@ var
         char(6) &
         char(0)
 
-    claimHeader: string =                   #Claim header.
-        char(0) &
-        char(0) &
-        char(9)
+    claimType: char = char(11)             #Claim Message Type.
     serialized: string                     #Serialized string.
 
     socket: AsyncSocket = newAsyncSocket() #Socket.
@@ -78,7 +75,7 @@ echo "Signed the Claim."
 
 #Create the serialized string.
 serialized = claim.serialize()
-serialized = claimHeader & char(serialized.len) & serialized
+serialized = claimType & char(serialized.len) & serialized
 
 #Connect to the server.
 echo "Connecting..."

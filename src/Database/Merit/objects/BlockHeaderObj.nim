@@ -13,11 +13,7 @@ import ../../../lib/Merkle
 #BLS lib.
 import ../../../lib/BLS
 
-#Wallet lib.
-import ../../../Wallet/Wallet
-
-#Verifications and Miners objects.
-import VerificationsObj
+#Miners object.
 import MinersObj
 
 #Finals lib.
@@ -35,34 +31,14 @@ finalsd:
         last* {.final.}: ArgonHash
 
         #Aggregate Signatue of the Verifications.
-        verifications: BLSSignature
+        verifications*: BLSSignature
         #Merkle tree hash of the Miners.
         miners: SHA512Hash
 
         #Timestamp.
         time*: uint
-
-#Verifications accessors.
-proc verifications*(header: BlockHeader): BLSSignature =
-    header.verifications
-
-proc `verifications=`*(
-    header: BlockHeader,
-    verifications: BLSSignature
-) {.raises: [].} =
-    header.verifications = verifications
-
-proc setVerifications(
-    header: BlockHeader,
-    verifications: Verifications
-) {.raises: [].} =
-    header.verifications = verifications.aggregate
-
-proc `verifications=`*(
-    header: BlockHeader,
-    verifications: Verifications
-) {.raises: [].} =
-    header.setVerifications(verifications)
+        #Proof.
+        proof*: uint
 
 #Calculate the Miners's Merkle Hash.
 proc calculateMerkle*(miners: Miners): SHA512Hash {.raises: [ValueError].} =
@@ -101,32 +77,18 @@ proc `miners=`*(
 proc newBlockHeaderObj*(
     nonce: uint,
     last: ArgonHash,
-    verifications: BLSSignature,
+    verifs: BLSSignature,
     miners: SHA512Hash,
     time: uint,
+    proof: uint
 ): BlockHeader {.raises: [].} =
-    #Create the Block Header.
     result = BlockHeader(
         nonce: nonce,
         last: last,
-        verifications: verifications,
+        verifications: verifs,
         miners: miners,
-        time: time
+        time: time,
+        proof: proof
     )
     result.ffinalizeNonce()
     result.ffinalizeLast()
-
-proc newBlockHeaderObj*(
-    nonce: uint,
-    last: ArgonHash,
-    verifications: Verifications,
-    miners: Miners,
-    time: uint,
-): BlockHeader {.raises: [ValueError].} =
-    newBlockHeaderObj(
-        nonce,
-        last,
-        verifications.aggregate,
-        miners.calculateMerkle(),
-        time
-    )

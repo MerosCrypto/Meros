@@ -8,10 +8,10 @@ import ../../../../src/lib/Hash
 
 #BLS/MinerWallet libs.
 import ../../../../src/lib/BLS
-import ../../../../src/Database/Merit/MinerWallet
+import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
-import ../../../../src/Database/Merit/Verifications
+import ../../../../src/Database/Verifications/Verifications
 
 #BlockHeader object.
 import ../../../../src/Database/Merit/objects/BlockHeaderObj
@@ -45,6 +45,8 @@ for i in 1 .. 20:
         miners: SHA512Hash
         #Time.
         time: uint = getTime()
+        #Proof.
+        proof: uint = uint(rand(500000))
 
     #Randomze the hashes.
     for b in 0 ..< 64:
@@ -60,6 +62,7 @@ for i in 1 .. 20:
     header.verifications = verifs
     header.miners = miners
     header.time = time
+    header.proof = proof
 
     #Serialize it and parse it back.
     var headerParsed: BlockHeader = header.serialize().parseBlockHeader()
@@ -73,5 +76,6 @@ for i in 1 .. 20:
     assert(header.verifications == headerParsed.verifications)
     assert(header.miners == headerParsed.miners)
     assert(header.time == headerParsed.time)
+    assert(header.proof == headerParsed.proof)
 
 echo "Finished the Network/Serialize/Merit/BlockHeader test."

@@ -10,8 +10,8 @@ import BN
 #Hash lib.
 import ../../../lib/Hash
 
-#Verifications library.
-import ../Verifications
+#Verifications lib.
+import ../../Verifications/Verifications
 
 #Difficulty and Block objects.
 import DifficultyObj
@@ -41,10 +41,7 @@ proc newBlockchainObj*(
     genesis: string,
     blockTime: uint,
     startDifficulty: BN
-): Blockchain {.raises: [ValueError, ArgonError, BLSError].} =
-    var verifs: Verifications = newVerificationsObj()
-    verifs.calculateSig()
-
+): Blockchain {.raises: [ValueError, ArgonError].} =
     result = Blockchain(
         blockTime: blockTime,
 
@@ -53,7 +50,8 @@ proc newBlockchainObj*(
             newBlockObj(
                 0,
                 genesis.pad(64).toArgonHash(),
-                verifs,
+                nil,
+                @[],
                 @[],
                 0,
                 0

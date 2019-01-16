@@ -16,7 +16,7 @@ import ../../Wallet/Wallet
 import ../../Wallet/Address
 
 #Index object.
-import objects/IndexObj
+import ../common/objects/IndexObj
 
 #Entry object and descendants.
 import objects/EntryObj
@@ -25,7 +25,6 @@ import objects/ClaimObj
 import objects/SendObj
 import objects/ReceiveObj
 import objects/DataObj
-import objects/MeritRemovalObj
 
 #Account object.
 import objects/AccountObj
@@ -139,7 +138,7 @@ proc add*(
         return false
 
     #Verify the Receive's input address.
-    if recv.index.address != send.sender:
+    if recv.index.key != send.sender:
         return false
 
     #Verify the nonces match.
@@ -152,7 +151,7 @@ proc add*(
             if entry.descendant == EntryType.Receive:
                 var past: Receive = cast[Receive](entry)
                 if (
-                    (past.index.address == recv.index.address) and
+                    (past.index.key == recv.index.key) and
                     (past.index.nonce == recv.index.nonce)
                 ):
                     return false
@@ -172,12 +171,3 @@ proc add*(
 
     #Add the Data.
     result = account.add(cast[Entry](data))
-
-#Add a Merit Removal.
-discard """
-func add*(
-    account: Account,
-    mr: MeritRemoval
-): bool {.raises: [ValueError].} =
-    result = account.add(cast[Entry](mr))
-"""

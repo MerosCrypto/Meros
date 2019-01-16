@@ -84,9 +84,3 @@ It returns:
         - `data` (string)
         - `sha512` (string)
         - `proof` (int)
-
-### `getUnarchivedVerifications`
-`getUnarchivedVerifications` will fetch and return all Unarchived Verifications on the Lattice. It takes in zero arguments and returns an array of objects, each as follows:
-- `verifier` (string)
-- `hash` (string)
-- `signature` (string)

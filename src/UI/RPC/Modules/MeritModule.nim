@@ -10,8 +10,13 @@ import ../../../lib/Hash
 #BlS lib.
 import ../../../lib/BLS
 
-#Verifications and Miners objects.
-import ../../../Database/Merit/objects/VerificationsObj
+#Index object.
+import ../../../Database/common/objects/IndexObj
+
+#Verifications lib.
+import ../../../Database/Verifications/Verifications
+
+#Miners object.
 import ../../../Database/Merit/objects/MinersObj
 
 #Block lib.
@@ -90,19 +95,18 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
             "verifications": $gotBlock.header.verifications,
             "miners": $gotBlock.header.miners,
 
-            "time": int(gotBlock.header.time)
+            "time": int(gotBlock.header.time),
+            "proof": int(gotBlock.header.proof)
         },
-        "proof": int(gotBlock.proof),
-        "hash": $gotBlock.hash,
-        "argon": $gotBlock.argon
+        "hash": $gotBlock.hash
     }
 
     #Add the Verifications.
     result["verifications"] = %* []
-    for verif in gotBlock.verifications.verifications:
+    for index in gotBlock.verifications:
         result["verifications"].add(%* {
-            "verifier": $verif.verifier,
-            "hash": $verif.hash
+            "verifier": index.key.toHex(),
+            "nonce": int(index.nonce)
         })
 
     #Add the Miners.
@@ -127,7 +131,7 @@ proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     except:
         raise newException(EventError, "Couldn't get and call merit.publishBlock.")
 
-    #If that worked, bBroadcast the Block.
+    #If that worked, broadcast the Block.
     if success:
         try:
             rpc.events.get(

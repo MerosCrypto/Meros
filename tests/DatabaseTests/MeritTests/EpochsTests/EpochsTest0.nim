@@ -1,4 +1,4 @@
-#Epochs Test 0. Verifies that no Verifications = No Rewards.
+#Epochs Test 0. Verifies that No Verifications = No Rewards.
 
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
@@ -6,7 +6,8 @@ import ../../../../src/Database/Merit/Merit
 var
     epochs: Epochs = newEpochs()
     rewards: Rewards = epochs.shift(
-        newVerificationsObj()
+        nil,
+        @[]
     ).calculate(nil)
 
 assert(rewards.len == 0)

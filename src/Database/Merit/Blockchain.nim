@@ -16,9 +16,8 @@ import ../../lib/BLS
 #Miners object.
 import objects/MinersObj
 
-#Difficulty, Verifications, and Block libs.
+#Difficulty and Block libs.
 import Difficulty
-import Verifications
 import Block
 
 #Blockchain object.
@@ -30,7 +29,7 @@ proc newBlockchain*(
     genesis: string,
     blockTime: uint,
     startDifficulty: BN
-): Blockchain {.raises: [ValueError, ArgonError, BLSError].} =
+): Blockchain {.raises: [ValueError, ArgonError].} =
     newBlockchainObj(
         genesis,
         blockTime,
@@ -41,7 +40,7 @@ proc newBlockchain*(
 proc processBlock*(
     blockchain: Blockchain,
     newBlock: Block
-): bool {.raises: [ValueError, BLSError].} =
+): bool {.raises: [ValueError].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 
@@ -57,15 +56,11 @@ proc processBlock*(
         return false
 
     #If the last hash is off...
-    if newBlock.header.last != blocks[^1].argon:
+    if newBlock.header.last != blocks[^1].hash:
         return false
 
     #If the time is before the last block's...
     if newBlock.header.time < blocks[^1].header.time:
-        return false
-
-    #Verify the Block Header's Verifications signature matches the Block's Verifications signature.
-    if newBlock.header.verifications != newBlock.verifications.aggregate:
         return false
 
     #Verify the Block Header's Merkle Hash of the Miners matches the Block's Miners.
@@ -73,10 +68,6 @@ proc processBlock*(
         return false
 
     #Verify the Block itself.
-    #Verify the Verifications's Aggregate Signature.
-    if not newBlock.verifications.verify():
-        return false
-
     #Verify the Miners.
     var total: uint = 0
     if (newBlock.miners.len < 1) or (100 < newBlock.miners.len):
@@ -121,4 +112,5 @@ proc processBlock*(
     if not blockchain.difficulties[^1].verifyDifficulty(newBlock):
         return false
 
+    #Add the Block.
     blockchain.add(newBlock)

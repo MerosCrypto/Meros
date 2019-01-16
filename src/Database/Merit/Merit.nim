@@ -10,26 +10,29 @@ import ../../lib/Base
 #BLS lib.
 import ../../lib/BLS
 
+#Verifications lib.
+import ../Verifications/Verifications
+
+#VerifierIndex object.
+import objects/VerifierIndexObj
+export VerifierIndexObj
+
 #Miners object.
 import objects/MinersObj
 export MinersObj
 
 #Every Merit lib.
 import Difficulty
-import Verifications
 import Block
 import Blockchain
 import State
 import Epochs
-import MinerWallet
 
 export Difficulty
-export Verifications
 export Block
 export Blockchain
 export State
 export Epochs
-export MinerWallet
 
 #Finals lib.
 import finals
@@ -46,7 +49,7 @@ proc newMerit*(
     blockTime: uint,
     startDifficulty: string,
     live: uint
-): Merit {.raises: [ValueError, ArgonError, BLSError].} =
+): Merit {.raises: [ValueError, ArgonError].} =
     Merit(
         blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
         state: newState(live),
@@ -56,11 +59,11 @@ proc newMerit*(
 #Add a block.
 proc processBlock*(
     merit: Merit,
+    verifications: Verifications,
     newBlock: Block
 ): Rewards {.raises: [
     KeyError,
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Add the block to the Blockchain.
     if not merit.blockchain.processBlock(newBlock):
@@ -71,6 +74,6 @@ proc processBlock*(
     merit.state.processBlock(merit.blockchain, newBlock)
 
     #Have the Epochs process the Block.
-    var epoch: Epoch = merit.epochs.shift(newBlock.verifications)
+    var epoch: Epoch = merit.epochs.shift(verifications, newBlock.verifications)
     #Calculate the rewards.
     result = epoch.calculate(merit.state)

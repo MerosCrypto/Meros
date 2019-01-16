@@ -19,27 +19,25 @@ finalsd:
         Verification* = ref object of RootObj
             #BLS Key.
             verifier* {.final.}: BLSPublicKey
+            #Nonce.
+            nonce* {.final.}: uint
             #Entry Hash.
             hash* {.final.}: Hash[512]
+            #Block the Verification was archived in.
+            archived* {.final.}: uint
 
         #Verification object for the mempool.
         MemoryVerification* = ref object of Verification
             #BLS signature for aggregation in a block.
             signature* {.final.}: BLSSignature
 
-        #A group of verifier/hash pairs with the final aggregate signature.
-        Verifications* = ref object of RootObj
-            #Verifications.
-            verifications*: seq[MemoryVerification]
-            #Aggregate signature.
-            aggregate*: BLSSignature
-
 #New Verification object.
 func newVerificationObj*(
     hash: Hash[512]
 ): Verification {.raises: [].} =
     result = Verification(
-        hash: hash
+        hash: hash,
+        archived: 0
     )
     result.ffinalizeHash()
 
@@ -48,12 +46,7 @@ func newMemoryVerificationObj*(
     hash: Hash[512]
 ): MemoryVerification {.raises: [].} =
     result = MemoryVerification(
-        hash: hash
+        hash: hash,
+        archived: 0
     )
     result.ffinalizeHash()
-
-#New Verifications object.
-func newVerificationsObj*(): Verifications {.raises: [].} =
-    Verifications(
-        verifications: @[]
-    )

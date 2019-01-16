@@ -8,6 +8,7 @@ export RPCObj
 #RPC modules.
 import Modules/SystemModule
 import Modules/PersonalModule
+import Modules/VerificationsModule
 import Modules/MeritModule
 import Modules/LatticeModule
 import Modules/NetworkModule
@@ -48,6 +49,8 @@ proc handle*(
             await rpc.systemModule(msg, reply)
         of "personal":
             await rpc.personalModule(msg, reply)
+        of "verifications":
+            await rpc.verificationsModule(msg, reply)
         of "merit":
             await rpc.meritModule(msg, reply)
         of "lattice":

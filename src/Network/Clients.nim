@@ -7,14 +7,18 @@ import ../lib/Util
 #Hash lib.
 import ../lib/Hash
 
+#BLS lib.
+import ../lib/BLS
+
 #Block libs.
-import ../Database/Merit/Verifications
+import ../Database/Verifications/Verifications
 import ../Database/Merit/Block
 
 #Lattice libs.
 import ../Database/Lattice/Lattice
 
 #Parse libs.
+import Serialize/Verifications/ParseVerification
 import Serialize/Merit/ParseBlock
 import Serialize/Lattice/ParseClaim
 import Serialize/Lattice/ParseSend
@@ -39,6 +43,11 @@ import asyncnet, asyncdispatch
 
 #Seq utils standard lib.
 import sequtils
+
+#Tables standard lib.
+import tables
+
+import strutils
 
 #Receive a header and message from a socket.
 proc recv*(socket: AsyncSocket, handshake: bool = false): Future[tuple[header: string, msg: string]] {.async.} =
@@ -85,18 +94,47 @@ proc recv*(socket: AsyncSocket, handshake: bool = false): Future[tuple[header: s
 proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool] {.async.} =
     result = true
 
-    #Make sure we have all the Entries verified in it.
-    var entries: seq[string] = @[]
-    for verif in newBlock.verifications.verifications:
-        try:
-            discard network.nodeEvents.get(
-                proc (hash: string): Entry,
-                "lattice.getEntryByHash"
-            )(verif.hash.toString())
-        except:
-            if getCurrentExceptionMsg() == "Lattice does not have a Entry for that hash.":
-                entries.add(verif.hash.toString())
-    entries = deduplicate(entries)
+    #Tuple to define missing data.
+    type Gap = tuple[key: string, start: uint, last: uint]
+
+    var
+        #Variable for gaps.
+        gaps: seq[Gap] = @[]
+        #Define a table to store the hashes in.
+        hashes: Table[string, seq[string]] = initTable[string, seq[string]]()
+        #Table to store the Verifications in.
+        verifications: Table[string, seq[Verification]] = initTable[string, seq[Verification]]()
+        #List of verified Entries.
+        entries: seq[string] = @[]
+
+    #Make sure we have all the Verifications in it.
+    for verifier in newBlock.verifications:
+        #Add a seq for them in each table.
+        hashes[verifier.key] = network.nodeEvents.get(
+            proc (key: string, nonce: uint): seq[string],
+            "verifications.getPendingHashes"
+        )(verifier.key, verifier.nonce)
+
+        verifications[verifier.key] = @[]
+
+        #Get the Verifier's height.
+        var verifHeight: uint = network.nodeEvents.get(
+            proc (key: string): uint,
+            "verifications.getVerifierHeight"
+        )(verifier.key)
+
+        #If we're missing Verifications...
+        if verifHeight < verifier.nonce:
+            #Add the gap.
+            gaps.add((
+                verifier.key,
+                verifHeight,
+                verifier.nonce
+            ))
+
+    #If there are no gaps, return.
+    if gaps.len == 0:
+        return
 
     #Try block is here so if anything fails, we still send Stop Syncing.
     try:
@@ -106,7 +144,63 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
             char(0)
         )
 
-        #Ask for missing Entries.
+        #Ask for missing Verifications.
+        for gap in gaps:
+            #Send the Requests.
+            for nonce in gap.start .. gap.last:
+                await socket.send(
+                    char(MessageType.VerificationRequest) &
+                    !(
+                        !gap.key &
+                        !nonce.toBinary()
+                    )
+                )
+
+                #Get the response.
+                var res: tuple[header: string, msg: string] = await socket.recv()
+                #Make sure it's a Verification.
+                if MessageType(res.header[0]) != MessageType.Verification:
+                    return false
+                #Parse it.
+                var verif: Verification = res.msg.parseVerification()
+                #Verify it's from the correct person and has the correct nonce.
+                if verif.verifier.toString() != gap.key:
+                    return false
+                if verif.nonce != nonce:
+                    return false
+                #Add it.
+                verifications[gap.key].add(verif)
+                hashes[gap.key].add(verif.hash.toString())
+                entries.add(verif.hash.toString())
+
+        #Check the Block's aggregate.
+        #Aggregate Infos for each Verifier.
+        var agInfos: seq[ptr BLSAggregationInfo] = @[]
+        #Iterate over every Verifier.
+        for index in newBlock.verifications:
+            #Aggregate Infos for this verifier.
+            var verifierAgInfos: seq[ptr BLSAggregationInfo] = @[]
+            #Iterate over this verifier's hashes.
+            for hash in hashes[index.key]:
+                #Create AggregationInfos.
+                verifierAgInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
+                verifierAgInfos[^1][] = newBLSAggregationInfo(newBLSPublicKey(index.key), hash)
+            #Create the aggregate AggregateInfo for this Verifier.
+            agInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
+            agInfos[^1][] = verifierAgInfos.aggregate()
+
+        #Add the aggregate info to the Block's signature.
+        newBlock.header.verifications.setAggregationInfo(agInfos.aggregate())
+        #Verify the signature.
+        if not newBlock.header.verifications.verify():
+            return false
+
+        echo "Downloaded verifications and verified they're legit."
+
+        #Download the Entries.
+        #Dedeuplicate the list.
+        entries = entries.deduplicate()
+        #Iterate over each entry.
         for entry in entries:
             #Send the Request.
             await socket.send(
@@ -152,6 +246,19 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
 
                 else:
                     return false
+
+        #Since we now have every Entry, add the Verifications.
+        for index in newBlock.verifications:
+            for verif in verifications[index.key]:
+                #If we failed to add this (shows up as an Exception), due to a MeritRemoval, the Block won't be added.
+                #That said, the aggregate proves these are valid Verifications.
+                network.nodeEvents.get(
+                    proc (verif: Verification),
+                    "verifications.verification"
+                )(verif)
+
+        echo "Added every Entry and Verification."
+
     except:
         raise
 
@@ -219,11 +326,11 @@ proc handshake(
     #If we have less Blocks, get what we need.
     if ourHeight < theirHeight:
         #Ask for each Block.
-        for height in ourHeight ..< theirHeight:
+        for nonce in ourHeight ..< theirHeight:
             #Send the Request.
             await socket.send(
                 char(MessageType.BlockRequest) &
-                !height.toBinary()
+                !nonce.toBinary()
             )
 
             #Parse it.
@@ -233,7 +340,7 @@ proc handshake(
             except:
                 return 0
 
-            #Get all the Entries it verifies.
+            #Get all the verifications it references and the entries those verify.
             if not await newBlock.sync(network, socket):
                 return 0
 

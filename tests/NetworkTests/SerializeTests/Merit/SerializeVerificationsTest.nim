@@ -1,99 +1,67 @@
-#Serialize Verification Test.
+#Serialize Verifications Test.
 
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
+#VerifierIndex object.
+import ../../../../src/Database/Merit/objects/VerifierIndexObj
 
-#BLS lib.
-import ../../../../src/lib/BLS
-
-#MinerWallet lib.
-import ../../../../src/Database/Merit/MinerWallet
-
-#Verifications lib.
-import ../../../../src/Database/Merit/Verifications
-
-#Serialize lib.
+#Serialize libs.
 import ../../../../src/Network/Serialize/Merit/SerializeVerifications
 import ../../../../src/Network/Serialize/Merit/ParseVerifications
 
 #Random standard lib.
 import random
 
+#Algorithm standard lib; used to randomize the Verifications/Miners order.
+import algorithm
+
 #Set the seed to be based on the time.
 randomize(int(getTime()))
 
-#Test 20 Verification serializations.
-for i in 1 .. 20:
-    echo "Testing Verification Serialization/Parsing, iteration " & $i & "."
-
-    var
-        #Create a Wallet for signing the Verification.
-        verifier: MinerWallet = newMinerWallet()
-        #Create a hash.
-        hash: Hash[512]
-    #Set the hash to a random value.
-    for i in 0 ..< 64:
-        hash.data[i] = uint8(rand(255))
-    #Add the Verification.
-    var verif: MemoryVerification = newMemoryVerification(hash)
-    verifier.sign(verif)
-
-    #Serialize it and parse it back.
-    var verifParsed: MemoryVerification = verif.serialize().parseVerification()
-
-    #Test the serialized versions.
-    assert(verif.serialize() == verifParsed.serialize())
-
-    #Test the Verification's properties.
-    assert(verif.verifier == verifParsed.verifier)
-    assert(verif.hash == verifParsed.hash)
-    assert(verif.signature == verifParsed.signature)
-
-#Test 20 Verifications serializations.
 for i in 1 .. 20:
     echo "Testing Verifications Serialization/Parsing, iteration " & $i & "."
 
     var
-        #Verifications.
-        verifs: Verifications = newVerificationsObj()
-        #Verification quantity.
-        verifQuantity: int = rand(200) + 1
+        #seq of VerifierIndex.
+        verifs: seq[VerifierIndex] = newSeq[VerifierIndex](rand(99) + 1)
+        key: string
+        nonce: uint
+        merkle: string
 
-    #Fill up the Verifications.
-    for v in 0 ..< verifQuantity:
-        var
-            #Random hash to verify.
-            hash: Hash[512]
-            #Verifier.
-            verifier: MinerWallet = newMinerWallet()
-            #Verification.
-            verif: MemoryVerification
+    #Fill up the VerifierIndexes.
+    for v in 0 ..< verifs.len:
+        #Reset the key and merkle.
+        key = newString(48)
+        merkle = newString(64)
 
-        #Randomize the hash.
-        for b in 0 ..< 64:
-            hash.data[b] = uint8(rand(255))
+        #Randomize the key.
+        for b in 0 ..< key.len:
+            key[b] = char(rand(255))
 
-        #Create the Verification.
-        verif = newMemoryVerification(hash)
-        verifier.sign(verif)
-        verifs.verifications.add(verif)
+        #Randomize the nonce.
+        nonce = uint(rand(100000))
 
-    #Calculate the Verifications sig.
-    verifs.calculateSig()
+        #Randomize the merkle.
+        for b in 0 ..< merkle.len:
+            merkle[b] = char(rand(255))
+
+        verifs[v] = newVerifierIndex(
+            key,
+            nonce,
+            merkle
+        )
 
     #Serialize it and parse it back.
-    var verifsParsed: Verifications = verifs.serialize().parseVerifications(verifs.aggregate)
+    var verifsParsed: seq[VerifierIndex] = verifs.serialize().parseVerifications()
 
     #Test the serialized versions.
     assert(verifs.serialize() == verifsParsed.serialize())
 
     #Test the Verifications.
-    for v in 0 ..< verifs.verifications.len:
-        assert(verifs.verifications[v].verifier == verifsParsed.verifications[v].verifier)
-        assert(verifs.verifications[v].hash == verifsParsed.verifications[v].hash)
-    assert(verifs.aggregate == verifsParsed.aggregate)
+    for v in 0 ..< verifs.len:
+        assert(verifs[v].key == verifsParsed[v].key)
+        assert(verifs[v].nonce == verifsParsed[v].nonce)
+        assert(verifs[v].merkle == verifsParsed[v].merkle)
 
 echo "Finished the Network/Serialize/Merit/Verifications test."

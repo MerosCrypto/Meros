@@ -26,7 +26,7 @@ func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
     result = true
 
     #If the Argon hash didn't beat the difficulty...
-    if newBlock.argon.toBN() < diff.difficulty:
+    if newBlock.hash.toBN() < diff.difficulty:
         return false
 
 #Calculate the next difficulty using the blocks, difficulties, period Length, and blocks per period.

@@ -12,8 +12,7 @@ finalsd:
             Claim = 1,
             Send = 2,
             Receive = 3,
-            Data = 4,
-            MeritRemoval = 5
+            Data = 4
 
         #Entry object.
         Entry* = ref object of RootObj

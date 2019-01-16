@@ -7,6 +7,9 @@ import ../lib/Util
 #Hash lib.
 import ../lib/Hash
 
+#Verifications lib.
+import ../Database/Verifications/Verifications
+
 #Merit lib.
 import ../Database/Merit/Merit
 
@@ -15,11 +18,12 @@ import ../Database/Lattice/Lattice
 
 #Serialization libs.
 import Serialize/SerializeCommon
+import Serialize/Verifications/SerializeVerification
 import Serialize/Merit/SerializeBlock
 import Serialize/Lattice/SerializeEntry
 
 #Parsing libs.
-import Serialize/Merit/ParseVerifications
+import Serialize/Verifications/ParseMemoryVerification
 import Serialize/Merit/ParseBlock
 import Serialize/Lattice/ParseClaim
 import Serialize/Lattice/ParseSend
@@ -96,13 +100,12 @@ proc newNetwork*(
                 #Switch based off the message type (in a try to handle invalid messages).
                 try:
                     case msg.content:
-                        of MessageType.Verification:
+                        of MessageType.MemoryVerification:
+                            var verif: MemoryVerification = msg.message.parseMemoryVerification()
                             if nodeEvents.get(
                                 proc (verif: MemoryVerification): bool,
-                                "merit.verification"
-                            )(
-                                msg.message.parseVerification()
-                            ):
+                                "verifications.memory_verification"
+                            )(verif):
                                 network.clients.broadcast(msg)
 
                         of MessageType.Block:
@@ -146,6 +149,36 @@ proc newNetwork*(
                             )(data):
                                 network.clients.broadcast(msg)
 
+                        of MessageType.VerificationRequest:
+                            var
+                                req: seq[string] = msg.message.deserialize(2)
+                            var
+                                key: string = req[0].pad(48)
+                                nonce: uint = uint(req[1].fromBinary())
+                            var
+                                height: uint = network.nodeEvents.get(
+                                    proc (key: string): uint,
+                                    "verifications.getVerifierHeight"
+                                )(key)
+
+                            if height <= nonce:
+                                network.clients.reply(
+                                    msg,
+                                    char(MessageType.DataMissing) &
+                                    char(0)
+                                )
+                            else:
+                                network.clients.reply(
+                                    msg,
+                                    char(MessageType.Verification) &
+                                    !(
+                                        nodeEvents.get(
+                                            proc (key: string, nonce: uint): Verification,
+                                            "verifications.getVerification"
+                                        )(key, nonce).serialize()
+                                    )
+                                )
+
                         of MessageType.BlockRequest:
                             var
                                 requested: uint = uint(msg.message.fromBinary)
@@ -170,7 +203,7 @@ proc newNetwork*(
                                         nodeEvents.get(
                                             proc (nonce: uint): Block,
                                             "merit.getBlock"
-                                        )(nonce).serialize()
+                                        )(requested).serialize()
                                     )
                                 )
 
@@ -208,9 +241,6 @@ proc newNetwork*(
                                     msgType = char(MessageType.Receive)
                                 of EntryType.Data:
                                     msgType = char(MessageType.Data)
-                                of EntryType.MeritRemoval:
-                                    #Ignore this for now.
-                                    discard
 
                             #Send over the Entry.
                             network.clients.reply(msg, msgType & !entry.serialize())

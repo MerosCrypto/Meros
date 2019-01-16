@@ -23,4 +23,5 @@ func serialize*(header: BlockHeader): string {.raises: [].} =
         !header.last.toString() &
         !header.verifications.toString() &
         !header.miners.toString() &
-        !header.time.toBinary()
+        !header.time.toBinary() &
+        !header.proof.toBinary()

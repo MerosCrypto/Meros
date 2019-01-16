@@ -4,6 +4,9 @@ include MainConstants
 var
     events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.
 
+    #Verifications.
+    verifications {.threadvar.}: Verifications
+
     #Merit.
     merit {.threadvar.}: Merit #Blockchain and state.
 
@@ -13,6 +16,7 @@ var
     #Personal.
     miner: bool                  #Miner boolean.
     minerWallet: MinerWallet     #Miner Wallet.
+    verifyLock: Lock             #Verify Lock.
     wallet {.threadvar.}: Wallet #Wallet.
 
     #Network.

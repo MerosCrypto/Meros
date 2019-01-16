@@ -12,7 +12,7 @@ import ../../Wallet/Address
 import ../../Network/Serialize/Lattice/SerializeReceive
 
 #Index object.
-import objects/IndexObj
+import ../common/objects/IndexObj
 
 #Entry object.
 import objects/EntryObj
@@ -30,7 +30,7 @@ proc newReceive*(
     nonce: uint
 ): Receive {.raises: [ValueError, FinalAttributeError].} =
     #Verify the input address.
-    if not Address.verify(index.address):
+    if not Address.verify(index.key):
         raise newException(ValueError, "Receive address is not valid.")
 
     #Craft the result.

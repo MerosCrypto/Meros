@@ -1,31 +1,35 @@
 include MainMerit
 
 #Creates and publishes a Verification.
-proc verify(entry: Entry) {.raises: [
-    KeyError,
-    ValueError,
-    AsyncError,
-    FinalAttributeError
-].} =
+proc verify(entry: Entry) {.async.} =
     #Make sure we're a Miner with Merit.
     if (miner) and (merit.state.getBalance(minerWallet.publicKey) > uint(0)):
         #Make sure we didn't already Verify an Entry at this position.
         if lattice.accounts[entry.sender].entries[int(entry.nonce)].len != 1:
             return
 
+        #Acquire the verify lock.
+        while not tryAcquire(verifyLock):
+            #While we can't acquire it, allow other async processes to run.
+            await sleepAsync(1)
+
         #Verify the Entry.
-        var verif: MemoryVerification = newMemoryVerification(entry.hash)
-        minerWallet.sign(verif)
+        var verif: MemoryVerification = newMemoryVerificationObj(entry.hash)
+        minerWallet.sign(verif, verifications[minerWallet.publicKey.toString()].height)
+
+        #Add the verif to verifications.
+        verifications.add(verif)
+
+        #Release the verify lock.
+        release(verifyLock)
 
         #Discard lattice.verify because it is known to return true.
         discard lattice.verify(merit, verif)
-        #Add the Verification to the unarchived set.
-        lattice.unarchive(verif)
 
         #Broadcast the Verification.
         network.broadcast(
             newMessage(
-                MessageType.Verification,
+                MessageType.MemoryVerification,
                 verif.serialize()
             )
         )
@@ -71,13 +75,6 @@ proc mainLattice() {.raises: [
                 lattice[index]
         )
 
-        #Handle requests for the Unarchived Verifications.
-        events.on(
-            "lattice.getUnarchivedVerifications",
-            proc (): seq[MemoryVerification] =
-                lattice.unarchived
-        )
-
         #Handle Claims.
         events.on(
             "lattice.claim",
@@ -85,8 +82,7 @@ proc mainLattice() {.raises: [
                 ValueError,
                 AsyncError,
                 BLSError,
-                SodiumError,
-                FinalAttributeError
+                SodiumError
             ].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Claim."
@@ -100,7 +96,10 @@ proc mainLattice() {.raises: [
                     echo "Successfully added the Claim."
 
                     #Create a Verification.
-                    verify(claim)
+                    try:
+                        asyncCheck verify(claim)
+                    except:
+                        raise newException(AsyncError, "Couldn't verify an entry.")
                 else:
                     result = false
                     echo "Failed to add the Claim."
@@ -130,7 +129,10 @@ proc mainLattice() {.raises: [
                     echo "Successfully added the Send."
 
                     #Create a Verification.
-                    verify(send)
+                    try:
+                        asyncCheck verify(send)
+                    except:
+                        raise newException(AsyncError, "Couldn't verify an entry.")
 
                     #If the Send is for us, Receive it.
                     if wallet != nil:
@@ -174,8 +176,7 @@ proc mainLattice() {.raises: [
                 ValueError,
                 AsyncError,
                 BLSError,
-                SodiumError,
-                FinalAttributeError
+                SodiumError
             ].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Receive."
@@ -189,7 +190,10 @@ proc mainLattice() {.raises: [
                     echo "Successfully added the Receive."
 
                     #Create a Verification.
-                    verify(recv)
+                    try:
+                        asyncCheck verify(recv)
+                    except:
+                        raise newException(AsyncError, "Couldn't verify an entry.")
                 else:
                     result = false
                     echo "Failed to add the Receive."
@@ -203,8 +207,7 @@ proc mainLattice() {.raises: [
                 ValueError,
                 AsyncError,
                 BLSError,
-                SodiumError,
-                FinalAttributeError
+                SodiumError
             ].} =
                 #Print that we're adding the Entry.
                 echo "Adding a new Data."
@@ -218,7 +221,10 @@ proc mainLattice() {.raises: [
                     echo "Successfully added the Data."
 
                     #Create a Verification.
-                    verify(data)
+                    try:
+                        asyncCheck verify(data)
+                    except:
+                        raise newException(AsyncError, "Couldn't verify an entry.")
                 else:
                     result = false
                     echo "Failed to add the Data."

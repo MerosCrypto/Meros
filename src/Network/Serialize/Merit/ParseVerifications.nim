@@ -1,77 +1,40 @@
-#Errors lib.
-import ../../../lib/Errors
+discard """
+    Please read the note in SerializeVerifications before handling this file.
+"""
 
 #Util lib.
 import ../../../lib/Util
 
-#Hash lib.
-import ../../../lib/Hash
+#VerifierIndex object.
+import ../../../Database/Merit/objects/VerifierIndexObj
 
-#BLS lib.
-import ../../../lib/BLS
-
-#Verification object.
-import ../../../Database/Merit/objects/VerificationsObj
-
-#Serialize/Deserialize functions.
+#Common serialization functions.
 import ../SerializeCommon
 
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
-#Parse a Verification.
-proc parseVerification*(
-    verifStr: string
-): MemoryVerification {.raises: [
-    ValueError,
-    BLSError,
-    FinalAttributeError
-].} =
-    var
-        #Public Key | Entry Hash | Signature
-        verifSeq: seq[string] = verifStr.deserialize(3)
-        #Verifier's Public Key.
-        verifier: BLSPublicKey = newBLSPublicKey(verifSeq[0].pad(48))
-        #Get the Entry hash.
-        entry: string = verifSeq[1].pad(64)
-        #BLS signature.
-        sig: BLSSignature = newBLSSignature(verifSeq[2].pad(96))
-
-    #Create the Verification.
-    result = newMemoryVerificationObj(
-        entry.toHash(512)
-    )
-    result.verifier = verifier
-
-    #Set the signature.
-    result.signature = sig
-
-#Parse Verifications.
+#Parse function.
 proc parseVerifications*(
-    verifsStr: string,
-    aggregate: BLSSignature
-): Verifications {.raises: [
-    ValueError,
-    BLSError,
+    verifsStr: string
+): seq[VerifierIndex] {.raises: [
     FinalAttributeError
 ].} =
-    #Create the result.
-    result = newVerificationsObj()
+    #Init the result.
+    result = @[]
 
-    #Deserialize the data.
-    var verifsSeq: seq[string] = verifsStr.deserialize()
+    #Key1 | Nonce 1 | Merkle1 .. KeyN | NonceN | MerkleN
+    var verifsSeq: seq[string] = verifsStr.deserialize(3)
 
-    #Parse each Verification.
-    for i in countup(0, verifsSeq.len - 1, 2):
-        result.verifications.add(
-            newMemoryVerificationObj(
-                verifsSeq[i+1].pad(64).toHash(512)
-            )
+    #Parse each VerifierIndex.
+    var verifier: VerifierIndex
+    for i in countup(0, verifsSeq.len - 1, 3):
+        #Create the VerifierIndex.
+        verifier = newVerifierIndex(
+            verifsSeq[i].pad(48),
+            uint(verifsSeq[i + 1].fromBinary()),
+            verifsSeq[i + 2].pad(64)
         )
-        result.verifications[^1].verifier = newBLSPublicKey(verifsSeq[i].pad(48))
 
-    #Set the aggregate.
-    result.aggregate = aggregate
+        #Push the VerifierIndex to the seq.
+        result.add(verifier)

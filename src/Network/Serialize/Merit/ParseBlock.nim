@@ -1,20 +1,10 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
+#VerifierIndex object.
+import ../../../Database/Merit/objects/VerifierIndexObj
 
-#Hash lib.
-import ../../../lib/Hash
-
-#BLS lib.
-import ../../../lib/BLS
-
-#Lattice lib.
-import ../../../Database/Lattice/Lattice
-
-#Verifications and Miners objects.
-import ../../../Database/Merit/objects/VerificationsObj
+#Miners object.
 import ../../../Database/Merit/objects/MinersObj
 
 #Block lib.
@@ -36,26 +26,24 @@ proc parseBlock*(
     ValueError,
     ArgonError,
     BLSError,
-    FinalAttributeError
+    FinalAttributeError,
 ].} =
-    #Header | Proof | Verifications Count | Miners
-    var blockSeq: seq[string] = blockStr.deserialize(4)
+    #Header | Verifications | Miners
+    var blockSeq: seq[string] = blockStr.deserialize(3)
+
+    #Parse the elements.
+    var
+        header: BlockHeader = blockSeq[0].parseBlockHeader()
+        verifs: seq[VerifierIndex] = blockSeq[1].parseVerifications()
+        miners: Miners = blockSeq[2].parseMiners()
 
     #Create the Block Object.
-    result = Block()
-
-    #Set the Header.
-    result.header = blockSeq[0].parseBlockHeader()
-    #Set the proof.
-    result.proof = uint(blockSeq[1].fromBinary())
-
-    #Set the hash.
-    result.hash = SHA512(blockSeq[0])
-    #Set the Argon hash.
-    result.argon = Argon(result.hash.toString(), result.proof.toBinary())
-
-    #Set the Verifications.
-    result.verifications = blockSeq[2].parseVerifications(result.header.verifications)
-
-    #Set the Miners.
-    result.miners = blockSeq[3].parseMiners()
+    result = newBlockObj(
+        header.nonce,
+        header.last,
+        header.verifications,
+        verifs,
+        miners,
+        header.time,
+        header.proof
+    )

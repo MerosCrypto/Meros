@@ -1,10 +1,9 @@
-include MainGlobals
+include MainVerifications
 
 proc mainMerit() {.raises: [
     ValueError,
     AsyncError,
-    ArgonError,
-    BLSError
+    ArgonError
 ].} =
     {.gcsafe.}:
         #Create the Merit.
@@ -31,30 +30,6 @@ proc mainMerit() {.raises: [
                 merit.blockchain.blocks[int(nonce)]
         )
 
-        #Handle Verifications.
-        events.on(
-            "merit.verification",
-            proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].} =
-                #Print that we're adding the Verification.
-                echo "Adding a new Verification."
-
-                #Verify the signature.
-                verif.signature.setAggregationInfo(
-                    newBLSAggregationInfo(verif.verifier, verif.hash.toString())
-                )
-                if not verif.signature.verify():
-                    return false
-
-                #Add the Verification to the Lattice.
-                result = lattice.verify(merit, verif)
-                if not result:
-                    echo "Failed to add the Verification."
-
-                #Add the Verification to the unarchived set.
-                lattice.unarchive(verif)
-                echo "Successfully added the Verification."
-        )
-
         #Handle full blocks.
         try:
             events.on(
@@ -76,36 +51,69 @@ proc mainMerit() {.raises: [
                                     echo "Failed to add the Block."
                                     return false
 
-                        #Missing Entries.
+                        #Missing Verifications/Entries.
                         if not await newBlock.sync(network, network.clients.clients[0]):
                             echo "Failed to add the Block."
                             return false
 
-                    #Verify we have all the Entries.
-                    for verif in newBlock.verifications.verifications:
-                        if not lattice.lookup.hasKey(verif.hash.toString()):
+                    if newBlock.verifications.len > 0:
+                        #Verify we have all the Verifications and Entries, as well as verify the signature.
+                        var agInfos: seq[ptr BLSAggregationInfo] = @[]
+                        for index in newBlock.verifications:
+                            #Verify we have the Verifier.
+                            if not verifications.hasKey(index.key):
+                                echo "Failed to add the Block."
+                                return false
+
+                            #Verify this isn't archiving archived Verifications.
+                            if index.nonce < verifications[index.key].archived:
+                                echo "Failed to add the Block."
+                                return false
+
+                            #Verify we have all the Verifications.
+                            if index.nonce >= verifications[index.key].height:
+                                echo "Failed to add the Block."
+                                return false
+
+                            #Check the merkle.
+                            if verifications[index.key].calculateMerkle(index.nonce) != index.merkle:
+                                echo "Failed to add the Block."
+                                return false
+
+                            var
+                                verifierArchived: uint = verifications[index.key].archived
+                                #Grab this Verifier's verifications.
+                                verifierVerifs: seq[Verification] = verifications[index.key][verifierArchived .. index.nonce]
+                                #Declare an aggregation info seq for this verifier.
+                                verifierAgInfos: seq[ptr BLSAggregationInfo] = newSeq[ptr BLSAggregationInfo](verifierVerifs.len)
+                            for v in 0 ..< verifierVerifs.len:
+                                #Make sure the Lattice has this Entry.
+                                if not lattice.lookup.hasKey(verifierVerifs[v].hash.toString()):
+                                    return false
+
+                                #Create an aggregation info for this verification.
+                                verifierAgInfos[v] = cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo)))
+                                verifierAgInfos[v][] = newBLSAggregationInfo(verifierVerifs[v].verifier, verifierVerifs[v].hash.toString())
+
+                            #Add the Verifier's aggregation info to the seq.
+                            agInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
+                            agInfos[^1][] = verifierAgInfos.aggregate()
+                        #Add the aggregate info to the signature.
+                        newBlock.header.verifications.setAggregationInfo(agInfos.aggregate())
+                        if not newBlock.header.verifications.verify():
                             echo "Failed to add the Block."
                             return false
-
-                    #Verify the Verifications.
-                    if not newBlock.verifications.verify():
-                        echo "Failed to add the Block."
-                        return false
 
                     #Add the Block to the Merit.
                     var rewards: Rewards
                     try:
-                        rewards = merit.processBlock(newBlock)
+                        rewards = merit.processBlock(verifications, newBlock)
                     except:
                         echo "Failed to add the Block."
                         return false
 
-                    #Add each Verification.
-                    for verif in newBlock.verifications.verifications:
-                        #Discard the result since we already made sure the hash exists.
-                        discard lattice.verify(merit, verif)
-                        #Archive the verification.
-                        lattice.archive(verif)
+                    #Archive the Verifications mentioned in the Block.
+                    verifications.archive(newBlock.verifications, newBlock.header.nonce)
 
                     #Create the Mints (which ends up minting a total of of 50000 EMB).
                     var

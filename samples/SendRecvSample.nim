@@ -6,7 +6,7 @@ import ../src/lib/Base
 import ../src/Wallet/Wallet
 
 #Index object.
-import ../src/Database/Lattice/objects/IndexObj
+import ../src/Database/common/objects/IndexObj
 
 #Send/Receive Entries.
 import ../src/Database/Lattice/Send

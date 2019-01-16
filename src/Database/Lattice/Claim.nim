@@ -6,7 +6,7 @@ import ../../lib/Hash
 
 #BLS/MinerWallet libs.
 import ../../lib/BLS
-import ../Merit/MinerWallet
+import ../../Wallet/MinerWallet
 
 #Wallet libs.
 import ../../Wallet/Wallet

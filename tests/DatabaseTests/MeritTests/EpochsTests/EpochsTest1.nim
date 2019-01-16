@@ -6,8 +6,15 @@ import BN
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#BLS lib.
+#Merkle lib.
+import ../../../../src/lib/Merkle
+
+#BLS and minerWallet libs.
 import ../../../../src/lib/BLS
+import ../../../../src/Wallet/MinerWallet
+
+#Verifications lib.
+import ../../../../src/Database/Verifications/Verifications
 
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
@@ -19,19 +26,22 @@ import EpochsTestCommon
 import strutils
 
 var
-    #Epochs.
-    epochs: Epochs = newEpochs()
+    #Verifications.
+    verifications: Verifications = newVerifications()
     #Blockchain.
     blockchain: Blockchain = newBlockchain("epoch test", 1, newBN(0))
     #State.
     state: State = newState(100)
-    #BLS Keys.
-    key: BLSPrivateKey = newBLSPrivateKeyFromSeed("0")
+    #Epochs.
+    epochs: Epochs = newEpochs()
+    #VerifierIndexes.
+    verifs: seq[VerifierIndex] = @[]
+
+    #MinerWallet.
+    miner: MinerWallet = newMinerWallet()
     #Hash.
     hash: Hash[512] = "aa".repeat(64).toHash(512)
-    #Verifications object.
-    verifications: Verifications = newVerificationsObj()
-    #Temporary Verification object.
+    #MemoryVerification object.
     verif: MemoryVerification
     #Rewards.
     rewards: Rewards
@@ -41,30 +51,37 @@ state.processBlock(
     blockchain,
     blankBlock(@[
         newMinerObj(
-            key.getPublicKey(),
+            miner.publicKey,
             100
         )
     ])
 )
 
-#Add a Hash 0/Key 0 Verification.
+#Add a Verification.
 verif = newMemoryVerificationObj(hash)
-verif.verifier = key.getPublicKey()
-verifications.verifications.add(verif)
+miner.sign(verif, 0)
+#Add it the Verifications.
+verifications.add(verif)
+#Add a VerifierIndex.
+verifs.add(newVerifierIndex(
+    miner.publicKey.toString(),
+    0,
+    newMerkle(hash.toString()).hash
+))
 
 #Shift on the Verifications.
-rewards = epochs.shift(verifications).calculate(state)
+rewards = epochs.shift(verifications, verifs).calculate(state)
 assert(rewards.len == 0)
 
 #Shift 5 over.
 for _ in 0 ..< 5:
-    rewards = epochs.shift(newVerificationsObj()).calculate(state)
+    rewards = epochs.shift(verifications, @[]).calculate(state)
     assert(rewards.len == 0)
 
 #Next shift should result in a Rewards of Key 0, 1000.
-rewards = epochs.shift(newVerificationsObj()).calculate(state)
+rewards = epochs.shift(verifications, @[]).calculate(state)
 assert(rewards.len == 1)
-assert(rewards[0].key == key.getPublicKey().toString())
+assert(rewards[0].key == miner.publicKey.toString())
 assert(rewards[0].score == 1000)
 
 echo "Finished the Database/Merit/Epochs Test #1."
