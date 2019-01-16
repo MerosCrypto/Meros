@@ -2,7 +2,6 @@
 
 ### Verifications Redo:
 - Update DBDump Sample.
-- Test the ClientClaim sample.
 
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
