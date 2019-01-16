@@ -47,7 +47,7 @@ proc sign*(
     #Set the sender behind the Entry.
     claim.sender = wallet.address
 
-    #Sign MintNonce & "." & EMBAddress
+    #Sign MintNonce & "." & MerosAddress
     claim.bls = miner.sign($claim.mintNonce & "." & claim.sender)
 
     #Set the hash.

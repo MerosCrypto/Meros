@@ -115,7 +115,7 @@ proc mainMerit() {.raises: [
                     #Archive the Verifications mentioned in the Block.
                     verifications.archive(newBlock.verifications, newBlock.header.nonce)
 
-                    #Create the Mints (which ends up minting a total of of 50000 EMB).
+                    #Create the Mints (which ends up minting a total of of 50000 MEROS).
                     var
                         #Nonce of the Mint.
                         mintNonce: uint

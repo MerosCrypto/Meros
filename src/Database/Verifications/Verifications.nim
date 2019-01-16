@@ -39,7 +39,7 @@ proc newVerifications*(): Verifications =
 proc add*(
     verifs: Verifications,
     verif: Verification
-) {.raises: [KeyError, EmbIndexError].} =
+) {.raises: [KeyError, MerosIndexError].} =
     if not verifs.hasKey(verif.verifier.toString()):
         verifs[verif.verifier.toString()] = newVerifierObj(verif.verifier.toString())
 

@@ -48,7 +48,7 @@
 - Replace bools as status codes with Exceptions.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Add `DataExistsError` for when data has already been added.
-- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `EmbIndexError`.
+- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Use `sugerror`'s `reraise` for all our Exception wrapping.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
@@ -76,7 +76,7 @@
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Document the Message Types.
 - Use Nim Documentation Comments.
-- Ember Whitepaper.
+- Meros Whitepaper.
 
 ### Community Service:
 - Create a Nimble library out of ED25519.

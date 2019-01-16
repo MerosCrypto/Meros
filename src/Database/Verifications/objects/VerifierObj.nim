@@ -36,10 +36,10 @@ func newVerifierObj*(key: string): Verifier =
     result.ffinalizeKey()
 
 #Add a Verification to a Verifier.
-proc add*(verifier: Verifier, verif: Verification) {.raises: [EmbIndexError].} =
+proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError].} =
     #Verify the Verification's Verifier.
     if verif.verifier.toString() != verifier.key:
-        raise newException(EmbIndexError, "Verification's Verifier doesn't match the Verifier we're adding it to.")
+        raise newException(MerosIndexError, "Verification's Verifier doesn't match the Verifier we're adding it to.")
 
     #Verify the Verification's Nonce.
     if verif.nonce != verifier.height:
@@ -47,7 +47,7 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [EmbIndexError].} =
             #MERIT REMOVAL.
             discard
         #Already added.
-        raise newException(EmbIndexError, "Verification has already been added.")
+        raise newException(MerosIndexError, "Verification has already been added.")
 
     #Verify this isn't a double spend.
     for oldVerif in verifier.verifications:
@@ -64,7 +64,7 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [EmbIndexError].} =
     verifier.verifications.add(verif)
 
 #Add a MemoryVerification to a Verifier.
-proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError, EmbIndexError].} =
+proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError, MerosIndexError].} =
     #Verify the signature.
     verif.signature.setAggregationInfo(
         newBLSAggregationInfo(verif.verifier, verif.hash.toString())

@@ -1,6 +1,6 @@
 # Usage
 
-The default Ember RPC port is 5333. Requests are sent as JSON, and are sent with a new line after them. Requests are NOT HTTP POST requests.
+The default Meros RPC port is 5333. Requests are sent as JSON, and are sent with a new line after them. Requests are NOT HTTP POST requests.
 
 Every request has three fields.
 - `module`, a string of the name of the RPC module you're trying to access There's `system`, `personal`, `merit`, `lattice`, and `network`.

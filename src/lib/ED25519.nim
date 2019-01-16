@@ -16,7 +16,7 @@ import strutils
 import nimcrypto
 
 #SIGN_PREFIX applied to every message.
-const SIGN_PREFIX {.strdefine.}: string = "EMB"
+const SIGN_PREFIX {.strdefine.}: string = "MEROS"
 
 #Seed constructor.
 proc newEdSeed*(): Seed {.raises: [RandomError].} =

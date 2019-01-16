@@ -68,7 +68,7 @@ proc newGUI*(
             toRPC,
             toGUI,
             newWebView(
-                "Ember Core",
+                "Meros Core",
                 "",
                 width,
                 height

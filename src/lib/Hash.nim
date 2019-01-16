@@ -2,11 +2,11 @@
 import Hash/HashCommon
 export HashCommon
 
-#SHA3 lib (used by Ember).
+#SHA3 lib (used by Meros).
 import Hash/SHA3
 export SHA3
 
-#Argon lib (used by Ember).
+#Argon lib (used by Meros).
 import Hash/Argon
 export Argon
 

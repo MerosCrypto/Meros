@@ -3,7 +3,7 @@ include MainGlobals
 proc mainVerifications() {.raises: [
     KeyError,
     ValueError,
-    EmbIndexError,
+    MerosIndexError,
     BLSError,
     FinalAttributeError
 ].} =
@@ -104,7 +104,7 @@ proc mainVerifications() {.raises: [
         #Handle Verifications.
         events.on(
             "verifications.verification",
-            proc (verif: Verification) {.raises: [ValueError, EmbIndexError].} =
+            proc (verif: Verification) {.raises: [ValueError, MerosIndexError].} =
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification from a Block."
 
@@ -118,7 +118,7 @@ proc mainVerifications() {.raises: [
         #Handle Verifications.
         events.on(
             "verifications.memory_verification",
-            proc (verif: MemoryVerification): bool {.raises: [ValueError, EmbIndexError, BLSError].} =
+            proc (verif: MemoryVerification): bool {.raises: [ValueError, MerosIndexError, BLSError].} =
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification."
 

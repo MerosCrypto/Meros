@@ -2,25 +2,25 @@
 
 ### Dependencies
 
-Ember requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work but are untested), Nim 0.19.2, Nimble, GMP, Chia's BLS library, and LibSodium.
+Meros requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work but are untested), Nim 0.19.2, Nimble, GMP, Chia's BLS library, and LibSodium.
 
 - For how to install Nim/Nimble, see https://nim-lang.org/install_windows.html.
 - For GMP, go to https://github.com/Legrandin/mpir-windows-builds. Download the MPIR DLL for your platform, and put it in your `/build` directory as `libgmp.dll`.
-- For BLS, see https://github.com/EmberCrypto/ec_bls.
+- For BLS, see https://github.com/MerosCrypto/ec_bls.
 - For LibSodium, download https://download.libsodium.org/libsodium/releases/libsodium-1.0.16-mingw.tar.gz. Extract the files and open the folder for your arch. Place `bin/libsodium-23.dll` in your `/build` directory. Place `lib/libsodium.a` in your compiler's static library folder.
 
 Now, install the Nimble packages.
 
 ```
-nimble install https://github.com/EmberCrypto/BN ec_events https://github.com/EmberCrypto/Argon2 https://github.com/EmberCrypto/ec_bls https://github.com/EmberCrypto/WebView
+nimble install https://github.com/MerosCrypto/BN ec_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/ec_bls https://github.com/MerosCrypto/WebView
 nimble install finals nimcrypto rocksdb
 ```
 
-### Ember
+### Meros
 
 ```
-git clone https://github.com/EmberCrypto/Ember.git
-cd Ember
+git clone https://github.com/MerosCrypto/Meros.git
+cd Meros
 nim c src/main.nim
 ```
 

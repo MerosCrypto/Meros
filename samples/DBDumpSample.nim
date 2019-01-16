@@ -1,5 +1,5 @@
-#Ember RPC module.
-import EmberRPC
+#Meros RPC module.
+import MerosRPC
 
 #Async standard lib.
 import asyncdispatch
@@ -12,7 +12,7 @@ import sequtils
 
 var
     #RPC.
-    rpc: EmberRPC = waitFor newEmberRPC(port = 5135)
+    rpc: MerosRPC = waitFor newMerosRPC(port = 5135)
     #DB.
     db: JSONNode = %* {
         "verifications": {},

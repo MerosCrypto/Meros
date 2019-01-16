@@ -6,7 +6,7 @@ include MainImports
 const
     #Merit constants.
     GENESIS: string =          #Genesis string.
-        "EMB_DEVELOPER_TESTNET"
+        "MEROS_DEVELOPER_TESTNET_1D"
     BLOCK_DIFFICULTY: string = #Blockchain difficulty at the start.
         "FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     BLOCK_TIME: uint = 600     #Block time in seconds.

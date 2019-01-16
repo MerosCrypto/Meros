@@ -32,7 +32,7 @@ import algorithm
 #Tables standard lib.
 import tables
 
-#Calculate what share each person deserves of the minted Ember.
+#Calculate what share each person deserves of the minted Meros.
 proc calculate*(
     epoch: Epoch,
     state: State

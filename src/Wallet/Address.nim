@@ -15,7 +15,7 @@ import strutils
 import sequtils
 
 #Human readable data.
-const ADDRESS_HRP {.strdefine.}: string = "Emb"
+const ADDRESS_HRP {.strdefine.}: string = "Meros"
 
 #Hex constants used for the BCH code.
 const BCH_VALUES: array[5, uint32] = [
@@ -77,7 +77,7 @@ func verifyBCH(data: seq[uint8]): bool {.raises: [].} =
 
 #Generates a address using a modified form of Bech32 based on a public key.
 #An address is composed of the following:
-#   1. "Emb" prefix (human readable data part).
+#   1. "Meros" prefix (human readable data part).
 #   2. Base32 version of the public key.
 #   3. A BCH code.
 func newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
