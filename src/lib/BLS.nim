@@ -92,7 +92,7 @@ proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.raises: [BLSError].} =
         )
 
 proc aggregate*(
-    agInfos: seq[BLSAggregationInfo]
+    agInfos: seq[ptr BLSAggregationInfo]
 ): BLSAggregationInfo {.raises: [BLSError].} =
     try:
         result = ec_bls.aggregate(agInfos)
