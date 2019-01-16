@@ -46,8 +46,8 @@ var
         char(6) &
         char(0)
 
-    sendType: char = char(11)              #Send Message Type.
-    recvType: char = char(12)              #Receive Message Type.
+    sendType: char = char(12)              #Send Message Type.
+    recvType: char = char(13)              #Receive Message Type.
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.

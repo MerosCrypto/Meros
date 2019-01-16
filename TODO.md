@@ -3,9 +3,11 @@
 ### Verifications Redo:
 - Update Syncing.
 - Update DBDump Sample.
-- Test the Client and ClientClaim samples.
+- Test the ClientClaim sample.
 
 ### Core:
+- Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
+
 - Improve the Difficulty algorithm.
 - Inactive Merit.
 - Have Merit Holders indexable by the order they got Merit in.
