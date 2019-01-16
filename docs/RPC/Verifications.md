@@ -1,5 +1,12 @@
 # Verifications Module
 
+### `getVerification`
+`getVerification` will fetch and return the hash of a specified verification. It takes in two arguments:
+- Verifier (string)
+- Nonce (int)
+It returns:
+- `hash` (string)
+
 ### `getUnarchivedVerifications`
 `getUnarchivedVerifications` will fetch and return all accounts with unarchived verifications. It takes in zero arguments and returns an array of objects, each as follows:
 - `verifier`  (string)

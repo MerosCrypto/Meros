@@ -34,6 +34,27 @@ import strutils
 #JSON standard lib.
 import json
 
+#Get a Verification.
+proc getVerification(
+    rpc: RPC,
+    key: string,
+    nonce: uint
+): JSONnode {.raises: [EventError].} =
+    try:
+        result = %* {
+            "hash": $(
+                rpc.events.get(
+                    proc (key: string, nonce: uint): Verification,
+                    "verifications.getVerification"
+                )(
+                    key,
+                    nonce
+                ).hash
+            )
+        }
+    except:
+        raise newException(EventError, "Couldn't get and call verifications.getVerification.")
+
 #Get unarchived verifications.
 proc getUnarchivedVerifications(
     rpc: RPC
@@ -88,6 +109,12 @@ proc verificationsModule*(
     try:
         #Switch based off the method.
         case json["method"].getStr():
+            of "getVerification":
+                res = rpc.getVerification(
+                    json["args"][0].getStr().parseHexStr(),
+                    uint(json["args"][1].getInt())
+                )
+
             of "getUnarchivedVerifications":
                 res = rpc.getUnarchivedVerifications()
 
