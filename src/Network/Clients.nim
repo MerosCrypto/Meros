@@ -104,6 +104,8 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
         hashes: Table[string, seq[string]] = initTable[string, seq[string]]()
         #Table to store the Verifications in.
         verifications: Table[string, seq[Verification]] = initTable[string, seq[Verification]]()
+        #List of verified Entries.
+        entries: seq[string] = @[]
 
     #Make sure we have all the Verifications in it.
     for verifier in newBlock.verifications:
@@ -169,6 +171,7 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
                 #Add it.
                 verifications[gap.key].add(verif)
                 hashes[gap.key].add(verif.hash.toString())
+                entries.add(verif.hash.toString())
 
         #Check the Block's aggregate.
         #Aggregate Infos for each Verifier.
@@ -194,7 +197,19 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
 
         echo "Downloaded verifications and verified they're legit."
 
-        discard """
+        #Download the Entries.
+        #Dedeuplicate the list.
+        entries = entries.deduplicate()
+        #Iterate over each entry.
+        for entry in entries:
+            #Send the Request.
+            await socket.send(
+                char(MessageType.EntryRequest) &
+                !entry
+            )
+
+            #Get the response.
+            var res: tuple[header: string, msg: string] = await socket.recv()
             #Add it.
             case MessageType(res.header[0]):
                 of MessageType.Claim:
@@ -231,7 +246,19 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
 
                 else:
                     return false
-        """
+
+        #Since we now have every Entry, add the Verifications.
+        for index in newBlock.verifications:
+            for verif in verifications[index.key]:
+                #If we failed to add this (shows up as an Exception), due to a MeritRemoval, the Block won't be added.
+                #That said, the aggregate proves these are valid Verifications.
+                network.nodeEvents.get(
+                    proc (verif: Verification),
+                    "verifications.verification"
+                )(verif)
+
+        echo "Added every Entry and Verification."
+
     except:
         raise
 

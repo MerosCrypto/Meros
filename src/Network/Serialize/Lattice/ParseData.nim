@@ -34,7 +34,7 @@ proc parseData*(
 ].} =
     var
         #Public Key | Nonce | Data | Proof | Signature
-        dataSeq: seq[string] = sendStr.deserialize(6)
+        dataSeq: seq[string] = sendStr.deserialize(5)
         #Get the sender's Public Key.
         sender: EdPublicKey = newEdPublicKey(dataSeq[0].pad(32))
         #Get the sender's address.
@@ -44,7 +44,7 @@ proc parseData*(
         #Get the data.
         data: string = dataSeq[2]
         #Get the proof.
-        proof: string = dataSeq[3]
+        proof: uint = uint(dataSeq[3].fromBinary())
         #Get the signature.
         signature: string = dataSeq[4].pad(64)
 
@@ -59,9 +59,9 @@ proc parseData*(
     #Set the SHA512 hash.
     result.sha512 = SHA512(data)
     #Set the proof.
-    result.proof = uint(proof.fromBinary())
+    result.proof = proof
     #Set the hash.
-    result.hash = Argon(result.sha512.toString(), proof, true)
+    result.hash = Argon(result.sha512.toString(), proof.toBinary(), true)
 
     #Set the signature.
     result.signature = signature

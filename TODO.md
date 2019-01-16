@@ -1,12 +1,12 @@
 # TODO
 
 ### Verifications Redo:
-- Update Syncing.
 - Update DBDump Sample.
 - Test the ClientClaim sample.
 
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
+- Update Verifications to use Ed25519 Public Key + nonce, instead of the hash. 28 byte savings + gap detection while syncing.
 
 - Improve the Difficulty algorithm.
 - Inactive Merit.
@@ -14,7 +14,7 @@
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 
-- Make sure serialized elements are unique (data is just `!data.nonce.toBinary() & !data.data` which is a collision waiting to happen).
+- Make sure hash sources are unique (data is just `data.data` which is a collision waiting to happen).
 - Remove direct references to clients[0].
 - Sync Entries not on the Blockchain.
 - Sync Verifications not on the Blockchain.

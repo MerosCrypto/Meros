@@ -171,12 +171,3 @@ proc add*(
 
     #Add the Data.
     result = account.add(cast[Entry](data))
-
-#Add a Merit Removal.
-discard """
-func add*(
-    account: Account,
-    mr: MeritRemoval
-): bool {.raises: [ValueError].} =
-    result = account.add(cast[Entry](mr))
-"""

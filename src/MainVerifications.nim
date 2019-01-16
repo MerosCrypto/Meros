@@ -86,6 +86,20 @@ proc mainVerifications() {.raises: [
 
         #Handle Verifications.
         events.on(
+            "verifications.verification",
+            proc (verif: Verification) {.raises: [ValueError, EmbIndexError].} =
+                #Print that we're adding the Verification.
+                echo "Adding a new Verification from a Block."
+
+                #Add the Verification to the Verifications.
+                verifications.add(verif)
+
+                #Add the Verification to the Lattice (discarded since we confirmed the Entry's existence).
+                discard lattice.verify(merit, verif)
+        )
+
+        #Handle Verifications.
+        events.on(
             "verifications.memory_verification",
             proc (verif: MemoryVerification): bool {.raises: [ValueError, EmbIndexError, BLSError].} =
                 #Print that we're adding the Verification.
