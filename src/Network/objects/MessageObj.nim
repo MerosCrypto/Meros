@@ -10,18 +10,19 @@ finalsd:
         MessageType* = enum
             Handshake = 0,
             Syncing = 1,
-            BlockRequest = 2,
-            VerificationRequest = 3,
+            VerificationRequest = 2,
+            BlockRequest = 3,
             EntryRequest = 4,
             DataMissing = 5,
             SyncingOver = 6,
             HandshakeOver = 7,
-            MemoryVerification = 8,
-            Block = 9,
-            Claim = 10,
-            Send = 11,
-            Receive = 12,
-            Data = 13
+            Verification = 8,
+            MemoryVerification = 9,
+            Block = 10,
+            Claim = 11,
+            Send = 12,
+            Receive = 13,
+            Data = 14
 
         #Message object.
         Message* = ref object of RootObj

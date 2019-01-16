@@ -18,6 +18,7 @@ import ../Database/Lattice/Lattice
 
 #Serialization libs.
 import Serialize/SerializeCommon
+import Serialize/Verifications/SerializeVerification
 import Serialize/Merit/SerializeBlock
 import Serialize/Lattice/SerializeEntry
 
@@ -148,6 +149,36 @@ proc newNetwork*(
                             )(data):
                                 network.clients.broadcast(msg)
 
+                        of MessageType.VerificationRequest:
+                            var
+                                req: seq[string] = msg.message.deserialize(2)
+                            var
+                                key: string = req[0].pad(48)
+                                nonce: uint = uint(req[1].fromBinary())
+                            var
+                                height: uint = network.nodeEvents.get(
+                                    proc (key: string): uint,
+                                    "verifications.getVerifierHeight"
+                                )(key)
+
+                            if height <= nonce:
+                                network.clients.reply(
+                                    msg,
+                                    char(MessageType.DataMissing) &
+                                    char(0)
+                                )
+                            else:
+                                network.clients.reply(
+                                    msg,
+                                    char(MessageType.Verification) &
+                                    !(
+                                        nodeEvents.get(
+                                            proc (key: string, nonce: uint): Verification,
+                                            "verifications.getVerification"
+                                        )(key, nonce).serialize()
+                                    )
+                                )
+
                         of MessageType.BlockRequest:
                             var
                                 requested: uint = uint(msg.message.fromBinary)
@@ -172,7 +203,7 @@ proc newNetwork*(
                                         nodeEvents.get(
                                             proc (nonce: uint): Block,
                                             "merit.getBlock"
-                                        )(nonce).serialize()
+                                        )(requested).serialize()
                                     )
                                 )
 

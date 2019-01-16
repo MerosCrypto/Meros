@@ -10,6 +10,20 @@ proc mainVerifications() {.raises: [
     {.gcsafe.}:
         verifications = newVerifications()
 
+        #Provide access to the verifier's height.
+        events.on(
+            "verifications.getVerifierHeight",
+            proc (key: string): uint {.raises: [KeyError].} =
+                verifications[key].height
+        )
+
+        #Provide access to verifications.
+        events.on(
+            "verifications.getVerification",
+            proc (key: string, nonce: uint): Verification {.raises: [KeyError].} =
+                verifications[key][nonce]
+        )
+
         #Provide access to the VerifierIndexes of verifiers with unarchived Verifications.
         events.on(
             "verifications.getUnarchivedIndexes",
@@ -45,6 +59,29 @@ proc mainVerifications() {.raises: [
 
                 #Return the hash.
                 return sigs.aggregate()
+        )
+
+        #Used to calculate the aggregate with Verifications we just downloaded.
+        events.on(
+            "verifications.getPendingHashes",
+            proc (
+                key: string,
+                nonceArg: uint
+            ): seq[string] {.raises: [KeyError].} =
+                result = @[]
+
+                #Make sure there are verifications.
+                if verifications[key].height == 0:
+                    return
+
+                #Make sure the nonce is within bounds.
+                var nonce: uint = nonceArg
+                if verifications[key].height <= nonce:
+                    nonce = verifications[key].height - 1
+
+                #Add the hashes.
+                for verif in verifications[key][verifications[key].archived .. nonce]:
+                    result.add(verif.hash.toString())
         )
 
         #Handle Verifications.
