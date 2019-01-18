@@ -52,8 +52,13 @@ proc archive*(verifs: Verifications, indexes: seq[VerifierIndex], archived: uint
 
     #Iterate over every Index.
     for index in indexes:
-        #Calculate the start.
-        start = verifs[index.key].archived + 1
+        #Archived should start at -1, but can't since it's an uint.
+        #This means it needs this overide to work.
+        if verifs[index.key][0].archived == 0:
+            start = 0
+        else:
+            start = verifs[index.key].archived + 1
+
         #Iterate over every Verification.
         for i in start .. index.nonce:
             #Archive the Verification.

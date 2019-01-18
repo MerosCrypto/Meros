@@ -31,21 +31,15 @@ proc mainVerifications() {.raises: [
                 #Calculate who has new Verifications.
                 result = @[]
                 for verifier in verifications.keys():
+                    #Skip over verifier's with no Verifications, if any manage to exist.
+                    if verifications[verifier].height == 0:
+                        continue
+
                     #Generally, we'd only need to see if the height is greater than the archived.
                     #That said, archived is supposed to start at -1. It can't as an uint.
-                    #To solve this, we need to have an override here.
-
-                    #Both of the following conditions must be met for this Verifier to be fully archived.
-                    # 1) Their height - 1 == their archived
-                    # (which only fails when their height is 1 but their archived is 0).
-                    # 2) Their height is 1 and their first verification was archived.
-                    if (
-                        (verifications[verifier].archived == verifications[verifier].height - 1) and
-                        (
-                            (verifications[verifier].height == 1) and
-                            (verifications[verifier][0].archived != 0)
-                        )
-                    ):
+                    #To solve this, we have a different check.
+                    #We check if the tip Verification was archived or not.
+                    if verifications[verifier][^1].archived != 0:
                         continue
 
                     #Since there are unarchived verifications, add the VerifierIndex.

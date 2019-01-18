@@ -79,6 +79,9 @@ proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError, Me
 func `[]`*(verifier: Verifier, index: uint): Verification {.raises: [].} =
     verifier.verifications[int(index)]
 
+func `[]`*(verifier: Verifier, index: BackwardsIndex): Verification {.raises: [].} =
+    verifier.verifications[index]
+
 func `[]`*(verifier: Verifier, slice: Slice[uint]): seq[Verification] {.raises: [].} =
     verifier.verifications[int(slice.a) .. int(slice.b)]
 
