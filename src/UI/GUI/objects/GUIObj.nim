@@ -2,13 +2,13 @@
 import ../../../Wallet/Wallet
 
 #Events lib.
-import ec_events
+import mc_events
 
 #Finals lib.
 import finals
 
 #WebView.
-import ec_webview
+import mc_webview
 
 #JSON standard lib.
 import json

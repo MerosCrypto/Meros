@@ -12,10 +12,10 @@ export GUIObj
 import Bindings/Bindings
 
 #Events lib.
-import ec_events
+import mc_events
 
 #WebView.
-import ec_webview
+import mc_webview
 
 #Async standard lib.
 import asyncdispatch

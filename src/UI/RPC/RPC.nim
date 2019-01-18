@@ -14,7 +14,7 @@ import Modules/LatticeModule
 import Modules/NetworkModule
 
 #EventEmitter lib.
-import ec_events
+import mc_events
 
 #Async standard lib.
 import asyncdispatch

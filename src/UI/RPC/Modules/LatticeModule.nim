@@ -17,7 +17,7 @@ import ../../../Database/Lattice/Lattice
 import ../objects/RPCObj
 
 #EventEmitter lib.
-import ec_events
+import mc_events
 
 #Finals lib.
 import finals

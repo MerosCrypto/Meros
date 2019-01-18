@@ -36,7 +36,7 @@ import Serialize/SerializeCommon
 import Serialize/Merit/SerializeBlock
 
 #Events lib.
-import ec_events
+import mc_events
 
 #Networking standard libs.
 import asyncnet, asyncdispatch
