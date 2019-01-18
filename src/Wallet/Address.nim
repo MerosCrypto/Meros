@@ -15,7 +15,7 @@ import strutils
 import sequtils
 
 #Human readable data.
-const ADDRESS_HRP {.strdefine.}: string = "Meros"
+const ADDRESS_HRP {.strdefine.}: string = "Mr"
 
 #Hex constants used for the BCH code.
 const BCH_VALUES: array[5, uint32] = [
