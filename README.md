@@ -1,4 +1,4 @@
-# <img src="https://github.com/kayabaNerve/Meros/raw/master/logos/logo32.png" height="32px"/> Meros
+# <img src="https://github.com/MerosCrypto/Meros/raw/master/logos/logo32.png" height="32px"/> Meros
 
 ## An instant and feeless cryptocurrency for the future, secured by the Merit Caching Algorithm.
 
