@@ -66,14 +66,14 @@ func isFull(tree: Merkle): bool {.raises: [].} =
 #Returns the deptch of the tree.
 func depth(tree: Merkle): int {.raises: [].} =
     if tree.isLeaf:
-        return 1
+        return 0
 
     #We use tree.left because the left tree will alaways be non-nil.
     return 1 + tree.left.depth
 
 #Creates a Merkle Tree out of a single hash, filling in duplicates.
 proc chainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
-    if depth == 1:
+    if depth == 0:
         return newMerkle(hash)
     return newMerkle(chainOfDepth(depth - 1, hash), nil)
 
