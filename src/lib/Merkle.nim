@@ -24,6 +24,14 @@ func newMerkle(hash: string): Merkle {.raises: [].} =
         hash: hash
     )
 
+#tostring
+proc `$`*(tree: Merkle): string =
+    if tree.isNil:
+        return "_"
+    if tree.isLeaf:
+        return tree.hash
+    return "M(" & $tree.left & ", " & $tree.right & ")"
+
 #Rehashes a Merkle Tree.
 proc rehash(tree: Merkle) {.raises: [].} =
     #If this is a Leaf, its hash is constant.
@@ -70,6 +78,14 @@ func depth(tree: Merkle): int {.raises: [].} =
 
     #We use tree.left because the left tree will alaways be non-nil.
     return 1 + tree.left.depth
+
+#Number of leaves
+func leafCount(tree: Merkle): int {.raises: [].} =
+    if tree.isNil:
+        return 0
+    if tree.isLeaf:
+        return 1
+    return tree.left.leafCount + tree.right.leafCount
 
 #Creates a Merkle Tree out of a single hash, filling in duplicates.
 proc chainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
@@ -139,9 +155,32 @@ proc newMerkleAux(hashes: openarray[string], targetDepth: int): Merkle {.raises:
 
     if len(hashes) <= halfWidth:
         # we need to duplicate LHS on RHS
-        let lhs = newMerkleAux(hashes, targetDepth - 1)
-        return newMerkle(lhs, lhs)
+        return newMerkle(newMerkleAux(hashes, targetDepth - 1), nil)
     else:
         let lhs = newMerkleAux(hashes[0 ..< halfWidth], targetDepth - 1)
         let rhs = newMerkleAux(hashes[halfWidth ..< len(hashes)], targetDepth - 1)
         return newMerkle(lhs, rhs)
+
+
+#forward declaration
+proc withoutNLeavesAux(tree: Merkle, n: int): Merkle {.raises: [].}
+
+#Nonmutatively remove the last N leaves from a tree
+proc withoutNLeaves*(tree: Merkle, n: int): Merkle {.raises: [].} =
+    #resize
+    var tree = tree
+    var n = n
+    #continually chop of entire right half while we can
+    while n > 0 and n >= tree.right.leafCount:
+        n -= tree.right.leafCount
+        tree = tree.left
+    return tree.withoutNLeavesAux(n)
+
+proc withoutNLeavesAux(tree: Merkle, n: int): Merkle {.raises: [].} =
+    if n == 0:
+        return tree
+
+    if n >= tree.right.leafCount:
+        return newMerkle(tree.left.withoutNLeavesAux(n - tree.right.leafCount), nil)
+    else:
+        return newMerkle(tree.left, tree.right.withoutNLeavesAux(n))
