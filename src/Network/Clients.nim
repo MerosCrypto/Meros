@@ -124,7 +124,7 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
         )(verifier.key)
 
         #If we're missing Verifications...
-        if verifHeight < verifier.nonce:
+        if verifHeight <= verifier.nonce:
             #Add the gap.
             gaps.add((
                 verifier.key,
@@ -195,8 +195,6 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
         if not newBlock.header.verifications.verify():
             return false
 
-        echo "Downloaded verifications and verified they're legit."
-
         #Download the Entries.
         #Dedeuplicate the list.
         entries = entries.deduplicate()
@@ -256,8 +254,6 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
                     proc (verif: Verification),
                     "verifications.verification"
                 )(verif)
-
-        echo "Added every Entry and Verification."
 
     except:
         raise
