@@ -80,7 +80,7 @@ proc chainOfDepth(depth: int, hash: string): Merkle {.raises: [].} =
 #Adds a hash to a Merkle Tree.
 proc add*(tree: var Merkle, hash: string) {.raises: [].} =
     if tree.isLeaf:
-      tree = newMerkle(tree, newMerkle(hash))
+        tree = newMerkle(tree, newMerkle(hash))
     elif tree.left.isNil:
         tree = newMerkle(
             newMerkle(hash),
@@ -97,25 +97,25 @@ proc add*(tree: var Merkle, hash: string) {.raises: [].} =
 
     tree.rehash()
 
-# From https://stackoverflow.com/a/15327567/4608364
+#From https://stackoverflow.com/a/15327567/4608364
 proc ceilLog2(x: uint64): uint64 =
-  const t: array[6, uint64] = [
-    0xFFFFFFFF00000000'u64,
-    0x00000000FFFF0000'u64,
-    0x000000000000FF00'u64,
-    0x00000000000000F0'u64,
-    0x000000000000000C'u64,
-    0x0000000000000002'u64,
-  ]
-  var x: uint64 = x
-  var y: uint64 = if (x and (x - 1)) == 0: 0 else: 1
-  var j: uint64 = 32
-  for i in 0 ..< 6:
-    let k: uint64 = if (x and t[i]) == 0'u64: 0'u64 else: j
-    y += k
-    x = x shr k
-    j = j shr 1
-  return y
+    const t: array[6, uint64] = [
+        0xFFFFFFFF00000000'u64,
+        0x00000000FFFF0000'u64,
+        0x000000000000FF00'u64,
+        0x00000000000000F0'u64,
+        0x000000000000000C'u64,
+        0x0000000000000002'u64,
+    ]
+    var x: uint64 = x
+    var y: uint64 = if (x and (x - 1)) == 0: 0 else: 1
+    var j: uint64 = 32
+    for i in 0 ..< 6:
+        let k: uint64 = if (x and t[i]) == 0'u64: 0'u64 else: j
+        y += k
+        x = x shr k
+        j = j shr 1
+    return y
 
 #forward declaration
 proc newMerkleAux(hashes: openarray[string], targetDepth: int): Merkle {.raises: [].}
@@ -131,8 +131,8 @@ proc newMerkle*(hashes: varargs[string]): Merkle {.raises: [].} =
 
 proc newMerkleAux(hashes: openarray[string], targetDepth: int): Merkle {.raises: [].} =
     if targetDepth == 0:
-      assert(len(hashes) == 1)
-      return newMerkle(hashes[0])
+        assert(len(hashes) == 1)
+        return newMerkle(hashes[0])
 
     #half of the number of items in the lowest level of the tree (if it were completely filled)
     let halfWidth = 2^(targetDepth-1)
