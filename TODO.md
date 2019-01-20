@@ -15,6 +15,7 @@
 - Sync Entries not on the Blockchain.
 - Sync Verifications not on the Blockchain.
 - Sync gaps (if we get an Entry with nonce 8 but we only have up to 6; applies to both the Lattice and Verifications).
+- Replace the `sleepAsync(100)` in `verify` for gap syncing.
 - Add peer finding.
 - Add Node karma.
 

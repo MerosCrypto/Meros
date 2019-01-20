@@ -2,6 +2,9 @@ include MainMerit
 
 #Creates and publishes a Verification.
 proc verify(entry: Entry) {.async.} =
+    #Sleep for 100 microseconds to make sure this Verification is sent after ther Entry itself.
+    await sleepAsync(100)
+
     #Make sure we're a Miner with Merit.
     if (miner) and (merit.state.getBalance(minerWallet.publicKey) > uint(0)):
         #Make sure we didn't already Verify an Entry at this position.
