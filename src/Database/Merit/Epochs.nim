@@ -157,8 +157,9 @@ proc shift*(epochs: var Epochs, verifs: Verifications, indexes: seq[VerifierInde
 
             #If it wasn't found, create a seq for it in the newest Epoch.
             if not found:
-                newEpoch[verif.hash.toString()] = newSeq[BLSPublicKey](1)
-                newEpoch[verif.hash.toString()][0] = verif.verifier
+                newEpoch[verif.hash.toString()] = @[
+                    verif.verifier
+                ]
 
     #Add the newest Epoch.
     epochs.add(newEpoch)

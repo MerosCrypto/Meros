@@ -3,7 +3,6 @@ include MainGlobals
 proc mainVerifications() {.raises: [
     KeyError,
     ValueError,
-    MerosIndexError,
     BLSError,
     FinalAttributeError
 ].} =
@@ -98,12 +97,22 @@ proc mainVerifications() {.raises: [
         #Handle Verifications.
         events.on(
             "verifications.verification",
-            proc (verif: Verification) {.raises: [ValueError, MerosIndexError].} =
+            proc (verif: Verification): bool {.raises: [ValueError].} =
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification from a Block."
 
+                #Set the result to a default value.
+                result = true
+
                 #Add the Verification to the Verifications.
-                verifications.add(verif)
+                try:
+                    verifications.add(verif)
+                except:
+                    #We either got the Verification/a competing Verification while handling the Block
+                    #OR
+                    #This had an unknown error.
+                    #We return false to be safe.
+                    return false
 
                 #Add the Verification to the Lattice (discarded since we confirmed the Entry's existence).
                 discard lattice.verify(merit, verif)
@@ -112,7 +121,7 @@ proc mainVerifications() {.raises: [
         #Handle Verifications.
         events.on(
             "verifications.memory_verification",
-            proc (verif: MemoryVerification): bool {.raises: [ValueError, MerosIndexError, BLSError].} =
+            proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].} =
                 #Print that we're adding the Verification.
                 echo "Adding a new Verification."
 
@@ -125,7 +134,10 @@ proc mainVerifications() {.raises: [
                     return false
 
                 #Add the Verification to the Verifications.
-                verifications.add(verif)
+                try:
+                    verifications.add(verif)
+                except:
+                    return false
 
                 #Add the Verification to the Lattice.
                 result = lattice.verify(merit, verif)

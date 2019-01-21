@@ -250,11 +250,11 @@ proc sync*(newBlock: Block, network: Network, socket: AsyncSocket): Future[bool]
             for verif in verifications[index.key]:
                 #If we failed to add this (shows up as an Exception), due to a MeritRemoval, the Block won't be added.
                 #That said, the aggregate proves these are valid Verifications.
-                network.nodeEvents.get(
-                    proc (verif: Verification),
+                if not network.nodeEvents.get(
+                    proc (verif: Verification): bool,
                     "verifications.verification"
-                )(verif)
-
+                )(verif):
+                    return false
     except:
         raise
 
