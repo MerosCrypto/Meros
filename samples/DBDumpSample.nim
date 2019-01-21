@@ -12,7 +12,7 @@ import sequtils
 
 var
     #RPC.
-    rpc: MerosRPC = waitFor newMerosRPC(port = 5135)
+    rpc: MerosRPC = waitFor newMerosRPC()
     #DB.
     db: JSONNode = %* {
         "verifications": {},
