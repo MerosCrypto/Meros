@@ -12,7 +12,7 @@ Meros requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work b
 Now, install the Nimble packages.
 
 ```
-nimble install https://github.com/MerosCrypto/BN mc_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_webview
+nimble install BN mc_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_webview
 nimble install finals nimcrypto rocksdb
 ```
 
