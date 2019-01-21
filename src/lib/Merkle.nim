@@ -24,14 +24,6 @@ func newMerkle(hash: string): Merkle {.raises: [].} =
         hash: hash
     )
 
-#tostring
-proc `$`*(tree: Merkle): string =
-    if tree.isNil:
-        return "_"
-    if tree.isLeaf:
-        return tree.hash
-    return "M(" & $tree.left & ", " & $tree.right & ")"
-
 #Rehashes a Merkle Tree.
 proc rehash(tree: Merkle) {.raises: [].} =
     #If this is a Leaf, its hash is constant.
@@ -79,7 +71,7 @@ func depth(tree: Merkle): int {.raises: [].} =
     #We use tree.left because the left tree will alaways be non-nil.
     return 1 + tree.left.depth
 
-#Number of leaves
+#Number of leaves.
 func leafCount(tree: Merkle): int {.raises: [].} =
     if tree.isNil:
         return 0
@@ -113,74 +105,90 @@ proc add*(tree: var Merkle, hash: string) {.raises: [].} =
 
     tree.rehash()
 
-#From https://stackoverflow.com/a/15327567/4608364
-proc ceilLog2(x: uint64): uint64 =
-    const t: array[6, uint64] = [
-        0xFFFFFFFF00000000'u64,
-        0x00000000FFFF0000'u64,
-        0x000000000000FF00'u64,
-        0x00000000000000F0'u64,
-        0x000000000000000C'u64,
-        0x0000000000000002'u64,
-    ]
-    var x: uint64 = x
-    var y: uint64 = if (x and (x - 1)) == 0: 0 else: 1
-    var j: uint64 = 32
+#From https://stackoverflow.com/a/15327567/4608364.
+const t: array[6, uint64] = [
+    0xFFFFFFFF00000000'u64,
+    0x00000000FFFF0000'u64,
+    0x000000000000FF00'u64,
+    0x00000000000000F0'u64,
+    0x000000000000000C'u64,
+    0x0000000000000002'u64
+]
+proc ceilLog2(xArg: uint64): uint64 {.raises: [].} =
+    var
+        x: uint64 = xArg
+        j: uint64 = 32
+        y: uint64
+        k: uint64
+
+    if (x and (x - 1)) == 0:
+        y = 0
+    else:
+        y = 1
+
     for i in 0 ..< 6:
-        let k: uint64 = if (x and t[i]) == 0'u64: 0'u64 else: j
+        if (x and t[i]) == 0'u64:
+            k = 0'u64
+        else:
+            k = j
+
         y += k
         x = x shr k
         j = j shr 1
+
     return y
 
-#forward declaration
-proc newMerkleAux(hashes: openarray[string], targetDepth: int): Merkle {.raises: [].}
+proc newMerkleAux(hashes: varargs[string], targetDepth: int): Merkle {.raises: [].} =
+    if targetDepth == 0:
+        return newMerkle(hashes[0])
 
+    let halfWidth = 2 ^ (targetDepth - 1)
+    if hashes.len <= halfWidth:
+        #We need to duplicate LHS on RHS.
+        return newMerkle(newMerkleAux(hashes, targetDepth - 1), nil)
+    else:
+        return newMerkle(
+            newMerkleAux(hashes[0 ..< halfWidth], targetDepth - 1),
+            newMerkleAux(hashes[halfWidth ..< len(hashes)], targetDepth - 1)
+        )
 #Merkle constructor based on a seq or array of hashes (as strings).
 proc newMerkle*(hashes: varargs[string]): Merkle {.raises: [].} =
     #If there were no hashes, create a nil tree.
     if hashes.len == 0:
         return newMerkle(nil, nil)
 
-    let targetDepth = int(ceilLog2(uint64(len(hashes))))
-    return newMerkleAux(hashes, targetDepth)
+    #Pass off to Merkle Aux.
+    return newMerkleAux(
+        hashes,
+        int(
+            ceilLog2(uint64(hashes.len))
+        )
+    )
 
-proc newMerkleAux(hashes: openarray[string], targetDepth: int): Merkle {.raises: [].} =
-    if targetDepth == 0:
-        assert(len(hashes) == 1)
-        return newMerkle(hashes[0])
-
-    #half of the number of items in the lowest level of the tree (if it were completely filled)
-    let halfWidth = 2^(targetDepth-1)
-
-    if len(hashes) <= halfWidth:
-        # we need to duplicate LHS on RHS
-        return newMerkle(newMerkleAux(hashes, targetDepth - 1), nil)
-    else:
-        let lhs = newMerkleAux(hashes[0 ..< halfWidth], targetDepth - 1)
-        let rhs = newMerkleAux(hashes[halfWidth ..< len(hashes)], targetDepth - 1)
-        return newMerkle(lhs, rhs)
-
-
-#forward declaration
-proc withoutNLeavesAux(tree: Merkle, n: int): Merkle {.raises: [].}
-
-#Nonmutatively remove the last N leaves from a tree
-proc withoutNLeaves*(tree: Merkle, n: int): Merkle {.raises: [].} =
-    #resize
-    var tree = tree
-    var n = n
-    #continually chop of entire right half while we can
-    while n > 0 and n >= tree.right.leafCount:
-        n -= tree.right.leafCount
-        tree = tree.left
-    return tree.withoutNLeavesAux(n)
-
-proc withoutNLeavesAux(tree: Merkle, n: int): Merkle {.raises: [].} =
+#Recursive function to trim a Merkle without cutting an entire branch.
+proc trimAux(tree: Merkle, n: int): Merkle {.raises: [].} =
     if n == 0:
         return tree
 
     if n >= tree.right.leafCount:
-        return newMerkle(tree.left.withoutNLeavesAux(n - tree.right.leafCount), nil)
+        return newMerkle(tree.left.trimAux(n - tree.right.leafCount), nil)
     else:
-        return newMerkle(tree.left, tree.right.withoutNLeavesAux(n))
+        return newMerkle(tree.left, tree.right.trimAux(n))
+
+#Nonmutatively remove the last N leaves from a tree.
+proc trim*(treeArg: Merkle, nArg: int): Merkle {.raises: [].} =
+    #Clone the arguments.
+    var
+        tree: Merkle = treeArg
+        n: int = nArg
+
+    #Chop of the entire right branch for as long as we can.
+    while (
+        (n >= tree.right.leafCount) and
+        (n > 0)
+    ):
+        n -= tree.right.leafCount
+        tree = tree.left
+
+    #Recursively handle the rest.
+    return tree.trimAux(n)

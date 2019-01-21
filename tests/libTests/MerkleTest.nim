@@ -13,7 +13,7 @@ import ../../src/lib/Base
 import ../../src/lib/Merkle
 
 block:
-    var
+    let
         #First leaf.
         a: string = SHA512("a").toString()
         #Second leaf.
@@ -34,8 +34,8 @@ block:
             ab & cc
         ).toString()
 
-        #Create the Merkle Tree.
-        merkle: Merkle = newMerkle(a, b, c)
+    #Create the Merkle Tree.
+    var merkle: Merkle = newMerkle(a, b, c)
 
     #Test the results.
     assert(hash == merkle.hash, "Merkle hash is not what it should be.")
@@ -57,89 +57,73 @@ block:
 
 block:
     let
-        a = SHA512("a").toString()
-        b = SHA512("b").toString()
-        c = SHA512("c").toString()
-        d = SHA512("d").toString()
+        #Left-side leaves.
+        a: string = SHA512("a").toString()
+        b: string = SHA512("b").toString()
+        c: string = SHA512("c").toString()
+        d: string = SHA512("d").toString()
 
-        e = SHA512("e").toString()
-        f = SHA512("f").toString()
-        g = SHA512("g").toString()
-        h = SHA512("h").toString()
+        #Right-side leaves.
+        e: string = SHA512("e").toString()
+        f: string = SHA512("f").toString()
+        g: string = SHA512("g").toString()
+        h: string = SHA512("h").toString()
 
-        #will test trees comprised of a-e, a-f, a-g, and a-h
+        #Left-side branches.
+        ab: string = SHA512(a & b).toString()
+        cd: string = SHA512(c & d).toString()
+        abcd: string = SHA512(ab & cd).toString()
 
-        ab = SHA512(a & b).toString()
-        cd = SHA512(c & d).toString()
-        abcd = SHA512(ab & cd).toString()
+        #Right-side branches.
+        ef: string = SHA512(e & f).toString()
+        gh: string = SHA512(g & h).toString()
+        efgh: string  = SHA512(ef & gh).toString()
 
-    #first, a-e
-    let
-        ee = SHA512(e & e).toString()
-        eeee = SHA512(ee & ee).toString()
-        abcdeeee = SHA512(abcd & eeee).toString()
-        tree_ae = newMerkle(a, b, c, d, e)
-    assert(tree_ae.hash == abcdeeee)
+        #Changed branched if we remove h.
+        gg: string = SHA512(g & g).toString()
+        efgg: string = SHA512(ef & gg).toString()
+        abcdefgg: string = SHA512(abcd & efgg).toString()
 
-    #now, a-f
-    let
-        ef = SHA512(e & f).toString()
-        efef = SHA512(ef & ef).toString()
-        abcdefef = SHA512(abcd & efef).toString()
-        #not just ANY tree
-        #this one is tree as FUCK
-        tree_af = newMerkle(a, b, c, d, e, f)
-    assert(tree_af.hash == abcdefef)
+        #Changed branches if we remove g and h.
+        efef: string = SHA512(ef & ef).toString()
+        abcdefef: string = SHA512(abcd & efef).toString()
 
-    #now, a-g
-    let
-        gg = SHA512(g & g).toString()
-        efgg = SHA512(ef & gg).toString()
-        abcdefgg = SHA512(abcd & efgg).toString()
-        tree_ag = newMerkle(a, b, c, d, e, f, g)
-    assert(tree_ag.hash == abcdefgg)
+        #Changed branches if we remove d, e, f, g, and h.
+        cc: string = SHA512(c & c).toString()
+        abcc: string = SHA512(ab & cc).toString()
 
-    #finally, a-h
-    let
-        gh = SHA512(g & h).toString()
-        efgh = SHA512(ef & gh).toString()
-        abcdefgh = SHA512(abcd & efgh).toString()
-        tree_ah = newMerkle(a, b, c, d, e, f, g, h)
-    assert(tree_ah.hash == abcdefgh)
+        #Tree hashes.
+        abcdefgh: string = SHA512(abcd & efgh).toString()
 
+        #Create the merkle trees.
+        merkle_ah: Merkle = newMerkle(a, b, c, d, e, f, g, h)
+        merkle_ah2: Merkle = merkle_ah.trim(0)
+        merkle_ag: Merkle = merkle_ah.trim(1)
+        merkle_af: Merkle = merkle_ah.trim(2)
+        merkle_ac: Merkle = merkle_ah.trim(5)
 
-    #test leaf removal
-    let tree_ad = newMerkle(abcd)
-    let abcc = SHA512(ab & SHA512(c & c).toString()).toString()
+    #Verify the merkle_ah and merkle_ah2 hashes.
+    assert(merkle_ah.hash == abcdefgh)
+    assert(merkle_ah2.hash == merkle_ah.hash)
 
-    assert(tree_ah.withoutNLeaves(7).hash == a)
-    assert(tree_ah.withoutNLeaves(6).hash == ab)
-    assert(tree_ah.withoutNLeaves(5).hash == abcc)
-    assert(tree_ah.withoutNLeaves(4).hash == tree_ad.hash)
-    assert(tree_ah.withoutNLeaves(3).hash == tree_ae.hash)
-    assert(tree_ah.withoutNLeaves(2).hash == tree_af.hash)
-    assert(tree_ah.withoutNLeaves(1).hash == tree_ag.hash)
-    assert(tree_ah.withoutNLeaves(0).hash == tree_ah.hash)
+    #Verify merkle_ah2's ref is the same as merkle_ah.
+    assert(cast[int](merkle_ah2) == cast[int](merkle_ah))
 
-    assert(tree_ag.withoutNLeaves(6).hash == a)
-    assert(tree_ag.withoutNLeaves(5).hash == ab)
-    assert(tree_ag.withoutNLeaves(4).hash == abcc)
-    assert(tree_ag.withoutNLeaves(3).hash == tree_ad.hash)
-    assert(tree_ag.withoutNLeaves(2).hash == tree_ae.hash)
-    assert(tree_ag.withoutNLeaves(1).hash == tree_af.hash)
-    assert(tree_ag.withoutNLeaves(0).hash == tree_ag.hash)
+    #Verify the merkle_ag hash and refs.
+    assert(merkle_ag.hash == abcdefgg)
+    assert(merkle_ag.left == merkle_ah.left)
+    assert(merkle_ag.right != merkle_ah.right)
 
-    assert(tree_af.withoutNLeaves(5).hash == a)
-    assert(tree_af.withoutNLeaves(4).hash == ab)
-    assert(tree_af.withoutNLeaves(3).hash == abcc)
-    assert(tree_af.withoutNLeaves(2).hash == tree_ad.hash)
-    assert(tree_af.withoutNLeaves(1).hash == tree_ae.hash)
-    assert(tree_af.withoutNLeaves(0).hash == tree_af.hash)
+    #Verify the merkle_af hash and refs.
+    assert(merkle_af.hash == abcdefef)
+    assert(merkle_af.left == merkle_ah.left)
+    assert(merkle_af.right != merkle_ah.right)
 
-    assert(tree_ae.withoutNLeaves(4).hash == a)
-    assert(tree_ae.withoutNLeaves(3).hash == ab)
-    assert(tree_ae.withoutNLeaves(2).hash == abcc)
-    assert(tree_ae.withoutNLeaves(1).hash == tree_ad.hash)
-    assert(tree_ae.withoutNLeaves(0).hash == tree_ae.hash)
+    #Verify the merkle_ac hash and refs.
+    assert(merkle_ac.hash == abcc)
+    assert(merkle_ac.left != merkle_ah.left)
+    assert(merkle_ac.right != merkle_ah.right)
+    assert(merkle_ac.left == merkle_ah.left.left)
+    assert(merkle_ac.left != merkle_ah.left.right)
 
 echo "Finished the lib/Merkle test."
