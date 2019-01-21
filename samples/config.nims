@@ -4,7 +4,7 @@ if getCommand() == "c":
 
 #Necessary flags.
 switch("threads", "on")
-switch("define", "ADDRESS_HRP=Meros")
+switch("define", "ADDRESS_HRP=Mr")
 switch("define", "SIGN_PREFIX=MEROS")
 switch("define", "DEFAULT_PORT=5132")
 

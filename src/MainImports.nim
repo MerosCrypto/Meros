@@ -44,7 +44,7 @@ import Network/Serialize/Lattice/SerializeData
 import UI/UI
 
 #Event lib.
-import ec_events
+import mc_events
 
 #Finals lib.
 import finals

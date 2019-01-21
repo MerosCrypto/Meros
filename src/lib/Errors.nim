@@ -14,7 +14,7 @@ type
     MemoryError*   = object of Exception #Used when alloc/dealloc fails.
 
     #Database/Lattice Errors.
-    MintError*     = object of Exception #Used when Minting MEROS fails.
+    MintError*     = object of Exception #Used when Minting MR fails.
 
     #Network Errors.
     AsyncError*    = object of Exception #Used when async code fails.

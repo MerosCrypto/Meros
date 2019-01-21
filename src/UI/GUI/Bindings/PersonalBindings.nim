@@ -8,7 +8,7 @@ import ../../../Wallet/Wallet
 import ../objects/GUIObj
 
 #WebView lib.
-import ec_webview
+import mc_webview
 
 #String utils standard lib.
 import strutils

@@ -5,10 +5,10 @@ import ../../../lib/Errors
 import ../objects/GUIObj
 
 #EventEmitter lib.
-import ec_events
+import mc_events
 
 #WebView lib.
-import ec_webview
+import mc_webview
 
 #String utils standard lib.
 import strutils

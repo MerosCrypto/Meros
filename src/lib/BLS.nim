@@ -4,7 +4,7 @@
 import Errors
 
 #BLS Nimble package.
-import ec_bls
+import mc_bls
 
 #Type definitions.
 type
@@ -84,7 +84,7 @@ export verify
 #Aggregation functions.
 proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.raises: [BLSError].} =
     try:
-        result = ec_bls.aggregate(keys)
+        result = mc_bls.aggregate(keys)
     except:
         raise newException(
             BLSError,
@@ -95,7 +95,7 @@ proc aggregate*(
     agInfos: seq[ptr BLSAggregationInfo]
 ): BLSAggregationInfo {.raises: [BLSError].} =
     try:
-        result = ec_bls.aggregate(agInfos)
+        result = mc_bls.aggregate(agInfos)
     except:
         raise newException(
             BLSError,
@@ -104,7 +104,7 @@ proc aggregate*(
 
 proc aggregate*(sigs: seq[BLSSignature]): BLSSignature {.raises: [BLSError].} =
     try:
-        result = ec_bls.aggregate(sigs)
+        result = mc_bls.aggregate(sigs)
     except:
         raise newException(
             BLSError,

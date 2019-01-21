@@ -26,7 +26,7 @@ for i in 1 .. 20:
         #Wallets.
         sender: Wallet = newWallet()
         receiver: Wallet = newWallet()
-        #Send (for 1 MEROS).
+        #Send (for 1 MR).
         send: Send = newSend(
             receiver.address,
             newBN("10000000000"),
