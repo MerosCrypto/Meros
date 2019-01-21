@@ -8,7 +8,7 @@ Meros requires Nim, Nimble, GMP, Chia's BLS library, and LibSodium.
 sudo apt-get install curl git libgmp3-dev libsodium-dev gtk+-3.0 at-spi2-core webkit2gtk-4.0
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 0.19.2
-nimble install https://github.com/MerosCrypto/BN mc_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/WebView
+nimble install https://github.com/MerosCrypto/BN mc_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_webview
 nimble install finals nimcrypto rocksdb
 ```
 
