@@ -47,7 +47,7 @@ proc toJSON*(
     #Set the descendant fields.
     case entry.descendant:
         of EntryType.Mint:
-            result["output"] = % $cast[Mint](entry).output
+            result["output"] = % cast[Mint](entry).output.toHex()
             result["amount"] = % $cast[Mint](entry).amount
         of EntryType.Claim:
             result["mintNonce"] = % int(cast[Claim](entry).mintNonce)
