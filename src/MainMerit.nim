@@ -80,10 +80,16 @@ proc mainMerit() {.raises: [
                                 echo "Failed to add the Block."
                                 return false
 
+                            #Start of this verifier's unarchived verifications.
+                            var verifierStart: uint = verifications[index.key].archived + 1
+                            #Override to handle how archived is 0 twice.
+                            if verifierStart == 1:
+                                if verifications[index.key][0].archived == 0:
+                                    verifierStart = 0
+
                             var
-                                verifierArchived: uint = verifications[index.key].archived
                                 #Grab this Verifier's verifications.
-                                verifierVerifs: seq[Verification] = verifications[index.key][verifierArchived .. index.nonce]
+                                verifierVerifs: seq[Verification] = verifications[index.key][verifierStart .. index.nonce]
                                 #Declare an aggregation info seq for this verifier.
                                 verifierAgInfos: seq[ptr BLSAggregationInfo] = newSeq[ptr BLSAggregationInfo](verifierVerifs.len)
                             for v in 0 ..< verifierVerifs.len:

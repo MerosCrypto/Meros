@@ -62,9 +62,16 @@ proc mainVerifications() {.raises: [
                     verifier: Verifier = verifications[verifierStr]
                     #Create a seq of signatures.
                     sigs: seq[BLSSignature] = @[]
+                    #Start of the unarchived Verifications.
+                    start: uint = verifier.archived + 1
+
+                #Override to handle how archived is 0 twice.
+                if start == 1:
+                    if verifier[0].archived == 0:
+                        start = 0
 
                 #Iterate over every unarchived verification, up to and including the nonce.
-                for verif in verifier{verifier.archived .. nonce}:
+                for verif in verifier{start .. nonce}:
                     sigs.add(verif.signature)
 
                 #Return the hash.
