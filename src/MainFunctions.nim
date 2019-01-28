@@ -47,14 +47,11 @@ finalsd:
             memoryVerification* {.final.}: proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].}
 
         MeritFunctionBox = ref object of RootObj
-            getVerifierHeight*    {.final.}: proc (key: string): uint                           {.raises: [KeyError].}
-            getVerification*      {.final.}: proc (key: string, nonce: uint): Verification      {.raises: [KeyError].}
-            getUnarchivedIndexes* {.final.}: proc (): seq[VerifierIndex]                        {.raises: [KeyError, FinalAttributeError].}
-            getPendingAggregate*  {.final.}: proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, BLSError].}
-            getPendingHashes*     {.final.}: proc (key: string, nonceArg: uint): seq[string]    {.raises: [KeyError].}
+            getHeight*     {.final.}: proc (): uint             {.raises: [].}
+            getDifficulty* {.final.}: proc (): BN               {.raises: [].}
+            getBlock*      {.final.}: proc (nonce: uint): Block {.raises: [].}
 
-            verification*        {.final.}: proc (verif: Verification): bool       {.raises: [ValueError].}
-            memory_verification* {.final.}: proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].}
+            addBlock* {.final.}: proc (newBlock: Block): Future[bool] {.async.}
 
         LatticeFunctionBox = ref object of RootObj
             getHeight*       {.final.}: proc (account: string): uint {.raises: [ValueError].}
