@@ -1,9 +1,6 @@
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Async standard lib.
 import asyncdispatch
 

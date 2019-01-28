@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Wallet lib.
 import ../../../Wallet/Wallet
 
-#EventEmitter lib.
-import mc_events
-
 #Async standard lib.
 import asyncdispatch
 

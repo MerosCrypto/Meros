@@ -19,9 +19,6 @@ import ../../../Database/Verifications/Verifications
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Finals lib.
 import finals
 

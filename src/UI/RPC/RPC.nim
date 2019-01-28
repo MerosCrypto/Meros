@@ -13,9 +13,6 @@ import Modules/MeritModule
 import Modules/LatticeModule
 import Modules/NetworkModule
 
-#EventEmitter lib.
-import mc_events
-
 #Async standard lib.
 import asyncdispatch
 

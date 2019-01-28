@@ -16,9 +16,6 @@ import ../../../Database/Lattice/Lattice
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Finals lib.
 import finals
 

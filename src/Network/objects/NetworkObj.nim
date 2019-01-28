@@ -1,9 +1,6 @@
 #Import the Clients object.
 import ClientsObj
 
-#Events library.
-import mc_events
-
 #finals lib.
 import finals
 

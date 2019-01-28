@@ -11,9 +11,6 @@ export GUIObj
 #JS Bindings.
 import Bindings/Bindings
 
-#Events lib.
-import mc_events
-
 #WebView.
 import mc_webview
 

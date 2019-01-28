@@ -25,9 +25,6 @@ import ../../../Network/Serialize/Lattice/SerializeData
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Finals lib.
 import finals
 
