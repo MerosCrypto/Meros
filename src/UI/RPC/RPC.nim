@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Main Function Box.
+import ../../MainFunctionBox
+
 #RPC object.
 import objects/RPCObj
 export RPCObj
@@ -24,12 +27,12 @@ import json
 
 #Constructor.
 proc newRPC*(
-    events: EventEmitter,
+    functions: MainFunctionBox,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
 ): RPC {.raises: [SocketError].} =
     result = newRPCObject(
-        events,
+        functions,
         toRPC,
         toGUI
     )
