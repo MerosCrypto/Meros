@@ -1,8 +1,7 @@
 discard """
-This lib is special, in a few ways.
+This lib is special, in a couple of ways.
 - It is prefixed by Main, and directly under src/, but it is NOT part of the include chain.
 - It's not a lib, but an object file.
-- It's named MainFunctions, but doesn't define a single function. Just prototypes.
 
 This is a replacement for the previously used EventEmitters (mc_events).
 It's type safe, and serves the same purpose, yet provides an even better API.

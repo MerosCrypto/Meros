@@ -44,7 +44,7 @@ import Network/Serialize/Lattice/SerializeData
 import UI/UI
 
 #Main Function Box.
-import MainFunctions
+import MainFunctionBox
 
 #Finals lib.
 import finals
