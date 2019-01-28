@@ -70,7 +70,7 @@ proc mainLattice() {.raises: [
             lattice[index]
 
         #Handle Claims.
-        functions.lattice.claim = proc (claim: Claim): bool {.raises: [
+        functions.lattice.addClaim = proc (claim: Claim): bool {.raises: [
             ValueError,
             AsyncError,
             BLSError,
@@ -98,7 +98,7 @@ proc mainLattice() {.raises: [
             echo ""
 
         #Handle Sends.
-        functions.lattice.send = proc (send: Send): bool {.raises: [
+        functions.lattice.addSend = proc (send: Send): bool {.raises: [
             ValueError,
             EventError,
             AsyncError,
@@ -158,7 +158,7 @@ proc mainLattice() {.raises: [
 
 
         #Handle Receives.
-        functions.lattice.receive = proc (recv: Receive): bool {.raises: [
+        functions.lattice.addReceive = proc (recv: Receive): bool {.raises: [
             ValueError,
             AsyncError,
             BLSError,
@@ -186,7 +186,7 @@ proc mainLattice() {.raises: [
             echo ""
 
         #Handle Data.
-        functions.lattice.data = proc (data: Data): bool {.raises: [
+        functions.lattice.addData = proc (data: Data): bool {.raises: [
             ValueError,
             AsyncError,
             BLSError,

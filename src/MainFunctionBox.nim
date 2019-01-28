@@ -9,8 +9,14 @@ That said, we lose the library format, and instead have this.
 This is annoying, but we no longer have to specify the type when we call events, so we break even.
 """
 
+#Errors lib.
+import lib/Errors
+
 #BN lib.
 import BN
+
+#Message object.
+import Network/objects/MessageObj
 
 #Wallet.
 import Wallet/Wallet
@@ -30,61 +36,63 @@ import lib/BLS
 #Finals lib.
 import finals
 
-finalsd:
-    type
-        SystemFunctionBox = ref object of RootObj
-            quit* {.final.}: proc () {.raises: [ChannelError, AsyncError, SocketError].}
+#Async lib.
+import asyncdispatch
 
-        VerificationsFunctionBox = ref object of RootObj
-            getVerifierHeight*    {.final.}: proc (key: string): uint                           {.raises: [KeyError].}
-            getVerification*      {.final.}: proc (key: string, nonce: uint): Verification      {.raises: [KeyError].}
-            getUnarchivedIndexes* {.final.}: proc (): seq[VerifierIndex]                        {.raises: [KeyError, FinalAttributeError].}
-            getPendingAggregate*  {.final.}: proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, BLSError].}
-            getPendingHashes*     {.final.}: proc (key: string, nonce: uint): seq[string]       {.raises: [KeyError].}
+type
+    SystemFunctionBox* = ref object of RootObj
+        quit*: proc () {.raises: [ChannelError, AsyncError, SocketError].}
 
-            verification*       {.final.}: proc (verif: Verification): bool       {.raises: [ValueError].}
-            memoryVerification* {.final.}: proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].}
+    VerificationsFunctionBox* = ref object of RootObj
+        getVerifierHeight*:     proc (key: string): uint                           {.raises: [KeyError].}
+        getVerification*:       proc (key: string, nonce: uint): Verification      {.raises: [KeyError].}
+        getUnarchivedIndexes*:  proc (): seq[VerifierIndex]                        {.raises: [KeyError, FinalAttributeError].}
+        getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, BLSError].}
+        getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.raises: [KeyError].}
 
-        MeritFunctionBox = ref object of RootObj
-            getHeight*     {.final.}: proc (): uint             {.raises: [].}
-            getDifficulty* {.final.}: proc (): BN               {.raises: [].}
-            getBlock*      {.final.}: proc (nonce: uint): Block {.raises: [].}
+        addVerification*:        proc (verif: Verification): bool       {.raises: [ValueError].}
+        addMemoryVerification*:  proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].}
 
-            addBlock* {.final.}: proc (newBlock: Block): Future[bool] {.async.}
+    MeritFunctionBox* = ref object of RootObj
+        getHeight*:      proc (): uint             {.raises: [].}
+        getDifficulty*:  proc (): BN               {.raises: [].}
+        getBlock*:       proc (nonce: uint): Block {.raises: [].}
 
-        LatticeFunctionBox = ref object of RootObj
-            getHeight*       {.final.}: proc (account: string): uint {.raises: [ValueError].}
-            getBalance*      {.final.}: proc (account: string): BN   {.raises: [ValueError].}
-            getEntryByHash*  {.final.}: proc (hash: string): Entry   {.raises: [KeyError, ValueError].}
-            getEntryByIndex* {.final.}: proc (index: Index): Entry   {.raises: [ValueError].}
+        addBlock*:  proc (newBlock: Block): Future[bool]
 
-            claim*   {.final.}: proc (claim: Claim): bool  {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
-            send*    {.final.}: proc (send: Send): bool    {.raises: [ValueError, EventError, AsyncError, BLSError, SodiumError, FinalAttributeError].}
-            receive* {.final.}: proc (recv: Receive): bool {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
-            data*    {.final.}: proc (data: Data): bool    {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
+    LatticeFunctionBox* = ref object of RootObj
+        getHeight*:        proc (account: string): uint {.raises: [ValueError].}
+        getBalance*:       proc (account: string): BN   {.raises: [ValueError].}
+        getEntryByHash*:   proc (hash: string): Entry   {.raises: [KeyError, ValueError].}
+        getEntryByIndex*:  proc (index: Index): Entry   {.raises: [ValueError].}
 
-        PersonalFunctionBox = ref object of RootObj
-            getWallet* {.final.}: proc (): Wallet {.raises: [].}
+        addClaim*:    proc (claim: Claim): bool  {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
+        addSend*:     proc (send: Send): bool    {.raises: [ValueError, EventError, AsyncError, BLSError, SodiumError, FinalAttributeError].}
+        addReceive*:  proc (recv: Receive): bool {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
+        addData*:     proc (data: Data): bool    {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
 
-            setSeed*     {.final.}: proc (seed: string)     {.raises: [ValueError, RandomError, SodiumError].}
-            signSend*    {.final.}: proc (send: Send): bool {.raises: [ValueError, SodiumError, FinalAttributeError].}
-            signReceive* {.final.}: proc (recv: Receive)    {.raises: [SodiumError, FinalAttributeError].}
-            signData*    {.final.}: proc (data: Data): bool {.raises: [ValueError, SodiumError, FinalAttributeError].}
+    PersonalFunctionBox* = ref object of RootObj
+        getWallet*:  proc (): Wallet {.raises: [].}
 
-        NetworkFunctionBox = ref object of RootObj
-            connect*   {.final.}: proc (ip: string, port: uint): Future[bool] {.async.}
-            broadcast* {.final.}: proc (msgType: MessageType, msg: string)    {.raises: [AsyncError].}
+        setSeed*:      proc (seed: string)     {.raises: [ValueError, RandomError, SodiumError].}
+        signSend*:     proc (send: Send): bool {.raises: [ValueError, SodiumError, FinalAttributeError].}
+        signReceive*:  proc (recv: Receive)    {.raises: [SodiumError, FinalAttributeError].}
+        signData*:     proc (data: Data): bool {.raises: [ValueError, SodiumError, FinalAttributeError].}
 
-        MainFunctionBox = ref object of RootObj
-            system*        {.final.}: SystemFunctionBox
-            verifications* {.final.}: VerificationsFunctionBox
-            merit*         {.final.}: MeritFunctionBox
-            lattice*       {.final.}: LatticeFunctionBox
-            personal*      {.final.}: PersonalFunctionBox
-            network*       {.final.}: NetworkFunctionBox
+    NetworkFunctionBox* = ref object of RootObj
+        connect*:    proc (ip: string, port: uint): Future[bool]
+        broadcast*:  proc (msgType: MessageType, msg: string) {.raises: [AsyncError].}
+
+    MainFunctionBox* = ref object of RootObj
+        system*:         SystemFunctionBox
+        verifications*:  VerificationsFunctionBox
+        merit*:          MeritFunctionBox
+        lattice*:        LatticeFunctionBox
+        personal*:       PersonalFunctionBox
+        network*:        NetworkFunctionBox
 
 #Constructor.
-proc newMainFunctionBox(): MainFunctionBox {.raises: [].} =
+proc newMainFunctionBox*(): MainFunctionBox {.raises: [].} =
     MainFunctionBox(
         system:        SystemFunctionBox(),
         verifications: VerificationsFunctionBox(),

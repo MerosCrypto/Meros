@@ -95,7 +95,7 @@ proc mainVerifications() {.raises: [
                 result.add(verif.hash.toString())
 
         #Handle Verifications.
-        functions.verifications.verification = proc (
+        functions.verifications.addVerification = proc (
             verif: Verification
         ): bool {.raises: [ValueError].} =
             #Print that we're adding the Verification.
@@ -118,7 +118,7 @@ proc mainVerifications() {.raises: [
             discard lattice.verify(merit, verif)
 
         #Handle Verifications.
-        functions.verifications.memory_verification = proc (
+        functions.verifications.addMemoryVerification = proc (
             verif: MemoryVerification
         ): bool {.raises: [ValueError, BLSError].} =
             #Print that we're adding the Verification.
