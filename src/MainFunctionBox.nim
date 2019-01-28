@@ -81,7 +81,7 @@ type
 
     NetworkFunctionBox* = ref object of RootObj
         connect*:    proc (ip: string, port: uint): Future[bool]
-        broadcast*:  proc (msgType: MessageType, msg: string) {.raises: [AsyncError].}
+        broadcast*:  proc (msgType: MessageType, msg: string) {.raises: [].}
 
     MainFunctionBox* = ref object of RootObj
         system*:         SystemFunctionBox

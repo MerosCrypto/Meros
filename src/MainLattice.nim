@@ -39,14 +39,7 @@ proc verify(entry: Entry) {.async.} =
         )
         """
 
-proc mainLattice() {.raises: [
-    ValueError,
-    EventError,
-    AsyncError,
-    BLSError,
-    SodiumError,
-    FinalAttributeError
-].} =
+proc mainLattice() {.raises: [ValueError].} =
     {.gcsafe.}:
         #Create the Lattice.
         lattice = newLattice(
@@ -139,7 +132,7 @@ proc mainLattice() {.raises: [
 
                         try:
                             #Emit it.
-                            if functions.lattice.receive(recv):
+                            if functions.lattice.addReceive(recv):
                                 discard """
                                 #Broadcast it.
                                 network.broadcast(

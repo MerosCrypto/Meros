@@ -2,7 +2,6 @@ include MainVerifications
 
 proc mainMerit() {.raises: [
     ValueError,
-    AsyncError,
     ArgonError
 ].} =
     {.gcsafe.}:
@@ -29,6 +28,7 @@ proc mainMerit() {.raises: [
             echo "Adding a new Block. " & $newBlock.header.nonce
 
             #If we're connected to other people, sync missing info.
+            discard """
             if network.clients.clients.len > 0:
                 #Missing previous Blocks.
                 if newBlock.header.nonce > uint(merit.blockchain.blocks.len):
@@ -43,6 +43,7 @@ proc mainMerit() {.raises: [
                 if not await newBlock.sync(network, network.clients.clients[0]):
                     echo "Failed to add the Block."
                     return false
+            """
 
             if newBlock.verifications.len > 0:
                 #Verify we have all the Verifications and Entries, as well as verify the signature.
@@ -135,10 +136,7 @@ proc mainMerit() {.raises: [
 
                         #Emit it.
                         try:
-                            if not events.get(
-                                proc (claim: Claim): bool,
-                                "lattice.claim"
-                            )(claim):
+                            if not functions.lattice.addClaim(claim):
                                 raise newException(Exception, "")
                         except:
                             raise newException(EventError, "Couldn't get and call lattice.claim.")

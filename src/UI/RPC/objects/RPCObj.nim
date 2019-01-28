@@ -5,7 +5,9 @@ import ../../../lib/Errors
 import ../../../Wallet/Wallet
 
 #Main Function Box.
-import ../../MainFunctionBox
+import ../../../MainFunctionBox
+#Export it so all modules can access it.
+export MainFunctionBox
 
 #Async standard lib.
 import asyncdispatch

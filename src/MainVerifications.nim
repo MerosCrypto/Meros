@@ -1,11 +1,6 @@
 include MainGlobals
 
-proc mainVerifications() {.raises: [
-    KeyError,
-    ValueError,
-    BLSError,
-    FinalAttributeError
-].} =
+proc mainVerifications() {.raises: [].} =
     {.gcsafe.}:
         verifications = newVerifications()
 

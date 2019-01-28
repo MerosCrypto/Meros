@@ -1,9 +1,6 @@
 include MainPersonal
 
-proc mainNetwork() {.raises: [
-    AsyncError,
-    SocketError
-].} =
+proc mainNetwork() {.raises: [].} =
     {.gcsafe.}:
         discard """
         #Create the Network..
@@ -47,5 +44,5 @@ proc mainNetwork() {.raises: [
         functions.network.broadcast = proc (
             msgType: MessageType,
             msg: string
-        ) {.raises: [AsyncError].} =
+        ) {.raises: [].} =
             echo "Fake broadcast."

@@ -1,6 +1,6 @@
 include MainLattice
 
-proc mainPersonal() {.raises: [ValueError, RandomError, SodiumError, FinalAttributeError].} =
+proc mainPersonal() {.raises: [].} =
     {.gcsafe.}:
         #Get the Wallet.
         functions.personal.getWallet = proc (): Wallet {.raises: [].} =

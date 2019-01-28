@@ -105,7 +105,7 @@ proc getEntryByHash(
     #Get the Entry.
     var entry: Entry
     try:
-        entry = rpc.functions.attice.getEntryByHash(hash)
+        entry = rpc.functions.lattice.getEntryByHash(hash)
     except:
         raise newException(EventError, "Couldn't get and call lattice.getEntryByHash.")
 

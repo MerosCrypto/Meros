@@ -3,7 +3,10 @@
 ### Network Redo:
 - Redo Networking.
 - Redo MainNetwork.
+- Uncomment network/network.shutdown in MainGlobals.
 - Uncomment broadcasts in MainMerit and MainLattice.
+- Uncomment syncing in `merit.addBlock`.
+- Update `import Network/Network`s in MainImports and MainFunctionBox.
 
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.

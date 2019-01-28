@@ -38,7 +38,7 @@ import strutils
 import json
 
 #Get the Wallet info.
-func getWallet(rpc: RPC): JSONNode {.raises: [EventError, PersonalError].} =
+proc getWallet(rpc: RPC): JSONNode {.raises: [EventError, PersonalError].} =
     var wallet: Wallet
     try:
         wallet = rpc.functions.personal.getWallet()
@@ -74,9 +74,12 @@ proc send(
     nonce: uint
 ): JSONNode {.raises: [
     ValueError,
-    ArgonError,
-    PersonalError,
     EventError,
+    AsyncError,
+    ArgonError,
+    BLSError,
+    SodiumError,
+    PersonalError,
     FinalAttributeError
 ].} =
     #Create the Send.
@@ -88,11 +91,11 @@ proc send(
     #Mine the Send.
     send.mine("aa".repeat(64).toBN(16))
 
-    if not rpc.function.personal.signSend(sign):
+    if not rpc.functions.personal.signSend(send):
         raise newException(PersonalError, "Couldn't sign the Send.")
 
     #Add it.
-    if not rpc.functions.lattice.send(send):
+    if not rpc.functions.lattice.addSend(send):
         raise newException(EventError, "Couldn't get and call lattice.send.")
 
     #Broadcast the Send.
@@ -114,6 +117,9 @@ proc receive(
 ): JSONNode {.raises: [
     ValueError,
     EventError,
+    AsyncError,
+    BLSError,
+    SodiumError,
     FinalAttributeError
 ].} =
     #Create the Receive.
@@ -132,7 +138,7 @@ proc receive(
         raise newException(EventError, "Couldn't get and call personal.signReceive.")
 
     #Add it.
-    if not rpc.functions.lattice.receive(recv):
+    if not rpc.functions.lattice.addReceive(recv):
         raise newException(EventError, "Couldn't get and call lattice.receive.")
 
     #Broadcast the Receive.
@@ -152,9 +158,12 @@ proc data(
     nonce: uint
 ): JSONNode {.raises: [
     ValueError,
-    ArgonError,
-    PersonalError,
     EventError,
+    AsyncError,
+    ArgonError,
+    BLSError,
+    SodiumError,
+    PersonalError,
     FinalAttributeError
 ].} =
     #Create the Data.
@@ -166,11 +175,11 @@ proc data(
     data.mine("E0".repeat(64).toBN(16))
 
     #Sign the Data.
-    if not rpc.functions.personal.signData(data)
+    if not rpc.functions.personal.signData(data):
         raise newException(PersonalError, "Couldn't sign the Data.")
 
     #Add it.
-    if not rpc.functions.lattice.data(data):
+    if not rpc.functions.lattice.addData(data):
         raise newException(EventError, "Couldn't get and call lattice.data.")
 
     #Broadcast the Data.
