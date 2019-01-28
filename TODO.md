@@ -1,5 +1,10 @@
 # TODO
 
+### Network Redo:
+- Redo Networking.
+- Redo MainNetwork.
+- Uncomment broadcasts in MainMerit and MainLattice.
+
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
 - Update Verifications to use Ed25519 Public Key + nonce, instead of the hash. 28 byte savings + gap detection while syncing.

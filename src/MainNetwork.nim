@@ -5,6 +5,7 @@ proc mainNetwork() {.raises: [
     SocketError
 ].} =
     {.gcsafe.}:
+        discard """
         #Create the Network..
         network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, events)
 
@@ -34,3 +35,17 @@ proc mainNetwork() {.raises: [
                     msg
                 )
             )
+        """
+
+        #Provide fake functions for now,
+        functions.network.connect = proc (
+            ip: string,
+            port: uint
+        ): Future[bool] {.async.} =
+            echo "Fake connect."
+
+        functions.network.broadcast = proc (
+            msgType: MessageType,
+            msg: string
+        ) {.raises: [AsyncError].} =
+            echo "Fake broadcast."
