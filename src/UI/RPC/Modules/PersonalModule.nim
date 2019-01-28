@@ -41,12 +41,9 @@ import json
 func getWallet(rpc: RPC): JSONNode {.raises: [EventError, PersonalError].} =
     var wallet: Wallet
     try:
-        wallet = rpc.events.get(
-            proc (): Wallet,
-            "personal.getWallet"
-        )()
+        wallet = rpc.functions.personal.getWallet()
     except:
-        raise newException(EventError, "Couldn't get and call personal.get.")
+        raise newException(EventError, "Couldn't get and call personal.getWallet.")
     if wallet == nil:
         raise newException(PersonalError, "Personal doesn't have a Wallet.")
 
@@ -65,10 +62,7 @@ proc setSeed(
     EventError,
 ].} =
     try:
-        rpc.events.get(
-            proc (seed: string),
-            "personal.setSeed"
-        )(seed)
+        rpc.functions.personal.setSeed(seed)
     except:
         raise newException(EventError, "Couldn't get and call personal.setSeed.")
 
@@ -94,40 +88,18 @@ proc send(
     #Mine the Send.
     send.mine("aa".repeat(64).toBN(16))
 
-    #Sign the Send.
-    var sign: proc(send: Send): bool
-    try:
-        sign = rpc.events.get(
-            proc (send: Send): bool,
-            "personal.signSend"
-        )
-    except:
-        raise newException(EventError, "Couldn't get and call personal.signSend.")
-    try:
-        if not send.sign():
-            raise newException(Exception, "")
-    except:
+    if not rpc.function.personal.signSend(sign):
         raise newException(PersonalError, "Couldn't sign the Send.")
 
-    try:
-        #Add it.
-        if not rpc.events.get(
-            proc (send: Send): bool,
-            "lattice.send"
-        )(send):
-            raise newException(Exception, "")
-    except:
+    #Add it.
+    if not rpc.functions.lattice.send(send):
         raise newException(EventError, "Couldn't get and call lattice.send.")
 
     #Broadcast the Send.
     try:
-        rpc.events.get(
-            proc (msgType: MessageType, msg: string),
-            "network.broadcast"
-        )(MessageType.Send, send.serialize())
+        rpc.functions.network.broadcast(MessageType.Send, send.serialize())
     except:
         echo "Failed to broadcast the Send."
-
 
     result = %* {
         "hash": $send.hash
@@ -154,32 +126,18 @@ proc receive(
     )
 
     #Sign the Receive.
-    var sign: proc(recv: Receive)
     try:
-        sign = rpc.events.get(
-            proc (recv: Receive),
-            "personal.signReceive"
-        )
-        recv.sign()
+        rpc.functions.personal.signReceive(recv)
     except:
         raise newException(EventError, "Couldn't get and call personal.signReceive.")
 
-    try:
-        #Add it.
-        if not rpc.events.get(
-            proc (recv: Receive): bool,
-            "lattice.receive"
-        )(recv):
-            raise newException(Exception, "")
-    except:
+    #Add it.
+    if not rpc.functions.lattice.receive(recv):
         raise newException(EventError, "Couldn't get and call lattice.receive.")
 
     #Broadcast the Receive.
     try:
-        rpc.events.get(
-            proc (msgType: MessageType, msg: string),
-            "network.broadcast"
-        )(MessageType.Receive, recv.serialize())
+        rpc.functions.network.broadcast(MessageType.Receive, recv.serialize())
     except:
         echo "Failed to broadcast the Receive."
 
@@ -208,36 +166,16 @@ proc data(
     data.mine("E0".repeat(64).toBN(16))
 
     #Sign the Data.
-    var sign: proc(data: Data): bool
-    try:
-        sign = rpc.events.get(
-            proc (data: Data): bool,
-            "personal.signData"
-        )
-    except:
-        raise newException(EventError, "Couldn't get and call personal.signData.")
-    try:
-        if not data.sign():
-            raise newException(Exception, "")
-    except:
-        raise newException(PersonalError, "Couldn't sign the Send.")
+    if not rpc.functions.personal.signData(data)
+        raise newException(PersonalError, "Couldn't sign the Data.")
 
-    try:
-        #Add it.
-        if not rpc.events.get(
-            proc (data: Data): bool,
-            "lattice.data"
-        )(data):
-            raise newException(Exception, "")
-    except:
+    #Add it.
+    if not rpc.functions.lattice.data(data):
         raise newException(EventError, "Couldn't get and call lattice.data.")
 
     #Broadcast the Data.
     try:
-        rpc.events.get(
-            proc (msgType: MessageType, msg: string),
-            "network.broadcast"
-        )(MessageType.Data, data.serialize())
+        rpc.functions.network.broadcast(MessageType.Data, data.serialize())
     except:
         echo "Failed to broadcast the Data."
 

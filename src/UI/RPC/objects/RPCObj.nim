@@ -4,6 +4,9 @@ import ../../../lib/Errors
 #Wallet lib.
 import ../../../Wallet/Wallet
 
+#Main Function Box.
+import ../../MainFunctionBox
+
 #Async standard lib.
 import asyncdispatch
 
@@ -19,7 +22,7 @@ import json
 #RPC object.
 finalsd:
     type RPC* = ref object of RootObj
-        events* {.final.}: EventEmitter
+        functions* {.final.}: MainFunctionBox
         toRPC* {.final.}: ptr Channel[JSONNode]
         toGUI* {.final.}: ptr Channel[JSONNode]
         server* {.final.}: AsyncSocket
@@ -28,20 +31,20 @@ finalsd:
 
 #Constructor.
 proc newRPCObject*(
-    events: EventEmitter,
+    functions: MainFunctionBox,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
 ): RPC {.raises: [SocketError].} =
     try:
         result = RPC(
-            events: events,
+            functions: functions,
             toRPC: toRPC,
             toGUI: toGUI,
             server: newAsyncSocket(),
             clients: @[],
             listening: true
         )
-        result.ffinalizeEvents()
+        result.ffinalizeFunctions()
         result.ffinalizeToRPC()
         result.ffinalizeToGUI()
         result.ffinalizeServer()
