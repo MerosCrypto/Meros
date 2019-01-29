@@ -1,5 +1,5 @@
-#Util.
-import ../../lib/Util
+#Serialization common lib.
+import ../Serialize/SerializeCommon
 
 #finals lib.
 import finals
@@ -64,20 +64,11 @@ func newMessage*(
     content: MessageType,
     message: string
 ): Message {.raises: [].} =
-    #Serialize the length.
-    var
-        len: int = message.len
-        length: string = ""
-    while len > 255:
-        len = len mod 255
-        length &= char(255)
-    length &= char(len)
-
     #Create the Message.
     result = Message(
         content: content,
         len: uint(message.len),
-        header: char(content) & length,
+        header: char(content) & message.lenPrefix,
         message: message
     )
     result.finalize()
