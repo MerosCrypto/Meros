@@ -9,19 +9,21 @@ finalsd:
         #Message Type enum.
         MessageType* = enum
             Handshake = 0,
-            Syncing = 1,
-            BlockRequest = 2,
-            VerificationRequest = 3,
-            EntryRequest = 4,
-            DataMissing = 5,
-            SyncingOver = 6,
-            HandshakeOver = 7,
-            Verification = 8,
-            Claim = 9,
-            Send = 10,
-            Receive = 11,
-            Data = 12,
-            MemoryVerification = 13,
+            HandshakeOver = 1,
+
+            Syncing = 2,
+            BlockRequest = 3,
+            VerificationRequest = 4,
+            EntryRequest = 5,
+            DataMissing = 6,
+            SyncingOver = 7,
+
+            Claim = 8,
+            Send = 9,
+            Receive = 10,
+            Data = 11,
+            MemoryVerification = 12,
+            Verification = 13,
             Block = 14
 
         #Message object.

@@ -15,6 +15,9 @@ import ../src/Database/Lattice/Lattice
 import ../src/Network/Serialize/Lattice/SerializeSend
 import ../src/Network/Serialize/Lattice/SerializeReceive
 
+#Message object.
+import ../src/Network/objects/MessageObj
+
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch
 
@@ -22,35 +25,35 @@ import asyncnet, asyncdispatch
 import strutils
 
 var
-    answer: string                         #Answer to questions.
+    answer: string                             #Answer to questions.
 
-    address: string                        #Address to send/receive from.
-    inputNonce: uint                       #Nonce of the Send to Receive from.
-    amount: BN                             #Amount we're sending.
-    nonce: uint                            #Nonce of the Entry.
+    address: string                            #Address to send/receive from.
+    inputNonce: uint                           #Nonce of the Send to Receive from.
+    amount: BN                                 #Amount we're sending.
+    nonce: uint                                #Nonce of the Entry.
 
-    wallet: Wallet                         #Wallet.
+    wallet: Wallet                             #Wallet.
 
-    send: Send                             #Send object.
-    recv: Receive                          #Receive object.
+    send: Send                                 #Send object.
+    recv: Receive                              #Receive object.
 
-    handshake: string =                    #Handshake that says we're at Block 0.
+    handshake: string =                        #Handshake that says we're at Block 0.
         char(0) &
         char(0) &
         char(0) &
-        char(1) & char(0)
+        char(MessageType.Handshake) & char(0)
 
-    handshakeOver: string =                #Handshake over message.
+    handshakeOver: string =                    #Handshake over message.
         char(0) &
         char(0) &
-        char(7) &
+        char(MessageType.HandshakeOver) &
         char(0)
 
-    sendType: char = char(10)              #Send Message Type.
-    recvType: char = char(11)              #Receive Message Type.
-    serialized: string                     #Serialized string.
+    sendType: char = char(MessageType.Send)    #Send Message Type.
+    recvType: char = char(MessageType.Receive) #Receive Message Type.
+    serialized: string                         #Serialized string.
 
-    client: AsyncSocket = newAsyncSocket() #Socket.
+    client: AsyncSocket = newAsyncSocket()     #Socket.
 
 #Get the Seed.
 echo "What's the Wallet's Seed? If you don't have a Wallet, press enter to make one. "
