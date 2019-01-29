@@ -4,8 +4,23 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
+#Lattice lib (for all Entry types).
+import ../Database/Lattice/Lattice
+
+#Verifications lib (for Verification/MemoryVerification).
+import ../Database/Verifications/Verifications
+
+#Block lib.
+import ../Database/Merit/Block as BlockFile
+
 #Serialization common lib.
 import Serialize/SerializeCommon
+
+#Serialization parsing libs.
+import Serialize/Lattice/ParseClaim
+import Serialize/Lattice/ParseSend
+import Serialize/Lattice/ParseReceive
+import Serialize/Lattice/ParseData
 
 #Messsage and Client object.
 import objects/MessageObj
@@ -119,7 +134,68 @@ proc handshake*(
 
     #If they have more blocks than us, return that we're missing blocks.
     if height < theirHeight:
-        result = HandshakeState.MissingBlocks
+        return HandshakeState.MissingBlocks
 
     #Else, return that the handshake is complete.
     result = HandshakeState.Complete
+
+#Tell the Client we're syncing.
+proc sync(client: Client) {.async.} =
+    #If we're already syncing, do nothing.
+    if client.ourState == ClientState.Syncing:
+        return
+
+    #Send that we're syncing.
+    client.send(newMessage(MessageType.Syncing))
+
+#Sync an Entry.
+proc syncEntry(client: Client, hash: string): Future[Entry] {.async.} =
+    #If we're not syncing, raise an error.
+    if client.ourState != ClientState.Syncing:
+        raise newException(SyncConfigError, "This Client isn't configured to sync data.")
+
+    #Send the request.
+    client.send(newMessage(MessageType.EntryRequest, hash))
+
+    #Get their response.
+    var msg: Message = await client.recv()
+
+    case msg.content:
+        of MessageType.Claim:
+            return msg.message.parseClaim()
+
+        of MessageType.Send:
+            return msg.message.parseSend()
+
+        of MessageType.Receive:
+            return msg.message.parseReceive()
+
+        of MessageType.Data:
+            return msg.message.parseData()
+
+        of MessageType.DataMissing:
+            raise newException(DataMissingError, "Client didn't have the requested data.")
+
+        else:
+            raise newException(InvalidResponseError, "Client didn't respond properly to our EntryRequest.")
+
+#Sync a Verification.
+proc syncVerification(
+    client: Client,
+    verifier: string,
+    nonce: uint
+): Future[Verification] {.async.} =
+    discard
+
+#Sync a Block.
+proc syncBlock(client: Client, nonce: uint): Future[Block] {.async.} =
+    discard
+
+#Tell the Client we're done syncing.
+proc syncOver(client: Client) {.async.} =
+    #If we're already not syncing, do nothing.
+    if client.ourState != ClientState.Syncing:
+        return
+
+    #Send that we're done syncing.
+    client.send(newMessage(MessageType.SyncingOver))

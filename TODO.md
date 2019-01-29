@@ -8,6 +8,7 @@
 - Uncomment syncing in `merit.addBlock`.
 - Update `import Network/Network`s in MainImports and MainFunctionBox.
 - Clean up all the `try`s/`except`s/`raises` in the RPC.
+- Remove EventError.
 
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
