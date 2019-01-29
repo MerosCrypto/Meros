@@ -4,18 +4,18 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
-#Message/Client/Clients/Network objects.
+#Message and Network objects.
 import objects/MessageObj
-import objects/ClientObj
-import objects/ClientsObj
 import objects/NetworkObj
-#Export the Message, Clients, and Network objects.
+#Export the Message and Network objects.
 export MessageObj
-export ClientsObj
 export NetworkObj
 
 #Network Function Box.
 import objects/NetworkFunctionBox
+
+#Clients library.
+import Clients
 
 #Networking standard libs.
 import asyncdispatch, asyncnet
