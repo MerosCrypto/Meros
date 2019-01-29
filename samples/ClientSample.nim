@@ -43,11 +43,11 @@ var
     handshakeOver: string =                #Handshake over message.
         char(0) &
         char(0) &
-        char(6) &
+        char(7) &
         char(0)
 
-    sendType: char = char(12)              #Send Message Type.
-    recvType: char = char(13)              #Receive Message Type.
+    sendType: char = char(10)              #Send Message Type.
+    recvType: char = char(11)              #Receive Message Type.
     serialized: string                     #Serialized string.
 
     client: AsyncSocket = newAsyncSocket() #Socket.

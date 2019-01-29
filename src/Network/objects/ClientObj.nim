@@ -6,19 +6,24 @@ import asyncnet
 
 #Client object.
 finalsd:
-    type Client* = ref object of RootObj
-        #IP.
-        ip* {.final.}: string
-        #Port.
-        port* {.final.}: uint
-        #ID.
-        id* {.final.}: uint
-        #Shaking.
-        shaking*: bool
-        #Syncing.
-        syncing*: bool
-        #Socket.
-        socket* {.final.}: AsyncSocket
+    type
+        ClientState* = enum
+            Shaking = 0,
+            ShakingAndSyncing = 1,
+            Syncing = 2,
+            Ready = 3
+
+        Client* = ref object of RootObj
+            #IP.
+            ip* {.final.}: string
+            #Port.
+            port* {.final.}: uint
+            #ID.
+            id* {.final.}: uint
+            #State.
+            state*: ClientState
+            #Socket.
+            socket* {.final.}: AsyncSocket
 
 #Constructor.
 func newClient*(ip: string, port: uint, id: uint, socket: AsyncSocket): Client {.raises: [].} =
@@ -26,13 +31,10 @@ func newClient*(ip: string, port: uint, id: uint, socket: AsyncSocket): Client {
         ip: ip,
         port: port,
         id: id,
-        shaking: true,
-        syncing: false,
+        state: Shaking,
         socket: socket
     )
+    result.ffinalizeIP()
+    result.ffinalizePort()
     result.ffinalizeID()
     result.ffinalizeSocket()
-
-#Converter so we don't always have to .socket, but instead can directly use .recv().
-converter toSocket*(client: Client): AsyncSocket {.raises: [].} =
-    client.socket

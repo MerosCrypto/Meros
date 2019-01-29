@@ -1,5 +1,11 @@
+#Main Function Box.
+import ../../MainFunctionBox
+
 #Import the Clients object.
 import ClientsObj
+
+#Network Function Box.
+import NetworkFunctionBoxObj
 
 #finals lib.
 import finals
@@ -17,13 +23,13 @@ finalsd:
         #Protocol version.
         protocol* {.final.}: uint
         #Clients.
-        clients*: Clients
+        clients* {.final.}: Clients
         #Server.
         server* {.final.}: AsyncSocket
-        #Event Emitter for the Clients/Server.
-        subEvents* {.final.}: EventEmitter
-        #Event Emitter for the node.
-        nodeEvents* {.final.}: EventEmitter
+        #Network Function Box.
+        networkFunctions* {.final.}: NetworkFunctionBox
+        #Main Function Box.
+        mainFunctions* {.final.}: MainFunctionsBox
 
 #Constructor.
 func newNetworkObj*(
@@ -31,19 +37,20 @@ func newNetworkObj*(
     protocol: uint,
     clients: Clients,
     server: AsyncSocket,
-    subEvents: EventEmitter,
-    nodeEvents: EventEmitter
+    networkFunctions: NetworkFunctionBox
+    mainFunctions: MainFunctionsBox
 ): Network {.raises: [].} =
     result = Network(
         id: id,
         protocol: protocol,
         clients: clients,
         server: server,
-        subEvents: subEvents,
-        nodeEvents: nodeEvents
+        networkFunctions: networkFunctions,
+        mainFunctions: mainFunctions
     )
     result.ffinalizeID()
     result.ffinalizeProtocol()
+    result.ffinalizeClients()
     result.ffinalizeServer()
-    result.ffinalizeSubEvents()
-    result.ffinalizeNodeEvents()
+    result.ffinalizeNetworkFunctions()
+    result.ffinalizeMainFunctions()

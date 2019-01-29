@@ -42,10 +42,10 @@ var
     handshakeOver: string =                #Handshake over message.
         char(0) &
         char(0) &
-        char(6) &
+        char(7) &
         char(0)
 
-    claimType: char = char(11)             #Claim Message Type.
+    claimType: char = char(9)              #Claim Message Type.
     serialized: string                     #Serialized string.
 
     socket: AsyncSocket = newAsyncSocket() #Socket.
