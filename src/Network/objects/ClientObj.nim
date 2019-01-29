@@ -7,6 +7,11 @@ import asyncnet
 #Client object.
 finalsd:
     type
+        HandshakeState* = enum
+            Error = 0,
+            Complete = 1,
+            MissingBlocks = 2
+
         ClientState* = enum
             Shaking = 0,
             ShakingAndSyncing = 1,
