@@ -9,14 +9,12 @@ finalsd:
     type
         HandshakeState* = enum
             Error = 0,
-            Complete = 1,
-            MissingBlocks = 2
+            MissingBlocks = 1,
+            Complete = 2
 
         ClientState* = enum
-            Shaking = 0,
-            ShakingAndSyncing = 1,
-            Syncing = 2,
-            Ready = 3
+            Syncing = 0,
+            Ready = 1
 
         Client* = ref object of RootObj
             #IP.
@@ -25,18 +23,26 @@ finalsd:
             port* {.final.}: uint
             #ID.
             id* {.final.}: uint
-            #State.
-            state*: ClientState
+            #Our state.
+            ourState*: ClientState
+            #Their state.
+            theirState*: ClientState
             #Socket.
             socket* {.final.}: AsyncSocket
 
 #Constructor.
-func newClient*(ip: string, port: uint, id: uint, socket: AsyncSocket): Client {.raises: [].} =
+func newClient*(
+    ip: string,
+    port: uint,
+    id: uint,
+    socket: AsyncSocket
+): Client {.raises: [].} =
     result = Client(
         ip: ip,
         port: port,
         id: id,
-        state: ClientState.Shaking,
+        ourState: ClientState.Ready,
+        theirState: ClientState.Ready,
         socket: socket
     )
     result.ffinalizeIP()
