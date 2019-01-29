@@ -31,7 +31,7 @@ func newClient*(ip: string, port: uint, id: uint, socket: AsyncSocket): Client {
         ip: ip,
         port: port,
         id: id,
-        state: Shaking,
+        state: ClientState.Shaking,
         socket: socket
     )
     result.ffinalizeIP()

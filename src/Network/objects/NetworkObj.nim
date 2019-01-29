@@ -5,13 +5,10 @@ import ../../MainFunctionBox
 import ClientsObj
 
 #Network Function Box.
-import NetworkFunctionBoxObj
+import NetworkFunctionBox
 
 #finals lib.
 import finals
-
-#Tables standard lib.
-import tables
 
 #Asyncnet standard lib.
 import asyncnet
@@ -29,7 +26,7 @@ finalsd:
         #Network Function Box.
         networkFunctions* {.final.}: NetworkFunctionBox
         #Main Function Box.
-        mainFunctions* {.final.}: MainFunctionsBox
+        mainFunctions* {.final.}: MainFunctionBox
 
 #Constructor.
 func newNetworkObj*(
@@ -37,8 +34,8 @@ func newNetworkObj*(
     protocol: uint,
     clients: Clients,
     server: AsyncSocket,
-    networkFunctions: NetworkFunctionBox
-    mainFunctions: MainFunctionsBox
+    networkFunctions: NetworkFunctionBox,
+    mainFunctions: MainFunctionBox
 ): Network {.raises: [].} =
     result = Network(
         id: id,

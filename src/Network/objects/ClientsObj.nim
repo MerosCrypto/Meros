@@ -25,12 +25,6 @@ func newClients*(): Clients {.raises: [].} =
         clients: newSeq[Client]()
     )
 
-#Getter.
-func `[]`*(clients: Clients, id: uint): Client {.raises: [].} =
-    for client in clients.clients:
-        if client.id == id:
-            return client
-
 #Disconnect.
 proc disconnect*(clients: Clients, id: uint) {.raises: [].} =
     for i, client in clients.clients:
@@ -51,3 +45,9 @@ proc shutdown*(clients: Clients) {.raises: [].} =
             discard
         #Delete the first client. Since we iterate from start to finish, and always delete the client...
         clients.clients.delete(0)
+
+#Getter.
+func `[]`*(clients: Clients, id: uint): Client {.raises: [].} =
+    for client in clients.clients:
+        if client.id == id:
+            return client
