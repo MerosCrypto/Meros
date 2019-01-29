@@ -22,6 +22,11 @@ import Serialize/Lattice/ParseSend
 import Serialize/Lattice/ParseReceive
 import Serialize/Lattice/ParseData
 
+import Serialize/Verifications/ParseVerification
+import Serialize/Verifications/ParseMemoryVerification
+
+import Serialize/Merit/ParseBlock
+
 #Messsage and Client object.
 import objects/MessageObj
 import objects/ClientObj
@@ -29,7 +34,7 @@ import objects/ClientObj
 #Export the Client object.
 export ClientObj
 
-#Networking sstandard libs.
+#Networking standard libs.
 import asyncdispatch, asyncnet
 
 #Receive a message.
@@ -140,7 +145,7 @@ proc handshake*(
     result = HandshakeState.Complete
 
 #Tell the Client we're syncing.
-proc sync(client: Client) {.async.} =
+proc sync*(client: Client) {.async.} =
     #If we're already syncing, do nothing.
     if client.ourState == ClientState.Syncing:
         return
@@ -149,7 +154,7 @@ proc sync(client: Client) {.async.} =
     client.send(newMessage(MessageType.Syncing))
 
 #Sync an Entry.
-proc syncEntry(client: Client, hash: string): Future[Entry] {.async.} =
+proc syncEntry*(client: Client, hash: string): Future[Entry] {.async.} =
     #If we're not syncing, raise an error.
     if client.ourState != ClientState.Syncing:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
@@ -180,19 +185,55 @@ proc syncEntry(client: Client, hash: string): Future[Entry] {.async.} =
             raise newException(InvalidResponseError, "Client didn't respond properly to our EntryRequest.")
 
 #Sync a Verification.
-proc syncVerification(
+proc syncVerification*(
     client: Client,
     verifier: string,
     nonce: uint
 ): Future[Verification] {.async.} =
-    discard
+    #If we're not syncing, raise an error.
+    if client.ourState != ClientState.Syncing:
+        raise newException(SyncConfigError, "This Client isn't configured to sync data.")
+
+    #Send the request.
+    client.send(newMessage(MessageType.VerificationRequest, !verifier & !nonce.toBinary()))
+
+    #Get their response.
+    var msg: Message = await client.recv()
+
+    case msg.content:
+        of MessageType.Verification:
+            return msg.message.parseVerification()
+
+        of MessageType.DataMissing:
+            raise newException(DataMissingError, "Client didn't have the requested data.")
+
+        else:
+            raise newException(InvalidResponseError, "Client didn't respond properly to our VerificationRequest.")
 
 #Sync a Block.
-proc syncBlock(client: Client, nonce: uint): Future[Block] {.async.} =
-    discard
+proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
+    #If we're not syncing, raise an error.
+    if client.ourState != ClientState.Syncing:
+        raise newException(SyncConfigError, "This Client isn't configured to sync data.")
+
+    #Send the request.
+    client.send(newMessage(MessageType.BlockRequest, !nonce.toBinary()))
+
+    #Get their response.
+    var msg: Message = await client.recv()
+
+    case msg.content:
+        of MessageType.Block:
+            return msg.message.parseBlock()
+
+        of MessageType.DataMissing:
+            raise newException(DataMissingError, "Client didn't have the requested data.")
+
+        else:
+            raise newException(InvalidResponseError, "Client didn't respond properly to our BlockRequest.")
 
 #Tell the Client we're done syncing.
-proc syncOver(client: Client) {.async.} =
+proc syncOver*(client: Client) {.async.} =
     #If we're already not syncing, do nothing.
     if client.ourState != ClientState.Syncing:
         return
