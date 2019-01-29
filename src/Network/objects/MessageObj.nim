@@ -6,25 +6,24 @@ import finals
 
 finalsd:
     type
-        #Message Type enum.
-        MessageType* = enum
+        #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
+        MessageType* {.pure.} = enum
             Handshake = 0,
-            HandshakeOver = 1,
 
-            Syncing = 2,
-            BlockRequest = 3,
-            VerificationRequest = 4,
-            EntryRequest = 5,
-            DataMissing = 6,
-            SyncingOver = 7,
+            Syncing = 1,
+            BlockRequest = 2,
+            VerificationRequest = 3,
+            EntryRequest = 4,
+            DataMissing = 5,
+            SyncingOver = 6,
 
-            Claim = 8,
-            Send = 9,
-            Receive = 10,
-            Data = 11,
-            MemoryVerification = 12,
-            Verification = 13,
-            Block = 14
+            Claim = 7,
+            Send = 8,
+            Receive = 9,
+            Data = 10,
+            MemoryVerification = 11,
+            Block = 12,
+            Verification = 13
 
         #Message object.
         Message* = ref object of RootObj
@@ -64,7 +63,7 @@ func newMessage*(
 #Constructor for outgoing data.
 func newMessage*(
     content: MessageType,
-    message: string
+    message: string = ""
 ): Message {.raises: [].} =
     #Create the Message.
     result = Message(

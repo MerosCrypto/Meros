@@ -40,13 +40,7 @@ var
         char(0) &
         char(0) &
         char(0) &
-        char(MessageType.Handshake) & char(0)
-
-    handshakeOver: string =                   #Handshake over message.
-        char(0) &
-        char(0) &
-        char(MessageType.HandshakeOver) &
-        char(0)
+        char(Handshake) & char(0)
 
     claimType: char = char(MessageType.Claim) #Claim Message Type.
     serialized: string                        #Serialized string.
@@ -87,7 +81,6 @@ echo "Connected."
 
 #Send the Handshake.
 waitFor socket.send(handshake)
-waitFor socket.send(handshakeOver)
 echo "Handshaked."
 
 #Send the serialized Entry.

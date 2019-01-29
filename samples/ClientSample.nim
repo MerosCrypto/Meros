@@ -43,12 +43,6 @@ var
         char(0) &
         char(MessageType.Handshake) & char(0)
 
-    handshakeOver: string =                    #Handshake over message.
-        char(0) &
-        char(0) &
-        char(MessageType.HandshakeOver) &
-        char(0)
-
     sendType: char = char(MessageType.Send)    #Send Message Type.
     recvType: char = char(MessageType.Receive) #Receive Message Type.
     serialized: string                         #Serialized string.
@@ -135,7 +129,6 @@ echo "Connected."
 
 #Send the Handshake.
 waitFor client.send(handshake)
-waitFor client.send(handshakeOver)
 echo "Handshaked."
 
 #Send the serialized Entry.
