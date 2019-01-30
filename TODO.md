@@ -1,9 +1,11 @@
 # TODO
 
 ### Network Redo:
-- Redo Networking.
+- Double check return values of `lattice.`: `claim`, `send`, `receive`, `data`.
+- Double check return value of `verifications.addMemoryVerification`.
+- Double check return value of `merit.block`.
+- Add syncing back in.
 - Uncomment syncing in `merit.addBlock`.
-- Clean up all the `try`s/`except`s/`raises` in the RPC.
 - Remove EventError.
 
 ### Core:
@@ -52,11 +54,12 @@
 - Network page on the GUI.
 
 ### Improvements:
-- Replace bools as status codes with Exceptions.
+- Solve bool/exception disparity by replacing most bools with Exceptions.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Use `sugerror`'s `reraise` for all our Exception wrapping.
+- Clean up all the `try`s/`except`s/`raises` in the RPC.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
@@ -65,7 +68,6 @@
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Don't rebroadcast Blocks that we're syncing.
-- Improve Network's encapsulation.
 
 - Make more things `func`.
 

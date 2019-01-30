@@ -48,14 +48,16 @@ proc handle(
         except:
             continue
 
-        #If this was a message changing the sync state...
+        #If this was a message changing the sync state, update it and return.
         if msg.content == MessageType.Syncing:
             client.theirState = ClientState.Syncing
+            return
         if msg.content == MessageType.SyncingOver:
-            client.theirState = ClientState.Syncing
+            client.theirState = ClientState.Ready
+            return
 
         #Tell the Network of our new message.
-        if not networkFunctions.handle(msg):
+        if not await networkFunctions.handle(msg):
             #If the message was invalid, disconnect the client and stop handling it.
             client.close()
             return

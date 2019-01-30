@@ -7,6 +7,33 @@ import ../lib/Util
 #Main Function Box.
 import ../MainFunctionBox
 
+#Lattice lib (for all Entry types).
+import ../Database/Lattice/Lattice
+
+#Verifications lib (for Verification/MemoryVerification).
+import ../Database/Verifications/Verifications
+
+#Block lib.
+import ../Database/Merit/Block
+
+#Serialization common lib.
+import Serialize/SerializeCommon
+
+#Serialize libs.
+import Serialize/Merit/SerializeBlock
+import Serialize/Verifications/SerializeVerification
+import Serialize/Lattice/SerializeEntry
+
+#Parse libs.
+import Serialize/Lattice/ParseClaim
+import Serialize/Lattice/ParseSend
+import Serialize/Lattice/ParseReceive
+import Serialize/Lattice/ParseData
+
+import Serialize/Verifications/ParseMemoryVerification
+
+import Serialize/Merit/ParseBlock
+
 #Message and Network objects.
 import objects/MessageObj
 import objects/NetworkObj
@@ -23,6 +50,14 @@ import Clients
 #Networking standard libs.
 import asyncdispatch, asyncnet
 
+#Broadcast a message.
+proc broadcast*(network: Network, msg: Message) {.raises: [].} =
+    network.clients.broadcast(msg)
+
+#Reply to a message.
+proc reply*(network: Network, msg: Message, res: Message) {.raises: [].} =
+    network.clients.reply(msg, res)
+
 #Constructor.
 proc newNetwork*(
     id: uint,
@@ -37,7 +72,7 @@ proc newNetwork*(
         raise newException(SocketError, "Couldn't create a socket for the server.")
 
     #Create the Network.
-    result = newNetworkObj(
+    var network: Network = newNetworkObj(
         id,
         protocol,
         newClients(),
@@ -45,6 +80,9 @@ proc newNetwork*(
         newNetworkLibFunctionBox(),
         mainFunctions
     )
+    #Set the result to network.
+    #We don't just use result so handle can access network.
+    result = network
 
     #Provide functions for the Network Functions Box.
     result.networkFunctions.getNetworkID = proc (): uint {.raises: [].} =
@@ -56,8 +94,146 @@ proc newNetwork*(
     result.networkFunctions.getHeight = proc (): uint {.raises: [].} =
         mainFunctions.merit.getHeight()
 
-    result.networkFunctions.handle = proc (msg: Message): bool {.raises: [].} =
-        discard
+    result.networkFunctions.handle = proc (msg: Message): Future[bool] {.async.} =
+        #Set the result to true.
+        result = true
+
+        #Try to handle the message.
+        try:
+            case msg.content:
+                of MessageType.Handshake:
+                    #Return false since we should've already handshaked.
+                    return false
+
+                #These three messages should never make it to handle.
+                of MessageType.Syncing:
+                    echo "We are attempting to handle a message which should've never made it to handle."
+                of MessageType.SyncingOver:
+                    echo "We are attempting to handle a message which should've never made it to handle."
+                of MessageType.DataMissing:
+                    echo "We are attempting to handle a message which should've never made it to handle."
+
+                #This message should only be received if we're syncing and handled by syncing.
+                of MessageType.Verification:
+                    echo "We are attempting to handle a Verification."
+
+                of MessageType.BlockRequest:
+                    #Grab our chain height and parse the requested nonce.
+                    var
+                        nonce: uint = mainFunctions.merit.getHeight()
+                        req: uint = uint(msg.message.fromBinary())
+
+                    #If we don't have that block, send them DataMissing.
+                    if nonce <= req:
+                        network.clients.reply(
+                            msg,
+                            newMessage(MessageType.DataMissing)
+                        )
+                    #Since we have it, grab it, serialize it, and send it.
+                    else:
+                        network.clients.reply(
+                            msg,
+                            newMessage(
+                                MessageType.Block,
+                                mainFunctions.merit.getBlock(req).serialize()
+                            )
+                        )
+
+                of MessageType.VerificationRequest:
+                    var
+                        req: seq[string] = msg.message.deserialize(2)
+                        key: string = req[0].pad(48)
+                        nonce: uint = uint(req[1].fromBinary())
+                        height: uint = mainFunctions.verifications.getVerifierHeight(key)
+
+                    if height <= nonce:
+                        network.clients.reply(
+                            msg,
+                            newMessage(MessageType.DataMissing)
+                        )
+                    else:
+                        network.clients.reply(
+                            msg,
+                            newMessage(
+                                MessageType.Verification,
+                                mainFunctions.verifications.getVerification(key, nonce).serialize()
+                            )
+                        )
+
+                of MessageType.EntryRequest:
+                    #Declare the Entry and a MessageType used to send it with.
+                    var
+                        entry: Entry
+                        msgType: MessageType
+
+                    try:
+                        #Try to get the Entry.
+                        entry = mainFunctions.lattice.getEntryByHash(msg.message)
+                    except:
+                        #If that failed, return DataMissing.
+                        network.clients.reply(
+                            msg,
+                            newMessage(MessageType.DataMissing)
+                        )
+
+                    #Verify we didn't get a Mint, which should not be transmitted.
+                    if entry.descendant == EntryType.Mint:
+                        #Return DataMissing.
+                        network.clients.reply(
+                            msg,
+                            newMessage(MessageType.DataMissing)
+                        )
+
+                    #If we did get an Entry, that wasn't a Mint, set the MessageType.
+                    case entry.descendant:
+                        of EntryType.Mint:
+                            discard
+                        of EntryType.Claim:
+                            msgType = MessageType.Claim
+                        of EntryType.Send:
+                            msgType = MessageType.Send
+                        of EntryType.Receive:
+                            msgType = MessageType.Receive
+                        of EntryType.Data:
+                            msgType = MessageType.Data
+
+                    #Send the Entry.
+                    network.clients.reply(
+                        msg,
+                        newMessage(
+                            msgType,
+                            entry.serialize()
+                        )
+                    )
+
+                of MessageType.Claim:
+                    if mainFunctions.lattice.addClaim(msg.message.parseClaim()):
+                        network.clients.broadcast(msg)
+
+                of MessageType.Send:
+                    if mainFunctions.lattice.addSend(msg.message.parseSend()):
+                        network.clients.broadcast(msg)
+
+                of MessageType.Receive:
+                    if mainFunctions.lattice.addReceive(msg.message.parseReceive()):
+                        network.clients.broadcast(msg)
+
+                of MessageType.Data:
+                    if mainFunctions.lattice.addData(msg.message.parseData()):
+                        network.clients.broadcast(msg)
+
+                of MessageType.MemoryVerification:
+                    if mainFunctions.verifications.addMemoryVerification(
+                        msg.message.parseMemoryVerification()
+                    ):
+                        network.clients.broadcast(msg)
+
+                of MessageType.Block:
+                    if await mainFunctions.merit.addBlock(msg.message.parseBlock()):
+                        network.clients.broadcast(msg)
+        except:
+            #If we encountered an error handling the message, return false.
+            return false
 
 #Listen on a port.
 proc listen*(network: Network, port: uint) {.async.} =
@@ -95,14 +271,6 @@ proc connect*(network: Network, ip: string, port: uint) {.async.} =
         socket,
         network.networkFunctions
     )
-
-#Broadcast a message.
-proc broadcast*(network: Network, msg: Message) {.raises: [].} =
-    network.clients.broadcast(msg)
-
-#Reply to a message.
-proc reply*(network: Network, msg: Message, res: Message) {.raises: [].} =
-    network.clients.reply(msg, res)
 
 #Shutdown all Network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =
