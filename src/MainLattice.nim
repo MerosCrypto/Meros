@@ -29,7 +29,6 @@ proc verify(entry: Entry) {.async.} =
         #Discard lattice.verify because it is known to return true.
         discard lattice.verify(merit, verif)
 
-        discard """
         #Broadcast the Verification.
         network.broadcast(
             newMessage(
@@ -37,7 +36,6 @@ proc verify(entry: Entry) {.async.} =
                 verif.serialize()
             )
         )
-        """
 
 proc mainLattice() {.raises: [ValueError].} =
     {.gcsafe.}:
@@ -133,7 +131,6 @@ proc mainLattice() {.raises: [ValueError].} =
                         try:
                             #Emit it.
                             if functions.lattice.addReceive(recv):
-                                discard """
                                 #Broadcast it.
                                 network.broadcast(
                                     newMessage(
@@ -141,7 +138,6 @@ proc mainLattice() {.raises: [ValueError].} =
                                         recv.serialize()
                                     )
                                 )
-                                """
                         except:
                             raise newException(EventError, "Couldn't get and call lattice.receive.")
             else:

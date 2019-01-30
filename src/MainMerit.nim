@@ -143,7 +143,6 @@ proc mainMerit() {.raises: [
 
             echo "Successfully added the Block."
 
-            discard """
             #Broadcast the Block.
             network.broadcast(
                 newMessage(
@@ -161,4 +160,3 @@ proc mainMerit() {.raises: [
                         claim.serialize()
                     )
                 )
-            """

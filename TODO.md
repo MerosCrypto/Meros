@@ -2,17 +2,12 @@
 
 ### Network Redo:
 - Redo Networking.
-- Redo MainNetwork.
-- Uncomment network/network.shutdown in MainGlobals.
-- Uncomment broadcasts in MainMerit and MainLattice.
 - Uncomment syncing in `merit.addBlock`.
-- Update `import Network/Network`s in MainImports and MainFunctionBox.
 - Clean up all the `try`s/`except`s/`raises` in the RPC.
 - Remove EventError.
 
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
-- Update Verifications to use Ed25519 Public Key + nonce, instead of the hash. 28 byte savings + gap detection while syncing.
 - Update Claims to use Ed25519 Public Keys, not addresses.
 
 - Improve the Difficulty algorithm.

@@ -1,13 +1,15 @@
 include MainPersonal
 
-proc mainNetwork() {.raises: [].} =
+proc mainNetwork() {.raises: [SocketError].} =
     {.gcsafe.}:
-        discard """
         #Create the Network..
-        network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, events)
+        network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, functions)
 
         #Start listening.
-        network.start(NETWORK_PORT)
+        try:
+            asyncCheck network.listen(NETWORK_PORT)
+        except:
+            raise newException(SocketError, "Couldn't listen on our server socket.")
 
         #Handle network events.
         #Connect to another node.
@@ -21,28 +23,14 @@ proc mainNetwork() {.raises: [].} =
             except:
                 result = false
 
-        #Broadcast a message. This is used to send data out.
+        #Broadcast a message.
         functions.network.broadcast = proc (
             msgType: MessageType,
             msg: string
-        ) {.raises: [AsyncError].} =
+        ) {.raises: [].} =
             network.broadcast(
                 newMessage(
                     msgType,
                     msg
                 )
             )
-        """
-
-        #Provide fake functions for now,
-        functions.network.connect = proc (
-            ip: string,
-            port: uint
-        ): Future[bool] {.async.} =
-            echo "Fake connect."
-
-        functions.network.broadcast = proc (
-            msgType: MessageType,
-            msg: string
-        ) {.raises: [].} =
-            echo "Fake broadcast."

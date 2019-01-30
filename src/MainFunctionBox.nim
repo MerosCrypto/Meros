@@ -15,6 +15,9 @@ import lib/Errors
 #BN lib.
 import BN
 
+#BLS lib.
+import lib/BLS
+
 #Message object.
 import Network/objects/MessageObj
 
@@ -29,9 +32,6 @@ import Database/Merit/Merit
 
 #Lattice.
 import Database/Lattice/Lattice
-
-#BLS lib.
-import lib/BLS
 
 #Finals lib.
 import finals

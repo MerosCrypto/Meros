@@ -20,7 +20,7 @@ var
     wallet {.threadvar.}: Wallet #Wallet.
 
     #Network.
-    #network {.threadvar.}: Network #Network.
+    network {.threadvar.}: Network #Network.
 
     #UI.
     fromMain: Channel[string] #Channel from the 'main' thread to the UI thread.
@@ -40,7 +40,7 @@ if paramCount() > 0:
             raise newException(ValueError, "No BLS Private Key was passed with --miner.")
 
 #Properly shutdown.
-functions.system.quit = proc () {.raises: [ChannelError, AsyncError].} =
+functions.system.quit = proc () {.raises: [ChannelError, AsyncError, SocketError].} =
     #Shutdown the GUI.
     try:
         fromMain.send("shutdown")
@@ -51,7 +51,7 @@ functions.system.quit = proc () {.raises: [ChannelError, AsyncError].} =
     rpc.shutdown()
 
     #Shut down the Network.
-    #network.shutdown()
+    network.shutdown()
 
     #Quit.
     quit(0)

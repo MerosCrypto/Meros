@@ -27,7 +27,6 @@ import Database/Merit/Merit
 import Database/Lattice/Lattice
 
 #Network.
-import Network/objects/MessageObj
 import Network/Network
 
 #Serialization libs.
