@@ -145,7 +145,7 @@ proc handshake*(
     result = HandshakeState.Complete
 
 #Tell the Client we're syncing.
-proc sync*(client: Client) {.async.} =
+proc sync*(client: Client) {.raises: [SocketError].} =
     #If we're already syncing, do nothing.
     if client.ourState == ClientState.Syncing:
         return
@@ -236,7 +236,7 @@ proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
             raise newException(InvalidResponseError, "Client didn't respond properly to our BlockRequest.")
 
 #Tell the Client we're done syncing.
-proc syncOver*(client: Client) {.async.} =
+proc syncOver*(client: Client) {.raises: [SocketError].} =
     #If we're already not syncing, do nothing.
     if client.ourState != ClientState.Syncing:
         return

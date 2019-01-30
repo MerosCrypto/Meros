@@ -4,6 +4,12 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
+#Hash lib.
+import ../lib/Hash
+
+#BLS lib.
+import ../lib/BLS
+
 #Main Function Box.
 import ../MainFunctionBox
 
@@ -46,6 +52,12 @@ import objects/NetworkLibFunctionBox
 
 #Clients library.
 import Clients
+
+#Seq utils standard lib.
+import sequtils
+
+#Tables standard lib.
+import tables
 
 #Networking standard libs.
 import asyncdispatch, asyncnet
@@ -271,6 +283,31 @@ proc connect*(network: Network, ip: string, port: uint) {.async.} =
         socket,
         network.networkFunctions
     )
+
+#Request a Block.
+proc requestBlock*(network: Network, nonce: uint) {.async.} =
+    #If we use the .items iterator, we gain two advantages.
+    #The first is that since we can only directly index by ID, we don't have to track that.
+    #The second is that we only run if we have a client.
+    for client in network.clients:
+        #Start syncing.
+        client.sync()
+        #Get the Block.
+        var requested: Block = await client.syncBlock(nonce)
+        #Stop syncing.
+        client.syncOver()
+        #Notify MainMerit.
+        discard await network.mainFunctions.merit.addBlock(requested)
+        #Return to prevent running multiple times.
+        return
+
+#Sync a Block's Verifications/Entries.
+proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
+    for client in network.clients:
+        result = true
+
+        #Return so we don't run again with a new Client.
+        return
 
 #Shutdown all Network operations.
 proc shutdown*(network: Network) {.raises: [SocketError].} =

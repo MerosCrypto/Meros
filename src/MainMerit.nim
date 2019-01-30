@@ -28,22 +28,22 @@ proc mainMerit() {.raises: [
             echo "Adding a new Block. " & $newBlock.header.nonce
 
             #If we're connected to other people, sync missing info.
-            discard """
             if network.clients.clients.len > 0:
-                #Missing previous Blocks.
+                #Check if we're missing previous Blocks.
                 if newBlock.header.nonce > uint(merit.blockchain.blocks.len):
                     #Iterate over the missing Blocks.
                     for nonce in uint(merit.blockchain.blocks.len) ..< newBlock.header.nonce:
-                        #Get and test it.
-                        if not await network.requestBlock(nonce):
+                        #Get and test the Block.
+                        try:
+                            await network.requestBlock(nonce)
+                        except:
                             echo "Failed to add the Block."
                             return false
 
                 #Missing Verifications/Entries.
-                if not await newBlock.sync(network, network.clients.clients[0]):
+                if not await network.sync(newBlock):
                     echo "Failed to add the Block."
                     return false
-            """
 
             if newBlock.verifications.len > 0:
                 #Verify we have all the Verifications and Entries, as well as verify the signature.

@@ -1,11 +1,8 @@
 # TODO
 
 ### Network Redo:
-- Double check return values of `lattice.`: `claim`, `send`, `receive`, `data`.
-- Double check return value of `verifications.addMemoryVerification`.
-- Double check return value of `merit.block`.
-- Add syncing back in.
-- Uncomment syncing in `merit.addBlock`.
+- `network.sync`.
+- Sync after the Handshake.
 - Remove EventError.
 
 ### Core:
@@ -54,6 +51,8 @@
 - Network page on the GUI.
 
 ### Improvements:
+- Clean `merit.addBlock`.
+
 - Solve bool/exception disparity by replacing most bools with Exceptions.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Add `DataExistsError` for when data has already been added.
