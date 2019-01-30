@@ -87,16 +87,16 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
     )
 
 #Send a messsage.
-proc send*(client: Client, msg: Message) {.raises: [AsyncError].} =
+proc send*(client: Client, msg: Message) {.raises: [SocketError].} =
     #Make sure the client is open.
     if not client.socket.isClosed():
         try:
             asyncCheck client.socket.send($msg)
         except:
-            raise newException(AsyncError, "Couldn't broacast to a Client.")
+            raise newException(SocketError, "Couldn't broacast to a Client.")
     #If it isn't, mark the client for disconnection.
     else:
-        raise newException(AsyncError, "Client was closed.")
+        raise newException(SocketError, "Client was closed.")
 
 #Handshake.
 proc handshake*(
@@ -152,6 +152,9 @@ proc sync*(client: Client) {.async.} =
 
     #Send that we're syncing.
     client.send(newMessage(MessageType.Syncing))
+
+    #Update our state.
+    client.ourState = ClientState.Syncing
 
 #Sync an Entry.
 proc syncEntry*(client: Client, hash: string): Future[Entry] {.async.} =
@@ -240,3 +243,6 @@ proc syncOver*(client: Client) {.async.} =
 
     #Send that we're done syncing.
     client.send(newMessage(MessageType.SyncingOver))
+
+    #Update our state.
+    client.ourState = ClientState.Ready

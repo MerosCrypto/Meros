@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Finals lib.
 import finals
 
@@ -49,3 +52,14 @@ func newClient*(
     result.ffinalizePort()
     result.ffinalizeID()
     result.ffinalizeSocket()
+
+#Check if a Client is closed.
+func isClosed*(client: Client): bool {.raises: [].} =
+    client.socket.isClosed()
+
+#Close a Client.
+proc close*(client: Client) {.raises: [SocketError].} =
+    try:
+        client.socket.close()
+    except:
+        raise newException(SocketError, "Couldn't close the socket.")

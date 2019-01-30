@@ -25,6 +25,13 @@ func newClients*(): Clients {.raises: [].} =
         clients: newSeq[Client]()
     )
 
+#Add a new Client.
+proc add*(clients: Clients, client: Client) {.raises: [].} =
+    #We do not inc(clients.total) here.
+    #Clients calls it after Client creation.
+    #Why? After we create a client, but before we add it, we call handshake, which takes an unspecified amount of time.
+    clients.clients.add(client)
+
 #Disconnect.
 proc disconnect*(clients: Clients, id: uint) {.raises: [].} =
     for i, client in clients.clients:
@@ -51,3 +58,8 @@ func `[]`*(clients: Clients, id: uint): Client {.raises: [].} =
     for client in clients.clients:
         if client.id == id:
             return client
+
+#Iterator.
+iterator items*(clients: Clients): Client {.raises: [].} =
+    for client in clients.clients:
+        yield client
