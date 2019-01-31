@@ -27,7 +27,7 @@ import Serialize/Verifications/ParseMemoryVerification
 
 import Serialize/Merit/ParseBlock
 
-#Messsage and Client object.
+#Message and Client object.
 import objects/MessageObj
 import objects/ClientObj
 
@@ -43,7 +43,7 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
         header: string
         offset: int = 0
         size: int
-        msg: string
+        msg: string = ""
 
     #If this is a handsshake, set an offset of 2.
     if handshake:
@@ -57,8 +57,8 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
         if header.len == 0:
             #Close the client.
             client.socket.close()
-            #Stop trying to recv.
-            return
+            #Raise an error.
+            raise newException(SocketError, "Client disconnected.")
         #Else, if we got a partial header, raise an exception.
         raise newException(SocketError, "Didn't get a full header.")
 
@@ -71,8 +71,9 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
         #Add it to the size.
         size += ord(header[^1])
 
-    #Now that we know how long the message is, get it.
-    msg = await client.socket.recv(size)
+    #Now that we know how long the message is, get it (as long as there is one).
+    if size > 0:
+        msg = await client.socket.recv(size)
     #Verify the length.
     if msg.len != size:
         raise newException(SocketError, "Didn't get a full message.")
@@ -86,7 +87,7 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
         msg
     )
 
-#Send a messsage.
+#Send a message.
 proc send*(client: Client, msg: Message) {.raises: [SocketError].} =
     #Make sure the client is open.
     if not client.socket.isClosed():
@@ -220,7 +221,7 @@ proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    client.send(newMessage(MessageType.BlockRequest, !nonce.toBinary()))
+    client.send(newMessage(MessageType.BlockRequest, nonce.toBinary()))
 
     #Get their response.
     var msg: Message = await client.recv()

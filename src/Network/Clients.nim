@@ -16,7 +16,7 @@ import ../Database/Merit/Block as BlockFile
 #Serialization common lib.
 import Serialize/SerializeCommon
 
-#Messsage object.
+#Message object.
 import objects/MessageObj
 
 #Client library and Clients object.
@@ -51,10 +51,10 @@ proc handle(
         #If this was a message changing the sync state, update it and return.
         if msg.content == MessageType.Syncing:
             client.theirState = ClientState.Syncing
-            return
+            continue
         if msg.content == MessageType.SyncingOver:
             client.theirState = ClientState.Ready
-            return
+            continue
 
         #Tell the Network of our new message.
         if not await networkFunctions.handle(msg):

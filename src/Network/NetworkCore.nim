@@ -66,16 +66,16 @@ proc newNetwork*(
 
                 #This message should only be received if we're syncing and handled by syncing.
                 of MessageType.Verification:
-                    echo "We are attempting to handle a Verification."
+                    echo "We are attempting to handle a Verification which shouldn't happen."
 
                 of MessageType.BlockRequest:
                     #Grab our chain height and parse the requested nonce.
                     var
-                        nonce: uint = mainFunctions.merit.getHeight()
+                        height: uint = mainFunctions.merit.getHeight()
                         req: uint = uint(msg.message.fromBinary())
 
                     #If we don't have that block, send them DataMissing.
-                    if nonce <= req:
+                    if height <= req:
                         network.clients.reply(
                             msg,
                             newMessage(MessageType.DataMissing)

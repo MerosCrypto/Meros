@@ -67,6 +67,7 @@ func newMessage*(
 ): Message {.raises: [].} =
     #Create the Message.
     result = Message(
+        client: 0,
         content: content,
         len: uint(message.len),
         header: char(content) & message.lenPrefix,
