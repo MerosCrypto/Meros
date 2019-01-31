@@ -36,6 +36,7 @@ import Serialize/Lattice/ParseSend
 import Serialize/Lattice/ParseReceive
 import Serialize/Lattice/ParseData
 
+import Serialize/Verifications/ParseVerification
 import Serialize/Verifications/ParseMemoryVerification
 
 import Serialize/Merit/ParseBlock

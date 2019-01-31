@@ -1,7 +1,7 @@
 # TODO
 
 ### Network Redo:
-- `network.sync`.
+- Bug fixes.
 - Sync after the Handshake.
 - Remove EventError.
 

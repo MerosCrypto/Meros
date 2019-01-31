@@ -35,7 +35,8 @@ proc mainMerit() {.raises: [
                     for nonce in uint(merit.blockchain.blocks.len) ..< newBlock.header.nonce:
                         #Get and test the Block.
                         try:
-                            await network.requestBlock(nonce)
+                            if not await network.requestBlock(nonce):
+                                raise newException(Exception, "")
                         except:
                             echo "Failed to add the Block."
                             return false
