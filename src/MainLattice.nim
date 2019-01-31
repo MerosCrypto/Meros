@@ -30,7 +30,7 @@ proc verify(entry: Entry) {.async.} =
         discard lattice.verify(merit, verif)
 
         #Broadcast the Verification.
-        network.broadcast(
+        await network.broadcast(
             newMessage(
                 MessageType.MemoryVerification,
                 verif.serialize()
@@ -132,7 +132,7 @@ proc mainLattice() {.raises: [ValueError].} =
                             #Emit it.
                             if functions.lattice.addReceive(recv):
                                 #Broadcast it.
-                                network.broadcast(
+                                asyncCheck network.broadcast(
                                     newMessage(
                                         MessageType.Receive,
                                         recv.serialize()

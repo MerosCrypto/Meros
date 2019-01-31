@@ -117,7 +117,7 @@ proc add*(
 proc broadcast*(
     clients: Clients,
     msg: Message
-) {.raises: [].} =
+) {.async.} =
     #Seq of the clients to disconnect.
     var toDisconnect: seq[uint] = @[]
 
@@ -133,7 +133,7 @@ proc broadcast*(
 
         #Try to send the message.
         try:
-            client.send(msg)
+            await client.send(msg)
         #If that failed, mark the Client for disconnection.
         except:
             toDisconnect.add(client.id)
@@ -147,13 +147,13 @@ proc reply*(
     clients: Clients,
     msg: Message,
     res: Message
-) {.raises: [].} =
+) {.async.} =
     #Get the client.
     var client: Client = clients[msg.client]
 
     #Try to send the message.
     try:
-        client.send(msg)
+        await client.send(msg)
     #If that failed, mark the Client for disconnection.
     except:
         clients.disconnect(msg.client)

@@ -145,7 +145,7 @@ proc mainMerit() {.raises: [
             echo "Successfully added the Block."
 
             #Broadcast the Block.
-            network.broadcast(
+            await network.broadcast(
                 newMessage(
                     MessageType.Block,
                     newBlock.serialize()
@@ -155,7 +155,7 @@ proc mainMerit() {.raises: [
             #If we made a Claim...
             if not claim.isNil:
                 #Broadcast the Claim.
-                network.broadcast(
+                await network.broadcast(
                     newMessage(
                         MessageType.Claim,
                         claim.serialize()

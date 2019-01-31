@@ -119,7 +119,7 @@ proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     #If that worked, broadcast the Block.
     if success:
         try:
-            rpc.functions.network.broadcast(MessageType.Block, data)
+            asyncCheck rpc.functions.network.broadcast(MessageType.Block, data)
         except:
             echo "Failed to broadcast the Block."
 

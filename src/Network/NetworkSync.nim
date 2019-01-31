@@ -46,26 +46,14 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
         #Try block is here so if anything fails, we still send SyncingOver.
         try:
             #Send syncing.
-            client.sync()
+            await client.sync()
 
             #Ask for missing Verifications.
             for gap in gaps:
                 #Send the Requests.
                 for nonce in gap.start .. gap.last:
-                    client.send(
-                        newMessage(
-                            MessageType.VerificationRequest,
-                            !gap.key & !nonce.toBinary()
-                        )
-                    )
-
-                    #Get the response.
-                    var res: Message = await client.recv()
-                    #Make sure it's a Verification.
-                    if res.content != MessageType.Verification:
-                        return false
-                    #Parse it.
-                    var verif: Verification = res.message.parseVerification()
+                    #Sync the Verification.
+                    var verif: Verification = await client.syncVerification(gap.key, nonce)
                     #Verify it's from the correct person and has the correct nonce.
                     if verif.verifier.toString() != gap.key:
                         return false
@@ -108,32 +96,24 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
             entries = entries.deduplicate()
             #Iterate over each Entry.
             for entry in entries:
-                #Send the Request.
-                client.send(
-                    newMessage(
-                        MessageType.EntryRequest,
-                        entry
-                    )
-                )
-
-                #Get the response.
-                var res: Message = await client.recv()
+                #Sync the Entry.
+                var res: Entry = await client.syncEntry(entry)
                 #Add it.
-                case res.content:
-                    of MessageType.Claim:
-                        if not network.mainFunctions.lattice.addClaim(res.message.parseClaim()):
+                case res.descendant:
+                    of EntryType.Claim:
+                        if not network.mainFunctions.lattice.addClaim(cast[Claim](entry)):
                             return false
 
-                    of MessageType.Send:
-                        if not network.mainFunctions.lattice.addSend(res.message.parseSend()):
+                    of EntryType.Send:
+                        if not network.mainFunctions.lattice.addSend(cast[Send](entry)):
                             return false
 
-                    of MessageType.Receive:
-                        if not network.mainFunctions.lattice.addReceive(res.message.parseReceive()):
+                    of EntryType.Receive:
+                        if not network.mainFunctions.lattice.addReceive(cast[Receive](entry)):
                             return false
 
-                    of MessageType.Data:
-                        if not network.mainFunctions.lattice.addData(res.message.parseData()):
+                    of EntryType.Data:
+                        if not network.mainFunctions.lattice.addData(cast[Data](entry)):
                             return false
 
                     else:
@@ -152,7 +132,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
 
         finally:
             #But finally, send SyncingOver.
-            client.syncOver()
+            await client.syncOver()
 
         #If we finished without any errors, return before the for loop grabs another Client.
         return
@@ -161,7 +141,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
 proc requestBlock*(network: Network, nonce: uint): Future[bool] {.async.} =
     for client in network.clients:
         #Start syncing.
-        client.sync()
+        await client.sync()
 
         #Get the Block.
         var requested: Block = await client.syncBlock(nonce)

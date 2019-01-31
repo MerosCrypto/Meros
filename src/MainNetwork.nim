@@ -27,8 +27,8 @@ proc mainNetwork() {.raises: [SocketError].} =
         functions.network.broadcast = proc (
             msgType: MessageType,
             msg: string
-        ) {.raises: [].} =
-            network.broadcast(
+        ) {.async.} =
+            await network.broadcast(
                 newMessage(
                     msgType,
                     msg

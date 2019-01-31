@@ -53,12 +53,10 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
     header = await client.socket.recv(2 + offset)
     #Verify the length.
     if header.len != (2 + offset):
-        #If the header length is 0 because the client disconnected...
+        #If the header length is 0, likely because the client disconnected...
         if header.len == 0:
-            #Close the client.
-            client.socket.close()
             #Raise an error.
-            raise newException(SocketError, "Client disconnected.")
+            raise newException(SocketError, "Client is likely disconnected.")
         #Else, if we got a partial header, raise an exception.
         raise newException(SocketError, "Didn't get a full header.")
 
@@ -88,11 +86,11 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
     )
 
 #Send a message.
-proc send*(client: Client, msg: Message) {.raises: [SocketError].} =
+proc send*(client: Client, msg: Message) {.async.} =
     #Make sure the client is open.
     if not client.socket.isClosed():
         try:
-            asyncCheck client.socket.send($msg)
+            await client.socket.send($msg)
         except:
             raise newException(SocketError, "Couldn't broacast to a Client.")
     #If it isn't, mark the client for disconnection.
@@ -146,13 +144,13 @@ proc handshake*(
     result = HandshakeState.Complete
 
 #Tell the Client we're syncing.
-proc sync*(client: Client) {.raises: [SocketError].} =
+proc sync*(client: Client) {.async.} =
     #If we're already syncing, do nothing.
     if client.ourState == ClientState.Syncing:
         return
 
     #Send that we're syncing.
-    client.send(newMessage(MessageType.Syncing))
+    await client.send(newMessage(MessageType.Syncing))
 
     #Update our state.
     client.ourState = ClientState.Syncing
@@ -164,7 +162,7 @@ proc syncEntry*(client: Client, hash: string): Future[Entry] {.async.} =
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    client.send(newMessage(MessageType.EntryRequest, hash))
+    await client.send(newMessage(MessageType.EntryRequest, hash))
 
     #Get their response.
     var msg: Message = await client.recv()
@@ -199,7 +197,7 @@ proc syncVerification*(
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    client.send(newMessage(MessageType.VerificationRequest, !verifier & !nonce.toBinary()))
+    await client.send(newMessage(MessageType.VerificationRequest, !verifier & !nonce.toBinary()))
 
     #Get their response.
     var msg: Message = await client.recv()
@@ -221,7 +219,7 @@ proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    client.send(newMessage(MessageType.BlockRequest, nonce.toBinary()))
+    await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary()))
 
     #Get their response.
     var msg: Message = await client.recv()
@@ -237,13 +235,13 @@ proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
             raise newException(InvalidResponseError, "Client didn't respond properly to our BlockRequest.")
 
 #Tell the Client we're done syncing.
-proc syncOver*(client: Client) {.raises: [SocketError].} =
+proc syncOver*(client: Client) {.async.} =
     #If we're already not syncing, do nothing.
     if client.ourState != ClientState.Syncing:
         return
 
     #Send that we're done syncing.
-    client.send(newMessage(MessageType.SyncingOver))
+    await client.send(newMessage(MessageType.SyncingOver))
 
     #Update our state.
     client.ourState = ClientState.Ready

@@ -100,7 +100,7 @@ proc send(
 
     #Broadcast the Send.
     try:
-        rpc.functions.network.broadcast(MessageType.Send, send.serialize())
+        asyncCheck rpc.functions.network.broadcast(MessageType.Send, send.serialize())
     except:
         echo "Failed to broadcast the Send."
 
@@ -143,7 +143,7 @@ proc receive(
 
     #Broadcast the Receive.
     try:
-        rpc.functions.network.broadcast(MessageType.Receive, recv.serialize())
+        asyncCheck rpc.functions.network.broadcast(MessageType.Receive, recv.serialize())
     except:
         echo "Failed to broadcast the Receive."
 
@@ -184,7 +184,7 @@ proc data(
 
     #Broadcast the Data.
     try:
-        rpc.functions.network.broadcast(MessageType.Data, data.serialize())
+        asyncCheck rpc.functions.network.broadcast(MessageType.Data, data.serialize())
     except:
         echo "Failed to broadcast the Data."
 

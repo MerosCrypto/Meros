@@ -2,12 +2,12 @@
 include NetworkImports
 
 #Broadcast a message.
-proc broadcast*(network: Network, msg: Message) {.raises: [].} =
-    network.clients.broadcast(msg)
+proc broadcast*(network: Network, msg: Message) {.async.} =
+    await network.clients.broadcast(msg)
 
 #Reply to a message.
-proc reply*(network: Network, msg: Message, res: Message) {.raises: [].} =
-    network.clients.reply(msg, res)
+proc reply*(network: Network, msg: Message, res: Message) {.async.} =
+    await network.clients.reply(msg, res)
 
 #Constructor.
 proc newNetwork*(
@@ -76,13 +76,13 @@ proc newNetwork*(
 
                     #If we don't have that block, send them DataMissing.
                     if height <= req:
-                        network.clients.reply(
+                        await network.clients.reply(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
                     #Since we have it, grab it, serialize it, and send it.
                     else:
-                        network.clients.reply(
+                        await network.clients.reply(
                             msg,
                             newMessage(
                                 MessageType.Block,
@@ -98,12 +98,12 @@ proc newNetwork*(
                         height: uint = mainFunctions.verifications.getVerifierHeight(key)
 
                     if height <= nonce:
-                        network.clients.reply(
+                        await network.clients.reply(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
                     else:
-                        network.clients.reply(
+                        await network.clients.reply(
                             msg,
                             newMessage(
                                 MessageType.Verification,
@@ -122,7 +122,7 @@ proc newNetwork*(
                         entry = mainFunctions.lattice.getEntryByHash(msg.message)
                     except:
                         #If that failed, return DataMissing.
-                        network.clients.reply(
+                        await network.clients.reply(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
@@ -130,7 +130,7 @@ proc newNetwork*(
                     #Verify we didn't get a Mint, which should not be transmitted.
                     if entry.descendant == EntryType.Mint:
                         #Return DataMissing.
-                        network.clients.reply(
+                        await network.clients.reply(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
@@ -149,7 +149,7 @@ proc newNetwork*(
                             msgType = MessageType.Data
 
                     #Send the Entry.
-                    network.clients.reply(
+                    await network.clients.reply(
                         msg,
                         newMessage(
                             msgType,
@@ -159,29 +159,29 @@ proc newNetwork*(
 
                 of MessageType.Claim:
                     if mainFunctions.lattice.addClaim(msg.message.parseClaim()):
-                        network.clients.broadcast(msg)
+                        await network.clients.broadcast(msg)
 
                 of MessageType.Send:
                     if mainFunctions.lattice.addSend(msg.message.parseSend()):
-                        network.clients.broadcast(msg)
+                        await network.clients.broadcast(msg)
 
                 of MessageType.Receive:
                     if mainFunctions.lattice.addReceive(msg.message.parseReceive()):
-                        network.clients.broadcast(msg)
+                        await network.clients.broadcast(msg)
 
                 of MessageType.Data:
                     if mainFunctions.lattice.addData(msg.message.parseData()):
-                        network.clients.broadcast(msg)
+                        await network.clients.broadcast(msg)
 
                 of MessageType.MemoryVerification:
                     if mainFunctions.verifications.addMemoryVerification(
                         msg.message.parseMemoryVerification()
                     ):
-                        network.clients.broadcast(msg)
+                        await network.clients.broadcast(msg)
 
                 of MessageType.Block:
                     if await mainFunctions.merit.addBlock(msg.message.parseBlock()):
-                        network.clients.broadcast(msg)
+                        await network.clients.broadcast(msg)
         except:
             #If we encountered an error handling the message, return false.
             return false
