@@ -88,19 +88,35 @@ proc add*(
     #Increase the count so the next client has an unique ID.
     inc(clients.count)
 
-    #Handshake with the Client.
-    var state: HandshakeState = await client.handshake(
-        networkFunctions.getNetworkID(),
-        networkFunctions.getProtocol(),
-        networkFunctions.getHeight()
-    )
+    try:
+        #Handshake with the Client.
+        var state: HandshakeState = await client.handshake(
+            networkFunctions.getNetworkID(),
+            networkFunctions.getProtocol(),
+            networkFunctions.getHeight()
+        )
 
-    #If there was an error, return.
-    if state == HandshakeState.Error:
+        #If there was an error, return.
+        if state == HandshakeState.Error:
+            return
+
+        #Add the new Client to Clients.
+        clients.add(client)
+
+        #If we are missing Blocks, sync the last one, which will trigger syncing the others.
+        if state == HandshakeState.MissingBlocks:
+            await client.sync()
+            var tail: Block = await client.syncBlock(0)
+            await client.syncOver()
+
+            #Pass it off to the Network lib. If it fails, DC the node.
+            if not await networkFunctions.handleBlock(tail):
+                echo "Failed to sync with this Client."
+                clients.disconnect(client.id)
+    except:
+        #If the Handshake/initial sync failed, disconnect the Client and return.
+        clients.disconnect(client.id)
         return
-
-    #Add the new Client to Clients.
-    clients.add(client)
 
     #Handle it.
     try:
@@ -153,7 +169,7 @@ proc reply*(
 
     #Try to send the message.
     try:
-        await client.send(msg)
+        await client.send(res)
     #If that failed, mark the Client for disconnection.
     except:
         clients.disconnect(msg.client)

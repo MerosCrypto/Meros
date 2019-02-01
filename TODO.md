@@ -1,7 +1,7 @@
 # TODO
 
 ### Network Redo:
-- Bug fixes.
+- Test Claim/Send/Receive.
 - Sync after the Handshake.
 - Remove EventError.
 

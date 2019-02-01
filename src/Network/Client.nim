@@ -53,10 +53,12 @@ proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
     header = await client.socket.recv(2 + offset)
     #Verify the length.
     if header.len != (2 + offset):
-        #If the header length is 0, likely because the client disconnected...
+        #If the header length is 0, because the client disconnected...
         if header.len == 0:
+            #Close the Client.
+            client.socket.close()
             #Raise an error.
-            raise newException(SocketError, "Client is likely disconnected.")
+            raise newException(SocketError, "Client disconnected.")
         #Else, if we got a partial header, raise an exception.
         raise newException(SocketError, "Didn't get a full header.")
 
@@ -108,11 +110,15 @@ proc handshake*(
     result = HandshakeState.Error
 
     #Send a handshake.
-    await client.socket.send(
-        char(id) &
-        char(protocol) &
-        char(MessageType.Handshake) &
-        !height.toBinary()
+    var heightStr: string = height.toBinary()
+    await client.send(
+        newMessage(
+            0,
+            MessageType.Handshake,
+            uint(heightStr.len),
+            char(id) & char(protocol) & char(MessageType.Handshake) & heightStr.lenPrefix,
+            heightStr
+        )
     )
 
     #Get their handshake back.
@@ -154,6 +160,8 @@ proc sync*(client: Client) {.async.} =
 
     #Update our state.
     client.ourState = ClientState.Syncing
+
+    echo "Set Syncing."
 
 #Sync an Entry.
 proc syncEntry*(client: Client, hash: string): Future[Entry] {.async.} =
@@ -245,3 +253,5 @@ proc syncOver*(client: Client) {.async.} =
 
     #Update our state.
     client.ourState = ClientState.Ready
+
+    echo "Ended Syncing."

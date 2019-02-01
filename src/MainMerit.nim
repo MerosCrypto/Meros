@@ -30,9 +30,9 @@ proc mainMerit() {.raises: [
             #If we're connected to other people, sync missing info.
             if network.clients.clients.len > 0:
                 #Check if we're missing previous Blocks.
-                if newBlock.header.nonce > uint(merit.blockchain.blocks.len):
+                if newBlock.header.nonce > merit.blockchain.height:
                     #Iterate over the missing Blocks.
-                    for nonce in uint(merit.blockchain.blocks.len) ..< newBlock.header.nonce:
+                    for nonce in uint(merit.blockchain.height) ..< newBlock.header.nonce:
                         #Get and test the Block.
                         try:
                             if not await network.requestBlock(nonce):

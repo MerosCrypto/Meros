@@ -126,13 +126,13 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
                 if not network.mainFunctions.verifications.addVerification(verif):
                     return false
 
-        except:
-            #If there's an issue, raise it.
-            raise
-
-        finally:
-            #But finally, send SyncingOver.
+            #Stop Syncing.
             await client.syncOver()
+
+        except:
+            #If there's an issue, stop syncing, and then raise it.
+            await client.syncOver()
+            raise
 
         #If we finished without any errors, return before the for loop grabs another Client.
         return

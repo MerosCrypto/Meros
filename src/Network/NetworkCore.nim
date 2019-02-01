@@ -74,6 +74,10 @@ proc newNetwork*(
                         height: uint = mainFunctions.merit.getHeight()
                         req: uint = uint(msg.message.fromBinary())
 
+                    #If they asked for Block 0, they want the tail.
+                    if req == 0:
+                        req = height - 1
+
                     #If we don't have that block, send them DataMissing.
                     if height <= req:
                         await network.clients.reply(
@@ -185,6 +189,9 @@ proc newNetwork*(
         except:
             #If we encountered an error handling the message, return false.
             return false
+
+    result.networkFunctions.handleBlock = proc (tailBlock: Block): Future[bool] {.async.} =
+        result = await mainFunctions.merit.addBlock(tailBlock)
 
 #Listen on a port.
 proc listen*(network: Network, port: uint) {.async.} =
