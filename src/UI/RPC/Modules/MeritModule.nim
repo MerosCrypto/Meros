@@ -31,9 +31,6 @@ import ../../../Network/Serialize/Merit/ParseBlock
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Async standard lib.
 import asyncdispatch
 
@@ -47,10 +44,7 @@ proc getHeight(rpc: RPC): JSONNode {.raises: [EventError].} =
     #Get the Height.
     var height: uint
     try:
-        height = rpc.events.get(
-            proc (): uint,
-            "merit.getHeight"
-        )()
+        height = rpc.functions.merit.getHeight()
     except:
         raise newException(EventError, "Couldn't get and call merit.getHeight.")
 
@@ -63,10 +57,7 @@ proc getDifficulty(rpc: RPC): JSONnode {.raises: [EventError].} =
     #Get the Block Difficulty.
     var difficulty: BN
     try:
-        difficulty = rpc.events.get(
-            proc (): BN,
-            "merit.getDifficulty"
-        )()
+        difficulty = rpc.functions.merit.getDifficulty()
     except:
         raise newException(EventError, "Couldn't get and call merit.getDifficulty.")
 
@@ -79,10 +70,7 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
     #Get the Block.
     var gotBlock: Block
     try:
-        gotBlock = rpc.events.get(
-            proc (nonce: uint): Block,
-            "merit.getBlock"
-        )(nonce)
+        gotBlock = rpc.functions.merit.getBlock(nonce)
     except:
         raise newException(EventError, "Couldn't get and call merit.getBlock.")
 
@@ -121,10 +109,7 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
 proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     var success: bool = false
     try:
-        if not await rpc.events.get(
-            proc (newBlock: Block): Future[bool],
-            "merit.block"
-        )(data.parseBlock()):
+        if not await rpc.functions.merit.addBlock(data.parseBlock()):
             raise newException(Exception, "Failed to add the Block.")
         else:
             success = true
@@ -134,10 +119,7 @@ proc publishBlock(rpc: RPC, data: string): Future[JSONNode] {.async.} =
     #If that worked, broadcast the Block.
     if success:
         try:
-            rpc.events.get(
-                proc (msgType: MessageType, msg: string),
-                "network.broadcast"
-            )(MessageType.Block, data)
+            asyncCheck rpc.functions.network.broadcast(MessageType.Block, data)
         except:
             echo "Failed to broadcast the Block."
 

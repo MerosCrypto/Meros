@@ -16,9 +16,6 @@ import ../../../Database/Lattice/Lattice
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Finals lib.
 import finals
 
@@ -74,10 +71,7 @@ proc getHeight(
     #Get the height.
     var height: uint
     try:
-        height = rpc.events.get(
-            proc (account: string): uint,
-            "lattice.getHeight"
-        )(account)
+        height = rpc.functions.lattice.getHeight(account)
     except:
         raise newException(EventError, "Couldn't get and call lattice.getHeight.")
 
@@ -94,10 +88,7 @@ proc getBalance(
     #Get the balance.
     var balance: BN
     try:
-        balance = rpc.events.get(
-            proc (account: string): BN,
-            "lattice.getBalance"
-        )(account)
+        balance = rpc.functions.lattice.getBalance(account)
     except:
         raise newException(EventError, "Couldn't get and call lattice.getBalance.")
 
@@ -114,10 +105,7 @@ proc getEntryByHash(
     #Get the Entry.
     var entry: Entry
     try:
-        entry = rpc.events.get(
-            proc (hash: string): Entry,
-            "lattice.getEntryByHash"
-        )(hash)
+        entry = rpc.functions.lattice.getEntryByHash(hash)
     except:
         raise newException(EventError, "Couldn't get and call lattice.getEntryByHash.")
 
@@ -132,10 +120,7 @@ proc getEntryByIndex(
     #Get the Entry.
     var entry: Entry
     try:
-        entry = rpc.events.get(
-            proc (index: Index): Entry,
-            "lattice.getEntryByIndex"
-        )(
+        entry = rpc.functions.lattice.getEntryByIndex(
             newIndex(
                 address,
                 uint(nonce)

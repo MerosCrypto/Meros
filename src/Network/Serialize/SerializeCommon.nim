@@ -1,28 +1,27 @@
-#Prepends a string with its length.
-func `!`*(dataArg: string): string {.raises: [].} =
-    #Extract the data argument.
-    var data: string = dataArg
-    #Strip leading 0s.
-
-    while (data.len > 0) and (data[0] == char(0)):
-        data = data.substr(1, data.len)
-
-    result = ""
-
+#Generates the length that's prefixed onto serialized strings.
+func `lenPrefix`*(data: string): string {.raises: [].} =
     var
         #How many full bytes are needed to represent the length.
         full: int = int(data.len / 255)
         #How much of the length is left over after those full bytes.
         remainder: int = data.len mod 255
-
     #Add each full byte.
     for _ in 0 ..< full:
         result &= char(255)
     #Add the byte representing the remainding length.
     result &= char(remainder)
 
-    #Add the data itself.
-    result &= data
+#Prepends a string with its length.
+func `!`*(dataArg: string): string {.raises: [].} =
+    #Extract the data argument.
+    var data: string = dataArg
+
+    #Strip leading 0s.
+    while (data.len > 0) and (data[0] == char(0)):
+        data = data.substr(1, data.len)
+
+    #Return the data prefixed by it's length.
+    result = data.lenPrefix & data
 
 #Deseralizes a string by getting the length of the next byte, slicing that out, and moving on.
 func deserialize*(

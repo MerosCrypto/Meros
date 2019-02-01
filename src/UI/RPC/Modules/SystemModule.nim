@@ -1,9 +1,6 @@
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Async standard lib.
 import asyncdispatch
 
@@ -17,10 +14,7 @@ proc shutdown(rpc: RPC, reply: proc (json: JSONNode)) {.raises: [].} =
         reply(%* {})
 
         #Quit.
-        rpc.events.get(
-            proc (),
-            "system.quit"
-        )()
+        rpc.functions.system.quit()
     except:
         echo "SAFE SHUTDOWN FAILED!"
         quit(-1)

@@ -19,9 +19,6 @@ import ../../../Database/Verifications/Verifications
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Finals lib.
 import finals
 
@@ -42,15 +39,7 @@ proc getVerification(
 ): JSONnode {.raises: [EventError].} =
     try:
         result = %* {
-            "hash": $(
-                rpc.events.get(
-                    proc (key: string, nonce: uint): Verification,
-                    "verifications.getVerification"
-                )(
-                    key,
-                    nonce
-                ).hash
-            )
+            "hash": $rpc.functions.verifications.getVerification(key, nonce).hash
         }
     except:
         raise newException(EventError, "Couldn't get and call verifications.getVerification.")
@@ -62,10 +51,7 @@ proc getUnarchivedVerifications(
     #Get the indexes.
     var indexes: seq[VerifierIndex]
     try:
-        indexes = rpc.events.get(
-            proc (): seq[VerifierIndex],
-            "verifications.getUnarchivedIndexes"
-        )()
+        indexes = rpc.functions.verifications.getUnarchivedIndexes()
     except:
         raise newException(EventError, "Couldn't get and call verifications.getUnarchivedIndexes.")
 
@@ -73,12 +59,7 @@ proc getUnarchivedVerifications(
     var aggregates: seq[BLSSignature] = newSeq[BLSSignature](indexes.len)
     for i in 0 ..< indexes.len:
         try:
-            aggregates[i] = rpc.events.get(
-                proc (
-                    verifier: string,
-                    nonce: uint
-                ): BLSSignature, "verifications.getPendingAggregate"
-            )(
+            aggregates[i] = rpc.functions.verifications.getPendingAggregate(
                 indexes[i].key,
                 indexes[i].nonce
             )

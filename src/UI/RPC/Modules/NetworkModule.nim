@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #RPC object.
 import ../objects/RPCObj
 
-#EventEmitter lib.
-import mc_events
-
 #Async standard lib.
 import asyncdispatch
 
@@ -27,10 +24,7 @@ proc connect*(
 ): Future[JSONNode] {.async.} =
     try:
         #Connect to a new node.
-        if not await rpc.events.get(
-            proc (ip: string, port: uint): Future[bool],
-            "network.connect"
-        )(ip, port):
+        if not await rpc.functions.network.connect(ip, port):
             result = %* {
                 "error": "Couldn't connect to the IP/Port."
             }

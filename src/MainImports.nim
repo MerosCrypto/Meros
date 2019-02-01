@@ -43,8 +43,8 @@ import Network/Serialize/Lattice/SerializeData
 #UI.
 import UI/UI
 
-#Event lib.
-import mc_events
+#Main Function Box.
+import MainFunctionBox
 
 #Finals lib.
 import finals

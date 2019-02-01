@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #GUI object.
 import ../objects/GUIObj
 
-#EventEmitter lib.
-import mc_events
-
 #WebView lib.
 import mc_webview
 

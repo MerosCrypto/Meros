@@ -1,39 +1,36 @@
 include MainPersonal
 
-proc mainNetwork() {.raises: [
-    AsyncError,
-    SocketError
-].} =
+proc mainNetwork() {.raises: [SocketError].} =
     {.gcsafe.}:
         #Create the Network..
-        network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, events)
+        network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, functions)
 
         #Start listening.
-        network.start(NETWORK_PORT)
+        try:
+            asyncCheck network.listen(NETWORK_PORT)
+        except:
+            raise newException(SocketError, "Couldn't listen on our server socket.")
 
         #Handle network events.
         #Connect to another node.
-        try:
-            events.on(
-                "network.connect",
-                proc (ip: string, port: uint): Future[bool] {.async.} =
-                    try:
-                        await network.connect(ip, port)
-                        result = true
-                    except:
-                        result = false
-            )
-        except:
-            raise newException(AsyncError, "Couldn't add an Async proc to the EventEmitter.")
+        functions.network.connect = proc (
+            ip: string,
+            port: uint
+        ): Future[bool] {.async.} =
+            try:
+                await network.connect(ip, port)
+                result = true
+            except:
+                result = false
 
-        #Broadcast a message. This is used to send data out.
-        events.on(
-            "network.broadcast",
-            proc (msgType: MessageType, msg: string) {.raises: [AsyncError].} =
-                network.broadcast(
-                    newMessage(
-                        msgType,
-                        msg
-                    )
+        #Broadcast a message.
+        functions.network.broadcast = proc (
+            msgType: MessageType,
+            msg: string
+        ) {.async.} =
+            await network.broadcast(
+                newMessage(
+                    msgType,
+                    msg
                 )
-        )
+            )

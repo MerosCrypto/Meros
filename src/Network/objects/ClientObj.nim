@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Finals lib.
 import finals
 
@@ -6,33 +9,57 @@ import asyncnet
 
 #Client object.
 finalsd:
-    type Client* = ref object of RootObj
-        #IP.
-        ip* {.final.}: string
-        #Port.
-        port* {.final.}: uint
-        #ID.
-        id* {.final.}: uint
-        #Shaking.
-        shaking*: bool
-        #Syncing.
-        syncing*: bool
-        #Socket.
-        socket* {.final.}: AsyncSocket
+    type
+        HandshakeState* = enum
+            Error = 0,
+            MissingBlocks = 1,
+            Complete = 2
+
+        ClientState* = enum
+            Syncing = 0,
+            Ready = 1
+
+        Client* = ref object of RootObj
+            #IP.
+            ip* {.final.}: string
+            #Port.
+            port* {.final.}: uint
+            #ID.
+            id* {.final.}: uint
+            #Our state.
+            ourState*: ClientState
+            #Their state.
+            theirState*: ClientState
+            #Socket.
+            socket* {.final.}: AsyncSocket
 
 #Constructor.
-func newClient*(ip: string, port: uint, id: uint, socket: AsyncSocket): Client {.raises: [].} =
+func newClient*(
+    ip: string,
+    port: uint,
+    id: uint,
+    socket: AsyncSocket
+): Client {.raises: [].} =
     result = Client(
         ip: ip,
         port: port,
         id: id,
-        shaking: true,
-        syncing: false,
+        ourState: ClientState.Ready,
+        theirState: ClientState.Ready,
         socket: socket
     )
+    result.ffinalizeIP()
+    result.ffinalizePort()
     result.ffinalizeID()
     result.ffinalizeSocket()
 
-#Converter so we don't always have to .socket, but instead can directly use .recv().
-converter toSocket*(client: Client): AsyncSocket {.raises: [].} =
-    client.socket
+#Check if a Client is closed.
+func isClosed*(client: Client): bool {.raises: [].} =
+    client.socket.isClosed()
+
+#Close a Client.
+proc close*(client: Client) {.raises: [SocketError].} =
+    try:
+        client.socket.close()
+    except:
+        raise newException(SocketError, "Couldn't close the socket.")

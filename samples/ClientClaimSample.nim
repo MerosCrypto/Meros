@@ -18,6 +18,9 @@ import ../src/Database/Lattice/Lattice
 #Serialization lib.
 import ../src/Network/Serialize/Lattice/SerializeClaim
 
+#Message object.
+import ../src/Network/objects/MessageObj
+
 #Networking/OS standard libs.
 import asyncnet, asyncdispatch
 
@@ -25,28 +28,22 @@ import asyncnet, asyncdispatch
 import strutils
 
 var
-    inputNonce: uint                       #Nonce of the Mint to Claim from.
-    nonce: uint                            #Nonce of the Entry.
+    inputNonce: uint                          #Nonce of the Mint to Claim from.
+    nonce: uint                               #Nonce of the Entry.
 
     miner: MinerWallet
-    wallet: Wallet                         #Wallet.
+    wallet: Wallet                            #Wallet.
 
-    claim: Claim                           #Claim object.
+    claim: Claim                              #Claim object.
 
-    handshake: string =                    #Handshake that says we're at Block 0.
+    handshake: string =                       #Handshake that says we're at Block 0.
         char(0) &
         char(0) &
         char(0) &
-        char(1) & char(0)
+        char(Handshake) & char(0)
 
-    handshakeOver: string =                #Handshake over message.
-        char(0) &
-        char(0) &
-        char(6) &
-        char(0)
-
-    claimType: char = char(11)             #Claim Message Type.
-    serialized: string                     #Serialized string.
+    claimType: char = char(MessageType.Claim) #Claim Message Type.
+    serialized: string                        #Serialized string.
 
     socket: AsyncSocket = newAsyncSocket() #Socket.
 
@@ -84,7 +81,6 @@ echo "Connected."
 
 #Send the Handshake.
 waitFor socket.send(handshake)
-waitFor socket.send(handshakeOver)
 echo "Handshaked."
 
 #Send the serialized Entry.

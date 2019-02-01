@@ -2,7 +2,7 @@ include MainConstants
 
 #Global variables used throughout Main.
 var
-    events: EventEmitter = newEventEmitter() #EventEmitter for queries and new data.
+    functions: MainFunctionBox = newMainFunctionBox()
 
     #Verifications.
     verifications {.threadvar.}: Verifications
@@ -11,7 +11,7 @@ var
     merit {.threadvar.}: Merit #Blockchain and state.
 
     #Lattice.
-    lattice {.threadvar.}: Lattice  #Lattice.
+    lattice {.threadvar.}: Lattice #Lattice.
 
     #Personal.
     miner: bool                  #Miner boolean.
@@ -40,21 +40,18 @@ if paramCount() > 0:
             raise newException(ValueError, "No BLS Private Key was passed with --miner.")
 
 #Properly shutdown.
-events.on(
-    "system.quit",
-    proc () {.raises: [ChannelError, AsyncError, SocketError].} =
-        #Shutdown the GUI.
-        try:
-            fromMain.send("shutdown")
-        except:
-            raise newException(ChannelError, "Couldn't send shutdown to the GUI.")
+functions.system.quit = proc () {.raises: [ChannelError, AsyncError, SocketError].} =
+    #Shutdown the GUI.
+    try:
+        fromMain.send("shutdown")
+    except:
+        raise newException(ChannelError, "Couldn't send shutdown to the GUI.")
 
-        #Shutdown the RPC.
-        rpc.shutdown()
+    #Shutdown the RPC.
+    rpc.shutdown()
 
-        #Shut down the Network.
-        network.shutdown()
+    #Shut down the Network.
+    network.shutdown()
 
-        #Quit.
-        quit(0)
-)
+    #Quit.
+    quit(0)

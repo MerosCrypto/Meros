@@ -11,7 +11,7 @@ proc mainRPC() {.raises: [
 ].} =
     {.gcsafe.}:
         #Create the RPC.
-        rpc = newRPC(events, addr toRPC, addr toGUI)
+        rpc = newRPC(functions, addr toRPC, addr toGUI)
 
         try:
             #Start the RPC.

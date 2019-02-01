@@ -1,28 +1,32 @@
-#Util.
-import ../../lib/Util
+#Lattice lib.
+import ../../Database/Lattice/Lattice
+
+#Serialization common lib.
+import ../Serialize/SerializeCommon
 
 #finals lib.
 import finals
 
 finalsd:
     type
-        #Message Type enum.
-        MessageType* = enum
+        #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
+        MessageType* {.pure.} = enum
             Handshake = 0,
+
             Syncing = 1,
-            VerificationRequest = 2,
-            BlockRequest = 3,
+            BlockRequest = 2,
+            VerificationRequest = 3,
             EntryRequest = 4,
             DataMissing = 5,
             SyncingOver = 6,
-            HandshakeOver = 7,
-            Verification = 8,
-            MemoryVerification = 9,
-            Block = 10,
-            Claim = 11,
-            Send = 12,
-            Receive = 13,
-            Data = 14
+
+            Claim = 7,
+            Send = 8,
+            Receive = 9,
+            Data = 10,
+            MemoryVerification = 11,
+            Block = 12,
+            Verification = 13
 
         #Message object.
         Message* = ref object of RootObj
@@ -31,6 +35,21 @@ finalsd:
             len* {.final.}: uint
             header* {.final.}: string
             message* {.final.}: string
+
+#syncEntry response. Stops a segfault that occurs when we cast things around.
+#This its own type as finals can't handle a type with a case statement.
+type SyncEntryResponse* = ref object of RootObj
+    case entry*: EntryType:
+        of EntryType.Claim:
+            claim*: Claim
+        of EntryType.Send:
+            send*: Send
+        of EntryType.Receive:
+            receive*: Receive
+        of EntryType.Data:
+            data*: Data
+        else:
+            discard
 
 #Finalize the Message.
 func finalize(
@@ -62,22 +81,14 @@ func newMessage*(
 #Constructor for outgoing data.
 func newMessage*(
     content: MessageType,
-    message: string
+    message: string = ""
 ): Message {.raises: [].} =
-    #Serialize the length.
-    var
-        len: int = message.len
-        length: string = ""
-    while len > 255:
-        len = len mod 255
-        length &= char(255)
-    length &= char(len)
-
     #Create the Message.
     result = Message(
+        client: 0,
         content: content,
         len: uint(message.len),
-        header: char(content) & length,
+        header: char(content) & message.lenPrefix,
         message: message
     )
     result.finalize()

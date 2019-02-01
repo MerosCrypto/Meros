@@ -30,21 +30,14 @@ proc verify(entry: Entry) {.async.} =
         discard lattice.verify(merit, verif)
 
         #Broadcast the Verification.
-        network.broadcast(
+        await network.broadcast(
             newMessage(
                 MessageType.MemoryVerification,
                 verif.serialize()
             )
         )
 
-proc mainLattice() {.raises: [
-    ValueError,
-    EventError,
-    AsyncError,
-    BLSError,
-    SodiumError,
-    FinalAttributeError
-].} =
+proc mainLattice() {.raises: [ValueError].} =
     {.gcsafe.}:
         #Create the Lattice.
         lattice = newLattice(
@@ -53,183 +46,158 @@ proc mainLattice() {.raises: [
         )
 
         #Handle requests for an account's height.
-        events.on(
-            "lattice.getHeight",
-            proc (account: string): uint {.raises: [ValueError].} =
-                lattice.getAccount(account).height
-        )
+        functions.lattice.getHeight = proc (account: string): uint {.raises: [ValueError].} =
+            lattice.getAccount(account).height
 
         #Handle requests for an account's balance.
-        events.on(
-            "lattice.getBalance",
-            proc (account: string): BN {.raises: [ValueError].} =
-                lattice.getAccount(account).balance
-        )
+        functions.lattice.getBalance = proc (account: string): BN {.raises: [ValueError].} =
+            lattice.getAccount(account).balance
 
         #Handle requests for an Entry.
-        events.on(
-            "lattice.getEntryByHash",
-            proc (hash: string): Entry {.raises: [KeyError, ValueError].} =
-                lattice[hash]
-        )
-        events.on(
-            "lattice.getEntryByIndex",
-            proc (index: Index): Entry {.raises: [ValueError].} =
-                lattice[index]
-        )
+        functions.lattice.getEntryByHash = proc (hash: string): Entry {.raises: [KeyError, ValueError].} =
+            lattice[hash]
+
+        functions.lattice.getEntryByIndex = proc (index: Index): Entry {.raises: [ValueError].} =
+            lattice[index]
 
         #Handle Claims.
-        events.on(
-            "lattice.claim",
-            proc (claim: Claim): bool {.raises: [
-                ValueError,
-                AsyncError,
-                BLSError,
-                SodiumError
-            ].} =
-                #Print that we're adding the Entry.
-                echo "Adding a new Claim."
+        functions.lattice.addClaim = proc (claim: Claim): bool {.raises: [
+            ValueError,
+            AsyncError,
+            BLSError,
+            SodiumError
+        ].} =
+            #Print that we're adding the Entry.
+            echo "Adding a new Claim."
 
-                #Add the Claim.
-                if lattice.add(
-                    merit,
-                    claim
-                ):
-                    result = true
-                    echo "Successfully added the Claim."
+            #Add the Claim.
+            if lattice.add(
+                merit,
+                claim
+            ):
+                result = true
+                echo "Successfully added the Claim."
 
-                    #Create a Verification.
-                    try:
-                        asyncCheck verify(claim)
-                    except:
-                        raise newException(AsyncError, "Couldn't verify an entry.")
-                else:
-                    result = false
-                    echo "Failed to add the Claim."
-                echo ""
-        )
+                #Create a Verification.
+                try:
+                    asyncCheck verify(claim)
+                except:
+                    raise newException(AsyncError, "Couldn't verify an entry.")
+            else:
+                result = false
+                echo "Failed to add the Claim."
+            echo ""
 
         #Handle Sends.
-        events.on(
-            "lattice.send",
-            proc (send: Send): bool {.raises: [
-                ValueError,
-                EventError,
-                AsyncError,
-                BLSError,
-                SodiumError,
-                FinalAttributeError
-            ].} =
-                #Print that we're adding the Entry.
-                echo "Adding a new Send."
+        functions.lattice.addSend = proc (send: Send): bool {.raises: [
+            ValueError,
+            EventError,
+            AsyncError,
+            BLSError,
+            SodiumError,
+            FinalAttributeError
+        ].} =
+            #Print that we're adding the Entry.
+            echo "Adding a new Send."
 
-                #Add the Send.
-                if lattice.add(
-                    merit,
-                    send
-                ):
-                    result = true
-                    echo "Successfully added the Send."
+            #Add the Send.
+            if lattice.add(
+                merit,
+                send
+            ):
+                result = true
+                echo "Successfully added the Send."
 
-                    #Create a Verification.
-                    try:
-                        asyncCheck verify(send)
-                    except:
-                        raise newException(AsyncError, "Couldn't verify an entry.")
+                #Create a Verification.
+                try:
+                    asyncCheck verify(send)
+                except:
+                    raise newException(AsyncError, "Couldn't verify an entry.")
 
-                    #If the Send is for us, Receive it.
-                    if wallet != nil:
-                        if send.output == wallet.address:
-                            #Create the Receive.
-                            var recv: Receive = newReceive(
-                                newIndex(
-                                    send.sender,
-                                    send.nonce
-                                ),
-                                lattice.getAccount(wallet.address).height
-                            )
-                            #Sign it.
-                            wallet.sign(recv)
+                #If the Send is for us, Receive it.
+                if wallet != nil:
+                    if send.output == wallet.address:
+                        #Create the Receive.
+                        var recv: Receive = newReceive(
+                            newIndex(
+                                send.sender,
+                                send.nonce
+                            ),
+                            lattice.getAccount(wallet.address).height
+                        )
+                        #Sign it.
+                        wallet.sign(recv)
 
-                            try:
-                                #Emit it.
-                                if events.get(
-                                    proc (recv: Receive): bool,
-                                    "lattice.receive"
-                                )(recv):
-                                    #Broadcast it.
-                                    network.broadcast(
-                                        newMessage(
-                                            MessageType.Receive,
-                                            recv.serialize()
-                                        )
+                        try:
+                            #Emit it.
+                            if functions.lattice.addReceive(recv):
+                                #Broadcast it.
+                                asyncCheck network.broadcast(
+                                    newMessage(
+                                        MessageType.Receive,
+                                        recv.serialize()
                                     )
-                            except:
-                                raise newException(EventError, "Couldn't get and call lattice.receive.")
-                else:
-                    result = false
-                    echo "Failed to add the Send."
-                echo ""
-        )
+                                )
+                        except:
+                            raise newException(EventError, "Couldn't get and call lattice.receive.")
+            else:
+                result = false
+                echo "Failed to add the Send."
+            echo ""
+
 
         #Handle Receives.
-        events.on(
-            "lattice.receive",
-            proc (recv: Receive): bool {.raises: [
-                ValueError,
-                AsyncError,
-                BLSError,
-                SodiumError
-            ].} =
-                #Print that we're adding the Entry.
-                echo "Adding a new Receive."
+        functions.lattice.addReceive = proc (recv: Receive): bool {.raises: [
+            ValueError,
+            AsyncError,
+            BLSError,
+            SodiumError
+        ].} =
+            #Print that we're adding the Entry.
+            echo "Adding a new Receive."
 
-                #Add the Receive.
-                if lattice.add(
-                    merit,
-                    recv
-                ):
-                    result = true
-                    echo "Successfully added the Receive."
+            #Add the Receive.
+            if lattice.add(
+                merit,
+                recv
+            ):
+                result = true
+                echo "Successfully added the Receive."
 
-                    #Create a Verification.
-                    try:
-                        asyncCheck verify(recv)
-                    except:
-                        raise newException(AsyncError, "Couldn't verify an entry.")
-                else:
-                    result = false
-                    echo "Failed to add the Receive."
-                echo ""
-        )
+                #Create a Verification.
+                try:
+                    asyncCheck verify(recv)
+                except:
+                    raise newException(AsyncError, "Couldn't verify an entry.")
+            else:
+                result = false
+                echo "Failed to add the Receive."
+            echo ""
 
         #Handle Data.
-        events.on(
-            "lattice.data",
-            proc (data: Data): bool {.raises: [
-                ValueError,
-                AsyncError,
-                BLSError,
-                SodiumError
-            ].} =
-                #Print that we're adding the Entry.
-                echo "Adding a new Data."
+        functions.lattice.addData = proc (data: Data): bool {.raises: [
+            ValueError,
+            AsyncError,
+            BLSError,
+            SodiumError
+        ].} =
+            #Print that we're adding the Entry.
+            echo "Adding a new Data."
 
-                #Add the Data.
-                if lattice.add(
-                    merit,
-                    data
-                ):
-                    result = true
-                    echo "Successfully added the Data."
+            #Add the Data.
+            if lattice.add(
+                merit,
+                data
+            ):
+                result = true
+                echo "Successfully added the Data."
 
-                    #Create a Verification.
-                    try:
-                        asyncCheck verify(data)
-                    except:
-                        raise newException(AsyncError, "Couldn't verify an entry.")
-                else:
-                    result = false
-                    echo "Failed to add the Data."
-                echo ""
-        )
+                #Create a Verification.
+                try:
+                    asyncCheck verify(data)
+                except:
+                    raise newException(AsyncError, "Couldn't verify an entry.")
+            else:
+                result = false
+                echo "Failed to add the Data."
+            echo ""

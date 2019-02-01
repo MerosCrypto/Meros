@@ -1,9 +1,6 @@
 #Import the Wallet lib.
 import ../../../Wallet/Wallet
 
-#Events lib.
-import mc_events
-
 #Finals lib.
 import finals
 

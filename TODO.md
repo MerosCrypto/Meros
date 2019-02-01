@@ -2,7 +2,6 @@
 
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
-- Update Verifications to use Ed25519 Public Key + nonce, instead of the hash. 28 byte savings + gap detection while syncing.
 - Update Claims to use Ed25519 Public Keys, not addresses.
 
 - Improve the Difficulty algorithm.
@@ -32,6 +31,8 @@
 - Command line options.
 - Make the ports to listen on runtime options.
 
+- Don't allow the same Client to connect multiple times.
+
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
@@ -47,11 +48,15 @@
 - Network page on the GUI.
 
 ### Improvements:
-- Replace bools as status codes with Exceptions.
+- Clean `merit.addBlock`.
+
+- Solve bool/exception disparity by replacing most bools with Exceptions.
+- Remove EventError.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Use `sugerror`'s `reraise` for all our Exception wrapping.
+- Clean up all the `try`s/`except`s/`raises` in the RPC.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
@@ -60,7 +65,6 @@
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Don't rebroadcast Blocks that we're syncing.
-- Improve Network's encapsulation.
 
 - Make more things `func`.
 
