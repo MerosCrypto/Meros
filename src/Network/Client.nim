@@ -205,7 +205,12 @@ proc syncVerification*(
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    await client.send(newMessage(MessageType.VerificationRequest, !verifier & !nonce.toBinary()))
+    await client.send(
+        newMessage(
+            MessageType.VerificationRequest,
+            !verifier & !nonce.toBinary()
+        )
+    )
 
     #Get their response.
     var msg: Message = await client.recv()

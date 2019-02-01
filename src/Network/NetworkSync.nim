@@ -98,6 +98,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
             for entry in entries:
                 #Sync the Entry.
                 var res: Entry = await client.syncEntry(entry)
+
                 #Add it.
                 case res.descendant:
                     of EntryType.Claim:
@@ -149,7 +150,8 @@ proc requestBlock*(network: Network, nonce: uint): Future[bool] {.async.} =
         #Sync the Block.
         if not await network.sync(requested):
             return false
-        #That sync will send SyncingOver for us.
+        #If there's an issue, stop syncing, and then raise it.
+        await client.syncOver()
 
         #Notify MainMerit.
         result = await network.mainFunctions.merit.addBlock(requested)

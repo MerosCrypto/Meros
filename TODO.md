@@ -1,9 +1,8 @@
 # TODO
 
 ### Network Redo:
+- Fix Syncing Data.
 - Test Claim/Send/Receive.
-- Sync after the Handshake.
-- Remove EventError.
 
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
@@ -36,6 +35,8 @@
 - Command line options.
 - Make the ports to listen on runtime options.
 
+- Don't allow the same Client to connect multiple times.
+
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
@@ -54,6 +55,7 @@
 - Clean `merit.addBlock`.
 
 - Solve bool/exception disparity by replacing most bools with Exceptions.
+- Remove EventError.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.

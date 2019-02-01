@@ -70,14 +70,6 @@ proc add*(
     socket: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox
 ) {.async.} =
-    #Make sure we aren't already connected to them.
-    for client in clients:
-        if (
-            (client.ip == ip) and
-            (client.port == port)
-        ):
-            return
-
     #Create the Client.
     var client: Client = newClient(
         ip,
