@@ -1,3 +1,6 @@
+#Lattice lib.
+import ../../Database/Lattice/Lattice
+
 #Serialization common lib.
 import ../Serialize/SerializeCommon
 
@@ -32,6 +35,21 @@ finalsd:
             len* {.final.}: uint
             header* {.final.}: string
             message* {.final.}: string
+
+#syncEntry response. Stops a segfault that occurs when we cast things around.
+#This its own type as finals can't handle a type with a case statement.
+type SyncEntryResponse* = ref object of RootObj
+    case entry*: EntryType:
+        of EntryType.Claim:
+            claim*: Claim
+        of EntryType.Send:
+            send*: Send
+        of EntryType.Receive:
+            receive*: Receive
+        of EntryType.Data:
+            data*: Data
+        else:
+            discard
 
 #Finalize the Message.
 func finalize(

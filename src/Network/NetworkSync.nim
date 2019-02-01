@@ -97,24 +97,24 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
             #Iterate over each Entry.
             for entry in entries:
                 #Sync the Entry.
-                var res: Entry = await client.syncEntry(entry)
+                var res: SyncEntryResponse = await client.syncEntry(entry)
 
                 #Add it.
-                case res.descendant:
+                case res.entry:
                     of EntryType.Claim:
-                        if not network.mainFunctions.lattice.addClaim(cast[Claim](entry)):
+                        if not network.mainFunctions.lattice.addClaim(res.claim):
                             return false
 
                     of EntryType.Send:
-                        if not network.mainFunctions.lattice.addSend(cast[Send](entry)):
+                        if not network.mainFunctions.lattice.addSend(res.send):
                             return false
 
                     of EntryType.Receive:
-                        if not network.mainFunctions.lattice.addReceive(cast[Receive](entry)):
+                        if not network.mainFunctions.lattice.addReceive(res.receive):
                             return false
 
                     of EntryType.Data:
-                        if not network.mainFunctions.lattice.addData(cast[Data](entry)):
+                        if not network.mainFunctions.lattice.addData(res.data):
                             return false
 
                     else:

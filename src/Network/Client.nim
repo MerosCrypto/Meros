@@ -164,7 +164,7 @@ proc sync*(client: Client) {.async.} =
     echo "Set Syncing."
 
 #Sync an Entry.
-proc syncEntry*(client: Client, hash: string): Future[Entry] {.async.} =
+proc syncEntry*(client: Client, hash: string): Future[SyncEntryResponse] {.async.} =
     #If we're not syncing, raise an error.
     if client.ourState != ClientState.Syncing:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
@@ -177,16 +177,28 @@ proc syncEntry*(client: Client, hash: string): Future[Entry] {.async.} =
 
     case msg.content:
         of MessageType.Claim:
-            return msg.message.parseClaim()
+            return SyncEntryResponse(
+                entry: EntryType.Claim,
+                claim: msg.message.parseClaim()
+            )
 
         of MessageType.Send:
-            return msg.message.parseSend()
+            return SyncEntryResponse(
+                entry: EntryType.Send,
+                send: msg.message.parseSend()
+            )
 
         of MessageType.Receive:
-            return msg.message.parseReceive()
+            return SyncEntryResponse(
+                entry: EntryType.Receive,
+                receive: msg.message.parseReceive()
+            )
 
         of MessageType.Data:
-            return msg.message.parseData()
+            return SyncEntryResponse(
+                entry: EntryType.Data,
+                data: msg.message.parseData()
+            )
 
         of MessageType.DataMissing:
             raise newException(DataMissingError, "Client didn't have the requested data.")
