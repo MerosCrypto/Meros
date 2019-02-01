@@ -1,9 +1,5 @@
 # TODO
 
-### Network Redo:
-- Fix Syncing Data.
-- Test Claim/Send/Receive.
-
 ### Core:
 - Update BLS to handle AggregationInfos properly, instead of offloading pointer work.
 - Update Claims to use Ed25519 Public Keys, not addresses.

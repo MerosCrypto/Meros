@@ -76,17 +76,29 @@ proc mainVerifications() {.raises: [].} =
         ): seq[string] {.raises: [KeyError].} =
             result = @[]
 
+            var
+                #Grab the Verifier.
+                verifier: Verifier = verifications[key]
+                #Start of the unarchived Verifications.
+                start: uint = verifier.archived + 1
+                #Nonce to end at.
+                nonce: uint = nonceArg
+
             #Make sure there are verifications.
             if verifications[key].height == 0:
                 return
 
+            #Override to handle how archived is 0 twice.
+            if start == 1:
+                if verifications[key][0].archived == 0:
+                    start = 0
+
             #Make sure the nonce is within bounds.
-            var nonce: uint = nonceArg
             if verifications[key].height <= nonce:
                 nonce = verifications[key].height - 1
 
             #Add the hashes.
-            for verif in verifications[key][verifications[key].archived .. nonce]:
+            for verif in verifications[key][start .. nonce]:
                 result.add(verif.hash.toString())
 
         #Handle Verifications.
