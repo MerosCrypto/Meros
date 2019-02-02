@@ -177,27 +177,23 @@ proc syncEntry*(client: Client, hash: string): Future[SyncEntryResponse] {.async
 
     case msg.content:
         of MessageType.Claim:
-            return SyncEntryResponse(
-                entry: EntryType.Claim,
-                claim: msg.message.parseClaim()
+            return newSyncEntryResponse(
+                msg.message.parseClaim()
             )
 
         of MessageType.Send:
-            return SyncEntryResponse(
-                entry: EntryType.Send,
-                send: msg.message.parseSend()
+            return newSyncEntryResponse(
+                msg.message.parseSend()
             )
 
         of MessageType.Receive:
-            return SyncEntryResponse(
-                entry: EntryType.Receive,
-                receive: msg.message.parseReceive()
+            return newSyncEntryResponse(
+                msg.message.parseReceive()
             )
 
         of MessageType.Data:
-            return SyncEntryResponse(
-                entry: EntryType.Data,
-                data: msg.message.parseData()
+            return newSyncEntryResponse(
+                msg.message.parseData()
             )
 
         of MessageType.DataMissing:

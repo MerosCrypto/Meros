@@ -36,20 +36,20 @@ finalsd:
             header* {.final.}: string
             message* {.final.}: string
 
-#syncEntry response. Stops a segfault that occurs when we cast things around.
-#This its own type as finals can't handle a type with a case statement.
-type SyncEntryResponse* = ref object of RootObj
-    case entry*: EntryType:
-        of EntryType.Claim:
-            claim*: Claim
-        of EntryType.Send:
-            send*: Send
-        of EntryType.Receive:
-            receive*: Receive
-        of EntryType.Data:
-            data*: Data
-        else:
-            discard
+        #syncEntry response.
+        #This has its own type to stop a segfault that occurs when we cast things around.
+        SyncEntryResponse* = ref object of RootObj
+            case entry*: EntryType:
+                of EntryType.Claim:
+                    claim* {.final.}: Claim
+                of EntryType.Send:
+                    send* {.final.}: Send
+                of EntryType.Receive:
+                    receive* {.final.}: Receive
+                of EntryType.Data:
+                    data* {.final.}: Data
+                else:
+                    discard
 
 #Finalize the Message.
 func finalize(
@@ -92,6 +92,31 @@ func newMessage*(
         message: message
     )
     result.finalize()
+
+#SyncEntryResponse constructors.
+func newSyncEntryResponse*(claim: Claim): SyncEntryResponse {.raises: [].} =
+    SyncEntryResponse(
+        entry: EntryType.Claim,
+        claim: claim
+    )
+
+func newSyncEntryResponse*(send: Send): SyncEntryResponse {.raises: [].} =
+    SyncEntryResponse(
+        entry: EntryType.Send,
+        send: send
+    )
+
+func newSyncEntryResponse*(recv: Receive): SyncEntryResponse {.raises: [].} =
+    SyncEntryResponse(
+        entry: EntryType.Receive,
+        receive: recv
+    )
+
+func newSyncEntryResponse*(data: Data): SyncEntryResponse {.raises: [].} =
+    SyncEntryResponse(
+        entry: EntryType.Data,
+        data: data
+    )
 
 #Stringify.
 func `$`*(msg: Message): string {.raises: [].} =
