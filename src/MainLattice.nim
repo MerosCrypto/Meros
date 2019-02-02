@@ -86,7 +86,6 @@ proc mainLattice() {.raises: [ValueError].} =
             else:
                 result = false
                 echo "Failed to add the Claim."
-            echo ""
 
         #Handle Sends.
         functions.lattice.addSend = proc (send: Send): bool {.raises: [
@@ -143,7 +142,6 @@ proc mainLattice() {.raises: [ValueError].} =
             else:
                 result = false
                 echo "Failed to add the Send."
-            echo ""
 
 
         #Handle Receives.
@@ -172,7 +170,6 @@ proc mainLattice() {.raises: [ValueError].} =
             else:
                 result = false
                 echo "Failed to add the Receive."
-            echo ""
 
         #Handle Data.
         functions.lattice.addData = proc (data: Data): bool {.raises: [
@@ -200,4 +197,3 @@ proc mainLattice() {.raises: [ValueError].} =
             else:
                 result = false
                 echo "Failed to add the Data."
-            echo ""

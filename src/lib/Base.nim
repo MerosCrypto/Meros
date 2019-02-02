@@ -6,12 +6,12 @@ import sequtils
 
 #Bases.
 const
-    Hex: seq[char] = @[
+    HEX: seq[char] = @[
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
         'A', 'B', 'C', 'D', 'E', 'F'
     ]
 
-    Raw: seq[char] = mapLiterals(@[
+    RAW: seq[char] = mapLiterals(@[
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
         40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58,
@@ -33,10 +33,10 @@ const
 func digits(base: int): seq[char] {.raises: [].} =
     #IF the base is 16 or below...
     if base <= 16:
-        return Hex
+        return HEX
     #If the base is 256...
     elif base == 256:
-        return Raw
+        return RAW
 
 #Verifies a string is of a certain base.
 func isBase*(value: string, base: int): bool {.raises: [].} =

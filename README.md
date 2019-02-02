@@ -9,12 +9,10 @@
 ### Meros Whitepaper: Being  Written
 
 #### Current State
-Meros is still under development and is running a Developer Testnet. Anyone can participate if they compile their own Node.
+Meros is still under development and occasionally runs Developer Testnets. Anyone can participate, as long as they compile their own Node.
 
 #### Compiling
-
-For guides on how to compile Meros, please see https://github.com/MerosCrypto/Meros/tree/master/docs/Compilation.
+For guides on how to compile Meros, please see https://github.com/MerosCrypto/Meros/tree/master/docs/Development/Compilation.
 
 #### Contributing
-
-Meros will not have an ICO, yet the community voted on whether or not there should be a premine. The community decided there should be a seven week premine (Meros doesn't have a max supply, and therefore the premine amount cannot be denominated via a percent). Two weeks will be released at the launch of the network, with one more week released every six months. This will allow a strong mainnet launch, guaranteeing Meros's success, and funding for three years.
+Meros is seeking out developers to contribute to the codebase! If you wish to help out, please read the [Style Guide](https://github.com/MerosCrypto/Meros/tree/master/docs/Development/StyleGuide.md), and then pick an item from the [TODO](https://github.com/MerosCrypto/Meros/tree/master/TODO.md).
