@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Util lib.
+import ../../lib/Util
+
 #Numerical libs.
 import BN
 import ../../lib/Base
@@ -12,8 +15,8 @@ import ../../lib/Hash
 import ../../lib/BLS
 
 #Wallet libs.
-import ../../Wallet/Wallet
 import ../../Wallet/Address
+import ../../Wallet/Wallet
 
 #Index object.
 import ../common/objects/IndexObj
@@ -80,7 +83,7 @@ proc add*(
         claim.bls.setAggregationInfo(
             newBLSAggregationInfo(
                 newBLSPublicKey(mint.output),
-                $mint.nonce & "." & account.address
+                mint.nonce.toBinary() & Address.toBN(account.address).toString(256)
             )
         )
     except:

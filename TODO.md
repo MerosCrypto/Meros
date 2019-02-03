@@ -1,8 +1,6 @@
 # TODO
 
 ### Core:
-- Update Claims to use Ed25519 Public Keys, not addresses.
-
 - Improve the Difficulty algorithm.
 - Dead Merit.
 - Have Merit Holders indexable by the order they got Merit in.

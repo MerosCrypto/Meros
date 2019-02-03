@@ -1,14 +1,21 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Util lib.
+import ../../lib/Util
+
 #Hash lib.
 import ../../lib/Hash
+
+#Base lib.
+import ../../lib/Base
 
 #BLS/MinerWallet libs.
 import ../../lib/BLS
 import ../../Wallet/MinerWallet
 
 #Wallet libs.
+import ../../Wallet/Address
 import ../../Wallet/Wallet
 
 #Import the Serialization library.
@@ -47,8 +54,8 @@ proc sign*(
     #Set the sender behind the Entry.
     claim.sender = wallet.address
 
-    #Sign MintNonce & "." & MerosAddress
-    claim.bls = miner.sign($claim.mintNonce & "." & claim.sender)
+    #Sign MintNonce & "." & PublicKey.
+    claim.bls = miner.sign(claim.mintNonce.toBinary() & Address.toBN(claim.sender).toString(256))
 
     #Set the hash.
     claim.hash = SHA512(claim.serialize())
