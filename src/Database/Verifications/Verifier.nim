@@ -21,15 +21,14 @@ import Verification
 import finals
 
 #Calculate the Merkle.
-proc calculateMerkle*(verifier: Verifier, nonce: uint): string {.raises: [].} =
-    #Create a seq for the hashes.
-    var hashes: seq[string] = newSeq[string](nonce)
-    #Grab every Verificaion up to, but including, this nonce, for this Verifier.
-    for verif in verifier[uint(0) .. nonce]:
-        #Add its hash to the seq.
-        hashes.add(verif.hash.toString())
-    #Create the Merkle Tree and return the hash.
-    result = newMerkle(hashes).hash
+proc calculateMerkle*(verifier: Verifier, nonce: uint): string {.raises: [ValueError].} =
+    #Calculate how many leaves we're trimming.
+    var toTrim: int = verifier.verifications.len - (int(nonce) + 1)
+    if toTrim < 0:
+        raise newException(ValueError, "Nonce is out of bounds.")
+
+    #Return the hash of this Verifier's trimmed Merkle.
+    verifier.merkle.trim(toTrim).hash
 
 #Calculate the aggregate signature.
 proc calculateSig*(verifs: seq[MemoryVerification]): BLSSignature {.raises: [BLSError].} =

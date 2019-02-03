@@ -4,6 +4,9 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
+#Merkle lib.
+import ../../../lib/Merkle
+
 #BLS lib.
 import ../../../lib/BLS
 
@@ -24,14 +27,17 @@ finalsd:
         archived*: uint
         #seq of the Verifications.
         verifications*: seq[Verification]
+        #Merkle of the Verifications.
+        merkle*: Merkle
 
 #Constructor.
-func newVerifierObj*(key: string): Verifier =
+proc newVerifierObj*(key: string): Verifier =
     result = Verifier(
         key: key,
         height: 0,
         archived: 0,
-        verifications: @[]
+        verifications: @[],
+        merkle: newMerkle()
     )
     result.ffinalizeKey()
 
@@ -59,9 +65,10 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError].}
 
     #Increase the height.
     inc(verifier.height)
-
     #Add the Verification to the seq.
     verifier.verifications.add(verif)
+    #Add the Verification to the Merkle.
+    verifier.merkle.add(verif.hash.toString())
 
 #Add a MemoryVerification to a Verifier.
 proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError, MerosIndexError].} =

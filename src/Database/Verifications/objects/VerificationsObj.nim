@@ -33,7 +33,7 @@ func newVerificationsObj*(): Verifications {.raises: [].} =
     newTable[string, Verifier]()
 
 #Creates a new Verifier on the Verifications.
-func add*(
+proc add*(
     verifs: Verifications,
     verifier: string
 ) {.raises: [].} =
@@ -45,7 +45,7 @@ func add*(
     verifs[verifier] = newVerifierObj(verifier)
 
 #Gets a Verifier by their key.
-func `[]`*(
+proc `[]`*(
     verifs: Verifications,
     verifier: string
 ): Verifier {.raises: [KeyError].} =

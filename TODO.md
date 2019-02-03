@@ -61,7 +61,6 @@
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
-- Optimize `verifier.calculateMerkle()` by having every Verifier keep track of their own Merkle, and just cutting off the tail.
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Don't rebroadcast Blocks or Entries that we're syncing.

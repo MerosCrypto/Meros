@@ -20,6 +20,7 @@ proc mainVerifications() {.raises: [].} =
         #Provide access to the VerifierIndexes of verifiers with unarchived Verifications.
         functions.verifications.getUnarchivedIndexes = proc (): seq[VerifierIndex] {.raises: [
             KeyError,
+            ValueError,
             FinalAttributeError
         ].} =
             #Calculate who has new Verifications.

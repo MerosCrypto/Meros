@@ -46,7 +46,7 @@ type
     VerificationsFunctionBox* = ref object of RootObj
         getVerifierHeight*:     proc (key: string): uint                           {.raises: [KeyError].}
         getVerification*:       proc (key: string, nonce: uint): Verification      {.raises: [KeyError].}
-        getUnarchivedIndexes*:  proc (): seq[VerifierIndex]                        {.raises: [KeyError, FinalAttributeError].}
+        getUnarchivedIndexes*:  proc (): seq[VerifierIndex]                        {.raises: [KeyError, ValueError, FinalAttributeError].}
         getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, BLSError].}
         getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.raises: [KeyError].}
 
