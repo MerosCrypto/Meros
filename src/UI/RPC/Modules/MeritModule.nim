@@ -10,8 +10,8 @@ import ../../../lib/Hash
 #BlS lib.
 import ../../../lib/BLS
 
-#Index object.
-import ../../../Database/common/objects/IndexObj
+#VerifierIndex object.
+import ../../../Database/Merit/objects/VerifierIndexObj
 
 #Verifications lib.
 import ../../../Database/Verifications/Verifications
@@ -94,7 +94,8 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
     for index in gotBlock.verifications:
         result["verifications"].add(%* {
             "verifier": index.key.toHex(),
-            "nonce": int(index.nonce)
+            "nonce": int(index.nonce),
+            "merkle": index.merkle.toHex()
         })
 
     #Add the Miners.
