@@ -13,14 +13,14 @@ import finals
 #Send object.
 finalsd:
     type Send* = ref object of Entry
-        #Data used to create the SHA512 hash.
+        #Data used to create the Blake512 hash.
         #Destination address.
         output* {.final.}: string
         #Amount transacted.
         amount* {.final.}: BN
 
-        #SHA512 hash.
-        sha512* {.final.}: SHA512Hash
+        #Blake512 hash.
+        blake* {.final.}: Blake512Hash
         #Proof this isn't spam.
         proof* {.final.}: uint
 

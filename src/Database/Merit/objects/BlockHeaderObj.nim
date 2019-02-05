@@ -33,7 +33,7 @@ finalsd:
         #Aggregate Signatue of the Verifications.
         verifications*: BLSSignature
         #Merkle tree hash of the Miners.
-        miners: SHA512Hash
+        miners: Blake512Hash
 
         #Timestamp.
         time*: uint
@@ -41,23 +41,23 @@ finalsd:
         proof*: uint
 
 #Calculate the Miners's Merkle Hash.
-proc calculateMerkle*(miners: Miners): SHA512Hash {.raises: [ValueError].} =
+proc calculateMerkle*(miners: Miners): Blake512Hash {.raises: [ValueError].} =
     #Create a Markle Tree of the Miners.
     var hashes: seq[string] = newSeq[string](miners.len)
     for i in 0 ..< miners.len:
-        hashes[i] = SHA512(
+        hashes[i] = Blake512(
             miners[i].miner.toString() &
             miners[i].amount.toBinary()
         ).toString()
-    result = newMerkle(hashes).hash.toSHA512Hash()
+    result = newMerkle(hashes).hash.toBlake512Hash()
 
 #Miners accessors.
-proc miners*(header: BlockHeader): SHA512Hash {.raises: [].} =
+proc miners*(header: BlockHeader): Blake512Hash {.raises: [].} =
     header.miners
 
 proc `miners=`*(
     header: BlockHeader,
-    miners: SHA512Hash
+    miners: Blake512Hash
 ) {.raises: [].} =
     header.miners = miners
 
@@ -78,7 +78,7 @@ proc newBlockHeaderObj*(
     nonce: uint,
     last: ArgonHash,
     verifs: BLSSignature,
-    miners: SHA512Hash,
+    miners: Blake512Hash,
     time: uint,
     proof: uint
 ): BlockHeader {.raises: [].} =

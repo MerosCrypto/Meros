@@ -2,15 +2,15 @@
 import Hash/HashCommon
 export HashCommon
 
-#SHA3 lib (used by Meros).
-import Hash/SHA3
-export SHA3
+#Blake lib (used by Meros).
+import Hash/Blake2
+export Blake2
 
 #Argon lib (used by Meros).
 import Hash/Argon
 export Argon
 
-#SHA2 lib (for compatibility with old systems).
+#SHA2 lib (for compatibility with old systems such as BTC).
 import Hash/SHA2
 export SHA2
 
@@ -22,12 +22,16 @@ export RipeMD
 import Hash/Keccak
 export Keccak
 
-#Define SHA3 as the default SHA hash family.
+#SHA3 lib (formerly used by Meros).
+import Hash/SHA3
+export SHA3
+
+#Define Blake_2 as Blake.
 type
-    SHA256Hash* = SHA3_256Hash
-    SHA512Hash* = SHA3_512Hash
+    Blake384Hash* = Blake2_384Hash
+    Blake512Hash* = Blake2_512Hash
 var
-    SHA256*: proc (input: string): SHA256Hash {.raises: [].} = SHA3_256
-    SHA512*: proc (input: string): SHA512Hash {.raises: [].} = SHA3_512
-    toSHA256Hash*: proc (input: string): SHA256Hash {.raises: [ValueError].} = toSHA3_256Hash
-    toSHA512Hash*: proc (input: string): SHA512Hash {.raises: [ValueError].} = toSHA3_512Hash
+    Blake384*: proc (input: string): Blake384Hash {.raises: [].} = Blake2_384
+    Blake512*: proc (input: string): Blake512Hash {.raises: [].} = Blake2_512
+    toBlake384Hash*: proc (input: string): Blake384Hash {.raises: [ValueError].} = toBlake2_384Hash
+    toBlake512Hash*: proc (input: string): Blake512Hash {.raises: [ValueError].} = toBlake2_512Hash

@@ -2,8 +2,8 @@
 import BN
 import ../lib/Base
 
-#ED25519 lib (for the Public Key object).
-import ../lib/ED25519
+#Ed25519 lib (for the Public Key object).
+import ../lib/Ed25519
 
 #Base32 lib.
 import ../lib/Base32

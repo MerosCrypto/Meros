@@ -42,7 +42,7 @@ for i in 1 .. 20:
         #Verifications.
         verifs: BLSSignature
         #Miners Hash.
-        miners: SHA512Hash
+        miners: Blake512Hash
         #Time.
         time: uint = getTime()
         #Proof.

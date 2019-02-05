@@ -52,7 +52,7 @@ proc toJSON*(
         of EntryType.Send:
             result["output"] = % cast[Send](entry).output
             result["amount"] = % $cast[Send](entry).amount
-            result["sha512"] = % $cast[Send](entry).sha512
+            result["blake"] = % $cast[Send](entry).blake
             result["proof"]  = % int(cast[Send](entry).proof)
         of EntryType.Receive:
             result["index"] = %* {}
@@ -60,7 +60,7 @@ proc toJSON*(
             result["index"]["nonce"]   = % int(cast[Receive](entry).index.nonce)
         of EntryType.Data:
             result["data"]   = % cast[Data](entry).data.toHex()
-            result["sha512"] = % $cast[Data](entry).sha512
+            result["blake"] = % $cast[Data](entry).blake
             result["proof"]  = % int(cast[Data](entry).proof)
 
 #Get the height of an account.

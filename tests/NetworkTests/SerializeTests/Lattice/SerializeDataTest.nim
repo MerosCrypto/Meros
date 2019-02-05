@@ -77,7 +77,7 @@ for i in 1 .. 20:
 
     #Test the Data properties.
     assert(data.data == dataParsed.data)
-    assert(data.sha512 == dataParsed.sha512)
+    assert(data.blake == dataParsed.blake)
     assert(data.proof == dataParsed.proof)
 
 echo "Finished the Network/Serialize/Lattice/Data test."

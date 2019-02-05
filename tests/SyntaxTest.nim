@@ -11,7 +11,7 @@ import ../src/lib/Base32
 import ../src/lib/BLS
 
 import ../src/lib/libsodium
-import ../src/lib/ED25519
+import ../src/lib/Ed25519
 
 import ../src/lib/Hash
 import ../src/lib/Merkle

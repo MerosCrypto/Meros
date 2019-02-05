@@ -65,12 +65,12 @@ proc parseSend*(
     result.sender = input
     #Set the nonce.
     result.nonce = nonce
-    #Set the SHA512 hash.
-    result.sha512 = SHA512(result.serialize())
+    #Set the Blake512 hash.
+    result.blake = Blake512(result.serialize())
     #Set the proof.
     result.proof = uint(proof.fromBinary())
     #Set the hash.
-    result.hash = Argon(result.sha512.toString(), proof, true)
+    result.hash = Argon(result.blake.toString(), proof, true)
 
     #Set the signature.
     result.signature = signature

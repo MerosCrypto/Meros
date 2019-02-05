@@ -15,22 +15,22 @@ import ../../src/lib/Merkle
 block:
     let
         #First leaf.
-        a: string = SHA512("a").toString()
+        a: string = Blake512("a").toString()
         #Second leaf.
-        b: string = SHA512("b").toString()
+        b: string = Blake512("b").toString()
         #Third leaf.
-        c: string = SHA512("c").toString()
+        c: string = Blake512("c").toString()
 
         #First hash.
-        ab: string = SHA512(
+        ab: string = Blake512(
             a & b
         ).toString()
         #Second hash.
-        cc: string = SHA512(
+        cc: string = Blake512(
             c & c
         ).toString()
         #Root hash.
-        hash: string = SHA512(
+        hash: string = Blake512(
             ab & cc
         ).toString()
 
@@ -58,42 +58,42 @@ block:
 block:
     let
         #Left-side leaves.
-        a: string = SHA512("a").toString()
-        b: string = SHA512("b").toString()
-        c: string = SHA512("c").toString()
-        d: string = SHA512("d").toString()
+        a: string = Blake512("a").toString()
+        b: string = Blake512("b").toString()
+        c: string = Blake512("c").toString()
+        d: string = Blake512("d").toString()
 
         #Right-side leaves.
-        e: string = SHA512("e").toString()
-        f: string = SHA512("f").toString()
-        g: string = SHA512("g").toString()
-        h: string = SHA512("h").toString()
+        e: string = Blake512("e").toString()
+        f: string = Blake512("f").toString()
+        g: string = Blake512("g").toString()
+        h: string = Blake512("h").toString()
 
         #Left-side branches.
-        ab: string = SHA512(a & b).toString()
-        cd: string = SHA512(c & d).toString()
-        abcd: string = SHA512(ab & cd).toString()
+        ab: string = Blake512(a & b).toString()
+        cd: string = Blake512(c & d).toString()
+        abcd: string = Blake512(ab & cd).toString()
 
         #Right-side branches.
-        ef: string = SHA512(e & f).toString()
-        gh: string = SHA512(g & h).toString()
-        efgh: string  = SHA512(ef & gh).toString()
+        ef: string = Blake512(e & f).toString()
+        gh: string = Blake512(g & h).toString()
+        efgh: string  = Blake512(ef & gh).toString()
 
         #Changed branched if we remove h.
-        gg: string = SHA512(g & g).toString()
-        efgg: string = SHA512(ef & gg).toString()
-        abcdefgg: string = SHA512(abcd & efgg).toString()
+        gg: string = Blake512(g & g).toString()
+        efgg: string = Blake512(ef & gg).toString()
+        abcdefgg: string = Blake512(abcd & efgg).toString()
 
         #Changed branches if we remove g and h.
-        efef: string = SHA512(ef & ef).toString()
-        abcdefef: string = SHA512(abcd & efef).toString()
+        efef: string = Blake512(ef & ef).toString()
+        abcdefef: string = Blake512(abcd & efef).toString()
 
         #Changed branches if we remove d, e, f, g, and h.
-        cc: string = SHA512(c & c).toString()
-        abcc: string = SHA512(ab & cc).toString()
+        cc: string = Blake512(c & c).toString()
+        abcc: string = Blake512(ab & cc).toString()
 
         #Tree hashes.
-        abcdefgh: string = SHA512(abcd & efgh).toString()
+        abcdefgh: string = Blake512(abcd & efgh).toString()
 
         #Create the merkle trees.
         merkle_ah: Merkle = newMerkle(a, b, c, d, e, f, g, h)

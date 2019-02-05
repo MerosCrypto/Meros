@@ -2,11 +2,11 @@
 {.passC: "-Isrc/lib/libsodium".}
 {.passL: "-lsodium".}
 
-#---------- ED25519 ----------
+#---------- Ed25519 ----------
 
-#Define the ED25519 objects.
+#Define the Ed25519 objects.
 type
-    ED25519State* {.
+    Ed25519State* {.
         header: "../../src/lib/libsodium/sodium.h",
         importc: "crypto_sign_ed25519ph_state"
     .} = object
@@ -25,14 +25,14 @@ func sodiumKeyPair*(
 .}
 
 #Sodium function for initiating a state.
-func sodiumInitState*(state: ptr ED25519State): int {.
+func sodiumInitState*(state: ptr Ed25519State): int {.
     header: "../../src/lib/libsodium/sodium.h",
     importc: "crypto_sign_ed25519ph_init"
 .}
 
 #Sodium function for updating a state.
 func sodiumUpdateState*(
-    state: ptr ED25519State,
+    state: ptr Ed25519State,
     msg: ptr char,
     len: culong
 ): int {.
@@ -42,7 +42,7 @@ func sodiumUpdateState*(
 
 #Sodium function for signing a message.
 func sodiumSign*(
-    state: ptr ED25519State,
+    state: ptr Ed25519State,
     sig: ptr char,
     len: ptr culong,
     priv: PrivateKey
@@ -53,7 +53,7 @@ func sodiumSign*(
 
 #Sodium function for verifying a message.
 func sodiumVerify*(
-    state: ptr ED25519State,
+    state: ptr Ed25519State,
     sig: ptr char,
     pub: PublicKey
 ): int {.

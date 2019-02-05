@@ -56,12 +56,12 @@ proc parseData*(
     result.sender = senderAddress
     #Set the nonce.
     result.nonce = nonce
-    #Set the SHA512 hash.
-    result.sha512 = SHA512(data)
+    #Set the Blake512 hash.
+    result.blake = Blake512(data)
     #Set the proof.
     result.proof = proof
     #Set the hash.
-    result.hash = Argon(result.sha512.toString(), proof.toBinary(), true)
+    result.hash = Argon(result.blake.toString(), proof.toBinary(), true)
 
     #Set the signature.
     result.signature = signature

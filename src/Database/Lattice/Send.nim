@@ -53,8 +53,8 @@ proc newSend*(
     #Set the nonce.
     result.nonce = nonce
 
-    #Set the SHA512.
-    result.sha512 = SHA512(result.serialize())
+    #Set the Blake512.
+    result.blake = Blake512(result.serialize())
 
 #'Mine' a TX (beat the spam filter).
 proc mine*(
@@ -64,11 +64,11 @@ proc mine*(
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: uint = 0
-        hash: ArgonHash = Argon(send.sha512.toString(), proof.toBinary(), true)
+        hash: ArgonHash = Argon(send.blake.toString(), proof.toBinary(), true)
 
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(send.sha512.toString(), proof.toBinary(), true)
+        hash = Argon(send.blake.toString(), proof.toBinary(), true)
 
     send.proof = proof
     send.hash = hash

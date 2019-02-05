@@ -21,18 +21,4 @@ assert(
     $SHA3_512("abc") == "B751850B1A57168A5693CD924B6B096E08F621827444F70D884F5D0240D2712E10E116E9192AF3C91A7EC57647E3934057340B4CF408D5A56592F8274EEC53F0"
 )
 
-#Verify SHA3 is used as the default.
-assert(
-    SHA256("test") == SHA3_256("test")
-)
-assert(
-    SHA256("test2") == SHA3_256("test2")
-)
-assert(
-    SHA512("test") == SHA3_512("test")
-)
-assert(
-    SHA512("test2") == SHA3_512("test2")
-)
-
 echo "Finished the lib/Hash/SHA3 test."

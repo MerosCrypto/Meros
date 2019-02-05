@@ -53,7 +53,7 @@ for i in 1 .. 20:
     #Test the Send properties.
     assert(send.output == sendParsed.output)
     assert(send.amount == sendParsed.amount)
-    assert(send.sha512 == sendParsed.sha512)
+    assert(send.blake == sendParsed.blake)
     assert(send.proof == sendParsed.proof)
 
 echo "Finished the Network/Serialize/Lattice/Send test."

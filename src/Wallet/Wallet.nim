@@ -1,8 +1,8 @@
 #Errors lib.
 import ../lib/Errors
 
-#ED25519 lib.
-import ../lib/ED25519
+#Ed25519 lib.
+import ../lib/Ed25519
 #Export the critical objects.
 export EdSeed, EdPrivateKey, EdPublicKey
 
@@ -94,7 +94,7 @@ func newWallet*(
 
 #Sign a message.
 func sign*(key: EdPrivateKey, msg: string): string {.raises: [SodiumError].} =
-    ED25519.sign(key, msg)
+    Ed25519.sign(key, msg)
 
 #Sign a message via a Wallet.
 func sign*(wallet: Wallet, msg: string): string {.raises: [SodiumError].} =
@@ -106,7 +106,7 @@ func verify*(
     msg: string,
     sig: string
 ): bool {.raises: [SodiumError].} =
-    ED25519.verify(key, msg, sig)
+    Ed25519.verify(key, msg, sig)
 
 #Verify a message via a Wallet.
 func verify*(

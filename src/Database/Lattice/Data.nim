@@ -42,7 +42,7 @@ proc newData*(
     #Set the nonce.
     result.nonce = nonce
     #Set the hash.
-    result.sha512 = SHA512(data)
+    result.blake = Blake512(data)
 
 #'Mine' the data (beat the spam filter).
 proc mine*(
@@ -52,12 +52,12 @@ proc mine*(
     #Create a proof of 0 and get the first Argon hash.
     var
         proof: uint = 0
-        hash: ArgonHash = Argon(data.sha512.toString(), proof.toBinary(), true)
+        hash: ArgonHash = Argon(data.blake.toString(), proof.toBinary(), true)
 
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(data.sha512.toString(), proof.toBinary(), true)
+        hash = Argon(data.blake.toString(), proof.toBinary(), true)
 
     #Set the proof and hash.
     data.proof = proof

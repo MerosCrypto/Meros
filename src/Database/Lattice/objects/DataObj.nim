@@ -12,8 +12,8 @@ finalsd:
     type Data* = ref object of Entry
         #Data included in the Entry.
         data* {.final.}: string
-        #SHA512 hash.
-        sha512* {.final.}: SHA512Hash
+        #Blake512 hash.
+        blake* {.final.}: Blake512Hash
         #Proof this isn't spam.
         proof* {.final.}: uint
 

@@ -63,7 +63,7 @@ proc parseClaim*(
     result.bls = bls
 
     #Set the hash.
-    result.hash = SHA512(result.serialize())
+    result.hash = Blake512(result.serialize())
 
     #Set the signature.
     result.signature = signature
