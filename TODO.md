@@ -1,26 +1,41 @@
 # TODO
 
 ### Core:
+Filesystem:
+- Store Verifications.
+- Store Blocks.
+- Store Entries.
+
+Verifications:
+- Merit Removal.
+
+Merit:
 - Improve the Difficulty algorithm.
 - Dead Merit.
-- Have Merit Holders indexable by the order they got Merit in.
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
+- Make RandomX the mining algorithm (node should use the 256 MB mode).
+- Don't just hash the block header; include random sampling to force miners to run full nodes.
 
+Lattice:
 - Make sure hash sources are unique (data is just `data.data` which is a collision waiting to happen).
-- Multi-client syncing.
+- Have `Send`'s/`Data`'s Blake2b hash signed, not its Argon2, so remote services can calculate work.
+- Have work precalculable for 100 `Send`'s/`Data`'s in advance.
+- Difficulty voting.
+- Lock boxes.
+
+Network:
+- Prevent the same client from connecting multiple times.
 - Sync Entries not on the Blockchain.
 - Sync Verifications not on the Blockchain.
-- Sync gaps (if we get data with nonce 8 but we only have up to 6; applies to both the Lattice and Verifications).
-- Replace the `sleepAsync(100)` in `verify` for gap syncing.
-- Add peer finding.
-- Add Node karma.
+- Sync gaps (if we get data with nonce 2 but we only have 0; applies to both the Lattice and Verifications).
+- Replace the `sleepAsync(100)` in `verify` with gap syncing.
+- Peer finding.
+- Multi-client syncing.
+- Node karma.
+- Move Entries and Verifications to UDP.
 
-- Merit Removal system.
-- Difficulty Voting system.
-
-- Database.
-
+Tests:
 - Merkle fuzz testing.
 - Tests.
 
@@ -28,13 +43,11 @@
 - Command line options.
 - Make the ports to listen on runtime options.
 
-- Don't allow the same Client to connect multiple times.
-
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
 
-- Have RPC handle things in order OR use an ID system.
+- Have the RPC match the JSON-RPC 2.0 spec (minus HTTP).
 - Have the RPC dynamically get the nonce (it's currently an argument).
 - `network.rebroadcast(address, nonce)` RPC method.
 - Expose more of the Verifications RPC.
@@ -45,37 +58,24 @@
 - Network page on the GUI.
 
 ### Improvements:
-- Switch from Chia's BLS lib to Milagro, yet keep mc_bls so we can preserve most of the API.
-- When we switch to Milagro, clean up the `ptr AggregationInfo` mess we have now.
-
-- Clean `merit.addBlock`.
+- Clean up the `ptr AggregationInfo` mess we have now.
+- Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
 - Remove `EventError`.
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
-- Use `sugerror`'s `reraise` for all our Exception wrapping.
-- Clean up all the `try`s/`except`s/`raises` in the RPC.
-- Solve bool/exception disparity by replacing most bools with Exceptions.
+- Replace every Error with Enums. Every function should return an Option-Esque EITHER Enum or Value and have a blank raises pragma.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
 
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
+- Clean `merit.addBlock`.
 - Don't rebroadcast Blocks or Entries that we're syncing.
 
-- Make more things `func`.
-
-### Behavior Changes:
-    Decided:
-        - Have Sends/Datas SHA512 signed, not their Argon, so remote services can handle the work.
-        - Have required work be based on account, not on TX, and precalculable to a point.
-        - Replace Argon2d with a CPU-only algorithm.
-
-    Undecided:
-        - Use Ed25519 everywhere; BLS saves space but since we handle the Verifications when they come in, it doesn't save time.
-        - Don't push 255, 255, remainder for the length; push the amount of length bytes and then the raw binary (exponential over additive).
+- Make more `proc`s `func`.
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
@@ -84,4 +84,4 @@
 - Meros Whitepaper.
 
 ### Community Service:
-- Create a Nimble library out of Ed25519.
+- Create a Nimble library out of our Ed25519 code (and remove LibSodium from the Meros repo).
