@@ -21,7 +21,7 @@ import ../src/Wallet/Wallet
 import ../src/Wallet/MinerWallet
 
 #Database.
-import ../src/Database/Filesystem/Filesystem
+import ../src/Database/Filesystem/DB
 import ../src/Database/Lattice/Lattice
 import ../src/Database/Merit/Merit
 

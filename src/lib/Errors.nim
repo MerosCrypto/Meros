@@ -1,5 +1,10 @@
 #Errors file for all custom error types we want to declare.
 
+#LMDB lib.
+import mc_lmdb
+#Export its custom Error type.
+export LMDBError
+
 type
     #lib Errors.
     RandomError* = object of Exception #Used when the RNG fails.

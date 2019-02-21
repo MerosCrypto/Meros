@@ -2,17 +2,17 @@
 
 ### Dependencies
 
-Meros requires Nim, Nimble, GMP, Chia's BLS library, and LibSodium.
+Meros requires Git, GCC/G++, Make (for LMDB), CMake (for BLS), Nim, Nimble, GMP, Chia's BLS library, LibSodium, and LMDB.
 
 ```
-sudo apt-get install curl git libgmp3-dev libsodium-dev gtk+-3.0 at-spi2-core webkit2gtk-4.0
+sudo apt-get install gcc g++ make cmake curl git libgmp3-dev libsodium-dev gtk+-3.0 at-spi2-core webkit2gtk-4.0
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 0.19.4
-nimble install BN mc_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_webview
-nimble install finals nimcrypto rocksdb
+nimble install BN mc_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals nimcrypto
 ```
 
 For instructions on setting up the BLS library, see https://github.com/MerosCrypto/mc_bls.
+For instructions on setting up the LMDB library, see https://github.com/MerosCrypto/mc_lmdb.
 
 ### Meros
 
