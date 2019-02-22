@@ -4,10 +4,10 @@ import ../../../lib/Errors
 #Wallet lib.
 import ../../../Wallet/Wallet
 
-#Main Function Box.
-import ../../../MainFunctionBox
+#Global Function Box object.
+import ../../../objects/GlobalFunctionBoxObj
 #Export it so all modules can access it.
-export MainFunctionBox
+export GlobalFunctionBox
 
 #Async standard lib.
 import asyncdispatch
@@ -24,7 +24,7 @@ import json
 #RPC object.
 finalsd:
     type RPC* = ref object of RootObj
-        functions* {.final.}: MainFunctionBox
+        functions* {.final.}: GlobalFunctionBox
         toRPC* {.final.}: ptr Channel[JSONNode]
         toGUI* {.final.}: ptr Channel[JSONNode]
         server* {.final.}: AsyncSocket
@@ -33,7 +33,7 @@ finalsd:
 
 #Constructor.
 proc newRPCObject*(
-    functions: MainFunctionBox,
+    functions: GlobalFunctionBox,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
 ): RPC {.raises: [SocketError].} =

@@ -7,7 +7,7 @@ proc mainNetwork() {.raises: [SocketError].} =
 
         #Start listening.
         try:
-            asyncCheck network.listen(NETWORK_PORT)
+            asyncCheck network.listen(config)
         except:
             raise newException(SocketError, "Couldn't listen on our server socket.")
 

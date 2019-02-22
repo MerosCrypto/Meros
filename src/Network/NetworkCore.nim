@@ -13,7 +13,7 @@ proc reply*(network: Network, msg: Message, res: Message) {.async.} =
 proc newNetwork*(
     id: uint,
     protocol: uint,
-    mainFunctions: MainFunctionBox
+    mainFunctions: GlobalFunctionBox
 ): Network {.raises: [SocketError].} =
     #Create the server socket.
     var server: AsyncSocket
@@ -194,10 +194,10 @@ proc newNetwork*(
         result = await mainFunctions.merit.addBlock(tailBlock)
 
 #Listen on a port.
-proc listen*(network: Network, port: uint) {.async.} =
+proc listen*(network: Network, config: Config) {.async.} =
     #Start listening.
     network.server.setSockOpt(OptReuseAddr, true)
-    network.server.bindAddr(Port(port))
+    network.server.bindAddr(Port(config.tcpPort))
     network.server.listen()
 
     #Accept new connections infinitely.
@@ -209,7 +209,7 @@ proc listen*(network: Network, port: uint) {.async.} =
             #Pass it to Clients.
             asyncCheck network.clients.add(
                 client.address,
-                port,
+                0,
                 client.client,
                 network.networkFunctions
             )

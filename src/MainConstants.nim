@@ -6,7 +6,7 @@ include MainImports
 const
     #Merit constants.
     GENESIS: string =          #Genesis string.
-        "MEROS_DEVELOPER_TESTNET_1D"
+        "MEROS_DEVELOPER_TESTNET_2"
     BLOCK_DIFFICULTY: string = #Blockchain difficulty at the start.
         "FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     BLOCK_TIME: uint = 600     #Block time in seconds.
@@ -21,7 +21,3 @@ const
     #Network constants.
     NETWORK_ID: uint = 0       #Network ID.
     NETWORK_PROTOCOL: uint = 0 #Protocol version.
-    NETWORK_PORT: uint = 5132  #Port to listen on.
-
-    #UI constants.
-    RPC_PORT: uint = 5133

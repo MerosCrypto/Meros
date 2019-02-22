@@ -124,16 +124,16 @@ proc mainMerit() {.raises: [
                 )
 
                 #If we have wallets...
-                if (wallet != nil) and (minerWallet != nil):
+                if (wallet != nil) and (config.miner != nil):
                     #Check if we're the one getting the reward.
-                    if minerWallet.publicKey.toString() == reward.key:
+                    if config.miner.publicKey.toString() == reward.key:
                         #Claim the Reward.
                         var claim: Claim = newClaim(
                             mintNonce,
                             lattice.getAccount(wallet.address).height
                         )
                         #Sign the claim.
-                        claim.sign(minerWallet, wallet)
+                        claim.sign(config.miner, wallet)
 
                         #Emit it.
                         try:

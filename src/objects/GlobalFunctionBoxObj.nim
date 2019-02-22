@@ -1,8 +1,4 @@
 discard """
-This lib is special, in a couple of ways.
-- It is prefixed by Main, and directly under src/, but it is NOT part of the include chain.
-- It's not even a lib, but an object file.
-
 This is a replacement for the previously used EventEmitters (mc_events).
 It's type safe, and serves the same purpose, yet provides an even better API.
 That said, we lose the library format, and instead have this.
@@ -10,28 +6,28 @@ This is annoying, but we no longer have to specify the type when we call events,
 """
 
 #Errors lib.
-import lib/Errors
+import ../lib/Errors
 
 #BN lib.
 import BN
 
 #BLS lib.
-import lib/BLS
+import ../lib/BLS
 
 #Message object.
-import Network/objects/MessageObj
+import ../Network/objects/MessageObj
 
 #Wallet.
-import Wallet/Wallet
+import ../Wallet/Wallet
 
 #Verifications.
-import Database/Verifications/Verifications
+import ../Database/Verifications/Verifications
 
 #Merit.
-import Database/Merit/Merit
+import ../Database/Merit/Merit
 
 #Lattice.
-import Database/Lattice/Lattice
+import ../Database/Lattice/Lattice
 
 #Finals lib.
 import finals
@@ -83,7 +79,7 @@ type
         connect*:    proc (ip: string, port: uint): Future[bool]
         broadcast*:  proc (msgType: MessageType, msg: string): Future[void]
 
-    MainFunctionBox* = ref object of RootObj
+    GlobalFunctionBox* = ref object of RootObj
         system*:         SystemFunctionBox
         verifications*:  VerificationsFunctionBox
         merit*:          MeritFunctionBox
@@ -92,8 +88,8 @@ type
         network*:        NetworkFunctionBox
 
 #Constructor.
-proc newMainFunctionBox*(): MainFunctionBox {.raises: [].} =
-    MainFunctionBox(
+proc newGlobalFunctionBox*(): GlobalFunctionBox {.raises: [].} =
+    GlobalFunctionBox(
         system:        SystemFunctionBox(),
         verifications: VerificationsFunctionBox(),
         merit:         MeritFunctionBox(),

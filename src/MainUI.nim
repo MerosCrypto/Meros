@@ -17,7 +17,7 @@ proc mainRPC() {.raises: [
             #Start the RPC.
             asyncCheck rpc.start()
             #Start listening.
-            asyncCheck rpc.listen(RPC_PORT)
+            asyncCheck rpc.listen(config)
         except:
             raise newException(AsyncError, "Couldn't start the RPC.")
 

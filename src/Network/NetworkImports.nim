@@ -10,9 +10,6 @@ import ../lib/Hash
 #BLS lib.
 import ../lib/BLS
 
-#Main Function Box.
-import ../MainFunctionBox
-
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice
 
@@ -21,6 +18,12 @@ import ../Database/Verifications/Verifications
 
 #Block lib.
 import ../Database/Merit/Block
+
+#Global Function Box object.
+import ../objects/GlobalFunctionBoxObj
+
+#Config object.
+import../objects/ConfigObj
 
 #Serialization common lib.
 import Serialize/SerializeCommon
@@ -49,7 +52,7 @@ export MessageObj
 export NetworkObj
 
 #Network Function Box.
-import objects/NetworkLibFunctionBox
+import objects/NetworkLibFunctionBoxObj
 
 #Clients library.
 import Clients

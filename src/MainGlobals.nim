@@ -2,42 +2,33 @@ include MainConstants
 
 #Global variables used throughout Main.
 var
-    functions: MainFunctionBox = newMainFunctionBox()
+    #Global Function Box.
+    functions: GlobalFunctionBox = newGlobalFunctionBox()
+
+    #Config.
+    config: Config = newConfig()
 
     #Verifications.
-    verifications {.threadvar.}: Verifications
+    verifications: Verifications
 
     #Merit.
-    merit {.threadvar.}: Merit #Blockchain and state.
+    merit: Merit #Blockchain and state.
 
     #Lattice.
-    lattice {.threadvar.}: Lattice #Lattice.
+    lattice: Lattice #Lattice.
 
     #Personal.
-    miner: bool                  #Miner boolean.
-    minerWallet: MinerWallet     #Miner Wallet.
-    verifyLock: Lock             #Verify Lock.
-    wallet {.threadvar.}: Wallet #Wallet.
+    verifyLock: Lock #Verify Lock.
+    wallet: Wallet   #Wallet.
 
     #Network.
-    network {.threadvar.}: Network #Network.
+    network: Network #Network.
 
     #UI.
     fromMain: Channel[string] #Channel from the 'main' thread to the UI thread.
     toRPC: Channel[JSONNode]  #Channel to the RPC from the GUI.
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
-    rpc {.threadvar.}: RPC    #RPC object.
-
-#If there are params...
-if paramCount() > 0:
-    #If the miner argument was passed...
-    if paramStr(1) == "--miner":
-        miner = true
-
-        if paramCount() > 1:
-            minerWallet = newMinerWallet(newBLSPrivateKeyFromBytes(paramStr(2)))
-        else:
-            raise newException(ValueError, "No BLS Private Key was passed with --miner.")
+    rpc: RPC    #RPC object.
 
 #Properly shutdown.
 functions.system.quit = proc () {.raises: [ChannelError, AsyncError, SocketError].} =

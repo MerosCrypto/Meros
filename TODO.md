@@ -77,6 +77,9 @@ Network/Serialize:
 RPC:
 - Tests.
 
+Other:
+- Config test.
+
 ### Features:
 - Command line options.
 - Make the ports to listen on runtime options.

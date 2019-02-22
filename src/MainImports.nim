@@ -43,17 +43,17 @@ import Network/Serialize/Lattice/SerializeData
 #UI.
 import UI/UI
 
-#Main Function Box.
-import MainFunctionBox
+#Global Function Box object.
+import objects/GlobalFunctionBoxObj
+
+#Config object.
+import objects/ConfigObj
 
 #Finals lib.
 import finals
 
 #BLS lib.
 import lib/BLS
-
-#OS standard lib.
-import os
 
 #Locks standard lib.
 import locks

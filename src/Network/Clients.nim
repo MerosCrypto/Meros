@@ -27,7 +27,7 @@ export Client
 export ClientsObj
 
 #Network Function Box.
-import objects/NetworkLibFunctionBox
+import objects/NetworkLibFunctionBoxObj
 
 #Networking standard libs.
 import asyncdispatch, asyncnet

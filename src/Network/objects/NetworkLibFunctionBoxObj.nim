@@ -1,7 +1,5 @@
 discard """
-This object file has a couple of pecularities.
-1) It does not end with `Obj`. This is to match MainFunctionBox, which is also special.
-2) It is named NetworkLibFB, not NetworkFB. This is because MFB also defines a `NetworkFunctionBox`.
+This is named NetworkLibFB, not NetworkFB, `because GlobalFunctionBox` also defines a `NetworkFunctionBox`.
 """
 
 #Block lib.

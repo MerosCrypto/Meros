@@ -61,3 +61,7 @@ import ../src/Network/Network
 
 #UI.
 import ../src/UI/UI
+
+#objects.
+import ../src/objects/GlobalFunctionBox
+import ../src/objectsConfig

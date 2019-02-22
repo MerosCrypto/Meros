@@ -1,8 +1,8 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Main Function Box.
-import ../../MainFunctionBox
+#Config object.
+import ../../objects/ConfigObj
 
 #RPC object.
 import objects/RPCObj
@@ -27,7 +27,7 @@ import json
 
 #Constructor.
 proc newRPC*(
-    functions: MainFunctionBox,
+    functions: GlobalFunctionBox,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
 ): RPC {.raises: [SocketError].} =
@@ -144,10 +144,10 @@ proc handle*(rpc: RPC, client: AsyncSocket) {.async.} =
         )
 
 #Start up the RPC (Socket; for remote connections).
-proc listen*(rpc: RPC, port: uint) {.async.} =
+proc listen*(rpc: RPC, config: Config) {.async.} =
     #Start listening.
     rpc.server.setSockOpt(OptReuseAddr, true)
-    rpc.server.bindAddr(Port(port))
+    rpc.server.bindAddr(Port(config.rpcPort))
     rpc.server.listen()
 
     #Accept new connections infinitely.
