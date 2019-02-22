@@ -33,8 +33,48 @@ Network:
 - Node karma.
 - Move Entries and Verifications to UDP.
 
-Tests:
+### Tests:
+lib:
+- lib/Base (256) test.
+- lib/Hash/Argon test.
+- lib/Hash/Blake2 test.
 - Merkle fuzz testing.
+- lib/Ed25519 test.
+
+Wallet:
+- Wallet/MinerWallet test.
+- Wallet/Wallet test.
+
+Database/Verifications:
+- Database/Verifications/Verifier test.
+- Database/Verifications/Verification test.
+- Database/Verifications/Verifications test.
+
+Database/Merit:
+- Database/Merit/Difficulty test.
+- Database/Merit/Block test.
+- Database/Merit/Blockchain test.
+- Database/Merit/State test.
+- More Database/Merit/Epochs test.
+- Database/Merit/Merit test.
+
+Database/Lattice:
+- Database/Lattice/Entry test.
+- Database/Lattice/Mint test.
+- Database/Lattice/Claim test.
+- Database/Lattice/Send test.
+- Database/Lattice/Receive test.
+- Database/Lattice/Data test.
+- Database/Lattice/Account test.
+- Database/Lattice/Lattice test.
+
+Network:
+- Tests.
+
+Network/Serialize:
+- Network/Serialize/Lattice/Entry test.
+
+RPC:
 - Tests.
 
 ### Features:
@@ -77,7 +117,7 @@ Tests:
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
-- Document the Message Types.
+- Document the Message Types under `docs/Protocol`.
 - Use Nim Documentation Comments.
 - Meros Whitepaper.
 

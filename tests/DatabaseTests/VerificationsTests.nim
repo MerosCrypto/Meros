@@ -1,3 +1,5 @@
 #Verifications Tests.
 
 import VerificationsTests/VerifierTest
+import VerificationsTests/VerificationTest
+import VerificationsTests/VerificationsTest
