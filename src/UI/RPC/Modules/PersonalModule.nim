@@ -79,7 +79,6 @@ proc send(
     ArgonError,
     BLSError,
     SodiumError,
-    PersonalError,
     FinalAttributeError
 ].} =
     #Create the Send.
@@ -88,11 +87,10 @@ proc send(
         amount,
         nonce
     )
+    #Sign the Send.
+    rpc.functions.personal.signSend(send)
     #Mine the Send.
     send.mine("aa".repeat(64).toBN(16))
-
-    if not rpc.functions.personal.signSend(send):
-        raise newException(PersonalError, "Couldn't sign the Send.")
 
     #Add it.
     if not rpc.functions.lattice.addSend(send):
@@ -163,7 +161,6 @@ proc data(
     ArgonError,
     BLSError,
     SodiumError,
-    PersonalError,
     FinalAttributeError
 ].} =
     #Create the Data.
@@ -171,12 +168,10 @@ proc data(
         dataArg,
         nonce
     )
+    #Sign the Data.
+    rpc.functions.personal.signData(data)
     #Mine the Data.
     data.mine("E0".repeat(64).toBN(16))
-
-    #Sign the Data.
-    if not rpc.functions.personal.signData(data):
-        raise newException(PersonalError, "Couldn't sign the Data.")
 
     #Add it.
     if not rpc.functions.lattice.addData(data):

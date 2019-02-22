@@ -41,40 +41,38 @@ proc newData*(
     )
     #Set the nonce.
     result.nonce = nonce
+
+#Sign a TX.
+proc sign*(
+    wallet: Wallet,
+    data: Data
+){.raises: [ValueError, SodiumError, FinalAttributeError].} =
+    #Set the sender behind the Entry.
+    data.sender = wallet.address
     #Set the hash.
-    result.blake = Blake512(data)
+    data.hash = Blake512(data.serialize())
+    #Sign the hash of the Data.
+    data.signature = wallet.sign(data.hash.toString())
 
 #'Mine' the data (beat the spam filter).
 proc mine*(
     data: Data,
     networkDifficulty: BN
 ) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
+    #Make sure the hash was set.
+    if data.hash.toBN() == newBN():
+        raise newException(ValueError, "Data wasn't signed.")
+
     #Create a proof of 0 and get the first Argon hash.
     var
         proof: uint = 0
-        hash: ArgonHash = Argon(data.blake.toString(), proof.toBinary(), true)
+        hash: ArgonHash = Argon(data.hash.toString(), proof.toBinary(), true)
 
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(data.blake.toString(), proof.toBinary(), true)
+        hash = Argon(data.hash.toString(), proof.toBinary(), true)
 
     #Set the proof and hash.
     data.proof = proof
-    data.hash = hash
-
-#Sign a TX.
-func sign*(
-    wallet: Wallet,
-    data: Data
-): bool {.raises: [ValueError, SodiumError, FinalAttributeError].} =
-    result = true
-
-    #Make sure the Data was mined.
-    if data.hash.toBN() == newBN():
-        return false
-
-    #Set the sender behind the Entry.
-    data.sender = wallet.address
-    #Sign the hash of the Data.
-    data.signature = wallet.sign(data.hash.toString())
+    data.argon = hash

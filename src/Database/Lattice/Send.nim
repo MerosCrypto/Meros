@@ -53,35 +53,32 @@ proc newSend*(
     #Set the nonce.
     result.nonce = nonce
 
-    #Set the Blake512.
-    result.blake = Blake512(result.serialize())
+#Sign a TX.
+proc sign*(wallet: Wallet, send: Send) {.raises: [ValueError, SodiumError, FinalAttributeError].} =
+    #Set the sender behind the Entry.
+    send.sender = wallet.address
+    #Set the hash.
+    send.hash = Blake512(send.serialize())
+    #Sign the hash of the Send.
+    send.signature = wallet.sign(send.hash.toString())
 
 #'Mine' a TX (beat the spam filter).
 proc mine*(
     send: Send,
     networkDifficulty: BN
 ) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
+    #Make sure the hash was set.
+    if send.hash.toBN() == newBN():
+        raise newException(ValueError, "Send wasn't signed.")
+
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: uint = 0
-        hash: ArgonHash = Argon(send.blake.toString(), proof.toBinary(), true)
+        hash: ArgonHash = Argon(send.hash.toString(), proof.toBinary(), true)
 
     while hash.toBN() <= networkDifficulty:
         inc(proof)
-        hash = Argon(send.blake.toString(), proof.toBinary(), true)
+        hash = Argon(send.hash.toString(), proof.toBinary(), true)
 
     send.proof = proof
-    send.hash = hash
-
-#Sign a TX.
-func sign*(wallet: Wallet, send: Send): bool {.raises: [ValueError, SodiumError, FinalAttributeError].} =
-    result = true
-
-    #Make sure the Send was mined.
-    if send.hash.toBN() == newBN():
-        return false
-
-    #Set the sender behind the Entry.
-    send.sender = wallet.address
-    #Sign the hash of the Send.
-    send.signature = wallet.sign(send.hash.toString())
+    send.argon = hash

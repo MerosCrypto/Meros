@@ -57,10 +57,10 @@ for i in 1 .. 20:
             0
         )
 
+    #Sign it.
+    wallet.sign(data)
     #Mine the Data.
     data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
-    #Sign it.
-    assert(wallet.sign(data))
 
     #Serialize it and parse it back.
     var dataParsed: Data = data.serialize().parseData()
@@ -77,7 +77,7 @@ for i in 1 .. 20:
 
     #Test the Data properties.
     assert(data.data == dataParsed.data)
-    assert(data.blake == dataParsed.blake)
     assert(data.proof == dataParsed.proof)
+    assert(data.argon == dataParsed.argon)
 
 echo "Finished the Network/Serialize/Lattice/Data test."

@@ -109,7 +109,7 @@ proc add*(
     difficulty: BN
 ): bool {.raises: [ValueError, SodiumError].} =
     #Verify the work.
-    if send.hash.toBN() < difficulty:
+    if send.argon.toBN() < difficulty:
         return false
 
     #Verify the output is a valid address.
@@ -169,7 +169,7 @@ proc add*(
     difficulty: BN
 ): bool {.raises: [ValueError, SodiumError].} =
     #Verify the work.
-    if data.hash.toBN() < difficulty:
+    if data.argon.toBN() < difficulty:
         return false
 
     #Add the Data.

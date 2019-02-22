@@ -15,8 +15,9 @@ import ../../../Wallet/Wallet
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/DataObj
 
-#Deserialize function.
+#Serialization functions.
 import ../SerializeCommon
+import SerializeData
 
 #Finals lib.
 import finals
@@ -56,12 +57,12 @@ proc parseData*(
     result.sender = senderAddress
     #Set the nonce.
     result.nonce = nonce
-    #Set the Blake512 hash.
-    result.blake = Blake512(data)
+    #Set the hash.
+    result.hash = Blake512(result.serialize())
     #Set the proof.
     result.proof = proof
-    #Set the hash.
-    result.hash = Argon(result.blake.toString(), proof.toBinary(), true)
+    #Set the Argon hash.
+    result.argon = Argon(result.hash.toString(), proof.toBinary(), true)
 
     #Set the signature.
     result.signature = signature

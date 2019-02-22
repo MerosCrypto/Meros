@@ -125,14 +125,15 @@ proc add*(
     if not result:
         return
 
-    #Else, add the Entry to the lookup table.
-    lattice.addHash(
-        entry.hash,
-        newIndex(
-            entry.sender,
-            entry.nonce
+    #If that wasn't a Mint, add the Entry to the lookup table.
+    if entry.descendant != EntryType.Mint:
+        lattice.addHash(
+            entry.hash,
+            newIndex(
+                entry.sender,
+                entry.nonce
+            )
         )
-    )
 
 proc mint*(
     lattice: Lattice,

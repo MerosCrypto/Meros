@@ -66,11 +66,11 @@ proc parseSend*(
     #Set the nonce.
     result.nonce = nonce
     #Set the Blake512 hash.
-    result.blake = Blake512(result.serialize())
+    result.hash = Blake512(result.serialize())
     #Set the proof.
     result.proof = uint(proof.fromBinary())
-    #Set the hash.
-    result.hash = Argon(result.blake.toString(), proof, true)
+    #Set the Argon hash.
+    result.argon = Argon(result.hash.toString(), proof, true)
 
     #Set the signature.
     result.signature = signature

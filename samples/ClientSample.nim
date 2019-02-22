@@ -84,10 +84,10 @@ if answer.toLower() == "send":
         amount,
         nonce
     )
+    #Sign the Send.
+    wallet.sign(send)
     #Mine the Send.
     send.mine("".pad(128, "aa").toBN(16))
-    #Sign the Send.
-    echo "Signing the Send retuned... " & $wallet.sign(send)
 
     #Create the serialized string.
     serialized = send.serialize()

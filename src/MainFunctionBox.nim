@@ -74,10 +74,10 @@ type
     PersonalFunctionBox* = ref object of RootObj
         getWallet*:  proc (): Wallet {.raises: [].}
 
-        setSeed*:      proc (seed: string)     {.raises: [ValueError, RandomError, SodiumError].}
-        signSend*:     proc (send: Send): bool {.raises: [ValueError, SodiumError, FinalAttributeError].}
-        signReceive*:  proc (recv: Receive)    {.raises: [SodiumError, FinalAttributeError].}
-        signData*:     proc (data: Data): bool {.raises: [ValueError, SodiumError, FinalAttributeError].}
+        setSeed*:      proc (seed: string)  {.raises: [ValueError, RandomError, SodiumError].}
+        signSend*:     proc (send: Send)    {.raises: [ValueError, SodiumError, FinalAttributeError].}
+        signReceive*:  proc (recv: Receive) {.raises: [SodiumError, FinalAttributeError].}
+        signData*:     proc (data: Data)    {.raises: [ValueError, SodiumError, FinalAttributeError].}
 
     NetworkFunctionBox* = ref object of RootObj
         connect*:    proc (ip: string, port: uint): Future[bool]

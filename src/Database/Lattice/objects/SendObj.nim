@@ -19,10 +19,10 @@ finalsd:
         #Amount transacted.
         amount* {.final.}: BN
 
-        #Blake512 hash.
-        blake* {.final.}: Blake512Hash
         #Proof this isn't spam.
         proof* {.final.}: uint
+        #Argon hash.
+        argon* {.final.}: ArgonHash
 
 #New Send object.
 func newSendObj*(

@@ -32,9 +32,9 @@ var
         0
     )
 
-#Mine and sign the Send.
+#Sign and mine the Send.
+sender.sign(send)
 send.mine("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16))
-discard sender.sign(send)
 
 #Sign the Receive.
 receiver.sign(recv)

@@ -17,12 +17,12 @@ import ../SerializeCommon
 #Serialize a Data.
 proc serialize*(data: Data): string {.raises: [ValueError].} =
     result =
+        !Address.toBN(data.sender).toString(256) &
         !data.nonce.toBinary() &
         !data.data
 
     if data.signature.len != 0:
         result =
-            !Address.toBN(data.sender).toString(256) &
             result &
             !data.proof.toBinary() &
             !data.signature

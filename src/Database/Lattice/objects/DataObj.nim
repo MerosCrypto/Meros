@@ -12,10 +12,11 @@ finalsd:
     type Data* = ref object of Entry
         #Data included in the Entry.
         data* {.final.}: string
-        #Blake512 hash.
-        blake* {.final.}: Blake512Hash
+
         #Proof this isn't spam.
         proof* {.final.}: uint
+        #Argon hash.
+        argon* {.final.}: ArgonHash
 
 #New Data object.
 func newDataObj*(data: string): Data {.raises: [FinalAttributeError].} =
@@ -23,5 +24,5 @@ func newDataObj*(data: string): Data {.raises: [FinalAttributeError].} =
         data: data
     )
     result.ffinalizeData()
-    
+
     result.descendant = EntryType.Data

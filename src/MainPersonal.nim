@@ -18,7 +18,7 @@ proc mainPersonal() {.raises: [].} =
                 wallet = newWallet(newEdSeed(seed))
 
         #Sign a Send.
-        functions.personal.signSend = proc (send: Send): bool {.raises: [
+        functions.personal.signSend = proc (send: Send) {.raises: [
             ValueError,
             SodiumError,
             FinalAttributeError
@@ -29,7 +29,7 @@ proc mainPersonal() {.raises: [].} =
         functions.personal.signReceive = proc (recv: Receive) {.raises: [SodiumError, FinalAttributeError].} =
             wallet.sign(recv)
 
-        functions.personal.signData = proc (data: Data): bool {.raises: [
+        functions.personal.signData = proc (data: Data) {.raises: [
             ValueError,
             SodiumError,
             FinalAttributeError

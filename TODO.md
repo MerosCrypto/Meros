@@ -18,8 +18,6 @@ Merit:
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
 
 Lattice:
-- Make sure hash sources are unique (data is just `data.data` which is a collision waiting to happen).
-- Have `Send`'s/`Data`'s Blake2b hash signed, not its Argon2, so remote services can calculate work.
 - Have work precalculable for 100 `Send`'s/`Data`'s in advance.
 - Difficulty voting.
 - Lock boxes.

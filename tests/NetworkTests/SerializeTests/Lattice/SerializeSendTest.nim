@@ -32,10 +32,10 @@ for i in 1 .. 20:
             newBN("10000000000"),
             0
         )
+    #Sign it.
+    sender.sign(send)
     #Mine the Send.
     send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
-    #Sign it.
-    assert(sender.sign(send), "Couldn't sign the Send.")
 
     #Serialize it and parse it back.
     var sendParsed: Send = send.serialize().parseSend()
@@ -53,7 +53,7 @@ for i in 1 .. 20:
     #Test the Send properties.
     assert(send.output == sendParsed.output)
     assert(send.amount == sendParsed.amount)
-    assert(send.blake == sendParsed.blake)
     assert(send.proof == sendParsed.proof)
+    assert(send.argon == sendParsed.argon)
 
 echo "Finished the Network/Serialize/Lattice/Send test."
