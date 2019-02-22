@@ -19,7 +19,8 @@ proc serialize*(data: Data): string {.raises: [ValueError].} =
     result =
         !Address.toBN(data.sender).toString(256) &
         !data.nonce.toBinary() &
-        !data.data
+        #Solves https://github.com/MerosCrypto/Meros/issues/46.
+        data.data.lenPrefix & data.data
 
     if data.signature.len != 0:
         result =
