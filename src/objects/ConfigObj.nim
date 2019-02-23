@@ -6,6 +6,9 @@ Finally, there's CLI options.
 CLI options will override options from the settings file which will override the default paramters.
 """
 
+#Errors lib.
+import ../lib/Errors
+
 #BLS lib.
 import ../lib/BLS
 
@@ -31,33 +34,42 @@ type Config* = ref object of RootObj
     #Port for the RPC to listen on.
     rpcPort*: uint
 
+#Returns if the key exists, after checking the value's type.
+proc check(json: JSONNode, key: string, kind: JSONNodeKind): bool {.raises: [ValueError].} =
+    result = false
+
+    if json.hasKey(key):
+        if json[key].kind != kind:
+            raise newException(ValueError, "Invalid `" & key & "` setting in the settings file.")
+        return true
+
 #Constructor.
-proc newConfig*(): Config =
-    var
-        miner: MinerWallet = nil
-        tcpPort: uint = 5132
-        rpcPort: uint = 5133
+proc newConfig*(): Config {.raises: [ValueError, IndexError, BLSError].} =
+    #Create the config.
+    result = Config(
+        miner: nil,
+        tcpPort: 5132,
+        rpcPort: 5133
+    )
 
     #If the settings file exists...
     if fileExists("./settings.json"):
         #Parse it.
-        var json: JSONNode = parseJSON(readFile("./settings.json"))
+        var json: JSONNode
+        try:
+            json = parseJSON(readFile("./settings.json"))
+        except:
+            raise newException(ValueError, "Invalid settings file.")
 
         #Read its settings.
-        if json.hasKey("miner"):
-            if json["miner"].kind != JString:
-                raise newException(ValueError, "Invalid `miner` setting in the settings file.")
-            miner = newMinerWallet(newBLSPrivateKeyFromBytes(json["miner"].getStr()))
+        if json.check("miner", JString):
+            result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(json["miner"].getStr()))
 
-        if json.hasKey("tcpPort"):
-            if json["tcpPort"].kind != JInt:
-                raise newException(ValueError, "Invalid `tcp` setting in the settings file.")
-            tcpPort = uint(json["tcpPort"].getInt())
+        if json.check("tcp", JInt):
+            result.tcpPort = uint(json["tcpPort"].getInt())
 
-        if json.hasKey("rpcPort"):
-            if json["rpcPort"].kind != JInt:
-                raise newException(ValueError, "Invalid `rpc` setting in the settings file.")
-            rpcPort = uint(json["rpcPort"].getInt())
+        if json.check("rpc", JInt):
+            result.rpcPort = uint(json["rpcPort"].getInt())
 
     #If there are params...
     if paramCount() > 0:
@@ -70,17 +82,10 @@ proc newConfig*(): Config =
             #Switch based off the param.
             case paramStr(i):
                 of "--miner":
-                    miner = newMinerWallet(newBLSPrivateKeyFromBytes(paramStr(i + 1)))
+                    result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(paramStr(i + 1)))
 
                 of "--tcpPort":
-                    tcpPort = parseUInt(paramStr(i + 1))
+                    result.tcpPort = parseUInt(paramStr(i + 1))
 
                 of "--rpcPort":
-                    rpcPort = parseUInt(paramStr(i + 1))
-
-    #Create the config.
-    result = Config(
-        miner: miner,
-        tcpPort: tcpPort,
-        rpcPort: rpcPort
-    )
+                    result.rpcPort = parseUInt(paramStr(i + 1))

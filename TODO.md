@@ -81,9 +81,6 @@ Other:
 - Config test.
 
 ### Features:
-- Command line options.
-- Make the ports to listen on runtime options.
-
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.

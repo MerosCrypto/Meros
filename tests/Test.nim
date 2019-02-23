@@ -4,7 +4,7 @@ import libTests
 import WalletTests
 import DatabaseTests
 import NetworkTests
-import objectTests
+import objectsTests
 
 import SyntaxTest
 
