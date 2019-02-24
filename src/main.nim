@@ -5,7 +5,8 @@
 #MainGlobals is included by MainVerifications.
 #MainVerifications is included by MainMerit.
 #MainMerit is included by MainLattice.
-#MainLattice is included by MainPersonal.
+#MainLattice is included by MainDatabase.
+#MainDatabase is included by MainPersonal.
 #MainPersonal is included by MainNetwork.
 #MainNetwork is included by MainUI.
 #It ends with include MainUI.
@@ -21,6 +22,7 @@ proc main() {.thread.} =
     mainVerifications()
     mainMerit()
     mainLattice()
+    MainDatabase()
     mainPersonal()
     mainNetwork()
     mainRPC()

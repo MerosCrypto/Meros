@@ -9,26 +9,29 @@ var
     config: Config = newConfig()
 
     #Verifications.
-    verifications: Verifications
+    verifications {.threadvar.}: Verifications
 
     #Merit.
-    merit: Merit #Blockchain and state.
+    merit {.threadvar.}: Merit
 
     #Lattice.
-    lattice: Lattice #Lattice.
+    lattice {.threadvar.}: Lattice
+
+    #DB.
+    db {.threadvar.}: DB
 
     #Personal.
-    verifyLock: Lock #Verify Lock.
-    wallet: Wallet   #Wallet.
+    verifyLock: Lock             #Verify lock to stop us from trigerring a MeritRemoval.
+    wallet {.threadvar.}: Wallet #Wallet.
 
     #Network.
-    network: Network #Network.
+    network {.threadvar.}: Network #Network.
 
     #UI.
     fromMain: Channel[string] #Channel from the 'main' thread to the UI thread.
     toRPC: Channel[JSONNode]  #Channel to the RPC from the GUI.
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
-    rpc: RPC    #RPC object.
+    rpc {.threadvar.}: RPC    #RPC object.
 
 #Properly shutdown.
 functions.system.quit = proc () {.raises: [ChannelError, AsyncError, SocketError].} =
@@ -43,6 +46,9 @@ functions.system.quit = proc () {.raises: [ChannelError, AsyncError, SocketError
 
     #Shut down the Network.
     network.shutdown()
+
+    #Shut down the DB.
+    db.close()
 
     #Quit.
     quit(0)

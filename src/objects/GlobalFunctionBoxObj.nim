@@ -29,6 +29,9 @@ import ../Database/Merit/Merit
 #Lattice.
 import ../Database/Lattice/Lattice
 
+#DB.
+import ../Database/Filesystem/DB
+
 #Finals lib.
 import finals
 
@@ -67,6 +70,11 @@ type
         addReceive*:  proc (recv: Receive): bool {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
         addData*:     proc (data: Data): bool    {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
 
+    DatabaseFunctionBox* = ref object of RootObj
+        put*:    proc (db: DB, key: string, val: string) {.raises: [LMDBError].}
+        get*:    proc (db: DB, key: string): string      {.raises: [LMDBError].}
+        delete*: proc (db: DB, key: string)              {.raises: [LMDBError].}
+
     PersonalFunctionBox* = ref object of RootObj
         getWallet*:  proc (): Wallet {.raises: [].}
 
@@ -84,6 +92,7 @@ type
         verifications*:  VerificationsFunctionBox
         merit*:          MeritFunctionBox
         lattice*:        LatticeFunctionBox
+        database*:       DatabaseFunctionBox
         personal*:       PersonalFunctionBox
         network*:        NetworkFunctionBox
 
@@ -94,6 +103,7 @@ proc newGlobalFunctionBox*(): GlobalFunctionBox {.raises: [].} =
         verifications: VerificationsFunctionBox(),
         merit:         MeritFunctionBox(),
         lattice:       LatticeFunctionBox(),
+        database:      DatabaseFunctionBox(),
         personal:      PersonalFunctionBox(),
         network:       NetworkFunctionBox()
     )

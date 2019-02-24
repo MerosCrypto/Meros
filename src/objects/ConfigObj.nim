@@ -25,14 +25,16 @@ import strutils
 import json
 
 type Config* = ref object of RootObj
-    #MinerWallet to verify transactions with.
-    miner*: MinerWallet
+    #DB Path.
+    db*: string
 
     #Port for our server to listen on.
     tcpPort*: uint
-
     #Port for the RPC to listen on.
     rpcPort*: uint
+
+    #MinerWallet to verify transactions with.
+    miner*: MinerWallet
 
 #Returns if the key exists, after checking the value's type.
 proc check(json: JSONNode, key: string, kind: JSONNodeKind): bool {.raises: [ValueError].} =
@@ -47,29 +49,33 @@ proc check(json: JSONNode, key: string, kind: JSONNodeKind): bool {.raises: [Val
 proc newConfig*(): Config {.raises: [ValueError, IndexError, BLSError].} =
     #Create the config.
     result = Config(
-        miner: nil,
+        db: "./data/db",
         tcpPort: 5132,
-        rpcPort: 5133
+        rpcPort: 5133,
+        miner: nil
     )
 
     #If the settings file exists...
-    if fileExists("./settings.json"):
+    if fileExists("./data/settings.json"):
         #Parse it.
         var json: JSONNode
         try:
-            json = parseJSON(readFile("./settings.json"))
+            json = parseJSON(readFile("./data/settings.json"))
         except:
             raise newException(ValueError, "Invalid settings file.")
 
         #Read its settings.
-        if json.check("miner", JString):
-            result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(json["miner"].getStr()))
+        if json.check("db", JString):
+            result.db = json["db"].getStr()
 
-        if json.check("tcp", JInt):
+        if json.check("tcpPort", JInt):
             result.tcpPort = uint(json["tcpPort"].getInt())
 
-        if json.check("rpc", JInt):
+        if json.check("rpcPort", JInt):
             result.rpcPort = uint(json["rpcPort"].getInt())
+
+        if json.check("miner", JString):
+            result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(json["miner"].getStr()))
 
     #If there are params...
     if paramCount() > 0:
@@ -81,11 +87,14 @@ proc newConfig*(): Config {.raises: [ValueError, IndexError, BLSError].} =
         for i in countup(1, paramCount(), 2):
             #Switch based off the param.
             case paramStr(i):
-                of "--miner":
-                    result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(paramStr(i + 1)))
+                of "--db":
+                    result.db = paramStr(i + 1)
 
                 of "--tcpPort":
                     result.tcpPort = parseUInt(paramStr(i + 1))
 
                 of "--rpcPort":
                     result.rpcPort = parseUInt(paramStr(i + 1))
+
+                of "--miner":
+                    result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(paramStr(i + 1)))

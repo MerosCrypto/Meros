@@ -103,7 +103,7 @@ Other:
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
-- Replace every Error with Enums. Every function should return an Option-Esque EITHER Enum or Value and have a blank raises pragma.
+- Replace every Error with Enums. Every function should return an Option-Esque with EITHER Enum or Value and have a blank raises pragma.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
