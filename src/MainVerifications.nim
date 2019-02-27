@@ -1,40 +1,38 @@
-include MainGlobals
+include MainDatabase
 
 proc mainVerifications() {.raises: [].} =
     {.gcsafe.}:
-        verifications = newVerifications()
+        verifications = newVerifications(functions.database)
 
         #Provide access to the verifier's height.
         functions.verifications.getVerifierHeight = proc (
             key: string
-        ): uint {.raises: [KeyError].} =
+        ): uint {.raises: [KeyError, LMDBError].} =
             verifications[key].height
 
         #Provide access to verifications.
         functions.verifications.getVerification = proc (
             key: string,
             nonce: uint
-        ): Verification {.raises: [KeyError].} =
+        ): Verification {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             verifications[key][nonce]
 
         #Provide access to the VerifierIndexes of verifiers with unarchived Verifications.
         functions.verifications.getUnarchivedIndexes = proc (): seq[VerifierIndex] {.raises: [
             KeyError,
             ValueError,
+            LMDBError,
             FinalAttributeError
         ].} =
             #Calculate who has new Verifications.
             result = @[]
-            for verifier in verifications.keys():
-                #Skip over verifier's with no Verifications, if any manage to exist.
+            for verifier in verifications.verifiers.keys():
+                #Skip over Verifiers with no Verifications, if any manage to exist.
                 if verifications[verifier].height == 0:
                     continue
 
-                #Generally, we'd only need to see if the height is greater than the archived.
-                #That said, archived is supposed to start at -1. It can't as an uint.
-                #To solve this, we have a different check.
-                #We check if the tip Verification was archived or not.
-                if verifications[verifier][^1].archived != 0:
+                #Continue if this user doesn't have Verifications.
+                if verifications[verifier].verifications.len > 0:
                     continue
 
                 #Since there are unarchived verifications, add the VerifierIndex.
@@ -49,19 +47,20 @@ proc mainVerifications() {.raises: [].} =
         functions.verifications.getPendingAggregate = proc (
             verifierStr: string,
             nonce: uint
-        ): BLSSignature {.raises: [KeyError, BLSError].} =
+        ): BLSSignature {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             var
                 #Grab the Verifier.
                 verifier: Verifier = verifications[verifierStr]
                 #Create a seq of signatures.
                 sigs: seq[BLSSignature] = @[]
                 #Start of the unarchived Verifications.
-                start: uint = verifier.archived + 1
+                start: uint
 
-            #Override to handle how archived is 0 twice.
-            if start == 1:
-                if verifier[0].archived == 0:
-                    start = 0
+            #If this Verifier has pending Verifications...
+            if verifier.verifications.len > 0:
+                start = verifier.verifications[0].nonce
+            else:
+                return nil
 
             #Iterate over every unarchived verification, up to and including the nonce.
             for verif in verifier{start .. nonce}:
@@ -74,14 +73,14 @@ proc mainVerifications() {.raises: [].} =
         functions.verifications.getPendingHashes = proc (
             key: string,
             nonceArg: uint
-        ): seq[string] {.raises: [KeyError].} =
+        ): seq[string] {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             result = @[]
 
             var
                 #Grab the Verifier.
                 verifier: Verifier = verifications[key]
                 #Start of the unarchived Verifications.
-                start: uint = verifier.archived + 1
+                start: uint
                 #Nonce to end at.
                 nonce: uint = nonceArg
 
@@ -89,10 +88,11 @@ proc mainVerifications() {.raises: [].} =
             if verifications[key].height == 0:
                 return
 
-            #Override to handle how archived is 0 twice.
-            if start == 1:
-                if verifications[key][0].archived == 0:
-                    start = 0
+            #If this Verifier has pending Verifications...
+            if verifier.verifications.len > 0:
+                start = verifier.verifications[0].nonce
+            else:
+                return @[]
 
             #Make sure the nonce is within bounds.
             if verifications[key].height <= nonce:

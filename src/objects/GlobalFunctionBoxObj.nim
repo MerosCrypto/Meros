@@ -20,14 +20,19 @@ import ../Network/objects/MessageObj
 #Wallet.
 import ../Wallet/Wallet
 
-#Verifications.
-import ../Database/Verifications/Verifications
+#Verification object.
+import ../Database/Verifications/objects/VerificationObj
 
-#Merit.
-import ../Database/Merit/Merit
+#VerifierIndex and Block object.
+import ../Database/Merit/objects/VerifierIndexObj
+import ../Database/Merit/objects/BlockObj
 
-#Lattice.
-import ../Database/Lattice/Lattice
+#Lattice Entries.
+import ../Database/Lattice/objects/EntryObj
+import ../Database/Lattice/Claim
+import ../Database/Lattice/Send
+import ../Database/Lattice/Receive
+import ../Database/Lattice/Data
 
 #DB.
 import ../Database/Filesystem/DB
@@ -43,11 +48,11 @@ type
         quit*: proc () {.raises: [ChannelError, AsyncError, SocketError].}
 
     VerificationsFunctionBox* = ref object of RootObj
-        getVerifierHeight*:     proc (key: string): uint                           {.raises: [KeyError].}
-        getVerification*:       proc (key: string, nonce: uint): Verification      {.raises: [KeyError].}
-        getUnarchivedIndexes*:  proc (): seq[VerifierIndex]                        {.raises: [KeyError, ValueError, FinalAttributeError].}
-        getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, BLSError].}
-        getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.raises: [KeyError].}
+        getVerifierHeight*:     proc (key: string): uint                           {.raises: [KeyError, LMDBError].}
+        getVerification*:       proc (key: string, nonce: uint): Verification      {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
+        getUnarchivedIndexes*:  proc (): seq[VerifierIndex]                        {.raises: [KeyError, ValueError, LMDBError, FinalAttributeError].}
+        getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
+        getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
 
         addVerification*:        proc (verif: Verification): bool       {.raises: [ValueError].}
         addMemoryVerification*:  proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].}
@@ -71,9 +76,9 @@ type
         addData*:     proc (data: Data): bool    {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
 
     DatabaseFunctionBox* = ref object of RootObj
-        put*:    proc (db: DB, key: string, val: string) {.raises: [LMDBError].}
-        get*:    proc (db: DB, key: string): string      {.raises: [LMDBError].}
-        delete*: proc (db: DB, key: string)              {.raises: [LMDBError].}
+        put*:    proc (key: string, val: string) {.raises: [LMDBError].}
+        get*:    proc (key: string): string      {.raises: [LMDBError].}
+        delete*: proc (key: string)              {.raises: [LMDBError].}
 
     PersonalFunctionBox* = ref object of RootObj
         getWallet*:  proc (): Wallet {.raises: [].}

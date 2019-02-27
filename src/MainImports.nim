@@ -26,7 +26,7 @@ import Database/Merit/Merit
 #Lattice.
 import Database/Lattice/Lattice
 
-#Filesystem.
+#DB.
 import Database/Filesystem/DB
 
 #Network.

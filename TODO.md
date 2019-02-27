@@ -2,7 +2,8 @@
 
 ### Core:
 Filesystem:
-- Store Verifications.
+- Make `Verifier.archived` an int so we can use -1.
+- Load unarchived verifications.
 - Store Blocks.
 - Store Entries.
 

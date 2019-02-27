@@ -50,7 +50,6 @@ proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSE
     if verifs.len == 0:
         return sig == nil
 
-
     #Create the Aggregation Infos.
     var agInfos: seq[ptr BLSAggregationInfo] = @[]
     try:

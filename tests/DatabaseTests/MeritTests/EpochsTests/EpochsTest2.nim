@@ -25,6 +25,9 @@ import ../../../../src/Database/Verifications/Verifications
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 
+#Database Function Box.
+import ../../../../src/objects/GlobalFunctionBoxObj
+
 #Epoch Test Common lib.
 import EpochsTestCommon
 
@@ -32,8 +35,10 @@ import EpochsTestCommon
 import strutils
 
 var
+    #Database Function Box.
+    functions: DatabaseFunctionBox = newTestDatabase()
     #Verifications.
-    verifications: Verifications = newVerifications()
+    verifications: Verifications = newVerifications(functions)
     #Blockchain.
     blockchain: Blockchain = newBlockchain("epoch test", 1, newBN(0))
     #State.

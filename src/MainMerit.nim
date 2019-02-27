@@ -51,7 +51,7 @@ proc mainMerit() {.raises: [
                 var agInfos: seq[ptr BLSAggregationInfo] = @[]
                 for index in newBlock.verifications:
                     #Verify we have the Verifier.
-                    if not verifications.hasKey(index.key):
+                    if not verifications.verifiers.hasKey(index.key):
                         echo "Failed to add the Block."
                         return false
 
@@ -71,11 +71,7 @@ proc mainMerit() {.raises: [
                         return false
 
                     #Start of this verifier's unarchived verifications.
-                    var verifierStart: uint = verifications[index.key].archived + 1
-                    #Override to handle how archived is 0 twice.
-                    if verifierStart == 1:
-                        if verifications[index.key][0].archived == 0:
-                            verifierStart = 0
+                    var verifierStart: uint = verifications[index.key].verifications[0].nonce
 
                     var
                         #Grab this Verifier's verifications.

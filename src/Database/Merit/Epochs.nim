@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Util lib.
 import ../../lib/Util
 
@@ -133,7 +136,17 @@ proc calculate*(
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-proc shift*(epochs: var Epochs, verifs: Verifications, indexes: seq[VerifierIndex]): Epoch {.raises: [KeyError].} =
+proc shift*(
+    epochs: var Epochs,
+    verifs: Verifications,
+    indexes: seq[VerifierIndex]
+): Epoch {.raises: [
+    KeyError,
+    ValueError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch()
