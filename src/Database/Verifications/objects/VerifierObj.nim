@@ -147,21 +147,15 @@ proc `[]`*(verifier: Verifier, aArg: int, b: int): seq[Verification] {.raises: [
 proc `[]`*(verifier: Verifier, a: uint, b: uint): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
     verifier[int(a), int(b)]
 
-proc `{}`*(verifier: Verifier, aArg: int, bArg: int): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
-    #Calculate the new indexes.
-    var
-        a: int = aArg - (verifier.archived + 1)
-        b: int = bArg - (verifier.archived + 1)
-
+proc `{}`*(verifier: Verifier, aArg: int, b: int): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
     #Support the initial verifier.archived value (-1).
+    var a: int = aArg
     if a == -1:
         a = 0
 
-    #Make sure it's within bounds.
+    #Make sure it's a valid slice.
     if a > b:
         raise newException(ValueError, "That slice is invalid.")
-    if b >= verifier.verifications.len:
-        raise newException(ValueError, "That Verifier doesn't have the MemoryVerifications for that slice.")
 
     #Grab the Verifications and cast them.
     var verifs: seq[Verification] = verifier[a, b]
