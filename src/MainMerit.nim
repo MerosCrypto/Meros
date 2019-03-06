@@ -48,7 +48,7 @@ proc mainMerit() {.raises: [
 
             if newBlock.verifications.len > 0:
                 #Verify we have all the Verifications and Entries, as well as verify the signature.
-                var agInfos: seq[ptr BLSAggregationInfo] = @[]
+                var agInfos: seq[BLSAggregationInfo] = @[]
                 for index in newBlock.verifications:
                     #Verify we have the Verifier.
                     if not verifications.verifiers.hasKey(index.key):
@@ -70,31 +70,39 @@ proc mainMerit() {.raises: [
                         echo "Failed to add the Block."
                         return false
 
-                    #Start of this verifier's unarchived verifications.
-                    var verifierStart: uint = verifications[index.key].verifications[0].nonce
-
                     var
+                        #Start of this verifier's unarchived verifications.
+                        verifierStart: uint = verifications[index.key].verifications[0].nonce
                         #Grab this Verifier's verifications.
                         verifierVerifs: seq[Verification] = verifications[index.key][verifierStart, index.nonce]
                         #Declare an aggregation info seq for this verifier.
-                        verifierAgInfos: seq[ptr BLSAggregationInfo] = newSeq[ptr BLSAggregationInfo](verifierVerifs.len)
+                        verifierAgInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](verifierVerifs.len)
                     for v in 0 ..< verifierVerifs.len:
                         #Make sure the Lattice has this Entry.
                         if not lattice.lookup.hasKey(verifierVerifs[v].hash.toString()):
                             return false
 
                         #Create an aggregation info for this verification.
-                        verifierAgInfos[v] = cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo)))
-                        verifierAgInfos[v][] = newBLSAggregationInfo(verifierVerifs[v].verifier, verifierVerifs[v].hash.toString())
+                        verifierAgInfos[v] = newBLSAggregationInfo(verifierVerifs[v].verifier, verifierVerifs[v].hash.toString())
 
                     #Add the Verifier's aggregation info to the seq.
-                    agInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
-                    agInfos[^1][] = verifierAgInfos.aggregate()
-                #Add the aggregate info to the signature.
-                newBlock.header.verifications.setAggregationInfo(agInfos.aggregate())
-                if not newBlock.header.verifications.verify():
-                    echo "Failed to add the Block."
-                    return false
+                    agInfos.add(verifierAgInfos.aggregate())
+
+                #Calculate the aggregation info.
+                var agInfo: BLSAggregationInfo = agInfos.aggregate()
+                #If it's nil, make sure the signature is 0.
+                if agInfo == nil:
+                    if newBlock.header.verifications != nil:
+                        return false
+                #If it's not nil, test it against the signature.
+                elif agInfo != nil:
+                    if newBlock.header.verifications == nil:
+                        return false
+
+                    newBlock.header.verifications.setAggregationInfo(agInfo)
+                    if not newBlock.header.verifications.verify():
+                        echo "Failed to add the Block."
+                        return false
 
             #Add the Block to the Merit.
             var rewards: Rewards

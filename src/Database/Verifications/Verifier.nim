@@ -51,11 +51,10 @@ proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSE
         return sig == nil
 
     #Create the Aggregation Infos.
-    var agInfos: seq[ptr BLSAggregationInfo] = @[]
+    var agInfos: seq[BLSAggregationInfo] = @[]
     try:
         for verif in verifs:
-            agInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
-            agInfos[^1][] = newBLSAggregationInfo(verif.verifier, verif.hash.toString())
+            agInfos.add(newBLSAggregationInfo(verif.verifier, verif.hash.toString()))
     except:
         raise newException(BLSError, "Couldn't allocate space for the AggregationInfo.")
 

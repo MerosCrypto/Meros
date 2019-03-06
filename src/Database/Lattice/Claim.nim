@@ -48,6 +48,7 @@ proc sign*(
     wallet: Wallet
 ) {.raises: [
     ValueError,
+    BLSError,
     SodiumError,
     FinalAttributeError
 ].} =

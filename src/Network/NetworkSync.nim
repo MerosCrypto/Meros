@@ -71,25 +71,30 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
 
             #Check the Block's aggregate.
             #Aggregate Infos for each Verifier.
-            var agInfos: seq[ptr BLSAggregationInfo] = @[]
+            var agInfos: seq[BLSAggregationInfo] = @[]
             #Iterate over every Verifier.
             for verifier in newBlock.verifications:
                 #Aggregate Infos for this verifier.
-                var verifierAgInfos: seq[ptr BLSAggregationInfo] = @[]
+                var verifierAgInfos: seq[BLSAggregationInfo] = @[]
                 #Iterate over this verifier's hashes.
                 for hash in hashes[verifier.key]:
                     #Create AggregationInfos.
-                    verifierAgInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
-                    verifierAgInfos[^1][] = newBLSAggregationInfo(newBLSPublicKey(verifier.key), hash)
+                    verifierAgInfos.add(newBLSAggregationInfo(newBLSPublicKey(verifier.key), hash))
                 #Create the aggregate AggregateInfo for this Verifier.
-                agInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
-                agInfos[^1][] = verifierAgInfos.aggregate()
+                agInfos.add(verifierAgInfos.aggregate())
 
-            #Add the aggregate info to the Block's signature.
-            newBlock.header.verifications.setAggregationInfo(agInfos.aggregate())
-            #Verify the signature.
-            if not newBlock.header.verifications.verify():
-                return false
+            #Calculate the aggregation info.
+            var agInfo: BLSAggregationInfo = agInfos.aggregate()
+            #If it's nil, make sure the signature is 0.
+            if agInfo == nil:
+                if newBlock.header.verifications != nil:
+                    return false
+            #If it's not nil, test it against the signature.
+            elif agInfo != nil:
+                newBlock.header.verifications.setAggregationInfo(agInfo)
+                #Verify the signature.
+                if not newBlock.header.verifications.verify():
+                    return false
 
             #Download the Entries.
             #Dedeuplicate the list.
