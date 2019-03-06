@@ -2,7 +2,7 @@
 
 ### Core:
 Filesystem:
-- Make `Verifier.archived` an int so we can use -1.
+- Store the last 6 blocks of Verifications in RAM, not just the last block.
 - Load unarchived verifications.
 - Store Blocks.
 - Store Entries.

@@ -31,8 +31,8 @@ proc mainVerifications() {.raises: [].} =
                 if verifications[verifier].height == 0:
                     continue
 
-                #Continue if this user doesn't have Verifications.
-                if verifications[verifier].verifications.len > 0:
+                #Continue if this user doesn't have unarchived Verifications.
+                if verifications[verifier].verifications.len == 0:
                     continue
 
                 #Since there are unarchived verifications, add the VerifierIndex.
@@ -54,16 +54,16 @@ proc mainVerifications() {.raises: [].} =
                 #Create a seq of signatures.
                 sigs: seq[BLSSignature] = @[]
                 #Start of the unarchived Verifications.
-                start: uint
+                start: int
 
             #If this Verifier has pending Verifications...
             if verifier.verifications.len > 0:
-                start = verifier.verifications[0].nonce
+                start = int(verifier.verifications[0].nonce)
             else:
                 return nil
 
             #Iterate over every unarchived verification, up to and including the nonce.
-            for verif in verifier{start .. nonce}:
+            for verif in verifier{start, int(nonce)}:
                 sigs.add(verif.signature)
 
             #Return the hash.
@@ -80,7 +80,7 @@ proc mainVerifications() {.raises: [].} =
                 #Grab the Verifier.
                 verifier: Verifier = verifications[key]
                 #Start of the unarchived Verifications.
-                start: uint
+                start: int
                 #Nonce to end at.
                 nonce: uint = nonceArg
 
@@ -90,7 +90,7 @@ proc mainVerifications() {.raises: [].} =
 
             #If this Verifier has pending Verifications...
             if verifier.verifications.len > 0:
-                start = verifier.verifications[0].nonce
+                start = int(verifier.verifications[0].nonce)
             else:
                 return @[]
 
@@ -99,7 +99,7 @@ proc mainVerifications() {.raises: [].} =
                 nonce = verifications[key].height - 1
 
             #Add the hashes.
-            for verif in verifications[key][start .. nonce]:
+            for verif in verifications[key][start, int(nonce)]:
                 result.add(verif.hash.toString())
 
         #Handle Verifications.

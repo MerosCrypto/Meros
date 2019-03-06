@@ -23,7 +23,7 @@ import finals
 #Calculate the Merkle.
 proc calculateMerkle*(verifier: Verifier, nonce: uint): string {.raises: [ValueError].} =
     #Calculate how many leaves we're trimming.
-    var toTrim: int = verifier.verifications.len - (int(nonce) + 1)
+    var toTrim: int = int(verifier.height - (nonce + 1))
     if toTrim < 0:
         raise newException(ValueError, "Nonce is out of bounds.")
 

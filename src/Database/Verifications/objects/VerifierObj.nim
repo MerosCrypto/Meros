@@ -37,7 +37,7 @@ finalsd:
         #Verifier height.
         height*: uint
         #Amount of Verifications which have been archived.
-        archived*: uint
+        archived*: int
         #seq of the Verifications.
         verifications*: seq[Verification]
         #Merkle of the Verifications.
@@ -50,7 +50,7 @@ proc newVerifierObj*(key: string, db: DatabaseFunctionBox): Verifier {.raises: [
 
         key: key,
         height: 0,
-        archived: 0,
+        archived: -1,
         verifications: @[],
         merkle: newMerkle()
     )
@@ -68,9 +68,9 @@ proc newVerifierObj*(key: string, db: DatabaseFunctionBox): Verifier {.raises: [
     var height: uint = uint(result.db.get("verifications_" & result.key).fromBinary())
     result.height = height
     if height == 0:
-        result.archived = height
+        result.archived = int(height)
     else:
-        result.archived = height - 1
+        result.archived = int(height - 1)
 
 #Add a Verification to a Verifier.
 proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError, LMDBError].} =
@@ -117,41 +117,54 @@ proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [MerosIndexEr
     verifier.add(cast[Verification](verif))
 
 # [] operators.
-proc `[]`*(verifier: Verifier, index: uint): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+proc `[]`*(verifier: Verifier, index: int): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
     #Check that the nonce isn't out of bounds.
-    if index >= verifier.height:
+    if index >= int(verifier.height):
         raise newException(ValueError, "That Verifier doesn't have a Verification for that nonce.")
 
     #If it's in the database...
-    if index <= verifier.archived:
+    if int(index) <= verifier.archived:
         #Grab it and return it.
         return verifier.db.get("verifications_" & verifier.key & "_" & index.toBinary()).parseVerification()
 
     #Else, return it from memory.
-    result = verifier.verifications[int(index) - int(verifier.archived + 1)]
+    result = verifier.verifications[int(index) - (verifier.archived + 1)]
+proc `[]`*(verifier: Verifier, index: uint): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    verifier[int(index)]
 
-proc `[]`*(verifier: Verifier, slice: Slice[uint]): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+proc `[]`*(verifier: Verifier, aArg: int, b: int): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    #Support the initial verifier.archived value (-1).
+    var a: int = aArg
+    if a == -1:
+        a = 0
+
     #Create a seq.
-    result = newSeq[Verification](slice.b - slice.a + 1)
+    result = newSeq[Verification](b - a + 1)
 
     #Grab every Verification.
-    for i in slice:
-        result[int(i - slice.a)] = verifier[i]
+    for i in a .. b:
+        result[int(i - a)] = verifier[i]
+proc `[]`*(verifier: Verifier, a: uint, b: uint): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    verifier[int(a), int(b)]
 
-proc `{}`*(verifier: Verifier, sliceArg: Slice[uint]): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
-    #Calculate the new Slice.
-    var slice: Slice[uint]
-    slice.a = sliceArg.a - (verifier.archived + 1)
-    slice.b = sliceArg.b - (verifier.archived + 1)
+proc `{}`*(verifier: Verifier, aArg: int, bArg: int): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    #Calculate the new indexes.
+    var
+        a: int = aArg - (verifier.archived + 1)
+        b: int = bArg - (verifier.archived + 1)
+
+    #Support the initial verifier.archived value (-1).
+    if a == -1:
+        a = 0
 
     #Make sure it's within bounds.
-    if slice.a > slice.b:
-        raise newException(ValueError, "That Verifier doesn't have the MemoryVerifications for that slice.")
-    if slice.b >= uint(verifier.verifications.len):
+    if a > b:
+        raise newException(ValueError, "That slice is invalid.")
+    if b >= verifier.verifications.len:
         raise newException(ValueError, "That Verifier doesn't have the MemoryVerifications for that slice.")
 
     #Grab the Verifications and cast them.
-    var verifs: seq[Verification] = verifier[slice]
+    var verifs: seq[Verification] = verifier[a, b]
     result = newSeq[MemoryVerification](verifs.len)
     for v in 0 ..< verifs.len:
         result[v] = cast[MemoryVerification](verifs[v])

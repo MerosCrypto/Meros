@@ -64,9 +64,9 @@ proc archive*(
         verifs.verifiers[index.key].verifications.delete(
             0,
             int(
-                index.nonce - (verifs[index.key].archived + 1)
+                index.nonce - uint(verifs[index.key].archived + 1)
             )
         )
 
         #Update the Verifier.
-        verifs[index.key].archived = index.nonce
+        verifs[index.key].archived = int(index.nonce)

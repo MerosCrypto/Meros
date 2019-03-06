@@ -56,7 +56,7 @@ proc mainMerit() {.raises: [
                         return false
 
                     #Verify this isn't archiving archived Verifications.
-                    if index.nonce < verifications[index.key].archived:
+                    if int(index.nonce) < verifications[index.key].archived:
                         echo "Failed to add the Block."
                         return false
 
@@ -75,7 +75,7 @@ proc mainMerit() {.raises: [
 
                     var
                         #Grab this Verifier's verifications.
-                        verifierVerifs: seq[Verification] = verifications[index.key][verifierStart .. index.nonce]
+                        verifierVerifs: seq[Verification] = verifications[index.key][verifierStart, index.nonce]
                         #Declare an aggregation info seq for this verifier.
                         verifierAgInfos: seq[ptr BLSAggregationInfo] = newSeq[ptr BLSAggregationInfo](verifierVerifs.len)
                     for v in 0 ..< verifierVerifs.len:
