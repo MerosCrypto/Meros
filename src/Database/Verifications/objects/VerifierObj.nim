@@ -23,6 +23,9 @@ import VerificationObj
 import ../../../Network/Serialize/Verifications/SerializeVerification
 import ../../../Network/Serialize/Verifications/ParseVerification
 
+#String utils standard lib.
+import strutils
+
 #Finals lib.
 import finals
 
@@ -58,19 +61,14 @@ proc newVerifierObj*(key: string, db: DatabaseFunctionBox): Verifier {.raises: [
 
     #Check if we're in the DB.
     try:
-        discard result.db.get("verifications_" & result.key)
+        result.archived = parseInt(result.db.get("verifications_" & result.key))
+    #If we're not, add ourselves and return.
     except:
-        #If we're not, add ourselves and return.
-        result.db.put("verifications_" & result.key, 0.toBinary())
+        result.db.put("verifications_" & result.key, $result.archived)
         return
 
     #Populate with the info from the DB.
-    var height: uint = uint(result.db.get("verifications_" & result.key).fromBinary())
-    result.height = height
-    if height == 0:
-        result.archived = int(height)
-    else:
-        result.archived = int(height - 1)
+    result.height = uint(result.archived + 1)
 
 #Add a Verification to a Verifier.
 proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError, LMDBError].} =

@@ -34,7 +34,7 @@ import finals
 
 #Verifications object.
 type Verifications* = ref object
-    db: DatabaseFunctionBox
+    db*: DatabaseFunctionBox
     verifiersStr: string
 
     verifiers*: TableRef[string, Verifier]
@@ -53,10 +53,13 @@ proc newVerificationsObj*(db: DatabaseFunctionBox): Verifications {.raises: [].}
         #Create a Verifier for each one in the string.
         for i in countup(0, result.verifiersStr.len, 48):
             var verifier: string = result.verifiersStr[i .. i + 47]
+            #Make sure we haven't already loaded this verifier.
+            if result.verifiers.hasKey(verifier):
+                continue
             result.verifiers[verifier] = newVerifierObj(verifier, result.db)
+    #If it doesn't, set the Verifiers' string to "",
     except:
-        #Do nothing if it doesn't.
-        discard
+        result.verifiersStr = ""
 
 #Creates a new Verifier on the Verifications.
 proc add*(
@@ -73,7 +76,7 @@ proc add*(
     #Add the Verifier to the Verifier's String.
     verifs.verifiersStr &= verifier.pad(48)
     #Update the Verifier's String in the DB.
-    verifs.db.put("verifications_verfiers", verifs.verifiersStr)
+    verifs.db.put("verifications_verifiers", verifs.verifiersStr)
 
 #Gets a Verifier by their key.
 proc `[]`*(
