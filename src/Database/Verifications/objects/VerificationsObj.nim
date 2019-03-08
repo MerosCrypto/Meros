@@ -26,6 +26,9 @@ import VerificationObj
 #Verifier object.
 import VerifierObj
 
+#Seq utils standard lib.
+import sequtils
+
 #Tables standard lib.
 import tables
 
@@ -35,9 +38,10 @@ import finals
 #Verifications object.
 type Verifications* = ref object
     db*: DatabaseFunctionBox
+    verifiersSeq: seq[string]
     verifiersStr: string
 
-    verifiers*: TableRef[string, Verifier]
+    verifiers: TableRef[string, Verifier]
 
 #Verifications constructor.
 proc newVerificationsObj*(db: DatabaseFunctionBox): Verifications {.raises: [].} =
@@ -50,19 +54,25 @@ proc newVerificationsObj*(db: DatabaseFunctionBox): Verifications {.raises: [].}
     #Grab the Verifiers' string, if it exists.
     try:
         result.verifiersStr = result.db.get("verifications_verifiers")
+        result.verifiersSeq = newSeq[string](result.verifiersStr.len div 48)
+
         #Create a Verifier for each one in the string.
         for i in countup(0, result.verifiersStr.len, 48):
-            var verifier: string = result.verifiersStr[i .. i + 47]
-            #Make sure we haven't already loaded this verifier.
-            if result.verifiers.hasKey(verifier):
-                continue
+            #Extract the verifier.
+            var verifier = result.verifiersStr[i .. i + 47].strip()
+
+            #Store it in the seq.
+            result.verifiersSeq[i div 48] = verifier
+
+            #Load the Verifier.
             result.verifiers[verifier] = newVerifierObj(verifier, result.db)
     #If it doesn't, set the Verifiers' string to "",
     except:
         result.verifiersStr = ""
+        result.verifiersSeq = @[]
 
 #Creates a new Verifier on the Verifications.
-proc add*(
+proc add(
     verifs: Verifications,
     verifier: string
 ) {.raises: [LMDBError].} =
@@ -73,10 +83,13 @@ proc add*(
     #Create a new Verifier.
     verifs.verifiers[verifier] = newVerifierObj(verifier, verifs.db)
 
-    #Add the Verifier to the Verifier's String.
-    verifs.verifiersStr &= verifier.pad(48)
-    #Update the Verifier's String in the DB.
-    verifs.db.put("verifications_verifiers", verifs.verifiersStr)
+    #Check if this Verifier is already in the DB.
+    if not verifs.verifiersSeq.contains(verifier):
+        #Add the Verifier to the Verifier's string and seq.
+        verifs.verifiersStr &= verifier.pad(48)
+        verifs.verifiersSeq.add(verifier)
+        #Update the Verifier's String in the DB.
+        verifs.db.put("verifications_verifiers", verifs.verifiersStr)
 
 #Gets a Verifier by their key.
 proc `[]`*(
@@ -102,3 +115,8 @@ proc `[]`*(
         raise newException(ValueError, "That verifier doesn't have a Verification for that nonce.")
 
     result = verifs.verifiers[index.key][index.nonce]
+
+#Iterate over every verifier.
+iterator verifiers*(verifs: Verifications): string {.raises: [].} =
+    for verifier in verifs.verifiers.keys():
+        yield verifier

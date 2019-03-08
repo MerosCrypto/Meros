@@ -1,6 +1,5 @@
 #Use C++ instead of C.
-if getCommand() == "c":
-    setCommand("cpp")
+setCommand("cpp")
 
 #Necessary flags.
 switch("threads", "on")

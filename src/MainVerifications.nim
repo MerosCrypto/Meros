@@ -26,7 +26,7 @@ proc mainVerifications() {.raises: [].} =
         ].} =
             #Calculate who has new Verifications.
             result = @[]
-            for verifier in verifications.verifiers.keys():
+            for verifier in verifications.verifiers():
                 #Skip over Verifiers with no Verifications, if any manage to exist.
                 if verifications[verifier].height == 0:
                     continue

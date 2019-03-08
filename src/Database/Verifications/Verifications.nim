@@ -61,7 +61,7 @@ proc archive*(
     #Iterate over every Index.
     for index in indexes:
         #Delete them from the seq.
-        verifs.verifiers[index.key].verifications.delete(
+        verifs[index.key].verifications.delete(
             0,
             int(index.nonce - verifs[index.key].verifications[0].nonce)
         )

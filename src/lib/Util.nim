@@ -5,6 +5,27 @@ import times
 proc getTime*(): uint {.raises: [].} =
     uint(times.getTime().toUnix())
 
+#Strips leading 0s.
+func strip*(data: string): string {.raises: [].} =
+    #Find the first non-0 char.
+    var i: int = 0
+    while (
+        (i < data.len) and
+        (data[i] == char(0))
+    ):
+        inc(i)
+        continue
+
+    #If there's no 0s, return the original string.
+    if i == 0:
+        return data
+    #If the entire string was 0, return nothing.
+    if i == data.len:
+        return ""
+
+    #Else, return the non-0 substring.
+    return data.substr(i, data.len)
+
 #Left-pads data, with a char or string, until the data is a certain length.
 func pad*(
     data: string,
@@ -61,6 +82,3 @@ func fromBinary*(
     for b in 0 ..< number.len:
         #Add the byte after it's been properly shifted.
         result += int(number[b]) shl ((number.len - b - 1) * 8)
-
-func `<..`*(a: int|uint, b: int|uint): Slice[uint] {.raises: [].} =
-    (uint(a) + 1) .. uint(b)

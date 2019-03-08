@@ -1,3 +1,6 @@
+#Util lib.
+import ../../lib/Util
+
 #Generates the length that's prefixed onto serialized strings.
 func `lenPrefix`*(data: string): string {.raises: [].} =
     var
@@ -14,14 +17,10 @@ func `lenPrefix`*(data: string): string {.raises: [].} =
 #Prepends a string with its length.
 func `!`*(dataArg: string): string {.raises: [].} =
     #Extract the data argument.
-    var data: string = dataArg
-
-    #Strip leading 0s.
-    while (data.len > 0) and (data[0] == char(0)):
-        data = data.substr(1, data.len)
+    result = dataArg.strip()
 
     #Return the data prefixed by it's length.
-    result = data.lenPrefix & data
+    result = result.lenPrefix & result
 
 #Deseralizes a string by getting the length of the next byte, slicing that out, and moving on.
 func deserialize*(

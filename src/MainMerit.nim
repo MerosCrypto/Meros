@@ -51,7 +51,9 @@ proc mainMerit() {.raises: [
                 var agInfos: seq[BLSAggregationInfo] = @[]
                 for index in newBlock.verifications:
                     #Verify we have the Verifier.
-                    if not verifications.verifiers.hasKey(index.key):
+                    try:
+                        discard verifications[index.key]
+                    except:
                         echo "Failed to add the Block."
                         return false
 
