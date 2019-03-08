@@ -61,10 +61,10 @@ proc newVerifierObj*(key: string, db: DatabaseFunctionBox): Verifier {.raises: [
 
     #Check if we're in the DB.
     try:
-        result.archived = parseInt(result.db.get("verifications_" & result.key))
+        result.archived = parseInt(result.db.get("verifications_" & result.key.pad(48)))
     #If we're not, add ourselves and return.
     except:
-        result.db.put("verifications_" & result.key, $result.archived)
+        result.db.put("verifications_" & result.key.pad(48), $result.archived)
         return
 
     #Populate with the info from the DB.
