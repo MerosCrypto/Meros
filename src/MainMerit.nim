@@ -11,7 +11,7 @@ proc mainMerit() {.raises: [
             BLOCK_TIME,
             BLOCK_DIFFICULTY,
             LIVE_MERIT,
-            functions.db
+            functions.database
         )
 
         #Handle requests for the current height.
@@ -23,8 +23,14 @@ proc mainMerit() {.raises: [
             merit.blockchain.difficulties[^1].difficulty
 
         #Handle requests for a Block.
-        functions.merit.getBlock = proc (nonce: uint): Block {.raises: [].} =
-            merit.blockchain.blocks[int(nonce)]
+        functions.merit.getBlock = proc (nonce: uint): Block {.raises: [
+            ValueError,
+            ArgonError,
+            BLSError,
+            LMDBError,
+            FinalAttributeError
+        ].} =
+            merit.blockchain[nonce]
 
         #Handle full blocks.
         functions.merit.addBlock = proc (newBlock: Block): Future[bool] {.async.} =

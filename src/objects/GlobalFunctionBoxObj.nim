@@ -60,7 +60,7 @@ type
     MeritFunctionBox* = ref object of RootObj
         getHeight*:      proc (): uint             {.raises: [].}
         getDifficulty*:  proc (): BN               {.raises: [].}
-        getBlock*:       proc (nonce: uint): Block {.raises: [].}
+        getBlock*:       proc (nonce: uint): Block {.raises: [ValueError, ArgonError, BLSError, LMDBError, FinalAttributeError].}
 
         addBlock*:  proc (newBlock: Block): Future[bool]
 
