@@ -7,9 +7,6 @@ Filesystem:
 
 - Load Headers/Blocks from the DB on boot.
 
-- Update the Blockchain object to have a Header seq and a Block seq.
-- Update the Blockchain to return Blocks from the Database.
-
 - Regenerate the Difficulties on boot.
 
 - Save the State to the Database.

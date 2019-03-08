@@ -13,6 +13,9 @@ import BN
 #BLS lib.
 import ../../lib/BLS
 
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
+
 #Miners object.
 import objects/MinersObj
 
@@ -24,23 +27,34 @@ import Block
 import objects/BlockchainObj
 export BlockchainObj
 
+#Finals lib.
+import finals
+
 #Create a new Blockchain.
 proc newBlockchain*(
     genesis: string,
     blockTime: uint,
-    startDifficulty: BN
+    startDifficulty: BN,
+    db: DatabaseFunctionBox
 ): Blockchain {.raises: [ValueError, ArgonError].} =
     newBlockchainObj(
         genesis,
         blockTime,
-        startDifficulty
+        startDifficulty,
+        db
     )
 
 #Adds a block to the blockchain.
 proc processBlock*(
     blockchain: Blockchain,
     newBlock: Block
-): bool {.raises: [ValueError].} =
+): bool {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 
@@ -53,7 +67,7 @@ proc processBlock*(
         return false
 
     #If the last hash is off...
-    if newBlock.header.last != blockchain.tip.hash:
+    if newBlock.header.last != blockchain.tip.header.hash:
         return false
 
     #If the time is before the last block's...

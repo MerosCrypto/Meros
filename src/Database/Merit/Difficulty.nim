@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Numerical libs.
 import BN
 import ../../lib/Base
@@ -15,6 +18,9 @@ import Block
 import objects/DifficultyObj
 export DifficultyObj
 
+#Finals lib.
+import finals
+
 #String utils standard lib.
 import strutils
 
@@ -30,14 +36,20 @@ func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
     result = true
 
     #If the Argon hash didn't beat the difficulty...
-    if newBlock.hash.toBN() < diff.difficulty:
+    if newBlock.header.hash.toBN() < diff.difficulty:
         return false
 
 #Calculate the next difficulty using the blockchain and blocks per period.
 proc calculateNextDifficulty*(
     blockchain: Blockchain,
     blocksPerPeriod: uint
-): Difficulty {.raises: [].} =
+): Difficulty {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     #If it was the genesis block, keep the same difficulty.
     if blockchain.height == 1:
         return blockchain.difficulties[0]

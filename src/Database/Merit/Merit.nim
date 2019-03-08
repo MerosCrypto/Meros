@@ -13,6 +13,9 @@ import ../../lib/BLS
 #Verifications lib.
 import ../Verifications/Verifications
 
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
+
 #VerifierIndex object.
 import objects/VerifierIndexObj
 export VerifierIndexObj
@@ -34,11 +37,16 @@ export Blockchain
 export State
 export Epochs
 
+#Serialize libs.
+import ../../Network/Serialize/Merit/SerializeBlock
+
 #Finals lib.
 import finals
 
 #Merit master object for a blockchain and state.
 type Merit* = ref object of RootObj
+    db: DatabaseFunctionBox
+
     blockchain*: Blockchain
     state*: State
     epochs: Epochs
@@ -48,11 +56,21 @@ proc newMerit*(
     genesis: string,
     blockTime: uint,
     startDifficulty: string,
-    live: uint
+    live: uint,
+    db: DatabaseFunctionBox
 ): Merit {.raises: [ValueError, ArgonError].} =
-    Merit(
-        blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
+    result = Merit(
+        db: db,
+
+        blockchain: newBlockchain(
+            genesis,
+            blockTime,
+            startDifficulty.toBN(16),
+            db
+        ),
+
         state: newState(live),
+
         epochs: newEpochs()
     )
 
@@ -64,6 +82,7 @@ proc processBlock*(
 ): Rewards {.raises: [
     KeyError,
     ValueError,
+    ArgonError,
     BLSError,
     LMDBError,
     FinalAttributeError
@@ -80,3 +99,7 @@ proc processBlock*(
     var epoch: Epoch = merit.epochs.shift(verifications, newBlock.verifications)
     #Calculate the rewards.
     result = epoch.calculate(merit.state)
+
+    #Save the block to the database.
+    merit.db.put("merit_" & newBlock.header.hash.toString(), newBlock.serialize())
+    merit.db.put("merit_tip", newBlock.header.hash.toString())

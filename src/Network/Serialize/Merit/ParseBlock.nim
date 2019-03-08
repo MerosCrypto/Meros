@@ -26,7 +26,7 @@ proc parseBlock*(
     ValueError,
     ArgonError,
     BLSError,
-    FinalAttributeError,
+    FinalAttributeError
 ].} =
     #Header | Verifications | Miners
     var blockSeq: seq[string] = blockStr.deserialize(3)

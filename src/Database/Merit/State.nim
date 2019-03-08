@@ -1,3 +1,9 @@
+#Errors lib.
+import ../../lib/Errors
+
+#Hash lib.
+import ../../lib/Hash
+
 #BLS lib.
 import ../../lib/BLS
 
@@ -47,7 +53,14 @@ proc processBlock*(
     state: State,
     blockchain: Blockchain,
     newBlock: Block
-) {.raises: [KeyError].} =
+) {.raises: [
+    KeyError,
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     #Grab the miners.
     var miners: Miners = newBlock.miners
 

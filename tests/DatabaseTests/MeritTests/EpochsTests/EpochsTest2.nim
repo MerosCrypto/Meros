@@ -40,7 +40,7 @@ var
     #Verifications.
     verifications: Verifications = newVerifications(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain("epoch test", 1, newBN(0))
+    blockchain: Blockchain = newBlockchain("epoch test", 1, newBN(0), nil)
     #State.
     state: State = newState(100)
     #Epochs.
