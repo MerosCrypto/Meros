@@ -4,8 +4,20 @@
 Filesystem:
 - Store the last 6 blocks of Verifications in RAM, not just the last block.
 - Load unarchived verifications.
-- Store Blocks.
-- Store Entries.
+
+- Load Headers/Blocks from the DB on boot.
+
+- Update the Blockchain object to have a Header seq and a Block seq.
+- Update the Blockchain to return Blocks from the Database.
+
+- Regenerate the Difficulties on boot.
+
+- Save the State to the Database.
+- Load the State from the Database.
+
+- Regenerate the Epochs on boot.
+
+- DB - Entries.
 
 Verifications:
 - Merit Removal.

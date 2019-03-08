@@ -6,7 +6,13 @@ proc mainMerit() {.raises: [
 ].} =
     {.gcsafe.}:
         #Create the Merit.
-        merit = newMerit(GENESIS, BLOCK_TIME, BLOCK_DIFFICULTY, LIVE_MERIT)
+        merit = newMerit(
+            GENESIS,
+            BLOCK_TIME,
+            BLOCK_DIFFICULTY,
+            LIVE_MERIT,
+            functions.db
+        )
 
         #Handle requests for the current height.
         functions.merit.getHeight = proc (): uint {.raises: [].} =

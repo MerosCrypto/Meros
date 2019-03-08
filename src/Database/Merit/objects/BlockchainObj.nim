@@ -13,8 +13,9 @@ import ../../../lib/Hash
 #Verifications lib.
 import ../../Verifications/Verifications
 
-#Difficulty and Block objects.
+#Difficulty, BlockHeader, and Block objects.
 import DifficultyObj
+import BlockHeaderObj
 import BlockObj
 
 #Finals lib.
@@ -31,9 +32,12 @@ finalsd:
 
         #Height.
         height*: uint
-        #seq of all the blocks.
-        blocks*: seq[Block]
-        #seq of all the difficulties.
+        #seq of every Blok Header.
+        headers: seq[BlockHeader]
+        #seq of all the Blocks in RAM.
+        blocks: seq[Block]
+
+        #seq of all the Difficulties.
         difficulties*: seq[Difficulty]
 
 #Create a Blockchain object.
@@ -46,6 +50,7 @@ proc newBlockchainObj*(
         blockTime: blockTime,
 
         height: 1,
+        headers: @[],
         blocks: @[
             newBlockObj(
                 0,
@@ -68,9 +73,19 @@ proc newBlockchainObj*(
     )
     result.ffinalizeBlockTime()
 
+#Adds a block.
 func add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
     inc(blockchain.height)
     blockchain.blocks.add(newBlock)
 
+#Adds a Difficulty.
 func add*(blockchain: Blockchain, difficulty: Difficulty) {.raises: [].} =
     blockchain.difficulties.add(difficulty)
+
+#Block getter.
+proc `[]`*(blockchain: Blockchain, index: uint): Block {.raises: [].} =
+    blockchain.blocks[int(index)]
+
+#Gets the last Block.
+func tip*(blockchain: Blockchain): Block {.raises: [].} =
+    blockchain.blocks[^1]

@@ -59,24 +59,15 @@ proc processBlock*(
     #If the Blockchain's height is over 50k, meaning there is a block to remove from the state...
     if blockchain.height > state.deadBlocks:
         #Get the block that should be removed.
-        miners = blockchain.blocks[^int(state.deadBlocks + 1)].miners
+        miners = blockchain[blockchain.height - (state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
         for miner in miners:
             state.data[miner.miner.toString()] = state.getBalance(miner.miner) - miner.amount
             state.live -= miner.amount
 
-#Process every block in a blockchain.
-proc processBlockchain*(
-    state: State,
-    blockchain: Blockchain
-) {.raises: [KeyError].} =
-    for i in blockchain.blocks:
-        state.processBlock(blockchain, i)
-
 #Constructor. It's at the bottom so we can call processBlockchain.
 proc newState*(
     blockchain: Blockchain,
     deadBlocks: uint
-): State {.raises: [KeyError].} =
+): State {.raises: [].} =
     result = newState(deadBlocks)
-    result.processBlockchain(blockchain)

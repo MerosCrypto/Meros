@@ -44,11 +44,8 @@ proc processBlock*(
     #Result is set to true for if nothing goes wrong.
     result = true
 
-    let
-        #Blocks Per Month.
-        blocksPerMonth: uint = uint(2592000) div blockchain.blockTime
-        #Grab the Blocks.
-        blocks: seq[Block] = blockchain.blocks
+    #Blocks Per Month.
+    let blocksPerMonth: uint = uint(2592000) div blockchain.blockTime
 
     #Verify the Block Header.
     #If the nonce is off...
@@ -56,11 +53,11 @@ proc processBlock*(
         return false
 
     #If the last hash is off...
-    if newBlock.header.last != blocks[^1].hash:
+    if newBlock.header.last != blockchain.tip.hash:
         return false
 
     #If the time is before the last block's...
-    if newBlock.header.time < blocks[^1].header.time:
+    if newBlock.header.time < blockchain.tip.header.time:
         return false
 
     #Verify the Block Header's Merkle Hash of the Miners matches the Block's Miners.
@@ -99,14 +96,7 @@ proc processBlock*(
 
     #If the difficulty needs to be updated...
     if blockchain.difficulties[^1].endBlock <= newBlock.header.nonce:
-        blockchain.add(
-            calculateNextDifficulty(
-                blockchain.blocks,
-                blockchain.difficulties,
-                blockchain.blockTime * blocksPerPeriod,
-                blocksPerPeriod
-            )
-        )
+        blockchain.add(calculateNextDifficulty(blockchain, blocksPerPeriod))
 
     #If the difficulty wasn't beat...
     if not blockchain.difficulties[^1].verifyDifficulty(newBlock):
