@@ -29,8 +29,6 @@ import strutils
 type Block* = ref object of RootObj
     #Block Header.
     header*: BlockHeader
-    #Hash of the Block Header.
-    hash*: ArgonHash
 
     #Verifications.
     verifications*: seq[VerifierIndex]
@@ -79,4 +77,4 @@ proc newBlockObj*(
     )
 
     #Set the Header hash.
-    result.hash = Argon(result.header.serialize(), result.header.proof.toBinary())
+    result.header.hash = Argon(result.header.serialize(), result.header.proof.toBinary())

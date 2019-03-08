@@ -139,7 +139,7 @@ for i in 1 .. 20:
     assert(newBlock.header.proof == blockParsed.header.proof)
 
     #Test the hash.
-    assert(newBlock.hash == blockParsed.hash)
+    assert(newBlock.header.hash == blockParsed.header.hash)
 
     #Test the Verifications.
     for v in 0 ..< newBlock.verifications.len:

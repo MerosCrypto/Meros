@@ -26,4 +26,4 @@ proc inc*(newBlock: Block) {.raises: [ArgonError].} =
     inc(newBlock.header.proof)
 
     #Recalculate the hash.
-    newBlock.hash = Argon(newBlock.header.serialize(), newBlock.header.proof.toBinary())
+    newBlock.header.hash = Argon(newBlock.header.serialize(), newBlock.header.proof.toBinary())

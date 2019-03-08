@@ -25,6 +25,9 @@ import strutils
 finalsd:
     #Define the BlockHeader object.
     type BlockHeader* = ref object of RootObj
+        #Block Hash.
+        hash*: ArgonHash
+        
         #Nonce.
         nonce* {.final.}: uint
         #Argon hash of the last block.
