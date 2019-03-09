@@ -53,6 +53,7 @@ proc calculateNextDifficulty*(
     #If it was the genesis block, keep the same difficulty.
     if blockchain.height == 1:
         blockchain.difficulty = blockchain.startDifficulty
+        return
 
     var
         #Last difficulty.

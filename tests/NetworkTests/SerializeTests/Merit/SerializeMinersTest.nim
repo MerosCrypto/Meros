@@ -1,4 +1,4 @@
-#Serialize Miners Tests.
+#Serialize Miners Test.
 
 #BLS lib.
 import ../../../../src/lib/BLS
@@ -17,8 +17,6 @@ import ../../../../src/Network/Serialize/Merit/ParseMiners
 import random
 import times
 import algorithm
-
-import strutils
 
 #Set the seed to be based on the time.
 randomize(getTime().toUnix())
@@ -87,6 +85,5 @@ for i in 1 .. 20:
     for i in 0 ..< miners.len:
         assert(miners[i].miner == minersParsed[i].miner)
         assert(miners[i].amount == minersParsed[i].amount)
-
 
 echo "Finished the Network/Serialize/Merit/Miners test."

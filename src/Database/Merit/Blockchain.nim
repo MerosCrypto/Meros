@@ -27,6 +27,9 @@ import Block
 import objects/BlockchainObj
 export BlockchainObj
 
+#Serialize libs.
+import ../../Network/Serialize/Merit/SerializeDifficulty
+
 #Finals lib.
 import finals
 
@@ -111,6 +114,7 @@ proc processBlock*(
     #If the difficulty needs to be updated...
     if blockchain.difficulty.endBlock <= newBlock.header.nonce:
         blockchain.calculateNextDifficulty(blocksPerPeriod)
+        blockchain.db.put("merit_difficulty", blockchain.difficulty.serialize())
 
     #If the difficulty wasn't beat...
     if not blockchain.difficulty.verifyDifficulty(newBlock):

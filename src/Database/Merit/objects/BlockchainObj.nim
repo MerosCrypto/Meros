@@ -35,7 +35,7 @@ import strutils
 finalsd:
     type Blockchain* = ref object of RootObj
         #DB Function Box.
-        db: DatabaseFunctionBox
+        db*: DatabaseFunctionBox
 
         #Block time (part of the chain params).
         blockTime* {.final.}: uint
@@ -56,13 +56,13 @@ finalsd:
 proc newBlockchainObj*(
     genesis: string,
     blockTime: uint,
-    startDifficulty: BN,
+    startDifficultyArg: BN,
     db: DatabaseFunctionBox
 ): Blockchain {.raises: [].} =
-    var startDifficulty = newDifficultyObj(
+    var startDifficulty: Difficulty = newDifficultyObj(
         0,
         1,
-        startDifficulty
+        startDifficultyArg
     )
 
     result = Blockchain(
@@ -71,7 +71,6 @@ proc newBlockchainObj*(
         blockTime: blockTime,
         startDifficulty: startDifficulty,
 
-        height: 1,
         blocks: @[],
 
         difficulty: startDifficulty
@@ -81,7 +80,7 @@ proc newBlockchainObj*(
 
 #Sets the amount of Headers we're loading.
 func setHeight*(blockchain: Blockchain, height: uint) {.raises: [ValueError].} =
-    if height != 1:
+    if blockchain.blocks.len != 0:
         raise newException(ValueError, "Blocks have already been added to this chain.")
 
     blockchain.height = height
@@ -94,6 +93,10 @@ func load*(blockchain: Blockchain, header: BlockHeader) {.raises: [].} =
 #Adds a Block loaded from the DB.
 func load*(blockchain: Blockchain, loadBlock: Block) {.raises: [].} =
     blockchain.blocks.add(loadBlock)
+
+#Sets the Difficulty to one loaded from the DB.
+func load*(blockchain: Blockchain, difficulty: Difficulty) {.raises: [].} =
+    blockchain.difficulty = difficulty
 
 #Adds a block.
 proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [LMDBError].} =

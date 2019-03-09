@@ -1,4 +1,4 @@
-#Serialize Block Header test.
+#Serialize Block Header Test.
 
 #Util lib.
 import ../../../../src/lib/Util

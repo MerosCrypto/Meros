@@ -5,9 +5,6 @@ Filesystem:
 - Store the last 6 blocks of Verifications in RAM, not just the last block.
 - Load unarchived verifications.
 
-- Save the current difficulty.
-- Load the current difficulty on boot.
-
 - Save the State to the Database.
 - Load the State from the Database.
 

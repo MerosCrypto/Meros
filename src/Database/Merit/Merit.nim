@@ -43,8 +43,10 @@ export Epochs
 #Serialize libs.
 import ../../Network/Serialize/SerializeCommon
 import ../../Network/Serialize/Merit/SerializeBlock
-import ../../Network/Serialize/Merit/ParseBlock
 import ../../Network/Serialize/Merit/ParseBlockHeader
+import ../../Network/Serialize/Merit/ParseBlock
+import ../../Network/Serialize/Merit/SerializeDifficulty
+import ../../Network/Serialize/Merit/ParseDifficulty
 
 #Finals lib.
 import finals
@@ -102,6 +104,9 @@ proc newMerit*(
         db.put("merit_tip", tip)
         db.put("merit_" & tip, genesisBlock.serialize())
 
+        #Also set the Difficulty to the starting difficulty.
+        db.put("merit_difficulty", result.blockchain.difficulty.serialize())
+
     #Load every header.
     var
         headers: seq[BlockHeader]
@@ -127,7 +132,8 @@ proc newMerit*(
         for h in countdown(headers.len - 1, headers.len - 12):
             result.blockchain.load(parseBlock(db.get("merit_" & headers[h].hash.toString())))
 
-    #Regenerate the Difficulties.
+    #Load the Difficulty.
+    result.blockchain.load(parseDifficulty(db.get("merit_difficulty")))
 
     #Regenerate the State.
 
