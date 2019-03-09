@@ -18,12 +18,22 @@ import ../../../../src/objects/GlobalFunctionBoxObj
 #DB.
 import ../../../../src/Database/Filesystem/DB
 
+#OS standard lib.
+import os
+
 #String utils standard lib.
 import strutils
 
 #Creates a database.
-var db: DB
+var db: DB = nil
 proc newTestDatabase*(): DatabaseFunctionBox =
+    #Close any existing DB.
+    if not db.isNil:
+        db.close()
+    
+    #Delete any old database.
+    removeFile("./data/test")
+
     #Open the database.
     db = newDB("./data/test")
 

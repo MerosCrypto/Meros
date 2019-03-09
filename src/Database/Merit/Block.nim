@@ -7,11 +7,11 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#BlockHeader and Block objects.
-import objects/BlockHeaderObj
+#BlockHeader lib and Block object.
+import BlockHeader
 import objects/BlockObj
 #Export the BlockHeader and Block objects.
-export BlockHeaderObj
+export BlockHeader
 export BlockObj
 
 #Serialization lib.

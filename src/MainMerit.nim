@@ -2,7 +2,10 @@ include MainVerifications
 
 proc mainMerit() {.raises: [
     ValueError,
-    ArgonError
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
 ].} =
     {.gcsafe.}:
         #Create the Merit.
@@ -20,7 +23,7 @@ proc mainMerit() {.raises: [
 
         #Handle requests for the current Difficulty.
         functions.merit.getDifficulty = proc (): BN {.raises: [].} =
-            merit.blockchain.difficulties[^1].difficulty
+            merit.blockchain.difficulty.difficulty
 
         #Handle requests for a Block.
         functions.merit.getBlock = proc (nonce: uint): Block {.raises: [

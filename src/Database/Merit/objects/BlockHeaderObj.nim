@@ -27,7 +27,7 @@ finalsd:
     type BlockHeader* = ref object of RootObj
         #Block Hash.
         hash*: ArgonHash
-        
+
         #Nonce.
         nonce* {.final.}: uint
         #Argon hash of the last block.
@@ -76,7 +76,7 @@ proc `miners=`*(
 ) {.raises: [ValueError].} =
     header.setMiners(miners)
 
-#Constructors.
+#Constructor.
 proc newBlockHeaderObj*(
     nonce: uint,
     last: ArgonHash,
@@ -93,5 +93,6 @@ proc newBlockHeaderObj*(
         time: time,
         proof: proof
     )
+
     result.ffinalizeNonce()
     result.ffinalizeLast()

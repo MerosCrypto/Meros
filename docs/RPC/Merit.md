@@ -5,7 +5,7 @@
 - `height` (int)
 
 ### `getDifficulty`
-`getDifficulty` will fetch and return the Block's difficulty. It takes in zero arguments and returns:
+`getDifficulty` will fetch and return the current difficulty. It takes in zero arguments and returns:
 - `difficulty` (string)
 
 ### `getBlock`

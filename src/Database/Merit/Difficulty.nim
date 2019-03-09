@@ -43,7 +43,7 @@ func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
 proc calculateNextDifficulty*(
     blockchain: Blockchain,
     blocksPerPeriod: uint
-): Difficulty {.raises: [
+) {.raises: [
     ValueError,
     ArgonError,
     BLSError,
@@ -52,11 +52,11 @@ proc calculateNextDifficulty*(
 ].} =
     #If it was the genesis block, keep the same difficulty.
     if blockchain.height == 1:
-        return blockchain.difficulties[0]
+        blockchain.difficulty = blockchain.startDifficulty
 
     var
         #Last difficulty.
-        last: Difficulty = blockchain.difficulties[^1]
+        last: Difficulty = blockchain.difficulty
         #New difficulty.
         difficulty: BN = last.difficulty
         #Target time.
@@ -108,11 +108,11 @@ proc calculateNextDifficulty*(
         difficulty = last.difficulty - change
 
     #If the difficulty is lower than the starting difficulty, use that.
-    if difficulty < blockchain.difficulties[0].difficulty:
-        difficulty = blockchain.difficulties[0].difficulty
+    if difficulty < blockchain.startDifficulty.difficulty:
+        difficulty = blockchain.startDifficulty.difficulty
 
     #Create the new difficulty.
-    result = newDifficultyObj(
+    blockchain.difficulty = newDifficultyObj(
         last.endBlock,
         last.endBlock + blocksPerPeriod,
         difficulty

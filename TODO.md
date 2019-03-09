@@ -5,9 +5,8 @@ Filesystem:
 - Store the last 6 blocks of Verifications in RAM, not just the last block.
 - Load unarchived verifications.
 
-- Load Headers/Blocks from the DB on boot.
-
-- Regenerate the Difficulties on boot.
+- Save the current difficulty.
+- Load the current difficulty on boot.
 
 - Save the State to the Database.
 - Load the State from the Database.
@@ -31,6 +30,10 @@ Lattice:
 - Have work precalculable for 100 `Send`'s/`Data`'s in advance.
 - Difficulty voting.
 - Lock boxes.
+
+Wallet:
+- Mnemonic file to convert a Mnemonic to seed, and vice versa.
+- HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 
 Network:
 - Prevent the same client from connecting multiple times.
@@ -113,7 +116,7 @@ Other:
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
-- Replace every Error with Enums. Every function should return an Option-Esque with EITHER Enum or Value and have a blank raises pragma.
+- Clean up Exceptions, whether it be with Option-esque Enum code or something else.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.

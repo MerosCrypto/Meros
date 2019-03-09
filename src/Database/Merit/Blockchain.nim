@@ -36,7 +36,7 @@ proc newBlockchain*(
     blockTime: uint,
     startDifficulty: BN,
     db: DatabaseFunctionBox
-): Blockchain {.raises: [ValueError, ArgonError].} =
+): Blockchain {.raises: [].} =
     newBlockchainObj(
         genesis,
         blockTime,
@@ -109,11 +109,11 @@ proc processBlock*(
         blocksPerPeriod = 144
 
     #If the difficulty needs to be updated...
-    if blockchain.difficulties[^1].endBlock <= newBlock.header.nonce:
-        blockchain.add(calculateNextDifficulty(blockchain, blocksPerPeriod))
+    if blockchain.difficulty.endBlock <= newBlock.header.nonce:
+        blockchain.calculateNextDifficulty(blocksPerPeriod)
 
     #If the difficulty wasn't beat...
-    if not blockchain.difficulties[^1].verifyDifficulty(newBlock):
+    if not blockchain.difficulty.verifyDifficulty(newBlock):
         return false
 
     #Add the Block.

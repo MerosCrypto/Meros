@@ -10,8 +10,10 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Block Header, VerifierIndex, and Miners objects.
-import BlockHeaderObj
+#Block Header lib.
+import ../BlockHeader
+
+#VerifierIndex and Miners objects.
 import VerifierIndexObj
 import MinersObj
 
@@ -64,7 +66,7 @@ proc newBlockObj*(
 
     #Create the Block.
     result = Block(
-        header: newBlockheaderObj(
+        header: newBlockheader(
             nonce,
             last,
             aggregate,
@@ -75,6 +77,3 @@ proc newBlockObj*(
         verifications: indexes,
         miners: miners
     )
-
-    #Set the Header hash.
-    result.header.hash = Argon(result.header.serialize(), result.header.proof.toBinary())

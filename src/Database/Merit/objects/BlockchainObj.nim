@@ -21,7 +21,8 @@ import DifficultyObj
 import BlockHeaderObj
 import BlockObj
 
-#Parse Block lib.
+#Serialize libs.
+import ../../../Network/Serialize/Merit/SerializeBlock
 import ../../../Network/Serialize/Merit/ParseBlock
 
 #Finals lib.
@@ -38,6 +39,8 @@ finalsd:
 
         #Block time (part of the chain params).
         blockTime* {.final.}: uint
+        #Starting Difficulty (part of the chain params).
+        startDifficulty* {.final.}: Difficulty
 
         #Height.
         height*: uint
@@ -46,8 +49,8 @@ finalsd:
         #seq of all the Blocks in RAM.
         blocks: seq[Block]
 
-        #seq of all the Difficulties.
-        difficulties*: seq[Difficulty]
+        #Current Difficulty.
+        difficulty*: Difficulty
 
 #Create a Blockchain object.
 proc newBlockchainObj*(
@@ -55,50 +58,56 @@ proc newBlockchainObj*(
     blockTime: uint,
     startDifficulty: BN,
     db: DatabaseFunctionBox
-): Blockchain {.raises: [ValueError, ArgonError].} =
+): Blockchain {.raises: [].} =
+    var startDifficulty = newDifficultyObj(
+        0,
+        1,
+        startDifficulty
+    )
+
     result = Blockchain(
         db: db,
 
         blockTime: blockTime,
+        startDifficulty: startDifficulty,
 
         height: 1,
-        headers: @[],
-        blocks: @[
-            newBlockObj(
-                0,
-                genesis.pad(64).toArgonHash(),
-                nil,
-                @[],
-                @[],
-                0,
-                0
-            )
-        ],
+        blocks: @[],
 
-        difficulties: @[
-            newDifficultyObj(
-                0,
-                1,
-                startDifficulty
-            )
-        ]
+        difficulty: startDifficulty
     )
     result.ffinalizeBlockTime()
+    result.ffinalizeStartDifficulty()
+
+#Sets the amount of Headers we're loading.
+func setHeight*(blockchain: Blockchain, height: uint) {.raises: [ValueError].} =
+    if height != 1:
+        raise newException(ValueError, "Blocks have already been added to this chain.")
+
+    blockchain.height = height
+    blockchain.headers = newSeq[BlockHeader](blockchain.height)
+
+#Adds a Header loaded from the DB.
+func load*(blockchain: Blockchain, header: BlockHeader) {.raises: [].} =
+    blockchain.headers[int(header.nonce)] = header
+
+#Adds a Block loaded from the DB.
+func load*(blockchain: Blockchain, loadBlock: Block) {.raises: [].} =
+    blockchain.blocks.add(loadBlock)
 
 #Adds a block.
-func add*(blockchain: Blockchain, newBlock: Block) {.raises: [].} =
+proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [LMDBError].} =
     inc(blockchain.height)
     blockchain.headers.add(newBlock.header)
     blockchain.blocks.add(newBlock)
 
-    #Override for our tests.
-    if not blockchain.db.isNil:
-        if blockchain.blocks.len > 12:
-            blockchain.blocks.delete(0)
+    #Delete the block we're no longer caching.
+    if blockchain.blocks.len > 12:
+        blockchain.blocks.delete(0)
 
-#Adds a Difficulty.
-func add*(blockchain: Blockchain, difficulty: Difficulty) {.raises: [].} =
-    blockchain.difficulties.add(difficulty)
+    #Save the block to the database.
+    blockchain.db.put("merit_" & newBlock.header.hash.toString(), newBlock.serialize())
+    blockchain.db.put("merit_tip", newBlock.header.hash.toString())
 
 #Block getter.
 proc `[]`*(blockchain: Blockchain, index: uint): Block {.raises: [
@@ -108,10 +117,6 @@ proc `[]`*(blockchain: Blockchain, index: uint): Block {.raises: [
     LMDBError,
     FinalAttributeError
 ].} =
-    #Override for our tests.
-    if blockchain.db.isNil:
-        return blockchain.blocks[int(index)]
-
     if index >= blockchain.height:
         raise newException(ValueError, "Blockchain doesn't have enough blocks for that index.")
 
