@@ -35,16 +35,16 @@ import finals
 
 #Create a new Blockchain.
 proc newBlockchain*(
+    db: DatabaseFunctionBox,
     genesis: string,
     blockTime: uint,
-    startDifficulty: BN,
-    db: DatabaseFunctionBox
+    startDifficulty: BN
 ): Blockchain {.raises: [].} =
     newBlockchainObj(
+        db,
         genesis,
         blockTime,
-        startDifficulty,
-        db
+        startDifficulty
     )
 
 #Adds a block to the blockchain.

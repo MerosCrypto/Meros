@@ -10,11 +10,11 @@ proc mainMerit() {.raises: [
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(
+            functions.database,
             GENESIS,
             BLOCK_TIME,
             BLOCK_DIFFICULTY,
-            LIVE_MERIT,
-            functions.database
+            LIVE_MERIT
         )
 
         #Handle requests for the current height.

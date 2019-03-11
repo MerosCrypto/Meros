@@ -59,11 +59,11 @@ type Merit* = ref object of RootObj
 
 #Constructor.
 proc newMerit*(
+    db: DatabaseFunctionBox,
     genesis: string,
     blockTime: uint,
     startDifficulty: string,
-    live: uint,
-    db: DatabaseFunctionBox
+    live: uint
 ): Merit {.raises: [
     ValueError,
     ArgonError,
@@ -74,13 +74,13 @@ proc newMerit*(
     #Create the Merit object.
     result = Merit(
         blockchain: newBlockchain(
+            db,
             genesis,
             blockTime,
-            startDifficulty.toBN(16),
-            db
+            startDifficulty.toBN(16)
         ),
 
-        state: newState(live),
+        state: newState(db, live),
 
         epochs: newEpochs()
     )

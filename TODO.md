@@ -6,7 +6,6 @@ Filesystem:
 - Load unarchived verifications.
 
 - Save the State to the Database.
-- Load the State from the Database.
 
 - Regenerate the Epochs on boot.
 

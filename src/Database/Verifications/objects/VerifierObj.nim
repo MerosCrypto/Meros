@@ -47,7 +47,10 @@ finalsd:
         merkle*: Merkle
 
 #Constructor.
-proc newVerifierObj*(key: string, db: DatabaseFunctionBox): Verifier {.raises: [LMDBError].} =
+proc newVerifierObj*(
+    db: DatabaseFunctionBox,
+    key: string
+): Verifier {.raises: [LMDBError].} =
     result = Verifier(
         db: db,
 

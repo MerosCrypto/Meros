@@ -65,7 +65,7 @@ proc newVerificationsObj*(db: DatabaseFunctionBox): Verifications {.raises: [].}
             result.verifiersSeq[i div 48] = verifier
 
             #Load the Verifier.
-            result.verifiers[verifier] = newVerifierObj(verifier, result.db)
+            result.verifiers[verifier] = newVerifierObj(result.db, verifier)
     #If it doesn't, set the Verifiers' string to "",
     except:
         result.verifiersStr = ""
@@ -81,7 +81,7 @@ proc add(
         return
 
     #Create a new Verifier.
-    verifs.verifiers[verifier] = newVerifierObj(verifier, verifs.db)
+    verifs.verifiers[verifier] = newVerifierObj(verifs.db, verifier)
 
     #Check if this Verifier is already in the DB.
     if not verifs.verifiersSeq.contains(verifier):

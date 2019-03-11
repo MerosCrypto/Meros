@@ -54,10 +54,10 @@ finalsd:
 
 #Create a Blockchain object.
 proc newBlockchainObj*(
+    db: DatabaseFunctionBox,
     genesis: string,
     blockTime: uint,
-    startDifficultyArg: BN,
-    db: DatabaseFunctionBox
+    startDifficultyArg: BN
 ): Blockchain {.raises: [].} =
     var startDifficulty: Difficulty = newDifficultyObj(
         0,
