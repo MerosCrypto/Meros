@@ -16,8 +16,8 @@ import ../Verifications/Verifications
 #VerifierIndex object.
 import objects/VerifierIndexObj
 
-#State lib.
-import State
+#State object.
+import objects/StateObj
 
 #Epoch objects.
 import objects/EpochsObj
@@ -65,7 +65,7 @@ proc calculate*(
             result.add(
                 newReward(
                     person.toString(),
-                    state.getBalance(person)
+                    state[person]
                 )
             )
             #Add the Merit to the total.

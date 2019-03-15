@@ -5,8 +5,6 @@ Filesystem:
 - Store the last 6 blocks of Verifications in RAM, not just the last block.
 - Load unarchived verifications.
 
-- Save the State to the Database.
-
 - Regenerate the Epochs on boot.
 
 - DB - Entries.
@@ -105,7 +103,6 @@ Other:
 - Network page on the GUI.
 
 ### Improvements:
-- Clean up the `ptr AggregationInfo` mess we have now.
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
 - Remove `EventError`.

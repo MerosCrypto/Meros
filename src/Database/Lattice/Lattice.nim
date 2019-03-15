@@ -167,7 +167,7 @@ proc verify*(
     verif: Verification,
 ): bool {.raises: [KeyError, ValueError].} =
     #Make sure the verifier has weight.
-    if merit.state.getBalance(verif.verifier) == uint(0):
+    if merit.state[verif.verifier] == uint(0):
         return false
 
     #Turn the hash into a string.
@@ -194,7 +194,7 @@ proc verify*(
     #Calculate the weight.
     var weight: uint = 0
     for i in lattice.verifications[hash]:
-        weight += merit.state.getBalance(i)
+        weight += merit.state[i]
     #If the Entry has at least 50.1% of the weight...
     if weight > ((merit.state.live div uint(2)) + 1):
         #Get the Index/Entry.

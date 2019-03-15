@@ -6,7 +6,7 @@ proc verify(entry: Entry) {.async.} =
     await sleepAsync(100)
 
     #Make sure we're a Miner with Merit.
-    if (not config.miner.isNil) and (merit.state.getBalance(config.miner.publicKey) > uint(0)):
+    if (not config.miner.isNil) and (merit.state[config.miner.publicKey] > uint(0)):
         #Make sure we didn't already Verify an Entry at this position.
         if lattice.accounts[entry.sender].entries[int(entry.nonce)].len != 1:
             return
