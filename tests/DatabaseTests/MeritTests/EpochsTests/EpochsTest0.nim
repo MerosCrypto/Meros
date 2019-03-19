@@ -3,8 +3,18 @@
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 
+#Database Function Box.
+import ../../../../src/objects/GlobalFunctionBoxObj
+
+#Epoch Test Common lib.
+import EpochsTestCommon
+
 var
-    epochs: Epochs = newEpochs()
+    #Database Function Box.
+    functions: DatabaseFunctionBox = newTestDatabase()
+    #Epochs.
+    epochs: Epochs = newEpochs(functions)
+    #Rewards.
     rewards: Rewards = epochs.shift(
         nil,
         @[]

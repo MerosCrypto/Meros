@@ -13,6 +13,9 @@ import ../../lib/BLS
 #Verifications objects.
 import ../Verifications/Verifications
 
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
+
 #VerifierIndex object.
 import objects/VerifierIndexObj
 
@@ -43,7 +46,7 @@ proc calculate*(
     KeyError
 ].} =
     #If the epoch is empty, do nothing.
-    if epoch.len == 0:
+    if epoch.verifications.len == 0:
         return @[]
 
     var
@@ -53,14 +56,14 @@ proc calculate*(
         total: uint
 
     #Iterate over each Entry.
-    for entry in epoch.keys():
+    for entry in epoch.verifications.keys():
         #Clear the loop variables.
         #We use result as a loop variable because we don't need it till later.
         result = newRewards()
         total = 0
 
         #Iterate over the result who verified an entry.
-        for person in epoch[entry]:
+        for person in epoch.verifications[entry]:
             #Add them to our seq with their Merit.
             result.add(
                 newReward(
@@ -97,7 +100,7 @@ proc calculate*(
         )
 
     #Make sure we're dealing with a maximum of 100 results.
-    if epoch.len > 100:
+    if epoch.verifications.len > 100:
         #Sort them by greatest score.
         result.sort(
             proc (
@@ -132,12 +135,22 @@ proc calculate*(
     for i in 0 ..< result.len:
         result[i].score = result[i].score * 1000 div total
 
-#Shift does three things:
+#This shift is used for regenerating the Epochs on boot.
+proc shift*(
+    epochs: Epochs,
+    tips: TableRef[string, uint],
+    verifs: Verifications,
+    indexes: seq[VerifierIndex]
+) {.raises: [].} =
+    discard
+
+#This shift does four things:
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
+# - Saves the VerifierIndexes in the Epoch to-be-returned to the Database.
 proc shift*(
-    epochs: var Epochs,
+    epochs: Epochs,
     verifs: Verifications,
     indexes: seq[VerifierIndex]
 ): Epoch {.raises: [
@@ -149,7 +162,7 @@ proc shift*(
 ].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
-        newEpoch: Epoch = newEpoch()
+        newEpoch: Epoch = newEpoch(indexes)
         #A loop variable saying if we found the Entry in an older Epoch.
         found: bool
 
@@ -160,23 +173,30 @@ proc shift*(
             found = false
 
             #Iterate over each Epoch to find which has the Entry.
-            for epoch in epochs:
+            for epoch in epochs.epochs:
                 #If this Epoch has it, set found to true, and add it.
-                if epoch.hasKey(verif.hash.toString()):
+                if epoch.verifications.hasKey(verif.hash.toString()):
                     found = true
-                    epoch[verif.hash.toString()].add(verif.verifier)
+                    epoch.verifications[verif.hash.toString()].add(verif.verifier)
                     #Don't waste time by searching the others.
                     break
 
             #If it wasn't found, create a seq for it in the newest Epoch.
             if not found:
-                newEpoch[verif.hash.toString()] = @[
+                newEpoch.verifications[verif.hash.toString()] = @[
                     verif.verifier
                 ]
 
     #Add the newest Epoch.
-    epochs.add(newEpoch)
+    epochs.epochs.add(newEpoch)
     #Set the result to the oldest.
-    result = epochs[0]
+    result = epochs.epochs[0]
     #Remove the oldest.
-    epochs.delete(0)
+    epochs.epochs.delete(0)
+
+    #When we regenerate the Epochs, we can't just shift the last 6 blocks.
+    #When it adds the Verifications, it'd try loading everything from the archived to the specified tip.
+    #When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
+    #Therefore, we save the tip of every Verifier, as it was before the 6 blocks in the current Epochs.
+    for index in result.indexes:
+        epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())

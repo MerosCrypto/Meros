@@ -1,6 +1,12 @@
 #BLS lib.
 import ../../../lib/BLS
 
+#DB Function Box object.
+import ../../../objects/GlobalFunctionBoxObj
+
+#VerifierIndex object.
+import VerifierIndexObj
+
 #Tables standard lib.
 import tables
 
@@ -16,10 +22,16 @@ finalsd:
         #Seq of Rewards.
         Rewards* = seq[Reward]
 
-        #Epoch. Entry Hash -> Public Keys.
-        Epoch* = TableRef[string, seq[BLSPublicKey]]
-        #Seq of 6 epochs.
-        Epochs* = seq[Epoch]
+        #Epoch object.
+        Epoch* = ref object of RootObj
+            #Entry Hash -> Public Keys
+            verifications*: TableRef[string, seq[BLSPublicKey]]
+            #List of Verifiers and what tip was used for this Epoch.
+            indexes*: seq[VerifierIndex]
+        #Seq of epochs.
+        Epochs* = ref object of RootObj
+            db*: DatabaseFunctionBox
+            epochs*: seq[Epoch]
 
 #Constructors.
 proc newReward*(key: string, score: uint): Reward {.raises: [].} =
@@ -32,13 +44,19 @@ proc newReward*(key: string, score: uint): Reward {.raises: [].} =
 proc newRewards*(): Rewards {.raises: [].} =
     newSeq[Reward]()
 
-proc newEpoch*(): Epoch {.raises: [].} =
-    newTable[string, seq[BLSPublicKey]]()
+proc newEpoch*(indexes: seq[VerifierIndex]): Epoch {.raises: [].} =
+    Epoch(
+        verifications: newTable[string, seq[BLSPublicKey]](),
+        indexes: indexes
+    )
 
-proc newEpochs*(): Epochs {.raises: [].} =
+proc newEpochs*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
     #Create the seq.
-    result = newSeq[Epoch](6)
+    result = Epochs(
+        db: db,
+        epochs: newSeq[Epoch](6)
+    )
 
     #Place blank epochs in.
     for i in 0 ..< 6:
-        result[i] = newEpoch()
+        result.epochs[i] = newEpoch(@[])

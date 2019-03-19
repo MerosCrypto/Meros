@@ -44,7 +44,7 @@ var
     #State.
     state: State = newState(functions, 100)
     #Epochs.
-    epochs: Epochs = newEpochs()
+    epochs: Epochs = newEpochs(functions)
     #VerifierIndexes.
     verifs: seq[VerifierIndex] = @[]
 

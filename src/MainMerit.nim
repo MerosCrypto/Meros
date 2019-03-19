@@ -11,6 +11,7 @@ proc mainMerit() {.raises: [
         #Create the Merit.
         merit = newMerit(
             functions.database,
+            verifications,
             GENESIS,
             BLOCK_TIME,
             BLOCK_DIFFICULTY,

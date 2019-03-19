@@ -48,6 +48,9 @@ import ../../Network/Serialize/Merit/ParseBlock
 import ../../Network/Serialize/Merit/SerializeDifficulty
 import ../../Network/Serialize/Merit/ParseDifficulty
 
+#Tables standard lib.
+import tables
+
 #Finals lib.
 import finals
 
@@ -60,6 +63,7 @@ type Merit* = ref object of RootObj
 #Constructor.
 proc newMerit*(
     db: DatabaseFunctionBox,
+    verifications: Verifications,
     genesis: string,
     blockTime: uint,
     startDifficulty: string,
@@ -82,7 +86,7 @@ proc newMerit*(
 
         state: newState(db, live),
 
-        epochs: newEpochs()
+        epochs: newEpochs(db)
     )
 
     #Grab the tip.
@@ -135,9 +139,28 @@ proc newMerit*(
     #Load the Difficulty.
     result.blockchain.load(parseDifficulty(db.get("merit_difficulty")))
 
-    #Regenerate the State.
-
     #Regenerate the Epochs.
+    #Load every tip outside of the epochs from the DB.
+    var tips: TableRef[string, uint] = newTable[string, uint]()
+    #Use the Holders string from the State.
+    if result.state.holdersStr != "":
+        for i in countup(0, result.state.holdersStr.len, 48):
+            #Extract the holder.
+            var holder = result.state.holdersStr[i .. i + 47]
+
+            #Load their tip.
+            try:
+                tips[holder] = uint(db.get("merit_" & holder & "_epoch").fromBinary())
+            except:
+                #If this failed, it's because they have Merit but don't have Verifications older than 6 blocks.
+                discard
+
+    for i in 1 .. 6:
+        result.epochs.shift(
+            tips,
+            verifications,
+            result.blockchain[result.blockchain.height - uint(i)].verifications
+        )
 
 #Add a block.
 proc processBlock*(
@@ -161,6 +184,9 @@ proc processBlock*(
     merit.state.processBlock(merit.blockchain, newBlock)
 
     #Have the Epochs process the Block.
-    var epoch: Epoch = merit.epochs.shift(verifications, newBlock.verifications)
+    var epoch: Epoch = merit.epochs.shift(
+        verifications,
+        newBlock.verifications
+    )
     #Calculate the rewards.
     result = epoch.calculate(merit.state)

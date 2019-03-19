@@ -24,7 +24,7 @@ finalsd:
         #Seq of every holder.
         holdersSeq: seq[string]
         #String of every holder.
-        holdersStr: string
+        holdersStr*: string
 
         #Blocks until Merit is dead.
         deadBlocks* {.final.}: uint
@@ -37,7 +37,7 @@ finalsd:
 proc newState*(
     db: DatabaseFunctionBox,
     deadBlocks: uint
-): State {.raises: [LMDBError].} =
+): State {.raises: [].} =
     result = State(
         db: db,
         deadBlocks: deadBlocks,
