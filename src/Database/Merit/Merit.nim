@@ -140,8 +140,14 @@ proc newMerit*(
     result.blockchain.load(parseDifficulty(db.get("merit_difficulty")))
 
     #Regenerate the Epochs.
-    #Load every tip outside of the epochs from the DB.
-    var tips: TableRef[string, uint] = newTable[string, uint]()
+
+    var
+        #Table of every archived tip before the current Epochs.
+        tips: TableRef[string, uint] = newTable[string, uint]()
+        #Table of every archived tip before the 6 Epochs before the current Epochs.
+        prevtips: TableRef[string, uint] = newTable[string, uint]()
+        #Table of every Entry mentioned in the 6 Epochs before the Epochs we're mentioning.
+        ignore: TableRef[string, bool] = newTable[string, bool]()
     #Use the Holders string from the State.
     if result.state.holdersStr != "":
         for i in countup(0, result.state.holdersStr.len, 48):
@@ -153,13 +159,25 @@ proc newMerit*(
                 tips[holder] = uint(db.get("merit_" & holder & "_epoch").fromBinary())
             except:
                 #If this failed, it's because they have Merit but don't have Verifications older than 6 blocks.
-                discard
+                continue
+
+            #Load their previous tip.
+            try:
+                prevtips[holder] = uint(db.get("merit_" & holder & "_previous_epoch").fromBinary())
+            except:
+                #If this failed, it's because they have Merit but don't have Verifications older then 12 blocks.
+                continue
+
+            #Grab every hash that's mentioned in the six blocks before the six Epochs we regenerate.
+            for i in prevtips[holder] .. tips[holder]:
+                ignore[verifications[holder][i].hash.toString()] = true
 
     for i in 1 .. 6:
         result.epochs.shift(
-            tips,
             verifications,
-            result.blockchain[result.blockchain.height - uint(i)].verifications
+            result.blockchain[result.blockchain.height - uint(i)].verifications,
+            tips,
+            ignore
         )
 
 #Add a block.

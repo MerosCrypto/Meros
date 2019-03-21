@@ -138,11 +138,45 @@ proc calculate*(
 #This shift is used for regenerating the Epochs on boot.
 proc shift*(
     epochs: Epochs,
-    tips: TableRef[string, uint],
     verifs: Verifications,
-    indexes: seq[VerifierIndex]
-) {.raises: [].} =
-    discard
+    indexes: seq[VerifierIndex],
+    tips: TableRef[string, uint],
+    ignore: TableRef[string, bool]
+) {.raises: [
+    KeyError,
+    ValueError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
+    var
+        newEpoch: Epoch = newEpoch(indexes)
+        found: bool
+
+    for index in indexes:
+        for verif in verifs[index.key][tips[index.key], index.nonce]:
+            found = false
+
+            for epoch in epochs.epochs:
+                #If we're supposed to ignore this hash, because it's in an Epoch before the ones we're regenerating, break.
+                if ignore[verif.hash.toString()]:
+                    break
+
+                if epoch.verifications.hasKey(verif.hash.toString()):
+                    found = true
+                    epoch.verifications[verif.hash.toString()].add(verif.verifier)
+                    break
+
+            if not found:
+                newEpoch.verifications[verif.hash.toString()] = @[
+                    verif.verifier
+                ]
+
+        #Update the tip,
+        tips[index.key] = index.nonce
+
+    epochs.epochs.add(newEpoch)
+    epochs.epochs.delete(0)
 
 #This shift does four things:
 # - Adds the newest set of Verifications.
@@ -198,5 +232,17 @@ proc shift*(
     #When it adds the Verifications, it'd try loading everything from the archived to the specified tip.
     #When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
     #Therefore, we save the tip of every Verifier, as it was before the 6 blocks in the current Epochs.
+
+    #We also need to know which Entries were mentioned in the Epochs before the Epochs we regenerate.
+    #This is so we don't assign Entries to current Epochs when they were assigned to previous Epoch.
+    #Therefore, we need to set the current merit_holder_epoch to merit_previous_epoch, if one exists.
+    #This must be done first as else we'd overwrite it.
     for index in result.indexes:
+        try:
+            epochs.db.put("merit_" & index.key & "_previous_epoch", epochs.db.get("merit_" & index.key & "_epoch"))
+        except:
+            #They didn't already have a merit_holder_epoch.
+            discard
+
+        #Now, save the tip.
         epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())

@@ -8,7 +8,6 @@ Filesystem:
 
 - Add a getter for the holdersStr to State (and remove public access).
 - Remove public access from every field in Epochs and add functions in EpochsObj as a replacement.
-- Fill out Epochs.shift(TableRef[string, uint], Verifications, seq[VerifierIndex]).
 
 - DB - Entries.
 
