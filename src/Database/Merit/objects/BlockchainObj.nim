@@ -61,7 +61,7 @@ proc newBlockchainObj*(
 ): Blockchain {.raises: [].} =
     var startDifficulty: Difficulty = newDifficultyObj(
         0,
-        1,
+        2,
         startDifficultyArg
     )
 
