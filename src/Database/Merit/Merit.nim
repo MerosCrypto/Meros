@@ -140,13 +140,8 @@ proc newMerit*(
     result.blockchain.load(parseDifficulty(db.get("merit_difficulty")))
 
     #Regenerate the Epochs.
-    var
-        #Table of every archived tip before the current Epochs.
-        tips: TableRef[string, uint] = newTable[string, uint]()
-        #Table of every archived tip before the 6 Epochs before the current Epochs.
-        prevtips: TableRef[string, uint] = newTable[string, uint]()
-        #Table of every Entry mentioned in the 6 Epochs before the Epochs we're mentioning.
-        ignore: TableRef[string, bool] = newTable[string, bool]()
+    #Table of every archived tip before the current Epochs.
+    var tips: TableRef[string, int] = newTable[string, int]()
     #Use the Holders string from the State.
     if result.state.holdersStr != "":
         for i in countup(0, result.state.holdersStr.len, 48):
@@ -155,32 +150,23 @@ proc newMerit*(
 
             #Load their tip.
             try:
-                tips[holder] = uint(db.get("merit_" & holder & "_epoch").fromBinary())
+                tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
             except:
                 #If this failed, it's because they have Merit but don't have Verifications older than 6 blocks.
                 continue
 
-            #Load their previous tip.
-            try:
-                prevtips[holder] = uint(db.get("merit_" & holder & "_previous_epoch").fromBinary())
-            except:
-                #If this failed, it's because they have Merit but don't have Verifications older then 12 blocks.
-                continue
-
-            #Grab every hash that's mentioned in the six blocks before the six Epochs we regenerate.
-            for i in prevtips[holder] .. tips[holder]:
-                ignore[verifications[holder][i].hash.toString()] = true
-
-    var start: int = 6
-    if result.blockchain.height < 6:
+    #Shift the last 12 blocks. Why?
+    #We want to regenerate the Epochs for the last 6, but we need to regenerate the 6 before that so late verifications aren't labelled as first appearances.
+    var start: int = 12
+    #If the blockchain is smaller than 12, load every block.
+    if result.blockchain.height < 12:
         start = int(result.blockchain.height)
 
     for i in countdown(start, 1):
-        result.epochs.shift(
+        discard result.epochs.shift(
             verifications,
             result.blockchain[result.blockchain.height - uint(i)].verifications,
-            tips,
-            ignore
+            tips
         )
 
 #Add a block.

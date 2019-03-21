@@ -47,7 +47,7 @@ proc calculate*(
     FinalAttributeError
 ].} =
     #If the epoch is empty, do nothing.
-    if epoch.verifications.len == 0:
+    if epoch.len == 0:
         return @[]
 
     var
@@ -57,14 +57,14 @@ proc calculate*(
         total: uint
 
     #Iterate over each Entry.
-    for entry in epoch.verifications.keys():
+    for entry in epoch.keys():
         #Clear the loop variables.
         #We use result as a loop variable because we don't need it till later.
         result = newRewards()
         total = 0
 
         #Iterate over the result who verified an entry.
-        for person in epoch.verifications[entry]:
+        for person in epoch[entry]:
             #Add them to our seq with their Merit.
             result.add(
                 newReward(
@@ -101,7 +101,7 @@ proc calculate*(
         )
 
     #Make sure we're dealing with a maximum of 100 results.
-    if epoch.verifications.len > 100:
+    if epoch.len > 100:
         #Sort them by greatest score.
         result.sort(
             proc (
@@ -136,58 +136,17 @@ proc calculate*(
     for i in 0 ..< result.len:
         result[i].score = result[i].score * 1000 div total
 
-#This shift is used for regenerating the Epochs on boot.
-proc shift*(
-    epochs: Epochs,
-    verifs: Verifications,
-    indexes: seq[VerifierIndex],
-    tips: TableRef[string, uint],
-    ignore: TableRef[string, bool]
-) {.raises: [
-    KeyError,
-    ValueError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
-].} =
-    var
-        #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
-        newEpoch: Epoch = newEpoch(indexes)
-        #Loop variable saying if we found the Entry in an older Epoch.
-        found: bool
-
-    #Loop over each Verification.
-    for index in indexes:
-        for verif in verifs[index.key][verifs[index.key].archived .. int(index.nonce)]:
-            #Set found to false.
-            found = false
-
-            #If we're supposed to ignore this hash, because it's in an Epoch before the ones we're regenerating, break.
-            if ignore[verif.hash.toString()]:
-                found = true
-
-            #Try adding this hash to an existing Epoch.
-            if epochs.add(verif.hash.toString(), verif.verifier):
-                found = true
-
-            #If we're not supposed to ignore this hash and it wasn't in an existing Epoch, add it to the new Epoch.
-            if not found:
-                newEpoch.add(verif.hash.toString(), verif.verifier)
-
-        #Update the tip,
-        tips[index.key] = index.nonce
-
-    discard epochs.shift(newEpoch, false)
-
 #This shift does four things:
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
 # - Saves the VerifierIndexes in the Epoch to-be-returned to the Database.
+#If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
 proc shift*(
     epochs: Epochs,
     verifs: Verifications,
-    indexes: seq[VerifierIndex]
+    indexes: seq[VerifierIndex],
+    tips: TableRef[string, int] = nil
 ): Epoch {.raises: [
     KeyError,
     ValueError,
@@ -200,10 +159,20 @@ proc shift*(
         newEpoch: Epoch = newEpoch(indexes)
         #Loop variable saying if we found the Entry in an older Epoch.
         found: bool
+        #Loop variable of what verification to start with.
+        start: int
 
     #Loop over each Verification.
     for index in indexes:
-        for verif in verifs[index.key][verifs[index.key].archived .. int(index.nonce)]:
+        #If we were passed tips, use those for the starting point.
+        if not tips.isNil:
+            start = tips[index.key]
+        #Else, use the verifier's archived.
+        else:
+            start = verifs[index.key].archived
+
+        #Iterate over every Verification.
+        for verif in verifs[index.key][start .. int(index.nonce)]:
             #Set found to false.
             found = false
 
@@ -215,5 +184,9 @@ proc shift*(
             if not found:
                 newEpoch.add(verif.hash.toString(), verif.verifier)
 
+        #If we were passed a set of tips, update them.
+        if not tips.isNil:
+            tips[index.key] = int(index.nonce)
+
     #Return the popped Epoch.
-    result = epochs.shift(newEpoch)
+    result = epochs.shift(newEpoch, indexes, tips.isNil)

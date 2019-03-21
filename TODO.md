@@ -5,6 +5,8 @@ Filesystem:
 - Store the last 6 blocks of Verifications in RAM, not just the last block.
 - Load unarchived verifications.
 
+- Remove holders who lost all their Merit from `merit_holders`.
+
 - DB - Entries.
 
 Verifications:

@@ -30,16 +30,16 @@ finalsd:
         #Seq of Rewards.
         Rewards* = seq[Reward]
 
-        #Epoch object.
-        Epoch* = ref object of RootObj
-            #Entry Hash -> Public Keys
-            verifications*: TableRef[string, seq[BLSPublicKey]]
-            #List of Verifiers and what tip was used for this Epoch.
-            indexes: seq[VerifierIndex]
-        #Seq of epochs.
+        #Epoch object. Entry Hash -> Public Keys
+        Epoch* = TableRef[string, seq[BLSPublicKey]]
+        #Epochs object.
         Epochs* = ref object of RootObj
+            #Database.
             db: DatabaseFunctionBox
+            #Seq of the current 6 Epochs.
             epochs: seq[Epoch]
+            #The last 12 Epochs of indexes.
+            indexes: seq[seq[VerifierIndex]]
 
 #Constructors.
 proc newReward*(key: string, score: uint): Reward {.raises: [].} =
@@ -53,21 +53,23 @@ proc newRewards*(): Rewards {.raises: [].} =
     newSeq[Reward]()
 
 proc newEpoch*(indexes: seq[VerifierIndex]): Epoch {.raises: [].} =
-    Epoch(
-        verifications: newTable[string, seq[BLSPublicKey]](),
-        indexes: indexes
-    )
+    newTable[string, seq[BLSPublicKey]]()
 
 proc newEpochs*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
     #Create the seq.
     result = Epochs(
         db: db,
-        epochs: newSeq[Epoch](6)
+        epochs: newSeq[Epoch](6),
+        indexes: newSeq[seq[VerifierIndex]](12)
     )
 
     #Place blank epochs in.
     for i in 0 ..< 6:
         result.epochs[i] = newEpoch(@[])
+
+    #Place blank indexes in.
+    for i in 0 ..< 12:
+        result.indexes[i] = @[]
 
 #Add a hash to Epochs. Returns false if this hash isn't already in these Epochs.
 proc add*(epochs: Epochs, hash: string, verifier: BLSPublicKey): bool {.raises: [KeyError].} =
@@ -77,21 +79,21 @@ proc add*(epochs: Epochs, hash: string, verifier: BLSPublicKey): bool {.raises: 
     #Check every Epoch.
     for epoch in epochs.epochs:
         #If we found the hash, add the verifier and return true.
-        if epoch.verifications.hasKey(hash):
-            epoch.verifications[hash].add(verifier)
+        if epoch.hasKey(hash):
+            epoch[hash].add(verifier)
             return true
 
 #Add a hash to an Epoch.
 proc add*(epoch: Epoch, hash: string, verifier: BLSPublicKey) {.raises: [KeyError].} =
     #Create the seq if one doesn't already exist.
-    if not epoch.verifications.hasKey(hash):
-        epoch.verifications[hash] = @[]
+    if not epoch.hasKey(hash):
+        epoch[hash] = @[]
 
     #Add the key.
-    epoch.verifications[hash].add(verifier)
+    epoch[hash].add(verifier)
 
 #Shift an Epoch.
-proc shift*(epochs: Epochs, epoch: Epoch, save: bool = true): Epoch {.raises: [LMDBError].} =
+proc shift*(epochs: Epochs, epoch: Epoch, indexes: seq[VerifierIndex], save: bool): Epoch {.raises: [LMDBError].} =
     #Add the newest Epoch.
     epochs.epochs.add(epoch)
     #Set the result to the oldest.
@@ -99,23 +101,26 @@ proc shift*(epochs: Epochs, epoch: Epoch, save: bool = true): Epoch {.raises: [L
     #Remove the oldest.
     epochs.epochs.delete(0)
 
+    #Add the newest indexes.
+    epochs.indexes.add(indexes)
+    #Grab the oldest.
+    var oldIndexes: seq[VerifierIndex] = epochs.indexes[0]
+    #Remove the oldest.
+    epochs.indexes.delete(0)
+
     #If we should save this to the database...
     if save:
-        #When we regenerate the Epochs, we can't just shift the last 6 blocks.
-        #When it adds the Verifications, it'd try loading everything from the archived to the specified tip.
-        #When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
-        #Therefore, we save the tip of every Verifier, as it was before the 6 blocks in the current Epochs.
+        discard """
+        When we regenerate the Epochs, we can't just shift the last 6 blocks, for two reasons.
 
-        #We also need to know which Entries were mentioned in the Epochs before the Epochs we regenerate.
-        #This is so we don't assign Entries to current Epochs when they were assigned to previous Epoch.
-        #Therefore, we need to set the current merit_holder_epoch to merit_previous_epoch, if one exists.
-        #This must be done first as else we'd overwrite it.
-        for index in result.indexes:
-            try:
-                epochs.db.put("merit_" & index.key & "_previous_epoch", epochs.db.get("merit_" & index.key & "_epoch"))
-            except:
-                #They didn't already have a merit_holder_epoch.
-                discard
+        1) When it adds the Verifications, it'd try loading everything from the archived to the specified index.
+        When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
 
-            #Now, save the tip.
+        2) When it adds the Verifications, it'd assume every appearance is the first appearance.
+        This is because it doesn't have the 6 Epochs before it so when it checks the Epochs, it's iterating over blanks.
+
+        Therefore, we need to save the index that's at least 13 blocks old to merit_HOLDER_epoch (and then load the last 12 blocks).
+        """
+
+        for index in oldIndexes:
             epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())
