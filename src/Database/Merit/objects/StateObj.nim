@@ -24,7 +24,7 @@ finalsd:
         #Seq of every holder.
         holdersSeq: seq[string]
         #String of every holder.
-        holdersStr*: string
+        holdersStr: string
 
         #Blocks until Merit is dead.
         deadBlocks* {.final.}: uint
@@ -92,6 +92,10 @@ proc add(state: State, key: string, save: bool) {.raises: [].} =
         state.holdersStr &= key
 
 #Getters.
+#Provides read only access to the holder string, which is also used to regenerate the Epochs.
+proc `holdersStr`*(state: State): string {.raises: [].} =
+    state.holdersStr
+
 proc `[]`*(state: State, key: string): uint {.raises: [KeyError].} =
     #Add this holder to the State if they don't exist already.
     state.add(key, false)

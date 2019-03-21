@@ -63,7 +63,7 @@ proc mainVerifications() {.raises: [].} =
                 return nil
 
             #Iterate over every unarchived verification, up to and including the nonce.
-            for verif in verifier{start, int(nonce)}:
+            for verif in verifier{start .. int(nonce)}:
                 sigs.add(verif.signature)
 
             #Return the hash.
@@ -99,7 +99,7 @@ proc mainVerifications() {.raises: [].} =
                 nonce = verifications[key].height - 1
 
             #Add the hashes.
-            for verif in verifications[key][start, int(nonce)]:
+            for verif in verifications[key][start .. int(nonce)]:
                 result.add(verif.hash.toString())
 
         #Handle Verifications.

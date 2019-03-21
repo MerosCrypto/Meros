@@ -2,12 +2,8 @@
 
 ### Core:
 Filesystem:
-- Update the Verifier `[]` operators to take a slice.
 - Store the last 6 blocks of Verifications in RAM, not just the last block.
 - Load unarchived verifications.
-
-- Add a getter for the holdersStr to State (and remove public access).
-- Remove public access from every field in Epochs and add functions in EpochsObj as a replacement.
 
 - DB - Entries.
 

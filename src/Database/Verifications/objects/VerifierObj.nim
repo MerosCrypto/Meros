@@ -133,11 +133,19 @@ proc `[]`*(verifier: Verifier, index: int): Verification {.raises: [ValueError, 
 proc `[]`*(verifier: Verifier, index: uint): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
     verifier[int(index)]
 
-proc `[]`*(verifier: Verifier, aArg: int, b: int): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+proc `[]`*(verifier: Verifier, slice: Slice[int] | Slice[uint]): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    #Extract the slice values.
+    var
+        a: int = int(slice.a)
+        b: int = int(slice.b)
+
     #Support the initial verifier.archived value (-1).
-    var a: int = aArg
     if a == -1:
         a = 0
+
+    #Make sure it's a valid slice.
+    if a > b:
+        raise newException(ValueError, "That slice is invalid.")
 
     #Create a seq.
     result = newSeq[Verification](b - a + 1)
@@ -145,12 +153,14 @@ proc `[]`*(verifier: Verifier, aArg: int, b: int): seq[Verification] {.raises: [
     #Grab every Verification.
     for i in a .. b:
         result[int(i - a)] = verifier[i]
-proc `[]`*(verifier: Verifier, a: uint, b: uint): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
-    verifier[int(a), int(b)]
 
-proc `{}`*(verifier: Verifier, aArg: int, b: int): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+proc `{}`*(verifier: Verifier, slice: Slice[int]): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    #Extract the slice values.
+    var
+        a: int = slice.a
+        b: int = slice.b
+
     #Support the initial verifier.archived value (-1).
-    var a: int = aArg
     if a == -1:
         a = 0
 
@@ -159,7 +169,7 @@ proc `{}`*(verifier: Verifier, aArg: int, b: int): seq[MemoryVerification] {.rai
         raise newException(ValueError, "That slice is invalid.")
 
     #Grab the Verifications and cast them.
-    var verifs: seq[Verification] = verifier[a, b]
+    var verifs: seq[Verification] = verifier[a .. b]
     result = newSeq[MemoryVerification](verifs.len)
     for v in 0 ..< verifs.len:
         result[v] = cast[MemoryVerification](verifs[v])

@@ -43,7 +43,8 @@ proc calculate*(
     epoch: Epoch,
     state: State
 ): Rewards {.raises: [
-    KeyError
+    KeyError,
+    FinalAttributeError
 ].} =
     #If the epoch is empty, do nothing.
     if epoch.verifications.len == 0:
@@ -150,33 +151,33 @@ proc shift*(
     FinalAttributeError
 ].} =
     var
+        #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch(indexes)
+        #Loop variable saying if we found the Entry in an older Epoch.
         found: bool
 
+    #Loop over each Verification.
     for index in indexes:
-        for verif in verifs[index.key][tips[index.key], index.nonce]:
+        for verif in verifs[index.key][verifs[index.key].archived .. int(index.nonce)]:
+            #Set found to false.
             found = false
 
-            for epoch in epochs.epochs:
-                #If we're supposed to ignore this hash, because it's in an Epoch before the ones we're regenerating, break.
-                if ignore[verif.hash.toString()]:
-                    break
+            #If we're supposed to ignore this hash, because it's in an Epoch before the ones we're regenerating, break.
+            if ignore[verif.hash.toString()]:
+                found = true
 
-                if epoch.verifications.hasKey(verif.hash.toString()):
-                    found = true
-                    epoch.verifications[verif.hash.toString()].add(verif.verifier)
-                    break
+            #Try adding this hash to an existing Epoch.
+            if epochs.add(verif.hash.toString(), verif.verifier):
+                found = true
 
+            #If we're not supposed to ignore this hash and it wasn't in an existing Epoch, add it to the new Epoch.
             if not found:
-                newEpoch.verifications[verif.hash.toString()] = @[
-                    verif.verifier
-                ]
+                newEpoch.add(verif.hash.toString(), verif.verifier)
 
         #Update the tip,
         tips[index.key] = index.nonce
 
-    epochs.epochs.add(newEpoch)
-    epochs.epochs.delete(0)
+    discard epochs.shift(newEpoch, false)
 
 #This shift does four things:
 # - Adds the newest set of Verifications.
@@ -197,52 +198,22 @@ proc shift*(
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch(indexes)
-        #A loop variable saying if we found the Entry in an older Epoch.
+        #Loop variable saying if we found the Entry in an older Epoch.
         found: bool
 
     #Loop over each Verification.
     for index in indexes:
-        for verif in verifs[index.key][verifs[index.key].archived, int(index.nonce)]:
+        for verif in verifs[index.key][verifs[index.key].archived .. int(index.nonce)]:
             #Set found to false.
             found = false
 
-            #Iterate over each Epoch to find which has the Entry.
-            for epoch in epochs.epochs:
-                #If this Epoch has it, set found to true, and add it.
-                if epoch.verifications.hasKey(verif.hash.toString()):
-                    found = true
-                    epoch.verifications[verif.hash.toString()].add(verif.verifier)
-                    #Don't waste time by searching the others.
-                    break
+            #Try adding this hash to an existing Epoch.
+            if epochs.add(verif.hash.toString(), verif.verifier):
+                found = true
 
-            #If it wasn't found, create a seq for it in the newest Epoch.
+            #If it wasn't in an existing Epoch, add it to the new Epoch.
             if not found:
-                newEpoch.verifications[verif.hash.toString()] = @[
-                    verif.verifier
-                ]
+                newEpoch.add(verif.hash.toString(), verif.verifier)
 
-    #Add the newest Epoch.
-    epochs.epochs.add(newEpoch)
-    #Set the result to the oldest.
-    result = epochs.epochs[0]
-    #Remove the oldest.
-    epochs.epochs.delete(0)
-
-    #When we regenerate the Epochs, we can't just shift the last 6 blocks.
-    #When it adds the Verifications, it'd try loading everything from the archived to the specified tip.
-    #When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
-    #Therefore, we save the tip of every Verifier, as it was before the 6 blocks in the current Epochs.
-
-    #We also need to know which Entries were mentioned in the Epochs before the Epochs we regenerate.
-    #This is so we don't assign Entries to current Epochs when they were assigned to previous Epoch.
-    #Therefore, we need to set the current merit_holder_epoch to merit_previous_epoch, if one exists.
-    #This must be done first as else we'd overwrite it.
-    for index in result.indexes:
-        try:
-            epochs.db.put("merit_" & index.key & "_previous_epoch", epochs.db.get("merit_" & index.key & "_epoch"))
-        except:
-            #They didn't already have a merit_holder_epoch.
-            discard
-
-        #Now, save the tip.
-        epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())
+    #Return the popped Epoch.
+    result = epochs.shift(newEpoch)

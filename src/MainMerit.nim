@@ -92,7 +92,7 @@ proc mainMerit() {.raises: [
                         #Start of this verifier's unarchived verifications.
                         verifierStart: uint = verifications[index.key].verifications[0].nonce
                         #Grab this Verifier's verifications.
-                        verifierVerifs: seq[Verification] = verifications[index.key][verifierStart, index.nonce]
+                        verifierVerifs: seq[Verification] = verifications[index.key][verifierStart .. index.nonce]
                         #Declare an aggregation info seq for this verifier.
                         verifierAgInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](verifierVerifs.len)
                     for v in 0 ..< verifierVerifs.len:
