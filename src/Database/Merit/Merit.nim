@@ -119,8 +119,8 @@ proc newMerit*(
     headers = newSeq[BlockHeader](last.nonce + 1)
 
     while last.nonce != 0:
-        last = parseBlockHeader(db.get("merit_" & last.last.toString()).deserialize(3)[0])
         headers[i] = last
+        last = parseBlockHeader(db.get("merit_" & last.last.toString()).deserialize(3)[0])
         inc(i)
     headers[i] = last
 
@@ -140,7 +140,6 @@ proc newMerit*(
     result.blockchain.load(parseDifficulty(db.get("merit_difficulty")))
 
     #Regenerate the Epochs.
-
     var
         #Table of every archived tip before the current Epochs.
         tips: TableRef[string, uint] = newTable[string, uint]()
@@ -172,7 +171,11 @@ proc newMerit*(
             for i in prevtips[holder] .. tips[holder]:
                 ignore[verifications[holder][i].hash.toString()] = true
 
-    for i in 1 .. 6:
+    var start: int = 6
+    if result.blockchain.height < 6:
+        start = int(result.blockchain.height)
+
+    for i in countdown(start, 1):
         result.epochs.shift(
             verifications,
             result.blockchain[result.blockchain.height - uint(i)].verifications,
