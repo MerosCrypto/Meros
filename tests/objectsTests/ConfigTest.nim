@@ -1,3 +1,3 @@
 #Config Test.
 
-echo "The object/Config test is empty."
+echo "The objects/Config test is empty."

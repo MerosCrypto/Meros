@@ -95,6 +95,7 @@ Other:
 - `network.rebroadcast(address, nonce)` RPC method.
 - Expose more of the Verifications RPC.
 
+- Loading screen.
 - Show the existing wallet on reload of `Main.html`.
 - Claim creation via the GUI.
 - `Account` history viewing via the GUI.
