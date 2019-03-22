@@ -1,13 +1,12 @@
-#Epochs Test 0. Verifies that No Verifications = No Rewards.
+discard """
+Epochs Test 0. Verifies that No Verifications = No Rewards.
+"""
 
-#Merit lib.
-import ../../../../src/Database/Merit/Merit
+#Epochs lib.
+import ../../../../src/Database/Merit/Epochs
 
-#Database Function Box.
-import ../../../../src/objects/GlobalFunctionBoxObj
-
-#Epoch Test Common lib.
-import EpochsTestCommon
+#Merit Testing functions.
+import ../TestMerit
 
 var
     #Database Function Box.

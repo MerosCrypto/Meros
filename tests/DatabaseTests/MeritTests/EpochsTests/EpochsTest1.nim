@@ -1,4 +1,6 @@
-#Epochs Test 1. Verifies that 1 Verification = 1000.
+discard """
+Epochs Test 1. Verifies that 1 Verification = 1000.
+"""
 
 #BN lib.
 import BN
@@ -9,7 +11,7 @@ import ../../../../src/lib/Hash
 #Merkle lib.
 import ../../../../src/lib/Merkle
 
-#BLS and minerWallet libs.
+#BLS and MinerWallet libs.
 import ../../../../src/lib/BLS
 import ../../../../src/Wallet/MinerWallet
 
@@ -19,11 +21,8 @@ import ../../../../src/Database/Verifications/Verifications
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 
-#Database Function Box.
-import ../../../../src/objects/GlobalFunctionBoxObj
-
-#Epoch Test Common lib.
-import EpochsTestCommon
+#Merit Testing functions.
+import ../TestMerit
 
 #String utils standard lib.
 import strutils
@@ -34,32 +33,34 @@ var
     #Verifications.
     verifications: Verifications = newVerifications(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(functions, "epoch test", 1, newBN(0))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_1", 1, newBN(0))
     #State.
     state: State = newState(functions, 100)
     #Epochs.
     epochs: Epochs = newEpochs(functions)
-    #VerifierIndexes.
-    verifs: seq[VerifierIndex] = @[]
 
-    #MinerWallet.
-    miner: MinerWallet = newMinerWallet()
     #Hash.
     hash: Hash[512] = "aa".repeat(64).toHash(512)
+    #MinerWallet.
+    miner: MinerWallet = newMinerWallet()
     #MemoryVerification object.
     verif: MemoryVerification
+    #VerifierIndexes.
+    verifs: seq[VerifierIndex] = @[]
     #Rewards.
     rewards: Rewards
 
 #Give Key 0 Merit.
 state.processBlock(
     blockchain,
-    blankBlock(@[
-        newMinerObj(
-            miner.publicKey,
-            100
-        )
-    ])
+    newTestBlock(
+        miners = @[
+            newMinerObj(
+                miner.publicKey,
+                100
+            )
+        ]
+    )
 )
 
 #Add a Verification.

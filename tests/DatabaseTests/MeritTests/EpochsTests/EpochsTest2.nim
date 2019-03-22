@@ -15,7 +15,7 @@ import ../../../../src/lib/Hash
 #Merkle lib.
 import ../../../../src/lib/Merkle
 
-#BLS and minerWallet libs.
+#BLS and MinerWallet libs.
 import ../../../../src/lib/BLS
 import ../../../../src/Wallet/MinerWallet
 
@@ -25,11 +25,8 @@ import ../../../../src/Database/Verifications/Verifications
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 
-#Database Function Box.
-import ../../../../src/objects/GlobalFunctionBoxObj
-
-#Epoch Test Common lib.
-import EpochsTestCommon
+#Merit Testing functions.
+import ../TestMerit
 
 #String utils standard lib.
 import strutils
@@ -45,35 +42,37 @@ var
     state: State = newState(functions, 100)
     #Epochs.
     epochs: Epochs = newEpochs(functions)
-    #VerifierIndexes.
-    verifs: seq[VerifierIndex] = @[]
 
-    #MinerWallet.
+    #Hash.
+    hash: Hash[512] = "aa".repeat(64).toHash(512)
+    #MinerWallets.
     miners: seq[MinerWallet] = @[
         newMinerWallet(),
         newMinerWallet()
     ]
-    #Hash.
-    hash: Hash[512] = "aa".repeat(64).toHash(512)
     #MemoryVerification object.
     verif: MemoryVerification
+    #VerifierIndexes.
+    verifs: seq[VerifierIndex] = @[]
     #Rewards.
     rewards: Rewards
 
 #Give both Keys Merit.
 state.processBlock(
     blockchain,
-    blankBlock(@[
-        newMinerObj(
-            miners[0].publicKey,
-            50
-        ),
+    newTestBlock(
+        miners = @[
+            newMinerObj(
+                miners[0].publicKey,
+                50
+            ),
 
-        newMinerObj(
-            miners[1].publicKey,
-            50
-        )
-    ])
+            newMinerObj(
+                miners[1].publicKey,
+                50
+            )
+        ]
+    )
 )
 
 #Add a Key 0 Verification.

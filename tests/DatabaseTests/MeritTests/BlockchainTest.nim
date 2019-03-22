@@ -31,8 +31,8 @@ import ../../../src/Database/Merit/Blockchain
 import ../../../src/Network/Serialize/Merit/SerializeDifficulty
 import ../../../src/Network/Serialize/Merit/SerializeBlock
 
-#Test Database lib.
-import ../../lib/TestDatabase
+#Merit Testing functions.
+import TestMerit
 
 #Finals lib.
 import finals
@@ -41,60 +41,16 @@ var
     #Database.
     db: DatabaseFunctionBox = newTestDatabase()
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(
+    blockchain: Blockchain = newTestBlockchain(
         db,
-        "TEST_BLOCKCHAIN",
+        "BLOCKCHAIN_TEST",
         30,
         "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16)
-    )
-    #Genesis Block.
-    genesis: Block = newBlockObj(
-        0,
-        "TEST_BLOCKCHAIN".pad(64).toArgonHash(),
-        nil,
-        @[],
-        @[],
-        getTime(),
-        0
     )
     #Current difficulty.
     difficulty: Difficulty
     #Block we're mining.
     mining: Block
-
-proc newTestBlock(
-    nonce: int | uint,
-    last: ArgonHash = blockchain.tip.header.hash,
-    aggregate: BLSSignature = nil,
-    indexes: seq[VerifierIndex] = @[],
-    miners: Miners = @[
-        newMinerObj(
-            newBLSPrivateKeyFromSeed("TEST").getPublicKey(),
-            uint(100)
-        )
-    ],
-    time: uint = getTime(),
-    proof: uint = 0
-): Block {.raises: [ValueError, ArgonError].} =
-    newBlockObj(
-        uint(nonce),
-        last,
-        aggregate,
-        indexes,
-        miners,
-        time,
-        proof
-    )
-
-#Save the genesis data to the database.
-db.put("merit_tip", genesis.header.hash.toString())
-db.put("merit_" & genesis.header.hash.toString(), genesis.serialize())
-db.put("merit_difficulty", blockchain.difficulty.serialize())
-
-#Load the genesis Block onto the Blockchain.
-blockchain.setHeight(1)
-blockchain.load(genesis.header)
-blockchain.load(genesis)
 
 #Mine 10 blocks.
 for i in 1 .. 10:
@@ -102,6 +58,7 @@ for i in 1 .. 10:
 
     #Grab the Difficulty.
     var diffCopy: BN = blockchain.difficulty.difficulty
+
     difficulty = newDifficultyObj(
         blockchain.difficulty.start,
         blockchain.difficulty.endBlock,
@@ -109,7 +66,10 @@ for i in 1 .. 10:
     )
 
     #Create the Block.
-    mining = newTestBlock(i)
+    mining = newTestBlock(
+        i,
+        blockchain.tip.header.hash
+    )
 
     #Mine it.
     while not difficulty.verifyDifficulty(mining):

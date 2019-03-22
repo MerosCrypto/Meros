@@ -1,4 +1,4 @@
-#Provides access to a testing database.
+#Database Testing Functions.
 
 #Errors lib.
 import ../../src/lib/Errors
@@ -24,7 +24,7 @@ proc newTestDatabase*(): DatabaseFunctionBox =
     removeFile("./data/test")
 
     #Open the database.
-    db = newDB("./data/test")
+    db = newDB("./data/test", 1073741824)
 
     #Create the Function Box.
     result = DatabaseFunctionBox()
