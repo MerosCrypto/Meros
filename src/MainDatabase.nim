@@ -3,7 +3,7 @@ include MainGlobals
 proc mainDatabase() {.raises: [LMDBError].} =
     {.gcsafe.}:
         #Open the database.
-        db = newDB(config.db)
+        db = newDB(config.db, MAX_DB_SIZE)
 
         #Allow access to put/get/delete.
         functions.database.put = proc (key: string, val: string) {.raises: [LMDBError].} =

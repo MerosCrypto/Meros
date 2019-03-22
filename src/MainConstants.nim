@@ -4,6 +4,9 @@ include MainImports
 #Some constants are defined in Nimscript and loaded via intdefine/strdefine.
 #This is because they're for libraries which can't have their constants defined in a foreign file.
 const
+    #DB constants.
+    MAX_DB_SIZE: int64 = 107374182400 #Max DB size.
+
     #Merit constants.
     GENESIS: string =          #Genesis string.
         "MEROS_DEVELOPER_TESTNET_2"
