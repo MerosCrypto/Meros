@@ -60,8 +60,6 @@ Database/Verifications:
 Database/Merit:
 - Database/Merit/Difficulty test.
 - Database/Merit/Block test.
-- Database/Merit/Blockchain test.
-- Database/Merit/State test.
 - More Database/Merit/Epochs test.
 - Database/Merit/Merit test.
 
@@ -107,6 +105,7 @@ Other:
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
 - Remove `EventError`.
+- Rename the exported `LMDBError` to `DBError`.
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
