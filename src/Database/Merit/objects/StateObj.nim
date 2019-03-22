@@ -25,6 +25,8 @@ finalsd:
         holdersSeq: seq[string]
         #String of every holder.
         holdersStr: string
+        #List of unsaved accounts.
+        pending: seq[string]
 
         #Blocks until Merit is dead.
         deadBlocks* {.final.}: uint
@@ -40,6 +42,8 @@ proc newState*(
 ): State {.raises: [].} =
     result = State(
         db: db,
+        pending: @[],
+
         deadBlocks: deadBlocks,
         live: 0,
         holders: newTable[string, uint]()
@@ -61,7 +65,7 @@ proc newState*(
         #Parse them into the seq.
         result.holdersSeq = newSeq[string](result.holdersStr.len div 48)
 
-        for i in countup(0, result.holdersStr.len, 48):
+        for i in countup(0, result.holdersStr.len - 1, 48):
             #Extract the holder.
             var holder = result.holdersStr[i .. i + 47]
 
@@ -96,34 +100,27 @@ proc add(state: State, key: string, save: bool) {.raises: [].} =
 proc `holdersStr`*(state: State): string {.raises: [].} =
     state.holdersStr
 
-proc `[]`*(state: State, key: string): uint {.raises: [KeyError].} =
-    #Add this holder to the State if they don't exist already.
-    state.add(key, false)
-
-    #Return their value.
-    result = state.holders[key]
-
-proc `[]`*(state: State, keyArg: BLSPublicKey): uint {.raises: [KeyError].} =
-    #Extract the argument.
-    var key: string = keyArg.toString()
+proc `[]`*(state: State, keyArg: string): uint {.raises: [KeyError].} =
+    #Make sure the key is padded.
+    var key: string = keyArg.pad(48)
 
     #Add this holder to the State if they don't exist already.
     state.add(key, false)
 
     #Return their value.
     result = state.holders[key]
+
+proc `[]`*(state: State, key: BLSPublicKey): uint {.inline, raises: [KeyError].} =
+    state[key.toString()]
 
 #Return the amount of live Merit.
 proc `live`*(state: State): uint {.raises: [].} =
     state.live
 
-#Setter.
-proc `[]=`*(state: State, keyArg: string, value: uint) {.raises: [KeyError, LMDBError].} =
+#Setters.
+proc `[]=`*(state: State, keyArg: string, value: uint) {.raises: [KeyError].} =
     #Extract the argument.
     var key: string = keyArg.pad(48)
-
-    #Add this holder to the State if they don't exist already.
-    state.add(key, true)
 
     #Get the previous value.
     var previous: uint = state.holders[key]
@@ -135,8 +132,29 @@ proc `[]=`*(state: State, keyArg: string, value: uint) {.raises: [KeyError, LMDB
     else:
         state.live -= previous - value
 
-    #Save the new balance to the DB.
-    state.db.put("merit_" & key, value.toBinary())
+    #Mark them as pending to be saved.
+    state.pending.add(key)
 
-    #Save the new updated merit value.
+    #If they're not in the holdersSeq, add them to that and the string.
+    if not state.holdersSeq.contains(key):
+        state.holdersSeq.add(key)
+        state.holdersStr &= key
+
+proc `[]=`*(state: State, key: BLSPublicKey, value: uint) {.inline, raises: [KeyError].} =
+    state[key.toString()] = value
+
+#Save the State to the DB.
+proc save*(state: State) {.raises: [KeyError, LMDBError].} =
+    #Iterate over every pending account.
+    for key in state.pending:
+        #Save the new balance to the DB.
+        state.db.put("merit_" & key, state.holders[key].toBinary())
+
+    #Clear pending.
+    state.pending = @[]
+
+    #Save the new Merit quantity.
     state.db.put("merit_live", state.live.toBinary())
+
+    #Save the holdersStr.
+    state.db.put("merit_holders", state.holdersStr)

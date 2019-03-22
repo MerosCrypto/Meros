@@ -144,7 +144,7 @@ proc newMerit*(
     var tips: TableRef[string, int] = newTable[string, int]()
     #Use the Holders string from the State.
     if result.state.holdersStr != "":
-        for i in countup(0, result.state.holdersStr.len, 48):
+        for i in countup(0, result.state.holdersStr.len - 1, 48):
             #Extract the holder.
             var holder = result.state.holdersStr[i .. i + 47]
 

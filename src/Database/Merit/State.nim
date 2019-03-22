@@ -47,8 +47,9 @@ proc processBlock*(
 
     #If the Blockchain's height is over the dead blocks quantity, meaning there is a block to remove from the state...
     if blockchain.height > state.deadBlocks:
-        #Get the block that should be removed.
-        miners = blockchain[blockchain.height - (state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
-        for miner in miners:
-            state[miner.miner.toString()] = state[miner.miner] - miner.amount
+        for miner in blockchain[blockchain.height - (state.deadBlocks + 1)].miners:
+            state[miner.miner] = state[miner.miner] - miner.amount
+
+    #Save the State to the DB.
+    state.save()
