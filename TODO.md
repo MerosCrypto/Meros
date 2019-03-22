@@ -104,6 +104,8 @@ Other:
 ### Improvements:
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
+- We used uint because indexes can't be negative and it was safer. That said, the constant casting is quite annoying and we're still limited to the int limits. In some places, we've even updated the casts to accept both, defeating the point. We should just remove uint at this point.
+
 - Remove `EventError`.
 - Rename the exported `LMDBError` to `DBError`.
 - Add `DataExistsError` for when data has already been added.

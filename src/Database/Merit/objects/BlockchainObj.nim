@@ -132,5 +132,5 @@ proc `[]`*(blockchain: Blockchain, index: uint): Block {.raises: [
         result = parseBlock(blockchain.db.get("merit_" & blockchain.headers[int(index)].hash.toString()))
 
 #Gets the last Block.
-func tip*(blockchain: Blockchain): Block {.raises: [].} =
+func tip*(blockchain: Blockchain): Block {.inline, raises: [].} =
     blockchain.blocks[^1]

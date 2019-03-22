@@ -58,9 +58,6 @@ proc archive*(
     indexes: seq[VerifierIndex],
     archived: uint
 ) {.raises: [KeyError, LMDBError].} =
-    #Declare the start variable outside of the loop.
-    var start: uint
-
     #Iterate over every Index.
     for index in indexes:
         #Delete them from the seq.
