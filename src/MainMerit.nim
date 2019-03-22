@@ -64,15 +64,10 @@ proc mainMerit() {.raises: [
 
             if newBlock.verifications.len > 0:
                 #Verify we have all the Verifications and Entries, as well as verify the signature.
-                var agInfos: seq[BLSAggregationInfo] = @[]
+                var
+                    agInfos: seq[BLSAggregationInfo] = @[]
+                    verifiers: Table[string, bool] = initTable[string, bool]()
                 for index in newBlock.verifications:
-                    #Verify we have the Verifier.
-                    try:
-                        discard verifications[index.key]
-                    except:
-                        echo "Failed to add the Block."
-                        return false
-
                     #Verify this isn't archiving archived Verifications.
                     if int(index.nonce) < verifications[index.key].archived:
                         echo "Failed to add the Block."
@@ -88,6 +83,12 @@ proc mainMerit() {.raises: [
                         echo "Failed to add the Block."
                         return false
 
+                    #Verify this Block doesn't have this verifier twice,
+                    if verifiers.hasKey(index.key):
+                        echo "Failed to add the Block."
+                        return false
+                    verifiers[index.key] = true
+
                     var
                         #Start of this verifier's unarchived verifications.
                         verifierStart: uint = verifications[index.key].verifications[0].nonce
@@ -98,6 +99,7 @@ proc mainMerit() {.raises: [
                     for v in 0 ..< verifierVerifs.len:
                         #Make sure the Lattice has this Entry.
                         if not lattice.lookup.hasKey(verifierVerifs[v].hash.toString()):
+                            echo "Failed to add the Block."
                             return false
 
                         #Create an aggregation info for this verification.
@@ -108,15 +110,12 @@ proc mainMerit() {.raises: [
 
                 #Calculate the aggregation info.
                 var agInfo: BLSAggregationInfo = agInfos.aggregate()
-                #If it's nil, make sure the signature is 0.
-                if agInfo == nil:
-                    if newBlock.header.verifications != nil:
-                        return false
-                #If it's not nil, test it against the signature.
-                elif agInfo != nil:
-                    if newBlock.header.verifications == nil:
-                        return false
-
+                #Make sure that if the AgInfo is nil the Signature is as well
+                if agInfo.isNil != newBlock.header.verifications.isNil:
+                    echo "Failed to add the Block."
+                    return false
+                #If it's not nil, verify the Signature.
+                if agInfo != nil:
                     newBlock.header.verifications.setAggregationInfo(agInfo)
                     if not newBlock.header.verifications.verify():
                         echo "Failed to add the Block."

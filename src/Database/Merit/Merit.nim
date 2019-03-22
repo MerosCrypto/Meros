@@ -153,7 +153,7 @@ proc newMerit*(
                 tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
             except:
                 #If this failed, it's because they have Merit but don't have Verifications older than 6 blocks.
-                continue
+                tips[holder] = 0
 
     #Shift the last 12 blocks. Why?
     #We want to regenerate the Epochs for the last 6, but we need to regenerate the 6 before that so late verifications aren't labelled as first appearances.
