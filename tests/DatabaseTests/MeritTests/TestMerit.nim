@@ -47,39 +47,3 @@ proc newTestBlock*(
         time,
         proof
     )
-
-#Creates a Blockchain and genesis Block.
-proc newTestBlockchain*(
-    db: DatabaseFunctionBox,
-    genesis: string,
-    blockTime: uint,
-    startDifficulty: BN
-): Blockchain =
-    #Create the Blockchain.
-    result = newBlockchain(
-        db,
-        genesis,
-        blockTime,
-        startDifficulty
-    )
-
-    #Create the Genesis Block.
-    var genesisBlock: Block = newBlockObj(
-        0,
-        genesis.pad(64).toArgonHash(),
-        nil,
-        @[],
-        @[],
-        getTime(),
-        0
-    )
-
-    #Save the Genesis data to the database.
-    db.put("merit_tip", genesisBlock.header.hash.toString())
-    db.put("merit_" & genesisBlock.header.hash.toString(), genesisBlock.serialize())
-    db.put("merit_difficulty", result.difficulty.serialize())
-
-    #Load the Genesis Block onto the Blockchain.
-    result.setHeight(1)
-    result.load(genesisBlock.header)
-    result.load(genesisBlock)

@@ -39,7 +39,13 @@ proc newBlockchain*(
     genesis: string,
     blockTime: uint,
     startDifficulty: BN
-): Blockchain {.raises: [].} =
+): Blockchain {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     newBlockchainObj(
         db,
         genesis,
@@ -119,6 +125,6 @@ proc processBlock*(
     blockchain.add(newBlock)
 
     #If the difficulty needs to be updated...
-    if newBlock.header.nonce == blockchain.difficulty.endBlock - 1:
+    if newBlock.header.nonce == blockchain.difficulty.endBlock:
         blockchain.calculateNextDifficulty(blocksPerPeriod)
         blockchain.db.put("merit_difficulty", blockchain.difficulty.serialize())

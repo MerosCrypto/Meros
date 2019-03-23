@@ -41,7 +41,7 @@ var
     #Database.
     db: DatabaseFunctionBox = newTestDatabase()
     #Blockchain.
-    blockchain: Blockchain = newTestBlockchain(
+    blockchain: Blockchain = newBlockchain(
         db,
         "STATE_TEST",
         30,

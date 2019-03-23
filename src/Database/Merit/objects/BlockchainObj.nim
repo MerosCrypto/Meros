@@ -22,14 +22,17 @@ import BlockHeaderObj
 import BlockObj
 
 #Serialize libs.
+import ../../../Network/Serialize/SerializeCommon
+
 import ../../../Network/Serialize/Merit/SerializeBlock
+import ../../../Network/Serialize/Merit/ParseBlockHeader
 import ../../../Network/Serialize/Merit/ParseBlock
+
+import ../../../Network/Serialize/Merit/SerializeDifficulty
+import ../../../Network/Serialize/Merit/ParseDifficulty
 
 #Finals lib.
 import finals
-
-#String utils standard lib.
-import strutils
 
 #Blockchain object.
 finalsd:
@@ -58,45 +61,89 @@ proc newBlockchainObj*(
     genesis: string,
     blockTime: uint,
     startDifficultyArg: BN
-): Blockchain {.raises: [].} =
+): Blockchain {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
+    #Create the start difficulty.
     var startDifficulty: Difficulty = newDifficultyObj(
         0,
-        2,
+        1,
         startDifficultyArg
     )
 
+    #Create the Blockchain.
     result = Blockchain(
         db: db,
 
         blockTime: blockTime,
         startDifficulty: startDifficulty,
 
-        blocks: @[],
-
         difficulty: startDifficulty
     )
+    #Finalize the Block Time and Start Difficulty.
     result.ffinalizeBlockTime()
     result.ffinalizeStartDifficulty()
 
-#Sets the amount of Headers we're loading.
-func setHeight*(blockchain: Blockchain, height: uint) {.raises: [ValueError].} =
-    if blockchain.blocks.len != 0:
-        raise newException(ValueError, "Blocks have already been added to this chain.")
+    #Grab the tip from the DB.
+    var tip: string = ""
+    try:
+        tip = db.get("merit_tip")
+    except:
+        #If the tip isn't defined, this is the first boot.
+        #Create a Genesis Block.
+        var genesisBlock: Block = newBlockObj(
+            0,
+            genesis.pad(64).toArgonHash(),
+            nil,
+            @[],
+            @[],
+            0,
+            0
+        )
+        #Grab the tip.
+        tip = genesisBlock.header.hash.toString()
 
-    blockchain.height = height
-    blockchain.headers = newSeq[BlockHeader](blockchain.height)
+        #Save the tip and the Block.
+        db.put("merit_tip", tip)
+        db.put("merit_" & tip, genesisBlock.serialize())
 
-#Adds a Header loaded from the DB.
-func load*(blockchain: Blockchain, header: BlockHeader) {.raises: [].} =
-    blockchain.headers[int(header.nonce)] = header
+        #Also set the Difficulty to the starting difficulty.
+        db.put("merit_difficulty", result.difficulty.serialize())
 
-#Adds a Block loaded from the DB.
-func load*(blockchain: Blockchain, loadBlock: Block) {.raises: [].} =
-    blockchain.blocks.add(loadBlock)
+    #Load every header.
+    var
+        headers: seq[BlockHeader]
+        last: BlockHeader = parseBlockHeader(db.get("merit_" & tip).deserialize(3)[0])
+        i: int = 0
+    headers = newSeq[BlockHeader](last.nonce + 1)
 
-#Sets the Difficulty to one loaded from the DB.
-func load*(blockchain: Blockchain, difficulty: Difficulty) {.raises: [].} =
-    blockchain.difficulty = difficulty
+    while last.nonce != 0:
+        headers[i] = last
+        last = parseBlockHeader(db.get("merit_" & last.last.toString()).deserialize(3)[0])
+        inc(i)
+    headers[i] = last
+
+    #Set the blockchain's height and create a seq for the headers.
+    result.height = uint(headers.len)
+    result.headers = newSeq[BlockHeader](result.height)
+    #Load the headers.
+    for header in headers:
+        result.headers[int(header.nonce)] = header
+
+    #Load the blocks we want to cache.
+    if headers.len < 12:
+        for h in countdown(headers.len - 1, 0):
+            result.blocks.add(parseBlock(db.get("merit_" & headers[h].hash.toString())))
+    else:
+        for h in countdown(headers.len - 1, headers.len - 12):
+            result.blocks.add(parseBlock(db.get("merit_" & headers[h].hash.toString())))
+
+    #Load the Difficulty.
+    result.difficulty = parseDifficulty(db.get("merit_difficulty"))
 
 #Adds a block.
 proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [LMDBError].} =

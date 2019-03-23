@@ -40,14 +40,6 @@ export Blockchain
 export State
 export Epochs
 
-#Serialize libs.
-import ../../Network/Serialize/SerializeCommon
-import ../../Network/Serialize/Merit/SerializeBlock
-import ../../Network/Serialize/Merit/ParseBlockHeader
-import ../../Network/Serialize/Merit/ParseBlock
-import ../../Network/Serialize/Merit/SerializeDifficulty
-import ../../Network/Serialize/Merit/ParseDifficulty
-
 #Tables standard lib.
 import tables
 
@@ -88,56 +80,6 @@ proc newMerit*(
 
         epochs: newEpochs(db)
     )
-
-    #Grab the tip.
-    var tip: string = ""
-    try:
-        tip = db.get("merit_tip")
-    except:
-        #If the tip isn't defined, set the tip to the genesis block.
-        var genesisBlock: Block = newBlockObj(
-            0,
-            genesis.pad(64).toArgonHash(),
-            nil,
-            @[],
-            @[],
-            0,
-            0
-        )
-        tip = genesisBlock.header.hash.toString()
-        db.put("merit_tip", tip)
-        db.put("merit_" & tip, genesisBlock.serialize())
-
-        #Also set the Difficulty to the starting difficulty.
-        db.put("merit_difficulty", result.blockchain.difficulty.serialize())
-
-    #Load every header.
-    var
-        headers: seq[BlockHeader]
-        last: BlockHeader = parseBlockHeader(db.get("merit_" & tip).deserialize(3)[0])
-        i: int = 0
-    headers = newSeq[BlockHeader](last.nonce + 1)
-
-    while last.nonce != 0:
-        headers[i] = last
-        last = parseBlockHeader(db.get("merit_" & last.last.toString()).deserialize(3)[0])
-        inc(i)
-    headers[i] = last
-
-    result.blockchain.setHeight(uint(headers.len))
-    for header in headers:
-        result.blockchain.load(header)
-
-    #Load the blocks we want to cache.
-    if headers.len < 12:
-        for h in countdown(headers.len - 1, 0):
-            result.blockchain.load(parseBlock(db.get("merit_" & headers[h].hash.toString())))
-    else:
-        for h in countdown(headers.len - 1, headers.len - 12):
-            result.blockchain.load(parseBlock(db.get("merit_" & headers[h].hash.toString())))
-
-    #Load the Difficulty.
-    result.blockchain.load(parseDifficulty(db.get("merit_difficulty")))
 
     #Regenerate the Epochs.
     #Table of every archived tip before the current Epochs.

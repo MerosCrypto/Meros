@@ -109,7 +109,7 @@ proc calculateNextDifficulty*(
 
     #Create the new difficulty.
     blockchain.difficulty = newDifficultyObj(
-        last.endBlock,
+        last.endBlock + 1,
         last.endBlock + blocksPerPeriod,
         difficulty
     )
