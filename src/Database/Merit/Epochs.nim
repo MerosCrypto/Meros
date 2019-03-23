@@ -132,23 +132,22 @@ proc newEpochs*(
         return
 
     #Use the Holders string from the State.
-    if holders != "":
-        for i in countup(0, holders.len - 1, 48):
-            #Extract the holder.
-            var holder = holders[i .. i + 47]
+    for i in countup(0, holders.len - 1, 48):
+        #Extract the holder.
+        var holder = holders[i .. i + 47]
 
-            #Load their tip.
-            try:
-                tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
-            except:
-                #If this failed, it's because they have Merit but don't have Verifications older than 6 blocks.
-                tips[holder] = 0
+        #Load their tip.
+        try:
+            tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
+        except:
+            #If this failed, it's because they have Merit but don't have Verifications older than 5 blocks.
+            tips[holder] = 0
 
-    #Shift the last 12 blocks. Why?
-    #We want to regenerate the Epochs for the last 6, but we need to regenerate the 6 before that so late verifications aren't labelled as first appearances.
-    var start: int = 12
-    #If the blockchain is smaller than 12, load every block.
-    if blockchain.height < 12:
+    #Shift the last 10 blocks. Why?
+    #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late verifications aren't labelled as first appearances.
+    var start: int = 10
+    #If the blockchain is smaller than 10, load every block.
+    if blockchain.height < 10:
         start = int(blockchain.height)
 
     for i in countdown(start, 1):

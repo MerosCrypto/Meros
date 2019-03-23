@@ -110,8 +110,8 @@ verifs.add(newVerifierIndex(
 rewards = epochs.shift(verifications, verifs).calculate(state)
 assert(rewards.len == 0)
 
-#Shift 4 over.
-for _ in 0 ..< 4:
+#Shift 3 over.
+for _ in 0 ..< 3:
     rewards = epochs.shift(verifications, @[]).calculate(state)
     assert(rewards.len == 0)
 

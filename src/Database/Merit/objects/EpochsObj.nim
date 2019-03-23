@@ -36,7 +36,7 @@ finalsd:
         Epochs* = ref object of RootObj
             #Database.
             db: DatabaseFunctionBox
-            #Seq of the current 6 Epochs.
+            #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
             #The last 12 Epochs of indexes.
             indexes: seq[seq[VerifierIndex]]
@@ -59,16 +59,16 @@ proc newEpochsObj*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
     #Create the seq.
     result = Epochs(
         db: db,
-        epochs: newSeq[Epoch](6),
-        indexes: newSeq[seq[VerifierIndex]](12)
+        epochs: newSeq[Epoch](5),
+        indexes: newSeq[seq[VerifierIndex]](10)
     )
 
     #Place blank epochs in.
-    for i in 0 ..< 6:
+    for i in 0 ..< 5:
         result.epochs[i] = newEpoch(@[])
 
     #Place blank indexes in.
-    for i in 0 ..< 12:
+    for i in 0 ..< 10:
         result.indexes[i] = @[]
 
 #Add a hash to Epochs. Returns false if this hash isn't already in these Epochs.
@@ -111,15 +111,15 @@ proc shift*(epochs: Epochs, epoch: Epoch, indexes: seq[VerifierIndex], save: boo
     #If we should save this to the database...
     if save:
         discard """
-        When we regenerate the Epochs, we can't just shift the last 6 blocks, for two reasons.
+        When we regenerate the Epochs, we can't just shift the last 5 blocks, for two reasons.
 
         1) When it adds the Verifications, it'd try loading everything from the archived to the specified index.
         When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
 
         2) When it adds the Verifications, it'd assume every appearance is the first appearance.
-        This is because it doesn't have the 6 Epochs before it so when it checks the Epochs, it's iterating over blanks.
+        This is because it doesn't have the 5 Epochs before it so when it checks the Epochs, it's iterating over blanks.
 
-        Therefore, we need to save the index that's at least 13 blocks old to merit_HOLDER_epoch (and then load the last 12 blocks).
+        Therefore, we need to save the index that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
         """
 
         for index in oldIndexes:
