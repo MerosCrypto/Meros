@@ -126,4 +126,4 @@ block:
     assert(merkle_ac.left == merkle_ah.left.left)
     assert(merkle_ac.left != merkle_ah.left.right)
 
-echo "Finished the lib/Merkle test."
+echo "Finished the lib/Merkle Test."

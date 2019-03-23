@@ -1,3 +1,3 @@
 #LatticeModule Test.
 
-echo "The UI/RPC/Modules/LatticeModule test is empty."
+echo "The UI/RPC/Modules/LatticeModule Test is empty."

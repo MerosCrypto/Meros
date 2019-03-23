@@ -1,3 +1,3 @@
 #Claim Test.
 
-echo "The Database/Lattice/Claim test is empty."
+echo "The Database/Lattice/Claim Test is empty."

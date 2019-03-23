@@ -77,4 +77,4 @@ for i in 1 .. 20:
         "Input Nonce:\r\n" & $recv.index.nonce & "\r\n" & $recvParsed.index.nonce
     )
 
-echo "Finished the Network/Serialize/Lattice/Receive test."
+echo "Finished the Network/Serialize/Lattice/Receive Test."

@@ -12,4 +12,4 @@ assert(
     $RipeMD_160("abc") == "8EB208F7E05D987A9B044A8E98C6B087F15A0BFC"
 )
 
-echo "Finished the lib/Hash/RipeMD test."
+echo "Finished the lib/Hash/RipeMD Test."

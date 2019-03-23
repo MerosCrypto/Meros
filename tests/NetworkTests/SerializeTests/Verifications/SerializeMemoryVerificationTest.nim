@@ -54,4 +54,4 @@ for i in 1 .. 20:
     assert(verif.hash == verifParsed.hash)
     assert(verif.signature == verifParsed.signature)
 
-echo "Finished the Network/Serialize/Verifications/MemoryVerification test."
+echo "Finished the Network/Serialize/Verifications/MemoryVerification Test."

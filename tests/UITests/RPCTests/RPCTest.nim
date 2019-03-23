@@ -1,3 +1,3 @@
 #RPC Test.
 
-echo "The UI/RPC/RPC test is empty."
+echo "The UI/RPC/RPC Test is empty."

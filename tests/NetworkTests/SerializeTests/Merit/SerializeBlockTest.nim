@@ -152,4 +152,4 @@ for i in 1 .. 20:
         assert(newBlock.miners[m].miner == blockParsed.miners[m].miner)
         assert(newBlock.miners[m].amount == blockParsed.miners[m].amount)
 
-echo "Finished the Network/Serialize/Merit/Block test."
+echo "Finished the Network/Serialize/Merit/Block Test."

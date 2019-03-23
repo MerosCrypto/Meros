@@ -1,3 +1,3 @@
 #Wallet Test.
 
-echo "The Wallet/Wallet test is empty."
+echo "The Wallet/Wallet Test is empty."

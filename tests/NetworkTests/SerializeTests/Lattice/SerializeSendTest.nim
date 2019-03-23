@@ -56,4 +56,4 @@ for i in 1 .. 20:
     assert(send.proof == sendParsed.proof)
     assert(send.argon == sendParsed.argon)
 
-echo "Finished the Network/Serialize/Lattice/Send test."
+echo "Finished the Network/Serialize/Lattice/Send Test."

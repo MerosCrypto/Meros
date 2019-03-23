@@ -45,4 +45,4 @@ for i in 1 .. 20:
     #Verify toBN works.
     assert(strip($wallet.publicKey) == Address.toBN(wallet.address).toString(16), "Address.toBN didn't return the correct BN.")
 
-echo "Finished the Wallet/Address test."
+echo "Finished the Wallet/Address Test."

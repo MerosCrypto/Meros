@@ -1,3 +1,3 @@
 #Block Test.
 
-echo "The Database/Merit/Block test is empty."
+echo "The Database/Merit/Block Test is empty."

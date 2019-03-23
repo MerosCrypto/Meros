@@ -47,4 +47,4 @@ for i in 1 .. 20:
     #Test the Difficulty.
     assert(difficulty.difficulty == difficultyParsed.difficulty)
 
-echo "Finished the Network/Serialize/Merit/Difficulty test."
+echo "Finished the Network/Serialize/Merit/Difficulty Test."

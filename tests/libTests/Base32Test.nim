@@ -42,4 +42,4 @@ for i in 1 .. 20:
     #Verify parsing strings works.
     assert(base32String == $base32String.toBase32(), "Base 32's parsed data doesn't match the data input.")
 
-echo "Finished the lib/Base32 test."
+echo "Finished the lib/Base32 Test."

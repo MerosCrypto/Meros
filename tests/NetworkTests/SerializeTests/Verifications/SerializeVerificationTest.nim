@@ -54,4 +54,4 @@ for i in 1 .. 20:
     assert(verif.nonce == verifParsed.nonce)
     assert(verif.hash == verifParsed.hash)
 
-echo "Finished the Network/Serialize/Verifications/Verification test."
+echo "Finished the Network/Serialize/Verifications/Verification Test."

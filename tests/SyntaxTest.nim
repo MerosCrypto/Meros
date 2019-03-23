@@ -1,4 +1,4 @@
-#Syntax test. Compiles every file to verify the codebase has valid syntax.
+#Syntax Test. Compiles every file to verify the codebase has valid syntax.
 
 #Lib.
 import ../src/lib/Errors

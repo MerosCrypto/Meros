@@ -64,4 +64,4 @@ for i in 1 .. 20:
         assert(verifs[v].nonce == verifsParsed[v].nonce)
         assert(verifs[v].merkle == verifsParsed[v].merkle)
 
-echo "Finished the Network/Serialize/Merit/Verifications test."
+echo "Finished the Network/Serialize/Merit/Verifications Test."

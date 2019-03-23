@@ -35,8 +35,6 @@ import tables
 #Finals lib.
 import finals
 
-import strutils
-
 var
     #Database.
     db: DatabaseFunctionBox = newTestDatabase()
@@ -58,6 +56,8 @@ var
     balances: OrderedTable[string, uint] = initOrderedTable[string, uint]()
     #Block we're mining.
     mining: Block
+
+echo "Testing State processing and DB interactions."
 
 #Mine 10 blocks.
 for i in 1 .. 10:
@@ -149,4 +149,4 @@ for k in balances.keys():
 #Check the holders string.
 assert(state.holdersStr == holdersStr)
 
-echo "Finished the Database/Merit/State test."
+echo "Finished the Database/Merit/State Test."

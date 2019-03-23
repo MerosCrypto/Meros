@@ -26,12 +26,12 @@ var tests: seq[string] = @[
     "123",
     "abc",
     "abcdefghijklmnopqrstuvwxyz",
-    "test",
-    "test1",
-    "test2",
-    "This is a longer test.",
+    "Test",
+    "Test1",
+    "Test2",
+    "This is a longer Test.",
     "Now we have special character.\r\n",
-    "\0\0This test starts with leading 0s and is meant to test Issue #46.",
+    "\0\0This Test starts with leading 0s and is meant to Test Issue #46.",
     "Write the tests they said.",
     "Make up phrases they said.",
     "Well here are the phrases.",
@@ -41,7 +41,7 @@ var tests: seq[string] = @[
     "Yet another phrase.",
     "This is 32 characters long.     ",
     "This is 256 characters long.    ".repeat(8),
-    "This is the 20th test because I wanted a nice number."
+    "This is the 20th Test because I wanted a nice number."
 ]
 
 #Test 20 serializations.
@@ -80,4 +80,4 @@ for i in 1 .. 20:
     assert(data.proof == dataParsed.proof)
     assert(data.argon == dataParsed.argon)
 
-echo "Finished the Network/Serialize/Lattice/Data test."
+echo "Finished the Network/Serialize/Lattice/Data Test."

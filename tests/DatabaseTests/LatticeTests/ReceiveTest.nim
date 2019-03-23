@@ -1,3 +1,3 @@
 #Receive Test.
 
-echo "The Database/Lattice/Receive test is empty."
+echo "The Database/Lattice/Receive Test is empty."

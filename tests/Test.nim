@@ -1,4 +1,4 @@
-#Run every test...
+#Run every Test...
 
 import objectsTests
 import libTests
@@ -9,4 +9,4 @@ import NetworkTests
 
 import SyntaxTest
 
-echo "Finished all the tests."
+echo "Finished all the Tests."

@@ -1,3 +1,3 @@
 #Lattice Test.
 
-echo "The Database/Lattice/Lattice test is empty."
+echo "The Database/Lattice/Lattice Test is empty."

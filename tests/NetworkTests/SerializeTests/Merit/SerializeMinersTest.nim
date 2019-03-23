@@ -86,4 +86,4 @@ for i in 1 .. 20:
         assert(miners[i].miner == minersParsed[i].miner)
         assert(miners[i].amount == minersParsed[i].amount)
 
-echo "Finished the Network/Serialize/Merit/Miners test."
+echo "Finished the Network/Serialize/Merit/Miners Test."

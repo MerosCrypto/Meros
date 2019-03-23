@@ -77,4 +77,4 @@ for i in 1 .. 20:
         "BLS Signature:\r\n" & $claim.bls & "\r\n" & $claimParsed.bls
     )
 
-echo "Finished the Network/Serialize/Lattice/Claim test."
+echo "Finished the Network/Serialize/Lattice/Claim Test."

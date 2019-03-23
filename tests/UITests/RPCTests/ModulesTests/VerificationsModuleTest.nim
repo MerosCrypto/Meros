@@ -1,3 +1,3 @@
 #VerificationsModule Test.
 
-echo "The UI/RPC/Modules/VerificationsModule test is empty."
+echo "The UI/RPC/Modules/VerificationsModule Test is empty."

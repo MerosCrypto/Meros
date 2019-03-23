@@ -1,3 +1,3 @@
 #MeritModule Test.
 
-echo "The UI/RPC/Modules/MeritModule test is empty."
+echo "The UI/RPC/Modules/MeritModule Test is empty."

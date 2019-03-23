@@ -78,4 +78,4 @@ for i in 1 .. 20:
     assert(header.time == headerParsed.time)
     assert(header.proof == headerParsed.proof)
 
-echo "Finished the Network/Serialize/Merit/BlockHeader test."
+echo "Finished the Network/Serialize/Merit/BlockHeader Test."
