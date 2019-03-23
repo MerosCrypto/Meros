@@ -41,49 +41,56 @@ Network:
 - Move Entries and Verifications to UDP.
 
 ### Tests:
+objects:
+- objects/Config Test.
+
 lib:
-- lib/Base (256) test.
-- lib/Hash/Argon test.
-- lib/Hash/Blake2 test.
-- Merkle fuzz testing.
-- lib/Ed25519 test.
+- lib/Base (256) Test.
+- lib/Hash/Argon Test.
+- lib/Hash/Blake2 Test.
+- lib/Merkle Test (fuzz).
+- lib/Ed25519 Test.
 
 Wallet:
-- Wallet/MinerWallet test.
-- Wallet/Wallet test.
+- Wallet/MinerWallet Test.
+- Wallet/Wallet Test.
 
 Database/Verifications:
-- Database/Verifications/Verifier test.
-- Database/Verifications/Verification test.
-- Database/Verifications/Verifications test.
+- Database/Verifications/Verifier Test.
+- Database/Verifications/Verification Test.
+- Database/Verifications/Verifications Test.
 
 Database/Merit:
-- Database/Merit/Difficulty test.
-- Database/Merit/Block test.
-- More Database/Merit/Epochs test.
-- Database/Merit/Merit test.
+- Database/Merit/BlockHeader Test.
+- Database/Merit/Block Test.
+- Database/Merit/Difficulty Test.
+- More Database/Merit/Epochs Test (in relation to the DB and for complex reward calculation).
+- Database/Merit/Merit Test.
 
 Database/Lattice:
-- Database/Lattice/Entry test.
-- Database/Lattice/Mint test.
-- Database/Lattice/Claim test.
-- Database/Lattice/Send test.
-- Database/Lattice/Receive test.
-- Database/Lattice/Data test.
-- Database/Lattice/Account test.
-- Database/Lattice/Lattice test.
+- Database/Lattice/Entry Test.
+- Database/Lattice/Mint Test.
+- Database/Lattice/Claim Test.
+- Database/Lattice/Send Test.
+- Database/Lattice/Receive Test.
+- Database/Lattice/Data Test.
+- Database/Lattice/Account Test.
+- Database/Lattice/Lattice Test.
 
 Network:
 - Tests.
 
-Network/Serialize:
-- Network/Serialize/Lattice/Entry test.
+Network/Serialize/Lattice:
+- Network/Serialize/Lattice/Entry Test.
 
-RPC:
-- Tests.
-
-Other:
-- Config test.
+UI/RPC:
+- UI/RPC/RPC Test.
+- UI/RPC/Modules/SystemModule Test.
+- UI/RPC/Modules/VerificationsModule Test.
+- UI/RPC/Modules/MeritModule Test.
+- UI/RPC/Modules/LatticeModule Test.
+- UI/RPC/Modules/PersonalModule Test.
+- UI/RPC/Modules/NetworkModule Test.
 
 ### Features:
 - Utilize Logger.
