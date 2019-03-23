@@ -106,7 +106,7 @@ for i in 1 .. 10:
         if not blockchain.processBlock(mining):
             raise newException(Exception, "")
     except:
-        raise newException(ValueError, "Valid Block wasn't successfully added. " & getCurrentExceptionMsg())
+        raise newException(ValueError, "Valid Block wasn't successfully added.")
 
     #Add it to the State.
     state.processBlock(blockchain, mining)
@@ -121,41 +121,32 @@ for i in 1 .. 10:
             balances[key.toString()] -= miners[i - 6][m].amount
 
     #Check the amount of Merit in existence.
-    if state.live != uint(min(i, 5) * 100):
-        raise newException(ValueError, "State has the wrong amount of live Merit.")
-    if db.get("merit_live").fromBinary() != min(i, 5) * 100:
-        raise newException(ValueError, "DB has the wrong amount of live Merit.")
+    assert(state.live == uint(min(i, 5) * 100))
+    assert(db.get("merit_live").fromBinary() == min(i, 5) * 100)
 
     #Check the balances.
     var holdersStr: string = ""
     for k in balances.keys():
         holdersStr &= k
-        if state[k] != balances[k]:
-            raise newException(ValueError, "Our balance table and the State disagree.")
-        if uint(db.get("merit_" & k).fromBinary()) != balances[k]:
-            raise newException(ValueError, "Our balance table and the DB disagree.")
+        assert(state[k] == balances[k])
+        assert(uint(db.get("merit_" & k).fromBinary()) == balances[k])
 
     #Check the holders string.
-    if holdersStr != state.holdersStr:
-        raise newException(ValueError, "Our holdersStr and the State disagree.")
-    if holdersStr != db.get("merit_holders"):
-        raise newException(ValueError, "Our holdersStr and the DB disagree.")
+    assert(holdersStr == state.holdersStr)
+    assert(holdersStr == db.get("merit_holders"))
 
 #Reload the State.
 state = newState(db, 5)
 #Check the live Merit.
-if state.live != 500:
-    raise newException(ValueError, "Loaded State has the wrong amount of live Merit.")
+assert(state.live == 500)
 
 #Check the balances.
 var holdersStr: string = ""
 for k in balances.keys():
     holdersStr &= k
-    if state[k] != balances[k]:
-        raise newException(ValueError, "Our balance table and the loaded State disagree.")
+    assert(state[k] == balances[k])
 
 #Check the holders string.
-if state.holdersStr != holdersStr:
-    raise newException(ValueError, "Our holdersStr and the loaded State disagree.")
+assert(state.holdersStr == holdersStr)
 
 echo "Finished the Database/Merit/State test."
