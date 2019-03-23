@@ -76,40 +76,9 @@ proc newMerit*(
             startDifficulty.toBN(16)
         ),
 
-        state: newState(db, live),
-
-        epochs: newEpochs(db)
+        state: newState(db, live)
     )
-
-    #Regenerate the Epochs.
-    #Table of every archived tip before the current Epochs.
-    var tips: TableRef[string, int] = newTable[string, int]()
-    #Use the Holders string from the State.
-    if result.state.holdersStr != "":
-        for i in countup(0, result.state.holdersStr.len - 1, 48):
-            #Extract the holder.
-            var holder = result.state.holdersStr[i .. i + 47]
-
-            #Load their tip.
-            try:
-                tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
-            except:
-                #If this failed, it's because they have Merit but don't have Verifications older than 6 blocks.
-                tips[holder] = 0
-
-    #Shift the last 12 blocks. Why?
-    #We want to regenerate the Epochs for the last 6, but we need to regenerate the 6 before that so late verifications aren't labelled as first appearances.
-    var start: int = 12
-    #If the blockchain is smaller than 12, load every block.
-    if result.blockchain.height < 12:
-        start = int(result.blockchain.height)
-
-    for i in countdown(start, 1):
-        discard result.epochs.shift(
-            verifications,
-            result.blockchain[result.blockchain.height - uint(i)].verifications,
-            tips
-        )
+    result.epochs = newEpochs(db, verifications, result.blockchain)
 
 #Add a block.
 proc processBlock*(

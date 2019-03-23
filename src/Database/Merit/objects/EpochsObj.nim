@@ -55,7 +55,7 @@ proc newRewards*(): Rewards {.raises: [].} =
 proc newEpoch*(indexes: seq[VerifierIndex]): Epoch {.raises: [].} =
     newTable[string, seq[BLSPublicKey]]()
 
-proc newEpochs*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
+proc newEpochsObj*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
     #Create the seq.
     result = Epochs(
         db: db,

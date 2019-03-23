@@ -37,11 +37,11 @@ var
     #Verifications.
     verifications: Verifications = newVerifications(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(functions, "epoch test", 1, newBN(0))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_2", 1, newBN(0))
     #State.
     state: State = newState(functions, 100)
     #Epochs.
-    epochs: Epochs = newEpochs(functions)
+    epochs: Epochs = newEpochs(functions, verifications, blockchain)
 
     #Hash.
     hash: Hash[512] = "aa".repeat(64).toHash(512)

@@ -37,7 +37,7 @@ var
     #State.
     state: State = newState(functions, 100)
     #Epochs.
-    epochs: Epochs = newEpochs(functions)
+    epochs: Epochs = newEpochs(functions, verifications, blockchain)
 
     #Hash.
     hash: Hash[512] = "aa".repeat(64).toHash(512)
