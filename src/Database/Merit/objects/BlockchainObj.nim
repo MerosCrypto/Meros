@@ -135,12 +135,16 @@ proc newBlockchainObj*(
         result.headers[int(header.nonce)] = header
 
     #Load the blocks we want to cache.
-    if headers.len < 12:
+    result.blocks = newSeq[Block](min(10, headers.len))
+    if headers.len < 10:
+        var loading: Block
         for h in countdown(headers.len - 1, 0):
-            result.blocks.add(parseBlock(db.get("merit_" & headers[h].hash.toString())))
+            loading = parseBlock(db.get("merit_" & headers[h].hash.toString()))
+            result.blocks[int(loading.header.nonce)] = loading
     else:
-        for h in countdown(headers.len - 1, headers.len - 12):
-            result.blocks.add(parseBlock(db.get("merit_" & headers[h].hash.toString())))
+        #We store the headers in reverse order.
+        for h in 0 ..< 10:
+            result.blocks[9 - h] = parseBlock(db.get("merit_" & headers[h].hash.toString()))
 
     #Load the Difficulty.
     result.difficulty = parseDifficulty(db.get("merit_difficulty"))
@@ -152,7 +156,7 @@ proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [LMDBError].} =
     blockchain.blocks.add(newBlock)
 
     #Delete the block we're no longer caching.
-    if blockchain.blocks.len > 12:
+    if blockchain.blocks.len > 10:
         blockchain.blocks.delete(0)
 
     #Save the block to the database.
@@ -170,11 +174,11 @@ proc `[]`*(blockchain: Blockchain, index: uint): Block {.raises: [
     if index >= blockchain.height:
         raise newException(ValueError, "Blockchain doesn't have enough blocks for that index.")
 
-    if blockchain.height < 12:
+    if blockchain.height < 10:
         result = blockchain.blocks[int(index)]
 
-    if index >= blockchain.height - 12:
-        result = blockchain.blocks[int(index - (blockchain.height - 12))]
+    if index >= blockchain.height - 10:
+        result = blockchain.blocks[int(index - (blockchain.height - 10))]
     else:
         result = parseBlock(blockchain.db.get("merit_" & blockchain.headers[int(index)].hash.toString()))
 
