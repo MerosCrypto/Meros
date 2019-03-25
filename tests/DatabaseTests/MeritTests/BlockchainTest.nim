@@ -145,7 +145,7 @@ proc test*(blocks: int) =
         assert(blockchain[i].serialize() == reloaded[i].serialize())
 
 test(5)
-test(10)
+test(9)
 test(15)
 
 echo "Finished the Database/Merit/Blockchain Test."
