@@ -27,9 +27,6 @@ export MintObj
 #Finals lib.
 import finals
 
-#Used to handle data strings.
-import strutils
-
 #Create a new Mint.
 proc newMint*(
     output: string,
@@ -45,7 +42,6 @@ proc newMint*(
         output,
         amount
     )
-
     #Set the nonce.
     result.nonce = nonce
 
