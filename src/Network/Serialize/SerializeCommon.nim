@@ -80,3 +80,13 @@ func deserialize*(
     #Shave off unused items.
     for i in item ..< estimated:
         result.delete(item)
+
+#Turns a seq[string] backed into a serialized string, only using the first X items.
+#Used for hash calculation when parsing objects.
+func reserialize*(
+    data: seq[string],
+    start: int,
+    endIndex: int
+): string {.raises: [].} =
+    for i in start .. endIndex:
+        result &= data[i].lenPrefix & data[i]

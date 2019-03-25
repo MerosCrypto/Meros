@@ -14,13 +14,12 @@ import ../../../lib/BLS
 import ../../../Wallet/Address
 import ../../../Wallet/Wallet
 
-#Entry, and Claim object.
+#Entry object and Claim lib.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/Claim
 
-#Serialize/Deserialize functions.
+#Serialize common functions.
 import ../SerializeCommon
-import SerializeClaim
 
 #Finals lib.
 import finals
@@ -63,7 +62,7 @@ proc parseClaim*(
     result.bls = bls
 
     #Set the hash.
-    result.hash = Blake512(result.serialize())
+    result.hash = Blake512(claimSeq.reserialize(1, 3))
 
     #Set the signature.
     result.signature = signature

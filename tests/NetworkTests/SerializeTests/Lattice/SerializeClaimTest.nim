@@ -66,6 +66,10 @@ for i in 1 .. 20:
         claim.signature == claimParsed.signature,
         "Signature:\r\n" & claim.signature & "\r\n" & claimParsed.signature
     )
+    assert(
+        claim.verified == claimParsed.verified,
+        "Verified:\r\n" & $claim.verified & "\r\n" & $claimParsed.verified,
+    )
 
     #Test the Claim properties.
     assert(

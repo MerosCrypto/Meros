@@ -74,6 +74,7 @@ for i in 1 .. 20:
     assert(data.nonce == dataParsed.nonce)
     assert(data.hash == dataParsed.hash)
     assert(data.signature == dataParsed.signature)
+    assert(data.verified == dataParsed.verified)
 
     #Test the Data properties.
     assert(data.data == dataParsed.data)

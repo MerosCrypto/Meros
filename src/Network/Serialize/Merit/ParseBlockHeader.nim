@@ -10,8 +10,8 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#BlockHeader lib.
-import ../../../Database/Merit/BlockHeader
+#BlockHeader object.
+import ../../../Database/Merit/objects/BlockHeaderObj
 
 #Common serialization functions.
 import ../SerializeCommon
@@ -30,7 +30,7 @@ proc parseBlockHeader*(
     var headerSeq: seq[string] = headerStr.deserialize(6)
 
     #Create the BlockHeader.
-    result = newBlockHeader(
+    result = newBlockHeaderObj(
         uint(headerSeq[0].fromBinary()),
         headerSeq[1].pad(64).toArgonHash(),
         newBLSSignature(headerSeq[2].pad(96)),
@@ -38,3 +38,4 @@ proc parseBlockHeader*(
         uint(headerSeq[4].fromBinary()),
         uint(headerSeq[5].fromBinary())
     )
+    result.hash = Argon(headerStr, headerSeq[5])

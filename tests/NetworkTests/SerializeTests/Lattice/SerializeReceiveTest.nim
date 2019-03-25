@@ -66,6 +66,10 @@ for i in 1 .. 20:
         recv.signature == recvParsed.signature,
         "Signature:\r\n" & recv.signature & "\r\n" & recvParsed.signature
     )
+    assert(
+        recv.verified == recvParsed.verified,
+        "Verified:\r\n" & $recv.verified & "\r\n" & $recvParsed.verified,
+    )
 
     #Test the Receive properties.
     assert(

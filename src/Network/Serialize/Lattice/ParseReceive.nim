@@ -16,9 +16,8 @@ import ../../../Database/common/objects/IndexObj
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/ReceiveObj
 
-#Serialize/Deserialize functions.
+#Serialize common functions.
 import ../SerializeCommon
-import SerializeReceive
 
 #Finals lib.
 import finals
@@ -61,7 +60,7 @@ proc parseReceive*(
     #Set the nonce.
     result.nonce = nonce
     #Set the hash.
-    result.hash = Blake512(result.serialize())
+    result.hash = Blake512(recvSeq.reserialize(1, 3))
 
     #Verify the signature.
     if not sender.verify(result.hash.toString(), signature):

@@ -49,6 +49,7 @@ for i in 1 .. 20:
     assert(send.nonce == sendParsed.nonce)
     assert(send.hash == sendParsed.hash)
     assert(send.signature == sendParsed.signature)
+    assert(send.verified == sendParsed.verified)
 
     #Test the Send properties.
     assert(send.output == sendParsed.output)
