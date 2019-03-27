@@ -199,7 +199,7 @@ proc test(blocks: int) =
         epoch = epochs.shift(verifications, indexes)
 
         #Mark the indexes as archived.
-        verifications.archive(indexes, uint(i))
+        verifications.archive(indexes)
 
         #Make sure the Epoch has the same hashes as we do.
         for hash in epoch.keys():

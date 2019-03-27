@@ -55,8 +55,7 @@ proc add*(
 #For each provided Index, archive all Verifications from the account's last archived to the provided nonce.
 proc archive*(
     verifs: Verifications,
-    indexes: seq[VerifierIndex],
-    archived: uint
+    indexes: seq[VerifierIndex]
 ) {.raises: [KeyError, LMDBError].} =
     #Iterate over every Index.
     for index in indexes:

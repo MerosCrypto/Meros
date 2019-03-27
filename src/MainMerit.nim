@@ -130,7 +130,7 @@ proc mainMerit() {.raises: [
                 return false
 
             #Archive the Verifications mentioned in the Block.
-            verifications.archive(newBlock.verifications, newBlock.header.nonce)
+            verifications.archive(newBlock.verifications)
 
             #Create the Mints (which ends up minting a total of 50000 MR).
             var
