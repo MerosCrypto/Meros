@@ -21,6 +21,12 @@ import ../Verifications/Verifications
 #Merit lib.
 import ../Merit/Merit
 
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
+
+#Serialize Entry function.
+import ../../Network/Serialize/Lattice/SerializeEntry
+
 #Entry and Entry descendants.
 import objects/EntryObj
 import Mint
@@ -43,9 +49,6 @@ import Account
 import objects/LatticeObj
 export LatticeObj
 
-#String utils standard lib.
-import strutils
-
 #Seq utils standard lib.
 import sequtils
 
@@ -54,6 +57,18 @@ import tables
 
 #Finals lib.
 import finals
+
+#Constructor.
+proc newLattice*(
+    db: DatabaseFunctionBox,
+    txDiff: string,
+    dataDiff: string
+): Lattice {.raises: [ValueError].} =
+    newLatticeObj(
+        db,
+        txDiff,
+        dataDiff
+    )
 
 #Add a Entry to the Lattice.
 proc add*(
@@ -125,15 +140,17 @@ proc add*(
     if not result:
         return
 
-    #If that wasn't a Mint, add the Entry to the lookup table.
-    if entry.descendant != EntryType.Mint:
-        lattice.addHash(
-            entry.hash,
-            newIndex(
-                entry.sender,
-                entry.nonce
-            )
+    #Add the Entry to the lookup table.
+    lattice.addHash(
+        entry.hash,
+        newIndex(
+            entry.sender,
+            entry.nonce
         )
+    )
+
+    #Save the Entry to the DB.
+    lattice.db.put("lattice_" & entry.hash, char(entry.descendant) & entry.serialize())
 
 proc mint*(
     lattice: Lattice,
@@ -159,6 +176,9 @@ proc mint*(
     #Add it to the Lattice.
     if not lattice.add(nil, mint, true):
         raise newException(MintError, "Couldn't add the Mint Entry to the Lattice.")
+
+    #Save the hash to the DB.
+    lattice.db.put("lattice_minter_" & mint.nonce.toBinary(), mint.hash.toString())
 
 #Add a Verification to the Verifications' table.
 proc verify*(
@@ -242,3 +262,6 @@ proc verify*(
                 lattice.accounts[index.key].balance += mint.amount
             else:
                 discard
+
+        #Save the hash to the DB under SENDER_NONCE.
+        lattice.db.put("lattice_" & entry.sender & "_" & entry.nonce.toBinary(), entry.hash.toString())

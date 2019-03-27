@@ -1,6 +1,9 @@
 #BN lib.
 import BN
 
+#DB Function Box object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #Entry, Mint, and Send objects.
 import EntryObj
 import MintObj
@@ -12,6 +15,9 @@ import finals
 #Account object.
 finalsd:
     type Account* = ref object of RootObj
+        #DB.
+        db: DatabaseFunctionBox
+
         #Chain owner.
         address* {.final.}: string
         #Account height.
@@ -22,8 +28,10 @@ finalsd:
         balance*: BN
 
 #Creates a new account object.
-func newAccountObj*(address: string): Account {.raises: [].} =
+proc newAccountObj*(db: DatabaseFunctionBox, address: string): Account {.raises: [].} =
     result = Account(
+        db: db,
+        
         address: address,
         height: 0,
         entries: @[],

@@ -11,6 +11,9 @@ import ../../../lib/Hash
 #Merit lib.
 import ../../Merit/Merit
 
+#DB Function Box object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #Index object.
 import ../../common/objects/IndexObj
 
@@ -28,6 +31,12 @@ import tables
 
 #Lattice master object.
 type Lattice* = ref object of RootObj
+    #Database.
+    db: DatabaseFunctionBox,
+    
+    accountsStr: string
+    accountsSeq: seq[string]
+
     #Difficulties.
     difficulties*: tuple[transaction: BN, data: BN]
 
@@ -50,12 +59,15 @@ type Lattice* = ref object of RootObj
     ]
 
 #Lattice constructor
-func newLattice*(
+func newLatticeObj*(
+    db: DatabaseFunctionBox,
     txDiff: string,
     dataDiff: string
 ): Lattice {.raises: [ValueError].} =
     #Create the object.
     result = Lattice(
+        db: db,
+
         difficulties: (transaction: txDiff.toBN(16), data: dataDiff.toBN(16)),
         lookup: newTable[string, Index](),
         verifications: newTable[string, seq[BLSPublicKey]](),
@@ -63,7 +75,7 @@ func newLattice*(
     )
 
     #Add the minter account.
-    result.accounts["minter"] = newAccountObj("minter")
+    result.accounts["minter"] = newAccountObj(result.db, "minter")
 
 #Add a hash to the lookup.
 func addHash*(
@@ -82,7 +94,7 @@ func addAccount*(
     if lattice.accounts.hasKey(address):
         return
 
-    lattice.accounts[address] = newAccountObj(address)
+    lattice.accounts[address] = newAccountObj(lattice.db, address)
 
 #Gets an account.
 func getAccount*(

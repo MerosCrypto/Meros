@@ -1,26 +1,37 @@
 # TODO
 
 ### Core:
-Filesystem:
-- Store the last 6 blocks of Verifications in RAM, not just the last block.
-- Load unarchived verifications.
+DB Branch Before Merge:
+- We save Entries to `lattice_HASH`.
+- We save confirmed, including Mint, hashes to `lattice_SENDER_NONCE`.
+- We need to save a list of accounts.
+- We need to save a list of unconfirmed TXs.
+- We need to load the list of accounts.
+- We need to load the unconfirmed Entries.
+- We need to load the the Verifications of unconfirmed Entries.
 
-- Remove holders who lost all their Merit from `merit_holders`.
-
-- DB - Entries.
+- Verifications Test (in relation to the DB).
+- Lattice Test (in relation to the DB).
 
 Verifications:
-- Merit Removal.
+- Load unarchived verifications from the DB.
 
 Merit:
+- Checkpoints.
 - Improve the Difficulty algorithm.
 - Dead Merit.
 - Resolve Merit forks.
 - Have cutoff Rewards carry over.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
+- Remove holders who lost all their Merit from `merit_holders`.
+
+Verifications & Merit:
+- Merit Removal.
+- Verification Exclusions: Verifications that we can't find the TX for, so the Block says to ignore, which are validated by checkpoints.
 
 Lattice:
+- Cache the UXTO set.
 - Have work precalculable for 100 `Send`'s/`Data`'s in advance.
 - Difficulty voting.
 - Lock boxes.
@@ -30,14 +41,15 @@ Wallet:
 - HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 
 Network:
+- Move to fixed length messages (instead of length prefixes like we have now).
 - Prevent the same client from connecting multiple times.
+- Peer finding.
+- Node karma.
+- Multi-client syncing.
 - Sync Entries not on the Blockchain.
 - Sync Verifications not on the Blockchain.
 - Sync gaps (if we get data with nonce 2 but we only have 0; applies to both the Lattice and Verifications).
 - Replace the `sleepAsync(100)` in `verify` with gap syncing.
-- Peer finding.
-- Multi-client syncing.
-- Node karma.
 - Move Entries and Verifications to UDP.
 
 ### Tests:
@@ -64,7 +76,6 @@ Database/Merit:
 - Database/Merit/BlockHeader Test.
 - Database/Merit/Block Test.
 - Database/Merit/Difficulty Test.
-- More Database/Merit/Epochs Test (in relation to the DB and for complex reward calculation).
 - Database/Merit/Merit Test.
 
 Database/Lattice:
@@ -113,7 +124,10 @@ UI/RPC:
 
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
-- We used uint because indexes can't be negative and it was safer. That said, the constant casting is quite annoying and we're still limited to the int limits. In some places, we've even updated the casts to accept both, defeating the point. We should just remove uint at this point.
+- Remove `ref` from objects that shouldn't be `ref`.
+- Remove `of RootObj` from objects that aren't inherited from.
+
+- We used `uint` because indexes can't be negative and it was safer. That said, the constant casting is quite annoying and we're still limited to the `int` limits. In some places, we've even updated the casts to accept both, defeating the point. We should just remove `uint` at this point.
 
 - Remove `EventError`.
 - Rename the exported `LMDBError` to `DBError`.
