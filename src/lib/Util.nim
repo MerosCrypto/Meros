@@ -28,11 +28,11 @@ func strip*(data: string): string {.raises: [].} =
 
 #Left-pads data, with a char or string, until the data is a certain length.
 func pad*(
-    data: string,
+    data: char | string,
     len: int,
     prefix: char | string = char(0)
 ): string {.raises: [].} =
-    result = data
+    result = $data
 
     while result.len < len:
         result = prefix & result

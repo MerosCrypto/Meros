@@ -116,7 +116,7 @@ proc mainVerifications() {.raises: [].} =
             try:
                 verifications.add(verif)
             except:
-                #We either got the Verification/a competing Verification while handling the Block
+                #We either already got the Verification/got a competing Verification while handling the Block
                 #OR
                 #This had an unknown error.
                 #We return false to be safe.

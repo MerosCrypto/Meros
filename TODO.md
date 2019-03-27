@@ -10,7 +10,7 @@ DB Branch Before Merge:
 - We need to load the unconfirmed Entries.
 - We need to load the the Verifications of unconfirmed Entries.
 
-- Verifications Test (in relation to the DB).
+- Add empty Verifiers to the VerificationsTest (and more Verifiers/Verifications in general).
 - Lattice Test (in relation to the DB).
 
 Verifications:
@@ -70,13 +70,13 @@ Wallet:
 Database/Verifications:
 - Database/Verifications/Verifier Test.
 - Database/Verifications/Verification Test.
-- Database/Verifications/Verifications Test.
 
 Database/Merit:
 - Database/Merit/BlockHeader Test.
 - Database/Merit/Block Test.
 - Database/Merit/Difficulty Test.
 - Database/Merit/Merit Test.
+- Add DB writeups, like the one in the VerificationsTest, to BlockchainTest, StateTest, and EpochsTest.
 
 Database/Lattice:
 - Database/Lattice/Entry Test.

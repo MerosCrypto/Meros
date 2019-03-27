@@ -57,7 +57,7 @@ proc newVerificationsObj*(db: DatabaseFunctionBox): Verifications {.raises: [].}
         result.verifiersSeq = newSeq[string](result.verifiersStr.len div 48)
 
         #Create a Verifier for each one in the string.
-        for i in countup(0, result.verifiersStr.len, 48):
+        for i in countup(0, result.verifiersStr.len - 1, 48):
             #Extract the verifier.
             var verifier = result.verifiersStr[i .. i + 47].strip()
 

@@ -19,10 +19,6 @@ import ../../../objects/GlobalFunctionBoxObj
 #Verification object.
 import VerificationObj
 
-#Serialize libs.
-import ../../../Network/Serialize/Verifications/SerializeVerification
-import ../../../Network/Serialize/Verifications/ParseVerification
-
 #String utils standard lib.
 import strutils
 
@@ -54,21 +50,25 @@ proc newVerifierObj*(
     result = Verifier(
         db: db,
 
-        key: key,
-        height: 0,
+        key: key.pad(48),
         archived: -1,
         verifications: @[],
         merkle: newMerkle()
     )
     result.ffinalizeKey()
 
-    #Check if we're in the DB.
+    #Load our data from the DB.
     try:
-        result.archived = parseInt(result.db.get("verifications_" & result.key.pad(48)))
-    #If we're not, add ourselves and return.
+        result.archived = parseInt(result.db.get("verifications_" & result.key))
+
+        #Recreate the Merkle tree.
+        for i in 0 .. result.archived:
+            result.merkle.add(
+                result.db.get("verifications_" & result.key & "_" & i.toBinary())
+            )
+    #If we're not in the DB, add ourselves.
     except:
-        result.db.put("verifications_" & result.key.pad(48), $result.archived)
-        return
+        result.db.put("verifications_" & result.key, $result.archived)
 
     #Populate with the info from the DB.
     result.height = uint(result.archived + 1)
@@ -103,7 +103,7 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError, L
     verifier.merkle.add(verif.hash.toString())
 
     #Add the Verification to the Database.
-    verifier.db.put("verifications_" & verifier.key & "_" & verif.nonce.toBinary(), verif.serialize())
+    verifier.db.put("verifications_" & verifier.key & "_" & verif.nonce.toBinary(), verif.hash.toString())
 
 #Add a MemoryVerification to a Verifier.
 proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [MerosIndexError, BLSError, LMDBError].} =
@@ -126,7 +126,12 @@ proc `[]`*(verifier: Verifier, index: int): Verification {.raises: [ValueError, 
     #If it's in the database...
     if int(index) <= verifier.archived:
         #Grab it and return it.
-        return verifier.db.get("verifications_" & verifier.key & "_" & index.toBinary()).parseVerification()
+        result = newVerificationObj(
+            verifier.db.get("verifications_" & verifier.key & "_" & index.toBinary()).toHash(512)
+        )
+        result.verifier = newBLSPublicKey(verifier.key)
+        result.nonce = uint(index)
+        return
 
     #Else, return it from memory.
     result = verifier.verifications[int(index) - (verifier.archived + 1)]
