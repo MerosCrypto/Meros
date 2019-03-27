@@ -1,5 +1,8 @@
-#Errors.
+#Errors lib.
 import ../../lib/Errors
+
+#Util lib.
+import ../../lib/Util
 
 #BN lib.
 import BN
@@ -49,6 +52,9 @@ import Account
 import objects/LatticeObj
 export LatticeObj
 
+#String utils standard lib.
+import strutils
+
 #Seq utils standard lib.
 import sequtils
 
@@ -76,7 +82,7 @@ proc add*(
     merit: Merit,
     entry: Entry,
     mintOverride: bool = false
-): bool {.raises: [ValueError, BLSError, SodiumError].} =
+): bool {.raises: [ValueError, BLSError, SodiumError, LMDBError].} =
     #Make sure the sender is only minter when mintOverride is true.
     if (
         (entry.sender == "minter") and
@@ -150,7 +156,7 @@ proc add*(
     )
 
     #Save the Entry to the DB.
-    lattice.db.put("lattice_" & entry.hash, char(entry.descendant) & entry.serialize())
+    lattice.db.put("lattice_" & entry.hash.toString(), char(entry.descendant) & entry.serialize())
 
 proc mint*(
     lattice: Lattice,
@@ -161,6 +167,7 @@ proc mint*(
     MintError,
     BLSError,
     SodiumError,
+    LMDBError,
     FinalAttributeError
 ].} =
     #Store the height as the result.
@@ -185,7 +192,7 @@ proc verify*(
     lattice: Lattice,
     merit: Merit,
     verif: Verification,
-): bool {.raises: [KeyError, ValueError].} =
+): bool {.raises: [KeyError, ValueError, LMDBError].} =
     #Make sure the verifier has weight.
     if merit.state[verif.verifier] == uint(0):
         return false

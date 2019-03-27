@@ -32,8 +32,8 @@ import tables
 #Lattice master object.
 type Lattice* = ref object of RootObj
     #Database.
-    db: DatabaseFunctionBox,
-    
+    db*: DatabaseFunctionBox
+
     accountsStr: string
     accountsSeq: seq[string]
 
