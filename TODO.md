@@ -1,7 +1,6 @@
 # TODO
 
-### Core:
-DB Branch Before Merge:
+### DB Branch Before Merge:
 - We save Entries to `lattice_HASH`.
 - We save confirmed, including Mint, hashes to `lattice_SENDER_NONCE`.
 - We need to save a list of accounts.
@@ -13,6 +12,7 @@ DB Branch Before Merge:
 - Add empty Verifiers to the VerificationsTest (and more Verifiers/Verifications in general).
 - Lattice Test (in relation to the DB).
 
+### Core:
 Verifications:
 - Load unarchived verifications from the DB.
 
@@ -60,7 +60,6 @@ lib:
 - lib/Base (256) Test.
 - lib/Hash/Argon Test.
 - lib/Hash/Blake2 Test.
-- lib/Merkle Test (fuzz).
 - lib/Ed25519 Test.
 
 Wallet:
