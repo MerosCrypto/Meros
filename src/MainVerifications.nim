@@ -105,7 +105,7 @@ proc mainVerifications() {.raises: [].} =
         #Handle Verifications.
         functions.verifications.addVerification = proc (
             verif: Verification
-        ): bool {.raises: [ValueError].} =
+        ): bool {.raises: [ValueError, LMDBError].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
 
@@ -128,7 +128,7 @@ proc mainVerifications() {.raises: [].} =
         #Handle Verifications.
         functions.verifications.addMemoryVerification = proc (
             verif: MemoryVerification
-        ): bool {.raises: [ValueError, BLSError].} =
+        ): bool {.raises: [ValueError, BLSError, LMDBError].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification."
 

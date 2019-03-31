@@ -54,26 +54,26 @@ type
         getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
         getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
 
-        addVerification*:        proc (verif: Verification): bool       {.raises: [ValueError].}
-        addMemoryVerification*:  proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError].}
+        addVerification*:        proc (verif: Verification): bool       {.raises: [ValueError, LMDBError].}
+        addMemoryVerification*:  proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError, LMDBError].}
 
     MeritFunctionBox* = ref object of RootObj
-        getHeight*:      proc (): uint             {.raises: [].}
+        getHeight*:      proc (): uint             {.raises: [LMDBError].}
         getDifficulty*:  proc (): BN               {.raises: [].}
         getBlock*:       proc (nonce: uint): Block {.raises: [ValueError, ArgonError, BLSError, LMDBError, FinalAttributeError].}
 
         addBlock*:  proc (newBlock: Block): Future[bool]
 
     LatticeFunctionBox* = ref object of RootObj
-        getHeight*:        proc (account: string): uint {.raises: [ValueError].}
-        getBalance*:       proc (account: string): BN   {.raises: [ValueError].}
-        getEntryByHash*:   proc (hash: string): Entry   {.raises: [KeyError, ValueError].}
+        getHeight*:        proc (account: string): uint {.raises: [ValueError, LMDBError].}
+        getBalance*:       proc (account: string): BN   {.raises: [ValueError, LMDBError].}
+        getEntryByHash*:   proc (hash: string): Entry   {.raises: [KeyError].}
         getEntryByIndex*:  proc (index: Index): Entry   {.raises: [ValueError].}
 
-        addClaim*:    proc (claim: Claim): bool  {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
-        addSend*:     proc (send: Send): bool    {.raises: [ValueError, EventError, AsyncError, BLSError, SodiumError, FinalAttributeError].}
-        addReceive*:  proc (recv: Receive): bool {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
-        addData*:     proc (data: Data): bool    {.raises: [ValueError, AsyncError, BLSError, SodiumError].}
+        addClaim*:    proc (claim: Claim): bool  {.raises: [ValueError, AsyncError, BLSError, SodiumError, LMDBError].}
+        addSend*:     proc (send: Send): bool    {.raises: [ValueError, EventError, AsyncError, BLSError, SodiumError, LMDBError, FinalAttributeError].}
+        addReceive*:  proc (recv: Receive): bool {.raises: [ValueError, AsyncError, BLSError, LMDBError, SodiumError].}
+        addData*:     proc (data: Data): bool    {.raises: [ValueError, AsyncError, BLSError, LMDBError, SodiumError].}
 
     DatabaseFunctionBox* = ref object of RootObj
         put*:    proc (key: string, val: string) {.raises: [LMDBError].}

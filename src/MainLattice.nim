@@ -41,20 +41,21 @@ proc mainLattice() {.raises: [ValueError].} =
     {.gcsafe.}:
         #Create the Lattice.
         lattice = newLattice(
+            functions.database,
             TRANSACTION_DIFFICULTY,
             DATA_DIFFICULTY
         )
 
         #Handle requests for an account's height.
-        functions.lattice.getHeight = proc (account: string): uint {.raises: [ValueError].} =
+        functions.lattice.getHeight = proc (account: string): uint {.raises: [ValueError, LMDBError].} =
             lattice[account].height
 
         #Handle requests for an account's balance.
-        functions.lattice.getBalance = proc (account: string): BN {.raises: [ValueError].} =
+        functions.lattice.getBalance = proc (account: string): BN {.raises: [ValueError, LMDBError].} =
             lattice[account].balance
 
         #Handle requests for an Entry.
-        functions.lattice.getEntryByHash = proc (hash: string): Entry {.raises: [KeyError, ValueError].} =
+        functions.lattice.getEntryByHash = proc (hash: string): Entry {.raises: [KeyError].} =
             lattice.getEntry(hash)
 
         functions.lattice.getEntryByIndex = proc (index: Index): Entry {.raises: [ValueError].} =
@@ -65,7 +66,8 @@ proc mainLattice() {.raises: [ValueError].} =
             ValueError,
             AsyncError,
             BLSError,
-            SodiumError
+            SodiumError,
+            LMDBError
         ].} =
             #Print that we're adding the Entry.
             echo "Adding a new Claim."
@@ -94,6 +96,7 @@ proc mainLattice() {.raises: [ValueError].} =
             AsyncError,
             BLSError,
             SodiumError,
+            LMDBError,
             FinalAttributeError
         ].} =
             #Print that we're adding the Entry.
@@ -149,6 +152,7 @@ proc mainLattice() {.raises: [ValueError].} =
             ValueError,
             AsyncError,
             BLSError,
+            LMDBError,
             SodiumError
         ].} =
             #Print that we're adding the Entry.
@@ -176,6 +180,7 @@ proc mainLattice() {.raises: [ValueError].} =
             ValueError,
             AsyncError,
             BLSError,
+            LMDBError,
             SodiumError
         ].} =
             #Print that we're adding the Entry.
