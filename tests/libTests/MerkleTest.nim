@@ -100,4 +100,10 @@ for i in 1 .. 20:
     #Test that the both tree and the fullCopy have the same hash.
     assert(both.hash == fullCopy[0])
 
+    #Prune the tree to half of its size.
+    constructor.prune((hashLen div 2) - 1)
+
+    #Make sure trimming, as long as we don't break the lower bound, still works.
+    assert(constructor.trim(hashLen div 2).hash == addition.trim(hashLen div 2).hash)
+
 echo "Finished the lib/Merkle Test."

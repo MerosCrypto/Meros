@@ -192,3 +192,20 @@ proc trim*(treeArg: Merkle, nArg: int): Merkle {.raises: [].} =
 
     #Recursively handle the rest.
     return tree.trimAux(n)
+
+#Deletes leaves and lower branches. Sets a lower bound on trim, which will lead to undefined behavior if broken.
+proc prune*(tree: Merkle, nArg: int) {.raises: [].} =
+    #Clone n and set the part of the tree we're chopping.
+    var
+        n: int = nArg
+        chopping: Merkle = tree
+
+    #Chop of the left branch for as long as we can.
+    while (
+        (n >= chopping.left.leafCount) and
+        (n > 0)
+    ):
+        n -= chopping.left.leafCount
+        chopping.left.left = nil
+        chopping.left.right = nil
+        chopping = chopping.right

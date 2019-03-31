@@ -119,14 +119,12 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
-
-- Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
+- We used `uint` because indexes can't be negative and it was safer. That said, the constant casting is quite annoying and we're still limited to the `int` limits. In some places, we've even updated the casts to accept both, defeating the point. We should just remove `uint` at this point.
 
 - Remove `ref` from objects that shouldn't be `ref`.
 - Remove `of RootObj` from objects that aren't inherited from.
 
-- We used `uint` because indexes can't be negative and it was safer. That said, the constant casting is quite annoying and we're still limited to the `int` limits. In some places, we've even updated the casts to accept both, defeating the point. We should just remove `uint` at this point.
+- Make more `proc`s `func`.
 
 - Remove `EventError`.
 - Rename the exported `LMDBError` to `DBError`.
@@ -135,15 +133,19 @@ UI/RPC:
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Clean up Exceptions, whether it be with Option-esque Enum code or something else.
 
-- We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
 - Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
+
+- If a Merkle's left is too big to prune, descend until we find a left which isn't.
+
+- We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
+
+- Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Clean `merit.addBlock`.
 - Don't rebroadcast Blocks or Entries that we're syncing.
-
-- Make more `proc`s `func`.
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
