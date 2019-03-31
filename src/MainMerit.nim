@@ -151,7 +151,7 @@ proc mainMerit() {.raises: [
                         #Claim the Reward.
                         var claim: Claim = newClaim(
                             mintNonce,
-                            lattice.getAccount(wallet.address).height
+                            lattice[wallet.address].height
                         )
                         #Sign the claim.
                         claim.sign(config.miner, wallet)

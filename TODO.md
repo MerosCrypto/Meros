@@ -4,8 +4,10 @@
 - We save Entries to `lattice_HASH`.
 - We save confirmed, including Mint, hashes to `lattice_SENDER_NONCE`.
 - We save a list of accounts.
-- We need to load the list of accounts.
-- We need to provide access to confirmed Entries in the DB.
+- We load the list of accounts.
+- We load Lattice entries loaded by hash from the DB.
+- We need to add a cache for unconfirmed Entries to the Account object.
+- We need to provide access to confirmed Entries in the DB via the Account object.
 - We need to reload the last 6 blocks, resyncing the unconfirmed Entries and tracking the Verifications.
 
 - Lattice Test (in relation to the DB).
@@ -121,7 +123,10 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
+- Decide a definitive import ordering and make sure it's used throughout the codebase.
+
 - We used `uint` because indexes can't be negative and it was safer. That said, the constant casting is quite annoying and we're still limited to the `int` limits. In some places, we've even updated the casts to accept both, defeating the point. We should just remove `uint` at this point.
+- Use `let` where appropriate.
 
 - Remove `ref` from objects that shouldn't be `ref`.
 - Remove `of RootObj` from objects that aren't inherited from.

@@ -91,7 +91,7 @@ proc add*(
         return false
 
     #Get the Account.
-    var account: Account = lattice.getAccount(entry.sender)
+    var account: Account = lattice[entry.sender]
 
     case entry.descendant:
         of EntryType.Mint:
@@ -171,7 +171,7 @@ proc mint*(
     FinalAttributeError
 ].} =
     #Store the height as the result.
-    result = lattice.getAccount("minter").height
+    result = lattice["minter"].height
 
     #Create the Mint Entry.
     var mint: Mint = newMint(

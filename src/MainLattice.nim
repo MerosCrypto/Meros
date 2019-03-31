@@ -47,15 +47,15 @@ proc mainLattice() {.raises: [ValueError].} =
 
         #Handle requests for an account's height.
         functions.lattice.getHeight = proc (account: string): uint {.raises: [ValueError].} =
-            lattice.getAccount(account).height
+            lattice[account].height
 
         #Handle requests for an account's balance.
         functions.lattice.getBalance = proc (account: string): BN {.raises: [ValueError].} =
-            lattice.getAccount(account).balance
+            lattice[account].balance
 
         #Handle requests for an Entry.
         functions.lattice.getEntryByHash = proc (hash: string): Entry {.raises: [KeyError, ValueError].} =
-            lattice[hash]
+            lattice.getEntry(hash)
 
         functions.lattice.getEntryByIndex = proc (index: Index): Entry {.raises: [ValueError].} =
             lattice[index]
@@ -122,7 +122,7 @@ proc mainLattice() {.raises: [ValueError].} =
                                 send.sender,
                                 send.nonce
                             ),
-                            lattice.getAccount(wallet.address).height
+                            lattice[wallet.address].height
                         )
                         #Sign it.
                         wallet.sign(recv)
