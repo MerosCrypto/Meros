@@ -13,7 +13,6 @@ type Merkle* = ref object of RootObj
         of true:
             discard
         of false:
-            chopped: int
             left*: Merkle
             right*: Merkle
     hash*: string
@@ -45,7 +44,6 @@ proc rehash(tree: Merkle) {.raises: [].} =
 proc newMerkle(left: Merkle, right: Merkle): Merkle {.raises: [].} =
     result = Merkle(
         isLeaf: false,
-        chopped: 0,
         left: left,
         right: right
     )
@@ -79,8 +77,6 @@ func leafCount(tree: Merkle): int {.raises: [].} =
         return 0
     if tree.isLeaf:
         return 1
-    if tree.left.isNil:
-        return tree.chopped
     return tree.left.leafCount + tree.right.leafCount
 
 #Creates a Merkle Tree out of a single hash, filling in duplicates.
@@ -146,7 +142,7 @@ proc newMerkleAux(hashes: varargs[string], targetDepth: int): Merkle {.raises: [
     if targetDepth == 0:
         return newMerkle(hashes[0])
 
-    let halfWidth = 2 ^ (targetDepth - 1)
+    let halfWidth: int = 2 ^ (targetDepth - 1)
     if hashes.len <= halfWidth:
         #We need to duplicate LHS on RHS.
         return newMerkle(newMerkleAux(hashes, targetDepth - 1), nil)
@@ -196,30 +192,3 @@ proc trim*(treeArg: Merkle, nArg: int): Merkle {.raises: [].} =
 
     #Recursively handle the rest.
     return tree.trimAux(n)
-
-#Deletes N leaves and lower branches, counting already deleted leaves.
-#Sets a lower bound on trim, which will lead to undefined behavior if broken.
-proc prune*(tree: Merkle, nArg: int) {.raises: [].} =
-    #Clone n and set the part of the tree we're chopping.
-    var
-        n: int = nArg
-        chopping: Merkle = tree
-
-    #Make sure this isn't a leaf.
-    if tree.isLeaf:
-        return
-
-    #Chop of the left branch for as long as we can.
-    while (
-        (n >= chopping.left.leafCount) and
-        (chopping.left.isFull) and
-        (n > 0)
-    ):
-        n -= chopping.left.leafCount
-        chopping.chopped = chopping.left.leafCount
-        chopping.left = nil
-        chopping = chopping.right
-
-        #Make sure we didn't go down to a leaf.
-        if chopping.isLeaf:
-            return

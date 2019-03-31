@@ -100,12 +100,6 @@ for i in 1 .. 20:
     #Test that the both tree and the fullCopy have the same hash.
     assert(both.hash == fullCopy[0])
 
-    #Prune the tree to half of its size via multiple prunes.
-    constructor.prune((hashLen div 5) - 1)
-    constructor.prune((hashLen div 4) - 1)
-    constructor.prune((hashLen div 3) - 1)
-    constructor.prune((hashLen div 2) - 1)
-
     #Make sure trimming, as long as we don't break the lower bound, still works.
     assert(constructor.trim(hashLen div 2).hash == addition.trim(hashLen div 2).hash)
 
