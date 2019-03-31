@@ -9,7 +9,6 @@
 - We need to load the unconfirmed Entries.
 - We need to load the the Verifications of unconfirmed Entries.
 
-- Add empty Verifiers to the VerificationsTest (and more Verifiers/Verifications in general).
 - Lattice Test (in relation to the DB).
 
 ### Core:

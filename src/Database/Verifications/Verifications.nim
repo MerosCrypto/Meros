@@ -10,6 +10,9 @@ import BN
 #Hash lib.
 import ../../lib/Hash
 
+#Merkle lib.
+import ../../lib/Merkle
+
 #BLS lib.
 import ../../lib/BLS
 
@@ -64,6 +67,9 @@ proc archive*(
             0,
             int(index.nonce - verifs[index.key].verifications[0].nonce)
         )
+
+        #Prune their Merkle.
+        verifs[index.key].merkle.prune(int(index.nonce) - 1)
 
         #Update the Verifier.
         verifs[index.key].archived = int(index.nonce)

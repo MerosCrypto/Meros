@@ -66,6 +66,9 @@ proc newVerifierObj*(
             result.merkle.add(
                 result.db.get("verifications_" & result.key & "_" & i.toBinary())
             )
+
+        #Prune the Merkle tree.
+        result.merkle.prune(result.archived - 1)
     #If we're not in the DB, add ourselves.
     except:
         result.db.put("verifications_" & result.key, $result.archived)

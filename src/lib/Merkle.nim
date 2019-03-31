@@ -205,6 +205,10 @@ proc prune*(tree: Merkle, nArg: int) {.raises: [].} =
         n: int = nArg
         chopping: Merkle = tree
 
+    #Make sure this isn't a leaf.
+    if tree.isLeaf:
+        return
+
     #Chop of the left branch for as long as we can.
     while (
         (n >= chopping.left.leafCount) and
@@ -213,6 +217,9 @@ proc prune*(tree: Merkle, nArg: int) {.raises: [].} =
     ):
         n -= chopping.left.leafCount
         chopping.chopped = chopping.left.leafCount
-        chopping.left.left = nil
-        chopping.left.right = nil
+        chopping.left = nil
         chopping = chopping.right
+
+        #Make sure we didn't go down to a leaf.
+        if chopping.isLeaf:
+            return
