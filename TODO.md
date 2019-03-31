@@ -3,11 +3,10 @@
 ### DB Branch Before Merge:
 - We save Entries to `lattice_HASH`.
 - We save confirmed, including Mint, hashes to `lattice_SENDER_NONCE`.
-- We need to save a list of accounts.
-- We need to save a list of unconfirmed TXs.
+- We save a list of accounts.
 - We need to load the list of accounts.
-- We need to load the unconfirmed Entries.
-- We need to load the the Verifications of unconfirmed Entries.
+- We need to provide access to confirmed Entries in the DB.
+- We need to reload the last 6 blocks, resyncing the unconfirmed Entries and tracking the Verifications.
 
 - Lattice Test (in relation to the DB).
 
@@ -17,6 +16,7 @@ Verifications:
 
 Merit:
 - Checkpoints.
+- If a TX wasn't confirmed, but doesn't have any competitors, default it to confirmed.
 - Improve the Difficulty algorithm.
 - Dead Merit.
 - Resolve Merit forks.
@@ -27,6 +27,7 @@ Merit:
 
 Verifications & Merit:
 - Merit Removal.
+- Currently, Blockchains archive Verifications via the tip; we should also add a start nonce to ignore unarchived Verifications which are past their Epoch.
 - Verification Exclusions: Verifications that we can't find the TX for, so the Block says to ignore, which are validated by checkpoints.
 
 Lattice:
@@ -108,7 +109,7 @@ UI/RPC:
 
 - Have the RPC match the JSON-RPC 2.0 spec (minus HTTP).
 - Have the RPC dynamically get the nonce (it's currently an argument).
-- `network.rebroadcast(address, nonce)` RPC method.
+- `network.rebroadcast(address | verifier, nonce)` RPC method.
 - Expose more of the Verifications RPC.
 
 - Loading screen.
