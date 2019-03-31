@@ -13,6 +13,8 @@
 ### Core:
 Verifications:
 - Load unarchived verifications from the DB.
+- Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
+- When we load a Merkle, load every leaf into a seq, and then call newMerkle. Don't use addition.
 
 Merit:
 - Checkpoints.

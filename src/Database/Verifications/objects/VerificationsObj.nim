@@ -38,7 +38,6 @@ import finals
 #Verifications object.
 type Verifications* = ref object
     db*: DatabaseFunctionBox
-    verifiersSeq: seq[string]
     verifiersStr: string
 
     verifiers: TableRef[string, Verifier]
@@ -54,22 +53,17 @@ proc newVerificationsObj*(db: DatabaseFunctionBox): Verifications {.raises: [].}
     #Grab the Verifiers' string, if it exists.
     try:
         result.verifiersStr = result.db.get("verifications_verifiers")
-        result.verifiersSeq = newSeq[string](result.verifiersStr.len div 48)
 
         #Create a Verifier for each one in the string.
         for i in countup(0, result.verifiersStr.len - 1, 48):
             #Extract the verifier.
             var verifier = result.verifiersStr[i .. i + 47].strip()
 
-            #Store it in the seq.
-            result.verifiersSeq[i div 48] = verifier
-
             #Load the Verifier.
             result.verifiers[verifier] = newVerifierObj(result.db, verifier)
     #If it doesn't, set the Verifiers' string to "",
     except:
         result.verifiersStr = ""
-        result.verifiersSeq = @[]
 
 #Creates a new Verifier on the Verifications.
 proc add(
@@ -83,13 +77,10 @@ proc add(
     #Create a new Verifier.
     verifs.verifiers[verifier] = newVerifierObj(verifs.db, verifier)
 
-    #Check if this Verifier is already in the DB.
-    if not verifs.verifiersSeq.contains(verifier):
-        #Add the Verifier to the Verifier's string and seq.
-        verifs.verifiersStr &= verifier.pad(48)
-        verifs.verifiersSeq.add(verifier)
-        #Update the Verifier's String in the DB.
-        verifs.db.put("verifications_verifiers", verifs.verifiersStr)
+    #Add the Verifier to the Verifier's string.
+    verifs.verifiersStr &= verifier.pad(48)
+    #Update the Verifier's String in the DB.
+    verifs.db.put("verifications_verifiers", verifs.verifiersStr)
 
 #Gets a Verifier by their key.
 proc `[]`*(

@@ -33,9 +33,7 @@ import tables
 type Lattice* = ref object of RootObj
     #Database.
     db*: DatabaseFunctionBox
-
     accountsStr: string
-    accountsSeq: seq[string]
 
     #Difficulties.
     difficulties*: tuple[transaction: BN, data: BN]
@@ -94,7 +92,12 @@ func addAccount*(
     if lattice.accounts.hasKey(address):
         return
 
+    #Create the account.
     lattice.accounts[address] = newAccountObj(lattice.db, address)
+
+    #Add the Account to the accounts string and then save it to the Database.
+    lattice.accountsStr &= address
+    lattice.db.put("lattice_accounts", lattice.accountsStr)
 
 #Gets an account.
 func getAccount*(
