@@ -13,6 +13,7 @@ type Merkle* = ref object of RootObj
         of true:
             discard
         of false:
+            chopped: int
             left*: Merkle
             right*: Merkle
     hash*: string
@@ -44,6 +45,7 @@ proc rehash(tree: Merkle) {.raises: [].} =
 proc newMerkle(left: Merkle, right: Merkle): Merkle {.raises: [].} =
     result = Merkle(
         isLeaf: false,
+        chopped: 0,
         left: left,
         right: right
     )
@@ -77,6 +79,8 @@ func leafCount(tree: Merkle): int {.raises: [].} =
         return 0
     if tree.isLeaf:
         return 1
+    if tree.left.isNil:
+        return tree.chopped
     return tree.left.leafCount + tree.right.leafCount
 
 #Creates a Merkle Tree out of a single hash, filling in duplicates.
@@ -193,7 +197,8 @@ proc trim*(treeArg: Merkle, nArg: int): Merkle {.raises: [].} =
     #Recursively handle the rest.
     return tree.trimAux(n)
 
-#Deletes leaves and lower branches. Sets a lower bound on trim, which will lead to undefined behavior if broken.
+#Deletes N leaves and lower branches, counting already deleted leaves.
+#Sets a lower bound on trim, which will lead to undefined behavior if broken.
 proc prune*(tree: Merkle, nArg: int) {.raises: [].} =
     #Clone n and set the part of the tree we're chopping.
     var
@@ -203,9 +208,11 @@ proc prune*(tree: Merkle, nArg: int) {.raises: [].} =
     #Chop of the left branch for as long as we can.
     while (
         (n >= chopping.left.leafCount) and
+        (chopping.left.isFull) and
         (n > 0)
     ):
         n -= chopping.left.leafCount
+        chopping.chopped = chopping.left.leafCount
         chopping.left.left = nil
         chopping.left.right = nil
         chopping = chopping.right
