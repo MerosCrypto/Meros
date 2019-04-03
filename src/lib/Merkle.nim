@@ -182,6 +182,14 @@ proc trim*(treeArg: Merkle, nArg: int): Merkle {.raises: [].} =
         tree: Merkle = treeArg
         n: int = nArg
 
+    #This code doesn't handle trimming everything BUT the initial leaf.
+    #This override handles that.
+    if tree.leafCount - n == 1:
+        result = tree
+        while result.isBranch:
+            result = result.left
+        return
+
     #Chop of the entire right branch for as long as we can.
     while (
         (n >= tree.right.leafCount) and

@@ -18,13 +18,16 @@ import random
 #Seq utils standard lib.
 import sequtils
 
+#Seed Random via the time.
+randomize(int(getTime()))
+
 #Test nil Merle trees.
 assert(newMerkle().hash == "".pad(64))
 
 #Test leaves.
 assert(newMerkle("1".pad(64)).hash == "1".pad(64))
 
-#Test 10 trees.
+#Test 20 trees.
 for i in 1 .. 20:
     echo "Testing Merkle Trees, iteration " & $i & "."
 
@@ -39,7 +42,8 @@ for i in 1 .. 20:
         #Copy the hashes so we can form our own tree of it (albeit slowly).
         fullCopy: seq[string] = hashes
         #Pick a random sub-amount for use in a Merkle tree created with both the constructor and addition.
-        bothLen: int = rand(hashLen - 1)
+        #The +1 is to make sure we don't skip the both test.
+        bothLen: int = rand(hashLen - 2) + 1
         #Create a second copy of the hashes with this smaller range.
         partialCopy: seq[string] = hashes[0 ..< bothLen]
         #Define three trees. One of newMerkle, one of addition, and one of both.

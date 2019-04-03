@@ -20,7 +20,7 @@ import ../../../../src/Network/Serialize/Verifications/ParseVerification
 #Random standard lib.
 import random
 
-#Set the seed to be based on the time.
+#Seed Random via the time.
 randomize(int(getTime()))
 
 #Test 20 Verification serializations.

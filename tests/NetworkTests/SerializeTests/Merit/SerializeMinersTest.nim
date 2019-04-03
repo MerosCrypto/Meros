@@ -1,5 +1,8 @@
 #Serialize Miners Test.
 
+#Util lib.
+import ../../../../src/lib/Util
+
 #BLS lib.
 import ../../../../src/lib/BLS
 
@@ -13,13 +16,12 @@ import ../../../../src/Wallet/MinerWallet
 import ../../../../src/Network/Serialize/Merit/SerializeMiners
 import ../../../../src/Network/Serialize/Merit/ParseMiners
 
-#Random/Time/Algorithm standard libs. They're used to randomize the testing data.
+#Random/Algorithm standard libs, used to randomize the testing data.
 import random
-import times
 import algorithm
 
-#Set the seed to be based on the time.
-randomize(getTime().toUnix())
+#Seed Random via the time.
+randomize(int(getTime()))
 
 #Test 20 serializations.
 for i in 1 .. 20:

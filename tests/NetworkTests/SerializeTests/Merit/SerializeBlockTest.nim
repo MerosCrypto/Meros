@@ -27,7 +27,7 @@ import random
 #Algorithm standard lib; used to randomize the Verifications/Miners order.
 import algorithm
 
-#Set the seed to be based on the time.
+#Seed Random via the time.
 randomize(int(getTime()))
 
 for i in 1 .. 20:

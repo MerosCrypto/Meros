@@ -1,5 +1,8 @@
 #Serialize Difficulty Test.
 
+#Util lib.
+import ../../../../src/lib/Util
+
 #Numerical libs.
 import BN
 import ../../../../src/lib/Base
@@ -11,14 +14,11 @@ import ../../../../src/Database/Merit/objects/DifficultyObj
 import ../../../../src/Network/Serialize/Merit/SerializeDifficulty
 import ../../../../src/Network/Serialize/Merit/ParseDifficulty
 
-#Random/times standard lib.
+#Random standard lib.
 import random
-import times
 
-import strutils
-
-#Set the seed to be based on the time.
-randomize(getTime().toUnix())
+#Seed Random via the time.
+randomize(int(getTime()))
 
 #Test 20 serializations.
 for i in 1 .. 20:
