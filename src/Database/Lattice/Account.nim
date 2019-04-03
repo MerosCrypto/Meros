@@ -37,7 +37,7 @@ export AccountObj
 proc add(
     account: Account,
     entry: Entry
-): bool {.raises: [ValueError, SodiumError].} =
+): bool {.raises: [ValueError, SodiumError, LMDBError].} =
     result = true
 
     #Verify the sender.
@@ -69,7 +69,7 @@ proc add(
 proc add*(
     account: Account,
     mint: Mint
-): bool {.raises: [ValueError, SodiumError].} =
+): bool {.raises: [ValueError, SodiumError, LMDBError].} =
     account.add(cast[Entry](mint))
 
 #Add a Claim.
@@ -77,7 +77,7 @@ proc add*(
     account: Account,
     claim: Claim,
     mint: Mint
-): bool {.raises: [ValueError, BLSError, SodiumError].} =
+): bool {.raises: [ValueError, BLSError, SodiumError, LMDBError].} =
     #Verify the BLS signature is for this mint and this person.
     try:
         claim.bls.setAggregationInfo(
@@ -107,7 +107,7 @@ proc add*(
     account: Account,
     send: Send,
     difficulty: BN
-): bool {.raises: [ValueError, SodiumError].} =
+): bool {.raises: [ValueError, SodiumError, LMDBError].} =
     #Verify the work.
     if send.argon.toBN() < difficulty:
         return false
@@ -128,7 +128,7 @@ proc add*(
     account: Account,
     recv: Receive,
     sendArg: Entry
-): bool {.raises: [ValueError, SodiumError].} =
+): bool {.raises: [ValueError, SodiumError, LMDBError].} =
     #Verify the entry is a Send.
     if sendArg.descendant != EntryType.Send:
         return false
@@ -167,7 +167,7 @@ proc add*(
     account: Account,
     data: Data,
     difficulty: BN
-): bool {.raises: [ValueError, SodiumError].} =
+): bool {.raises: [ValueError, SodiumError, LMDBError].} =
     #Verify the work.
     if data.argon.toBN() < difficulty:
         return false

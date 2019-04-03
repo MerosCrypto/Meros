@@ -32,10 +32,10 @@ import ../TestDatabase
 discard """
 On Verifications creation:
     Load `verifications_verifiers`.
-    For each, add the verifier.
+    For each, add the Verifier.
 
 On Verifier creation:
-    If the Verifier doesn't exist, add them to `verifiersStr` (if they're not in `verifiersSeq`) and save it.
+    If the Verifier doesn't exist, add them to `verifiersStr` and save it.
     Load `verifications_KEY`, which is the quantity archived in string format (not binary).
     For each archived Verification, load `verifications_KEY_NONCE`, which is the hash, and regenerate the Merkle.
     If it doesn't exist, save "-1" to `verifications_KEY`.

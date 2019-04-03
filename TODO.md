@@ -1,20 +1,12 @@
 # TODO
 
 ### DB Branch Before Merge:
-- We save Entries to `lattice_HASH`.
-- We save confirmed, including Mint, hashes to `lattice_SENDER_NONCE`.
-- We save a list of accounts.
-- We load the list of accounts.
-- We load Lattice entries loaded by hash from the DB.
-- We need to add a cache for unconfirmed Entries to the Account object.
-- We need to provide access to confirmed Entries in the DB via the Account object.
-- We need to reload the last 6 blocks, resyncing the unconfirmed Entries and tracking the Verifications.
+- Load unarchived verifications from the DB.
 
 - Lattice Test (in relation to the DB).
 
 ### Core:
 Verifications:
-- Load unarchived verifications from the DB.
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - When we load a Merkle, load every leaf into a seq, and then call newMerkle. Don't use addition.
 

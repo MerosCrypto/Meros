@@ -37,11 +37,19 @@ proc verify(entry: Entry) {.async.} =
             )
         )
 
-proc mainLattice() {.raises: [ValueError].} =
+proc mainLattice() {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     {.gcsafe.}:
         #Create the Lattice.
         lattice = newLattice(
             functions.database,
+            merit,
+            verifications,
             TRANSACTION_DIFFICULTY,
             DATA_DIFFICULTY
         )
