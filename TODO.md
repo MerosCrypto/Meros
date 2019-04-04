@@ -1,10 +1,5 @@
 # TODO
 
-### DB Branch Before Merge:
-- Expand the Lattice test to handle saving/loading multiple Entries at the same index.
-- Expand the Lattice test with multiple Verifiers and partial Verifications.
-- Reload votes when the chain is 3 blocks, 6 blocks, and 9 blocks.
-
 ### Core:
 Database:
 - If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
@@ -86,7 +81,7 @@ Database/Lattice:
 - Database/Lattice/Receive Test.
 - Database/Lattice/Data Test.
 - Database/Lattice/Account Test.
-- Database/Lattice/Lattice Test.
+- Clean the Database/Lattice/Lattice Test and test loading Verifications after 6 and 9 Blocks.
 
 Network:
 - Tests.

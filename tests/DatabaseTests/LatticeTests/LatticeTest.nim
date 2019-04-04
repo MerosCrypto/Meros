@@ -159,53 +159,71 @@ proc test() =
         assert(originalAccount.balance == reloadedAccount.balance)
 
         #Check every Entry.
-        for h in 0 ..< int(originalAccount.height):
+        for h in uint(0) ..< originalAccount.height:
             var
-                originalEntry: Entry = lattice[address][uint(h)]
-                reloadedEntry: Entry = reloaded[address][uint(h)] #<-
+                originalEntries: seq[Entry]
+                reloadedEntries: seq[Entry]
+            if h < originalAccount.confirmed:
+                originalEntries = @[originalAccount[h]]
+                reloadedEntries = @[reloadedAccount[h]]
+            else:
+                originalEntries = originalAccount.entries[int(h - reloadedAccount.confirmed)]
+                reloadedEntries = reloadedAccount.entries[int(h - reloadedAccount.confirmed)]
 
-            assert(originalEntry.descendant == reloadedEntry.descendant)
-            assert(originalEntry.sender == reloadedEntry.sender)
-            assert(originalEntry.nonce == reloadedEntry.nonce)
-            assert(originalEntry.hash == reloadedEntry.hash)
-            assert(originalEntry.signature == reloadedEntry.signature)
-            assert(originalEntry.verified == reloadedEntry.verified)
+            for e in 0 ..< originalEntries.len:
+                assert(originalEntries[e].descendant == reloadedEntries[e].descendant)
+                assert(originalEntries[e].sender == reloadedEntries[e].sender)
+                assert(originalEntries[e].nonce == reloadedEntries[e].nonce)
+                assert(originalEntries[e].hash == reloadedEntries[e].hash)
+                assert(originalEntries[e].signature == reloadedEntries[e].signature)
+                assert(originalEntries[e].verified == reloadedEntries[e].verified)
 
-            case originalEntry.descendant:
-                of EntryType.Mint:
-                    assert(cast[Mint](originalEntry).output == cast[Mint](reloadedEntry).output)
-                    assert(cast[Mint](originalEntry).amount == cast[Mint](reloadedEntry).amount)
-                of EntryType.Claim:
-                    assert(cast[Claim](originalEntry).mintNonce == cast[Claim](reloadedEntry).mintNonce)
-                    assert(cast[Claim](originalEntry).bls == cast[Claim](reloadedEntry).bls)
-                of EntryType.Send:
-                    assert(cast[Send](originalEntry).output == cast[Send](reloadedEntry).output)
-                    assert(cast[Send](originalEntry).amount == cast[Send](reloadedEntry).amount)
-                    assert(cast[Send](originalEntry).proof == cast[Send](reloadedEntry).proof)
-                    assert(cast[Send](originalEntry).argon == cast[Send](reloadedEntry).argon)
-                of EntryType.Receive:
-                    assert(cast[Receive](originalEntry).index.key == cast[Receive](reloadedEntry).index.key)
-                    assert(cast[Receive](originalEntry).index.nonce == cast[Receive](reloadedEntry).index.nonce)
-                of EntryType.Data:
-                    assert(cast[Data](originalEntry).data == cast[Data](reloadedEntry).data)
-                    assert(cast[Data](originalEntry).proof == cast[Data](reloadedEntry).proof)
-                    assert(cast[Data](originalEntry).argon == cast[Data](reloadedEntry).argon)
+                case originalEntries[e].descendant:
+                    of EntryType.Mint:
+                        assert(cast[Mint](originalEntries[e]).output == cast[Mint](reloadedEntries[e]).output)
+                        assert(cast[Mint](originalEntries[e]).amount == cast[Mint](reloadedEntries[e]).amount)
+                    of EntryType.Claim:
+                        assert(cast[Claim](originalEntries[e]).mintNonce == cast[Claim](reloadedEntries[e]).mintNonce)
+                        assert(cast[Claim](originalEntries[e]).bls == cast[Claim](reloadedEntries[e]).bls)
+                    of EntryType.Send:
+                        assert(cast[Send](originalEntries[e]).output == cast[Send](reloadedEntries[e]).output)
+                        assert(cast[Send](originalEntries[e]).amount == cast[Send](reloadedEntries[e]).amount)
+                        assert(cast[Send](originalEntries[e]).proof == cast[Send](reloadedEntries[e]).proof)
+                        assert(cast[Send](originalEntries[e]).argon == cast[Send](reloadedEntries[e]).argon)
+                    of EntryType.Receive:
+                        assert(cast[Receive](originalEntries[e]).index.key == cast[Receive](reloadedEntries[e]).index.key)
+                        assert(cast[Receive](originalEntries[e]).index.nonce == cast[Receive](reloadedEntries[e]).index.nonce)
+                    of EntryType.Data:
+                        assert(cast[Data](originalEntries[e]).data == cast[Data](reloadedEntries[e]).data)
+                        assert(cast[Data](originalEntries[e]).proof == cast[Data](reloadedEntries[e]).proof)
+                        assert(cast[Data](originalEntries[e]).argon == cast[Data](reloadedEntries[e]).argon)
     for address in reloaded.accounts.keys():
         assert(lattice.accounts.hasKey(address))
 
 #Adds a Block which assigns all new Merit to the passed MinerWallet.
-proc addBlock(wallet: MinerWallet) =
-    var mining: Block = newBlockObj(
-        1,
-        merit.blockchain.tip.header.hash,
-        nil,
-        @[],
-        @[
+proc addBlock(wallets: seq[MinerWallet], tips: seq[VerifierIndex]) =
+    var miners: Miners = @[]
+    for wallet in wallets:
+        miners.add(
             newMinerObj(
                 wallet.publicKey,
-                100
+                uint(100 div wallets.len)
             )
-        ],
+        )
+    if 100 mod wallets.len != 0:
+        miners.add(
+            newMinerObj(
+                newMinerWallet().publicKey,
+                uint(100 mod wallets.len)
+            )
+        )
+
+    var mining: Block = newBlockObj(
+        merit.blockchain.height,
+        merit.blockchain.tip.header.hash,
+        nil,
+        tips,
+        miners,
         getTime(),
         0
     )
@@ -214,7 +232,7 @@ proc addBlock(wallet: MinerWallet) =
     try:
         discard merit.processBlock(verifications, mining)
     except:
-        raise newException(ValueError, "Valid Block wasn't successfully added.")
+        raise newException(ValueError, "Valid Block wasn't successfully added. " & getCurrentExceptionMsg())
 
 #Adds a Verification for an Entry.
 proc verify(wallet: MinerWallet, hash: string) =
@@ -227,12 +245,12 @@ proc verify(wallet: MinerWallet, hash: string) =
 for i in 0 ..< 3:
     verifiers.add(newMinerWallet())
 
-#Create ten Accounts.
-for i in 0 ..< 10:
+#Create three Accounts.
+for i in 0 ..< 3:
     accounts.add(newWallet())
 
 #Mine a Block assigning Verifier 1 all of the Merit.
-addBlock(verifiers[0])
+addBlock(@[verifiers[0]], @[])
 
 #Mint some coins to the first Verifier, and claim them by the first Account.
 assert(lattice.mint(verifiers[0].publicKey.toString(), newBN(300)) == 0)
@@ -300,6 +318,62 @@ test()
 #Verify everything else, and do another test.
 verifiers[0].verify(lattice[accounts[1].address][1].hash.toString())
 verifiers[0].verify(lattice[accounts[2].address][0].hash.toString())
+test()
+
+#Give two other Verifiers Merit.
+addBlock(
+    @[verifiers[1]],
+    @[
+        newVerifierIndex(verifiers[0].publicKey.toString(), 2, "")
+    ]
+)
+addBlock(@[verifiers[2]], @[])
+
+#Add a Data to the first account.
+data = newData("2", 3)
+accounts[0].sign(data)
+data.mine("".pad(128, '0').toBN(16))
+assert(lattice.add(data))
+assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
+
+#Add a conflicting Data.
+data = newData("3", 3)
+accounts[0].sign(data)
+data.mine("".pad(128, '0').toBN(16))
+assert(lattice.add(data))
+assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
+
+#Partially verify each of them.
+verifiers[0].verify(lattice[accounts[0].address].entries[0][0].hash.toString())
+assert(not lattice[accounts[0].address].entries[0][0].verified)
+verifiers[1].verify(lattice[accounts[0].address].entries[0][1].hash.toString())
+assert(not lattice[accounts[0].address].entries[0][1].verified)
+
+#Archive these Verifications in a Block.
+#In real life, if the Verifications don't make it into a Block, we'd redownload them when the next Block came through and process the Verifications then.
+addBlock(
+    @[
+        verifiers[0],
+        verifiers[1],
+        verifiers[2]
+    ],
+    @[
+        newVerifierIndex(verifiers[0].publicKey.toString(), verifications[verifiers[0].publicKey.toString()].height - 1, ""),
+        newVerifierIndex(verifiers[1].publicKey.toString(), verifications[verifiers[1].publicKey.toString()].height - 1, "")
+    ]
+)
+verifications.archive(merit.blockchain.tip.verifications)
+
+#Test.
+test()
+
+#Finish verifying the second Data.
+var hash: Hash[512] = lattice[accounts[0].address].entries[0][1].hash
+verifiers[2].verify(hash.toString())
+assert(lattice[accounts[0].address][3].hash == hash)
+assert(lattice[accounts[0].address][3].verified)
+
+#Test.
 test()
 
 echo "Finished the Database/Lattice/Lattice Test."

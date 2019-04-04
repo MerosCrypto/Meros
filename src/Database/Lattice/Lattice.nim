@@ -195,9 +195,14 @@ proc newLattice*(
 
     #Grab every Verifier mentioned in the last 6 Blocks of Verifications.
     var verifiers: seq[string] = @[]
-    for b in merit.blockchain.height - 6 ..< merit.blockchain.height:
-        for index in merit.blockchain[b].verifications:
-            verifiers.add(index.key)
+    if merit.blockchain.height < 6:
+        for b in uint(0) ..< merit.blockchain.height:
+            for index in merit.blockchain[b].verifications:
+                verifiers.add(index.key)
+    else:
+        for b in merit.blockchain.height - 6 ..< merit.blockchain.height:
+            for index in merit.blockchain[b].verifications:
+                verifiers.add(index.key)
     verifiers = verifiers.deduplicate()
 
     #Iterate over every Verifier.

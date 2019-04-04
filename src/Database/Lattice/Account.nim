@@ -44,10 +44,6 @@ proc add(
     if entry.sender != account.address:
         return false
 
-    #Verify the nonce.
-    if uint(account.height) != entry.nonce:
-        return false
-
     #If it's a valid minter Entry...
     if (
         (account.address == "minter") and

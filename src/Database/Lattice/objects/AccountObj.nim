@@ -108,7 +108,7 @@ proc addEntry*(
 
     if entry.nonce < account.height:
         #Make sure we're not overwriting something out of the cache.
-        if entry.nonce >= account.confirmed:
+        if entry.nonce < account.confirmed:
             raise newException(ValueError, "Account has a verified Entry at this position.")
         if account.entries[i][0].verified:
             raise newException(ValueError, "Account has a verified Entry at this position.")
