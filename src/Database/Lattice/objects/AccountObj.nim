@@ -52,7 +52,7 @@ finalsd:
         balance*: BN
 
 #Creates a new account object.
-proc newAccountObj*(db: DatabaseFunctionBox, address: string, load: bool): Account {.raises: [].} =
+proc newAccountObj*(db: DatabaseFunctionBox, address: string, load: bool = false): Account {.raises: [].} =
     result = Account(
         db: db,
 
@@ -85,32 +85,43 @@ proc newAccountObj*(db: DatabaseFunctionBox, address: string, load: bool): Accou
                     result.entries[int(i - result.confirmed)][h div 64] = result.db.get("lattice_" & hashes[h ..< h + 64]).parseEntry()
         #If we're not in the DB, add ourselves.
         except:
-            try:
-                result.db.put("lattice_" & result.address, 0.toBinary())
-                result.db.put("lattice_" & result.address & "_confirmed", 0.toBinary())
-                result.db.put("lattice_" & result.address & "_balance", newBN().toString(256))
-            except:
-                discard
+            if address != "minter":
+                echo getCurrentExceptionMsg()
+    #If this account ia new, provide default values.
+    else:
+        try:
+            result.db.put("lattice_" & result.address, 0.toBinary())
+            result.db.put("lattice_" & result.address & "_confirmed", 0.toBinary())
+            result.db.put("lattice_" & result.address & "_balance", newBN().toString(256))
+        except:
+            discard
 
 #Add a Entry to an account.
 proc addEntry*(
     account: Account,
     entry: Entry
 ) {.raises: [ValueError, LMDBError].} =
+    #Correct for the Entries no longer in RAM.
+    var
+        offset: int = int(account.height) - account.entries.len
+        i: int = int(entry.nonce) - offset
+
     if entry.nonce < account.height:
-        #Make sure we're not overwriting a verified Entry.
-        if account.entries[int(entry.nonce)][0].verified:
+        #Make sure we're not overwriting something out of the cache.
+        if entry.nonce >= account.confirmed:
+            raise newException(ValueError, "Account has a verified Entry at this position.")
+        if account.entries[i][0].verified:
             raise newException(ValueError, "Account has a verified Entry at this position.")
 
         #Make sure we're not adding it twice.
-        for e in account.entries[int(entry.nonce)]:
+        for e in account.entries[i]:
             if e.hash == entry.hash:
                 raise newException(ValueError, "Account already has this Entry.")
 
     #Add the Entry to the proper seq.
     if entry.nonce < account.height:
         #Add to an existing seq.
-        account.entries[int(entry.nonce)].add(entry)
+        account.entries[i].add(entry)
     elif entry.nonce == account.height:
         #Increase the account height.
         inc(account.height)
@@ -128,19 +139,18 @@ proc addEntry*(
 
     #Save the list of entries at this index to the DB .
     var hashes: string
-    for e in account.entries[int(entry.nonce)]:
+    for e in account.entries[i]:
         hashes &= e.hash.toString()
     account.db.put("lattice_" & account.address & "_" & entry.nonce.toBinary(), hashes)
 
 #Helper getter that takes in an index.
 proc `[]`*(account: Account, index: uint): Entry {.raises: [ValueError].} =
     #Check the index is in bounds.
-    if index >= uint(account.entries.len):
+    if index >= uint(account.height):
         raise newException(ValueError, "Account index out of bounds.")
 
     #If it's in the database...
-    var offset: int = int(account.height) - account.entries.len
-    if int(index) < offset:
+    if index < account.confirmed:
         try:
             #Grab it.
             result = account.db.get(
@@ -155,7 +165,9 @@ proc `[]`*(account: Account, index: uint): Entry {.raises: [ValueError].} =
             raise newException(ValueError, getCurrentExceptionMsg())
 
     #Else, check if there is a singular Entry we can return from memory.
-    var i: int = int(index) - offset
+    var
+        offset: int = int(account.height) - account.entries.len
+        i: int = int(index) - offset
     if account.entries[i].len != 1:
         raise newException(ValueError, "Conflicting Entries at that position with no verified Entry.")
     result = account.entries[i][0]

@@ -48,8 +48,8 @@ proc mainLattice() {.raises: [
         #Create the Lattice.
         lattice = newLattice(
             functions.database,
-            merit,
             verifications,
+            merit,
             TRANSACTION_DIFFICULTY,
             DATA_DIFFICULTY
         )

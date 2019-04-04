@@ -45,6 +45,7 @@ export Data
 
 #Account lib.
 import Account
+export Account
 
 #Lattice Objects.
 import objects/LatticeObj
@@ -103,10 +104,10 @@ proc verify*(
         #Get the Index, Account. and calculate the offset.
         var
             index: Index = lattice.lookup[hash]
-            account: Account = lattice.accounts[index.key]
+            account: Account = lattice[index.key]
             offset: int = int(account.height) - account.entries.len
 
-        #Remove every hash at that index from the lookup.
+        #Remove every hash at that index from the lookup and the verifications.
         for e in account.entries[int(index.nonce) - offset]:
             lattice.rmHash(e.hash)
 
@@ -121,6 +122,11 @@ proc verify*(
 
         #Set it to verified.
         entry.verified = true
+
+        #Delete every verified Entry that's still in this Verifier's cache.
+        #We don't just remove [0] as Entries may be confirmed out of order.
+        while (lattice[entry.sender].entries.len > 0) and (lattice[entry.sender].entries[0][0].verified):
+            lattice[entry.sender].entries.delete(0)
 
         #If we're not just reloading Verifications, and should update balances/save results to the DB...
         if save:
@@ -141,7 +147,7 @@ proc verify*(
                         #Cast it to a var.
                         recv: Receive = cast[Receive](entry)
                         #Get the Send it's Receiving.
-                        send: Send = cast[Send](lattice.accounts[recv.index.key][recv.index.nonce])
+                        send: Send = cast[Send](lattice[recv.index.key][recv.index.nonce])
                     #Update the balance.
                     account.balance += send.amount
                 of EntryType.Claim:
@@ -149,7 +155,7 @@ proc verify*(
                         #Cast it to a var.
                         claim: Claim = cast[Claim](entry)
                         #Get the Mint it's Claiming.
-                        mint: Mint = cast[Mint](lattice.accounts["minter"][claim.mintNonce])
+                        mint: Mint = cast[Mint](lattice["minter"][claim.mintNonce])
                     #Update the balance.
                     account.balance += mint.amount
                 else:
@@ -158,24 +164,19 @@ proc verify*(
             #Save the confirmed Entry's hash to the DB under SENDER_NONCE.
             lattice.db.put("lattice_" & entry.sender & "_" & entry.nonce.toBinary(), entry.hash.toString())
 
-            #Delete every verified Entry that's still in this Verifier's cache.
-            #We don't just remove [0] as Entries may be confirmed out of order.
-            while lattice.accounts[entry.sender].entries[0][0].verified:
-                lattice.accounts[entry.sender].entries.delete(0)
-
             #Update the Account's confirmed field.
-            lattice.accounts[entry.sender].confirmed = lattice.accounts[entry.sender].height - uint(lattice.accounts[entry.sender].entries.len)
-            lattice.db.put("lattice_" & entry.sender & "_confirmed", lattice.accounts[entry.sender].confirmed.toBinary())
+            lattice[entry.sender].confirmed = lattice[entry.sender].height - uint(lattice[entry.sender].entries.len)
+            lattice.db.put("lattice_" & entry.sender & "_confirmed", lattice[entry.sender].confirmed.toBinary())
 
             #If the balance was changed, save the new Balance to the DB.
             if changedBalance:
-                lattice.db.put("lattice_" & entry.sender & "_balance", lattice.accounts[entry.sender].balance.toString(256))
+                lattice.db.put("lattice_" & entry.sender & "_balance", lattice[entry.sender].balance.toString(256))
 
 #Constructor.
 proc newLattice*(
     db: DatabaseFunctionBox,
-    merit: Merit,
     verifications: Verifications,
+    merit: Merit,
     txDiff: string,
     dataDiff: string
 ): Lattice {.raises: [
@@ -215,7 +216,6 @@ proc newLattice*(
 #Add a Entry to the Lattice.
 proc add*(
     lattice: Lattice,
-    merit: Merit,
     entry: Entry,
     mintOverride: bool = false
 ): bool {.raises: [ValueError, BLSError, SodiumError, LMDBError].} =
@@ -241,7 +241,7 @@ proc add*(
             #Add the casted entry (and the Mint it's trying to claim).
             result = account.add(
                 claim,
-                cast[Mint](lattice.accounts["minter"][claim.mintNonce])
+                cast[Mint](lattice["minter"][claim.mintNonce])
             )
 
         of EntryType.Send:
@@ -282,14 +282,15 @@ proc add*(
     if not result:
         return
 
-    #Add the Entry to the lookup table.
-    lattice.addHash(
-        entry.hash,
-        newIndex(
-            entry.sender,
-            entry.nonce
+    #If this isn't a Mint, add the Entry to the lookup table.
+    if entry.descendant != EntryType.Mint:
+        lattice.addHash(
+            entry.hash,
+            newIndex(
+                entry.sender,
+                entry.nonce
+            )
         )
-    )
 
 proc mint*(
     lattice: Lattice,
@@ -314,8 +315,18 @@ proc mint*(
     )
 
     #Add it to the Lattice.
-    if not lattice.add(nil, mint, true):
+    if not lattice.add(mint, true):
         raise newException(MintError, "Couldn't add the Mint Entry to the Lattice.")
+
+    #Save the minter's new height to the DB.
+    lattice.db.put("lattice_minter", lattice["minter"].height.toBinary())
 
     #Save the hash to the DB.
     lattice.db.put("lattice_minter_" & mint.nonce.toBinary(), mint.hash.toString())
+
+    #Update the minter's confirmed field.
+    lattice["minter"].confirmed = lattice["minter"].height
+    lattice.db.put("lattice_minter_confirmed", lattice["minter"].confirmed.toBinary())
+
+    #Clear the minter's cache.
+    lattice["minter"].entries.delete(0)

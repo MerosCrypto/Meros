@@ -7,7 +7,7 @@ discard """
 
     Back in the day, I wrote this note explaining things in the name of safety.
     Now, even though it's semi irrelevant, I find it hard to delete it.
-    t's fun. It's part of Meros. It could still apply. Therefore, it shall remain,
+    t's fun. It's part of Meros. It could still apply. Therefore, it shall remain.
     Enjoy.
     --Luke Parker
 """

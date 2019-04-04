@@ -77,6 +77,7 @@ proc newLatticeObj*(
 
     #Add the minter account.
     result.accounts["minter"] = newAccountObj(result.db, "minter", true)
+    result.accounts["minter"].lookup = nil
 
     #Grab the Accounts' string, if it exists.
     try:
@@ -90,10 +91,11 @@ proc newLatticeObj*(
             result.accounts[address] = newAccountObj(result.db, address, true)
 
             #Add every hash it loaded to the lookup.
-            for key in result.lookup.keys():
-                result.lookup[key] = result.accounts[address].lookup[key]
-            #Clear the Account's table.
-            result.accounts[address].lookup = nil
+            if not result.accounts[address].lookup.isNil:
+                for key in result.accounts[address].lookup.keys():
+                    result.lookup[key] = result.accounts[address].lookup[key]
+                #Clear the Account's table.
+                result.accounts[address].lookup = nil
     #If it doesn't, set the Accounts' string to "",
     except:
         result.accountsStr = ""
@@ -106,12 +108,13 @@ func addHash*(
 ) {.raises: [].} =
     lattice.lookup[hash.toString()] = index
 
-#Deletes a hash from the lookup.
+#Deletes a hash from the lookup/verifications.
 func rmHash*(
     lattice: Lattice,
     hash: Hash[512]
 ) {.raises: [].} =
     lattice.lookup.del(hash.toString())
+    lattice.verifications.del(hash.toString())
 
 #Creates a new Account on the Lattice.
 proc add*(
@@ -123,7 +126,7 @@ proc add*(
         return
 
     #Create the account.
-    lattice.accounts[address] = newAccountObj(lattice.db, address, false)
+    lattice.accounts[address] = newAccountObj(lattice.db, address)
 
     #Add the Account to the accounts string and then save it to the Database.
     lattice.accountsStr &= address

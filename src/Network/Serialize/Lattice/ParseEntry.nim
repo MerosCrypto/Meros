@@ -24,12 +24,12 @@ proc parseEntry*(entry: string): Entry {.raises: [
 ].} =
     case EntryType(entry[0]):
         of EntryType.Mint:
-            return entry[1 .. entry.len].parseMint()
+            return entry[1 ..< entry.len].parseMint()
         of EntryType.Claim:
-            return entry[1 .. entry.len].parseClaim()
+            return entry[1 ..< entry.len].parseClaim()
         of EntryType.Send:
-            return entry[1 .. entry.len].parseSend()
+            return entry[1 ..< entry.len].parseSend()
         of EntryType.Receive:
-            return entry[1 .. entry.len].parseReceive()
+            return entry[1 ..< entry.len].parseReceive()
         of EntryType.Data:
-            return entry[1 .. entry.len].parseData()
+            return entry[1 ..< entry.len].parseData()

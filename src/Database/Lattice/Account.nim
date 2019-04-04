@@ -45,7 +45,7 @@ proc add(
         return false
 
     #Verify the nonce.
-    if uint(account.entries.len) != entry.nonce:
+    if uint(account.height) != entry.nonce:
         return false
 
     #If it's a valid minter Entry...

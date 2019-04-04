@@ -1,14 +1,19 @@
 # TODO
 
 ### DB Branch Before Merge:
-- Load unarchived verifications from the DB.
-
-- Lattice Test (in relation to the DB).
+- Expand the Lattice test to handle saving/loading multiple Entries at the same index.
+- Expand the Lattice test with multiple Verifiers and partial Verifications.
+- Reload votes when the chain is 3 blocks, 6 blocks, and 9 blocks.
 
 ### Core:
+Database:
+- If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
+- If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
+
 Verifications:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - When we load a Merkle, load every leaf into a seq, and then call newMerkle. Don't use addition.
+- Load unarchived verifications from the DB.
 
 Merit:
 - Checkpoints.
@@ -87,7 +92,8 @@ Network:
 - Tests.
 
 Network/Serialize/Lattice:
-- Network/Serialize/Lattice/Entry Test.
+- Network/Serialize/Lattice/SerializeEntry Test.
+- Network/Serialize/Lattice/ParseEntry Test.
 
 UI/RPC:
 - UI/RPC/RPC Test.
