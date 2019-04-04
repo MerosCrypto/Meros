@@ -81,10 +81,7 @@ proc mainLattice() {.raises: [
             echo "Adding a new Claim."
 
             #Add the Claim.
-            if lattice.add(
-                merit,
-                claim
-            ):
+            if lattice.add(claim):
                 result = true
                 echo "Successfully added the Claim."
 
@@ -111,10 +108,7 @@ proc mainLattice() {.raises: [
             echo "Adding a new Send."
 
             #Add the Send.
-            if lattice.add(
-                merit,
-                send
-            ):
+            if lattice.add(send):
                 result = true
                 echo "Successfully added the Send."
 
@@ -167,10 +161,7 @@ proc mainLattice() {.raises: [
             echo "Adding a new Receive."
 
             #Add the Receive.
-            if lattice.add(
-                merit,
-                recv
-            ):
+            if lattice.add(recv):
                 result = true
                 echo "Successfully added the Receive."
 
@@ -195,10 +186,7 @@ proc mainLattice() {.raises: [
             echo "Adding a new Data."
 
             #Add the Data.
-            if lattice.add(
-                merit,
-                data
-            ):
+            if lattice.add(data):
                 result = true
                 echo "Successfully added the Data."
 
