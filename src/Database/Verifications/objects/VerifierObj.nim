@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Util lib.
+import ../../../lib/Util
+
 #Hash lib.
 import ../../../lib/Hash
 
@@ -10,8 +13,14 @@ import ../../../lib/Merkle
 #BLS lib.
 import ../../../lib/BLS
 
+#DB Function Box object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #Verification object.
 import VerificationObj
+
+#String utils standard lib.
+import strutils
 
 #Finals lib.
 import finals
@@ -19,30 +28,53 @@ import finals
 #Verifier object.
 finalsd:
     type Verifier* = ref object of RootObj
+        #DB Function Box.
+        db: DatabaseFunctionBox
+
         #Chain owner.
         key* {.final.}: string
         #Verifier height.
         height*: uint
         #Amount of Verifications which have been archived.
-        archived*: uint
+        archived*: int
         #seq of the Verifications.
         verifications*: seq[Verification]
         #Merkle of the Verifications.
         merkle*: Merkle
 
 #Constructor.
-proc newVerifierObj*(key: string): Verifier =
+proc newVerifierObj*(
+    db: DatabaseFunctionBox,
+    key: string
+): Verifier {.raises: [LMDBError].} =
     result = Verifier(
-        key: key,
-        height: 0,
-        archived: 0,
+        db: db,
+
+        key: key.pad(48),
+        archived: -1,
         verifications: @[],
         merkle: newMerkle()
     )
     result.ffinalizeKey()
 
+    #Load our data from the DB.
+    try:
+        result.archived = parseInt(result.db.get("verifications_" & result.key))
+
+        #Recreate the Merkle tree.
+        for i in 0 .. result.archived:
+            result.merkle.add(
+                result.db.get("verifications_" & result.key & "_" & i.toBinary())
+            )
+    #If we're not in the DB, add ourselves.
+    except:
+        result.db.put("verifications_" & result.key, $result.archived)
+
+    #Populate with the info from the DB.
+    result.height = uint(result.archived + 1)
+
 #Add a Verification to a Verifier.
-proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError].} =
+proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError, LMDBError].} =
     #Verify the Verification's Verifier.
     if verif.verifier.toString() != verifier.key:
         raise newException(MerosIndexError, "Verification's Verifier doesn't match the Verifier we're adding it to.")
@@ -70,8 +102,11 @@ proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError].}
     #Add the Verification to the Merkle.
     verifier.merkle.add(verif.hash.toString())
 
+    #Add the Verification to the Database.
+    verifier.db.put("verifications_" & verifier.key & "_" & verif.nonce.toBinary(), verif.hash.toString())
+
 #Add a MemoryVerification to a Verifier.
-proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError, MerosIndexError].} =
+proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [MerosIndexError, BLSError, LMDBError].} =
     #Verify the signature.
     verif.signature.setAggregationInfo(
         newBLSAggregationInfo(verif.verifier, verif.hash.toString())
@@ -83,17 +118,63 @@ proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [BLSError, Me
     verifier.add(cast[Verification](verif))
 
 # [] operators.
-func `[]`*(verifier: Verifier, index: uint): Verification {.raises: [].} =
-    verifier.verifications[int(index)]
+proc `[]`*(verifier: Verifier, index: int): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    #Check that the nonce isn't out of bounds.
+    if index >= int(verifier.height):
+        raise newException(ValueError, "That Verifier doesn't have a Verification for that nonce.")
 
-func `[]`*(verifier: Verifier, index: BackwardsIndex): Verification {.raises: [].} =
-    verifier.verifications[index]
+    #If it's in the database...
+    if int(index) <= verifier.archived:
+        #Grab it and return it.
+        result = newVerificationObj(
+            verifier.db.get("verifications_" & verifier.key & "_" & index.toBinary()).toHash(512)
+        )
+        result.verifier = newBLSPublicKey(verifier.key)
+        result.nonce = uint(index)
+        return
 
-func `[]`*(verifier: Verifier, slice: Slice[uint]): seq[Verification] {.raises: [].} =
-    verifier.verifications[int(slice.a) .. int(slice.b)]
+    #Else, return it from memory.
+    result = verifier.verifications[int(index) - (verifier.archived + 1)]
+proc `[]`*(verifier: Verifier, index: uint): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    verifier[int(index)]
 
-func `{}`*(verifier: Verifier, slice: Slice[uint]): seq[MemoryVerification] {.raises: [].} =
-    var verifs: seq[Verification] = verifier.verifications[slice]
+proc `[]`*(verifier: Verifier, slice: Slice[int] | Slice[uint]): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    #Extract the slice values.
+    var
+        a: int = int(slice.a)
+        b: int = int(slice.b)
+
+    #Support the initial verifier.archived value (-1).
+    if a == -1:
+        a = 0
+
+    #Make sure it's a valid slice.
+    if a > b:
+        raise newException(ValueError, "That slice is invalid.")
+
+    #Create a seq.
+    result = newSeq[Verification](b - a + 1)
+
+    #Grab every Verification.
+    for i in a .. b:
+        result[int(i - a)] = verifier[i]
+
+proc `{}`*(verifier: Verifier, slice: Slice[int]): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+    #Extract the slice values.
+    var
+        a: int = slice.a
+        b: int = slice.b
+
+    #Support the initial verifier.archived value (-1).
+    if a == -1:
+        a = 0
+
+    #Make sure it's a valid slice.
+    if a > b:
+        raise newException(ValueError, "That slice is invalid.")
+
+    #Grab the Verifications and cast them.
+    var verifs: seq[Verification] = verifier[a .. b]
     result = newSeq[MemoryVerification](verifs.len)
     for v in 0 ..< verifs.len:
         result[v] = cast[MemoryVerification](verifs[v])

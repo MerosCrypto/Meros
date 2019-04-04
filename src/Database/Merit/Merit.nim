@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Util lib.
+import ../../lib/Util
+
 #Hash lib.
 import ../../lib/Hash
 
@@ -12,6 +15,9 @@ import ../../lib/BLS
 
 #Verifications lib.
 import ../Verifications/Verifications
+
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
 
 #VerifierIndex object.
 import objects/VerifierIndexObj
@@ -34,6 +40,9 @@ export Blockchain
 export State
 export Epochs
 
+#Tables standard lib.
+import tables
+
 #Finals lib.
 import finals
 
@@ -45,16 +54,31 @@ type Merit* = ref object of RootObj
 
 #Constructor.
 proc newMerit*(
+    db: DatabaseFunctionBox,
+    verifications: Verifications,
     genesis: string,
     blockTime: uint,
     startDifficulty: string,
     live: uint
-): Merit {.raises: [ValueError, ArgonError].} =
-    Merit(
-        blockchain: newBlockchain(genesis, blockTime, startDifficulty.toBN(16)),
-        state: newState(live),
-        epochs: newEpochs()
+): Merit {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
+    #Create the Merit object.
+    result = Merit(
+        blockchain: newBlockchain(
+            db,
+            genesis,
+            blockTime,
+            startDifficulty.toBN(16)
+        ),
+
+        state: newState(db, live)
     )
+    result.epochs = newEpochs(db, verifications, result.blockchain)
 
 #Add a block.
 proc processBlock*(
@@ -63,7 +87,11 @@ proc processBlock*(
     newBlock: Block
 ): Rewards {.raises: [
     KeyError,
-    ValueError
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
 ].} =
     #Add the block to the Blockchain.
     if not merit.blockchain.processBlock(newBlock):
@@ -74,6 +102,9 @@ proc processBlock*(
     merit.state.processBlock(merit.blockchain, newBlock)
 
     #Have the Epochs process the Block.
-    var epoch: Epoch = merit.epochs.shift(verifications, newBlock.verifications)
+    var epoch: Epoch = merit.epochs.shift(
+        verifications,
+        newBlock.verifications
+    )
     #Calculate the rewards.
     result = epoch.calculate(merit.state)

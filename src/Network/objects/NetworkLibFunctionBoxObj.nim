@@ -2,6 +2,9 @@ discard """
 This is named NetworkLibFB, not NetworkFB, `because GlobalFunctionBox` also defines a `NetworkFunctionBox`.
 """
 
+#Errors lib.
+import ../../lib/Errors
+
 #Block lib.
 import ../../Database/Merit/Block
 
@@ -14,7 +17,7 @@ import asyncdispatch
 type NetworkLibFunctionBox* = ref object of RootObj
     getNetworkID*: proc (): uint {.raises: [].}
     getProtocol*:  proc (): uint {.raises: [].}
-    getHeight*:    proc (): uint {.raises: [].}
+    getHeight*:    proc (): uint {.raises: [LMDBError].}
 
     handle*: proc (msg: Message): Future[bool]
     handleBlock*: proc (newBlock: Block): Future[bool]

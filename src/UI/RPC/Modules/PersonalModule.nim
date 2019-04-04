@@ -79,6 +79,7 @@ proc send(
     ArgonError,
     BLSError,
     SodiumError,
+    LMDBError,
     FinalAttributeError
 ].} =
     #Create the Send.
@@ -118,6 +119,7 @@ proc receive(
     AsyncError,
     BLSError,
     SodiumError,
+    LMDBError,
     FinalAttributeError
 ].} =
     #Create the Receive.
@@ -161,6 +163,7 @@ proc data(
     ArgonError,
     BLSError,
     SodiumError,
+    LMDBError,
     FinalAttributeError
 ].} =
     #Create the Data.

@@ -1,3 +1,3 @@
 #Verification Test.
 
-echo "The Database/Verifications/Verification test is empty."
+echo "The Database/Verifications/Verification Test is empty."

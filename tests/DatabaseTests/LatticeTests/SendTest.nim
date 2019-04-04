@@ -1,3 +1,3 @@
 #Send Test.
 
-echo "The Database/Lattice/Send test is empty."
+echo "The Database/Lattice/Send Test is empty."

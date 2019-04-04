@@ -18,11 +18,11 @@ export VerificationObj
 import finals
 
 #Sign a Verification.
-func sign*(
+proc sign*(
     miner: MinerWallet,
     verif: MemoryVerification,
     nonce: uint
-) {.raises: [FinalAttributeError].} =
+) {.raises: [BLSError, FinalAttributeError].} =
     #Set the verifier.
     verif.verifier = miner.publicKey
     #Set the nonce.

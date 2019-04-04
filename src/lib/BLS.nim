@@ -32,6 +32,12 @@ proc newBLSPrivateKeyFromBytes*(key: string): BLSPrivateKey {.raises: [BLSError]
             "Couldn't create a BLS Private Key from its Bytes: " & getCurrentExceptionMsg()
         )
 
+proc getPublicKey*(key: BLSPrivateKey): BLSPublicKey {.raises: [BLSError].} =
+    try:
+        result = mc_bls.getPublicKey(key)
+    except:
+        raise newException(BLSError, "Couldn't create a BLS Public Key from a Private Key: " & getCurrentExceptionMsg())
+
 proc newBLSPublicKey*(key: string): BLSPublicKey {.raises: [BLSError].} =
     try:
         result = newPublicKeyFromBytes(key)
@@ -63,7 +69,6 @@ proc newBLSAggregationInfo*(
         )
 
 #Getters.
-export getPublicKey
 export getAggregationInfo
 
 #Equality operators.
@@ -74,12 +79,16 @@ export `!=`
 export toString
 export `$`
 
-#Private Key functions.
-export sign
-
 #Signature functions.
 export setAggregationInfo
 export verify
+
+#Private Key functions.
+proc sign*(key: BLSPrivateKey, msg: string): BLSSignature {.raises: [BLSError].} =
+    try:
+        result = mc_bls.sign(key, msg)
+    except:
+        raise newException(BLSError, "Couldn't sign a message: " & getCurrentExceptionMsg())
 
 #Aggregation functions.
 proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.raises: [BLSError].} =
@@ -92,7 +101,7 @@ proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.raises: [BLSError].} =
         )
 
 proc aggregate*(
-    agInfos: seq[ptr BLSAggregationInfo]
+    agInfos: seq[BLSAggregationInfo]
 ): BLSAggregationInfo {.raises: [BLSError].} =
     try:
         result = mc_bls.aggregate(agInfos)

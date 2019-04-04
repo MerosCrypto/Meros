@@ -13,6 +13,9 @@ import BN
 #BLS lib.
 import ../../lib/BLS
 
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
+
 #Miners object.
 import objects/MinersObj
 
@@ -24,13 +27,27 @@ import Block
 import objects/BlockchainObj
 export BlockchainObj
 
+#Serialize Difficulty lib.
+import ../../Network/Serialize/Merit/SerializeDifficulty
+
+#Finals lib.
+import finals
+
 #Create a new Blockchain.
 proc newBlockchain*(
+    db: DatabaseFunctionBox,
     genesis: string,
     blockTime: uint,
     startDifficulty: BN
-): Blockchain {.raises: [ValueError, ArgonError].} =
+): Blockchain {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     newBlockchainObj(
+        db,
         genesis,
         blockTime,
         startDifficulty
@@ -40,15 +57,18 @@ proc newBlockchain*(
 proc processBlock*(
     blockchain: Blockchain,
     newBlock: Block
-): bool {.raises: [ValueError].} =
+): bool {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     #Result is set to true for if nothing goes wrong.
     result = true
 
-    let
-        #Blocks Per Month.
-        blocksPerMonth: uint = uint(2592000) div blockchain.blockTime
-        #Grab the Blocks.
-        blocks: seq[Block] = blockchain.blocks
+    #Blocks Per Month.
+    let blocksPerMonth: uint = uint(2592000) div blockchain.blockTime
 
     #Verify the Block Header.
     #If the nonce is off...
@@ -56,11 +76,11 @@ proc processBlock*(
         return false
 
     #If the last hash is off...
-    if newBlock.header.last != blocks[^1].hash:
+    if newBlock.header.last != blockchain.tip.header.hash:
         return false
 
     #If the time is before the last block's...
-    if newBlock.header.time < blocks[^1].header.time:
+    if newBlock.header.time < blockchain.tip.header.time:
         return false
 
     #Verify the Block Header's Merkle Hash of the Miners matches the Block's Miners.
@@ -97,20 +117,14 @@ proc processBlock*(
     else:
         blocksPerPeriod = 144
 
-    #If the difficulty needs to be updated...
-    if blockchain.difficulties[^1].endBlock <= newBlock.header.nonce:
-        blockchain.add(
-            calculateNextDifficulty(
-                blockchain.blocks,
-                blockchain.difficulties,
-                blockchain.blockTime * blocksPerPeriod,
-                blocksPerPeriod
-            )
-        )
-
     #If the difficulty wasn't beat...
-    if not blockchain.difficulties[^1].verifyDifficulty(newBlock):
+    if not blockchain.difficulty.verifyDifficulty(newBlock):
         return false
 
     #Add the Block.
     blockchain.add(newBlock)
+
+    #If the difficulty needs to be updated...
+    if newBlock.header.nonce == blockchain.difficulty.endBlock:
+        blockchain.calculateNextDifficulty(blocksPerPeriod)
+        blockchain.db.put("merit_difficulty", blockchain.difficulty.serialize())

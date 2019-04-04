@@ -41,7 +41,7 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
 
-proc newMinerWallet*(priv: BLSPrivateKey): MinerWallet {.raises: [].} =
+proc newMinerWallet*(priv: BLSPrivateKey): MinerWallet {.raises: [BLSError].} =
     result = MinerWallet(
         privateKey: priv,
         publicKey: priv.getPublicKey()
@@ -50,7 +50,7 @@ proc newMinerWallet*(priv: BLSPrivateKey): MinerWallet {.raises: [].} =
     result.ffinalizePublicKey()
 
 #Sign a message via a MinerWallet.
-func sign*(miner: MinerWallet, msg: string): BLSSignature {.raises: [].} =
+proc sign*(miner: MinerWallet, msg: string): BLSSignature {.raises: [BLSError].} =
     miner.privateKey.sign(msg)
 
 #Verify a message.

@@ -2,11 +2,21 @@ include MainVerifications
 
 proc mainMerit() {.raises: [
     ValueError,
-    ArgonError
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
 ].} =
     {.gcsafe.}:
         #Create the Merit.
-        merit = newMerit(GENESIS, BLOCK_TIME, BLOCK_DIFFICULTY, LIVE_MERIT)
+        merit = newMerit(
+            functions.database,
+            verifications,
+            GENESIS,
+            BLOCK_TIME,
+            BLOCK_DIFFICULTY,
+            LIVE_MERIT
+        )
 
         #Handle requests for the current height.
         functions.merit.getHeight = proc (): uint {.raises: [].} =
@@ -14,11 +24,17 @@ proc mainMerit() {.raises: [
 
         #Handle requests for the current Difficulty.
         functions.merit.getDifficulty = proc (): BN {.raises: [].} =
-            merit.blockchain.difficulties[^1].difficulty
+            merit.blockchain.difficulty.difficulty
 
         #Handle requests for a Block.
-        functions.merit.getBlock = proc (nonce: uint): Block {.raises: [].} =
-            merit.blockchain.blocks[int(nonce)]
+        functions.merit.getBlock = proc (nonce: uint): Block {.raises: [
+            ValueError,
+            ArgonError,
+            BLSError,
+            LMDBError,
+            FinalAttributeError
+        ].} =
+            merit.blockchain[nonce]
 
         #Handle full blocks.
         functions.merit.addBlock = proc (newBlock: Block): Future[bool] {.async.} =
@@ -48,15 +64,12 @@ proc mainMerit() {.raises: [
 
             if newBlock.verifications.len > 0:
                 #Verify we have all the Verifications and Entries, as well as verify the signature.
-                var agInfos: seq[ptr BLSAggregationInfo] = @[]
+                var
+                    agInfos: seq[BLSAggregationInfo] = @[]
+                    verifiers: Table[string, bool] = initTable[string, bool]()
                 for index in newBlock.verifications:
-                    #Verify we have the Verifier.
-                    if not verifications.hasKey(index.key):
-                        echo "Failed to add the Block."
-                        return false
-
                     #Verify this isn't archiving archived Verifications.
-                    if index.nonce < verifications[index.key].archived:
+                    if int(index.nonce) < verifications[index.key].archived:
                         echo "Failed to add the Block."
                         return false
 
@@ -70,35 +83,43 @@ proc mainMerit() {.raises: [
                         echo "Failed to add the Block."
                         return false
 
-                    #Start of this verifier's unarchived verifications.
-                    var verifierStart: uint = verifications[index.key].archived + 1
-                    #Override to handle how archived is 0 twice.
-                    if verifierStart == 1:
-                        if verifications[index.key][0].archived == 0:
-                            verifierStart = 0
+                    #Verify this Block doesn't have this verifier twice,
+                    if verifiers.hasKey(index.key):
+                        echo "Failed to add the Block."
+                        return false
+                    verifiers[index.key] = true
 
                     var
+                        #Start of this verifier's unarchived verifications.
+                        verifierStart: uint = verifications[index.key].verifications[0].nonce
                         #Grab this Verifier's verifications.
                         verifierVerifs: seq[Verification] = verifications[index.key][verifierStart .. index.nonce]
                         #Declare an aggregation info seq for this verifier.
-                        verifierAgInfos: seq[ptr BLSAggregationInfo] = newSeq[ptr BLSAggregationInfo](verifierVerifs.len)
+                        verifierAgInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](verifierVerifs.len)
                     for v in 0 ..< verifierVerifs.len:
                         #Make sure the Lattice has this Entry.
                         if not lattice.lookup.hasKey(verifierVerifs[v].hash.toString()):
+                            echo "Failed to add the Block."
                             return false
 
                         #Create an aggregation info for this verification.
-                        verifierAgInfos[v] = cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo)))
-                        verifierAgInfos[v][] = newBLSAggregationInfo(verifierVerifs[v].verifier, verifierVerifs[v].hash.toString())
+                        verifierAgInfos[v] = newBLSAggregationInfo(verifierVerifs[v].verifier, verifierVerifs[v].hash.toString())
 
                     #Add the Verifier's aggregation info to the seq.
-                    agInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
-                    agInfos[^1][] = verifierAgInfos.aggregate()
-                #Add the aggregate info to the signature.
-                newBlock.header.verifications.setAggregationInfo(agInfos.aggregate())
-                if not newBlock.header.verifications.verify():
+                    agInfos.add(verifierAgInfos.aggregate())
+
+                #Calculate the aggregation info.
+                var agInfo: BLSAggregationInfo = agInfos.aggregate()
+                #Make sure that if the AgInfo is nil the Signature is as well
+                if agInfo.isNil != newBlock.header.verifications.isNil:
                     echo "Failed to add the Block."
                     return false
+                #If it's not nil, verify the Signature.
+                if agInfo != nil:
+                    newBlock.header.verifications.setAggregationInfo(agInfo)
+                    if not newBlock.header.verifications.verify():
+                        echo "Failed to add the Block."
+                        return false
 
             #Add the Block to the Merit.
             var rewards: Rewards
@@ -109,7 +130,7 @@ proc mainMerit() {.raises: [
                 return false
 
             #Archive the Verifications mentioned in the Block.
-            verifications.archive(newBlock.verifications, newBlock.header.nonce)
+            verifications.archive(newBlock.verifications)
 
             #Create the Mints (which ends up minting a total of 50000 MR).
             var
@@ -130,7 +151,7 @@ proc mainMerit() {.raises: [
                         #Claim the Reward.
                         var claim: Claim = newClaim(
                             mintNonce,
-                            lattice.getAccount(wallet.address).height
+                            lattice[wallet.address].height
                         )
                         #Sign the claim.
                         claim.sign(config.miner, wallet)

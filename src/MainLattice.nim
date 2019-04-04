@@ -6,7 +6,7 @@ proc verify(entry: Entry) {.async.} =
     await sleepAsync(100)
 
     #Make sure we're a Miner with Merit.
-    if (not config.miner.isNil) and (merit.state.getBalance(config.miner.publicKey) > uint(0)):
+    if (not config.miner.isNil) and (merit.state[config.miner.publicKey] > uint(0)):
         #Make sure we didn't already Verify an Entry at this position.
         if lattice.accounts[entry.sender].entries[int(entry.nonce)].len != 1:
             return
@@ -37,25 +37,34 @@ proc verify(entry: Entry) {.async.} =
             )
         )
 
-proc mainLattice() {.raises: [ValueError].} =
+proc mainLattice() {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     {.gcsafe.}:
         #Create the Lattice.
         lattice = newLattice(
+            functions.database,
+            verifications,
+            merit,
             TRANSACTION_DIFFICULTY,
             DATA_DIFFICULTY
         )
 
         #Handle requests for an account's height.
-        functions.lattice.getHeight = proc (account: string): uint {.raises: [ValueError].} =
-            lattice.getAccount(account).height
+        functions.lattice.getHeight = proc (account: string): uint {.raises: [ValueError, LMDBError].} =
+            lattice[account].height
 
         #Handle requests for an account's balance.
-        functions.lattice.getBalance = proc (account: string): BN {.raises: [ValueError].} =
-            lattice.getAccount(account).balance
+        functions.lattice.getBalance = proc (account: string): BN {.raises: [ValueError, LMDBError].} =
+            lattice[account].balance
 
         #Handle requests for an Entry.
-        functions.lattice.getEntryByHash = proc (hash: string): Entry {.raises: [KeyError, ValueError].} =
-            lattice[hash]
+        functions.lattice.getEntryByHash = proc (hash: string): Entry {.raises: [KeyError].} =
+            lattice.getEntry(hash)
 
         functions.lattice.getEntryByIndex = proc (index: Index): Entry {.raises: [ValueError].} =
             lattice[index]
@@ -65,16 +74,14 @@ proc mainLattice() {.raises: [ValueError].} =
             ValueError,
             AsyncError,
             BLSError,
-            SodiumError
+            SodiumError,
+            LMDBError
         ].} =
             #Print that we're adding the Entry.
             echo "Adding a new Claim."
 
             #Add the Claim.
-            if lattice.add(
-                merit,
-                claim
-            ):
+            if lattice.add(claim):
                 result = true
                 echo "Successfully added the Claim."
 
@@ -94,16 +101,14 @@ proc mainLattice() {.raises: [ValueError].} =
             AsyncError,
             BLSError,
             SodiumError,
+            LMDBError,
             FinalAttributeError
         ].} =
             #Print that we're adding the Entry.
             echo "Adding a new Send."
 
             #Add the Send.
-            if lattice.add(
-                merit,
-                send
-            ):
+            if lattice.add(send):
                 result = true
                 echo "Successfully added the Send."
 
@@ -122,7 +127,7 @@ proc mainLattice() {.raises: [ValueError].} =
                                 send.sender,
                                 send.nonce
                             ),
-                            lattice.getAccount(wallet.address).height
+                            lattice[wallet.address].height
                         )
                         #Sign it.
                         wallet.sign(recv)
@@ -149,16 +154,14 @@ proc mainLattice() {.raises: [ValueError].} =
             ValueError,
             AsyncError,
             BLSError,
+            LMDBError,
             SodiumError
         ].} =
             #Print that we're adding the Entry.
             echo "Adding a new Receive."
 
             #Add the Receive.
-            if lattice.add(
-                merit,
-                recv
-            ):
+            if lattice.add(recv):
                 result = true
                 echo "Successfully added the Receive."
 
@@ -176,16 +179,14 @@ proc mainLattice() {.raises: [ValueError].} =
             ValueError,
             AsyncError,
             BLSError,
+            LMDBError,
             SodiumError
         ].} =
             #Print that we're adding the Entry.
             echo "Adding a new Data."
 
             #Add the Data.
-            if lattice.add(
-                merit,
-                data
-            ):
+            if lattice.add(data):
                 result = true
                 echo "Successfully added the Data."
 

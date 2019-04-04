@@ -23,7 +23,7 @@ import finals
 #Calculate the Merkle.
 proc calculateMerkle*(verifier: Verifier, nonce: uint): string {.raises: [ValueError].} =
     #Calculate how many leaves we're trimming.
-    var toTrim: int = verifier.verifications.len - (int(nonce) + 1)
+    var toTrim: int = int(verifier.height - (nonce + 1))
     if toTrim < 0:
         raise newException(ValueError, "Nonce is out of bounds.")
 
@@ -50,13 +50,11 @@ proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSE
     if verifs.len == 0:
         return sig == nil
 
-
     #Create the Aggregation Infos.
-    var agInfos: seq[ptr BLSAggregationInfo] = @[]
+    var agInfos: seq[BLSAggregationInfo] = @[]
     try:
         for verif in verifs:
-            agInfos.add(cast[ptr BLSAggregationInfo](alloc0(sizeof(BLSAggregationInfo))))
-            agInfos[^1][] = newBLSAggregationInfo(verif.verifier, verif.hash.toString())
+            agInfos.add(newBLSAggregationInfo(verif.verifier, verif.hash.toString()))
     except:
         raise newException(BLSError, "Couldn't allocate space for the AggregationInfo.")
 

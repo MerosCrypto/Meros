@@ -1,5 +1,9 @@
-#Lattice lib.
-import ../../Database/Lattice/Lattice
+#Lattice Entries (we don't just import Lattice due to a circular dependcy).
+import ../../Database/Lattice/objects/EntryObj
+import ../../Database/Lattice/Claim
+import ../../Database/Lattice/Send
+import ../../Database/Lattice/Receive
+import ../../Database/Lattice/Data
 
 #Serialization common lib.
 import ../Serialize/SerializeCommon

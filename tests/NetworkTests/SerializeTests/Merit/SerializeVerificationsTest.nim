@@ -16,7 +16,7 @@ import random
 #Algorithm standard lib; used to randomize the Verifications/Miners order.
 import algorithm
 
-#Set the seed to be based on the time.
+#Seed Random via the time.
 randomize(int(getTime()))
 
 for i in 1 .. 20:
@@ -64,4 +64,4 @@ for i in 1 .. 20:
         assert(verifs[v].nonce == verifsParsed[v].nonce)
         assert(verifs[v].merkle == verifsParsed[v].merkle)
 
-echo "Finished the Network/Serialize/Merit/Verifications test."
+echo "Finished the Network/Serialize/Merit/Verifications Test."

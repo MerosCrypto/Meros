@@ -1,5 +1,14 @@
+#Errors lib.
+import ../../lib/Errors
+
+#Util lib.
+import ../../lib/Util
+
 #BLS lib.
 import ../../lib/BLS
+
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
 
 #Miners object.
 import objects/MinersObj
@@ -8,75 +17,39 @@ import objects/MinersObj
 import Block
 import Blockchain
 
+#State object.
+import objects/StateObj
+#Export it.
+export StateObj
+
 #Finals lib.
 import finals
-
-#Tables standard lib.
-import tables
-
-#State object.
-finalsd:
-    type State* = ref object of RootObj
-        #Blocks until Merit is dead.
-        deadBlocks* {.final.}: uint
-        #Live Merit.
-        live*: uint
-        #Address -> Merit
-        data: ref Table[string, uint]
-
-#Constructor.
-func newState*(deadBlocks: uint): State {.raises: [].} =
-    result = State(
-        deadBlocks: deadBlocks,
-        live: 0,
-        data: newTable[string, uint]()
-    )
-    result.ffinalizeDeadBlocks()
-
-#Get the Merit of an account.
-func getBalance*(state: State, account: BLSPublicKey): uint {.raises: [KeyError].} =
-    #Set the result to 0 (in case there isn't an entry in the table).
-    result = 0
-
-    #If there is an entry, set the result to it.
-    if state.data.hasKey(account.toString()):
-        result = state.data[account.toString()]
 
 #Process a block.
 proc processBlock*(
     state: State,
     blockchain: Blockchain,
     newBlock: Block
-) {.raises: [KeyError].} =
+) {.raises: [
+    KeyError,
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     #Grab the miners.
     var miners: Miners = newBlock.miners
 
     #For each miner, add their Merit to the State.
     for miner in miners:
-        state.data[miner.miner.toString()] = state.getBalance(miner.miner) + miner.amount
-        state.live += miner.amount
+        state[miner.miner.toString()] = state[miner.miner] + miner.amount
 
-    #If the Blockchain's height is over 50k, meaning there is a block to remove from the state...
+    #If the Blockchain's height is over the dead blocks quantity, meaning there is a block to remove from the state...
     if blockchain.height > state.deadBlocks:
-        #Get the block that should be removed.
-        miners = blockchain.blocks[^int(state.deadBlocks + 1)].miners
         #For each miner, remove their Merit from the State.
-        for miner in miners:
-            state.data[miner.miner.toString()] = state.getBalance(miner.miner) - miner.amount
-            state.live -= miner.amount
+        for miner in blockchain[blockchain.height - (state.deadBlocks + 1)].miners:
+            state[miner.miner] = state[miner.miner] - miner.amount
 
-#Process every block in a blockchain.
-proc processBlockchain*(
-    state: State,
-    blockchain: Blockchain
-) {.raises: [KeyError].} =
-    for i in blockchain.blocks:
-        state.processBlock(blockchain, i)
-
-#Constructor. It's at the bottom so we can call processBlockchain.
-proc newState*(
-    blockchain: Blockchain,
-    deadBlocks: uint
-): State {.raises: [KeyError].} =
-    result = newState(deadBlocks)
-    result.processBlockchain(blockchain)
+    #Save the State to the DB.
+    state.save()

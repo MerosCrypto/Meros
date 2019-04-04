@@ -33,8 +33,7 @@ else:
     switch("stackTrace", "on")
     switch("excessiveStackTrace", "on")
 
-#Remove dead code and optimize for size (which is faster than `opt=speed` for Meros).
-switch("deadCodeElim", "on")
+#Optimize for size (which is faster than `opt=speed` for Meros (at least on x86_64)).
 switch("opt", "size")
 
 #Enable parallel building.

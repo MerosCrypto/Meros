@@ -66,6 +66,10 @@ for i in 1 .. 20:
         claim.signature == claimParsed.signature,
         "Signature:\r\n" & claim.signature & "\r\n" & claimParsed.signature
     )
+    assert(
+        claim.verified == claimParsed.verified,
+        "Verified:\r\n" & $claim.verified & "\r\n" & $claimParsed.verified,
+    )
 
     #Test the Claim properties.
     assert(
@@ -77,4 +81,4 @@ for i in 1 .. 20:
         "BLS Signature:\r\n" & $claim.bls & "\r\n" & $claimParsed.bls
     )
 
-echo "Finished the Network/Serialize/Lattice/Claim test."
+echo "Finished the Network/Serialize/Lattice/Claim Test."

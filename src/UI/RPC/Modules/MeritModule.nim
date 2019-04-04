@@ -77,6 +77,8 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
     #Create the Block.
     result = %* {
         "header": {
+            "hash": $gotBlock.header.hash,
+
             "nonce": int(gotBlock.header.nonce),
             "last": $gotBlock.header.last,
 
@@ -85,8 +87,7 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
 
             "time": int(gotBlock.header.time),
             "proof": int(gotBlock.header.proof)
-        },
-        "hash": $gotBlock.hash
+        }
     }
 
     #Add the Verifications.

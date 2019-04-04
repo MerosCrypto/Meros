@@ -1,11 +1,12 @@
-#Run every test...
+#Run every Test...
 
+import objectsTests
 import libTests
 import WalletTests
 import DatabaseTests
+import UITests
 import NetworkTests
-import objectsTests
 
 import SyntaxTest
 
-echo "Finished all the tests."
+echo "Finished all the Tests."

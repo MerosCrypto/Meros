@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Util lib.
 import ../../lib/Util
 
@@ -7,14 +10,20 @@ import ../../lib/Hash
 #BLS lib.
 import ../../lib/BLS
 
-#Verifications objects.
+#Verifications lib.
 import ../Verifications/Verifications
+
+#DB Function Box object.
+import ../../objects/GlobalFunctionBoxObj
 
 #VerifierIndex object.
 import objects/VerifierIndexObj
 
-#State lib.
-import State
+#Blockchain lib.
+import Blockchain
+
+#State object.
+import objects/StateObj
 
 #Epoch objects.
 import objects/EpochsObj
@@ -32,12 +41,129 @@ import algorithm
 #Tables standard lib.
 import tables
 
+#This shift does four things:
+# - Adds the newest set of Verifications.
+# - Stores the oldest Epoch to be returned.
+# - Removes the oldest Epoch from Epochs.
+# - Saves the VerifierIndexes in the Epoch to-be-returned to the Database.
+#If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
+proc shift*(
+    epochs: Epochs,
+    verifs: Verifications,
+    indexes: seq[VerifierIndex],
+    tips: TableRef[string, int] = nil
+): Epoch {.raises: [
+    KeyError,
+    ValueError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
+    var
+        #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
+        newEpoch: Epoch = newEpoch(indexes)
+        #Loop variable saying if we found the Entry in an older Epoch.
+        found: bool
+        #Loop variable of what verification to start with.
+        start: int
+
+    #Loop over each Verification.
+    for index in indexes:
+        #If we were passed tips, use those for the starting point.
+        if not tips.isNil:
+            start = tips[index.key]
+        #Else, use the verifier's archived.
+        else:
+            start = verifs[index.key].archived
+
+        #Iterate over every Verification.
+        for verif in verifs[index.key][start .. int(index.nonce)]:
+            #Set found to false.
+            found = false
+
+            #Try adding this hash to an existing Epoch.
+            if epochs.add(verif.hash.toString(), verif.verifier):
+                found = true
+
+            #If it wasn't in an existing Epoch, add it to the new Epoch.
+            if not found:
+                newEpoch.add(verif.hash.toString(), verif.verifier)
+
+        #If we were passed a set of tips, update them.
+        if not tips.isNil:
+            tips[index.key] = int(index.nonce)
+
+    #Return the popped Epoch.
+    result = epochs.shift(newEpoch, indexes, tips.isNil)
+
+#Constructor. Below shift as it calls shift.
+proc newEpochs*(
+    db: DatabaseFunctionBox,
+    verifications: Verifications,
+    blockchain: Blockchain
+): Epochs {.raises: [
+    KeyError,
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
+    #Create the Epochs objects.
+    result = newEpochsObj(db)
+
+    #Regenerate the Epochs.
+    var
+        #String of every holder.
+        holders: string
+        #Table of every archived tip before the current Epochs.
+        tips: TableRef[string, int] = newTable[string, int]()
+
+    try:
+        holders = db.get("merit_holders")
+    except:
+        #If there are no holders, there's no mined Blocks and therefore no Epochs to regenerate.
+        holders = ""
+
+    #We don't just return in the above except in case an empty holders is saved to the DB.
+    #That should be impossible, as the State, as of right now, only saves the holders once it has some.
+    #That said, if we change how the State operates the DB, it shouldn't break this.
+    if holders == "":
+        return
+
+    #Use the Holders string from the State.
+    for i in countup(0, holders.len - 1, 48):
+        #Extract the holder.
+        var holder = holders[i .. i + 47]
+
+        #Load their tip.
+        try:
+            tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
+        except:
+            #If this failed, it's because they have Merit but don't have Verifications older than 5 blocks.
+            tips[holder] = 0
+
+    #Shift the last 10 blocks. Why?
+    #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late verifications aren't labelled as first appearances.
+    var start: int = 10
+    #If the blockchain is smaller than 10, load every block.
+    if blockchain.height < 10:
+        start = int(blockchain.height)
+
+    for i in countdown(start, 1):
+        discard result.shift(
+            verifications,
+            blockchain[blockchain.height - uint(i)].verifications,
+            tips
+        )
+
 #Calculate what share each person deserves of the minted Meros.
 proc calculate*(
     epoch: Epoch,
     state: State
 ): Rewards {.raises: [
-    KeyError
+    KeyError,
+    FinalAttributeError
 ].} =
     #If the epoch is empty, do nothing.
     if epoch.len == 0:
@@ -62,7 +188,7 @@ proc calculate*(
             result.add(
                 newReward(
                     person.toString(),
-                    state.getBalance(person)
+                    state[person]
                 )
             )
             #Add the Merit to the total.
@@ -128,42 +254,3 @@ proc calculate*(
     #Normalize each person to a score of 1000.
     for i in 0 ..< result.len:
         result[i].score = result[i].score * 1000 div total
-
-#Shift does three things:
-# - Adds the newest set of Verifications.
-# - Stores the oldest Epoch to be returned.
-# - Removes the oldest Epoch from Epochs.
-proc shift*(epochs: var Epochs, verifs: Verifications, indexes: seq[VerifierIndex]): Epoch {.raises: [KeyError].} =
-    var
-        #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
-        newEpoch: Epoch = newEpoch()
-        #A loop variable saying if we found the Entry in an older Epoch.
-        found: bool
-
-    #Loop over each Verification.
-    for index in indexes:
-        for verif in verifs[index.key][verifs[index.key].archived .. index.nonce]:
-            #Set found to false.
-            found = false
-
-            #Iterate over each Epoch to find which has the Entry.
-            for epoch in epochs:
-                #If this Epoch has it, set found to true, and add it.
-                if epoch.hasKey(verif.hash.toString()):
-                    found = true
-                    epoch[verif.hash.toString()].add(verif.verifier)
-                    #Don't waste time by searching the others.
-                    break
-
-            #If it wasn't found, create a seq for it in the newest Epoch.
-            if not found:
-                newEpoch[verif.hash.toString()] = @[
-                    verif.verifier
-                ]
-
-    #Add the newest Epoch.
-    epochs.add(newEpoch)
-    #Set the result to the oldest.
-    result = epochs[0]
-    #Remove the oldest.
-    epochs.delete(0)

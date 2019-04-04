@@ -19,9 +19,8 @@ import ../../../Wallet/Wallet
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/SendObj
 
-#Serialize/Deserialize functions.
+#Serialize common functions.
 import ../SerializeCommon
-import SerializeSend
 
 #Finals lib.
 import finals
@@ -66,7 +65,7 @@ proc parseSend*(
     #Set the nonce.
     result.nonce = nonce
     #Set the Blake512 hash.
-    result.hash = Blake512(result.serialize())
+    result.hash = Blake512(sendSeq.reserialize(0, 3))
     #Set the proof.
     result.proof = uint(proof.fromBinary())
     #Set the Argon hash.

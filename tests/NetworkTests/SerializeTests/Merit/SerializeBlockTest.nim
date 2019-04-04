@@ -27,7 +27,7 @@ import random
 #Algorithm standard lib; used to randomize the Verifications/Miners order.
 import algorithm
 
-#Set the seed to be based on the time.
+#Seed Random via the time.
 randomize(int(getTime()))
 
 for i in 1 .. 20:
@@ -139,7 +139,7 @@ for i in 1 .. 20:
     assert(newBlock.header.proof == blockParsed.header.proof)
 
     #Test the hash.
-    assert(newBlock.hash == blockParsed.hash)
+    assert(newBlock.header.hash == blockParsed.header.hash)
 
     #Test the Verifications.
     for v in 0 ..< newBlock.verifications.len:
@@ -152,4 +152,4 @@ for i in 1 .. 20:
         assert(newBlock.miners[m].miner == blockParsed.miners[m].miner)
         assert(newBlock.miners[m].amount == blockParsed.miners[m].amount)
 
-echo "Finished the Network/Serialize/Merit/Block test."
+echo "Finished the Network/Serialize/Merit/Block Test."

@@ -20,7 +20,7 @@ import ../../../../src/Network/Serialize/Verifications/ParseMemoryVerification
 #Random standard lib.
 import random
 
-#Set the seed to be based on the time.
+#Seed Random via the time.
 randomize(int(getTime()))
 
 #Test 20 MemoryVerification serializations.
@@ -32,8 +32,6 @@ for i in 1 .. 20:
         verifier: MinerWallet = newMinerWallet()
         #Create a nonce.
         nonce: uint = uint(rand(65000))
-        #Create an archived (archived should not be serialized).
-        archived: uint = uint(rand(500000)) + 1
         #Create a hash.
         hash: Hash[512]
     #Set the hash to a random value.
@@ -42,7 +40,6 @@ for i in 1 .. 20:
 
     #Create the MemoryVerification.
     var verif: MemoryVerification = newMemoryVerificationObj(hash)
-    verif.archived = archived
     verifier.sign(verif, nonce)
 
     #Serialize it and parse it back.
@@ -56,6 +53,5 @@ for i in 1 .. 20:
     assert(verif.nonce == verifParsed.nonce)
     assert(verif.hash == verifParsed.hash)
     assert(verif.signature == verifParsed.signature)
-    assert(verifParsed.archived == 0) #Archived should be set by each node, not serialized. This confirms that.
-    
-echo "Finished the Network/Serialize/Verifications/MemoryVerification test."
+
+echo "Finished the Network/Serialize/Verifications/MemoryVerification Test."

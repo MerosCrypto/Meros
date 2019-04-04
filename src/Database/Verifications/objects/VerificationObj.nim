@@ -23,8 +23,6 @@ finalsd:
             nonce* {.final.}: uint
             #Entry Hash.
             hash* {.final.}: Hash[512]
-            #Block the Verification was archived in.
-            archived* {.final.}: uint
 
         #Verification object for the mempool.
         MemoryVerification* = ref object of Verification
@@ -36,8 +34,7 @@ func newVerificationObj*(
     hash: Hash[512]
 ): Verification {.raises: [].} =
     result = Verification(
-        hash: hash,
-        archived: 0
+        hash: hash
     )
     result.ffinalizeHash()
 
@@ -46,7 +43,6 @@ func newMemoryVerificationObj*(
     hash: Hash[512]
 ): MemoryVerification {.raises: [].} =
     result = MemoryVerification(
-        hash: hash,
-        archived: 0
+        hash: hash
     )
     result.ffinalizeHash()

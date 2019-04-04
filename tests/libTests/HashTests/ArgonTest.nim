@@ -1,3 +1,3 @@
 #Argon Test.
 
-echo "The lib/Hash/Argon test is empty."
+echo "The lib/Hash/Argon Test is empty."

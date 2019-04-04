@@ -9,7 +9,7 @@ import ../../src/lib/Base32
 #Random standard lib.
 import random
 
-#Set the seed to be based on the time.
+#Seed Random via the time.
 randomize(int(getTime()))
 
 #Verify isBase32.
@@ -42,4 +42,4 @@ for i in 1 .. 20:
     #Verify parsing strings works.
     assert(base32String == $base32String.toBase32(), "Base 32's parsed data doesn't match the data input.")
 
-echo "Finished the lib/Base32 test."
+echo "Finished the lib/Base32 Test."

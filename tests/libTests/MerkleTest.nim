@@ -12,118 +12,99 @@ import ../../src/lib/Base
 #Merkle lib.
 import ../../src/lib/Merkle
 
-block:
-    let
-        #First leaf.
-        a: string = Blake512("a").toString()
-        #Second leaf.
-        b: string = Blake512("b").toString()
-        #Third leaf.
-        c: string = Blake512("c").toString()
+#Random standard lib.
+import random
 
-        #First hash.
-        ab: string = Blake512(
-            a & b
-        ).toString()
-        #Second hash.
-        cc: string = Blake512(
-            c & c
-        ).toString()
-        #Root hash.
-        hash: string = Blake512(
-            ab & cc
-        ).toString()
+#Seq utils standard lib.
+import sequtils
 
-    #Create the Merkle Tree.
-    var merkle: Merkle = newMerkle(a, b, c)
+#Seed Random via the time.
+randomize(int(getTime()))
 
-    #Test the results.
-    assert(hash == merkle.hash, "Merkle hash is not what it should be.")
+#Test nil Merle trees.
+assert(newMerkle().hash == "".pad(64))
 
-    #Test nil Merle trees.
-    assert(newMerkle().hash == "".pad(64))
+#Test leaves.
+assert(newMerkle("1".pad(64)).hash == "1".pad(64))
 
-    #Test adding hashes.
-    merkle = newMerkle(a)
-    merkle.add(b)
-    merkle.add(c)
-    assert(merkle.hash == hash)
+#Test 20 trees.
+for i in 1 .. 20:
+    echo "Testing Merkle Trees, iteration " & $i & "."
 
-    merkle = newMerkle()
-    merkle.add(a)
-    merkle.add(b)
-    merkle.add(c)
-    assert(merkle.hash == hash)
+    #Create a random amount of hashes.
+    var
+        hashLen: int = rand(900) + 100
+        hashes: seq[string] = newSeq[string](hashLen)
+    for h in 0 ..< hashLen:
+        hashes[h] = Blake512(h.toBinary()).toString()
 
-block:
-    let
-        #Left-side leaves.
-        a: string = Blake512("a").toString()
-        b: string = Blake512("b").toString()
-        c: string = Blake512("c").toString()
-        d: string = Blake512("d").toString()
+    var
+        #Copy the hashes so we can form our own tree of it (albeit slowly).
+        fullCopy: seq[string] = hashes
+        #Pick a random sub-amount for use in a Merkle tree created with both the constructor and addition.
+        #The +1 is to make sure we don't skip the both test.
+        bothLen: int = rand(hashLen - 2) + 1
+        #Create a second copy of the hashes with this smaller range.
+        partialCopy: seq[string] = hashes[0 ..< bothLen]
+        #Define three trees. One of newMerkle, one of addition, and one of both.
+        constructor: Merkle = newMerkle(hashes)
+        addition: Merkle = newMerkle()
+        both: Merkle = newMerkle(hashes[0 ..< bothLen])
 
-        #Right-side leaves.
-        e: string = Blake512("e").toString()
-        f: string = Blake512("f").toString()
-        g: string = Blake512("g").toString()
-        h: string = Blake512("h").toString()
+    #Create the addition tree.
+    for hash in hashes:
+        addition.add(hash)
 
-        #Left-side branches.
-        ab: string = Blake512(a & b).toString()
-        cd: string = Blake512(c & d).toString()
-        abcd: string = Blake512(ab & cd).toString()
+    #Generate our own tree, slowly, using fullCopy.
+    #Run until we only have one hash.
+    while fullCopy.len != 1:
+        #Iterate over the seq by a 2 count.
+        for h in countup(0, fullCopy.len - 1, 2):
+            #If there is no h + 1, add the last hash again.
+            if fullCopy.len mod 2 == 1:
+                fullCopy.add(fullCopy[fullCopy.len - 1])
 
-        #Right-side branches.
-        ef: string = Blake512(e & f).toString()
-        gh: string = Blake512(g & h).toString()
-        efgh: string  = Blake512(ef & gh).toString()
+            #Turn fullCopy[h] into the branch hash for fullCopy[h .. h + 1].
+            fullCopy[h] = Blake512(fullCopy[h] & fullCopy[h + 1]).toString()
 
-        #Changed branched if we remove h.
-        gg: string = Blake512(g & g).toString()
-        efgg: string = Blake512(ef & gg).toString()
-        abcdefgg: string = Blake512(abcd & efgg).toString()
+        #Delete every other element.
+        var d: int = 1
+        while d < fullCopy.len:
+            fullCopy.delete(d)
+            inc(d)
 
-        #Changed branches if we remove g and h.
-        efef: string = Blake512(ef & ef).toString()
-        abcdefef: string = Blake512(abcd & efef).toString()
+    #Generate our own tree, slowly, using partialCopy.
+    while partialCopy.len != 1:
+        for h in countup(0, partialCopy.len - 1, 2):
+            if partialCopy.len mod 2 == 1:
+                partialCopy.add(partialCopy[partialCopy.len - 1])
 
-        #Changed branches if we remove d, e, f, g, and h.
-        cc: string = Blake512(c & c).toString()
-        abcc: string = Blake512(ab & cc).toString()
+            partialCopy[h] = Blake512(partialCopy[h] & partialCopy[h + 1]).toString()
 
-        #Tree hashes.
-        abcdefgh: string = Blake512(abcd & efgh).toString()
+        var d: int = 1
+        while d < partialCopy.len:
+            partialCopy.delete(d)
+            inc(d)
 
-        #Create the merkle trees.
-        merkle_ah: Merkle = newMerkle(a, b, c, d, e, f, g, h)
-        merkle_ah2: Merkle = merkle_ah.trim(0)
-        merkle_ag: Merkle = merkle_ah.trim(1)
-        merkle_af: Merkle = merkle_ah.trim(2)
-        merkle_ac: Merkle = merkle_ah.trim(5)
+    #Test that the constructor and addition tree have the same hash as fullCopy.
+    assert(constructor.hash == fullCopy[0])
+    assert(addition.hash == fullCopy[0])
 
-    #Verify the merkle_ah and merkle_ah2 hashes.
-    assert(merkle_ah.hash == abcdefgh)
-    assert(merkle_ah2.hash == merkle_ah.hash)
+    #Test that the both tree has the same hash as partialCopy.
+    assert(both.hash == partialCopy[0])
 
-    #Verify merkle_ah2's ref is the same as merkle_ah.
-    assert(cast[int](merkle_ah2) == cast[int](merkle_ah))
+    #Test that when hashLen - bothLen elements are trimmed, their hashes equal both's.
+    assert(constructor.trim(hashLen - bothLen).hash == both.hash)
+    assert(addition.trim(hashLen - bothLen).hash == both.hash)
 
-    #Verify the merkle_ag hash and refs.
-    assert(merkle_ag.hash == abcdefgg)
-    assert(merkle_ag.left == merkle_ah.left)
-    assert(merkle_ag.right != merkle_ah.right)
+    #Complete the both tree.
+    for hash in hashes[bothLen ..< hashLen]:
+        both.add(hash)
 
-    #Verify the merkle_af hash and refs.
-    assert(merkle_af.hash == abcdefef)
-    assert(merkle_af.left == merkle_ah.left)
-    assert(merkle_af.right != merkle_ah.right)
+    #Test that the both tree and the fullCopy have the same hash.
+    assert(both.hash == fullCopy[0])
 
-    #Verify the merkle_ac hash and refs.
-    assert(merkle_ac.hash == abcc)
-    assert(merkle_ac.left != merkle_ah.left)
-    assert(merkle_ac.right != merkle_ah.right)
-    assert(merkle_ac.left == merkle_ah.left.left)
-    assert(merkle_ac.left != merkle_ah.left.right)
+    #Make sure trimming, as long as we don't break the lower bound, still works.
+    assert(constructor.trim(hashLen div 2).hash == addition.trim(hashLen div 2).hash)
 
-echo "Finished the lib/Merkle test."
+echo "Finished the lib/Merkle Test."

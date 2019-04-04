@@ -10,7 +10,7 @@ import ../../../lib/Hash
 #BLS lib.
 import ../../../lib/BLS
 
-#Miners object.
+#BlockHeader object.
 import ../../../Database/Merit/objects/BlockHeaderObj
 
 #Common serialization functions.
@@ -25,7 +25,7 @@ import strutils
 #Parse function.
 proc parseBlockHeader*(
     headerStr: string
-): BlockHeader {.raises: [ValueError, BLSError].} =
+): BlockHeader {.raises: [ValueError, ArgonError, BLSError].} =
     #Nonce | Last Hash | Verifications Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(6)
 
@@ -38,3 +38,4 @@ proc parseBlockHeader*(
         uint(headerSeq[4].fromBinary()),
         uint(headerSeq[5].fromBinary())
     )
+    result.hash = Argon(headerStr, headerSeq[5])

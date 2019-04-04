@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Numerical libs.
 import BN
 import ../../lib/Base
@@ -5,11 +8,18 @@ import ../../lib/Base
 #Hash lib.
 import ../../lib/Hash
 
+#Blockchain object.
+import objects/BlockchainObj
+
 #Block lib.
 import Block
+
 #Difficulty object.
 import objects/DifficultyObj
 export DifficultyObj
+
+#Finals lib.
+import finals
 
 #String utils standard lib.
 import strutils
@@ -26,29 +36,31 @@ func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [Value
     result = true
 
     #If the Argon hash didn't beat the difficulty...
-    if newBlock.hash.toBN() < diff.difficulty:
+    if newBlock.header.hash.toBN() < diff.difficulty:
         return false
 
-#Calculate the next difficulty using the blocks, difficulties, period Length, and blocks per period.
+#Calculate the next difficulty using the blockchain and blocks per period.
 proc calculateNextDifficulty*(
-    blocks: seq[Block],
-    difficulties: seq[Difficulty],
-    targetTime: uint,
+    blockchain: Blockchain,
     blocksPerPeriod: uint
-): Difficulty {.raises: [].} =
-    #If it was the genesis block, keep the same difficulty.
-    if blocks.len == 1:
-        return difficulties[0]
-
+) {.raises: [
+    ValueError,
+    ArgonError,
+    BLSError,
+    LMDBError,
+    FinalAttributeError
+].} =
     var
         #Last difficulty.
-        last: Difficulty = difficulties[difficulties.len-1]
+        last: Difficulty = blockchain.difficulty
         #New difficulty.
         difficulty: BN = last.difficulty
+        #Target time.
+        targetTime: uint = blockchain.blockTime * blocksPerPeriod
         #Start block of the difficulty.
-        start: uint = blocks[blocks.len - int(blocksPerPeriod + 1)].header.time
+        start: uint = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
         #End block of the difficulty.
-        endTime: uint = blocks[blocks.len - 1].header.time
+        endTime: uint = blockchain.tip.header.time
         #Period time.
         actualTime: uint = endTime - start
         #Possible values.
@@ -92,12 +104,12 @@ proc calculateNextDifficulty*(
         difficulty = last.difficulty - change
 
     #If the difficulty is lower than the starting difficulty, use that.
-    if difficulty < difficulties[0].difficulty:
-        difficulty = difficulties[0].difficulty
+    if difficulty < blockchain.startDifficulty.difficulty:
+        difficulty = blockchain.startDifficulty.difficulty
 
     #Create the new difficulty.
-    result = newDifficultyObj(
-        last.endBlock,
+    blockchain.difficulty = newDifficultyObj(
+        last.endBlock + 1,
         last.endBlock + blocksPerPeriod,
         difficulty
     )

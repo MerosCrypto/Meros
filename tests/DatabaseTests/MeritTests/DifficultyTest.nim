@@ -1,3 +1,3 @@
 #Difficulty Test.
 
-echo "The Database/Merit/Difficulty test is empty."
+echo "The Database/Merit/Difficulty Test is empty."

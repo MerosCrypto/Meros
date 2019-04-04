@@ -1,40 +1,38 @@
-include MainGlobals
+include MainDatabase
 
 proc mainVerifications() {.raises: [].} =
     {.gcsafe.}:
-        verifications = newVerifications()
+        verifications = newVerifications(functions.database)
 
         #Provide access to the verifier's height.
         functions.verifications.getVerifierHeight = proc (
             key: string
-        ): uint {.raises: [KeyError].} =
+        ): uint {.raises: [KeyError, LMDBError].} =
             verifications[key].height
 
         #Provide access to verifications.
         functions.verifications.getVerification = proc (
             key: string,
             nonce: uint
-        ): Verification {.raises: [KeyError].} =
+        ): Verification {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             verifications[key][nonce]
 
         #Provide access to the VerifierIndexes of verifiers with unarchived Verifications.
         functions.verifications.getUnarchivedIndexes = proc (): seq[VerifierIndex] {.raises: [
             KeyError,
             ValueError,
+            LMDBError,
             FinalAttributeError
         ].} =
             #Calculate who has new Verifications.
             result = @[]
-            for verifier in verifications.keys():
-                #Skip over verifier's with no Verifications, if any manage to exist.
+            for verifier in verifications.verifiers():
+                #Skip over Verifiers with no Verifications, if any manage to exist.
                 if verifications[verifier].height == 0:
                     continue
 
-                #Generally, we'd only need to see if the height is greater than the archived.
-                #That said, archived is supposed to start at -1. It can't as an uint.
-                #To solve this, we have a different check.
-                #We check if the tip Verification was archived or not.
-                if verifications[verifier][^1].archived != 0:
+                #Continue if this user doesn't have unarchived Verifications.
+                if verifications[verifier].verifications.len == 0:
                     continue
 
                 #Since there are unarchived verifications, add the VerifierIndex.
@@ -49,22 +47,23 @@ proc mainVerifications() {.raises: [].} =
         functions.verifications.getPendingAggregate = proc (
             verifierStr: string,
             nonce: uint
-        ): BLSSignature {.raises: [KeyError, BLSError].} =
+        ): BLSSignature {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             var
                 #Grab the Verifier.
                 verifier: Verifier = verifications[verifierStr]
                 #Create a seq of signatures.
                 sigs: seq[BLSSignature] = @[]
                 #Start of the unarchived Verifications.
-                start: uint = verifier.archived + 1
+                start: int
 
-            #Override to handle how archived is 0 twice.
-            if start == 1:
-                if verifier[0].archived == 0:
-                    start = 0
+            #If this Verifier has pending Verifications...
+            if verifier.verifications.len > 0:
+                start = int(verifier.verifications[0].nonce)
+            else:
+                return nil
 
             #Iterate over every unarchived verification, up to and including the nonce.
-            for verif in verifier{start .. nonce}:
+            for verif in verifier{start .. int(nonce)}:
                 sigs.add(verif.signature)
 
             #Return the hash.
@@ -74,14 +73,14 @@ proc mainVerifications() {.raises: [].} =
         functions.verifications.getPendingHashes = proc (
             key: string,
             nonceArg: uint
-        ): seq[string] {.raises: [KeyError].} =
+        ): seq[string] {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             result = @[]
 
             var
                 #Grab the Verifier.
                 verifier: Verifier = verifications[key]
                 #Start of the unarchived Verifications.
-                start: uint = verifier.archived + 1
+                start: int
                 #Nonce to end at.
                 nonce: uint = nonceArg
 
@@ -89,23 +88,24 @@ proc mainVerifications() {.raises: [].} =
             if verifications[key].height == 0:
                 return
 
-            #Override to handle how archived is 0 twice.
-            if start == 1:
-                if verifications[key][0].archived == 0:
-                    start = 0
+            #If this Verifier has pending Verifications...
+            if verifier.verifications.len > 0:
+                start = int(verifier.verifications[0].nonce)
+            else:
+                return @[]
 
             #Make sure the nonce is within bounds.
             if verifications[key].height <= nonce:
                 nonce = verifications[key].height - 1
 
             #Add the hashes.
-            for verif in verifications[key][start .. nonce]:
+            for verif in verifications[key][start .. int(nonce)]:
                 result.add(verif.hash.toString())
 
         #Handle Verifications.
         functions.verifications.addVerification = proc (
             verif: Verification
-        ): bool {.raises: [ValueError].} =
+        ): bool {.raises: [ValueError, LMDBError].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
 
@@ -116,7 +116,7 @@ proc mainVerifications() {.raises: [].} =
             try:
                 verifications.add(verif)
             except:
-                #We either got the Verification/a competing Verification while handling the Block
+                #We either already got the Verification/got a competing Verification while handling the Block
                 #OR
                 #This had an unknown error.
                 #We return false to be safe.
@@ -128,7 +128,7 @@ proc mainVerifications() {.raises: [].} =
         #Handle Verifications.
         functions.verifications.addMemoryVerification = proc (
             verif: MemoryVerification
-        ): bool {.raises: [ValueError, BLSError].} =
+        ): bool {.raises: [ValueError, BLSError, LMDBError].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification."
 

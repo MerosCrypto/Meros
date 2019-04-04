@@ -15,7 +15,7 @@ import ../../../../src/lib/Hash
 #Merkle lib.
 import ../../../../src/lib/Merkle
 
-#BLS and minerWallet libs.
+#BLS and MinerWallet libs.
 import ../../../../src/lib/BLS
 import ../../../../src/Wallet/MinerWallet
 
@@ -25,50 +25,54 @@ import ../../../../src/Database/Verifications/Verifications
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 
-#Epoch Test Common lib.
-import EpochsTestCommon
+#Merit Testing functions.
+import ../TestMerit
 
 #String utils standard lib.
 import strutils
 
 var
+    #Database Function Box.
+    functions: DatabaseFunctionBox = newTestDatabase()
     #Verifications.
-    verifications: Verifications = newVerifications()
+    verifications: Verifications = newVerifications(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain("epoch test", 1, newBN(0))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_2", 1, newBN(0))
     #State.
-    state: State = newState(100)
+    state: State = newState(functions, 100)
     #Epochs.
-    epochs: Epochs = newEpochs()
-    #VerifierIndexes.
-    verifs: seq[VerifierIndex] = @[]
+    epochs: Epochs = newEpochs(functions, verifications, blockchain)
 
-    #MinerWallet.
+    #Hash.
+    hash: Hash[512] = "aa".repeat(64).toHash(512)
+    #MinerWallets.
     miners: seq[MinerWallet] = @[
         newMinerWallet(),
         newMinerWallet()
     ]
-    #Hash.
-    hash: Hash[512] = "aa".repeat(64).toHash(512)
     #MemoryVerification object.
     verif: MemoryVerification
+    #VerifierIndexes.
+    verifs: seq[VerifierIndex] = @[]
     #Rewards.
     rewards: Rewards
 
 #Give both Keys Merit.
 state.processBlock(
     blockchain,
-    blankBlock(@[
-        newMinerObj(
-            miners[0].publicKey,
-            50
-        ),
+    newTestBlock(
+        miners = @[
+            newMinerObj(
+                miners[0].publicKey,
+                50
+            ),
 
-        newMinerObj(
-            miners[1].publicKey,
-            50
-        )
-    ])
+            newMinerObj(
+                miners[1].publicKey,
+                50
+            )
+        ]
+    )
 )
 
 #Add a Key 0 Verification.
@@ -106,8 +110,8 @@ verifs.add(newVerifierIndex(
 rewards = epochs.shift(verifications, verifs).calculate(state)
 assert(rewards.len == 0)
 
-#Shift 4 over.
-for _ in 0 ..< 4:
+#Shift 3 over.
+for _ in 0 ..< 3:
     rewards = epochs.shift(verifications, @[]).calculate(state)
     assert(rewards.len == 0)
 

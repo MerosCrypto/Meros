@@ -142,7 +142,7 @@ proc newMerkleAux(hashes: varargs[string], targetDepth: int): Merkle {.raises: [
     if targetDepth == 0:
         return newMerkle(hashes[0])
 
-    let halfWidth = 2 ^ (targetDepth - 1)
+    let halfWidth: int = 2 ^ (targetDepth - 1)
     if hashes.len <= halfWidth:
         #We need to duplicate LHS on RHS.
         return newMerkle(newMerkleAux(hashes, targetDepth - 1), nil)
@@ -181,6 +181,14 @@ proc trim*(treeArg: Merkle, nArg: int): Merkle {.raises: [].} =
     var
         tree: Merkle = treeArg
         n: int = nArg
+
+    #This code doesn't handle trimming everything BUT the initial leaf.
+    #This override handles that.
+    if tree.leafCount - n == 1:
+        result = tree
+        while result.isBranch:
+            result = result.left
+        return
 
     #Chop of the entire right branch for as long as we can.
     while (

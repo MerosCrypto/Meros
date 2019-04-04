@@ -1,7 +1,7 @@
 #Errors file for all custom error types we want to declare.
 
-#LMDB lib.
-import mc_lmdb
+#DB lib.
+import ../Database/Filesystem/DB
 #Export its custom Error type.
 export LMDBError
 
