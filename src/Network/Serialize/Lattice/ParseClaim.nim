@@ -24,9 +24,6 @@ import ../SerializeCommon
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
 #Parse a Claim.
 proc parseClaim*(
     claimStr: string
@@ -36,18 +33,24 @@ proc parseClaim*(
     FinalAttributeError
 ].} =
     var
-        #Public Key | Nonce | Mint Nonce | BLS | Signature
-        claimSeq: seq[string] = claimStr.deserialize(5)
+        #Public Key | Nonce | Mint Nonce | BLS Signature | Signature
+        claimSeq: seq[string] = claimStr.deserialize(
+            PUBLIC_KEY_LEN,
+            INT_LEN,
+            INT_LEN,
+            BLS_SIGNATURE_LEN,
+            SIGNATURE_LEN
+        )
         #Get the sender's Public Key.
-        sender: EdPublicKey = newEdPublicKey(claimSeq[0].pad(32))
+        sender: EdPublicKey = newEdPublicKey(claimSeq[0])
         #Get the nonce.
         nonce: uint = uint(claimSeq[1].fromBinary())
         #Get the mint nonce.
         mintNonce: uint = uint(claimSeq[2].fromBinary())
         #Get the BLS signature.
-        bls: BLSSignature = newBLSSignature(claimSeq[3].pad(96))
+        bls: BLSSignature = newBLSSignature(claimSeq[3])
         #Get the signature.
-        signature: string = claimSeq[4].pad(64)
+        signature: string = claimSeq[4]
 
     #Create the Claim.
     result = newClaim(

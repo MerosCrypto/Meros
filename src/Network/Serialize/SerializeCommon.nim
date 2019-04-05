@@ -1,85 +1,45 @@
 #Util lib.
 import ../../lib/Util
 
-#Generates the length that's prefixed onto serialized strings.
-func `lenPrefix`*(data: string): string {.raises: [].} =
-    var
-        #How many full bytes are needed to represent the length.
-        full: int = int(data.len / 255)
-        #How much of the length is left over after those full bytes.
-        remainder: int = data.len mod 255
-    #Add each full byte.
-    for _ in 0 ..< full:
-        result &= char(255)
-    #Add the byte representing the remainding length.
-    result &= char(remainder)
+#Lengths of various data types and messages.
+const
+    BYTE_LEN*:           int = 1
+    INT_LEN*:            int = 4
+    MEROS_LEN*:          int = 8
+    HASH_LEN*:           int = 64
+    PUBLIC_KEY_LEN*:     int = 32
+    SIGNATURE_LEN*:      int = 64
+    BLS_PUBLIC_KEY_LEN*: int = 48
+    BLS_SIGNATURE_LEN*:  int = 96
 
-#Prepends a string with its length.
-func `!`*(dataArg: string): string {.raises: [].} =
-    #Extract the data argument.
-    result = dataArg.strip()
+    VERIFICATION_LEN*:        int = BLS_PUBLIC_KEY_LEN + INT_LEN + HASH_LEN
+    MEMORY_VERIFICATION_LEN*: int = BLS_PUBLIC_KEY_LEN + INT_LEN + HASH_LEN + SIGNATURE_LEN
 
-    #Return the data prefixed by it's length.
-    result = result.lenPrefix & result
+    DIFFICULTY_LEN*:     int = INT_LEN + INT_LEN + HASH_LEN
+    MINER_LEN*:          int = BLS_PUBLIC_KEY_LEN + BYTE_LEN
+    VERIFIER_INDEX_LEN*: int = BLS_PUBLIC_KEY_LEN + INT_LEN + HASH_LEN
+    BLOCK_HEADER_LEN*:   int = INT_LEN + HASH_LEN + BLS_SIGNATURE_LEN + HASH_LEN + INT_LEN + INT_LEN
+
+    MINT_LEN*:        int = INT_LEN + BLS_PUBLIC_KEY_LEN + INT_LEN
+    CLAIM_LEN*:       int = PUBLIC_KEY_LEN + INT_LEN + INT_LEN + BLS_SIGNATURE_LEN + SIGNATURE_LEN
+    SEND_LEN*:        int = PUBLIC_KEY_LEN + INT_LEN + PUBLIC_KEY_LEN + MEROS_LEN + INT_LEN + SIGNATURE_LEN
+    RECEIVE_LEN*:     int = PUBLIC_KEY_LEN + INT_LEN + PUBLIC_KEY_LEN + INT_LEN + SIGNATURE_LEN
+    DATA_PREFIX_LEN*: int = PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN
+    DATA_SUFFIX_LEN*: int = INT_LEN + SIGNATURE_LEN
 
 #Deseralizes a string by getting the length of the next byte, slicing that out, and moving on.
 func deserialize*(
     data: string,
-    estimated: int = 0
+    lengths: varargs[int]
 ): seq[string] {.raises: [].} =
     #Allocate the seq.
-    result = newSeq[string](estimated)
+    result = newSeq[string](lengths.len)
 
-    var
-        #Item we're on.
-        item: int = 0
-        #Location in the string.
-        loc: int = 0
-        #Size of the next element.
-        size: int
-
-    #While we're not at the end of string and we're still in the allocated set...
-    while (loc < data.len) and (item < estimated):
-        #Reset the size.
-        size = 0
-
-        #Go through full byte.
-        while ord(data[loc]) == 255:
-            #Add it to the size.
-            size += ord(data[loc])
-            #Increase the Location.
-            inc(loc)
-        #Add the current byte to the size (either the size/remainder).
-        size += ord(data[loc])
-        #Increase the location.
-        inc(loc)
-
-        #Get the result.
-        result[item] = data[loc ..< loc + size]
-        #Increase the item.
-        inc(item)
-        #Add the size to the loc.
-        loc += size
-
-    #While we're not at the end of string and we're not in the allocated set...
-    while loc < data.len:
-        #Do the exact same thing.
-        size = 0
-
-        while ord(data[loc]) == 255:
-            size += ord(data[loc])
-            inc(loc)
-        size += ord(data[loc])
-        inc(loc)
-
-        #Add it to the seq at the end, don't set an 'existing' var.
-        result.add(data[loc ..< loc + size])
-        inc(item)
-        loc += size
-
-    #Shave off unused items.
-    for i in item ..< estimated:
-        result.delete(item)
+    #Iterate over every length, slicing the strings out.
+    var handled: int = 0
+    for i in 0 ..< lengths.len:
+        result[i] = data.substr(handled, handled + lengths[i] - 1)
+        handled += lengths[i]
 
 #Turns a seq[string] backed into a serialized string, only using the first X items.
 #Used for hash calculation when parsing objects.
@@ -89,4 +49,4 @@ func reserialize*(
     endIndex: int
 ): string {.raises: [].} =
     for i in start .. endIndex:
-        result &= data[i].lenPrefix & data[i]
+        result &= data[i]

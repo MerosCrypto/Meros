@@ -15,10 +15,13 @@ import ../SerializeCommon
 
 #Serialize Verifications.
 proc serialize*(verifications: seq[VerifierIndex]): string {.raises: [].} =
+    #Set the quantity.
+    result = verifications.len.toBinary().pad(INT_LEN)
+
     #Iterate over every VerifierIndex.
     for verifier in verifications:
         #Serialize their data.
         result &=
-            !verifier.key &
-            !verifier.nonce.toBinary() &
-            !verifier.merkle
+            verifier.key &
+            verifier.nonce.toBinary().pad(INT_LEN) &
+            verifier.merkle

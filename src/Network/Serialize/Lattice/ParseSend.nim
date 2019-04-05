@@ -38,21 +38,28 @@ proc parseSend*(
 ].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
-        sendSeq: seq[string] = sendStr.deserialize(6)
+        sendSeq: seq[string] = sendStr.deserialize(
+            PUBLIC_KEY_LEN,
+            INT_LEN,
+            PUBLIC_KEY_LEN,
+            MEROS_LEN,
+            INT_LEN,
+            SIGNATURE_LEN
+        )
         #Get the sender's public key.
-        sender: EdPublicKey = newEdPublicKey(sendSeq[0].pad(32))
+        sender: EdPublicKey = newEdPublicKey(sendSeq[0])
         #Set the input address based off the sender's public key.
         input: string = newAddress(sender)
         #Get the nonce.
         nonce: uint = uint(sendSeq[1].fromBinary())
         #Get the output.
-        output: string = newAddress(sendSeq[2].pad(32))
+        output: string = newAddress(sendSeq[2])
         #Get the amount.
         amount: BN = sendSeq[3].toBN(256)
         #Get the proof.
         proof: string = sendSeq[4]
         #Get the signature.
-        signature: string = sendSeq[5].pad(64)
+        signature: string = sendSeq[5]
 
     #Create the Send.
     result = newSendObj(

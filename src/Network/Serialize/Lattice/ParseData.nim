@@ -21,9 +21,6 @@ import ../SerializeCommon
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
 #Parse a Data.
 proc parseData*(
     dataStr: string
@@ -33,20 +30,33 @@ proc parseData*(
     FinalAttributeError
 ].} =
     var
-        #Public Key | Nonce | Data | Proof | Signature
-        dataSeq: seq[string] = dataStr.deserialize(5)
+        #Public Key | Nonce | Data Len | Data | Proof | Signature
+        keyNonce: seq[string] = dataStr.deserialize(
+            PUBLIC_KEY_LEN,
+            INT_LEN
+        )
+        data: string = dataStr.substr(
+            PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN,
+            PUBLIC_KEY_LEN + INT_LEN + int(dataStr[PUBLIC_KEY_LEN + INT_LEN])
+        )
+        proofSig: seq[string] = dataStr
+            .substr(
+                PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN + int(dataStr[PUBLIC_KEY_LEN + INT_LEN])
+            )
+            .deserialize(
+                INT_LEN,
+                SIGNATURE_LEN
+            )
         #Get the sender's Public Key.
-        sender: EdPublicKey = newEdPublicKey(dataSeq[0].pad(32))
+        sender: EdPublicKey = newEdPublicKey(keyNonce[0])
         #Get the sender's address.
         senderAddress: string = newAddress(sender)
         #Get the nonce.
-        nonce: uint = uint(dataSeq[1].fromBinary())
-        #Get the data.
-        data: string = dataSeq[2]
+        nonce: uint = uint(keyNonce[1].fromBinary())
         #Get the proof.
-        proof: uint = uint(dataSeq[3].fromBinary())
+        proof: uint = uint(proofSig[0].fromBinary())
         #Get the signature.
-        signature: string = dataSeq[4].pad(64)
+        signature: string = proofSig[1]
 
     #Create the Data.
     result = newDataObj(
@@ -57,7 +67,7 @@ proc parseData*(
     #Set the nonce.
     result.nonce = nonce
     #Set the hash.
-    result.hash = Blake512(dataSeq.reserialize(0, 2))
+    result.hash = Blake512(keyNonce[0] & keyNonce[1] & char(result.data.len) & data)
     #Set the proof.
     result.proof = proof
     #Set the Argon hash.

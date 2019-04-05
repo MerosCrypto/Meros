@@ -14,16 +14,16 @@ import ../../../Database/Lattice/objects/DataObj
 #Common serialization functions.
 import ../SerializeCommon
 
+import strutils
 #Serialize a Data.
 proc serialize*(data: Data): string {.raises: [ValueError].} =
     result =
-        !Address.toBN(data.sender).toString(256) &
-        !data.nonce.toBinary() &
-        #Solves https://github.com/MerosCrypto/Meros/issues/46.
-        data.data.lenPrefix & data.data
+        Address.toPublicKey(data.sender) &
+        data.nonce.toBinary().pad(INT_LEN) &
+        char(data.data.len) & data.data
 
     if data.signature.len != 0:
         result =
             result &
-            !data.proof.toBinary() &
-            !data.signature
+            data.proof.toBinary().pad(INT_LEN) &
+            data.signature

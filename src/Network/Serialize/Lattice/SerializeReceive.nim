@@ -18,12 +18,12 @@ import ../SerializeCommon
 #Serialize a Receive.
 proc serialize*(recv: Receive): string {.raises: [ValueError].} =
     result =
-        !recv.nonce.toBinary() &
-        !Address.toBN(recv.index.key).toString(256) &
-        !recv.index.nonce.toBinary()
+        recv.nonce.toBinary().pad(INT_LEN) &
+        Address.toPublicKey(recv.index.key) &
+        recv.index.nonce.toBinary().pad(INT_LEN)
 
     if recv.signature.len != 0:
         result =
-            !Address.toBN(recv.sender).toString(256) &
+            Address.toPublicKey(recv.sender) &
             result &
-            !recv.signature
+            recv.signature

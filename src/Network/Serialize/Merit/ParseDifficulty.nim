@@ -20,7 +20,11 @@ proc parseDifficulty*(
     difficultyStr: string
 ): Difficulty {.raises: [ValueError].} =
     #Start | End | Difficulty
-    var difficultySeq: seq[string] = difficultyStr.deserialize(3)
+    var difficultySeq: seq[string] = difficultyStr.deserialize(
+        INT_LEN,
+        INT_LEN,
+        HASH_LEN
+    )
 
     #Add each miner/amount.
     result = newDifficultyObj(

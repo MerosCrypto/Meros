@@ -17,8 +17,11 @@ import strutils
 func serialize*(
     miners: Miners
 ): string {.raises: [].} =
+    #Set the quantity.
+    result = $char(miners.len)
+
     #Add each miner.
     for miner in 0 ..< miners.len:
         result &=
-            !miners[miner].miner.toString() &
-            !miners[miner].amount.toBinary()
+            miners[miner].miner.toString() &
+            char(miners[miner].amount)

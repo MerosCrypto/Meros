@@ -23,17 +23,24 @@ import strutils
 proc parseMiners*(
     minersStr: string
 ): Miners {.raises: [BLSError].} =
+    #Quantity | Address1 | Amount1 .. AddressN | AmountN
+    var
+        quantity: int = int(minersStr[0])
+        minersSeq: seq[string]
+
     #Init the result.
-    result = @[]
+    result = newSeq[Miner](quantity)
 
-    #Address1 | Amount1 .. AddressN | AmountN
-    var minersSeq: seq[string] = minersStr.deserialize(2)
-
-    #Add each miner/amount.
-    for i in countup(0, minersSeq.len - 1, 2):
-        result.add(
-            newMinerObj(
-                newBLSPublicKey(minersSeq[i].pad(48)),
-                uint(minersSeq[i + 1].fromBinary())
+    #Parse each Miner.
+    for i in 0 ..< quantity:
+        minersSeq = minersStr
+            .substr(BYTE_LEN + (i * MINER_LEN))
+            .deserialize(
+                BLS_PUBLIC_KEY_LEN,
+                BYTE_LEN
             )
+
+        result[i] = newMinerObj(
+            newBLSPublicKey(minersSeq[0]),
+            uint(minersSeq[1][0])
         )

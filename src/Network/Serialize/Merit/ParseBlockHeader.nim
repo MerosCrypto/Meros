@@ -27,14 +27,21 @@ proc parseBlockHeader*(
     headerStr: string
 ): BlockHeader {.raises: [ValueError, ArgonError, BLSError].} =
     #Nonce | Last Hash | Verifications Aggregate Signature | Miners Merkle | Time | Proof
-    var headerSeq: seq[string] = headerStr.deserialize(6)
+    var headerSeq: seq[string] = headerStr.deserialize(
+        INT_LEN,
+        HASH_LEN,
+        BLS_SIGNATURE_LEN,
+        HASH_LEN,
+        INT_LEN,
+        INT_LEN
+    )
 
     #Create the BlockHeader.
     result = newBlockHeaderObj(
         uint(headerSeq[0].fromBinary()),
-        headerSeq[1].pad(64).toArgonHash(),
-        newBLSSignature(headerSeq[2].pad(96)),
-        headerSeq[3].pad(64).toBlake512Hash(),
+        headerSeq[1].toArgonHash(),
+        newBLSSignature(headerSeq[2]),
+        headerSeq[3].toBlake512Hash(),
         uint(headerSeq[4].fromBinary()),
         uint(headerSeq[5].fromBinary())
     )

@@ -17,13 +17,13 @@ import ../SerializeCommon
 #Serialize a Send.
 proc serialize*(send: Send): string {.raises: [ValueError].} =
     result =
-        !Address.toBN(send.sender).toString(256) &
-        !send.nonce.toBinary() &
-        !Address.toBN(send.output).toString(256) &
-        !send.amount.toString(256)
+        Address.toPublicKey(send.sender) &
+        send.nonce.toBinary().pad(INT_LEN) &
+        Address.toPublicKey(send.output) &
+        send.amount.toString(256).pad(MEROS_LEN)
 
     if send.signature.len != 0:
         result =
             result &
-            !send.proof.toBinary() &
-            !send.signature
+            send.proof.toBinary().pad(INT_LEN) &
+            send.signature
