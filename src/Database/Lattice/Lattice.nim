@@ -107,10 +107,6 @@ proc verify*(
             account: Account = lattice[index.key]
             offset: int = int(account.height) - account.entries.len
 
-        #Remove every hash at that index from the lookup and the verifications.
-        for e in account.entries[int(index.nonce) - offset]:
-            lattice.rmHash(e.hash)
-
         #Only keep the confirmed Entry.
         account.entries[int(index.nonce) - offset].keepIf(
             proc (e: Entry): bool =
@@ -335,3 +331,11 @@ proc mint*(
 
     #Clear the minter's cache.
     lattice["minter"].entries.delete(0)
+
+#Call rmHash on every hash in this Epoch.
+proc archive*(
+    lattice: Lattice,
+    epoch: Epoch
+) {.raises: [].} =
+    for hash in epoch.keys():
+        lattice.rmHash(hash)

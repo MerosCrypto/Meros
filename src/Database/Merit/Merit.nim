@@ -85,7 +85,7 @@ proc processBlock*(
     merit: Merit,
     verifications: Verifications,
     newBlock: Block
-): Rewards {.raises: [
+): Epoch {.raises: [
     KeyError,
     ValueError,
     ArgonError,
@@ -101,10 +101,8 @@ proc processBlock*(
     #Have the state process the block.
     merit.state.processBlock(merit.blockchain, newBlock)
 
-    #Have the Epochs process the Block.
-    var epoch: Epoch = merit.epochs.shift(
+    #Have the Epochs process the Block and return the popped Epoch.
+    result = merit.epochs.shift(
         verifications,
         newBlock.verifications
     )
-    #Calculate the rewards.
-    result = epoch.calculate(merit.state)

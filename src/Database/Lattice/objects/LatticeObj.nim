@@ -111,10 +111,10 @@ func addHash*(
 #Deletes a hash from the lookup/verifications.
 func rmHash*(
     lattice: Lattice,
-    hash: Hash[512]
+    hash: string
 ) {.raises: [].} =
-    lattice.lookup.del(hash.toString())
-    lattice.verifications.del(hash.toString())
+    lattice.lookup.del(hash)
+    lattice.verifications.del(hash)
 
 #Creates a new Account on the Lattice.
 proc add*(
