@@ -1,20 +1,5 @@
 # TODO
 
-### Fixed Length Messages
-- Handshaking works.
-- Syncing after the Handshake downloads the tip, downloads the first Block we're missing, adds that, downloads the second, and then fails. Reconnecting adds the block that failed successfully.
-
-- Test VerificationRequest.
-- Test EntryRequest.
-
-- Test Claim.
-- Test Send.
-- Test Receive.
-- Test Data.
-
-- Test MemoryVerification.
-- Test Verification.
-
 ### Core:
 Database:
 - If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.

@@ -96,8 +96,11 @@ proc newNetwork*(
 
                 of MessageType.VerificationRequest:
                     var
-                        req: seq[string] = msg.message.deserialize(2)
-                        key: string = req[0].pad(48)
+                        req: seq[string] = msg.message.deserialize(
+                            BLS_PUBLIC_KEY_LEN,
+                            INT_LEN
+                        )
+                        key: string = req[0]
                         nonce: uint = uint(req[1].fromBinary())
                         height: uint = mainFunctions.verifications.getVerifierHeight(key)
 

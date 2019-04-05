@@ -271,15 +271,12 @@ proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
 
     #Send the request.
     await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary().pad(INT_LEN)))
-    echo "Asked for Block."
 
     #Get their response.
     var msg: Message = await client.recv()
-    echo "Received Block"
 
     case msg.content:
         of MessageType.Block:
-            echo "Got Block"
             return msg.message.parseBlock()
 
         of MessageType.DataMissing:
