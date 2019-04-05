@@ -44,7 +44,7 @@ finalsd:
         address* {.final.}: string
         #Account height.
         height*: uint
-        #Nonce of the highest confirmed Entry (where everything before it is also confirmed).
+        #Nonce of the highest Entry popped out of Epochs.
         confirmed*: uint
         #seq of the Entries (actually a seq of seqs so we can handle unconfirmed Entries).
         entries*: seq[seq[Entry]]
@@ -75,7 +75,7 @@ proc newAccountObj*(db: DatabaseFunctionBox, address: string, load: bool = false
             #Create a lookup table for storing hashes.
             result.lookup = newTable[string, Index]()
 
-            #Load every unconfirmed Entry.
+            #Load every Entry still in the Epochs.
             result.entries = newSeq[seq[Entry]](result.height - result.confirmed)
             for i in result.confirmed ..< result.height:
                 var hashes: string = result.db.get("lattice_" & result.address & "_" & i.toBinary())
@@ -102,9 +102,7 @@ proc addEntry*(
     entry: Entry
 ) {.raises: [ValueError, LMDBError].} =
     #Correct for the Entries no longer in RAM.
-    var
-        offset: int = int(account.height) - account.entries.len
-        i: int = int(entry.nonce) - offset
+    var i: int = int(entry.nonce - account.confirmed)
 
     if entry.nonce < account.height:
         #Make sure we're not overwriting something out of the cache.
@@ -165,9 +163,10 @@ proc `[]`*(account: Account, index: uint): Entry {.raises: [ValueError].} =
             raise newException(ValueError, getCurrentExceptionMsg())
 
     #Else, check if there is a singular Entry we can return from memory.
-    var
-        offset: int = int(account.height) - account.entries.len
-        i: int = int(index) - offset
+    var i: int = int(index - account.confirmed)
     if account.entries[i].len != 1:
+        for e in account.entries[i]:
+            if e.verified:
+                return e
         raise newException(ValueError, "Conflicting Entries at that position with no verified Entry.")
     result = account.entries[i][0]
