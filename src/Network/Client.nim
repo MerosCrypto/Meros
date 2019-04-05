@@ -38,52 +38,87 @@ export ClientObj
 import asyncdispatch, asyncnet
 
 #Receive a message.
-proc recv*(client: Client, handshake: bool = false): Future[Message] {.async.} =
+proc recv*(client: Client): Future[Message] {.async.} =
     var
-        header: string
-        offset: int = 0
+        content: MessageType
         size: int
-        msg: string = ""
+        msg: string
 
-    #If this is a handsshake, set an offset of 2.
-    if handshake:
-        offset = 2
+    #Receive the content type.
+    msg = await client.socket.recv(1)
+    #If the message length is 0, because the client disconnected...
+    if msg.len == 0:
+        #Close the Client.
+        client.socket.close()
+        #Raise an error.
+        raise newException(SocketError, "Client disconnected.")
+    content = MessageType(msg[0])
 
-    #Receive the header.
-    header = await client.socket.recv(2 + offset)
-    #Verify the length.
-    if header.len != (2 + offset):
-        #If the header length is 0, because the client disconnected...
-        if header.len == 0:
-            #Close the Client.
-            client.socket.close()
-            #Raise an error.
-            raise newException(SocketError, "Client disconnected.")
-        #Else, if we got a partial header, raise an exception.
-        raise newException(SocketError, "Didn't get a full header.")
+    #Switch based on the content to determine the Message Size.
+    case content:
+        of MessageType.Handshake:
+            size = BYTE_LEN + BYTE_LEN + INT_LEN
 
-    #Define the size.
-    size = ord(header[^1])
-    #While the last size char is 255, signifying there's more to the size...
-    while ord(header[^1]) == 255:
-        #Get a new byte.
-        header &= await client.socket.recv(1)
-        #Add it to the size.
-        size += ord(header[^1])
+        of MessageType.Syncing:
+            size = 0
+        of MessageType.BlockRequest:
+            size = INT_LEN
+        of MessageType.VerificationRequest:
+            size = BLS_PUBLIC_KEY_LEN + INT_LEN
+        of MessageType.EntryRequest:
+            size = HASH_LEN
+        of MessageType.DataMissing:
+            size = 0
+        of MessageType.SyncingOver:
+            size = 0
+
+        of MessageType.Claim:
+            size = CLAIM_LEN
+        of MessageType.Send:
+            size = SEND_LEN
+        of MessageType.Receive:
+            size = RECEIVE_LEN
+        of MessageType.Data:
+            size = DATA_PREFIX_LEN
+
+        of MessageType.MemoryVerification:
+            size = MEMORY_VERIFICATION_LEN
+        of MessageType.Block:
+            size = BLOCK_HEADER_LEN + INT_LEN
+        of MessageType.Verification:
+            size = VERIFICATION_LEN
 
     #Now that we know how long the message is, get it (as long as there is one).
     if size > 0:
         msg = await client.socket.recv(size)
+
+    #If this is a MessageType with more data...
+    case content:
+        of MessageType.Data:
+            var len: int = int(msg[^1])
+            size += len
+            msg &= await client.socket.recv(len)
+            size += DATA_SUFFIX_LEN
+            msg &= await client.socket.recv(DATA_SUFFIX_LEN)
+        of MessageType.Block:
+            var quantity: int = msg.substr(msg.len - 4).fromBinary()
+            size += (quantity * VERIFIER_INDEX_LEN) + BYTE_LEN
+            msg &= await client.socket.recv((quantity * VERIFIER_INDEX_LEN) + BYTE_LEN)
+            quantity = int(msg[^1])
+            size += quantity * MINER_LEN
+            msg &= await client.socket.recv(quantity * MINER_LEN)
+        else:
+            discard
+
     #Verify the length.
     if msg.len != size:
         raise newException(SocketError, "Didn't get a full message.")
 
-    #Create a Message out of the header/message and return it.
+    #Create a proper Message and return it.
     result = newMessage(
         client.id,
-        MessageType(header[0 + offset]),
+        content,
         uint(size),
-        header,
         msg
     )
 
@@ -110,37 +145,34 @@ proc handshake*(
     result = HandshakeState.Error
 
     #Send a handshake.
-    var heightStr: string = height.toBinary()
     await client.send(
         newMessage(
-            0,
             MessageType.Handshake,
-            uint(heightStr.len),
-            char(id) & char(protocol) & char(MessageType.Handshake) & heightStr.lenPrefix,
-            heightStr
+            char(id) & char(protocol) & height.toBinary().pad(INT_LEN)
         )
     )
 
     #Get their handshake back.
-    var handshake: Message = await client.recv(true)
-
+    var handshake: Message = await client.recv()
     #Verify their handshake is a handshake.
     if handshake.content != MessageType.Handshake:
         return
+
+    #Deserialize their message.
+    var handshakeSeq: seq[string] = handshake.message.deserialize(
+        BYTE_LEN,
+        BYTE_LEN,
+        INT_LEN
+    )
     #Verify their Network ID.
-    if uint(handshake.header[0]) != id:
+    if uint(handshakeSeq[0][0]) != id:
         return
     #Verify their Protocol version.
-    if uint(handshake.header[1]) != protocol:
-        return
-    #Verify they're not claiming to have over 4 billion blocks.
-    if int(handshake.header[3]) > 4:
+    if uint(handshakeSeq[1][0]) != protocol:
         return
 
     #Get their Blockchain height.
-    var theirHeight: uint = uint(
-        handshake.message.fromBinary()
-    )
+    var theirHeight: uint = uint(handshakeSeq[2].fromBinary())
 
     #If they have more blocks than us, return that we're missing blocks.
     if height < theirHeight:
@@ -160,8 +192,6 @@ proc sync*(client: Client) {.async.} =
 
     #Update our state.
     client.ourState = ClientState.Syncing
-
-    echo "Set Syncing."
 
 #Sync an Entry.
 proc syncEntry*(client: Client, hash: string): Future[SyncEntryResponse] {.async.} =
@@ -216,7 +246,7 @@ proc syncVerification*(
     await client.send(
         newMessage(
             MessageType.VerificationRequest,
-            !verifier & !nonce.toBinary()
+            verifier & nonce.toBinary().pad(INT_LEN)
         )
     )
 
@@ -240,13 +270,16 @@ proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary()))
+    await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary().pad(INT_LEN)))
+    echo "Asked for Block."
 
     #Get their response.
     var msg: Message = await client.recv()
+    echo "Received Block"
 
     case msg.content:
         of MessageType.Block:
+            echo "Got Block"
             return msg.message.parseBlock()
 
         of MessageType.DataMissing:
@@ -266,5 +299,3 @@ proc syncOver*(client: Client) {.async.} =
 
     #Update our state.
     client.ourState = ClientState.Ready
-
-    echo "Ended Syncing."
