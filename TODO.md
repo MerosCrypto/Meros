@@ -1,5 +1,20 @@
 # TODO
 
+### Fixed Length Messages
+- Handshaking works.
+- Syncing after the Handshake downloads the tip, downloads the first Block we're missing, adds that, downloads the second, and then fails. Reconnecting adds the block that failed successfully.
+
+- Test VerificationRequest.
+- Test EntryRequest.
+
+- Test Claim.
+- Test Send.
+- Test Receive.
+- Test Data.
+
+- Test MemoryVerification.
+- Test Verification.
+
 ### Core:
 Database:
 - If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
@@ -7,7 +22,6 @@ Database:
 
 Verifications:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
-- When we load a Merkle, load every leaf into a seq, and then call newMerkle. Don't use addition.
 - Load unarchived verifications from the DB.
 
 Merit:
@@ -37,7 +51,6 @@ Wallet:
 - HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 
 Network:
-- Move to fixed length messages (instead of length prefixes like we have now).
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
