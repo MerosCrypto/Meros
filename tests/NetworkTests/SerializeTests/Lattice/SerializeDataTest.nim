@@ -40,7 +40,7 @@ var tests: seq[string] = @[
     "Another phrase.",
     "Yet another phrase.",
     "This is 32 characters long.     ",
-    "This is 256 characters long.    ".repeat(8),
+    " This is 255 characters long.   ".repeat(8).substr(1),
     "This is the 20th Test because I wanted a nice number."
 ]
 
