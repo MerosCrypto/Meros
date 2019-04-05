@@ -29,7 +29,7 @@ for i in 1 .. 20:
         difficulty: Difficulty
 
     for _ in 0 ..< 64:
-        difficultyStr &= rand(255)
+        difficultyStr &= char(rand(255))
     difficulty = newDifficultyObj(start, endBlock, difficultyStr.toBN(256))
 
     echo "Testing Difficulty Serialization/Parsing, iteration " & $i & "."

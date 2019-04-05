@@ -86,10 +86,7 @@ proc add(state: State, key: string) {.raises: [].} =
 proc `holdersStr`*(state: State): string {.raises: [].} =
     state.holdersStr
 
-proc `[]`*(state: State, keyArg: string): uint {.raises: [KeyError].} =
-    #Make sure the key is padded.
-    var key: string = keyArg.pad(48)
-
+proc `[]`*(state: State, key: string): uint {.raises: [KeyError].} =
     #Add this holder to the State if they don't exist already.
     state.add(key)
 
@@ -104,10 +101,7 @@ proc `live`*(state: State): uint {.raises: [].} =
     state.live
 
 #Setters.
-proc `[]=`*(state: State, keyArg: string, value: uint) {.raises: [KeyError].} =
-    #Extract the argument.
-    var key: string = keyArg.pad(48)
-
+proc `[]=`*(state: State, key: string, value: uint) {.raises: [KeyError].} =
     #Get the previous value (uses the State `[]` so `add` is called).
     var previous: uint = state[key]
     #Set their new value.

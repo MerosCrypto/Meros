@@ -53,7 +53,7 @@ proc add(
         discard
     #Else, if it's an invalid signature...
     elif not newEdPublicKey(
-        account.address.toBN().toString(256)
+        account.address.toPublicKey()
     ).verify(entry.hash.toString(), entry.signature):
         #Return false.
         return false
@@ -79,7 +79,7 @@ proc add*(
         claim.bls.setAggregationInfo(
             newBLSAggregationInfo(
                 newBLSPublicKey(mint.output),
-                mint.nonce.toBinary() & Address.toBN(account.address).toString(256)
+                mint.nonce.toBinary() & Address.toPublicKey(account.address)
             )
         )
     except:

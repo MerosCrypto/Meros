@@ -50,7 +50,7 @@ proc newVerifierObj*(
     result = Verifier(
         db: db,
 
-        key: key.pad(48),
+        key: key,
         archived: -1,
         verifications: @[],
         merkle: newMerkle()

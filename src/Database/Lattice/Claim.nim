@@ -56,7 +56,7 @@ proc sign*(
     claim.sender = wallet.address
 
     #Sign MintNonce & PublicKey.
-    claim.bls = miner.sign(claim.mintNonce.toBinary() & Address.toBN(claim.sender).toString(256))
+    claim.bls = miner.sign(claim.mintNonce.toBinary() & Address.toPublicKey(claim.sender))
 
     #Set the hash.
     claim.hash = Blake512(claim.serialize())

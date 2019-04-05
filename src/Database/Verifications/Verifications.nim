@@ -69,4 +69,4 @@ proc archive*(
         verifs[index.key].archived = int(index.nonce)
 
         #Update the DB.
-        verifs.db.put("verifications_" & index.key.pad(48), $index.nonce)
+        verifs.db.put("verifications_" & index.key, $index.nonce)

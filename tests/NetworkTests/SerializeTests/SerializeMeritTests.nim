@@ -1,8 +1,8 @@
 #Test for all the Merit Serialize/Parse functions.
 
 #Merit Serialize.
-import Merit/SerializeBlockHeaderTest
+import Merit/SerializeDifficultyTest
 import Merit/SerializeVerificationsTest
 import Merit/SerializeMinersTest
+import Merit/SerializeBlockHeaderTest
 import Merit/SerializeBlockTest
-import Merit/SerializeDifficultyTest
