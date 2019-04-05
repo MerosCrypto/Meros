@@ -10,9 +10,6 @@ import ../SerializeCommon
 #BLS lib.
 import ../../../lib/BLS
 
-#String utils standard library.
-import strutils
-
 #Serialization function.
 func serialize*(
     miners: Miners

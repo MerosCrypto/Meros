@@ -45,7 +45,7 @@ for i in 1 .. 20:
         #Aggregate Signature.
         aggregate: BLSSignature
         #Verifications.
-        verifs: seq[VerifierIndex]
+        verifs: seq[VerifierIndex] = newSeq[VerifierIndex](rand(512))
         #Temporary key/merkle strings for creating VerifierIndexes.
         vKey: string
         vMerkle: string

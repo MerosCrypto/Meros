@@ -16,9 +16,6 @@ import ../../../Database/Merit/objects/MinersObj
 #Common serialization functions.
 import ../SerializeCommon
 
-#String utils standard library.
-import strutils
-
 #Parse function.
 proc parseMiners*(
     minersStr: string
