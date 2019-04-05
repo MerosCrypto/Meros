@@ -41,7 +41,7 @@ proc mainMerit() {.raises: [
             result = true
 
             #Print that we're adding the Block.
-            echo "Adding a new Block. " & $newBlock.header.nonce
+            echo "Adding a new Block. "
 
             #If we're connected to other people, sync missing info.
             if network.clients.clients.len > 0:
@@ -122,15 +122,21 @@ proc mainMerit() {.raises: [
                         return false
 
             #Add the Block to the Merit.
-            var rewards: Rewards
+            var epoch: Epoch
             try:
-                rewards = merit.processBlock(verifications, newBlock)
+                epoch = merit.processBlock(verifications, newBlock)
             except:
                 echo "Failed to add the Block."
                 return false
 
             #Archive the Verifications mentioned in the Block.
             verifications.archive(newBlock.verifications)
+
+            #Archive the hashes handled by the popped Epoch.
+            lattice.archive(epoch)
+
+            #Calculate the rewards.
+            var rewards: Rewards = epoch.calculate(merit.state)
 
             #Create the Mints (which ends up minting a total of 50000 MR).
             var

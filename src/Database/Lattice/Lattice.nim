@@ -101,32 +101,22 @@ proc verify*(
         weight += merit.state[i]
     #If the Entry has at least 50.1% of the weight...
     if weight > ((merit.state.live div uint(2)) + 1):
-        #Get the Index, Account. and calculate the offset.
+        #Get the Index, Account, and calculate in `entries`.
         var
             index: Index = lattice.lookup[hash]
             account: Account = lattice[index.key]
-            offset: int = int(account.height) - account.entries.len
-
-        #Remove every hash at that index from the lookup and the verifications.
-        for e in account.entries[int(index.nonce) - offset]:
-            lattice.rmHash(e.hash)
-
-        #Only keep the confirmed Entry.
-        account.entries[int(index.nonce) - offset].keepIf(
-            proc (e: Entry): bool =
-                verif.hash == e.hash
-        )
+            i: int = int(index.nonce - lattice[index.key].confirmed)
 
         #Get said Entry.
-        var entry: Entry = account[index.nonce]
+        var entry: Entry = nil
+        for e in account.entries[i]:
+            if e.hash == verif.hash:
+                entry = e
+        if entry.isNil:
+            return false
 
         #Set it to verified.
         entry.verified = true
-
-        #Delete every verified Entry that's still in this Verifier's cache.
-        #We don't just remove [0] as Entries may be confirmed out of order.
-        while (lattice[entry.sender].entries.len > 0) and (lattice[entry.sender].entries[0][0].verified):
-            lattice[entry.sender].entries.delete(0)
 
         #If we're not just reloading Verifications, and should update balances/save results to the DB...
         if save:
@@ -161,13 +151,6 @@ proc verify*(
                 else:
                     changedBalance = false
 
-            #Save the confirmed Entry's hash to the DB under SENDER_NONCE.
-            lattice.db.put("lattice_" & entry.sender & "_" & entry.nonce.toBinary(), entry.hash.toString())
-
-            #Update the Account's confirmed field.
-            lattice[entry.sender].confirmed = lattice[entry.sender].height - uint(lattice[entry.sender].entries.len)
-            lattice.db.put("lattice_" & entry.sender & "_confirmed", lattice[entry.sender].confirmed.toBinary())
-
             #If the balance was changed, save the new Balance to the DB.
             if changedBalance:
                 lattice.db.put("lattice_" & entry.sender & "_balance", lattice[entry.sender].balance.toString(256))
@@ -195,12 +178,12 @@ proc newLattice*(
 
     #Grab every Verifier mentioned in the last 6 Blocks of Verifications.
     var verifiers: seq[string] = @[]
-    if merit.blockchain.height < 6:
+    if merit.blockchain.height < 5:
         for b in uint(0) ..< merit.blockchain.height:
             for index in merit.blockchain[b].verifications:
                 verifiers.add(index.key)
     else:
-        for b in merit.blockchain.height - 6 ..< merit.blockchain.height:
+        for b in merit.blockchain.height - 5 ..< merit.blockchain.height:
             for index in merit.blockchain[b].verifications:
                 verifiers.add(index.key)
     verifiers = verifiers.deduplicate()
@@ -335,3 +318,39 @@ proc mint*(
 
     #Clear the minter's cache.
     lattice["minter"].entries.delete(0)
+
+#Remove every hash in this Epoch from the cache/RAM, updating confirmed.
+proc archive*(
+    lattice: Lattice,
+    epoch: Epoch
+) {.raises: [ValueError, LMDBError].} =
+    for hash in epoch.keys():
+        #Grab the Index for this hash.
+        var index: Index
+        try:
+            index = lattice.lookup[hash]
+        #If we couldn't grab it, it's because we're handling hashes out of order and already handled this one.
+        except:
+            continue
+
+        #If this index points to a newer Entry than the previously newest Entry out of Epochs...
+        if index.nonce >= lattice[index.key].confirmed:
+            #Handle all previous Entries, if we're going out of order.
+            while (
+                (lattice[index.key].entries.len > 0) and
+                (lattice[index.key].entries[0][0].nonce <= index.nonce)
+            ):
+                #Remove the hashes of all Entries at this position from the lookup/verifications table.
+                for e in lattice[index.key].entries[0]:
+                    lattice.rmHash(e.hash.toString())
+
+                #Save the verified Entry's hash to the DB under SENDER_NONCE.
+                lattice.db.put("lattice_" & lattice[index].sender & "_" & lattice[index.key].entries[0][0].nonce.toBinary(), lattice[index.key][0].hash.toString())
+
+                #Clear these Entries at this position.
+                lattice[index.key].entries.delete(0)
+
+            #Update confirmed.
+            lattice[index.key].confirmed = index.nonce + 1
+            #Save the new confirmed to the DB.
+            lattice.db.put("lattice_" & index.key & "_confirmed", lattice[index.key].confirmed.toBinary())

@@ -117,13 +117,13 @@ proc newBlockchainObj*(
     #Load every header.
     var
         headers: seq[BlockHeader]
-        last: BlockHeader = parseBlockHeader(db.get("merit_" & tip).deserialize(3)[0])
+        last: BlockHeader = parseBlockHeader(db.get("merit_" & tip).substr(0, BLOCK_HEADER_LEN - 1))
         i: int = 0
     headers = newSeq[BlockHeader](last.nonce + 1)
 
     while last.nonce != 0:
         headers[i] = last
-        last = parseBlockHeader(db.get("merit_" & last.last.toString()).deserialize(3)[0])
+        last = parseBlockHeader(db.get("merit_" & last.last.toString()).substr(0, BLOCK_HEADER_LEN - 1))
         inc(i)
     headers[i] = last
 
@@ -175,7 +175,7 @@ proc `[]`*(blockchain: Blockchain, index: uint): Block {.raises: [
         raise newException(ValueError, "Blockchain doesn't have enough blocks for that index.")
 
     if blockchain.height < 10:
-        result = blockchain.blocks[int(index)]
+        return blockchain.blocks[int(index)]
 
     if index >= blockchain.height - 10:
         result = blockchain.blocks[int(index - (blockchain.height - 10))]

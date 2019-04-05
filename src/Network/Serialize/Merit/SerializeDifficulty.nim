@@ -23,6 +23,6 @@ func serialize*(
     difficulty: Difficulty
 ): string {.raises: [].} =
     result =
-        !difficulty.start.toBinary() &
-        !difficulty.endBlock.toBinary() &
-        !difficulty.difficulty.toString(256)
+        difficulty.start.toBinary().pad(INT_LEN) &
+        difficulty.endBlock.toBinary().pad(INT_LEN) &
+        difficulty.difficulty.toString(256).pad(HASH_LEN)

@@ -56,10 +56,12 @@ func newEdPublicKey*(key: string): EdPublicKey {.raises: [ValueError].} =
         raise newException(ValueError, "Invalid Public Key.")
 
 #Stringify a Seed/PublicKey.
-func `$`*(key: EdSeed | EdPublicKey): string {.raises: [].} =
+func toString*(key: EdSeed | EdPublicKey): string {.raises: [].} =
     result = ""
     for b in key:
-        result = result & uint8(b).toHex()
+        result = result & char(b)
+func `$`*(key: EdSeed | EdPublicKey): string {.raises: [].} =
+    result = key.toString().toHex()
 
 #Constructor.
 func newWallet*(

@@ -20,12 +20,12 @@ import ../SerializeCommon
 #Serialize a Claim.
 proc serialize*(claim: Claim): string {.raises: [ValueError].} =
     result =
-        !claim.nonce.toBinary() &
-        !claim.mintNonce.toBinary() &
-        !claim.bls.toString()
+        claim.nonce.toBinary().pad(INT_LEN) &
+        claim.mintNonce.toBinary().pad(INT_LEN) &
+        claim.bls.toString()
 
     if claim.signature.len != 0:
         result =
-            !Address.toBN(claim.sender).toString(256) &
+            Address.toPublicKey(claim.sender) &
             result &
-            !claim.signature
+            claim.signature

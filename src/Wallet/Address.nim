@@ -150,20 +150,15 @@ func verify*(address: string): bool {.raises: [ValueError].} =
 func verify*(address: string, key: EdPublicKey): bool {.raises: [ValueError].} =
     address == newAddress(key)
 
-#Converts an address to a BN.
-func toBN*(address: string): BN {.raises: [ValueError].} =
+#Converts an address to a string of its PublicKey.
+func toPublicKey*(address: string): string {.raises: [ValueError].} =
     #Verify the address.
     if not address.verify():
         raise newException(ValueError, "Invalid Address.")
 
-    var
-        #Get the key by removing the HRP. removing the BCH code, converting the string to Base32, and the Base32 to Base256.
-        key: seq[uint8] = address.substr(ADDRESS_HRP.len, address.len - 7).toBase32().toSeq()
-        keyStr: string = ""
+    #Get the key by removing the HRP. removing the BCH code, converting the string to Base32, and the Base32 to Base256.
+    var key: seq[uint8] = address.substr(ADDRESS_HRP.len, address.len - 7).toBase32().toSeq()
 
     #Turn the seq into a string.
     for c in key:
-        keyStr &= char(c)
-
-    #Create the BN.
-    result = keyStr.toBN(256)
+        result &= char(c)

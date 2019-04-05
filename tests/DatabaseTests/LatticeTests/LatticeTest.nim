@@ -70,8 +70,6 @@ We cache every Entry from the Account's earliest unconfirmed Entry to their tip.
 We save every Entry without their verified field.
 """
 
-import strutils
-
 var
     #Database.
     db: DatabaseFunctionBox = newTestDatabase()
@@ -117,7 +115,6 @@ proc test() =
         "".pad(128, '0')
     )
 
-    #Test the lookup tables.
     for hash in lattice.lookup.keys():
         assert(reloaded.lookup.hasKey(hash))
         assert(lattice.lookup[hash].key == reloaded.lookup[hash].key)
@@ -176,7 +173,7 @@ proc test() =
                 assert(originalEntries[e].nonce == reloadedEntries[e].nonce)
                 assert(originalEntries[e].hash == reloadedEntries[e].hash)
                 assert(originalEntries[e].signature == reloadedEntries[e].signature)
-                assert(originalEntries[e].verified == reloadedEntries[e].verified)
+                #We don't test Verified because we test the verifications table and https://github.com/MerosCrypto/Meros/issues/55.
 
                 case originalEntries[e].descendant:
                     of EntryType.Mint:
@@ -230,7 +227,7 @@ proc addBlock(wallets: seq[MinerWallet], tips: seq[VerifierIndex]) =
     while not merit.blockchain.difficulty.verifyDifficulty(mining):
         inc(mining)
     try:
-        discard merit.processBlock(verifications, mining)
+        lattice.archive(merit.processBlock(verifications, mining))
     except:
         raise newException(ValueError, "Valid Block wasn't successfully added. " & getCurrentExceptionMsg())
 
@@ -280,6 +277,16 @@ assert(db.get("lattice_" & send.hash.toString()) == char(send.descendant) & send
 #Update the accountsStr.
 accountsStr &= accounts[0].address
 
+#Archive the Verification.
+addBlock(
+    @[
+        verifiers[0]
+    ],
+    @[
+        newVerifierIndex(verifiers[0].publicKey.toString(), 0, "")
+    ]
+)
+
 #Test.
 test()
 
@@ -312,20 +319,38 @@ assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data
 accountsStr &= accounts[1].address
 accountsStr &= accounts[2].address
 
-#Test.
+#Archive the Verifications and test.
+addBlock(
+    @[
+        verifiers[0],
+        verifiers[1],
+        verifiers[2]
+    ],
+    @[
+        newVerifierIndex(verifiers[0].publicKey.toString(), 3, "")
+    ]
+)
 test()
 
 #Verify everything else, and do another test.
 verifiers[0].verify(lattice[accounts[1].address][1].hash.toString())
 verifiers[0].verify(lattice[accounts[2].address][0].hash.toString())
+addBlock(
+    @[
+        verifiers[0],
+        verifiers[1],
+        verifiers[2]
+    ],
+    @[
+        newVerifierIndex(verifiers[0].publicKey.toString(), 5, "")
+    ]
+)
 test()
 
 #Give two other Verifiers Merit.
 addBlock(
     @[verifiers[1]],
-    @[
-        newVerifierIndex(verifiers[0].publicKey.toString(), 2, "")
-    ]
+    @[]
 )
 addBlock(@[verifiers[2]], @[])
 
@@ -344,10 +369,10 @@ assert(lattice.add(data))
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
 #Partially verify each of them.
-verifiers[0].verify(lattice[accounts[0].address].entries[0][0].hash.toString())
-assert(not lattice[accounts[0].address].entries[0][0].verified)
-verifiers[1].verify(lattice[accounts[0].address].entries[0][1].hash.toString())
-assert(not lattice[accounts[0].address].entries[0][1].verified)
+verifiers[0].verify(lattice[accounts[0].address].entries[3][0].hash.toString())
+assert(not lattice[accounts[0].address].entries[3][0].verified)
+verifiers[1].verify(lattice[accounts[0].address].entries[3][1].hash.toString())
+assert(not lattice[accounts[0].address].entries[3][1].verified)
 
 #Archive these Verifications in a Block.
 #In real life, if the Verifications don't make it into a Block, we'd redownload them when the next Block came through and process the Verifications then.
@@ -358,8 +383,8 @@ addBlock(
         verifiers[2]
     ],
     @[
-        newVerifierIndex(verifiers[0].publicKey.toString(), verifications[verifiers[0].publicKey.toString()].height - 1, ""),
-        newVerifierIndex(verifiers[1].publicKey.toString(), verifications[verifiers[1].publicKey.toString()].height - 1, "")
+        newVerifierIndex(verifiers[0].publicKey.toString(), 6, ""),
+        newVerifierIndex(verifiers[1].publicKey.toString(), 0, "")
     ]
 )
 verifications.archive(merit.blockchain.tip.verifications)
@@ -368,10 +393,22 @@ verifications.archive(merit.blockchain.tip.verifications)
 test()
 
 #Finish verifying the second Data.
-var hash: Hash[512] = lattice[accounts[0].address].entries[0][1].hash
+var hash: Hash[512] = lattice[accounts[0].address].entries[2][1].hash
 verifiers[2].verify(hash.toString())
 assert(lattice[accounts[0].address][3].hash == hash)
 assert(lattice[accounts[0].address][3].verified)
+
+#Archive the Verification.
+addBlock(
+    @[
+        verifiers[0],
+        verifiers[1],
+        verifiers[2]
+    ],
+    @[
+        newVerifierIndex(verifiers[2].publicKey.toString(), 0, "")
+    ]
+)
 
 #Test.
 test()

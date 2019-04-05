@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Util lib.
+import ../../../lib/Util
+
 #VerifierIndex object.
 import ../../../Database/Merit/objects/VerifierIndexObj
 
@@ -29,13 +32,15 @@ proc parseBlock*(
     FinalAttributeError
 ].} =
     #Header | Verifications | Miners
-    var blockSeq: seq[string] = blockStr.deserialize(3)
-
-    #Parse the elements.
     var
-        header: BlockHeader = blockSeq[0].parseBlockHeader()
-        verifs: seq[VerifierIndex] = blockSeq[1].parseVerifications()
-        miners: Miners = blockSeq[2].parseMiners()
+        header: BlockHeader = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
+        verifs: seq[VerifierIndex] = blockStr.substr(
+            BLOCK_HEADER_LEN,
+            BLOCK_HEADER_LEN + INT_LEN + (blockStr[BLOCK_HEADER_LEN ..< BLOCK_HEADER_LEN + 4].fromBinary() * VERIFIER_INDEX_LEN)
+        ).parseVerifications()
+        miners: Miners = blockStr.substr(
+            BLOCK_HEADER_LEN + INT_LEN + (blockStr[BLOCK_HEADER_LEN ..< BLOCK_HEADER_LEN + 4].fromBinary() * VERIFIER_INDEX_LEN)
+        ).parseMiners()
 
     #Create the Block Object.
     result = newBlockObj(

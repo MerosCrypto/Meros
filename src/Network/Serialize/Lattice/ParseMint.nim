@@ -63,11 +63,15 @@ proc parseMint*(
 ].} =
     var
         #Nonce | Output | Amount
-        mintSeq: seq[string] = mintStr.deserialize(3)
+        mintSeq: seq[string] = mintStr.deserialize(
+            INT_LEN,
+            BLS_PUBLIC_KEY_LEN,
+            INT_LEN
+        )
         #Get the nonce.
         nonce: uint = uint(mintSeq[0].fromBinary())
         #Get the output.
-        output: string = mintSeq[1].pad(48)
+        output: string = mintSeq[1]
         #Get the amount.
         amount: BN = mintSeq[2].toBN(256)
 

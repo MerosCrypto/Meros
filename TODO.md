@@ -7,7 +7,6 @@ Database:
 
 Verifications:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
-- When we load a Merkle, load every leaf into a seq, and then call newMerkle. Don't use addition.
 - Load unarchived verifications from the DB.
 
 Merit:
@@ -37,7 +36,6 @@ Wallet:
 - HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 
 Network:
-- Move to fixed length messages (instead of length prefixes like we have now).
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.

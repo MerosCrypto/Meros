@@ -20,21 +20,26 @@ proc parseVerifications*(
 ): seq[VerifierIndex] {.raises: [
     FinalAttributeError
 ].} =
-    #Init the result.
-    result = @[]
+    #Quantity | Key 1 | Nonce 1 | Merkle 1 .. Key N | Nonce N | Merkle N
+    var
+        quantity: int = verifsStr[0 ..< INT_LEN].fromBinary()
+        verifsSeq: seq[string]
 
-    #Key1 | Nonce 1 | Merkle1 .. KeyN | NonceN | MerkleN
-    var verifsSeq: seq[string] = verifsStr.deserialize(3)
+    #Init the result.
+    result = newSeq[VerifierIndex](quantity)
 
     #Parse each VerifierIndex.
-    var verifier: VerifierIndex
-    for i in countup(0, verifsSeq.len - 1, 3):
-        #Create the VerifierIndex.
-        verifier = newVerifierIndex(
-            verifsSeq[i].pad(48),
-            uint(verifsSeq[i + 1].fromBinary()),
-            verifsSeq[i + 2].pad(64)
-        )
+    for i in 0 ..< quantity:
+        verifsSeq = verifsStr
+            .substr(INT_LEN + (i * VERIFIER_INDEX_LEN))
+            .deserialize(
+                BLS_PUBLIC_KEY_LEN,
+                INT_LEN,
+                HASH_LEN
+            )
 
-        #Push the VerifierIndex to the seq.
-        result.add(verifier)
+        result[i] = newVerifierIndex(
+            verifsSeq[0],
+            uint(verifsSeq[1].fromBinary()),
+            verifsSeq[2]
+        )

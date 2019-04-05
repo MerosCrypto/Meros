@@ -17,6 +17,6 @@ import ../SerializeCommon
 #Serialize a Mint.
 proc serialize*(mint: Mint): string {.raises: [].} =
     result =
-        !mint.nonce.toBinary() &
-        !mint.output &
-        !mint.amount.toString(256)
+        mint.nonce.toBinary().pad(INT_LEN) &
+        mint.output &
+        mint.amount.toString(256).pad(INT_LEN) #We use INT_LEN as no single Mint should break the 32 bit int limit.

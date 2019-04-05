@@ -37,7 +37,6 @@ finalsd:
             client* {.final.}: uint
             content* {.final.}: MessageType
             len* {.final.}: uint
-            header* {.final.}: string
             message* {.final.}: string
 
         #syncEntry response.
@@ -62,7 +61,6 @@ func finalize(
     msg.ffinalizeClient()
     msg.ffinalizeContent()
     msg.ffinalizeLen()
-    msg.ffinalizeHeader()
     msg.ffinalizeMessage()
 
 #Constructor for incoming data.
@@ -70,14 +68,12 @@ func newMessage*(
     client: uint,
     content: MessageType,
     len: uint,
-    header: string,
     message: string
 ): Message {.raises: [].} =
     result = Message(
         client: client,
         content: content,
         len: len,
-        header: header,
         message: message
     )
     result.finalize()
@@ -92,7 +88,6 @@ func newMessage*(
         client: 0,
         content: content,
         len: uint(message.len),
-        header: char(content) & message.lenPrefix,
         message: message
     )
     result.finalize()
@@ -124,4 +119,4 @@ func newSyncEntryResponse*(data: Data): SyncEntryResponse {.raises: [].} =
 
 #Stringify.
 func `$`*(msg: Message): string {.raises: [].} =
-    msg.header & msg.message
+    char(msg.content) & msg.message

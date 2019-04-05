@@ -19,9 +19,6 @@ import ../SerializeCommon
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
 #Parse a Verification.
 proc parseMemoryVerification*(
     verifStr: string
@@ -31,16 +28,21 @@ proc parseMemoryVerification*(
     FinalAttributeError
 ].} =
     var
-        #Public Key | Nonce | Entry Hash | Signature
-        verifSeq: seq[string] = verifStr.deserialize(4)
+        #BLS Public Key | Nonce | Entry Hash | BLS Signature
+        verifSeq: seq[string] = verifStr.deserialize(
+            BLS_PUBLIC_KEY_LEN,
+            INT_LEN,
+            HASH_LEN,
+            BLS_SIGNATURE_LEN
+        )
         #Verifier's Public Key.
-        verifier: BLSPublicKey = newBLSPublicKey(verifSeq[0].pad(48))
+        verifier: BLSPublicKey = newBLSPublicKey(verifSeq[0])
         #Nonce.
         nonce: uint = uint(verifSeq[1].fromBinary())
         #Get the Entry hash.
-        entry: string = verifSeq[2].pad(64)
+        entry: string = verifSeq[2]
         #BLS signature.
-        sig: BLSSignature = newBLSSignature(verifSeq[3].pad(96))
+        sig: BLSSignature = newBLSSignature(verifSeq[3])
 
     #Create the Verification.
     result = newMemoryVerificationObj(

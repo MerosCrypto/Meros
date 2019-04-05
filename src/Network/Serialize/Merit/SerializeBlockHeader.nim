@@ -19,9 +19,9 @@ import ../SerializeCommon
 #Serialize a Block Header.
 func serialize*(header: BlockHeader): string {.raises: [].} =
     result =
-        !header.nonce.toBinary() &
-        !header.last.toString() &
-        !header.verifications.toString() &
-        !header.miners.toString() &
-        !header.time.toBinary() &
-        !header.proof.toBinary()
+        header.nonce.toBinary().pad(INT_LEN) &
+        header.last.toString() &
+        header.verifications.toString() &
+        header.miners.toString() &
+        header.time.toBinary().pad(INT_LEN) &
+        header.proof.toBinary().pad(INT_LEN)

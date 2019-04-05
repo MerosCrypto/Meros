@@ -16,6 +16,6 @@ import ../SerializeCommon
 #Serialize a Verification.
 func serialize*(verif: Verification): string {.raises: [].} =
     result =
-        !verif.verifier.toString() &
-        !verif.nonce.toBinary() &
-        !verif.hash.toString()
+        verif.verifier.toString() &
+        verif.nonce.toBinary().pad(INT_LEN) &
+        verif.hash.toString()

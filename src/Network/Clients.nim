@@ -103,7 +103,6 @@ proc add*(
 
             #Pass it off to the Network lib. If it fails, DC the node.
             if not await networkFunctions.handleBlock(tail):
-                echo "Failed to sync with this Client."
                 clients.disconnect(client.id)
     except:
         #If the Handshake/initial sync failed, disconnect the Client and return.
