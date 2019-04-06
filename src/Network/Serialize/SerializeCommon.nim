@@ -6,7 +6,7 @@ const
     BYTE_LEN*:           int = 1
     INT_LEN*:            int = 4
     MEROS_LEN*:          int = 8
-    HASH_LEN*:           int = 64
+    HASH_LEN*:           int = 48
     PUBLIC_KEY_LEN*:     int = 32
     SIGNATURE_LEN*:      int = 64
     BLS_PUBLIC_KEY_LEN*: int = 48

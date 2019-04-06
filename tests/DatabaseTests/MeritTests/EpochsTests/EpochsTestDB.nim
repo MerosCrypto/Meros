@@ -67,7 +67,7 @@ proc test(blocks: int) =
         #Miners we're mining to.
         miners: Miners = @[]
         #Hashes we're verifying.
-        hashes: seq[seq[Hash[512]]] = @[]
+        hashes: seq[seq[Hash[384]]] = @[]
         #Table of hashes -> verifiers.
         verified: Table[string, seq[BLSPublicKey]] = initTable[string, seq[BLSPublicKey]]()
         #VerifierIndexes.
@@ -113,7 +113,7 @@ proc test(blocks: int) =
         #If Merit has been mined, create hashes (same amount as the nonce).
         if i != 1:
             for h in 0 ..< i:
-                hashes[^1].add((char(i) & char(0) & char(h)).pad(64).toHash(512))
+                hashes[^1].add((char(i) & char(0) & char(h)).pad(48).toHash(384))
                 if hashes[^1].len != 0:
                     verified[hashes[^1][^1].toString()] = @[]
 
@@ -203,7 +203,7 @@ proc test(blocks: int) =
 
         #Make sure the Epoch has the same hashes as we do.
         for hash in epoch.keys():
-            assert(hashes[^6].contains(hash.toHash(512)))
+            assert(hashes[^6].contains(hash.toHash(384)))
         for hash in hashes[^6]:
             assert(epoch.hasKey(hash.toString()))
 
@@ -232,7 +232,7 @@ proc test(blocks: int) =
 
         #Make sure the Epoch has the same hashes as we do.
         for hash in epoch.keys():
-            assert(hashes[^(5 - i)].contains(hash.toHash(512)))
+            assert(hashes[^(5 - i)].contains(hash.toHash(384)))
         for hash in hashes[^(5 - i)]:
             assert(epoch.hasKey(hash.toString()))
 

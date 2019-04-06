@@ -43,7 +43,7 @@ proc parseVerification*(
 
     #Create the Verification.
     result = newMemoryVerificationObj(
-        entry.toHash(512)
+        entry.toHash(384)
     )
     result.verifier = verifier
     result.nonce = nonce

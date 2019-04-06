@@ -79,10 +79,10 @@ proc newAccountObj*(db: DatabaseFunctionBox, address: string, load: bool = false
             result.entries = newSeq[seq[Entry]](result.height - result.confirmed)
             for i in result.confirmed ..< result.height:
                 var hashes: string = result.db.get("lattice_" & result.address & "_" & i.toBinary())
-                result.entries[int(i - result.confirmed)] = newSeq[Entry](hashes.len div 64)
-                for h in countup(0, hashes.len - 1, 64):
-                    result.lookup[hashes[h ..< h + 64]] = newIndex(result.address, i)
-                    result.entries[int(i - result.confirmed)][h div 64] = result.db.get("lattice_" & hashes[h ..< h + 64]).parseEntry()
+                result.entries[int(i - result.confirmed)] = newSeq[Entry](hashes.len div 48)
+                for h in countup(0, hashes.len - 1, 48):
+                    result.lookup[hashes[h ..< h + 48]] = newIndex(result.address, i)
+                    result.entries[int(i - result.confirmed)][h div 48] = result.db.get("lattice_" & hashes[h ..< h + 48]).parseEntry()
         #If we're not in the DB, add ourselves.
         except:
             if address != "minter":

@@ -41,7 +41,7 @@ proc parseBlockHeader*(
         uint(headerSeq[0].fromBinary()),
         headerSeq[1].toArgonHash(),
         newBLSSignature(headerSeq[2]),
-        headerSeq[3].toBlake512Hash(),
+        headerSeq[3].toBlake384Hash(),
         uint(headerSeq[4].fromBinary()),
         uint(headerSeq[5].fromBinary())
     )

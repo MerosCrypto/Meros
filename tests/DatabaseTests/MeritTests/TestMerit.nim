@@ -26,7 +26,7 @@ export TestDatabase
 #Creates a Block, with every setting optional.
 proc newTestBlock*(
     nonce: int = 0,
-    last: ArgonHash = "".pad(64).toArgonHash(),
+    last: ArgonHash = "".pad(48).toArgonHash(),
     aggregate: BLSSignature = nil,
     indexes: seq[VerifierIndex] = @[],
     miners: Miners = @[

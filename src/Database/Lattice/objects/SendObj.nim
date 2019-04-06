@@ -13,7 +13,7 @@ import finals
 #Send object.
 finalsd:
     type Send* = ref object of Entry
-        #Data used to create the Blake512 hash.
+        #Data used to create the Blake384 hash.
         #Destination address.
         output* {.final.}: string
         #Amount transacted.

@@ -29,7 +29,7 @@ import os
 
 #Highest difficulty.
 #This would be in Main's Constants except it's impossible to change without changing the underlying libraries.
-let MAX: BN = "F".repeat(128).toBN(16)
+let MAX: BN = "F".repeat(96).toBN(16)
 
 #Verifies a difficulty against a block.
 func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =

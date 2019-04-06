@@ -22,10 +22,10 @@ import sequtils
 randomize(int(getTime()))
 
 #Test nil Merle trees.
-assert(newMerkle().hash == "".pad(64))
+assert(newMerkle().hash == "".pad(48))
 
 #Test leaves.
-assert(newMerkle("1".pad(64)).hash == "1".pad(64))
+assert(newMerkle("1".pad(48)).hash == "1".pad(48))
 
 #Test 20 trees.
 for i in 1 .. 20:
@@ -36,7 +36,7 @@ for i in 1 .. 20:
         hashLen: int = rand(900) + 100
         hashes: seq[string] = newSeq[string](hashLen)
     for h in 0 ..< hashLen:
-        hashes[h] = Blake512(h.toBinary()).toString()
+        hashes[h] = Blake384(h.toBinary()).toString()
 
     var
         #Copy the hashes so we can form our own tree of it (albeit slowly).
@@ -65,7 +65,7 @@ for i in 1 .. 20:
                 fullCopy.add(fullCopy[fullCopy.len - 1])
 
             #Turn fullCopy[h] into the branch hash for fullCopy[h .. h + 1].
-            fullCopy[h] = Blake512(fullCopy[h] & fullCopy[h + 1]).toString()
+            fullCopy[h] = Blake384(fullCopy[h] & fullCopy[h + 1]).toString()
 
         #Delete every other element.
         var d: int = 1
@@ -79,7 +79,7 @@ for i in 1 .. 20:
             if partialCopy.len mod 2 == 1:
                 partialCopy.add(partialCopy[partialCopy.len - 1])
 
-            partialCopy[h] = Blake512(partialCopy[h] & partialCopy[h + 1]).toString()
+            partialCopy[h] = Blake384(partialCopy[h] & partialCopy[h + 1]).toString()
 
         var d: int = 1
         while d < partialCopy.len:

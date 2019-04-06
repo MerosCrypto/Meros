@@ -29,9 +29,6 @@ export SHA3
 #Define Blake_2 as Blake.
 type
     Blake384Hash* = Blake2_384Hash
-    Blake512Hash* = Blake2_512Hash
 var
     Blake384*: proc (input: string): Blake384Hash {.raises: [].} = Blake2_384
-    Blake512*: proc (input: string): Blake512Hash {.raises: [].} = Blake2_512
     toBlake384Hash*: proc (input: string): Blake384Hash {.raises: [ValueError].} = toBlake2_384Hash
-    toBlake512Hash*: proc (input: string): Blake512Hash {.raises: [ValueError].} = toBlake2_512Hash

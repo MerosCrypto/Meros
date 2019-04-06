@@ -54,6 +54,9 @@ lib:
 - lib/Base (256) Test.
 - lib/Hash/Argon Test.
 - lib/Hash/Blake2 Test.
+- lib/Hash/SHA3 (384) Test.
+- lib/Hash/Keccak (384) Test.
+- lib/Hash/SHA2 (384) Test.
 - lib/Ed25519 Test.
 
 Wallet:

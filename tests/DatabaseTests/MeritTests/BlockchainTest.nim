@@ -44,7 +44,7 @@ proc test*(blocks: int) =
         #Database.
         db: DatabaseFunctionBox = newTestDatabase()
         #Starting Difficultty.
-        startDifficulty: BN = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16)
+        startDifficulty: BN = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16)
         #Blockchain.
         blockchain: Blockchain = newBlockchain(
             db,

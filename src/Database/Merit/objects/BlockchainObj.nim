@@ -97,7 +97,7 @@ proc newBlockchainObj*(
         #Create a Genesis Block.
         var genesisBlock: Block = newBlockObj(
             0,
-            genesis.pad(64).toArgonHash(),
+            genesis.pad(48).toArgonHash(),
             nil,
             @[],
             @[],

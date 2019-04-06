@@ -23,7 +23,7 @@ finalsd:
             #Index on the account.
             nonce* {.final.}: uint
             #Hash.
-            hash* {.final.}: Hash[512]
+            hash* {.final.}: Hash[384]
             #Signature.
             signature* {.final.}: string
             #Verified.

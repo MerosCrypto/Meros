@@ -33,7 +33,7 @@ for i in 1 .. 20:
     for v in 0 ..< verifs.len:
         #Reset the key and merkle.
         key = newString(48)
-        merkle = newString(64)
+        merkle = newString(48)
 
         #Randomize the key.
         for b in 0 ..< key.len:

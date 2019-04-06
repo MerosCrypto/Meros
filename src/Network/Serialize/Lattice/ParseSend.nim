@@ -71,8 +71,8 @@ proc parseSend*(
     result.sender = input
     #Set the nonce.
     result.nonce = nonce
-    #Set the Blake512 hash.
-    result.hash = Blake512(sendSeq.reserialize(0, 3))
+    #Set the Blake384 hash.
+    result.hash = Blake384(sendSeq.reserialize(0, 3))
     #Set the proof.
     result.proof = uint(proof.fromBinary())
     #Set the Argon hash.

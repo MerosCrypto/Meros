@@ -83,4 +83,4 @@ proc parseMint*(
     #Set the nonce.
     result.nonce = nonce
     #Set the hash.
-    result.hash = Blake512(mintStr)
+    result.hash = Blake384(mintStr)

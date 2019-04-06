@@ -8,7 +8,7 @@ import HashCommon
 import Argon2
 
 #Define the Hash Type.
-type ArgonHash* = HashCommon.Hash[512]
+type ArgonHash* = HashCommon.Hash[384]
 
 #Take in data and a salt; return a ArgonHash.
 func Argon*(
@@ -39,4 +39,4 @@ func Argon*(
 
 #String to ArgonHash.
 func toArgonHash*(hash: string): ArgonHash {.raises: [ValueError].} =
-    hash.toHash(512)
+    hash.toHash(384)

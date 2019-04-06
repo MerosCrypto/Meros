@@ -10,7 +10,7 @@ var
     i16: int16 = int16(16920)
     u16: uint16 = uint16(45198)
     i32: int32 = int32(98194)
-    u32: uint32 = uint32(3631343648)
+    u32: uint32 = uint32(3631343488)
 
 #Test the conversions work.
 assert(i8 == int8(i8.toBinary().fromBinary()))

@@ -33,9 +33,9 @@ for i in 1 .. 20:
         #Create a nonce.
         nonce: uint = uint(rand(65000))
         #Create a hash.
-        hash: Hash[512]
+        hash: Hash[384]
     #Set the hash to a random value.
-    for i in 0 ..< 64:
+    for i in 0 ..< 48:
         hash.data[i] = uint8(rand(255))
 
     #Create the Verification.

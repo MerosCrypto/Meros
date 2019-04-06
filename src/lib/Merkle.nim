@@ -32,13 +32,13 @@ proc rehash(tree: Merkle) {.raises: [].} =
 
     #If the left tree is nil, meaning this is an empty tree...
     if tree.left.isNil:
-        tree.hash = "".pad(64)
+        tree.hash = "".pad(48)
     #If there's an odd number of children, duplicate the left one.
     elif tree.right.isNil:
-        tree.hash = Blake512(tree.left.hash & tree.left.hash).toString()
+        tree.hash = Blake384(tree.left.hash & tree.left.hash).toString()
     #Hash the left & right hashes.
     else:
-        tree.hash = Blake512(tree.left.hash & tree.right.hash).toString()
+        tree.hash = Blake384(tree.left.hash & tree.right.hash).toString()
 
 #Merkle constructor based on two other Merkles.
 proc newMerkle(left: Merkle, right: Merkle): Merkle {.raises: [].} =

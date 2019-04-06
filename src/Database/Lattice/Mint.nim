@@ -46,4 +46,4 @@ proc newMint*(
     result.nonce = nonce
 
     #Set the hash.
-    result.hash = Blake512(result.serialize())
+    result.hash = Blake384(result.serialize())

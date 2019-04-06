@@ -127,7 +127,7 @@ proc `[]`*(verifier: Verifier, index: int): Verification {.raises: [ValueError, 
     if int(index) <= verifier.archived:
         #Grab it and return it.
         result = newVerificationObj(
-            verifier.db.get("verifications_" & verifier.key & "_" & index.toBinary()).toHash(512)
+            verifier.db.get("verifications_" & verifier.key & "_" & index.toBinary()).toHash(384)
         )
         result.verifier = newBLSPublicKey(verifier.key)
         result.nonce = uint(index)

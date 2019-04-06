@@ -58,7 +58,7 @@ proc sign*(wallet: Wallet, send: Send) {.raises: [ValueError, SodiumError, Final
     #Set the sender behind the Entry.
     send.sender = wallet.address
     #Set the hash.
-    send.hash = Blake512(send.serialize())
+    send.hash = Blake384(send.serialize())
     #Sign the hash of the Send.
     send.signature = wallet.sign(send.hash.toString())
 

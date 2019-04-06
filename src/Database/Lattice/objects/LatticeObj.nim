@@ -103,7 +103,7 @@ proc newLatticeObj*(
 #Add a hash to the lookup (used by the constructor).
 func addHash*(
     lattice: Lattice,
-    hash: Hash[512],
+    hash: Hash[384],
     index: Index
 ) {.raises: [].} =
     lattice.lookup[hash.toString()] = index

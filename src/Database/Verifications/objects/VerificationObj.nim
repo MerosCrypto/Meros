@@ -22,7 +22,7 @@ finalsd:
             #Nonce.
             nonce* {.final.}: uint
             #Entry Hash.
-            hash* {.final.}: Hash[512]
+            hash* {.final.}: Hash[384]
 
         #Verification object for the mempool.
         MemoryVerification* = ref object of Verification
@@ -31,7 +31,7 @@ finalsd:
 
 #New Verification object.
 func newVerificationObj*(
-    hash: Hash[512]
+    hash: Hash[384]
 ): Verification {.raises: [].} =
     result = Verification(
         hash: hash
@@ -40,7 +40,7 @@ func newVerificationObj*(
 
 #New MemoryVerification object.
 func newMemoryVerificationObj*(
-    hash: Hash[512]
+    hash: Hash[384]
 ): MemoryVerification {.raises: [].} =
     result = MemoryVerification(
         hash: hash

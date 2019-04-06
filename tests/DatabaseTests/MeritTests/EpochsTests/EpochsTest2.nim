@@ -44,7 +44,7 @@ var
     epochs: Epochs = newEpochs(functions, verifications, blockchain)
 
     #Hash.
-    hash: Hash[512] = "aa".repeat(64).toHash(512)
+    hash: Hash[384] = "aa".repeat(48).toHash(384)
     #MinerWallets.
     miners: seq[MinerWallet] = @[
         newMinerWallet(),

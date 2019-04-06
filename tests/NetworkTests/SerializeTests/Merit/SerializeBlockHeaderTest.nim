@@ -42,14 +42,14 @@ for i in 1 .. 20:
         #Verifications.
         verifs: BLSSignature
         #Miners Hash.
-        miners: Blake512Hash
+        miners: Blake384Hash
         #Time.
         time: uint = getTime()
         #Proof.
         proof: uint = uint(rand(500000))
 
     #Randomze the hashes.
-    for b in 0 ..< 64:
+    for b in 0 ..< 48:
         last.data[b] = uint8(rand(255))
         miners.data[b] = uint8(rand(255))
 

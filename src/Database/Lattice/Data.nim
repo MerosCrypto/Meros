@@ -50,7 +50,7 @@ proc sign*(
     #Set the sender behind the Entry.
     data.sender = wallet.address
     #Set the hash.
-    data.hash = Blake512(data.serialize())
+    data.hash = Blake384(data.serialize())
     #Sign the hash of the Data.
     data.signature = wallet.sign(data.hash.toString())
 

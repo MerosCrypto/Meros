@@ -22,7 +22,7 @@ proc newBlockHeader*(
     nonce: uint,
     last: ArgonHash,
     verifs: BLSSignature,
-    miners: Blake512Hash,
+    miners: Blake384Hash,
     time: uint,
     proof: uint
 ): BlockHeader {.raises: [ArgonError].} =

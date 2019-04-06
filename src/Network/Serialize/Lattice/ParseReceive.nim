@@ -66,7 +66,7 @@ proc parseReceive*(
     #Set the nonce.
     result.nonce = nonce
     #Set the hash.
-    result.hash = Blake512(recvSeq.reserialize(1, 3))
+    result.hash = Blake384(recvSeq.reserialize(1, 3))
 
     #Verify the signature.
     if not sender.verify(result.hash.toString(), signature):

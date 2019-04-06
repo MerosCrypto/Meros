@@ -82,7 +82,7 @@ var
         verifications,
         "BLOCKCHAIN_TEST",
         30,
-        "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
         100
     )
     #Lattice.
@@ -90,8 +90,8 @@ var
         db,
         verifications,
         merit,
-        "".pad(128, '0'),
-        "".pad(128, '0')
+        "".pad(96, '0'),
+        "".pad(96, '0')
     )
 
     #Verifiers.
@@ -111,8 +111,8 @@ proc test() =
         db,
         verifications,
         merit,
-        "".pad(128, '0'),
-        "".pad(128, '0')
+        "".pad(96, '0'),
+        "".pad(96, '0')
     )
 
     for hash in lattice.lookup.keys():
@@ -233,7 +233,7 @@ proc addBlock(wallets: seq[MinerWallet], tips: seq[VerifierIndex]) =
 
 #Adds a Verification for an Entry.
 proc verify(wallet: MinerWallet, hash: string) =
-    var verif: MemoryVerification = newMemoryVerificationObj(hash.toHash(512))
+    var verif: MemoryVerification = newMemoryVerificationObj(hash.toHash(384))
     wallet.sign(verif, verifications[wallet.publicKey.toString()].height)
     verifications.add(verif)
     assert(lattice.verify(merit, verif))
@@ -264,13 +264,13 @@ verifiers[0].verify(lattice[accounts[0].address][0].hash.toString())
 #Send 100 Meros to the second account, and 50 to the third.
 var send: Send = newSend(accounts[1].address, newBN(100), 1)
 accounts[0].sign(send)
-send.mine("".pad(128, '0').toBN(16))
+send.mine("".pad(96, '0').toBN(16))
 assert(lattice.add(send))
 assert(db.get("lattice_" & send.hash.toString()) == char(send.descendant) & send.serialize())
 
 send = newSend(accounts[2].address, newBN(50), 2)
 accounts[0].sign(send)
-send.mine("".pad(128, '0').toBN(16))
+send.mine("".pad(96, '0').toBN(16))
 assert(lattice.add(send))
 assert(db.get("lattice_" & send.hash.toString()) == char(send.descendant) & send.serialize())
 
@@ -311,7 +311,7 @@ verifiers[0].verify(lattice[accounts[1].address][0].hash.toString())
 #Add a Data to the second account.
 var data: Data = newData("1", 1)
 accounts[1].sign(data)
-data.mine("".pad(128, '0').toBN(16))
+data.mine("".pad(96, '0').toBN(16))
 assert(lattice.add(data))
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
@@ -357,14 +357,14 @@ addBlock(@[verifiers[2]], @[])
 #Add a Data to the first account.
 data = newData("2", 3)
 accounts[0].sign(data)
-data.mine("".pad(128, '0').toBN(16))
+data.mine("".pad(96, '0').toBN(16))
 assert(lattice.add(data))
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
 #Add a conflicting Data.
 data = newData("3", 3)
 accounts[0].sign(data)
-data.mine("".pad(128, '0').toBN(16))
+data.mine("".pad(96, '0').toBN(16))
 assert(lattice.add(data))
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
@@ -393,7 +393,7 @@ verifications.archive(merit.blockchain.tip.verifications)
 test()
 
 #Finish verifying the second Data.
-var hash: Hash[512] = lattice[accounts[0].address].entries[2][1].hash
+var hash: Hash[384] = lattice[accounts[0].address].entries[2][1].hash
 verifiers[2].verify(hash.toString())
 assert(lattice[accounts[0].address][3].hash == hash)
 assert(lattice[accounts[0].address][3].verified)

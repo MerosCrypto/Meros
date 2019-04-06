@@ -28,7 +28,7 @@ for i in 1 .. 20:
         difficultyStr: string = ""
         difficulty: Difficulty
 
-    for _ in 0 ..< 64:
+    for _ in 0 ..< 48:
         difficultyStr &= char(rand(255))
     difficulty = newDifficultyObj(start, endBlock, difficultyStr.toBN(256))
 

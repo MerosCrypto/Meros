@@ -39,13 +39,13 @@ for i in 1 .. 20:
         #Nonce.
         nonce: uint = uint(rand(6500))
         #Last hash.
-        last: Hash[512]
+        last: Hash[384]
         #MinerWallet used to create random BLSSignatures.
         miner: MinerWallet = newMinerWallet()
         #Aggregate Signature.
         aggregate: BLSSignature
         #Verifications.
-        verifs: seq[VerifierIndex] = newSeq[VerifierIndex](rand(512))
+        verifs: seq[VerifierIndex] = newSeq[VerifierIndex](rand(384))
         #Temporary key/merkle strings for creating VerifierIndexes.
         vKey: string
         vMerkle: string
@@ -61,7 +61,7 @@ for i in 1 .. 20:
         proof: uint = uint(rand(500000))
 
     #Randomize the last hash.
-    for b in 0 ..< 64:
+    for b in 0 ..< 48:
         last.data[b] = uint8(rand(255))
 
     #Create a random BLSSignature.
@@ -71,7 +71,7 @@ for i in 1 .. 20:
     for v in 0 ..< verifs.len:
         #Reset the key and merkle.
         vKey = newString(48)
-        vMerkle = newString(64)
+        vMerkle = newString(48)
 
         #Randomize the key.
         for b in 0 ..< vKey.len:
