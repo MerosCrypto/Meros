@@ -1,8 +1,11 @@
 #Errors lib.
 import ../lib/Errors
 
+#Util lib.
+import ../lib/Util
+
 #Ed25519 lib.
-import ../lib/Ed25519
+import Ed25519
 #Export the critical objects.
 export EdSeed, EdPrivateKey, EdPublicKey
 
@@ -14,12 +17,9 @@ export Address
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
 finalsd:
     #Wallet object.
-    type Wallet* = ref object of RootObj
+    type Wallet* = object
         #Seed.
         seed* {.final.}: EdSeed
         #Private Key.
@@ -76,7 +76,7 @@ func `$`*(
 
 #Constructor.
 proc newWallet*(
-    seed: EdSeed = newEdSeed()
+    seed: EdSeed
 ): Wallet {.forceCheck: [
     SodiumError
 ].} =
@@ -98,6 +98,17 @@ proc newWallet*(
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
     result.ffinalizeAddress()
+
+proc newWallet*(): Wallet {.forceCheck: [
+    RandomError,
+    SodiumError
+].} =
+    try:
+        result = newWallet(newEdSeed())
+    except RandomError:
+        fcRaise RandomError
+    except SodiumError:
+        fcRaise SodiumError
 
 #Constructor.
 proc newWallet*(

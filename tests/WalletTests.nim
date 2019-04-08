@@ -1,5 +1,9 @@
 #Wallet Tests.
 
-import WalletTests/MinerWalletTest
+import WalletTests/Ed25519Test
+import WalletTests/BLSTest
+
 import WalletTests/AddressTest
 import WalletTests/WalletTest
+
+import WalletTests/MinerWalletTest

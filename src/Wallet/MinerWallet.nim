@@ -2,20 +2,15 @@
 import ../lib/Errors
 
 #BLS lib.
-import ../lib/BLS
+import BLS
+export BLS
 
 #Finals lib.
 import finals
 
-#nimcrypto lib, used for its secure random number generation.
-import nimcrypto
-
-#String utils standard lib.
-import strutils
-
 finalsd:
     #Miner object.
-    type MinerWallet* = ref object of RootObj
+    type MinerWallet* = object
         #Private Key.
         privateKey* {.final.}: BLSPrivateKey
         #Public Key.
@@ -28,12 +23,11 @@ proc newMinerWallet*(): MinerWallet {.forceCheck: [
 ].} =
     #Create a seed.
     var seed: string = newString(32)
+    #Use nimcrypto to fill the Seed with random bytes.
     try:
-        #Use nimcrypto to fill the Seed with random bytes.
-        if randomBytes(seed) != 32:
-            raise newException(RandomError, "Couldn't get enough bytes for the Seed.")
+        randomFill(seed)
     except:
-        raise newException(RandomError, getCurrentExceptionMsg())
+        raise newException(RandomError, "Couldn't randomly fill the BLS Seed.")
 
     try:
         var priv: BLSPrivateKey = newBLSPrivateKeyFromSeed(seed)

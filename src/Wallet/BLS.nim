@@ -1,12 +1,10 @@
-#BLS wrapper that adds a prefix to the types.
-
 #Errors lib.
-import Errors
+import ../lib/Errors
 
 #BLS Nimble package.
 import mc_bls
 
-#Type definitions.
+#Type aliases.
 type
     BLSPrivateKey* = PrivateKey
     BLSPublicKey* = PublicKey
@@ -14,31 +12,41 @@ type
     BLSAggregationInfo* = AggregationInfo
 
 #Constructors.
-proc newBLSPrivateKeyFromSeed*(key: string): BLSPrivateKey {.raises: [BLSError].} =
+proc newBLSPrivateKeyFromSeed*(
+    key: string
+): BLSPrivateKey {.forceCheck: [
+    BLSError
+].} =
     try:
         result = newPrivateKeyFromSeed(key)
     except:
-        raise newException(
-            BLSError,
-            "Couldn't create a BLS Private Key from a Seed: " & getCurrentExceptionMsg()
-        )
+        raise newException(BLSError, "Couldn't create a BLS Private Key from a Seed: " & getCurrentExceptionMsg())
 
-proc newBLSPrivateKeyFromBytes*(key: string): BLSPrivateKey {.raises: [BLSError].} =
+proc newBLSPrivateKeyFromBytes*(
+    key: string
+): BLSPrivateKey {.forceCheck: [
+    BLSError
+].} =
     try:
         result = newPrivateKeyFromBytes(key)
     except:
-        raise newException(
-            BLSError,
-            "Couldn't create a BLS Private Key from its Bytes: " & getCurrentExceptionMsg()
-        )
+        raise newException(BLSError, "Couldn't create a BLS Private Key from its Bytes: " & getCurrentExceptionMsg())
 
-proc getPublicKey*(key: BLSPrivateKey): BLSPublicKey {.raises: [BLSError].} =
+proc getPublicKey*(
+    key: BLSPrivateKey
+): BLSPublicKey {.forceCheck: [
+    BLSError
+].} =
     try:
         result = mc_bls.getPublicKey(key)
     except:
         raise newException(BLSError, "Couldn't create a BLS Public Key from a Private Key: " & getCurrentExceptionMsg())
 
-proc newBLSPublicKey*(key: string): BLSPublicKey {.raises: [BLSError].} =
+proc newBLSPublicKey*(
+    key: string
+): BLSPublicKey {.forceCheck: [
+    BLSError
+].} =
     try:
         result = newPublicKeyFromBytes(key)
     except:
@@ -47,7 +55,11 @@ proc newBLSPublicKey*(key: string): BLSPublicKey {.raises: [BLSError].} =
             "Couldn't create a BLS Public Key from its Bytes: " & getCurrentExceptionMsg()
         )
 
-proc newBLSSignature*(sig: string): BLSSignature {.raises: [BLSError].} =
+proc newBLSSignature*(
+    sig: string
+): BLSSignature {.forceCheck: [
+    BLSError
+].} =
     try:
         result = newSignatureFromBytes(sig)
     except:
@@ -59,7 +71,7 @@ proc newBLSSignature*(sig: string): BLSSignature {.raises: [BLSError].} =
 proc newBLSAggregationInfo*(
     key: BLSPublicKey,
     msg: string
-): BLSAggregationInfo {.raises: [BLSError].} =
+): BLSAggregationInfo {.forceCheck: [BLSError].} =
     try:
         result = newAggregationInfoFromMsg(key, msg)
     except:
@@ -84,14 +96,14 @@ export setAggregationInfo
 export verify
 
 #Private Key functions.
-proc sign*(key: BLSPrivateKey, msg: string): BLSSignature {.raises: [BLSError].} =
+proc sign*(key: BLSPrivateKey, msg: string): BLSSignature {.forceCheck: [BLSError].} =
     try:
         result = mc_bls.sign(key, msg)
     except:
         raise newException(BLSError, "Couldn't sign a message: " & getCurrentExceptionMsg())
 
 #Aggregation functions.
-proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.raises: [BLSError].} =
+proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.forceCheck: [BLSError].} =
     try:
         result = mc_bls.aggregate(keys)
     except:
@@ -102,7 +114,7 @@ proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.raises: [BLSError].} =
 
 proc aggregate*(
     agInfos: seq[BLSAggregationInfo]
-): BLSAggregationInfo {.raises: [BLSError].} =
+): BLSAggregationInfo {.forceCheck: [BLSError].} =
     try:
         result = mc_bls.aggregate(agInfos)
     except:
@@ -111,7 +123,7 @@ proc aggregate*(
             "Couldn't aggregate the BLS AggregationInfos: " & getCurrentExceptionMsg()
         )
 
-proc aggregate*(sigs: seq[BLSSignature]): BLSSignature {.raises: [BLSError].} =
+proc aggregate*(sigs: seq[BLSSignature]): BLSSignature {.forceCheck: [BLSError].} =
     try:
         result = mc_bls.aggregate(sigs)
     except:

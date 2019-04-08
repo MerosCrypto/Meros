@@ -1,34 +1,40 @@
 #Errors lib.
-import Errors
+import ../lib/Errors
+
+#Util lib.
+import ../lib/Util
 
 #LibSodium lib.
-import libsodium
+import ../lib/libsodium
+
+#SIGN_PREFIX applied to every message, stopping cross-network replays.
+const SIGN_PREFIX {.strdefine.}: string = "MEROS"
+
 #Export the Private/Public Key objects (with a prefix).
 type
     EdSeed* = Seed
     EdPrivateKey* = PrivateKey
     EdPublicKey* = PublicKey
 
-#Standard string utils lib.
-import strutils
-
-#Nimcrypto lib.
-import nimcrypto
-
-#SIGN_PREFIX applied to every message.
-const SIGN_PREFIX {.strdefine.}: string = "MEROS"
-
 #Seed constructor.
-proc newEdSeed*(): Seed {.raises: [RandomError].} =
+proc newEdSeed*(): Seed {.forceCheck: [
+    RandomError
+].} =
+    #Fill the Seed with random bytes.
     try:
-        #Use nimcrypto to fill the Seed with random bytes.
-        if randomBytes(result) != 32:
-            raise newException(RandomError, "Couldn't get enough bytes for the Seed.")
+        randomFill(result)
     except:
-        raise newException(RandomError, getCurrentExceptionMsg())
+        raise newException(RandomError, "Couldn't randomly fill the Seed.")
 
-#Nim function for creating a Key Pair.
-func newEdKeyPair*(seedArg: Seed): tuple[priv: PrivateKey, pub: PublicKey] {.raises: [SodiumError]} =
+#Key Pair constrcutor.
+func newEdKeyPair*(
+    seedArg: Seed
+): tuple[
+    priv: PrivateKey,
+    pub: PublicKey
+] {.forceCheck: [
+    SodiumError
+].} =
     #Extract the Seed.
     var seed: Seed = seedArg
 
@@ -38,10 +44,15 @@ func newEdKeyPair*(seedArg: Seed): tuple[priv: PrivateKey, pub: PublicKey] {.rai
         addr result.priv[0],
         addr seed[0]
     ) != 0:
-        raise newException(SodiumError, "Sodium could not create a Key Pair.")
+        raise newException(SodiumError, "Sodium could not create a Key Pair from the passed Seed.")
 
 #Nim function for signing a message.
-func sign*(key: PrivateKey, msgArg: string): string {.raises: [SodiumError]} =
+func sign*(
+    key: PrivateKey,
+    msgArg: string
+): string {.forceCheck: [
+    SodiumError
+].} =
     #Extract the message arg.
     var msg: string = SIGN_PREFIX & msgArg
 
@@ -55,15 +66,18 @@ func sign*(key: PrivateKey, msgArg: string): string {.raises: [SodiumError]} =
         raise newException(SodiumError, "Sodium could not update a State.")
 
     #Create the signature.
-    var sig: array[64, char]
-    if sodiumSign(addr state, addr sig[0], nil, key) != 0:
+    result = newString(64)
+    if sodiumSign(addr state, addr result[0], nil, key) != 0:
         raise newException(SodiumError, "Sodium could not sign a message.")
 
-    #Return the signature.
-    return sig.join()
-
 #Nim function for verifying a message.
-func verify*(key: PublicKey, msgArg: string, sigArg: string): bool {.raises: [SodiumError]} =
+func verify*(
+    key: PublicKey,
+    msgArg: string,
+    sigArg: string
+): bool {.forceCheck: [
+    SodiumError
+].} =
     #Extract the args.
     var
         msg: string = SIGN_PREFIX & msgArg

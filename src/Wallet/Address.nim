@@ -1,16 +1,16 @@
 #Errors lib.
 import ../lib/Errors
 
-#Ed25519 lib (for the Public Key object).
-import ../lib/Ed25519
+#Util lib (used for parseHexInt).
+import ../lib/Util
 
-#Base32 lib.
+#Ed25519 lib (for the Public Key object).
+import Ed25519
+
+#Base32 lib (used to encode the Address).
 import ../lib/Base32
 
-#String utils standard lib.
-import strutils
-
-#Seq utils standard lib.
+#Seq utils standard lib (used for concat).
 import sequtils
 
 #Human readable data.
