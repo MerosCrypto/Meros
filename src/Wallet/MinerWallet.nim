@@ -7,7 +7,7 @@ import ../lib/BLS
 #Finals lib.
 import finals
 
-#nimcrypto; used to generate a valid seed.
+#nimcrypto lib, used for its secure random number generation.
 import nimcrypto
 
 #String utils standard lib.
@@ -22,7 +22,10 @@ finalsd:
         publicKey* {.final.}: BLSPublicKey
 
 #Constructors.
-proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
+proc newMinerWallet*(): MinerWallet {.forceCheck: [
+    RandomError,
+    BLSError
+].} =
     #Create a seed.
     var seed: string = newString(32)
     try:
@@ -32,41 +35,40 @@ proc newMinerWallet*(): MinerWallet {.raises: [RandomError, BLSError].} =
     except:
         raise newException(RandomError, getCurrentExceptionMsg())
 
-    var priv: BLSPrivateKey = newBLSPrivateKeyFromSeed(seed)
-
-    result = MinerWallet(
-        privateKey: priv,
-        publicKey: priv.getPublicKey()
-    )
+    try:
+        var priv: BLSPrivateKey = newBLSPrivateKeyFromSeed(seed)
+        result = MinerWallet(
+            privateKey: priv,
+            publicKey: priv.getPublicKey()
+        )
+    except BLSError:
+        fcRaise BLSError
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
 
-proc newMinerWallet*(priv: BLSPrivateKey): MinerWallet {.raises: [BLSError].} =
-    result = MinerWallet(
-        privateKey: priv,
-        publicKey: priv.getPublicKey()
-    )
+proc newMinerWallet*(
+    priv: BLSPrivateKey
+): MinerWallet {.forceCheck: [
+    BLSError
+].} =
+    try:
+        result = MinerWallet(
+            privateKey: priv,
+            publicKey: priv.getPublicKey()
+        )
+    except BLSError:
+        fcRaise BLSError
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
 
 #Sign a message via a MinerWallet.
-proc sign*(miner: MinerWallet, msg: string): BLSSignature {.raises: [BLSError].} =
-    miner.privateKey.sign(msg)
-
-#Verify a message.
-proc verify*(
+proc sign*(
     miner: MinerWallet,
-    msg: string,
-    sigArg: string
-): bool {.raises: [BLSError].} =
-    #Create the Signature.
-    var sig: BLSSignature = newBLSSignature(sigArg)
-
-    #Create the Aggregation Info.
-    var agInfo: BLSAggregationInfo = newBLSAggregationInfo(miner.publicKey, msg)
-
-    #Add the Aggregation Info to the signature.
-    sig.setAggregationInfo(agInfo)
-
-    #Verify the signature.
-    result = sig.verify()
+    msg: string
+): BLSSignature {.forceCheck: [
+    BLSError
+].} =
+    try:
+        result = miner.privateKey.sign(msg)
+    except:
+        fcRaise BLSError

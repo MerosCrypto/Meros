@@ -30,7 +30,11 @@ finalsd:
         address* {.final.}: string
 
 #Create a new Seed from a string.
-func newEdSeed*(seed: string): EdSeed {.raises: [ValueError].} =
+func newEdSeed*(
+    seed: string
+): EdSeed {.forceCheck: [
+    EdSeedError
+].} =
     #If it's binary...
     if seed.len == 32:
         for i in 0 ..< 32:
@@ -40,10 +44,14 @@ func newEdSeed*(seed: string): EdSeed {.raises: [ValueError].} =
         for i in countup(0, 63, 2):
             result[i div 2] = cuchar(parseHexInt(seed[i .. i + 1]))
     else:
-        raise newException(ValueError, "Invalid Seed.")
+        raise newException(EdSeedError, "Invalid Seed passed to newEdSeed.")
 
 #Create a new Public Key from a string.
-func newEdPublicKey*(key: string): EdPublicKey {.raises: [ValueError].} =
+func newEdPublicKey*(
+    key: string
+): EdPublicKey {.forceCheck: [
+    EdPublicKeyError
+].} =
     #If it's binary...
     if key.len == 32:
         for i in 0 ..< 32:
@@ -53,22 +61,31 @@ func newEdPublicKey*(key: string): EdPublicKey {.raises: [ValueError].} =
         for i in countup(0, 63, 2):
             result[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
     else:
-        raise newException(ValueError, "Invalid Public Key.")
+        raise newException(EdPublicKeyError, "Invalid Public Key passed to newEdPublicKey.")
 
 #Stringify a Seed/PublicKey.
-func toString*(key: EdSeed | EdPublicKey): string {.raises: [].} =
-    result = ""
+func toString*(
+    key: EdSeed or EdPublicKey
+): string {.forceCheck: [].} =
     for b in key:
         result = result & char(b)
-func `$`*(key: EdSeed | EdPublicKey): string {.raises: [].} =
-    result = key.toString().toHex()
+func `$`*(
+    key: EdSeed or EdPublicKey
+): string {.forceCheck: [].} =
+    key.toString().toHex()
 
 #Constructor.
-func newWallet*(
+proc newWallet*(
     seed: EdSeed = newEdSeed()
-): Wallet {.raises: [ValueError, SodiumError].} =
+): Wallet {.forceCheck: [
+    SodiumError
+].} =
     #Generate a new key pair.
-    var pair: tuple[priv: EdPrivateKey, pub: EdPublicKey] = newEdKeyPair(seed)
+    var pair: tuple[priv: EdPrivateKey, pub: EdPublicKey]
+    try:
+        pair = newEdKeyPair(seed)
+    except SodiumError:
+        fcRaise SodiumError
 
     #Create a new Wallet based off the seed/key pair.
     result = Wallet(
@@ -83,37 +100,57 @@ func newWallet*(
     result.ffinalizeAddress()
 
 #Constructor.
-func newWallet*(
+proc newWallet*(
     seed: EdSeed,
     address: string
-): Wallet {.raises: [ValueError, SodiumError].} =
+): Wallet {.forceCheck: [
+    AddressError,
+    SodiumError
+].} =
     #Create a Wallet based off the Seed (and verify the integrity via the Address).
-    result = newWallet(seed)
+    try:
+        result = newWallet(seed)
+    except SodiumError:
+        fcRaise SodiumError
 
     #Verify the integrity via the Address.
-    if result.address != address:
-        raise newException(ValueError, "Invalid Address for this Wallet.")
-
-#Sign a message.
-func sign*(key: EdPrivateKey, msg: string): string {.raises: [SodiumError].} =
-    Ed25519.sign(key, msg)
+    if address.isValid(result.publicKey):
+        raise newException(AddressError, "Invalid Address for this Wallet.")
 
 #Sign a message via a Wallet.
-func sign*(wallet: Wallet, msg: string): string {.raises: [SodiumError].} =
-    wallet.privateKey.sign(msg)
+proc sign*(
+    wallet: Wallet,
+    msg: string
+): string {.forceCheck: [
+    SodiumError
+].} =
+    try:
+        result = wallet.privateKey.sign(msg)
+    except SodiumError:
+        fcRaise SodiumError
 
-#Verify a message.
-func verify*(
+#Verify a signature.
+proc verify*(
     key: EdPublicKey,
     msg: string,
     sig: string
-): bool {.raises: [SodiumError].} =
-    Ed25519.verify(key, msg, sig)
+): bool {.forceCheck: [
+    SodiumError
+].} =
+    try:
+        result = Ed25519.verify(key, msg, sig)
+    except SodiumError:
+        fcRaise SodiumError
 
-#Verify a message via a Wallet.
-func verify*(
+#Verify a signature via a Wallet.
+proc verify*(
     wallet: Wallet,
     msg: string,
     sig: string
-): bool {.raises: [SodiumError].} =
-    wallet.publicKey.verify(msg, sig)
+): bool {.forceCheck: [
+    SodiumError
+].} =
+    try:
+        result = wallet.publicKey.verify(msg, sig)
+    except SodiumError:
+        fcRaise SodiumError
