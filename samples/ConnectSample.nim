@@ -7,25 +7,17 @@ import json
 var
     #Client socket.
     client: AsyncSocket = newAsyncSocket()
-    #JSON payload.
-    data: string
-    #IP to connect to.
-    ip: string
+    #JSON.
+    payload: JSONNode
 
 echo "What IP do you want to connect to? "
-ip = stdin.readLine()
-
-#Uglify the JSON.
-toUgly(
-    data,
-    %* {
-        "module": "network",
-        "method": "connect",
-        "args": [
-            ip, 5132
-        ]
-    }
-)
+payload = %* {
+    "module": "network",
+    "method": "connect",
+    "args": [
+        stdin.readLine(), 5132
+    ]
+}
 
 #Connect to the server.
 echo "Connecting..."
@@ -33,7 +25,7 @@ waitFor client.connect("127.0.0.1", Port(5133))
 echo "Connected."
 
 #Send the JSON.
-waitFor client.send(data & "\r\n")
+waitFor client.send($payload & "\r\n")
 echo "Sent."
 
 #Get the response back.

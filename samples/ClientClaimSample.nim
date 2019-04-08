@@ -1,10 +1,6 @@
 #Util lib.
 import ../src/lib/Util
 
-#Numerical libs.
-import BN
-import ../src/lib/Base
-
 #BLS lib.
 import ../src/lib/BLS
 
@@ -15,17 +11,18 @@ import ../src/Wallet/MinerWallet
 #Lattice lib.
 import ../src/Database/Lattice/Lattice
 
-#Serialization lib.
+#Serialization libs.
+import ../src/Network/Serialize/SerializeCommon
 import ../src/Network/Serialize/Lattice/SerializeClaim
 
 #Message object.
 import ../src/Network/objects/MessageObj
 
-#Networking/OS standard libs.
-import asyncnet, asyncdispatch
-
 #String utils standard lib.
 import strutils
+
+#Networking standard libs.
+import asyncnet, asyncdispatch
 
 var
     inputNonce: uint                          #Nonce of the Mint to Claim from.
@@ -37,15 +34,14 @@ var
     claim: Claim                              #Claim object.
 
     handshake: string =                       #Handshake that says we're at Block 0.
+        char(MessageType.Handshake) &
         char(0) &
         char(0) &
-        char(0) &
-        char(Handshake) & char(0)
+        0.toBinary().pad(INT_LEN)
 
     claimType: char = char(MessageType.Claim) #Claim Message Type.
-    serialized: string                        #Serialized string.
 
-    socket: AsyncSocket = newAsyncSocket() #Socket.
+    socket: AsyncSocket = newAsyncSocket()    #Socket.
 
 #Create the Miner Wallet.
 echo "What's the BLS Private Key? "
@@ -56,9 +52,9 @@ echo "What's the Wallet's Seed? "
 wallet = newWallet(newEdSeed(stdin.readLine()))
 
 #Get the input nonce and the nonce.
-echo "What nonce is the Mint Entry?"
+echo "What nonce is the Mint Entry? "
 inputNonce = parseUInt(stdin.readLine())
-echo "What nonce is this on your account?"
+echo "What nonce is this on your account? "
 nonce = parseUInt(stdin.readLine())
 
 #Create the Claim.
@@ -70,10 +66,6 @@ claim = newClaim(
 claim.sign(miner, wallet)
 echo "Signed the Claim."
 
-#Create the serialized string.
-serialized = claim.serialize()
-serialized = claimType & char(serialized.len) & serialized
-
 #Connect to the server.
 echo "Connecting..."
 waitFor socket.connect("127.0.0.1", Port(5132))
@@ -83,6 +75,6 @@ echo "Connected."
 waitFor socket.send(handshake)
 echo "Handshaked."
 
-#Send the serialized Entry.
-waitFor socket.send(serialized)
+#Send the Claim.
+waitFor socket.send(claimType & claim.serialize())
 echo "Sent."

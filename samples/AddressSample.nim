@@ -9,18 +9,16 @@ for _ in 0 ..< 500:
     #Create a new wallet.
     wallet = newWallet()
 
+    #Print the generated address.
+    echo wallet.address
+
     #Verify the address.
     if not wallet.address.verify():
-        echo wallet.address
         echo "Invalid Address Type 1."
         quit()
 
     #Verify the address for the matching pub key.
     if not wallet.address.verify(wallet.publicKey):
-        echo wallet.address
         echo wallet.publicKey
         echo "Invalid Address Type 2."
         quit()
-
-    #Print the generated address.
-    echo wallet.address

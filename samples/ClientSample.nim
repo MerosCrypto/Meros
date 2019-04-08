@@ -1,9 +1,8 @@
 #Util lib.
 import ../src/lib/Util
 
-#Numerical libs.
-import BN
-import ../src/lib/Base
+#BN/Hex lib.
+import ../src/lib/Hex
 
 #Wallet lib.
 import ../src/Wallet/Wallet
@@ -87,7 +86,7 @@ if answer.toLower() == "send":
     #Sign the Send.
     wallet.sign(send)
     #Mine the Send.
-    send.mine("".pad(128, "aa").toBN(16))
+    send.mine("".pad(128, "aa").toBNFromHex())
 
     #Create the serialized string.
     serialized = send.serialize()

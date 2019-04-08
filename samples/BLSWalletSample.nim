@@ -1,7 +1,5 @@
-#BLS lib.
+#BLS and Miner Wallet libs.
 import ../src/lib/BLS
-
-#Miner Wallet lib.
 import ../src/Wallet/MinerWallet
 
 #Create the Miner Wallet.
