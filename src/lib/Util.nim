@@ -1,5 +1,17 @@
+#Errors lib.
+import Errors
+
 #Times standard lib.
 import times
+
+#String utils standard lib.
+import strutils
+#Export the commonly used int/hex functions from it.
+export parseInt, parseUInt
+export toHex, parseHexInt, parseHexStr
+
+#Nimcrypto lib (for secure RNG).
+import nimcrypto
 
 #Gets the epoch and returns it as an int.
 proc getTime*(): uint {.raises: [].} =
@@ -61,3 +73,15 @@ func fromBinary*(
     for b in 0 ..< number.len:
         #Add the byte after it's been properly shifted.
         result += int(number[b]) shl ((number.len - b - 1) * 8)
+
+#Securely generates X random bytes,
+proc randomFill*[T](
+    arr: var openArray[T]
+) {.raises: [
+    RandomError
+].} =
+    try:
+        if randomBytes(arr) != arr.len:
+            raise newException(Exception, "")
+    except:
+        raise newException(RandomError, "Couldn't randomly fill the passed array.")

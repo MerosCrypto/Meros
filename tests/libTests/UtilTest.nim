@@ -1,8 +1,6 @@
 #Util lib.
 import ../../src/lib/Util
 
-import strutils
-
 #Various number types.
 var
     i8: int8 = int8(73)
