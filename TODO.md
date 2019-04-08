@@ -1,12 +1,36 @@
 # TODO
 
+### Cleanup:
+Specific Tasks:
+- Create a Nimble library out of our Ed25519 code (and remove LibSodium from the Meros repo).
+
+- Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
+- `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
+
+- Clean `merit.addBlock`.
+- Don't rebroadcast Blocks or Entries that we're syncing.
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
+
+General Cleanup:
+- Decide a definitive import ordering and make sure it's used throughout the codebase.
+
+- Replace evey `uint` with `Natural`.
+
+- Use `let` where appropriate.
+- Remove `ref` from objects that shouldn't be `ref`.
+- Remove `of RootObj` from objects that aren't inherited from.
+- Make more `proc`s `func`.
+
+- Add `DataExistsError` for when data has already been added.
+- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
+- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
+
 ### Core:
 Database:
 - If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 
 Verifications:
-- Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - Load unarchived verifications from the DB.
 
 Merit:
@@ -51,15 +75,16 @@ objects:
 - objects/Config Test.
 
 lib:
-- lib/Base (256) Test.
+- lib/Raw Test.
 - lib/Hash/Argon Test.
 - lib/Hash/Blake2 Test.
 - lib/Hash/SHA3 (384) Test.
 - lib/Hash/Keccak (384) Test.
 - lib/Hash/SHA2 (384) Test.
-- lib/Ed25519 Test.
 
 Wallet:
+- lib/Ed25519 Test.
+
 - Wallet/MinerWallet Test.
 - Wallet/Wallet Test.
 
@@ -117,40 +142,10 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
-- Decide a definitive import ordering and make sure it's used throughout the codebase.
-
-- We used `uint` because indexes can't be negative and it was safer. That said, the constant casting is quite annoying and we're still limited to the `int` limits. In some places, we've even updated the casts to accept both, defeating the point. We should just remove `uint` at this point.
-- Use `let` where appropriate.
-
-- Remove `ref` from objects that shouldn't be `ref`.
-- Remove `of RootObj` from objects that aren't inherited from.
-
-- Make more `proc`s `func`.
-
-- Remove `EventError`.
-- Rename the exported `LMDBError` to `DBError`.
-- Add `DataExistsError` for when data has already been added.
-- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
-- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
-- Clean up Exceptions, whether it be with Option-esque Enum code or something else.
-
-- If a Merkle's left is too big to prune, or isn't full, descend until we find a left which isn't too big and is full.
-
-- We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
-
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
-
-- `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
-
-- Clean `merit.addBlock`.
-- Don't rebroadcast Blocks or Entries that we're syncing.
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Document the Message Types under `docs/Protocol`.
 - Use Nim Documentation Comments.
 - Meros Whitepaper.
-
-### Community Service:
-- Create a Nimble library out of our Ed25519 code (and remove LibSodium from the Meros repo).

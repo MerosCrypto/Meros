@@ -4,29 +4,30 @@
 import ForceCheck
 export ForceCheck
 
-#DB lib.
+#DB lib, imported so we can export a masked LMDBerror.
 import mc_lmdb
-#Export its custom Error type.
-export LMDBError
 
 type
     #lib Errors.
     RandomError* = object of Exception #Used when the RNG fails.
     ArgonError*  = object of Exception #Used when Argon fails.
-    BLSError*    = object of Exception #Used when BLS fails.
-    SodiumError* = object of Exception #Used when LibSodium fails.
-    EventError*  = object of Exception #Used when the EventEmiiter fails.
 
     #Wallet Errors.
+    BLSError*          = object of Exception #Used when the BLS lib fails.
+    BLSSignatureError* = object of Exception #Used whn a BLS Signature fails to verify.
+
+    SodiumError*      = object of Exception #Used when LibSodium fails.
     EdSeedError*      = object of Exception #Used when passed an invalid Ed25519 Seed.
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
+    EdSignatureError* = object of Exception #Used when a Ed25519 Signature fails to verify.
     AddressError*     = object of Exception #Used when passed an invalid Address.
+
+    #Database/Filesystem Errors.
+    DBWriteError* = object of LMDBError #Used when writing to the DB fails.
+    DBReadError*  = object of LMDBError #Used when reading from the DB fails.
 
     #Database/common Errors.
     MerosIndexError* = object of Exception #KeyError, yet not `of ValueError`. It's prefixed with Meros since Nim provides an IndexError.
-
-    #Database/Filesystem Errors.
-    MemoryError* = object of Exception #Used when alloc/dealloc fails.
 
     #Database/Lattice Errors.
     MintError* = object of Exception #Used when Minting MR fails.
