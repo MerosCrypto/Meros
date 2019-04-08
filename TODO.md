@@ -134,8 +134,6 @@ UI/RPC:
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
 - Clean up Exceptions, whether it be with Option-esque Enum code or something else.
 
-- Replace Base (currently B16 and B256) with Hex and merge B256 in with BN.
-
 - If a Merkle's left is too big to prune, or isn't full, descend until we find a left which isn't too big and is full.
 
 - We route all of Ed25519 through Wallet. We have MinerWallet. We frequently use BLS directly. Remedy this.
