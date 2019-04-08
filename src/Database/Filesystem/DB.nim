@@ -1,6 +1,6 @@
 #LMDB wrapper.
 import mc_lmdb
-export get, put, delete, close, LMDBError
+export get, put, delete, close
 
 #Rename LMDB to DB.
 type DB* = LMDB
