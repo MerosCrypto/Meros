@@ -1,3 +1,6 @@
+#Errors lib.
+import Errors
+
 #BN lib.
 import BN
 export BN
@@ -9,7 +12,7 @@ import math
 let BASE: BN = newBN(256)
 
 #Turn a Raw string into a BN.
-proc toBNFomRaw*(value: string): BN {.raises: [].} =
+proc toBNFomRaw*(value: string): BN {.forceCheck: [].} =
     #Create a new BN.
     result = newBN()
 
@@ -21,7 +24,7 @@ proc toBNFomRaw*(value: string): BN {.raises: [].} =
         ) * newBN(int(digit))
 
 #Convert the BN to its Raw string.
-proc toRaw*(valueArg: BN): string {.raises: [].} =
+proc toRaw*(valueArg: BN): string {.forceCheck: [].} =
     #Copy the value.
     var value: BN = valueArg
 

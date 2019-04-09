@@ -1,6 +1,25 @@
 # TODO
 
 ### Cleanup:
+General Cleanup:
+- Decide a definitive import ordering and make sure it's used throughout the codebase.
+
+- Replace every `uint` with `Natural`.
+
+- Use `let` where appropriate.
+- Remove `ref` from objects that shouldn't be `ref`.
+- Remove `of RootObj` from objects that aren't inherited from.
+
+- Add `DataExistsError` for when data has already been added.
+- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
+- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
+
+- Clean objects.
+- Clean Database.
+- Clean Network.
+- Clean UI.
+- Clean Main.
+
 Specific Tasks:
 - Create a Nimble library out of our Ed25519 code (and remove LibSodium from the Meros repo).
 
@@ -11,19 +30,16 @@ Specific Tasks:
 - Don't rebroadcast Blocks or Entries that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 
-General Cleanup:
-- Decide a definitive import ordering and make sure it's used throughout the codebase.
+Tests:
+- lib/Raw Test.
+- lib/Hash/Argon Test.
+- lib/Hash/Blake2 Test.
+- lib/Hash/SHA3 (384) Test.
+- lib/Hash/Keccak (384) Test.
+- lib/Hash/SHA2 (384) Test.
 
-- Replace evey `uint` with `Natural`.
-
-- Use `let` where appropriate.
-- Remove `ref` from objects that shouldn't be `ref`.
-- Remove `of RootObj` from objects that aren't inherited from.
-- Make more `proc`s `func`.
-
-- Add `DataExistsError` for when data has already been added.
-- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
-- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
+- Network/Serialize/Lattice/SerializeEntry Test.
+- Network/Serialize/Lattice/ParseEntry Test.
 
 ### Core:
 Database:
@@ -74,14 +90,6 @@ Network:
 objects:
 - objects/Config Test.
 
-lib:
-- lib/Raw Test.
-- lib/Hash/Argon Test.
-- lib/Hash/Blake2 Test.
-- lib/Hash/SHA3 (384) Test.
-- lib/Hash/Keccak (384) Test.
-- lib/Hash/SHA2 (384) Test.
-
 Wallet:
 - lib/Ed25519 Test.
 
@@ -112,10 +120,6 @@ Database/Lattice:
 Network:
 - Tests.
 
-Network/Serialize/Lattice:
-- Network/Serialize/Lattice/SerializeEntry Test.
-- Network/Serialize/Lattice/ParseEntry Test.
-
 UI/RPC:
 - UI/RPC/RPC Test.
 - UI/RPC/Modules/SystemModule Test.
@@ -142,6 +146,8 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
+- Make more `proc`s `func` (pending https://github.com/nim-lang/Nim/issues/10985).
+
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
 ### Documentation:

@@ -7,9 +7,6 @@ import HashCommon
 #nimcrypto lib.
 import nimcrypto
 
-#String utils standard lib.
-import strutils
-
 #Define the Hash Types.
 type
     SHA3_256Hash* = HashCommon.Hash[256]

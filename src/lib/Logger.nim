@@ -1,4 +1,7 @@
-#Logger. Fully thread safe and non-blocking.
+#A fully thread safe, non blocking, logger with three classes of alerts.
+
+#Errors lib.
+import Errors
 
 #Async standard lib.
 import asyncdispatch
@@ -21,7 +24,11 @@ type Logger* = ref object of RootObj
     extraneous: File
 
 #Constructor.
-proc newLogger*(): Logger {.raises: [Exception].} =
+proc newLogger*(): Logger {.forceCheck: [
+    irrecoverable: [
+        IOError
+    ]
+].} =
     Logger(
         urgent: open("urgent.log", fmAppend),
         mismatch: open("mismatch.log", fmAppend),
@@ -30,7 +37,7 @@ proc newLogger*(): Logger {.raises: [Exception].} =
     )
 
 #Urgent. Displays a message and halts execution.
-proc urgent*(logger: Logger, statement: string) {.raises: [IOerror].} =
+proc urgent*(logger: Logger, statement: string) {.forceCheck: [].} =
     #Print the statement. This will be changed to a dialog box in the future.
     echo statement
 
@@ -38,7 +45,10 @@ proc urgent*(logger: Logger, statement: string) {.raises: [IOerror].} =
     acquire(logger.urgentLock)
 
     #Log it in a file.
-    logger.urgent.writeLine(statement)
+    try:
+        logger.urgent.writeLine(statement)
+    except IOError:
+        discard
 
     #Quit.
     quit(-1)

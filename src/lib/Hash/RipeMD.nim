@@ -7,9 +7,6 @@ import HashCommon
 #nimcrypto lib.
 import nimcrypto
 
-#String utils standard lib.
-import strutils
-
 #Define the Hash Type.
 type RipeMD_160Hash* = Hash[160]
 

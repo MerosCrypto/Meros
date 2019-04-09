@@ -1,3 +1,6 @@
+#Errors lib.
+import Errors
+
 #BN lib.
 import BN
 export BN
@@ -15,7 +18,7 @@ const HEX: seq[char] = @[
 ]
 
 #Verifies if a string is Hex or not.
-func isHex*(value: string): bool {.raises: [].} =
+func isHex*(value: string): bool {.forceCheck: [].} =
     #Default value of true.
     result = true
 
@@ -38,7 +41,7 @@ func isHex*(value: string): bool {.raises: [].} =
             return false
 
 #Turn a Hex string into a BN.
-proc toBNFromHex*(valueArg: string): BN {.raises: [ValueError].} =
+proc toBNFromHex*(valueArg: string): BN {.forceCheck: [ValueError].} =
     #If the value isn't of the base, raise a ValueError.
     if not valueArg.isHex():
         raise newException(ValueError, "Invalid Hex number.")
@@ -61,7 +64,7 @@ proc toBNFromHex*(valueArg: string): BN {.raises: [ValueError].} =
         ) * newBN(HEX.find(digit))
 
 #Convert the BN to its Hex string.
-proc toHex*(valueArg: BN): string {.raises: [].} =
+proc toHex*(valueArg: BN): string {.forceCheck: [].} =
     #Copy the value.
     var value: BN = valueArg
 

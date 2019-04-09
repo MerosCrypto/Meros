@@ -14,15 +14,15 @@ export toHex, parseHexInt, parseHexStr
 import nimcrypto
 
 #Gets the epoch and returns it as an int.
-proc getTime*(): uint {.raises: [].} =
+proc getTime*(): uint {.forceCheck: [].} =
     uint(times.getTime().toUnix())
 
 #Left-pads data, with a char or string, until the data is a certain length.
 func pad*(
-    data: char | string,
+    data: char or string,
     len: int,
-    prefix: char | string = char(0)
-): string {.raises: [].} =
+    prefix: char or string = char(0)
+): string {.forceCheck: [].} =
     result = $data
 
     while result.len < len:
@@ -31,7 +31,7 @@ func pad*(
 #Converts a number to a binary string.
 func toBinary*(
     number: SomeNumber
-): string {.raises: [].} =
+): string {.forceCheck: [].} =
     var
         #Get the bytes of the number.
         bytes: int = sizeof(number)
@@ -65,7 +65,7 @@ func toBinary*(
 #Converts a binary string to a number.
 func fromBinary*(
     number: string
-): int {.raises: [].} =
+): int {.forceCheck: [].} =
     #Init the result variable.
     result = 0
 
@@ -77,11 +77,11 @@ func fromBinary*(
 #Securely generates X random bytes,
 proc randomFill*[T](
     arr: var openArray[T]
-) {.raises: [
+) {.forceCheck: [
     RandomError
 ].} =
     try:
         if randomBytes(arr) != arr.len:
             raise newException(Exception, "")
-    except:
+    except Exception:
         raise newException(RandomError, "Couldn't randomly fill the passed array.")

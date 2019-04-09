@@ -6,17 +6,11 @@ import ../../src/lib/Util
 #Hash lib.
 import ../../src/lib/Hash
 
-#Base lib.
-import ../../src/lib/Base
-
 #Merkle lib.
 import ../../src/lib/Merkle
 
 #Random standard lib.
 import random
-
-#Seq utils standard lib.
-import sequtils
 
 #Seed Random via the time.
 randomize(int(getTime()))

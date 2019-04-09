@@ -7,9 +7,6 @@ import HashCommon
 #nimcrypto lib.
 import nimcrypto
 
-#String utils standard lib.
-import strutils
-
 #Define the Hash Type.
 type Blake2_384Hash* = HashCommon.Hash[384]
 

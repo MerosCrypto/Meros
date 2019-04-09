@@ -20,3 +20,5 @@ assert(u32 == uint32(u32.toBinary().fromBinary()))
 
 #Make sure that leading 0 bytes are ignored.
 assert(0.toBinary() == "")
+
+echo "Finished the lib/Util Test."
