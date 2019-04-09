@@ -40,12 +40,12 @@ func Argon*(
         raise newException(ArgonError, "Argon2d raised an error.")
 
 #String to ArgonHash.
-proc toArgonHash*(
+func toArgonHash*(
     hash: string
 ): ArgonHash {.forceCheck: [
     ValueError
 ].} =
     try:
         result = hash.toHash(384)
-    except ValueError:
-        fcRaise ValueError
+    except ValueError as e:
+        raise e

@@ -30,5 +30,10 @@ export SHA3
 type
     Blake384Hash* = Blake2_384Hash
 var
-    Blake384*: proc (input: string): Blake384Hash {.raises: [].} = Blake2_384
-    toBlake384Hash*: proc (input: string): Blake384Hash {.raises: [ValueError].} = toBlake2_384Hash
+    Blake384*: proc (
+        input: string
+    ): Blake384Hash {.raises: [].} = Blake2_384
+
+    toBlake384Hash*: proc (
+        input: string
+    ): Blake384Hash {.noSideEffect, raises: [ValueError].} = toBlake2_384Hash
