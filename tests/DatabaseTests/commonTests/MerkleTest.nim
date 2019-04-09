@@ -1,13 +1,13 @@
 #Merkle Tree Test.
 
 #Util lib.
-import ../../src/lib/Util
+import ../../../src/lib/Util
 
 #Hash lib.
-import ../../src/lib/Hash
+import ../../../src/lib/Hash
 
 #Merkle lib.
-import ../../src/lib/Merkle
+import ../../../src/Database/common/Merkle
 
 #Random standard lib.
 import random
@@ -16,10 +16,10 @@ import random
 randomize(int(getTime()))
 
 #Test nil Merle trees.
-assert(newMerkle().hash == "".pad(48))
+assert(newMerkle().hash == "".pad(48).toHash(384))
 
 #Test leaves.
-assert(newMerkle("1".pad(48)).hash == "1".pad(48))
+assert(newMerkle("1".pad(48).toHash(384)).hash == "1".pad(48).toHash(384))
 
 #Test 20 trees.
 for i in 1 .. 20:
@@ -28,18 +28,18 @@ for i in 1 .. 20:
     #Create a random amount of hashes.
     var
         hashLen: int = rand(900) + 100
-        hashes: seq[string] = newSeq[string](hashLen)
+        hashes: seq[Hash[384]] = newSeq[Hash[384]](hashLen)
     for h in 0 ..< hashLen:
-        hashes[h] = Blake384(h.toBinary()).toString()
+        hashes[h] = Blake384(h.toBinary())
 
     var
         #Copy the hashes so we can form our own tree of it (albeit slowly).
-        fullCopy: seq[string] = hashes
+        fullCopy: seq[Hash[384]] = hashes
         #Pick a random sub-amount for use in a Merkle tree created with both the constructor and addition.
         #The +1 is to make sure we don't skip the both test.
         bothLen: int = rand(hashLen - 2) + 1
         #Create a second copy of the hashes with this smaller range.
-        partialCopy: seq[string] = hashes[0 ..< bothLen]
+        partialCopy: seq[Hash[384]] = hashes[0 ..< bothLen]
         #Define three trees. One of newMerkle, one of addition, and one of both.
         constructor: Merkle = newMerkle(hashes)
         addition: Merkle = newMerkle()
@@ -59,7 +59,7 @@ for i in 1 .. 20:
                 fullCopy.add(fullCopy[fullCopy.len - 1])
 
             #Turn fullCopy[h] into the branch hash for fullCopy[h .. h + 1].
-            fullCopy[h] = Blake384(fullCopy[h] & fullCopy[h + 1]).toString()
+            fullCopy[h] = Blake384(fullCopy[h].toString() & fullCopy[h + 1].toString())
 
         #Delete every other element.
         var d: int = 1
@@ -73,7 +73,7 @@ for i in 1 .. 20:
             if partialCopy.len mod 2 == 1:
                 partialCopy.add(partialCopy[partialCopy.len - 1])
 
-            partialCopy[h] = Blake384(partialCopy[h] & partialCopy[h + 1]).toString()
+            partialCopy[h] = Blake384(partialCopy[h].toString() & partialCopy[h + 1].toString())
 
         var d: int = 1
         while d < partialCopy.len:
