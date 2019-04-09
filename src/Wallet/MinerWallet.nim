@@ -17,7 +17,7 @@ finalsd:
         publicKey* {.final.}: BLSPublicKey
 
 #Constructors.
-proc newMinerWallet*(): MinerWallet {.forceCheck: [
+func newMinerWallet*(): MinerWallet {.forceCheck: [
     RandomError,
     BLSError
 ].} =
@@ -35,12 +35,12 @@ proc newMinerWallet*(): MinerWallet {.forceCheck: [
             privateKey: priv,
             publicKey: priv.getPublicKey()
         )
-    except BLSError:
-        fcRaise BLSError
+    except BLSError as e:
+        raise e
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
 
-proc newMinerWallet*(
+func newMinerWallet*(
     priv: BLSPrivateKey
 ): MinerWallet {.forceCheck: [
     BLSError
@@ -50,13 +50,13 @@ proc newMinerWallet*(
             privateKey: priv,
             publicKey: priv.getPublicKey()
         )
-    except BLSError:
-        fcRaise BLSError
+    except BLSError as e:
+        raise e
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
 
 #Sign a message via a MinerWallet.
-proc sign*(
+func sign*(
     miner: MinerWallet,
     msg: string
 ): BLSSignature {.forceCheck: [
@@ -64,5 +64,5 @@ proc sign*(
 ].} =
     try:
         result = miner.privateKey.sign(msg)
-    except:
-        fcRaise BLSError
+    except BLSError as e:
+        raise e

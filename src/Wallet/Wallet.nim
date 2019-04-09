@@ -81,7 +81,7 @@ func `$`*(
     key.toString().toHex()
 
 #Constructor.
-proc newWallet*(
+func newWallet*(
     seed: EdSeed
 ): Wallet {.forceCheck: [
     SodiumError
@@ -90,8 +90,8 @@ proc newWallet*(
     var pair: tuple[priv: EdPrivateKey, pub: EdPublicKey]
     try:
         pair = newEdKeyPair(seed)
-    except SodiumError:
-        fcRaise SodiumError
+    except SodiumError as e:
+        raise e
 
     #Create a new Wallet based off the seed/key pair.
     result = Wallet(
@@ -111,13 +111,13 @@ proc newWallet*(): Wallet {.forceCheck: [
 ].} =
     try:
         result = newWallet(newEdSeed())
-    except RandomError:
-        fcRaise RandomError
-    except SodiumError:
-        fcRaise SodiumError
+    except RandomError as e:
+        raise e
+    except SodiumError as e:
+        raise e
 
 #Constructor.
-proc newWallet*(
+func newWallet*(
     seed: EdSeed,
     address: string
 ): Wallet {.forceCheck: [
@@ -127,15 +127,15 @@ proc newWallet*(
     #Create a Wallet based off the Seed (and verify the integrity via the Address).
     try:
         result = newWallet(seed)
-    except SodiumError:
-        fcRaise SodiumError
+    except SodiumError as e:
+        raise e
 
     #Verify the integrity via the Address.
     if address.isValid(result.publicKey):
         raise newException(AddressError, "Invalid Address for this Wallet.")
 
 #Sign a message via a Wallet.
-proc sign*(
+func sign*(
     wallet: Wallet,
     msg: string
 ): string {.forceCheck: [
@@ -143,11 +143,11 @@ proc sign*(
 ].} =
     try:
         result = wallet.privateKey.sign(msg)
-    except SodiumError:
-        fcRaise SodiumError
+    except SodiumError as e:
+        raise e
 
 #Verify a signature.
-proc verify*(
+func verify*(
     key: EdPublicKey,
     msg: string,
     sig: string
@@ -156,11 +156,11 @@ proc verify*(
 ].} =
     try:
         result = Ed25519.verify(key, msg, sig)
-    except SodiumError:
-        fcRaise SodiumError
+    except SodiumError as e:
+        raise e
 
 #Verify a signature via a Wallet.
-proc verify*(
+func verify*(
     wallet: Wallet,
     msg: string,
     sig: string
@@ -169,5 +169,5 @@ proc verify*(
 ].} =
     try:
         result = wallet.publicKey.verify(msg, sig)
-    except SodiumError:
-        fcRaise SodiumError
+    except SodiumError as e:
+        raise e

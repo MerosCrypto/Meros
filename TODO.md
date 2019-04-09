@@ -10,6 +10,8 @@ General Cleanup:
 - Remove `ref` from objects that shouldn't be `ref`.
 - Remove `of RootObj` from objects that aren't inherited from.
 
+- Make more `proc`s `func`.
+
 - Add `DataExistsError` for when data has already been added.
 - Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
 - Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
@@ -146,8 +148,6 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
-- Make more `proc`s `func` (pending https://github.com/nim-lang/Nim/issues/10985).
-
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 
 ### Documentation:

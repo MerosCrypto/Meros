@@ -54,7 +54,7 @@ proc urgent*(logger: Logger, statement: string) {.forceCheck: [].} =
     quit(-1)
 
 #Mismatch. Logs a message worth looking into but doesn't halt execution.
-proc mismatch*(logger: Logger, statement: string) {.async.} =
+func mismatch*(logger: Logger, statement: string) {.async.} =
     #Acquire the mismatch lock.
     while not tryAcquire(logger.mismatchLock):
         #While we can't acquire it, allow other async processes to run.
@@ -67,7 +67,7 @@ proc mismatch*(logger: Logger, statement: string) {.async.} =
     release(logger.mismatchLock)
 
 #Info. Logs a generic message.
-proc info*(logger: Logger, statement: string) {.async.} =
+func info*(logger: Logger, statement: string) {.async.} =
     #Acquire the info lock.
     while not tryAcquire(logger.infoLock):
         #While we can't acquire it, allow other async processes to run.
@@ -81,7 +81,7 @@ proc info*(logger: Logger, statement: string) {.async.} =
 
 #Extranous. Logs a message only worth looking into if you have a rainbow flashes displaying the Star Wars movie.
 #Requires debug to be defined.
-proc extraneous*(logger: Logger, statement: string) {.async.} =
+func extraneous*(logger: Logger, statement: string) {.async.} =
     #Only do something when debug is defined.
     when defined(debug):
         #Acquire the extraneous lock.

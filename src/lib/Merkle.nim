@@ -138,7 +138,7 @@ const t: array[6, uint64] = [
     0x000000000000000C'u64,
     0x0000000000000002'u64
 ]
-proc ceilLog2(
+func ceilLog2(
     xArg: uint64
 ): uint64 {.forceCheck: [].} =
     var
