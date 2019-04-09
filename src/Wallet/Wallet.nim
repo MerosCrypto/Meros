@@ -41,10 +41,13 @@ func newEdSeed*(
             result[i] = seed[i]
     #If it's hex...
     elif seed.len == 64:
-        for i in countup(0, 63, 2):
-            result[i div 2] = cuchar(parseHexInt(seed[i .. i + 1]))
+        try:
+            for i in countup(0, 63, 2):
+                result[i div 2] = cuchar(parseHexInt(seed[i .. i + 1]))
+        except ValueError:
+            raise newException(EdSeedError, "Hex-length Seed with invalid Hex data passed to newEdSeed.")
     else:
-        raise newException(EdSeedError, "Invalid Seed passed to newEdSeed.")
+        raise newException(EdSeedError, "Invalid length Seed passed to newEdSeed.")
 
 #Create a new Public Key from a string.
 func newEdPublicKey*(
@@ -58,10 +61,13 @@ func newEdPublicKey*(
             result[i] = key[i]
     #If it's hex...
     elif key.len == 64:
-        for i in countup(0, 63, 2):
-            result[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
+        try:
+            for i in countup(0, 63, 2):
+                result[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
+        except ValueError:
+            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newEdSeed.")
     else:
-        raise newException(EdPublicKeyError, "Invalid Public Key passed to newEdPublicKey.")
+        raise newException(EdPublicKeyError, "Invalid length Public Key passed to newEdPublicKey.")
 
 #Stringify a Seed/PublicKey.
 func toString*(

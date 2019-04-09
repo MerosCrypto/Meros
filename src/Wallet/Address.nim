@@ -111,7 +111,7 @@ func newAddress*(
 ].} =
     #Verify the key length.
     if (keyArg.len != 32) and (keyArg.len != 64):
-        raise newException(EdPublicKeyError, "Public Key with an improper length passed to newAddress.")
+        raise newException(EdPublicKeyError, "Invalid length Public Key passed to newAddress.")
 
     #Extract the key.
     var key: array[32, uint8]
@@ -121,8 +121,11 @@ func newAddress*(
             key[i] = uint8(keyArg[i])
     #If it's hex formatted...
     else:
-        for i in countup(0, 63, 2):
-            key[i div 2] = uint8(parseHexInt(keyArg[i .. i + 1]))
+        try:
+            for i in countup(0, 63, 2):
+                key[i div 2] = uint8(parseHexInt(keyArg[i .. i + 1]))
+        except ValueError:
+            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newAddress.")
 
     #Create a new address with the array.
     result = newAddress(key)

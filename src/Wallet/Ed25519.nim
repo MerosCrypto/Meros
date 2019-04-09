@@ -23,7 +23,7 @@ proc newEdSeed*(): Seed {.forceCheck: [
     #Fill the Seed with random bytes.
     try:
         randomFill(result)
-    except:
+    except RandomError:
         raise newException(RandomError, "Couldn't randomly fill the Seed.")
 
 #Key Pair constrcutor.
