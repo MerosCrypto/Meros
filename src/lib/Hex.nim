@@ -85,8 +85,6 @@ proc toHex*(valueArg: BN): string {.forceCheck: [].} =
         power *= BASE
         inc(numDigits)
 
-    #Set the result to a new string.
-    result = ""
     #Count down from the number of digits to 0.
     for i in countDown(numDigits, 0):
         #Set the place to the base raised to the digit location.

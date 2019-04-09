@@ -77,7 +77,7 @@ func toString*(
         result = result & char(b)
 func `$`*(
     key: EdSeed or EdPublicKey
-): string {.forceCheck: [].} =
+): string {.inline, forceCheck: [].} =
     key.toString().toHex()
 
 #Constructor.

@@ -1,5 +1,8 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Index object.
-import ../../common/objects/IndexObj
+import IndexObj
 #Export the Index object.
 export IndexObj
 
@@ -12,7 +15,7 @@ finalsd:
     #We successfully detect if the Block is valid and we have the correct Verifications via the aggregate signature.
     #That said, if the aggregate is wrong, we need to check where the problem is.
     #By including merkles, we can find out what specific VERIFIER is under scrutiny.
-    type VerifierIndex* = ref object of Index
+    type VerifierIndex* = object of Index
         merkle* {.final.}: string
 
 #Constructors.
@@ -20,9 +23,14 @@ func newVerifierIndex*(
     key: string,
     nonce: uint,
     merkle: string
-): VerifierIndex {.raises: [FinalAttributeError].} =
-    result = VerifierIndex()
+): VerifierIndex {.forceCheck: [
+    irrecoverable: [
+        FinalAttributeError
+    ]
+].} =
+    result = VerifierIndex(
+        merkle: merkle
+    )
     result.key = key
     result.nonce = nonce
-    result.merkle = merkle
     result.ffinalizeMerkle()

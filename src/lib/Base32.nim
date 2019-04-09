@@ -154,9 +154,6 @@ func `$`*(
     #Extract the data.
     var data: seq[uint8] = cast[seq[uint8]](dataArg)
 
-    #Create the empty result string.
-    result = ""
-
     #Iterate over every item in the seq.
     for i in data:
         #Add the item.

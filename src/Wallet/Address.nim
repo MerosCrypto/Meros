@@ -79,7 +79,7 @@ func generateBCH(
 #Verifies a BCH code via a data argument of the Public Key and BCH code.
 func verifyBCH(
     data: seq[uint8]
-): bool {.forceCheck: [].} =
+): bool {.inline, forceCheck: [].} =
     polymod(HRP.concat(data)) == 1
 
 #Generates a address, using a modified form of Bech32 based on a public key.
@@ -133,7 +133,7 @@ func newAddress*(
 #Work with Public Keys objects, not just arrays.
 func newAddress*(
     key: EdPublicKey
-): string {.forceCheck: [].} =
+): string {.inline, forceCheck: [].} =
     newAddress(cast[array[32, uint8]](key))
 
 #Checks if an address is valid.
@@ -170,7 +170,7 @@ func isValid*(
 func isValid*(
     address: string,
     key: EdPublicKey
-): bool {.forceCheck: [].} =
+): bool {.inline, forceCheck: [].} =
     (address.isValid) and (address == newAddress(key))
 
 #Converts an address to a string of its PublicKey.

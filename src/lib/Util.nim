@@ -14,8 +14,8 @@ export toHex, parseHexInt, parseHexStr
 import nimcrypto
 
 #Gets the epoch and returns it as an int.
-proc getTime*(): uint {.forceCheck: [].} =
-    uint(times.getTime().toUnix())
+proc getTime*(): int64 {.inline, forceCheck: [].} =
+    times.getTime().toUnix()
 
 #Left-pads data, with a char or string, until the data is a certain length.
 func pad*(
@@ -66,9 +66,6 @@ func toBinary*(
 func fromBinary*(
     number: string
 ): int {.forceCheck: [].} =
-    #Init the result variable.
-    result = 0
-
     #Iterate over each byte.
     for b in 0 ..< number.len:
         #Add the byte after it's been properly shifted.

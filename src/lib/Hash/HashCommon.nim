@@ -34,20 +34,18 @@ func toHash*(
 func toString*(
     hash: Hash
 ): string {.forceCheck: [].} =
-    result = ""
     for b in hash.data:
         result &= char(b)
 
 #To hex string.
 func `$`*(
     hash: Hash
-): string  {.forceCheck: [].} =
-    result = ""
+): string {.forceCheck: [].} =
     for b in hash.data:
         result &= b.toHex()
 
 #To BN.
 func toBN*(
     hash: Hash
-): BN  {.forceCheck: [].} =
+): BN {.inline, forceCheck: [].} =
     hash.toString().toBNFromRaw()

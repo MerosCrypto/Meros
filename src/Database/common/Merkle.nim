@@ -11,7 +11,7 @@ import ../../lib/Hash
 import math
 
 #Merkle Object.
-type Merkle* = ref object of RootObj
+type Merkle* = ref object
     case isLeaf*: bool
         of true:
             discard
