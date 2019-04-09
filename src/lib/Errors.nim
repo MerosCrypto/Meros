@@ -10,7 +10,7 @@ import mc_lmdb
 type
     #lib Errors.
     RandomError* = object of Exception #Used when the RNG fails.
-    ArgonError*  = object of Exception #Used when Argon fails.
+    ArgonError*  = object of Exception #Used when the Argon library fails.
 
     #Wallet Errors.
     BLSError*          = object of Exception #Used when the BLS lib fails.

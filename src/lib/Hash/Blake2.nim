@@ -1,3 +1,6 @@
+#Errors lib.
+import ../Errors
+
 #Hash master type.
 import HashCommon
 
@@ -11,7 +14,9 @@ import strutils
 type Blake2_384Hash* = HashCommon.Hash[384]
 
 #Blake 384 hashing algorithm.
-proc Blake2_384*(bytesArg: string): Blake2_384Hash {.raises: [].} =
+proc Blake2_384*(
+    bytesArg: string
+): Blake2_384Hash {.raises: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -25,5 +30,12 @@ proc Blake2_384*(bytesArg: string): Blake2_384Hash {.raises: [].} =
     result.data = blake2_384.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to Blake2_384Hash.
-func toBlake2_384Hash*(hash: string): Blake2_384Hash {.raises: [ValueError].} =
-    hash.toHash(384)
+proc toBlake2_384Hash*(
+    hash: string
+): Blake2_384Hash {.raises: [
+    ValueError
+].} =
+    try:
+        result = hash.toHash(384)
+    except ValueError:
+        fcRaise ValueError

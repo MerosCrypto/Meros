@@ -1,3 +1,6 @@
+#Errors lib.
+import ../Errors
+
 #Hash master type.
 import HashCommon
 
@@ -13,7 +16,9 @@ type
     Keccak_384Hash* = HashCommon.Hash[384]
 
 #Keccak 256 hashing algorithm.
-proc Keccak_256*(bytesArg: string): Keccak_256Hash {.raises: [].} =
+proc Keccak_256*(
+    bytesArg: string
+): Keccak_256Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -27,7 +32,9 @@ proc Keccak_256*(bytesArg: string): Keccak_256Hash {.raises: [].} =
     result.data = keccak256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #Keccak 384 hashing algorithm.
-proc Keccak_384*(bytesArg: string): Keccak_384Hash {.raises: [].} =
+proc Keccak_384*(
+    bytesArg: string
+): Keccak_384Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -41,9 +48,23 @@ proc Keccak_384*(bytesArg: string): Keccak_384Hash {.raises: [].} =
     result.data = keccak384.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to Keccak_256Hash.
-func toKeccak_256Hash*(hash: string): Keccak_256Hash {.raises: [ValueError].} =
-    hash.toHash(256)
+proc toKeccak_256Hash*(
+    hash: string
+): Keccak_256Hash {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = hash.toHash(256)
+    except ValueError:
+        fcRaise ValueError
 
 #String to Keccak_384Hash.
-func toKeccak_384Hash*(hash: string): Keccak_384Hash {.raises: [ValueError].} =
-    hash.toHash(384)
+proc toKeccak_384Hash*(
+    hash: string
+): Keccak_384Hash {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = hash.toHash(384)
+    except ValueError:
+        fcRaise ValueError

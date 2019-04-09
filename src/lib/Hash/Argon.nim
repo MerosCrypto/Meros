@@ -15,7 +15,9 @@ func Argon*(
     data: string,
     salt: string,
     reduced: bool = false
-): ArgonHash {.raises: [ArgonError].} =
+): ArgonHash {.forceCheck: [
+    ArgonError
+].} =
     #The iteration quantity and memory usage values are for testing only.
     #They are not final and will be changed.
     var
@@ -34,9 +36,16 @@ func Argon*(
             memory,
             1
         ).data
-    except:
+    except Exception:
         raise newException(ArgonError, "Argon2d raised an error.")
 
 #String to ArgonHash.
-func toArgonHash*(hash: string): ArgonHash {.raises: [ValueError].} =
-    hash.toHash(384)
+proc toArgonHash*(
+    hash: string
+): ArgonHash {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = hash.toHash(384)
+    except ValueError:
+        fcRaise ValueError

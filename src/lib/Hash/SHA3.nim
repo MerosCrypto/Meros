@@ -1,3 +1,6 @@
+#Errors lib.
+import ../Errors
+
 #Hash master type.
 import HashCommon
 
@@ -13,7 +16,9 @@ type
     SHA3_384Hash* = HashCommon.Hash[384]
 
 #SHA3 256 hashing algorithm.
-proc SHA3_256*(bytesArg: string): SHA3_256Hash {.raises: [].} =
+proc SHA3_256*(
+    bytesArg: string
+): SHA3_256Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -27,7 +32,9 @@ proc SHA3_256*(bytesArg: string): SHA3_256Hash {.raises: [].} =
     result.data = sha3_256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #SHA3 384 hashing algorithm.
-proc SHA3_384*(bytesArg: string): SHA3_384Hash {.raises: [].} =
+proc SHA3_384*(
+    bytesArg: string
+): SHA3_384Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -41,9 +48,23 @@ proc SHA3_384*(bytesArg: string): SHA3_384Hash {.raises: [].} =
     result.data = sha3_384.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to SHA3_256Hash.
-func toSHA3_256Hash*(hash: string): SHA3_256Hash {.raises: [ValueError].} =
-    hash.toHash(256)
+proc toSHA3_256Hash*(
+    hash: string
+): SHA3_256Hash {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = hash.toHash(256)
+    except ValueError:
+        fcRaise ValueError
 
 #String to SHA3_384Hash.
-func toSHA3_384Hash*(hash: string): SHA3_384Hash {.raises: [ValueError].} =
-    hash.toHash(384)
+proc toSHA3_384Hash*(
+    hash: string
+): SHA3_384Hash {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = hash.toHash(384)
+    except ValueError:
+        fcRaise ValueError

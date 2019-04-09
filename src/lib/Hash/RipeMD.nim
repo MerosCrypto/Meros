@@ -1,3 +1,6 @@
+#Errors lib.
+import ../Errors
+
 #Hash master type.
 import HashCommon
 
@@ -11,7 +14,9 @@ import strutils
 type RipeMD_160Hash* = Hash[160]
 
 #RIPEMD 160 hash function.
-proc RipeMD_160*(bytesArg: string): RipeMD_160Hash {.raises: [].} =
+proc RipeMD_160*(
+    bytesArg: string
+): RipeMD_160Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -25,5 +30,12 @@ proc RipeMD_160*(bytesArg: string): RipeMD_160Hash {.raises: [].} =
     result.data = ripemd160.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to RipeMD_160Hash.
-func toRipeMD_160Hash*(hash: string): RipeMD_160Hash {.raises: [ValueError].} =
-    hash.toHash(160)
+proc toRipeMD_160Hash*(
+    hash: string
+): RipeMD_160Hash {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = hash.toHash(160)
+    except ValueError:
+        fcRaise ValueError
