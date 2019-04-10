@@ -5,10 +5,10 @@ import ../../lib/Errors
 import ../../lib/Hash
 
 #Merkle lib.
-import ../../lib/Merkle
+import ../common/Merkle
 
-#BLS lib.
-import ../../lib/BLS
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
 
 #Verifier object.
 import objects/VerifierObj
@@ -21,14 +21,14 @@ import Verification
 import finals
 
 #Calculate the Merkle.
-proc calculateMerkle*(verifier: Verifier, nonce: uint): string {.raises: [ValueError].} =
+proc calculateMerkle*(verifier: Verifier, nonce: Natural): string {.raises: [ValueError].} =
     #Calculate how many leaves we're trimming.
-    var toTrim: int = int(verifier.height - (nonce + 1))
+    var toTrim: int = verifier.height - (nonce + 1)
     if toTrim < 0:
         raise newException(ValueError, "Nonce is out of bounds.")
 
     #Return the hash of this Verifier's trimmed Merkle.
-    verifier.merkle.trim(toTrim).hash
+    result = verifier.merkle.trim(toTrim).hash.toString()
 
 #Calculate the aggregate signature.
 proc calculateSig*(verifs: seq[MemoryVerification]): BLSSignature {.raises: [BLSError].} =

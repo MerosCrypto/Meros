@@ -19,7 +19,7 @@ proc newBLSPrivateKeyFromSeed*(
 ].} =
     try:
         result = newPrivateKeyFromSeed(key)
-    except:
+    except Exception:
         raise newException(BLSError, "Couldn't create a BLS Private Key from a Seed: " & getCurrentExceptionMsg())
 
 proc newBLSPrivateKeyFromBytes*(
@@ -29,7 +29,7 @@ proc newBLSPrivateKeyFromBytes*(
 ].} =
     try:
         result = newPrivateKeyFromBytes(key)
-    except:
+    except Exception:
         raise newException(BLSError, "Couldn't create a BLS Private Key from its Bytes: " & getCurrentExceptionMsg())
 
 proc getPublicKey*(
@@ -39,7 +39,7 @@ proc getPublicKey*(
 ].} =
     try:
         result = mc_bls.getPublicKey(key)
-    except:
+    except Exception:
         raise newException(BLSError, "Couldn't create a BLS Public Key from a Private Key: " & getCurrentExceptionMsg())
 
 proc newBLSPublicKey*(
@@ -49,7 +49,7 @@ proc newBLSPublicKey*(
 ].} =
     try:
         result = newPublicKeyFromBytes(key)
-    except:
+    except Exception:
         raise newException(
             BLSError,
             "Couldn't create a BLS Public Key from its Bytes: " & getCurrentExceptionMsg()
@@ -62,7 +62,7 @@ proc newBLSSignature*(
 ].} =
     try:
         result = newSignatureFromBytes(sig)
-    except:
+    except Exception:
         raise newException(
             BLSError,
             "Couldn't create a BLS Signature from its Bytes: " & getCurrentExceptionMsg()
@@ -74,7 +74,7 @@ proc newBLSAggregationInfo*(
 ): BLSAggregationInfo {.forceCheck: [BLSError].} =
     try:
         result = newAggregationInfoFromMsg(key, msg)
-    except:
+    except Exception:
         raise newException(
             BLSError,
             "Couldn't create a BLS AggregationInfo from a Message: " & getCurrentExceptionMsg()
@@ -96,17 +96,26 @@ export setAggregationInfo
 export verify
 
 #Private Key functions.
-proc sign*(key: BLSPrivateKey, msg: string): BLSSignature {.forceCheck: [BLSError].} =
+proc sign*(
+    key: BLSPrivateKey,
+    msg: string
+): BLSSignature {.forceCheck: [
+    BLSError
+].} =
     try:
         result = mc_bls.sign(key, msg)
-    except:
+    except Exception:
         raise newException(BLSError, "Couldn't sign a message: " & getCurrentExceptionMsg())
 
 #Aggregation functions.
-proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.forceCheck: [BLSError].} =
+proc aggregate*(
+    keys: seq[BLSPublicKey]
+): BLSPublicKey {.forceCheck: [
+    BLSError
+].} =
     try:
         result = mc_bls.aggregate(keys)
-    except:
+    except Exception:
         raise newException(
             BLSError,
             "Couldn't aggregate the BLS Public Keys: " & getCurrentExceptionMsg()
@@ -114,19 +123,25 @@ proc aggregate*(keys: seq[BLSPublicKey]): BLSPublicKey {.forceCheck: [BLSError].
 
 proc aggregate*(
     agInfos: seq[BLSAggregationInfo]
-): BLSAggregationInfo {.forceCheck: [BLSError].} =
+): BLSAggregationInfo {.forceCheck: [
+    BLSError
+].} =
     try:
         result = mc_bls.aggregate(agInfos)
-    except:
+    except Exception:
         raise newException(
             BLSError,
             "Couldn't aggregate the BLS AggregationInfos: " & getCurrentExceptionMsg()
         )
 
-proc aggregate*(sigs: seq[BLSSignature]): BLSSignature {.forceCheck: [BLSError].} =
+proc aggregate*(
+    sigs: seq[BLSSignature]
+): BLSSignature {.forceCheck: [
+    BLSError
+].} =
     try:
         result = mc_bls.aggregate(sigs)
-    except:
+    except Exception:
         raise newException(
             BLSError,
             "Couldn't aggregate the BLS Signatures: " & getCurrentExceptionMsg()

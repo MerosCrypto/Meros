@@ -1,9 +1,11 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Numerical libs.
-import BN
-import ../../lib/Base
+#Util lib.
+import ../../lib/Util
+
+#BN/Raw lib.
+import ../../lib/Raw
 
 #Hash lib.
 import ../../lib/Hash
@@ -21,34 +23,25 @@ export DifficultyObj
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
-#OS standard lib.
-import os
-
 #Highest difficulty.
-#This would be in Main's Constants except it's impossible to change without changing the underlying libraries.
-let MAX: BN = "F".repeat(96).toBN(16)
+let MAX: BN = "".pad(48, char(255)).toBNFromRaw()
 
-#Verifies a difficulty against a block.
-func verifyDifficulty*(diff: Difficulty, newBlock: Block): bool {.raises: [ValueError].} =
-    result = true
-
-    #If the Argon hash didn't beat the difficulty...
-    if newBlock.header.hash.toBN() < diff.difficulty:
+#Verifies a hash beats a difficulty.
+proc verify*(
+    diff: Difficulty,
+    hash: Hash[384]
+): bool {.forceCheck: [].} =
+    try:
+        result = hash.toBN() > diff.difficulty
+    except ValueError:
         return false
 
 #Calculate the next difficulty using the blockchain and blocks per period.
 proc calculateNextDifficulty*(
     blockchain: Blockchain,
-    blocksPerPeriod: uint
-) {.raises: [
-    ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
+    blocksPerPeriod: Natural
+): Difficulty {.forceCheck: [
+    ValueError
 ].} =
     var
         #Last difficulty.
@@ -56,15 +49,26 @@ proc calculateNextDifficulty*(
         #New difficulty.
         difficulty: BN = last.difficulty
         #Target time.
-        targetTime: uint = blockchain.blockTime * blocksPerPeriod
-        #Start block of the difficulty.
-        start: uint = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
-        #End block of the difficulty.
-        endTime: uint = blockchain.tip.header.time
+        targetTime: int = blockchain.blockTime * blocksPerPeriod
+        #Start time of this period.
+        start: int64
+        #End time.
+        endTime: int64 = blockchain.tip.header.time
         #Period time.
-        actualTime: uint = endTime - start
+        actualTime: int64
         #Possible values.
         possible: BN = MAX - last.difficulty
+        #Change.
+        change: BN
+
+    #Grab the start time.
+    try:
+        start = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
+    except ValueError as e:
+        raise e
+
+    #Calculate the actual time.
+    actualTime = endTime - start
 
     #Handle divide by zeros.
     if actualTime == 0:
@@ -77,7 +81,7 @@ proc calculateNextDifficulty*(
                 #The targetTime (bigger) minus the actualTime (smaller)
                 #Over the targetTime
         #Since we need the difficulty to increase.
-        var change: BN = (possible * newBN(targetTime - actualTime)) div newBN(targetTime)
+        change = (possible * newBN(targetTime - actualTime)) div newBN(targetTime)
 
         #If we're increasing the difficulty by more than 10%...
         if possible / newBN(10) < change:
@@ -93,7 +97,7 @@ proc calculateNextDifficulty*(
             #Multipled by the targetTime (smaller)
             #Divided by the actualTime (bigger)
         #Since we need the difficulty to decrease.
-        var change: BN = last.difficulty * newBN(targetTime div actualTime)
+        change = last.difficulty * newBN(targetTime div actualTime)
 
         #If we're decreasing the difficulty by more than 10% of the possible values...
         if possible / newBN(10) < change:
@@ -108,7 +112,7 @@ proc calculateNextDifficulty*(
         difficulty = blockchain.startDifficulty.difficulty
 
     #Create the new difficulty.
-    blockchain.difficulty = newDifficultyObj(
+    result = newDifficultyObj(
         last.endBlock + 1,
         last.endBlock + blocksPerPeriod,
         difficulty

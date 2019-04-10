@@ -10,14 +10,12 @@ import BN
 #Hash lib.
 import ../../lib/Hash
 
-#BLS lib.
-import ../../lib/BLS
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
 
-#Index object.
+#Index and VerifierIndex objects.
 import ../common/objects/IndexObj
-
-#VerifierIndex object (not under common as this is solely used for archival, which is triggered by Merit).
-import ../Merit/objects/VerifierIndexObj
+import ../common/objects/VerifierIndexObj
 
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
@@ -49,24 +47,24 @@ proc newVerifications*(db: DatabaseFunctionBox): Verifications {.raises: [].} =
 proc add*(
     verifs: Verifications,
     verif: Verification
-) {.raises: [KeyError, MerosIndexError, LMDBError].} =
+) {.raises: [MerosIndexError, DBError].} =
     verifs[verif.verifier.toString()].add(verif)
 
 #For each provided Index, archive all Verifications from the account's last archived to the provided nonce.
 proc archive*(
     verifs: Verifications,
     indexes: seq[VerifierIndex]
-) {.raises: [KeyError, LMDBError].} =
+) {.raises: [DBError].} =
     #Iterate over every Index.
     for index in indexes:
         #Delete them from the seq.
         verifs[index.key].verifications.delete(
             0,
-            int(index.nonce - verifs[index.key].verifications[0].nonce)
+            index.nonce - verifs[index.key].verifications[0].nonce
         )
 
         #Update the Verifier.
-        verifs[index.key].archived = int(index.nonce)
+        verifs[index.key].archived = index.nonce
 
         #Update the DB.
         verifs.db.put("verifications_" & index.key, $index.nonce)

@@ -7,73 +7,85 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSSignature).
+import ../../../Wallet/MinerWallet
 
 #Block Header lib.
 import ../BlockHeader
 
 #VerifierIndex and Miners objects.
-import VerifierIndexObj
+import ../../common/objects/VerifierIndexObj
 import MinersObj
-
-#Serialization libs.
-import ../../../Network/Serialize/Merit/SerializeBlockHeader
-import ../../../Network/Serialize/Merit/SerializeMiners
 
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
 #Define the Block class.
-type Block* = ref object of RootObj
+type Block* = object
     #Block Header.
     header*: BlockHeader
 
     #Verifications.
-    verifications*: seq[VerifierIndex]
+    indexes*: seq[VerifierIndex]
     #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
-    miners*: Miners
+    miners: Miners
 
-#Set the Miners.
-proc `miners=`*(newBlock: Block, miners: Miners) =
-    newBlock.miners = miners
-    newBlock.header.miners = miners
+#Miners getter/setter.
+func miners*(
+    blockArg: Block
+): Miners {.inline, forceCheck: [].} =
+    blockArg.miners
+
+#Update the Block Header with the new miner merkle.
+func `miners=`*(
+    blockArg: var Block,
+    miners: Miners
+) {.forceCheck: [].} =
+    blockArg.miners = miners
+    blockArg.header.miners = miners.merkle.hash
 
 #Constructor.
-proc newBlockObj*(
-    nonce: uint,
+func newBlockObj*(
+    nonce: Natural,
     last: ArgonHash,
     aggregate: BLSSignature,
     indexes: seq[VerifierIndex],
     miners: Miners,
-    time: uint = getTime(),
-    proof: uint = 0
-): Block {.raises: [ValueError, ArgonError].} =
+    time: int64 = getTime(),
+    proof: Natural = 0
+): Block {.forceCheck: [
+    ValueError,
+    ArgonError
+].} =
     #Verify the Miners, unless this is the genesis Block.
     if nonce != 0:
-        var total: uint = 0
-        if (miners.len < 1) or (100 < miners.len):
+        var total: Natural = 0
+        if (miners.miners.len < 1) or (100 < miners.miners.len):
             raise newException(ValueError, "Invalid Miners quantity.")
-        for miner in miners:
+        for miner in miners.miners:
             total += miner.amount
-            if (miner.amount < 1) or (uint(100) < miner.amount):
+            if (miner.amount < 1) or (100 < miner.amount):
                 raise newException(ValueError, "Invalid Miner amount.")
         if total != 100:
             raise newException(ValueError, "Invalid total Miner amount.")
 
-    #Create the Block.
-    result = Block(
-        header: newBlockheader(
+    #Create the Block Header.
+    var header: BlockHeader
+    try:
+        header = newBlockheader(
             nonce,
             last,
             aggregate,
-            miners.calculateMerkle(),
+            miners.merkle.hash,
             time,
             proof
-        ),
-        verifications: indexes,
+        )
+    except ArgonError as e:
+        raise e
+
+    #Create the Block.
+    result = Block(
+        header: header,
+        indexes: indexes,
         miners: miners
     )

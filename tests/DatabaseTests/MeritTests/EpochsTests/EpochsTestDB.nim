@@ -9,19 +9,16 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Numerical libs.
-import BN
-import ../../../../src/lib/Base
-
-#BLS and MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
 
-#VerifierIndex and Miners object.
-import ../../../../src/Database/Merit/objects/VerifierIndexObj
+#VerifierIndex object.
+import ../../../../src/Database/common/objects/VerifierIndexObj
+
+#Miners object.
 import ../../../../src/Database/Merit/objects/MinersObj
 
 #Difficulty, Block, and Blockchain libs.
@@ -35,11 +32,14 @@ import ../../../../src/Database/Merit/Epochs
 #Merit Testing functions.
 import ../TestMerit
 
-#Tables standard lib.
-import tables
+#BN lib.
+import BN
 
 #Finals lib.
 import finals
+
+#Tables standard lib.
+import tables
 
 proc test(blocks: int) =
     echo "Testing Epoch shifting and DB interactions with " & $blocks & " blocks."
@@ -65,15 +65,13 @@ proc test(blocks: int) =
         #MinerWallets.
         wallets: seq[MinerWallet]
         #Miners we're mining to.
-        miners: Miners = @[]
+        miners: Miners
         #Hashes we're verifying.
         hashes: seq[seq[Hash[384]]] = @[]
         #Table of hashes -> verifiers.
         verified: Table[string, seq[BLSPublicKey]] = initTable[string, seq[BLSPublicKey]]()
         #VerifierIndexes.
         indexes: seq[VerifierIndex]
-        #Seq of the aggregate signatures for each verifier.
-        aggregates: seq[BLSSignature]
         #Block we're mining.
         mining: Block
         #Epoch we popped.
@@ -91,14 +89,14 @@ proc test(blocks: int) =
         wallets.add(newMinerWallet())
 
         #Create the list of miners.
-        miners = @[]
+        miners = newMinersObj(@[])
         for m in 0 ..< wallets.len:
             #Give equal amounts to each miner
-            var amount: uint = uint(100 div i)
+            var amount: int = 100 div i
 
             #If this is the first miner, give them the remainder.
             if m == 0:
-                amount += uint(100 mod i)
+                amount += 100 mod i
 
             #Add the miner.
             miners.add(
@@ -169,11 +167,11 @@ proc test(blocks: int) =
                 continue
 
             #Since there are unarchived verifications, add the VerifierIndex.
-            var nonce: uint = verifications[verifier].height - 1
+            var nonce: int = verifications[verifier].height - 1
             indexes.add(newVerifierIndex(
                 verifier,
                 nonce,
-                verifications[verifier].calculateMerkle(nonce)
+                verifications[verifier].calculateMerkle(nonce).toHash(384)
             ))
 
         #Create the Block. We don't need to pass an aggregate signature because the blockchain doesn't test for that; MainMerit does.
@@ -185,15 +183,14 @@ proc test(blocks: int) =
         )
 
         #Mine it.
-        while not blockchain.difficulty.verifyDifficulty(mining):
+        while not blockchain.difficulty.verify(mining.header.hash):
             inc(mining)
 
         #Add it to the Blockchain.
         try:
-            if not blockchain.processBlock(mining):
-                raise newException(Exception, "")
-        except:
-            raise newException(ValueError, "Valid Block wasn't successfully added.")
+            blockchain.processBlock(mining)
+        except ValueError as e:
+            raise newException(ValueError, "Valid Block wasn't successfully added: " & e.msg)
 
         #Shift the indexes onto the Epochs.
         epoch = epochs.shift(verifications, indexes)

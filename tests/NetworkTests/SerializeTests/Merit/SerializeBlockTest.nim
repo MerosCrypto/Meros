@@ -6,15 +6,17 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#BLS/MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#VerifierIndex and Miners objects.
-import ../../../../src/Database/Merit/objects/VerifierIndexObj
+#VerifierIndex object.
+import ../../../../src/Database/common/objects/VerifierIndexObj
+
+#Miner object.
 import ../../../../src/Database/Merit/objects/MinersObj
 
-#Block lib.
+#BlockHeader and Block lib.
+import ../../../../src/Database/Merit/BlockHeader
 import ../../../../src/Database/Merit/Block
 
 #Serialize libs.
@@ -24,7 +26,7 @@ import ../../../../src/Network/Serialize/Merit/ParseBlock
 #Random standard lib.
 import random
 
-#Algorithm standard lib; used to randomize the Verifications/Miners order.
+#Algorithm standard lib; used to randomize the Indexes/Miners order.
 import algorithm
 
 #Seed Random via the time.
@@ -37,28 +39,28 @@ for i in 1 .. 20:
         #Block.
         newBlock: Block
         #Nonce.
-        nonce: uint = uint(rand(6500))
+        nonce: int = rand(6500)
         #Last hash.
         last: Hash[384]
         #MinerWallet used to create random BLSSignatures.
         miner: MinerWallet = newMinerWallet()
         #Aggregate Signature.
         aggregate: BLSSignature
-        #Verifications.
-        verifs: seq[VerifierIndex] = newSeq[VerifierIndex](rand(384))
+        #Indexes.
+        indexes: seq[VerifierIndex] = newSeq[VerifierIndex](rand(384))
         #Temporary key/merkle strings for creating VerifierIndexes.
         vKey: string
         vMerkle: string
         #Miners.
-        miners: Miners = newSeq[Miner](rand(99) + 1)
+        miners: seq[Miner] = newSeq[Miner](rand(99) + 1)
         #Remaining Merit in the Block.
         remaining: int = 100
         #Amount of Merit to give each Miner.
         amount: int
         #Time.
-        time: uint = uint(rand(2000000000))
+        time: int = rand(2000000000)
         #Proof.
-        proof: uint = uint(rand(500000))
+        proof: int = rand(500000)
 
     #Randomize the last hash.
     for b in 0 ..< 48:
@@ -67,8 +69,8 @@ for i in 1 .. 20:
     #Create a random BLSSignature.
     aggregate = miner.sign(rand(100000).toBinary())
 
-    #Randomize the Verifications.
-    for v in 0 ..< verifs.len:
+    #Randomize the Indexes.
+    for v in 0 ..< indexes.len:
         #Reset the key and merkle.
         vKey = newString(48)
         vMerkle = newString(48)
@@ -81,10 +83,10 @@ for i in 1 .. 20:
         for b in 0 ..< vMerkle.len:
             vMerkle[b] = char(rand(255))
 
-        verifs[v] = newVerifierIndex(
+        indexes[v] = newVerifierIndex(
             vKey,
-            uint(rand(100000)),
-            vMerkle
+            rand(100000),
+            vMerkle.toHash(384)
         )
 
     #Fill up the Miners.
@@ -118,8 +120,8 @@ for i in 1 .. 20:
         nonce,
         last,
         aggregate,
-        verifs,
-        miners,
+        indexes,
+        newMinersObj(miners),
         time,
         proof
     )
@@ -133,7 +135,7 @@ for i in 1 .. 20:
     #Test the Header.
     assert(newBlock.header.nonce == blockParsed.header.nonce)
     assert(newBlock.header.last == blockParsed.header.last)
-    assert(newBlock.header.verifications == blockParsed.header.verifications)
+    assert(newBlock.header.aggregate == blockParsed.header.aggregate)
     assert(newBlock.header.miners == blockParsed.header.miners)
     assert(newBlock.header.time == blockParsed.header.time)
     assert(newBlock.header.proof == blockParsed.header.proof)
@@ -141,15 +143,17 @@ for i in 1 .. 20:
     #Test the hash.
     assert(newBlock.header.hash == blockParsed.header.hash)
 
-    #Test the Verifications.
-    for v in 0 ..< newBlock.verifications.len:
-        assert(newBlock.verifications[v].key == blockParsed.verifications[v].key)
-        assert(newBlock.verifications[v].nonce == blockParsed.verifications[v].nonce)
-        assert(newBlock.verifications[v].merkle == blockParsed.verifications[v].merkle)
+    #Test the Indexes.
+    assert(newBlock.indexes.len == blockParsed.indexes.len)
+    for v in 0 ..< newBlock.indexes.len:
+        assert(newBlock.indexes[v].key == blockParsed.indexes[v].key)
+        assert(newBlock.indexes[v].nonce == blockParsed.indexes[v].nonce)
+        assert(newBlock.indexes[v].merkle == blockParsed.indexes[v].merkle)
 
     #Test the Miners.
-    for m in 0 ..< newBlock.miners.len:
-        assert(newBlock.miners[m].miner == blockParsed.miners[m].miner)
-        assert(newBlock.miners[m].amount == blockParsed.miners[m].amount)
+    assert(newBlock.miners.miners.len == blockParsed.miners.miners.len)
+    for m in 0 ..< newBlock.miners.miners.len:
+        assert(newBlock.miners.miners[m].miner == blockParsed.miners.miners[m].miner)
+        assert(newBlock.miners.miners[m].amount == blockParsed.miners.miners[m].amount)
 
 echo "Finished the Network/Serialize/Merit/Block Test."

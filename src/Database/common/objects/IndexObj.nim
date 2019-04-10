@@ -9,12 +9,12 @@ finalsd:
     type Index* = object of RootObj
         key* {.final.}: string #Key, as in Key/Value, not Public Key.
                                #Address on the Lattice/BLS Public Key on the Verifications DAG.
-        nonce* {.final.}: uint
+        nonce* {.final.}: int
 
 #Constructor.
 func newIndex*(
     key: string,
-    nonce: uint
+    nonce: Natural
 ): Index {.forceCheck: [].} =
     result = Index(
         key: key,

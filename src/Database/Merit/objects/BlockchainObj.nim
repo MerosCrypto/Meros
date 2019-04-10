@@ -4,20 +4,15 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN lib.
-import BN
-
 #Hash lib.
 import ../../../lib/Hash
-
-#Verifications lib.
-import ../../Verifications/Verifications
 
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#Difficulty, BlockHeader, and Block objects.
+#Difficulty, Miners, BlockHeader, and Block objects.
 import DifficultyObj
+import MinersObj
 import BlockHeaderObj
 import BlockObj
 
@@ -31,22 +26,25 @@ import ../../../Network/Serialize/Merit/ParseBlock
 import ../../../Network/Serialize/Merit/SerializeDifficulty
 import ../../../Network/Serialize/Merit/ParseDifficulty
 
+#BN lib.
+import BN
+
 #Finals lib.
 import finals
 
 #Blockchain object.
 finalsd:
-    type Blockchain* = ref object of RootObj
+    type Blockchain* = object
         #DB Function Box.
         db*: DatabaseFunctionBox
 
         #Block time (part of the chain params).
-        blockTime* {.final.}: uint
+        blockTime* {.final.}: Natural
         #Starting Difficulty (part of the chain params).
         startDifficulty* {.final.}: Difficulty
 
         #Height.
-        height*: uint
+        height*: Natural
         #seq of every Blok Header.
         headers: seq[BlockHeader]
         #seq of all the Blocks in RAM.
@@ -59,17 +57,11 @@ finalsd:
 proc newBlockchainObj*(
     db: DatabaseFunctionBox,
     genesis: string,
-    blockTime: uint,
+    blockTime: Natural,
     startDifficultyArg: BN
-): Blockchain {.raises: [
-    ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
-].} =
+): Blockchain {.forceCheck: [].} =
     #Create the start difficulty.
-    var startDifficulty: Difficulty = newDifficultyObj(
+    let startDifficulty: Difficulty = newDifficultyObj(
         0,
         1,
         startDifficultyArg
@@ -92,65 +84,106 @@ proc newBlockchainObj*(
     var tip: string = ""
     try:
         tip = db.get("merit_tip")
-    except:
-        #If the tip isn't defined, this is the first boot.
+    #If the tip isn't defined, this is the first boot.
+    except DBReadError:
         #Create a Genesis Block.
-        var genesisBlock: Block = newBlockObj(
-            0,
-            genesis.pad(48).toArgonHash(),
-            nil,
-            @[],
-            @[],
-            0,
-            0
-        )
+        var genesisBlock: Block
+        try:
+            genesisBlock = newBlockObj(
+                0,
+                genesis.pad(48).toArgonHash(),
+                nil,
+                @[],
+                newMinersObj(@[]),
+                0,
+                0
+            )
+        except ValueError as e:
+            doAssert(false, "Couldn't create the Genesis Block due to a ValueError: " & e.msg)
+        except ArgonError as e:
+            doAssert(false, "Couldn't create the Genesis Block due to an ArgonError: " & e.msg)
         #Grab the tip.
         tip = genesisBlock.header.hash.toString()
 
-        #Save the tip and the Block.
-        db.put("merit_tip", tip)
-        db.put("merit_" & tip, genesisBlock.serialize())
-
-        #Also set the Difficulty to the starting difficulty.
-        db.put("merit_difficulty", result.difficulty.serialize())
+        #Save the tip, the Genesis Block, and the starting Difficulty.
+        try:
+            db.put("merit_tip", tip)
+            db.put("merit_" & tip, genesisBlock.serialize())
+            db.put("merit_difficulty", result.difficulty.serialize())
+        except DBWriteError as e:
+            doAssert(false, "Couldn't write the Genesis Block to the DB: " & e.msg)
 
     #Load every header.
     var
         headers: seq[BlockHeader]
-        last: BlockHeader = parseBlockHeader(db.get("merit_" & tip).substr(0, BLOCK_HEADER_LEN - 1))
+        last: BlockHeader
         i: int = 0
+    try:
+        last = parseBlockHeader(db.get("merit_" & tip).substr(0, BLOCK_HEADER_LEN - 1))
+    except ValueError as e:
+        doAssert(false, "Couldn't parse a Block Header from the Database: " & e.msg)
+    except BLSError as e:
+        doAssert(false, "Couldn't parse a Block Header's Aggregate Signature from the Database: " & e.msg)
+    except ArgonError as e:
+        doAssert(false, "Couldn't hash a Block Header from the Database: " & e.msg)
+    except DBReadError as e:
+        doAssert(false, "Couldn't find/load a Block Header from the Database: " & e.msg)
     headers = newSeq[BlockHeader](last.nonce + 1)
 
     while last.nonce != 0:
         headers[i] = last
-        last = parseBlockHeader(db.get("merit_" & last.last.toString()).substr(0, BLOCK_HEADER_LEN - 1))
+        try:
+            last = parseBlockHeader(db.get("merit_" & last.last.toString()).substr(0, BLOCK_HEADER_LEN - 1))
+        except ValueError as e:
+            doAssert(false, "Couldn't parse a Block Header from the Database: " & e.msg)
+        except BLSError as e:
+            doAssert(false, "Couldn't parse a Block Header's Aggregate Signature from the Database: " & e.msg)
+        except ArgonError as e:
+            doAssert(false, "Couldn't hash a Block Header from the Database: " & e.msg)
+        except DBReadError as e:
+            doAssert(false, "Couldn't find/load a Block Header from the Database: " & e.msg)
         inc(i)
     headers[i] = last
 
     #Set the blockchain's height and create a seq for the headers.
-    result.height = uint(headers.len)
+    result.height = headers.len
     result.headers = newSeq[BlockHeader](result.height)
     #Load the headers.
     for header in headers:
-        result.headers[int(header.nonce)] = header
+        result.headers[header.nonce] = header
 
     #Load the blocks we want to cache.
     result.blocks = newSeq[Block](min(10, headers.len))
-    if headers.len < 10:
-        var loading: Block
-        for h in countdown(headers.len - 1, 0):
-            loading = parseBlock(db.get("merit_" & headers[h].hash.toString()))
-            result.blocks[int(loading.header.nonce)] = loading
-    else:
-        #We store the headers in reverse order.
-        for h in 0 ..< 10:
-            result.blocks[9 - h] = parseBlock(db.get("merit_" & headers[h].hash.toString()))
+    try:
+        if headers.len < 10:
+            var loading: Block
+            for h in countdown(headers.len - 1, 0):
+                loading = parseBlock(db.get("merit_" & headers[h].hash.toString()))
+                result.blocks[loading.header.nonce] = loading
+        else:
+            #We store the headers in reverse order.
+            for h in 0 ..< 10:
+                result.blocks[9 - h] = parseBlock(db.get("merit_" & headers[h].hash.toString()))
+    except ValueError as e:
+        doAssert(false, "Couldn't parse a Block we're supposed to cache from the Database: " & e.msg)
+    except BLSError as e:
+        doAssert(false, "Couldn't parse a Block we're supposed to cache's Aggregate Signature OR Miners from the Database: " & e.msg)
+    except ArgonError as e:
+        doAssert(false, "Couldn't hash a Block we're supposed to cache from the Database: " & e.msg)
+    except DBReadError as e:
+        doAssert(false, "Couldn't load a Block we're supposed to cache from the Database: " & e.msg)
 
     #Load the Difficulty.
-    result.difficulty = parseDifficulty(db.get("merit_difficulty"))
+    try:
+        result.difficulty = parseDifficulty(db.get("merit_difficulty"))
+    except DBReadError as e:
+        doAssert(false, "Couldn't load the Difficulty from the Database: " & e.msg)
 
 #Adds a block.
-proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [LMDBError].} =
+proc add*(
+    blockchain: var Blockchain,
+    newBlock: Block
+) {.forceCheck: [].} =
     inc(blockchain.height)
     blockchain.headers.add(newBlock.header)
     blockchain.blocks.add(newBlock)
@@ -160,28 +193,42 @@ proc add*(blockchain: Blockchain, newBlock: Block) {.raises: [LMDBError].} =
         blockchain.blocks.delete(0)
 
     #Save the block to the database.
-    blockchain.db.put("merit_" & newBlock.header.hash.toString(), newBlock.serialize())
-    blockchain.db.put("merit_tip", newBlock.header.hash.toString())
+    try:
+        blockchain.db.put("merit_" & newBlock.header.hash.toString(), newBlock.serialize())
+        blockchain.db.put("merit_tip", newBlock.header.hash.toString())
+    except DBWriteError as e:
+        doAssert(false, "Couldn't write a block to the database: " & e.msg)
 
 #Block getter.
-proc `[]`*(blockchain: Blockchain, index: uint): Block {.raises: [
-    ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
+proc `[]`*(
+    blockchain: Blockchain,
+    index: Natural
+): Block {.forceCheck: [
+    ValueError
 ].} =
     if index >= blockchain.height:
-        raise newException(ValueError, "Blockchain doesn't have enough blocks for that index.")
+        raise newException(ValueError, "That index is greater than the Blockchain height.")
 
     if blockchain.height < 10:
-        return blockchain.blocks[int(index)]
+        return blockchain.blocks[index]
 
     if index >= blockchain.height - 10:
-        result = blockchain.blocks[int(index - (blockchain.height - 10))]
+        result = blockchain.blocks[index - (blockchain.height - 10)]
     else:
-        result = parseBlock(blockchain.db.get("merit_" & blockchain.headers[int(index)].hash.toString()))
+        try:
+            result = parseBlock(blockchain.db.get("merit_" & blockchain.headers[index].hash.toString()))
+        except ValueError as e:
+            doAssert(false, "Couldn't parse a Block we were asked for from the Database: " & e.msg)
+        except BLSError as e:
+            doAssert(false, "Couldn't parse a Block we were asked for's Aggregate Signature OR Miners from the Database: " & e.msg)
+        except ArgonError as e:
+            doAssert(false, "Couldn't hash a Block we were asked for from the Database: " & e.msg)
+        except DBReadError as e:
+            doAssert(false, "Couldn't load a Block we were asked for from the Database: " & e.msg)
+
 
 #Gets the last Block.
-func tip*(blockchain: Blockchain): Block {.inline, raises: [].} =
+func tip*(
+    blockchain: Blockchain
+): Block {.inline, forceCheck: [].} =
     blockchain.blocks[^1]

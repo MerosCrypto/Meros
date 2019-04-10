@@ -1,9 +1,11 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #Index object.
 import IndexObj
-#Export the Index object.
 export IndexObj
 
 #Finals lib.
@@ -16,21 +18,20 @@ finalsd:
     #That said, if the aggregate is wrong, we need to check where the problem is.
     #By including merkles, we can find out what specific VERIFIER is under scrutiny.
     type VerifierIndex* = object of Index
-        merkle* {.final.}: string
+        merkle* {.final.}: Hash[384]
 
 #Constructors.
 func newVerifierIndex*(
     key: string,
-    nonce: uint,
-    merkle: string
-): VerifierIndex {.forceCheck: [
-    irrecoverable: [
-        FinalAttributeError
-    ]
-].} =
+    nonce: Natural,
+    merkle: Hash[384]
+): VerifierIndex {.forceCheck: [].} =
     result = VerifierIndex(
         merkle: merkle
     )
-    result.key = key
-    result.nonce = nonce
+    try:
+        result.key = key
+        result.nonce = nonce
+    except FinalAttributeError:
+        doAssert(false, "Couldn't set the field of a brand new Index due to a FinalAttributeError.")
     result.ffinalizeMerkle()

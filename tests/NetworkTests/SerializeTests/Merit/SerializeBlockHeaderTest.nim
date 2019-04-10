@@ -6,8 +6,7 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#BLS/MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
@@ -39,14 +38,14 @@ for i in 1 .. 20:
         last: ArgonHash
         #Miner Wallet.
         miner: MinerWallet = newMinerWallet()
-        #Verifications.
-        verifs: BLSSignature
+        #Aggregate Signature of the Verifications.
+        agg: BLSSignature
         #Miners Hash.
         miners: Blake384Hash
         #Time.
-        time: uint = getTime()
+        time: int64 = getTime()
         #Proof.
-        proof: uint = uint(rand(500000))
+        proof: int = rand(500000)
 
     #Randomze the hashes.
     for b in 0 ..< 48:
@@ -54,12 +53,12 @@ for i in 1 .. 20:
         miners.data[b] = uint8(rand(255))
 
     #Create a Random BLS signature.
-    verifs = miner.sign(last.toString())
+    agg = miner.sign(last.toString())
 
     #Create the Header.
     header.nonce = uint(nonce)
     header.last = last
-    header.verifications = verifs
+    header.aggregate = agg
     header.miners = miners
     header.time = time
     header.proof = proof
@@ -73,7 +72,7 @@ for i in 1 .. 20:
     #Test each field.
     assert(header.nonce == headerParsed.nonce)
     assert(header.last == headerParsed.last)
-    assert(header.verifications == headerParsed.verifications)
+    assert(header.aggregate == headerParsed.aggregate)
     assert(header.miners == headerParsed.miners)
     assert(header.time == headerParsed.time)
     assert(header.proof == headerParsed.proof)

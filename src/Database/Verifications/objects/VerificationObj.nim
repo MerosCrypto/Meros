@@ -4,14 +4,11 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSSignature).
+import ../../../Wallet/MinerWallet
 
 #Finals lib.
 import finals
-
-#String utils standard lib.
-import strutils
 
 finalsd:
     type
@@ -20,7 +17,7 @@ finalsd:
             #BLS Key.
             verifier* {.final.}: BLSPublicKey
             #Nonce.
-            nonce* {.final.}: uint
+            nonce* {.final.}: Natural
             #Entry Hash.
             hash* {.final.}: Hash[384]
 

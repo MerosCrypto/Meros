@@ -3,14 +3,11 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#BLS lib.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
+import ../../../../src/Wallet/MinerWallet
 
 #Miners object.
 import ../../../../src/Database/Merit/objects/MinersObj
-
-#MinerWallet lib.
-import ../../../../src/Wallet/MinerWallet
 
 #Serialize lib.
 import ../../../../src/Network/Serialize/Merit/SerializeMiners
@@ -29,9 +26,9 @@ for i in 1 .. 20:
         #Wallets.
         wallets: seq[MinerWallet] = @[]
         #Miners.
-        miners: Miners = @[]
+        miners: Miners = newMinersObj(@[])
         #Quantity.
-        quantity: int = (rand(99) + 1) #Returns between 1 to 100.
+        quantity: int = rand(99) + 1 #Returns between 1 to 100.
         #Amount temp variable.
         amount: int
         #Remaining amount.
@@ -62,14 +59,14 @@ for i in 1 .. 20:
         #Add the Miner.
         miners.add(newMinerObj(
             wallets[i].publicKey,
-            uint(amount)
+            amount
         ))
 
         #Subtract the amount from remaining.
         remaining -= amount
 
     #Randomly order the miners.
-    miners.sort(
+    miners.miners.sort(
         proc (x: Miner, y: Miner): int =
             rand(1000)
     )
@@ -81,11 +78,11 @@ for i in 1 .. 20:
     assert(miners.serialize() == minersParsed.serialize())
 
     #Test the length.
-    assert(miners.len == minersParsed.len)
+    assert(miners.miners.len == minersParsed.miners.len)
 
     #Test each miner for equality.
-    for i in 0 ..< miners.len:
-        assert(miners[i].miner == minersParsed[i].miner)
-        assert(miners[i].amount == minersParsed[i].amount)
+    for i in 0 ..< miners.miners.len:
+        assert(miners.miners[i].miner == minersParsed.miners[i].miner)
+        assert(miners.miners[i].amount == minersParsed.miners[i].amount)
 
 echo "Finished the Network/Serialize/Merit/Miners Test."

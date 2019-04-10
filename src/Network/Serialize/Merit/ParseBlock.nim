@@ -5,18 +5,19 @@ import ../../../lib/Errors
 import ../../../lib/Util
 
 #VerifierIndex object.
-import ../../../Database/Merit/objects/VerifierIndexObj
+import ../../../Database/common/objects/VerifierIndexObj
 
 #Miners object.
 import ../../../Database/Merit/objects/MinersObj
 
-#Block lib.
+#BlockHeader and lib.
+import ../../../Database/Merit/BlockHeader
 import ../../../Database/Merit/Block
 
 #Deserialize/parse functions.
 import ../SerializeCommon
 import ParseBlockHeader
-import ParseVerifications
+import ParseIndexes
 import ParseMiners
 
 #Finals lib.
@@ -28,16 +29,15 @@ proc parseBlock*(
 ): Block {.raises: [
     ValueError,
     ArgonError,
-    BLSError,
-    FinalAttributeError
+    BLSError
 ].} =
     #Header | Verifications | Miners
     var
         header: BlockHeader = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
-        verifs: seq[VerifierIndex] = blockStr.substr(
+        indexes: seq[VerifierIndex] = blockStr.substr(
             BLOCK_HEADER_LEN,
             BLOCK_HEADER_LEN + INT_LEN + (blockStr[BLOCK_HEADER_LEN ..< BLOCK_HEADER_LEN + 4].fromBinary() * VERIFIER_INDEX_LEN)
-        ).parseVerifications()
+        ).parseIndexes()
         miners: Miners = blockStr.substr(
             BLOCK_HEADER_LEN + INT_LEN + (blockStr[BLOCK_HEADER_LEN ..< BLOCK_HEADER_LEN + 4].fromBinary() * VERIFIER_INDEX_LEN)
         ).parseMiners()
@@ -46,8 +46,8 @@ proc parseBlock*(
     result = newBlockObj(
         header.nonce,
         header.last,
-        header.verifications,
-        verifs,
+        header.aggregate,
+        indexes,
         miners,
         header.time,
         header.proof

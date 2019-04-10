@@ -1,6 +1,9 @@
 #Errors lib.
 import ../lib/Errors
 
+#Util lib.
+import ../lib/Util
+
 #BLS lib.
 import BLS
 export BLS
@@ -17,7 +20,7 @@ finalsd:
         publicKey* {.final.}: BLSPublicKey
 
 #Constructors.
-func newMinerWallet*(): MinerWallet {.forceCheck: [
+proc newMinerWallet*(): MinerWallet {.forceCheck: [
     RandomError,
     BLSError
 ].} =
@@ -26,7 +29,7 @@ func newMinerWallet*(): MinerWallet {.forceCheck: [
     #Use nimcrypto to fill the Seed with random bytes.
     try:
         randomFill(seed)
-    except:
+    except RandomError:
         raise newException(RandomError, "Couldn't randomly fill the BLS Seed.")
 
     try:
@@ -40,7 +43,7 @@ func newMinerWallet*(): MinerWallet {.forceCheck: [
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
 
-func newMinerWallet*(
+proc newMinerWallet*(
     priv: BLSPrivateKey
 ): MinerWallet {.forceCheck: [
     BLSError
@@ -56,7 +59,7 @@ func newMinerWallet*(
     result.ffinalizePublicKey()
 
 #Sign a message via a MinerWallet.
-func sign*(
+proc sign*(
     miner: MinerWallet,
     msg: string
 ): BLSSignature {.forceCheck: [

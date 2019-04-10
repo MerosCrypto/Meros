@@ -30,20 +30,20 @@ proc newTestDatabase*(): DatabaseFunctionBox =
     result = DatabaseFunctionBox()
 
     #Allow access to put/get/delete.
-    result.put = proc (key: string, val: string) {.raises: [LMDBError].} =
+    result.put = proc (key: string, val: string) {.raises: [DBWriteError].} =
         try:
             db.put(key, val)
-        except:
-            raise newException(LMDBError, getCurrentExceptionMsg())
+        except Exception as e:
+            raise newException(DBWriteError, e.msg)
 
-    result.get = proc (key: string): string {.raises: [LMDBError].} =
+    result.get = proc (key: string): string {.raises: [DBReadError].} =
         try:
             result = db.get(key)
-        except:
-            raise newException(LMDBError, getCurrentExceptionMsg())
+        except Exception as e:
+            raise newException(DBReadError, e.msg)
 
-    result.delete = proc (key: string) {.raises: [LMDBError].} =
+    result.delete = proc (key: string) {.raises: [DBWriteError].} =
         try:
             db.delete(key)
-        except:
-            raise newException(LMDBError, getCurrentExceptionMsg())
+        except Exception as e:
+            raise newException(DBWriteError, e.msg)

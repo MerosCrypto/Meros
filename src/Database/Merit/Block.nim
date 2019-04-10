@@ -7,23 +7,26 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#BlockHeader lib and Block object.
+#BlockHeader lib.
 import BlockHeader
+
+#Block object.
 import objects/BlockObj
-#Export the BlockHeader and Block objects.
-export BlockHeader
 export BlockObj
 
 #Serialization lib.
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
-#Finals lib.
-import finals
-
 #Increase the proof.
-proc inc*(newBlock: Block) {.raises: [ArgonError].} =
+func inc*(
+    blockArg: var Block
+) {.forceCheck: [
+    ArgonError
+].} =
     #Increase the proof.
-    inc(newBlock.header.proof)
-
+    inc(blockArg.header.proof)
     #Recalculate the hash.
-    newBlock.header.hash = Argon(newBlock.header.serialize(), newBlock.header.proof.toBinary())
+    try:
+        blockArg.header.hash = Argon(blockArg.header.serialize(), blockArg.header.proof.toBinary())
+    except ArgonError as e:
+        raise e

@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #BN lib.
 import BN
 
@@ -6,16 +9,20 @@ import finals
 
 #Difficulty object.
 finalsd:
-    type Difficulty* = ref object of RootObj
+    type Difficulty* = object
         #Start of the period.
-        start* {.final.}: uint
+        start* {.final.}: Natural
         #End of the period.
-        endBlock* {.final.}: uint
+        endBlock* {.final.}: Natural
         #Difficulty to beat.
         difficulty* {.final.}: BN
 
 #Create a new Difficulty object.
-func newDifficultyObj*(start: uint, endBlock: uint, difficulty: BN): Difficulty {.raises: [].} =
+func newDifficultyObj*(
+    start: Natural,
+    endBlock: Natural,
+    difficulty: BN
+): Difficulty {.forceCheck: [].} =
     result = Difficulty(
         start: start,
         endBlock: endBlock,

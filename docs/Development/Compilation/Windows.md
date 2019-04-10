@@ -2,9 +2,9 @@
 
 ### Dependencies
 
-Meros requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work but are untested), Make (for LMDB), CMake (for BLS), Nim 0.19.4, Nimble, GMP, Chia's BLS library, LibSodium, and LMDB.
+Meros requires Git, GCC/G++ (through MinGW or TDM; clang/msvc will likely work but are untested), Make (for LMDB), CMake (for BLS), Nim devel, Nimble, GMP, Chia's BLS library, LibSodium, and LMDB.
 
-- For how to install Nim/Nimble, see https://nim-lang.org/install_windows.html.
+- For how to install Nim/Nimble, see https://github.com/dom96/choosenim.
 - For GMP, go to https://github.com/Legrandin/mpir-windows-builds. Download the MPIR DLL for your platform, and put it in your `/build` directory as `libgmp.dll`.
 - For BLS, see https://github.com/MerosCrypto/mc_bls.
 - For LibSodium, download https://download.libsodium.org/libsodium/releases/libsodium-1.0.16-mingw.tar.gz. Extract the files and open the folder for your arch. Place `bin/libsodium-23.dll` in your `/build` directory. Place `lib/libsodium.a` in your compiler's static library folder.

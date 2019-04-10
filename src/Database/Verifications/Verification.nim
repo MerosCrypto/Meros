@@ -21,7 +21,7 @@ import finals
 proc sign*(
     miner: MinerWallet,
     verif: MemoryVerification,
-    nonce: uint
+    nonce: Natural
 ) {.raises: [BLSError, FinalAttributeError].} =
     #Set the verifier.
     verif.verifier = miner.publicKey

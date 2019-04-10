@@ -7,8 +7,8 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
 #BlockHeader object.
 import ../../../Database/Merit/objects/BlockHeaderObj
@@ -19,13 +19,10 @@ import ../SerializeCommon
 #Finals lib.
 import finals
 
-#String utils standard library.
-import strutils
-
 #Parse function.
 proc parseBlockHeader*(
     headerStr: string
-): BlockHeader {.raises: [ValueError, ArgonError, BLSError].} =
+): BlockHeader {.raises: [ValueError, BLSError, ArgonError].} =
     #Nonce | Last Hash | Verifications Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(
         INT_LEN,
@@ -38,11 +35,11 @@ proc parseBlockHeader*(
 
     #Create the BlockHeader.
     result = newBlockHeaderObj(
-        uint(headerSeq[0].fromBinary()),
+        headerSeq[0].fromBinary(),
         headerSeq[1].toArgonHash(),
         newBLSSignature(headerSeq[2]),
         headerSeq[3].toBlake384Hash(),
-        uint(headerSeq[4].fromBinary()),
-        uint(headerSeq[5].fromBinary())
+        headerSeq[4].fromBinary(),
+        headerSeq[5].fromBinary()
     )
     result.hash = Argon(headerStr, headerSeq[5])

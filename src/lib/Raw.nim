@@ -12,7 +12,7 @@ import math
 let BASE: BN = newBN(256)
 
 #Turn a Raw string into a BN.
-proc toBNFomRaw*(value: string): BN {.forceCheck: [].} =
+proc toBNFromRaw*(value: string): BN {.forceCheck: [].} =
     #Create a new BN.
     result = newBN()
 
@@ -30,7 +30,7 @@ proc toRaw*(valueArg: BN): string {.forceCheck: [].} =
 
     #If the value is zero, return 0.
     if value == newBN(0):
-        return $'\0'
+        return $char(0)
 
     #Create the power, numDigits, place, and digit variables.
     var
@@ -54,4 +54,4 @@ proc toRaw*(valueArg: BN): string {.forceCheck: [].} =
         #Remove the place from the value.
         value = value mod place
         #Ad the new digit to the result.
-        result &= int(digit)
+        result &= char(digit)

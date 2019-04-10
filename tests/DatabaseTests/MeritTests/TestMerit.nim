@@ -3,11 +3,8 @@
 #Util lib,
 import ../../../src/lib/Util
 
-#BN lib.
-import BN
-
-#BLS lib,
-import ../../../src/lib/BLS
+#MinerWallet lib (for BLSSignature).
+import ../../../src/Wallet/MinerWallet
 
 #Hash lib.
 import ../../../src/lib/Hash
@@ -23,20 +20,23 @@ import ../../../src/Network/Serialize/Merit/SerializeBlock
 import ../TestDatabase
 export TestDatabase
 
+#BN lib.
+import BN
+
 #Creates a Block, with every setting optional.
 proc newTestBlock*(
-    nonce: int = 0,
+    nonce: Natural = 0,
     last: ArgonHash = "".pad(48).toArgonHash(),
     aggregate: BLSSignature = nil,
     indexes: seq[VerifierIndex] = @[],
-    miners: Miners = @[
+    miners: Miners = newMinersObj(@[
         newMinerObj(
             newBLSPrivateKeyFromSeed("TEST").getPublicKey(),
             uint(100)
         )
-    ],
-    time: uint = getTime(),
-    proof: uint = 0
+    ]),
+    time: int64 = getTime(),
+    proof: Natural = 0
 ): Block =
     newBlockObj(
         uint(nonce),

@@ -9,10 +9,9 @@ import BN
 import ../../../../src/lib/Hash
 
 #Merkle lib.
-import ../../../../src/lib/Merkle
+import ../../../../src/Database/common/Merkle
 
-#BLS and MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
@@ -54,12 +53,12 @@ var
 state.processBlock(
     blockchain,
     newTestBlock(
-        miners = @[
+        miners = newMinersObj(@[
             newMinerObj(
                 miner.publicKey,
                 100
             )
-        ]
+        ])
     )
 )
 
@@ -72,7 +71,7 @@ verifications.add(verif)
 verifs.add(newVerifierIndex(
     miner.publicKey.toString(),
     0,
-    newMerkle(hash.toString()).hash
+    newMerkle(hash).hash
 ))
 
 #Shift on the Verifications.

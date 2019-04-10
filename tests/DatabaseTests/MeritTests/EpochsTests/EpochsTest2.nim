@@ -6,17 +6,16 @@ Epochs Test 2. Verifies that:
 Result in 500/500 when the Entry first appeared.
 """
 
-#BN lib.
-import BN
+#Util lib.
+import ../../../../src/lib/Util
 
 #Hash lib.
 import ../../../../src/lib/Hash
 
 #Merkle lib.
-import ../../../../src/lib/Merkle
+import ../../../../src/Database/common/Merkle
 
-#BLS and MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
@@ -28,8 +27,8 @@ import ../../../../src/Database/Merit/Merit
 #Merit Testing functions.
 import ../TestMerit
 
-#String utils standard lib.
-import strutils
+#BN lib.
+import BN
 
 var
     #Database Function Box.
@@ -44,7 +43,7 @@ var
     epochs: Epochs = newEpochs(functions, verifications, blockchain)
 
     #Hash.
-    hash: Hash[384] = "aa".repeat(48).toHash(384)
+    hash: Hash[384] = "".pad(48, char(128)).toHash(384)
     #MinerWallets.
     miners: seq[MinerWallet] = @[
         newMinerWallet(),
@@ -61,7 +60,7 @@ var
 state.processBlock(
     blockchain,
     newTestBlock(
-        miners = @[
+        miners = newMinersObj(@[
             newMinerObj(
                 miners[0].publicKey,
                 50
@@ -71,7 +70,7 @@ state.processBlock(
                 miners[1].publicKey,
                 50
             )
-        ]
+        ])
     )
 )
 
@@ -84,7 +83,7 @@ verifications.add(verif)
 verifs.add(newVerifierIndex(
     miners[0].publicKey.toString(),
     0,
-    newMerkle(hash.toString()).hash
+    newMerkle(hash).hash
 ))
 
 #Shift on the Verifications.
@@ -103,7 +102,7 @@ verifications.add(verif)
 verifs.add(newVerifierIndex(
     miners[1].publicKey.toString(),
     0,
-    newMerkle(hash.toString()).hash
+    newMerkle(hash).hash
 ))
 
 #Shift on the Verifications.

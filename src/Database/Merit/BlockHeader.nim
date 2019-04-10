@@ -7,8 +7,8 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#BLS lib.
-import ../../lib/BLS
+#MinerWallet lib (for BLSSignature).
+import ../../Wallet/MinerWallet
 
 #BlockHeader object.
 import objects/BlockHeaderObj
@@ -18,14 +18,16 @@ export BlockHeaderObj
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
 #Constructor.
-proc newBlockHeader*(
-    nonce: uint,
+func newBlockHeader*(
+    nonce: Natural,
     last: ArgonHash,
     verifs: BLSSignature,
     miners: Blake384Hash,
-    time: uint,
-    proof: uint
-): BlockHeader {.raises: [ArgonError].} =
+    time: Natural,
+    proof: Natural
+): BlockHeader {.forceCheck: [
+    ArgonError
+].} =
     result = newBlockHeaderObj(
         nonce,
         last,
@@ -34,4 +36,7 @@ proc newBlockHeader*(
         time,
         proof
     )
-    result.hash = Argon(result.serialize(), result.proof.toBinary())
+    try:
+        result.hash = Argon(result.serialize(), result.proof.toBinary())
+    except ArgonError as e:
+        raise e

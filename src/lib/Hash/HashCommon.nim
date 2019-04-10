@@ -45,7 +45,7 @@ func `$`*(
         result &= b.toHex()
 
 #To BN.
-func toBN*(
+proc toBN*(
     hash: Hash
 ): BN {.inline, forceCheck: [].} =
     hash.toString().toBNFromRaw()

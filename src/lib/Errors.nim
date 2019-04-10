@@ -23,11 +23,15 @@ type
     AddressError*     = object of Exception #Used when passed an invalid Address.
 
     #Database/Filesystem Errors.
-    DBWriteError* = object of LMDBError #Used when writing to the DB fails.
-    DBReadError*  = object of LMDBError #Used when reading from the DB fails.
+    DBError*      = object of LMDBError
+    DBWriteError* = object of DBError #Used when writing to the DB fails.
+    DBReadError*  = object of DBError #Used when reading from the DB fails.
 
     #Database/common Errors.
     MerosIndexError* = object of Exception #KeyError, yet not `of ValueError`. It's prefixed with Meros since Nim provides an IndexError.
+
+    #Database/Blockchain Errors.
+    NotInEpochsError* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Database/Lattice Errors.
     MintError* = object of Exception #Used when Minting MR fails.

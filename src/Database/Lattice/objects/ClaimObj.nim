@@ -1,5 +1,5 @@
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSSignature).
+import ../../../Wallet/MinerWallet
 
 #Entry object.
 import EntryObj
@@ -23,5 +23,5 @@ func newClaimObj*(
         mintNonce: mintNonce
     )
     result.ffinalizeMintNonce()
-    
+
     result.descendant = EntryType.Claim

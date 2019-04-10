@@ -4,14 +4,14 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSPublicKey).
+import ../../../Wallet/MinerWallet
 
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
 
 #VerifierIndex object.
-import VerifierIndexObj
+import ../../common/objects/VerifierIndexObj
 
 #Tables standard lib.
 import tables
@@ -22,40 +22,49 @@ import finals
 finalsd:
     type
         #Reward object. Declares a BLS Public Key (as a string) and a number which adds up to 1000.
-        Reward* = object of RootObj
+        Reward* = object
             key* {.final.}: string
-            score* {.final.}: uint #This is final even though we double set score (once with a raw value, once with a normalized value). How?
-                                   #We initially set the score in this value via the constructor.
-                                   #Since we set the score in this file, we don't call the finals setter, and finals thinks it's unset.
+            score* {.final.}: Natural #This is final even though we double set score (once with a raw value, once with a normalized value). How?
+                                      #We initially set the score in this value via the constructor.
+                                      #Since we set the score in this file, and we don't call the finalize, finals thinks it's unset.
         #Seq of Rewards.
         Rewards* = seq[Reward]
 
         #Epoch object. Entry Hash -> Public Keys
-        Epoch* = TableRef[string, seq[BLSPublicKey]]
+        Epoch* = Table[string, seq[BLSPublicKey]]
+
         #Epochs object.
-        Epochs* = ref object of RootObj
+        Epochs* = object
             #Database.
             db: DatabaseFunctionBox
+
             #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
-            #The last 12 Epochs of indexes.
+            #The last 10 Epochs of indexes.
             indexes: seq[seq[VerifierIndex]]
 
 #Constructors.
-proc newReward*(key: string, score: uint): Reward {.raises: [].} =
+func newReward*(
+    key: string,
+    score: Natural
+): Reward {.forceCheck: [].} =
     result = Reward(
         key: key,
         score: score
     )
     result.ffinalizeKey()
 
-proc newRewards*(): Rewards {.raises: [].} =
+func newRewards*(): Rewards {.inline, forceCheck: [].} =
     newSeq[Reward]()
 
-proc newEpoch*(indexes: seq[VerifierIndex]): Epoch {.raises: [].} =
-    newTable[string, seq[BLSPublicKey]]()
+func newEpoch*(
+    indexes: seq[VerifierIndex]
+): Epoch {.inline, forceCheck: [].} =
+    initTable[string, seq[BLSPublicKey]]()
 
-proc newEpochsObj*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
+func newEpochsObj*(
+    db: DatabaseFunctionBox
+): Epochs {.forceCheck: [].} =
     #Create the seq.
     result = Epochs(
         db: db,
@@ -71,29 +80,50 @@ proc newEpochsObj*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
     for i in 0 ..< 10:
         result.indexes[i] = @[]
 
-#Add a hash to Epochs. Returns false if this hash isn't already in these Epochs.
-proc add*(epochs: Epochs, hash: string, verifier: BLSPublicKey): bool {.raises: [KeyError].} =
-    #Default return value of false.
-    result = false
-
+#Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
+func add*(
+    epochs: var Epochs,
+    hash: string,
+    verifier: BLSPublicKey
+) {.forceCheck: [
+    NotInEpochsError
+].} =
     #Check every Epoch.
-    for epoch in epochs.epochs:
-        #If we found the hash, add the verifier and return true.
-        if epoch.hasKey(hash):
-            epoch[hash].add(verifier)
-            return true
+    try:
+        for i in 0 ..< epochs.epochs.len:
+            #If we found the hash, add the verifier and return true.
+            if epochs.epochs[i].hasKey(hash):
+                epochs.epochs[i][hash].add(verifier)
+                return
+    except KeyError as e:
+        doAssert(false, "Couldn't add a hash to an Epoch which already has said hash: " & e.msg)
+    raise newException(NotInEpochsError, "")
 
 #Add a hash to an Epoch.
-proc add*(epoch: Epoch, hash: string, verifier: BLSPublicKey) {.raises: [KeyError].} =
-    #Create the seq if one doesn't already exist.
-    if not epoch.hasKey(hash):
+func add*(
+    epoch: var Epoch,
+    hash: string,
+    verifier: BLSPublicKey
+) {.forceCheck: [].} =
+    #Create the seq.
+    try:
         epoch[hash] = @[]
+    except KeyError as e:
+        doAssert(false, "Couldn't add a seq to an Epoch: " & e.msg)
 
     #Add the key.
-    epoch[hash].add(verifier)
+    try:
+        epoch[hash].add(verifier)
+    except KeyError as e:
+        doAssert(false, "Couldn't add a hash to a newly created seq in the Epoch: " & e.msg)
 
 #Shift an Epoch.
-proc shift*(epochs: Epochs, epoch: Epoch, indexes: seq[VerifierIndex], save: bool): Epoch {.raises: [LMDBError].} =
+proc shift*(
+    epochs: var Epochs,
+    epoch: Epoch,
+    indexes: seq[VerifierIndex],
+    save: bool
+): Epoch {.forceCheck: [].} =
     #Add the newest Epoch.
     epochs.epochs.add(epoch)
     #Set the result to the oldest.
@@ -104,7 +134,7 @@ proc shift*(epochs: Epochs, epoch: Epoch, indexes: seq[VerifierIndex], save: boo
     #Add the newest indexes.
     epochs.indexes.add(indexes)
     #Grab the oldest.
-    var oldIndexes: seq[VerifierIndex] = epochs.indexes[0]
+    let oldIndexes: seq[VerifierIndex] = epochs.indexes[0]
     #Remove the oldest.
     epochs.indexes.delete(0)
 
@@ -122,5 +152,8 @@ proc shift*(epochs: Epochs, epoch: Epoch, indexes: seq[VerifierIndex], save: boo
         Therefore, we need to save the index that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
         """
 
-        for index in oldIndexes:
-            epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())
+        try:
+            for index in oldIndexes:
+                epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save the new Epoch tip to the database: " & e.msg)

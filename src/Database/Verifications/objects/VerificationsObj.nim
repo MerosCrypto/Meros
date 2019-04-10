@@ -6,13 +6,12 @@ import ../../../lib/Util
 
 #Numerical libs.
 import BN
-import ../../../lib/Base
 
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
 #Index object.
 import ../../common/objects/IndexObj
@@ -69,7 +68,7 @@ proc newVerificationsObj*(db: DatabaseFunctionBox): Verifications {.raises: [].}
 proc add(
     verifs: Verifications,
     verifier: string
-) {.raises: [LMDBError].} =
+) {.raises: [].} =
     #Make sure the verifier doesn't already exist.
     if verifs.verifiers.hasKey(verifier):
         return
@@ -80,24 +79,30 @@ proc add(
     #Add the Verifier to the Verifier's string.
     verifs.verifiersStr &= verifier
     #Update the Verifier's String in the DB.
-    verifs.db.put("verifications_verifiers", verifs.verifiersStr)
+    try:
+        verifs.db.put("verifications_verifiers", verifs.verifiersStr)
+    except DBError as e:
+        doAssert(false, "Couldn't update the Verifiers' string: " & e.msg)
 
 #Gets a Verifier by their key.
 proc `[]`*(
     verifs: Verifications,
     verifier: string
-): Verifier {.raises: [KeyError, LMDBError].} =
+): Verifier {.raises: [].} =
     #Call add, which will only create a new Verifier if one doesn't exist.
     verifs.add(verifier)
 
     #Return the verifier.
-    result = verifs.verifiers[verifier]
+    try:
+        result = verifs.verifiers[verifier]
+    except KeyError as e:
+        doAssert(false, "Couldn't load a Verifier despite just calling `add` for that Verifier: " & e.msg)
 
 #Gets a Verification by its Index.
 proc `[]`*(
     verifs: Verifications,
     index: Index
-): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+): Verification {.raises: [ValueError, BLSError, DBError, FinalAttributeError].} =
     #Check for the existence of the verifier.
     if not verifs.verifiers.hasKey(index.key):
         raise newException(ValueError, "Verifications does not have an Verifier for that key.")
