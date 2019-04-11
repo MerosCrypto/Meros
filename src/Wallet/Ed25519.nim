@@ -4,8 +4,8 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
-#LibSodium lib.
-import ../lib/libsodium
+#LibSodium Ed25519 components.
+import mc_ed25519
 
 #SIGN_PREFIX applied to every message, stopping cross-network replays.
 const SIGN_PREFIX {.strdefine.}: string = "MEROS"

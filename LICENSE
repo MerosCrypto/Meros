@@ -1,5 +1,3 @@
-The bundled LibSodium header files are under the ISC License, copyright (2013-2018) Frank Denis <j at pureftpd dot org>. Please see the `src/lib/libsodium` folder for the full `LICENSE` text.
-
 To the extent possible under law, Luke Parker has waived all copyright and related or neighboring rights to the files under `logos/`, via the [CC0 license](https://creativecommons.org/publicdomain/zero/1.0/).
 
 Meros is released under the following license:
