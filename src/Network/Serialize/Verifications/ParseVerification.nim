@@ -7,8 +7,8 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
 #Verification object.
 import ../../../Database/Verifications/objects/VerificationObj
@@ -22,10 +22,9 @@ import finals
 #Parse a Verification.
 proc parseVerification*(
     verifStr: string
-): Verification {.raises: [
+): Verification {.forceCheck: [
     ValueError,
-    BLSError,
-    FinalAttributeError
+    BLSError
 ].} =
     var
         #BLS Public Key | Nonce | Entry Hash
@@ -35,15 +34,25 @@ proc parseVerification*(
             HASH_LEN
         )
         #Verifier's Public Key.
-        verifier: BLSPublicKey = newBLSPublicKey(verifSeq[0])
+        verifier: BLSPublicKey
         #Nonce.
         nonce: uint = uint(verifSeq[1].fromBinary())
         #Get the Entry hash.
         entry: string = verifSeq[2]
 
+    try:
+        verifier = newBLSPublicKey(verifSeq[0])
+    except BLSError as e:
+        raise e
+
     #Create the Verification.
-    result = newMemoryVerificationObj(
-        entry.toHash(384)
-    )
-    result.verifier = verifier
-    result.nonce = nonce
+    try:
+        result = newMemoryVerificationObj(
+            entry.toHash(384)
+        )
+        result.verifier = verifier
+        result.nonce = nonce
+    except ValueError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when parsing a Verification: " & e.msg)

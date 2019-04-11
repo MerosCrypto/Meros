@@ -4,7 +4,7 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib (for BLSSignature).
+#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
 #Finals lib.
@@ -29,7 +29,7 @@ finalsd:
 #New Verification object.
 func newVerificationObj*(
     hash: Hash[384]
-): Verification {.raises: [].} =
+): Verification {.forceCheck: [].} =
     result = Verification(
         hash: hash
     )
@@ -38,7 +38,7 @@ func newVerificationObj*(
 #New MemoryVerification object.
 func newMemoryVerificationObj*(
     hash: Hash[384]
-): MemoryVerification {.raises: [].} =
+): MemoryVerification {.forceCheck: [].} =
     result = MemoryVerification(
         hash: hash
     )

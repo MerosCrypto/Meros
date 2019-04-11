@@ -9,16 +9,11 @@ import ../../../src/lib/Util
 #Hash lib.
 import ../../../src/lib/Hash
 
-#Numerical libs.
-import BN
-import ../../../src/lib/Base
-
-#BLS and MinerWallet libs.
-import ../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#VerifierIndex object.
-import ../../../src/Database/Merit/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../../src/Database/common/objects/VerifierRecordObj
 
 #Verifications lib.
 import ../../../src/Database/Verifications/Verifications
@@ -62,10 +57,10 @@ var
     #MemoryVerification we just created.
     verif: MemoryVerification
     #Tips we're archiving.
-    archiving: seq[VerifierIndex]
+    archiving: seq[VerifierRecord]
 
 #Tests the DB's list of verifiers, tips, and a reloaded copy of the Verifications against the real one.
-proc test(archived: seq[VerifierIndex], verifiersLen: int) =
+proc test(archived: seq[VerifierRecord], verifiersLen: int) =
     #Test the `verifications_verifiers`.
     var verifiersStr: string
     for v in 0 ..< verifiersLen:
@@ -77,7 +72,7 @@ proc test(archived: seq[VerifierIndex], verifiersLen: int) =
         #Make sure the original Verifications has the same tip.
         assert(verifications[tip.key].archived == int(tip.nonce))
         #Make sure the DB has the same tip.
-        assert(db.get("verifications_" & tip.key) == $tip.nonce)
+        assert(db.get("verifications_" & tip.key.toString()) == $tip.nonce)
 
     #Reload the database.
     var reloaded: Verifications = newVerifications(db)
@@ -86,8 +81,8 @@ proc test(archived: seq[VerifierIndex], verifiersLen: int) =
     for v in verifiers:
         #Grab each Verifier.
         var
-            originalVerifier: Verifier = verifications[v.publicKey.toString()]
-            reloadedVerifier: Verifier = reloaded[v.publicKey.toString()]
+            originalVerifier: Verifier = verifications[v.publicKey]
+            reloadedVerifier: Verifier = reloaded[v.publicKey]
 
         #Test both have the same fields.
         assert(originalVerifier.key == reloadedVerifier.key)
@@ -101,7 +96,7 @@ proc test(archived: seq[VerifierIndex], verifiersLen: int) =
 
         #Test the Merkle.
         if originalVerifier.archived == -1:
-            assert(reloadedVerifier.merkle.hash == "".pad(48))
+            assert(reloadedVerifier.merkle.hash.toString() == "".pad(48))
         else:
             assert(originalVerifier.calculateMerkle(uint(originalVerifier.archived)) == reloadedVerifier.calculateMerkle(uint(originalVerifier.archived)))
 
@@ -131,20 +126,20 @@ for i in 0 ..< 5:
 
 #Archive all of these (the Merkle is blank since we check that in the Merit systems, which are out of scope for this test).
 archiving = @[
-    newVerifierIndex(
-        verifiers[0].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[0].publicKey,
         0,
-        "".pad(48)
+        "".pad(48).toHash(384)
     ),
-    newVerifierIndex(
-        verifiers[1].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[1].publicKey,
         2,
-        "".pad(48)
+        "".pad(48).toHash(384)
     ),
-    newVerifierIndex(
-        verifiers[2].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[2].publicKey,
         4,
-        "".pad(48)
+        "".pad(48).toHash(384)
     )
 ]
 verifications.archive(archiving)
@@ -178,24 +173,24 @@ verifications.add(verif)
 assert(db.get("verifications_" & verifiers[3].publicKey.toString() & "_" & 0.toBinary()) == verif.hash.toString())
 
 #Add a blank Verifier.
-discard verifications[verifiers[4].publicKey.toString()]
+discard verifications[verifiers[4].publicKey]
 
 #Archive all of these except the second Verifier and the blank verifier.
 archiving = @[
-    newVerifierIndex(
-        verifiers[0].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[0].publicKey,
         7,
-        "".pad(48)
+        "".pad(48).toHash(384)
     ),
-    newVerifierIndex(
-        verifiers[2].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[2].publicKey,
         9,
-        "".pad(48)
+        "".pad(48).toHash(384)
     ),
-    newVerifierIndex(
-        verifiers[3].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[3].publicKey,
         0,
-        "".pad(48)
+        "".pad(48).toHash(384)
     )
 ]
 verifications.archive(archiving)
@@ -211,15 +206,15 @@ assert(db.get("verifications_" & verifiers[4].publicKey.toString() & "_" & 0.toB
 
 #Archive the second verifier and the blank verifier.
 archiving = @[
-    newVerifierIndex(
-        verifiers[1].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[1].publicKey,
         6,
-        "".pad(48)
+        "".pad(48).toHash(384)
     ),
-    newVerifierIndex(
-        verifiers[4].publicKey.toString(),
+    newVerifierRecord(
+        verifiers[4].publicKey,
         0,
-        "".pad(48)
+        "".pad(48).toHash(384)
     )
 ]
 verifications.archive(archiving)

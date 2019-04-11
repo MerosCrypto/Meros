@@ -17,7 +17,7 @@ proc mainVerifications() {.raises: [].} =
         ): Verification {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             verifications[key][nonce]
 
-        #Provide access to the VerifierIndexes of verifiers with unarchived Verifications.
+        #Provide access to the VerifierRecords of verifiers with unarchived Verifications.
         functions.verifications.getUnarchivedIndexes = proc (): seq[VerifierIndex] {.raises: [
             KeyError,
             ValueError,

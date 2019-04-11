@@ -1,24 +1,18 @@
 #Errors.
 import ../../lib/Errors
 
-#Util lib.
-import ../../lib/Util
-
-#BN lib.
-import BN
-
 #Hash lib.
 import ../../lib/Hash
 
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#Index and VerifierIndex objects.
-import ../common/objects/IndexObj
-import ../common/objects/VerifierIndexObj
-
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
+
+#VerificationsIndex and VerifierRecord object.
+import ../common/objects/VerificationsIndexObj
+import ../common/objects/VerifierRecordObj
 
 #Verification and Verifier libs.
 import Verification
@@ -30,7 +24,7 @@ export Verifier
 import objects/VerificationsObj
 export VerificationsObj
 
-#Sequtils standard lib.
+#Seq utils standard lib.
 import sequtils
 
 #Tables standard lib.
@@ -40,31 +34,47 @@ import tables
 import finals
 
 #Constructor wrapper.
-proc newVerifications*(db: DatabaseFunctionBox): Verifications {.raises: [].} =
+proc newVerifications*(
+    db: DatabaseFunctionBox
+): Verifications {.forceCheck: [].} =
     newVerificationsObj(db)
 
 #Add a Verification.
 proc add*(
     verifs: Verifications,
     verif: Verification
-) {.raises: [MerosIndexError, DBError].} =
-    verifs[verif.verifier.toString()].add(verif)
+) {.forceCheck: [
+    IndexError,
+    GapError,
+    MeritRemoval
+].} =
+    try:
+        verifs[verif.verifier].add(verif)
+    except IndexError as e:
+        raise e
+    except GapError as e:
+        raise e
+    except MeritRemoval as e:
+        raise e
 
-#For each provided Index, archive all Verifications from the account's last archived to the provided nonce.
+#For each provided Record, archive all Verifications from the account's last archived to the provided nonce.
 proc archive*(
     verifs: Verifications,
-    indexes: seq[VerifierIndex]
-) {.raises: [DBError].} =
-    #Iterate over every Index.
-    for index in indexes:
+    records: seq[VerifierRecord]
+) {.forceCheck: [].} =
+    #Iterate over every Record.
+    for record in records:
         #Delete them from the seq.
-        verifs[index.key].verifications.delete(
+        verifs[record.key].verifications.delete(
             0,
-            index.nonce - verifs[index.key].verifications[0].nonce
+            record.nonce - verifs[record.key].verifications[0].nonce
         )
 
         #Update the Verifier.
-        verifs[index.key].archived = index.nonce
+        verifs[record.key].archived = record.nonce
 
         #Update the DB.
-        verifs.db.put("verifications_" & index.key, $index.nonce)
+        try:
+            verifs.db.put("verifications_" & record.key.toString(), $record.nonce)
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save a Verifier's tip to the Database: " & e.msg)

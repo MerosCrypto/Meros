@@ -4,49 +4,67 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
+
 #Merkle lib.
 import ../common/Merkle
 
-#MinerWallet lib.
-import ../../Wallet/MinerWallet
+#Verification lib.
+import Verification
 
 #Verifier object.
 import objects/VerifierObj
 export VerifierObj
 
-#Verification lib.
-import Verification
-
 #Finals lib.
 import finals
 
 #Calculate the Merkle.
-proc calculateMerkle*(verifier: Verifier, nonce: Natural): string {.raises: [ValueError].} =
+proc calculateMerkle*(
+    verifier: Verifier,
+    nonce: Natural
+): Hash[384] {.forceCheck: [
+    IndexError
+].} =
     #Calculate how many leaves we're trimming.
-    var toTrim: int = verifier.height - (nonce + 1)
+    let toTrim: int = verifier.height - (nonce + 1)
     if toTrim < 0:
-        raise newException(ValueError, "Nonce is out of bounds.")
+        raise newException(IndexError, "Nonce is out of bounds.")
 
     #Return the hash of this Verifier's trimmed Merkle.
-    result = verifier.merkle.trim(toTrim).hash.toString()
+    result = verifier.merkle.trim(toTrim).hash
 
 #Calculate the aggregate signature.
-proc calculateSig*(verifs: seq[MemoryVerification]): BLSSignature {.raises: [BLSError].} =
-    #If there's no verifications...
+proc aggregate*(
+    verifs: seq[MemoryVerification]
+): BLSSignature {.forceCheck: [
+    BLSError
+].} =
+    #If there's no Verifications...
     if verifs.len == 0:
         return nil
 
     #Declare a seq for the Signatures.
-    var sigs: seq[BLSSignature]
+    var sigs: seq[BLSSignature] = newSeq[BLSSignature](verifs.len)
     #Put every signature in the seq.
-    for verif in verifs:
-        sigs.add(verif.signature)
-    #Set the aggregate.
-    result = sigs.aggregate()
+    for i in 0 ..< verifs.len:
+        sigs.add(verifs[i].signature)
 
-#Verify the aggregate signature.
-proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSError].} =
-    #If there's no verifications...
+    #Return the aggregate.
+    try:
+        result = sigs.aggregate()
+    except BLSError as e:
+        raise e
+
+#Verify an aggregate signature.
+proc verify*(
+    verifs: seq[Verification],
+    sig: BLSSignature
+): bool {.forceCheck: [
+    BLSError
+].} =
+    #If there's no verifications, return if the signature is null.
     if verifs.len == 0:
         return sig == nil
 
@@ -55,11 +73,11 @@ proc verify*(verifs: seq[Verification], sig: BLSSignature): bool {.raises: [BLSE
     try:
         for verif in verifs:
             agInfos.add(newBLSAggregationInfo(verif.verifier, verif.hash.toString()))
-    except:
-        raise newException(BLSError, "Couldn't allocate space for the AggregationInfo.")
 
-    #Add the aggregated Aggregation Infos to the signature.
-    sig.setAggregationInfo(agInfos.aggregate())
+        #Set the AggregationInfo.
+        sig.setAggregationInfo(agInfos.aggregate())
+    except BLSError as e:
+        raise e
 
     #Verify the signature.
     result = sig.verify()

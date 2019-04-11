@@ -20,7 +20,7 @@ finalsd:
             descendant* {.final.}: EntryType
             #Address behind the Entry.
             sender* {.final.}: string
-            #Index on the account.
+            #Nonce on the account.
             nonce* {.final.}: uint
             #Hash.
             hash* {.final.}: Hash[384]
