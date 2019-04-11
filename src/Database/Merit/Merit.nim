@@ -16,9 +16,8 @@ import ../Verifications/Verifications
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#VerifierIndex object.
-import ../common/objects/VerifierIndexObj
-export VerifierIndexObj
+#VerifierRecord object.
+import ../common/objects/VerifierRecordObj
 
 #Miners object.
 import objects/MinersObj
@@ -83,12 +82,18 @@ proc processBlock*(
     verifications: Verifications,
     newBlock: Block
 ): Epoch {.forceCheck: [
-    ValueError
+    ValueError,
+    IndexError,
+    GapError
 ].} =
     #Add the block to the Blockchain.
     try:
         merit.blockchain.processBlock(newBlock):
     except ValueError as e:
+        raise e
+    except IndexError as e:
+        raise e
+    except GapError as e:
         raise e
 
     #Have the state process the block.
@@ -97,5 +102,5 @@ proc processBlock*(
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
         verifications,
-        newBlock.indexes
+        newBlock.records
     )

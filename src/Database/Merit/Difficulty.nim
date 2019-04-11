@@ -41,7 +41,7 @@ proc calculateNextDifficulty*(
     blockchain: Blockchain,
     blocksPerPeriod: Natural
 ): Difficulty {.forceCheck: [
-    ValueError
+    IndexError
 ].} =
     var
         #Last difficulty.
@@ -64,7 +64,7 @@ proc calculateNextDifficulty*(
     #Grab the start time.
     try:
         start = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
-    except ValueError as e:
+    except IndexError as e:
         raise e
 
     #Calculate the actual time.

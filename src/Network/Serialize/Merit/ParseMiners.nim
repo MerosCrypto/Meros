@@ -16,7 +16,9 @@ import ../SerializeCommon
 #Parse function.
 proc parseMiners*(
     minersStr: string
-): Miners {.raises: [BLSError].} =
+): Miners {.forceCheck: [
+    BLSError
+].} =
     #Quantity | BLS Key 1 | Amount 1 .. BLS Key N | Amount N
     var
         quantity: int = int(minersStr[0])
@@ -32,9 +34,12 @@ proc parseMiners*(
                 BYTE_LEN
             )
 
-        miners[i] = newMinerObj(
-            newBLSPublicKey(minersSeq[0]),
-            int(minersSeq[1][0])
-        )
+        try:
+            miners[i] = newMinerObj(
+                newBLSPublicKey(minersSeq[0]),
+                int(minersSeq[1][0])
+            )
+        except BLSError as e:
+            raise e
 
     result = newMinersObj(miners)

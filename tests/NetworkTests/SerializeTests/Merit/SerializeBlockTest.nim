@@ -9,8 +9,8 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#VerifierIndex object.
-import ../../../../src/Database/common/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../../../src/Database/common/objects/VerifierRecordObj
 
 #Miner object.
 import ../../../../src/Database/Merit/objects/MinersObj
@@ -26,7 +26,7 @@ import ../../../../src/Network/Serialize/Merit/ParseBlock
 #Random standard lib.
 import random
 
-#Algorithm standard lib; used to randomize the Indexes/Miners order.
+#Algorithm standard lib; used to randomize the Records/Miners order.
 import algorithm
 
 #Seed Random via the time.
@@ -46,9 +46,9 @@ for i in 1 .. 20:
         miner: MinerWallet = newMinerWallet()
         #Aggregate Signature.
         aggregate: BLSSignature
-        #Indexes.
-        indexes: seq[VerifierIndex] = newSeq[VerifierIndex](rand(384))
-        #Temporary key/merkle strings for creating VerifierIndexes.
+        #Records.
+        records: seq[VerifierRecord] = newSeq[VerifierRecord](rand(384))
+        #Temporary key/merkle strings for creating VerifierRecordes.
         vKey: string
         vMerkle: string
         #Miners.
@@ -69,8 +69,8 @@ for i in 1 .. 20:
     #Create a random BLSSignature.
     aggregate = miner.sign(rand(100000).toBinary())
 
-    #Randomize the Indexes.
-    for v in 0 ..< indexes.len:
+    #Randomize the Records.
+    for v in 0 ..< records.len:
         #Reset the key and merkle.
         vKey = newString(48)
         vMerkle = newString(48)
@@ -83,8 +83,8 @@ for i in 1 .. 20:
         for b in 0 ..< vMerkle.len:
             vMerkle[b] = char(rand(255))
 
-        indexes[v] = newVerifierIndex(
-            vKey,
+        records[v] = newVerifierRecord(
+            newBLSPrivateKeyFromSeed(vKey).getPublicKey(),
             rand(100000),
             vMerkle.toHash(384)
         )
@@ -120,7 +120,7 @@ for i in 1 .. 20:
         nonce,
         last,
         aggregate,
-        indexes,
+        records,
         newMinersObj(miners),
         time,
         proof
@@ -143,12 +143,12 @@ for i in 1 .. 20:
     #Test the hash.
     assert(newBlock.header.hash == blockParsed.header.hash)
 
-    #Test the Indexes.
-    assert(newBlock.indexes.len == blockParsed.indexes.len)
-    for v in 0 ..< newBlock.indexes.len:
-        assert(newBlock.indexes[v].key == blockParsed.indexes[v].key)
-        assert(newBlock.indexes[v].nonce == blockParsed.indexes[v].nonce)
-        assert(newBlock.indexes[v].merkle == blockParsed.indexes[v].merkle)
+    #Test the Records.
+    assert(newBlock.records.len == blockParsed.records.len)
+    for v in 0 ..< newBlock.records.len:
+        assert(newBlock.records[v].key == blockParsed.records[v].key)
+        assert(newBlock.records[v].nonce == blockParsed.records[v].nonce)
+        assert(newBlock.records[v].merkle == blockParsed.records[v].merkle)
 
     #Test the Miners.
     assert(newBlock.miners.miners.len == blockParsed.miners.miners.len)

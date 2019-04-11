@@ -5,6 +5,9 @@ That said, we do store one in the DB, so we need to convert a Difficulty object 
 Even though this has no relation to the Network code, it does have relation to the Serialize code.
 """
 
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
@@ -21,7 +24,7 @@ import ../SerializeCommon
 #Serialization function.
 proc serialize*(
     difficulty: Difficulty
-): string {.raises: [].} =
+): string {.forceCheck: [].} =
     result =
         difficulty.start.toBinary().pad(INT_LEN) &
         difficulty.endBlock.toBinary().pad(INT_LEN) &

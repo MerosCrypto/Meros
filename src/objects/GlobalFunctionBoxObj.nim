@@ -15,8 +15,9 @@ import ../Network/objects/MessageObj
 import ../Wallet/MinerWallet
 import ../Wallet/Wallet
 
-#VerifierIndex object.
-import ../Database/common/objects/VerifierIndexObj
+#LatticeIndex and VerifierRecord objects.
+import ../Database/common/objects/LatticeIndexObj
+import ../Database/common/objects/VerifierRecordObj
 
 #Verification object.
 import ../Database/Verifications/objects/VerificationObj
@@ -47,7 +48,7 @@ type
     VerificationsFunctionBox* = ref object of RootObj
         getVerifierHeight*:     proc (key: string): uint                           {.noSideEffect, raises: [KeyError, DBError].}
         getVerification*:       proc (key: string, nonce: uint): Verification      {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
-        getUnarchivedIndexes*:  proc (): seq[VerifierIndex]                        {.noSideEffect, raises: [KeyError, ValueError, DBError, FinalAttributeError].}
+        getUnarchivedRecords*:  proc (): seq[VerifierRecord]                        {.noSideEffect, raises: [KeyError, ValueError, DBError, FinalAttributeError].}
         getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
         getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
 
@@ -65,7 +66,7 @@ type
         getHeight*:        proc (account: string): uint {.noSideEffect, raises: [ValueError, DBError].}
         getBalance*:       proc (account: string): BN   {.noSideEffect, raises: [ValueError, DBError].}
         getEntryByHash*:   proc (hash: string): Entry   {.noSideEffect, raises: [KeyError].}
-        getEntryByIndex*:  proc (index: Index): Entry   {.noSideEffect, raises: [ValueError].}
+        getEntryByIndex*:  proc (index: LatticeIndex): Entry   {.noSideEffect, raises: [ValueError].}
 
         addClaim*:    proc (claim: Claim): bool  {.noSideEffect, raises: [ValueError, AsyncError, BLSError, SodiumError, DBError].}
         addSend*:     proc (send: Send): bool    {.noSideEffect, raises: [ValueError, AsyncError, BLSError, SodiumError, DBError, FinalAttributeError].}

@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
@@ -17,7 +20,9 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 import ../SerializeCommon
 
 #Serialize a Block Header.
-func serialize*(header: BlockHeader): string {.raises: [].} =
+func serialize*(
+    header: BlockHeader
+): string {.forceCheck: [].} =
     result =
         header.nonce.toBinary().pad(INT_LEN) &
         header.last.toString() &

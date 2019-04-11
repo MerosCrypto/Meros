@@ -44,15 +44,19 @@ proc processBlock*(
     blockchain: var Blockchain,
     newBlock: Block
 ) {.forceCheck: [
-    ValueError
+    ValueError,
+    IndexError,
+    GapError
 ].} =
     #Blocks Per Month.
-    let blocksPerMonth: Natural = 2592000 div blockchain.blockTime
+    let blocksPerMonth: int = 2592000 div blockchain.blockTime
 
     #Verify the Block Header.
     #If the nonce is off...
-    if newBlock.header.nonce != blockchain.height:
-        raise newException(ValueError, "Invalid nonce.")
+    if newBlock.header.nonce > blockchain.height:
+        raise newException(GapError, "Missing blocks before the Block we're trying to add.")
+    elif newBlock.header.nonce < blockchain.height:
+        raise newException(IndexError, "Invalid nonce.")
 
     #If the last hash is off...
     if newBlock.header.last != blockchain.tip.header.hash:
@@ -66,20 +70,8 @@ proc processBlock*(
     if newBlock.header.miners != newBlock.miners.merkle.hash:
         raise newException(ValueError, "Invalid Miners' merkle.")
 
-    #Verify the Block itself.
-    #Verify the Miners.
-    var total: Natural = 0
-    if (newBlock.miners.miners.len < 1) or (100 < newBlock.miners.miners.len):
-        raise newException(ValueError, "Invalid Miners quantity.")
-    for miner in newBlock.miners.miners:
-        total += miner.amount
-        if (miner.amount < 1) or (100 < miner.amount):
-            raise newException(ValueError, "Invalid Miner amount.")
-    if total != 100:
-        raise newException(ValueError, "Invalid total Miner amount.")
-
     #Set the period length.
-    var blocksPerPeriod: Natural
+    var blocksPerPeriod: int
     #If we're in the first month, the period length is one block.
     if blockchain.height < blocksPerMonth:
         blocksPerPeriod = 1
@@ -107,7 +99,7 @@ proc processBlock*(
     if newBlock.header.nonce == blockchain.difficulty.endBlock:
         try:
             blockchain.difficulty = blockchain.calculateNextDifficulty(blocksPerPeriod)
-        except ValueError as e:
+        except IndexError as e:
             doAssert(false, "Added a Block successfully but failed to calculate the next difficulty: " & e.msg)
 
         try:

@@ -2,6 +2,9 @@ discard """
 Read the note in SerializeDifficulty before working with this file.
 """
 
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
@@ -17,7 +20,7 @@ import ../SerializeCommon
 #Parse function.
 proc parseDifficulty*(
     difficultyStr: string
-): Difficulty {.raises: [].} =
+): Difficulty {.forceCheck: [].} =
     #Start | End | Difficulty
     var difficultySeq: seq[string] = difficultyStr.deserialize(
         INT_LEN,

@@ -47,7 +47,7 @@ proc processBlock*(
         try:
             for miner in blockchain[blockchain.height - (state.deadBlocks + 1)].miners.miners:
                 state[miner.miner] = state[miner.miner] - miner.amount
-        except ValueError as e:
+        except IndexError as e:
             doAssert(false, "State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
 
     #Save the State to the DB.

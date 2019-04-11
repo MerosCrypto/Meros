@@ -14,6 +14,9 @@ import ../../../../src/Database/common/Merkle
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
+#VerifierRecord object.
+import ../../../../src/Database/common/objects/VerifierRecordObj
+
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
 
@@ -44,8 +47,8 @@ var
     miner: MinerWallet = newMinerWallet()
     #MemoryVerification object.
     verif: MemoryVerification
-    #VerifierIndexes.
-    verifs: seq[VerifierIndex] = @[]
+    #VerifierRecords.
+    verifs: seq[VerifierRecord] = @[]
     #Rewards.
     rewards: Rewards
 
@@ -67,9 +70,9 @@ verif = newMemoryVerificationObj(hash)
 miner.sign(verif, 0)
 #Add it the Verifications.
 verifications.add(verif)
-#Add a VerifierIndex.
-verifs.add(newVerifierIndex(
-    miner.publicKey.toString(),
+#Add a VerifierRecord.
+verifs.add(newVerifierRecord(
+    miner.publicKey,
     0,
     newMerkle(hash).hash
 ))

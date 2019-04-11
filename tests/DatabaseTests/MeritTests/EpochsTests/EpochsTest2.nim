@@ -18,6 +18,9 @@ import ../../../../src/Database/common/Merkle
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
+#VerifierRecord object.
+import ../../../../src/Database/common/objects/VerifierRecordObj
+
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
 
@@ -51,8 +54,8 @@ var
     ]
     #MemoryVerification object.
     verif: MemoryVerification
-    #VerifierIndexes.
-    verifs: seq[VerifierIndex] = @[]
+    #VerifierRecords.
+    verifs: seq[VerifierRecord] = @[]
     #Rewards.
     rewards: Rewards
 
@@ -79,9 +82,9 @@ verif = newMemoryVerificationObj(hash)
 miners[0].sign(verif, 0)
 #Add it the Verifications.
 verifications.add(verif)
-#Add a VerifierIndex.
-verifs.add(newVerifierIndex(
-    miners[0].publicKey.toString(),
+#Add a VerifierRecord.
+verifs.add(newVerifierRecord(
+    miners[0].publicKey,
     0,
     newMerkle(hash).hash
 ))
@@ -90,7 +93,7 @@ verifs.add(newVerifierIndex(
 rewards = epochs.shift(verifications, verifs).calculate(state)
 assert(rewards.len == 0)
 
-#Clear the VerifierIndexes.
+#Clear the VerifierRecords.
 verifs = @[]
 
 #Add a Key 1 Verification.
@@ -98,9 +101,9 @@ verif = newMemoryVerificationObj(hash)
 miners[1].sign(verif, 0)
 #Add it the Verifications.
 verifications.add(verif)
-#Add a VerifierIndex.
-verifs.add(newVerifierIndex(
-    miners[1].publicKey.toString(),
+#Add a VerifierRecord.
+verifs.add(newVerifierRecord(
+    miners[1].publicKey,
     0,
     newMerkle(hash).hash
 ))

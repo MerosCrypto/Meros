@@ -15,8 +15,8 @@ import ../../../../src/Wallet/MinerWallet
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
 
-#VerifierIndex object.
-import ../../../../src/Database/common/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../../../src/Database/common/objects/VerifierRecordObj
 
 #Miners object.
 import ../../../../src/Database/Merit/objects/MinersObj
@@ -70,8 +70,8 @@ proc test(blocks: int) =
         hashes: seq[seq[Hash[384]]] = @[]
         #Table of hashes -> verifiers.
         verified: Table[string, seq[BLSPublicKey]] = initTable[string, seq[BLSPublicKey]]()
-        #VerifierIndexes.
-        indexes: seq[VerifierIndex]
+        #VerifierRecords.
+        indexes: seq[VerifierRecord]
         #Block we're mining.
         mining: Block
         #Epoch we popped.
@@ -119,7 +119,7 @@ proc test(blocks: int) =
         for hash in hashes[^1]:
             #Create the Verification.
             var verif: MemoryVerification = newMemoryVerificationObj(hash)
-            wallets[0].sign(verif, verifications[wallets[0].publicKey.toString()].height)
+            wallets[0].sign(verif, verifications[wallets[0].publicKey].height)
             verifications.add(verif)
 
             #Say this wallet verified this hash.
@@ -134,7 +134,7 @@ proc test(blocks: int) =
 
                 #Create the Verification.
                 var verif: MemoryVerification = newMemoryVerificationObj(hash)
-                wallets[w].sign(verif, verifications[wallets[w].publicKey.toString()].height)
+                wallets[w].sign(verif, verifications[wallets[w].publicKey].height)
                 verifications.add(verif)
 
                 #Say this wallet verified this hash.
@@ -149,7 +149,7 @@ proc test(blocks: int) =
 
                 #Create the Verification.
                 var verif: MemoryVerification = newMemoryVerificationObj(hash)
-                wallets[w].sign(verif, verifications[wallets[w].publicKey.toString()].height)
+                wallets[w].sign(verif, verifications[wallets[w].publicKey].height)
                 verifications.add(verif)
 
                 #Say this wallet verified this hash.
@@ -157,7 +157,10 @@ proc test(blocks: int) =
 
         #Create the indexes.
         indexes = @[]
-        for verifier in verifications.verifiers():
+        for wallet in wallets:
+            #Grab the Verifier.
+            var verifier: BLSPublicKey = wallet.publicKey
+
             #Skip over Verifiers with no Verifications, if any manage to exist.
             if verifications[verifier].height == 0:
                 continue
@@ -166,12 +169,12 @@ proc test(blocks: int) =
             if verifications[verifier].verifications.len == 0:
                 continue
 
-            #Since there are unarchived verifications, add the VerifierIndex.
+            #Since there are unarchived verifications, add the VerifierRecord.
             var nonce: int = verifications[verifier].height - 1
-            indexes.add(newVerifierIndex(
+            indexes.add(newVerifierRecord(
                 verifier,
                 nonce,
-                verifications[verifier].calculateMerkle(nonce).toHash(384)
+                verifications[verifier].calculateMerkle(nonce)
             ))
 
         #Create the Block. We don't need to pass an aggregate signature because the blockchain doesn't test for that; MainMerit does.

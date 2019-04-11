@@ -13,8 +13,8 @@ import ../../../Wallet/MinerWallet
 #Block Header lib.
 import ../BlockHeader
 
-#VerifierIndex and Miners objects.
-import ../../common/objects/VerifierIndexObj
+#VerifierRecord and Miners objects.
+import ../../common/objects/VerifierRecordObj
 import MinersObj
 
 #Finals lib.
@@ -25,8 +25,8 @@ type Block* = object
     #Block Header.
     header*: BlockHeader
 
-    #Verifications.
-    indexes*: seq[VerifierIndex]
+    #Verifier Records.
+    records*: seq[VerifierRecord]
     #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
     miners: Miners
 
@@ -49,7 +49,7 @@ func newBlockObj*(
     nonce: Natural,
     last: ArgonHash,
     aggregate: BLSSignature,
-    indexes: seq[VerifierIndex],
+    records: seq[VerifierRecord],
     miners: Miners,
     time: int64 = getTime(),
     proof: Natural = 0
@@ -59,7 +59,7 @@ func newBlockObj*(
 ].} =
     #Verify the Miners, unless this is the genesis Block.
     if nonce != 0:
-        var total: Natural = 0
+        var total: int = 0
         if (miners.miners.len < 1) or (100 < miners.miners.len):
             raise newException(ValueError, "Invalid Miners quantity.")
         for miner in miners.miners:
@@ -86,6 +86,6 @@ func newBlockObj*(
     #Create the Block.
     result = Block(
         header: header,
-        indexes: indexes,
+        records: records,
         miners: miners
     )

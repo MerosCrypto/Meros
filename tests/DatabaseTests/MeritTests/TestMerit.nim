@@ -3,11 +3,14 @@
 #Util lib,
 import ../../../src/lib/Util
 
+#Hash lib.
+import ../../../src/lib/Hash
+
 #MinerWallet lib (for BLSSignature).
 import ../../../src/Wallet/MinerWallet
 
-#Hash lib.
-import ../../../src/lib/Hash
+#VerifierRecord object.
+import ../../../src/Database/common/objects/VerifierRecordObj
 
 #Merit lib.
 import ../../../src/Database/Merit/Merit
@@ -28,7 +31,7 @@ proc newTestBlock*(
     nonce: Natural = 0,
     last: ArgonHash = "".pad(48).toArgonHash(),
     aggregate: BLSSignature = nil,
-    indexes: seq[VerifierIndex] = @[],
+    indexes: seq[VerifierRecord] = @[],
     miners: Miners = newMinersObj(@[
         newMinerObj(
             newBLSPrivateKeyFromSeed("TEST").getPublicKey(),

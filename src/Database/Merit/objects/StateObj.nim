@@ -31,7 +31,7 @@ finalsd:
         #Live Merit.
         live: Natural
         #Address -> Merit
-        holders: Table[string, Natural]
+        holders: Table[string, int]
 
 #Constructor.
 proc newStateObj*(
@@ -44,7 +44,7 @@ proc newStateObj*(
 
         deadBlocks: deadBlocks,
         live: 0,
-        holders: initTable[string, Natural]()
+        holders: initTable[string, int]()
     )
     result.ffinalizeDeadBlocks()
 
@@ -86,7 +86,7 @@ func add(
 func `[]`*(
     state: var State,
     key: string
-): Natural {.forceCheck: [].} =
+): int {.forceCheck: [].} =
     #Add this holder to the State if they don't exist already.
     state.add(key)
 
@@ -99,13 +99,13 @@ func `[]`*(
 func `[]`*(
     state: var State,
     key: BLSPublicKey
-): Natural {.inline, forceCheck: [].} =
+): int {.inline, forceCheck: [].} =
     state[key.toString()]
 
 #Return the amount of live Merit.
 func live*(
     state: State
-): Natural {.inline, forceCheck: [].} =
+): int {.inline, forceCheck: [].} =
     state.live
 
 #Setters.
@@ -115,7 +115,7 @@ func `[]=`*(
     value: Natural
 ) {.forceCheck: [].} =
     #Get the previous value (uses the State `[]` so `add` is called).
-    var previous: Natural = state[key]
+    var previous: int = state[key]
     #Set their new value.
     state.holders[key] = value
     #Update live accrodingly.

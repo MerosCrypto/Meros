@@ -12,9 +12,6 @@ import ../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#VerifierIndex object.
-import ../../../src/Database/common/objects/VerifierIndexObj
-
 #Miners object.
 import ../../../src/Database/Merit/objects/MinersObj
 

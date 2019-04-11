@@ -13,8 +13,8 @@ import ../../../src/lib/Hash
 import ../../../src/lib/Raw
 import ../../../src/lib/Hex
 
-#VerifierIndex object.
-import ../../../src/Database/common/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../../src/Database/common/objects/VerifierRecordObj
 
 #Miners object.
 import ../../../src/Database/Merit/objects/MinersObj

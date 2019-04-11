@@ -10,8 +10,8 @@ import ../../../Wallet/MinerWallet
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#VerifierIndex object.
-import ../../common/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../common/objects/VerifierRecordObj
 
 #Tables standard lib.
 import tables
@@ -24,7 +24,7 @@ finalsd:
         #Reward object. Declares a BLS Public Key (as a string) and a number which adds up to 1000.
         Reward* = object
             key* {.final.}: string
-            score* {.final.}: Natural #This is final even though we double set score (once with a raw value, once with a normalized value). How?
+            score* {.final.}: Natural #This is final, even though we double set it (once with a raw value, once with a normalized value). How?
                                       #We initially set the score in this value via the constructor.
                                       #Since we set the score in this file, and we don't call the finalize, finals thinks it's unset.
         #Seq of Rewards.
@@ -40,8 +40,8 @@ finalsd:
 
             #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
-            #The last 10 Epochs of indexes.
-            indexes: seq[seq[VerifierIndex]]
+            #The last 10 Epochs of records.
+            records: seq[seq[VerifierRecord]]
 
 #Constructors.
 func newReward*(
@@ -58,7 +58,7 @@ func newRewards*(): Rewards {.inline, forceCheck: [].} =
     newSeq[Reward]()
 
 func newEpoch*(
-    indexes: seq[VerifierIndex]
+    records: seq[VerifierRecord]
 ): Epoch {.inline, forceCheck: [].} =
     initTable[string, seq[BLSPublicKey]]()
 
@@ -69,16 +69,16 @@ func newEpochsObj*(
     result = Epochs(
         db: db,
         epochs: newSeq[Epoch](5),
-        indexes: newSeq[seq[VerifierIndex]](10)
+        records: newSeq[seq[VerifierRecord]](10)
     )
 
     #Place blank epochs in.
     for i in 0 ..< 5:
         result.epochs[i] = newEpoch(@[])
 
-    #Place blank indexes in.
+    #Place blank records in.
     for i in 0 ..< 10:
-        result.indexes[i] = @[]
+        result.records[i] = @[]
 
 #Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
 func add*(
@@ -86,7 +86,7 @@ func add*(
     hash: string,
     verifier: BLSPublicKey
 ) {.forceCheck: [
-    NotInEpochsError
+    NotInEpochs
 ].} =
     #Check every Epoch.
     try:
@@ -97,7 +97,7 @@ func add*(
                 return
     except KeyError as e:
         doAssert(false, "Couldn't add a hash to an Epoch which already has said hash: " & e.msg)
-    raise newException(NotInEpochsError, "")
+    raise newException(NotInEpochs, "")
 
 #Add a hash to an Epoch.
 func add*(
@@ -121,7 +121,7 @@ func add*(
 proc shift*(
     epochs: var Epochs,
     epoch: Epoch,
-    indexes: seq[VerifierIndex],
+    records: seq[VerifierRecord],
     save: bool
 ): Epoch {.forceCheck: [].} =
     #Add the newest Epoch.
@@ -131,29 +131,29 @@ proc shift*(
     #Remove the oldest.
     epochs.epochs.delete(0)
 
-    #Add the newest indexes.
-    epochs.indexes.add(indexes)
+    #Add the newest records.
+    epochs.records.add(records)
     #Grab the oldest.
-    let oldIndexes: seq[VerifierIndex] = epochs.indexes[0]
+    let oldRecords: seq[VerifierRecord] = epochs.records[0]
     #Remove the oldest.
-    epochs.indexes.delete(0)
+    epochs.records.delete(0)
 
     #If we should save this to the database...
     if save:
         discard """
         When we regenerate the Epochs, we can't just shift the last 5 blocks, for two reasons.
 
-        1) When it adds the Verifications, it'd try loading everything from the archived to the specified index.
+        1) When it adds the Verifications, it'd try loading everything from the archived to the specified record.
         When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
 
         2) When it adds the Verifications, it'd assume every appearance is the first appearance.
         This is because it doesn't have the 5 Epochs before it so when it checks the Epochs, it's iterating over blanks.
 
-        Therefore, we need to save the index that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
+        Therefore, we need to save the nonce that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
         """
 
         try:
-            for index in oldIndexes:
-                epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())
+            for record in oldRecords:
+                epochs.db.put("merit_" & record.key.toString() & "_epoch", record.nonce.toBinary())
         except DBWriteError as e:
-            doAssert(false, "Couldn't save the new Epoch tip to the database: " & e.msg)
+            doAssert(false, "Couldn't save the new Epoch tip to the Database: " & e.msg)

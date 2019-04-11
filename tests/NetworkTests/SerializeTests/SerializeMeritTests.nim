@@ -2,7 +2,7 @@
 
 #Merit Serialize.
 import Merit/SerializeDifficultyTest
-import Merit/SerializeIndexesTest
+import Merit/SerializeRecordsTest
 import Merit/SerializeMinersTest
 import Merit/SerializeBlockHeaderTest
 import Merit/SerializeBlockTest

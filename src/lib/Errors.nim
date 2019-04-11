@@ -1,4 +1,4 @@
-#Errors lib, providing easy access to ForceCheck and defining all out custom errors.
+#Errors lib, providing easy access to ForceCheck and defining all our custom errors.
 
 #ForceCheck lib.
 import ForceCheck
@@ -14,24 +14,25 @@ type
 
     #Wallet Errors.
     BLSError*          = object of Exception #Used when the BLS lib fails.
-    BLSSignatureError* = object of Exception #Used whn a BLS Signature fails to verify.
-
     SodiumError*      = object of Exception #Used when LibSodium fails.
+    
     EdSeedError*      = object of Exception #Used when passed an invalid Ed25519 Seed.
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
-    EdSignatureError* = object of Exception #Used when a Ed25519 Signature fails to verify.
     AddressError*     = object of Exception #Used when passed an invalid Address.
+
+    #Database/common Errors.
+    GapError* = object of Exception #Used when trying to add an item, yet missing items before said item.
 
     #Database/Filesystem Errors.
     DBError*      = object of LMDBError
     DBWriteError* = object of DBError #Used when writing to the DB fails.
     DBReadError*  = object of DBError #Used when reading from the DB fails.
 
-    #Database/common Errors.
-    MerosIndexError* = object of Exception #KeyError, yet not `of ValueError`. It's prefixed with Meros since Nim provides an IndexError.
+    #Database/Verifications Errors.
+    MeritRemoval* = object of Exception #Used when a Verifier commits a malicious act against the network.
 
     #Database/Blockchain Errors.
-    NotInEpochsError* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
+    NotInEpochs* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Database/Lattice Errors.
     MintError* = object of Exception #Used when Minting MR fails.

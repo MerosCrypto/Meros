@@ -22,7 +22,11 @@ import finals
 #Parse function.
 proc parseBlockHeader*(
     headerStr: string
-): BlockHeader {.raises: [ValueError, BLSError, ArgonError].} =
+): BlockHeader {.forceCheck: [
+    ValueError,
+    ArgonError,
+    BLSError
+].} =
     #Nonce | Last Hash | Verifications Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(
         INT_LEN,
@@ -34,12 +38,19 @@ proc parseBlockHeader*(
     )
 
     #Create the BlockHeader.
-    result = newBlockHeaderObj(
-        headerSeq[0].fromBinary(),
-        headerSeq[1].toArgonHash(),
-        newBLSSignature(headerSeq[2]),
-        headerSeq[3].toBlake384Hash(),
-        headerSeq[4].fromBinary(),
-        headerSeq[5].fromBinary()
-    )
-    result.hash = Argon(headerStr, headerSeq[5])
+    try:
+        result = newBlockHeaderObj(
+            headerSeq[0].fromBinary(),
+            headerSeq[1].toArgonHash(),
+            newBLSSignature(headerSeq[2]),
+            headerSeq[3].toBlake384Hash(),
+            headerSeq[4].fromBinary(),
+            headerSeq[5].fromBinary()
+        )
+        result.hash = Argon(headerStr, headerSeq[5])
+    except ValueError as e:
+        raise e
+    except ArgonError as e:
+        raise e
+    except BLSError as e:
+        raise e

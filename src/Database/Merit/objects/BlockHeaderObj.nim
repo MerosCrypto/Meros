@@ -33,7 +33,7 @@ finalsd:
         miners*: Blake384Hash
 
         #Timestamp.
-        time*: int64
+        time*: Time
         #Proof.
         proof*: Natural
 
@@ -43,7 +43,7 @@ func newBlockHeaderObj*(
     last: ArgonHash,
     aggregate: BLSSignature,
     miners: Blake384Hash,
-    time: int64,
+    time: Time,
     proof: Natural
 ): BlockHeader {.forceCheck: [].} =
     result = BlockHeader(

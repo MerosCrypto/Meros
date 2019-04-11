@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
@@ -13,7 +16,7 @@ import ../../../Wallet/MinerWallet
 #Serialization function.
 func serialize*(
     miners: Miners
-): string {.raises: [].} =
+): string {.forceCheck: [].} =
     #Set the quantity.
     result = $char(miners.miners.len)
 

@@ -197,26 +197,26 @@ proc add*(
         blockchain.db.put("merit_" & newBlock.header.hash.toString(), newBlock.serialize())
         blockchain.db.put("merit_tip", newBlock.header.hash.toString())
     except DBWriteError as e:
-        doAssert(false, "Couldn't write a block to the database: " & e.msg)
+        doAssert(false, "Couldn't save a block to the Database: " & e.msg)
 
 #Block getter.
 proc `[]`*(
     blockchain: Blockchain,
-    index: Natural
+    nonce: Natural
 ): Block {.forceCheck: [
-    ValueError
+    IndexError
 ].} =
-    if index >= blockchain.height:
-        raise newException(ValueError, "That index is greater than the Blockchain height.")
+    if nonce >= blockchain.height:
+        raise newException(IndexError, "That nonce is greater than the Blockchain height.")
 
     if blockchain.height < 10:
-        return blockchain.blocks[index]
+        return blockchain.blocks[nonce]
 
-    if index >= blockchain.height - 10:
-        result = blockchain.blocks[index - (blockchain.height - 10)]
+    if nonce >= blockchain.height - 10:
+        result = blockchain.blocks[nonce - (blockchain.height - 10)]
     else:
         try:
-            result = parseBlock(blockchain.db.get("merit_" & blockchain.headers[index].hash.toString()))
+            result = parseBlock(blockchain.db.get("merit_" & blockchain.headers[nonce].hash.toString()))
         except ValueError as e:
             doAssert(false, "Couldn't parse a Block we were asked for from the Database: " & e.msg)
         except BLSError as e:

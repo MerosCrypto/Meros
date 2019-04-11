@@ -16,8 +16,8 @@ import ../Verifications/Verifications
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#VerifierIndex object.
-import ../common/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../common/objects/VerifierRecordObj
 
 #Blockcain and State lib.
 import Blockchain
@@ -43,44 +43,44 @@ import tables
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-# - Saves the VerifierIndexes in the Epoch to-be-returned to the Database.
+# - Saves the VerifierRecordes in the Epoch to-be-returned to the Database.
 #If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
 proc shift*(
     epochs: var Epochs,
     verifications: Verifications,
-    indexes: seq[VerifierIndex],
+    records: seq[VerifierRecord],
     tips: TableRef[string, int] = nil
 ): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
-        newEpoch: Epoch = newEpoch(indexes)
+        newEpoch: Epoch = newEpoch(records)
         #Loop variable of what verification to start with.
         start: int
         #Verifications we're handling.
         verifs: seq[Verification]
 
     #Loop over each Verification.
-    for index in indexes:
+    for record in records:
         #If we were passed tips, use those for the starting point.
         if not tips.isNil:
             try:
-                start = tips[index.key]
+                start = tips[record.key.toString()]
             except KeyError as e:
                 doAssert(false, "Reloading Epochs from the DB using invalid tips: " & e.msg)
         #Else, use the verifier's archived.
         else:
-            start = verifications[index.key].archived
+            start = verifications[record.key].archived
 
         #Grab the Verifs.
         try:
-            verifs = verifications[index.key][start .. int(index.nonce)]
+            verifs = verifications[record.key][start .. int(record.nonce)]
         #This will be thrown if we access a verif too high, which shouldn't happen as we check a Block only has valid tips.
-        except ValueError as e:
+        except IndexError as e:
             doAssert(false, "An invalid tip was passed to shift: " & e.msg)
         #This will be thrown if we load a verif from the DB which fails to parse, which means the cache is skipped AND the DB is corrupted.
         except BLSError as e:
             doAssert(false, "Epochs.shift tried to load a Verification outside of the cache which failed to parse: " & e.msg)
-        except DBError as e:
+        except DBReadError as e:
             doAssert(false, "Epochs.shift tried to load a Verification outside of the cache which failed to load: " & e.msg)
         except FinalAttributeError as e:
             doAssert(false, "Epochs.shift tried to load a Verification which triggered finals: " & e.msg)
@@ -91,15 +91,15 @@ proc shift*(
             try:
                 epochs.add(verif.hash.toString(), verif.verifier)
             #If it wasn't in any existing Epoch, add it to the new one.
-            except NotInEpochsError:
+            except NotInEpochs:
                 newEpoch.add(verif.hash.toString(), verif.verifier)
 
         #If we were passed a set of tips, update them.
         if not tips.isNil:
-            tips[index.key] = index.nonce
+            tips[record.key.toString()] = record.nonce
 
     #Return the popped Epoch.
-    result = epochs.shift(newEpoch, indexes, tips.isNil)
+    result = epochs.shift(newEpoch, records, tips.isNil)
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
@@ -152,10 +152,10 @@ proc newEpochs*(
         for i in countdown(start, 1):
             discard result.shift(
                 verifications,
-                blockchain[blockchain.height - i].indexes,
+                blockchain[blockchain.height - i].records,
                 tips
             )
-    except ValueError as e:
+    except IndexError as e:
         doAssert(false, "Couldn't shift the last blocks of the chain: " & e.msg)
 
 #Calculate what share each person deserves of the minted Meros.
