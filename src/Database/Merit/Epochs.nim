@@ -47,7 +47,7 @@ import tables
 #If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
 proc shift*(
     epochs: var Epochs,
-    verifications: Verifications,
+    verifications: var Verifications,
     records: seq[VerifierRecord],
     tips: TableRef[string, int] = nil
 ): Epoch {.forceCheck: [].} =
@@ -77,13 +77,6 @@ proc shift*(
         #This will be thrown if we access a verif too high, which shouldn't happen as we check a Block only has valid tips.
         except IndexError as e:
             doAssert(false, "An invalid tip was passed to shift: " & e.msg)
-        #This will be thrown if we load a verif from the DB which fails to parse, which means the cache is skipped AND the DB is corrupted.
-        except BLSError as e:
-            doAssert(false, "Epochs.shift tried to load a Verification outside of the cache which failed to parse: " & e.msg)
-        except DBReadError as e:
-            doAssert(false, "Epochs.shift tried to load a Verification outside of the cache which failed to load: " & e.msg)
-        except FinalAttributeError as e:
-            doAssert(false, "Epochs.shift tried to load a Verification which triggered finals: " & e.msg)
 
         #Iterate over every Verification.
         for verif in verifs:
@@ -104,7 +97,7 @@ proc shift*(
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    verifications: var Verifications,
     blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
     #Create the Epochs objects.

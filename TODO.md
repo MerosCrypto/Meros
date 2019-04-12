@@ -4,7 +4,7 @@
 General Cleanup:
 - Decide a definitive import ordering and make sure it's used throughout the codebase.
 
-- Replace every `uint` with `Natural`.
+- Replace every `uint` with `int`/`Natural`.
 
 - Use `let` where appropriate.
 - Remove `ref` from objects that shouldn't be `ref`.
@@ -12,22 +12,24 @@ General Cleanup:
 
 - Make more `proc`s `func`.
 
-- Add `DataExistsError` for when data has already been added.
-- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `MerosIndexError`.
-- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `SignatureError`.
+- Remove `save: bool = false` from various systems.
 
-- Clean objects.
-- Clean Database/Verifications.
-- Clean Database/Lattice.
-- Clean Network.
-- Clean UI.
-- Clean Main.
+- Add `DataExists` for when data has already been added.
+- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `IndexError`.
+- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `ValueError`.
+
+- Export `FinalAttributeError` from `Errors` so we don't have to import `finals` from so many places.
 
 Specific Tasks:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
-- Clean `merit.addBlock`.
+- Clean objects.
+- Clean Database/Lattice.
+- Clean Network.
+- Clean UI.
+- Clean Main, especially `merit.addBlock`.
+
 - Don't rebroadcast Blocks or Entries that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 

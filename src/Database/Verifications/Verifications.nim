@@ -41,7 +41,7 @@ proc newVerifications*(
 
 #Add a Verification.
 proc add*(
-    verifs: Verifications,
+    verifs: var Verifications,
     verif: Verification
 ) {.forceCheck: [
     IndexError,
@@ -59,7 +59,7 @@ proc add*(
 
 #For each provided Record, archive all Verifications from the account's last archived to the provided nonce.
 proc archive*(
-    verifs: Verifications,
+    verifs: var Verifications,
     records: seq[VerifierRecord]
 ) {.forceCheck: [].} =
     #Iterate over every Record.

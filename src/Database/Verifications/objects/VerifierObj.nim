@@ -24,7 +24,7 @@ import finals
 
 #Verifier object.
 finalsd:
-    type Verifier* = ref object of RootObj
+    type Verifier* = object
         #DB Function Box.
         db: DatabaseFunctionBox
 
@@ -86,7 +86,7 @@ proc newVerifierObj*(
 
 #Add a Verification to a Verifier.
 proc add*(
-    verifier: Verifier,
+    verifier: var Verifier,
     verif: Verification
 ) {.forceCheck: [
     IndexError,
@@ -108,7 +108,7 @@ proc add*(
     #Verify this Verifier isn't verifying conflicting Entries.
 
     #Increase the height.
-    inc(verifier.height)
+    verifier.height = verifier.height + 1
     #Add the Verification to the seq.
     verifier.verifications.add(verif)
     #Add the Verification to the Merkle.
@@ -122,7 +122,7 @@ proc add*(
 
 #Add a MemoryVerification to a Verifier.
 proc add*(
-    verifier: Verifier,
+    verifier: var Verifier,
     verif: MemoryVerification
 ) {.forceCheck: [
     ValueError,
@@ -173,7 +173,7 @@ proc `[]`*(
             doAssert(false, "Couldn't parse a Verification we were asked for from the Database: " & e.msg)
         except DBReadError as e:
             doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
-        
+
         try:
             result.verifier = verifier.key
             result.nonce = nonce

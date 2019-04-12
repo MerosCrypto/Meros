@@ -61,10 +61,8 @@ proc aggregate*(
 proc verify*(
     verifs: seq[Verification],
     sig: BLSSignature
-): bool {.forceCheck: [
-    BLSError
-].} =
-    #If there's no verifications, return if the signature is null.
+): bool {.forceCheck: [].} =
+    #If there are no verifications, the signature should be null.
     if verifs.len == 0:
         return sig == nil
 
@@ -76,8 +74,8 @@ proc verify*(
 
         #Set the AggregationInfo.
         sig.setAggregationInfo(agInfos.aggregate())
-    except BLSError as e:
-        raise e
+    except BLSError:
+        return false
 
     #Verify the signature.
     result = sig.verify()

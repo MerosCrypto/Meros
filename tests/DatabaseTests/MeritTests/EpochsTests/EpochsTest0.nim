@@ -33,7 +33,7 @@ var
     epochs: Epochs = newEpochs(functions, verifications, blockchain)
     #Rewards.
     rewards: Rewards = epochs.shift(
-        nil,
+        verifications,
         @[]
     ).calculate(state)
 

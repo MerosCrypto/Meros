@@ -23,7 +23,7 @@ import tables
 import finals
 
 #Verifications object.
-type Verifications* = ref object
+type Verifications* = object
     #DB.
     db*: DatabaseFunctionBox
     #List of every Verifier.
@@ -62,7 +62,7 @@ proc newVerificationsObj*(
 
 #Creates a new Verifier on the Verifications.
 proc add(
-    verifs: Verifications,
+    verifs: var Verifications,
     verifier: BLSPublicKey
 ) {.forceCheck: [].} =
     #Create a string of the verifier.
@@ -85,9 +85,9 @@ proc add(
 
 #Gets a Verifier by their key.
 proc `[]`*(
-    verifs: Verifications,
+    verifs: var Verifications,
     verifier: BLSPublicKey
-): Verifier {.forceCheck: [].} =
+): var Verifier {.forceCheck: [].} =
     #Call add, which will only create a new Verifier if one doesn't exist.
     verifs.add(verifier)
 
@@ -99,7 +99,7 @@ proc `[]`*(
 
 #Gets a Verification by its Index.
 proc `[]`*(
-    verifs: Verifications,
+    verifs: var Verifications,
     index: VerificationsIndex
 ): Verification {.forceCheck: [IndexError].} =
     #Check the nonce isn't out of bounds.

@@ -50,7 +50,7 @@ type Merit* = ref object
 #Constructor.
 proc newMerit*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    verifications: var Verifications,
     genesis: string,
     blockTime: Natural,
     startDifficultyArg: string,
@@ -79,7 +79,7 @@ proc newMerit*(
 #Add a block.
 proc processBlock*(
     merit: Merit,
-    verifications: Verifications,
+    verifications: var Verifications,
     newBlock: Block
 ): Epoch {.forceCheck: [
     ValueError,
