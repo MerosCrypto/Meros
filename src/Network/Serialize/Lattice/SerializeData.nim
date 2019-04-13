@@ -1,24 +1,33 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
-
-#Base lib.
-import ../../../lib/Base
 
 #Address lib.
 import ../../../Wallet/Address
 
-#Entry and Data object.
+#Entry and Data objects.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/DataObj
 
 #Common serialization functions.
 import ../SerializeCommon
 
-import strutils
 #Serialize a Data.
-proc serialize*(data: Data): string {.raises: [ValueError].} =
+func serialize*(
+    data: Data
+): string {.forceCheck: [
+    AddressError
+].} =
+    var sender: string
+    try:
+        sender = Address.toPublicKey(data.sender)
+    except AddressError as e:
+        raise e
+
     result =
-        Address.toPublicKey(data.sender) &
+        sender &
         data.nonce.toBinary().pad(INT_LEN) &
         char(data.data.len) & data.data
 

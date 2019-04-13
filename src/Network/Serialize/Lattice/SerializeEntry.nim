@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Entry object and descendants.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/MintObj
@@ -14,17 +17,22 @@ import SerializeReceive
 import SerializeData
 
 #Serialize an Entry.
-proc serialize*(entry: Entry): string =
-    case entry.descendant:
-        of EntryType.Mint:
-            #We do not Serialize Mints for Network transmission.
-            #This is used for saving a Mint to the DB.
-            result = cast[Mint](entry).serialize()
-        of EntryType.Claim:
-            result = cast[Claim](entry).serialize()
-        of EntryType.Send:
-            result = cast[Send](entry).serialize()
-        of EntryType.Receive:
-            result = cast[Receive](entry).serialize()
-        of EntryType.Data:
-            result = cast[Data](entry).serialize()
+proc serialize*(
+    entry: Entry
+): string {.forceCheck: [
+    AddressError
+].} =
+    try:
+        case entry.descendant:
+            of EntryType.Mint:
+                result = cast[Mint](entry).serialize()
+            of EntryType.Claim:
+                result = cast[Claim](entry).serialize()
+            of EntryType.Send:
+                result = cast[Send](entry).serialize()
+            of EntryType.Receive:
+                result = cast[Receive](entry).serialize()
+            of EntryType.Data:
+                result = cast[Data](entry).serialize()
+    except AddressError as e:
+        raise e

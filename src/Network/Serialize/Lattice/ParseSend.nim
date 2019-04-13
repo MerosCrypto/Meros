@@ -4,15 +4,13 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../../lib/Base
+#BN/Raw lib.
+import ../../../lib/Raw
 
 #Hash lib.
 import ../../../lib/Hash
 
-#Wallet libraries.
-import ../../../Wallet/Address
+#Wallet lib.
 import ../../../Wallet/Wallet
 
 #Entry object and Send object.
@@ -25,16 +23,13 @@ import ../SerializeCommon
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
-
 #Parse a Send.
 proc parseSend*(
     sendStr: string
-): Send {.raises: [
+): Send {.forceCheck: [
     ValueError,
     ArgonError,
-    FinalAttributeError
+    EdPublicKeyError
 ].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
@@ -46,20 +41,24 @@ proc parseSend*(
             INT_LEN,
             SIGNATURE_LEN
         )
-        #Get the sender's public key.
-        sender: EdPublicKey = newEdPublicKey(sendSeq[0])
-        #Set the input address based off the sender's public key.
-        input: string = newAddress(sender)
+        #Sender.
+        sender: string
         #Get the nonce.
-        nonce: uint = uint(sendSeq[1].fromBinary())
-        #Get the output.
-        output: string = newAddress(sendSeq[2])
+        nonce: int = sendSeq[1].fromBinary()
+        #Output.
+        output: string
         #Get the amount.
-        amount: BN = sendSeq[3].toBN(256)
+        amount: BN = sendSeq[3].toBNFromRaw()
         #Get the proof.
         proof: string = sendSeq[4]
         #Get the signature.
         signature: string = sendSeq[5]
+
+    try:
+        sender = newAddress(sendSeq[0])
+        output = newAddress(sendSeq[2])
+    except EdPublicKeyError as e:
+        raise e
 
     #Create the Send.
     result = newSendObj(
@@ -67,16 +66,24 @@ proc parseSend*(
         amount
     )
 
-    #Set the sender.
-    result.sender = input
-    #Set the nonce.
-    result.nonce = nonce
-    #Set the Blake384 hash.
-    result.hash = Blake384(sendSeq.reserialize(0, 3))
-    #Set the proof.
-    result.proof = uint(proof.fromBinary())
-    #Set the Argon hash.
-    result.argon = Argon(result.hash.toString(), proof, true)
+    try:
+        #Set the sender.
+        result.sender = sender
+        #Set the nonce.
+        result.nonce = nonce
 
-    #Set the signature.
-    result.signature = signature
+        #Set the Blake384 hash.
+        result.hash = Blake384(sendSeq.reserialize(0, 3))
+        #Set the proof.
+        result.proof = proof.fromBinary()
+
+        #Set the Argon hash.
+        result.argon = Argon(result.hash.toString(), proof, true)
+        #Set the signature.
+        result.signature = signature
+    except ValueError as e:
+        raise e
+    except ArgonError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when parsing a Mint: " & e.msg)

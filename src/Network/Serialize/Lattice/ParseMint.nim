@@ -37,12 +37,11 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
+#BN/Raw lib.
+import ../../../lib/Raw
+
 #Hash lib.
 import ../../../lib/Hash
-
-#Numerical libs.
-import BN
-import ../../../lib/Base
 
 #Entry and Mint objects.
 import ../../../Database/Lattice/objects/EntryObj
@@ -57,30 +56,34 @@ import finals
 #Parse a Mint.
 proc parseMint*(
     mintStr: string
-): Mint {.raises: [
-    ValueError,
-    FinalAttributeError
+): Mint {.forceCheck: [
+    ValueError
 ].} =
     var
         #Nonce | Output | Amount
         mintSeq: seq[string] = mintStr.deserialize(
             INT_LEN,
             BLS_PUBLIC_KEY_LEN,
-            INT_LEN
+            MEROS_LEN
         )
         #Get the nonce.
-        nonce: uint = uint(mintSeq[0].fromBinary())
+        nonce: int = mintSeq[0].fromBinary()
         #Get the output.
         output: string = mintSeq[1]
         #Get the amount.
-        amount: BN = mintSeq[2].toBN(256)
+        amount: BN = mintSeq[2].toBNFromRaw()
 
     #Create the Mint.
     result = newMintObj(
         output,
         amount
     )
-    #Set the nonce.
-    result.nonce = nonce
-    #Set the hash.
-    result.hash = Blake384(mintStr)
+    try:
+        #Set the nonce.
+        result.nonce = nonce
+        #Set the hash.
+        result.hash = Blake384(mintStr)
+    except ValueError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when parsing a Mint: " & e.msg)

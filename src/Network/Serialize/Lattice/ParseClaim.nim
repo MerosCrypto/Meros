@@ -7,14 +7,13 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
-#Wallet libraries.
-import ../../../Wallet/Address
+#Wallet lib.
 import ../../../Wallet/Wallet
 
-#Entry object and Claim lib.
+#Entry and Claim objects.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/Claim
 
@@ -27,10 +26,10 @@ import finals
 #Parse a Claim.
 proc parseClaim*(
     claimStr: string
-): Claim {.raises: [
+): Claim {.forceCheck: [
     ValueError,
     BLSError,
-    FinalAttributeError
+    EdPublicKeyError
 ].} =
     var
         #Public Key | Nonce | Mint Nonce | BLS Signature | Signature
@@ -42,15 +41,25 @@ proc parseClaim*(
             SIGNATURE_LEN
         )
         #Get the sender's Public Key.
-        sender: EdPublicKey = newEdPublicKey(claimSeq[0])
+        sender: EdPublicKey
         #Get the nonce.
-        nonce: uint = uint(claimSeq[1].fromBinary())
+        nonce: int = claimSeq[1].fromBinary()
         #Get the mint nonce.
-        mintNonce: uint = uint(claimSeq[2].fromBinary())
+        mintNonce: int = claimSeq[2].fromBinary()
         #Get the BLS signature.
-        bls: BLSSignature = newBLSSignature(claimSeq[3])
+        bls: BLSSignature
         #Get the signature.
         signature: string = claimSeq[4]
+
+    try:
+        sender = newEdPublicKey(claimSeq[0])
+    except EdPublicKeyError as e:
+        raise e
+
+    try:
+        bls = newBLSSignature(claimSeq[3])
+    except BLSError as e:
+        raise e
 
     #Create the Claim.
     result = newClaim(
@@ -58,14 +67,17 @@ proc parseClaim*(
         nonce
     )
 
-    #Set the sender.
-    result.sender = newAddress(sender)
+    try:
+        #Set the sender.
+        result.sender = newAddress(sender)
+        #Set the BLS signature.
+        result.bls = bls
 
-    #Set the BLS signature.
-    result.bls = bls
-
-    #Set the hash.
-    result.hash = Blake384(claimSeq.reserialize(1, 3))
-
-    #Set the signature.
-    result.signature = signature
+        #Set the hash.
+        result.hash = Blake384(claimSeq.reserialize(1, 3))
+        #Set the signature.
+        result.signature = signature
+    except ValueError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when parsing a Claim: " & e.msg)

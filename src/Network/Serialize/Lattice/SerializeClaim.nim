@@ -1,13 +1,13 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
-#Base lib.
-import ../../../lib/Base
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
-#BLS lib.
-import ../../../lib/BLS
-
-#Address library.
+#Address lib.
 import ../../../Wallet/Address
 
 #Entry and Claim objects.
@@ -18,14 +18,24 @@ import ../../../Database/Lattice/objects/ClaimObj
 import ../SerializeCommon
 
 #Serialize a Claim.
-proc serialize*(claim: Claim): string {.raises: [ValueError].} =
+func serialize*(
+    claim: Claim
+): string {.forceCheck: [
+    AddressError
+].} =
     result =
         claim.nonce.toBinary().pad(INT_LEN) &
         claim.mintNonce.toBinary().pad(INT_LEN) &
         claim.bls.toString()
 
     if claim.signature.len != 0:
+        var sender: string
+        try:
+            sender = Address.toPublicKey(claim.sender)
+        except AddressError as e:
+            raise e
+
         result =
-            Address.toPublicKey(claim.sender) &
+            sender &
             result &
             claim.signature

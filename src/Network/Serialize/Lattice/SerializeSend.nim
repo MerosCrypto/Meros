@@ -1,13 +1,16 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
-#Base lib.
-import ../../../lib/Base
+#BN/Raw lib.
+import ../../../lib/Raw
 
 #Address lib.
 import ../../../Wallet/Address
 
-#Entry and Send object.
+#Entry and Send objects.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/SendObj
 
@@ -15,12 +18,25 @@ import ../../../Database/Lattice/objects/SendObj
 import ../SerializeCommon
 
 #Serialize a Send.
-proc serialize*(send: Send): string {.raises: [ValueError].} =
+proc serialize*(
+    send: Send
+): string {.forceCheck: [
+    AddressError
+].} =
+    var
+        sender: string
+        output: string
+    try:
+        sender = Address.toPublicKey(send.sender)
+        output = Address.toPublicKey(send.output)
+    except AddressError as e:
+        raise e
+
     result =
-        Address.toPublicKey(send.sender) &
+        sender &
         send.nonce.toBinary().pad(INT_LEN) &
-        Address.toPublicKey(send.output) &
-        send.amount.toString(256).pad(MEROS_LEN)
+        output &
+        send.amount.toRaw().pad(MEROS_LEN)
 
     if send.signature.len != 0:
         result =

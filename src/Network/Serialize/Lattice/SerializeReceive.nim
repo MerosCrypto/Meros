@@ -1,14 +1,16 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
-
-#Base lib.
-import ../../../lib/Base
 
 #Address library.
 import ../../../Wallet/Address
 
-#Index, Entry, and Receive objects.
-import ../../../Database/common/objects/IndexObj
+#LatticeIndex object.
+import ../../../Database/common/objects/LatticeIndexObj
+
+#Entry and Receive objects.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/ReceiveObj
 
@@ -16,14 +18,30 @@ import ../../../Database/Lattice/objects/ReceiveObj
 import ../SerializeCommon
 
 #Serialize a Receive.
-proc serialize*(recv: Receive): string {.raises: [ValueError].} =
+func serialize*(
+    recv: Receive
+): string {.forceCheck: [
+    AddressError
+].} =
+    var input: string
+    try:
+        input = Address.toPublicKey(recv.index.address)
+    except AddressError as e:
+        raise e
+
     result =
         recv.nonce.toBinary().pad(INT_LEN) &
-        Address.toPublicKey(recv.index.key) &
+        input &
         recv.index.nonce.toBinary().pad(INT_LEN)
 
     if recv.signature.len != 0:
+        var sender: string
+        try:
+            sender = Address.toPublicKey(recv.sender)
+        except AddressError as e:
+            raise e
+
         result =
-            Address.toPublicKey(recv.sender) &
+            sender &
             result &
             recv.signature
