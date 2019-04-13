@@ -35,9 +35,6 @@ import ../TestMerit
 #BN lib.
 import BN
 
-#Finals lib.
-import finals
-
 #Tables standard lib.
 import tables
 
