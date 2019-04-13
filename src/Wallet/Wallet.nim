@@ -151,23 +151,19 @@ func verify*(
     key: EdPublicKey,
     msg: string,
     sig: string
-): bool {.forceCheck: [
-    SodiumError
-].} =
+): bool {.forceCheck: [].} =
     try:
         result = Ed25519.verify(key, msg, sig)
-    except SodiumError as e:
-        raise e
+    except SodiumError:
+        return false
 
 #Verify a signature via a Wallet.
 func verify*(
     wallet: Wallet,
     msg: string,
     sig: string
-): bool {.forceCheck: [
-    SodiumError
-].} =
+): bool {.forceCheck: [].} =
     try:
         result = wallet.publicKey.verify(msg, sig)
-    except SodiumError as e:
-        raise e
+    except SodiumError:
+        return false

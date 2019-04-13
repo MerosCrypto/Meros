@@ -77,7 +77,7 @@ proc newVerifierObj*(
                 result.db.get("verifications_" & result.keyStr & "_" & i.toBinary()).toHash(384)
             )
     except ValueError as e:
-        doAssert(false, "Couldn't parse a hash in the Verifier's Merkle whcih was successfully retrieved from the Database: " & e.msg)
+        doAssert(false, "Couldn't parse a hash in the Verifier's Merkle which was successfully retrieved from the Database: " & e.msg)
     except DBReadError as e:
         doAssert(false, "Couldn't load the Verifier's Merkle from the Database: " & e.msg)
 
