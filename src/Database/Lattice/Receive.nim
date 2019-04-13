@@ -5,14 +5,11 @@ import ../../lib/Errors
 import ../../lib/Hash
 
 #Wallet libs.
-import ../../Wallet/Wallet
 import ../../Wallet/Address
+import ../../Wallet/Wallet
 
-#Import the Serialization library.
-import ../../Network/Serialize/Lattice/SerializeReceive
-
-#Index object.
-import ../common/objects/IndexObj
+#LatticeIndex object.
+import ../common/objects/LatticeIndexObj
 
 #Entry object.
 import objects/EntryObj
@@ -21,36 +18,50 @@ import objects/EntryObj
 import objects/ReceiveObj
 export ReceiveObj
 
+#Import the Serialization library.
+import ../../Network/Serialize/Lattice/SerializeReceive
+
 #Finals lib.
 import finals
 
 #Create a new Receive Entry.
 proc newReceive*(
-    index: Index,
-    nonce: uint
-): Receive {.raises: [ValueError, FinalAttributeError].} =
+    index: LatticeIndex,
+    nonce: Natural
+): Receive {.forceCheck: [
+    ValueError,
+    AddressError
+].} =
     #Verify the input address.
-    if not Address.verify(index.key):
+    if not Address.isValid(index.address):
         raise newException(ValueError, "Receive address is not valid.")
 
-    #Craft the result.
+    #Create the result.
     result = newReceiveObj(index)
 
-    #Set the nonce.
-    result.nonce = nonce
+    try:
+        #Set the nonce.
+        result.nonce = nonce
+        #Set the hash.
+        result.hash = Blake384(result.serialize())
+    except AddressError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Receive: " & e.msg)
 
-    #Set the hash.
-    result.hash = Blake384(result.serialize())
-
-#Sign a TX.
+#Sign a Receive.
 func sign*(
     wallet: Wallet,
     recv: Receive
-) {.raises: [
-    SodiumError,
-    FinalAttributeError
+) {.forceCheck: [
+    SodiumError
 ].} =
-    #Set the sender behind the Entry.
-    recv.sender = wallet.address
-    #Sign the hash of the Receive.
-    recv.signature = wallet.sign(recv.hash.toString())
+    try:
+        #Set the sender behind the Entry.
+        recv.sender = wallet.address
+        #Sign the hash of the Receive.
+        recv.signature = wallet.sign(recv.hash.toString())
+    except SodiumError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when signing a Receive: " & e.msg)

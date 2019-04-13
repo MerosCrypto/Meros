@@ -4,18 +4,12 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#BN lib.
-import BN
-
 #Hash lib.
 import ../../lib/Hash
 
 #Wallet libs.
-import ../../Wallet/Wallet
 import ../../Wallet/Address
-
-#Import the Serialization library.
-import ../../Network/Serialize/Lattice/SerializeSend
+import ../../Wallet/Wallet
 
 #Entry object.
 import objects/EntryObj
@@ -24,61 +18,94 @@ import objects/EntryObj
 import objects/SendObj
 export SendObj
 
+#Import the Serialization library.
+import ../../Network/Serialize/Lattice/SerializeSend
+
+#BN lib.
+import BN
+
 #Finals lib.
 import finals
 
-#Used to handle data strings.
-import strutils
-
 #Create a new Send.
-proc newSend*(
+func newSend*(
     output: string,
     amount: BN,
-    nonce: uint
-): Send {.raises: [ValueError, FinalAttributeError].} =
+    nonce: Natural
+): Send {.forceCheck: [
+    ValueError
+].} =
     #Verify output.
-    if not Address.verify(output):
+    if not Address.isValid(output):
         raise newException(ValueError, "Send output address is not valid.")
 
     #Verify the amount.
     if amount <= newBN(0):
         raise newException(ValueError, "Send amount is negative or zero.")
 
-    #Craft the result.
+    #Create the result.
     result = newSendObj(
         output,
         amount
     )
 
     #Set the nonce.
-    result.nonce = nonce
+    try:
+        result.nonce = nonce
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)
 
-#Sign a TX.
-proc sign*(wallet: Wallet, send: Send) {.raises: [ValueError, SodiumError, FinalAttributeError].} =
-    #Set the sender behind the Entry.
-    send.sender = wallet.address
-    #Set the hash.
-    send.hash = Blake384(send.serialize())
-    #Sign the hash of the Send.
-    send.signature = wallet.sign(send.hash.toString())
+#Sign a Send.
+proc sign*(
+    wallet: Wallet,
+    send: Send
+) {.forceCheck: [
+    ValueError,
+    AddressError,
+    SodiumError
+].} =
+    try:
+        #Set the sender behind the Entry.
+        send.sender = wallet.address
+        #Set the hash.
+        send.hash = Blake384(send.serialize())
+        #Sign the hash of the Send.
+        send.signature = wallet.sign(send.hash.toString())
+    except ValueError as e:
+        raise e
+    except AddressError as e:
+        raise e
+    except SodiumError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when signing a Send: " & e.msg)
 
 #'Mine' a TX (beat the spam filter).
 proc mine*(
     send: Send,
     networkDifficulty: BN
-) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
+) {.forceCheck: [
+    ValueError,
+    ArgonError
+].} =
     #Make sure the hash was set.
     if send.hash.toBN() == newBN():
         raise newException(ValueError, "Send wasn't signed.")
 
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
-        proof: uint = 0
-        hash: ArgonHash = Argon(send.hash.toString(), proof.toBinary(), true)
-
-    while hash.toBN() <= networkDifficulty:
-        inc(proof)
+        proof: int = 0
+        hash: ArgonHash
+    try:
         hash = Argon(send.hash.toString(), proof.toBinary(), true)
+        while hash.toBN() <= networkDifficulty:
+            inc(proof)
+            hash = Argon(send.hash.toString(), proof.toBinary(), true)
+    except ArgonError as e:
+        raise e
 
-    send.proof = proof
-    send.argon = hash
+    try:
+        send.proof = proof
+        send.argon = hash
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when mining a Send: " & e.msg)

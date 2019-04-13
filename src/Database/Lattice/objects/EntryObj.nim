@@ -21,7 +21,7 @@ finalsd:
             #Address behind the Entry.
             sender* {.final.}: string
             #Nonce on the account.
-            nonce* {.final.}: uint
+            nonce* {.final.}: Natural
             #Hash.
             hash* {.final.}: Hash[384]
             #Signature.

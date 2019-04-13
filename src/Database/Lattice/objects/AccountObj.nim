@@ -4,27 +4,28 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../../lib/Base
+#BN/Raw lib.
+import ../../../lib/Raw
 
 #Hash lib.
 import ../../../lib/Hash
 
+#Wallet libs.
+import ../../../Wallet/Address
+import ../../../Wallet/Wallet
+
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
+
+#LatticeIndex object.
+import ../../common/objects/LatticeIndexObj
+
+#Entry object.
+import EntryObj
 
 #Serialize/Parse Entry functions.
 import ../../../Network/Serialize/Lattice/SerializeEntry
 import ../../../Network/Serialize/Lattice/ParseEntry
-
-#Index object.
-import ../../common/objects/IndexObj
-
-#Entry, Mint, and Send objects.
-import EntryObj
-import MintObj
-import SendObj
 
 #Finals lib.
 import finals
@@ -34,25 +35,28 @@ import tables
 
 #Account object.
 finalsd:
-    type Account* = ref object of RootObj
+    type Account* = ref object
         #DB.
         db: DatabaseFunctionBox
-        #Table of hashes we loaded from the DB -> Index.
-        lookup*: TableRef[string, Index]
+        #Table of hashes we loaded from the DB -> LatticeIndex.
+        lookup*: TableRef[string, LatticeIndex]
 
         #Chain owner.
         address* {.final.}: string
         #Account height.
-        height*: uint
+        height*: Natural
         #Nonce of the highest Entry popped out of Epochs.
-        confirmed*: uint
+        confirmed*: Natural
         #seq of the Entries (actually a seq of seqs so we can handle unconfirmed Entries).
         entries*: seq[seq[Entry]]
         #Balance of the address.
         balance*: BN
 
 #Creates a new account object.
-proc newAccountObj*(db: DatabaseFunctionBox, address: string, load: bool = false): Account {.raises: [].} =
+proc newAccountObj*(
+    db: DatabaseFunctionBox,
+    address: string
+): Account {.forceCheck: [].} =
     result = Account(
         db: db,
 
@@ -64,52 +68,92 @@ proc newAccountObj*(db: DatabaseFunctionBox, address: string, load: bool = false
     )
     result.ffinalizeAddress()
 
-    #If we're supposed to load this Account from the DB...
-    if load:
-        try:
-            #Load the heights/balance.
-            result.height = uint(result.db.get("lattice_" & result.address).fromBinary())
-            result.confirmed = uint(result.db.get("lattice_" & result.address & "_confirmed").fromBinary())
-            result.balance = result.db.get("lattice_" & result.address & "_balance").toBN(256)
-
-            #Create a lookup table for storing hashes.
-            result.lookup = newTable[string, Index]()
-
-            #Load every Entry still in the Epochs.
-            result.entries = newSeq[seq[Entry]](result.height - result.confirmed)
-            for i in result.confirmed ..< result.height:
-                var hashes: string = result.db.get("lattice_" & result.address & "_" & i.toBinary())
-                result.entries[int(i - result.confirmed)] = newSeq[Entry](hashes.len div 48)
-                for h in countup(0, hashes.len - 1, 48):
-                    result.lookup[hashes[h ..< h + 48]] = newIndex(result.address, i)
-                    result.entries[int(i - result.confirmed)][h div 48] = result.db.get("lattice_" & hashes[h ..< h + 48]).parseEntry()
-        #If we're not in the DB, add ourselves.
-        except:
-            if address != "minter":
-                echo getCurrentExceptionMsg()
-    #If this account ia new, provide default values.
-    else:
+    #Load the heights/balance.
+    try:
+        result.height = result.db.get("lattice_" & result.address).fromBinary()
+        result.confirmed = result.db.get("lattice_" & result.address & "_confirmed").fromBinary()
+        result.balance = result.db.get("lattice_" & result.address & "_balance").toBNFromRaw()
+    #The Account must not exist.
+    except DBReadError:
         try:
             result.db.put("lattice_" & result.address, 0.toBinary())
             result.db.put("lattice_" & result.address & "_confirmed", 0.toBinary())
-            result.db.put("lattice_" & result.address & "_balance", newBN().toString(256))
-        except:
-            discard
+            result.db.put("lattice_" & result.address & "_balance", newBN().toRaw())
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save a new Account to the Database: " & e.msg)
+
+    #Create a lookup table for storing hashes.
+    result.lookup = newTable[string, LatticeIndex]()
+
+    #Load every Entry still in the Epochs (or yet to enter an Epoch).
+    result.entries = newSeq[seq[Entry]](result.height - result.confirmed)
+    for i in result.confirmed ..< result.height:
+        #Load the potential hashes.
+        var hashes: string
+        try:
+            hashes = result.db.get("lattice_" & result.address & "_" & i.toBinary())
+        except DBReadError as e:
+            doAssert(false, "Couldn't load the unconfirmed hashes from the Database: " & e.msg)
+
+        #Load the Entries.
+        result.entries[i - result.confirmed] = newSeq[Entry](hashes.len div 48)
+        for h in countup(0, hashes.len - 1, 48):
+            result.lookup[hashes[h ..< h + 48]] = newLatticeIndex(result.address, i)
+
+            try:
+                result.entries[i - result.confirmed][h div 48] = result.db.get("lattice_" & hashes[h ..< h + 48]).parseEntry()
+            except ValueError as e:
+                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
+            except ArgonError as e:
+                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a ArgonError: " & e.msg)
+            except BLSError as e:
+                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a BLSError: " & e.msg)
+            except EdPublicKeyError as e:
+                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
+            except DBReadError as e:
+                doAssert(false, "Couldn't load an unconfirmed Entry from the Database: " & e.msg)
 
 #Add a Entry to an account.
-proc addEntry*(
+proc add*(
     account: Account,
     entry: Entry
-) {.raises: [ValueError, LMDBError].} =
+) {.forceCheck: [
+    ValueError,
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError
+].} =
+    #Check the Signature.
+    #If it's a valid minter Entry...
+    if (
+        (account.address == "minter") and
+        (entry.descendant == EntryType.Mint)
+    ):
+        #Override as there's no signatures for minters.
+        discard
+    #Else, if it's an invalid signature...
+    else:
+        var pubKey: EdPublicKey
+        try:
+            pubKey = newEdPublicKey(
+                Address.toPublicKey(account.address)
+            )
+        except AddressError as e:
+            raise e
+        except EdPublicKeyError as e:
+            raise e
+
+        if not pubKey.verify(entry.hash.toString(), entry.signature):
+            raise newException(ValueError, "Failed to verify the Entry's signature.")
+
     #Correct for the Entries no longer in RAM.
-    var i: int = int(entry.nonce - account.confirmed)
+    var i: int = entry.nonce - account.confirmed
 
     if entry.nonce < account.height:
-        #Make sure we're not overwriting something out of the cache.
+        #Make sure we're not overwriting something outside of the cache.
         if entry.nonce < account.confirmed:
-            raise newException(ValueError, "Account has a verified Entry at this position.")
-        if account.entries[i][0].verified:
-            raise newException(ValueError, "Account has a verified Entry at this position.")
+            raise newException(IndexError, "Account has a verified Entry at this position.")
 
         #Make sure we're not adding it twice.
         for e in account.entries[i]:
@@ -128,24 +172,41 @@ proc addEntry*(
             entry
         ])
         #Save the new height to the DB.
-        account.db.put("lattice_" & account.address, account.height.toBinary())
+        try:
+            account.db.put("lattice_" & account.address, account.height.toBinary())
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save an Account's new height to the Database: " & e.msg)
     else:
-        raise newException(ValueError, "Account has holes in its chain.")
+        raise newException(GapError, "Account has holes in its chain.")
 
     #Save the Entry to the DB.
-    account.db.put("lattice_" & entry.hash.toString(), char(entry.descendant) & entry.serialize())
+    try:
+        account.db.put("lattice_" & entry.hash.toString(), char(entry.descendant) & entry.serialize())
+    except AddressError:
+        doAssert(false, "Added an Entry which failed to serialize.")
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save an Entry to the Database: " & e.msg)
 
     #Save the list of entries at this index to the DB .
     var hashes: string
     for e in account.entries[i]:
         hashes &= e.hash.toString()
-    account.db.put("lattice_" & account.address & "_" & entry.nonce.toBinary(), hashes)
+    try:
+        account.db.put("lattice_" & account.address & "_" & entry.nonce.toBinary(), hashes)
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save the list of hashes for an index to the Database: " & e.msg)
 
-#Helper getter that takes in an index.
-proc `[]`*(account: Account, index: uint): Entry {.raises: [ValueError].} =
+#Getter.
+proc `[]`*(
+    account: Account,
+    index: int
+): Entry {.forceCheck: [
+    ValueError,
+    IndexError
+].} =
     #Check the index is in bounds.
-    if index >= uint(account.height):
-        raise newException(ValueError, "Account index out of bounds.")
+    if index >= account.height:
+        raise newException(IndexError, "Account index out of bounds.")
 
     #If it's in the database...
     if index < account.confirmed:
@@ -155,15 +216,26 @@ proc `[]`*(account: Account, index: uint): Entry {.raises: [ValueError].} =
                 "lattice_" &
                 account.db.get("lattice_" & account.address & "_" & index.toBinary())
             ).parseEntry()
+        except ValueError as e:
+            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
+        except ArgonError as e:
+            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a ArgonError: " & e.msg)
+        except BLSError as e:
+            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a BLSError: " & e.msg)
+        except EdPublicKeyError as e:
+            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
+        except DBReadError as e:
+            doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
+        try:
             #Mark it as verified.
             result.verified = true
-            #Return it.
-            return
-        except:
-            raise newException(ValueError, getCurrentExceptionMsg())
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)
+        #Return it.
+        return
 
     #Else, check if there is a singular Entry we can return from memory.
-    var i: int = int(index - account.confirmed)
+    var i: int = index - account.confirmed
     if account.entries[i].len != 1:
         for e in account.entries[i]:
             if e.verified:

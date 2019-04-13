@@ -4,22 +4,15 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../lib/Base
-
 #Hash lib.
 import ../../lib/Hash
 
-#BLS lib.
-import ../../lib/BLS
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
 
 #Wallet libs.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
-
-#Index object.
-import ../common/objects/IndexObj
 
 #Entry object and descendants.
 import objects/EntryObj
@@ -33,47 +26,46 @@ import objects/DataObj
 import objects/AccountObj
 export AccountObj
 
-#Add a Entry.
-proc add(
-    account: Account,
-    entry: Entry
-): bool {.raises: [ValueError, SodiumError, LMDBError].} =
-    result = true
-
-    #Verify the sender.
-    if entry.sender != account.address:
-        return false
-
-    #If it's a valid minter Entry...
-    if (
-        (account.address == "minter") and
-        (entry.descendant == EntryType.Mint)
-    ):
-        #Override as there's no signatures for minters.
-        discard
-    #Else, if it's an invalid signature...
-    elif not newEdPublicKey(
-        account.address.toPublicKey()
-    ).verify(entry.hash.toString(), entry.signature):
-        #Return false.
-        return false
-
-    #Add the Entry.
-    account.addEntry(entry)
+#BN lib.
+import BN
 
 #Add a Mint.
 proc add*(
     account: Account,
     mint: Mint
-): bool {.raises: [ValueError, SodiumError, LMDBError].} =
-    account.add(cast[Entry](mint))
+) {.forceCheck: [
+    ValueError,
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError
+].} =
+    try:
+        account.add(cast[Entry](mint))
+    except ValueError as e:
+        raise e
+    except IndexError as e:
+        raise e
+    except GapError as e:
+        raise e
+    except AddressError as e:
+        raise e
+    except EdPublicKeyError as e:
+        raise e
 
 #Add a Claim.
 proc add*(
     account: Account,
     claim: Claim,
     mint: Mint
-): bool {.raises: [ValueError, BLSError, SodiumError, LMDBError].} =
+) {.forceCheck: [
+    ValueError,
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError,
+    BLSError
+].} =
     #Verify the BLS signature is for this mint and this person.
     try:
         claim.bls.setAggregationInfo(
@@ -82,91 +74,132 @@ proc add*(
                 mint.nonce.toBinary() & Address.toPublicKey(account.address)
             )
         )
-    except:
-        raise newException(BLSError, "Couldn't create a Public Key from the Mint/add the aggregation info to the Claim.")
+    except AddressError as e:
+        raise e
+    except BLSError as e:
+        raise e
     if not claim.bls.verify():
-        return false
+        raise newException(ValueError, "Claim had invalid BLS signature.")
 
     #Verify it's unclaimed.
-    for entries in account.entries:
-        for entry in entries:
-            if entry.descendant == EntryType.Claim:
-                var past: Claim = cast[Claim](entry)
-                if claim.mintNonce == past.mintNonce:
-                    return false
 
     #Add the Claim.
-    result = account.add(cast[Entry](claim))
+    try:
+        account.add(cast[Entry](claim))
+    except ValueError as e:
+        raise e
+    except IndexError as e:
+        raise e
+    except GapError as e:
+        raise e
+    except AddressError as e:
+        raise e
+    except EdPublicKeyError as e:
+        raise e
 
 #Add a Send.
 proc add*(
     account: Account,
     send: Send,
     difficulty: BN
-): bool {.raises: [ValueError, SodiumError, LMDBError].} =
+) {.forceCheck: [
+    ValueError,
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError
+].} =
     #Verify the work.
     if send.argon.toBN() < difficulty:
-        return false
+        raise newException(ValueError, "Failed to verify the Send's work.")
 
     #Verify the output is a valid address.
-    if not Address.verify(send.output):
-        return false
+    if not Address.isValid(send.output):
+        raise newException(ValueError, "Failed to verify the Send's output.")
 
     #Verify the account has enough money.
     if account.balance < send.amount:
-        return false
+        raise newException(ValueError, "Sender doesn't have enough monery for this Send.")
 
     #Add the Send.
-    result = account.add(cast[Entry](send))
+    try:
+        account.add(cast[Entry](send))
+    except ValueError as e:
+        raise e
+    except IndexError as e:
+        raise e
+    except GapError as e:
+        raise e
+    except AddressError as e:
+        raise e
+    except EdPublicKeyError as e:
+        raise e
 
 #Add a Receive.
 proc add*(
     account: Account,
     recv: Receive,
     sendArg: Entry
-): bool {.raises: [ValueError, SodiumError, LMDBError].} =
+) {.forceCheck: [
+    ValueError,
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError
+].} =
     #Verify the entry is a Send.
     if sendArg.descendant != EntryType.Send:
-        return false
+        raise newException(ValueError, "Trying to Receive from an Entry that isn't a Send.")
 
     #Cast it to a Send.
     var send: Send = cast[Send](sendArg)
 
     #Verify the Send's output address.
     if account.address != send.output:
-        return false
-
-    #Verify the Receive's input address.
-    if recv.index.key != send.sender:
-        return false
-
-    #Verify the nonces match.
-    if recv.index.nonce != send.nonce:
-        return false
+        raise newException(ValueError, "Receiver is trying to receive from a Send which isn't for them.")
 
     #Verify it's unclaimed.
-    for entries in account.entries:
-        for entry in entries:
-            if entry.descendant == EntryType.Receive:
-                var past: Receive = cast[Receive](entry)
-                if (
-                    (past.index.key == recv.index.key) and
-                    (past.index.nonce == recv.index.nonce)
-                ):
-                    return false
 
     #Add the Receive.
-    result = account.add(cast[Entry](recv))
+    try:
+        account.add(cast[Entry](recv))
+    except ValueError as e:
+        raise e
+    except IndexError as e:
+        raise e
+    except GapError as e:
+        raise e
+    except AddressError as e:
+        raise e
+    except EdPublicKeyError as e:
+        raise e
 
 #Add Data.
 proc add*(
     account: Account,
     data: Data,
     difficulty: BN
-): bool {.raises: [ValueError, SodiumError, LMDBError].} =
+) {.forceCheck: [
+    ValueError,
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError
+].} =
     #Verify the work.
     if data.argon.toBN() < difficulty:
-        return false
+        raise newException(ValueError, "Failed to verify the Data's work.")
 
     #Add the Data.
-    result = account.add(cast[Entry](data))
+    try:
+        account.add(cast[Entry](data))
+    except ValueError as e:
+        raise e
+    except IndexError as e:
+        raise e
+    except GapError as e:
+        raise e
+    except AddressError as e:
+        raise e
+    except EdPublicKeyError as e:
+        raise e

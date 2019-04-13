@@ -7,19 +7,12 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#Base lib.
-import ../../lib/Base
-
-#BLS/MinerWallet libs.
-import ../../lib/BLS
+#MinerWallet lib.
 import ../../Wallet/MinerWallet
 
 #Wallet libs.
 import ../../Wallet/Address
 import ../../Wallet/Wallet
-
-#Import the Serialization library.
-import ../../Network/Serialize/Lattice/SerializeClaim
 
 #Entry object.
 import objects/EntryObj
@@ -28,38 +21,55 @@ import objects/EntryObj
 import objects/ClaimObj
 export ClaimObj
 
+#Import the Serialization library.
+import ../../Network/Serialize/Lattice/SerializeClaim
+
 #Finals lib.
 import finals
 
 #Create a new Claim Entry.
-proc newClaim*(
-    mintNonce: uint,
-    nonce: uint
-): Claim {.raises: [FinalAttributeError].} =
-    #Craft the result.
+func newClaim*(
+    mintNonce: Natural,
+    nonce: Natural
+): Claim {.forceCheck: [].} =
+    #Create the result.
     result = newClaimObj(mintNonce)
 
     #Set the nonce.
-    result.nonce = nonce
+    try:
+        result.nonce = nonce
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)
 
 proc sign*(
     claim: Claim,
     miner: MinerWallet,
     wallet: Wallet
-) {.raises: [
+) {.forceCheck: [
     ValueError,
+    AddressError,
     BLSError,
-    SodiumError,
-    FinalAttributeError
+    SodiumError
 ].} =
-    #Set the sender behind the Entry.
-    claim.sender = wallet.address
+    try:
+        #Set the sender behind the Entry.
+        claim.sender = wallet.address
 
-    #Sign MintNonce & PublicKey.
-    claim.bls = miner.sign(claim.mintNonce.toBinary() & Address.toPublicKey(claim.sender))
+        #Sign MintNonce & PublicKey.
+        claim.bls = miner.sign(claim.mintNonce.toBinary() & Address.toPublicKey(claim.sender))
 
-    #Set the hash.
-    claim.hash = Blake384(claim.serialize())
+        #Set the hash.
+        claim.hash = Blake384(claim.serialize())
 
-    #Sign the hash of the Claim.
-    claim.signature = wallet.sign(claim.hash.toString())
+        #Sign the hash of the Claim.
+        claim.signature = wallet.sign(claim.hash.toString())
+    except ValueError as e:
+        raise e
+    except AddressError as e:
+        raise e
+    except BLSError as e:
+        raise e
+    except SodiumError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)

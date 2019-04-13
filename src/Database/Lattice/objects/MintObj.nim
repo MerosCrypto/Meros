@@ -1,11 +1,14 @@
-#BN lib.
-import BN
+#Errors lib.
+import ../../../lib/Errors
 
 #Hash lib.
 import ../../../lib/Hash
 
 #Entry object.
 import EntryObj
+
+#BN lib.
+import BN
 
 #Finals lib.
 import finals
@@ -22,7 +25,7 @@ finalsd:
 func newMintObj*(
     output: string,
     amount: BN
-): Mint {.raises: [FinalAttributeError].} =
+): Mint {.forceCheck: [].} =
     #Set the Mint fields.
     result = Mint(
         output: output,
@@ -32,6 +35,9 @@ func newMintObj*(
     result.ffinalizeAmount()
 
     #Set the constant entry fields.
-    result.sender = "minter"
-    result.descendant = EntryType.Mint
-    result.verified = true
+    try:
+        result.sender = "minter"
+        result.descendant = EntryType.Mint
+        result.verified = true
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)

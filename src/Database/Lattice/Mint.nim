@@ -1,21 +1,11 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Util lib.
-import ../../lib/Util
-
-#BN lib.
-import BN
-
 #Hash lib.
 import ../../lib/Hash
 
-#Wallet libs.
+#Wallet lib.
 import ../../Wallet/Wallet
-import ../../Wallet/Address
-
-#Import the Serialization library.
-import ../../Network/Serialize/Lattice/SerializeMint
 
 #Entry object.
 import objects/EntryObj
@@ -24,6 +14,12 @@ import objects/EntryObj
 import objects/MintObj
 export MintObj
 
+#Import the Serialization library.
+import ../../Network/Serialize/Lattice/SerializeMint
+
+#BN lib.
+import BN
+
 #Finals lib.
 import finals
 
@@ -31,19 +27,26 @@ import finals
 proc newMint*(
     output: string,
     amount: BN,
-    nonce: uint
-): Mint {.raises: [ValueError, FinalAttributeError].} =
+    nonce: Natural
+): Mint {.forceCheck: [
+    ValueError
+].} =
     #Verify the amount.
     if amount <= newBN(0):
         raise newException(ValueError, "Mint amount is negative or zero.")
 
-    #Craft the result.
+    #Create the result.
     result = newMintObj(
         output,
         amount
     )
-    #Set the nonce.
-    result.nonce = nonce
 
-    #Set the hash.
-    result.hash = Blake384(result.serialize())
+    try:
+        #Set the nonce.
+        result.nonce = nonce
+        #Set the hash.
+        result.hash = Blake384(result.serialize())
+    except ValueError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)

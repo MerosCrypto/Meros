@@ -29,50 +29,73 @@ import finals
 #Create a new Entry.
 proc newData*(
     data: string,
-    nonce: uint
-): Data {.raises: [ValueError, FinalAttributeError].} =
+    nonce: Natural
+): Data {.forceCheck: [
+    ValueError
+].} =
     #Verify the data argument.
     if data.len > 255:
         raise newException(ValueError, "Data's data was greater than 255 bytes.")
 
-    #Craft the result.
+    #Create the result.
     result = newDataObj(
         data
     )
+
     #Set the nonce.
-    result.nonce = nonce
+    try:
+        result.nonce = nonce
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)
 
 #Sign a TX.
 proc sign*(
     wallet: Wallet,
     data: Data
-){.raises: [ValueError, SodiumError, FinalAttributeError].} =
-    #Set the sender behind the Entry.
-    data.sender = wallet.address
-    #Set the hash.
-    data.hash = Blake384(data.serialize())
-    #Sign the hash of the Data.
-    data.signature = wallet.sign(data.hash.toString())
+) {.forceCheck: [
+    AddressError,
+    SodiumError
+].} =
+    try:
+        #Set the sender behind the Entry.
+        data.sender = wallet.address
+        #Set the hash.
+        data.hash = Blake384(data.serialize())
+        #Sign the hash of the Data.
+        data.signature = wallet.sign(data.hash.toString())
+    except AddressError as e:
+        raise e
+    except SodiumError as e:
+        raise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when signing a Data: " & e.msg)
 
 #'Mine' the data (beat the spam filter).
 proc mine*(
     data: Data,
     networkDifficulty: BN
-) {.raises: [ValueError, ArgonError, FinalAttributeError].} =
+) {.forceCheck: [
+    ValueError,
+    ArgonError,
+].} =
     #Make sure the hash was set.
     if data.hash.toBN() == newBN():
         raise newException(ValueError, "Data wasn't signed.")
 
-    #Create a proof of 0 and get the first Argon hash.
-    var
-        proof: uint = 0
-        hash: ArgonHash = Argon(data.hash.toString(), proof.toBinary(), true)
-
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
-    while hash.toBN() <= networkDifficulty:
-        inc(proof)
+    var
+        proof: int = 0
+        hash: ArgonHash
+    try:
         hash = Argon(data.hash.toString(), proof.toBinary(), true)
+        while hash.toBN() <= networkDifficulty:
+            inc(proof)
+            hash = Argon(data.hash.toString(), proof.toBinary(), true)
+    except ArgonError as e:
+        raise e
 
-    #Set the proof and hash.
-    data.proof = proof
-    data.argon = hash
+    try:
+        data.proof = proof
+        data.argon = hash
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when mining a Send: " & e.msg)
