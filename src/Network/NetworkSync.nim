@@ -10,7 +10,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
         result = true
 
         #Tuple to define missing data.
-        type Gap = tuple[key: string, start: uint, last: uint]
+        type Gap = tuple[key: string, start: int, last: int]
 
         var
             #Variable for gaps.
@@ -25,7 +25,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
         #Make sure we have all the Verifications in the Block.
         for verifier in newBlock.verifications:
             #Get the Verifier's height.
-            var verifHeight: uint = network.mainFunctions.verifications.getVerifierHeight(verifier.key)
+            var verifHeight: int = network.mainFunctions.verifications.getVerifierHeight(verifier.key)
 
             #If we're missing Verifications...
             if verifHeight <= verifier.nonce:
@@ -144,7 +144,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
         return
 
 #Request a Block.
-proc requestBlock*(network: Network, nonce: uint): Future[bool] {.async.} =
+proc requestBlock*(network: Network, nonce: int): Future[bool] {.async.} =
     for client in network.clients:
         #Start syncing.
         await client.sync()

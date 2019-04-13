@@ -11,8 +11,8 @@ proc reply*(network: Network, msg: Message, res: Message) {.async.} =
 
 #Constructor.
 proc newNetwork*(
-    id: uint,
-    protocol: uint,
+    id: int,
+    protocol: int,
     mainFunctions: GlobalFunctionBox
 ): Network {.raises: [SocketError].} =
     #Create the server socket.
@@ -36,13 +36,13 @@ proc newNetwork*(
     result = network
 
     #Provide functions for the Network Functions Box.
-    result.networkFunctions.getNetworkID = proc (): uint {.raises: [].} =
+    result.networkFunctions.getNetworkID = proc (): int {.raises: [].} =
         id
 
-    result.networkFunctions.getProtocol = proc (): uint {.raises: [].} =
+    result.networkFunctions.getProtocol = proc (): int {.raises: [].} =
         protocol
 
-    result.networkFunctions.getHeight = proc (): uint {.raises: [LMDBError].} =
+    result.networkFunctions.getHeight = proc (): int {.raises: [LMDBError].} =
         mainFunctions.merit.getHeight()
 
     result.networkFunctions.handle = proc (msg: Message): Future[bool] {.async.} =
@@ -71,8 +71,8 @@ proc newNetwork*(
                 of MessageType.BlockRequest:
                     #Grab our chain height and parse the requested nonce.
                     var
-                        height: uint = mainFunctions.merit.getHeight()
-                        req: uint = uint(msg.message.fromBinary())
+                        height: int = mainFunctions.merit.getHeight()
+                        req: int = msg.message.fromBinary()
 
                     #If they asked for Block 0, they want the tail.
                     if req == 0:
@@ -101,8 +101,8 @@ proc newNetwork*(
                             INT_LEN
                         )
                         key: string = req[0]
-                        nonce: uint = uint(req[1].fromBinary())
-                        height: uint = mainFunctions.verifications.getVerifierHeight(key)
+                        nonce: int = req[1].fromBinary()
+                        height: int = mainFunctions.verifications.getVerifierHeight(key)
 
                     if height <= nonce:
                         await network.clients.reply(
@@ -220,7 +220,7 @@ proc listen*(network: Network, config: Config) {.async.} =
             continue
 
 #Connect to a Client.
-proc connect*(network: Network, ip: string, port: uint) {.async.} =
+proc connect*(network: Network, ip: string, port: int) {.async.} =
     #Create the socket.
     var socket: AsyncSocket = newAsyncSocket()
     #Connect.

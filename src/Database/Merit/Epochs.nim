@@ -73,7 +73,7 @@ proc shift*(
 
         #Grab the Verifs.
         try:
-            verifs = verifications[record.key][start .. int(record.nonce)]
+            verifs = verifications[record.key][start .. record.nonce]
         #This will be thrown if we access a verif too high, which shouldn't happen as we check a Block only has valid tips.
         except IndexError as e:
             doAssert(false, "An invalid tip was passed to shift: " & e.msg)

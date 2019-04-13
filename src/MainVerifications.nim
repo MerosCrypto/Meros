@@ -7,13 +7,13 @@ proc mainVerifications() {.raises: [].} =
         #Provide access to the verifier's height.
         functions.verifications.getVerifierHeight = proc (
             key: string
-        ): uint {.raises: [KeyError, LMDBError].} =
+        ): int {.raises: [KeyError, LMDBError].} =
             verifications[key].height
 
         #Provide access to verifications.
         functions.verifications.getVerification = proc (
             key: string,
-            nonce: uint
+            nonce: int
         ): Verification {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             verifications[key][nonce]
 
@@ -36,7 +36,7 @@ proc mainVerifications() {.raises: [].} =
                     continue
 
                 #Since there are unarchived verifications, add the VerifierIndex.
-                var nonce: uint = verifications[verifier].height - 1
+                var nonce: int = verifications[verifier].height - 1
                 result.add(newVerifierIndex(
                     verifier,
                     nonce,
@@ -46,7 +46,7 @@ proc mainVerifications() {.raises: [].} =
         #Provide access to pending aggregate signatures.
         functions.verifications.getPendingAggregate = proc (
             verifierStr: string,
-            nonce: uint
+            nonce: int
         ): BLSSignature {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             var
                 #Grab the Verifier.
@@ -58,12 +58,12 @@ proc mainVerifications() {.raises: [].} =
 
             #If this Verifier has pending Verifications...
             if verifier.verifications.len > 0:
-                start = int(verifier.verifications[0].nonce)
+                start = verifier.verifications[0].nonce
             else:
                 return nil
 
             #Iterate over every unarchived verification, up to and including the nonce.
-            for verif in verifier{start .. int(nonce)}:
+            for verif in verifier{start .. nonce}:
                 sigs.add(verif.signature)
 
             #Return the hash.
@@ -72,7 +72,7 @@ proc mainVerifications() {.raises: [].} =
         #Used to calculate the aggregate with Verifications we just downloaded.
         functions.verifications.getPendingHashes = proc (
             key: string,
-            nonceArg: uint
+            nonceArg: int
         ): seq[string] {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
             result = @[]
 
@@ -82,7 +82,7 @@ proc mainVerifications() {.raises: [].} =
                 #Start of the unarchived Verifications.
                 start: int
                 #Nonce to end at.
-                nonce: uint = nonceArg
+                nonce: int = nonceArg
 
             #Make sure there are verifications.
             if verifications[key].height == 0:
@@ -90,7 +90,7 @@ proc mainVerifications() {.raises: [].} =
 
             #If this Verifier has pending Verifications...
             if verifier.verifications.len > 0:
-                start = int(verifier.verifications[0].nonce)
+                start = verifier.verifications[0].nonce
             else:
                 return @[]
 
@@ -99,7 +99,7 @@ proc mainVerifications() {.raises: [].} =
                 nonce = verifications[key].height - 1
 
             #Add the hashes.
-            for verif in verifications[key][start .. int(nonce)]:
+            for verif in verifications[key][start .. nonce]:
                 result.add(verif.hash.toString())
 
         #Handle Verifications.

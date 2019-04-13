@@ -16,9 +16,9 @@ import asyncnet
 finalsd:
     type Network* = ref object of RootObj
         #Network ID.
-        id* {.final.}: uint
+        id* {.final.}: int
         #Protocol version.
-        protocol* {.final.}: uint
+        protocol* {.final.}: int
         #Clients.
         clients* {.final.}: Clients
         #Server.
@@ -30,8 +30,8 @@ finalsd:
 
 #Constructor.
 func newNetworkObj*(
-    id: uint,
-    protocol: uint,
+    id: int,
+    protocol: int,
     clients: Clients,
     server: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox,

@@ -6,9 +6,9 @@ proc verify(entry: Entry) {.async.} =
     await sleepAsync(100)
 
     #Make sure we're a Miner with Merit.
-    if (not config.miner.isNil) and (merit.state[config.miner.publicKey] > uint(0)):
+    if (not config.miner.isNil) and (merit.state[config.miner.publicKey] > 0):
         #Make sure we didn't already Verify an Entry at this position.
-        if lattice[entry.sender].entries[int(entry.nonce - lattice[entry.sender].confirmed)].len != 1:
+        if lattice[entry.sender].entries[entry.nonce - lattice[entry.sender].confirmed].len != 1:
             return
 
         #Acquire the verify lock.
@@ -55,7 +55,7 @@ proc mainLattice() {.raises: [
         )
 
         #Handle requests for an account's height.
-        functions.lattice.getHeight = proc (account: string): uint {.raises: [ValueError, LMDBError].} =
+        functions.lattice.getHeight = proc (account: string): int {.raises: [ValueError, LMDBError].} =
             lattice[account].height
 
         #Handle requests for an account's balance.

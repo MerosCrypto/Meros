@@ -14,13 +14,13 @@ import strutils
 import json
 
 #Default network port.
-const DEFAULT_PORT {.intdefine.}: uint = 5132
+const DEFAULT_PORT {.intdefine.}: int = 5132
 
 #Connect to a new node.
 proc connect*(
     rpc: RPC,
     ip: string,
-    port: uint
+    port: int
 ): Future[JSONNode] {.async.} =
     try:
         #Connect to a new node.
@@ -47,7 +47,7 @@ proc networkModule*(
             of "connect":
                 res = await rpc.connect(
                     json["args"][0].getStr(),
-                    if json["args"].len == 2: uint(json["args"][1].getInt()) else: DEFAULT_PORT
+                    if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
                 )
 
             else:

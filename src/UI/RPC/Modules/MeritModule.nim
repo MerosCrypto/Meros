@@ -42,7 +42,7 @@ import json
 
 proc getHeight(rpc: RPC): JSONNode {.raises: [EventError].} =
     #Get the Height.
-    var height: uint
+    var height: int
     try:
         height = rpc.functions.merit.getHeight()
     except:
@@ -50,7 +50,7 @@ proc getHeight(rpc: RPC): JSONNode {.raises: [EventError].} =
 
     #Send back the Height.
     result = %* {
-        "height": int(height)
+        "height": height
     }
 
 proc getDifficulty(rpc: RPC): JSONnode {.raises: [EventError].} =
@@ -66,7 +66,7 @@ proc getDifficulty(rpc: RPC): JSONnode {.raises: [EventError].} =
         "difficulty": $difficulty
     }
 
-proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].} =
+proc getBlock(rpc: RPC, nonce: int): JSONNode {.raises: [KeyError, EventError].} =
     #Get the Block.
     var gotBlock: Block
     try:
@@ -79,14 +79,14 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
         "header": {
             "hash": $gotBlock.header.hash,
 
-            "nonce": int(gotBlock.header.nonce),
+            "nonce": gotBlock.header.nonce,
             "last": $gotBlock.header.last,
 
             "verifications": $gotBlock.header.verifications,
             "miners": $gotBlock.header.miners,
 
-            "time": int(gotBlock.header.time),
-            "proof": int(gotBlock.header.proof)
+            "time": gotBlock.header.time,
+            "proof": gotBlock.header.proof
         }
     }
 
@@ -95,7 +95,7 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
     for index in gotBlock.verifications:
         result["verifications"].add(%* {
             "verifier": index.key.toHex(),
-            "nonce": int(index.nonce),
+            "nonce": index.nonce,
             "merkle": index.merkle.toHex()
         })
 
@@ -104,7 +104,7 @@ proc getBlock(rpc: RPC, nonce: uint): JSONNode {.raises: [KeyError, EventError].
     for miner in gotBlock.miners:
         result["miners"].add(%* {
             "miner": $miner.miner,
-            "amount": int(miner.amount)
+            "amount": miner.amount
         })
 
 #Publish a Block.
@@ -146,7 +146,7 @@ proc meritModule*(
 
             of "getBlock":
                 res = rpc.getBlock(
-                    uint(json["args"][0].getInt())
+                    json["args"][0].getInt()
                 )
 
             of "publishBlock":

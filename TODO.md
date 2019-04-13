@@ -4,8 +4,6 @@
 General Cleanup:
 - Decide a definitive import ordering and make sure it's used throughout the codebase.
 
-- Replace every `uint` with `int`/`Natural`.
-
 - Use `let` where appropriate.
 - Remove `ref` from objects that shouldn't be `ref`.
 - Remove `of RootObj` from objects that aren't inherited from.

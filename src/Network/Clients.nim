@@ -66,7 +66,7 @@ proc handle(
 proc add*(
     clients: Clients,
     ip: string,
-    port: uint,
+    port: int,
     socket: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox
 ) {.async.} =
@@ -126,7 +126,7 @@ proc broadcast*(
     msg: Message
 ) {.async.} =
     #Seq of the clients to disconnect.
-    var toDisconnect: seq[uint] = @[]
+    var toDisconnect: seq[int] = @[]
 
     #Iterate over each client.
     for client in clients.clients:

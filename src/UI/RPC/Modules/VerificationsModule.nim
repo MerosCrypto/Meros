@@ -35,7 +35,7 @@ import json
 proc getVerification(
     rpc: RPC,
     key: string,
-    nonce: uint
+    nonce: int
 ): JSONnode {.raises: [EventError].} =
     try:
         result = %* {
@@ -72,7 +72,7 @@ proc getUnarchivedVerifications(
     for i in 0 ..< indexes.len:
         result.add(%* {
             "verifier": indexes[i].key.toHex(),
-            "nonce": int(indexes[i].nonce),
+            "nonce": indexes[i].nonce,
             "merkle": indexes[i].merkle.toHex(),
             "signature": $aggregates[i]
         })
@@ -93,7 +93,7 @@ proc verificationsModule*(
             of "getVerification":
                 res = rpc.getVerification(
                     json["args"][0].getStr().parseHexStr(),
-                    uint(json["args"][1].getInt())
+                    json["args"][1].getInt()
                 )
 
             of "getUnarchivedVerifications":

@@ -15,7 +15,7 @@ proc mainNetwork() {.raises: [SocketError].} =
         #Connect to another node.
         functions.network.connect = proc (
             ip: string,
-            port: uint
+            port: int
         ): Future[bool] {.async.} =
             try:
                 await network.connect(ip, port)

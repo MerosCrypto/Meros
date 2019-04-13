@@ -29,9 +29,9 @@ type Config* = ref object of RootObj
     db*: string
 
     #Port for our server to listen on.
-    tcpPort*: uint
+    tcpPort*: int
     #Port for the RPC to listen on.
-    rpcPort*: uint
+    rpcPort*: int
 
     #MinerWallet to verify transactions with.
     miner*: MinerWallet
@@ -69,10 +69,10 @@ proc newConfig*(): Config {.raises: [ValueError, IndexError, BLSError].} =
             result.db = json["db"].getStr()
 
         if json.check("tcpPort", JInt):
-            result.tcpPort = uint(json["tcpPort"].getInt())
+            result.tcpPort = json["tcpPort"].getInt()
 
         if json.check("rpcPort", JInt):
-            result.rpcPort = uint(json["rpcPort"].getInt())
+            result.rpcPort = json["rpcPort"].getInt()
 
         if json.check("miner", JString):
             result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(json["miner"].getStr()))

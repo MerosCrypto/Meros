@@ -118,7 +118,7 @@ proc recv*(client: Client): Future[Message] {.async.} =
     result = newMessage(
         client.id,
         content,
-        uint(size),
+        size,
         msg
     )
 
@@ -137,9 +137,9 @@ proc send*(client: Client, msg: Message) {.async.} =
 #Handshake.
 proc handshake*(
     client: Client,
-    id: uint,
-    protocol: uint,
-    height: uint
+    id: int,
+    protocol: int,
+    height: int
 ): Future[HandshakeState] {.async.} =
     #Set the result to Error in case the Handshake fails.
     result = HandshakeState.Error
@@ -165,14 +165,14 @@ proc handshake*(
         INT_LEN
     )
     #Verify their Network ID.
-    if uint(handshakeSeq[0][0]) != id:
+    if int(handshakeSeq[0][0]) != id:
         return
     #Verify their Protocol version.
-    if uint(handshakeSeq[1][0]) != protocol:
+    if int(handshakeSeq[1][0]) != protocol:
         return
 
     #Get their Blockchain height.
-    var theirHeight: uint = uint(handshakeSeq[2].fromBinary())
+    var theirHeight: int = handshakeSeq[2].fromBinary()
 
     #If they have more blocks than us, return that we're missing blocks.
     if height < theirHeight:
@@ -236,7 +236,7 @@ proc syncEntry*(client: Client, hash: string): Future[SyncEntryResponse] {.async
 proc syncVerification*(
     client: Client,
     verifier: string,
-    nonce: uint
+    nonce: int
 ): Future[Verification] {.async.} =
     #If we're not syncing, raise an error.
     if client.ourState != ClientState.Syncing:
@@ -264,7 +264,7 @@ proc syncVerification*(
             raise newException(InvalidResponseError, "Client didn't respond properly to our VerificationRequest.")
 
 #Sync a Block.
-proc syncBlock*(client: Client, nonce: uint): Future[Block] {.async.} =
+proc syncBlock*(client: Client, nonce: int): Future[Block] {.async.} =
     #If we're not syncing, raise an error.
     if client.ourState != ClientState.Syncing:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")

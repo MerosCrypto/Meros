@@ -71,7 +71,7 @@ proc send(
     rpc: RPC,
     address: string,
     amount: BN,
-    nonce: uint
+    nonce: int
 ): JSONNode {.raises: [
     ValueError,
     EventError,
@@ -111,8 +111,8 @@ proc send(
 proc receive(
     rpc: RPC,
     address: string,
-    inputNonce: uint,
-    nonce: uint
+    inputNonce: int,
+    nonce: int
 ): JSONNode {.raises: [
     ValueError,
     EventError,
@@ -155,7 +155,7 @@ proc receive(
 proc data(
     rpc: RPC,
     dataArg: string,
-    nonce: uint
+    nonce: int
 ): JSONNode {.raises: [
     ValueError,
     EventError,

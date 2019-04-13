@@ -35,7 +35,7 @@ proc toJSON*(
     result = %* {
         "descendant": $entry.descendant,
         "sender": entry.sender,
-        "nonce": int(entry.nonce),
+        "nonce": ntry.nonce,
         "hash": $entry.hash,
         "signature": ($entry.signature).toHex(),
         "verified": entry.verified
@@ -47,20 +47,20 @@ proc toJSON*(
             result["output"] = % cast[Mint](entry).output.toHex()
             result["amount"] = % $cast[Mint](entry).amount
         of EntryType.Claim:
-            result["mintNonce"] = % int(cast[Claim](entry).mintNonce)
+            result["mintNonce"] = % $cast[Claim](entry).mintNonce
             result["bls"]       = % $cast[Claim](entry).bls
         of EntryType.Send:
             result["output"] = % cast[Send](entry).output
             result["amount"] = % $cast[Send](entry).amount
-            result["proof"]  = % int(cast[Send](entry).proof)
+            result["proof"]  = % cast[Send](entry).proof
             result["argon"] = % $cast[Send](entry).argon
         of EntryType.Receive:
             result["index"] = %* {}
             result["index"]["key"] = % cast[Receive](entry).index.key
-            result["index"]["nonce"]   = % int(cast[Receive](entry).index.nonce)
+            result["index"]["nonce"]   = % cast[Receive](entry).index.nonce
         of EntryType.Data:
             result["data"]   = % cast[Data](entry).data.toHex()
-            result["proof"]  = % int(cast[Data](entry).proof)
+            result["proof"]  = % cast[Data](entry).proof
             result["argon"] = % $cast[Data](entry).argon
 
 #Get the height of an account.
@@ -69,7 +69,7 @@ proc getHeight(
     account: string
 ): JSONNode {.raises: [EventError].} =
     #Get the height.
-    var height: uint
+    var height: int
     try:
         height = rpc.functions.lattice.getHeight(account)
     except:
@@ -123,7 +123,7 @@ proc getEntryByIndex(
         entry = rpc.functions.lattice.getEntryByIndex(
             newIndex(
                 address,
-                uint(nonce)
+                nonce
             )
         )
     except:

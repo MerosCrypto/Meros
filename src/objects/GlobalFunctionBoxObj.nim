@@ -46,24 +46,24 @@ type
         quit*: proc () {.noSideEffect, raises: [ChannelError, AsyncError, SocketError].}
 
     VerificationsFunctionBox* = ref object of RootObj
-        getVerifierHeight*:     proc (key: string): uint                           {.noSideEffect, raises: [KeyError, DBError].}
-        getVerification*:       proc (key: string, nonce: uint): Verification      {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
+        getVerifierHeight*:     proc (key: string): int                           {.noSideEffect, raises: [KeyError, DBError].}
+        getVerification*:       proc (key: string, nonce: int): Verification      {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
         getUnarchivedRecords*:  proc (): seq[VerifierRecord]                        {.noSideEffect, raises: [KeyError, ValueError, DBError, FinalAttributeError].}
-        getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
-        getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
+        getPendingAggregate*:   proc (verifier: string, nonce: int): BLSSignature {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
+        getPendingHashes*:      proc (key: string, nonce: int): seq[string]       {.noSideEffect, raises: [KeyError, ValueError, BLSError, DBError, FinalAttributeError].}
 
         addVerification*:        proc (verif: Verification): bool       {.noSideEffect, raises: [ValueError, DBError].}
         addMemoryVerification*:  proc (verif: MemoryVerification): bool {.noSideEffect, raises: [ValueError, BLSError, DBError].}
 
     MeritFunctionBox* = ref object of RootObj
-        getHeight*:      proc (): uint             {.noSideEffect, raises: [DBError].}
+        getHeight*:      proc (): int             {.noSideEffect, raises: [DBError].}
         getDifficulty*:  proc (): BN               {.noSideEffect, raises: [].}
-        getBlock*:       proc (nonce: uint): Block {.noSideEffect, raises: [ValueError, ArgonError, BLSError, DBError, FinalAttributeError].}
+        getBlock*:       proc (nonce: int): Block {.noSideEffect, raises: [ValueError, ArgonError, BLSError, DBError, FinalAttributeError].}
 
         addBlock*:  proc (newBlock: Block): Future[bool]
 
     LatticeFunctionBox* = ref object of RootObj
-        getHeight*:        proc (account: string): uint {.noSideEffect, raises: [ValueError, DBError].}
+        getHeight*:        proc (account: string): int {.noSideEffect, raises: [ValueError, DBError].}
         getBalance*:       proc (account: string): BN   {.noSideEffect, raises: [ValueError, DBError].}
         getEntryByHash*:   proc (hash: string): Entry   {.noSideEffect, raises: [KeyError].}
         getEntryByIndex*:  proc (index: LatticeIndex): Entry   {.noSideEffect, raises: [ValueError].}
@@ -87,7 +87,7 @@ type
         signData*:     proc (data: Data)    {.noSideEffect, raises: [ValueError, SodiumError, FinalAttributeError].}
 
     NetworkFunctionBox* = ref object of RootObj
-        connect*:    proc (ip: string, port: uint): Future[bool]
+        connect*:    proc (ip: string, port: int): Future[bool]
         broadcast*:  proc (msgType: MessageType, msg: string): Future[void]
 
     GlobalFunctionBox* = ref object of RootObj

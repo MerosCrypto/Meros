@@ -23,9 +23,9 @@ finalsd:
             #IP.
             ip* {.final.}: string
             #Port.
-            port* {.final.}: uint
+            port* {.final.}: int
             #ID.
-            id* {.final.}: uint
+            id* {.final.}: int
             #Our state.
             ourState*: ClientState
             #Their state.
@@ -36,8 +36,8 @@ finalsd:
 #Constructor.
 func newClient*(
     ip: string,
-    port: uint,
-    id: uint,
+    port: int,
+    id: int,
     socket: AsyncSocket
 ): Client {.raises: [].} =
     result = Client(

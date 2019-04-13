@@ -34,9 +34,9 @@ finalsd:
 
         #Message object.
         Message* = ref object of RootObj
-            client* {.final.}: uint
+            client* {.final.}: int
             content* {.final.}: MessageType
-            len* {.final.}: uint
+            len* {.final.}: int
             message* {.final.}: string
 
         #syncEntry response.
@@ -65,9 +65,9 @@ func finalize(
 
 #Constructor for incoming data.
 func newMessage*(
-    client: uint,
+    client: int,
     content: MessageType,
-    len: uint,
+    len: int,
     message: string
 ): Message {.raises: [].} =
     result = Message(
@@ -87,7 +87,7 @@ func newMessage*(
     result = Message(
         client: 0,
         content: content,
-        len: uint(message.len),
+        len: message.len,
         message: message
     )
     result.finalize()

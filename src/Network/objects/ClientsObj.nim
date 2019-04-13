@@ -13,7 +13,7 @@ import asyncnet
 #Clients object.
 type Clients* = ref object of RootObj
     #Used to provide each Client an unique ID.
-    count*: uint
+    count*: int
     #Seq of every Client.
     clients*: seq[Client]
 
@@ -33,7 +33,7 @@ proc add*(clients: Clients, client: Client) {.raises: [].} =
     clients.clients.add(client)
 
 #Disconnect.
-proc disconnect*(clients: Clients, id: uint) {.raises: [].} =
+proc disconnect*(clients: Clients, id: int) {.raises: [].} =
     for i, client in clients.clients:
         if client.id == id:
             try:
@@ -54,7 +54,7 @@ proc shutdown*(clients: Clients) {.raises: [].} =
         clients.clients.delete(0)
 
 #Getter.
-func `[]`*(clients: Clients, id: uint): Client {.raises: [].} =
+func `[]`*(clients: Clients, id: int): Client {.raises: [].} =
     for client in clients.clients:
         if client.id == id:
             return client

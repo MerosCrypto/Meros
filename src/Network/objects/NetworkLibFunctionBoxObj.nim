@@ -15,9 +15,9 @@ import MessageObj
 import asyncdispatch
 
 type NetworkLibFunctionBox* = ref object of RootObj
-    getNetworkID*: proc (): uint {.raises: [].}
-    getProtocol*:  proc (): uint {.raises: [].}
-    getHeight*:    proc (): uint {.raises: [LMDBError].}
+    getNetworkID*: proc (): int {.raises: [].}
+    getProtocol*:  proc (): int {.raises: [].}
+    getHeight*:    proc (): int {.raises: [LMDBError].}
 
     handle*: proc (msg: Message): Future[bool]
     handleBlock*: proc (newBlock: Block): Future[bool]

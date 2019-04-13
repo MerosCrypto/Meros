@@ -19,7 +19,7 @@ proc mainMerit() {.raises: [
         )
 
         #Handle requests for the current height.
-        functions.merit.getHeight = proc (): uint {.raises: [].} =
+        functions.merit.getHeight = proc (): int {.raises: [].} =
             merit.blockchain.height
 
         #Handle requests for the current Difficulty.
@@ -27,7 +27,7 @@ proc mainMerit() {.raises: [
             merit.blockchain.difficulty.difficulty
 
         #Handle requests for a Block.
-        functions.merit.getBlock = proc (nonce: uint): Block {.raises: [
+        functions.merit.getBlock = proc (nonce: int): Block {.raises: [
             ValueError,
             ArgonError,
             BLSError,
@@ -48,7 +48,7 @@ proc mainMerit() {.raises: [
                 #Check if we're missing previous Blocks.
                 if newBlock.header.nonce > merit.blockchain.height:
                     #Iterate over the missing Blocks.
-                    for nonce in uint(merit.blockchain.height) ..< newBlock.header.nonce:
+                    for nonce in merit.blockchain.height ..< newBlock.header.nonce:
                         #Get and test the Block.
                         try:
                             if not await network.requestBlock(nonce):
@@ -69,7 +69,7 @@ proc mainMerit() {.raises: [
                     verifiers: Table[string, bool] = initTable[string, bool]()
                 for index in newBlock.verifications:
                     #Verify this isn't archiving archived Verifications.
-                    if int(index.nonce) < verifications[index.key].archived:
+                    if index.nonce < verifications[index.key].archived:
                         echo "Failed to add the Block."
                         return false
 
@@ -91,7 +91,7 @@ proc mainMerit() {.raises: [
 
                     var
                         #Start of this verifier's unarchived verifications.
-                        verifierStart: uint = verifications[index.key].verifications[0].nonce
+                        verifierStart: int = verifications[index.key].verifications[0].nonce
                         #Grab this Verifier's verifications.
                         verifierVerifs: seq[Verification] = verifications[index.key][verifierStart .. index.nonce]
                         #Declare an aggregation info seq for this verifier.
@@ -141,7 +141,7 @@ proc mainMerit() {.raises: [
             #Create the Mints (which ends up minting a total of 50000 MR).
             var
                 #Nonce of the Mint.
-                mintNonce: uint
+                mintNonce: int
                 #Any Claim we may create.
                 claim: Claim
             for reward in rewards:
