@@ -13,9 +13,9 @@ type
     ArgonError*  = object of Exception #Used when the Argon library fails.
 
     #Wallet Errors.
-    BLSError*          = object of Exception #Used when the BLS lib fails.
+    BLSError*         = object of Exception #Used when the BLS lib fails.
     SodiumError*      = object of Exception #Used when LibSodium fails.
-    
+
     EdSeedError*      = object of Exception #Used when passed an invalid Ed25519 Seed.
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
     AddressError*     = object of Exception #Used when passed an invalid Address.
@@ -46,6 +46,7 @@ type
 
     #UI/RPC Errors.
     ChannelError*  = object of Exception #Used when a Channel fails.
+    JSONError*     = object of Exception #Used when loading/parsing JSON fails.
     PersonalError* = object of Exception #Used when the Wallet in the RPC fails.
 
     #UI/GUI Errors.

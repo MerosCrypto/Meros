@@ -26,7 +26,6 @@ Specific Tasks:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
-- Clean objects.
 - Clean Network.
 - Clean UI.
 - Clean Main, especially `merit.addBlock`.
