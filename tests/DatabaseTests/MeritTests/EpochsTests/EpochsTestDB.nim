@@ -71,15 +71,19 @@ proc test(blocks: int) =
         #Table of hashes -> verifiers.
         verified: Table[string, seq[BLSPublicKey]] = initTable[string, seq[BLSPublicKey]]()
         #VerifierRecords.
-        indexes: seq[VerifierRecord]
+        records: seq[seq[VerifierRecord]] = @[]
         #Block we're mining.
         mining: Block
         #Epoch we popped.
         epoch: Epoch
 
-    #Add 5 blank seqs to hahes for the 5 blank Epochs we start with.
+    #Add 5 blank seqs to hashes for the 5 blank Epochs we start with.
     for i in 0 ..< 5:
         hashes.add(@[])
+
+    #Add 10 blank seqs to records.
+    for i in 0 ..< 10:
+        records.add(@[])
 
     #Mine blocks blocks.
     for i in 1 .. blocks:
@@ -155,8 +159,8 @@ proc test(blocks: int) =
                 #Say this wallet verified this hash.
                 verified[hash.toString()].add(wallets[w].publicKey)
 
-        #Create the indexes.
-        indexes = @[]
+        #Create the new records.
+        records.add(@[])
         for wallet in wallets:
             #Grab the Verifier.
             var verifier: BLSPublicKey = wallet.publicKey
@@ -171,7 +175,7 @@ proc test(blocks: int) =
 
             #Since there are unarchived verifications, add the VerifierRecord.
             var nonce: int = verifications[verifier].height - 1
-            indexes.add(newVerifierRecord(
+            records[^1].add(newVerifierRecord(
                 verifier,
                 nonce,
                 verifications[verifier].calculateMerkle(nonce)
@@ -181,7 +185,7 @@ proc test(blocks: int) =
         mining = newTestBlock(
             nonce = i,
             last = blockchain.tip.header.hash,
-            indexes = indexes,
+            records = records[^1],
             miners = miners
         )
 
@@ -195,24 +199,28 @@ proc test(blocks: int) =
         except ValueError as e:
             raise newException(ValueError, "Valid Block wasn't successfully added: " & e.msg)
 
-        #Shift the indexes onto the Epochs.
-        epoch = epochs.shift(verifications, indexes)
+        #Shift the records onto the Epochs.
+        epoch = epochs.shift(verifications, records[^1])
 
-        #Mark the indexes as archived.
-        verifications.archive(indexes)
+        #Mark the records as archived.
+        verifications.archive(records[^1])
 
         #Make sure the Epoch has the same hashes as we do.
-        for hash in epoch.keys():
+        for hash in epoch.hashes.keys():
             assert(hashes[^6].contains(hash.toHash(384)))
         for hash in hashes[^6]:
-            assert(epoch.hasKey(hash.toString()))
+            assert(epoch.hashes.hasKey(hash.toString()))
 
         #Make sure the Epoch has the same list of verifiers as we do.
         for hash in hashes[^6]:
-            for verifier in epoch[hash.toString()]:
+            for verifier in epoch.hashes[hash.toString()]:
                 assert(verified[hash.toString()].contains(verifier))
             for verifier in verified[hash.toString()]:
-                assert(epoch[hash.toString()].contains(verifier))
+                assert(epoch.hashes[hash.toString()].contains(verifier))
+
+        #Test that the saved records are accurate.
+        for record in records[^11]:
+            assert(db.get("merit_" & record.key.toString & "_epoch").fromBinary() == record.nonce)
 
     #Manually set Merit Holders because Epochs relies on the State to do that but we don't have one,
     var holders: string = ""
@@ -226,22 +234,26 @@ proc test(blocks: int) =
 
     echo "Testing the reloaded Epochs..."
 
-    #Shift 5 blank sets of indexes.
+    #Shift 5 blank sets of records.
     for i in 0 ..< 5:
         epoch = epochs.shift(verifications, @[])
 
         #Make sure the Epoch has the same hashes as we do.
-        for hash in epoch.keys():
+        for hash in epoch.hashes.keys():
             assert(hashes[^(5 - i)].contains(hash.toHash(384)))
         for hash in hashes[^(5 - i)]:
-            assert(epoch.hasKey(hash.toString()))
+            assert(epoch.hashes.hasKey(hash.toString()))
 
         #Make sure the Epoch has the same list of verifiers as we do.
         for hash in hashes[^(5 - i)]:
-            for verifier in epoch[hash.toString()]:
+            for verifier in epoch.hashes[hash.toString()]:
                 assert(verified[hash.toString()].contains(verifier))
             for verifier in verified[hash.toString()]:
-                assert(epoch[hash.toString()].contains(verifier))
+                assert(epoch.hashes[hash.toString()].contains(verifier))
+
+    #Test that the saved records are accurate.
+    for record in records[^6]:
+        assert(db.get("merit_" & record.key.toString() & "_epoch").fromBinary() == record.nonce)
 
 test(3)
 test(9)

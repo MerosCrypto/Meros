@@ -31,7 +31,9 @@ finalsd:
         Rewards* = seq[Reward]
 
         #Epoch object. Entry Hash -> Public Keys
-        Epoch* = Table[string, seq[BLSPublicKey]]
+        Epoch* = object
+            hashes*: Table[string, seq[BLSPublicKey]]
+            records*: seq[VerifierRecord]
 
         #Epochs object.
         Epochs* = object
@@ -40,8 +42,8 @@ finalsd:
 
             #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
-            #The last 10 Epochs of records.
-            records: seq[seq[VerifierRecord]]
+            #The last five VerifierRecords to have been shifted out of Epochs.
+            records*: seq[seq[VerifierRecord]]
 
 #Constructors.
 func newReward*(
@@ -60,7 +62,10 @@ func newRewards*(): Rewards {.inline, forceCheck: [].} =
 func newEpoch*(
     records: seq[VerifierRecord]
 ): Epoch {.inline, forceCheck: [].} =
-    initTable[string, seq[BLSPublicKey]]()
+    Epoch(
+        hashes: initTable[string, seq[BLSPublicKey]](),
+        records: records
+    )
 
 func newEpochsObj*(
     db: DatabaseFunctionBox
@@ -69,7 +74,7 @@ func newEpochsObj*(
     result = Epochs(
         db: db,
         epochs: newSeq[Epoch](5),
-        records: newSeq[seq[VerifierRecord]](10)
+        records: newSeq[seq[VerifierRecord]](5)
     )
 
     #Place blank epochs in.
@@ -77,7 +82,7 @@ func newEpochsObj*(
         result.epochs[i] = newEpoch(@[])
 
     #Place blank records in.
-    for i in 0 ..< 10:
+    for i in 0 ..< 5:
         result.records[i] = @[]
 
 #Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
@@ -92,8 +97,11 @@ func add*(
     try:
         for i in 0 ..< epochs.epochs.len:
             #If we found the hash, add the verifier and return true.
-            if epochs.epochs[i].hasKey(hash):
-                epochs.epochs[i][hash].add(verifier)
+            if epochs.epochs[i].hashes.hasKey(hash):
+                for key in epochs.epochs[i].hashes[hash]:
+                    if key == verifier:
+                        return
+                epochs.epochs[i].hashes[hash].add(verifier)
                 return
     except KeyError as e:
         doAssert(false, "Couldn't add a hash to an Epoch which already has said hash: " & e.msg)
@@ -107,13 +115,13 @@ func add*(
 ) {.forceCheck: [].} =
     #Create the seq.
     try:
-        epoch[hash] = @[]
+        epoch.hashes[hash] = @[]
     except KeyError as e:
         doAssert(false, "Couldn't add a seq to an Epoch: " & e.msg)
 
     #Add the key.
     try:
-        epoch[hash].add(verifier)
+        epoch.hashes[hash].add(verifier)
     except KeyError as e:
         doAssert(false, "Couldn't add a hash to a newly created seq in the Epoch: " & e.msg)
 
@@ -121,7 +129,6 @@ func add*(
 proc shift*(
     epochs: var Epochs,
     epoch: Epoch,
-    records: seq[VerifierRecord],
     save: bool
 ): Epoch {.forceCheck: [].} =
     #Add the newest Epoch.
@@ -131,10 +138,10 @@ proc shift*(
     #Remove the oldest.
     epochs.epochs.delete(0)
 
-    #Add the newest records.
-    epochs.records.add(records)
+    #Add the newly shifted records.
+    epochs.records.add(result.records)
     #Grab the oldest.
-    let oldRecords: seq[VerifierRecord] = epochs.records[0]
+    let records: seq[VerifierRecord] = epochs.records[0]
     #Remove the oldest.
     epochs.records.delete(0)
 
@@ -153,7 +160,7 @@ proc shift*(
         """
 
         try:
-            for record in oldRecords:
+            for record in records:
                 epochs.db.put("merit_" & record.key.toString() & "_epoch", record.nonce.toBinary())
         except DBWriteError as e:
             doAssert(false, "Couldn't save the new Epoch tip to the Database: " & e.msg)

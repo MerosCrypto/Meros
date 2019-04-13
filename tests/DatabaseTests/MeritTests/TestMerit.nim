@@ -31,7 +31,7 @@ proc newTestBlock*(
     nonce: Natural = 0,
     last: ArgonHash = "".pad(48).toArgonHash(),
     aggregate: BLSSignature = nil,
-    indexes: seq[VerifierRecord] = @[],
+    records: seq[VerifierRecord] = @[],
     miners: Miners = newMinersObj(@[
         newMinerObj(
             newBLSPrivateKeyFromSeed("TEST").getPublicKey(),
@@ -42,10 +42,10 @@ proc newTestBlock*(
     proof: Natural = 0
 ): Block =
     newBlockObj(
-        uint(nonce),
+        nonce,
         last,
         aggregate,
-        indexes,
+        records,
         miners,
         time,
         proof

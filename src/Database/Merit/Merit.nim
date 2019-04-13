@@ -61,7 +61,7 @@ proc newMerit*(
     try:
         startDifficulty = startDifficultyArg.toBNFromHex()
     except ValueError as e:
-        doAssert(false, "Invalid chain spec (start difficulty) passed to newMerit: " & e.msg)
+        doAssert(false, "Invalid chain specs (start difficulty) passed to newMerit: " & e.msg)
 
     #Create the Merit object.
     result = Merit(

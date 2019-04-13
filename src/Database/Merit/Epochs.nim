@@ -43,7 +43,7 @@ import tables
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-# - Saves the VerifierRecordes in the Epoch to-be-returned to the Database.
+# - Saves the VerifierRecords in the Epoch to-be-returned to the Database.
 #If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
 proc shift*(
     epochs: var Epochs,
@@ -92,7 +92,7 @@ proc shift*(
             tips[record.key.toString()] = record.nonce
 
     #Return the popped Epoch.
-    result = epochs.shift(newEpoch, records, tips.isNil)
+    result = epochs.shift(newEpoch, tips.isNil)
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
@@ -157,7 +157,7 @@ func calculate*(
     state: var State
 ): Rewards {.forceCheck: [].} =
     #If the epoch is empty, do nothing.
-    if epoch.len == 0:
+    if epoch.hashes.len == 0:
         return @[]
 
     var
@@ -167,7 +167,7 @@ func calculate*(
         total: int
 
     #Iterate over each Entry.
-    for entry in epoch.keys():
+    for entry in epoch.hashes.keys():
         #Clear the loop variables.
         #We use result as a loop variable because we don't need it till later.
         result = newRewards()
@@ -175,7 +175,7 @@ func calculate*(
 
         #Iterate over the result who verified an entry.
         try:
-            for person in epoch[entry]:
+            for person in epoch.hashes[entry]:
                 #Add them to our seq with their Merit.
                 result.add(
                     newReward(
@@ -220,7 +220,7 @@ func calculate*(
         doAssert(false, "Couldn't grab the score of a key grabbed from table.keys(): " & e.msg)
 
     #Make sure we're dealing with a maximum of 100 results.
-    if epoch.len > 100:
+    if epoch.hashes.len > 100:
         #Sort them by greatest score.
         result.sort(
             func (
