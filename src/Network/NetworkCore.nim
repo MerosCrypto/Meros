@@ -42,7 +42,7 @@ proc newNetwork*(
     result.networkFunctions.getProtocol = proc (): int {.raises: [].} =
         protocol
 
-    result.networkFunctions.getHeight = proc (): int {.raises: [LMDBError].} =
+    result.networkFunctions.getHeight = proc (): int {.raises: [].} =
         mainFunctions.merit.getHeight()
 
     result.networkFunctions.handle = proc (msg: Message): Future[bool] {.async.} =

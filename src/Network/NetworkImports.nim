@@ -7,8 +7,8 @@ import ../lib/Util
 #Hash lib.
 import ../lib/Hash
 
-#BLS lib.
-import ../lib/BLS
+#MinerWallet lib.
+import ../Wallet/MinerWallet
 
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice

@@ -14,7 +14,7 @@ import finals
 import asyncnet
 
 finalsd:
-    type Network* = ref object of RootObj
+    type Network* = ref object
         #Network ID.
         id* {.final.}: int
         #Protocol version.

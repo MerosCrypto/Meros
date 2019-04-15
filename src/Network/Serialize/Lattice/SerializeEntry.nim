@@ -19,9 +19,7 @@ import SerializeData
 #Serialize an Entry.
 proc serialize*(
     entry: Entry
-): string {.forceCheck: [
-    AddressError
-].} =
+): string {.forceCheck: [].} =
     try:
         case entry.descendant:
             of EntryType.Mint:
@@ -34,5 +32,5 @@ proc serialize*(
                 result = cast[Receive](entry).serialize()
             of EntryType.Data:
                 result = cast[Data](entry).serialize()
-    except AddressError as e:
-        raise e
+    except AddressError:
+        doAssert(false, "Tried to serialize an Entry with an invalid address. We only serialize what we save or rebroadcast, and we don't do either for invalid data.")

@@ -1,9 +1,8 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Numerical libs.
-import BN
-import ../../../lib/Base
+#BN/Hex lib.
+import ../../../lib/Hex
 
 #Hash lib.
 import ../../../lib/Hash
@@ -91,7 +90,7 @@ proc send(
     #Sign the Send.
     rpc.functions.personal.signSend(send)
     #Mine the Send.
-    send.mine("aa".repeat(48).toBN(16))
+    send.mine("aa".repeat(48).toBNFromHex())
 
     #Add it.
     if not rpc.functions.lattice.addSend(send):
@@ -174,7 +173,7 @@ proc data(
     #Sign the Data.
     rpc.functions.personal.signData(data)
     #Mine the Data.
-    data.mine("E0".repeat(48).toBN(16))
+    data.mine("E0".repeat(48).toBNFromHex())
 
     #Add it.
     if not rpc.functions.lattice.addData(data):

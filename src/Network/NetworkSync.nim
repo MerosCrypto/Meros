@@ -23,12 +23,12 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
             entries: seq[string] = @[]
 
         #Make sure we have all the Verifications in the Block.
-        for verifier in newBlock.verifications:
+        for record in newBlock.record:
             #Get the Verifier's height.
-            var verifHeight: int = network.mainFunctions.verifications.getVerifierHeight(verifier.key)
+            var verifHeight: int = network.mainFunctions.verifications.getVerifierHeight(record.key)
 
             #If we're missing Verifications...
-            if verifHeight <= verifier.nonce:
+            if verifHeight <= record.nonce:
                 #Add the gap.
                 gaps.add((
                     verifier.key,
@@ -37,7 +37,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
                 ))
 
             #Grab their pending hashes and place it in hashes.
-            hashes[verifier.key] = network.mainFunctions.verifications.getPendingHashes(verifier.key, verifHeight)
+            hashes[record.key] = network.mainFunctions.verifications.getPendingHashes(record.key, verifHeight)
 
         #If there are no gaps, return.
         if gaps.len == 0:
@@ -72,14 +72,14 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
             #Check the Block's aggregate.
             #Aggregate Infos for each Verifier.
             var agInfos: seq[BLSAggregationInfo] = @[]
-            #Iterate over every Verifier.
-            for verifier in newBlock.verifications:
+            #Iterate over every Record.
+            for record in newBlock.records:
                 #Aggregate Infos for this verifier.
                 var verifierAgInfos: seq[BLSAggregationInfo] = @[]
                 #Iterate over this verifier's hashes.
-                for hash in hashes[verifier.key]:
+                for hash in hashes[record.key]:
                     #Create AggregationInfos.
-                    verifierAgInfos.add(newBLSAggregationInfo(newBLSPublicKey(verifier.key), hash))
+                    verifierAgInfos.add(newBLSAggregationInfo(newBLSPublicKey(record.key), hash))
                 #Create the aggregate AggregateInfo for this Verifier.
                 agInfos.add(verifierAgInfos.aggregate())
 
@@ -87,13 +87,13 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
             var agInfo: BLSAggregationInfo = agInfos.aggregate()
             #If it's nil, make sure the signature is 0.
             if agInfo == nil:
-                if newBlock.header.verifications != nil:
+                if newBlock.header.aggregate != nil:
                     return false
             #If it's not nil, test it against the signature.
             elif agInfo != nil:
-                newBlock.header.verifications.setAggregationInfo(agInfo)
+                newBlock.header.aggregate.setAggregationInfo(agInfo)
                 #Verify the signature.
-                if not newBlock.header.verifications.verify():
+                if not newBlock.header.aggregate.verify():
                     return false
 
             #Download the Entries.

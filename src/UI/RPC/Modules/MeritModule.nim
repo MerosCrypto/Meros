@@ -7,8 +7,8 @@ import BN
 #Hash lib.
 import ../../../lib/Hash
 
-#BlS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
 #VerifierIndex object.
 import ../../../Database/Merit/objects/VerifierIndexObj
