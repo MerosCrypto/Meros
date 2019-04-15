@@ -1,6 +1,6 @@
 include MainDatabase
 
-proc mainVerifications() {.raises: [].} =
+proc mainVerifications() {.forceCheck: [].} =
     {.gcsafe.}:
         verifications = newVerifications(functions.database)
 

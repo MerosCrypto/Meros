@@ -16,12 +16,8 @@ proc newRPC*(
     functions: GlobalFunctionBox,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
-): RPC {.raises: [SocketError].} =
-    newRPCObject(
-        functions,
-        toRPC,
-        toGUI
-    )
+): RPC {.raises: [].} =
+    result = RPC()
 
 proc handle*(
     rpc: RPC,
@@ -35,12 +31,6 @@ proc start*(
 ) {.async.} =
     discard
 
-proc handle*(
-    rpc: RPC,
-    client: AsyncSocket
-) {.async.} =
-    discard
-
 proc listen*(
     rpc: RPC,
     config: Config
@@ -49,7 +39,14 @@ proc listen*(
 
 proc shutdown*(
     rpc: RPC
-) {.raises: [
-    AsyncError
-].} =
+) {.raises: [].} =
+    discard
+
+proc newGUI*(
+    fromMainArg: ptr Channel[string],
+    toRPC: ptr Channel[JSONNode],
+    toGUI: ptr Channel[JSONNode],
+    width: int,
+    height: int
+) {.raises: [].} =
     discard

@@ -1,11 +1,14 @@
 include MainGlobals
 
-proc mainDatabase() {.raises: [
+proc mainDatabase() {.forceCheck: [
     DBError
 ].} =
     {.gcsafe.}:
         #Open the database.
-        db = newDB(config.db, MAX_DB_SIZE)
+        try:
+            db = newDB(config.db, MAX_DB_SIZE)
+        except DBError as e:
+            raise e
 
         #Allow access to put/get/delete.
         functions.database.put = proc (

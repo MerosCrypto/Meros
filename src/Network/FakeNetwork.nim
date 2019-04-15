@@ -31,9 +31,7 @@ proc newNetwork*(
     id: int,
     protocol: int,
     mainFunctions: GlobalFunctionBox
-): Network {.raises: [
-    SocketError
-].} =
+): Network {.raises: [].} =
     newNetworkObj(
         id,
         protocol,
@@ -58,9 +56,7 @@ proc connect*(
 
 proc shutdown*(
     network: Network
-) {.raises: [
-    SocketError
-].} =
+) {.raises: [].} =
     discard
 
 proc sync*(

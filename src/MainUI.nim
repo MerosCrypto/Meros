@@ -5,10 +5,7 @@ fromMain.open()
 toRPC.open()
 toGUI.open()
 
-proc mainRPC() {.raises: [
-    AsyncError,
-    SocketError
-].} =
+proc mainRPC() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the RPC.
         rpc = newRPC(functions, addr toRPC, addr toGUI)
@@ -18,12 +15,9 @@ proc mainRPC() {.raises: [
             asyncCheck rpc.start()
             #Start listening.
             asyncCheck rpc.listen(config)
-        except:
-            raise newException(AsyncError, "Couldn't start the RPC.")
+        except Exception:
+            discard
 
-proc mainGUI() {.raises: [
-    ChannelError,
-    WebViewError
-].} =
+proc mainGUI() {.forceCheck: [].} =
     #Create the GUI.
     newGUI(addr fromMain, addr toRPC, addr toGUI, 800, 500)

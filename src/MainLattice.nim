@@ -8,7 +8,7 @@ proc verify(
     await sleepAsync(100)
 
     #Make sure we're a Miner with Merit.
-    if (not config.miner.isNil) and (merit.state[config.miner.publicKey] > 0):
+    if config.miner.initiated and (merit.state[config.miner.publicKey] > 0):
         #Make sure we didn't already Verify an Entry at this position.
         if lattice[entry.sender].entries[entry.nonce - lattice[entry.sender].confirmed].len != 1:
             return
@@ -20,7 +20,7 @@ proc verify(
 
         #Verify the Entry.
         var verif: MemoryVerification = newMemoryVerificationObj(entry.hash)
-        config.miner.sign(verif, verifications[config.miner.publicKey.toString()].height)
+        config.miner.sign(verif, verifications[config.miner.publicKey].height)
 
         #Add the verif to verifications.
         verifications.add(verif)
@@ -28,8 +28,8 @@ proc verify(
         #Release the verify lock.
         release(verifyLock)
 
-        #Discard lattice.verify because it is known to return true.
-        discard lattice.verify(merit, verif)
+        #Add the Verification to the Lattice.
+        lattice.verify(merit, verif)
 
         #Broadcast the Verification.
         await network.broadcast(
@@ -39,13 +39,7 @@ proc verify(
             )
         )
 
-proc mainLattice() {.raises: [
-    ValueError,
-    IndexError,
-    GapError,
-    EdPublicKeyError,
-    BLSError
-].} =
+proc mainLattice() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Lattice.
         lattice = newLattice(
@@ -59,27 +53,40 @@ proc mainLattice() {.raises: [
         #Handle requests for an account's height.
         functions.lattice.getHeight = proc (
             address: string
-        ): int {.raises: [].} =
-            lattice[address].height
+        ): int {.forceCheck: [
+            AddressError
+        ].} =
+            try:
+                result = lattice[address].height
+            except AddressError as e:
+                raise e
 
         #Handle requests for an account's balance.
         functions.lattice.getBalance = proc (
             address: string
-        ): BN {.raises: [].} =
-            lattice[address].balance
+        ): BN {.forceCheck: [
+            AddressError
+        ].} =
+            try:
+                result = lattice[address].balance
+            except AddressError as e:
+                raise e
 
         #Handle requests for an Entry.
         functions.lattice.getEntryByHash = proc (
             hash: Hash[384]
-        ): Entry {.raises: [
+        ): Entry {.forceCheck: [
             ValueError,
+            IndexError,
             ArgonError,
             BLSError,
             EdPublicKeyError
         ].} =
             try:
-                lattice[hash]
+                result = lattice[hash]
             except ValueError as e:
+                raise e
+            except IndexError as e:
                 raise e
             except ArgonError as e:
                 raise e
@@ -90,12 +97,12 @@ proc mainLattice() {.raises: [
 
         functions.lattice.getEntryByIndex = proc (
             index: LatticeIndex
-        ): Entry {.raises: [
+        ): Entry {.forceCheck: [
             ValueError,
             IndexError
         ].} =
             try:
-                lattice[index]
+                result = lattice[index]
             except ValueError as e:
                 raise e
             except IndexError as e:
@@ -104,10 +111,11 @@ proc mainLattice() {.raises: [
         #Handle Claims.
         functions.lattice.addClaim = proc (
             claim: Claim
-        ) {.raises: [
+        ) {.forceCheck: [
             ValueError,
             IndexError,
             GapError,
+            AddressError,
             EdPublicKeyError,
             BLSError
         ].} =
@@ -128,7 +136,11 @@ proc mainLattice() {.raises: [
             #Missing Entries before this Entry.
             except GapError as e:
                 echo "Failed to add the Claim."
-                discard
+                raise e
+            #Account has an invalid address.
+            except AddressError as e:
+                echo "Failed to add the Claim."
+                raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
                 echo "Failed to add the Claim."
@@ -143,17 +155,19 @@ proc mainLattice() {.raises: [
             #Create a Verification.
             try:
                 asyncCheck verify(claim)
-            except:
-                raise newException(AsyncError, "Couldn't verify a Claim.")
+            except Exception:
+                doAssert(false)
 
         #Handle Sends.
         functions.lattice.addSend = proc (
             send: Send
-        ) {.raises: [
+        ) {.forceCheck: [
             ValueError,
             IndexError,
             GapError,
-            EdPublicKeyError
+            AddressError,
+            EdPublicKeyError,
+            SodiumError
         ].} =
             #Print that we're adding the Send.
             echo "Adding a new Send."
@@ -172,19 +186,26 @@ proc mainLattice() {.raises: [
             #Missing Entries before this Entry.
             except GapError as e:
                 echo "Failed to add the Send."
-                discard
+                raise e
+            #Account has an invalid address.
+            except AddressError as e:
+                echo "Failed to add the Send."
+                raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
                 echo "Failed to add the Send."
                 raise e
+            #BLSError.
+            except BLSError as e:
+                doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Claim: " & e.msg)
 
             echo "Successfully added the Send."
 
             #Create a Verification.
             try:
                 asyncCheck verify(send)
-            except:
-                raise newException(AsyncError, "Couldn't verify a Send.")
+            except Exception:
+                doAssert(false)
 
             #If the Send is for us, Receive it.
             if wallet.initiated:
@@ -193,13 +214,13 @@ proc mainLattice() {.raises: [
                     var recv: Receive
                     try:
                         recv = newReceive(
-                            newIndex(
+                            newLatticeIndex(
                                 send.sender,
                                 send.nonce
                             ),
                             lattice[wallet.address].height
                         )
-                    except AddressError as e:
+                    except AddressError:
                         doAssert(false, "One of our Wallets has an invalid Address.")
 
                     #Sign it.
@@ -223,10 +244,11 @@ proc mainLattice() {.raises: [
         #Handle Receives.
         functions.lattice.addReceive = proc (
             recv: Receive
-        ) {.raises: [
+        ) {.forceCheck: [
             ValueError,
             IndexError,
             GapError,
+            AddressError,
             EdPublicKeyError
         ].} =
             #Print that we're adding the Receive.
@@ -246,27 +268,35 @@ proc mainLattice() {.raises: [
             #Missing Entries before this Entry.
             except GapError as e:
                 echo "Failed to add the Receive."
-                discard
+                raise e
+            #Account has an invalid address.
+            except AddressError as e:
+                echo "Failed to add the Receive."
+                raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
                 echo "Failed to add the Receive."
                 raise e
+            #BLSError.
+            except BLSError as e:
+                doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Receive: " & e.msg)
 
             echo "Successfully added the Receive."
 
             #Create a Verification.
             try:
                 asyncCheck verify(recv)
-            except:
-                raise newException(AsyncError, "Couldn't verify a Receive.")
+            except Exception:
+                doAssert(false)
 
         #Handle Data.
         functions.lattice.addData = proc (
             data: Data
-        ) {.raises: [
+        ) {.forceCheck: [
             ValueError,
             IndexError,
             GapError,
+            AddressError,
             EdPublicKeyError
         ].} =
             #Print that we're adding the Data.
@@ -286,16 +316,23 @@ proc mainLattice() {.raises: [
             #Missing Entries before this Entry.
             except GapError as e:
                 echo "Failed to add the Data."
-                discard
+                raise e
+            #Account has an invalid address.
+            except AddressError as e:
+                echo "Failed to add the Data."
+                raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
                 echo "Failed to add the Data."
                 raise e
+            #BLSError.
+            except BLSError as e:
+                doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Data: " & e.msg)
 
             echo "Successfully added the Data."
 
             #Create a Verification.
             try:
                 asyncCheck verify(data)
-            except:
-                raise newException(AsyncError, "Couldn't verify a Data.")
+            except Exception:
+                doAssert(false)

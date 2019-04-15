@@ -10,25 +10,23 @@ General Cleanup:
 
 - Make more `proc`s `func`.
 
-- Add `DataExists` for when data has already been added.
-- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `IndexError`.
-- Replace BLS/Sodium Errors when a signature fails, versus when the lib fails, with `ValueError`.
-
-- Export `FinalAttributeError` from `Errors` so we don't have to import `finals` from so many places.
-
 Specific Tasks:
 - Confirm that all leading whitespace is a multiple of 4 (ignoring comment lineups).
 
-- Move Mint to a `BLSPublicKey` from a `string`.
+- Add `DataExists` for when data has already been added.
+- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `IndexError`.
+- Export `FinalAttributeError` from `Errors` so we don't have to import `finals` from so many places.
 
 - Remove `save: bool` from various systems.
 
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
+- Move Mint to a `BLSPublicKey` from a `string`.
+
 - Clean Network.
 - Clean UI.
-- Clean Main, especially `merit.addBlock`.
+- Finish cleaning Main, especially `merit.addBlock`. It currently compiles, yet has some code commented, some `except Exception`s, and no cleaning of the async code.
 
 - Don't rebroadcast Blocks or Entries that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).

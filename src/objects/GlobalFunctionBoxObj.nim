@@ -49,6 +49,26 @@ type
     SystemFunctionBox* = ref object
         quit*: proc () {.raises: [].}
 
+    DatabaseFunctionBox* = ref object
+        put*: proc (
+            key: string,
+            val: string
+        ) {.raises: [
+            DBWriteError
+        ].}
+
+        get*: proc (
+            key: string
+        ): string {.raises: [
+            DBReadError
+        ].}
+
+        delete*: proc (
+            key: string
+        ) {.raises: [
+            DBWriteError
+        ].}
+
     VerificationsFunctionBox* = ref object
         getVerifierHeight*: proc (
             key: BLSPublicKey
@@ -114,16 +134,21 @@ type
     LatticeFunctionBox* = ref object
         getHeight*: proc (
             address: string
-        ): int {.raises: [].}
+        ): int {.raises: [
+            AddressError
+        ].}
 
         getBalance*: proc (
             address: string
-        ): BN {.raises: [].}
+        ): BN {.raises: [
+            AddressError
+        ].}
 
         getEntryByHash*: proc (
-            hash: string
+            hash: Hash[384]
         ): Entry {.raises: [
             ValueError,
+            IndexError,
             ArgonError,
             BLSError,
             EdPublicKeyError
@@ -142,6 +167,7 @@ type
             ValueError,
             IndexError,
             GapError,
+            AddressError,
             EdPublicKeyError,
             BLSError
         ].}
@@ -152,7 +178,9 @@ type
             ValueError,
             IndexError,
             GapError,
-            EdPublicKeyError
+            AddressError,
+            EdPublicKeyError,
+            SodiumError
         ].}
 
         addReceive*: proc (
@@ -161,6 +189,7 @@ type
             ValueError,
             IndexError,
             GapError,
+            AddressError,
             EdPublicKeyError
         ].}
 
@@ -170,27 +199,8 @@ type
             ValueError,
             IndexError,
             GapError,
+            AddressError,
             EdPublicKeyError
-        ].}
-
-    DatabaseFunctionBox* = ref object
-        put*: proc (
-            key: string,
-            val: string
-        ) {.raises: [
-            DBWriteError
-        ].}
-
-        get*: proc (
-            key: string
-        ): string {.raises: [
-            DBReadError
-        ].}
-
-        delete*: proc (
-            key: string
-        ) {.raises: [
-            DBWriteError
         ].}
 
     PersonalFunctionBox* = ref object
@@ -199,8 +209,8 @@ type
         setSeed*: proc (
             seed: string
         ) {.raises: [
-            ValueError,
             RandomError,
+            EdSeedError,
             SodiumError
         ].}
 
@@ -208,6 +218,7 @@ type
             send: Send
         ) {.raises: [
             ValueError,
+            AddressError,
             SodiumError
         ].}
 
@@ -220,7 +231,7 @@ type
         signData*: proc (
             data: Data
         ) {.raises: [
-            ValueError,
+            AddressError,
             SodiumError
         ].}
 
@@ -228,7 +239,7 @@ type
         connect*: proc (
             ip: string,
             port: int
-        ): Future[bool]
+        ): Future[void]
 
         broadcast*: proc (
             msgType: MessageType,
@@ -237,10 +248,10 @@ type
 
     GlobalFunctionBox* = ref object
         system*:        SystemFunctionBox
+        database*:      DatabaseFunctionBox
         verifications*: VerificationsFunctionBox
         merit*:         MeritFunctionBox
         lattice*:       LatticeFunctionBox
-        database*:      DatabaseFunctionBox
         personal*:      PersonalFunctionBox
         network*:       NetworkFunctionBox
 
@@ -248,10 +259,10 @@ type
 func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
     GlobalFunctionBox(
         system:        SystemFunctionBox(),
+        database:      DatabaseFunctionBox(),
         verifications: VerificationsFunctionBox(),
         merit:         MeritFunctionBox(),
         lattice:       LatticeFunctionBox(),
-        database:      DatabaseFunctionBox(),
         personal:      PersonalFunctionBox(),
         network:       NetworkFunctionBox()
     )

@@ -1,8 +1,6 @@
 include MainPersonal
 
-proc mainNetwork() {.raises: [
-    SocketError
-].} =
+proc mainNetwork() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Network..
         network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, functions)
@@ -10,20 +8,16 @@ proc mainNetwork() {.raises: [
         #Start listening.
         try:
             asyncCheck network.listen(config)
-        except:
-            raise newException(SocketError, "Couldn't listen on our server socket.")
+        except Exception:
+            discard
 
         #Handle network events.
         #Connect to another node.
         functions.network.connect = proc (
             ip: string,
             port: int
-        ): Future[bool] {.async.} =
-            try:
-                await network.connect(ip, port)
-                result = true
-            except:
-                result = false
+        ) {.async.} =
+            await network.connect(ip, port)
 
         #Broadcast a message.
         functions.network.broadcast = proc (

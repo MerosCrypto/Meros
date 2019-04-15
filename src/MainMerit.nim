@@ -1,6 +1,6 @@
 include MainVerifications
 
-proc mainMerit() {.raises: [].} =
+proc mainMerit() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(
@@ -13,20 +13,23 @@ proc mainMerit() {.raises: [].} =
         )
 
         #Handle requests for the current height.
-        functions.merit.getHeight = proc (): int {.raises: [].} =
+        functions.merit.getHeight = proc (): int {.forceCheck: [].} =
             merit.blockchain.height
 
         #Handle requests for the current Difficulty.
-        functions.merit.getDifficulty = proc (): Difficulty {.raises: [].} =
+        functions.merit.getDifficulty = proc (): Difficulty {.forceCheck: [].} =
             merit.blockchain.difficulty
 
         #Handle requests for a Block.
         functions.merit.getBlock = proc (
             nonce: int
-        ): Block {.raises: [
+        ): Block {.forceCheck: [
             IndexError
         ].} =
-            merit.blockchain[nonce]
+            try:
+                result = merit.blockchain[nonce]
+            except IndexError as e:
+                raise e
 
         #Handle full blocks.
         functions.merit.addBlock = proc (
@@ -47,7 +50,7 @@ proc mainMerit() {.raises: [].} =
                         try:
                             if not await network.requestBlock(nonce):
                                 raise newException(Exception, "")
-                        except:
+                        except Exception:
                             echo "Failed to add the Block."
                             return false
 
@@ -119,7 +122,7 @@ proc mainMerit() {.raises: [].} =
             var epoch: Epoch
             try:
                 epoch = merit.processBlock(verifications, newBlock)
-            except:
+            except Exception:
                 echo "Failed to add the Block."
                 return false
 
@@ -157,10 +160,7 @@ proc mainMerit() {.raises: [].} =
                         claim.sign(config.miner, wallet)
 
                         #Emit it.
-                        try:
-                            functions.lattice.addClaim(claim)
-                        except:
-                            raise newException(EventError, "Couldn't get and call lattice.claim.")
+                        functions.lattice.addClaim(claim)
 
             echo "Successfully added the Block."
 
@@ -173,7 +173,7 @@ proc mainMerit() {.raises: [].} =
             )
 
             #If we made a Claim...
-            if not claim.initiated:
+            if not claim.isNil:
                 #Broadcast the Claim.
                 await network.broadcast(
                     newMessage(
