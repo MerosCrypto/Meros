@@ -8,8 +8,8 @@ This is annoying, but we no longer have to specify the type when we call events,
 #Errors lib.
 import ../lib/Errors
 
-#Message object.
-import ../Network/objects/MessageObj
+#Hash lib.
+import ../lib/Hash
 
 #MinerWallet and Wallet libs.
 import ../Wallet/MinerWallet
@@ -22,7 +22,8 @@ import ../Database/common/objects/VerifierRecordObj
 #Verification object.
 import ../Database/Verifications/objects/VerificationObj
 
-#Block object.
+#Difficulty and Block objects.
+import ../Database/Merit/objects/DifficultyObj
 import ../Database/Merit/objects/BlockObj
 
 #Lattice Entries.
@@ -31,6 +32,9 @@ import ../Database/Lattice/objects/ClaimObj
 import ../Database/Lattice/objects/SendObj
 import ../Database/Lattice/objects/ReceiveObj
 import ../Database/Lattice/objects/DataObj
+
+#Message object.
+import ../Network/objects/MessageObj
 
 #BN lib.
 import BN
@@ -42,136 +46,134 @@ import finals
 import asyncdispatch
 
 type
-    SystemFunctionBox* = ref object of RootObj
-        quit*: proc () {.noSideEffect, raises: [
-            ChannelError,
-            AsyncError,
-            SocketError
-        ].}
+    SystemFunctionBox* = ref object
+        quit*: proc () {.raises: [].}
 
-    VerificationsFunctionBox* = ref object of RootObj
+    VerificationsFunctionBox* = ref object
         getVerifierHeight*: proc (
-            key: string
-        ): int {.noSideEffect, raises: [].}
+            key: BLSPublicKey
+        ): int {.raises: [].}
 
         getVerification*: proc (
-            key: string,
+            key: BLSPublicKey,
             nonce: int
-        ): Verification {.noSideEffect, raises: [
-            ValueError,
-            BLSError
+        ): Verification {.raises: [
+            IndexError
         ].}
 
-        getUnarchivedRecords*: proc (): seq[VerifierRecord] {.noSideEffect, raises: [
-            ValueError
+        getUnarchivedRecords*: proc (): seq[VerifierRecord] {.raises: [
+            IndexError
         ].}
 
         getPendingAggregate*: proc (
-            verifier: string,
+            key: BLSPublicKey,
             nonce: int
-        ): BLSSignature {.noSideEffect, raises: [
-            ValueError,
+        ): BLSSignature {.raises: [
+            IndexError,
             BLSError
         ].}
 
         getPendingHashes*: proc (
-            key: string,
+            key: BLSPublicKey,
             nonce: int
-        ): seq[string] {.noSideEffect, raises: [
-            ValueError,
-            BLSError
+        ): seq[Hash[384]] {.raises: [
+            IndexError
         ].}
 
         addVerification*: proc (
             verif: Verification
-        ): bool {.noSideEffect, raises: [
-            ValueError
+        ) {.raises: [
+            ValueError,
+            IndexError
         ].}
 
         addMemoryVerification*: proc (
             verif: MemoryVerification
-        ): bool {.noSideEffect, raises: [
+        ) {.raises: [
+            IndexError,
             ValueError,
+            GapError,
             BLSError
         ].}
 
-    MeritFunctionBox* = ref object of RootObj
-        getHeight*: proc (): int {.noSideEffect, raises: [].}
+    MeritFunctionBox* = ref object
+        getHeight*: proc (): int {.raises: [].}
 
-        getDifficulty*: proc (): BN {.noSideEffect, raises: [].}
+        getDifficulty*: proc (): Difficulty {.raises: [].}
 
         getBlock*: proc (
             nonce: int
-        ): Block {.noSideEffect, raises: [
-            ValueError,
-            ArgonError,
-            BLSError
+        ): Block {.raises: [
+            IndexError
         ].}
 
         addBlock*: proc (
             newBlock: Block
         ): Future[bool]
 
-    LatticeFunctionBox* = ref object of RootObj
+    LatticeFunctionBox* = ref object
         getHeight*: proc (
-            account: string
-        ): int {.noSideEffect, raises: [
-            ValueError
-        ].}
+            address: string
+        ): int {.raises: [].}
 
         getBalance*: proc (
-            account: string
-        ): BN {.noSideEffect, raises: [
-            ValueError
-        ].}
+            address: string
+        ): BN {.raises: [].}
 
         getEntryByHash*: proc (
             hash: string
-        ): Entry {.noSideEffect, raises: [].}
+        ): Entry {.raises: [
+            ValueError,
+            ArgonError,
+            BLSError,
+            EdPublicKeyError
+        ].}
 
         getEntryByIndex*: proc (
             index: LatticeIndex
-        ): Entry {.noSideEffect, raises: [
-            ValueError
+        ): Entry {.raises: [
+            ValueError,
+            IndexError
         ].}
 
         addClaim*: proc (
             claim: Claim
-        ): bool {.noSideEffect, raises: [
+        ) {.raises: [
             ValueError,
-            AsyncError,
-            BLSError,
-            SodiumError
+            IndexError,
+            GapError,
+            EdPublicKeyError,
+            BLSError
         ].}
 
         addSend*: proc (
             send: Send
-        ): bool {.noSideEffect, raises: [
+        ) {.raises: [
             ValueError,
-            AsyncError,
-            BLSError,
-            SodiumError,
+            IndexError,
+            GapError,
+            EdPublicKeyError
         ].}
 
         addReceive*: proc (
             recv: Receive
-        ): bool {.noSideEffect, raises: [
+        ) {.raises: [
             ValueError,
-            AsyncError,
-            BLSError,
-            SodiumError
+            IndexError,
+            GapError,
+            EdPublicKeyError
         ].}
 
         addData*: proc (
             data: Data
-        ): bool {.noSideEffect, raises: [
+        ) {.raises: [
             ValueError,
-            AsyncError,
-            BLSError,
-            SodiumError
+            IndexError,
+            GapError,
+            EdPublicKeyError
         ].}
 
-    DatabaseFunctionBox* = ref object of RootObj
+    DatabaseFunctionBox* = ref object
         put*: proc (
             key: string,
             val: string
@@ -191,12 +193,12 @@ type
             DBWriteError
         ].}
 
-    PersonalFunctionBox* = ref object of RootObj
-        getWallet*: proc (): Wallet {.noSideEffect, raises: [].}
+    PersonalFunctionBox* = ref object
+        getWallet*: proc (): Wallet {.raises: [].}
 
         setSeed*: proc (
             seed: string
-        ) {.noSideEffect, raises: [
+        ) {.raises: [
             ValueError,
             RandomError,
             SodiumError
@@ -204,36 +206,36 @@ type
 
         signSend*: proc (
             send: Send
-        ) {.noSideEffect, raises: [
+        ) {.raises: [
             ValueError,
             SodiumError
         ].}
 
         signReceive*: proc (
             recv: Receive
-        ) {.noSideEffect, raises: [
+        ) {.raises: [
             SodiumError
         ].}
 
         signData*: proc (
             data: Data
-        ) {.noSideEffect, raises: [
+        ) {.raises: [
             ValueError,
             SodiumError
         ].}
 
-    NetworkFunctionBox* = ref object of RootObj
+    NetworkFunctionBox* = ref object
         connect*: proc (
             ip: string,
             port: int
-        ): Future[bool] {.noSideEffect, raises: [].}
+        ): Future[bool]
 
         broadcast*: proc (
             msgType: MessageType,
             msg: string
-        ): Future[void] {.noSideEffect, raises: [].}
+        ): Future[void]
 
-    GlobalFunctionBox* = ref object of RootObj
+    GlobalFunctionBox* = ref object
         system*:        SystemFunctionBox
         verifications*: VerificationsFunctionBox
         merit*:         MeritFunctionBox

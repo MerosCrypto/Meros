@@ -112,3 +112,11 @@ proc `[]`*(
         doAssert(false, "Couldn't grab a Verifier despite just calling `add` for that Verifier: " & e.msg)
     except IndexError as e:
         raise e
+
+#Iterate over every verifier.
+iterator verifiers*(verifs: Verifications): BLSPublicKey {.raises: [].} =
+    for verifier in verifs.verifiers.keys():
+        try:
+            yield verifs.verifiers[verifier].key
+        except KeyError as e:
+            doAssert(false, "Couldn't grab a Verifier despite only asking for it because of the keys iterator: " & e.msg)

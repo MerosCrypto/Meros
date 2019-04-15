@@ -28,10 +28,16 @@ proc main() {.thread.} =
     mainRPC()
 
     runForever()
-spawn main()
 
-#Spawn the GUI.
-mainGUI()
-
-#Sync up with the main thread.
-sync()
+#If there's no GUI...
+when defined(nogui):
+    #Run main.
+    main()
+#If there is one...
+else:
+    #Spawn main on a thread.
+    spawn main()
+    #Run the GUI on the main thread,
+    mainGUI()
+    #Sync the threads.
+    sync()

@@ -21,7 +21,9 @@ proc mainRPC() {.raises: [
         except:
             raise newException(AsyncError, "Couldn't start the RPC.")
 
-proc mainGUI() {.raises: [ChannelError, WebViewError].} =
-    when not defined(nogui):
-        #Create the GUI.
-        newGUI(addr fromMain, addr toRPC, addr toGUI, 800, 500)
+proc mainGUI() {.raises: [
+    ChannelError,
+    WebViewError
+].} =
+    #Create the GUI.
+    newGUI(addr fromMain, addr toRPC, addr toGUI, 800, 500)

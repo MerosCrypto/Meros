@@ -12,8 +12,8 @@ const
         "MEROS_DEVELOPER_TESTNET_2"
     BLOCK_DIFFICULTY: string = #Blockchain difficulty at the start.
         "FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    BLOCK_TIME: int = 600     #Block time in seconds.
-    LIVE_MERIT: int = 1000    #Blocks before Merit dies.
+    BLOCK_TIME: int = 600      #Block time in seconds.
+    LIVE_MERIT: int = 1000     #Blocks before Merit dies.
 
     #Lattice constants.
     TRANSACTION_DIFFICULTY: string = #Transaction difficulty at the start.

@@ -4,14 +4,11 @@ import lib/Errors
 #Util lib.
 import lib/Util
 
-#BN lib.
-import BN
-
 #Hash lib.
 import lib/Hash
 
 #Merkle lib.
-import lib/Merkle
+import Database/common/Merkle
 
 #Wallet.
 import Wallet/MinerWallet
@@ -30,7 +27,7 @@ import Database/Lattice/Lattice
 import Database/Filesystem/DB
 
 #Network.
-import Network/Network
+import Network/FakeNetwork
 
 #Serialization libs.
 import Network/Serialize/Verifications/SerializeMemoryVerification
@@ -44,7 +41,7 @@ import Network/Serialize/Lattice/SerializeReceive
 import Network/Serialize/Lattice/SerializeData
 
 #UI.
-import UI/UI
+import UI/FakeUI
 
 #Global Function Box object.
 import objects/GlobalFunctionBoxObj
@@ -52,23 +49,20 @@ import objects/GlobalFunctionBoxObj
 #Config object.
 import objects/ConfigObj
 
+#BN lib.
+import BN
+
 #Finals lib.
 import finals
-
-#BLS lib.
-import lib/BLS
 
 #Locks standard lib.
 import locks
 
-#Async standard lib.
-import asyncdispatch
-
 #Thread standard lib.
 import threadpool
 
-#String utils standard lib.
-import strutils
+#Async standard lib.
+import asyncdispatch
 
 #JSON standard lib.
 import json

@@ -18,6 +18,7 @@ import ../../objects/GlobalFunctionBoxObj
 
 #VerifierRecord object.
 import ../common/objects/VerifierRecordObj
+export VerifierRecordObj
 
 #Miners object.
 import objects/MinersObj

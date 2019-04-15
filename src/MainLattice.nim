@@ -1,7 +1,9 @@
 include MainMerit
 
 #Creates and publishes a Verification.
-proc verify(entry: Entry) {.async.} =
+proc verify(
+    entry: Entry
+) {.async.} =
     #Sleep for 100 microseconds to make sure this Verification is sent after ther Entry itself.
     await sleepAsync(100)
 
@@ -39,10 +41,10 @@ proc verify(entry: Entry) {.async.} =
 
 proc mainLattice() {.raises: [
     ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
+    IndexError,
+    GapError,
+    EdPublicKeyError,
+    BLSError
 ].} =
     {.gcsafe.}:
         #Create the Lattice.
@@ -55,146 +57,245 @@ proc mainLattice() {.raises: [
         )
 
         #Handle requests for an account's height.
-        functions.lattice.getHeight = proc (account: string): int {.raises: [ValueError, LMDBError].} =
-            lattice[account].height
+        functions.lattice.getHeight = proc (
+            address: string
+        ): int {.raises: [].} =
+            lattice[address].height
 
         #Handle requests for an account's balance.
-        functions.lattice.getBalance = proc (account: string): BN {.raises: [ValueError, LMDBError].} =
-            lattice[account].balance
+        functions.lattice.getBalance = proc (
+            address: string
+        ): BN {.raises: [].} =
+            lattice[address].balance
 
         #Handle requests for an Entry.
-        functions.lattice.getEntryByHash = proc (hash: string): Entry {.raises: [KeyError].} =
-            lattice.getEntry(hash)
+        functions.lattice.getEntryByHash = proc (
+            hash: Hash[384]
+        ): Entry {.raises: [
+            ValueError,
+            ArgonError,
+            BLSError,
+            EdPublicKeyError
+        ].} =
+            try:
+                lattice[hash]
+            except ValueError as e:
+                raise e
+            except ArgonError as e:
+                raise e
+            except BLSError as e:
+                raise e
+            except EdPublicKeyError as e:
+                raise e
 
-        functions.lattice.getEntryByIndex = proc (index: Index): Entry {.raises: [ValueError].} =
-            lattice[index]
+        functions.lattice.getEntryByIndex = proc (
+            index: LatticeIndex
+        ): Entry {.raises: [
+            ValueError,
+            IndexError
+        ].} =
+            try:
+                lattice[index]
+            except ValueError as e:
+                raise e
+            except IndexError as e:
+                raise e
 
         #Handle Claims.
-        functions.lattice.addClaim = proc (claim: Claim): bool {.raises: [
+        functions.lattice.addClaim = proc (
+            claim: Claim
+        ) {.raises: [
             ValueError,
-            AsyncError,
-            BLSError,
-            SodiumError,
-            LMDBError
+            IndexError,
+            GapError,
+            EdPublicKeyError,
+            BLSError
         ].} =
-            #Print that we're adding the Entry.
+            #Print that we're adding the Claim.
             echo "Adding a new Claim."
 
             #Add the Claim.
-            if lattice.add(claim):
-                result = true
-                echo "Successfully added the Claim."
-
-                #Create a Verification.
-                try:
-                    asyncCheck verify(claim)
-                except:
-                    raise newException(AsyncError, "Couldn't verify an entry.")
-            else:
-                result = false
+            try:
+                lattice.add(claim)
+            #Invalid Ed25519 Signature or invalid BLS Signature OR data already exists.
+            except ValueError as e:
                 echo "Failed to add the Claim."
+                raise e
+            #Competing Entry already verified at this position.
+            except IndexError as e:
+                echo "Failed to add the Claim."
+                raise e
+            #Missing Entries before this Entry.
+            except GapError as e:
+                echo "Failed to add the Claim."
+                discard
+            #Invalid Ed25519 Public Key.
+            except EdPublicKeyError as e:
+                echo "Failed to add the Claim."
+                raise e
+            #BLS lib threw.
+            except BLSError as e:
+                echo "Failed to add the Claim."
+                raise e
+
+            echo "Successfully added the Claim."
+
+            #Create a Verification.
+            try:
+                asyncCheck verify(claim)
+            except:
+                raise newException(AsyncError, "Couldn't verify a Claim.")
 
         #Handle Sends.
-        functions.lattice.addSend = proc (send: Send): bool {.raises: [
+        functions.lattice.addSend = proc (
+            send: Send
+        ) {.raises: [
             ValueError,
-            EventError,
-            AsyncError,
-            BLSError,
-            SodiumError,
-            LMDBError,
-            FinalAttributeError
+            IndexError,
+            GapError,
+            EdPublicKeyError
         ].} =
-            #Print that we're adding the Entry.
+            #Print that we're adding the Send.
             echo "Adding a new Send."
 
             #Add the Send.
-            if lattice.add(send):
-                result = true
-                echo "Successfully added the Send."
+            try:
+                lattice.add(send)
+            #Invalid Ed25519 Signature OR data already exists.
+            except ValueError as e:
+                echo "Failed to add the Send."
+                raise e
+            #Competing Entry already verified at this position.
+            except IndexError as e:
+                echo "Failed to add the Send."
+                raise e
+            #Missing Entries before this Entry.
+            except GapError as e:
+                echo "Failed to add the Send."
+                discard
+            #Invalid Ed25519 Public Key.
+            except EdPublicKeyError as e:
+                echo "Failed to add the Send."
+                raise e
 
-                #Create a Verification.
-                try:
-                    asyncCheck verify(send)
-                except:
-                    raise newException(AsyncError, "Couldn't verify an entry.")
+            echo "Successfully added the Send."
 
-                #If the Send is for us, Receive it.
-                if wallet != nil:
-                    if send.output == wallet.address:
-                        #Create the Receive.
-                        var recv: Receive = newReceive(
+            #Create a Verification.
+            try:
+                asyncCheck verify(send)
+            except:
+                raise newException(AsyncError, "Couldn't verify a Send.")
+
+            #If the Send is for us, Receive it.
+            if wallet.initiated:
+                if send.output == wallet.address:
+                    #Create the Receive.
+                    var recv: Receive
+                    try:
+                        recv = newReceive(
                             newIndex(
                                 send.sender,
                                 send.nonce
                             ),
                             lattice[wallet.address].height
                         )
-                        #Sign it.
+                    except AddressError as e:
+                        doAssert(false, "One of our Wallets has an invalid Address.")
+
+                    #Sign it.
+                    try:
                         wallet.sign(recv)
+                    except SodiumError as e:
+                        raise e
 
-                        try:
-                            #Emit it.
-                            if functions.lattice.addReceive(recv):
-                                #Broadcast it.
-                                asyncCheck network.broadcast(
-                                    newMessage(
-                                        MessageType.Receive,
-                                        recv.serialize()
-                                    )
-                                )
-                        except:
-                            raise newException(EventError, "Couldn't get and call lattice.receive.")
-            else:
-                result = false
-                echo "Failed to add the Send."
-
+                    discard """
+                        #Emit it.
+                        functions.lattice.addReceive(recv)
+                        #Broadcast it.
+                        asyncCheck network.broadcast(
+                            newMessage(
+                                MessageType.Receive,
+                                recv.serialize()
+                            )
+                        )
+                    """
 
         #Handle Receives.
-        functions.lattice.addReceive = proc (recv: Receive): bool {.raises: [
+        functions.lattice.addReceive = proc (
+            recv: Receive
+        ) {.raises: [
             ValueError,
-            AsyncError,
-            BLSError,
-            LMDBError,
-            SodiumError
+            IndexError,
+            GapError,
+            EdPublicKeyError
         ].} =
-            #Print that we're adding the Entry.
+            #Print that we're adding the Receive.
             echo "Adding a new Receive."
 
             #Add the Receive.
-            if lattice.add(recv):
-                result = true
-                echo "Successfully added the Receive."
-
-                #Create a Verification.
-                try:
-                    asyncCheck verify(recv)
-                except:
-                    raise newException(AsyncError, "Couldn't verify an entry.")
-            else:
-                result = false
+            try:
+                lattice.add(recv)
+            #Invalid Ed25519 Signature OR data already exists.
+            except ValueError as e:
                 echo "Failed to add the Receive."
+                raise e
+            #Competing Entry already verified at this position.
+            except IndexError as e:
+                echo "Failed to add the Receive."
+                raise e
+            #Missing Entries before this Entry.
+            except GapError as e:
+                echo "Failed to add the Receive."
+                discard
+            #Invalid Ed25519 Public Key.
+            except EdPublicKeyError as e:
+                echo "Failed to add the Receive."
+                raise e
+
+            echo "Successfully added the Receive."
+
+            #Create a Verification.
+            try:
+                asyncCheck verify(recv)
+            except:
+                raise newException(AsyncError, "Couldn't verify a Receive.")
 
         #Handle Data.
-        functions.lattice.addData = proc (data: Data): bool {.raises: [
+        functions.lattice.addData = proc (
+            data: Data
+        ) {.raises: [
             ValueError,
-            AsyncError,
-            BLSError,
-            LMDBError,
-            SodiumError
+            IndexError,
+            GapError,
+            EdPublicKeyError
         ].} =
-            #Print that we're adding the Entry.
+            #Print that we're adding the Data.
             echo "Adding a new Data."
 
             #Add the Data.
-            if lattice.add(data):
-                result = true
-                echo "Successfully added the Data."
-
-                #Create a Verification.
-                try:
-                    asyncCheck verify(data)
-                except:
-                    raise newException(AsyncError, "Couldn't verify an entry.")
-            else:
-                result = false
+            try:
+                lattice.add(data)
+            #Invalid Ed25519 Signature OR data already exists.
+            except ValueError as e:
                 echo "Failed to add the Data."
+                raise e
+            #Competing Entry already verified at this position.
+            except IndexError as e:
+                echo "Failed to add the Data."
+                raise e
+            #Missing Entries before this Entry.
+            except GapError as e:
+                echo "Failed to add the Data."
+                discard
+            #Invalid Ed25519 Public Key.
+            except EdPublicKeyError as e:
+                echo "Failed to add the Data."
+                raise e
+
+            echo "Successfully added the Data."
+
+            #Create a Verification.
+            try:
+                asyncCheck verify(data)
+            except:
+                raise newException(AsyncError, "Couldn't verify a Data.")

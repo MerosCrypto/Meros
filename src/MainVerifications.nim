@@ -6,25 +6,27 @@ proc mainVerifications() {.raises: [].} =
 
         #Provide access to the verifier's height.
         functions.verifications.getVerifierHeight = proc (
-            key: string
-        ): int {.raises: [KeyError, LMDBError].} =
+            key: BLSPublicKey
+        ): int {.forceCheck: [].} =
             verifications[key].height
 
         #Provide access to verifications.
         functions.verifications.getVerification = proc (
-            key: string,
+            key: BLSPublicKey,
             nonce: int
-        ): Verification {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
-            verifications[key][nonce]
+        ): Verification {.forceCheck: [
+            IndexError
+        ].} =
+            try:
+                result = verifications[key][nonce]
+            except IndexError as e:
+                raise e
 
         #Provide access to the VerifierRecords of verifiers with unarchived Verifications.
-        functions.verifications.getUnarchivedIndexes = proc (): seq[VerifierIndex] {.raises: [
-            KeyError,
-            ValueError,
-            LMDBError,
-            FinalAttributeError
+        functions.verifications.getUnarchivedRecords = proc (): seq[VerifierRecord] {.forceCheck: [
+            IndexError
         ].} =
-            #Calculate who has new Verifications.
+            #Check who has new Verifications.
             result = @[]
             for verifier in verifications.verifiers():
                 #Skip over Verifiers with no Verifications, if any manage to exist.
@@ -35,22 +37,32 @@ proc mainVerifications() {.raises: [].} =
                 if verifications[verifier].verifications.len == 0:
                     continue
 
-                #Since there are unarchived verifications, add the VerifierIndex.
-                var nonce: int = verifications[verifier].height - 1
-                result.add(newVerifierIndex(
+                #Since there are unarchived verifications, add the VerifierRecord.
+                var
+                    nonce: int = verifications[verifier].height - 1
+                    merkle: Hash[384]
+                try:
+                    merkle = verifications[verifier].calculateMerkle(nonce)
+                except IndexError as e:
+                    raise e
+
+                result.add(newVerifierRecord(
                     verifier,
                     nonce,
-                    verifications[verifier].calculateMerkle(nonce)
+                    merkle
                 ))
 
         #Provide access to pending aggregate signatures.
         functions.verifications.getPendingAggregate = proc (
-            verifierStr: string,
+            key: BLSPublicKey,
             nonce: int
-        ): BLSSignature {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
+        ): BLSSignature {.forceCheck: [
+            IndexError,
+            BLSError
+        ].} =
             var
                 #Grab the Verifier.
-                verifier: Verifier = verifications[verifierStr]
+                verifier: Verifier = verifications[key]
                 #Create a seq of signatures.
                 sigs: seq[BLSSignature] = @[]
                 #Start of the unarchived Verifications.
@@ -63,17 +75,25 @@ proc mainVerifications() {.raises: [].} =
                 return nil
 
             #Iterate over every unarchived verification, up to and including the nonce.
-            for verif in verifier{start .. nonce}:
-                sigs.add(verif.signature)
+            try:
+                for verif in verifier{start .. nonce}:
+                    sigs.add(verif.signature)
+            except IndexError as e:
+                raise e
 
             #Return the hash.
-            return sigs.aggregate()
+            try:
+                return sigs.aggregate()
+            except BLSError as e:
+                raise e
 
         #Used to calculate the aggregate with Verifications we just downloaded.
         functions.verifications.getPendingHashes = proc (
-            key: string,
-            nonceArg: int
-        ): seq[string] {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].} =
+            key: BLSPublicKey,
+            nonce: int
+        ): seq[Hash[384]] {.forceCheck: [
+            IndexError
+        ].} =
             result = @[]
 
             var
@@ -81,8 +101,6 @@ proc mainVerifications() {.raises: [].} =
                 verifier: Verifier = verifications[key]
                 #Start of the unarchived Verifications.
                 start: int
-                #Nonce to end at.
-                nonce: int = nonceArg
 
             #Make sure there are verifications.
             if verifications[key].height == 0:
@@ -94,59 +112,77 @@ proc mainVerifications() {.raises: [].} =
             else:
                 return @[]
 
-            #Make sure the nonce is within bounds.
-            if verifications[key].height <= nonce:
-                nonce = verifications[key].height - 1
-
             #Add the hashes.
-            for verif in verifications[key][start .. nonce]:
-                result.add(verif.hash.toString())
+            try:
+                for verif in verifications[key][start .. nonce]:
+                    result.add(verif.hash)
+            except IndexError as e:
+                raise e
 
         #Handle Verifications.
         functions.verifications.addVerification = proc (
             verif: Verification
-        ): bool {.raises: [ValueError, LMDBError].} =
+        ) {.forceCheck: [
+            ValueError,
+            IndexError
+        ].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
 
-            #Set the result to a default value.
-            result = true
-
-            #Add the Verification to the Verifications.
+            #Add the Verification to the Verifications DAG.
             try:
                 verifications.add(verif)
-            except:
-                #We either already got the Verification/got a competing Verification while handling the Block
-                #OR
-                #This had an unknown error.
-                #We return false to be safe.
-                return false
-
-            #Add the Verification to the Lattice (discarded since we confirmed the Entry's existence).
-            discard lattice.verify(merit, verif)
-
-        #Handle Verifications.
-        functions.verifications.addMemoryVerification = proc (
-            verif: MemoryVerification
-        ): bool {.raises: [ValueError, BLSError, LMDBError].} =
-            #Print that we're adding the Verification.
-            echo "Adding a new Verification."
-
-            #Verify the signature.
-            verif.signature.setAggregationInfo(
-                newBLSAggregationInfo(verif.verifier, verif.hash.toString())
-            )
-            if not verif.signature.verify():
-                echo "Failed to add the Verification."
-                return false
-
-            #Add the Verification to the Verifications.
-            try:
-                verifications.add(verif)
-            except:
-                return false
+            except IndexError as e:
+                #Verification has already been added.
+                raise e
+            except GapError:
+                #Missing Verifications before this Verification.
+                #Since we got this from a Block, we should've already synced all previous Verifications.
+                doAssert(false, "Adding a Verification from a Block which we verified, despite not having all mentioned Verifications.")
+            except MeritRemoval:
+                #Verifier committed a malicious act against the network.
+                discard
 
             #Add the Verification to the Lattice.
-            result = lattice.verify(merit, verif)
-            if not result:
-                echo "Missing whatever we just added a Verification for."
+            try:
+                lattice.verify(merit, verif)
+            except ValueError as e:
+                raise e
+            except IndexError as e:
+                raise e
+
+        #Handle MemoryVerifications.
+        functions.verifications.addMemoryVerification = proc (
+            verif: MemoryVerification
+        ) {.forceCheck: [
+            ValueError,
+            IndexError,
+            GapError,
+            BLSError
+        ].} =
+            #Print that we're adding the MemoryVerification.
+            echo "Adding a new MemoryVerification."
+
+            #Add the MemoryVerification to the Verifications DAG.
+            try:
+                verifications.add(verif)
+            except IndexError as e:
+                #Verification has already been added.
+                raise e
+            except GapError as e:
+                #Missing Verifications before this Verification.
+                raise e
+            except BLSError as e:
+                #Invalid BLS signature.
+                raise e
+            except MeritRemoval:
+                #Verifier committed a malicious act against the network.
+                discard
+
+            #Add the Verification to the Lattice.
+            try:
+                lattice.verify(merit, verif)
+            except ValueError as e:
+                raise e
+            except IndexError as e:
+                raise e

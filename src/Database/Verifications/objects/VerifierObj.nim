@@ -125,7 +125,6 @@ proc add*(
     verifier: var Verifier,
     verif: MemoryVerification
 ) {.forceCheck: [
-    ValueError,
     IndexError,
     GapError,
     BLSError,
@@ -137,7 +136,7 @@ proc add*(
             newBLSAggregationInfo(verif.verifier, verif.hash.toString())
         )
         if not verif.signature.verify():
-            raise newException(ValueError, "Failed to verify the Verification's signature.")
+            raise newException(BLSError, "Failed to verify the Verification's signature.")
     except BLSError as e:
         raise e
 

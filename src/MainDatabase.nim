@@ -1,25 +1,39 @@
 include MainGlobals
 
-proc mainDatabase() {.raises: [LMDBError].} =
+proc mainDatabase() {.raises: [
+    DBError
+].} =
     {.gcsafe.}:
         #Open the database.
         db = newDB(config.db, MAX_DB_SIZE)
 
         #Allow access to put/get/delete.
-        functions.database.put = proc (key: string, val: string) {.raises: [LMDBError].} =
+        functions.database.put = proc (
+            key: string, val: string
+        ) {.forceCheck: [
+            DBWriteError
+        ].} =
             try:
                 db.put(key, val)
-            except:
-                raise newException(LMDBError, getCurrentExceptionMsg())
+            except Exception as e:
+                raise newException(DBWriteError, e.msg)
 
-        functions.database.get = proc (key: string): string {.raises: [LMDBError].} =
+        functions.database.get = proc (
+            key: string
+        ): string {.forceCheck: [
+            DBReadError
+        ].} =
             try:
                 result = db.get(key)
-            except:
-                raise newException(LMDBError, getCurrentExceptionMsg())
+            except Exception as e:
+                raise newException(DBReadError, e.msg)
 
-        functions.database.delete = proc (key: string) {.raises: [LMDBError].} =
+        functions.database.delete = proc (
+            key: string
+        ) {.forceCheck: [
+            DBWriteError
+        ].} =
             try:
                 db.delete(key)
-            except:
-                raise newException(LMDBError, getCurrentExceptionMsg())
+            except Exception as e:
+                raise newException(DBWriteError, e.msg)

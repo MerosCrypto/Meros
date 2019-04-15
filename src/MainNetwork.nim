@@ -1,6 +1,8 @@
 include MainPersonal
 
-proc mainNetwork() {.raises: [SocketError].} =
+proc mainNetwork() {.raises: [
+    SocketError
+].} =
     {.gcsafe.}:
         #Create the Network..
         network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, functions)
