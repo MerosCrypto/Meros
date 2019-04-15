@@ -29,12 +29,11 @@ proc newReceive*(
     index: LatticeIndex,
     nonce: Natural
 ): Receive {.forceCheck: [
-    ValueError,
     AddressError
 ].} =
     #Verify the input address.
     if not Address.isValid(index.address):
-        raise newException(ValueError, "Receive address is not valid.")
+        raise newException(AddressError, "Receive address is not valid.")
 
     #Create the result.
     result = newReceiveObj(index)

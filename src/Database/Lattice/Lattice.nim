@@ -119,6 +119,8 @@ proc verify*(
             i = index.nonce - lattice[index.address].confirmed
         except KeyError as e:
             doAssert(false, "Couldn't grab the confirmed Entry's Index/Account/cache offsetted index: " & e.msg)
+        except AddressError as e:
+            doAssert(false, "Calculating the weight of a valid Entry without being able to grab the account due to an AddressError: " & e.msg)
 
         #Get said Entry.
         var entry: Entry = nil
@@ -153,12 +155,15 @@ proc verify*(
                         send: Send
                     try:
                         send = cast[Send](lattice[recv.index.address][recv.index.nonce])
-                    except IndexError as e:
-                        doAssert(false, "Confirmed Receive receives Send that's beyond the Account height: " & e.msg)
+                    except KeyError as e:
+                        doAssert(false, "Couldn't grab the Send the confirmed Receive is receiving from due to a KeyError: " & e.msg)
                     except ValueError as e:
                         doAssert(false, "Receive was confirmed before Send: " & e.msg)
-                    except KeyError as e:
-                        doAssert(false, "Couldn't grab the Send the confirmed Receive is receiving from: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Confirmed Receive receives Send that's beyond the Account height: " & e.msg)
+                    except AddressError as e:
+                        doAssert(false, "Couln't grab the Send the confirmed Receive is receiving from due to an AddressError: " & e.msg)
+
                     #Update the balance.
                     account.balance += send.amount
                 of EntryType.Claim:
@@ -169,12 +174,14 @@ proc verify*(
                         mint: Mint
                     try:
                         mint = cast[Mint](lattice["minter"][claim.mintNonce])
-                    except IndexError as e:
-                        doAssert(false, "Confirmed Claim receives Mint that's beyond the minter height: " & e.msg)
-                    except ValueError as e:
-                        doAssert(false, "Claim was confirmed before Mint, which shouldn't need any confirmed: " & e.msg)
                     except KeyError as e:
                         doAssert(false, "Couldn't grab a Mint from the minter Account: " & e.msg)
+                    except ValueError as e:
+                        doAssert(false, "Claim was confirmed before Mint, which shouldn't need any confirmed: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Confirmed Claim receives Mint that's beyond the minter height: " & e.msg)
+                    except AddressError as e:
+                        doAssert(false, "Couln't grab the Mint the confirmed Claim is claiming from due to an AddressError: " & e.msg)
 
                     #Update the balance.
                     account.balance += mint.amount
@@ -184,9 +191,11 @@ proc verify*(
             #If the balance was changed, save the new Balance to the DB.
             if changedBalance:
                 try:
-                    lattice.db.put("lattice_" & entry.sender & "_balance", lattice[entry.sender].balance.toRaw())
+                    lattice.db.put("lattice_" & entry.sender & "_balance", lattice.accounts[entry.sender].balance.toRaw())
                 except KeyError as e:
                     doAssert(false, "Couldn't grab the confirmed Entry's sender's updated balance: " & e.msg)
+                except AddressError as e:
+                    doAssert(false, "Couln't grab the Send the conrfirmed Receive is receiving from due to an AddressError: " & e.msg)
                 except DBWriteError as e:
                     doAssert(false, "Couldn't save an updated balance to the Database: " & e.msg)
 
@@ -259,7 +268,11 @@ proc add*(
         raise newException(ValueError, "Adding an Entry to minter without mintOverride being true.")
 
     #Get the Account.
-    var account: Account = lattice[entry.sender]
+    var account: Account
+    try:
+        account = lattice[entry.sender]
+    except AddressError as e:
+        raise e
 
     try:
         case entry.descendant:
@@ -345,7 +358,10 @@ proc mint*(
     EdPublicKeyError
 ].} =
     #Store the height as the result.
-    result = lattice["minter"].height
+    try:
+        result = lattice["minter"].height
+    except AddressError:
+        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
 
     #Create the Mint Entry.
     var mint: Mint
@@ -384,11 +400,16 @@ proc mint*(
         #Update the minter's confirmed field.
         lattice["minter"].confirmed = lattice["minter"].height
         lattice.db.put("lattice_minter_confirmed", lattice["minter"].confirmed.toBinary())
+    except AddressError:
+        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
     except DBWriteError as e:
         doAssert(false, "Couldn't write the minter's new height/confirmed and the latest mint's hash to the database: " & e.msg)
 
     #Clear the minter's cache.
-    lattice["minter"].entries.delete(0)
+    try:
+        lattice["minter"].entries.delete(0)
+    except AddressError:
+        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
 
 #Remove every hash in this Epoch from the cache/RAM, updating confirmed and the amount of Verifications to reload.
 proc archive*(
@@ -405,36 +426,53 @@ proc archive*(
                 continue
 
         #If this index points to a newer Entry than the previously newest Entry out of Epochs...
-        if index.nonce >= lattice[index.address].confirmed:
+        var confirmed: int
+        try:
+            confirmed = lattice[index.address].confirmed
+        except AddressError as e:
+            doAssert(false, "Trying to access the confirmed of an Account we're archiving, yet the Lattice just tried creating the account and detected it as invalid: " & e.msg)
+        if index.nonce >= confirmed:
             #Handle all previous Entries, if we're going out of order.
-            while (
-                (lattice[index.address].entries.len > 0) and
-                (lattice[index.address].entries[0][0].nonce <= index.nonce)
-            ):
-                #Remove the hashes of all Entries at this position from the lookup/verifications table.
-                for e in lattice[index.address].entries[0]:
-                    lattice.rmHash(e.hash)
-
-                #Save the verified Entry's hash to the DB under SENDER_NONCE.
-                try:
-                    lattice.db.put("lattice_" & lattice[index].sender & "_" & lattice[index.address].entries[0][0].nonce.toBinary(), lattice[index.address][0].hash.toString())
-                except IndexError as e:
-                    doAssert(false, "Couldn't access the first Entry on the Account, despite confirming it had one: " & e.msg)
-                except ValueError as e:
-                    doAssert(false, "Couldn't access the first Entry on the Account because there's multiple Entries with none confirmed: " & e.msg)
-                except DBWriteError as e:
-                    doAssert(false, "Couldn't write the confirmed Entry's hash to its index: " & e.msg)
-
-                #Clear these Entries at this position.
-                lattice[index.address].entries.delete(0)
-
-            #Update confirmed.
-            lattice[index.address].confirmed = index.nonce + 1
-            #Save the new confirmed to the DB.
             try:
-                lattice.db.put("lattice_" & index.address & "_confirmed", lattice[index.address].confirmed.toBinary())
-            except DBWriteError as e:
-                doAssert(false, "Couldn't write the updated confirmed to the database: " & e.msg)
+                while (
+                    (lattice[index.address].entries.len > 0) and
+                    (lattice[index.address].entries[0][0].nonce <= index.nonce)
+                ):
+                    #Remove the hashes of all Entries at this position from the lookup/verifications table.
+                    try:
+                        for e in lattice[index.address].entries[0]:
+                            lattice.rmHash(e.hash)
+                    except AddressError as e:
+                        doAssert(false, "Trying to clear the cache of an Account we're archiving, yet the Lattice just tried creating the account and detected it as invalid: " & e.msg)
+                    except ValueError as e:
+                        doAssert(false, "Couldn't access the first Entry on the Account because there's multiple Entries with none confirmed: " & e.msg)
+
+                    #Save the verified Entry's hash to the DB under SENDER_NONCE.
+                    try:
+                        lattice.db.put("lattice_" & lattice[index].sender & "_" & lattice[index.address].entries[0][0].nonce.toBinary(), lattice[index.address][0].hash.toString())
+                    except ValueError as e:
+                        doAssert(false, "Couldn't access the first Entry on the Account because there's multiple Entries with none confirmed: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Couldn't access the first Entry on the Account, despite confirming it had one: " & e.msg)
+                    except AddressError as e:
+                        doAssert(false, "Trying to save the hash of a confirmed Entry to its index, yet the Lattice just tried creating the Account and detected as invalid: " & e.msg)
+                    except DBWriteError as e:
+                        doAssert(false, "Couldn't write the confirmed Entry's hash to its index: " & e.msg)
+
+                    #Clear these Entries at this position.
+                    lattice[index.address].entries.delete(0)
+
+                #Update confirmed.
+                lattice[index.address].confirmed = index.nonce + 1
+                #Save the new confirmed to the DB.
+                try:
+                    lattice.db.put("lattice_" & index.address & "_confirmed", lattice[index.address].confirmed.toBinary())
+                except AddressError as e:
+                    doAssert(false, "Trying to save the confirmed of an Account that the Lattice just tried creating and detected it as invalid: " & e.msg)
+                except DBWriteError as e:
+                    doAssert(false, "Couldn't write the updated confirmed to the database: " & e.msg)
+            except AddressError as e:
+                doAssert(false, "Trying to access the entries of an Account we're archiving, yet the Lattice just tried creating the account and detected it as invalid: " & e.msg)
 
     #Save the records to lattice_VERIFIER_epoch so we can reload Verifications.
     #Epoch, in the Merit DB, means the record shifted 10+ Epochs ago.

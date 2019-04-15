@@ -56,7 +56,13 @@ finalsd:
 proc newAccountObj*(
     db: DatabaseFunctionBox,
     address: string
-): Account {.forceCheck: [].} =
+): Account {.forceCheck: [
+    AddressError
+].} =
+    #Verify the address.
+    if (address != "minter") and (not address.isValid()):
+        raise newException(AddressError, "Invalid Address passed to `newAccountObj`.")
+
     result = Account(
         db: db,
 
@@ -121,7 +127,6 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    AddressError,
     EdPublicKeyError
 ].} =
     #Check the Signature.
@@ -139,8 +144,8 @@ proc add*(
             pubKey = newEdPublicKey(
                 Address.toPublicKey(account.address)
             )
-        except AddressError as e:
-            raise e
+        except AddressError:
+            doAssert(false, "Created an account with an invalid address.")
         except EdPublicKeyError as e:
             raise e
 
@@ -182,8 +187,6 @@ proc add*(
     #Save the Entry to the DB.
     try:
         account.db.put("lattice_" & entry.hash.toString(), char(entry.descendant) & entry.serialize())
-    except AddressError:
-        doAssert(false, "Added an Entry which failed to serialize.")
     except DBWriteError as e:
         doAssert(false, "Couldn't save an Entry to the Database: " & e.msg)
 

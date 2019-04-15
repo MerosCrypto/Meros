@@ -93,7 +93,10 @@ proc newLatticeObj*(
     )
 
     #Add the minter account.
-    result.accounts["minter"] = newAccountObj(result.db, "minter")
+    try:
+        result.accounts["minter"] = newAccountObj(result.db, "minter")
+    except AddressError:
+        doAssert(false, "`newAccountObj`'s \"minter\" override for the address validity check is broken.")
     try:
         result.accounts["minter"].lookup = nil
     except KeyError as e:
@@ -111,7 +114,10 @@ proc newLatticeObj*(
         #Extract the account.
         var address: string = result.accountsStr[i ..< i + 60]
         #Load the Account.
-        result.accounts[address] = newAccountObj(result.db, address)
+        try:
+            result.accounts[address] = newAccountObj(result.db, address)
+        except AddressError as e:
+            doAssert(false, "Couldn't load an account because it was saved under an invalid address: " & e.msg)
 
         #Add every hash it loaded to the lookup.
         try:
@@ -143,13 +149,19 @@ func rmHash*(
 proc add*(
     lattice: var Lattice,
     address: string
-) {.forceCheck: [].} =
+) {.forceCheck: [
+    AddressError
+].} =
     #Make sure the account doesn't already exist.
     if lattice.accounts.hasKey(address):
         return
 
     #Create the account.
-    lattice.accounts[address] = newAccountObj(lattice.db, address)
+    try:
+        lattice.accounts[address] = newAccountObj(lattice.db, address)
+    except AddressError as e:
+        raise e
+
     #Clear their lookup.
     try:
         lattice.accounts[address].lookup = nil
@@ -167,9 +179,14 @@ proc add*(
 proc `[]`*(
     lattice: var Lattice,
     address: string
-): var Account {.forceCheck: [].} =
+): var Account {.forceCheck: [
+    AddressError
+].} =
     #Call add, which will only create an account if one doesn't exist.
-    lattice.add(address)
+    try:
+        lattice.add(address)
+    except AddressError as e:
+        raise e
 
     #Return the account.
     try:
@@ -199,17 +216,33 @@ proc `[]`*(
 
 #Gets a Entry by its hash.
 proc `[]`*(
-    lattice: Lattice,
-    hash: Hash[384]
+    lattice: var Lattice,
+    hashArg: Hash[384]
 ): Entry {.forceCheck: [
     ValueError,
+    IndexError,
     ArgonError,
     BLSError,
     EdPublicKeyError
 ].} =
+    #Extract the hash.
+    var hash: string = hashArg.toString()
+
+    #Check if the Entry is in the cache.
+    if lattice.lookup.hasKey(hash):
+        #If it is, return it from the cache.
+        try:
+            return lattice[lattice.lookup[hash]]
+        except KeyError as e:
+            doAssert(false, "Couldn't grab a LatticeIndex despite confirming that key exists: " & e.msg)
+        except ValueError as e:
+            raise e
+        except IndexError as e:
+            raise e
+
     #Load the hash from the DB, raising a KeyError on failure.
     try:
-        result = lattice.db.get("lattice_" & hash.toString()).parseEntry()
+        result = lattice.db.get("lattice_" & hash).parseEntry()
     except ValueError as e:
         raise e
     except ArgonError as e:

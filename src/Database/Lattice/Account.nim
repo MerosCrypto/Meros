@@ -37,7 +37,6 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    AddressError,
     EdPublicKeyError
 ].} =
     try:
@@ -47,8 +46,6 @@ proc add*(
     except IndexError as e:
         raise e
     except GapError as e:
-        raise e
-    except AddressError as e:
         raise e
     except EdPublicKeyError as e:
         raise e
@@ -62,7 +59,6 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    AddressError,
     EdPublicKeyError,
     BLSError
 ].} =
@@ -74,8 +70,8 @@ proc add*(
                 mint.nonce.toBinary() & Address.toPublicKey(account.address)
             )
         )
-    except AddressError as e:
-        raise e
+    except AddressError:
+        doAssert(false, "Created an account with an invalid address.")
     except BLSError as e:
         raise e
     if not claim.bls.verify():
@@ -92,8 +88,6 @@ proc add*(
         raise e
     except GapError as e:
         raise e
-    except AddressError as e:
-        raise e
     except EdPublicKeyError as e:
         raise e
 
@@ -106,7 +100,6 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    AddressError,
     EdPublicKeyError
 ].} =
     #Verify the work.
@@ -130,8 +123,6 @@ proc add*(
         raise e
     except GapError as e:
         raise e
-    except AddressError as e:
-        raise e
     except EdPublicKeyError as e:
         raise e
 
@@ -144,7 +135,6 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    AddressError,
     EdPublicKeyError
 ].} =
     #Verify the entry is a Send.
@@ -169,8 +159,6 @@ proc add*(
         raise e
     except GapError as e:
         raise e
-    except AddressError as e:
-        raise e
     except EdPublicKeyError as e:
         raise e
 
@@ -183,7 +171,6 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    AddressError,
     EdPublicKeyError
 ].} =
     #Verify the work.
@@ -198,8 +185,6 @@ proc add*(
     except IndexError as e:
         raise e
     except GapError as e:
-        raise e
-    except AddressError as e:
         raise e
     except EdPublicKeyError as e:
         raise e
