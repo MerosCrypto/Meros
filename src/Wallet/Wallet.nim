@@ -20,6 +20,8 @@ import finals
 finalsd:
     #Wallet object.
     type Wallet* = object
+        #Initiated.
+        initiated* {.final.}: bool
         #Seed.
         seed* {.final.}: EdSeed
         #Private Key.
@@ -95,11 +97,13 @@ func newWallet*(
 
     #Create a new Wallet based off the seed/key pair.
     result = Wallet(
+        initiated: true,
         seed: seed,
         privateKey: pair.priv,
         publicKey: pair.pub,
         address: newAddress(pair.pub)
     )
+    result.ffinalizeInitiated()
     result.ffinalizeSeed()
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()

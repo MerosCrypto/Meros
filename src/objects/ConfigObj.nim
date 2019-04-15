@@ -21,7 +21,7 @@ import os
 #JSON standard lib.
 import json
 
-type Config* = ref object of RootObj
+type Config* = object
     #DB Path.
     db*: string
 
@@ -64,8 +64,7 @@ proc newConfig*(): Config {.forceCheck: [
         result = Config(
             db: "./data/db",
             tcpPort: 5132,
-            rpcPort: 5133,
-            miner: newMinerWallet()
+            rpcPort: 5133
         )
     except RandomError as e:
         raise e
