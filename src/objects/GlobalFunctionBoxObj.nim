@@ -241,7 +241,7 @@ type
         broadcast*: proc (
             msgType: MessageType,
             msg: string
-        ): Future[void]
+        ) {.raises: [].}
 
     GlobalFunctionBox* = ref object
         system*:        SystemFunctionBox

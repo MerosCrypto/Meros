@@ -23,18 +23,18 @@ proc handle*(
     rpc: RPC,
     msg: JSONNode,
     reply: proc (json: JSONNode)
-) {.async.} =
+) {.forceCheck: [], async.} =
     discard
 
 proc start*(
     rpc: RPC
-) {.async.} =
+) {.forceCheck: [], async.} =
     discard
 
 proc listen*(
     rpc: RPC,
     config: Config
-) {.async.} =
+) {.forceCheck: [], async.} =
     discard
 
 proc shutdown*(

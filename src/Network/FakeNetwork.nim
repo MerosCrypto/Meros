@@ -17,14 +17,14 @@ export NetworkObj
 proc broadcast*(
     network: Network,
     msg: Message
-) {.async.} =
+) {.forceCheck: [], async.} =
     discard
 
 proc reply*(
     network: Network,
     msg: Message,
     res: Message
-) {.async.} =
+) {.forceCheck: [], async.} =
     discard
 
 proc newNetwork*(
@@ -44,14 +44,14 @@ proc newNetwork*(
 proc listen*(
     network: Network,
     config: Config
-) {.async.} =
+) {.forceCheck: [], async.} =
     discard
 
 proc connect*(
     network: Network,
     ip: string,
     port: int
-) {.async.} =
+) {.forceCheck: [], async.} =
     discard
 
 proc shutdown*(
@@ -62,11 +62,11 @@ proc shutdown*(
 proc sync*(
     network: Network,
     newBlock: Block
-): Future[bool] {.async.} =
+): Future[bool] {.forceCheck: [], async.} =
     discard
 
 proc requestBlock*(
     network: Network,
     nonce: int
-): Future[bool] {.async.} =
+): Future[bool] {.forceCheck: [], async.} =
     discard

@@ -3,40 +3,62 @@ include MainMerit
 #Creates and publishes a Verification.
 proc verify(
     entry: Entry
-) {.async.} =
+) {.forceCheck: [], async.} =
     #Sleep for 100 microseconds to make sure this Verification is sent after ther Entry itself.
-    await sleepAsync(100)
+    try:
+        await sleepAsync(100)
+    except Exception as e:
+        doAssert(false, "Couldn't sleep for 0.1 seconds before verifying an Entry: " & e.msg)
 
     #Make sure we're a Miner with Merit.
     if config.miner.initiated and (merit.state[config.miner.publicKey] > 0):
-        #Make sure we didn't already Verify an Entry at this position.
-        if lattice[entry.sender].entries[entry.nonce - lattice[entry.sender].confirmed].len != 1:
-            return
+        #Make sure we didn't already verify an Entry at the same Index.
+        try:
+            if lattice[entry.sender].entries[entry.nonce - lattice[entry.sender].confirmed].len != 1:
+                return
+        except AddressError:
+            doAssert(false, "Tried to verify an Entry who's sender was an invalid address.")
 
         #Acquire the verify lock.
         while not tryAcquire(verifyLock):
             #While we can't acquire it, allow other async processes to run.
-            await sleepAsync(1)
+            try:
+                await sleepAsync(1)
+            except Exception as e:
+                doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
 
         #Verify the Entry.
         var verif: MemoryVerification = newMemoryVerificationObj(entry.hash)
-        config.miner.sign(verif, verifications[config.miner.publicKey].height)
+        try:
+            config.miner.sign(verif, verifications[config.miner.publicKey].height)
+        except BLSError as e:
+            doAssert(false, "Couldn't create a MemoryVerification due to a BLSError: " & e.msg)
 
         #Add the verif to verifications.
-        verifications.add(verif)
+        try:
+            verifications.add(verif)
+        except IndexError as e:
+            doAssert(false, "Created a MemoryVerification which we already added: " & e.msg)
+        except GapError as e:
+            doAssert(false, "Created a MemoryVerification with an invalid nonce: " & e.msg)
+        except MeritRemoval as e:
+            doAssert(false, "Created a MemoryVerification which causes a Merit Removal: " & e.msg)
 
         #Release the verify lock.
         release(verifyLock)
 
         #Add the Verification to the Lattice.
-        lattice.verify(merit, verif)
+        try:
+            lattice.verify(merit, verif)
+        except ValueError as e:
+            doAssert(false, "Tried verifying an Entry when we didn't have Merit/tried verifying a non-existant/dated Entry: " & e.msg)
+        except IndexError as e:
+            doAssert(false, "Created a MemoryVerification which we already added: " & e.msg)
 
         #Broadcast the Verification.
-        await network.broadcast(
-            newMessage(
-                MessageType.MemoryVerification,
-                verif.serialize()
-            )
+        functions.network.broadcast(
+            MessageType.MemoryVerification,
+            verif.serialize()
         )
 
 proc mainLattice() {.forceCheck: [].} =
@@ -156,7 +178,7 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 asyncCheck verify(claim)
             except Exception:
-                doAssert(false)
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")
 
         #Handle Sends.
         functions.lattice.addSend = proc (
@@ -205,7 +227,7 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 asyncCheck verify(send)
             except Exception:
-                doAssert(false)
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")
 
             #If the Send is for us, Receive it.
             if wallet.initiated:
@@ -229,17 +251,35 @@ proc mainLattice() {.forceCheck: [].} =
                     except SodiumError as e:
                         raise e
 
-                    discard """
-                        #Emit it.
+                    #Emit it.
+                    try:
                         functions.lattice.addReceive(recv)
-                        #Broadcast it.
-                        asyncCheck network.broadcast(
-                            newMessage(
-                                MessageType.Receive,
-                                recv.serialize()
-                            )
-                        )
-                    """
+                    except ValueError:
+                        #The signature was either invalid or the Receive already existed.
+                        #If the signature was invalid, we should doAssert(false).
+                        #Else, we should discard.
+                        #Until we add DataExists, we can't safely doAssert(false).
+                        #doAssert(false, "Created a Receive with an invalid signature: " & e.msg)
+                        discard
+                    except IndexError:
+                        discard
+                    except GapError as e:
+                        doAssert(false, "Created Receive has a nonce ahead of the height: " & e.msg)
+                    except AddressError as e:
+                        doAssert(false, "Created Receive has an invalid sender address, detected when adding: " & e.msg)
+                    except EdPublicKeyError as e:
+                        doAssert(false, "Created Receive's sender doesn't decode to a valid Public Key: " & e.msg)
+
+                    #Broadcast it.
+                    var serialized: string
+                    try:
+                        serialized = recv.serialize()
+                    except AddressError as e:
+                        doAssert(false, "Created Receive has an invalid sender address, detected when serializing: " & e.msg)
+                    functions.network.broadcast(
+                        MessageType.Receive,
+                        serialized
+                    )
 
         #Handle Receives.
         functions.lattice.addReceive = proc (
@@ -287,7 +327,7 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 asyncCheck verify(recv)
             except Exception:
-                doAssert(false)
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")
 
         #Handle Data.
         functions.lattice.addData = proc (
@@ -335,4 +375,4 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 asyncCheck verify(data)
             except Exception:
-                doAssert(false)
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")

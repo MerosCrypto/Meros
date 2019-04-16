@@ -24,7 +24,7 @@ Specific Tasks:
 
 - Clean UI.
 - Clean Network.
-- Finish cleaning Main, especially `merit.addBlock`. It currently compiles, yet has some code commented, some `except Exception`s, and no cleaning of the async code.
+- Clean MainMerit, especially `merit.addBlock`. It currently compiles, yet has some code commented, some `except Exception`s, and no cleaning of the async code.
 - Clean tests.
 
 - Don't rebroadcast Blocks or Entries that we're syncing.
@@ -91,9 +91,11 @@ Network:
 objects:
 - objects/Config Test.
 
-Wallet:
-- lib/Ed25519 Test.
+lib:
+- lib/Logger Test.
 
+Wallet:
+- Wallet/Ed25519 Test.
 - Wallet/MinerWallet Test.
 - Wallet/Wallet Test.
 

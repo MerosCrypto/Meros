@@ -14,5 +14,5 @@
 10. Use `func` wherever possible, and try to always write pure code.
 11. Every function argument, and every Exception, should have their own line.
 12. Always throw an Exception on an error, even if you can `return false`, UNLESS the function is named `verify` or `isX`.
-13. All functions, which aren’t async, must be decorated with the `{.forceCheck.}` pragma.
+13. All functions must be decorated with the `{.forceCheck.}` pragma. For more info, see https://github.com/MerosCrypto/ForceCheck.
 14. Comment your code as needed. It is better to comment too much than too little.

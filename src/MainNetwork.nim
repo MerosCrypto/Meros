@@ -16,17 +16,23 @@ proc mainNetwork() {.forceCheck: [].} =
         functions.network.connect = proc (
             ip: string,
             port: int
-        ) {.async.} =
-            await network.connect(ip, port)
+        ) {.forceCheck: [], async.} =
+            try:
+                await network.connect(ip, port)
+            except Exception as e:
+                doAssert(false, "Couldn't connect to another node due to an exception thrown by async: " & e.msg)
 
         #Broadcast a message.
         functions.network.broadcast = proc (
             msgType: MessageType,
             msg: string
-        ) {.async.} =
-            await network.broadcast(
-                newMessage(
-                    msgType,
-                    msg
+        ) {.forceCheck: [].} =
+            try:
+                asyncCheck network.broadcast(
+                    newMessage(
+                        msgType,
+                        msg
+                    )
                 )
-            )
+            except Exception as e:
+                doAssert(false, "Couldn't broadcast a message due to an exception thrown by async: " & e.msg)

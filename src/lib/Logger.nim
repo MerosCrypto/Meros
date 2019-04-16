@@ -24,20 +24,22 @@ type Logger* = ref object of RootObj
     extraneous: File
 
 #Constructor.
-proc newLogger*(): Logger {.forceCheck: [
-    irrecoverable: [
-        IOError
-    ]
-].} =
-    Logger(
-        urgent: open("urgent.log", fmAppend),
-        mismatch: open("mismatch.log", fmAppend),
-        info: open("info.log", fmAppend),
-        extraneous: open("etraneous.log", fmAppend)
-    )
+proc newLogger*(): Logger {.forceCheck: [].} =
+    try:
+        result = Logger(
+            urgent:     open("data/urgent.log", fmAppend),
+            mismatch:   open("data/mismatch.log", fmAppend),
+            info:       open("data/info.log", fmAppend),
+            extraneous: open("data/etraneous.log", fmAppend)
+        )
+    except IOError:
+        doAssert(false, "Couldn't open the log files: " & e.msg)
 
 #Urgent. Displays a message and halts execution.
-proc urgent*(logger: Logger, statement: string) {.forceCheck: [].} =
+proc urgent*(
+    logger: Logger,
+    statement: string
+) {.forceCheck: [].} =
     #Print the statement. This will be changed to a dialog box in the future.
     echo statement
 
@@ -54,10 +56,13 @@ proc urgent*(logger: Logger, statement: string) {.forceCheck: [].} =
     quit(-1)
 
 #Mismatch. Logs a message worth looking into but doesn't halt execution.
-func mismatch*(logger: Logger, statement: string) {.async.} =
+func mismatch*(
+    logger: Logger,
+    statement: string
+) {.forceCheck: [], async.} =
     #Acquire the mismatch lock.
     while not tryAcquire(logger.mismatchLock):
-        #While we can't acquire it, allow other async processes to run.
+        #While we can't acquire it, allow other forceCheck: [], async processes to run.
         await sleepAsync(1)
 
     #log it.
@@ -67,10 +72,13 @@ func mismatch*(logger: Logger, statement: string) {.async.} =
     release(logger.mismatchLock)
 
 #Info. Logs a generic message.
-func info*(logger: Logger, statement: string) {.async.} =
+func info*(
+    logger: Logger,
+    statement: string
+) {.forceCheck: [], async.} =
     #Acquire the info lock.
     while not tryAcquire(logger.infoLock):
-        #While we can't acquire it, allow other async processes to run.
+        #While we can't acquire it, allow other forceCheck: [], async processes to run.
         await sleepAsync(1)
 
     #log it.
@@ -81,12 +89,15 @@ func info*(logger: Logger, statement: string) {.async.} =
 
 #Extranous. Logs a message only worth looking into if you have a rainbow flashes displaying the Star Wars movie.
 #Requires debug to be defined.
-func extraneous*(logger: Logger, statement: string) {.async.} =
+func extraneous*(
+    logger: Logger,
+    statement: string
+) {.forceCheck: [], async.} =
     #Only do something when debug is defined.
     when defined(debug):
         #Acquire the extraneous lock.
         while not tryAcquire(logger.extraneousLock):
-            #While we can't acquire it, allow other async processes to run.
+            #While we can't acquire it, allow other forceCheck: [], async processes to run.
             await sleepAsync(1)
 
         #log it.

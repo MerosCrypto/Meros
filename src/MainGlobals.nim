@@ -44,16 +44,10 @@ functions.system.quit = proc () {.forceCheck: [].} =
         echo "Couldn't shutdown the GUI due to an Exception: " & e.msg
 
     #Shutdown the RPC.
-    try:
-        rpc.shutdown()
-    except AsyncError as e:
-        echo "Couldn't shutdown the RPC: " & e.msg
+    rpc.shutdown()
 
     #Shut down the Network.
-    try:
-        network.shutdown()
-    except SocketError as e:
-        echo "Couldn't shutdown the Network: " & e.msg
+    network.shutdown()
 
     #Shut down the DB.
     try:
