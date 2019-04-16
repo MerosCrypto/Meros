@@ -20,9 +20,6 @@ import ../../../Database/Lattice/Claim
 #Serialize common functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse a Claim.
 proc parseClaim*(
     claimStr: string

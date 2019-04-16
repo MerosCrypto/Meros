@@ -16,9 +16,6 @@ import ../../../Database/Verifications/objects/VerificationObj
 #Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse a Memory Verification.
 proc parseMemoryVerification*(
     verifStr: string

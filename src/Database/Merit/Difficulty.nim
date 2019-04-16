@@ -20,9 +20,6 @@ import Block
 import objects/DifficultyObj
 export DifficultyObj
 
-#Finals lib.
-import finals
-
 #Highest difficulty.
 let MAX: BN = "".pad(48, char(255)).toBNFromRaw()
 

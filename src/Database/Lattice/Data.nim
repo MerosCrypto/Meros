@@ -23,9 +23,6 @@ import objects/EntryObj
 import objects/DataObj
 export DataObj
 
-#Finals lib.
-import finals
-
 #Create a new Entry.
 proc newData*(
     data: string,

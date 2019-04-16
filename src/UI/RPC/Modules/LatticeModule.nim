@@ -16,9 +16,6 @@ import ../../../Database/Lattice/Lattice
 #RPC object.
 import ../objects/RPCObj
 
-#Finals lib.
-import finals
-
 #Async standard lib.
 import asyncdispatch
 

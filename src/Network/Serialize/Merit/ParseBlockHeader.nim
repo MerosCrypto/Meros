@@ -16,9 +16,6 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 #Common serialization functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse function.
 proc parseBlockHeader*(
     headerStr: string

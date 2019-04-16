@@ -39,9 +39,6 @@ export Blockchain
 export State
 export Epochs
 
-#Finals lib.
-import finals
-
 #Merit master object for a blockchain and state.
 type Merit* = ref object
     blockchain*: Blockchain

@@ -24,9 +24,6 @@ import ../../Network/Serialize/Lattice/SerializeSend
 #BN lib.
 import BN
 
-#Finals lib.
-import finals
-
 #Create a new Send.
 func newSend*(
     output: string,

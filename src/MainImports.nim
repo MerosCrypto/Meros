@@ -52,9 +52,6 @@ import objects/ConfigObj
 #BN lib.
 import BN
 
-#Finals lib.
-import finals
-
 #Locks standard lib.
 import locks
 

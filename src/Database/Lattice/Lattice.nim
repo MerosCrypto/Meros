@@ -57,9 +57,6 @@ import sequtils
 #Tables standard lib.
 import tables
 
-#Finals lib.
-import finals
-
 #Add a Verification to the Verifications' table.
 proc verify*(
     lattice: var Lattice,

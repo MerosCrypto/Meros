@@ -16,9 +16,6 @@ import ../../../Database/common/objects/VerifierRecordObj
 #Common serialization functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse Records.
 proc parseRecords*(
     recordsStr: string

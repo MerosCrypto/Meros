@@ -30,9 +30,6 @@ import sequtils
 #Tables standard lib.
 import tables
 
-#Finals lib.
-import finals
-
 #Constructor wrapper.
 proc newVerifications*(
     db: DatabaseFunctionBox

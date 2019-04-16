@@ -20,9 +20,6 @@ import ../../Network/Serialize/Lattice/SerializeMint
 #BN lib.
 import BN
 
-#Finals lib.
-import finals
-
 #Create a new Mint.
 proc newMint*(
     output: string,

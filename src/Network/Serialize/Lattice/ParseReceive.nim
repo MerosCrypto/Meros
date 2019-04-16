@@ -20,9 +20,6 @@ import ../../../Database/Lattice/objects/ReceiveObj
 #Serialize common functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse a Receive.
 proc parseReceive*(
     recvStr: string

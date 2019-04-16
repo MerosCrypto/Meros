@@ -11,9 +11,6 @@ import ../../Wallet/MinerWallet
 import objects/VerificationObj
 export VerificationObj
 
-#Finals lib.
-import finals
-
 #Sign a Verification.
 proc sign*(
     miner: MinerWallet,

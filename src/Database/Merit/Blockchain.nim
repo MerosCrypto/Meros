@@ -22,9 +22,6 @@ import ../../Network/Serialize/Merit/SerializeDifficulty
 #BN lib.
 import BN
 
-#Finals lib.
-import finals
-
 #Create a new Blockchain.
 proc newBlockchain*(
     db: DatabaseFunctionBox,

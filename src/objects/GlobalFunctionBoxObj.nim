@@ -39,9 +39,6 @@ import ../Network/objects/MessageObj
 #BN lib.
 import BN
 
-#Finals lib.
-import finals
-
 #Async lib.
 import asyncdispatch
 

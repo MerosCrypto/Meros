@@ -50,9 +50,6 @@ import ../../../Database/Lattice/objects/MintObj
 #Serialize common functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse a Mint.
 proc parseMint*(
     mintStr: string

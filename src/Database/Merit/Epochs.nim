@@ -27,9 +27,6 @@ import State
 import objects/EpochsObj
 export EpochsObj
 
-#Finals lib.
-import finals
-
 #Sequtils standard lib (used to remove Rewards).
 import sequtils
 

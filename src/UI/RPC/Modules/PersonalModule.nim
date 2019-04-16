@@ -24,9 +24,6 @@ import ../../../Network/Serialize/Lattice/SerializeData
 #RPC object.
 import ../objects/RPCObj
 
-#Finals lib.
-import finals
-
 #Async standard lib.
 import asyncdispatch
 

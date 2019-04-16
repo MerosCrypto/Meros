@@ -4,6 +4,10 @@
 import ForceCheck
 export ForceCheck
 
+#Finals lib, imported so we can export its Error.
+import finals
+export FinalAttributeError
+
 #DB lib, imported so we can export a masked LMDBerror.
 import mc_lmdb
 

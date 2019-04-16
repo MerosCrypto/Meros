@@ -24,9 +24,6 @@ export ClaimObj
 #Import the Serialization library.
 import ../../Network/Serialize/Lattice/SerializeClaim
 
-#Finals lib.
-import finals
-
 #Create a new Claim Entry.
 func newClaim*(
     mintNonce: Natural,

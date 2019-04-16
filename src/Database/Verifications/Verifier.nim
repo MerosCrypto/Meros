@@ -17,9 +17,6 @@ import Verification
 import objects/VerifierObj
 export VerifierObj
 
-#Finals lib.
-import finals
-
 #Calculate the Merkle.
 proc calculateMerkle*(
     verifier: Verifier,

@@ -17,9 +17,6 @@ import ../../../Database/Lattice/objects/DataObj
 #Serialize common functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse a Data.
 proc parseData*(
     dataStr: string

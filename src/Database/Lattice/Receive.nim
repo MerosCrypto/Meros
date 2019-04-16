@@ -21,9 +21,6 @@ export ReceiveObj
 #Import the Serialization library.
 import ../../Network/Serialize/Lattice/SerializeReceive
 
-#Finals lib.
-import finals
-
 #Create a new Receive Entry.
 proc newReceive*(
     index: LatticeIndex,

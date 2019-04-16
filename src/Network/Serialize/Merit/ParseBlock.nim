@@ -20,9 +20,6 @@ import ParseBlockHeader
 import ParseRecords
 import ParseMiners
 
-#Finals lib.
-import finals
-
 #Parse a Block.
 proc parseBlock*(
     blockStr: string

@@ -20,9 +20,6 @@ import ../../../Database/Lattice/objects/SendObj
 #Serialize common functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
 #Parse a Send.
 proc parseSend*(
     sendStr: string

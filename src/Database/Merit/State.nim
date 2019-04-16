@@ -18,9 +18,6 @@ import Blockchain
 import objects/StateObj
 export StateObj
 
-#Finals lib.
-import finals
-
 #Constructor.
 proc newState*(
     db: DatabaseFunctionBox,

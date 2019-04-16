@@ -14,8 +14,6 @@ Specific Tasks:
 - Confirm that all leading whitespace is a multiple of 4 (ignoring comment lineups).
 
 - Add `DataExists` for when data has already been added.
-- Replace `KeyError` (and `ValueError`s we've used as `KeyError`s) with `IndexError`.
-- Export `FinalAttributeError` from `Errors` so we don't have to import `finals` from so many places.
 
 - Remove `save: bool` from various systems.
 
@@ -24,9 +22,10 @@ Specific Tasks:
 
 - Move Mint to a `BLSPublicKey` from a `string`.
 
-- Clean Network.
 - Clean UI.
+- Clean Network.
 - Finish cleaning Main, especially `merit.addBlock`. It currently compiles, yet has some code commented, some `except Exception`s, and no cleaning of the async code.
+- Clean tests.
 
 - Don't rebroadcast Blocks or Entries that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
