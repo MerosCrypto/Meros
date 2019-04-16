@@ -20,8 +20,6 @@ Specific Tasks:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
-- Move Mint to a `BLSPublicKey` from a `string`.
-
 - Clean UI.
 - Clean Network.
 - Clean MainMerit, especially `merit.addBlock`. It currently compiles, yet has some code commented, some `except Exception`s, and no cleaning of the async code.

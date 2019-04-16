@@ -249,7 +249,7 @@ for i in 0 ..< 3:
 addBlock(@[verifiers[0]], @[])
 
 #Mint some coins to the first Verifier, and claim them by the first Account.
-assert(lattice.mint(verifiers[0].publicKey.toString(), newBN(300)) == 0)
+assert(lattice.mint(verifiers[0].publicKey, newBN(300)) == 0)
 assert(db.get("lattice_" & db.get("lattice_minter_" & 0.toBinary())) == char(EntryType.Mint) & lattice["minter"][0].serialize())
 
 var claim: Claim = newClaim(0, 0)

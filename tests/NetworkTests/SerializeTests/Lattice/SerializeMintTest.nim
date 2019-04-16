@@ -34,9 +34,9 @@ for i in 1 .. 20:
 
     #Mint (for a random amount).
     var mint: Mint = newMint(
-        newBLSPrivateKeyFromSeed(rand(150000).toBinary()).getPublicKey().toString(),
+        newBLSPrivateKeyFromSeed(rand(150000).toBinary()).getPublicKey(),
         newBN(rand(100000000)),
-        uint(rand(75000))
+        rand(75000)
     )
 
     #Serialize it and parse it back.

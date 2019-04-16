@@ -66,7 +66,7 @@ proc add*(
     try:
         claim.bls.setAggregationInfo(
             newBLSAggregationInfo(
-                newBLSPublicKey(mint.output),
+                mint.output,
                 mint.nonce.toBinary() & Address.toPublicKey(account.address)
             )
         )

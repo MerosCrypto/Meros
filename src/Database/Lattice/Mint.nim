@@ -4,8 +4,8 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
-#Wallet lib.
-import ../../Wallet/Wallet
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
 
 #Entry object.
 import objects/EntryObj
@@ -22,7 +22,7 @@ import BN
 
 #Create a new Mint.
 proc newMint*(
-    output: string,
+    output: BLSPublicKey,
     amount: BN,
     nonce: Natural
 ): Mint {.forceCheck: [

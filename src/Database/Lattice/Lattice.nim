@@ -345,7 +345,7 @@ proc add*(
 
 proc mint*(
     lattice: var Lattice,
-    key: string,
+    key: BLSPublicKey,
     amount: BN
 ): int {.forceCheck: [
     ValueError,

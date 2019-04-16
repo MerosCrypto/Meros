@@ -7,6 +7,9 @@ import ../../../lib/Util
 #BN/Raw lib.
 import ../../../lib/Raw
 
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
+
 #Entry and Mint objects.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/MintObj
@@ -20,5 +23,5 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     result =
         mint.nonce.toBinary().pad(INT_LEN) &
-        mint.output &
+        mint.output.toString() &
         mint.amount.toRaw().pad(MEROS_LEN)

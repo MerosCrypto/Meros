@@ -43,6 +43,9 @@ import ../../../lib/Raw
 #Hash lib.
 import ../../../lib/Hash
 
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
+
 #Entry and Mint objects.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/MintObj
@@ -54,7 +57,8 @@ import ../SerializeCommon
 proc parseMint*(
     mintStr: string
 ): Mint {.forceCheck: [
-    ValueError
+    ValueError,
+    BLSError
 ].} =
     var
         #Nonce | Output | Amount
@@ -65,10 +69,16 @@ proc parseMint*(
         )
         #Get the nonce.
         nonce: int = mintSeq[0].fromBinary()
-        #Get the output.
-        output: string = mintSeq[1]
+        #Output.
+        output: BLSPublicKey
         #Get the amount.
         amount: BN = mintSeq[2].toBNFromRaw()
+
+    #Parse the output.
+    try:
+        output = newBLSPublicKey(mintSeq[1])
+    except BLSError as e:
+        raise e
 
     #Create the Mint.
     result = newMintObj(

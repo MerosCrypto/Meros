@@ -4,6 +4,9 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
+
 #Entry object.
 import EntryObj
 
@@ -16,14 +19,14 @@ import finals
 #Mint object.
 finalsd:
     type Mint* = ref object of Entry
-        #Destination address.
-        output* {.final.}: string
+        #Destination key.
+        output* {.final.}: BLSPublicKey
         #Amount transacted.
         amount* {.final.}: BN
 
 #Constructor.
 func newMintObj*(
-    output: string,
+    output: BLSPublicKey,
     amount: BN
 ): Mint {.forceCheck: [].} =
     #Set the Mint fields.
