@@ -151,15 +151,11 @@ proc verify*(
                         #Get the Send it's Receiving.
                         send: Send
                     try:
-                        send = cast[Send](lattice[recv.index.address][recv.index.nonce])
-                    except KeyError as e:
-                        doAssert(false, "Couldn't grab the Send the confirmed Receive is receiving from due to a KeyError: " & e.msg)
+                        send = cast[Send](lattice[recv.index])
                     except ValueError as e:
                         doAssert(false, "Receive was confirmed before Send: " & e.msg)
                     except IndexError as e:
                         doAssert(false, "Confirmed Receive receives Send that's beyond the Account height: " & e.msg)
-                    except AddressError as e:
-                        doAssert(false, "Couln't grab the Send the confirmed Receive is receiving from due to an AddressError: " & e.msg)
 
                     #Update the balance.
                     account.balance += send.amount
@@ -171,8 +167,6 @@ proc verify*(
                         mint: Mint
                     try:
                         mint = cast[Mint](lattice["minter"][claim.mintNonce])
-                    except KeyError as e:
-                        doAssert(false, "Couldn't grab a Mint from the minter Account: " & e.msg)
                     except ValueError as e:
                         doAssert(false, "Claim was confirmed before Mint, which shouldn't need any confirmed: " & e.msg)
                     except IndexError as e:
@@ -201,13 +195,13 @@ proc newLattice*(
     db: DatabaseFunctionBox,
     verifications: var Verifications,
     merit: Merit,
-    txDiff: string,
+    sendDiff: string,
     dataDiff: string
 ): Lattice {.forceCheck: [].} =
     #Create the Lattice.
     result = newLatticeObj(
         db,
-        txDiff,
+        sendDiff,
         dataDiff
     )
 
@@ -295,8 +289,8 @@ proc add*(
                 account.add(
                     #Send Entry.
                     send,
-                    #Transaction Difficulty.
-                    lattice.difficulties.transaction
+                    #Send Difficulty.
+                    lattice.difficulties.send
                 )
 
             of EntryType.Receive:

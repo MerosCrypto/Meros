@@ -16,9 +16,9 @@ const
     LIVE_MERIT: int = 1000     #Blocks before Merit dies.
 
     #Lattice constants.
-    TRANSACTION_DIFFICULTY: string = #Transaction difficulty at the start.
+    SEND_DIFFICULTY: string = #Send difficulty at the start.
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    DATA_DIFFICULTY: string =        #Data difficulty at the start.
+    DATA_DIFFICULTY: string = #Data difficulty at the start.
         "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
     #Network constants.

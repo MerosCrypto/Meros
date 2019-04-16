@@ -72,6 +72,10 @@ proc mainLattice() {.forceCheck: [].} =
             DATA_DIFFICULTY
         )
 
+        #Handle requests for the Difficulties.
+        functions.lattice.getDifficulties = proc (): Difficulties {.forceCheck: [].} =
+            lattice.difficulties
+
         #Handle requests for an account's height.
         functions.lattice.getHeight = proc (
             address: string
@@ -98,23 +102,11 @@ proc mainLattice() {.forceCheck: [].} =
         functions.lattice.getEntryByHash = proc (
             hash: Hash[384]
         ): Entry {.forceCheck: [
-            ValueError,
-            IndexError,
-            ArgonError,
-            BLSError,
-            EdPublicKeyError
+            IndexError
         ].} =
             try:
                 result = lattice[hash]
-            except ValueError as e:
-                raise e
             except IndexError as e:
-                raise e
-            except ArgonError as e:
-                raise e
-            except BLSError as e:
-                raise e
-            except EdPublicKeyError as e:
                 raise e
 
         functions.lattice.getEntryByIndex = proc (

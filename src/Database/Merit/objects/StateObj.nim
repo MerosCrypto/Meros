@@ -52,9 +52,10 @@ proc newStateObj*(
     try:
         result.live = result.db.get("merit_live").fromBinary()
         result.holdersStr = result.db.get("merit_holders")
-    #If these don't exist, carry on.
+    #If these don't exist, confirm we didn't load one but not the other.
     except DBReadError:
-        discard
+        if result.live != 0:
+            doAssert(false, "Loaded the amount of live Merit but not any holders from the database.")
 
     #Handle each holder.
     var holder: string

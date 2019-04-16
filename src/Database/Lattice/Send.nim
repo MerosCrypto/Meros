@@ -30,11 +30,12 @@ func newSend*(
     amount: BN,
     nonce: Natural
 ): Send {.forceCheck: [
-    ValueError
+    ValueError,
+    AddressError
 ].} =
     #Verify output.
     if not Address.isValid(output):
-        raise newException(ValueError, "Send output address is not valid.")
+        raise newException(AddressError, "Send output address is not valid.")
 
     #Verify the amount.
     if amount <= newBN(0):

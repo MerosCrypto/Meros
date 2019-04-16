@@ -228,7 +228,7 @@ proc `[]`*(
         except EdPublicKeyError as e:
             doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
         except DBReadError as e:
-            doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
+            doAssert(false, "Couldn't load a Entry we were asked for from the Database: " & e.msg)
         try:
             #Mark it as verified.
             result.verified = true
@@ -245,3 +245,19 @@ proc `[]`*(
                 return e
         raise newException(ValueError, "Conflicting Entries at that position with no verified Entry.")
     result = account.entries[i][0]
+
+#Getter used exlusively by Lattice[hash]. That getter confirms the entry is in RAM.
+proc `[]`*(
+    account: Account,
+    index: int,
+    hash: Hash[384]
+): Entry {.forceCheck: [].} =
+    var i: int = index - account.confirmed
+    if i >= account.entries.len:
+        doAssert(false, "Entry we tried to retrieve by hash wasn't actually in RAM, as checked by the i value.")
+
+    for entry in account.entries[i]:
+        for e in account.entries[i]:
+            if entry.hash == hash:
+                return entry
+    doAssert(false, "Entry we tried to retrieve by hash wasn't actually in RAM, as checked by the hash.")

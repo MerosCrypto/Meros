@@ -19,6 +19,9 @@ import ../../../objects/GlobalFunctionBoxObj
 #LatticeIndex object.
 import ../../common/objects/LatticeIndexObj
 
+#Difficulties object.
+import DifficultiesObj
+
 #Entry object.
 import EntryObj
 
@@ -33,10 +36,6 @@ import tables
 
 #Lattice master object.
 type
-    Difficulties* = object
-        transaction*: BN
-        data*: BN
-
     Lattice* = object
         #Database.
         db*: DatabaseFunctionBox
@@ -66,27 +65,14 @@ type
 #Lattice constructor
 proc newLatticeObj*(
     db: DatabaseFunctionBox,
-    txDiffArg: string,
-    dataDiffArg: string
+    sendDiff: string,
+    dataDiff: string
 ): Lattice {.forceCheck: [].} =
-    #Extract the difficulties.
-    var
-        txDiff: BN
-        dataDiff: BN
-    try:
-        txDiff = txDiffArg.toBNFromHex()
-        dataDiff = dataDiffArg.toBNFromHex()
-    except ValueError as e:
-        doAssert(false, "Invalid Lattice specs (starting difficulties) passed to newLattice: " & e.msg)
-
     #Create the object.
     result = Lattice(
         db: db,
 
-        difficulties: Difficulties(
-            transaction: txDiff,
-            data: dataDiff
-        ),
+        difficulties: newDifficultiesObj(sendDiff, dataDiff),
         lookup: initTable[string, LatticeIndex](),
         verifications: initTable[string, seq[BLSPublicKey]](),
         accounts: initTable[string, Account]()
@@ -219,11 +205,7 @@ proc `[]`*(
     lattice: var Lattice,
     hashArg: Hash[384]
 ): Entry {.forceCheck: [
-    ValueError,
-    IndexError,
-    ArgonError,
-    BLSError,
-    EdPublicKeyError
+    IndexError
 ].} =
     #Extract the hash.
     var hash: string = hashArg.toString()
@@ -232,24 +214,21 @@ proc `[]`*(
     if lattice.lookup.hasKey(hash):
         #If it is, return it from the cache.
         try:
-            return lattice[lattice.lookup[hash]]
+            var index: LatticeIndex = lattice.lookup[hash]
+            return lattice.accounts[index.address][index.nonce, hashArg]
         except KeyError as e:
-            doAssert(false, "Couldn't grab a LatticeIndex despite confirming that key exists: " & e.msg)
-        except ValueError as e:
-            raise e
-        except IndexError as e:
-            raise e
+            doAssert(false, "Couldn't grab a LatticeIndex/Account despite confirming that key exists: " & e.msg)
 
-    #Load the hash from the DB, raising a KeyError on failure.
+    #Load the hash from the DB.
     try:
         result = lattice.db.get("lattice_" & hash).parseEntry()
     except ValueError as e:
-        raise e
+        doAssert(false, "Couldn't parse an Entry from the Database due to a ValueError: " & e.msg)
     except ArgonError as e:
-        raise e
+        doAssert(false, "Couldn't parse an Entry from the Database due to an ArgonError: " & e.msg)
     except BLSError as e:
-        raise e
+        doAssert(false, "Couldn't parse an Entry from the Database due to an BLSError: " & e.msg)
     except EdPublicKeyError as e:
-        raise e
-    except DBReadError as e:
-        doAssert(false, "Couldn't load an Entry from the Database: " & e.msg)
+        doAssert(false, "Couldn't parse an Entry from the Database due to an EdPublicKeyErrir: " & e.msg)
+    except DBReadError:
+        raise newException(IndexError, "Hash doesn't map to any Entry.")

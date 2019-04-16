@@ -26,7 +26,8 @@ import ../Database/Verifications/objects/VerificationObj
 import ../Database/Merit/objects/DifficultyObj
 import ../Database/Merit/objects/BlockObj
 
-#Lattice Entries.
+#Difficulties and Entry objects.
+import ../Database/Lattice/objects/DifficultiesObj
 import ../Database/Lattice/objects/EntryObj
 import ../Database/Lattice/objects/ClaimObj
 import ../Database/Lattice/objects/SendObj
@@ -129,6 +130,8 @@ type
         ): Future[bool]
 
     LatticeFunctionBox* = ref object
+        getDifficulties*: proc (): Difficulties {.raises: [].}
+
         getHeight*: proc (
             address: string
         ): int {.raises: [
@@ -145,16 +148,12 @@ type
             hash: Hash[384]
         ): Entry {.raises: [
             ValueError,
-            IndexError,
-            ArgonError,
-            BLSError,
-            EdPublicKeyError
+            IndexError
         ].}
 
         getEntryByIndex*: proc (
             index: LatticeIndex
         ): Entry {.raises: [
-            ValueError,
             IndexError
         ].}
 

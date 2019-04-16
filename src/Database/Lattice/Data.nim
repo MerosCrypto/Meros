@@ -73,7 +73,7 @@ proc mine*(
     networkDifficulty: BN
 ) {.forceCheck: [
     ValueError,
-    ArgonError,
+    ArgonError
 ].} =
     #Make sure the hash was set.
     if data.hash.toBN() == newBN():
