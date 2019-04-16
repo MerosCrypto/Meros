@@ -11,8 +11,6 @@ General Cleanup:
 - Make more `proc`s `func`.
 
 Specific Tasks:
-- Confirm that all leading whitespace is a multiple of 4 (ignoring comment lineups).
-
 - Add `DataExists` for when data has already been added.
 
 - Remove `save: bool` from various systems.

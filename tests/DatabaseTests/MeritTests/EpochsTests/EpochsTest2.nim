@@ -1,8 +1,8 @@
 discard """
 Epochs Test 2. Verifies that:
- - 2 Verifications
- - For the same Entry
- - A block apart
+    - 2 Verifications
+    - For the same Entry
+    - A block apart
 Result in 500/500 when the Entry first appeared.
 """
 
