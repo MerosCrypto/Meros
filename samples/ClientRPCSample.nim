@@ -25,11 +25,11 @@ port = parseInt(stdin.readLine())
 
 #Get the module.
 echo "What module is your method in?"
-payload["module"] = newJString(stdin.readLine())
+payload["module"] = % stdin.readLine()
 
 #Get the method.
 echo "What method are you trying to call?"
-payload["method"] = newJString(stdin.readLine())
+payload["method"] = % stdin.readLine()
 
 #Get the argument count.
 echo "How many arguments are there?"
@@ -42,17 +42,9 @@ for i in 0 ..< argsLen:
 
     echo "What is the argument?"
     if stringOrInt[0] == 's':
-        payload["args"].add(
-            newJString(
-                stdin.readLine()
-            )
-        )
+        payload["args"].add(% stdin.readLine())
     elif stringOrInt[1] == 'i':
-        payload["args"].add(
-            newJInt(
-                parseInt(stdin.readLine())
-            )
-        )
+        payload["args"].add(% parseInt(stdin.readLine()))
 
 #Connect to the server.
 echo "Connecting..."

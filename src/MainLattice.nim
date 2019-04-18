@@ -163,8 +163,8 @@ proc mainLattice() {.forceCheck: [].} =
             #Create a Verification.
             try:
                 asyncCheck verify(claim)
-            except Exception:
-                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")
+            except Exception as e:
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
         #Handle Sends.
         functions.lattice.addSend = proc (
@@ -206,8 +206,8 @@ proc mainLattice() {.forceCheck: [].} =
             #Create a Verification.
             try:
                 asyncCheck verify(send)
-            except Exception:
-                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")
+            except Exception as e:
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
             #If the Send is for us, Receive it.
             if wallet.initiated:
@@ -301,8 +301,8 @@ proc mainLattice() {.forceCheck: [].} =
             #Create a Verification.
             try:
                 asyncCheck verify(recv)
-            except Exception:
-                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")
+            except Exception as e:
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
         #Handle Data.
         functions.lattice.addData = proc (
@@ -344,5 +344,5 @@ proc mainLattice() {.forceCheck: [].} =
             #Create a Verification.
             try:
                 asyncCheck verify(data)
-            except Exception:
-                doAssert(false, "Verify threw an Exception despite not naturally throwing anything.")
+            except Exception as e:
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)

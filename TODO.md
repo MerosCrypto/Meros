@@ -18,12 +18,15 @@ Specific Tasks:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
-- Clean UI.
-- Clean Network. When we do, call syncBlock from requestBlock.
-- Move broadcast for Entries from the Network/RPC to the Lattice, to match Blocks and also be able to remove the 100ms verify delay.
-- Move broadcast for Verifications from the Network/RPC to the Lattice, to match Blocks and Entries.
-- Print the Exception add (Verification/Entry/Block) raises when it fails from the Networking code (RPC already returns it).
+- Clean UI/GUI.
+- Clean Network. When we do:
+    - Call syncBlock from requestBlock.
+    - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
+    - Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
+    - Print the Exception add(Verification/Entry/Block) raises when it fails from the Networking code (this used to happen in Main, yet no longer does, and the RPC already responds with it).
 - Clean tests.
+
+- Update some `raise`s in the PersonalModule to `doAssert(false)`.
 
 - Don't rebroadcast Blocks or Entries that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).

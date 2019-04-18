@@ -86,7 +86,7 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
             #Calculate the aggregation info.
             var agInfo: BLSAggregationInfo = agInfos.aggregate()
             #If it's nil, make sure the signature is 0.
-            if agInfo == nil:
+            if agInfo.isNil:
                 if newBlock.header.aggregate != nil:
                     return false
             #If it's not nil, test it against the signature.

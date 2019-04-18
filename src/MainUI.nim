@@ -18,6 +18,7 @@ proc mainRPC() {.forceCheck: [].} =
         except Exception:
             discard
 
-proc mainGUI() {.forceCheck: [].} =
-    #Create the GUI.
-    newGUI(addr fromMain, addr toRPC, addr toGUI, 800, 500)
+when not defined(nogui):
+    proc mainGUI() {.forceCheck: [].} =
+        #Create the GUI.
+        newGUI(addr fromMain, addr toRPC, addr toGUI, 800, 500)

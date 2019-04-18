@@ -41,7 +41,7 @@ import Network/Serialize/Lattice/SerializeReceive
 import Network/Serialize/Lattice/SerializeData
 
 #UI.
-import UI/FakeUI
+import UI/UI
 
 #Global Function Box object.
 import objects/GlobalFunctionBoxObj

@@ -1,17 +1,14 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#BN lib.
-import BN
-
 #Hash lib.
 import ../../../lib/Hash
 
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#VerifierIndex object.
-import ../../../Database/Merit/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../../Database/common/objects/VerifierRecordObj
 
 #Verifications lib.
 import ../../../Database/Verifications/Verifications
@@ -22,74 +19,81 @@ import ../objects/RPCObj
 #Async standard lib.
 import asyncdispatch
 
-#String utils standard lib.
-import strutils
-
 #JSON standard lib.
 import json
 
 #Get a Verification.
 proc getVerification(
     rpc: RPC,
-    key: string,
+    key: BLSPublicKey,
     nonce: int
-): JSONnode {.raises: [EventError].} =
+): JSONnode {.forceCheck: [].} =
     try:
         result = %* {
             "hash": $rpc.functions.verifications.getVerification(key, nonce).hash
         }
-    except:
-        raise newException(EventError, "Couldn't get and call verifications.getVerification.")
+    except IndexError as e:
+        returnError()
 
 #Get unarchived verifications.
 proc getUnarchivedVerifications(
     rpc: RPC
-): JSONNode {.raises: [EventError].} =
-    #Get the indexes.
-    var indexes: seq[VerifierIndex]
-    try:
-        indexes = rpc.functions.verifications.getUnarchivedIndexes()
-    except:
-        raise newException(EventError, "Couldn't get and call verifications.getUnarchivedIndexes.")
+): JSONNode {.forceCheck: [].} =
+    #Get the records.
+    var records: seq[VerifierRecord] = rpc.functions.verifications.getUnarchivedRecords()
 
     #Get the aggregates.
-    var aggregates: seq[BLSSignature] = newSeq[BLSSignature](indexes.len)
-    for i in 0 ..< indexes.len:
+    var aggregates: seq[BLSSignature] = newSeq[BLSSignature](records.len)
+    for i in 0 ..< records.len:
         try:
             aggregates[i] = rpc.functions.verifications.getPendingAggregate(
-                indexes[i].key,
-                indexes[i].nonce
+                records[i].key,
+                records[i].nonce
             )
-        except:
-            raise newException(EventError, "Couldn't get and call verifications.getPendingAggregate.")
+        except IndexError as e:
+            returnError()
+        except BLSError as e:
+            returnError()
 
     #Create the JSON.
     result = %* []
     #Add each index/merkle.
-    for i in 0 ..< indexes.len:
+    for i in 0 ..< records.len:
         result.add(%* {
-            "verifier": indexes[i].key.toHex(),
-            "nonce": indexes[i].nonce,
-            "merkle": indexes[i].merkle.toHex(),
+            "verifier":  $records[i].key,
+            "nonce":     records[i].nonce,
+            "merkle":    $records[i].merkle,
             "signature": $aggregates[i]
         })
 
 #Handler.
-proc verificationsModule*(
+proc verifications*(
     rpc: RPC,
     json: JSONNode,
-    reply: proc (json: JSONNode)
-) {.async.} =
+    reply: proc (
+        json: JSONNode
+    ) {.raises: [].}
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 
-    #Put this in a try/catch in case the method fails.
+    #Switch based off the method.
+    var methodStr: string
     try:
-        #Switch based off the method.
-        case json["method"].getStr():
+        methodStr = json["method"].getStr()
+    except KeyError:
+        reply(%* {
+            "error": "No method specified."
+        })
+        return
+
+    try:
+        case methodStr:
             of "getVerification":
+                var key: BLSPublicKey = newBLSPublicKey(json["args"][0].getStr())
+
                 res = rpc.getVerification(
-                    json["args"][0].getStr().parseHexStr(),
+                    key,
                     json["args"][1].getInt()
                 )
 
@@ -100,10 +104,13 @@ proc verificationsModule*(
                 res = %* {
                     "error": "Invalid method."
                 }
-    except:
-        #If there was an issue, make the response the error message.
+    except KeyError:
         res = %* {
-            "error": getCurrentExceptionMsg()
+            "error": "Missing `args`."
+        }
+    except BLSError:
+        res = %* {
+            "error": "Invalid BLS Public Key."
         }
 
     reply(res)

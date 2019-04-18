@@ -7,9 +7,6 @@ import ../objects/RPCObj
 #Async standard lib.
 import asyncdispatch
 
-#String utils standard lib.
-import strutils
-
 #JSON standard lib.
 import json
 
@@ -21,43 +18,50 @@ proc connect*(
     rpc: RPC,
     ip: string,
     port: int
-): Future[JSONNode] {.async.} =
+): Future[JSONNode] {.forceCheck: [], async.} =
     try:
-        #Connect to a new node.
-        if not await rpc.functions.network.connect(ip, port):
-            result = %* {
-                "error": "Couldn't connect to the IP/Port."
-            }
-    except:
-        raise newException(EventError, "Couldn't get and call network.connect.")
+        await rpc.functions.network.connect(ip, port)
+    except Exception as e:
+        doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
 #Handler.
-proc networkModule*(
+proc network*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.async.} =
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 
-    #Put this in a try/catch in case the method fails.
+    #Switch based off the method.
+    var methodStr: string
     try:
-        #Switch based off the method.
-        case json["method"].getStr():
+        methodStr = json["method"].getStr()
+    except KeyError:
+        reply(%* {
+            "error": "No method specified."
+        })
+        return
+
+    try:
+        case methodStr:
             of "connect":
-                res = await rpc.connect(
-                    json["args"][0].getStr(),
-                    if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
-                )
+                try:
+                    res = await rpc.connect(
+                        json["args"][0].getStr(),
+                        if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
+                    )
+                except Exception as e:
+                    doAssert(false, "NetworkModule's connect threw an Exception despite not naturally throwing anything: " & e.msg)
+
 
             else:
                 res = %* {
                     "error": "Invalid method."
                 }
-    except:
-        #If there was an issue, make the response the error message.
+    except KeyError:
         res = %* {
-            "error": getCurrentExceptionMsg()
+            "error": "Missing `args`."
         }
 
     reply(res)

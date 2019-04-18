@@ -61,7 +61,7 @@ proc verify*(
 ): bool {.forceCheck: [].} =
     #If there are no verifications, the signature should be null.
     if verifs.len == 0:
-        return sig == nil
+        return sig.isNil
 
     #Create the Aggregation Infos.
     var agInfos: seq[BLSAggregationInfo] = @[]

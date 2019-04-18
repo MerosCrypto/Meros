@@ -1,13 +1,16 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Wallet lib.
-import ../../../Wallet/Wallet
-
 #Global Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
 #Export it so all modules can access it.
 export GlobalFunctionBox
+
+#Finals lib.
+import finals
+
+#Macros standard lib.
+import macros
 
 #Async standard lib.
 import asyncdispatch
@@ -15,40 +18,68 @@ import asyncdispatch
 #Networking standard lib.
 import asyncnet
 
-#Finals lib.
-import finals
-
 #JSON standard lib.
 import json
 
 #RPC object.
 finalsd:
-    type RPC* = ref object of RootObj
-        functions* {.final.}: GlobalFunctionBox
-        toRPC* {.final.}: ptr Channel[JSONNode]
-        toGUI* {.final.}: ptr Channel[JSONNode]
-        server* {.final.}: AsyncSocket
-        clients*: seq[AsyncSocket]
-        listening*: bool
+    type
+        RPCSocketClient* = ref object
+            id* {.final.}: int
+            socket* {.final.}: AsyncSocket
 
-#Constructor.
-proc newRPCObject*(
+        RPC* = ref object
+            functions* {.final.}: GlobalFunctionBox
+            toRPC* {.final.}: ptr Channel[JSONNode]
+            toGUI* {.final.}: ptr Channel[JSONNode]
+            server* {.final.}: AsyncSocket
+            clients*: seq[RPCSocketClient]
+            listening*: bool
+
+#Constructors.
+proc newRPCSocketClient*(
+    id: int,
+    socket: AsyncSocket
+): RPCSocketClient {.forceCheck: [].} =
+    result = RPCSocketClient(
+        id: id,
+        socket: socket
+    )
+    result.ffinalizeID()
+    result.ffinalizeSocket()
+
+proc newRPCObj*(
     functions: GlobalFunctionBox,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
-): RPC {.raises: [SocketError].} =
-    try:
-        result = RPC(
-            functions: functions,
-            toRPC: toRPC,
-            toGUI: toGUI,
-            server: newAsyncSocket(),
-            clients: @[],
-            listening: true
+): RPC {.forceCheck: [].} =
+    result = RPC(
+        functions: functions,
+        toRPC: toRPC,
+        toGUI: toGUI,
+        clients: @[],
+        listening: true
+    )
+    result.ffinalizeFunctions()
+    result.ffinalizeToRPC()
+    result.ffinalizeToGUI()
+    result.ffinalizeServer()
+
+#Macro to shorten returning errors when one occurs.
+macro returnError*(): untyped =
+    newStmtList(
+        newNimNode(nnkReturnStmt).add(
+            newNimNode(nnkPrefix).add(
+                newIdentNode("%*"),
+                newNimNode(nnkTableConstr).add(
+                    newNimNode(nnkExprColonExpr).add(
+                        newStrLitNode("error"),
+                        newNimNode(nnkDotExpr).add(
+                            newIdentNode("e"),
+                            newIdentNode("msg")
+                        )
+                    )
+                )
+            )
         )
-        result.ffinalizeFunctions()
-        result.ffinalizeToRPC()
-        result.ffinalizeToGUI()
-        result.ffinalizeServer()
-    except:
-        raise newException(SocketError, "Couldn't start the RPC Socket.")
+    )
