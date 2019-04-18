@@ -19,8 +19,10 @@ Specific Tasks:
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Clean UI.
-- Clean Network.
-- Clean MainMerit, especially `merit.addBlock`. It currently compiles, yet has some code commented, some `except Exception`s, and no cleaning of the async code.
+- Clean Network. When we do, call syncBlock from requestBlock.
+- Move broadcast for Entries from the Network/RPC to the Lattice, to match Blocks and also be able to remove the 100ms verify delay.
+- Move broadcast for Verifications from the Network/RPC to the Lattice, to match Blocks and Entries.
+- Print the Exception add (Verification/Entry/Block) raises when it fails from the Networking code (RPC already returns it).
 - Clean tests.
 
 - Don't rebroadcast Blocks or Entries that we're syncing.
@@ -38,10 +40,14 @@ Tests:
 - Network/Serialize/Lattice/ParseEntry Test.
 
 ### Core:
+Wallet:
+- Mnemonic file to convert a Mnemonic to seed, and vice versa.
+- HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
+
 Database:
 - If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
-- Assign a local nickname to every hash. The first vote takes up 52 bytes (hash + nickname), but the next only takes up 4 (nickname)
+- Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Verifications:
 - Load unarchived verifications from the DB.
@@ -67,10 +73,6 @@ Lattice:
 - Have work precalculable for 100 `Send`'s/`Data`'s in advance.
 - Difficulty voting.
 - Lock boxes.
-
-Wallet:
-- Mnemonic file to convert a Mnemonic to seed, and vice versa.
-- HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 
 Network:
 - Prevent the same client from connecting multiple times.
@@ -133,7 +135,7 @@ UI/RPC:
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
 
-- Have the RPC match the JSON-RPC 2.0 spec (minus HTTP).
+- Have the RPC match the JSON-RPC 2.0 spec.
 - Have the RPC dynamically get the nonce (it's currently an argument).
 - `network.rebroadcast(address | verifier, nonce)` RPC method.
 - Expose more of the Verifications RPC.

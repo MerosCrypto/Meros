@@ -19,7 +19,8 @@ import ../../objects/GlobalFunctionBoxObj
 #VerifierRecord object.
 import ../common/objects/VerifierRecordObj
 
-#Blockcain and State lib.
+#Block, Blockcain, and State lib.
+import Block
 import Blockchain
 import State
 

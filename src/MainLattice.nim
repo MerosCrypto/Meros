@@ -68,7 +68,7 @@ proc mainLattice() {.forceCheck: [].} =
             functions.database,
             verifications,
             merit,
-            TRANSACTION_DIFFICULTY,
+            SEND_DIFFICULTY,
             DATA_DIFFICULTY
         )
 
@@ -141,27 +141,21 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(claim)
             #Invalid Ed25519 Signature or invalid BLS Signature OR data already exists.
             except ValueError as e:
-                echo "Failed to add the Claim."
                 raise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                echo "Failed to add the Claim."
                 raise e
             #Missing Entries before this Entry.
             except GapError as e:
-                echo "Failed to add the Claim."
                 raise e
             #Account has an invalid address.
             except AddressError as e:
-                echo "Failed to add the Claim."
                 raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                echo "Failed to add the Claim."
                 raise e
             #BLS lib threw.
             except BLSError as e:
-                echo "Failed to add the Claim."
                 raise e
 
             echo "Successfully added the Claim."
@@ -180,8 +174,7 @@ proc mainLattice() {.forceCheck: [].} =
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError,
-            SodiumError
+            EdPublicKeyError
         ].} =
             #Print that we're adding the Send.
             echo "Adding a new Send."
@@ -191,23 +184,18 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(send)
             #Invalid Ed25519 Signature OR data already exists.
             except ValueError as e:
-                echo "Failed to add the Send."
                 raise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                echo "Failed to add the Send."
                 raise e
             #Missing Entries before this Entry.
             except GapError as e:
-                echo "Failed to add the Send."
                 raise e
             #Account has an invalid address.
             except AddressError as e:
-                echo "Failed to add the Send."
                 raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                echo "Failed to add the Send."
                 raise e
             #BLSError.
             except BLSError as e:
@@ -234,14 +222,14 @@ proc mainLattice() {.forceCheck: [].} =
                             ),
                             lattice[wallet.address].height
                         )
-                    except AddressError:
-                        doAssert(false, "One of our Wallets has an invalid Address.")
+                    except AddressError as e:
+                        doAssert(false, "One of our Wallets (" & wallet.address & ") has an invalid Address: " & e.msg)
 
                     #Sign it.
                     try:
                         wallet.sign(recv)
                     except SodiumError as e:
-                        raise e
+                        doAssert(false, "Failed to sign a Receive for a Send: " & e.msg)
 
                     #Emit it.
                     try:
@@ -291,23 +279,18 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(recv)
             #Invalid Ed25519 Signature OR data already exists.
             except ValueError as e:
-                echo "Failed to add the Receive."
                 raise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                echo "Failed to add the Receive."
                 raise e
             #Missing Entries before this Entry.
             except GapError as e:
-                echo "Failed to add the Receive."
                 raise e
             #Account has an invalid address.
             except AddressError as e:
-                echo "Failed to add the Receive."
                 raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                echo "Failed to add the Receive."
                 raise e
             #BLSError.
             except BLSError as e:
@@ -339,23 +322,18 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(data)
             #Invalid Ed25519 Signature OR data already exists.
             except ValueError as e:
-                echo "Failed to add the Data."
                 raise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                echo "Failed to add the Data."
                 raise e
             #Missing Entries before this Entry.
             except GapError as e:
-                echo "Failed to add the Data."
                 raise e
             #Account has an invalid address.
             except AddressError as e:
-                echo "Failed to add the Data."
                 raise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                echo "Failed to add the Data."
                 raise e
             #BLSError.
             except BLSError as e:

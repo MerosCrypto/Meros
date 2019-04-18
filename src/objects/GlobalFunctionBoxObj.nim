@@ -79,9 +79,7 @@ type
             IndexError
         ].}
 
-        getUnarchivedRecords*: proc (): seq[VerifierRecord] {.raises: [
-            IndexError
-        ].}
+        getUnarchivedRecords*: proc (): seq[VerifierRecord] {.raises: [].}
 
         getPendingAggregate*: proc (
             key: BLSPublicKey,
@@ -127,7 +125,7 @@ type
 
         addBlock*: proc (
             newBlock: Block
-        ): Future[bool]
+        ): Future[void]
 
     LatticeFunctionBox* = ref object
         getDifficulties*: proc (): Difficulties {.raises: [].}
@@ -147,13 +145,13 @@ type
         getEntryByHash*: proc (
             hash: Hash[384]
         ): Entry {.raises: [
-            ValueError,
             IndexError
         ].}
 
         getEntryByIndex*: proc (
             index: LatticeIndex
         ): Entry {.raises: [
+            ValueError,
             IndexError
         ].}
 
@@ -175,8 +173,7 @@ type
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError,
-            SodiumError
+            EdPublicKeyError
         ].}
 
         addReceive*: proc (

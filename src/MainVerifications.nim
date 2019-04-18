@@ -23,9 +23,7 @@ proc mainVerifications() {.forceCheck: [].} =
                 raise e
 
         #Provide access to the VerifierRecords of verifiers with unarchived Verifications.
-        functions.verifications.getUnarchivedRecords = proc (): seq[VerifierRecord] {.forceCheck: [
-            IndexError
-        ].} =
+        functions.verifications.getUnarchivedRecords = proc (): seq[VerifierRecord] {.forceCheck: [].} =
             #Check who has new Verifications.
             result = @[]
             for verifier in verifications.verifiers():
@@ -44,7 +42,7 @@ proc mainVerifications() {.forceCheck: [].} =
                 try:
                     merkle = verifications[verifier].calculateMerkle(nonce)
                 except IndexError as e:
-                    raise e
+                    doAssert(false, "Verifier.calculateMerkle() threw an IndexError when the index was verifier.height - 1: " & e.msg)
 
                 result.add(newVerifierRecord(
                     verifier,
@@ -151,6 +149,8 @@ proc mainVerifications() {.forceCheck: [].} =
             except IndexError as e:
                 raise e
 
+            echo "Successfully added a new Verification."
+
         #Handle MemoryVerifications.
         functions.verifications.addMemoryVerification = proc (
             verif: MemoryVerification
@@ -186,3 +186,5 @@ proc mainVerifications() {.forceCheck: [].} =
                 raise e
             except IndexError as e:
                 raise e
+
+            echo "Successfully added a new MemoryVerification."

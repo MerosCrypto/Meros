@@ -48,7 +48,9 @@ import Account
 export Account
 
 #Lattice object (and sub-objects).
+import objects/DifficultiesObj
 import objects/LatticeObj
+export Difficulties
 export LatticeObj
 
 #Seq utils standard lib.

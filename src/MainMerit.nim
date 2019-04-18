@@ -34,97 +34,100 @@ proc mainMerit() {.forceCheck: [].} =
         #Handle full blocks.
         functions.merit.addBlock = proc (
             newBlock: Block
-        ): Future[bool] {.async.} =
-            result = true
-
+        ) {.forceCheck: [
+            ValueError,
+            IndexError,
+            GapError
+        ], async.} =
             #Print that we're adding the Block.
             echo "Adding a new Block. "
 
-            #If we're connected to other people, sync missing info.
-            if network.clients.clients.len > 0:
-                #Check if we're missing previous Blocks.
-                if newBlock.header.nonce > merit.blockchain.height:
-                    #Iterate over the missing Blocks.
-                    for nonce in merit.blockchain.height ..< newBlock.header.nonce:
-                        #Get and test the Block.
-                        try:
-                            if not await network.requestBlock(nonce):
-                                raise newException(Exception, "")
-                        except Exception:
-                            echo "Failed to add the Block."
-                            return false
+            #Check if we're missing previous Blocks.
+            if newBlock.header.nonce > merit.blockchain.height:
+                #Iterate over the missing Blocks.
+                for nonce in merit.blockchain.height ..< newBlock.header.nonce:
+                    #Get and test the Block.
+                    try:
+                        await network.requestBlock(nonce)
+                    except Exception as e:
+                        doAssert(false, "Couldn't request a Block needed before verifying this Block: " & e.msg)
 
-                #Missing Verifications/Entries.
-                if not await network.sync(newBlock):
-                    echo "Failed to add the Block."
-                    return false
+            #Verify:
+                #We have all the Verifications and Entries.
+                #The signature.
+            var agInfos: seq[BLSAggregationInfo] = @[]
+            for record in newBlock.records:
+                #Grab the Verifier.
+                var verifier: Verifier = verifications[record.key]
 
-            if newBlock.records.len > 0:
-                #Verify we have all the Verifications and Entries, as well as verify the signature.
+                #Verify this isn't archiving archived Verifications.
+                if record.nonce <= verifier.archived:
+                    raise newException(IndexError, "Block has a VerifierRecord which archives archived Verifications.")
+
+                #Verify the merkle.
+                var merkle: Hash[384]
+                try:
+                    merkle = verifier.calculateMerkle(record.nonce)
+                except IndexError as e:
+                    raise e
+                if merkle != record.merkle:
+                    raise newException(ValueError, "Block has a VerifierRecord with a competing Merkle.")
+
                 var
-                    agInfos: seq[BLSAggregationInfo] = @[]
-                    verifiers: Table[string, bool] = initTable[string, bool]()
-                for index in newBlock.records:
-                    #Verify this isn't archiving archived Verifications.
-                    if index.nonce < verifications[index.key].archived:
-                        echo "Failed to add the Block."
-                        return false
+                    #Seq of the relevant verifications for this Verifier.
+                    verifs: seq[Verification]
+                    #Declare an aggregation info seq for this verifier.
+                    verifierAgInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](record.nonce - verifier.archived)
+                #Grab the verifications.
+                try:
+                    verifs = verifier[verifier.archived + 1 .. record.nonce]
+                except IndexError as e:
+                    raise e
 
-                    #Verify we have all the Verifications.
-                    if index.nonce >= verifications[index.key].height:
-                        echo "Failed to add the Block."
-                        return false
+                for v in 0 ..< verifs.len:
+                    #Make sure the Lattice has this Entry.
+                    if not lattice.lookup.hasKey(verifs[v].hash.toString()):
+                        raise newException(GapError, "Block refers to missing Entries, or Entries already out of an Epoch.")
 
-                    #Check the merkle.
-                    if verifications[index.key].calculateMerkle(index.nonce) != index.merkle:
-                        echo "Failed to add the Block."
-                        return false
+                    #Create an aggregation info for this verification.
+                    try:
+                        verifierAgInfos[v] = newBLSAggregationInfo(verifs[v].verifier, verifs[v].hash.toString())
+                    except BLSError as e:
+                        doAssert(false, "Couldn't create an AggregationInfo from a valid Verification: " & e.msg)
 
-                    #Verify this Block doesn't have this verifier twice,
-                    if verifiers.hasKey(index.key.toString()):
-                        echo "Failed to add the Block."
-                        return false
-                    verifiers[index.key.toString()] = true
-
-                    var
-                        #Start of this verifier's unarchived verifications.
-                        verifierStart: int = verifications[index.key].verifications[0].nonce
-                        #Grab this Verifier's verifications.
-                        verifierVerifs: seq[Verification] = verifications[index.key][verifierStart .. index.nonce]
-                        #Declare an aggregation info seq for this verifier.
-                        verifierAgInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](verifierVerifs.len)
-                    for v in 0 ..< verifierVerifs.len:
-                        #Make sure the Lattice has this Entry.
-                        if not lattice.lookup.hasKey(verifierVerifs[v].hash.toString()):
-                            echo "Failed to add the Block."
-                            return false
-
-                        #Create an aggregation info for this verification.
-                        verifierAgInfos[v] = newBLSAggregationInfo(verifierVerifs[v].verifier, verifierVerifs[v].hash.toString())
-
-                    #Add the Verifier's aggregation info to the seq.
+                #Add the Verifier's aggregation info to the seq.
+                try:
                     agInfos.add(verifierAgInfos.aggregate())
+                except BLSError as e:
+                    doAssert(false, "Couldn't aggregate the AggregationInfos of a Verifier: " & e.msg)
 
-                #Calculate the aggregation info.
-                var agInfo: BLSAggregationInfo = agInfos.aggregate()
-                #Make sure that if the AgInfo is nil the Signature is as well
-                if agInfo.isNil != newBlock.header.aggregate.isNil:
-                    echo "Failed to add the Block."
-                    return false
-                #If it's not nil, verify the Signature.
-                if agInfo != nil:
-                    newBlock.header.aggregate.setAggregationInfo(agInfo)
-                    if not newBlock.header.aggregate.verify():
-                        echo "Failed to add the Block."
-                        return false
+            #Calculate the aggregation info.
+            var agInfo: BLSAggregationInfo
+            try:
+                agInfo = agInfos.aggregate()
+            except BLSError as e:
+                doAssert(false, "Couldn't aggregate the AggregationInfos of all the Verifiers: " & e.msg)
+            #Make sure that if the AgInfo is nil the Signature is as well
+            if agInfo.isNil != newBlock.header.aggregate.isNil:
+                raise newException(ValueError, "Block has an invalid nil signature.")
+
+            #If it's not nil, verify the Signature.
+            if agInfo != nil:
+                newBlock.header.aggregate.setAggregationInfo(agInfo)
+                if not newBlock.header.aggregate.verify():
+                    raise newException(ValueError, "Block has an invalid signature.")
+
 
             #Add the Block to the Merit.
             var epoch: Epoch
             try:
                 epoch = merit.processBlock(verifications, newBlock)
-            except Exception:
-                echo "Failed to add the Block."
-                return false
+            except ValueError as e:
+                raise e
+            except IndexError as e:
+                raise e
+            except GapError as e:
+                raise e
 
             #Archive the Verifications mentioned in the Block.
             verifications.archive(newBlock.records)
@@ -142,42 +145,91 @@ proc mainMerit() {.forceCheck: [].} =
                 #Any Claim we may create.
                 claim: Claim
             for reward in rewards:
-                mintNonce = lattice.mint(
-                    reward.key,
-                    newBN(reward.score) * newBN(50) #This is a BN because 50 will end up as a much bigger number (decimals).
-                )
+                var key: BLSPublicKey
+                try:
+                    key = newBLSPublicKey(reward.key)
+                except BLSError as e:
+                    doAssert(false, "Couldn't extract a key from a Reward: " & e.msg)
+
+                try:
+                    mintNonce = lattice.mint(
+                        key,
+                        newBN(reward.score) * newBN(50)
+                    )
+                except ValueError as e:
+                    doAssert(false, "Minting a Block Reward failed due to a ValueError: " & e.msg)
+                except IndexError as e:
+                    doAssert(false, "Minting a Block Reward failed due to a IndexError: " & e.msg)
+                except GapError as e:
+                    doAssert(false, "Minting a Block Reward failed due to a GapError: " & e.msg)
+                except AddressError as e:
+                    doAssert(false, "Minting a Block Reward failed due to a AddressError: " & e.msg)
+                except EdPublicKeyError as e:
+                    doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 
                 #If we have wallets...
                 if (wallet.initiated) and (not config.miner.initiated):
                     #Check if we're the one getting the reward.
                     if config.miner.publicKey.toString() == reward.key:
                         #Claim the Reward.
-                        var claim: Claim = newClaim(
+                        var
+                            claim: Claim
+                            claimNonce: int
+                        try:
+                            claimNonce = lattice[wallet.address].height
+                        except AddressError as e:
+                            doAssert(false, "One of our Wallets (" & wallet.address & ") has an invalid Address: " & e.msg)
+
+                        claim = newClaim(
                             mintNonce,
-                            lattice[wallet.address].height
+                            claimNonce
                         )
+
                         #Sign the claim.
-                        claim.sign(config.miner, wallet)
+                        try:
+                            claim.sign(config.miner, wallet)
+                        except ValueError as e:
+                            doAssert(false, "Failed to sign a Claim for a Mint due to a ValueError: " & e.msg)
+                        except AddressError as e:
+                            doAssert(false, "Failed to sign a Claim for a Mint due to a AddressError: " & e.msg)
+                        except BLSError as e:
+                            doAssert(false, "Failed to sign a Claim for a Mint due to a BLSError: " & e.msg)
+                        except SodiumError as e:
+                            doAssert(false, "Failed to sign a Claim for a Mint due to a SodiumError: " & e.msg)
 
                         #Emit it.
-                        functions.lattice.addClaim(claim)
+                        try:
+                            functions.lattice.addClaim(claim)
+                        except ValueError as e:
+                            doAssert(false, "Failed to add a Claim for a Mint due to a ValueError: " & e.msg)
+                        except IndexError as e:
+                            doAssert(false, "Failed to add a Claim for a Mint due to a IndexError: " & e.msg)
+                        except GapError as e:
+                            doAssert(false, "Failed to add a Claim for a Mint due to a GapError: " & e.msg)
+                        except AddressError as e:
+                            doAssert(false, "Failed to add a Claim for a Mint due to a AddressError: " & e.msg)
+                        except EdPublicKeyError as e:
+                            doAssert(false, "Failed to add a Claim for a Mint due to a EdPublicKeyError: " & e.msg)
+                        except BLSError as e:
+                            doAssert(false, "Failed to add a Claim for a Mint due to a BLSError: " & e.msg)
 
             echo "Successfully added the Block."
 
-            #Broadcast the Block.
-            await network.broadcast(
-                newMessage(
-                    MessageType.Block,
-                    newBlock.serialize()
-                )
-            )
-
-            #If we made a Claim...
-            if not claim.isNil:
-                #Broadcast the Claim.
+            #Broadcast the Block and any created Claim.
+            try:
                 await network.broadcast(
                     newMessage(
-                        MessageType.Claim,
-                        claim.serialize()
+                        MessageType.Block,
+                        newBlock.serialize()
                     )
                 )
+
+                if not claim.isNil:
+                    await network.broadcast(
+                        newMessage(
+                            MessageType.Claim,
+                            claim.serialize()
+                        )
+                    )
+            except Exception as e:
+                doAssert(false, "Couldn't broadcast the new Block/Claim: " & e.msg)

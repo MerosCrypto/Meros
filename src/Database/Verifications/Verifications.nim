@@ -13,6 +13,7 @@ import ../../objects/GlobalFunctionBoxObj
 #VerificationsIndex and VerifierRecord object.
 import ../common/objects/VerificationsIndexObj
 import ../common/objects/VerifierRecordObj
+export VerificationsIndex
 
 #Verification and Verifier libs.
 import Verification

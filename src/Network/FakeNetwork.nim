@@ -20,13 +20,6 @@ proc broadcast*(
 ) {.forceCheck: [], async.} =
     discard
 
-proc reply*(
-    network: Network,
-    msg: Message,
-    res: Message
-) {.forceCheck: [], async.} =
-    discard
-
 proc newNetwork*(
     id: int,
     protocol: int,
@@ -59,14 +52,8 @@ proc shutdown*(
 ) {.raises: [].} =
     discard
 
-proc sync*(
-    network: Network,
-    newBlock: Block
-): Future[bool] {.forceCheck: [], async.} =
-    discard
-
 proc requestBlock*(
     network: Network,
     nonce: int
-): Future[bool] {.forceCheck: [], async.} =
+) {.forceCheck: [], async.} =
     discard
