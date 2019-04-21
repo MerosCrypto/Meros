@@ -53,23 +53,13 @@ func get(
 
 
 #Constructor.
-proc newConfig*(): Config {.forceCheck: [
-    ValueError,
-    Errors.JSONError,
-    RandomError,
-    BLSError
-].} =
+proc newConfig*(): Config {.forceCheck: [].} =
     #Create the config with the default options.
-    try:
-        result = Config(
-            db: "./data/db",
-            tcpPort: 5132,
-            rpcPort: 5133
-        )
-    except RandomError as e:
-        raise e
-    except BLSError as e:
-        raise e
+    result = Config(
+        db: "./data/db",
+        tcpPort: 5132,
+        rpcPort: 5133
+    )
 
     #If the settings file exists...
     if fileExists("./data/settings.json"):
@@ -80,52 +70,52 @@ proc newConfig*(): Config {.forceCheck: [
         try:
             settings = readFile("./data/settings.json")
         except Exception as e:
-            raise newException(Errors.JSONError, "Couldn't read from `./data/settings.json` despite it existing: " & e.msg)
+            doAssert(false, "Couldn't read from `./data/settings.json` despite it existing: " & e.msg)
         try:
             json = parseJSON(settings)
         except Exception as e:
-            raise newException(Errors.JSONError, "Couldn't parse `./data/settings.json` despite it existing: " & e.msg)
+            doAssert(false, "Couldn't parse `./data/settings.json` despite it existing: " & e.msg)
 
         #Handle the settings.
         try:
             result.db = json.get("db", JString).getStr()
         except ValueError as e:
-            raise e
+            doAssert(false, e.msg)
         except IndexError:
             discard
 
         try:
             result.tcpPort = json.get("tcpPort", JInt).getInt()
         except ValueError as e:
-            raise e
+            doAssert(false, e.msg)
         except IndexError:
             discard
 
         try:
             result.rpcPort = json.get("rpcPort", JInt).getInt()
         except ValueError as e:
-            raise e
+            doAssert(false, e.msg)
         except IndexError:
             discard
 
         try:
             result.miner = newMinerWallet(
                 newBLSPrivateKeyFromBytes(
-                    json.get("miner", JInt).getStr()
+                    json.get("miner", JString).getStr()
                 )
             )
         except ValueError as e:
-            raise e
+            doAssert(false, e.msg)
         except IndexError:
             discard
         except BLSError as e:
-            raise e
+            doAssert(false, "Couldn't create a MinerWallet from the value in `./data/settings.json`: " & e.msg)
 
     #If there are params...
     if paramCount() > 0:
         #Make sure there's an even amount of params.
         if paramCount() mod 2 != 0:
-            raise newException(ValueError, "Invalid amount of arguments.")
+            doAssert(false, "Invalid amount of arguments passed via the CLI.")
 
         #Iterate over each param.
         try:
@@ -149,8 +139,8 @@ proc newConfig*(): Config {.forceCheck: [
                                 )
                             )
                         except BLSError as e:
-                            raise e
+                            doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
         except ValueError as e:
-            raise e
+            doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
         except IndexError as e:
             doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
