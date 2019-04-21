@@ -18,7 +18,6 @@ Specific Tasks:
 - Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
-- Clean UI/GUI.
 - Clean Network. When we do:
     - Call syncBlock from requestBlock.
     - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.

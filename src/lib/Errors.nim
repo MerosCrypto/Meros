@@ -47,10 +47,6 @@ type
     DataMissingError*     = object of Exception #Used when a Client is missing requested data.
     InvalidResponseError* = object of Exception #Used when a Client sends an Invalid Response.
 
-    #UI/RPC Errors.
-    ChannelError*  = object of Exception #Used when a Channel fails.
-    JSONError*     = object of Exception #Used when loading/parsing JSON fails.
-    PersonalError* = object of Exception #Used when the Wallet in the RPC fails.
-
     #UI/GUI Errors.
-    WebViewError* = object of Exception #Used when Webview fails.
+    WebViewError* = object of Exception #Used when WebView fails.
+    RPCError*     = object of Exception #Used when the GUI makes an invalid RPC call.

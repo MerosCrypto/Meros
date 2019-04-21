@@ -63,7 +63,6 @@ proc newRPCObj*(
     result.ffinalizeFunctions()
     result.ffinalizeToRPC()
     result.ffinalizeToGUI()
-    result.ffinalizeServer()
 
 #Macro to shorten returning errors when one occurs.
 macro returnError*(): untyped =

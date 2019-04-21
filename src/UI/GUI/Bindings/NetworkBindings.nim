@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #GUI object.
 import ../objects/GUIObj
 
-#WebView lib.
-import mc_webview
-
 #String utils standard lib.
 import strutils
 
@@ -14,35 +11,37 @@ import strutils
 import json
 
 #Add the GUI bindings to the GUI.
-proc addTo*(gui: GUI) {.raises: [WebViewError].} =
+proc addTo*(
+    gui: GUI
+) {.forceCheck: [].} =
     try:
         #Quit.
         gui.webview.bindProc(
             "network",
             "connect",
-            proc (ip: string) {.raises: [OverflowError, ValueError, ChannelError].} =
-                var json: JSONNode
-                if ip.contains(':'):
-                    json = %* {
-                        "module": "network",
-                        "method": "connect",
-                        "args": [
+            proc (
+                ip: string
+            ) {.forceCheck: [].} =
+                try:
+                    if ip.contains(':'):
+                        discard gui.call(
+                            "network",
+                            "connect",
                             ip.split(':')[0],
                             parseInt(ip.split(':')[1])
-                        ]
-                    }
-                else:
-                    json = %* {
-                        "module": "network",
-                        "method": "connect",
-                        "args": ip
-                    }
-
-                try:
-                    #Send the connection info.
-                    gui.toRPC[].send(json)
-                except:
-                    raise newException(ChannelError, "Couldn't send network.connect over the channel.")
+                        )
+                    else:
+                        discard gui.call(
+                            "network",
+                            "connect",
+                            ip
+                        )
+                except ValueError as e:
+                    gui.webview.error("Value Error", "Invalid port number: " & e.msg)
+                except RPCError as e:
+                    gui.webview.error("RPC Error", e.msg)
         )
-    except:
-        raise newException(WebViewError, "Couldn't bind procs to WebView.")
+    except KeyError as e:
+        doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't bind the GUI functions to WebView due to a Exception: " & e.msg)
