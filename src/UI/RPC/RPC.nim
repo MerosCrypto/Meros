@@ -115,8 +115,18 @@ proc start*(
             asyncCheck rpc.handle(
                 data.msg,
                 proc (
-                    json: JSONNode
+                    jsonArg: JSONNode
                 ) {.forceCheck: [].} =
+                    #Extract the JSON argument.
+                    var json: JSONNode = jsonArg
+                    
+                    #If json is nil...
+                    if json.isNil:
+                        #Set a default response of success.
+                        json = %* {
+                            "success": true
+                        }
+
                     try:
                         rpc.toGUI[].send(json)
                     except DeadThreadError as e:
@@ -140,6 +150,7 @@ proc handle*(
             data = await client.socket.recvLine()
         except Exception:
             discard
+
         #If the line length is 0, the client is invalid. Stop handling it.
         if data.len == 0:
             try:
