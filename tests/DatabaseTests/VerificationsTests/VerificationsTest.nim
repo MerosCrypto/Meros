@@ -97,8 +97,6 @@ proc test(archived: seq[VerifierRecord], verifiersLen: int) =
         #Test the Merkle.
         if originalVerifier.archived == -1:
             assert(reloadedVerifier.merkle.hash.toString() == "".pad(48))
-        else:
-            assert(originalVerifier.calculateMerkle(uint(originalVerifier.archived)) == reloadedVerifier.calculateMerkle(uint(originalVerifier.archived)))
 
 #Create 5 Verifiers.
 for i in 0 ..< 5:

@@ -70,17 +70,6 @@ proc newVerifierObj*(
         except DBWriteError as e:
             doAssert(false, "Couldn't save a new Verifier to the Database: " & e.msg)
 
-    #Recreate the Merkle tree.
-    try:
-        for i in 0 .. result.archived:
-            result.merkle.add(
-                result.db.get("verifications_" & result.keyStr & "_" & i.toBinary()).toHash(384)
-            )
-    except ValueError as e:
-        doAssert(false, "Couldn't parse a hash in the Verifier's Merkle which was successfully retrieved from the Database: " & e.msg)
-    except DBReadError as e:
-        doAssert(false, "Couldn't load the Verifier's Merkle from the Database: " & e.msg)
-
     #Populate with the info from the DB.
     result.height = result.archived + 1
 

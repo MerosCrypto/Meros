@@ -15,7 +15,7 @@ Specific Tasks:
 
 - Remove `save: bool` from various systems.
 
-- Have one Merkle per Verifier per Block mention, not one Merkle per Verifier.
+- Correct the `toTrim` variable calculation Verifier.nim (requires MainMerit).
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Clean Network. When we do:
@@ -52,7 +52,7 @@ Database:
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Verifications:
-- Load unarchived verifications from the DB.
+- Load unarchived Verifications from the DB.
 
 Merit:
 - Checkpoints.

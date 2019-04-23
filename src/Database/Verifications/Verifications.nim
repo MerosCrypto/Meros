@@ -10,6 +10,9 @@ import ../../Wallet/MinerWallet
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
+#Merkle lib.
+import ../common/Merkle
+
 #VerificationsIndex and VerifierRecord object.
 import ../common/objects/VerificationsIndexObj
 import ../common/objects/VerifierRecordObj
@@ -68,7 +71,12 @@ proc archive*(
             record.nonce - verifs[record.key].verifications[0].nonce
         )
 
-        #Update the Verifier.
+        #Reset the Merkle.
+        verifs[record.key].merkle = newMerkle()
+        for verif in verifs[record.key].verifications:
+            verifs[record.key].merkle.add(verif.hash)
+
+        #Update the archived field.
         verifs[record.key].archived = record.nonce
 
         #Update the DB.
