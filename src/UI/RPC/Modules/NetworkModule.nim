@@ -18,7 +18,7 @@ proc connect*(
     rpc: RPC,
     ip: string,
     port: int
-): Future[JSONNode] {.forceCheck: [], async.} =
+) {.forceCheck: [], async.} =
     try:
         await rpc.functions.network.connect(ip, port)
     except Exception as e:
@@ -47,7 +47,7 @@ proc network*(
         case methodStr:
             of "connect":
                 try:
-                    res = await rpc.connect(
+                    await rpc.connect(
                         json["args"][0].getStr(),
                         if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
                     )

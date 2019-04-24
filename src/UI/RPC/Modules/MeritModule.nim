@@ -102,45 +102,37 @@ proc publishBlock(
     rpc: RPC,
     data: string
 ): Future[JSONNode] {.forceCheck: [], async.} =
-    var
-        res: JSONNode
-        newBlock: Block
+    var newBlock: Block
 
     try:
         newBlock = data.parseBlock()
     except ValueError as e:
-        res = %* {
+        return %* {
             "error": e.msg
         }
-        return
     except ArgonError as e:
-        res = %* {
+        return %* {
             "error": e.msg
         }
-        return
     except BLSError as e:
-        res = %* {
+        return %* {
             "error": e.msg
         }
-        return
 
     try:
         await rpc.functions.merit.addBlock(newBlock)
     except ValueError as e:
-        res = %* {
+        return %* {
             "error": e.msg
         }
-        return
     except IndexError as e:
-        res = %* {
+        return %* {
             "error": e.msg
         }
-        return
     except GapError as e:
-        res = %* {
+        return %* {
             "error": e.msg
         }
-        return
     except Exception as e:
         doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
 
