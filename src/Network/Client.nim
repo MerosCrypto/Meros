@@ -27,7 +27,7 @@ import Serialize/Verifications/ParseMemoryVerification
 
 import Serialize/Merit/ParseBlock
 
-#Message and Client object.
+#Message and Client objectS.
 import objects/MessageObj
 import objects/ClientObj
 
@@ -38,20 +38,26 @@ export ClientObj
 import asyncdispatch, asyncnet
 
 #Receive a message.
-proc recv*(client: Client): Future[Message] {.async.} =
+proc recv*(
+    client: Client
+): Future[Message] {.forceCheck: [
+    SocketError,
+    ClientError
+], async.} =
     var
         content: MessageType
         size: int
         msg: string
 
     #Receive the content type.
-    msg = await client.socket.recv(1)
+    try:
+        msg = await client.socket.recv(1)
+    except Exception as e:
+        raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
     #If the message length is 0, because the client disconnected...
     if msg.len == 0:
-        #Close the Client.
-        client.socket.close()
-        #Raise an error.
-        raise newException(SocketError, "Client disconnected.")
+        raise newException(ClientError, "Client disconnected.")
     content = MessageType(msg[0])
 
     #Switch based on the content to determine the Message Size.
@@ -60,6 +66,8 @@ proc recv*(client: Client): Future[Message] {.async.} =
             size = BYTE_LEN + BYTE_LEN + INT_LEN
 
         of MessageType.Syncing:
+            size = 0
+        of MessageType.SyncingAcknowledged:
             size = 0
         of MessageType.BlockRequest:
             size = INT_LEN
@@ -90,29 +98,50 @@ proc recv*(client: Client): Future[Message] {.async.} =
 
     #Now that we know how long the message is, get it (as long as there is one).
     if size > 0:
-        msg = await client.socket.recv(size)
+        try:
+            msg = await client.socket.recv(size)
+        except Exception as e:
+            raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
     #If this is a MessageType with more data...
     case content:
         of MessageType.Data:
             var len: int = int(msg[^1])
             size += len
-            msg &= await client.socket.recv(len)
+
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
             size += DATA_SUFFIX_LEN
-            msg &= await client.socket.recv(DATA_SUFFIX_LEN)
+
+            try:
+                msg &= await client.socket.recv(DATA_SUFFIX_LEN)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
         of MessageType.Block:
             var quantity: int = msg.substr(msg.len - 4).fromBinary()
             size += (quantity * VERIFIER_INDEX_LEN) + BYTE_LEN
-            msg &= await client.socket.recv((quantity * VERIFIER_INDEX_LEN) + BYTE_LEN)
+
+            try:
+                msg &= await client.socket.recv((quantity * VERIFIER_INDEX_LEN) + BYTE_LEN)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
             quantity = int(msg[^1])
             size += quantity * MINER_LEN
-            msg &= await client.socket.recv(quantity * MINER_LEN)
+
+            try:
+                msg &= await client.socket.recv(quantity * MINER_LEN)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
         else:
             discard
 
     #Verify the length.
     if msg.len != size:
-        raise newException(SocketError, "Didn't get a full message.")
+        raise newException(ClientError, "Didn't get a full message.")
 
     #Create a proper Message and return it.
     result = newMessage(
@@ -123,16 +152,22 @@ proc recv*(client: Client): Future[Message] {.async.} =
     )
 
 #Send a message.
-proc send*(client: Client, msg: Message) {.async.} =
+proc send*(
+    client: Client,
+    msg: Message
+) {.forceCheck: [
+    SocketError,
+    ClientError
+], async.} =
     #Make sure the client is open.
     if not client.socket.isClosed():
         try:
             await client.socket.send($msg)
-        except:
-            raise newException(SocketError, "Couldn't broacast to a Client.")
-    #If it isn't, mark the client for disconnection.
+        except Exception as e:
+            raise newException(SocketError, "Couldn't send to a Client: " & e.msg)
+    #If it isn't, raise an Error.
     else:
-        raise newException(SocketError, "Client was closed.")
+        raise newException(ClientError, "Client was closed.")
 
 #Handshake.
 proc handshake*(
@@ -140,23 +175,40 @@ proc handshake*(
     id: int,
     protocol: int,
     height: int
-): Future[HandshakeState] {.async.} =
-    #Set the result to Error in case the Handshake fails.
-    result = HandshakeState.Error
-
+): Future[HandshakeState] {.forceCheck: [
+    SocketError,
+    ClientError,
+    InvalidMessageError
+], async.} =
     #Send a handshake.
-    await client.send(
-        newMessage(
-            MessageType.Handshake,
-            char(id) & char(protocol) & height.toBinary().pad(INT_LEN)
+    try:
+        await client.send(
+            newMessage(
+                MessageType.Handshake,
+                char(id) & char(protocol) & height.toBinary().pad(INT_LEN)
+            )
         )
-    )
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Sending a handshake to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their handshake back.
-    var handshake: Message = await client.recv()
+    var handshake: Message
+    try:
+        handshake = await client.recv()
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Receiving a Client's handshake threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
     #Verify their handshake is a handshake.
     if handshake.content != MessageType.Handshake:
-        return
+        raise newException(InvalidMessageError, "Client responded to a Handshake with something other than a handshake.")
 
     #Deserialize their message.
     var handshakeSeq: seq[string] = handshake.message.deserialize(
@@ -166,10 +218,10 @@ proc handshake*(
     )
     #Verify their Network ID.
     if int(handshakeSeq[0][0]) != id:
-        return
+        raise newException(InvalidMessageError, "Client responded to a Handshake with a different Network ID.")
     #Verify their Protocol version.
     if int(handshakeSeq[1][0]) != protocol:
-        return
+        raise newException(InvalidMessageError, "Client responded to a Handshake with a different Protocol Version.")
 
     #Get their Blockchain height.
     var theirHeight: int = handshakeSeq[2].fromBinary()
@@ -182,117 +234,270 @@ proc handshake*(
     result = HandshakeState.Complete
 
 #Tell the Client we're syncing.
-proc sync*(client: Client) {.async.} =
+proc startSyncing*(
+    client: var Client
+) {.forceCheck: [
+    SocketError,
+    ClientError
+], async.} =
     #If we're already syncing, do nothing.
     if client.ourState == ClientState.Syncing:
         return
 
     #Send that we're syncing.
-    await client.send(newMessage(MessageType.Syncing))
+    try:
+        await client.send(newMessage(MessageType.Syncing))
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Sending a `Syncing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Bool of if we should still wait for a SyncingAcknowledged.
+    #Set to false after 5 seconds.
+    var shouldWait: bool = true
+    try:
+        addTimer(
+            5000,
+            true,
+            func (fd: AsyncFD): bool {.forceCheck: [].} =
+                shouldWait = false
+        )
+    except OSError as e:
+        doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
+
+    #Discard every message until we get a SyncingAcknowledged.
+    while shouldWait:
+        var msg: Message
+        try:
+            msg = await client.recv()
+        except SocketError as e:
+            raise e
+        except ClientError as e:
+            raise e
+        except Exception as e:
+            doAssert(false, "Receiving the response to a `Syncing` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        if msg.content == SyncingAcknowledged:
+            break
+
+    #If we broke because shouldWait expired, raise a client error.
+    if not shouldWait:
+        raise newException(ClientError, "Client never responded to the fact we were syncing.")
 
     #Update our state.
     client.ourState = ClientState.Syncing
 
 #Sync an Entry.
-proc syncEntry*(client: Client, hash: string): Future[SyncEntryResponse] {.async.} =
+proc syncEntry*(
+    client: Client,
+    hash: string
+): Future[SyncEntryResponse] {.forceCheck: [
+    SocketError,
+    ClientError,
+    SyncConfigError,
+    InvalidMessageError,
+    DataMissing
+], async.} =
     #If we're not syncing, raise an error.
     if client.ourState != ClientState.Syncing:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    await client.send(newMessage(MessageType.EntryRequest, hash))
+    try:
+        await client.send(newMessage(MessageType.EntryRequest, hash))
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Sending an `EntryRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
-    var msg: Message = await client.recv()
+    var msg: Message
+    try:
+        msg = await client.recv()
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Receiving the response to an `EntryRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    case msg.content:
-        of MessageType.Claim:
-            return newSyncEntryResponse(
-                msg.message.parseClaim()
-            )
+    #Parse the response.
+    try:
+        case msg.content:
+            of MessageType.Claim:
+                result = newSyncEntryResponse(
+                    msg.message.parseClaim()
+                )
 
-        of MessageType.Send:
-            return newSyncEntryResponse(
-                msg.message.parseSend()
-            )
+            of MessageType.Send:
+                result = newSyncEntryResponse(
+                    msg.message.parseSend()
+                )
 
-        of MessageType.Receive:
-            return newSyncEntryResponse(
-                msg.message.parseReceive()
-            )
+            of MessageType.Receive:
+                result = newSyncEntryResponse(
+                    msg.message.parseReceive()
+                )
 
-        of MessageType.Data:
-            return newSyncEntryResponse(
-                msg.message.parseData()
-            )
+            of MessageType.Data:
+                result = newSyncEntryResponse(
+                    msg.message.parseData()
+                )
 
-        of MessageType.DataMissing:
-            raise newException(DataMissingError, "Client didn't have the requested data.")
+            of MessageType.DataMissing:
+                raise newException(DataMissing, "Client didn't have the requested Entry.")
 
-        else:
-            raise newException(InvalidResponseError, "Client didn't respond properly to our EntryRequest.")
+            else:
+                raise newException(InvalidMessageError, "Client didn't respond properly to our EntryRequest.")
+    except ValueError as e:
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a ValueError: " & e.msg)
+    except ArgonError as e:
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a ArgonError: " & e.msg)
+    except BLSError as e:
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a BLSError: " & e.msg)
+    except EdPublicKeyError as e:
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a EdPublicKeyError: " & e.msg)
+    except InvalidMessageError as e:
+        raise e
+    except DataMissing as e:
+        raise e
 
 #Sync a Verification.
 proc syncVerification*(
     client: Client,
     verifier: string,
     nonce: int
-): Future[Verification] {.async.} =
-    #If we're not syncing, raise an error.
+): Future[Verification] {.forceCheck: [
+    SocketError,
+    ClientError,
+    SyncConfigError,
+    InvalidMessageError,
+    DataMissing
+], async.} =
+    #If we're not syncin/g, raise an error.
     if client.ourState != ClientState.Syncing:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    await client.send(
-        newMessage(
-            MessageType.VerificationRequest,
-            verifier & nonce.toBinary().pad(INT_LEN)
+    try:
+        await client.send(
+            newMessage(
+                MessageType.VerificationRequest,
+                verifier & nonce.toBinary().pad(INT_LEN)
+            )
         )
-    )
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Sending an `VerificationRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
-    var msg: Message = await client.recv()
+    var msg: Message
+    try:
+        msg = await client.recv()
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Receiving the response to an `VerificationRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     case msg.content:
         of MessageType.Verification:
-            return msg.message.parseVerification()
+            try:
+                result = msg.message.parseVerification()
+            except ValueError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, pointed out by a ValueError: " & e.msg)
+            except BLSError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
-            raise newException(DataMissingError, "Client didn't have the requested data.")
+            raise newException(DataMissing, "Client didn't have the requested Verification.")
 
         else:
-            raise newException(InvalidResponseError, "Client didn't respond properly to our VerificationRequest.")
+            raise newException(InvalidMessageError, "Client didn't respond properly to our VerificationRequest.")
 
 #Sync a Block.
-proc syncBlock*(client: Client, nonce: int): Future[Block] {.async.} =
+proc syncBlock*(
+    client: Client,
+    nonce: int
+): Future[Block] {.forceCheck: [
+    SocketError,
+    ClientError,
+    SyncConfigError,
+    InvalidMessageError,
+    DataMissing
+], async.} =
     #If we're not syncing, raise an error.
     if client.ourState != ClientState.Syncing:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
-    await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary().pad(INT_LEN)))
+    try:
+        await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary().pad(INT_LEN)))
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Sending an `BlockRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
-    var msg: Message = await client.recv()
+    var msg: Message
+    try:
+        msg = await client.recv()
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Receiving the response to an `BlockRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     case msg.content:
         of MessageType.Block:
-            return msg.message.parseBlock()
+            try:
+                result = msg.message.parseBlock()
+            except ValueError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, pointed out by a ValueError: " & e.msg)
+            except ArgonError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, pointed out by a ArgonError: " & e.msg)
+            except BLSError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
-            raise newException(DataMissingError, "Client didn't have the requested data.")
+            raise newException(DataMissing, "Client didn't have the requested Block.")
 
         else:
-            raise newException(InvalidResponseError, "Client didn't respond properly to our BlockRequest.")
+            raise newException(InvalidMessageError, "Client didn't respond properly to our BlockRequest.")
 
 #Tell the Client we're done syncing.
-proc syncOver*(client: Client) {.async.} =
+proc stopSyncing*(
+    client: var Client
+) {.forceCheck: [
+    SocketError,
+    ClientError
+], async.} =
     #If we're already not syncing, do nothing.
     if client.ourState != ClientState.Syncing:
         return
 
     #Send that we're done syncing.
-    await client.send(newMessage(MessageType.SyncingOver))
+    try:
+        await client.send(newMessage(MessageType.SyncingOver))
+    except SocketError as e:
+        raise e
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Sending a `SyncingOver` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Update our state.
     client.ourState = ClientState.Ready

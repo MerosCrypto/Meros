@@ -13,21 +13,22 @@ General Cleanup:
 Specific Tasks:
 - Add `DataExists` for when data has already been added.
 
-- Remove `save: bool` from various systems.
-
 - Correct the `toTrim` variable calculation Verifier.nim (requires MainMerit).
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
-- Clean Network. When we do:
-    - Call syncBlock from requestBlock.
-    - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
-    - Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
-    - Print the Exception add(Verification/Entry/Block) raises when it fails from the Networking code (this used to happen in Main, yet no longer does, and the RPC already responds with it).
+- Clean NetworkSync.
+- Make sure raises changes for the following are propogated appropriately:
+    - Network.connect (ClientError)
+    - Network.requestBlock (?)
+- Call syncBlock from requestBlock.
+- Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
+- Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
+
 - Clean tests.
 
 - Update some `raise`s in the PersonalModule to `doAssert(false)`.
 
-- Don't rebroadcast Blocks or Entries that we're syncing.
+- Don't rebroadcast data that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 
 Tests:

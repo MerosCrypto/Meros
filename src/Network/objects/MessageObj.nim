@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Lattice Entries (we don't just import Lattice due to a circular dependcy).
 import ../../Database/Lattice/objects/EntryObj
 import ../../Database/Lattice/objects/ClaimObj
@@ -18,22 +21,23 @@ finalsd:
             Handshake = 0,
 
             Syncing = 1,
-            BlockRequest = 2,
-            VerificationRequest = 3,
-            EntryRequest = 4,
-            DataMissing = 5,
-            SyncingOver = 6,
+            SyncingAcknowledged = 2,
+            BlockRequest = 3,
+            VerificationRequest = 4,
+            EntryRequest = 5,
+            DataMissing = 6,
+            SyncingOver = 7,
 
-            Claim = 7,
-            Send = 8,
-            Receive = 9,
-            Data = 10,
-            MemoryVerification = 11,
-            Block = 12,
-            Verification = 13
+            Claim = 8,
+            Send = 9,
+            Receive = 10,
+            Data = 11,
+            MemoryVerification = 12,
+            Block = 13,
+            Verification = 14
 
         #Message object.
-        Message* = ref object of RootObj
+        Message* = object
             client* {.final.}: int
             content* {.final.}: MessageType
             len* {.final.}: int
@@ -41,7 +45,7 @@ finalsd:
 
         #syncEntry response.
         #This has its own type to stop a segfault that occurs when we cast things around.
-        SyncEntryResponse* = ref object of RootObj
+        SyncEntryResponse* = object
             case entry*: EntryType:
                 of EntryType.Claim:
                     claim* {.final.}: Claim
@@ -56,8 +60,8 @@ finalsd:
 
 #Finalize the Message.
 func finalize(
-    msg: Message
-) {.raises: [].} =
+    msg: var Message
+) {.forceCheck: [].} =
     msg.ffinalizeClient()
     msg.ffinalizeContent()
     msg.ffinalizeLen()
@@ -69,7 +73,7 @@ func newMessage*(
     content: MessageType,
     len: int,
     message: string
-): Message {.raises: [].} =
+): Message {.forceCheck: [].} =
     result = Message(
         client: client,
         content: content,
@@ -82,7 +86,7 @@ func newMessage*(
 func newMessage*(
     content: MessageType,
     message: string = ""
-): Message {.raises: [].} =
+): Message {.forceCheck: [].} =
     #Create the Message.
     result = Message(
         client: 0,
@@ -93,30 +97,40 @@ func newMessage*(
     result.finalize()
 
 #SyncEntryResponse constructors.
-func newSyncEntryResponse*(claim: Claim): SyncEntryResponse {.raises: [].} =
+func newSyncEntryResponse*(
+    claim: Claim
+): SyncEntryResponse {.forceCheck: [].} =
     SyncEntryResponse(
         entry: EntryType.Claim,
         claim: claim
     )
 
-func newSyncEntryResponse*(send: Send): SyncEntryResponse {.raises: [].} =
+func newSyncEntryResponse*(
+    send: Send
+): SyncEntryResponse {.forceCheck: [].} =
     SyncEntryResponse(
         entry: EntryType.Send,
         send: send
     )
 
-func newSyncEntryResponse*(recv: Receive): SyncEntryResponse {.raises: [].} =
+func newSyncEntryResponse*(
+    recv: Receive
+): SyncEntryResponse {.forceCheck: [].} =
     SyncEntryResponse(
         entry: EntryType.Receive,
         receive: recv
     )
 
-func newSyncEntryResponse*(data: Data): SyncEntryResponse {.raises: [].} =
+func newSyncEntryResponse*(
+    data: Data
+): SyncEntryResponse {.forceCheck: [].} =
     SyncEntryResponse(
         entry: EntryType.Data,
         data: data
     )
 
 #Stringify.
-func `$`*(msg: Message): string {.raises: [].} =
+func `$`*(
+    msg: Message
+): string {.forceCheck: [].} =
     char(msg.content) & msg.message

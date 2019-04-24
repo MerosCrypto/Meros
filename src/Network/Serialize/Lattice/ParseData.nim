@@ -21,7 +21,6 @@ import ../SerializeCommon
 proc parseData*(
     dataStr: string
 ): Data {.forceCheck: [
-    ValueError,
     ArgonError,
     EdPublicKeyError
 ].} =
@@ -76,8 +75,6 @@ proc parseData*(
         result.argon = Argon(result.hash.toString(), proof.toBinary(), true)
         #Set the signature.
         result.signature = signature
-    except ValueError as e:
-        raise e
     except ArgonError as e:
         raise e
     except FinalAttributeError as e:

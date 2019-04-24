@@ -57,11 +57,11 @@ import objects/NetworkLibFunctionBoxObj
 #Clients library.
 import Clients
 
-#Seq utils standard lib.
-import sequtils
-
 #Tables standard lib.
 import tables
 
 #Networking standard libs.
 import asyncdispatch, asyncnet
+
+#Selectors standard lib, imported for an Error type asyncnet can raise but doesn't export.
+import selectors

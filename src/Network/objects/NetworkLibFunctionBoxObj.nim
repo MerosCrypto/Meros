@@ -1,5 +1,5 @@
 discard """
-This is named NetworkLibFB, not NetworkFB, `because GlobalFunctionBox` also defines a `NetworkFunctionBox`.
+This is named NetworkLibFunctionBox, not NetworkFunctionBox, `because GlobalFunctionBox` also defines a `NetworkFunctionBox`.
 """
 
 #Errors lib.
@@ -14,20 +14,20 @@ import MessageObj
 #Async standard lib.
 import asyncdispatch
 
-type NetworkLibFunctionBox* = ref object of RootObj
-    getNetworkID*: proc (): int {.raises: [].}
+type NetworkLibFunctionBox* = ref object
+    getNetworkID*: proc (): int {.noSideEffect, raises: [].}
 
-    getProtocol*: proc (): int {.raises: [].}
+    getProtocol*: proc (): int {.noSideEffect, raises: [].}
 
     getHeight*: proc (): int {.raises: [].}
 
     handle*: proc (
         msg: Message
-    ): Future[bool]
+    ): Future[void]
 
     handleBlock*: proc (
         newBlock: Block
-    ): Future[bool]
+    ): Future[void]
 
-proc newNetworkLibFunctionBox*(): NetworkLibFunctionBox {.raises: [].} =
+func newNetworkLibFunctionBox*(): NetworkLibFunctionBox {.forceCheck: [].} =
     NetworkLibFunctionBox()

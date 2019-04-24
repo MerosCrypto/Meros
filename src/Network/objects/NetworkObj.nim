@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Global Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
@@ -20,7 +23,7 @@ finalsd:
         #Protocol version.
         protocol* {.final.}: int
         #Clients.
-        clients* {.final.}: Clients
+        clients*: Clients
         #Server.
         server* {.final.}: AsyncSocket
         #Network Function Box.
@@ -33,21 +36,17 @@ func newNetworkObj*(
     id: int,
     protocol: int,
     clients: Clients,
-    server: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox,
     mainFunctions: GlobalFunctionBox
-): Network {.raises: [].} =
+): Network {.forceCheck: [].} =
     result = Network(
         id: id,
         protocol: protocol,
         clients: clients,
-        server: server,
         networkFunctions: networkFunctions,
         mainFunctions: mainFunctions
     )
     result.ffinalizeID()
     result.ffinalizeProtocol()
-    result.ffinalizeClients()
-    result.ffinalizeServer()
     result.ffinalizeNetworkFunctions()
     result.ffinalizeMainFunctions()

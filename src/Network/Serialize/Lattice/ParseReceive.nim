@@ -24,7 +24,6 @@ import ../SerializeCommon
 proc parseReceive*(
     recvStr: string
 ): Receive {.forceCheck: [
-    ValueError,
     EdPublicKeyError
 ].} =
     var
@@ -71,7 +70,5 @@ proc parseReceive*(
         result.hash = Blake384(recvSeq.reserialize(1, 3))
         #Set the signature.
         result.signature = signature
-    except ValueError as e:
-        raise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Receive: " & e.msg)

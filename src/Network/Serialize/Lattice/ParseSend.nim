@@ -24,7 +24,6 @@ import ../SerializeCommon
 proc parseSend*(
     sendStr: string
 ): Send {.forceCheck: [
-    ValueError,
     ArgonError,
     EdPublicKeyError
 ].} =
@@ -78,8 +77,6 @@ proc parseSend*(
         result.argon = Argon(result.hash.toString(), proof, true)
         #Set the signature.
         result.signature = signature
-    except ValueError as e:
-        raise e
     except ArgonError as e:
         raise e
     except FinalAttributeError as e:

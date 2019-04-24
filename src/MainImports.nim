@@ -27,7 +27,7 @@ import Database/Lattice/Lattice
 import Database/Filesystem/DB
 
 #Network.
-import Network/FakeNetwork
+import Network/Network
 
 #Serialization libs.
 import Network/Serialize/Verifications/SerializeMemoryVerification

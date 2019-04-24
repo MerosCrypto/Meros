@@ -2,7 +2,10 @@
 include NetworkCore
 
 #Sync a Block's Verifications/Entries.
-proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
+proc sync*(
+    network: Network,
+    newBlock: Block
+): Future[bool] {.forceCheck: [], async.} =
     #If we use the `.items` iterator, we gain two advantages.
     #The first is that since we can only directly index by ID, we don't have to track that.
     #The second is that we only run if we have a client.
@@ -144,7 +147,10 @@ proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
         return
 
 #Request a Block.
-proc requestBlock*(network: Network, nonce: int): Future[bool] {.async.} =
+proc requestBlock*(
+    network: Network,
+    nonce: int
+): Future[bool] {.forceCheck: [], async.} =
     for client in network.clients:
         #Start syncing.
         await client.sync()

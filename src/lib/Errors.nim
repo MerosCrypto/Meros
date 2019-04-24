@@ -42,10 +42,11 @@ type
     MintError* = object of Exception #Used when Minting MR fails.
 
     #Network Errors.
-    SocketError*          = object of Exception #Used when a socket fails.
-    SyncConfigError*      = object of Exception #Used when a Socket which isn't set for syncing is used to sync.
-    DataMissingError*     = object of Exception #Used when a Client is missing requested data.
-    InvalidResponseError* = object of Exception #Used when a Client sends an Invalid Response.
+    SocketError*         = object of Exception #Used when a Socket fails.
+    ClientError*         = object of Exception #Used when we try interacting with a disconnected Client or a Client who's breaking the protocol.
+    InvalidMessageError* = object of Exception #Used when a Client follows the protocol, yet sends an improper message for the situation.
+    SyncConfigError*     = object of Exception #Used when a Socket which isn't set for syncing is used to sync.
+    DataMissing*         = object of Exception #Used when a Client is missing requested data.
 
     #UI/GUI Errors.
     WebViewError* = object of Exception #Used when WebView fails.
