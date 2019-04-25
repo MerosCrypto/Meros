@@ -34,7 +34,7 @@ import asyncdispatch, asyncnet
 
 #Handle a client.
 proc handle(
-    client: var Client,
+    client: Client,
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [
     SocketError,
@@ -90,7 +90,7 @@ proc handle(
 
 #Add a new Client from a Socket.
 proc add*(
-    clients: var Clients,
+    clients: Clients,
     ip: string,
     port: int,
     socket: AsyncSocket,
@@ -197,7 +197,7 @@ proc add*(
 
 #Sends a message to all clients.
 proc broadcast*(
-    clients: var Clients,
+    clients: Clients,
     msg: Message
 ) {.forceCheck: [], async.} =
     #Seq of the clients to disconnect.
@@ -230,7 +230,7 @@ proc broadcast*(
 
 #Reply to a message.
 proc reply*(
-    clients: var Clients,
+    clients: Clients,
     msg: Message,
     res: Message
 ) {.forceCheck: [], async.} =

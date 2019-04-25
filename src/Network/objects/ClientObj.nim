@@ -18,7 +18,7 @@ finalsd:
             Syncing = 0,
             Ready = 1
 
-        Client* = object
+        Client* = ref object
             #IP.
             ip* {.final.}: string
             #Port.

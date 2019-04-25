@@ -4,6 +4,12 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
+#Hash lib.
+import ../lib/Hash
+
+#MinerWallet lib.
+import ../Wallet/MinerWallet
+
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice
 
@@ -235,7 +241,7 @@ proc handshake*(
 
 #Tell the Client we're syncing.
 proc startSyncing*(
-    client: var Client
+    client: Client
 ) {.forceCheck: [
     SocketError,
     ClientError
@@ -294,7 +300,7 @@ proc startSyncing*(
 #Sync an Entry.
 proc syncEntry*(
     client: Client,
-    hash: string
+    hash: Hash[384]
 ): Future[SyncEntryResponse] {.forceCheck: [
     SocketError,
     ClientError,
@@ -308,7 +314,7 @@ proc syncEntry*(
 
     #Send the request.
     try:
-        await client.send(newMessage(MessageType.EntryRequest, hash))
+        await client.send(newMessage(MessageType.EntryRequest, hash.toString()))
     except SocketError as e:
         raise e
     except ClientError as e:
@@ -356,13 +362,13 @@ proc syncEntry*(
             else:
                 raise newException(InvalidMessageError, "Client didn't respond properly to our EntryRequest.")
     except ValueError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a ValueError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a ValueError: " & e.msg)
     except ArgonError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a ArgonError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a ArgonError: " & e.msg)
     except BLSError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a BLSError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a BLSError: " & e.msg)
     except EdPublicKeyError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, pointed out by a EdPublicKeyError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a EdPublicKeyError: " & e.msg)
     except InvalidMessageError as e:
         raise e
     except DataMissing as e:
@@ -371,7 +377,7 @@ proc syncEntry*(
 #Sync a Verification.
 proc syncVerification*(
     client: Client,
-    verifier: string,
+    verifier: BLSPublicKey,
     nonce: int
 ): Future[Verification] {.forceCheck: [
     SocketError,
@@ -389,7 +395,7 @@ proc syncVerification*(
         await client.send(
             newMessage(
                 MessageType.VerificationRequest,
-                verifier & nonce.toBinary().pad(INT_LEN)
+                verifier.toString() & nonce.toBinary().pad(INT_LEN)
             )
         )
     except SocketError as e:
@@ -415,15 +421,18 @@ proc syncVerification*(
             try:
                 result = msg.message.parseVerification()
             except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, pointed out by a ValueError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, as pointed out by a ValueError: " & e.msg)
             except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, pointed out by a BLSError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, as pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
             raise newException(DataMissing, "Client didn't have the requested Verification.")
 
         else:
             raise newException(InvalidMessageError, "Client didn't respond properly to our VerificationRequest.")
+
+    if (result.verifier != verifier) or (result.nonce != nonce):
+        raise newException(InvalidMessageError, "Synced a Verification that we didn't request.")
 
 #Sync a Block.
 proc syncBlock*(
@@ -466,11 +475,11 @@ proc syncBlock*(
             try:
                 result = msg.message.parseBlock()
             except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, pointed out by a ValueError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, as pointed out by a ValueError: " & e.msg)
             except ArgonError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, pointed out by a ArgonError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, as pointed out by a ArgonError: " & e.msg)
             except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, pointed out by a BLSError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, as pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
             raise newException(DataMissing, "Client didn't have the requested Block.")
@@ -480,7 +489,7 @@ proc syncBlock*(
 
 #Tell the Client we're done syncing.
 proc stopSyncing*(
-    client: var Client
+    client: Client
 ) {.forceCheck: [
     SocketError,
     ClientError

@@ -3,7 +3,7 @@ include NetworkImports
 
 #Broadcast a message.
 proc broadcast*(
-    network: var Network,
+    network: Network,
     msg: Message
 ) {.forceCheck: [], async.} =
     try:
@@ -413,7 +413,7 @@ proc listen*(
 
     try:
         network.server.setSockOpt(OptReuseAddr, true)
-        network.server.bindAddr(Port(config.rpcPort))
+        network.server.bindAddr(Port(config.tcpPort))
     except OSError as e:
         doAssert(false, "Failed to set the Network's server socket options and bind it due to an OSError: " & e.msg)
     except ValueError as e:

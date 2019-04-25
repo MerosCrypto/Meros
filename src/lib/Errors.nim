@@ -11,6 +11,10 @@ export FinalAttributeError
 #DB lib, imported so we can export a masked LMDBerror.
 import mc_lmdb
 
+#Selectors standard lib, imported for an Error type asyncnet can raise but doesn't export.
+import selectors
+export IOSelectorsException
+
 type
     #lib Errors.
     RandomError* = object of Exception #Used when the RNG fails.
@@ -47,6 +51,7 @@ type
     InvalidMessageError* = object of Exception #Used when a Client follows the protocol, yet sends an improper message for the situation.
     SyncConfigError*     = object of Exception #Used when a Socket which isn't set for syncing is used to sync.
     DataMissing*         = object of Exception #Used when a Client is missing requested data.
+    ValidityConcern*     = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
 
     #UI/GUI Errors.
     WebViewError* = object of Exception #Used when WebView fails.

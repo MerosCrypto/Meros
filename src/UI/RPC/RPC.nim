@@ -22,9 +22,6 @@ import asyncdispatch
 #Networking standard lib.
 import asyncnet
 
-#Selectors standard lib, imported for an Error type asyncnet can raise but doesn't export.
-import selectors
-
 #JSON standard lib.
 import json
 
@@ -119,7 +116,7 @@ proc start*(
                 ) {.forceCheck: [].} =
                     #Extract the JSON argument.
                     var json: JSONNode = jsonArg
-                    
+
                     #If json is nil...
                     if json.isNil:
                         #Set a default response of success.

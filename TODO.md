@@ -16,10 +16,6 @@ Specific Tasks:
 - Correct the `toTrim` variable calculation Verifier.nim (requires MainMerit).
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
-- Clean NetworkSync.
-- Make sure raises changes for the following are propogated appropriately:
-    - Network.connect (ClientError)
-    - Network.requestBlock (?)
 - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
 - Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
 

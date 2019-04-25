@@ -48,9 +48,14 @@ proc mainMerit() {.forceCheck: [].} =
                 for nonce in merit.blockchain.height ..< newBlock.header.nonce:
                     #Get and test the Block.
                     try:
-                        await network.requestBlock(nonce)
+                        await functions.merit.addBlock(await network.requestBlock(nonce))
+                    #Redefine as a GapError since a failure to sync produces a gap.
+                    except DataMissing as e:
+                        raise newException(GapError, e.msg)
+                    except ValidityConcern as e:
+                        raise newException(GapError, e.msg)
                     except Exception as e:
-                        doAssert(false, "Couldn't request a Block needed before verifying this Block: " & e.msg)
+                        doAssert(false, "Couldn't request and add a Block needed before verifying this Block: " & e.msg)
 
             #Verify:
                 #We have all the Verifications and Entries.
@@ -92,7 +97,7 @@ proc mainMerit() {.forceCheck: [].} =
 
                     #Add this Verification to the table.
                     try:
-                        verifsTable[record.key.toString()][v] = verif.hash
+                        verifsTable[record.key.toString()][v] = verifs[v].hash
                     except KeyError as e:
                         doAssert(false, "Couldn't add a hash to a seq in a table, despite just creating the seq: " & e.msg)
 

@@ -18,9 +18,13 @@ proc connect*(
     rpc: RPC,
     ip: string,
     port: int
-) {.forceCheck: [], async.} =
+): Future[JSONNode] {.forceCheck: [], async.} =
     try:
         await rpc.functions.network.connect(ip, port)
+    except ClientError as e:
+        return %* {
+            "error": e.msg
+        }
     except Exception as e:
         doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
@@ -47,7 +51,7 @@ proc network*(
         case methodStr:
             of "connect":
                 try:
-                    await rpc.connect(
+                    res = await rpc.connect(
                         json["args"][0].getStr(),
                         if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
                     )

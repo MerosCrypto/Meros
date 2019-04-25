@@ -32,7 +32,7 @@ proc newLogger*(): Logger {.forceCheck: [].} =
             info:       open("data/info.log", fmAppend),
             extraneous: open("data/etraneous.log", fmAppend)
         )
-    except IOError:
+    except IOError as e:
         doAssert(false, "Couldn't open the log files: " & e.msg)
 
 #Urgent. Displays a message and halts execution.
@@ -50,46 +50,58 @@ proc urgent*(
     try:
         logger.urgent.writeLine(statement)
     except IOError:
-        discard
+        doAssert(false, "Couldn't write to the Logger's urgent log: " & e.msg)
 
     #Quit.
     quit(-1)
 
 #Mismatch. Logs a message worth looking into but doesn't halt execution.
-func mismatch*(
+proc mismatch*(
     logger: Logger,
     statement: string
 ) {.forceCheck: [], async.} =
     #Acquire the mismatch lock.
     while not tryAcquire(logger.mismatchLock):
         #While we can't acquire it, allow other forceCheck: [], async processes to run.
-        await sleepAsync(1)
+        try:
+            await sleepAsync(1)
+        except Exception as e:
+            doAssert(false, "Couldn't sleep for 0.001 seconds while waiting to acquire the Logger's mismatch lock: " & e.msg)
 
     #log it.
-    logger.mismatch.writeLine(statement)
+    try:
+        logger.mismatch.writeLine(statement)
+    except IOError as e:
+        doAssert(false, "Couldn't write to the Logger's mismatch log: " & e.msg)
 
     #Unlock the lock.
     release(logger.mismatchLock)
 
 #Info. Logs a generic message.
-func info*(
+proc info*(
     logger: Logger,
     statement: string
 ) {.forceCheck: [], async.} =
     #Acquire the info lock.
     while not tryAcquire(logger.infoLock):
         #While we can't acquire it, allow other forceCheck: [], async processes to run.
-        await sleepAsync(1)
+        try:
+            await sleepAsync(1)
+        except Exception as e:
+            doAssert(false, "Couldn't sleep for 0.001 seconds while waiting to acquire the Logger's info lock: " & e.msg)
 
     #log it.
-    logger.info.writeLine(statement)
+    try:
+        logger.info.writeLine(statement)
+    except IOError as e:
+        doAssert(false, "Couldn't write to the Logger's info log: " & e.msg)
 
     #Unlock the lock.
     release(logger.infoLock)
 
 #Extranous. Logs a message only worth looking into if you have a rainbow flashes displaying the Star Wars movie.
 #Requires debug to be defined.
-func extraneous*(
+proc extraneous*(
     logger: Logger,
     statement: string
 ) {.forceCheck: [], async.} =
@@ -98,10 +110,16 @@ func extraneous*(
         #Acquire the extraneous lock.
         while not tryAcquire(logger.extraneousLock):
             #While we can't acquire it, allow other forceCheck: [], async processes to run.
-            await sleepAsync(1)
+            try:
+                await sleepAsync(1)
+            except Exception as e:
+                doAssert(false, "Couldn't sleep for 0.001 seconds while waiting to acquire the Logger's extraneous lock: " & e.msg)
 
         #log it.
-        logger.extraneous.writeLine(statement)
+        try:
+            logger.extraneous.writeLine(statement)
+        except IOError as e:
+            doAssert(false, "Couldn't write to the Logger's extraneous log: " & e.msg)
 
         #Unlock the lock.
         release(logger.extraneousLock)

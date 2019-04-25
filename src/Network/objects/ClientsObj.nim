@@ -11,7 +11,7 @@ import sequtils
 import asyncnet
 
 #Clients object.
-type Clients* = object
+type Clients* = ref object
     #Used to provide each Client an unique ID.
     count*: int
     #Seq of every Client.
@@ -27,7 +27,7 @@ func newClients*(): Clients {.forceCheck: [].} =
 
 #Add a new Client.
 func add*(
-    clients: var Clients,
+    clients: Clients,
     client: Client
 ) {.forceCheck: [].} =
     #We do not inc(clients.total) here.
@@ -37,7 +37,7 @@ func add*(
 
 #Disconnect.
 proc disconnect*(
-    clients: var Clients,
+    clients: Clients,
     id: int
 ) {.forceCheck: [].} =
     for i, client in clients.clients:
@@ -47,7 +47,7 @@ proc disconnect*(
 
 #Disconnects every client.
 proc shutdown*(
-    clients: var Clients
+    clients: Clients
 ) {.forceCheck: [].} =
     for client in clients.clients:
         client.close()
@@ -67,5 +67,5 @@ func `[]`*(
 iterator items*(
     clients: Clients
 ): Client {.forceCheck: [].} =
-    for client in clients.clients:
+    for client in clients.clients.items():
         yield client
