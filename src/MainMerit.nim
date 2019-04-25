@@ -54,8 +54,9 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Verify:
                 #We have all the Verifications and Entries.
+                #We have the same set of Verifications.
                 #The signature.
-            var agInfos: seq[BLSAggregationInfo] = @[]
+            var verifsTable: Table[string, seq[Hash[384]]]
             for record in newBlock.records:
                 #Grab the Verifier.
                 var verifier: Verifier = verifications[record.key]
@@ -73,50 +74,31 @@ proc mainMerit() {.forceCheck: [].} =
                 if merkle != record.merkle:
                     raise newException(ValueError, "Block has a VerifierRecord with a competing Merkle.")
 
-                var
-                    #Seq of the relevant verifications for this Verifier.
-                    verifs: seq[Verification]
-                    #Declare an aggregation info seq for this verifier.
-                    verifierAgInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](record.nonce - verifier.archived)
+                #Seq of the relevant verifications for this Verifier.
+                var verifs: seq[Verification]
                 #Grab the verifications.
                 try:
                     verifs = verifier[verifier.archived + 1 .. record.nonce]
                 except IndexError as e:
                     raise e
 
+                #Set this Verifier up in the table.
+                verifsTable[record.key.toString()] = newSeq[Hash[384]](verifs.len)
+
                 for v in 0 ..< verifs.len:
                     #Make sure the Lattice has this Entry.
                     if not lattice.lookup.hasKey(verifs[v].hash.toString()):
                         raise newException(GapError, "Block refers to missing Entries, or Entries already out of an Epoch.")
 
-                    #Create an aggregation info for this verification.
+                    #Add this Verification to the table.
                     try:
-                        verifierAgInfos[v] = newBLSAggregationInfo(verifs[v].verifier, verifs[v].hash.toString())
-                    except BLSError as e:
-                        doAssert(false, "Couldn't create an AggregationInfo from a valid Verification: " & e.msg)
+                        verifsTable[record.key.toString()][v] = verif.hash
+                    except KeyError as e:
+                        doAssert(false, "Couldn't add a hash to a seq in a table, despite just creating the seq: " & e.msg)
 
-                #Add the Verifier's aggregation info to the seq.
-                try:
-                    agInfos.add(verifierAgInfos.aggregate())
-                except BLSError as e:
-                    doAssert(false, "Couldn't aggregate the AggregationInfos of a Verifier: " & e.msg)
-
-            #Calculate the aggregation info.
-            var agInfo: BLSAggregationInfo
-            try:
-                agInfo = agInfos.aggregate()
-            except BLSError as e:
-                doAssert(false, "Couldn't aggregate the AggregationInfos of all the Verifiers: " & e.msg)
-            #Make sure that if the AgInfo is nil the Signature is as well
-            if agInfo.isNil != newBlock.header.aggregate.isNil:
-                raise newException(ValueError, "Block has an invalid nil signature.")
-
-            #If it's not nil, verify the Signature.
-            if agInfo != nil:
-                newBlock.header.aggregate.setAggregationInfo(agInfo)
-                if not newBlock.header.aggregate.verify():
-                    raise newException(ValueError, "Block has an invalid signature.")
-
+            #Verify the signature.
+            if not newBlock.verify(verifsTable):
+                raise newException(ValueError, "Invalid Aggregate.")
 
             #Add the Block to the Merit.
             var epoch: Epoch

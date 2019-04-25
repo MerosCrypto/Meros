@@ -20,7 +20,6 @@ Specific Tasks:
 - Make sure raises changes for the following are propogated appropriately:
     - Network.connect (ClientError)
     - Network.requestBlock (?)
-- Call syncBlock from requestBlock.
 - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
 - Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
 
@@ -29,6 +28,7 @@ Specific Tasks:
 - Update some `raise`s in the PersonalModule to `doAssert(false)`.
 
 - Don't rebroadcast data that we're syncing.
+- Remove the code from MainMerit that verifies we have everything mentioned in a Block and the block's aggregate. NetworkSync should raise an error if it fails to sync something, and we verify the signature in NetworkSync in order to verify we're not adding forged Verifications.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 
 Tests:
