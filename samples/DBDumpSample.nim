@@ -30,13 +30,13 @@ for nonce in 0 ..< height:
 
 #Get every Verification.
 for syncBlock in db["blockchain"]:
-    for verif in syncBlock["verifications"]:
-        if not db["verifications"].hasKey(verif["verifier"].getStr()):
-            db["verifications"][verif["verifier"].getStr()] = %* []
+    for record in syncBlock["records"]:
+        if not db["verifications"].hasKey(record["verifier"].getStr()):
+            db["verifications"][record["verifier"].getStr()] = %* []
 
-        for nonce in db["verifications"][verif["verifier"].getStr()].len .. verif["nonce"].getInt():
-            var hash: JSONNode = (waitFor rpc.verifications.getVerification(verif["verifier"].getStr(), uint(nonce)))["hash"]
-            db["verifications"][verif["verifier"].getStr()].add(
+        for nonce in db["verifications"][record["verifier"].getStr()].len .. record["nonce"].getInt():
+            var hash: JSONNode = (waitFor rpc.verifications.getVerification(record["verifier"].getStr(), nonce))["hash"]
+            db["verifications"][record["verifier"].getStr()].add(
                 hash
             )
             hashes.add(hash.getStr())

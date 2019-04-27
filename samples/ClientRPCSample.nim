@@ -43,7 +43,7 @@ for i in 0 ..< argsLen:
     echo "What is the argument?"
     if stringOrInt[0] == 's':
         payload["args"].add(% stdin.readLine())
-    elif stringOrInt[1] == 'i':
+    elif stringOrInt[0] == 'i':
         payload["args"].add(% parseInt(stdin.readLine()))
 
 #Connect to the server.
