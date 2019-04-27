@@ -86,7 +86,7 @@ proc processBlock*(
 ].} =
     #Add the block to the Blockchain.
     try:
-        merit.blockchain.processBlock(newBlock):
+        merit.blockchain.processBlock(newBlock)
     except ValueError as e:
         raise e
     except IndexError as e:

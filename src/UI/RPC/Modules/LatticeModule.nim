@@ -57,9 +57,9 @@ proc toJSON*(
                 "nonce":   cast[Receive](entry).index.nonce
             }
         of EntryType.Data:
-            result["data"]   = % cast[Data](entry).data.toHex()
-            result["proof"]  = % cast[Data](entry).proof
-            result["argon"]  = % $cast[Data](entry).argon
+            result["data"]  = % cast[Data](entry).data.toHex()
+            result["proof"] = % cast[Data](entry).proof
+            result["argon"] = % $cast[Data](entry).argon
 
 #Get the height of an account.
 proc getHeight(

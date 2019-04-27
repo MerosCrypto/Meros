@@ -4,7 +4,7 @@
 `getHeight` will fetch and return the amount of Entries on an Account. It takes in one argument:
 - Address (string)
 It returns:
-- `height` (string)
+- `height` (int)
 
 ### `getBalance`
 `getBalance` will fetch and return the balance of an Account. It takes in one argument:
@@ -39,7 +39,7 @@ It returns:
         - `proof`  (int)
 
     When `descendant` == "Receive":
-        - `index`   (object)
+        - `index` (object)
             - `address` (string)
             - `nonce`   (int)
 

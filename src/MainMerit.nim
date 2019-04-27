@@ -40,7 +40,7 @@ proc mainMerit() {.forceCheck: [].} =
             GapError
         ], async.} =
             #Print that we're adding the Block.
-            echo "Adding a new Block. "
+            echo "Adding a new Block."
 
             #Check if we're missing previous Blocks.
             if newBlock.header.nonce > merit.blockchain.height:
