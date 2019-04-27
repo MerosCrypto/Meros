@@ -49,7 +49,7 @@ proc urgent*(
     #Log it in a file.
     try:
         logger.urgent.writeLine(statement)
-    except IOError:
+    except IOError as e:
         doAssert(false, "Couldn't write to the Logger's urgent log: " & e.msg)
 
     #Quit.

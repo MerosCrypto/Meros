@@ -24,7 +24,7 @@ import finals
 
 #Verifier object.
 finalsd:
-    type Verifier* = object
+    type Verifier* = ref object
         #DB Function Box.
         db: DatabaseFunctionBox
 

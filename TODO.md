@@ -11,9 +11,11 @@ General Cleanup:
 - Make more `proc`s `func`.
 
 Specific Tasks:
+- Have MainDatabase create a data directory if one doesn't already exist.
+- Fix the lack of Mint creation.
+
 - Add `DataExists` for when data has already been added.
 
-- Correct the `toTrim` variable calculation Verifier.nim (requires MainMerit).
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.

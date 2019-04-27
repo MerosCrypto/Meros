@@ -40,7 +40,7 @@ proc mainMerit() {.forceCheck: [].} =
             GapError
         ], async.} =
             #Print that we're adding the Block.
-            echo "Adding a new Block."
+            echo "Adding Block ", newBlock.header.nonce, "."
 
             #Check if we're missing previous Blocks.
             if newBlock.header.nonce > merit.blockchain.height:
@@ -61,7 +61,7 @@ proc mainMerit() {.forceCheck: [].} =
                 #We have all the Verifications and Entries.
                 #We have the same set of Verifications.
                 #The signature.
-            var verifsTable: Table[string, seq[Hash[384]]]
+            var verifsTable: Table[string, seq[Hash[384]]] = initTable[string, seq[Hash[384]]]()
             for record in newBlock.records:
                 #Grab the Verifier.
                 var verifier: Verifier = verifications[record.key]
