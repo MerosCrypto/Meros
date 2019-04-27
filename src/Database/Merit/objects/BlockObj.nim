@@ -104,7 +104,7 @@ func newBlockObj*(
             proof
         )
     except ArgonError as e:
-        raise e
+        fcRaise e
 
     #Create the Block.
     result = Block(
@@ -115,4 +115,4 @@ func newBlockObj*(
         `records=`(result, records)
         `miners=`(result, miners)
     except ValueError as e:
-        raise e
+        fcRaise e

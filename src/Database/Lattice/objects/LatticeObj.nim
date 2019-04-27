@@ -146,7 +146,7 @@ proc add*(
     try:
         lattice.accounts[address] = newAccountObj(lattice.db, address)
     except AddressError as e:
-        raise e
+        fcRaise e
 
     #Clear their lookup.
     try:
@@ -172,7 +172,7 @@ proc `[]`*(
     try:
         lattice.add(address)
     except AddressError as e:
-        raise e
+        fcRaise e
 
     #Return the account.
     try:
@@ -196,9 +196,9 @@ proc `[]`*(
     except KeyError as e:
         doAssert(false, "Couldn't grab an Account despite confirming that key exists: " & e.msg)
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
 
 #Gets a Entry by its hash.
 proc `[]`*(

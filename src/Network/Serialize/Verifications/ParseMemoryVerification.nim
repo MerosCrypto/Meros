@@ -44,7 +44,7 @@ proc parseMemoryVerification*(
         verifier = newBLSPublicKey(verifSeq[0])
         sig = newBLSSignature(verifSeq[3])
     except BLSError as e:
-        raise e
+        fcRaise e
 
     #Create the Verification.
     try:
@@ -55,6 +55,6 @@ proc parseMemoryVerification*(
         result.nonce = nonce
         result.signature = sig
     except ValueError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Memory Verification: " & e.msg)

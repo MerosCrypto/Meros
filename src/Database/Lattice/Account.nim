@@ -42,13 +42,13 @@ proc add*(
     try:
         account.add(cast[Entry](mint))
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
 #Add a Claim.
 proc add*(
@@ -73,7 +73,7 @@ proc add*(
     except AddressError:
         doAssert(false, "Created an account with an invalid address.")
     except BLSError as e:
-        raise e
+        fcRaise e
     if not claim.bls.verify():
         raise newException(ValueError, "Claim had invalid BLS signature.")
 
@@ -83,13 +83,13 @@ proc add*(
     try:
         account.add(cast[Entry](claim))
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
 #Add a Send.
 proc add*(
@@ -118,13 +118,13 @@ proc add*(
     try:
         account.add(cast[Entry](send))
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
 #Add a Receive.
 proc add*(
@@ -154,13 +154,13 @@ proc add*(
     try:
         account.add(cast[Entry](recv))
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
 #Add Data.
 proc add*(
@@ -181,10 +181,10 @@ proc add*(
     try:
         account.add(cast[Entry](data))
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e

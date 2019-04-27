@@ -22,7 +22,7 @@ proc mainNetwork() {.forceCheck: [].} =
             try:
                 await network.connect(ip, port)
             except ClientError as e:
-                raise e
+                fcRaise e
             except Exception as e:
                 doAssert(false, "Couldn't connect to another node due to an exception thrown by async: " & e.msg)
 

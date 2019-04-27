@@ -46,8 +46,8 @@ proc parseBlockHeader*(
         )
         result.hash = Argon(headerStr, headerSeq[5])
     except ValueError as e:
-        raise e
+        fcRaise e
     except ArgonError as e:
-        raise e
+        fcRaise e
     except BLSError as e:
-        raise e
+        fcRaise e

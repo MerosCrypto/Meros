@@ -18,16 +18,16 @@ proc mainPersonal() {.forceCheck: [].} =
                 try:
                     wallet = newWallet()
                 except RandomError as e:
-                    raise e
+                    fcRaise e
                 except SodiumError as e:
-                    raise e
+                    fcRaise e
             else:
                 try:
                     wallet = newWallet(newEdSeed(seed))
                 except EdSeedError as e:
-                    raise e
+                    fcRaise e
                 except SodiumError as e:
-                    raise e
+                    fcRaise e
 
         #Sign a Send.
         functions.personal.signSend = proc (
@@ -40,11 +40,11 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 wallet.sign(send)
             except ValueError as e:
-                raise e
+                fcRaise e
             except AddressError as e:
-                raise e
+                fcRaise e
             except SodiumError as e:
-                raise e
+                fcRaise e
 
         #Sign a Receive.
         functions.personal.signReceive = proc (
@@ -55,7 +55,7 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 wallet.sign(recv)
             except SodiumError as e:
-                raise e
+                fcRaise e
 
         functions.personal.signData = proc (data: Data) {.forceCheck: [
             AddressError,
@@ -64,6 +64,6 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 wallet.sign(data)
             except AddressError as e:
-                raise e
+                fcRaise e
             except SodiumError as e:
-                raise e
+                fcRaise e

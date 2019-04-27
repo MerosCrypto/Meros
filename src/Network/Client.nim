@@ -195,9 +195,9 @@ proc handshake*(
             )
         )
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Sending a handshake to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -206,9 +206,9 @@ proc handshake*(
     try:
         handshake = await client.recv()
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Receiving a Client's handshake threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -254,9 +254,9 @@ proc startSyncing*(
     try:
         await client.send(newMessage(MessageType.Syncing))
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Sending a `Syncing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -281,9 +281,9 @@ proc startSyncing*(
         try:
             msg = await client.recv()
         except SocketError as e:
-            raise e
+            fcRaise e
         except ClientError as e:
-            raise e
+            fcRaise e
         except Exception as e:
             doAssert(false, "Receiving the response to a `Syncing` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -316,9 +316,9 @@ proc syncEntry*(
     try:
         await client.send(newMessage(MessageType.EntryRequest, hash.toString()))
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Sending an `EntryRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -327,9 +327,9 @@ proc syncEntry*(
     try:
         msg = await client.recv()
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Receiving the response to an `EntryRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -370,9 +370,9 @@ proc syncEntry*(
     except EdPublicKeyError as e:
         raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a EdPublicKeyError: " & e.msg)
     except InvalidMessageError as e:
-        raise e
+        fcRaise e
     except DataMissing as e:
-        raise e
+        fcRaise e
 
 #Sync a Verification.
 proc syncVerification*(
@@ -399,9 +399,9 @@ proc syncVerification*(
             )
         )
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Sending an `VerificationRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -410,9 +410,9 @@ proc syncVerification*(
     try:
         msg = await client.recv()
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Receiving the response to an `VerificationRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -453,9 +453,9 @@ proc syncBlock*(
     try:
         await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary().pad(INT_LEN)))
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Sending an `BlockRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -464,9 +464,9 @@ proc syncBlock*(
     try:
         msg = await client.recv()
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Receiving the response to an `BlockRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -502,9 +502,9 @@ proc stopSyncing*(
     try:
         await client.send(newMessage(MessageType.SyncingOver))
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Sending a `SyncingOver` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 

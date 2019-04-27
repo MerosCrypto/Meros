@@ -52,7 +52,7 @@ proc aggregate*(
     try:
         result = sigs.aggregate()
     except BLSError as e:
-        raise e
+        fcRaise e
 
 #Verify an aggregate signature.
 proc verify*(

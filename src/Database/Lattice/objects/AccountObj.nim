@@ -147,7 +147,7 @@ proc add*(
         except AddressError:
             doAssert(false, "Created an account with an invalid address.")
         except EdPublicKeyError as e:
-            raise e
+            fcRaise e
 
         if not pubKey.verify(entry.hash.toString(), entry.signature):
             raise newException(ValueError, "Failed to verify the Entry's signature.")

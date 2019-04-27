@@ -78,7 +78,7 @@ proc parseMint*(
     try:
         output = newBLSPublicKey(mintSeq[1])
     except BLSError as e:
-        raise e
+        fcRaise e
 
     #Create the Mint.
     result = newMintObj(
@@ -91,6 +91,6 @@ proc parseMint*(
         #Set the hash.
         result.hash = Blake384(mintStr)
     except ValueError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Mint: " & e.msg)

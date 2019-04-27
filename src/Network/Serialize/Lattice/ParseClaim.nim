@@ -50,12 +50,12 @@ proc parseClaim*(
     try:
         sender = newEdPublicKey(claimSeq[0])
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
     try:
         bls = newBLSSignature(claimSeq[3])
     except BLSError as e:
-        raise e
+        fcRaise e
 
     #Create the Claim.
     result = newClaim(

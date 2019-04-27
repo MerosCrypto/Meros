@@ -27,7 +27,7 @@ func serialize*(
     try:
         input = Address.toPublicKey(recv.index.address)
     except AddressError as e:
-        raise e
+        fcRaise e
 
     result =
         recv.nonce.toBinary().pad(INT_LEN) &
@@ -39,7 +39,7 @@ func serialize*(
         try:
             sender = Address.toPublicKey(recv.sender)
         except AddressError as e:
-            raise e
+            fcRaise e
 
         result =
             sender &

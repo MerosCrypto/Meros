@@ -33,10 +33,10 @@ proc parseEntry*(
             of EntryType.Data:
                 return entry.substr(1).parseData()
     except ValueError as e:
-        raise e
+        fcRaise e
     except ArgonError as e:
-        raise e
+        fcRaise e
     except BLSError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e

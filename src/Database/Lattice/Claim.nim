@@ -61,12 +61,12 @@ proc sign*(
         #Sign the hash of the Claim.
         claim.signature = wallet.sign(claim.hash.toString())
     except ValueError as e:
-        raise e
+        fcRaise e
     except AddressError as e:
-        raise e
+        fcRaise e
     except BLSError as e:
-        raise e
+        fcRaise e
     except SodiumError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)

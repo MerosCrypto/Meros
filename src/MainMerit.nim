@@ -29,7 +29,7 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 result = merit.blockchain[nonce]
             except IndexError as e:
-                raise e
+                fcRaise e
 
         #Handle full blocks.
         functions.merit.addBlock = proc (
@@ -75,7 +75,7 @@ proc mainMerit() {.forceCheck: [].} =
                 try:
                     merkle = verifier.calculateMerkle(record.nonce)
                 except IndexError as e:
-                    raise e
+                    fcRaise e
                 if merkle != record.merkle:
                     raise newException(ValueError, "Block has a VerifierRecord with a competing Merkle.")
 
@@ -85,7 +85,7 @@ proc mainMerit() {.forceCheck: [].} =
                 try:
                     verifs = verifier[verifier.archived + 1 .. record.nonce]
                 except IndexError as e:
-                    raise e
+                    fcRaise e
 
                 #Set this Verifier up in the table.
                 verifsTable[record.key.toString()] = newSeq[Hash[384]](verifs.len)
@@ -110,11 +110,11 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 epoch = merit.processBlock(verifications, newBlock)
             except ValueError as e:
-                raise e
+                fcRaise e
             except IndexError as e:
-                raise e
+                fcRaise e
             except GapError as e:
-                raise e
+                fcRaise e
 
             #Archive the Verifications mentioned in the Block.
             verifications.archive(newBlock.records)

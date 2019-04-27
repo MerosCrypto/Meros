@@ -33,7 +33,7 @@ func serialize*(
         try:
             sender = Address.toPublicKey(claim.sender)
         except AddressError as e:
-            raise e
+            fcRaise e
 
         result =
             sender &

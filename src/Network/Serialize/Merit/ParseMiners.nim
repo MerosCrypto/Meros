@@ -40,6 +40,6 @@ proc parseMiners*(
                 int(minersSeq[1][0])
             )
         except BLSError as e:
-            raise e
+            fcRaise e
 
     result = newMinersObj(miners)

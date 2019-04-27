@@ -90,9 +90,9 @@ proc newNetwork*(
                             newMessage(MessageType.DataMissing)
                         )
                     except SocketError as e:
-                        raise e
+                        fcRaise e
                     except ClientError as e:
-                        raise e
+                        fcRaise e
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
                     return
@@ -113,9 +113,9 @@ proc newNetwork*(
                 except IndexError as e:
                     doAssert(false, "Couldn't grab a Block we've confirmed to have: " & e.msg)
                 except SocketError as e:
-                    raise e
+                    fcRaise e
                 except ClientError as e:
-                    raise e
+                    fcRaise e
                 except Exception as e:
                     doAssert(false, "Sending a block in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -141,9 +141,9 @@ proc newNetwork*(
                             newMessage(MessageType.DataMissing)
                         )
                     except SocketError as e:
-                        raise e
+                        fcRaise e
                     except ClientError as e:
-                        raise e
+                        fcRaise e
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `VerificationRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
                     return
@@ -157,9 +157,9 @@ proc newNetwork*(
                         )
                     )
                 except SocketError as e:
-                    raise e
+                    fcRaise e
                 except ClientError as e:
-                    raise e
+                    fcRaise e
                 except Exception as e:
                     doAssert(false, "Sending a Verification in response to a `VerificationRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -182,9 +182,9 @@ proc newNetwork*(
                             newMessage(MessageType.DataMissing)
                         )
                     except SocketError as e:
-                        raise e
+                        fcRaise e
                     except ClientError as e:
-                        raise e
+                        fcRaise e
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -197,9 +197,9 @@ proc newNetwork*(
                             newMessage(MessageType.DataMissing)
                         )
                     except SocketError as e:
-                        raise e
+                        fcRaise e
                     except ClientError as e:
-                        raise e
+                        fcRaise e
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -226,9 +226,9 @@ proc newNetwork*(
                         )
                     )
                 except SocketError as e:
-                    raise e
+                    fcRaise e
                 except ClientError as e:
-                    raise e
+                    fcRaise e
                 except Exception as e:
                     doAssert(false, "Sending an Entry in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 

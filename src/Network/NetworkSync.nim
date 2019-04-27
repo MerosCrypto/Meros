@@ -56,9 +56,9 @@ proc sync(
     try:
         await client.startSyncing()
     except SocketError as e:
-        raise e
+        fcRaise e
     except ClientError as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -71,15 +71,15 @@ proc sync(
             try:
                 verif = await client.syncVerification(gap.key, nonce)
             except SocketError as e:
-                raise e
+                fcRaise e
             except ClientError as e:
-                raise e
+                fcRaise e
             except SyncConfigError as e:
                 doAssert(false, "Client we attempted to sync a Verification from wasn't configured for syncing: " & e.msg)
             except InvalidMessageError as e:
-                raise e
+                fcRaise e
             except DataMissing as e:
-                raise e
+                fcRaise e
             except Exception as e:
                 doAssert(false, "Syncing a Verification in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -109,15 +109,15 @@ proc sync(
         try:
             res = await client.syncEntry(entry)
         except SocketError as e:
-            raise e
+            fcRaise e
         except ClientError as e:
-            raise e
+            fcRaise e
         except SyncConfigError as e:
             doAssert(false, "Client we attempted to sync an Entry from wasn't configured for syncing: " & e.msg)
         except InvalidMessageError as e:
-            raise e
+            fcRaise e
         except DataMissing as e:
-            raise e
+            fcRaise e
         except Exception as e:
             doAssert(false, "Syncing an Entry in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -223,7 +223,7 @@ proc sync*(
         #This is thrown if there's a invalid aggregate, which may be symptomatic of a Merit Removal.
         #We need to inform the higher processes to double check the Verifications DAG.
         except ValidityConcern as e:
-            raise e
+            fcRaise e
         except Exception as e:
             doAssert(false, "Syncing a Block's Verifications and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
         #If we made it through that without raising or continuing, return.
@@ -288,8 +288,8 @@ proc requestBlock*(
     try:
         await network.sync(result)
     except DataMissing as e:
-        raise e
+        fcRaise e
     except ValidityConcern as e:
-        raise e
+        fcRaise e
     except Exception as e:
         doAssert(false, "Syncing the data in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)

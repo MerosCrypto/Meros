@@ -70,7 +70,7 @@ func toBlake2_256Hash*(
     try:
         result = hash.toHash(256)
     except ValueError as e:
-        raise e
+        fcRaise e
 
 #String to Blake2_384Hash.
 func toBlake2_384Hash*(
@@ -81,7 +81,7 @@ func toBlake2_384Hash*(
     try:
         result = hash.toHash(384)
     except ValueError as e:
-        raise e
+        fcRaise e
 
 #String to Blake2_512Hash.
 func toBlake2_512Hash*(
@@ -92,4 +92,4 @@ func toBlake2_512Hash*(
     try:
         result = hash.toHash(512)
     except ValueError as e:
-        raise e
+        fcRaise e

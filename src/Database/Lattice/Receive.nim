@@ -41,7 +41,7 @@ proc newReceive*(
         #Set the hash.
         result.hash = Blake384(result.serialize())
     except AddressError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Receive: " & e.msg)
 
@@ -58,6 +58,6 @@ func sign*(
         #Sign the hash of the Receive.
         recv.signature = wallet.sign(recv.hash.toString())
     except SodiumError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when signing a Receive: " & e.msg)

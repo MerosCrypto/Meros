@@ -93,7 +93,7 @@ func newWallet*(
     try:
         pair = newEdKeyPair(seed)
     except SodiumError as e:
-        raise e
+        fcRaise e
 
     #Create a new Wallet based off the seed/key pair.
     result = Wallet(
@@ -116,9 +116,9 @@ proc newWallet*(): Wallet {.forceCheck: [
     try:
         result = newWallet(newEdSeed())
     except RandomError as e:
-        raise e
+        fcRaise e
     except SodiumError as e:
-        raise e
+        fcRaise e
 
 #Constructor.
 func newWallet*(
@@ -132,7 +132,7 @@ func newWallet*(
     try:
         result = newWallet(seed)
     except SodiumError as e:
-        raise e
+        fcRaise e
 
     #Verify the integrity via the Address.
     if address.isValid(result.publicKey):
@@ -148,7 +148,7 @@ func sign*(
     try:
         result = wallet.privateKey.sign(msg)
     except SodiumError as e:
-        raise e
+        fcRaise e
 
 #Verify a signature.
 func verify*(

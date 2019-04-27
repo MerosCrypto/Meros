@@ -28,6 +28,6 @@ proc sign*(
         try:
             verif.signature = miner.sign(verif.hash.toString())
         except BLSError as e:
-            raise e
+            fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when signing a Verification: " & e.msg)

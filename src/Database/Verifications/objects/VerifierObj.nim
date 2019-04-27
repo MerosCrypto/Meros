@@ -127,17 +127,17 @@ proc add*(
         if not verif.signature.verify():
             raise newException(BLSError, "Failed to verify the Verification's signature.")
     except BLSError as e:
-        raise e
+        fcRaise e
 
     #Add the Verification.
     try:
         verifier.add(cast[Verification](verif))
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except MeritRemoval as e:
-        raise e
+        fcRaise e
 
 # [] operators.
 proc `[]`*(
@@ -201,7 +201,7 @@ proc `[]`*(
         for i in a .. b:
             result[i - a] = verifier[i]
     except IndexError as e:
-        raise e
+        fcRaise e
 
 proc `{}`*(
     verifier: Verifier,
@@ -226,4 +226,4 @@ proc `{}`*(
     try:
         result = cast[seq[MemoryVerification]](verifier[a .. b])
     except IndexError as e:
-        raise e
+        fcRaise e

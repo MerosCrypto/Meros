@@ -52,11 +52,11 @@ proc add*(
     try:
         verifs[verif.verifier].add(verif)
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except MeritRemoval as e:
-        raise e
+        fcRaise e
 
 #For each provided Record, archive all Verifications from the account's last archived to the provided nonce.
 proc archive*(

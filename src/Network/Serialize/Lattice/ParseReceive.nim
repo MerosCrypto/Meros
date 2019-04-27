@@ -50,7 +50,7 @@ proc parseReceive*(
         sender = newAddress(recvSeq[0])
         inputAddress = newAddress(recvSeq[2])
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
     #Create the Receive.
     result = newReceiveObj(

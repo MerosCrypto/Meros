@@ -40,7 +40,7 @@ proc parseVerification*(
     try:
         verifier = newBLSPublicKey(verifSeq[0])
     except BLSError as e:
-        raise e
+        fcRaise e
 
     #Create the Verification.
     try:
@@ -50,6 +50,6 @@ proc parseVerification*(
         result.verifier = verifier
         result.nonce = nonce
     except ValueError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Verification: " & e.msg)

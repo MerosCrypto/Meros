@@ -265,7 +265,7 @@ proc add*(
     try:
         account = lattice[entry.sender]
     except AddressError as e:
-        raise e
+        fcRaise e
 
     try:
         case entry.descendant:
@@ -317,17 +317,17 @@ proc add*(
                     lattice.difficulties.data
                 )
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except AddressError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
     except BLSError as e:
-        raise e
+        fcRaise e
 
     #If this isn't a Mint, add the Entry to the lookup table.
     if entry.descendant != EntryType.Mint:
@@ -365,21 +365,21 @@ proc mint*(
             result
         )
     except ValueError as e:
-        raise e
+        fcRaise e
 
     #Add it to the Lattice.
     try:
         lattice.add(mint, true)
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
     except AddressError as e:
-        raise e
+        fcRaise e
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
     except BLSError as e:
         doAssert(false, "Adding a Mint threw a BLSError, which it should never do: " & e.msg)
 

@@ -50,9 +50,9 @@ proc handle(
         try:
             msg = await client.recv()
         except SocketError as e:
-            raise e
+            fcRaise e
         except ClientError as e:
-            raise e
+            fcRaise e
         except Exception as e:
             doAssert(false, "Receiving a message from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -64,9 +64,9 @@ proc handle(
             try:
                 await client.send(newMessage(MessageType.SyncingAcknowledged))
             except SocketError as e:
-                raise e
+                fcRaise e
             except ClientError as e:
-                raise e
+                fcRaise e
             except Exception as e:
                 doAssert(false, "Sending a `SyncingAcknowledged` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
             continue
@@ -79,12 +79,12 @@ proc handle(
         try:
             await networkFunctions.handle(msg)
         except SocketError as e:
-            raise e
+            fcRaise e
         except ClientError as e:
-            raise e
+            fcRaise e
         except InvalidMessageError as e:
             echo "Invalid Message: " & e.msg
-            raise e
+            fcRaise e
         except Exception as e:
             doAssert(false, "Handling a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 

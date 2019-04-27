@@ -24,7 +24,7 @@ func serialize*(
     try:
         sender = Address.toPublicKey(data.sender)
     except AddressError as e:
-        raise e
+        fcRaise e
 
     result =
         sender &

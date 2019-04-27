@@ -30,7 +30,7 @@ proc serialize*(
         sender = Address.toPublicKey(send.sender)
         output = Address.toPublicKey(send.output)
     except AddressError as e:
-        raise e
+        fcRaise e
 
     result =
         sender &

@@ -54,7 +54,7 @@ proc parseSend*(
         sender = newAddress(sendSeq[0])
         output = newAddress(sendSeq[2])
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
     #Create the Send.
     result = newSendObj(
@@ -78,6 +78,6 @@ proc parseSend*(
         #Set the signature.
         result.signature = signature
     except ArgonError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Mint: " & e.msg)

@@ -54,7 +54,7 @@ proc parseData*(
     try:
         sender = newAddress(newEdPublicKey(keyNonce[0]))
     except EdPublicKeyError as e:
-        raise e
+        fcRaise e
 
     #Create the Data.
     result = newDataObj(
@@ -76,6 +76,6 @@ proc parseData*(
         #Set the signature.
         result.signature = signature
     except ArgonError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Data: " & e.msg)

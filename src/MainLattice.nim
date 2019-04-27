@@ -85,7 +85,7 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 result = lattice[address].height
             except AddressError as e:
-                raise e
+                fcRaise e
 
         #Handle requests for an account's balance.
         functions.lattice.getBalance = proc (
@@ -96,7 +96,7 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 result = lattice[address].balance
             except AddressError as e:
-                raise e
+                fcRaise e
 
         #Handle requests for an Entry.
         functions.lattice.getEntryByHash = proc (
@@ -107,7 +107,7 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 result = lattice[hash]
             except IndexError as e:
-                raise e
+                fcRaise e
 
         functions.lattice.getEntryByIndex = proc (
             index: LatticeIndex
@@ -118,9 +118,9 @@ proc mainLattice() {.forceCheck: [].} =
             try:
                 result = lattice[index]
             except ValueError as e:
-                raise e
+                fcRaise e
             except IndexError as e:
-                raise e
+                fcRaise e
 
         #Handle Claims.
         functions.lattice.addClaim = proc (
@@ -141,22 +141,22 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(claim)
             #Invalid Ed25519 Signature or invalid BLS Signature OR data already exists.
             except ValueError as e:
-                raise e
+                fcRaise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                raise e
+                fcRaise e
             #Missing Entries before this Entry.
             except GapError as e:
-                raise e
+                fcRaise e
             #Account has an invalid address.
             except AddressError as e:
-                raise e
+                fcRaise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                raise e
+                fcRaise e
             #BLS lib threw.
             except BLSError as e:
-                raise e
+                fcRaise e
 
             echo "Successfully added the Claim."
 
@@ -184,19 +184,19 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(send)
             #Invalid Ed25519 Signature OR data already exists.
             except ValueError as e:
-                raise e
+                fcRaise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                raise e
+                fcRaise e
             #Missing Entries before this Entry.
             except GapError as e:
-                raise e
+                fcRaise e
             #Account has an invalid address.
             except AddressError as e:
-                raise e
+                fcRaise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                raise e
+                fcRaise e
             #BLSError.
             except BLSError as e:
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Claim: " & e.msg)
@@ -279,19 +279,19 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(recv)
             #Invalid Ed25519 Signature OR data already exists.
             except ValueError as e:
-                raise e
+                fcRaise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                raise e
+                fcRaise e
             #Missing Entries before this Entry.
             except GapError as e:
-                raise e
+                fcRaise e
             #Account has an invalid address.
             except AddressError as e:
-                raise e
+                fcRaise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                raise e
+                fcRaise e
             #BLSError.
             except BLSError as e:
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Receive: " & e.msg)
@@ -322,19 +322,19 @@ proc mainLattice() {.forceCheck: [].} =
                 lattice.add(data)
             #Invalid Ed25519 Signature OR data already exists.
             except ValueError as e:
-                raise e
+                fcRaise e
             #Competing Entry already verified at this position.
             except IndexError as e:
-                raise e
+                fcRaise e
             #Missing Entries before this Entry.
             except GapError as e:
-                raise e
+                fcRaise e
             #Account has an invalid address.
             except AddressError as e:
-                raise e
+                fcRaise e
             #Invalid Ed25519 Public Key.
             except EdPublicKeyError as e:
-                raise e
+                fcRaise e
             #BLSError.
             except BLSError as e:
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Data: " & e.msg)

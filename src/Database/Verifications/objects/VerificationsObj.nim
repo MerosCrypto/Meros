@@ -111,7 +111,7 @@ proc `[]`*(
     except KeyError as e:
         doAssert(false, "Couldn't grab a Verifier despite just calling `add` for that Verifier: " & e.msg)
     except IndexError as e:
-        raise e
+        fcRaise e
 
 #Iterate over every verifier.
 iterator verifiers*(verifs: Verifications): BLSPublicKey {.raises: [].} =

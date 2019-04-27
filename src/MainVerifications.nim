@@ -20,7 +20,7 @@ proc mainVerifications() {.forceCheck: [].} =
             try:
                 result = verifications[key][nonce]
             except IndexError as e:
-                raise e
+                fcRaise e
 
         #Provide access to the VerifierRecords of verifiers with unarchived Verifications.
         functions.verifications.getUnarchivedRecords = proc (): seq[VerifierRecord] {.forceCheck: [].} =
@@ -77,13 +77,13 @@ proc mainVerifications() {.forceCheck: [].} =
                 for verif in verifier{start .. nonce}:
                     sigs.add(verif.signature)
             except IndexError as e:
-                raise e
+                fcRaise e
 
             #Return the hash.
             try:
                 return sigs.aggregate()
             except BLSError as e:
-                raise e
+                fcRaise e
 
         #Used to calculate the aggregate with Verifications we just downloaded.
         functions.verifications.getPendingHashes = proc (
@@ -115,7 +115,7 @@ proc mainVerifications() {.forceCheck: [].} =
                 for verif in verifications[key][start .. nonce]:
                     result.add(verif.hash)
             except IndexError as e:
-                raise e
+                fcRaise e
 
         #Handle Verifications.
         functions.verifications.addVerification = proc (
@@ -132,7 +132,7 @@ proc mainVerifications() {.forceCheck: [].} =
                 verifications.add(verif)
             except IndexError as e:
                 #Verification has already been added.
-                raise e
+                fcRaise e
             except GapError:
                 #Missing Verifications before this Verification.
                 #Since we got this from a Block, we should've already synced all previous Verifications.
@@ -145,9 +145,9 @@ proc mainVerifications() {.forceCheck: [].} =
             try:
                 lattice.verify(merit, verif)
             except ValueError as e:
-                raise e
+                fcRaise e
             except IndexError as e:
-                raise e
+                fcRaise e
 
             echo "Successfully added a new Verification."
 
@@ -168,13 +168,13 @@ proc mainVerifications() {.forceCheck: [].} =
                 verifications.add(verif)
             except IndexError as e:
                 #Verification has already been added.
-                raise e
+                fcRaise e
             except GapError as e:
                 #Missing Verifications before this Verification.
-                raise e
+                fcRaise e
             except BLSError as e:
                 #Invalid BLS signature.
-                raise e
+                fcRaise e
             except MeritRemoval:
                 #Verifier committed a malicious act against the network.
                 discard
@@ -183,8 +183,8 @@ proc mainVerifications() {.forceCheck: [].} =
             try:
                 lattice.verify(merit, verif)
             except ValueError as e:
-                raise e
+                fcRaise e
             except IndexError as e:
-                raise e
+                fcRaise e
 
             echo "Successfully added a new MemoryVerification."

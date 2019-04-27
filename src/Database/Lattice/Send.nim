@@ -70,11 +70,11 @@ proc sign*(
         #Sign the hash of the Send.
         send.signature = wallet.sign(send.hash.toString())
     except ValueError as e:
-        raise e
+        fcRaise e
     except AddressError as e:
-        raise e
+        fcRaise e
     except SodiumError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when signing a Send: " & e.msg)
 
@@ -100,7 +100,7 @@ proc mine*(
             inc(proof)
             hash = Argon(send.hash.toString(), proof.toBinary(), true)
     except ArgonError as e:
-        raise e
+        fcRaise e
 
     try:
         send.proof = proof

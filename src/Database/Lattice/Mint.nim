@@ -44,6 +44,6 @@ proc newMint*(
         #Set the hash.
         result.hash = Blake384(result.serialize())
     except ValueError as e:
-        raise e
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)

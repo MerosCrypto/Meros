@@ -88,11 +88,11 @@ proc processBlock*(
     try:
         merit.blockchain.processBlock(newBlock)
     except ValueError as e:
-        raise e
+        fcRaise e
     except IndexError as e:
-        raise e
+        fcRaise e
     except GapError as e:
-        raise e
+        fcRaise e
 
     #Have the state process the block.
     merit.state.processBlock(merit.blockchain, newBlock)

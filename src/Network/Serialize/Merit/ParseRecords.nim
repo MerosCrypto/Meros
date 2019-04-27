@@ -48,6 +48,6 @@ proc parseRecords*(
                 recordSeq[2].toHash(384)
             )
         except ValueError as e:
-            raise e
+            fcRaise e
         except BLSError as e:
-            raise e
+            fcRaise e

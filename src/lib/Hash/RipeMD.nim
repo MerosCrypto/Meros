@@ -35,4 +35,4 @@ func toRipeMD_160Hash*(
     try:
         result = hash.toHash(160)
     except ValueError as e:
-        raise e
+        fcRaise e

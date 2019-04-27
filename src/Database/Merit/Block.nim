@@ -38,7 +38,7 @@ func inc*(
     try:
         blockArg.header.hash = Argon(blockArg.header.serialize(), blockArg.header.proof.toBinary())
     except ArgonError as e:
-        raise e
+        fcRaise e
 
 #Verify the aggregate signature for a table of Key -> seq[Hash].
 proc verify*(

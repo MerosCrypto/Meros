@@ -48,4 +48,4 @@ func toArgonHash*(
     try:
         result = hash.toHash(384)
     except ValueError as e:
-        raise e
+        fcRaise e

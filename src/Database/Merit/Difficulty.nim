@@ -62,7 +62,7 @@ proc calculateNextDifficulty*(
     try:
         start = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
     except IndexError as e:
-        raise e
+        fcRaise e
 
     #Calculate the actual time.
     actualTime = endTime - start
