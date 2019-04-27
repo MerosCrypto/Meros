@@ -12,6 +12,7 @@ import math
 
 #Merkle Object.
 type Merkle* = ref object
+    unset: bool
     case isLeaf*: bool
         of true:
             discard
@@ -20,7 +21,15 @@ type Merkle* = ref object
             right*: Merkle
     hash*: Hash[384]
 
-#Merkle constructor.
+#Nil leaf constructor.
+#This exists, instead of just using nil, so we can still access the isLeaf and hash fields.
+func newNilLeaf(): Merkle {.forceCheck: [].} =
+    Merkle(
+        unset: true,
+        isLeaf: true
+    )
+
+#Leaf constructor.
 func newMerkle(
     hash: Hash[384]
 ): Merkle {.forceCheck: [].} =
@@ -112,15 +121,21 @@ proc add*(
     tree: var Merkle,
     hash: Hash[384]
 ) {.forceCheck: [].} =
-    if tree.isLeaf:
+    if tree.unset:
+        tree = newMerkle(hash)
+        return
+    elif tree.isLeaf:
         tree = newMerkle(tree, newMerkle(hash))
+        return
     elif tree.left.isNil:
         tree = newMerkle(
             newMerkle(hash),
             nil
         )
+        return
     elif tree.isFull:
         tree = newMerkle(tree, chainOfDepth(tree.depth, hash))
+        return
     elif tree.left.isBranch and not tree.left.isFull:
         tree.left.add(hash)
     elif tree.right.isNil:
@@ -185,9 +200,9 @@ proc newMerkleAux(
 proc newMerkle*(
     hashes: varargs[Hash[384]]
 ): Merkle {.forceCheck: [].} =
-    #If there were no hashes, create a nil tree.
+    #If there were no hashes, return nil.
     if hashes.len == 0:
-        return newMerkle(nil, nil)
+        return newNilLeaf()
 
     #Pass off to Merkle Aux.
     result = newMerkleAux(

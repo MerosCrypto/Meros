@@ -13,13 +13,21 @@ import ../../../src/Database/common/Merkle
 import random
 
 #Seed Random via the time.
-randomize(int(getTime()))
+randomize(getTime())
 
 #Test nil Merle trees.
 assert(newMerkle().hash == "".pad(48).toHash(384))
 
 #Test leaves.
 assert(newMerkle("1".pad(48).toHash(384)).hash == "1".pad(48).toHash(384))
+
+#Test that a blank Merkle tree with an added leaf is the same as a tree created with said leaf.
+assert(newMerkle().isLeaf)
+assert(newMerkle("".pad(48).toHash(384)).isLeaf)
+var one: Merkle = newMerkle()
+one.add("".pad(48).toHash(384))
+assert(one.isLeaf)
+assert(one.hash == newMerkle("".pad(48).toHash(384)).hash)
 
 #Test 20 trees.
 for i in 1 .. 20:
