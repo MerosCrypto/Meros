@@ -155,7 +155,7 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 
                 #If we have wallets...
-                if (wallet.initiated) and (not config.miner.initiated):
+                if wallet.initiated and config.miner.initiated:
                     #Check if we're the one getting the reward.
                     if config.miner.publicKey.toString() == reward.key:
                         #Claim the Reward.
