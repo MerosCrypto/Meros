@@ -379,10 +379,13 @@ proc newNetwork*(
                 try:
                     await mainFunctions.merit.addBlock(newBlock)
                 except ValueError as e:
+                    echo "Failed to add the Block due to a ValueError: " & e.msg
                     raise newException(InvalidMessageError, "Adding the Block failed due to a ValueError: " & e.msg)
                 except IndexError as e:
+                    echo "Failed to add the Block due to a IndexError: " & e.msg
                     raise newException(InvalidMessageError, "Adding the Block failed due to a IndexError: " & e.msg)
-                except GapError:
+                except GapError as e:
+                    echo "Failed to add the Block due to a GapError: " & e.msg
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -391,6 +394,9 @@ proc newNetwork*(
                     await network.clients.broadcast(msg)
                 except Exception as e:
                     doAssert(false, "Clients.broadcast(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
+
+            of MessageType.End:
+                doAssert(false, "Trying to handle a Message of Type End despite explicitly refusing to receive messages of Type End.")
 
     result.networkFunctions.handleBlock = mainFunctions.merit.addBlock
 

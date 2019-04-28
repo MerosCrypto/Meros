@@ -122,17 +122,17 @@ proc publishBlock(
     try:
         await rpc.functions.merit.addBlock(newBlock)
     except ValueError as e:
-        echo "Failed to add Block: " & e.msg
+        echo "Failed to add the Block due to a ValueError: " & e.msg
         return %* {
             "error": e.msg
         }
     except IndexError as e:
-        echo "Failed to add Block: " & e.msg
+        echo "Failed to add the Block due to a IndexError: " & e.msg
         return %* {
             "error": e.msg
         }
     except GapError as e:
-        echo "Failed to add Block: " & e.msg
+        echo "Failed to add the Block due to a GapError: " & e.msg
         return %* {
             "error": e.msg
         }

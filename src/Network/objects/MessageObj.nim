@@ -34,7 +34,11 @@ finalsd:
             Data = 11,
             MemoryVerification = 12,
             Block = 13,
-            Verification = 14
+            Verification = 14,
+
+            #End is used to mark the end of the Enum.
+            #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
+            End = 15
 
         #Message object.
         Message* = object

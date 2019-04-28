@@ -17,7 +17,6 @@ Specific Tasks:
 
 - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
 - Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
-- Confirm syncing works.
 - Confirm two Nodes broadcast all events between each other.
 
 - Clean tests.

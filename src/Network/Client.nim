@@ -64,6 +64,12 @@ proc recv*(
     #If the message length is 0, because the client disconnected...
     if msg.len == 0:
         raise newException(ClientError, "Client disconnected.")
+
+    #Make sure the content is valid.
+    if int(content) >= int(MessageType.End):
+        raise newException(ClientError, "Client sent an invalid Message Type.")
+
+    #Extract the content.
     content = MessageType(msg[0])
 
     #Switch based on the content to determine the Message Size.
@@ -102,12 +108,18 @@ proc recv*(
         of MessageType.Verification:
             size = VERIFICATION_LEN
 
+        of MessageType.End:
+            doAssert(false, "Trying to Receive a Message of Type End despite explicitly checking the type was less than End.")
+
     #Now that we know how long the message is, get it (as long as there is one).
     if size > 0:
         try:
             msg = await client.socket.recv(size)
         except Exception as e:
             raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+    #If there's not a message, make sure we still clear the header from the variable so the length checks pass.
+    else:
+        msg = ""
 
     #If this is a MessageType with more data...
     case content:

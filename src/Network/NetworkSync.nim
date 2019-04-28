@@ -201,13 +201,17 @@ proc sync*(
     DataMissing,
     ValidityConcern
 ], async.} =
+    #List of Clients to disconnect.
+    var toDisconnect: seq[int] = @[]
+
     #Try syncing with every client.
+    var synced: bool = false
     for client in network.clients:
         try:
             await network.sync(client.id, newBlock)
         #If the Client had problems, disconnect them.
         except SocketError, ClientError:
-            network.clients.disconnect(client.id)
+            toDisconnect.add(client.id)
             continue
         #If we got an unexpected message, or this Client didn't have the needed info, try another client.
         except InvalidMessageError, DataMissing:
@@ -216,21 +220,33 @@ proc sync*(
                 await client.stopSyncing()
             #If that failed, disconnect the Client.
             except SocketError, ClientError:
-                network.clients.disconnect(client.id)
+                toDisconnect.add(client.id)
             except Exception as e:
                 doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
             continue
         #This is thrown if there's a invalid aggregate, which may be symptomatic of a Merit Removal.
         #We need to inform the higher processes to double check the Verifications DAG.
         except ValidityConcern as e:
+            try:
+                await client.stopSyncing()
+            except SocketError, ClientError:
+                toDisconnect.add(client.id)
+            except Exception as e:
+                doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
             fcRaise e
         except Exception as e:
             doAssert(false, "Syncing a Block's Verifications and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
-        #If we made it through that without raising or continuing, return.
-        return
+
+        #If we made it through that without raising or continuing, flip the bool.
+        synced = true
+
+    #Disconnect every Client marked for disconnection.
+    for id in toDisconnect:
+        network.clients.disconnect(id)
+
     #If we tried every client and didn't sync the needed data, raise a DataMissing.
-    #This is in an if true because Nim otherwise thinks we have unreachable code.
-    if true:
+    if not synced:
         raise newException(DataMissing, "Couldn't sync all the Verifications and Entries in a Block.")
 
 #Request a Block.
@@ -241,12 +257,13 @@ proc requestBlock*(
     DataMissing,
     ValidityConcern
 ], async.} =
+    var toDisconnect: seq[int] = @[]
     for client in network.clients:
         #Start syncing.
         try:
             await client.startSyncing()
         except SocketError, ClientError:
-            network.clients.disconnect(client.id)
+            toDisconnect.add(client.id)
             continue
         except Exception as e:
             doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -255,7 +272,7 @@ proc requestBlock*(
         try:
             result = await client.syncBlock(nonce)
         except SocketError, ClientError:
-            network.clients.disconnect(client.id)
+            toDisconnect.add(client.id)
             continue
         except SyncConfigError as e:
             doAssert(false, "Client we attempted to sync an Entry from wasn't configured for syncing: " & e.msg)
@@ -265,7 +282,7 @@ proc requestBlock*(
                 await client.stopSyncing()
             #If that failed, disconnect the Client.
             except SocketError, ClientError:
-                network.clients.disconnect(client.id)
+                toDisconnect.add(client.id)
             except Exception as e:
                 doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
             continue
@@ -277,12 +294,16 @@ proc requestBlock*(
             await client.stopSyncing()
         #If that failed, disconnect the Client.
         except SocketError, ClientError:
-            network.clients.disconnect(client.id)
+            toDisconnect.add(client.id)
         except Exception as e:
             doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         #Break out of the loop.
         break
+
+    #Disconnect any Clients marked for disconnection.
+    for id in toDisconnect:
+        network.clients.disconnect(id)
 
     #Sync the Block's contents.
     try:

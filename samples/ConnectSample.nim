@@ -15,7 +15,7 @@ payload = %* {
     "module": "network",
     "method": "connect",
     "args": [
-        stdin.readLine(), 5132
+        stdin.readLine()
     ]
 }
 

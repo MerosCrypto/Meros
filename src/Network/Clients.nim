@@ -38,8 +38,7 @@ proc handle(
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [
     SocketError,
-    ClientError,
-    INvalidMessageError
+    ClientError
 ], async.} =
     #Message loop variable.
     var msg: Message
@@ -82,9 +81,8 @@ proc handle(
             fcRaise e
         except ClientError as e:
             fcRaise e
-        except InvalidMessageError as e:
-            echo "Invalid Message: " & e.msg
-            fcRaise e
+        except InvalidMessageError:
+            continue
         except Exception as e:
             doAssert(false, "Handling a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -114,20 +112,20 @@ proc add*(
             networkFunctions.getProtocol(),
             networkFunctions.getHeight()
         )
-    except SocketError as e:
-        echo "Client failed to handshake due to a SocketError: " & e.msg
+    except SocketError:
         client.close()
         return
-    except ClientError as e:
-        echo "Client failed to handshake due to a ClientError: " & e.msg
+    except ClientError:
         client.close()
         return
-    except InvalidMessageError as e:
-        echo "Client failed to handshake due to an InvalidMessageError: " & e.msg
+    except InvalidMessageError:
         client.close()
         return
     except Exception as e:
         doAssert(false, "Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Add the new Client to Clients.
+    clients.add(client)
 
     #If we are missing Blocks, sync the last one, which will trigger syncing the others.
     if state == HandshakeState.MissingBlocks:
@@ -136,24 +134,19 @@ proc add*(
             await client.startSyncing()
             tail = await client.syncBlock(0)
             await client.stopSyncing()
-        except SocketError as e:
-            echo "Client failed to bootstrap due to a SocketError: " & e.msg
+        except SocketError:
             client.close()
             return
-        except ClientError as e:
-            echo "Client failed to bootstrap due to a ClientError: " & e.msg
+        except ClientError:
             client.close()
             return
-        except SyncConfigError as e:
-            echo "Client failed to bootstrap due to a SyncConfigError: " & e.msg
+        except SyncConfigError:
             client.close()
             return
-        except InvalidMessageError as e:
-            echo "Client failed to bootstrap due to a InvalidMessageError: " & e.msg
+        except InvalidMessageError:
             client.close()
             return
-        except DataMissing as e:
-            echo "Client failed to bootstrap due to missing data: " & e.msg
+        except DataMissing:
             client.close()
             return
         except Exception as e:
@@ -161,23 +154,17 @@ proc add*(
 
         try:
             await networkFunctions.handleBlock(tail)
-        except ValueError as e:
-            echo "Client failed to bootstrap due to a ValueError: " & e.msg
+        except ValueError:
             client.close()
             return
-        except IndexError as e:
-            echo "Client failed to bootstrap due to a IndexError: " & e.msg
+        except IndexError:
             client.close()
             return
-        except GapError as e:
-            echo "Client failed to bootstrap due to a GapError: " & e.msg
+        except GapError:
             client.close()
             return
         except Exception as e:
             doAssert(false, "Handling the tail Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Add the new Client to Clients.
-    clients.add(client)
 
     #Handle it.
     try:
@@ -189,8 +176,6 @@ proc add*(
     #This should affect node karma, not be a flat disconnect.
     #That said, we don't have karma yet.
     except ClientError:
-        clients.disconnect(client.id)
-    except InvalidMessageError:
         clients.disconnect(client.id)
     except Exception as e:
         doAssert(false, "Handling a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
