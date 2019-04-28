@@ -19,13 +19,11 @@ var
         "blockchain": [],
         "lattice": {}
     }
-    #Amount of blocks.
-    height: int = waitFor rpc.merit.getHeight()
     #List of Lattice Entries.
     hashes: seq[string] = @[]
 
 #Get every Block.
-for nonce in 0 ..< height:
+for nonce in 0 ..< waitFor rpc.merit.getHeight():
     db["blockchain"].add(waitFor rpc.merit.getBlock(nonce))
 
 #Get every Verification.
@@ -41,10 +39,15 @@ for syncBlock in db["blockchain"]:
             )
             hashes.add(hash.getStr())
 
-#Get every entry.
+#Get every Entry.
 hashes = hashes.deduplicate()
 for hash in hashes:
     db["lattice"][hash] = waitFor rpc.lattice.getEntryByHash(hash)
+
+#Get every Mint.
+for nonce in 0 ..< waitFor rpc.lattice.getHeight("minter"):
+    var mint: JSONNode = waitFor rpc.lattice.getEntryByIndex("minter", nonce)
+    db["lattice"][mint["hash"].getStr()] = mint
 
 #Write it to a file.
 "data/db.json".writeFile(db.pretty(4))
