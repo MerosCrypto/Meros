@@ -11,8 +11,6 @@ General Cleanup:
 - Make more `proc`s `func`.
 
 Specific Tasks:
-- Have MainDatabase create a data directory if one doesn't already exist.
-
 - Add `DataExists` for when data has already been added.
 
 - `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.

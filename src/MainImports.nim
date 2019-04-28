@@ -52,6 +52,9 @@ import objects/ConfigObj
 #BN lib.
 import BN
 
+#OS standard lib.
+import os
+
 #Locks standard lib.
 import locks
 

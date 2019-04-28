@@ -22,6 +22,8 @@ import os
 import json
 
 type Config* = object
+    #Data Directory.
+    dataDir*: string
     #DB Path.
     db*: string
 
@@ -56,25 +58,42 @@ func get(
 proc newConfig*(): Config {.forceCheck: [].} =
     #Create the config with the default options.
     result = Config(
-        db: "./data/db",
+        dataDir: "./data",
+        db: "db",
         tcpPort: 5132,
         rpcPort: 5133
     )
 
+    #Check if the data directory was overriden via the CLI.
+    #First, confirm the amount of CLI arguments.
+    if paramCount() mod 2 != 0:
+        doAssert(false, "Invalid amount of arguments passed via the CLI.")
+
+    #Look for the --dataDir switch.
+    if paramCount() > 0:
+        try:
+            for i in countup(1, paramCount(), 2):
+                if paramStr(i) == "--dataDir":
+                    result.dataDir = paramStr(i + 1)
+        except ValueError as e:
+            doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
+        except IndexError as e:
+            doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
+
     #If the settings file exists...
-    if fileExists("./data/settings.json"):
+    if fileExists(result.dataDir / "settings.json"):
         #Parse it.
         var
             settings: string
             json: JSONNode
         try:
-            settings = readFile("./data/settings.json")
+            settings = readFile(result.dataDir / "settings.json")
         except Exception as e:
-            doAssert(false, "Couldn't read from `./data/settings.json` despite it existing: " & e.msg)
+            doAssert(false, "Couldn't read from `" & (result.dataDir / "settings.json") & "` despite it existing: " & e.msg)
         try:
             json = parseJSON(settings)
         except Exception as e:
-            doAssert(false, "Couldn't parse `./data/settings.json` despite it existing: " & e.msg)
+            doAssert(false, "Couldn't parse `" & (result.dataDir / "settings.json") & "` despite it existing: " & e.msg)
 
         #Handle the settings.
         try:
@@ -109,14 +128,10 @@ proc newConfig*(): Config {.forceCheck: [].} =
         except IndexError:
             discard
         except BLSError as e:
-            doAssert(false, "Couldn't create a MinerWallet from the value in `./data/settings.json`: " & e.msg)
+            doAssert(false, "Couldn't create a MinerWallet from the value in `" & (result.dataDir / "settings.json") & "`: " & e.msg)
 
     #If there are params...
     if paramCount() > 0:
-        #Make sure there's an even amount of params.
-        if paramCount() mod 2 != 0:
-            doAssert(false, "Invalid amount of arguments passed via the CLI.")
-
         #Iterate over each param.
         try:
             for i in countup(1, paramCount(), 2):
@@ -144,3 +159,11 @@ proc newConfig*(): Config {.forceCheck: [].} =
             doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
         except IndexError as e:
             doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
+
+    #Make sure the data directory exists.
+    try:
+        discard existsOrCreateDir(result.dataDir)
+    except OSError as e:
+        doAssert(false, "Couldn't create the data directory due to an OSError: " & e.msg)
+    except IOError as e:
+        doAssert(false, "Couldn't create the data directory due to an IOError: " & e.msg)
