@@ -66,7 +66,7 @@ proc recv*(
         raise newException(ClientError, "Client disconnected.")
 
     #Make sure the content is valid.
-    if int(content) >= int(MessageType.End):
+    if int(msg[0]) >= int(MessageType.End):
         raise newException(ClientError, "Client sent an invalid Message Type.")
 
     #Extract the content.
