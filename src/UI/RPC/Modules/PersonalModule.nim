@@ -41,8 +41,10 @@ proc setSeed(
     try:
         rpc.functions.personal.setSeed(seed)
     except RandomError as e:
+        doAssert(seed.len == 0, "personal.setSeed threw a RandomError despite being passed a seed: " & e.msg)
         returnError()
     except EdSeedError as e:
+        doAssert(seed.len != 0, "personal.setSeed threw a EdSeedError despite not being passed a seed: " & e.msg)
         returnError()
     except SodiumError as e:
         returnError()
@@ -86,10 +88,8 @@ proc send(
     #Sign the Send.
     try:
         rpc.functions.personal.signSend(send)
-    except ValueError as e:
-        returnError()
     except AddressError as e:
-        returnError()
+        doAssert(false, "Couldn't sign the Send we created due to an AddressError (which means it failed to serialize): " & e.msg)
     except SodiumError as e:
         returnError()
 
@@ -97,7 +97,7 @@ proc send(
     try:
         send.mine(rpc.functions.lattice.getDifficulties().send)
     except ValueError as e:
-        returnError()
+        doAssert(false, "Couldn't mine the Send we created due to an ValueError (meaning it wasn't signed): " & e.msg)
     except ArgonError as e:
         returnError()
 
@@ -122,7 +122,7 @@ proc send(
     try:
         serialized = send.serialize()
     except AddressError as e:
-        returnError()
+        doAssert(false, "Couldn't serialize the Send we created and successfully added: " & e.msg)
     rpc.functions.network.broadcast(MessageType.Send, serialized)
 
     result = %* {
@@ -147,7 +147,7 @@ proc receive(
             nonce
         )
     except AddressError as e:
-        returnError()
+        doAssert(false, "Couldn't sign the Receive we created due to an AddressError (which means it failed to serialize): " & e.msg)
 
     #Sign the Receive.
     try:
@@ -174,7 +174,7 @@ proc receive(
     try:
         serialized = recv.serialize()
     except AddressError as e:
-        returnError()
+        doAssert(false, "Couldn't serialize the Receive we created and successfully added: " & e.msg)
     rpc.functions.network.broadcast(MessageType.Receive, serialized)
 
     result = %* {
@@ -201,7 +201,7 @@ proc data(
     try:
         rpc.functions.personal.signData(data)
     except AddressError as e:
-        returnError()
+        doAssert(false, "Couldn't sign the Data we created due to an AddressError (which means it failed to serialize): " & e.msg)
     except SodiumError as e:
         returnError()
 
@@ -209,7 +209,7 @@ proc data(
     try:
         data.mine(rpc.functions.lattice.getDifficulties().data)
     except ValueError as e:
-        returnError()
+        doAssert(false, "Couldn't mine the Data we created due to an ValueError (meaning it wasn't signed): " & e.msg)
     except ArgonError as e:
         returnError()
 
@@ -232,7 +232,7 @@ proc data(
     try:
         serialized = data.serialize()
     except AddressError as e:
-        returnError()
+        doAssert(false, "Couldn't serialize the Data we created and successfully added: " & e.msg)
     rpc.functions.network.broadcast(MessageType.Data, serialized)
 
     result = %* {

@@ -7,8 +7,6 @@
 - Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
 - Confirm two Nodes broadcast all events between each other.
 
-- Update some `raise`s in the PersonalModule to `doAssert(false)`.
-
 ### Core:
 Wallet:
 - Mnemonic file to convert a Mnemonic to seed, and vice versa.
