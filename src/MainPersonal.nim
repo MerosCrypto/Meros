@@ -33,14 +33,11 @@ proc mainPersonal() {.forceCheck: [].} =
         functions.personal.signSend = proc (
             send: Send
         ) {.forceCheck: [
-            ValueError,
             AddressError,
             SodiumError
         ].} =
             try:
                 wallet.sign(send)
-            except ValueError as e:
-                fcRaise e
             except AddressError as e:
                 fcRaise e
             except SodiumError as e:

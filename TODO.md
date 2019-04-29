@@ -9,7 +9,6 @@
 
 - Update some `raise`s in the PersonalModule to `doAssert(false)`.
 
-
 ### Core:
 Wallet:
 - Mnemonic file to convert a Mnemonic to seed, and vice versa.

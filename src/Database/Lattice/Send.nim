@@ -58,7 +58,6 @@ proc sign*(
     wallet: Wallet,
     send: Send
 ) {.forceCheck: [
-    ValueError,
     AddressError,
     SodiumError
 ].} =
@@ -69,8 +68,6 @@ proc sign*(
         send.hash = Blake384(send.serialize())
         #Sign the hash of the Send.
         send.signature = wallet.sign(send.hash.toString())
-    except ValueError as e:
-        fcRaise e
     except AddressError as e:
         fcRaise e
     except SodiumError as e:

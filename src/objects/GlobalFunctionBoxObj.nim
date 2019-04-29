@@ -210,7 +210,6 @@ type
         signSend*: proc (
             send: Send
         ) {.raises: [
-            ValueError,
             AddressError,
             SodiumError
         ].}

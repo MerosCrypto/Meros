@@ -172,8 +172,6 @@ proc mainMerit() {.forceCheck: [].} =
                         #Sign the claim.
                         try:
                             claim.sign(config.miner, wallet)
-                        except ValueError as e:
-                            doAssert(false, "Failed to sign a Claim for a Mint due to a ValueError: " & e.msg)
                         except AddressError as e:
                             doAssert(false, "Failed to sign a Claim for a Mint due to a AddressError: " & e.msg)
                         except BLSError as e:

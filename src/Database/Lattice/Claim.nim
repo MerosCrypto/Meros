@@ -43,7 +43,6 @@ proc sign*(
     miner: MinerWallet,
     wallet: Wallet
 ) {.forceCheck: [
-    ValueError,
     AddressError,
     BLSError,
     SodiumError
@@ -60,8 +59,6 @@ proc sign*(
 
         #Sign the hash of the Claim.
         claim.signature = wallet.sign(claim.hash.toString())
-    except ValueError as e:
-        fcRaise e
     except AddressError as e:
         fcRaise e
     except BLSError as e:
