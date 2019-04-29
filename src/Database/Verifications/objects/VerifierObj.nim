@@ -189,9 +189,10 @@ proc `[]`*(
 
     #Make sure it's a valid slice.
     #We would use Natural for this, except `a` can be -1.
-    #These assertions are off when range checks are off anyways.
-    assert(0 <= a, "Can't get Verification Slice from Verifier; a was negative.")
-    assert(a <= b, "Can't get Verification Slice from Verifier; b was less than a.")
+    if 0 > a:
+        raise newException(IndexError, "Can't get Verification Slice from Verifier; a was negative.")
+    if a > b:
+        raise newException(IndexError, "Can't get Verification Slice from Verifier; b was less than a.")
 
     #Create a seq.
     result = newSeq[Verification](b - a + 1)
@@ -219,8 +220,10 @@ proc `{}`*(
         a = 0
 
     #Make sure it's a valid slice.
-    assert(0 <= a, "Can't get MemoryVerification Slice from Verifier; a was negative.")
-    assert(a <= b, "Can't get MemoryVerification Slice from Verifier; b was less than a.")
+    if 0 > a:
+        raise newException(IndexError, "Can't get MemoryVerification Slice from Verifier; a was negative.")
+    if a > b:
+        raise newException(IndexError, "Can't get MemoryVerification Slice from Verifier; b was less than a.")
 
     #Grab the Verifications and cast them.
     try:
