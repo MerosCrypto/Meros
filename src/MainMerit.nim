@@ -37,11 +37,14 @@ proc mainMerit() {.forceCheck: [].} =
         ) {.forceCheck: [
             ValueError,
             IndexError,
-            GapError
+            GapError,
+            DataExists
         ], async.} =
             #If we already have this Block, raise.
+            #This is a needed check, even though there's the same one in processBlock, because requested Blocks are rebroadcasted.
+            #If a Client send us a back a Block, and we try to sync it, while they're still syncing, there's a standoff.
             if newBlock.header.nonce < merit.blockchain.height:
-                raise newException(IndexError, "Block already added.")
+                raise newException(DataExists, "Block already added.")
 
             #Print that we're adding the Block.
             echo "Adding Block ", newBlock.header.nonce, "."
@@ -58,8 +61,16 @@ proc mainMerit() {.forceCheck: [].} =
                         raise newException(GapError, e.msg)
                     except ValidityConcern as e:
                         raise newException(ValueError, e.msg)
+                    except ValueError as e:
+                        fcRaise e
+                    except IndexError as e:
+                        fcRaise e
+                    except GapError as e:
+                        doAssert(false, "Couldn't add Blocks in the gap before this Block due to a GapError: " & e.msg)
+                    except DataExists as e:
+                        doAssert(false, "Couldn't add a Block in the gap before this Block because DataExists: " & e.msg)
                     except Exception as e:
-                        doAssert(false, "Couldn't request and add a Block needed before verifying this Block: " & e.msg)
+                        doAssert(false, "Couldn't request and add a Block needed before verifying this Block, despite catching all naturally thrown Exceptions: " & e.msg)
 
             #Sync this Block.
             try:
@@ -108,9 +119,9 @@ proc mainMerit() {.forceCheck: [].} =
                 epoch = merit.processBlock(verifications, newBlock)
             except ValueError as e:
                 fcRaise e
-            except IndexError as e:
-                fcRaise e
             except GapError as e:
+                fcRaise e
+            except DataExists as e:
                 fcRaise e
 
             #Archive the Verifications mentioned in the Block.
@@ -165,7 +176,7 @@ proc mainMerit() {.forceCheck: [].} =
                 if not wallet.initiated:
                     echo "We got a Mint with nonce ", ourMint, ", however, we don't have a Wallet to Claim it to."
                     return
-                
+
                 #Claim the Reward.
                 var
                     claim: Claim

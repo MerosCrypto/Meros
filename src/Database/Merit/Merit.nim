@@ -81,17 +81,17 @@ proc processBlock*(
     newBlock: Block
 ): Epoch {.forceCheck: [
     ValueError,
-    IndexError,
-    GapError
+    GapError,
+    DataExists
 ].} =
     #Add the block to the Blockchain.
     try:
         merit.blockchain.processBlock(newBlock)
     except ValueError as e:
         fcRaise e
-    except IndexError as e:
-        fcRaise e
     except GapError as e:
+        fcRaise e
+    except DataExists as e:
         fcRaise e
 
     #Have the state process the block.

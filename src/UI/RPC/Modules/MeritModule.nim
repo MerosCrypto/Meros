@@ -136,6 +136,11 @@ proc publishBlock(
         return %* {
             "error": e.msg
         }
+    except DataExists as e:
+        echo "Failed to add the Block due to DataExists: " & e.msg
+        return %* {
+            "error": e.msg
+        }
     except Exception as e:
         doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
 

@@ -42,8 +42,8 @@ proc processBlock*(
     newBlock: Block
 ) {.forceCheck: [
     ValueError,
-    IndexError,
-    GapError
+    GapError,
+    DataExists
 ].} =
     #Blocks Per Month.
     let blocksPerMonth: int = 2592000 div blockchain.blockTime
@@ -53,7 +53,7 @@ proc processBlock*(
     if newBlock.header.nonce > blockchain.height:
         raise newException(GapError, "Missing blocks before the Block we're trying to add.")
     elif newBlock.header.nonce < blockchain.height:
-        raise newException(IndexError, "Invalid nonce.")
+        raise newException(DataExists, "Invalid nonce.")
 
     #If the last hash is off...
     if newBlock.header.last != blockchain.tip.header.hash:
