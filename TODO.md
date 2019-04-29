@@ -1,42 +1,14 @@
 # TODO
 
 ### Cleanup:
-General Cleanup:
-- Decide a definitive import ordering and make sure it's used throughout the codebase.
-
-- Use `let` where appropriate.
-- Remove `ref` from objects that shouldn't be `ref`.
-- Remove `of RootObj` from objects that aren't inherited from.
-
-- Make more `proc`s `func`.
-
-Specific Tasks:
 - Add `DataExists` for when data has already been added.
-
-- `verifications.getPendingAggregate` has a very specific use case and it should be merged with `verifications.getUnarchivedIndexes`.
 
 - Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
 - Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
 - Confirm two Nodes broadcast all events between each other.
 
-- Clean tests.
-
 - Update some `raise`s in the PersonalModule to `doAssert(false)`.
 
-- Don't rebroadcast data that we're syncing.
-- Remove the code from MainMerit that verifies we have everything mentioned in a Block and the block's aggregate. NetworkSync should raise an error if it fails to sync something, and we verify the signature in NetworkSync in order to verify we're not adding forged Verifications.
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
-
-Tests:
-- lib/Raw Test.
-- lib/Hash/Argon Test.
-- lib/Hash/Blake2 Test.
-- lib/Hash/SHA2 (384) Test.
-- lib/Hash/Keccak (384) Test.
-- lib/Hash/SHA3 (384) Test.
-
-- Network/Serialize/Lattice/SerializeEntry Test.
-- Network/Serialize/Lattice/ParseEntry Test.
 
 ### Core:
 Wallet:
@@ -74,21 +46,33 @@ Lattice:
 - Lock boxes.
 
 Network:
+- Don't rebroadcast data that we're syncing.
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
+
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
+
 - Multi-client syncing.
 - Sync Entries not on the Blockchain.
 - Sync Verifications not on the Blockchain.
 - Sync gaps (if we get data with nonce 2 but we only have 0; applies to both the Lattice and Verifications).
-- Replace the `sleepAsync(100)` in `verify` with gap syncing.
+
 - Move Entries and Verifications to UDP.
 
 ### Tests:
+Cleanup Tests.
+
 objects:
 - objects/Config Test.
 
 lib:
+- lib/Raw Test.
+- lib/Hash/Argon Test.
+- lib/Hash/Blake2 Test.
+- lib/Hash/SHA2 (384) Test.
+- lib/Hash/Keccak (384) Test.
+- lib/Hash/SHA3 (384) Test.
 - lib/Logger Test.
 
 Wallet:
@@ -119,6 +103,10 @@ Database/Lattice:
 
 Network:
 - Tests.
+
+Network/Serialize/Lattice:
+- Network/Serialize/Lattice/SerializeEntry Test.
+- Network/Serialize/Lattice/ParseEntry Test.
 
 UI/RPC:
 - UI/RPC/RPC Test.
