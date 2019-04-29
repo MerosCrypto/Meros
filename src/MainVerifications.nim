@@ -122,7 +122,8 @@ proc mainVerifications() {.forceCheck: [].} =
             verif: Verification
         ) {.forceCheck: [
             ValueError,
-            IndexError
+            IndexError,
+            DataExists
         ].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
@@ -130,15 +131,15 @@ proc mainVerifications() {.forceCheck: [].} =
             #Add the Verification to the Verifications DAG.
             try:
                 verifications.add(verif)
-            except IndexError as e:
-                #Verification has already been added.
-                fcRaise e
+            #Missing Verifications before this Verification.
+            #Since we got this from a Block, we should've already synced all previous Verifications.
             except GapError:
-                #Missing Verifications before this Verification.
-                #Since we got this from a Block, we should've already synced all previous Verifications.
                 doAssert(false, "Adding a Verification from a Block which we verified, despite not having all mentioned Verifications.")
+            #Verification was already added.
+            except DataExists as e:
+                fcRaise e
+            #Verifier committed a malicious act against the network.
             except MeritRemoval:
-                #Verifier committed a malicious act against the network.
                 discard
 
             #Add the Verification to the Lattice.
@@ -158,7 +159,8 @@ proc mainVerifications() {.forceCheck: [].} =
             ValueError,
             IndexError,
             GapError,
-            BLSError
+            BLSError,
+            DataExists
         ].} =
             #Print that we're adding the MemoryVerification.
             echo "Adding a new MemoryVerification."
@@ -166,17 +168,17 @@ proc mainVerifications() {.forceCheck: [].} =
             #Add the MemoryVerification to the Verifications DAG.
             try:
                 verifications.add(verif)
-            except IndexError as e:
-                #Verification has already been added.
-                fcRaise e
+            #Missing Verifications before this Verification.
             except GapError as e:
-                #Missing Verifications before this Verification.
                 fcRaise e
+            #Invalid signature.
             except BLSError as e:
-                #Invalid BLS signature.
                 fcRaise e
+            #Memory Verification was already added.
+            except DataExists as e:
+                fcRaise e
+            #Verifier committed a malicious act against the network.
             except MeritRemoval:
-                #Verifier committed a malicious act against the network.
                 discard
 
             #Add the Verification to the Lattice.

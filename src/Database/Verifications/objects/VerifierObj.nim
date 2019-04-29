@@ -78,8 +78,8 @@ proc add*(
     verifier: var Verifier,
     verif: Verification
 ) {.forceCheck: [
-    IndexError,
     GapError,
+    DataExists,
     MeritRemoval
 ].} =
     #Verify we're not missing Verifications.
@@ -92,7 +92,7 @@ proc add*(
             raise newException(MeritRemoval, "Verifier submitted two Verifications with the same nonce.")
 
         #Already added.
-        raise newException(IndexError, "Verification has already been added.")
+        raise newException(DataExists, "Verification has already been added.")
 
     #Verify this Verifier isn't verifying conflicting Entries.
 
@@ -114,9 +114,9 @@ proc add*(
     verifier: var Verifier,
     verif: MemoryVerification
 ) {.forceCheck: [
-    IndexError,
     GapError,
     BLSError,
+    DataExists,
     MeritRemoval
 ].} =
     #Verify the signature.
@@ -132,9 +132,9 @@ proc add*(
     #Add the Verification.
     try:
         verifier.add(cast[Verification](verif))
-    except IndexError as e:
-        fcRaise e
     except GapError as e:
+        fcRaise e
+    except DataExists as e:
         fcRaise e
     except MeritRemoval as e:
         fcRaise e

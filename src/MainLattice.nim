@@ -35,8 +35,12 @@ proc verify(
             doAssert(false, "Created a MemoryVerification which we already added: " & e.msg)
         except GapError as e:
             doAssert(false, "Created a MemoryVerification with an invalid nonce: " & e.msg)
+        except BLSError as e:
+            doAssert(false, "Couldn't add a MemoryVerification due to a BLSError: " & e.msg)
         except MeritRemoval as e:
             doAssert(false, "Created a MemoryVerification which causes a Merit Removal: " & e.msg)
+        except DataExists as e:
+            doAssert(false, "Created a MemoryVerification which already exists: " & e.msg)
 
         #Release the verify lock.
         release(verifyLock)

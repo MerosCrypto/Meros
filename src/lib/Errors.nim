@@ -29,7 +29,8 @@ type
     AddressError*     = object of Exception #Used when passed an invalid Address.
 
     #Database/common Errors.
-    GapError* = object of Exception #Used when trying to add an item, yet missing items before said item.
+    GapError* = object of Exception   #Used when trying to add an item, yet missing items before said item.
+    DataExists* = object of Exception #Used when trying to add data which was already added.
 
     #Database/Filesystem Errors.
     DBError*      = object of LMDBError
@@ -41,9 +42,6 @@ type
 
     #Database/Blockchain Errors.
     NotInEpochs* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
-
-    #Database/Lattice Errors.
-    MintError* = object of Exception #Used when Minting MR fails.
 
     #Network Errors.
     SocketError*         = object of Exception #Used when a Socket fails.

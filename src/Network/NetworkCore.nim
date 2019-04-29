@@ -339,6 +339,8 @@ proc newNetwork*(
                     return
                 except BLSError as e:
                     raise newException(InvalidMessageError, "Adding the MemoryVerification failed due to a BLSError: " & e.msg)
+                except DataExists:
+                    return
 
             of MessageType.Block:
                 var newBlock: Block

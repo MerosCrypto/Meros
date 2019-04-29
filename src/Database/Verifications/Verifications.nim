@@ -45,15 +45,36 @@ proc add*(
     verifs: var Verifications,
     verif: Verification
 ) {.forceCheck: [
-    IndexError,
     GapError,
+    DataExists,
     MeritRemoval
 ].} =
     try:
         verifs[verif.verifier].add(verif)
-    except IndexError as e:
-        fcRaise e
     except GapError as e:
+        fcRaise e
+    except DataExists as e:
+        fcRaise e
+    except MeritRemoval as e:
+        fcRaise e
+
+#Add a MemoryVerification.
+proc add*(
+    verifs: var Verifications,
+    verif: MemoryVerification
+) {.forceCheck: [
+    GapError,
+    BLSError,
+    DataExists,
+    MeritRemoval
+].} =
+    try:
+        verifs[verif.verifier].add(verif)
+    except GapError as e:
+        fcRaise e
+    except BLSError as e:
+        fcRaise e
+    except DataExists as e:
         fcRaise e
     except MeritRemoval as e:
         fcRaise e

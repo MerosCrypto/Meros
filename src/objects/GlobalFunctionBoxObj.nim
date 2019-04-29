@@ -100,16 +100,18 @@ type
             verif: Verification
         ) {.raises: [
             ValueError,
-            IndexError
+            IndexError,
+            DataExists
         ].}
 
         addMemoryVerification*: proc (
             verif: MemoryVerification
         ) {.raises: [
-            IndexError,
             ValueError,
+            IndexError,
             GapError,
-            BLSError
+            BLSError,
+            DataExists
         ].}
 
     MeritFunctionBox* = ref object

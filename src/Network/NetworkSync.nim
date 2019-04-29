@@ -292,6 +292,8 @@ proc sync*(
             doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
         except IndexError as e:
             doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
+        except DataExists:
+            discard
 
 #Request a Block.
 proc requestBlock*(
