@@ -249,24 +249,32 @@ proc sync*(
                                 network.mainFunctions.lattice.addClaim(entry.claim)
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError, BLSError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
 
                         of EntryType.Send:
                             try:
                                 network.mainFunctions.lattice.addSend(entry.send)
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
 
                         of EntryType.Receive:
                             try:
                                 network.mainFunctions.lattice.addReceive(entry.receive)
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
 
                         of EntryType.Data:
                             try:
                                 network.mainFunctions.lattice.addData(entry.data)
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
 
                         else:
                             doAssert(false, "SyncEntryResponse exists for an unsyncable type.")
@@ -293,7 +301,7 @@ proc sync*(
         except IndexError as e:
             doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
         except DataExists:
-            discard
+            continue
 
 #Request a Block.
 proc requestBlock*(

@@ -1,8 +1,5 @@
 # TODO
 
-### Cleanup:
-- Add `DataExists` for when data has already been added.
-
 ### Core:
 Wallet:
 - Mnemonic file to convert a Mnemonic to seed, and vice versa.

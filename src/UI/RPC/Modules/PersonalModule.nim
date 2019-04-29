@@ -116,6 +116,8 @@ proc send(
         returnError()
     except SodiumError as e:
         returnError()
+    except DataExists as e:
+        returnError()
 
     result = %* {
         "hash": $send.hash
@@ -159,6 +161,8 @@ proc receive(
     except AddressError as e:
         returnError()
     except EdPublicKeyError as e:
+        returnError()
+    except DataExists as e:
         returnError()
 
     result = %* {
@@ -209,6 +213,8 @@ proc data(
     except AddressError as e:
         returnError()
     except EdPublicKeyError as e:
+        returnError()
+    except DataExists as e:
         returnError()
 
     result = %* {

@@ -129,7 +129,8 @@ proc mainLattice() {.forceCheck: [].} =
             GapError,
             AddressError,
             EdPublicKeyError,
-            BLSError
+            BLSError,
+            DataExists
         ].} =
             #Print that we're adding the Claim.
             echo "Adding a new Claim."
@@ -137,7 +138,7 @@ proc mainLattice() {.forceCheck: [].} =
             #Add the Claim.
             try:
                 lattice.add(claim)
-            #Invalid Ed25519 Signature or invalid BLS Signature OR data already exists.
+            #Invalid Ed25519 Signature or invalid BLS Signature.
             except ValueError as e:
                 fcRaise e
             #Competing Entry already verified at this position.
@@ -154,6 +155,9 @@ proc mainLattice() {.forceCheck: [].} =
                 fcRaise e
             #BLS lib threw.
             except BLSError as e:
+                fcRaise e
+            #Data already exisrs.
+            except DataExists as e:
                 fcRaise e
 
             echo "Successfully added the Claim."
@@ -181,7 +185,8 @@ proc mainLattice() {.forceCheck: [].} =
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError
+            EdPublicKeyError,
+            DataExists
         ].} =
             #Print that we're adding the Send.
             echo "Adding a new Send."
@@ -189,7 +194,7 @@ proc mainLattice() {.forceCheck: [].} =
             #Add the Send.
             try:
                 lattice.add(send)
-            #Invalid Ed25519 Signature OR data already exists.
+            #Invalid Ed25519 Signature.
             except ValueError as e:
                 fcRaise e
             #Competing Entry already verified at this position.
@@ -207,6 +212,9 @@ proc mainLattice() {.forceCheck: [].} =
             #BLSError.
             except BLSError as e:
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Claim: " & e.msg)
+            #Data already exisrs.
+            except DataExists as e:
+                fcRaise e
 
             echo "Successfully added the Send."
 
@@ -265,6 +273,8 @@ proc mainLattice() {.forceCheck: [].} =
                         doAssert(false, "Created Receive has an invalid sender address, detected when adding: " & e.msg)
                     except EdPublicKeyError as e:
                         doAssert(false, "Created Receive's sender doesn't decode to a valid Public Key: " & e.msg)
+                    except DataExists:
+                        echo "Already added a Receive for the incoming Send."
 
         #Handle Receives.
         functions.lattice.addReceive = proc (
@@ -274,7 +284,8 @@ proc mainLattice() {.forceCheck: [].} =
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError
+            EdPublicKeyError,
+            DataExists
         ].} =
             #Print that we're adding the Receive.
             echo "Adding a new Receive."
@@ -282,7 +293,7 @@ proc mainLattice() {.forceCheck: [].} =
             #Add the Receive.
             try:
                 lattice.add(recv)
-            #Invalid Ed25519 Signature OR data already exists.
+            #Invalid Ed25519 Signature.
             except ValueError as e:
                 fcRaise e
             #Competing Entry already verified at this position.
@@ -300,6 +311,9 @@ proc mainLattice() {.forceCheck: [].} =
             #BLSError.
             except BLSError as e:
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Receive: " & e.msg)
+            #Data already exisrs.
+            except DataExists as e:
+                fcRaise e
 
             echo "Successfully added the Receive."
 
@@ -326,7 +340,8 @@ proc mainLattice() {.forceCheck: [].} =
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError
+            EdPublicKeyError,
+            DataExists
         ].} =
             #Print that we're adding the Data.
             echo "Adding a new Data."
@@ -352,6 +367,9 @@ proc mainLattice() {.forceCheck: [].} =
             #BLSError.
             except BLSError as e:
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Data: " & e.msg)
+            #Data already exisrs.
+            except DataExists as e:
+                fcRaise e
 
             echo "Successfully added the Data."
 

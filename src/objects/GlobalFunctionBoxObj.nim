@@ -165,7 +165,8 @@ type
             GapError,
             AddressError,
             EdPublicKeyError,
-            BLSError
+            BLSError,
+            DataExists
         ].}
 
         addSend*: proc (
@@ -175,7 +176,8 @@ type
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError
+            EdPublicKeyError,
+            DataExists
         ].}
 
         addReceive*: proc (
@@ -185,7 +187,8 @@ type
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError
+            EdPublicKeyError,
+            DataExists
         ].}
 
         addData*: proc (
@@ -195,7 +198,8 @@ type
             IndexError,
             GapError,
             AddressError,
-            EdPublicKeyError
+            EdPublicKeyError,
+            DataExists
         ].}
 
     PersonalFunctionBox* = ref object

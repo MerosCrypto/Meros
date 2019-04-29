@@ -37,7 +37,8 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    EdPublicKeyError
+    EdPublicKeyError,
+    DataExists
 ].} =
     try:
         account.add(cast[Entry](mint))
@@ -48,6 +49,8 @@ proc add*(
     except GapError as e:
         fcRaise e
     except EdPublicKeyError as e:
+        fcRaise e
+    except DataExists as e:
         fcRaise e
 
 #Add a Claim.
@@ -60,7 +63,8 @@ proc add*(
     IndexError,
     GapError,
     EdPublicKeyError,
-    BLSError
+    BLSError,
+    DataExists
 ].} =
     #Verify the BLS signature is for this mint and this person.
     try:
@@ -90,6 +94,8 @@ proc add*(
         fcRaise e
     except EdPublicKeyError as e:
         fcRaise e
+    except DataExists as e:
+        fcRaise e
 
 #Add a Send.
 proc add*(
@@ -100,7 +106,8 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    EdPublicKeyError
+    EdPublicKeyError,
+    DataExists
 ].} =
     #Verify the work.
     if send.argon.toBN() < difficulty:
@@ -125,6 +132,8 @@ proc add*(
         fcRaise e
     except EdPublicKeyError as e:
         fcRaise e
+    except DataExists as e:
+        fcRaise e
 
 #Add a Receive.
 proc add*(
@@ -135,7 +144,8 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    EdPublicKeyError
+    EdPublicKeyError,
+    DataExists
 ].} =
     #Verify the entry is a Send.
     if sendArg.descendant != EntryType.Send:
@@ -161,6 +171,8 @@ proc add*(
         fcRaise e
     except EdPublicKeyError as e:
         fcRaise e
+    except DataExists as e:
+        fcRaise e
 
 #Add Data.
 proc add*(
@@ -171,7 +183,8 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    EdPublicKeyError
+    EdPublicKeyError,
+    DataExists
 ].} =
     #Verify the work.
     if data.argon.toBN() < difficulty:
@@ -187,4 +200,6 @@ proc add*(
     except GapError as e:
         fcRaise e
     except EdPublicKeyError as e:
+        fcRaise e
+    except DataExists as e:
         fcRaise e

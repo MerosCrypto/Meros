@@ -251,7 +251,8 @@ proc add*(
     GapError,
     AddressError,
     EdPublicKeyError,
-    BLSError
+    BLSError,
+    DataExists
 ].} =
     #Make sure the sender is only minter when mintOverride is true.
     if (
@@ -328,6 +329,8 @@ proc add*(
         fcRaise e
     except BLSError as e:
         fcRaise e
+    except DataExists as e:
+        fcRaise e
 
     #If this isn't a Mint, add the Entry to the lookup table.
     if entry.descendant != EntryType.Mint:
@@ -382,6 +385,8 @@ proc mint*(
         fcRaise e
     except BLSError as e:
         doAssert(false, "Adding a Mint threw a BLSError, which it should never do: " & e.msg)
+    except DataExists as e:
+        doAssert(false, "Adding a new Mint failed because of a DataExists: " & e.msg)
 
     try:
         #Save the minter's new height to the DB.

@@ -255,6 +255,8 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Adding the Claim failed due to a BLSError: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Claim failed due to a EdPublicKeyError: " & e.msg)
+                except DataExists:
+                    return
 
             of MessageType.Send:
                 var send: Send
@@ -277,6 +279,8 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Adding the Send failed due to a AddressError: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Send failed due to a EdPublicKeyError: " & e.msg)
+                except DataExists:
+                    return
 
             of MessageType.Receive:
                 var recv: Receive
@@ -297,6 +301,8 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Adding the Receive failed due to a AddressError: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Receive failed due to a EdPublicKeyError: " & e.msg)
+                except DataExists:
+                    return
 
             of MessageType.Data:
                 var data: Data
@@ -319,6 +325,8 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Adding the Data failed due to a AddressError: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Data failed due to a EdPublicKeyError: " & e.msg)
+                except DataExists:
+                    return
 
             of MessageType.MemoryVerification:
                 var verif: MemoryVerification
@@ -363,6 +371,8 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Adding the Block failed due to a IndexError: " & e.msg)
                 except GapError as e:
                     echo "Failed to add the Block due to a GapError: " & e.msg
+                    return
+                except DataExists:
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)

@@ -216,3 +216,5 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Failed to add a Claim for a Mint due to a EdPublicKeyError: " & e.msg)
                 except BLSError as e:
                     doAssert(false, "Failed to add a Claim for a Mint due to a BLSError: " & e.msg)
+                except DataExists:
+                    echo "Already added a Claim for the incoming Mint."

@@ -127,7 +127,8 @@ proc add*(
     ValueError,
     IndexError,
     GapError,
-    EdPublicKeyError
+    EdPublicKeyError,
+    DataExists
 ].} =
     #Check the Signature.
     #If it's a valid minter Entry...
@@ -163,7 +164,7 @@ proc add*(
         #Make sure we're not adding it twice.
         for e in account.entries[i]:
             if e.hash == entry.hash:
-                raise newException(ValueError, "Account already has this Entry.")
+                raise newException(DataExists, "Account already has this Entry.")
 
     #Add the Entry to the proper seq.
     if entry.nonce < account.height:
