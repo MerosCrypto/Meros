@@ -4,14 +4,14 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSPublicKey).
+import ../../../Wallet/MinerWallet
 
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#VerifierIndex object.
-import VerifierIndexObj
+#VerifierRecord object.
+import ../../common/objects/VerifierRecordObj
 
 #Tables standard lib.
 import tables
@@ -22,78 +22,115 @@ import finals
 finalsd:
     type
         #Reward object. Declares a BLS Public Key (as a string) and a number which adds up to 1000.
-        Reward* = object of RootObj
+        Reward* = object
             key* {.final.}: string
-            score* {.final.}: uint #This is final even though we double set score (once with a raw value, once with a normalized value). How?
-                                   #We initially set the score in this value via the constructor.
-                                   #Since we set the score in this file, we don't call the finals setter, and finals thinks it's unset.
+            score* {.final.}: Natural #This is final, even though we double set it (once with a raw value, once with a normalized value). How?
+                                      #We initially set the score in this value via the constructor.
+                                      #Since we set the score in this file, and we don't call the finalize, finals thinks it's unset.
         #Seq of Rewards.
         Rewards* = seq[Reward]
 
         #Epoch object. Entry Hash -> Public Keys
-        Epoch* = TableRef[string, seq[BLSPublicKey]]
+        Epoch* = object
+            hashes*: Table[string, seq[BLSPublicKey]]
+            records*: seq[VerifierRecord]
+
         #Epochs object.
-        Epochs* = ref object of RootObj
+        Epochs* = object
             #Database.
             db: DatabaseFunctionBox
+
             #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
-            #The last 12 Epochs of indexes.
-            indexes: seq[seq[VerifierIndex]]
+            #The last five VerifierRecords to have been shifted out of Epochs.
+            records*: seq[seq[VerifierRecord]]
 
 #Constructors.
-proc newReward*(key: string, score: uint): Reward {.raises: [].} =
+func newReward*(
+    key: string,
+    score: Natural
+): Reward {.forceCheck: [].} =
     result = Reward(
         key: key,
         score: score
     )
     result.ffinalizeKey()
 
-proc newRewards*(): Rewards {.raises: [].} =
+func newRewards*(): Rewards {.inline, forceCheck: [].} =
     newSeq[Reward]()
 
-proc newEpoch*(indexes: seq[VerifierIndex]): Epoch {.raises: [].} =
-    newTable[string, seq[BLSPublicKey]]()
+func newEpoch*(
+    records: seq[VerifierRecord]
+): Epoch {.inline, forceCheck: [].} =
+    Epoch(
+        hashes: initTable[string, seq[BLSPublicKey]](),
+        records: records
+    )
 
-proc newEpochsObj*(db: DatabaseFunctionBox): Epochs {.raises: [].} =
+func newEpochsObj*(
+    db: DatabaseFunctionBox
+): Epochs {.forceCheck: [].} =
     #Create the seq.
     result = Epochs(
         db: db,
         epochs: newSeq[Epoch](5),
-        indexes: newSeq[seq[VerifierIndex]](10)
+        records: newSeq[seq[VerifierRecord]](5)
     )
 
     #Place blank epochs in.
     for i in 0 ..< 5:
         result.epochs[i] = newEpoch(@[])
 
-    #Place blank indexes in.
-    for i in 0 ..< 10:
-        result.indexes[i] = @[]
+    #Place blank records in.
+    for i in 0 ..< 5:
+        result.records[i] = @[]
 
-#Add a hash to Epochs. Returns false if this hash isn't already in these Epochs.
-proc add*(epochs: Epochs, hash: string, verifier: BLSPublicKey): bool {.raises: [KeyError].} =
-    #Default return value of false.
-    result = false
-
+#Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
+func add*(
+    epochs: var Epochs,
+    hash: string,
+    verifier: BLSPublicKey
+) {.forceCheck: [
+    NotInEpochs
+].} =
     #Check every Epoch.
-    for epoch in epochs.epochs:
-        #If we found the hash, add the verifier and return true.
-        if epoch.hasKey(hash):
-            epoch[hash].add(verifier)
-            return true
+    try:
+        for i in 0 ..< epochs.epochs.len:
+            #If we found the hash, add the verifier and return true.
+            if epochs.epochs[i].hashes.hasKey(hash):
+                for key in epochs.epochs[i].hashes[hash]:
+                    if key == verifier:
+                        return
+                epochs.epochs[i].hashes[hash].add(verifier)
+                return
+    except KeyError as e:
+        doAssert(false, "Couldn't add a hash to an Epoch which already has said hash: " & e.msg)
+    raise newException(NotInEpochs, "")
 
 #Add a hash to an Epoch.
-proc add*(epoch: Epoch, hash: string, verifier: BLSPublicKey) {.raises: [KeyError].} =
-    #Create the seq if one doesn't already exist.
-    if not epoch.hasKey(hash):
-        epoch[hash] = @[]
+func add*(
+    epoch: var Epoch,
+    hash: string,
+    verifier: BLSPublicKey
+) {.forceCheck: [].} =
+    #Create the seq.
+    try:
+        epoch.hashes[hash] = @[]
+    except KeyError as e:
+        doAssert(false, "Couldn't add a seq to an Epoch: " & e.msg)
 
     #Add the key.
-    epoch[hash].add(verifier)
+    try:
+        epoch.hashes[hash].add(verifier)
+    except KeyError as e:
+        doAssert(false, "Couldn't add a hash to a newly created seq in the Epoch: " & e.msg)
 
 #Shift an Epoch.
-proc shift*(epochs: Epochs, epoch: Epoch, indexes: seq[VerifierIndex], save: bool): Epoch {.raises: [LMDBError].} =
+proc shift*(
+    epochs: var Epochs,
+    epoch: Epoch,
+    save: bool
+): Epoch {.forceCheck: [].} =
     #Add the newest Epoch.
     epochs.epochs.add(epoch)
     #Set the result to the oldest.
@@ -101,26 +138,29 @@ proc shift*(epochs: Epochs, epoch: Epoch, indexes: seq[VerifierIndex], save: boo
     #Remove the oldest.
     epochs.epochs.delete(0)
 
-    #Add the newest indexes.
-    epochs.indexes.add(indexes)
+    #Add the newly shifted records.
+    epochs.records.add(result.records)
     #Grab the oldest.
-    var oldIndexes: seq[VerifierIndex] = epochs.indexes[0]
+    let records: seq[VerifierRecord] = epochs.records[0]
     #Remove the oldest.
-    epochs.indexes.delete(0)
+    epochs.records.delete(0)
 
     #If we should save this to the database...
     if save:
         discard """
         When we regenerate the Epochs, we can't just shift the last 5 blocks, for two reasons.
 
-        1) When it adds the Verifications, it'd try loading everything from the archived to the specified index.
+        1) When it adds the Verifications, it'd try loading everything from the archived to the specified record.
         When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
 
         2) When it adds the Verifications, it'd assume every appearance is the first appearance.
         This is because it doesn't have the 5 Epochs before it so when it checks the Epochs, it's iterating over blanks.
 
-        Therefore, we need to save the index that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
+        Therefore, we need to save the nonce that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
         """
 
-        for index in oldIndexes:
-            epochs.db.put("merit_" & index.key & "_epoch", index.nonce.toBinary())
+        try:
+            for record in records:
+                epochs.db.put("merit_" & record.key.toString() & "_epoch", record.nonce.toBinary())
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save the new Epoch tip to the Database: " & e.msg)

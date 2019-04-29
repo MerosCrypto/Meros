@@ -4,7 +4,6 @@
 
 <a href="https://discord.gg/nZmdWGA"><img src="https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png" height=92 width=92/></a>
 
-### [Outline](https://medium.com/@MerosCrypto/meros-cryptocurrency-d0df75e8170f)
 ### [Merit Caching Whitepaper](https://github.com/MerosCrypto/Merit-Caching)
 ### Meros Whitepaper: Being  Written
 

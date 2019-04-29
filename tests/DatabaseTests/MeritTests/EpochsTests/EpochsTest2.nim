@@ -1,23 +1,25 @@
 discard """
 Epochs Test 2. Verifies that:
- - 2 Verifications
- - For the same Entry
- - A block apart
+    - 2 Verifications
+    - For the same Entry
+    - A block apart
 Result in 500/500 when the Entry first appeared.
 """
 
-#BN lib.
-import BN
+#Util lib.
+import ../../../../src/lib/Util
 
 #Hash lib.
 import ../../../../src/lib/Hash
 
 #Merkle lib.
-import ../../../../src/lib/Merkle
+import ../../../../src/Database/common/Merkle
 
-#BLS and MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
+
+#VerifierRecord object.
+import ../../../../src/Database/common/objects/VerifierRecordObj
 
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
@@ -28,8 +30,8 @@ import ../../../../src/Database/Merit/Merit
 #Merit Testing functions.
 import ../TestMerit
 
-#String utils standard lib.
-import strutils
+#BN lib.
+import BN
 
 var
     #Database Function Box.
@@ -44,7 +46,7 @@ var
     epochs: Epochs = newEpochs(functions, verifications, blockchain)
 
     #Hash.
-    hash: Hash[384] = "aa".repeat(48).toHash(384)
+    hash: Hash[384] = "".pad(48, char(128)).toHash(384)
     #MinerWallets.
     miners: seq[MinerWallet] = @[
         newMinerWallet(),
@@ -52,8 +54,8 @@ var
     ]
     #MemoryVerification object.
     verif: MemoryVerification
-    #VerifierIndexes.
-    verifs: seq[VerifierIndex] = @[]
+    #VerifierRecords.
+    verifs: seq[VerifierRecord] = @[]
     #Rewards.
     rewards: Rewards
 
@@ -61,7 +63,7 @@ var
 state.processBlock(
     blockchain,
     newTestBlock(
-        miners = @[
+        miners = newMinersObj(@[
             newMinerObj(
                 miners[0].publicKey,
                 50
@@ -71,7 +73,7 @@ state.processBlock(
                 miners[1].publicKey,
                 50
             )
-        ]
+        ])
     )
 )
 
@@ -80,18 +82,18 @@ verif = newMemoryVerificationObj(hash)
 miners[0].sign(verif, 0)
 #Add it the Verifications.
 verifications.add(verif)
-#Add a VerifierIndex.
-verifs.add(newVerifierIndex(
-    miners[0].publicKey.toString(),
+#Add a VerifierRecord.
+verifs.add(newVerifierRecord(
+    miners[0].publicKey,
     0,
-    newMerkle(hash.toString()).hash
+    newMerkle(hash).hash
 ))
 
 #Shift on the Verifications.
 rewards = epochs.shift(verifications, verifs).calculate(state)
 assert(rewards.len == 0)
 
-#Clear the VerifierIndexes.
+#Clear the VerifierRecords.
 verifs = @[]
 
 #Add a Key 1 Verification.
@@ -99,11 +101,11 @@ verif = newMemoryVerificationObj(hash)
 miners[1].sign(verif, 0)
 #Add it the Verifications.
 verifications.add(verif)
-#Add a VerifierIndex.
-verifs.add(newVerifierIndex(
-    miners[1].publicKey.toString(),
+#Add a VerifierRecord.
+verifs.add(newVerifierRecord(
+    miners[1].publicKey,
     0,
-    newMerkle(hash.toString()).hash
+    newMerkle(hash).hash
 ))
 
 #Shift on the Verifications.

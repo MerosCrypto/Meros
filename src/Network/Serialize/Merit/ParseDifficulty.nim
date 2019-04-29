@@ -2,12 +2,14 @@ discard """
 Read the note in SerializeDifficulty before working with this file.
 """
 
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../../lib/Base
+#BN/Raw lib.
+import ../../../lib/Raw
 
 #Difficulty object.
 import ../../../Database/Merit/objects/DifficultyObj
@@ -18,7 +20,7 @@ import ../SerializeCommon
 #Parse function.
 proc parseDifficulty*(
     difficultyStr: string
-): Difficulty {.raises: [ValueError].} =
+): Difficulty {.forceCheck: [].} =
     #Start | End | Difficulty
     var difficultySeq: seq[string] = difficultyStr.deserialize(
         INT_LEN,
@@ -28,7 +30,7 @@ proc parseDifficulty*(
 
     #Add each miner/amount.
     result = newDifficultyObj(
-        uint(difficultySeq[0].fromBinary()),
-        uint(difficultySeq[1].fromBinary()),
-        difficultySeq[2].toBN(256)
+        difficultySeq[0].fromBinary(),
+        difficultySeq[1].fromBinary(),
+        difficultySeq[2].toBNFromRaw()
     )

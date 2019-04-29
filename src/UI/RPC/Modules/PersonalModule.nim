@@ -1,9 +1,8 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Numerical libs.
-import BN
-import ../../../lib/Base
+#Util lib.
+import ../../../lib/Util
 
 #Hash lib.
 import ../../../lib/Hash
@@ -25,27 +24,40 @@ import ../../../Network/Serialize/Lattice/SerializeData
 #RPC object.
 import ../objects/RPCObj
 
-#Finals lib.
-import finals
+#BN lib.
+import BN
 
 #Async standard lib.
 import asyncdispatch
 
-#String utils standard lib.
-import strutils
-
 #JSON standard lib.
 import json
 
-#Get the Wallet info.
-proc getWallet(rpc: RPC): JSONNode {.raises: [EventError, PersonalError].} =
-    var wallet: Wallet
+#Set the Wallet's Seed.
+proc setSeed(
+    rpc: RPC,
+    seed: string
+): JSONNode {.forceCheck: [].} =
     try:
-        wallet = rpc.functions.personal.getWallet()
-    except:
-        raise newException(EventError, "Couldn't get and call personal.getWallet.")
-    if wallet == nil:
-        raise newException(PersonalError, "Personal doesn't have a Wallet.")
+        rpc.functions.personal.setSeed(seed)
+    except RandomError as e:
+        doAssert(seed.len == 0, "personal.setSeed threw a RandomError despite being passed a seed: " & e.msg)
+        returnError()
+    except EdSeedError as e:
+        doAssert(seed.len != 0, "personal.setSeed threw a EdSeedError despite not being passed a seed: " & e.msg)
+        returnError()
+    except SodiumError as e:
+        returnError()
+
+#Get the Wallet info.
+proc getWallet(
+    rpc: RPC
+): JSONNode {.forceCheck: [].} =
+    var wallet: Wallet = rpc.functions.personal.getWallet()
+    if not wallet.initiated:
+        return %* {
+            "error": "Personal does not have a Wallet."
+        }
 
     result = %* {
         "seed": $wallet.seed,
@@ -53,55 +65,59 @@ proc getWallet(rpc: RPC): JSONNode {.raises: [EventError, PersonalError].} =
         "address": wallet.address
     }
 
-#Set the Wallet's Seed.
-#The RPC method is set. Set is a keyword. The Nim func is therefore expanded to setPrivateKey.
-proc setSeed(
-    rpc: RPC,
-    seed: string
-): JSONNode {.raises: [
-    EventError,
-].} =
-    try:
-        rpc.functions.personal.setSeed(seed)
-    except:
-        raise newException(EventError, "Couldn't get and call personal.setSeed.")
-
 #Create a Send Entry.
 proc send(
     rpc: RPC,
     address: string,
     amount: BN,
-    nonce: uint
-): JSONNode {.raises: [
-    ValueError,
-    EventError,
-    AsyncError,
-    ArgonError,
-    BLSError,
-    SodiumError,
-    LMDBError,
-    FinalAttributeError
-].} =
+    nonce: int
+): JSONNode {.forceCheck: [].} =
     #Create the Send.
-    var send: Send = newSend(
-        address,
-        amount,
-        nonce
-    )
+    var send: Send
+    try:
+        send = newSend(
+            address,
+            amount,
+            nonce
+        )
+    except ValueError as e:
+        returnError()
+    except AddressError as e:
+        returnError()
+
     #Sign the Send.
-    rpc.functions.personal.signSend(send)
+    try:
+        rpc.functions.personal.signSend(send)
+    except AddressError as e:
+        doAssert(false, "Couldn't sign the Send we created due to an AddressError (which means it failed to serialize): " & e.msg)
+    except SodiumError as e:
+        returnError()
+
     #Mine the Send.
-    send.mine("aa".repeat(48).toBN(16))
+    try:
+        send.mine(rpc.functions.lattice.getDifficulties().send)
+    except ValueError as e:
+        doAssert(false, "Couldn't mine the Send we created due to an ValueError (meaning it wasn't signed): " & e.msg)
+    except ArgonError as e:
+        returnError()
 
     #Add it.
-    if not rpc.functions.lattice.addSend(send):
-        raise newException(EventError, "Couldn't get and call lattice.send.")
-
-    #Broadcast the Send.
     try:
-        asyncCheck rpc.functions.network.broadcast(MessageType.Send, send.serialize())
-    except:
-        echo "Failed to broadcast the Send."
+        rpc.functions.lattice.addSend(send)
+    except ValueError as e:
+        returnError()
+    except IndexError as e:
+        returnError()
+    except GapError as e:
+        returnError()
+    except AddressError as e:
+        returnError()
+    except EdPublicKeyError as e:
+        returnError()
+    except SodiumError as e:
+        returnError()
+    except DataExists as e:
+        returnError()
 
     result = %* {
         "hash": $send.hash
@@ -111,41 +127,43 @@ proc send(
 proc receive(
     rpc: RPC,
     address: string,
-    inputNonce: uint,
-    nonce: uint
-): JSONNode {.raises: [
-    ValueError,
-    EventError,
-    AsyncError,
-    BLSError,
-    SodiumError,
-    LMDBError,
-    FinalAttributeError
-].} =
+    inputNonce: int,
+    nonce: int
+): JSONNode {.forceCheck: [].} =
     #Create the Receive.
-    var recv: Receive = newReceive(
-        newIndex(
-            address,
-            inputNonce,
-        ),
-        nonce
-    )
+    var recv: Receive
+    try:
+        recv = newReceive(
+            newLatticeIndex(
+                address,
+                inputNonce,
+            ),
+            nonce
+        )
+    except AddressError as e:
+        doAssert(false, "Couldn't sign the Receive we created due to an AddressError (which means it failed to serialize): " & e.msg)
 
     #Sign the Receive.
     try:
         rpc.functions.personal.signReceive(recv)
-    except:
-        raise newException(EventError, "Couldn't get and call personal.signReceive.")
+    except SodiumError as e:
+        returnError()
 
     #Add it.
-    if not rpc.functions.lattice.addReceive(recv):
-        raise newException(EventError, "Couldn't get and call lattice.receive.")
-
-    #Broadcast the Receive.
     try:
-        asyncCheck rpc.functions.network.broadcast(MessageType.Receive, recv.serialize())
-    except:
-        echo "Failed to broadcast the Receive."
+        rpc.functions.lattice.addReceive(recv)
+    except ValueError as e:
+        returnError()
+    except IndexError as e:
+        returnError()
+    except GapError as e:
+        returnError()
+    except AddressError as e:
+        returnError()
+    except EdPublicKeyError as e:
+        returnError()
+    except DataExists as e:
+        returnError()
 
     result = %* {
         "hash": $recv.hash
@@ -155,54 +173,77 @@ proc receive(
 proc data(
     rpc: RPC,
     dataArg: string,
-    nonce: uint
-): JSONNode {.raises: [
-    ValueError,
-    EventError,
-    AsyncError,
-    ArgonError,
-    BLSError,
-    SodiumError,
-    LMDBError,
-    FinalAttributeError
-].} =
+    nonce: int
+): JSONNode {.forceCheck: [].} =
     #Create the Data.
-    var data: Data = newData(
-        dataArg,
-        nonce
-    )
+    var data: Data
+    try:
+        data = newData(
+            dataArg,
+            nonce
+        )
+    except ValueError as e:
+        returnError()
+
     #Sign the Data.
-    rpc.functions.personal.signData(data)
+    try:
+        rpc.functions.personal.signData(data)
+    except AddressError as e:
+        doAssert(false, "Couldn't sign the Data we created due to an AddressError (which means it failed to serialize): " & e.msg)
+    except SodiumError as e:
+        returnError()
+
     #Mine the Data.
-    data.mine("E0".repeat(48).toBN(16))
+    try:
+        data.mine(rpc.functions.lattice.getDifficulties().data)
+    except ValueError as e:
+        doAssert(false, "Couldn't mine the Data we created due to an ValueError (meaning it wasn't signed): " & e.msg)
+    except ArgonError as e:
+        returnError()
 
     #Add it.
-    if not rpc.functions.lattice.addData(data):
-        raise newException(EventError, "Couldn't get and call lattice.data.")
-
-    #Broadcast the Data.
     try:
-        asyncCheck rpc.functions.network.broadcast(MessageType.Data, data.serialize())
-    except:
-        echo "Failed to broadcast the Data."
+        rpc.functions.lattice.addData(data):
+    except ValueError as e:
+        returnError()
+    except IndexError as e:
+        returnError()
+    except GapError as e:
+        returnError()
+    except AddressError as e:
+        returnError()
+    except EdPublicKeyError as e:
+        returnError()
+    except DataExists as e:
+        returnError()
 
     result = %* {
         "hash": $data.hash
     }
 
 #Handler.
-proc personalModule*(
+proc personal*(
     rpc: RPC,
     json: JSONNode,
-    reply: proc (json: JSONNode)
-) {.async.} =
+    reply: proc (
+        json: JSONNode
+    ) {.raises: [].}
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 
-    #Put this in a try/catch in case the method fails.
+    #Switch based off the method.
+    var methodStr: string
     try:
-        #Switch based off the method.
-        case json["method"].getStr():
+        methodStr = json["method"].getStr()
+    except KeyError:
+        reply(%* {
+            "error": "No method specified."
+        })
+        return
+
+    try:
+        case methodStr:
             of "setSeed":
                 res = rpc.setSeed(json["args"][0].getStr())
 
@@ -213,30 +254,33 @@ proc personalModule*(
                 res = rpc.send(
                     json["args"][0].getStr(),
                     newBN(json["args"][1].getStr()),
-                    parseUInt(json["args"][2].getStr())
+                    json["args"][2].getInt()
                 )
 
             of "receive":
                 res = rpc.receive(
                     json["args"][0].getStr(),
-                    parseUInt(json["args"][1].getStr()),
-                    parseUInt(json["args"][2].getStr())
+                    json["args"][1].getInt(),
+                    json["args"][2].getInt()
                 )
 
             of "data":
                 res = rpc.data(
-                    parseHexStr(json["args"][0].getStr()),
-                    parseUInt(json["args"][1].getStr())
+                    json["args"][0].getStr().parseHexStr(),
+                    json["args"][1].getInt()
                 )
 
             else:
                 res = %* {
                     "error": "Invalid method."
                 }
-    except:
-        #If there was an issue, make the response the error message.
+    except ValueError:
         res = %* {
-            "error": getCurrentExceptionMsg()
+            "error": "Invalid hex string passed."
+        }
+    except KeyError:
+        res = %* {
+            "error": "Missing `args`."
         }
 
     reply(res)

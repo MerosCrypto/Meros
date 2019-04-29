@@ -1,19 +1,15 @@
 #Address Test.
 
-#Base library.
-import ../../src/lib/Base
-
-#Address/Wallet libraries.
+#Address/Wallet libs.
 import ../../src/Wallet/Address
 import ../../src/Wallet/Wallet
 
 #String utils standard lib.
 import strutils
 
-#Define a wallet and address outside of the loop to prevent memory leaks.
-var
-    wallet: Wallet
-    address: string
+#Wallet.
+var wallet: Wallet
+
 #Run 100 times.
 for i in 1 .. 100:
     echo "Testing Address creation, iteration " & $i & "."
@@ -23,13 +19,13 @@ for i in 1 .. 100:
 
     #Verify the address.
     assert(
-        Address.verify(wallet.address),
+        Address.isValid(wallet.address),
         "Invalid Address."
     )
 
     #Verify the address for the matching pub key.
     assert(
-        Address.verify(
+        Address.isValid(
             wallet.address,
             wallet.publicKey
         ),
@@ -37,6 +33,6 @@ for i in 1 .. 100:
     )
 
     #Verify toPublicKey works.
-    assert(wallet.publicKey.toString() == Address.toPublicKey(wallet.address), "Address..toPublicKey didn't return the correct Public Key.")
+    assert(wallet.publicKey.toString() == Address.toPublicKey(wallet.address), "Address.toPublicKey() didn't return the correct Public Key.")
 
 echo "Finished the Wallet/Address Test."

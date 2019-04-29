@@ -1,5 +1,8 @@
-#BLS lib.
-import ../../../lib/BLS
+#Errors lib.
+import ../../../lib/Errors
+
+#MinerWallet lib (for BLSSignature).
+import ../../../Wallet/MinerWallet
 
 #Entry object.
 import EntryObj
@@ -11,17 +14,20 @@ import finals
 finalsd:
     type Claim* = ref object of Entry
         #Nonce of the mint being claimed.
-        mintNonce* {.final.}: uint
+        mintNonce* {.final.}: int
         #BLS Signature that proves you're the person the Mint was to.
         bls* {.final.}: BLSSignature
 
 #New Claim object.
 func newClaimObj*(
-    mintNonce: uint
-): Claim {.raises: [FinalAttributeError].} =
+    mintNonce: Natural
+): Claim {.forceCheck: [].} =
     result = Claim(
         mintNonce: mintNonce
     )
     result.ffinalizeMintNonce()
-    
-    result.descendant = EntryType.Claim
+
+    try:
+        result.descendant = EntryType.Claim
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final ~attribute twice when creating a Claim: " & e.msg)

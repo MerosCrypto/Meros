@@ -9,20 +9,18 @@ import ../../../src/lib/Util
 #Hash lib.
 import ../../../src/lib/Hash
 
-#Numerical libs.
-import BN
-import ../../../src/lib/Base
+#BN/Hex lib.
+import ../../../src/lib/Hex
 
-#BLS and MinerWallet libs.
-import ../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
 #Wallet lib.
 import ../../../src/Wallet/Wallet
 
-#Index and VerifierIndex objects.
-import ../../../src/Database/common/objects/IndexObj
-import ../../../src/Database/Merit/objects/VerifierIndexObj
+#LatticeIndex and VerifierRecord objects.
+import ../../../src/Database/common/objects/LatticeIndexObj
+import ../../../src/Database/common/objects/VerifierRecordObj
 
 #Verifications lib.
 import ../../../src/Database/Verifications/Verifications
@@ -117,7 +115,7 @@ proc test() =
 
     for hash in lattice.lookup.keys():
         assert(reloaded.lookup.hasKey(hash))
-        assert(lattice.lookup[hash].key == reloaded.lookup[hash].key)
+        assert(lattice.lookup[hash].address == reloaded.lookup[hash].address)
         assert(lattice.lookup[hash].nonce == reloaded.lookup[hash].nonce)
     for hash in reloaded.lookup.keys():
         assert(lattice.lookup.hasKey(hash))
@@ -156,7 +154,7 @@ proc test() =
         assert(originalAccount.balance == reloadedAccount.balance)
 
         #Check every Entry.
-        for h in uint(0) ..< originalAccount.height:
+        for h in 0 ..< originalAccount.height:
             var
                 originalEntries: seq[Entry]
                 reloadedEntries: seq[Entry]
@@ -188,7 +186,7 @@ proc test() =
                         assert(cast[Send](originalEntries[e]).proof == cast[Send](reloadedEntries[e]).proof)
                         assert(cast[Send](originalEntries[e]).argon == cast[Send](reloadedEntries[e]).argon)
                     of EntryType.Receive:
-                        assert(cast[Receive](originalEntries[e]).index.key == cast[Receive](reloadedEntries[e]).index.key)
+                        assert(cast[Receive](originalEntries[e]).index.address == cast[Receive](reloadedEntries[e]).index.address)
                         assert(cast[Receive](originalEntries[e]).index.nonce == cast[Receive](reloadedEntries[e]).index.nonce)
                     of EntryType.Data:
                         assert(cast[Data](originalEntries[e]).data == cast[Data](reloadedEntries[e]).data)
@@ -198,20 +196,20 @@ proc test() =
         assert(lattice.accounts.hasKey(address))
 
 #Adds a Block which assigns all new Merit to the passed MinerWallet.
-proc addBlock(wallets: seq[MinerWallet], tips: seq[VerifierIndex]) =
-    var miners: Miners = @[]
+proc addBlock(wallets: seq[MinerWallet], records: seq[VerifierRecord]) =
+    var miners: seq[Miner] = @[]
     for wallet in wallets:
         miners.add(
             newMinerObj(
                 wallet.publicKey,
-                uint(100 div wallets.len)
+                100 div wallets.len
             )
         )
     if 100 mod wallets.len != 0:
         miners.add(
             newMinerObj(
                 newMinerWallet().publicKey,
-                uint(100 mod wallets.len)
+                100 mod wallets.len
             )
         )
 
@@ -219,24 +217,25 @@ proc addBlock(wallets: seq[MinerWallet], tips: seq[VerifierIndex]) =
         merit.blockchain.height,
         merit.blockchain.tip.header.hash,
         nil,
-        tips,
-        miners,
+        records,
+        newMinersObj(miners),
         getTime(),
         0
     )
-    while not merit.blockchain.difficulty.verifyDifficulty(mining):
+    while not merit.blockchain.difficulty.verify(mining.header.hash):
         inc(mining)
     try:
-        lattice.archive(merit.processBlock(verifications, mining))
+        var res: Epoch = merit.processBlock(verifications, mining)
+        lattice.archive(res)
     except:
         raise newException(ValueError, "Valid Block wasn't successfully added. " & getCurrentExceptionMsg())
 
 #Adds a Verification for an Entry.
 proc verify(wallet: MinerWallet, hash: string) =
     var verif: MemoryVerification = newMemoryVerificationObj(hash.toHash(384))
-    wallet.sign(verif, verifications[wallet.publicKey.toString()].height)
+    wallet.sign(verif, verifications[wallet.publicKey].height)
     verifications.add(verif)
-    assert(lattice.verify(merit, verif))
+    lattice.verify(merit, verif)
 
 #Create three Verifiers.
 for i in 0 ..< 3:
@@ -250,12 +249,12 @@ for i in 0 ..< 3:
 addBlock(@[verifiers[0]], @[])
 
 #Mint some coins to the first Verifier, and claim them by the first Account.
-assert(lattice.mint(verifiers[0].publicKey.toString(), newBN(300)) == 0)
+assert(lattice.mint(verifiers[0].publicKey, newBN(300)) == 0)
 assert(db.get("lattice_" & db.get("lattice_minter_" & 0.toBinary())) == char(EntryType.Mint) & lattice["minter"][0].serialize())
 
 var claim: Claim = newClaim(0, 0)
 claim.sign(verifiers[0], accounts[0])
-assert(lattice.add(claim))
+lattice.add(claim)
 assert(db.get("lattice_" & claim.hash.toString()) == char(claim.descendant) & claim.serialize())
 
 #Verify the Claim so we can spend those funds.
@@ -264,14 +263,14 @@ verifiers[0].verify(lattice[accounts[0].address][0].hash.toString())
 #Send 100 Meros to the second account, and 50 to the third.
 var send: Send = newSend(accounts[1].address, newBN(100), 1)
 accounts[0].sign(send)
-send.mine("".pad(96, '0').toBN(16))
-assert(lattice.add(send))
+send.mine("".pad(96, '0').toBNFromHex())
+lattice.add(send)
 assert(db.get("lattice_" & send.hash.toString()) == char(send.descendant) & send.serialize())
 
 send = newSend(accounts[2].address, newBN(50), 2)
 accounts[0].sign(send)
-send.mine("".pad(96, '0').toBN(16))
-assert(lattice.add(send))
+send.mine("".pad(96, '0').toBNFromHex())
+lattice.add(send)
 assert(db.get("lattice_" & send.hash.toString()) == char(send.descendant) & send.serialize())
 
 #Update the accountsStr.
@@ -283,7 +282,7 @@ addBlock(
         verifiers[0]
     ],
     @[
-        newVerifierIndex(verifiers[0].publicKey.toString(), 0, "")
+        newVerifierRecord(verifiers[0].publicKey, 0, "".pad(48).toHash(384))
     ]
 )
 
@@ -295,14 +294,14 @@ verifiers[0].verify(lattice[accounts[0].address][1].hash.toString())
 verifiers[0].verify(lattice[accounts[0].address][2].hash.toString())
 
 #Create Receives on both accounts.
-var recv: Receive = newReceive(newIndex(accounts[0].address, 1), 0)
+var recv: Receive = newReceive(newLatticeIndex(accounts[0].address, 1), 0)
 accounts[1].sign(recv)
-assert(lattice.add(recv))
+lattice.add(recv)
 assert(db.get("lattice_" & recv.hash.toString()) == char(recv.descendant) & recv.serialize())
 
-recv = newReceive(newIndex(accounts[0].address, 2), 0)
+recv = newReceive(newLatticeIndex(accounts[0].address, 2), 0)
 accounts[2].sign(recv)
-assert(lattice.add(recv))
+lattice.add(recv)
 assert(db.get("lattice_" & recv.hash.toString()) == char(recv.descendant) & recv.serialize())
 
 #Verify the second account's Receive.
@@ -311,8 +310,8 @@ verifiers[0].verify(lattice[accounts[1].address][0].hash.toString())
 #Add a Data to the second account.
 var data: Data = newData("1", 1)
 accounts[1].sign(data)
-data.mine("".pad(96, '0').toBN(16))
-assert(lattice.add(data))
+data.mine("".pad(96, '0').toBNFromHex())
+lattice.add(data)
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
 #Update the accountsStr.
@@ -327,7 +326,7 @@ addBlock(
         verifiers[2]
     ],
     @[
-        newVerifierIndex(verifiers[0].publicKey.toString(), 3, "")
+        newVerifierRecord(verifiers[0].publicKey, 3, "".pad(48).toHash(384))
     ]
 )
 test()
@@ -342,7 +341,7 @@ addBlock(
         verifiers[2]
     ],
     @[
-        newVerifierIndex(verifiers[0].publicKey.toString(), 5, "")
+        newVerifierRecord(verifiers[0].publicKey, 5, "".pad(48).toHash(384))
     ]
 )
 test()
@@ -357,15 +356,15 @@ addBlock(@[verifiers[2]], @[])
 #Add a Data to the first account.
 data = newData("2", 3)
 accounts[0].sign(data)
-data.mine("".pad(96, '0').toBN(16))
-assert(lattice.add(data))
+data.mine("".pad(96, '0').toBNFromHex())
+lattice.add(data)
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
 #Add a conflicting Data.
 data = newData("3", 3)
 accounts[0].sign(data)
-data.mine("".pad(96, '0').toBN(16))
-assert(lattice.add(data))
+data.mine("".pad(96, '0').toBNFromHex())
+lattice.add(data)
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
 #Partially verify each of them.
@@ -383,12 +382,11 @@ addBlock(
         verifiers[2]
     ],
     @[
-        newVerifierIndex(verifiers[0].publicKey.toString(), 6, ""),
-        newVerifierIndex(verifiers[1].publicKey.toString(), 0, "")
+        newVerifierRecord(verifiers[0].publicKey, 6, "".pad(48).toHash(384)),
+        newVerifierRecord(verifiers[1].publicKey, 0, "".pad(48).toHash(384))
     ]
 )
-verifications.archive(merit.blockchain.tip.verifications)
-
+verifications.archive(merit.blockchain.tip.records)
 #Test.
 test()
 
@@ -406,7 +404,7 @@ addBlock(
         verifiers[2]
     ],
     @[
-        newVerifierIndex(verifiers[2].publicKey.toString(), 0, "")
+        newVerifierRecord(verifiers[2].publicKey, 0, "".pad(48).toHash(384))
     ]
 )
 

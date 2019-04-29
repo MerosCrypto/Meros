@@ -1,8 +1,5 @@
 #Serialize Claim Tests.
 
-#BLS lib.
-import ../../../../src/lib/BLS
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
@@ -15,7 +12,7 @@ import ../../../../src/Database/Lattice/objects/EntryObj
 #Claim lib.
 import ../../../../src/Database/Lattice/Claim
 
-#Serialize lib.
+#Serialization libs.
 import ../../../../src/Network/Serialize/Lattice/SerializeClaim
 import ../../../../src/Network/Serialize/Lattice/ParseClaim
 

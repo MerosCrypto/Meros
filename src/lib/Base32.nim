@@ -1,3 +1,6 @@
+#Errors lib.
+import Errors
+
 #math standard lib.
 import math
 
@@ -8,7 +11,9 @@ const CHARACTERS: string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 type Base32* = distinct seq[uint8]
 
 #Checks if the string is a valid Base32 string.
-func isBase32*(data: string): bool {.raises: [].} =
+func isBase32*(
+    data: string
+): bool {.forceCheck: [].} =
     #Default return value of true.
     result = true
 
@@ -20,7 +25,9 @@ func isBase32*(data: string): bool {.raises: [].} =
             return false
 
 #Binary array to Base32 object.
-func toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
+func toBase32*(
+    data: openArray[uint8]
+): Base32 {.forceCheck: [].} =
     #Creae a result variable.
     var res: seq[uint8] = @[]
 
@@ -75,10 +82,14 @@ func toBase32*(data: openArray[uint8]): Base32 {.raises: [].} =
     result = cast[Base32](res)
 
 #Base32 string to Base32 object.
-func toBase32*(data: string): Base32 {.raises: [ValueError].} =
+func toBase32*(
+    data: string
+): Base32 {.forceCheck: [
+    ValueError
+].} =
     #Verify that the data string is a Base 32 string.
     if not data.isBase32():
-        raise newException(ValueError, "String is not a valid Base 32 number.")
+        raise newException(ValueError, "Invalid Base 32 number.")
 
     #Create a result variable.
     var res: seq[uint8] = @[]
@@ -92,7 +103,9 @@ func toBase32*(data: string): Base32 {.raises: [ValueError].} =
     result = cast[Base32](res)
 
 #Base32 object to binary seq.
-func toSeq*(dataArg: Base32): seq[uint8] {.raises: [].} =
+func toSeq*(
+    dataArg: Base32
+): seq[uint8] {.forceCheck: [].} =
     var
         #Extract the data.
         data: seq[uint8] = cast[seq[uint8]](dataArg)
@@ -135,12 +148,11 @@ func toSeq*(dataArg: Base32): seq[uint8] {.raises: [].} =
             bytes += 1
 
 #Base32 object to Base32 string.
-func `$`*(dataArg: Base32): string {.raises: [].} =
+func `$`*(
+    dataArg: Base32
+): string {.forceCheck: [].} =
     #Extract the data.
     var data: seq[uint8] = cast[seq[uint8]](dataArg)
-
-    #Create the empty result string.
-    result = ""
 
     #Iterate over every item in the seq.
     for i in data:

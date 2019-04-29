@@ -1,16 +1,26 @@
-#Numerical libs.
-import BN
-import ../Base
+#Errors lib.
+import ../Errors
 
-#String utils standard lib.
-import strutils
+#Util lib.
+import ../Util
+
+#BN/Raw lib.
+import ../Raw
 
 #Hash master type.
 type Hash*[bits: static[int]] = object
     data*: array[bits div 8, uint8]
 
+#Empty uint8 'array'.
+var EmptyHash*: ptr uint8
+
 #toHash function.
-func toHash*(hash: string, bits: static[int]): Hash[bits] {.raises: [ValueError].} =
+func toHash*(
+    hash: string,
+    bits: static[int]
+): Hash[bits] {.forceCheck: [
+    ValueError
+].} =
     if hash.len == bits div 8:
         for i in 0 ..< hash.len:
             result.data[i] = uint8(hash[i])
@@ -21,20 +31,21 @@ func toHash*(hash: string, bits: static[int]): Hash[bits] {.raises: [ValueError]
         raise newException(ValueError, "toHash not handed the right amount of data.")
 
 #To binary string.
-func toString*(hash: Hash): string {.raises: [].} =
-    result = ""
+func toString*(
+    hash: Hash
+): string {.forceCheck: [].} =
     for b in hash.data:
         result &= char(b)
 
 #To hex string.
-func `$`*(hash: Hash): string  {.raises: [].} =
-    result = ""
+func `$`*(
+    hash: Hash
+): string {.forceCheck: [].} =
     for b in hash.data:
         result &= b.toHex()
 
 #To BN.
-func toBN*(hash: Hash): BN  {.raises: [ValueError].} =
-    hash.toString().toBN(256)
-
-#Empty uint8 'array'.
-var EmptyHash*: ptr uint8
+proc toBN*(
+    hash: Hash
+): BN {.inline, forceCheck: [].} =
+    hash.toString().toBNFromRaw()

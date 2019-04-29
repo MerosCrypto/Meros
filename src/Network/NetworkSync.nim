@@ -1,165 +1,370 @@
 #Include the Second file in the chain, NetworkCore.
 include NetworkCore
 
-#Sync a Block's Verifications/Entries.
-proc sync*(network: Network, newBlock: Block): Future[bool] {.async.} =
-    #If we use the `.items` iterator, we gain two advantages.
-    #The first is that since we can only directly index by ID, we don't have to track that.
-    #The second is that we only run if we have a client.
-    for client in network.clients:
-        result = true
+#Tuple to define missing data.
+type Gap = tuple[key: BLSPublicKey, start: int, last: int]
 
-        #Tuple to define missing data.
-        type Gap = tuple[key: string, start: uint, last: uint]
+#Sync missing Verifications from a specific Client.
+proc syncVerifications(
+    network: Network,
+    id: int,
+    gaps: seq[Gap]
+): Future[seq[Verification]] {.forceCheck: [
+    SocketError,
+    ClientError,
+    InvalidMessageError,
+    DataMissing
+], async.} =
+    result = @[]
 
-        var
-            #Variable for gaps.
-            gaps: seq[Gap] = @[]
-            #Hashes of every Verification archived in this block.
-            hashes: Table[string, seq[string]] = initTable[string, seq[string]]()
-            #Seq to store the Verifications in.
-            verifications: seq[Verification] = newSeq[Verification]()
-            #List of verified Entries.
-            entries: seq[string] = @[]
+    #Grab the Client.
+    var client: Client = network.clients[id]
 
-        #Make sure we have all the Verifications in the Block.
-        for verifier in newBlock.verifications:
-            #Get the Verifier's height.
-            var verifHeight: uint = network.mainFunctions.verifications.getVerifierHeight(verifier.key)
+    #Send syncing.
+    try:
+        await client.startSyncing()
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            #If we're missing Verifications...
-            if verifHeight <= verifier.nonce:
-                #Add the gap.
-                gaps.add((
-                    verifier.key,
-                    verifHeight,
-                    verifier.nonce
-                ))
+    #Ask for missing Verifications.
+    for gap in gaps:
+        #Send the Requests.
+        for nonce in gap.start .. gap.last:
+            #Sync the Verification.
+            try:
+                result.add(await client.syncVerification(gap.key, nonce))
+            except SocketError as e:
+                fcRaise e
+            except ClientError as e:
+                fcRaise e
+            except SyncConfigError as e:
+                doAssert(false, "Client we attempted to sync a Verification from wasn't configured for syncing: " & e.msg)
+            except InvalidMessageError as e:
+                fcRaise e
+            except DataMissing as e:
+                fcRaise e
+            except Exception as e:
+                doAssert(false, "Syncing a Verification in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            #Grab their pending hashes and place it in hashes.
-            hashes[verifier.key] = network.mainFunctions.verifications.getPendingHashes(verifier.key, verifHeight)
+    #Stop syncing.
+    try:
+        await client.stopSyncing()
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #If there are no gaps, return.
-        if gaps.len == 0:
-            return
+#Sync a list of Entries from a specific Client.
+proc syncEntries*(
+    network: Network,
+    id: int,
+    entries: seq[Hash[384]]
+): Future[seq[SyncEntryResponse]] {.forceCheck: [
+    SocketError,
+    ClientError,
+    InvalidMessageError,
+    DataMissing
+], async.} =
+    result = @[]
 
-        #Try block is here so if anything fails, we still send SyncingOver.
+    #Grab the Client.
+    var client: Client = network.clients[id]
+
+    #Send syncing.
+    try:
+        await client.startSyncing()
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Ask for missing Entries.
+    for entry in entries:
+        #Sync the Entry.
         try:
-            #Send syncing.
-            await client.sync()
+            result.add(await client.syncEntry(entry))
+        except SocketError as e:
+            fcRaise e
+        except ClientError as e:
+            fcRaise e
+        except SyncConfigError as e:
+            doAssert(false, "Client we attempted to sync an Entry from wasn't configured for syncing: " & e.msg)
+        except InvalidMessageError as e:
+            fcRaise e
+        except DataMissing as e:
+            fcRaise e
+        except Exception as e:
+            doAssert(false, "Syncing an Entry in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            #Ask for missing Verifications.
-            for gap in gaps:
-                #Send the Requests.
-                for nonce in gap.start .. gap.last:
-                    #Sync the Verification.
-                    var verif: Verification = await client.syncVerification(gap.key, nonce)
-                    #Verify it's from the correct person and has the correct nonce.
-                    if verif.verifier.toString() != gap.key:
-                        return false
-                    if verif.nonce != nonce:
-                        return false
+    #Stop syncing.
+    try:
+        await client.stopSyncing()
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-                    #Add it to the list of Verifications.
-                    verifications.add(verif)
+#Sync a Block's Verifications/Entries.
+proc sync*(
+    network: Network,
+    newBlock: Block
+) {.forceCheck: [
+    DataMissing,
+    ValidityConcern
+], async.} =
+    var
+        #Variable for gaps.
+        gaps: seq[Gap] = @[]
+        #Hashes of every Verification archived in this block.
+        hashes: Table[string, seq[Hash[384]]] = initTable[string, seq[Hash[384]]]()
+        #Seq of missing Verifications.
+        verifications: seq[Verification] = @[]
+        #Hashes of the Entries mentioned in missing Verifications.
+        entryHashes: seq[Hash[384]] = @[]
+        #Entries mentioned in missing Verifications.
+        entries: seq[SyncEntryResponse] = @[]
 
-                    #Add its hash to the list of hashes for this verifier.
-                    hashes[gap.key].add(verif.hash.toString())
+    #Calculate the Verifications gaps.
+    for record in newBlock.records:
+        #Get the Verifier's height.
+        var verifHeight: int = network.mainFunctions.verifications.getVerifierHeight(record.key)
 
-                    #Add the Entry it verifies to entries.
-                    entries.add(verif.hash.toString())
+        #If we're missing Verifications...
+        if verifHeight <= record.nonce:
+            #Add the gap.
+            gaps.add((
+                record.key,
+                verifHeight,
+                record.nonce
+            ))
 
-            #Check the Block's aggregate.
-            #Aggregate Infos for each Verifier.
-            var agInfos: seq[BLSAggregationInfo] = @[]
-            #Iterate over every Verifier.
-            for verifier in newBlock.verifications:
-                #Aggregate Infos for this verifier.
-                var verifierAgInfos: seq[BLSAggregationInfo] = @[]
-                #Iterate over this verifier's hashes.
-                for hash in hashes[verifier.key]:
-                    #Create AggregationInfos.
-                    verifierAgInfos.add(newBLSAggregationInfo(newBLSPublicKey(verifier.key), hash))
-                #Create the aggregate AggregateInfo for this Verifier.
-                agInfos.add(verifierAgInfos.aggregate())
+        #Grab their pending hashes and place it in hashes.
+        try:
+            hashes[record.key.toString()] = network.mainFunctions.verifications.getPendingHashes(record.key, verifHeight - 1)
+        except IndexError as e:
+            doAssert(false, "Couldn't grab pending hashes we've confirmed to have: " & e.msg)
 
-            #Calculate the aggregation info.
-            var agInfo: BLSAggregationInfo = agInfos.aggregate()
-            #If it's nil, make sure the signature is 0.
-            if agInfo == nil:
-                if newBlock.header.verifications != nil:
-                    return false
-            #If it's not nil, test it against the signature.
-            elif agInfo != nil:
-                newBlock.header.verifications.setAggregationInfo(agInfo)
-                #Verify the signature.
-                if not newBlock.header.verifications.verify():
-                    return false
+    #Sync the missing Verifications.
+    if gaps.len != 0:
+        #List of Clients to disconnect.
+        var toDisconnect: seq[int] = @[]
 
-            #Download the Entries.
-            #Dedeuplicate the list.
-            entries = entries.deduplicate()
-            #Iterate over each Entry.
-            for entry in entries:
-                #Sync the Entry.
-                var res: SyncEntryResponse = await client.syncEntry(entry)
+        #Try syncing with every client.
+        var synced: bool = false
+        for client in network.clients:
+            try:
+                verifications = await network.syncVerifications(client.id, gaps)
+            #If the Client had problems, disconnect them.
+            except SocketError, ClientError:
+                toDisconnect.add(client.id)
+                continue
+            #If we got an unexpected message, or this Client didn't have the needed info, try another client.
+            except InvalidMessageError, DataMissing:
+                #Stop syncing.
+                try:
+                    await client.stopSyncing()
+                #If that failed, disconnect the Client.
+                except SocketError, ClientError:
+                    toDisconnect.add(client.id)
+                except Exception as e:
+                    doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                continue
+            except Exception as e:
+                doAssert(false, "Syncing a Block's Verifications and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-                #Add it.
-                case res.entry:
-                    of EntryType.Claim:
-                        if not network.mainFunctions.lattice.addClaim(res.claim):
-                            return false
+            #If we made it through that without raising or continuing, set synced to true.
+            synced = true
 
-                    of EntryType.Send:
-                        if not network.mainFunctions.lattice.addSend(res.send):
-                            return false
+        #Disconnect every Client marked for disconnection.
+        for id in toDisconnect:
+            network.clients.disconnect(id)
 
-                    of EntryType.Receive:
-                        if not network.mainFunctions.lattice.addReceive(res.receive):
-                            return false
+        #If we tried every client and didn't sync the needed data, raise a DataMissing.
+        if not synced:
+            raise newException(DataMissing, "Couldn't sync all the Verifications in a Block.")
 
-                    of EntryType.Data:
-                        if not network.mainFunctions.lattice.addData(res.data):
-                            return false
+    #Handle each Verification.
+    for verif in verifications:
+        #Add its hash to the list of hashes for this verifier.
+        try:
+            hashes[verif.verifier.toString()].add(verif.hash)
+        except KeyError as e:
+            doAssert(false, "Couldn't add a hash to a seq in a table we recently created: " & e.msg)
 
-                    else:
-                        return false
+        #Add the Entry hash it verifies to entryHashes.
+        entryHashes.add(verif.hash)
 
-            #Since we now have every Entry, add the Verifications.
-            for verif in verifications:
-                #If we failed to add this (shows up as an Exception), due to a MeritRemoval, the Block won't be added.
-                #That said, the aggregate proves these are valid Verifications.
-                if not network.mainFunctions.verifications.addVerification(verif):
-                    return false
+    #Check the Block's aggregate.
+    if not newBlock.verify(hashes):
+        raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
 
-            #Stop Syncing.
-            await client.syncOver()
+    #Sync the missing Entries.
+    if entryHashes.len != 0:
+        #Dedeuplicate the list of Entries.
+        entryHashes = entryHashes.deduplicate()
 
-        except:
-            #If there's an issue, stop syncing, and then raise it.
-            await client.syncOver()
-            raise
+        #List of Clients to disconnect.
+        var toDisconnect: seq[int] = @[]
 
-        #If we finished without any errors, return before the for loop grabs another Client.
-        return
+        #Try syncing with every client.
+        var synced: bool = false
+        for client in network.clients:
+            try:
+                entries = await network.syncEntries(client.id, entryHashes)
+            #If the Client had problems, disconnect them.
+            except SocketError, ClientError:
+                toDisconnect.add(client.id)
+                continue
+            #If we got an unexpected message, or this Client didn't have the needed info, try another client.
+            except InvalidMessageError, DataMissing:
+                #Stop syncing.
+                try:
+                    await client.stopSyncing()
+                #If that failed, disconnect the Client.
+                except SocketError, ClientError:
+                    toDisconnect.add(client.id)
+                except Exception as e:
+                    doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                continue
+            except Exception as e:
+                doAssert(false, "Syncing a Block's Verifications and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+            #Handle each Entry.
+            try:
+                for entry in entries:
+                    #Add it.
+                    case entry.entry:
+                        of EntryType.Claim:
+                            try:
+                                network.mainFunctions.lattice.addClaim(entry.claim)
+                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError, BLSError:
+                                raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
+
+                        of EntryType.Send:
+                            try:
+                                network.mainFunctions.lattice.addSend(entry.send)
+                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
+                                raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
+
+                        of EntryType.Receive:
+                            try:
+                                network.mainFunctions.lattice.addReceive(entry.receive)
+                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
+                                raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
+
+                        of EntryType.Data:
+                            try:
+                                network.mainFunctions.lattice.addData(entry.data)
+                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
+                                raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
+
+                        else:
+                            doAssert(false, "SyncEntryResponse exists for an unsyncable type.")
+            except InvalidMessageError:
+                continue
+
+            #If we made it through that without raising or continuing, set synced to true.
+            synced = true
+
+        #Disconnect every Client marked for disconnection.
+        for id in toDisconnect:
+            network.clients.disconnect(id)
+
+        #If we tried every client and didn't sync the needed data, raise a DataMissing.
+        if not synced:
+            raise newException(DataMissing, "Couldn't sync all the Entries in a Block.")
+
+    #Since we now have every Entry, add the Verifications.
+    for verif in verifications:
+        try:
+            network.mainFunctions.verifications.addVerification(verif)
+        except ValueError as e:
+            doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
+        except IndexError as e:
+            doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
+        except DataExists:
+            continue
 
 #Request a Block.
-proc requestBlock*(network: Network, nonce: uint): Future[bool] {.async.} =
+proc requestBlock*(
+    network: Network,
+    nonce: int
+): Future[Block] {.forceCheck: [
+    DataMissing,
+    ValidityConcern
+], async.} =
+    var toDisconnect: seq[int] = @[]
     for client in network.clients:
         #Start syncing.
-        await client.sync()
+        try:
+            await client.startSyncing()
+        except SocketError, ClientError:
+            toDisconnect.add(client.id)
+            continue
+        except Exception as e:
+            doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         #Get the Block.
-        var requested: Block = await client.syncBlock(nonce)
+        try:
+            result = await client.syncBlock(nonce)
+        except SocketError, ClientError:
+            toDisconnect.add(client.id)
+            continue
+        except SyncConfigError as e:
+            doAssert(false, "Client we attempted to sync an Entry from wasn't configured for syncing: " & e.msg)
+        except InvalidMessageError, DataMissing:
+            #Stop syncing.
+            try:
+                await client.stopSyncing()
+            #If that failed, disconnect the Client.
+            except SocketError, ClientError:
+                toDisconnect.add(client.id)
+            except Exception as e:
+                doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            continue
+        except Exception as e:
+            doAssert(false, "Syncing a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #Sync the Block.
-        if not await network.sync(requested):
-            return false
-        #If there's an issue, stop syncing, and then raise it.
-        await client.syncOver()
+        #If we made it this far, stop syncing.
+        try:
+            await client.stopSyncing()
+        #If that failed, disconnect the Client.
+        except SocketError, ClientError:
+            toDisconnect.add(client.id)
+        except Exception as e:
+            doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #Notify MainMerit.
-        result = await network.mainFunctions.merit.addBlock(requested)
+        #Break out of the loop.
+        break
 
-        #Return to prevent running multiple times.
-        return
+    #Disconnect any Clients marked for disconnection.
+    for id in toDisconnect:
+        network.clients.disconnect(id)
+
+    #Sync the Block's contents.
+    try:
+        await network.sync(result)
+    except DataMissing as e:
+        fcRaise e
+    except ValidityConcern as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Syncing the data in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)

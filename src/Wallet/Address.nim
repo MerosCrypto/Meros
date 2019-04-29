@@ -1,21 +1,32 @@
-#Numerical libs.
-import BN
-import ../lib/Base
+#Errors lib.
+import ../lib/Errors
+
+#Util lib (used for parseHexInt).
+import ../lib/Util
 
 #Ed25519 lib (for the Public Key object).
-import ../lib/Ed25519
+import Ed25519
 
-#Base32 lib.
+#Base32 lib (used to encode the Address).
 import ../lib/Base32
 
-#String utils standard lib.
-import strutils
-
-#Seq utils standard lib.
+#Seq utils standard lib (used for concat).
 import sequtils
 
 #Human readable data.
 const ADDRESS_HRP {.strdefine.}: string = "Mr"
+
+#Expands the HRP.
+func expandHRP(): seq[uint8] {.compileTime.} =
+    result = @[]
+    for c in ADDRESS_HRP:
+        result.add(uint8(int(c) shr 5))
+    result.add(0)
+    for c in ADDRESS_HRP:
+        result.add(uint8(int(c) and 31))
+
+#Expanded HRP.
+const HRP: seq[uint8] = expandHRP()
 
 #Hex constants used for the BCH code.
 const BCH_VALUES: array[5, uint32] = [
@@ -27,7 +38,9 @@ const BCH_VALUES: array[5, uint32] = [
 ]
 
 #BCH Polymod function.
-func polymod(values: seq[uint8]): uint32 {.raises: [].} =
+func polymod(
+    values: seq[uint8]
+): uint32 {.forceCheck: [].} =
     result = 1
     var b: uint32
     for value in values:
@@ -39,21 +52,13 @@ func polymod(values: seq[uint8]): uint32 {.raises: [].} =
             else:
                 result = result xor 0
 
-#Expands the HRP.
-#This could a const of sorts but then we can't use func.
-#It's better this way.
-func expandHRP(): seq[uint8] =
-    result = @[]
-    for c in ADDRESS_HRP:
-        result.add(uint8(ord(c) shr 5))
-    result.add(0)
-    for c in ADDRESS_HRP:
-        result.add(uint8(ord(c) and 31))
 
 #Generates a BCH code.
-func generateBCH*(data: seq[uint8]): seq[uint8] {.raises: [].} =
+func generateBCH(
+    data: seq[uint8]
+): seq[uint8] {.forceCheck: [].} =
     let polymod: uint32 = polymod(
-        expandHRP()
+        HRP
         .concat(data)
         .concat(@[
             uint8(0),
@@ -71,20 +76,20 @@ func generateBCH*(data: seq[uint8]): seq[uint8] {.raises: [].} =
             uint8((polymod shr (5 * (5 - i))) and 31)
         )
 
-#Verifies a BCH code by taking in the HRP and data (with the BCH code in the data).
-func verifyBCH(data: seq[uint8]): bool {.raises: [].} =
-    polymod(expandHRP().concat(data)) == 1
+#Verifies a BCH code via a data argument of the Public Key and BCH code.
+func verifyBCH(
+    data: seq[uint8]
+): bool {.inline, forceCheck: [].} =
+    polymod(HRP.concat(data)) == 1
 
-#Generates a address using a modified form of Bech32 based on a public key.
+#Generates a address, using a modified form of Bech32 based on a public key.
 #An address is composed of the following:
 #   1. "Meros" prefix (human readable data part).
 #   2. Base32 version of the public key.
 #   3. A BCH code.
-func newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
-    #Verify the key length.
-    if key.len != 32:
-        raise newException(ValueError, "Public Key isn't the proper length.")
-
+func newAddress(
+    key: openArray[uint8]
+): string {.forceCheck: [].} =
     #Get the Base32 version of Public Key.
     let base32: Base32 = key.toBase32()
 
@@ -99,10 +104,14 @@ func newAddress*(key: openArray[uint8]): string {.raises: [ValueError].} =
         )
 
 #Work with binary/hex strings, not just arrays.
-func newAddress*(keyArg: string): string {.raises: [ValueError].} =
+func newAddress*(
+    keyArg: string
+): string {.forceCheck: [
+    EdPublicKeyError
+].} =
     #Verify the key length.
     if (keyArg.len != 32) and (keyArg.len != 64):
-        raise newException(ValueError, "Public Key isn't the proper length.")
+        raise newException(EdPublicKeyError, "Invalid length Public Key passed to newAddress.")
 
     #Extract the key.
     var key: array[32, uint8]
@@ -112,18 +121,25 @@ func newAddress*(keyArg: string): string {.raises: [ValueError].} =
             key[i] = uint8(keyArg[i])
     #If it's hex formatted...
     else:
-        for i in countup(0, 63, 2):
-            key[i div 2] = uint8(parseHexInt(keyArg[i .. i + 1]))
+        try:
+            for i in countup(0, 63, 2):
+                key[i div 2] = uint8(parseHexInt(keyArg[i .. i + 1]))
+        except ValueError:
+            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newAddress.")
 
     #Create a new address with the array.
     result = newAddress(key)
 
 #Work with Public Keys objects, not just arrays.
-func newAddress*(key: EdPublicKey): string {.raises: [ValueError].} =
-    result = newAddress(cast[array[32, uint8]](key))
+func newAddress*(
+    key: EdPublicKey
+): string {.inline, forceCheck: [].} =
+    newAddress(cast[array[32, uint8]](key))
 
-#Verifies if an address is valid.
-func verify*(address: string): bool {.raises: [ValueError].} =
+#Checks if an address is valid.
+func isValid*(
+    address: string
+): bool {.forceCheck: [].} =
     #Return true if there's no issue.
     result = true
 
@@ -136,28 +152,46 @@ func verify*(address: string): bool {.raises: [ValueError].} =
         return false
 
     #Verify the BCH.
-    if not verifyBCH(
-        cast[seq[uint8]](
+    var base32: seq[uint8]
+    try:
+        base32 = cast[seq[uint8]](
             address.substr(
                 ADDRESS_HRP.len,
                 address.len
             ).toBase32()
         )
-    ):
+    except ValueError:
         return false
 
-#If we have a key to check with, make an address for that key and compare with the given address.
-func verify*(address: string, key: EdPublicKey): bool {.raises: [ValueError].} =
-    address == newAddress(key)
+    if not verifyBCH(base32):
+        return false
+
+#If we have a key to check against, check the address is valid, and that it matches the address for that key.
+func isValid*(
+    address: string,
+    key: EdPublicKey
+): bool {.inline, forceCheck: [].} =
+    (address.isValid) and (address == newAddress(key))
 
 #Converts an address to a string of its PublicKey.
-func toPublicKey*(address: string): string {.raises: [ValueError].} =
+func toPublicKey*(
+    address: string
+): string {.forceCheck: [
+    AddressError
+].} =
     #Verify the address.
-    if not address.verify():
-        raise newException(ValueError, "Invalid Address.")
+    if not address.isValid():
+        raise newException(AddressError, "Invalid Address passed to toPublicKey.")
 
     #Get the key by removing the HRP. removing the BCH code, converting the string to Base32, and the Base32 to Base256.
-    var key: seq[uint8] = address.substr(ADDRESS_HRP.len, address.len - 7).toBase32().toSeq()
+    var key: seq[uint8]
+    try:
+        key = address.substr(ADDRESS_HRP.len, address.len - 7).toBase32().toSeq()
+    except ValueError:
+        #toBase32 will throw a ValueError if there's a problem.
+        #That said, the validity check guarantees there isn't one.
+        #Raise an error, but with a custom message that explains how messed up this is.
+        raise newException(AddressError, "The address we're trying to get the Public Key of is invalid, despite isValid returning true.")
 
     #Turn the seq into a string.
     for c in key:

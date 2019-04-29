@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Util lib.
 import ../../lib/Util
 
@@ -31,7 +34,7 @@ const
 func deserialize*(
     data: string,
     lengths: varargs[int]
-): seq[string] {.raises: [].} =
+): seq[string] {.forceCheck: [].} =
     #Allocate the seq.
     result = newSeq[string](lengths.len)
 
@@ -47,6 +50,6 @@ func reserialize*(
     data: seq[string],
     start: int,
     endIndex: int
-): string {.raises: [].} =
+): string {.forceCheck: [].} =
     for i in start .. endIndex:
         result &= data[i]

@@ -7,34 +7,33 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#Merkle lib.
-import ../../../lib/Merkle
-
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
 
+#Merkle lib.
+import ../../common/Merkle
+
 #Verification object.
 import VerificationObj
-
-#String utils standard lib.
-import strutils
 
 #Finals lib.
 import finals
 
 #Verifier object.
 finalsd:
-    type Verifier* = ref object of RootObj
+    type Verifier* = ref object
         #DB Function Box.
         db: DatabaseFunctionBox
 
         #Chain owner.
-        key* {.final.}: string
+        key* {.final.}: BLSPublicKey
+        keyStr* {.final.}: string
+
         #Verifier height.
-        height*: uint
+        height*: Natural
         #Amount of Verifications which have been archived.
         archived*: int
         #seq of the Verifications.
@@ -45,12 +44,14 @@ finalsd:
 #Constructor.
 proc newVerifierObj*(
     db: DatabaseFunctionBox,
-    key: string
-): Verifier {.raises: [LMDBError].} =
+    key: BLSPublicKey
+): Verifier {.forceCheck: [].} =
     result = Verifier(
         db: db,
 
         key: key,
+        keyStr: key.toString(),
+
         archived: -1,
         verifications: @[],
         merkle: newMerkle()
@@ -59,107 +60,124 @@ proc newVerifierObj*(
 
     #Load our data from the DB.
     try:
-        result.archived = parseInt(result.db.get("verifications_" & result.key))
-
-        #Recreate the Merkle tree.
-        for i in 0 .. result.archived:
-            result.merkle.add(
-                result.db.get("verifications_" & result.key & "_" & i.toBinary())
-            )
+        result.archived = parseInt(result.db.get("verifications_" & result.keyStr))
+    except ValueError as e:
+        doAssert(false, "Couldn't parse the Verifier's archived which was successfully retrieved from the Database: " & e.msg)
     #If we're not in the DB, add ourselves.
-    except:
-        result.db.put("verifications_" & result.key, $result.archived)
+    except DBReadError:
+        try:
+            result.db.put("verifications_" & result.keyStr, $result.archived)
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save a new Verifier to the Database: " & e.msg)
 
     #Populate with the info from the DB.
-    result.height = uint(result.archived + 1)
+    result.height = result.archived + 1
 
 #Add a Verification to a Verifier.
-proc add*(verifier: Verifier, verif: Verification) {.raises: [MerosIndexError, LMDBError].} =
-    #Verify the Verification's Verifier.
-    if verif.verifier.toString() != verifier.key:
-        raise newException(MerosIndexError, "Verification's Verifier doesn't match the Verifier we're adding it to.")
-
+proc add*(
+    verifier: var Verifier,
+    verif: Verification
+) {.forceCheck: [
+    GapError,
+    DataExists,
+    MeritRemoval
+].} =
+    #Verify we're not missing Verifications.
+    if verif.nonce > verifier.height:
+        raise newException(GapError, "Missing Verifications before this Verification.")
     #Verify the Verification's Nonce.
-    if verif.nonce != verifier.height:
-        if verif.hash != verifier.verifications[int(verif.nonce)].hash:
-            #MERIT REMOVAL.
-            discard
-        #Already added.
-        raise newException(MerosIndexError, "Verification has already been added.")
+    elif verif.nonce < verifier.height:
+        #Verify they didn't submit two Verifications for the same nonce.
+        if verif.hash != verifier.verifications[verif.nonce].hash:
+            raise newException(MeritRemoval, "Verifier submitted two Verifications with the same nonce.")
 
-    #Verify this isn't a double spend.
-    for oldVerif in verifier.verifications:
-        if oldVerif.verifier == verif.verifier:
-            if oldVerif.nonce == verif.nonce:
-                if oldVerif.hash != verif.hash:
-                    #MERIT REMOVAL.
-                    discard
+        #Already added.
+        raise newException(DataExists, "Verification has already been added.")
+
+    #Verify this Verifier isn't verifying conflicting Entries.
 
     #Increase the height.
-    inc(verifier.height)
+    verifier.height = verifier.height + 1
     #Add the Verification to the seq.
     verifier.verifications.add(verif)
     #Add the Verification to the Merkle.
-    verifier.merkle.add(verif.hash.toString())
+    verifier.merkle.add(verif.hash)
 
     #Add the Verification to the Database.
-    verifier.db.put("verifications_" & verifier.key & "_" & verif.nonce.toBinary(), verif.hash.toString())
+    try:
+        verifier.db.put("verifications_" & verifier.key.toString() & "_" & verif.nonce.toBinary(), verif.hash.toString())
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save a Verification to the Database: " & e.msg)
 
 #Add a MemoryVerification to a Verifier.
-proc add*(verifier: Verifier, verif: MemoryVerification) {.raises: [MerosIndexError, BLSError, LMDBError].} =
+proc add*(
+    verifier: var Verifier,
+    verif: MemoryVerification
+) {.forceCheck: [
+    GapError,
+    BLSError,
+    DataExists,
+    MeritRemoval
+].} =
     #Verify the signature.
-    verif.signature.setAggregationInfo(
-        newBLSAggregationInfo(verif.verifier, verif.hash.toString())
-    )
-    if not verif.signature.verify():
-        raise newException(BLSError, "Failed to verify the Verification's signature.")
+    try:
+        verif.signature.setAggregationInfo(
+            newBLSAggregationInfo(verif.verifier, verif.hash.toString())
+        )
+        if not verif.signature.verify():
+            raise newException(BLSError, "Failed to verify the Verification's signature.")
+    except BLSError as e:
+        fcRaise e
 
     #Add the Verification.
-    verifier.add(cast[Verification](verif))
+    try:
+        verifier.add(cast[Verification](verif))
+    except GapError as e:
+        fcRaise e
+    except DataExists as e:
+        fcRaise e
+    except MeritRemoval as e:
+        fcRaise e
 
 # [] operators.
-proc `[]`*(verifier: Verifier, index: int): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+proc `[]`*(
+    verifier: Verifier,
+    nonce: Natural
+): Verification {.forceCheck: [
+    IndexError
+].} =
     #Check that the nonce isn't out of bounds.
-    if index >= int(verifier.height):
-        raise newException(ValueError, "That Verifier doesn't have a Verification for that nonce.")
+    if nonce >= verifier.height:
+        raise newException(IndexError, "That Verifier doesn't have a Verification for that nonce.")
 
     #If it's in the database...
-    if int(index) <= verifier.archived:
+    if nonce <= verifier.archived:
         #Grab it and return it.
-        result = newVerificationObj(
-            verifier.db.get("verifications_" & verifier.key & "_" & index.toBinary()).toHash(384)
-        )
-        result.verifier = newBLSPublicKey(verifier.key)
-        result.nonce = uint(index)
+        try:
+            result = newVerificationObj(
+                verifier.db.get("verifications_" & verifier.key.toString() & "_" & nonce.toBinary()).toHash(384)
+            )
+        except ValueError as e:
+            doAssert(false, "Couldn't parse a Verification we were asked for from the Database: " & e.msg)
+        except DBReadError as e:
+            doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
+
+        try:
+            result.verifier = verifier.key
+            result.nonce = nonce
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when loading a Verification: " & e.msg)
         return
 
     #Else, return it from memory.
-    result = verifier.verifications[int(index) - (verifier.archived + 1)]
-proc `[]`*(verifier: Verifier, index: uint): Verification {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
-    verifier[int(index)]
+    result = verifier.verifications[nonce - (verifier.archived + 1)]
 
-proc `[]`*(verifier: Verifier, slice: Slice[int] | Slice[uint]): seq[Verification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
-    #Extract the slice values.
-    var
-        a: int = int(slice.a)
-        b: int = int(slice.b)
-
-    #Support the initial verifier.archived value (-1).
-    if a == -1:
-        a = 0
-
-    #Make sure it's a valid slice.
-    if a > b:
-        raise newException(ValueError, "That slice is invalid.")
-
-    #Create a seq.
-    result = newSeq[Verification](b - a + 1)
-
-    #Grab every Verification.
-    for i in a .. b:
-        result[int(i - a)] = verifier[i]
-
-proc `{}`*(verifier: Verifier, slice: Slice[int]): seq[MemoryVerification] {.raises: [ValueError, BLSError, LMDBError, FinalAttributeError].} =
+proc `[]`*(
+    verifier: Verifier,
+    slice: Slice[int]
+): seq[Verification] {.forceCheck: [
+    IndexError
+].} =
     #Extract the slice values.
     var
         a: int = slice.a
@@ -170,11 +188,45 @@ proc `{}`*(verifier: Verifier, slice: Slice[int]): seq[MemoryVerification] {.rai
         a = 0
 
     #Make sure it's a valid slice.
+    #We would use Natural for this, except `a` can be -1.
+    if 0 > a:
+        raise newException(IndexError, "Can't get Verification Slice from Verifier; a was negative.")
     if a > b:
-        raise newException(ValueError, "That slice is invalid.")
+        raise newException(IndexError, "Can't get Verification Slice from Verifier; b was less than a.")
+
+    #Create a seq.
+    result = newSeq[Verification](b - a + 1)
+
+    #Grab every Verification.
+    try:
+        for i in a .. b:
+            result[i - a] = verifier[i]
+    except IndexError as e:
+        fcRaise e
+
+proc `{}`*(
+    verifier: Verifier,
+    slice: Slice[int]
+): seq[MemoryVerification] {.forceCheck: [
+    IndexError
+].} =
+    #Extract the slice values.
+    var
+        a: int = slice.a
+        b: int = slice.b
+
+    #Support the initial verifier.archived value (-1).
+    if a == -1:
+        a = 0
+
+    #Make sure it's a valid slice.
+    if 0 > a:
+        raise newException(IndexError, "Can't get MemoryVerification Slice from Verifier; a was negative.")
+    if a > b:
+        raise newException(IndexError, "Can't get MemoryVerification Slice from Verifier; b was less than a.")
 
     #Grab the Verifications and cast them.
-    var verifs: seq[Verification] = verifier[a .. b]
-    result = newSeq[MemoryVerification](verifs.len)
-    for v in 0 ..< verifs.len:
-        result[v] = cast[MemoryVerification](verifs[v])
+    try:
+        result = cast[seq[MemoryVerification]](verifier[a .. b])
+    except IndexError as e:
+        fcRaise e

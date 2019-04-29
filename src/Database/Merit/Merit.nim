@@ -4,14 +4,11 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
+#BN/Hex lib.
+import ../../lib/Hex
+
 #Hash lib.
 import ../../lib/Hash
-
-#Base lib.
-import ../../lib/Base
-
-#BLS lib.
-import ../../lib/BLS
 
 #Verifications lib.
 import ../Verifications/Verifications
@@ -19,9 +16,9 @@ import ../Verifications/Verifications
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#VerifierIndex object.
-import objects/VerifierIndexObj
-export VerifierIndexObj
+#VerifierRecord object.
+import ../common/objects/VerifierRecordObj
+export VerifierRecordObj
 
 #Miners object.
 import objects/MinersObj
@@ -29,25 +26,21 @@ export MinersObj
 
 #Every Merit lib.
 import Difficulty
+import BlockHeader
 import Block
 import Blockchain
 import State
 import Epochs
 
 export Difficulty
+export BlockHeader
 export Block
 export Blockchain
 export State
 export Epochs
 
-#Tables standard lib.
-import tables
-
-#Finals lib.
-import finals
-
 #Merit master object for a blockchain and state.
-type Merit* = ref object of RootObj
+type Merit* = ref object
     blockchain*: Blockchain
     state*: State
     epochs: Epochs
@@ -55,25 +48,26 @@ type Merit* = ref object of RootObj
 #Constructor.
 proc newMerit*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    verifications: var Verifications,
     genesis: string,
-    blockTime: uint,
-    startDifficulty: string,
-    live: uint
-): Merit {.raises: [
-    ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
-].} =
+    blockTime: Natural,
+    startDifficultyArg: string,
+    live: Natural
+): Merit {.forceCheck: [].} =
+    #Extract the Difficulty.
+    var startDifficulty: BN
+    try:
+        startDifficulty = startDifficultyArg.toBNFromHex()
+    except ValueError as e:
+        doAssert(false, "Invalid chain specs (start difficulty) passed to newMerit: " & e.msg)
+
     #Create the Merit object.
     result = Merit(
         blockchain: newBlockchain(
             db,
             genesis,
             blockTime,
-            startDifficulty.toBN(16)
+            startDifficulty
         ),
 
         state: newState(db, live)
@@ -83,20 +77,22 @@ proc newMerit*(
 #Add a block.
 proc processBlock*(
     merit: Merit,
-    verifications: Verifications,
+    verifications: var Verifications,
     newBlock: Block
-): Epoch {.raises: [
-    KeyError,
+): Epoch {.forceCheck: [
     ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
+    GapError,
+    DataExists
 ].} =
     #Add the block to the Blockchain.
-    if not merit.blockchain.processBlock(newBlock):
-        #If that fails, throw a ValueError.
-        raise newException(ValueError, "Invalid Block.")
+    try:
+        merit.blockchain.processBlock(newBlock)
+    except ValueError as e:
+        fcRaise e
+    except GapError as e:
+        fcRaise e
+    except DataExists as e:
+        fcRaise e
 
     #Have the state process the block.
     merit.state.processBlock(merit.blockchain, newBlock)
@@ -104,5 +100,5 @@ proc processBlock*(
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
         verifications,
-        newBlock.verifications
+        newBlock.records
     )

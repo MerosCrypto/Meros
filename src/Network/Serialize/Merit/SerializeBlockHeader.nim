@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
@@ -5,10 +8,10 @@ import ../../../lib/Util
 import ../../../lib/Hash
 
 #Merkle lib.
-import ../../../lib/Merkle
+import ../../../Database/common/Merkle
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSSignature's toString).
+import ../../../Wallet/MinerWallet
 
 #BlockHeader object.
 import ../../../Database/Merit/objects/BlockHeaderObj
@@ -17,11 +20,13 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 import ../SerializeCommon
 
 #Serialize a Block Header.
-func serialize*(header: BlockHeader): string {.raises: [].} =
+func serialize*(
+    header: BlockHeader
+): string {.forceCheck: [].} =
     result =
         header.nonce.toBinary().pad(INT_LEN) &
         header.last.toString() &
-        header.verifications.toString() &
+        header.aggregate.toString() &
         header.miners.toString() &
         header.time.toBinary().pad(INT_LEN) &
         header.proof.toBinary().pad(INT_LEN)

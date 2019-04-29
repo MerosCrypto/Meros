@@ -7,73 +7,112 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSSignature).
+import ../../../Wallet/MinerWallet
 
 #Block Header lib.
 import ../BlockHeader
 
-#VerifierIndex and Miners objects.
-import VerifierIndexObj
+#VerifierRecord and Miners objects.
+import ../../common/objects/VerifierRecordObj
 import MinersObj
-
-#Serialization libs.
-import ../../../Network/Serialize/Merit/SerializeBlockHeader
-import ../../../Network/Serialize/Merit/SerializeMiners
 
 #Finals lib.
 import finals
 
-#String utils standard lib.
-import strutils
+#Tables standard lib.
+import tables
 
 #Define the Block class.
-type Block* = ref object of RootObj
+type Block* = object
     #Block Header.
     header*: BlockHeader
 
-    #Verifications.
-    verifications*: seq[VerifierIndex]
+    #Verifier Records.
+    records: seq[VerifierRecord]
     #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
-    miners*: Miners
+    miners: Miners
 
-#Set the Miners.
-proc `miners=`*(newBlock: Block, miners: Miners) =
-    newBlock.miners = miners
-    newBlock.header.miners = miners
+#Records getter/setter.
+func records*(
+    blockArg: Block
+): seq[VerifierRecord] {.inline, forceCheck: [].} =
+    blockArg.records
+func `records=`*(
+    blockArg: var Block,
+    records: seq[VerifierRecord]
+) {.forceCheck: [ValueError].} =
+    #Verify no Verifier has multiple Records.
+    var
+        verifiers: Table[string, bool] = initTable[string, bool]()
+        verifier: string
+    for record in records:
+        verifier = record.key.toString()
+        if verifiers.hasKey(verifier):
+            raise newException(ValueError, "One Verifier has two Records.")
+        verifiers[verifier] = true
 
-#Constructor.
-proc newBlockObj*(
-    nonce: uint,
-    last: ArgonHash,
-    aggregate: BLSSignature,
-    indexes: seq[VerifierIndex],
-    miners: Miners,
-    time: uint = getTime(),
-    proof: uint = 0
-): Block {.raises: [ValueError, ArgonError].} =
+    blockArg.records = records
+
+#Miners getter/setter.
+func miners*(
+    blockArg: Block
+): Miners {.inline, forceCheck: [].} =
+    blockArg.miners
+func `miners=`*(
+    blockArg: var Block,
+    miners: Miners
+) {.forceCheck: [ValueError].} =
     #Verify the Miners, unless this is the genesis Block.
-    if nonce != 0:
-        var total: uint = 0
-        if (miners.len < 1) or (100 < miners.len):
+    if blockArg.header.nonce != 0:
+        if (miners.miners.len < 1) or (100 < miners.miners.len):
             raise newException(ValueError, "Invalid Miners quantity.")
-        for miner in miners:
-            total += miner.amount
-            if (miner.amount < 1) or (uint(100) < miner.amount):
+
+        var total: int = 0
+        for miner in miners.miners:
+            if (miner.amount < 1) or (100 < miner.amount):
                 raise newException(ValueError, "Invalid Miner amount.")
+            total += miner.amount
         if total != 100:
             raise newException(ValueError, "Invalid total Miner amount.")
 
-    #Create the Block.
-    result = Block(
-        header: newBlockheader(
+    blockArg.miners = miners
+    blockArg.header.miners = miners.merkle.hash
+
+#Constructor.
+func newBlockObj*(
+    nonce: Natural,
+    last: ArgonHash,
+    aggregate: BLSSignature,
+    records: seq[VerifierRecord],
+    miners: Miners,
+    time: int64 = getTime(),
+    proof: Natural = 0
+): Block {.forceCheck: [
+    ValueError,
+    ArgonError
+].} =
+    #Create the Block Header.
+    var header: BlockHeader
+    try:
+        header = newBlockheader(
             nonce,
             last,
             aggregate,
-            miners.calculateMerkle(),
+            miners.merkle.hash,
             time,
             proof
-        ),
-        verifications: indexes,
-        miners: miners
+        )
+    except ArgonError as e:
+        fcRaise e
+
+    #Create the Block.
+    result = Block(
+        header: header
     )
+    #Unorthodox syntax used to call our custom setters.
+    try:
+        `records=`(result, records)
+        `miners=`(result, miners)
+    except ValueError as e:
+        fcRaise e

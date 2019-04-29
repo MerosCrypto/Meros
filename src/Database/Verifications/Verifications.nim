@@ -1,26 +1,22 @@
 #Errors.
 import ../../lib/Errors
 
-#Util lib.
-import ../../lib/Util
-
-#BN lib.
-import BN
-
 #Hash lib.
 import ../../lib/Hash
 
-#BLS lib.
-import ../../lib/BLS
-
-#Index object.
-import ../common/objects/IndexObj
-
-#VerifierIndex object (not under common as this is solely used for archival, which is triggered by Merit).
-import ../Merit/objects/VerifierIndexObj
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
 
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
+
+#Merkle lib.
+import ../common/Merkle
+
+#VerificationsIndex and VerifierRecord object.
+import ../common/objects/VerificationsIndexObj
+import ../common/objects/VerifierRecordObj
+export VerificationsIndex
 
 #Verification and Verifier libs.
 import Verification
@@ -32,41 +28,80 @@ export Verifier
 import objects/VerificationsObj
 export VerificationsObj
 
-#Sequtils standard lib.
+#Seq utils standard lib.
 import sequtils
 
 #Tables standard lib.
 import tables
 
-#Finals lib.
-import finals
-
 #Constructor wrapper.
-proc newVerifications*(db: DatabaseFunctionBox): Verifications {.raises: [].} =
+proc newVerifications*(
+    db: DatabaseFunctionBox
+): Verifications {.forceCheck: [].} =
     newVerificationsObj(db)
 
 #Add a Verification.
 proc add*(
-    verifs: Verifications,
+    verifs: var Verifications,
     verif: Verification
-) {.raises: [KeyError, MerosIndexError, LMDBError].} =
-    verifs[verif.verifier.toString()].add(verif)
+) {.forceCheck: [
+    GapError,
+    DataExists,
+    MeritRemoval
+].} =
+    try:
+        verifs[verif.verifier].add(verif)
+    except GapError as e:
+        fcRaise e
+    except DataExists as e:
+        fcRaise e
+    except MeritRemoval as e:
+        fcRaise e
 
-#For each provided Index, archive all Verifications from the account's last archived to the provided nonce.
+#Add a MemoryVerification.
+proc add*(
+    verifs: var Verifications,
+    verif: MemoryVerification
+) {.forceCheck: [
+    GapError,
+    BLSError,
+    DataExists,
+    MeritRemoval
+].} =
+    try:
+        verifs[verif.verifier].add(verif)
+    except GapError as e:
+        fcRaise e
+    except BLSError as e:
+        fcRaise e
+    except DataExists as e:
+        fcRaise e
+    except MeritRemoval as e:
+        fcRaise e
+
+#For each provided Record, archive all Verifications from the account's last archived to the provided nonce.
 proc archive*(
-    verifs: Verifications,
-    indexes: seq[VerifierIndex]
-) {.raises: [KeyError, LMDBError].} =
-    #Iterate over every Index.
-    for index in indexes:
+    verifs: var Verifications,
+    records: seq[VerifierRecord]
+) {.forceCheck: [].} =
+    #Iterate over every Record.
+    for record in records:
         #Delete them from the seq.
-        verifs[index.key].verifications.delete(
+        verifs[record.key].verifications.delete(
             0,
-            int(index.nonce - verifs[index.key].verifications[0].nonce)
+            record.nonce - verifs[record.key].verifications[0].nonce
         )
 
-        #Update the Verifier.
-        verifs[index.key].archived = int(index.nonce)
+        #Reset the Merkle.
+        verifs[record.key].merkle = newMerkle()
+        for verif in verifs[record.key].verifications:
+            verifs[record.key].merkle.add(verif.hash)
+
+        #Update the archived field.
+        verifs[record.key].archived = record.nonce
 
         #Update the DB.
-        verifs.db.put("verifications_" & index.key, $index.nonce)
+        try:
+            verifs.db.put("verifications_" & record.key.toString(), $record.nonce)
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save a Verifier's tip to the Database: " & e.msg)

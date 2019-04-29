@@ -1,11 +1,14 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
 #Verification object.
 import ../../../Database/Verifications/objects/VerificationObj
@@ -13,8 +16,10 @@ import ../../../Database/Verifications/objects/VerificationObj
 #Common serialization functions.
 import ../SerializeCommon
 
-#Serialize a Verification.
-func serialize*(verif: MemoryVerification): string {.raises: [].} =
+#Serialize a Memory Verification.
+func serialize*(
+    verif: MemoryVerification
+): string {.forceCheck: [].} =
     result =
         verif.verifier.toString() &
         verif.nonce.toBinary().pad(INT_LEN) &

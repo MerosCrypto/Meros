@@ -11,42 +11,34 @@ export GUIObj
 #JS Bindings.
 import Bindings/Bindings
 
-#WebView.
-import mc_webview
-
-#Async standard lib.
-import asyncdispatch
-
-#String utils standard lib.
-import strutils
+#String format standard lib.
+import strformat
 
 #JSON standard lib.
 import json
 
 #Thread vars needed by loop.
 var
-    gui: GUI
+    gui {.threadvar.}: GUI
     fromMain: ptr Channel[string]
 
 #Loop. Called by WebView 10 times a second.
-proc loop() {.raises: [ChannelError, WebViewError].} =
+proc loop() {.forceCheck: [].} =
     #Get a message if one exists.
     var msg: tuple[dataAvailable: bool, msg: string]
     try:
         msg = fromMain[].tryRecv()
-    except:
-        raise newException(ChannelError, "The GUI couldn't try to receive data from fromMain.")
+    except ValueError as e:
+        doAssert(false, "Couldn't try to receive a message from main due to a ValueError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't try to receive a message from main due to a Exception: " & e.msg)
 
     #If there is a message...
     if msg.dataAvailable:
         #Switch on it.
         case msg.msg:
-            #If it said to shutdown, shutdown.
             of "shutdown":
-                try:
-                    gui.webview.exit()
-                except:
-                    raise newException(WebViewError, "Couldn't shutdown the WebView.")
+                gui.webview.exit()
 
 #Constructor.
 proc newGUI*(
@@ -55,7 +47,7 @@ proc newGUI*(
     toGUI: ptr Channel[JSONNode],
     width: int,
     height: int
-) {.raises: [ChannelError, WebViewError].} =
+) {.forceCheck: [].} =
     #Set the fromMain channel.
     fromMain = fromMainArg
 
@@ -65,36 +57,47 @@ proc newGUI*(
             toRPC,
             toGUI,
             newWebView(
-                "Meros Core",
+                "Meros",
                 "",
                 width,
                 height
             )
         )
-    except:
-        raise newException(WebViewError, "Couldn't create the WebView.")
+    except Exception as e:
+        doAssert(false, "Couldn't create the WebView: " & e.msg)
 
     #Add the Bindings.
     gui.createBindings(loop)
 
+    #Schedule a function to load the main page/start the loop.
     try:
-        #Schedule a function to load the main page/start the loop.
         gui.webview.dispatch(
-            proc () {.raises: [WebViewError].} =
+            proc () {.forceCheck: [].} =
                 #Load the main page.
-                if gui.webview.eval(
-                    "document.body.innerHTML = (\"" & MAIN.splitLines().join("\"+\"") & "\");"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't load the main page into the WebView.")
+                var js: string
+                try:
+                    js = &"""
+                        document.body.innerHTML = `{MAIN}`;
+                    """
+                except ValueError as e:
+                    doAssert(false, "Couldn't format the JS to load the main page: " & e.msg)
+
+                if gui.webview.eval(js) != 0:
+                    doAssert(false, "Couldn't load the main page into the WebView.")
 
                 #Start the loop.
-                if gui.webview.eval(
-                    "setInterval(GUI.loop, 100);"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't start the Nim loop from the WebView.")
-        )
+                try:
+                    js = &"""
+                        setInterval(GUI.loop, 100);
+                    """
+                except ValueError as e:
+                    doAssert(false, "Couldn't format the JS to load the main page: " & e.msg)
 
-        #Run the GUI.
-        gui.webview.run()
-    except:
-        raise newException(WebViewError, "Couldn't run the WebView.")
+                if gui.webview.eval(js) != 0:
+                    doAssert(false, "Couldn't start the Nim loop from the WebView.")
+        )
+    except Exception as e:
+        doAssert(false, "Couldn't dispatch a function to load the main page and start the Nim loop: " & e.msg)
+
+    #Run the GUI.
+    gui.webview.run()

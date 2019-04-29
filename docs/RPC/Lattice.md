@@ -4,7 +4,7 @@
 `getHeight` will fetch and return the amount of Entries on an Account. It takes in one argument:
 - Address (string)
 It returns:
-- `height` (string)
+- `height` (int)
 
 ### `getBalance`
 `getBalance` will fetch and return the balance of an Account. It takes in one argument:
@@ -18,11 +18,11 @@ It returns:
 It returns:
     For every entry:
     - `descendant` (string)
-    - `sender` (string)
-    - `nonce` (int)
-    - `hash` (string)
-    - `signature` (string)
-    - `verified` (bool)
+    - `sender`     (string)
+    - `nonce`      (int)
+    - `hash`       (string)
+    - `signature`  (string)
+    - `verified`   (bool)
 
     When `descendant` == "Mint":
         - `output` (string)
@@ -30,23 +30,23 @@ It returns:
 
     When `descendant` == "Claim":
         - `mintNonce` (int)
-        - `bls` (string)
+        - `bls`       (string)
 
     When `descendant` == "Send":
         - `output` (string)
         - `amount` (string)
         - `sha512` (string)
-        - `proof` (int)
+        - `proof`  (int)
 
     When `descendant` == "Receive":
         - `index` (object)
             - `address` (string)
-            - `nonce` (int)
+            - `nonce`   (int)
 
     When `descendant` == "Data":
-        - `data` (string)
+        - `data`   (string)
         - `sha512` (string)
-        - `proof` (int)
+        - `proof`  (int)
 
 ### `getEntryByIndex`
 `getEntryByIndex` will fetch and return an Entry. It takes in two arguments:
@@ -55,11 +55,11 @@ It returns:
 It returns:
     For every entry:
     - `descendant` (string)
-    - `sender` (string)
-    - `nonce` (int)
-    - `hash` (string)
-    - `signature` (string)
-    - `verified` (bool)
+    - `sender`     (string)
+    - `nonce`      (int)
+    - `hash`       (string)
+    - `signature`  (string)
+    - `verified`   (bool)
 
     When `descendant` == "Mint":
         - `output` (string)
@@ -67,20 +67,20 @@ It returns:
 
     When `descendant` == "Claim":
         - `mintNonce` (int)
-        - `bls` (string)
+        - `bls`       (string)
 
     When `descendant` == "Send":
         - `output` (string)
         - `amount` (string)
         - `sha512` (string)
-        - `proof` (int)
+        - `proof`  (int)
 
     When `descendant` == "Receive":
         - `index` (object)
             - `address` (string)
-            - `nonce` (int)
+            - `nonce`   (int)
 
     When `descendant` == "Data":
-        - `data` (string)
+        - `data`   (string)
         - `sha512` (string)
-        - `proof` (int)
+        - `proof`  (int)

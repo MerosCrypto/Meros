@@ -4,14 +4,11 @@ import lib/Errors
 #Util lib.
 import lib/Util
 
-#BN lib.
-import BN
-
 #Hash lib.
 import lib/Hash
 
 #Merkle lib.
-import lib/Merkle
+import Database/common/Merkle
 
 #Wallet.
 import Wallet/MinerWallet
@@ -52,23 +49,20 @@ import objects/GlobalFunctionBoxObj
 #Config object.
 import objects/ConfigObj
 
-#Finals lib.
-import finals
+#BN lib.
+import BN
 
-#BLS lib.
-import lib/BLS
+#OS standard lib.
+import os
 
 #Locks standard lib.
 import locks
 
-#Async standard lib.
-import asyncdispatch
-
 #Thread standard lib.
 import threadpool
 
-#String utils standard lib.
-import strutils
+#Async standard lib.
+import asyncdispatch
 
 #JSON standard lib.
 import json

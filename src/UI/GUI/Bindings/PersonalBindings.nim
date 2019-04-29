@@ -7,168 +7,159 @@ import ../../../Wallet/Wallet
 #GUI object.
 import ../objects/GUIObj
 
-#WebView lib.
-import mc_webview
-
-#String utils standard lib.
+#String utils and string format standard libs.
 import strutils
+import strformat
 
 #JSON standard lib.
 import json
 
 #Get the nonce to use with new transactions.
-proc getNonce*(gui: GUI): string {.raises: [ChannelError].} =
-    #Create a var for the address.
-    var address: string
+proc getNonce*(
+    gui: GUI
+): int {.forceCheck: [].} =
     try:
-        #Ask for the Wallet info.
-        gui.toRPC[].send(%* {
-            "module": "personal",
-            "method": "getWallet",
-            "args": []
-        })
-        #Get the wallet info.
-        address = gui.toGUI[].recv()["address"].getStr()
-    except:
-        raise newException(ChannelError, "Couldn't send wallet.get/get the Wallet info via the channel.")
+        #Get the address.
+        var address: string = gui.call("personal", "getWallet")["address"].getStr()
 
-    try:
-        #Ask for the Wallet's height.
-        gui.toRPC[].send(%* {
-            "module": "lattice",
-            "method": "getHeight",
-            "args": [
-                address
-            ]
-        })
-        #Set the result to the Wallet's height (AKA the next nonce).
-        result = gui.toGUI[].recv()["height"].getStr()
-    except:
-        raise newException(ChannelError, "Couldn't send lattice.getHeight/get the height via the channel.")
+        #Get the nonce.
+        result = gui.call("lattice", "getHeight", address)["height"].getInt()
+    except KeyError as e:
+        gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have an address/height field: " & e.msg)
+    except RPCError as e:
+        gui.webview.error("RPC Error", e.msg)
+        return -1
 
 #Add the Wallet bindings to the GUI.
-proc addTo*(gui: GUI) {.raises: [WebViewError].} =
+proc addTo*(
+    gui: GUI
+) {.forceCheck: [].} =
     try:
         #Get the Wallet.
         gui.webview.bindProcNoArg(
             "Personal",
             "getWallet",
-            proc () {.raises: [KeyError, ChannelError, WebViewError].} =
-                #Var for the response.
+            proc () {.forceCheck: [].} =
+                #Receive the Wallet info.
                 var wallet: JSONNode
                 try:
-                    gui.toRPC[].send(%* {
-                        "module": "personal",
-                        "method": "getWallet",
-                        "args": []
-                    })
+                    wallet = gui.call("personal", "getWallet")
+                except RPCError as e:
+                    gui.webview.error("RPC Error", e.msg)
 
-                    #Receive the Wallet info.
-                    wallet = gui.toGUI[].recv()
-                except:
-                    raise newException(ChannelError, "Couldn't get the Wallet.")
-
-                #Set the elements.
-                if gui.webview.eval(
-                    "document.getElementById('seed').innerHTML = '" & wallet["seed"].getStr() & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
-                if gui.webview.eval(
-                    "document.getElementById('publicKey').innerHTML = '" & wallet["publicKey"].getStr() & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
-                if gui.webview.eval(
-                    "document.getElementById('address').innerHTML = '" & wallet["address"].getStr() & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                #Display the Wallet info.
+                var js: string
+                try:
+                    js = &"""
+                        document.getElementById("seed").innerHTML = "{wallet["seed"].getStr()}";
+                        document.getElementById("publicKey").innerHTML = "{wallet["publicKey"].getStr()}";
+                        document.getElementById("address").innerHTML = "{wallet["address"].getStr()}";
+                    """
+                except ValueError as e:
+                    gui.webview.error("Value Error", "Couldn't format the JS to display the wallet info: " & e.msg)
+                if gui.webview.eval(js) != 0:
+                    gui.webview.error("RPC Error", "Couldn't eval the JS to display the Wallet.")
         )
 
         #Create a Wallet from a Seed.
         gui.webview.bindProc(
             "Personal",
             "setSeed",
-            proc (seed: string) {.raises: [ChannelError].} =
-                #Var for the response.
-                var res: JSONNode
+            proc (
+                seed: string
+            ) {.forceCheck: [].} =
                 try:
-                    gui.toRPC[].send(%* {
-                        "module": "personal",
-                        "method": "setSeed",
-                        "args": [
-                            seed
-                        ]
-                    })
-
-                    #Receive whether or not it worked.
-                    res = gui.toGUI[].recv()
-                except:
-                    raise newException(ChannelError, "Couldn't set the Wallet's Seed.")
+                    discard gui.call("personal", "setSeed", seed)
+                except RPCError as e:
+                    gui.webview.error("RPC Error", e.msg)
         )
 
         #Send.
         gui.webview.bindProc(
             "Personal",
             "send",
-            proc (dataArg: string) {.raises: [ChannelError, WebViewError].} =
+            proc (
+                dataArg: string
+            ) {.forceCheck: [].} =
                 #Split the data up.
                 var data: seq[string] = dataArg.split(" ")
 
-                #Var for the response.
+                #Get the nonce.
+                var nonce: int = gui.getNonce()
+                if nonce == -1:
+                    return
+
+                #Create the Send and grab the hash.
                 var hash: string
                 try:
-                    #Create the Send.
-                    gui.toRPC[].send(%* {
-                        "module": "personal",
-                        "method": "send",
-                        "args": [
-                            data[0],
-                            data[1],
-                            gui.getNonce()
-                        ]
-                    })
-                    
-                    hash = gui.toGUI[].recv()["hash"].getStr()
-                except:
-                    raise newException(ChannelError, "Couldn't send personal.send over the channel.")
+                    hash = gui.call(
+                        "personal",
+                        "send",
+                        data[0],
+                        data[1],
+                        nonce
+                    )["hash"].getStr()
+                except KeyError as e:
+                    gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
+                except RPCError as e:
+                    gui.webview.error("RPC Error", e.msg)
 
-                #Receive the hash and print it.
-                if gui.webview.eval(
-                    "document.getElementById('hash').innerHTML = '" & hash & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                #Display the hash.
+                var js: string
+                try:
+                    js = &"""
+                        document.getElementById("hash").innerHTML = "{hash}";
+                    """
+                except ValueError as e:
+                    gui.webview.error("Value Error", "Couldn't format the JS to display the Send's hash: " & e.msg)
+
+                if gui.webview.eval(js) != 0:
+                    gui.webview.error("RPC Error", "Couldn't eval the JS to display the Send's hash.")
         )
 
         #Receive.
         gui.webview.bindProc(
             "Personal",
             "receive",
-            proc (dataArg: string) {.raises: [ChannelError, WebViewError].} =
+            proc (
+                dataArg: string
+            ) {.forceCheck: [].} =
                 #Split the data.
                 var data: seq[string] = dataArg.split(" ")
 
-                #Var for the response.
+                #Get the nonce.
+                var nonce: int = gui.getNonce()
+                if nonce == -1:
+                    return
+
+                #Create the Receive and grab the hash.
                 var hash: string
                 try:
-                    #Create the Receive.
-                    gui.toRPC[].send(%* {
-                        "module": "personal",
-                        "method": "receive",
-                        "args": [
-                            data[0],
-                            data[1],
-                            gui.getNonce()
-                        ]
-                    })
-                    
-                    hash = gui.toGUI[].recv()["hash"].getStr()
-                except:
-                    raise newException(ChannelError, "Couldn't send personal.receive over the channel.")
+                    hash = gui.call(
+                        "personal",
+                        "receive",
+                        data[0],
+                        data[1],
+                        nonce
+                    )["hash"].getStr()
+                except KeyError as e:
+                    gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
+                except RPCError as e:
+                    gui.webview.error("RPC Error", e.msg)
 
-                #Receive the hash and print it.
-                if gui.webview.eval(
-                    "document.getElementById('hash').innerHTML = '" & hash & "';"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                #Display the hash.
+                var js: string
+                try:
+                    js = &"""
+                        document.getElementById("hash").innerHTML = "{hash}";
+                    """
+                except ValueError as e:
+                    gui.webview.error("Value Error", "Couldn't fromat the JS to display the Receive's hash: " & e.msg)
+
+                if gui.webview.eval(js) != 0:
+                    gui.webview.error("RPC Error", "Couldn't eval the JS to display the Receive's hash.")
         )
-    except:
-        raise newException(WebViewError, "Couldn't bind procs to WebView.")
+    except KeyError as e:
+        doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't bind the GUI functions to WebView due to a Exception: " & e.msg)

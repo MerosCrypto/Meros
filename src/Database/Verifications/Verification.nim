@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Util lib.
-import ../../lib/Util
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -14,18 +11,23 @@ import ../../Wallet/MinerWallet
 import objects/VerificationObj
 export VerificationObj
 
-#Finals lib.
-import finals
-
 #Sign a Verification.
 proc sign*(
     miner: MinerWallet,
     verif: MemoryVerification,
-    nonce: uint
-) {.raises: [BLSError, FinalAttributeError].} =
-    #Set the verifier.
-    verif.verifier = miner.publicKey
-    #Set the nonce.
-    verif.nonce = nonce
-    #Sign the hash of the Verification.
-    verif.signature = miner.sign(verif.hash.toString())
+    nonce: Natural
+) {.forceCheck: [
+    BLSError
+].} =
+    try:
+        #Set the verifier.
+        verif.verifier = miner.publicKey
+        #Set the nonce.
+        verif.nonce = nonce
+        #Sign the hash of the Verification.
+        try:
+            verif.signature = miner.sign(verif.hash.toString())
+        except BLSError as e:
+            fcRaise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when signing a Verification: " & e.msg)

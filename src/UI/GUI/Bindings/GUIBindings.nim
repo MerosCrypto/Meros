@@ -4,35 +4,26 @@ import ../../../lib/Errors
 #GUI object.
 import ../objects/GUIObj
 
-#WebView lib.
-import mc_webview
-
-#String utils standard lib.
-import strutils
-
-#JSON standard lib.
-import json
+#String format standard lib.
+import strformat
 
 #Add the GUI bindings to the GUI.
-proc addTo*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
+proc addTo*(
+    gui: GUI,
+    loop: proc () {.raises: [
+        WebViewError
+    ].}
+) {.forceCheck: [].} =
     try:
         #Quit.
         gui.webview.bindProcNoArg(
             "GUI",
             "quit",
-            proc () {.raises: [ChannelError].} =
-                #Close WebView.
-                gui.webview.terminate()
-
+            proc () {.forceCheck: [].} =
                 try:
-                    #Send the quit event.
-                    gui.toRPC[].send(%* {
-                        "module": "system",
-                        "method": "quit",
-                        "args": []
-                    })
-                except:
-                    raise newException(ChannelError, "Couldn't send system.quit over the channel.")
+                    discard gui.call("system", "quit")
+                except RPCError as e:
+                    gui.webview.error("RPC Error", e.msg)
         )
 
         #Loop function to allow the GUI thread to do something other than WebView.
@@ -42,24 +33,17 @@ proc addTo*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
             loop
         )
 
-        #Print. If debug isn't defined, this does nothing.
-        gui.webview.bindProc(
-            "GUI",
-            "print",
-            proc (msg: string) {.raises: [].} =
-                when defined(debug):
-                    echo msg
-        )
-
         #Load a new page.
         gui.webview.bindProc(
             "GUI",
             "load",
-            proc (pageArg: string) {.raises: [WebViewError].} =
+            proc (
+                pageArg: string
+            ) {.forceCheck: [].} =
                 #Declare a var for the page.
                 var page: string
 
-                #Find out what page to load.
+                #Grab the page we're trying to load.
                 case pageArg:
                     of "main":
                         page = MAIN
@@ -68,11 +52,18 @@ proc addTo*(gui: GUI, loop: proc ()) {.raises: [WebViewError].} =
                     of "receive":
                         page = RECEIVE
 
+                #Format it as a line of JS code.
+                try:
+                    page = &"document.body.innerHTML = (`{page}`);"
+                except ValueError as e:
+                    gui.webview.error("Value Error", "Couldn't format the JS to display the main page: " & e.msg)
+                    return
+
                 #Load the page.
-                if gui.webview.eval(
-                    "document.body.innerHTML = (\"" & page.splitLines().join("\"+\"") & "\");"
-                ) != 0:
-                    raise newException(WebViewError, "Couldn't evaluate JS in the WebView.")
+                if gui.webview.eval(page) != 0:
+                    gui.webview.error("RPC Error", "Couldn't eval the JS to load a new page.")
         )
-    except:
-        raise newException(WebViewError, "Couldn't bind procs to WebView.")
+    except KeyError as e:
+        doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't bind the GUI functions to WebView due to an Exception: " & e.msg)

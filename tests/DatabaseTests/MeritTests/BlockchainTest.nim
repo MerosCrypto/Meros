@@ -9,21 +9,18 @@ import ../../../src/lib/Util
 #Hash lib.
 import ../../../src/lib/Hash
 
-#Numerical libs.
-import BN
-import ../../../src/lib/Base
+#BN/Raw and BN/Hex libs.
+import ../../../src/lib/Raw
+import ../../../src/lib/Hex
 
-#BLS lib.
-import ../../../src/lib/BLS
-
-#VerifierIndex object.
-import ../../../src/Database/Merit/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../../src/Database/common/objects/VerifierRecordObj
 
 #Miners object.
 import ../../../src/Database/Merit/objects/MinersObj
 
 #Difficulty, Block, and Blockchain libs.
-import ../../../src/Database/Merit/Difficulty as DifficultyFile
+import ../../../src/Database/Merit/Difficulty
 import ../../../src/Database/Merit/Block
 import ../../../src/Database/Merit/Blockchain
 
@@ -44,7 +41,7 @@ proc test*(blocks: int) =
         #Database.
         db: DatabaseFunctionBox = newTestDatabase()
         #Starting Difficultty.
-        startDifficulty: BN = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBN(16)
+        startDifficulty: BN = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBNFromHex()
         #Blockchain.
         blockchain: Blockchain = newBlockchain(
             db,
@@ -77,15 +74,14 @@ proc test*(blocks: int) =
         )
 
         #Mine it.
-        while not difficulty.verifyDifficulty(mining):
+        while not difficulty.verify(mining.header.hash):
             inc(mining)
 
         #Add it.
         try:
-            if not blockchain.processBlock(mining):
-                raise newException(Exception, "")
-        except:
-            raise newException(ValueError, "Valid Block wasn't successfully added.")
+            blockchain.processBlock(mining)
+        except ValueError as e:
+            raise newException(ValueError, "Valid Block wasn't successfully added: " & e.msg)
 
         #Verify it was added to the DB properly.
         assert(db.get("merit_tip") == mining.header.hash.toString())

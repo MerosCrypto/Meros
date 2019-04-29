@@ -4,20 +4,20 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../lib/Base
+#BN/Raw lib.
+import ../../lib/Raw
 
 #Hash lib.
 import ../../lib/Hash
 
-#BLS lib.
-import ../../lib/BLS
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
 
-#Index object.
-import ../common/objects/IndexObj
-#Export the Index object.
-export IndexObj
+#LatticeIndex and VerifierRecord objects.
+import ../common/objects/LatticeIndexObj
+import ../common/objects/VerifierRecordObj
+#Export the LatticeIndex object.
+export LatticeIndexObj
 
 #Verifications lib.
 import ../Verifications/Verifications
@@ -28,14 +28,14 @@ import ../Merit/Merit
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#Entry and Entry descendants.
+#Entry object and Entry descendants lib.
 import objects/EntryObj
 import Mint
 import Claim
 import Send
 import Receive
 import Data
-#Export the Entry and Entry descendants.
+
 export EntryObj
 export Mint
 export Claim
@@ -47,12 +47,11 @@ export Data
 import Account
 export Account
 
-#Lattice Objects.
+#Lattice object (and sub-objects).
+import objects/DifficultiesObj
 import objects/LatticeObj
+export Difficulties
 export LatticeObj
-
-#String utils standard lib.
-import strutils
 
 #Seq utils standard lib.
 import sequtils
@@ -60,52 +59,67 @@ import sequtils
 #Tables standard lib.
 import tables
 
-#Finals lib.
-import finals
-
 #Add a Verification to the Verifications' table.
 proc verify*(
-    lattice: Lattice,
+    lattice: var Lattice,
     merit: Merit,
     verif: Verification,
     save: bool = true
-): bool {.raises: [KeyError, ValueError, LMDBError].} =
+) {.forceCheck: [
+    ValueError,
+    IndexError
+].} =
     #Make sure the verifier has weight.
-    if merit.state[verif.verifier] == uint(0):
-        return false
+    if merit.state[verif.verifier] == 0:
+        raise newException(ValueError, "Verifier doesn't have weight.")
 
     #Turn the hash into a string.
     var hash: string = verif.hash.toString()
 
     #Verify the Entry exists.
     if not lattice.lookup.hasKey(hash):
-        return false
+        raise newException(ValueError, "Entry either doesn't exist or is already out of the Epochs.")
 
     #Create a blank seq if there's not already a seq.
     if not lattice.verifications.hasKey(hash):
         lattice.verifications[hash] = @[]
 
     #Return if the Verification already exists.
-    for verifier in lattice.verifications[hash]:
-        if verifier == verif.verifier:
-            return false
-
-    result = true
+    try:
+        for verifier in lattice.verifications[hash]:
+            if verifier == verif.verifier:
+                raise newException(IndexError, "Verification was already added.")
+    except KeyError as e:
+        doAssert(false, "Couldn't grab the Verifications seq despite guarantreeing it existed: " & e.msg)
 
     #Add the Verification.
-    lattice.verifications[hash].add(verif.verifier)
+    try:
+        lattice.verifications[hash].add(verif.verifier)
+    except KeyError as e:
+        doAssert(false, "Couldn't add a Verification despite guaranteeing it had a seq: " & e.msg)
 
     #Calculate the weight.
-    var weight: uint = 0
-    for i in lattice.verifications[hash]:
-        weight += merit.state[i]
+    var weight: int = 0
+    try:
+        for i in lattice.verifications[hash]:
+            weight += merit.state[i]
+    except KeyError as e:
+        doAssert(false, "Couldn't add the Entry's weight together despite guaranteeing it had a seq: " & e.msg)
     #If the Entry has at least 50.1% of the weight...
-    if weight > ((merit.state.live div uint(2)) + 1):
+    if weight > (merit.state.live div 2) + 1:
         #Get the Index, Account, and calculate in `entries`.
         var
-            index: Index = lattice.lookup[hash]
-            account: Account = lattice[index.key]
-            i: int = int(index.nonce - lattice[index.key].confirmed)
+            index: LatticeIndex
+            account: Account
+            i: int
+        try:
+            index = lattice.lookup[hash]
+            account = lattice[index.address]
+            i = index.nonce - lattice[index.address].confirmed
+        except KeyError as e:
+            doAssert(false, "Couldn't grab the confirmed Entry's Index/Account/cache offsetted index: " & e.msg)
+        except AddressError as e:
+            doAssert(false, "Calculating the weight of a valid Entry without being able to grab the account due to an AddressError: " & e.msg)
 
         #Get said Entry.
         var entry: Entry = nil
@@ -113,7 +127,7 @@ proc verify*(
             if e.hash == verif.hash:
                 entry = e
         if entry.isNil:
-            return false
+            doAssert(false, "Confirmed an Entry but then failed to find that Entry.")
 
         #Set it to verified.
         entry.verified = true
@@ -137,7 +151,14 @@ proc verify*(
                         #Cast it to a var.
                         recv: Receive = cast[Receive](entry)
                         #Get the Send it's Receiving.
-                        send: Send = cast[Send](lattice[recv.index.key][recv.index.nonce])
+                        send: Send
+                    try:
+                        send = cast[Send](lattice[recv.index])
+                    except ValueError as e:
+                        doAssert(false, "Receive was confirmed before Send: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Confirmed Receive receives Send that's beyond the Account height: " & e.msg)
+
                     #Update the balance.
                     account.balance += send.amount
                 of EntryType.Claim:
@@ -145,7 +166,16 @@ proc verify*(
                         #Cast it to a var.
                         claim: Claim = cast[Claim](entry)
                         #Get the Mint it's Claiming.
-                        mint: Mint = cast[Mint](lattice["minter"][claim.mintNonce])
+                        mint: Mint
+                    try:
+                        mint = cast[Mint](lattice["minter"][claim.mintNonce])
+                    except ValueError as e:
+                        doAssert(false, "Claim was confirmed before Mint, which shouldn't need any confirmed: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Confirmed Claim receives Mint that's beyond the minter height: " & e.msg)
+                    except AddressError as e:
+                        doAssert(false, "Couln't grab the Mint the confirmed Claim is claiming from due to an AddressError: " & e.msg)
+
                     #Update the balance.
                     account.balance += mint.amount
                 else:
@@ -153,39 +183,43 @@ proc verify*(
 
             #If the balance was changed, save the new Balance to the DB.
             if changedBalance:
-                lattice.db.put("lattice_" & entry.sender & "_balance", lattice[entry.sender].balance.toString(256))
+                try:
+                    lattice.db.put("lattice_" & entry.sender & "_balance", lattice.accounts[entry.sender].balance.toRaw())
+                except KeyError as e:
+                    doAssert(false, "Couldn't grab the confirmed Entry's sender's updated balance: " & e.msg)
+                except AddressError as e:
+                    doAssert(false, "Couln't grab the Send the conrfirmed Receive is receiving from due to an AddressError: " & e.msg)
+                except DBWriteError as e:
+                    doAssert(false, "Couldn't save an updated balance to the Database: " & e.msg)
 
 #Constructor.
 proc newLattice*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    verifications: var Verifications,
     merit: Merit,
-    txDiff: string,
+    sendDiff: string,
     dataDiff: string
-): Lattice {.raises: [
-    ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
-].} =
+): Lattice {.forceCheck: [].} =
     #Create the Lattice.
     result = newLatticeObj(
         db,
-        txDiff,
+        sendDiff,
         dataDiff
     )
 
     #Grab every Verifier mentioned in the last 6 Blocks of Verifications.
-    var verifiers: seq[string] = @[]
-    if merit.blockchain.height < 5:
-        for b in uint(0) ..< merit.blockchain.height:
-            for index in merit.blockchain[b].verifications:
-                verifiers.add(index.key)
-    else:
-        for b in merit.blockchain.height - 5 ..< merit.blockchain.height:
-            for index in merit.blockchain[b].verifications:
-                verifiers.add(index.key)
+    var verifiers: seq[BLSPublicKey] = @[]
+    try:
+        if merit.blockchain.height < 5:
+            for b in 0 ..< merit.blockchain.height:
+                for record in merit.blockchain[b].records:
+                    verifiers.add(record.key)
+        else:
+            for b in merit.blockchain.height - 5 ..< merit.blockchain.height:
+                for record in merit.blockchain[b].records:
+                    verifiers.add(record.key)
+    except IndexError as e:
+        doAssert(false, "Couldn't grab a block when reloading the Lattice: " & e.msg)
     verifiers = verifiers.deduplicate()
 
     #Iterate over every Verifier.
@@ -193,164 +227,256 @@ proc newLattice*(
         #Grab their epoch tip from the Merit database.
         var tip: int
         try:
-            tip = db.get("merit_" & verifier & "_epoch").fromBinary()
-        except:
+            tip = db.get("lattice_" & verifier.toString() & "_epoch").fromBinary()
+        except DBReadError:
             tip = 0
 
         #Load every verification.
-        for v in tip ..< int(verifications[verifier].height):
-            discard result.verify(merit, verifications[verifier][v], false)
+        for v in tip ..< verifications[verifier].height:
+            try:
+                result.verify(merit, verifications[verifier][v], false)
+            except ValueError as e:
+                doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
+            except IndexError as e:
+                doAssert(false, "Reloaded a Verification twice, which is likely a false positive: " & e.msg)
 
 #Add a Entry to the Lattice.
 proc add*(
-    lattice: Lattice,
+    lattice: var Lattice,
     entry: Entry,
     mintOverride: bool = false
-): bool {.raises: [ValueError, BLSError, SodiumError, LMDBError].} =
+) {.forceCheck: [
+    ValueError,
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError,
+    BLSError,
+    DataExists
+].} =
     #Make sure the sender is only minter when mintOverride is true.
     if (
         (entry.sender == "minter") and
         (not mintOverride)
     ):
-        return false
+        raise newException(ValueError, "Adding an Entry to minter without mintOverride being true.")
 
     #Get the Account.
-    var account: Account = lattice[entry.sender]
+    var account: Account
+    try:
+        account = lattice[entry.sender]
+    except AddressError as e:
+        fcRaise e
 
-    case entry.descendant:
-        of EntryType.Mint:
-            #Add the casted entry.
-            result = account.add(cast[Mint](entry))
+    try:
+        case entry.descendant:
+            of EntryType.Mint:
+                #Add the casted entry.
+                account.add(cast[Mint](entry))
 
-        of EntryType.Claim:
-            #Cast it to a claim.
-            var claim: Claim = cast[Claim](entry)
+            of EntryType.Claim:
+                #Cast it to a claim.
+                var claim: Claim = cast[Claim](entry)
 
-            #Add the casted entry (and the Mint it's trying to claim).
-            result = account.add(
-                claim,
-                cast[Mint](lattice["minter"][claim.mintNonce])
-            )
+                #Add the casted entry (and the Mint it's trying to claim).
+                account.add(
+                    claim,
+                    cast[Mint](lattice["minter"][claim.mintNonce])
+                )
 
-        of EntryType.Send:
-            #Cast the Entry.
-            var send: Send = cast[Send](entry)
+            of EntryType.Send:
+                #Cast the Entry.
+                var send: Send = cast[Send](entry)
 
-            #Add it.
-            result = account.add(
-                #Send Entry.
-                send,
-                #Transaction Difficulty.
-                lattice.difficulties.transaction
-            )
+                #Add it.
+                account.add(
+                    #Send Entry.
+                    send,
+                    #Send Difficulty.
+                    lattice.difficulties.send
+                )
 
-        of EntryType.Receive:
-            var recv: Receive = cast[Receive](entry)
+            of EntryType.Receive:
+                var recv: Receive = cast[Receive](entry)
 
-            result = account.add(
-                #Receive Entry.
-                recv,
-                #Supposed Send Entry.
-                lattice[
-                    recv.index
-                ]
-            )
+                account.add(
+                    #Receive Entry.
+                    recv,
+                    #Supposed Send Entry.
+                    lattice[
+                        recv.index
+                    ]
+                )
 
-        of EntryType.Data:
-            var data: Data = cast[Data](entry)
+            of EntryType.Data:
+                var data: Data = cast[Data](entry)
 
-            result = account.add(
-                #Data Entry.
-                data,
-                #Data Difficulty.
-                lattice.difficulties.data
-            )
-
-    #If that didn't work, return.
-    if not result:
-        return
+                account.add(
+                    #Data Entry.
+                    data,
+                    #Data Difficulty.
+                    lattice.difficulties.data
+                )
+    except ValueError as e:
+        fcRaise e
+    except IndexError as e:
+        fcRaise e
+    except GapError as e:
+        fcRaise e
+    except AddressError as e:
+        fcRaise e
+    except EdPublicKeyError as e:
+        fcRaise e
+    except BLSError as e:
+        fcRaise e
+    except DataExists as e:
+        fcRaise e
 
     #If this isn't a Mint, add the Entry to the lookup table.
     if entry.descendant != EntryType.Mint:
         lattice.addHash(
             entry.hash,
-            newIndex(
+            newLatticeIndex(
                 entry.sender,
                 entry.nonce
             )
         )
 
 proc mint*(
-    lattice: Lattice,
-    key: string,
+    lattice: var Lattice,
+    key: BLSPublicKey,
     amount: BN
-): uint {.raises: [
+): int {.forceCheck: [
     ValueError,
-    MintError,
-    BLSError,
-    SodiumError,
-    LMDBError,
-    FinalAttributeError
+    IndexError,
+    GapError,
+    AddressError,
+    EdPublicKeyError
 ].} =
     #Store the height as the result.
-    result = lattice["minter"].height
+    try:
+        result = lattice["minter"].height
+    except AddressError:
+        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
 
     #Create the Mint Entry.
-    var mint: Mint = newMint(
-        key,
-        amount,
-        result
-    )
+    var mint: Mint
+    try:
+        mint = newMint(
+            key,
+            amount,
+            result
+        )
+    except ValueError as e:
+        fcRaise e
 
     #Add it to the Lattice.
-    if not lattice.add(mint, true):
-        raise newException(MintError, "Couldn't add the Mint Entry to the Lattice.")
+    try:
+        lattice.add(mint, true)
+    except ValueError as e:
+        fcRaise e
+    except IndexError as e:
+        fcRaise e
+    except GapError as e:
+        fcRaise e
+    except AddressError as e:
+        fcRaise e
+    except EdPublicKeyError as e:
+        fcRaise e
+    except BLSError as e:
+        doAssert(false, "Adding a Mint threw a BLSError, which it should never do: " & e.msg)
+    except DataExists as e:
+        doAssert(false, "Adding a new Mint failed because of a DataExists: " & e.msg)
 
-    #Save the minter's new height to the DB.
-    lattice.db.put("lattice_minter", lattice["minter"].height.toBinary())
+    try:
+        #Save the minter's new height to the DB.
+        lattice.db.put("lattice_minter", lattice["minter"].height.toBinary())
 
-    #Save the hash to the DB.
-    lattice.db.put("lattice_minter_" & mint.nonce.toBinary(), mint.hash.toString())
+        #Save the hash to the DB.
+        lattice.db.put("lattice_minter_" & mint.nonce.toBinary(), mint.hash.toString())
 
-    #Update the minter's confirmed field.
-    lattice["minter"].confirmed = lattice["minter"].height
-    lattice.db.put("lattice_minter_confirmed", lattice["minter"].confirmed.toBinary())
+        #Update the minter's confirmed field.
+        lattice["minter"].confirmed = lattice["minter"].height
+        lattice.db.put("lattice_minter_confirmed", lattice["minter"].confirmed.toBinary())
+    except AddressError:
+        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
+    except DBWriteError as e:
+        doAssert(false, "Couldn't write the minter's new height/confirmed and the latest mint's hash to the database: " & e.msg)
 
     #Clear the minter's cache.
-    lattice["minter"].entries.delete(0)
+    try:
+        lattice["minter"].entries.delete(0)
+    except AddressError:
+        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
 
-#Remove every hash in this Epoch from the cache/RAM, updating confirmed.
+#Remove every hash in this Epoch from the cache/RAM, updating confirmed and the amount of Verifications to reload.
 proc archive*(
-    lattice: Lattice,
+    lattice: var Lattice,
     epoch: Epoch
-) {.raises: [ValueError, LMDBError].} =
-    for hash in epoch.keys():
+) {.forceCheck: [].} =
+    for hash in epoch.hashes.keys():
         #Grab the Index for this hash.
-        var index: Index
+        var index: LatticeIndex
         try:
             index = lattice.lookup[hash]
         #If we couldn't grab it, it's because we're handling hashes out of order and already handled this one.
-        except:
-            continue
+        except KeyError:
+                continue
 
         #If this index points to a newer Entry than the previously newest Entry out of Epochs...
-        if index.nonce >= lattice[index.key].confirmed:
+        var confirmed: int
+        try:
+            confirmed = lattice[index.address].confirmed
+        except AddressError as e:
+            doAssert(false, "Trying to access the confirmed of an Account we're archiving, yet the Lattice just tried creating the account and detected it as invalid: " & e.msg)
+        if index.nonce >= confirmed:
             #Handle all previous Entries, if we're going out of order.
-            while (
-                (lattice[index.key].entries.len > 0) and
-                (lattice[index.key].entries[0][0].nonce <= index.nonce)
-            ):
-                #Remove the hashes of all Entries at this position from the lookup/verifications table.
-                for e in lattice[index.key].entries[0]:
-                    lattice.rmHash(e.hash.toString())
+            try:
+                while (
+                    (lattice[index.address].entries.len > 0) and
+                    (lattice[index.address].entries[0][0].nonce <= index.nonce)
+                ):
+                    #Remove the hashes of all Entries at this position from the lookup/verifications table.
+                    try:
+                        for e in lattice[index.address].entries[0]:
+                            lattice.rmHash(e.hash)
+                    except AddressError as e:
+                        doAssert(false, "Trying to clear the cache of an Account we're archiving, yet the Lattice just tried creating the account and detected it as invalid: " & e.msg)
+                    except ValueError as e:
+                        doAssert(false, "Couldn't access the first Entry on the Account because there's multiple Entries with none confirmed: " & e.msg)
 
-                #Save the verified Entry's hash to the DB under SENDER_NONCE.
-                lattice.db.put("lattice_" & lattice[index].sender & "_" & lattice[index.key].entries[0][0].nonce.toBinary(), lattice[index.key][0].hash.toString())
+                    #Save the verified Entry's hash to the DB under SENDER_NONCE.
+                    try:
+                        lattice.db.put("lattice_" & lattice[index].sender & "_" & lattice[index.address].entries[0][0].nonce.toBinary(), lattice[index.address][0].hash.toString())
+                    except ValueError as e:
+                        doAssert(false, "Couldn't access the first Entry on the Account because there's multiple Entries with none confirmed: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Couldn't access the first Entry on the Account, despite confirming it had one: " & e.msg)
+                    except AddressError as e:
+                        doAssert(false, "Trying to save the hash of a confirmed Entry to its index, yet the Lattice just tried creating the Account and detected as invalid: " & e.msg)
+                    except DBWriteError as e:
+                        doAssert(false, "Couldn't write the confirmed Entry's hash to its index: " & e.msg)
 
-                #Clear these Entries at this position.
-                lattice[index.key].entries.delete(0)
+                    #Clear these Entries at this position.
+                    lattice[index.address].entries.delete(0)
 
-            #Update confirmed.
-            lattice[index.key].confirmed = index.nonce + 1
-            #Save the new confirmed to the DB.
-            lattice.db.put("lattice_" & index.key & "_confirmed", lattice[index.key].confirmed.toBinary())
+                #Update confirmed.
+                lattice[index.address].confirmed = index.nonce + 1
+                #Save the new confirmed to the DB.
+                try:
+                    lattice.db.put("lattice_" & index.address & "_confirmed", lattice[index.address].confirmed.toBinary())
+                except AddressError as e:
+                    doAssert(false, "Trying to save the confirmed of an Account that the Lattice just tried creating and detected it as invalid: " & e.msg)
+                except DBWriteError as e:
+                    doAssert(false, "Couldn't write the updated confirmed to the database: " & e.msg)
+            except AddressError as e:
+                doAssert(false, "Trying to access the entries of an Account we're archiving, yet the Lattice just tried creating the account and detected it as invalid: " & e.msg)
+
+    #Save the records to lattice_VERIFIER_epoch so we can reload Verifications.
+    #Epoch, in the Merit DB, means the record shifted 10+ Epochs ago.
+    #Here, it means the record shifted 5+ Epochs ago.
+    for record in epoch.records:
+        try:
+            lattice.db.put("lattice_" & record.key.toString() & "_epoch", (record.nonce + 1).toBinary())
+        except DBWriteError as e:
+            doAssert(false, "Couldn't write a shifted record to the database: " & e.msg)

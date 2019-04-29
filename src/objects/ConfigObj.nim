@@ -2,15 +2,15 @@ discard """
 These are the config options for the node, which are sourced from three places.
 First. there's a set of default paramters.
 Second, there's a `settings.json` file.
-Finally, there's CLI options.
+Finally, there are CLI options.
 CLI options will override options from the settings file which will override the default paramters.
 """
 
 #Errors lib.
 import ../lib/Errors
 
-#BLS lib.
-import ../lib/BLS
+#Utils lib.
+import ../lib/Util
 
 #MinerWallet lib.
 import ../Wallet/MinerWallet
@@ -18,83 +18,152 @@ import ../Wallet/MinerWallet
 #OS standard lib.
 import os
 
-#String utils standard lib.
-import strutils
-
 #JSON standard lib.
 import json
 
-type Config* = ref object of RootObj
+type Config* = object
+    #Data Directory.
+    dataDir*: string
     #DB Path.
     db*: string
 
     #Port for our server to listen on.
-    tcpPort*: uint
+    tcpPort*: int
     #Port for the RPC to listen on.
-    rpcPort*: uint
+    rpcPort*: int
 
     #MinerWallet to verify transactions with.
     miner*: MinerWallet
 
-#Returns if the key exists, after checking the value's type.
-proc check(json: JSONNode, key: string, kind: JSONNodeKind): bool {.raises: [ValueError].} =
-    result = false
-
+#Returns the key if it exists and matches the passed type.
+func get(
+    json: JSONNode,
+    key: string,
+    kind: JSONNodeKind
+): JSONNode {.forceCheck: [
+    ValueError,
+    IndexError
+].} =
     if json.hasKey(key):
-        if json[key].kind != kind:
-            raise newException(ValueError, "Invalid `" & key & "` setting in the settings file.")
-        return true
+        try:
+            if json[key].kind != kind:
+                raise newException(ValueError, "Invalid `" & key & "` type in the settings file.")
+            return json[key]
+        except KeyError as e:
+            doAssert(false, "Couldn't get a JSON field despite confirming it exists: " & e.msg)
+    raise newException(IndexError, "Key is not present in this JSON.")
+
 
 #Constructor.
-proc newConfig*(): Config {.raises: [ValueError, IndexError, BLSError].} =
-    #Create the config.
+proc newConfig*(): Config {.forceCheck: [].} =
+    #Create the config with the default options.
     result = Config(
-        db: "./data/db",
+        dataDir: "./data",
+        db: "db",
         tcpPort: 5132,
-        rpcPort: 5133,
-        miner: nil
+        rpcPort: 5133
     )
 
-    #If the settings file exists...
-    if fileExists("./data/settings.json"):
-        #Parse it.
-        var json: JSONNode
+    #Check if the data directory was overriden via the CLI.
+    #First, confirm the amount of CLI arguments.
+    if paramCount() mod 2 != 0:
+        doAssert(false, "Invalid amount of arguments passed via the CLI.")
+
+    #Look for the --dataDir switch.
+    if paramCount() > 0:
         try:
-            json = parseJSON(readFile("./data/settings.json"))
-        except:
-            raise newException(ValueError, "Invalid settings file.")
+            for i in countup(1, paramCount(), 2):
+                if paramStr(i) == "--dataDir":
+                    result.dataDir = paramStr(i + 1)
+        except ValueError as e:
+            doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
+        except IndexError as e:
+            doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
 
-        #Read its settings.
-        if json.check("db", JString):
-            result.db = json["db"].getStr()
+    #If the settings file exists...
+    if fileExists(result.dataDir / "settings.json"):
+        #Parse it.
+        var
+            settings: string
+            json: JSONNode
+        try:
+            settings = readFile(result.dataDir / "settings.json")
+        except Exception as e:
+            doAssert(false, "Couldn't read from `" & (result.dataDir / "settings.json") & "` despite it existing: " & e.msg)
+        try:
+            json = parseJSON(settings)
+        except Exception as e:
+            doAssert(false, "Couldn't parse `" & (result.dataDir / "settings.json") & "` despite it existing: " & e.msg)
 
-        if json.check("tcpPort", JInt):
-            result.tcpPort = uint(json["tcpPort"].getInt())
+        #Handle the settings.
+        try:
+            result.db = json.get("db", JString).getStr()
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
 
-        if json.check("rpcPort", JInt):
-            result.rpcPort = uint(json["rpcPort"].getInt())
+        try:
+            result.tcpPort = json.get("tcpPort", JInt).getInt()
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
 
-        if json.check("miner", JString):
-            result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(json["miner"].getStr()))
+        try:
+            result.rpcPort = json.get("rpcPort", JInt).getInt()
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
+
+        try:
+            result.miner = newMinerWallet(
+                newBLSPrivateKeyFromBytes(
+                    json.get("miner", JString).getStr()
+                )
+            )
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
+        except BLSError as e:
+            doAssert(false, "Couldn't create a MinerWallet from the value in `" & (result.dataDir / "settings.json") & "`: " & e.msg)
 
     #If there are params...
     if paramCount() > 0:
-        #Make sure there's an even amount of params.
-        if paramCount() mod 2 != 0:
-            raise newException(ValueError, "Invalid amount of arguments.")
-
         #Iterate over each param.
-        for i in countup(1, paramCount(), 2):
-            #Switch based off the param.
-            case paramStr(i):
-                of "--db":
-                    result.db = paramStr(i + 1)
+        try:
+            for i in countup(1, paramCount(), 2):
+                #Switch based off the param.
+                case paramStr(i):
+                    of "--db":
+                        result.db = paramStr(i + 1)
 
-                of "--tcpPort":
-                    result.tcpPort = parseUInt(paramStr(i + 1))
+                    of "--tcpPort":
+                        result.tcpPort = parseInt(paramStr(i + 1))
 
-                of "--rpcPort":
-                    result.rpcPort = parseUInt(paramStr(i + 1))
+                    of "--rpcPort":
+                        result.rpcPort = parseInt(paramStr(i + 1))
 
-                of "--miner":
-                    result.miner = newMinerWallet(newBLSPrivateKeyFromBytes(paramStr(i + 1)))
+                    of "--miner":
+                        try:
+                            result.miner = newMinerWallet(
+                                newBLSPrivateKeyFromBytes(
+                                    paramStr(i + 1)
+                                )
+                            )
+                        except BLSError as e:
+                            doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
+        except ValueError as e:
+            doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
+        except IndexError as e:
+            doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
+
+    #Make sure the data directory exists.
+    try:
+        discard existsOrCreateDir(result.dataDir)
+    except OSError as e:
+        doAssert(false, "Couldn't create the data directory due to an OSError: " & e.msg)
+    except IOError as e:
+        doAssert(false, "Couldn't create the data directory due to an IOError: " & e.msg)

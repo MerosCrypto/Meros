@@ -1,7 +1,10 @@
 #Serialize Data Test.
 
-#Base lib.
-import ../../../../src/lib/Base
+#Util lib.
+import ../../../../src/lib/Util
+
+#BN/Hex lib.
+import ../../../../src/lib/Hex
 
 #Hash lib.
 import ../../../../src/lib/Hash
@@ -9,16 +12,15 @@ import ../../../../src/lib/Hash
 #Wallet lib.
 import ../../../../src/Wallet/Wallet
 
-#Entry object and the Data lib.
+#Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
+
+#Data lib.
 import ../../../../src/Database/Lattice/Data
 
-#Serialize lib.
+#Serialization libs.
 import ../../../../src/Network/Serialize/Lattice/SerializeData
 import ../../../../src/Network/Serialize/Lattice/ParseData
-
-#String utils standard lib.
-import strutils
 
 #Test data.
 var tests: seq[string] = @[
@@ -40,7 +42,7 @@ var tests: seq[string] = @[
     "Another phrase.",
     "Yet another phrase.",
     "This is 32 characters long.     ",
-    " This is 255 characters long.   ".repeat(8).substr(1),
+    "".pad(8, " This is 255 characters long.   ").substr(1),
     "This is the 20th Test because I wanted a nice number."
 ]
 
@@ -60,7 +62,7 @@ for i in 1 .. 20:
     #Sign it.
     wallet.sign(data)
     #Mine the Data.
-    data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
+    data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBNFromHex())
 
     #Serialize it and parse it back.
     var dataParsed: Data = data.serialize().parseData()

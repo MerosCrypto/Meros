@@ -9,19 +9,16 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Numerical libs.
-import BN
-import ../../../../src/lib/Base
-
-#BLS and MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
 
-#VerifierIndex and Miners object.
-import ../../../../src/Database/Merit/objects/VerifierIndexObj
+#VerifierRecord object.
+import ../../../../src/Database/common/objects/VerifierRecordObj
+
+#Miners object.
 import ../../../../src/Database/Merit/objects/MinersObj
 
 #Difficulty, Block, and Blockchain libs.
@@ -35,11 +32,11 @@ import ../../../../src/Database/Merit/Epochs
 #Merit Testing functions.
 import ../TestMerit
 
+#BN lib.
+import BN
+
 #Tables standard lib.
 import tables
-
-#Finals lib.
-import finals
 
 proc test(blocks: int) =
     echo "Testing Epoch shifting and DB interactions with " & $blocks & " blocks."
@@ -65,23 +62,25 @@ proc test(blocks: int) =
         #MinerWallets.
         wallets: seq[MinerWallet]
         #Miners we're mining to.
-        miners: Miners = @[]
+        miners: Miners
         #Hashes we're verifying.
         hashes: seq[seq[Hash[384]]] = @[]
         #Table of hashes -> verifiers.
         verified: Table[string, seq[BLSPublicKey]] = initTable[string, seq[BLSPublicKey]]()
-        #VerifierIndexes.
-        indexes: seq[VerifierIndex]
-        #Seq of the aggregate signatures for each verifier.
-        aggregates: seq[BLSSignature]
+        #VerifierRecords.
+        records: seq[seq[VerifierRecord]] = @[]
         #Block we're mining.
         mining: Block
         #Epoch we popped.
         epoch: Epoch
 
-    #Add 5 blank seqs to hahes for the 5 blank Epochs we start with.
+    #Add 5 blank seqs to hashes for the 5 blank Epochs we start with.
     for i in 0 ..< 5:
         hashes.add(@[])
+
+    #Add 10 blank seqs to records.
+    for i in 0 ..< 10:
+        records.add(@[])
 
     #Mine blocks blocks.
     for i in 1 .. blocks:
@@ -91,14 +90,14 @@ proc test(blocks: int) =
         wallets.add(newMinerWallet())
 
         #Create the list of miners.
-        miners = @[]
+        miners = newMinersObj(@[])
         for m in 0 ..< wallets.len:
             #Give equal amounts to each miner
-            var amount: uint = uint(100 div i)
+            var amount: int = 100 div i
 
             #If this is the first miner, give them the remainder.
             if m == 0:
-                amount += uint(100 mod i)
+                amount += 100 mod i
 
             #Add the miner.
             miners.add(
@@ -121,7 +120,7 @@ proc test(blocks: int) =
         for hash in hashes[^1]:
             #Create the Verification.
             var verif: MemoryVerification = newMemoryVerificationObj(hash)
-            wallets[0].sign(verif, verifications[wallets[0].publicKey.toString()].height)
+            wallets[0].sign(verif, verifications[wallets[0].publicKey].height)
             verifications.add(verif)
 
             #Say this wallet verified this hash.
@@ -136,7 +135,7 @@ proc test(blocks: int) =
 
                 #Create the Verification.
                 var verif: MemoryVerification = newMemoryVerificationObj(hash)
-                wallets[w].sign(verif, verifications[wallets[w].publicKey.toString()].height)
+                wallets[w].sign(verif, verifications[wallets[w].publicKey].height)
                 verifications.add(verif)
 
                 #Say this wallet verified this hash.
@@ -151,15 +150,18 @@ proc test(blocks: int) =
 
                 #Create the Verification.
                 var verif: MemoryVerification = newMemoryVerificationObj(hash)
-                wallets[w].sign(verif, verifications[wallets[w].publicKey.toString()].height)
+                wallets[w].sign(verif, verifications[wallets[w].publicKey].height)
                 verifications.add(verif)
 
                 #Say this wallet verified this hash.
                 verified[hash.toString()].add(wallets[w].publicKey)
 
-        #Create the indexes.
-        indexes = @[]
-        for verifier in verifications.verifiers():
+        #Create the new records.
+        records.add(@[])
+        for wallet in wallets:
+            #Grab the Verifier.
+            var verifier: BLSPublicKey = wallet.publicKey
+
             #Skip over Verifiers with no Verifications, if any manage to exist.
             if verifications[verifier].height == 0:
                 continue
@@ -168,9 +170,9 @@ proc test(blocks: int) =
             if verifications[verifier].verifications.len == 0:
                 continue
 
-            #Since there are unarchived verifications, add the VerifierIndex.
-            var nonce: uint = verifications[verifier].height - 1
-            indexes.add(newVerifierIndex(
+            #Since there are unarchived verifications, add the VerifierRecord.
+            var nonce: int = verifications[verifier].height - 1
+            records[^1].add(newVerifierRecord(
                 verifier,
                 nonce,
                 verifications[verifier].calculateMerkle(nonce)
@@ -180,39 +182,42 @@ proc test(blocks: int) =
         mining = newTestBlock(
             nonce = i,
             last = blockchain.tip.header.hash,
-            indexes = indexes,
+            records = records[^1],
             miners = miners
         )
 
         #Mine it.
-        while not blockchain.difficulty.verifyDifficulty(mining):
+        while not blockchain.difficulty.verify(mining.header.hash):
             inc(mining)
 
         #Add it to the Blockchain.
         try:
-            if not blockchain.processBlock(mining):
-                raise newException(Exception, "")
-        except:
-            raise newException(ValueError, "Valid Block wasn't successfully added.")
+            blockchain.processBlock(mining)
+        except ValueError as e:
+            raise newException(ValueError, "Valid Block wasn't successfully added: " & e.msg)
 
-        #Shift the indexes onto the Epochs.
-        epoch = epochs.shift(verifications, indexes)
+        #Shift the records onto the Epochs.
+        epoch = epochs.shift(verifications, records[^1])
 
-        #Mark the indexes as archived.
-        verifications.archive(indexes)
+        #Mark the records as archived.
+        verifications.archive(records[^1])
 
         #Make sure the Epoch has the same hashes as we do.
-        for hash in epoch.keys():
+        for hash in epoch.hashes.keys():
             assert(hashes[^6].contains(hash.toHash(384)))
         for hash in hashes[^6]:
-            assert(epoch.hasKey(hash.toString()))
+            assert(epoch.hashes.hasKey(hash.toString()))
 
         #Make sure the Epoch has the same list of verifiers as we do.
         for hash in hashes[^6]:
-            for verifier in epoch[hash.toString()]:
+            for verifier in epoch.hashes[hash.toString()]:
                 assert(verified[hash.toString()].contains(verifier))
             for verifier in verified[hash.toString()]:
-                assert(epoch[hash.toString()].contains(verifier))
+                assert(epoch.hashes[hash.toString()].contains(verifier))
+
+        #Test that the saved records are accurate.
+        for record in records[^11]:
+            assert(db.get("merit_" & record.key.toString & "_epoch").fromBinary() == record.nonce)
 
     #Manually set Merit Holders because Epochs relies on the State to do that but we don't have one,
     var holders: string = ""
@@ -226,22 +231,26 @@ proc test(blocks: int) =
 
     echo "Testing the reloaded Epochs..."
 
-    #Shift 5 blank sets of indexes.
+    #Shift 5 blank sets of records.
     for i in 0 ..< 5:
         epoch = epochs.shift(verifications, @[])
 
         #Make sure the Epoch has the same hashes as we do.
-        for hash in epoch.keys():
+        for hash in epoch.hashes.keys():
             assert(hashes[^(5 - i)].contains(hash.toHash(384)))
         for hash in hashes[^(5 - i)]:
-            assert(epoch.hasKey(hash.toString()))
+            assert(epoch.hashes.hasKey(hash.toString()))
 
         #Make sure the Epoch has the same list of verifiers as we do.
         for hash in hashes[^(5 - i)]:
-            for verifier in epoch[hash.toString()]:
+            for verifier in epoch.hashes[hash.toString()]:
                 assert(verified[hash.toString()].contains(verifier))
             for verifier in verified[hash.toString()]:
-                assert(epoch[hash.toString()].contains(verifier))
+                assert(epoch.hashes[hash.toString()].contains(verifier))
+
+    #Test that the saved records are accurate.
+    for record in records[^6]:
+        assert(db.get("merit_" & record.key.toString() & "_epoch").fromBinary() == record.nonce)
 
 test(3)
 test(9)

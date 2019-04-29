@@ -3,9 +3,8 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Numerical libs.
-import BN
-import ../../../../src/lib/Base
+#BN/Raw lib.
+import ../../../../src/lib/Raw
 
 #Difficulty object.
 import ../../../../src/Database/Merit/objects/DifficultyObj
@@ -23,14 +22,14 @@ randomize(int(getTime()))
 #Test 20 serializations.
 for i in 1 .. 20:
     var
-        start: uint = uint(rand(70000))
-        endBlock: uint = uint(rand(70000))
+        start: int = rand(70000)
+        endBlock: int = rand(70000)
         difficultyStr: string = ""
         difficulty: Difficulty
 
     for _ in 0 ..< 48:
         difficultyStr &= char(rand(255))
-    difficulty = newDifficultyObj(start, endBlock, difficultyStr.toBN(256))
+    difficulty = newDifficultyObj(start, endBlock, difficultyStr.toBNFromRaw())
 
     echo "Testing Difficulty Serialization/Parsing, iteration " & $i & "."
 

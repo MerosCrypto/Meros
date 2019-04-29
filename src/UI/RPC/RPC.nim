@@ -25,153 +25,277 @@ import asyncnet
 #JSON standard lib.
 import json
 
+#Sequtils standared lib.
+import sequtils
+
 #Constructor.
 proc newRPC*(
     functions: GlobalFunctionBox,
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
-): RPC {.raises: [SocketError].} =
-    result = newRPCObject(
+): RPC {.forceCheck: [].} =
+    newRPCObj(
         functions,
         toRPC,
         toGUI
     )
 
 #Handle a message.
-proc handle*(
+proc handle(
     rpc: RPC,
     msg: JSONNode,
-    reply: proc (json: JSONNode)
-) {.async.} =
-    #Handle the data.
-    case msg["module"].getStr():
-        of "system":
-            await rpc.systemModule(msg, reply)
-        of "personal":
-            await rpc.personalModule(msg, reply)
-        of "verifications":
-            await rpc.verificationsModule(msg, reply)
-        of "merit":
-            await rpc.meritModule(msg, reply)
-        of "lattice":
-            await rpc.latticeModule(msg, reply)
-        of "network":
-            await rpc.networkModule(msg, reply)
-        else:
-            reply(
-                %* {
-                    "error": "Unrecognized module."
-                }
-            )
+    reply: proc (
+        json: JSONNode
+    ) {.raises: [].}
+) {.forceCheck: [], async.} =
+    #Switch based off the moduke.
+    var moduleStr: string
+    try:
+        moduleStr = msg["module"].getStr()
+    except KeyError:
+        reply(%* {
+            "error": "No module specified."
+        })
+        return
 
-#Start up the RPC (Channels; for the GUI).
-proc start*(rpc: RPC) {.async.} =
-    #Define the data outside of the loop.
-    var data: tuple[dataAvailable: bool, msg: JSONNode]
+    try:
+        case moduleStr:
+            of "system":
+                await rpc.system(msg, reply)
+            of "personal":
+                await rpc.personal(msg, reply)
+            of "verifications":
+                await rpc.verifications(msg, reply)
+            of "merit":
+                await rpc.merit(msg, reply)
+            of "lattice":
+                await rpc.lattice(msg, reply)
+            of "network":
+                await rpc.network(msg, reply)
+            else:
+                reply(
+                    %* {
+                        "error": "Unrecognized module."
+                    }
+                )
+    except Exception as e:
+        doAssert(false, "An RPC module/reply threw an Exception despite not naturally throwing anything: " & e.msg)
 
+#Start up the RPC's connection to the GUI.
+proc start*(
+    rpc: RPC
+) {.forceCheck: [], async.} =
     while rpc.listening:
         #Allow other async code to execute.
-        await sleepAsync(1)
+        try:
+            await sleepAsync(1)
+        except Exception as e:
+            doAssert(false, "Couldn't sleep for 1ms before checking the GUI->RPC channel for data: " & e.msg)
 
-        #Try to get a message from the channel.
-        data = rpc.toRPC[].tryRecv()
+        #Try to get a message from the GUI.
+        var data: tuple[
+            dataAvailable: bool,
+            msg: JSONNode
+        ]
+        try:
+            data = rpc.toRPC[].tryRecv()
+        except ValueError as e:
+            doAssert(false, "Couldn't read from the channel using tryRecv due to a ValueError: " & e.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't read from the channel using tryRecv due to an Exception: " & e.msg)
         #If there's no data, continue.
         if not data.dataAvailable:
             continue
 
         #Handle the data.
-        asyncCheck rpc.handle(
-            data.msg,
-            proc (json: JSONNode) {.raises: [ChannelError].} =
-                try:
-                    rpc.toGUI[].send(json)
-                except:
-                    raise newException(ChannelError, "Couldn't send data to the GUI.")
-        )
+        try:
+            asyncCheck rpc.handle(
+                data.msg,
+                proc (
+                    jsonArg: JSONNode
+                ) {.forceCheck: [].} =
+                    #Extract the JSON argument.
+                    var json: JSONNode = jsonArg
+
+                    #If json is nil...
+                    if json.isNil:
+                        #Set a default response of success.
+                        json = %* {
+                            "success": true
+                        }
+
+                    try:
+                        rpc.toGUI[].send(json)
+                    except DeadThreadError as e:
+                        doAssert(false, "Couldn't send data to the GUI due to a DeadThreadError: " & e.msg)
+                    except Exception as e:
+                        doAssert(false, "Couldn't send data to the GUI due to an Exception: " & e.msg)
+            )
+        except Exception as e:
+            doAssert(false, "rpc.handle threw an Exception despite not naturally throwing anything: " & e.msg)
 
 #Handle a Socket Client.
-proc handle*(rpc: RPC, client: AsyncSocket) {.async.} =
-    #Define new vars for the client and data.
-    var
-        data: string
-        json: JSONNode
-
+proc handle*(
+    rpc: RPC,
+    client: RPCSocketClient
+) {.forceCheck: [], async.} =
     #Handle the client.
-    while not client.isClosed():
+    while not client.socket.isClosed():
         #Read in a line.
-        data = await client.recvLine()
+        var data: string
+        try:
+            data = await client.socket.recvLine()
+        except Exception:
+            discard
+
         #If the line length is 0, the client is invalid. Stop handling it.
         if data.len == 0:
+            try:
+                client.socket.close()
+            except Exception:
+                discard
+            for i in 0 ..< rpc.clients.len:
+                if rpc.clients[i].id == client.id:
+                    rpc.clients.delete(i)
             break
 
         #Parse the JSON.
+        var json: JSONNode
         try:
             json = parseJSON(data)
-        except:
-            json = %* {
-                "error": "Invalid RPC payload."
-            }
-            toUgly(data, json)
-            asyncCheck client.send(data & "\r\n")
+        except Exception:
+            try:
+                asyncCheck client.socket.send(
+                    $(%* {
+                        "error": "Invalid RPC payload."
+                    }) & "\r\n"
+                )
+            except Exception:
+                try:
+                    client.socket.close()
+                except Exception:
+                    discard
+                for i in 0 ..< rpc.clients.len:
+                    if rpc.clients[i].id == client.id:
+                        rpc.clients.delete(i)
+                break
             continue
 
         #Handle the data.
-        asyncCheck rpc.handle(
-            json,
-            proc (resArg: JSONNode) {.raises: [KeyError, AsyncError].} =
-                #Declare a var to send back.
-                var res: JSONNode
+        try:
+            asyncCheck rpc.handle(
+                json,
+                proc (
+                    resArg: JSONNode
+                ) {.forceCheck: [].} =
+                    #Declare a var to send back.
+                    var res: string
+                    try:
+                        #If resArg is nil...
+                        if resArg.isNil:
+                            #Set a default response of success.
+                            res = $(%* {
+                                "success": true
+                            })
+                        #Else, use the resArg.
+                        else:
+                            res = $resArg
+                    except KeyError as e:
+                        doAssert(false, "Couldn't serialize a JSON response: " & e.msg)
 
-                #If resArg is nil...
-                if resArg == nil:
-                    #Set a default response of success.
-                    res = %* {
-                        "success": true
-                    }
-                #Else, use the resArg.
-                else:
-                    res = resArg
+                    #Send it.
+                    try:
+                        asyncCheck client.socket.send(res & "\r\n")
+                    except Exception as e:
+                        echo "Couldn't send `" & res & "` to a RPC client: " & e.msg
+                        try:
+                            client.socket.close()
+                        except Exception:
+                            discard
+                        for i in 0 ..< rpc.clients.len:
+                            if rpc.clients[i].id == client.id:
+                                rpc.clients.delete(i)
+            )
+        except Exception as e:
+            doAssert(false, "Handle(JSONNode) threw an Exception despite not naturally throwing anything: " & e.msg)
 
-                #Convert the returned JSON to a string.
-                var resStr: string
-                toUgly(resStr, res)
 
-                #Send it.
-                try:
-                    asyncCheck client.send(resStr & "\r\n")
-                except:
-                    raise newException(AsyncError, "Couldn't send to a RPC Client.")
-        )
+#Start up the RPC's server socket.
+proc listen*(
+    rpc: RPC,
+    config: Config
+) {.forceCheck: [], async.} =
+    #Create the server socket.
+    try:
+        rpc.server = newAsyncSocket()
+    except FinalAttributeError as e:
+        doAssert(false, "Server is already listening: " & e.msg)
+    except ValueError as e:
+        doAssert(false, "Failed to create the RPC's server socket due to a ValueError: " & e.msg)
+    except IOSelectorsException as e:
+        doAssert(false, "Failed to create the RPC's server socket due to an IOSelectorsException: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Failed to create the RPC's server socket due to an Exception: " & e.msg)
 
-#Start up the RPC (Socket; for remote connections).
-proc listen*(rpc: RPC, config: Config) {.async.} =
+    try:
+        rpc.server.setSockOpt(OptReuseAddr, true)
+        rpc.server.bindAddr(Port(config.rpcPort))
+    except OSError as e:
+        doAssert(false, "Failed to set the RPC's server socket options and bind it due to an OSError: " & e.msg)
+    except ValueError as e:
+        doAssert(false, "Failed to bind the RPC's server socket due to a ValueError: " & e.msg)
+
     #Start listening.
-    rpc.server.setSockOpt(OptReuseAddr, true)
-    rpc.server.bindAddr(Port(config.rpcPort))
-    rpc.server.listen()
+    try:
+        rpc.server.listen()
+    except OSError as e:
+        doAssert(false, "Failed to start listening on the RPC's server socket due to an OSError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Failed to start listening on the RPC's server socket due to an Exception: " & e.msg)
 
     #Accept new connections infinitely.
+    var id: int = 0
     while (rpc.listening) and (not rpc.server.isClosed()):
-        #This is in a try/catch since ending the server while accepting a new Client will throw an Exception.
+        #Add the Client to the seq.
+        #Receive the new client.
+        var client: AsyncSocket
         try:
-            #Accept a new client.
-            rpc.clients.add(await rpc.server.accept())
-
-            #Handle it.
-            asyncCheck rpc.handle(rpc.clients[^1])
-        except:
+            client = await rpc.server.accept()
+        except Exception:
+            #This could happen by a crtical error, a closed server socket, or a bad client. We don't have enough info.
+            #In the first case, we should crash. In the second, break. #In the third, continue.
+            #If the socket is closed, continuuing will break. Therefore, a continue covers two/three cases and tries to keep going.
             continue
 
+        rpc.clients.add(
+            newRPCSocketClient(
+                id,
+                client
+            )
+        )
+        #Handle it.
+        try:
+            asyncCheck rpc.handle(rpc.clients[^1])
+        except Exception as e:
+            doAssert(false, "Handle(RPCSocketClient) threw an Exception despite not naturally throwing anything: " & e.msg)
+        #Increment the ID counter.
+        inc(id)
+
 #Shutdown.
-proc shutdown*(rpc: RPC) {.raises: [AsyncError].} =
+proc shutdown*(
+    rpc: RPC
+) {.forceCheck: [].} =
     #Set listening to false.
     rpc.listening = false
 
+    #Close the server socket.
     try:
-        #Close the server.
         rpc.server.close()
-        #Close each client.
-        for client in rpc.clients:
-            client.close()
-    except:
-        raise newException(AsyncError, "Couldn't close the RPC's server and client sockets.")
+    except Exception:
+        discard
+    #Close each client.
+    for client in rpc.clients:
+        try:
+            client.socket.close()
+        except Exception:
+            discard

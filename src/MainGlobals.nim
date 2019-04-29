@@ -33,13 +33,15 @@ var
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
     rpc {.threadvar.}: RPC    #RPC object.
 
-#Properly shutdown.
-functions.system.quit = proc () {.raises: [ChannelError, AsyncError, SocketError].} =
+#Function to safely shut down all elements of the node.
+functions.system.quit = proc () {.forceCheck: [].} =
     #Shutdown the GUI.
     try:
         fromMain.send("shutdown")
-    except:
-        raise newException(ChannelError, "Couldn't send shutdown to the GUI.")
+    except DeadThreadError as e:
+        echo "Couldn't shutdown the GUI due to a DeadThreadError: " & e.msg
+    except Exception as e:
+        echo "Couldn't shutdown the GUI due to an Exception: " & e.msg
 
     #Shutdown the RPC.
     rpc.shutdown()
@@ -48,7 +50,10 @@ functions.system.quit = proc () {.raises: [ChannelError, AsyncError, SocketError
     network.shutdown()
 
     #Shut down the DB.
-    db.close()
+    try:
+        db.close()
+    except DBError as e:
+        echo "Couldn't shutdown the DB: " & e.msg
 
     #Quit.
     quit(0)

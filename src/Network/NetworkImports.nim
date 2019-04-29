@@ -7,8 +7,11 @@ import ../lib/Util
 #Hash lib.
 import ../lib/Hash
 
-#BLS lib.
-import ../lib/BLS
+#MinerWallet lib.
+import ../Wallet/MinerWallet
+
+#VerifierRecord object.
+import ../Database/common/objects/VerifierRecordObj
 
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice
@@ -17,7 +20,7 @@ import ../Database/Lattice/Lattice
 import ../Database/Verifications/Verifications
 
 #Block lib.
-import ../Database/Merit/Block
+import ../Database/Merit/Block as BlockFile
 
 #Global Function Box object.
 import ../objects/GlobalFunctionBoxObj
@@ -57,11 +60,11 @@ import objects/NetworkLibFunctionBoxObj
 #Clients library.
 import Clients
 
+#Networking standard libs.
+import asyncdispatch, asyncnet
+
 #Seq utils standard lib.
 import sequtils
 
 #Tables standard lib.
 import tables
-
-#Networking standard libs.
-import asyncdispatch, asyncnet

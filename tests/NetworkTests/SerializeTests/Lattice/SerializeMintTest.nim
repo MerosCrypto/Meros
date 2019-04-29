@@ -3,23 +3,24 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Numerical libs.
-import BN
-import ../../../../src/lib/Base
-
 #Hash lib.
 import ../../../../src/lib/Hash
 
 #BLS lib.
-import ../../../../src/lib/BLS
+import ../../../../src/Wallet/MinerWallet
 
-#Entry object and the Mint lib.
+#Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
+
+#Mint lib.
 import ../../../../src/Database/Lattice/Mint
 
-#Serialize libs.
+#Serialization libs.
 import ../../../../src/Network/Serialize/Lattice/SerializeMint
 import ../../../../src/Network/Serialize/Lattice/ParseMint
+
+#BN lib.
+import BN
 
 #Random standard lib.
 import random
@@ -33,9 +34,9 @@ for i in 1 .. 20:
 
     #Mint (for a random amount).
     var mint: Mint = newMint(
-        newBLSPrivateKeyFromSeed(rand(150000).toBinary()).getPublicKey().toString(),
+        newBLSPrivateKeyFromSeed(rand(150000).toBinary()).getPublicKey(),
         newBN(rand(100000000)),
-        uint(rand(75000))
+        rand(75000)
     )
 
     #Serialize it and parse it back.

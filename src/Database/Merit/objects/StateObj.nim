@@ -4,8 +4,8 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSPublicKey).
+import ../../../Wallet/MinerWallet
 
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
@@ -18,7 +18,7 @@ import tables
 
 #State object.
 finalsd:
-    type State* = ref object of RootObj
+    type State* = object
         #DB.
         db: DatabaseFunctionBox
         #String of every holder.
@@ -27,50 +27,52 @@ finalsd:
         pending: seq[string]
 
         #Blocks until Merit is dead.
-        deadBlocks* {.final.}: uint
+        deadBlocks* {.final.}: Natural
         #Live Merit.
-        live: uint
+        live: Natural
         #Address -> Merit
-        holders: TableRef[string, uint]
+        holders: Table[string, int]
 
 #Constructor.
-proc newState*(
+proc newStateObj*(
     db: DatabaseFunctionBox,
-    deadBlocks: uint
-): State {.raises: [].} =
+    deadBlocks: Natural
+): State {.forceCheck: [].} =
     result = State(
         db: db,
         pending: @[],
 
         deadBlocks: deadBlocks,
         live: 0,
-        holders: newTable[string, uint]()
+        holders: initTable[string, int]()
     )
     result.ffinalizeDeadBlocks()
 
-    #Load the live Merit from the DB.
+    #Load the live Merit and the holders from the DB.
     try:
-        result.live = uint(result.db.get("merit_live").fromBinary())
-    #If the live merit doesn't exist, carry on.
-    except:
-        discard
-
-    #Load the state, if one exists.
-    try:
-        #Grab the Merit holders.
+        result.live = result.db.get("merit_live").fromBinary()
         result.holdersStr = result.db.get("merit_holders")
+    #If these don't exist, confirm we didn't load one but not the other.
+    except DBReadError:
+        if result.live != 0:
+            doAssert(false, "Loaded the amount of live Merit but not any holders from the database.")
 
-        for i in countup(0, result.holdersStr.len - 1, 48):
-            #Extract the holder.
-            var holder = result.holdersStr[i .. i + 47]
-
-            #Load their balance.
-            result.holders[holder] = uint(result.db.get("merit_" & holder).fromBinary())
-    except:
-        result.holdersStr = ""
+    #Handle each holder.
+    var holder: string
+    for i in countup(0, result.holdersStr.len - 1, 48):
+        #Extract the holder.
+        holder = result.holdersStr[i .. i + 47]
+        #Load their balance.
+        try:
+            result.holders[holder] = result.db.get("merit_" & holder).fromBinary()
+        except DBReadError as e:
+            doAssert(false, "Couldn't load a holder's state: " & e.msg)
 
 #Add a Holder to the State.
-proc add(state: State, key: string) {.raises: [].} =
+func add(
+    state: var State,
+    key: string
+) {.forceCheck: [].} =
     #Return if they are already in the state.
     if state.holders.hasKey(key):
         return
@@ -82,28 +84,39 @@ proc add(state: State, key: string) {.raises: [].} =
     state.holdersStr &= key
 
 #Getters.
-#Provides read only access to the holder string, which is also used to regenerate the Epochs.
-proc `holdersStr`*(state: State): string {.raises: [].} =
-    state.holdersStr
-
-proc `[]`*(state: State, key: string): uint {.raises: [KeyError].} =
+func `[]`*(
+    state: var State,
+    key: string
+): int {.forceCheck: [].} =
     #Add this holder to the State if they don't exist already.
     state.add(key)
 
     #Return their value.
-    result = state.holders[key]
+    try:
+        result = state.holders[key]
+    except KeyError as e:
+        doAssert(false, "State threw a KeyError when getting a value, despite calling add before attempting." & e.msg)
 
-proc `[]`*(state: State, key: BLSPublicKey): uint {.inline, raises: [KeyError].} =
+func `[]`*(
+    state: var State,
+    key: BLSPublicKey
+): int {.inline, forceCheck: [].} =
     state[key.toString()]
 
 #Return the amount of live Merit.
-proc `live`*(state: State): uint {.raises: [].} =
+func live*(
+    state: State
+): int {.inline, forceCheck: [].} =
     state.live
 
 #Setters.
-proc `[]=`*(state: State, key: string, value: uint) {.raises: [KeyError].} =
+func `[]=`*(
+    state: var State,
+    key: string,
+    value: Natural
+) {.forceCheck: [].} =
     #Get the previous value (uses the State `[]` so `add` is called).
-    var previous: uint = state[key]
+    var previous: int = state[key]
     #Set their new value.
     state.holders[key] = value
     #Update live accrodingly.
@@ -115,21 +128,31 @@ proc `[]=`*(state: State, key: string, value: uint) {.raises: [KeyError].} =
     #Mark them as pending to be saved.
     state.pending.add(key)
 
-proc `[]=`*(state: State, key: BLSPublicKey, value: uint) {.inline, raises: [KeyError].} =
+func `[]=`*(
+    state: var State,
+    key: BLSPublicKey,
+    value: Natural
+) {.inline, forceCheck: [].} =
     state[key.toString()] = value
 
 #Save the State to the DB.
-proc save*(state: State) {.raises: [KeyError, LMDBError].} =
-    #Iterate over every pending account.
-    for key in state.pending:
-        #Save the new balance to the DB.
-        state.db.put("merit_" & key, state.holders[key].toBinary())
+proc save*(
+    state: var State
+) {.forceCheck: [].} =
+    #Save the State
+    try:
+        #Iterate over every pending account.
+        for key in state.pending:
+            #Save the new balance to the DB.
+            state.db.put("merit_" & key, state[key].toBinary())
+        #Clear pending.
+        state.pending = @[]
 
-    #Clear pending.
-    state.pending = @[]
+        #Save the new Merit quantity.
+        state.db.put("merit_live", state.live.toBinary())
 
-    #Save the new Merit quantity.
-    state.db.put("merit_live", state.live.toBinary())
+        #Save the holdersStr.
+        state.db.put("merit_holders", state.holdersStr)
 
-    #Save the holdersStr.
-    state.db.put("merit_holders", state.holdersStr)
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save the State to the DB: " & e.msg)

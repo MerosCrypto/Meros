@@ -3,8 +3,8 @@
 #Wallet lib.
 import ../../../../src/Wallet/Wallet
 
-#Index object.
-import ../../../../src/Database/common/objects/IndexObj
+#LatticeIndex object.
+import ../../../../src/Database/common/objects/LatticeIndexObj
 
 #Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
@@ -12,7 +12,7 @@ import ../../../../src/Database/Lattice/objects/EntryObj
 #Receive lib.
 import ../../../../src/Database/Lattice/Receive
 
-#Serialize lib.
+#Serialization libs.
 import ../../../../src/Network/Serialize/Lattice/SerializeReceive
 import ../../../../src/Network/Serialize/Lattice/ParseReceive
 
@@ -29,7 +29,7 @@ for i in 1 .. 20:
 
     #Create the Receive.
     recv = newReceive(
-        newIndex(
+        newLatticeIndex(
             sender,
             0,
         ),
@@ -73,8 +73,8 @@ for i in 1 .. 20:
 
     #Test the Receive properties.
     assert(
-        recv.index.key == recvParsed.index.key,
-        "Input Address:\r\n" & recv.index.key & "\r\n" & recvParsed.index.key
+        recv.index.address == recvParsed.index.address,
+        "Input Address:\r\n" & recv.index.address & "\r\n" & recvParsed.index.address
     )
     assert(
         recv.index.nonce == recvParsed.index.nonce,

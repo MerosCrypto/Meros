@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
@@ -7,18 +10,18 @@ import ../../../Database/Merit/objects/MinersObj
 #Common serialization functions.
 import ../SerializeCommon
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib (for BLSPublicKey's toString).
+import ../../../Wallet/MinerWallet
 
 #Serialization function.
 func serialize*(
     miners: Miners
-): string {.raises: [].} =
+): string {.forceCheck: [].} =
     #Set the quantity.
-    result = $char(miners.len)
+    result = $char(miners.miners.len)
 
     #Add each miner.
-    for miner in 0 ..< miners.len:
+    for m in 0 ..< miners.miners.len:
         result &=
-            miners[miner].miner.toString() &
-            char(miners[miner].amount)
+            miners.miners[m].miner.toString() &
+            char(miners.miners[m].amount)

@@ -1,3 +1,6 @@
+#Errors lib.
+import ../../lib/Errors
+
 #Global Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
@@ -14,13 +17,13 @@ import finals
 import asyncnet
 
 finalsd:
-    type Network* = ref object of RootObj
+    type Network* = ref object
         #Network ID.
-        id* {.final.}: uint
+        id* {.final.}: int
         #Protocol version.
-        protocol* {.final.}: uint
+        protocol* {.final.}: int
         #Clients.
-        clients* {.final.}: Clients
+        clients*: Clients
         #Server.
         server* {.final.}: AsyncSocket
         #Network Function Box.
@@ -30,24 +33,20 @@ finalsd:
 
 #Constructor.
 func newNetworkObj*(
-    id: uint,
-    protocol: uint,
+    id: int,
+    protocol: int,
     clients: Clients,
-    server: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox,
     mainFunctions: GlobalFunctionBox
-): Network {.raises: [].} =
+): Network {.forceCheck: [].} =
     result = Network(
         id: id,
         protocol: protocol,
         clients: clients,
-        server: server,
         networkFunctions: networkFunctions,
         mainFunctions: mainFunctions
     )
     result.ffinalizeID()
     result.ffinalizeProtocol()
-    result.ffinalizeClients()
-    result.ffinalizeServer()
     result.ffinalizeNetworkFunctions()
     result.ffinalizeMainFunctions()

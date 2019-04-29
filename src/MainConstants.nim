@@ -12,15 +12,15 @@ const
         "MEROS_DEVELOPER_TESTNET_2"
     BLOCK_DIFFICULTY: string = #Blockchain difficulty at the start.
         "FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    BLOCK_TIME: uint = 600     #Block time in seconds.
-    LIVE_MERIT: uint = 1000    #Blocks before Merit dies.
+    BLOCK_TIME: int = 600      #Block time in seconds.
+    LIVE_MERIT: int = 1000     #Blocks before Merit dies.
 
     #Lattice constants.
-    TRANSACTION_DIFFICULTY: string = #Transaction difficulty at the start.
+    SEND_DIFFICULTY: string = #Send difficulty at the start.
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    DATA_DIFFICULTY: string =        #Data difficulty at the start.
+    DATA_DIFFICULTY: string = #Data difficulty at the start.
         "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
     #Network constants.
-    NETWORK_ID: uint = 0       #Network ID.
-    NETWORK_PROTOCOL: uint = 0 #Protocol version.
+    NETWORK_ID: int = 0       #Network ID.
+    NETWORK_PROTOCOL: int = 0 #Protocol version.

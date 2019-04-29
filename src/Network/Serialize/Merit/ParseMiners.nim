@@ -4,11 +4,8 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BLS lib.
-import ../../../lib/BLS
-
-#Address library.
-import ../../../Wallet/Address
+#MinerWallet lib (for BLSPublicKey).
+import ../../../Wallet/MinerWallet
 
 #Miners object.
 import ../../../Database/Merit/objects/MinersObj
@@ -19,14 +16,14 @@ import ../SerializeCommon
 #Parse function.
 proc parseMiners*(
     minersStr: string
-): Miners {.raises: [BLSError].} =
-    #Quantity | Address1 | Amount1 .. AddressN | AmountN
+): Miners {.forceCheck: [
+    BLSError
+].} =
+    #Quantity | BLS Key 1 | Amount 1 .. BLS Key N | Amount N
     var
         quantity: int = int(minersStr[0])
         minersSeq: seq[string]
-
-    #Init the result.
-    result = newSeq[Miner](quantity)
+        miners: seq[Miner] = newSeq[Miner](quantity)
 
     #Parse each Miner.
     for i in 0 ..< quantity:
@@ -37,7 +34,12 @@ proc parseMiners*(
                 BYTE_LEN
             )
 
-        result[i] = newMinerObj(
-            newBLSPublicKey(minersSeq[0]),
-            uint(minersSeq[1][0])
-        )
+        try:
+            miners[i] = newMinerObj(
+                newBLSPublicKey(minersSeq[0]),
+                int(minersSeq[1][0])
+            )
+        except BLSError as e:
+            fcRaise e
+
+    result = newMinersObj(miners)

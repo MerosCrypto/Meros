@@ -9,11 +9,13 @@ import BN
 import ../../../../src/lib/Hash
 
 #Merkle lib.
-import ../../../../src/lib/Merkle
+import ../../../../src/Database/common/Merkle
 
-#BLS and MinerWallet libs.
-import ../../../../src/lib/BLS
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
+
+#VerifierRecord object.
+import ../../../../src/Database/common/objects/VerifierRecordObj
 
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
@@ -45,8 +47,8 @@ var
     miner: MinerWallet = newMinerWallet()
     #MemoryVerification object.
     verif: MemoryVerification
-    #VerifierIndexes.
-    verifs: seq[VerifierIndex] = @[]
+    #VerifierRecords.
+    verifs: seq[VerifierRecord] = @[]
     #Rewards.
     rewards: Rewards
 
@@ -54,12 +56,12 @@ var
 state.processBlock(
     blockchain,
     newTestBlock(
-        miners = @[
+        miners = newMinersObj(@[
             newMinerObj(
                 miner.publicKey,
                 100
             )
-        ]
+        ])
     )
 )
 
@@ -68,11 +70,11 @@ verif = newMemoryVerificationObj(hash)
 miner.sign(verif, 0)
 #Add it the Verifications.
 verifications.add(verif)
-#Add a VerifierIndex.
-verifs.add(newVerifierIndex(
-    miner.publicKey.toString(),
+#Add a VerifierRecord.
+verifs.add(newVerifierRecord(
+    miner.publicKey,
     0,
-    newMerkle(hash.toString()).hash
+    newMerkle(hash).hash
 ))
 
 #Shift on the Verifications.

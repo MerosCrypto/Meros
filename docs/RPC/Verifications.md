@@ -3,7 +3,7 @@
 ### `getVerification`
 `getVerification` will fetch and return the hash of a specified verification. It takes in two arguments:
 - Verifier (string)
-- Nonce (int)
+- Nonce    (int)
 It returns:
 - `hash` (string)
 

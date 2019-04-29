@@ -7,31 +7,24 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#Wallet libraries.
-import ../../../Wallet/Address
+#Wallet lib.
 import ../../../Wallet/Wallet
 
-#Index, Entry, and Receive object.
-import ../../../Database/common/objects/IndexObj
+#LatticeIndex object,
+import ../../../Database/common/objects/LatticeIndexObj
+
+#Entry and Receive objects.
 import ../../../Database/Lattice/objects/EntryObj
 import ../../../Database/Lattice/objects/ReceiveObj
 
 #Serialize common functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
-#String utils standard lib.
-import strutils
-
 #Parse a Receive.
 proc parseReceive*(
     recvStr: string
-): Receive {.raises: [
-    ValueError,
-    SodiumError,
-    FinalAttributeError
+): Receive {.forceCheck: [
+    EdPublicKeyError
 ].} =
     var
         #Public Key | Nonce | Input Key | Input Nonce | Signature
@@ -42,34 +35,40 @@ proc parseReceive*(
             INT_LEN,
             SIGNATURE_LEN
         )
-        #Get the sender's Public Key.
-        sender: EdPublicKey = newEdPublicKey(recvSeq[0])
+        #Sender.
+        sender: string
         #Get the nonce.
-        nonce: uint = uint(recvSeq[1].fromBinary())
-        #Get the Input Address.
-        inputAddress: string = newAddress(recvSeq[2])
+        nonce: int = recvSeq[1].fromBinary()
+        #Input.
+        inputAddress: string
         #Get the input nonce.
-        inputNonce: uint = uint(recvSeq[3].fromBinary())
+        inputNonce: int = recvSeq[3].fromBinary()
         #Get the signature.
         signature: string = recvSeq[4]
 
+    try:
+        sender = newAddress(recvSeq[0])
+        inputAddress = newAddress(recvSeq[2])
+    except EdPublicKeyError as e:
+        fcRaise e
+
     #Create the Receive.
     result = newReceiveObj(
-        newIndex(
+        newLatticeIndex(
             inputAddress,
             inputNonce
         )
     )
 
-    #Set the sender.
-    result.sender = newAddress(sender)
-    #Set the nonce.
-    result.nonce = nonce
-    #Set the hash.
-    result.hash = Blake384(recvSeq.reserialize(1, 3))
+    try:
+        #Set the sender.
+        result.sender = sender
+        #Set the nonce.
+        result.nonce = nonce
 
-    #Verify the signature.
-    if not sender.verify(result.hash.toString(), signature):
-        raise newException(ValueError, "Received signature was invalid.")
-    #Set the signature.
-    result.signature = signature
+        #Set the hash.
+        result.hash = Blake384(recvSeq.reserialize(1, 3))
+        #Set the signature.
+        result.signature = signature
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when parsing a Receive: " & e.msg)

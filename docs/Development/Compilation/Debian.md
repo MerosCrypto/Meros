@@ -2,17 +2,29 @@
 
 ### Dependencies
 
-Meros requires Git, GCC/G++, Make (for LMDB), CMake (for BLS), Nim, Nimble, GMP, Chia's BLS library, LibSodium, and LMDB.
+Meros requires:
+- Git
+- GCC/G++
+- Make (for LMDB)
+- CMake (for BLS)
 
-```
-sudo apt-get install gcc g++ make cmake curl git libgmp3-dev libsodium-dev gtk+-3.0 at-spi2-core webkit2gtk-4.0
+- Nim devel
+- Nimble
+
+- GMP
+- Chia's BLS library
+- LibSodium
+- LMDB
+
+- To install the needed apt packages: `sudo apt-get install gcc g++ make cmake curl git libgmp3-dev gtk+-3.0 at-spi2-core webkit2gtk-4.0`
+- To install Nim/Nimble: ```
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
-choosenim 0.19.4
-nimble install BN mc_events https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals nimcrypto
+choosenim devel
 ```
-
-For instructions on setting up the BLS library, see https://github.com/MerosCrypto/mc_bls.
-For instructions on setting up the LMDB library, see https://github.com/MerosCrypto/mc_lmdb.
+- To install the Nimble packages: `nimble install BN https://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals nimcrypto`
+- For instructions on setting up BLS, see https://github.com/MerosCrypto/mc_bls.
+- For instructions on setting up LibSodium, see https://github.com/MerosCrypto/mc_ed25519.
+- For instructions on setting up LMDB, see https://github.com/MerosCrypto/mc_lmdb.
 
 ### Meros
 

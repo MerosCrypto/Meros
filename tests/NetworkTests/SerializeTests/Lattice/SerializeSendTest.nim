@@ -1,8 +1,7 @@
 #Serialize Send Test.
 
-#Numerical libs.
-import BN
-import ../../../../src/lib/Base
+#BN/Hex lib.
+import ../../../../src/lib/Hex
 
 #Hash lib.
 import ../../../../src/lib/Hash
@@ -10,11 +9,13 @@ import ../../../../src/lib/Hash
 #Wallet lib.
 import ../../../../src/Wallet/Wallet
 
-#Entry object and the Send lib.
+#Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
+
+#Send lib.
 import ../../../../src/Database/Lattice/Send
 
-#Serialize lib.
+#Serialization libs.
 import ../../../../src/Network/Serialize/Lattice/SerializeSend
 import ../../../../src/Network/Serialize/Lattice/ParseSend
 
@@ -35,7 +36,7 @@ for i in 1 .. 20:
     #Sign it.
     sender.sign(send)
     #Mine the Send.
-    send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBN(16))
+    send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBNFromHex())
 
     #Serialize it and parse it back.
     var sendParsed: Send = send.serialize().parseSend()

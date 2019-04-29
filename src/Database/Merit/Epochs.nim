@@ -7,8 +7,8 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#BLS lib.
-import ../../lib/BLS
+#MinerWallet lib (for BLSPublicKey's toString).
+import ../../Wallet/MinerWallet
 
 #Verifications lib.
 import ../Verifications/Verifications
@@ -16,26 +16,22 @@ import ../Verifications/Verifications
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#VerifierIndex object.
-import objects/VerifierIndexObj
+#VerifierRecord object.
+import ../common/objects/VerifierRecordObj
 
-#Blockchain lib.
+#Block, Blockcain, and State lib.
+import Block
 import Blockchain
-
-#State object.
-import objects/StateObj
+import State
 
 #Epoch objects.
 import objects/EpochsObj
 export EpochsObj
 
-#Finals lib.
-import finals
-
-#Seq utils standard lib.
+#Sequtils standard lib (used to remove Rewards).
 import sequtils
 
-#Algorithm standard lib.
+#Algorithm standard lib (used to sort Rewards).
 import algorithm
 
 #Tables standard lib.
@@ -45,70 +41,63 @@ import tables
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-# - Saves the VerifierIndexes in the Epoch to-be-returned to the Database.
+# - Saves the VerifierRecords in the Epoch to-be-returned to the Database.
 #If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
 proc shift*(
-    epochs: Epochs,
-    verifs: Verifications,
-    indexes: seq[VerifierIndex],
+    epochs: var Epochs,
+    verifications: var Verifications,
+    records: seq[VerifierRecord],
     tips: TableRef[string, int] = nil
-): Epoch {.raises: [
-    KeyError,
-    ValueError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
-].} =
+): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
-        newEpoch: Epoch = newEpoch(indexes)
-        #Loop variable saying if we found the Entry in an older Epoch.
-        found: bool
+        newEpoch: Epoch = newEpoch(records)
         #Loop variable of what verification to start with.
         start: int
+        #Verifications we're handling.
+        verifs: seq[Verification]
 
     #Loop over each Verification.
-    for index in indexes:
+    for record in records:
         #If we were passed tips, use those for the starting point.
         if not tips.isNil:
-            start = tips[index.key]
+            try:
+                start = tips[record.key.toString()]
+            except KeyError as e:
+                doAssert(false, "Reloading Epochs from the DB using invalid tips: " & e.msg)
         #Else, use the verifier's archived.
         else:
-            start = verifs[index.key].archived
+            start = verifications[record.key].archived
+
+        #Grab the Verifs.
+        try:
+            verifs = verifications[record.key][start .. record.nonce]
+        #This will be thrown if we access a verif too high, which shouldn't happen as we check a Block only has valid tips.
+        except IndexError as e:
+            doAssert(false, "An invalid tip was passed to shift: " & e.msg)
 
         #Iterate over every Verification.
-        for verif in verifs[index.key][start .. int(index.nonce)]:
-            #Set found to false.
-            found = false
-
+        for verif in verifs:
             #Try adding this hash to an existing Epoch.
-            if epochs.add(verif.hash.toString(), verif.verifier):
-                found = true
-
-            #If it wasn't in an existing Epoch, add it to the new Epoch.
-            if not found:
+            try:
+                epochs.add(verif.hash.toString(), verif.verifier)
+            #If it wasn't in any existing Epoch, add it to the new one.
+            except NotInEpochs:
                 newEpoch.add(verif.hash.toString(), verif.verifier)
 
         #If we were passed a set of tips, update them.
         if not tips.isNil:
-            tips[index.key] = int(index.nonce)
+            tips[record.key.toString()] = record.nonce
 
     #Return the popped Epoch.
-    result = epochs.shift(newEpoch, indexes, tips.isNil)
+    result = epochs.shift(newEpoch, tips.isNil)
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    verifications: var Verifications,
     blockchain: Blockchain
-): Epochs {.raises: [
-    KeyError,
-    ValueError,
-    ArgonError,
-    BLSError,
-    LMDBError,
-    FinalAttributeError
-].} =
+): Epochs {.forceCheck: [].} =
     #Create the Epochs objects.
     result = newEpochsObj(db)
 
@@ -121,7 +110,7 @@ proc newEpochs*(
 
     try:
         holders = db.get("merit_holders")
-    except:
+    except DBReadError:
         #If there are no holders, there's no mined Blocks and therefore no Epochs to regenerate.
         holders = ""
 
@@ -139,7 +128,7 @@ proc newEpochs*(
         #Load their tip.
         try:
             tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
-        except:
+        except DBReadError:
             #If this failed, it's because they have Merit but don't have Verifications older than 5 blocks.
             tips[holder] = 0
 
@@ -148,57 +137,61 @@ proc newEpochs*(
     var start: int = 10
     #If the blockchain is smaller than 10, load every block.
     if blockchain.height < 10:
-        start = int(blockchain.height)
+        start = blockchain.height
 
-    for i in countdown(start, 1):
-        discard result.shift(
-            verifications,
-            blockchain[blockchain.height - uint(i)].verifications,
-            tips
-        )
+    try:
+        for i in countdown(start, 1):
+            discard result.shift(
+                verifications,
+                blockchain[blockchain.height - i].records,
+                tips
+            )
+    except IndexError as e:
+        doAssert(false, "Couldn't shift the last blocks of the chain: " & e.msg)
 
 #Calculate what share each person deserves of the minted Meros.
-proc calculate*(
+func calculate*(
     epoch: Epoch,
-    state: State
-): Rewards {.raises: [
-    KeyError,
-    FinalAttributeError
-].} =
+    state: var State
+): Rewards {.forceCheck: [].} =
     #If the epoch is empty, do nothing.
-    if epoch.len == 0:
+    if epoch.hashes.len == 0:
         return @[]
 
     var
         #Score of a person. This is their combined normalized Entry values.
-        scores: TableRef[string, uint] = newTable[string, uint]()
+        scores: Table[string, int] = initTable[string, int]()
         #Total Merit behind an Entry.
-        total: uint
+        total: int
 
     #Iterate over each Entry.
-    for entry in epoch.keys():
+    for entry in epoch.hashes.keys():
         #Clear the loop variables.
         #We use result as a loop variable because we don't need it till later.
         result = newRewards()
         total = 0
 
         #Iterate over the result who verified an entry.
-        for person in epoch[entry]:
-            #Add them to our seq with their Merit.
-            result.add(
-                newReward(
-                    person.toString(),
-                    state[person]
+        try:
+            for person in epoch.hashes[entry]:
+                #Add them to our seq with their Merit.
+                result.add(
+                    newReward(
+                        person.toString(),
+                        state[person]
+                    )
                 )
-            )
-            #Add the Merit to the total.
-            total += result[^1].score
+                #Add the Merit to the total.
+                total += result[^1].score
+        except KeyError as e:
+            doAssert(false, "Couldn't grab the keys for a hash in the Epoch guaranteed to exist: " & e.msg)
 
         #Make sure the Entry was verified.
-        if total < ((state.live div uint(2)) + 1):
+        if total < ((state.live div 2) + 1):
             #If it wasn't, move on.
             continue
 
+    try:
         #Normalize each person to a share of 1000.
         for person in result:
             #Make sure they have a score.
@@ -207,23 +200,28 @@ proc calculate*(
 
             #Add this to their score.
             scores[person.key] += person.score * 1000 div total
+    except KeyError as e:
+        doAssert(false, "Couldn't set the score of a person guaranteed to be in the table: " & e.msg)
 
     #Turn the table into a seq.
     #Here's where we clear result and actually put in the data that will be returned.
     result = newRewards()
-    for key in scores.keys():
-        result.add(
-            newReward(
-                key,
-                scores[key]
+    try:
+        for key in scores.keys():
+            result.add(
+                newReward(
+                    key,
+                    scores[key]
+                )
             )
-        )
+    except KeyError as e:
+        doAssert(false, "Couldn't grab the score of a key grabbed from table.keys(): " & e.msg)
 
     #Make sure we're dealing with a maximum of 100 results.
-    if epoch.len > 100:
+    if epoch.hashes.len > 100:
         #Sort them by greatest score.
         result.sort(
-            proc (
+            func (
                 x: Reward,
                 y: Reward
             ): int =
@@ -252,5 +250,8 @@ proc calculate*(
         total += person.score
 
     #Normalize each person to a score of 1000.
-    for i in 0 ..< result.len:
-        result[i].score = result[i].score * 1000 div total
+    try:
+        for i in 0 ..< result.len:
+            result[i].score = result[i].score * 1000 div total
+    except FinalAttributeError as e:
+        doAssert(false, "Couldn't normalize the scores of the Verifiers due to finals: " & e.msg)

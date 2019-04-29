@@ -8,107 +8,259 @@ This is annoying, but we no longer have to specify the type when we call events,
 #Errors lib.
 import ../lib/Errors
 
-#BN lib.
-import BN
+#Hash lib.
+import ../lib/Hash
 
-#BLS lib.
-import ../lib/BLS
-
-#Message object.
-import ../Network/objects/MessageObj
-
-#Wallet.
+#MinerWallet and Wallet libs.
+import ../Wallet/MinerWallet
 import ../Wallet/Wallet
+
+#LatticeIndex and VerifierRecord objects.
+import ../Database/common/objects/LatticeIndexObj
+import ../Database/common/objects/VerifierRecordObj
 
 #Verification object.
 import ../Database/Verifications/objects/VerificationObj
 
-#VerifierIndex and Block object.
-import ../Database/Merit/objects/VerifierIndexObj
+#Difficulty and Block objects.
+import ../Database/Merit/objects/DifficultyObj
 import ../Database/Merit/objects/BlockObj
 
-#Lattice Entries.
+#Difficulties and Entry objects.
+import ../Database/Lattice/objects/DifficultiesObj
 import ../Database/Lattice/objects/EntryObj
-import ../Database/Lattice/Claim
-import ../Database/Lattice/Send
-import ../Database/Lattice/Receive
-import ../Database/Lattice/Data
+import ../Database/Lattice/objects/ClaimObj
+import ../Database/Lattice/objects/SendObj
+import ../Database/Lattice/objects/ReceiveObj
+import ../Database/Lattice/objects/DataObj
 
-#DB.
-import ../Database/Filesystem/DB
+#Message object.
+import ../Network/objects/MessageObj
 
-#Finals lib.
-import finals
+#BN lib.
+import BN
 
 #Async lib.
 import asyncdispatch
 
 type
-    SystemFunctionBox* = ref object of RootObj
-        quit*: proc () {.raises: [ChannelError, AsyncError, SocketError].}
+    SystemFunctionBox* = ref object
+        quit*: proc () {.raises: [].}
 
-    VerificationsFunctionBox* = ref object of RootObj
-        getVerifierHeight*:     proc (key: string): uint                           {.raises: [KeyError, LMDBError].}
-        getVerification*:       proc (key: string, nonce: uint): Verification      {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
-        getUnarchivedIndexes*:  proc (): seq[VerifierIndex]                        {.raises: [KeyError, ValueError, LMDBError, FinalAttributeError].}
-        getPendingAggregate*:   proc (verifier: string, nonce: uint): BLSSignature {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
-        getPendingHashes*:      proc (key: string, nonce: uint): seq[string]       {.raises: [KeyError, ValueError, BLSError, LMDBError, FinalAttributeError].}
+    DatabaseFunctionBox* = ref object
+        put*: proc (
+            key: string,
+            val: string
+        ) {.raises: [
+            DBWriteError
+        ].}
 
-        addVerification*:        proc (verif: Verification): bool       {.raises: [ValueError, LMDBError].}
-        addMemoryVerification*:  proc (verif: MemoryVerification): bool {.raises: [ValueError, BLSError, LMDBError].}
+        get*: proc (
+            key: string
+        ): string {.raises: [
+            DBReadError
+        ].}
 
-    MeritFunctionBox* = ref object of RootObj
-        getHeight*:      proc (): uint             {.raises: [LMDBError].}
-        getDifficulty*:  proc (): BN               {.raises: [].}
-        getBlock*:       proc (nonce: uint): Block {.raises: [ValueError, ArgonError, BLSError, LMDBError, FinalAttributeError].}
+        delete*: proc (
+            key: string
+        ) {.raises: [
+            DBWriteError
+        ].}
 
-        addBlock*:  proc (newBlock: Block): Future[bool]
+    VerificationsFunctionBox* = ref object
+        getVerifierHeight*: proc (
+            key: BLSPublicKey
+        ): int {.raises: [].}
 
-    LatticeFunctionBox* = ref object of RootObj
-        getHeight*:        proc (account: string): uint {.raises: [ValueError, LMDBError].}
-        getBalance*:       proc (account: string): BN   {.raises: [ValueError, LMDBError].}
-        getEntryByHash*:   proc (hash: string): Entry   {.raises: [KeyError].}
-        getEntryByIndex*:  proc (index: Index): Entry   {.raises: [ValueError].}
+        getVerification*: proc (
+            key: BLSPublicKey,
+            nonce: int
+        ): Verification {.raises: [
+            IndexError
+        ].}
 
-        addClaim*:    proc (claim: Claim): bool  {.raises: [ValueError, AsyncError, BLSError, SodiumError, LMDBError].}
-        addSend*:     proc (send: Send): bool    {.raises: [ValueError, EventError, AsyncError, BLSError, SodiumError, LMDBError, FinalAttributeError].}
-        addReceive*:  proc (recv: Receive): bool {.raises: [ValueError, AsyncError, BLSError, LMDBError, SodiumError].}
-        addData*:     proc (data: Data): bool    {.raises: [ValueError, AsyncError, BLSError, LMDBError, SodiumError].}
+        getUnarchivedRecords*: proc (): seq[VerifierRecord] {.raises: [].}
 
-    DatabaseFunctionBox* = ref object of RootObj
-        put*:    proc (key: string, val: string) {.raises: [LMDBError].}
-        get*:    proc (key: string): string      {.raises: [LMDBError].}
-        delete*: proc (key: string)              {.raises: [LMDBError].}
+        getPendingAggregate*: proc (
+            key: BLSPublicKey,
+            nonce: int
+        ): BLSSignature {.raises: [
+            IndexError,
+            BLSError
+        ].}
 
-    PersonalFunctionBox* = ref object of RootObj
-        getWallet*:  proc (): Wallet {.raises: [].}
+        getPendingHashes*: proc (
+            key: BLSPublicKey,
+            nonce: int
+        ): seq[Hash[384]] {.raises: [
+            IndexError
+        ].}
 
-        setSeed*:      proc (seed: string)  {.raises: [ValueError, RandomError, SodiumError].}
-        signSend*:     proc (send: Send)    {.raises: [ValueError, SodiumError, FinalAttributeError].}
-        signReceive*:  proc (recv: Receive) {.raises: [SodiumError, FinalAttributeError].}
-        signData*:     proc (data: Data)    {.raises: [ValueError, SodiumError, FinalAttributeError].}
+        addVerification*: proc (
+            verif: Verification
+        ) {.raises: [
+            ValueError,
+            IndexError,
+            DataExists
+        ].}
 
-    NetworkFunctionBox* = ref object of RootObj
-        connect*:    proc (ip: string, port: uint): Future[bool]
-        broadcast*:  proc (msgType: MessageType, msg: string): Future[void]
+        addMemoryVerification*: proc (
+            verif: MemoryVerification
+        ) {.raises: [
+            ValueError,
+            IndexError,
+            GapError,
+            BLSError,
+            DataExists
+        ].}
 
-    GlobalFunctionBox* = ref object of RootObj
-        system*:         SystemFunctionBox
-        verifications*:  VerificationsFunctionBox
-        merit*:          MeritFunctionBox
-        lattice*:        LatticeFunctionBox
-        database*:       DatabaseFunctionBox
-        personal*:       PersonalFunctionBox
-        network*:        NetworkFunctionBox
+    MeritFunctionBox* = ref object
+        getHeight*: proc (): int {.raises: [].}
+
+        getDifficulty*: proc (): Difficulty {.raises: [].}
+
+        getBlock*: proc (
+            nonce: int
+        ): Block {.raises: [
+            IndexError
+        ].}
+
+        addBlock*: proc (
+            newBlock: Block
+        ): Future[void]
+
+    LatticeFunctionBox* = ref object
+        getDifficulties*: proc (): Difficulties {.raises: [].}
+
+        getHeight*: proc (
+            address: string
+        ): int {.raises: [
+            AddressError
+        ].}
+
+        getBalance*: proc (
+            address: string
+        ): BN {.raises: [
+            AddressError
+        ].}
+
+        getEntryByHash*: proc (
+            hash: Hash[384]
+        ): Entry {.raises: [
+            IndexError
+        ].}
+
+        getEntryByIndex*: proc (
+            index: LatticeIndex
+        ): Entry {.raises: [
+            ValueError,
+            IndexError
+        ].}
+
+        addClaim*: proc (
+            claim: Claim
+        ) {.raises: [
+            ValueError,
+            IndexError,
+            GapError,
+            AddressError,
+            EdPublicKeyError,
+            BLSError,
+            DataExists
+        ].}
+
+        addSend*: proc (
+            send: Send
+        ) {.raises: [
+            ValueError,
+            IndexError,
+            GapError,
+            AddressError,
+            EdPublicKeyError,
+            DataExists
+        ].}
+
+        addReceive*: proc (
+            recv: Receive
+        ) {.raises: [
+            ValueError,
+            IndexError,
+            GapError,
+            AddressError,
+            EdPublicKeyError,
+            DataExists
+        ].}
+
+        addData*: proc (
+            data: Data
+        ) {.raises: [
+            ValueError,
+            IndexError,
+            GapError,
+            AddressError,
+            EdPublicKeyError,
+            DataExists
+        ].}
+
+    PersonalFunctionBox* = ref object
+        getWallet*: proc (): Wallet {.raises: [].}
+
+        setSeed*: proc (
+            seed: string
+        ) {.raises: [
+            RandomError,
+            EdSeedError,
+            SodiumError
+        ].}
+
+        signSend*: proc (
+            send: Send
+        ) {.raises: [
+            AddressError,
+            SodiumError
+        ].}
+
+        signReceive*: proc (
+            recv: Receive
+        ) {.raises: [
+            SodiumError
+        ].}
+
+        signData*: proc (
+            data: Data
+        ) {.raises: [
+            AddressError,
+            SodiumError
+        ].}
+
+    NetworkFunctionBox* = ref object
+        connect*: proc (
+            ip: string,
+            port: int
+        ): Future[void]
+
+        broadcast*: proc (
+            msgType: MessageType,
+            msg: string
+        ) {.raises: [].}
+
+    GlobalFunctionBox* = ref object
+        system*:        SystemFunctionBox
+        database*:      DatabaseFunctionBox
+        verifications*: VerificationsFunctionBox
+        merit*:         MeritFunctionBox
+        lattice*:       LatticeFunctionBox
+        personal*:      PersonalFunctionBox
+        network*:       NetworkFunctionBox
 
 #Constructor.
-proc newGlobalFunctionBox*(): GlobalFunctionBox {.raises: [].} =
+func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
     GlobalFunctionBox(
         system:        SystemFunctionBox(),
+        database:      DatabaseFunctionBox(),
         verifications: VerificationsFunctionBox(),
         merit:         MeritFunctionBox(),
         lattice:       LatticeFunctionBox(),
-        database:      DatabaseFunctionBox(),
         personal:      PersonalFunctionBox(),
         network:       NetworkFunctionBox()
     )

@@ -5,12 +5,15 @@ That said, we do store one in the DB, so we need to convert a Difficulty object 
 Even though this has no relation to the Network code, it does have relation to the Serialize code.
 """
 
+#Errors lib.
+import ../../../lib/Errors
+
 #Util lib.
 import ../../../lib/Util
 
-#Numerical libs.
-import BN
-import ../../../lib/Base
+#BN/Raw lib.
+import ../../../lib/Raw
+import ../../../lib/Hex
 
 #Miners object.
 import ../../../Database/Merit/objects/DifficultyObj
@@ -19,10 +22,10 @@ import ../../../Database/Merit/objects/DifficultyObj
 import ../SerializeCommon
 
 #Serialization function.
-func serialize*(
+proc serialize*(
     difficulty: Difficulty
-): string {.raises: [].} =
+): string {.forceCheck: [].} =
     result =
         difficulty.start.toBinary().pad(INT_LEN) &
         difficulty.endBlock.toBinary().pad(INT_LEN) &
-        difficulty.difficulty.toString(256).pad(HASH_LEN)
+        difficulty.difficulty.toRaw().pad(HASH_LEN)

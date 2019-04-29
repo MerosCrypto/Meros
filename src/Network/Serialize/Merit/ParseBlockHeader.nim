@@ -7,8 +7,8 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#BLS lib.
-import ../../../lib/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
 #BlockHeader object.
 import ../../../Database/Merit/objects/BlockHeaderObj
@@ -16,16 +16,14 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 #Common serialization functions.
 import ../SerializeCommon
 
-#Finals lib.
-import finals
-
-#String utils standard library.
-import strutils
-
 #Parse function.
 proc parseBlockHeader*(
     headerStr: string
-): BlockHeader {.raises: [ValueError, ArgonError, BLSError].} =
+): BlockHeader {.forceCheck: [
+    ValueError,
+    ArgonError,
+    BLSError
+].} =
     #Nonce | Last Hash | Verifications Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(
         INT_LEN,
@@ -37,12 +35,19 @@ proc parseBlockHeader*(
     )
 
     #Create the BlockHeader.
-    result = newBlockHeaderObj(
-        uint(headerSeq[0].fromBinary()),
-        headerSeq[1].toArgonHash(),
-        newBLSSignature(headerSeq[2]),
-        headerSeq[3].toBlake384Hash(),
-        uint(headerSeq[4].fromBinary()),
-        uint(headerSeq[5].fromBinary())
-    )
-    result.hash = Argon(headerStr, headerSeq[5])
+    try:
+        result = newBlockHeaderObj(
+            headerSeq[0].fromBinary(),
+            headerSeq[1].toArgonHash(),
+            newBLSSignature(headerSeq[2]),
+            headerSeq[3].toBlake384Hash(),
+            headerSeq[4].fromBinary(),
+            headerSeq[5].fromBinary()
+        )
+        result.hash = Argon(headerStr, headerSeq[5])
+    except ValueError as e:
+        fcRaise e
+    except ArgonError as e:
+        fcRaise e
+    except BLSError as e:
+        fcRaise e

@@ -11,21 +11,20 @@ import asyncnet
 finalsd:
     type
         HandshakeState* = enum
-            Error = 0,
-            MissingBlocks = 1,
-            Complete = 2
+            MissingBlocks = 0,
+            Complete = 1
 
         ClientState* = enum
             Syncing = 0,
             Ready = 1
 
-        Client* = ref object of RootObj
+        Client* = ref object
             #IP.
             ip* {.final.}: string
             #Port.
-            port* {.final.}: uint
+            port* {.final.}: int
             #ID.
-            id* {.final.}: uint
+            id* {.final.}: int
             #Our state.
             ourState*: ClientState
             #Their state.
@@ -36,10 +35,10 @@ finalsd:
 #Constructor.
 func newClient*(
     ip: string,
-    port: uint,
-    id: uint,
+    port: int,
+    id: int,
     socket: AsyncSocket
-): Client {.raises: [].} =
+): Client {.forceCheck: [].} =
     result = Client(
         ip: ip,
         port: port,
@@ -54,12 +53,14 @@ func newClient*(
     result.ffinalizeSocket()
 
 #Check if a Client is closed.
-func isClosed*(client: Client): bool {.raises: [].} =
+func isClosed*(
+    client: Client
+): bool {.forceCheck: [].} =
     client.socket.isClosed()
 
 #Close a Client.
-proc close*(client: Client) {.raises: [SocketError].} =
+proc close*(client: Client) {.forceCheck: [].} =
     try:
         client.socket.close()
-    except:
-        raise newException(SocketError, "Couldn't close the socket.")
+    except Exception:
+        discard

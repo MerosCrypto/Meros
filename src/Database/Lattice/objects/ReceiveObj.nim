@@ -1,8 +1,11 @@
+#Errors lib.
+import ../../../lib/Errors
+
+#LatticeIndex object.
+import ../../common/objects/LatticeIndexObj
+
 #Entry object.
 import EntryObj
-
-#Index object.
-import ../../common/objects/IndexObj
 
 #Finals lib.
 import finals
@@ -10,16 +13,19 @@ import finals
 #Receive object.
 finalsd:
     type Receive* = ref object of Entry
-        #Index.
-        index* {.final.}: Index
+        #LatticeIndex.
+        index* {.final.}: LatticeIndex
 
 #New Receive object.
 func newReceiveObj*(
-    index: Index
-): Receive {.raises: [FinalAttributeError].} =
+    index: LatticeIndex
+): Receive {.forceCheck: [].} =
     result = Receive(
         index: index
     )
     result.ffinalizeIndex()
 
-    result.descendant = EntryType.Receive
+    try:
+        result.descendant = EntryType.Receive
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)

@@ -1,6 +1,6 @@
 include MainPersonal
 
-proc mainNetwork() {.raises: [SocketError].} =
+proc mainNetwork() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Network..
         network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, functions)
@@ -8,29 +8,35 @@ proc mainNetwork() {.raises: [SocketError].} =
         #Start listening.
         try:
             asyncCheck network.listen(config)
-        except:
-            raise newException(SocketError, "Couldn't listen on our server socket.")
+        except Exception:
+            discard
 
         #Handle network events.
         #Connect to another node.
         functions.network.connect = proc (
             ip: string,
-            port: uint
-        ): Future[bool] {.async.} =
+            port: int
+        ) {.forceCheck: [
+            ClientError
+        ], async.} =
             try:
                 await network.connect(ip, port)
-                result = true
-            except:
-                result = false
+            except ClientError as e:
+                fcRaise e
+            except Exception as e:
+                doAssert(false, "Couldn't connect to another node due to an exception thrown by async: " & e.msg)
 
         #Broadcast a message.
         functions.network.broadcast = proc (
             msgType: MessageType,
             msg: string
-        ) {.async.} =
-            await network.broadcast(
-                newMessage(
-                    msgType,
-                    msg
+        ) {.forceCheck: [].} =
+            try:
+                asyncCheck network.broadcast(
+                    newMessage(
+                        msgType,
+                        msg
+                    )
                 )
-            )
+            except Exception as e:
+                doAssert(false, "Network.broadcast threw an Exception despite not naturally throwing any: " & e.msg)

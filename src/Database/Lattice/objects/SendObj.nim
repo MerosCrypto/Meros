@@ -1,11 +1,14 @@
-#BN lib.
-import BN
+#Errors lib.
+import ../../../lib/Errors
 
 #Hash lib.
 import ../../../lib/Hash
 
 #Entry object.
 import EntryObj
+
+#BN lib.
+import BN
 
 #Finals lib.
 import finals
@@ -20,7 +23,7 @@ finalsd:
         amount* {.final.}: BN
 
         #Proof this isn't spam.
-        proof* {.final.}: uint
+        proof* {.final.}: int
         #Argon hash.
         argon* {.final.}: ArgonHash
 
@@ -28,7 +31,7 @@ finalsd:
 func newSendObj*(
     output: string,
     amount: BN
-): Send {.raises: [FinalAttributeError].} =
+): Send {.forceCheck: [].} =
     result = Send(
         output: output,
         amount: amount
@@ -36,4 +39,7 @@ func newSendObj*(
     result.ffinalizeOutput()
     result.ffinalizeAmount()
 
-    result.descendant = EntryType.Send
+    try:
+        result.descendant = EntryType.Send
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)
