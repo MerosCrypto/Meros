@@ -39,6 +39,10 @@ proc mainMerit() {.forceCheck: [].} =
             IndexError,
             GapError
         ], async.} =
+            #If we already have this Block, raise.
+            if newBlock.header.nonce < merit.blockchain.height:
+                raise newException(IndexError, "Block already added.")
+
             #Print that we're adding the Block.
             echo "Adding Block ", newBlock.header.nonce, "."
 
@@ -53,15 +57,21 @@ proc mainMerit() {.forceCheck: [].} =
                     except DataMissing as e:
                         raise newException(GapError, e.msg)
                     except ValidityConcern as e:
-                        raise newException(GapError, e.msg)
+                        raise newException(ValueError, e.msg)
                     except Exception as e:
                         doAssert(false, "Couldn't request and add a Block needed before verifying this Block: " & e.msg)
 
-            #Verify:
-                #We have all the Verifications and Entries.
-                #We have the same set of Verifications.
-                #The signature.
-            var verifsTable: Table[string, seq[Hash[384]]] = initTable[string, seq[Hash[384]]]()
+            #Sync this Block.
+            try:
+                await network.sync(newBlock)
+            except DataMissing as e:
+                raise newException(GapError, e.msg)
+            except ValidityConcern as e:
+                raise newException(ValueError, e.msg)
+            except Exception as e:
+                doAssert(false, "Couldn't sync this Block: " & e.msg)
+
+            #Verify Record validity (nonce and Merkle), as well as whether or not the verified Entries are out of Epochs yet.
             for record in newBlock.records:
                 #Grab the Verifier.
                 var verifier: Verifier = verifications[record.key]
@@ -87,23 +97,10 @@ proc mainMerit() {.forceCheck: [].} =
                 except IndexError as e:
                     fcRaise e
 
-                #Set this Verifier up in the table.
-                verifsTable[record.key.toString()] = newSeq[Hash[384]](verifs.len)
-
+                #Make sure the Lattice has the verified Entries.
                 for v in 0 ..< verifs.len:
-                    #Make sure the Lattice has this Entry.
                     if not lattice.lookup.hasKey(verifs[v].hash.toString()):
                         raise newException(GapError, "Block refers to missing Entries, or Entries already out of an Epoch.")
-
-                    #Add this Verification to the table.
-                    try:
-                        verifsTable[record.key.toString()][v] = verifs[v].hash
-                    except KeyError as e:
-                        doAssert(false, "Couldn't add a hash to a seq in a table, despite just creating the seq: " & e.msg)
-
-            #Verify the signature.
-            if not newBlock.verify(verifsTable):
-                raise newException(ValueError, "Invalid Aggregate.")
 
             #Add the Block to the Merit.
             var epoch: Epoch

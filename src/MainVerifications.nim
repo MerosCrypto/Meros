@@ -79,7 +79,7 @@ proc mainVerifications() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
-            #Return the hash.
+            #Return the aggregate.
             try:
                 return sigs.aggregate()
             except BLSError as e:

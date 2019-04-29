@@ -44,13 +44,9 @@ proc sync(
 
         #Grab their pending hashes and place it in hashes.
         try:
-            hashes[record.key.toString()] = network.mainFunctions.verifications.getPendingHashes(record.key, verifHeight)
+            hashes[record.key.toString()] = network.mainFunctions.verifications.getPendingHashes(record.key, verifHeight - 1)
         except IndexError as e:
             doAssert(false, "Couldn't grab pending hashes we've confirmed to have: " & e.msg)
-
-    #If there are no gaps, return.
-    if gaps.len == 0:
-        return
 
     #Send syncing.
     try:
