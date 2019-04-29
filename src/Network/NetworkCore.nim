@@ -256,11 +256,6 @@ proc newNetwork*(
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Claim failed due to a EdPublicKeyError: " & e.msg)
 
-                try:
-                    await network.clients.broadcast(msg)
-                except Exception as e:
-                    doAssert(false, "Clients.broadcast(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
-
             of MessageType.Send:
                 var send: Send
                 try:
@@ -283,11 +278,6 @@ proc newNetwork*(
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Send failed due to a EdPublicKeyError: " & e.msg)
 
-                try:
-                    await network.clients.broadcast(msg)
-                except Exception as e:
-                    doAssert(false, "Clients.broadcast(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
-
             of MessageType.Receive:
                 var recv: Receive
                 try:
@@ -307,11 +297,6 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Adding the Receive failed due to a AddressError: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Receive failed due to a EdPublicKeyError: " & e.msg)
-
-                try:
-                    await network.clients.broadcast(msg)
-                except Exception as e:
-                    doAssert(false, "Clients.broadcast(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
 
             of MessageType.Data:
                 var data: Data
@@ -335,11 +320,6 @@ proc newNetwork*(
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Adding the Data failed due to a EdPublicKeyError: " & e.msg)
 
-                try:
-                    await network.clients.broadcast(msg)
-                except Exception as e:
-                    doAssert(false, "Clients.broadcast(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
-
             of MessageType.MemoryVerification:
                 var verif: MemoryVerification
                 try:
@@ -359,11 +339,6 @@ proc newNetwork*(
                     return
                 except BLSError as e:
                     raise newException(InvalidMessageError, "Adding the MemoryVerification failed due to a BLSError: " & e.msg)
-
-                try:
-                    await network.clients.broadcast(msg)
-                except Exception as e:
-                    doAssert(false, "Clients.broadcast(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
 
             of MessageType.Block:
                 var newBlock: Block
@@ -389,11 +364,6 @@ proc newNetwork*(
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                try:
-                    await network.clients.broadcast(msg)
-                except Exception as e:
-                    doAssert(false, "Clients.broadcast(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
 
             of MessageType.End:
                 doAssert(false, "Trying to handle a Message of Type End despite explicitly refusing to receive messages of Type End.")

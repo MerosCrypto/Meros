@@ -3,10 +3,6 @@
 ### Cleanup:
 - Add `DataExists` for when data has already been added.
 
-- Move broadcast for Entries from the Network/RPC to Main, to match Blocks and also be able to remove the 100ms verify delay.
-- Move broadcast for Verifications from the Network/RPC to Main, to match Blocks and Entries.
-- Confirm two Nodes broadcast all events between each other.
-
 ### Core:
 Wallet:
 - Mnemonic file to convert a Mnemonic to seed, and vice versa.

@@ -188,3 +188,9 @@ proc mainVerifications() {.forceCheck: [].} =
                 fcRaise e
 
             echo "Successfully added a new MemoryVerification."
+
+            #Broadcast the MemoryVerification.
+            functions.network.broadcast(
+                MessageType.MemoryVerification,
+                verif.serialize()
+            )

@@ -4,12 +4,6 @@ include MainMerit
 proc verify(
     entry: Entry
 ) {.forceCheck: [], async.} =
-    #Sleep for 100 microseconds to make sure this Verification is sent after ther Entry itself.
-    try:
-        await sleepAsync(100)
-    except Exception as e:
-        doAssert(false, "Couldn't sleep for 0.1 seconds before verifying an Entry: " & e.msg)
-
     #Make sure we're a Miner with Merit.
     if config.miner.initiated and (merit.state[config.miner.publicKey] > 0):
         #Make sure we didn't already verify an Entry at the same Index.
@@ -160,6 +154,15 @@ proc mainLattice() {.forceCheck: [].} =
 
             echo "Successfully added the Claim."
 
+            #Broadcast the Claim.
+            try:
+                functions.network.broadcast(
+                    MessageType.Claim,
+                    claim.serialize()
+                )
+            except AddressError as e:
+                doAssert(false, "Successfully added Claim failed to serialize: " & e.msg)
+
             #Create a Verification.
             try:
                 asyncCheck verify(claim)
@@ -202,6 +205,15 @@ proc mainLattice() {.forceCheck: [].} =
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Claim: " & e.msg)
 
             echo "Successfully added the Send."
+
+            #Broadcast the Send.
+            try:
+                functions.network.broadcast(
+                    MessageType.Send,
+                    send.serialize()
+                )
+            except AddressError as e:
+                doAssert(false, "Successfully added Send failed to serialize: " & e.msg)
 
             #Create a Verification.
             try:
@@ -250,17 +262,6 @@ proc mainLattice() {.forceCheck: [].} =
                     except EdPublicKeyError as e:
                         doAssert(false, "Created Receive's sender doesn't decode to a valid Public Key: " & e.msg)
 
-                    #Broadcast it.
-                    var serialized: string
-                    try:
-                        serialized = recv.serialize()
-                    except AddressError as e:
-                        doAssert(false, "Created Receive has an invalid sender address, detected when serializing: " & e.msg)
-                    functions.network.broadcast(
-                        MessageType.Receive,
-                        serialized
-                    )
-
         #Handle Receives.
         functions.lattice.addReceive = proc (
             recv: Receive
@@ -297,6 +298,15 @@ proc mainLattice() {.forceCheck: [].} =
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Receive: " & e.msg)
 
             echo "Successfully added the Receive."
+
+            #Broadcast the Receive.
+            try:
+                functions.network.broadcast(
+                    MessageType.Receive,
+                    recv.serialize()
+                )
+            except AddressError as e:
+                doAssert(false, "Successfully added Receive failed to serialize: " & e.msg)
 
             #Create a Verification.
             try:
@@ -340,6 +350,15 @@ proc mainLattice() {.forceCheck: [].} =
                 doAssert(false, "Couldn't add a Send due to a BLSError, which can only be thrown when adding a Data: " & e.msg)
 
             echo "Successfully added the Data."
+
+            #Broadcast the Data.
+            try:
+                functions.network.broadcast(
+                    MessageType.Data,
+                    data.serialize()
+                )
+            except AddressError as e:
+                doAssert(false, "Successfully added Receive failed to serialize: " & e.msg)
 
             #Create a Verification.
             try:

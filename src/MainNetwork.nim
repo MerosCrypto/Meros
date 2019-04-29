@@ -39,4 +39,4 @@ proc mainNetwork() {.forceCheck: [].} =
                     )
                 )
             except Exception as e:
-                doAssert(false, "Couldn't broadcast a message due to an exception thrown by async: " & e.msg)
+                doAssert(false, "Network.broadcast threw an Exception despite not naturally throwing any: " & e.msg)

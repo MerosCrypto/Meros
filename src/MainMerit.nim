@@ -123,11 +123,7 @@ proc mainMerit() {.forceCheck: [].} =
             var rewards: Rewards = epoch.calculate(merit.state)
 
             #Create the Mints (which ends up minting a total of 50000 MR).
-            var
-                #Nonce of the Mint.
-                mintNonce: int
-                #Any Claim we may create.
-                claim: Claim
+            var ourMint: int = -1
             for reward in rewards:
                 var key: BLSPublicKey
                 try:
@@ -136,10 +132,14 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Couldn't extract a key from a Reward: " & e.msg)
 
                 try:
-                    mintNonce = lattice.mint(
+                    var mintNonce: int = lattice.mint(
                         key,
                         newBN(reward.score) * newBN(50)
                     )
+
+                    #If we have a miner wallet, check if the mint was to us.
+                    if (config.miner.initiated) and (config.miner.publicKey.toString() == reward.key):
+                        ourMint = mintNonce
                 except ValueError as e:
                     doAssert(false, "Minting a Block Reward failed due to a ValueError: " & e.msg)
                 except IndexError as e:
@@ -151,67 +151,57 @@ proc mainMerit() {.forceCheck: [].} =
                 except EdPublicKeyError as e:
                     doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 
-                #If we have wallets...
-                if wallet.initiated and config.miner.initiated:
-                    #Check if we're the one getting the reward.
-                    if config.miner.publicKey.toString() == reward.key:
-                        #Claim the Reward.
-                        var
-                            claim: Claim
-                            claimNonce: int
-                        try:
-                            claimNonce = lattice[wallet.address].height
-                        except AddressError as e:
-                            doAssert(false, "One of our Wallets (" & wallet.address & ") has an invalid Address: " & e.msg)
-
-                        claim = newClaim(
-                            mintNonce,
-                            claimNonce
-                        )
-
-                        #Sign the claim.
-                        try:
-                            claim.sign(config.miner, wallet)
-                        except AddressError as e:
-                            doAssert(false, "Failed to sign a Claim for a Mint due to a AddressError: " & e.msg)
-                        except BLSError as e:
-                            doAssert(false, "Failed to sign a Claim for a Mint due to a BLSError: " & e.msg)
-                        except SodiumError as e:
-                            doAssert(false, "Failed to sign a Claim for a Mint due to a SodiumError: " & e.msg)
-
-                        #Emit it.
-                        try:
-                            functions.lattice.addClaim(claim)
-                        except ValueError as e:
-                            doAssert(false, "Failed to add a Claim for a Mint due to a ValueError: " & e.msg)
-                        except IndexError as e:
-                            doAssert(false, "Failed to add a Claim for a Mint due to a IndexError: " & e.msg)
-                        except GapError as e:
-                            doAssert(false, "Failed to add a Claim for a Mint due to a GapError: " & e.msg)
-                        except AddressError as e:
-                            doAssert(false, "Failed to add a Claim for a Mint due to a AddressError: " & e.msg)
-                        except EdPublicKeyError as e:
-                            doAssert(false, "Failed to add a Claim for a Mint due to a EdPublicKeyError: " & e.msg)
-                        except BLSError as e:
-                            doAssert(false, "Failed to add a Claim for a Mint due to a BLSError: " & e.msg)
-
             echo "Successfully added the Block."
 
-            #Broadcast the Block and any created Claim.
-            try:
-                await network.broadcast(
-                    newMessage(
-                        MessageType.Block,
-                        newBlock.serialize()
-                    )
+            #Broadcast the Block.
+            functions.network.broadcast(
+                MessageType.Block,
+                newBlock.serialize()
+            )
+
+            #If we got a Mint...
+            if ourMint != -1:
+                #Confirm we have a wallet.
+                if not wallet.initiated:
+                    echo "We got a Mint with nonce ", ourMint, ", however, we don't have a Wallet to Claim it to."
+                    return
+                
+                #Claim the Reward.
+                var
+                    claim: Claim
+                    claimNonce: int
+                try:
+                    claimNonce = lattice[wallet.address].height
+                except AddressError as e:
+                    doAssert(false, "One of our Wallets (" & wallet.address & ") has an invalid Address: " & e.msg)
+
+                claim = newClaim(
+                    ourMint,
+                    claimNonce
                 )
 
-                if not claim.isNil:
-                    await network.broadcast(
-                        newMessage(
-                            MessageType.Claim,
-                            claim.serialize()
-                        )
-                    )
-            except Exception as e:
-                doAssert(false, "Couldn't broadcast the new Block/Claim: " & e.msg)
+                #Sign the claim.
+                try:
+                    claim.sign(config.miner, wallet)
+                except AddressError as e:
+                    doAssert(false, "Failed to sign a Claim for a Mint due to a AddressError: " & e.msg)
+                except BLSError as e:
+                    doAssert(false, "Failed to sign a Claim for a Mint due to a BLSError: " & e.msg)
+                except SodiumError as e:
+                    doAssert(false, "Failed to sign a Claim for a Mint due to a SodiumError: " & e.msg)
+
+                #Emit it.
+                try:
+                    functions.lattice.addClaim(claim)
+                except ValueError as e:
+                    doAssert(false, "Failed to add a Claim for a Mint due to a ValueError: " & e.msg)
+                except IndexError as e:
+                    doAssert(false, "Failed to add a Claim for a Mint due to a IndexError: " & e.msg)
+                except GapError as e:
+                    doAssert(false, "Failed to add a Claim for a Mint due to a GapError: " & e.msg)
+                except AddressError as e:
+                    doAssert(false, "Failed to add a Claim for a Mint due to a AddressError: " & e.msg)
+                except EdPublicKeyError as e:
+                    doAssert(false, "Failed to add a Claim for a Mint due to a EdPublicKeyError: " & e.msg)
+                except BLSError as e:
+                    doAssert(false, "Failed to add a Claim for a Mint due to a BLSError: " & e.msg)

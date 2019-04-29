@@ -117,14 +117,6 @@ proc send(
     except SodiumError as e:
         returnError()
 
-    #Broadcast the Send.
-    var serialized: string
-    try:
-        serialized = send.serialize()
-    except AddressError as e:
-        doAssert(false, "Couldn't serialize the Send we created and successfully added: " & e.msg)
-    rpc.functions.network.broadcast(MessageType.Send, serialized)
-
     result = %* {
         "hash": $send.hash
     }
@@ -168,14 +160,6 @@ proc receive(
         returnError()
     except EdPublicKeyError as e:
         returnError()
-
-    #Broadcast the Receive.
-    var serialized: string
-    try:
-        serialized = recv.serialize()
-    except AddressError as e:
-        doAssert(false, "Couldn't serialize the Receive we created and successfully added: " & e.msg)
-    rpc.functions.network.broadcast(MessageType.Receive, serialized)
 
     result = %* {
         "hash": $recv.hash
@@ -226,14 +210,6 @@ proc data(
         returnError()
     except EdPublicKeyError as e:
         returnError()
-
-    #Broadcast the Data.
-    var serialized: string
-    try:
-        serialized = data.serialize()
-    except AddressError as e:
-        doAssert(false, "Couldn't serialize the Data we created and successfully added: " & e.msg)
-    rpc.functions.network.broadcast(MessageType.Data, serialized)
 
     result = %* {
         "hash": $data.hash
