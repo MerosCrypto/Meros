@@ -35,7 +35,7 @@ type Verifications* = ref object
 #Verifications constructor.
 proc newVerificationsObj*(
     db: DatabaseFunctionBox
-): Verifications {.forceCheck: [], fcBoundsOverride.} =
+): Verifications {.forceCheck: [].} =
     #Create the Verifications object.
     result = Verifications(
         db: db,
@@ -64,7 +64,7 @@ proc newVerificationsObj*(
 proc add(
     verifs: Verifications,
     verifier: BLSPublicKey
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     #Create a string of the verifier.
     var verifierStr: string = verifier.toString()
 
@@ -87,7 +87,7 @@ proc add(
 proc `[]`*(
     verifs: Verifications,
     verifier: BLSPublicKey
-): var Verifier {.forceCheck: [], fcBoundsOverride.} =
+): var Verifier {.forceCheck: [].} =
     #Call add, which will only create a new Verifier if one doesn't exist.
     verifs.add(verifier)
 

@@ -34,7 +34,7 @@ const
 func deserialize*(
     data: string,
     lengths: varargs[int]
-): seq[string] {.forceCheck: [], fcBoundsOverride.} =
+): seq[string] {.forceCheck: [].} =
     #Allocate the seq.
     result = newSeq[string](lengths.len)
 
@@ -50,6 +50,6 @@ func reserialize*(
     data: seq[string],
     start: int,
     endIndex: int
-): string {.forceCheck: [], fcBoundsOverride.} =
+): string {.forceCheck: [].} =
     for i in start .. endIndex:
         result &= data[i]

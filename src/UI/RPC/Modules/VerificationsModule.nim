@@ -38,7 +38,7 @@ proc getVerification(
 #Get unarchived verifications.
 proc getUnarchivedVerifications(
     rpc: RPC
-): JSONNode {.forceCheck: [], fcBoundsOverride.} =
+): JSONNode {.forceCheck: [].} =
     #Get the records.
     var records: seq[VerifierRecord] = rpc.functions.verifications.getUnarchivedRecords()
 
@@ -73,7 +73,7 @@ proc verifications*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 

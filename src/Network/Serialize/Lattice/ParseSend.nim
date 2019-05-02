@@ -26,7 +26,7 @@ proc parseSend*(
 ): Send {.forceCheck: [
     ArgonError,
     EdPublicKeyError
-], fcBoundsOverride.} =
+].} =
     var
         #Public Key | Nonce | Output | Amount | Proof | Signature
         sendSeq: seq[string] = sendStr.deserialize(

@@ -44,7 +44,7 @@ func `records=`*(
     records: seq[VerifierRecord]
 ) {.forceCheck: [
     ValueError
-], fcBoundsOverride.} =
+].} =
     #Verify no Verifier has multiple Records.
     var
         verifiers: Table[string, bool] = initTable[string, bool]()

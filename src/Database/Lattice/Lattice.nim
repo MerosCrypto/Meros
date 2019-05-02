@@ -199,7 +199,7 @@ proc newLattice*(
     merit: Merit,
     sendDiff: string,
     dataDiff: string
-): Lattice {.forceCheck: [], fcBoundsOverride.} =
+): Lattice {.forceCheck: [].} =
     #Create the Lattice.
     result = newLatticeObj(
         db,
@@ -413,7 +413,7 @@ proc mint*(
 proc archive*(
     lattice: var Lattice,
     epoch: Epoch
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     for hash in epoch.hashes.keys():
         #Grab the Index for this hash.
         var index: LatticeIndex

@@ -228,7 +228,7 @@ proc personal*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 

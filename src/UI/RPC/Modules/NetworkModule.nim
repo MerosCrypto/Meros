@@ -33,7 +33,7 @@ proc network*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 

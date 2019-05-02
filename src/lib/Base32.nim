@@ -27,7 +27,7 @@ func isBase32*(
 #Binary array to Base32 object.
 func toBase32*(
     data: openArray[uint8]
-): Base32 {.forceCheck: [], fcBoundsOverride.} =
+): Base32 {.forceCheck: [].} =
     #Creae a result variable.
     var res: seq[uint8] = @[]
 
@@ -105,7 +105,7 @@ func toBase32*(
 #Base32 object to binary seq.
 func toSeq*(
     dataArg: Base32
-): seq[uint8] {.forceCheck: [], fcBoundsOverride.} =
+): seq[uint8] {.forceCheck: [].} =
     var
         #Extract the data.
         data: seq[uint8] = cast[seq[uint8]](dataArg)
@@ -150,7 +150,7 @@ func toSeq*(
 #Base32 object to Base32 string.
 func `$`*(
     dataArg: Base32
-): string {.forceCheck: [], fcBoundsOverride.} =
+): string {.forceCheck: [].} =
     #Extract the data.
     var data: seq[uint8] = cast[seq[uint8]](dataArg)
 

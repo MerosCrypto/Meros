@@ -17,7 +17,7 @@ import json
 #Get the nonce to use with new transactions.
 proc getNonce*(
     gui: GUI
-): int {.forceCheck: [], fcBoundsOverride.} =
+): int {.forceCheck: [].} =
     try:
         #Get the address.
         var address: string = gui.call("personal", "getWallet")["address"].getStr()

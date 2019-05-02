@@ -47,7 +47,7 @@ proc toBNFromHex*(
     valueArg: string
 ): BN {.forceCheck: [
     ValueError
-], fcBoundsOverride.} =
+].} =
     #If the value isn't of the base, raise a ValueError.
     if not valueArg.isHex():
         raise newException(ValueError, "Invalid Hex number.")
@@ -72,7 +72,7 @@ proc toBNFromHex*(
 #Convert the BN to its Hex string.
 proc toHex*(
     valueArg: BN
-): string {.forceCheck: [], fcBoundsOverride.} =
+): string {.forceCheck: [].} =
     #Copy the value.
     var value: BN = valueArg
 

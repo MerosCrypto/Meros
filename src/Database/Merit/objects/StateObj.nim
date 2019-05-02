@@ -37,7 +37,7 @@ finalsd:
 proc newStateObj*(
     db: DatabaseFunctionBox,
     deadBlocks: Natural
-): State {.forceCheck: [], fcBoundsOverride.} =
+): State {.forceCheck: [].} =
     result = State(
         db: db,
         pending: @[],
@@ -72,7 +72,7 @@ proc newStateObj*(
 func add(
     state: var State,
     key: string
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     #Return if they are already in the state.
     if state.holders.hasKey(key):
         return
@@ -87,7 +87,7 @@ func add(
 func `[]`*(
     state: var State,
     key: string
-): int {.forceCheck: [], fcBoundsOverride.} =
+): int {.forceCheck: [].} =
     #Add this holder to the State if they don't exist already.
     state.add(key)
 
@@ -100,7 +100,7 @@ func `[]`*(
 func `[]`*(
     state: var State,
     key: BLSPublicKey
-): int {.inline, forceCheck: [], fcBoundsOverride.} =
+): int {.inline, forceCheck: [].} =
     state[key.toString()]
 
 #Return the amount of live Merit.
@@ -114,7 +114,7 @@ func `[]=`*(
     state: var State,
     key: string,
     value: Natural
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     #Get the previous value (uses the State `[]` so `add` is called).
     var previous: int = state[key]
     #Set their new value.
@@ -132,13 +132,13 @@ func `[]=`*(
     state: var State,
     key: BLSPublicKey,
     value: Natural
-) {.inline, forceCheck: [], fcBoundsOverride.} =
+) {.inline, forceCheck: [].} =
     state[key.toString()] = value
 
 #Save the State to the DB.
 proc save*(
     state: var State
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     #Save the State
     try:
         #Iterate over every pending account.

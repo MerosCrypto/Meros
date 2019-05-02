@@ -47,7 +47,7 @@ proc handle(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Switch based off the moduke.
     var moduleStr: string
     try:
@@ -138,7 +138,7 @@ proc start*(
 proc handle*(
     rpc: RPC,
     client: RPCSocketClient
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Handle the client.
     while not client.socket.isClosed():
         #Read in a line.
@@ -187,7 +187,7 @@ proc handle*(
                 json,
                 proc (
                     resArg: JSONNode
-                ) {.forceCheck: [], fcBoundsOverride.} =
+                ) {.forceCheck: [].} =
                     #Declare a var to send back.
                     var res: string
                     try:
@@ -224,7 +224,7 @@ proc handle*(
 proc listen*(
     rpc: RPC,
     config: Config
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Create the server socket.
     try:
         rpc.server = newAsyncSocket()

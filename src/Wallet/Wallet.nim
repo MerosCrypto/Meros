@@ -36,7 +36,7 @@ func newEdSeed*(
     seed: string
 ): EdSeed {.forceCheck: [
     EdSeedError
-], fcBoundsOverride.} =
+].} =
     #If it's binary...
     if seed.len == 32:
         for i in 0 ..< 32:
@@ -56,7 +56,7 @@ func newEdPublicKey*(
     key: string
 ): EdPublicKey {.forceCheck: [
     EdPublicKeyError
-], fcBoundsOverride.} =
+].} =
     #If it's binary...
     if key.len == 32:
         for i in 0 ..< 32:

@@ -48,7 +48,7 @@ proc getDifficulty(
 proc getBlock(
     rpc: RPC,
     nonce: int
-): JSONNode {.forceCheck: [], fcBoundsOverride.} =
+): JSONNode {.forceCheck: [].} =
     #Get the Block.
     var gotBlock: Block
     try:
@@ -151,7 +151,7 @@ proc merit*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 

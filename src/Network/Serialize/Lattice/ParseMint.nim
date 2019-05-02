@@ -59,7 +59,7 @@ proc parseMint*(
 ): Mint {.forceCheck: [
     ValueError,
     BLSError
-], fcBoundsOverride.} =
+].} =
     var
         #Nonce | Output | Amount
         mintSeq: seq[string] = mintStr.deserialize(

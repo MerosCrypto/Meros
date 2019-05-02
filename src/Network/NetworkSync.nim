@@ -130,7 +130,7 @@ proc sync*(
 ) {.forceCheck: [
     DataMissing,
     ValidityConcern
-], fcBoundsOverride, async.} =
+], async.} =
     var
         #Variable for gaps.
         gaps: seq[Gap] = @[]

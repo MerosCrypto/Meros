@@ -20,7 +20,7 @@ import ../SerializeCommon
 #Parse function.
 proc parseDifficulty*(
     difficultyStr: string
-): Difficulty {.forceCheck: [], fcBoundsOverride.} =
+): Difficulty {.forceCheck: [].} =
     #Start | End | Difficulty
     var difficultySeq: seq[string] = difficultyStr.deserialize(
         INT_LEN,

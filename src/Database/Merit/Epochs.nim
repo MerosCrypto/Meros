@@ -48,7 +48,7 @@ proc shift*(
     verifications: Verifications,
     records: seq[VerifierRecord],
     tips: TableRef[string, int] = nil
-): Epoch {.forceCheck: [], fcBoundsOverride.} =
+): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch(records)
@@ -97,7 +97,7 @@ proc newEpochs*(
     db: DatabaseFunctionBox,
     verifications: Verifications,
     blockchain: Blockchain
-): Epochs {.forceCheck: [], fcBoundsOverride.} =
+): Epochs {.forceCheck: [].} =
     #Create the Epochs objects.
     result = newEpochsObj(db)
 
@@ -153,7 +153,7 @@ proc newEpochs*(
 func calculate*(
     epoch: Epoch,
     state: var State
-): Rewards {.forceCheck: [], fcBoundsOverride.} =
+): Rewards {.forceCheck: [].} =
     #If the epoch is empty, do nothing.
     if epoch.hashes.len == 0:
         return @[]

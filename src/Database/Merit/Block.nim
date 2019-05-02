@@ -50,7 +50,7 @@ func inc*(
 proc verify*(
     blockArg: Block,
     verifs: Table[string, seq[Verification]]
-): bool {.forceCheck: [], fcBoundsOverride.} =
+): bool {.forceCheck: [].} =
     result = true
 
     #Make sure there's the same amount of Verifier as there are records.

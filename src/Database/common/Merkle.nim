@@ -41,7 +41,7 @@ func newMerkle(
 #Rehashes a Merkle Tree.
 proc rehash(
     tree: Merkle
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     #If this is a Leaf, its hash is constant.
     if tree.isLeaf:
         return
@@ -156,7 +156,7 @@ const t: array[6, uint64] = [
 ]
 func ceilLog2(
     xArg: uint64
-): uint64 {.forceCheck: [], fcBoundsOverride.} =
+): uint64 {.forceCheck: [].} =
     var
         x: uint64 = xArg
         j: uint64 = 32
@@ -183,7 +183,7 @@ func ceilLog2(
 proc newMerkleAux(
     hashes: varargs[Hash[384]],
     targetDepth: int
-): Merkle {.forceCheck: [], fcBoundsOverride.} =
+): Merkle {.forceCheck: [].} =
     if targetDepth == 0:
         return newMerkle(hashes[0])
 

@@ -22,7 +22,7 @@ proc parseMemoryVerification*(
 ): MemoryVerification {.forceCheck: [
     ValueError,
     BLSError
-], fcBoundsOverride.} =
+].} =
     var
         #BLS Public Key | Nonce | Entry Hash | BLS Signature
         verifSeq: seq[string] = verifStr.deserialize(

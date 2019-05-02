@@ -27,7 +27,7 @@ import json
 
 proc toJSON*(
     entry: Entry
-): JSONNode {.forceCheck: [], fcBoundsOverride.} =
+): JSONNode {.forceCheck: [].} =
     #Set the Entry's fields.
     result = %* {
         "descendant": $entry.descendant,
@@ -138,7 +138,7 @@ proc lattice*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], fcBoundsOverride, async.} =
+) {.forceCheck: [], async.} =
     #Declare a var for the response.
     var res: JSONNode
 

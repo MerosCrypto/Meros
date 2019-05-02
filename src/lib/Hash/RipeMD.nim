@@ -13,7 +13,7 @@ type RipeMD_160Hash* = Hash[160]
 #RIPEMD 160 hash function.
 proc RipeMD_160*(
     bytesArg: string
-): RipeMD_160Hash {.forceCheck: [], fcBoundsOverride.} =
+): RipeMD_160Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 

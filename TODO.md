@@ -125,7 +125,7 @@ UI/RPC:
 
 ### Improvements:
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
-- Update some fcBoundsOverride pragmas to block statements.
+- Disable the need for having bound checks on.
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.

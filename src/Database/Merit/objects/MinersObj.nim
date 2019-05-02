@@ -43,7 +43,7 @@ func newMinerObj*(
 #Miners Constructor.
 proc newMinersObj*(
     miners: seq[Miner] = @[]
-): Miners {.forceCheck: [], fcBoundsOverride.} =
+): Miners {.forceCheck: [].} =
     #Create the Miners object.
     result = Miners(
         miners: miners

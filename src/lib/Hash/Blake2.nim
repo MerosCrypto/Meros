@@ -16,7 +16,7 @@ type
 #Blake 256 hashing algorithm.
 proc Blake2_256*(
     bytesArg: string
-): Blake2_256Hash {.forceCheck: [], fcBoundsOverride.} =
+): Blake2_256Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -32,7 +32,7 @@ proc Blake2_256*(
 #Blake 384 hashing algorithm.
 proc Blake2_384*(
     bytesArg: string
-): Blake2_384Hash {.forceCheck: [], fcBoundsOverride.} =
+): Blake2_384Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -48,7 +48,7 @@ proc Blake2_384*(
 #Blake 512 hashing algorithm.
 proc Blake2_512*(
     bytesArg: string
-): Blake2_512Hash {.forceCheck: [], fcBoundsOverride.} =
+): Blake2_512Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 

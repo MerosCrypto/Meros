@@ -26,7 +26,7 @@ proc parseClaim*(
 ): Claim {.forceCheck: [
     BLSError,
     EdPublicKeyError
-], fcBoundsOverride.} =
+].} =
     var
         #Public Key | Nonce | Mint Nonce | BLS Signature | Signature
         claimSeq: seq[string] = claimStr.deserialize(

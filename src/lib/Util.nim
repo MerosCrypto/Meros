@@ -68,7 +68,7 @@ func toBinary*(
 #Converts a binary string to a number.
 func fromBinary*(
     number: string
-): int {.forceCheck: [], fcBoundsOverride.} =
+): int {.forceCheck: [].} =
     #Iterate over each byte.
     for b in 0 ..< number.len:
         #Add the byte after it's been properly shifted.

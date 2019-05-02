@@ -58,7 +58,7 @@ proc newAccountObj*(
     address: string
 ): Account {.forceCheck: [
     AddressError
-], fcBoundsOverride.} =
+].} =
     #Verify the address.
     if (address != "minter") and (not address.isValid()):
         raise newException(AddressError, "Invalid Address passed to `newAccountObj`.")
@@ -129,7 +129,7 @@ proc add*(
     GapError,
     EdPublicKeyError,
     DataExists
-], fcBoundsOverride.} =
+].} =
     #Check the Signature.
     #If it's a valid minter Entry...
     if (
@@ -207,7 +207,7 @@ proc `[]`*(
 ): Entry {.forceCheck: [
     ValueError,
     IndexError
-], fcBoundsOverride.} =
+].} =
     #Check the index is in bounds.
     if index >= account.height:
         raise newException(IndexError, "Account index out of bounds.")
@@ -252,7 +252,7 @@ proc `[]`*(
     account: Account,
     index: int,
     hash: Hash[384]
-): Entry {.forceCheck: [], fcBoundsOverride.} =
+): Entry {.forceCheck: [].} =
     var i: int = index - account.confirmed
     if i >= account.entries.len:
         doAssert(false, "Entry we tried to retrieve by hash wasn't actually in RAM, as checked by the i value.")

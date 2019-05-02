@@ -19,7 +19,7 @@ proc parseMiners*(
 ): Miners {.forceCheck: [
     ValueError,
     BLSError
-], fcBoundsOverride.} =
+].} =
     #Quantity | BLS Key 1 | Amount 1 .. BLS Key N | Amount N
     var
         quantity: int

@@ -67,7 +67,7 @@ proc newLatticeObj*(
     db: DatabaseFunctionBox,
     sendDiff: string,
     dataDiff: string
-): Lattice {.forceCheck: [], fcBoundsOverride.} =
+): Lattice {.forceCheck: [].} =
     #Create the object.
     result = Lattice(
         db: db,
@@ -120,7 +120,7 @@ func addHash*(
     lattice: var Lattice,
     hash: Hash[384],
     index: LatticeIndex
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     lattice.lookup[hash.toString()] = index
 
 #Deletes a hash from the lookup/verifications.
@@ -137,7 +137,7 @@ proc add*(
     address: string
 ) {.forceCheck: [
     AddressError
-], fcBoundsOverride.} =
+].} =
     #Make sure the account doesn't already exist.
     if lattice.accounts.hasKey(address):
         return
@@ -167,7 +167,7 @@ proc `[]`*(
     address: string
 ): var Account {.forceCheck: [
     AddressError
-], fcBoundsOverride.} =
+].} =
     #Call add, which will only create an account if one doesn't exist.
     try:
         lattice.add(address)

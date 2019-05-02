@@ -40,7 +40,7 @@ const BCH_VALUES: array[5, uint32] = [
 #BCH Polymod function.
 func polymod(
     values: seq[uint8]
-): uint32 {.forceCheck: [], fcBoundsOverride.} =
+): uint32 {.forceCheck: [].} =
     result = 1
     var b: uint32
     for value in values:
@@ -108,7 +108,7 @@ func newAddress*(
     keyArg: string
 ): string {.forceCheck: [
     EdPublicKeyError
-], fcBoundsOverride.} =
+].} =
     #Verify the key length.
     if (keyArg.len != 32) and (keyArg.len != 64):
         raise newException(EdPublicKeyError, "Invalid length Public Key passed to newAddress.")

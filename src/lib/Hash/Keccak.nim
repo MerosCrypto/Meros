@@ -15,7 +15,7 @@ type
 #Keccak 256 hashing algorithm.
 proc Keccak_256*(
     bytesArg: string
-): Keccak_256Hash {.forceCheck: [], fcBoundsOverride.} =
+): Keccak_256Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -31,7 +31,7 @@ proc Keccak_256*(
 #Keccak 512 hashing algorithm.
 proc Keccak_512*(
     bytesArg: string
-): Keccak_512Hash {.forceCheck: [], fcBoundsOverride.} =
+): Keccak_512Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 

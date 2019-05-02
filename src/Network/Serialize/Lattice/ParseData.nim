@@ -24,7 +24,7 @@ proc parseData*(
     ValueError,
     ArgonError,
     EdPublicKeyError
-], fcBoundsOverride.} =
+].} =
     var
         #Public Key | Nonce | Data Len | Data | Proof | Signature
         keyNonce: seq[string] = dataStr.deserialize(

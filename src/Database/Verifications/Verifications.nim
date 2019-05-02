@@ -48,7 +48,7 @@ proc add*(
     GapError,
     DataExists,
     MeritRemoval
-], fcBoundsOverride.} =
+].} =
     try:
         verifs[verif.verifier].add(verif)
     except GapError as e:
@@ -67,7 +67,7 @@ proc add*(
     BLSError,
     DataExists,
     MeritRemoval
-], fcBoundsOverride.} =
+].} =
     try:
         verifs[verif.verifier].add(verif)
     except GapError as e:
@@ -83,7 +83,7 @@ proc add*(
 proc archive*(
     verifs: Verifications,
     records: seq[VerifierRecord]
-) {.forceCheck: [], fcBoundsOverride.} =
+) {.forceCheck: [].} =
     #Iterate over every Record.
     for record in records:
         #Delete them from the seq.

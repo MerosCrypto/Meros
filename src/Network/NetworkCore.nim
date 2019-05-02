@@ -136,19 +136,18 @@ proc newNetwork*(
                     doAssert(false, "Sending a block in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.VerificationRequest:
-                fcBoundsOverride:
-                    var
-                        req: seq[string] = msg.message.deserialize(
-                            BLS_PUBLIC_KEY_LEN,
-                            INT_LEN
-                        )
-                        key: BLSPublicKey
-                        nonce: int = req[1].fromBinary()
-                        height: int
-                    try:
-                        key = newBLSPublicKey(req[0])
-                    except BLSError as e:
-                        raise newException(InvalidMessageError, "`VerificationRequest` contained an invalid BLS Public Key: " & e.msg)
+                var
+                    req: seq[string] = msg.message.deserialize(
+                        BLS_PUBLIC_KEY_LEN,
+                        INT_LEN
+                    )
+                    key: BLSPublicKey
+                    nonce: int = req[1].fromBinary()
+                    height: int
+                try:
+                    key = newBLSPublicKey(req[0])
+                except BLSError as e:
+                    raise newException(InvalidMessageError, "`VerificationRequest` contained an invalid BLS Public Key: " & e.msg)
 
                 height = mainFunctions.verifications.getVerifierHeight(key)
                 if height <= nonce:

@@ -16,7 +16,7 @@ import ../../../Wallet/MinerWallet
 #Serialization function.
 func serialize*(
     miners: Miners
-): string {.forceCheck: [], fcBoundsOverride.} =
+): string {.forceCheck: [].} =
     #Set the quantity.
     result = $char(miners.miners.len)
 

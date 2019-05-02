@@ -34,7 +34,7 @@ func newEdKeyPair*(
     pub: PublicKey
 ] {.forceCheck: [
     SodiumError
-], fcBoundsOverride.} =
+].} =
     #Extract the Seed.
     var seed: Seed = seedArg
 
@@ -52,7 +52,7 @@ func sign*(
     msgArg: string
 ): string {.forceCheck: [
     SodiumError
-], fcBoundsOverride.} =
+].} =
     #Extract the message arg.
     var msg: string = SIGN_PREFIX & msgArg
 
@@ -77,7 +77,7 @@ func verify*(
     sigArg: string
 ): bool {.forceCheck: [
     SodiumError
-], fcBoundsOverride.} =
+].} =
     #Extract the args.
     var
         msg: string = SIGN_PREFIX & msgArg
