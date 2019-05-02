@@ -128,6 +128,9 @@ UI/RPC:
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
-- Document the Message Types under `docs/Protocol`.
 - Use Nim Documentation Comments.
+- In docs/Protocol/Syncing, explain `GetAccountHeight`, `GetHashesAtIndex`, and `GetVerifierHeight`.
+- docs/Protocol/Lattice.
+- docs/Protocol/Verifications.
+- docs/Protocol/Merit.
 - Meros Whitepaper.

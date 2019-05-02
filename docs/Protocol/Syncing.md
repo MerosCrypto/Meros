@@ -1,8 +1,12 @@
 # Syncing
 
-Syncing is an state between two nodes where one needs to catch up. To initiate syncing, the node missing data (the "syncer") sends `Syncing`. In response, the node which received `Syncing` (the "syncee") sends `SyncingAcknowledged`. The syncer should ignore all messages from the syncee until it receives `SyncingAcknowledged`, in order to not confuse normal network traffic with data relevant to its syncing.
+Syncing is a state between two nodes where one needs to catch up. To initiate syncing, the node missing data (the "syncer") sends `Syncing`. In response, the node which received `Syncing` (the "syncee") sends `SyncingAcknowledged`. The syncer should ignore all messages from the syncee until it receives `SyncingAcknowledged`, in order to not confuse normal network traffic with data relevant to its syncing.
 
 During syncing, the syncer can only send:
+
+- `GetAccountHeight`
+- `GetHashesAtIndex`
+- `GetVerifierHeight`
 - `EntryRequest`
 - `MemoryVerificationRequest`
 - `BlockRequest`
@@ -35,11 +39,11 @@ A `EntryRequest` is followed by the 48 byte Entry hash, with an expected respons
 
 ### MemoryVerificationRequest
 
-A `MemoryVerificationRequest` has a message length of 52 bytes; the 48 byte Verifier public key followed by the 4 byte nonce of the verification, with an expected response being a `MemoryVerification` containing the memory verification at the requested location. If a verifier had multiple verifications at that location, the syncer should respond with a `MeritRemoval` containing every memory verification at that index.
+A `MemoryVerificationRequest` has a message length of 52 bytes; the 48 byte Verifier public key followed by the 4 byte nonce of the verification, with an expected response being a `MemoryVerification` containing the memory verification at the requested location. If a verifier had multiple verifications at that location, the syncee should respond with a `MeritRemoval` containing every memory verification at that index.
 
 ### BlockRequest
 
-A `BlockRequest` is followed by the 48 byte block hash, with an expected response being a `Block` containing the block, or if the syncee doesn't have the block in question, a `DataMissing`.
+A `BlockRequest` is followed by the 48 byte block hash, with an expected response being a `Block` containing the block. If a zero'd hash is provided, the syncee should respond with a `Block` containing their tail block.
 
 ### VerificationRequest
 
@@ -48,5 +52,5 @@ A `VerificationRequest` is identical to a `MemoryVerificationRequest`, except fo
 ### Violations in Meros
 
 - Meros doesn't support the `MemoryVerificationRequest` message type.
-- Meros doesn't support the `MeritRemoval`  message type.
-- A `BlockRequest` is followed by four bytes representing the nonce of the block, as Meros currently doesn't support chain reorgs in any form.
+- Meros doesn't support the `MeritRemoval` message type.
+- A `BlockRequest` is followed by four bytes representing the nonce of the block, as Meros currently doesn't support chain reorgs in any form. To get the tail block, Meros sends four zero bytes.
