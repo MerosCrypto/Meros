@@ -22,10 +22,10 @@ proc parseRecords*(
 ): seq[VerifierRecord] {.forceCheck: [
     ValueError,
     BLSError
-].} =
+], fcBoundsOverride.} =
     #Quantity | BLS Key 1 | Nonce 1 | Merkle 1 .. BLS Key N | Nonce N | Merkle N
     var
-        quantity: int = recordsStr[0 ..< INT_LEN].fromBinary()
+        quantity: int = recordsStr.substr(0, INT_LEN - 1).fromBinary()
         recordSeq: seq[string]
 
     #Init the result.

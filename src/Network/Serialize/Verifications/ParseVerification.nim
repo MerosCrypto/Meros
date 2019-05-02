@@ -22,7 +22,7 @@ proc parseVerification*(
 ): Verification {.forceCheck: [
     ValueError,
     BLSError
-].} =
+], fcBoundsOverride.} =
     var
         #BLS Public Key | Nonce | Entry Hash
         verifSeq: seq[string] = verifStr.deserialize(

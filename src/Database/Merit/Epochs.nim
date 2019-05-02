@@ -48,7 +48,7 @@ proc shift*(
     verifications: Verifications,
     records: seq[VerifierRecord],
     tips: TableRef[string, int] = nil
-): Epoch {.forceCheck: [].} =
+): Epoch {.forceCheck: [], fcBoundsOverride.} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch(records)
@@ -97,7 +97,7 @@ proc newEpochs*(
     db: DatabaseFunctionBox,
     verifications: Verifications,
     blockchain: Blockchain
-): Epochs {.forceCheck: [].} =
+): Epochs {.forceCheck: [], fcBoundsOverride.} =
     #Create the Epochs objects.
     result = newEpochsObj(db)
 
@@ -123,7 +123,7 @@ proc newEpochs*(
     #Use the Holders string from the State.
     for i in countup(0, holders.len - 1, 48):
         #Extract the holder.
-        var holder = holders[i .. i + 47]
+        var holder = holders[i ..< i + 48]
 
         #Load their tip.
         try:
@@ -153,7 +153,7 @@ proc newEpochs*(
 func calculate*(
     epoch: Epoch,
     state: var State
-): Rewards {.forceCheck: [].} =
+): Rewards {.forceCheck: [], fcBoundsOverride.} =
     #If the epoch is empty, do nothing.
     if epoch.hashes.len == 0:
         return @[]
@@ -237,12 +237,12 @@ func calculate*(
         #Declare the cutoff edge.
         var edge: int = 100
         #If the result at the edge are tied...
-        while result[edge-1].score == result[edge].score:
+        while result[edge - 1].score == result[edge].score:
             #Increase the edge.
             inc(edge)
 
         #Delete everything after the edge.
-        result.delete(edge, result.len-1)
+        result.delete(edge, result.len - 1)
 
     #Reuse total to calculate the total score.
     total = 0

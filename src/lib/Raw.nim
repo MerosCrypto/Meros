@@ -12,7 +12,9 @@ import math
 let BASE: BN = newBN(256)
 
 #Turn a Raw string into a BN.
-proc toBNFromRaw*(value: string): BN {.forceCheck: [].} =
+proc toBNFromRaw*(
+    value: string
+): BN {.forceCheck: [].} =
     #Create a new BN.
     result = newBN()
 
@@ -24,7 +26,9 @@ proc toBNFromRaw*(value: string): BN {.forceCheck: [].} =
         ) * newBN(int(digit))
 
 #Convert the BN to its Raw string.
-proc toRaw*(valueArg: BN): string {.forceCheck: [].} =
+proc toRaw*(
+    valueArg: BN
+): string {.forceCheck: [].} =
     #Copy the value.
     var value: BN = valueArg
 

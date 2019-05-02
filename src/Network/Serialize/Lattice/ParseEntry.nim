@@ -19,7 +19,7 @@ proc parseEntry*(
     ArgonError,
     BLSError,
     EdPublicKeyError
-].} =
+], fcBoundsOverride.} =
     try:
         case EntryType(entry[0]):
             of EntryType.Mint:

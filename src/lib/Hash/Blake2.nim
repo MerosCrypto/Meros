@@ -16,7 +16,7 @@ type
 #Blake 256 hashing algorithm.
 proc Blake2_256*(
     bytesArg: string
-): Blake2_256Hash {.raises: [].} =
+): Blake2_256Hash {.forceCheck: [], fcBoundsOverride.} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -32,7 +32,7 @@ proc Blake2_256*(
 #Blake 384 hashing algorithm.
 proc Blake2_384*(
     bytesArg: string
-): Blake2_384Hash {.raises: [].} =
+): Blake2_384Hash {.forceCheck: [], fcBoundsOverride.} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -48,7 +48,7 @@ proc Blake2_384*(
 #Blake 512 hashing algorithm.
 proc Blake2_512*(
     bytesArg: string
-): Blake2_512Hash {.raises: [].} =
+): Blake2_512Hash {.forceCheck: [], fcBoundsOverride.} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -64,7 +64,7 @@ proc Blake2_512*(
 #String to Blake2_256Hash.
 func toBlake2_256Hash*(
     hash: string
-): Blake2_256Hash {.raises: [
+): Blake2_256Hash {.forceCheck: [
     ValueError
 ].} =
     try:
@@ -75,7 +75,7 @@ func toBlake2_256Hash*(
 #String to Blake2_384Hash.
 func toBlake2_384Hash*(
     hash: string
-): Blake2_384Hash {.raises: [
+): Blake2_384Hash {.forceCheck: [
     ValueError
 ].} =
     try:
@@ -86,7 +86,7 @@ func toBlake2_384Hash*(
 #String to Blake2_512Hash.
 func toBlake2_512Hash*(
     hash: string
-): Blake2_512Hash {.raises: [
+): Blake2_512Hash {.forceCheck: [
     ValueError
 ].} =
     try:

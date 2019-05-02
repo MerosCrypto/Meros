@@ -30,7 +30,7 @@ proc processBlock*(
     state: var State,
     blockchain: Blockchain,
     newBlock: Block
-) {.forceCheck: [].} =
+) {.forceCheck: [], fcBoundsOverride.} =
     #Grab the miners.
     var miners: seq[Miner] = newBlock.miners.miners
 

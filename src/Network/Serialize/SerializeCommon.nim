@@ -30,11 +30,11 @@ const
     DATA_PREFIX_LEN*: int = PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN
     DATA_SUFFIX_LEN*: int = INT_LEN + SIGNATURE_LEN
 
-#Deseralizes a string by getting the length of the next byte, slicing that out, and moving on.
+#Deseralizes a string by getting the length of the next set of bytes, slicing that out, and moving on.
 func deserialize*(
     data: string,
     lengths: varargs[int]
-): seq[string] {.forceCheck: [].} =
+): seq[string] {.forceCheck: [], fcBoundsOverride.} =
     #Allocate the seq.
     result = newSeq[string](lengths.len)
 
@@ -50,6 +50,6 @@ func reserialize*(
     data: seq[string],
     start: int,
     endIndex: int
-): string {.forceCheck: [].} =
+): string {.forceCheck: [], fcBoundsOverride.} =
     for i in start .. endIndex:
         result &= data[i]

@@ -33,7 +33,7 @@ proc network*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (json: JSONNode)
-) {.forceCheck: [], async.} =
+) {.forceCheck: [], fcBoundsOverride, async.} =
     #Declare a var for the response.
     var res: JSONNode
 
@@ -66,6 +66,10 @@ proc network*(
     except KeyError:
         res = %* {
             "error": "Missing `args`."
+        }
+    except IndexError:
+        res = %* {
+            "error": "Not enough args were passed."
         }
 
     reply(res)

@@ -37,7 +37,7 @@ proc aggregate*(
     verifs: seq[MemoryVerification]
 ): BLSSignature {.forceCheck: [
     BLSError
-].} =
+], fcBoundsOverride.} =
     #If there's no Verifications...
     if verifs.len == 0:
         return nil

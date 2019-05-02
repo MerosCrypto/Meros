@@ -37,6 +37,7 @@ proc handle(
     client: Client,
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [
+    IndexError,
     SocketError,
     ClientError
 ], async.} =
@@ -77,6 +78,8 @@ proc handle(
         #Handle our new message.
         try:
             await networkFunctions.handle(msg)
+        except IndexError as e:
+            fcRaise e
         except SocketError as e:
             fcRaise e
         except ClientError as e:
@@ -169,6 +172,11 @@ proc add*(
     #Handle it.
     try:
         await client.handle(networkFunctions)
+    #If an IndexError happened, we couldn't get the Client to reply to them
+    #This means something else disconnected and removed them.
+    except IndexError:
+        #Disconnect them again to be safe.
+        clients.disconnect(client.id)
     #If a SocketError happend, the Client is likely doomed. Fully disconnect it.
     except SocketError:
         clients.disconnect(client.id)
@@ -218,9 +226,15 @@ proc reply*(
     clients: Clients,
     msg: Message,
     res: Message
-) {.forceCheck: [], async.} =
+) {.forceCheck: [
+    IndexError
+], async.} =
     #Get the client.
-    var client: Client = clients[msg.client]
+    var client: Client
+    try:
+        client = clients[msg.client]
+    except IndexError as e:
+        fcRaise e
 
     #Try to send the message.
     try:

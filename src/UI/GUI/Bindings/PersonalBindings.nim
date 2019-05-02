@@ -17,7 +17,7 @@ import json
 #Get the nonce to use with new transactions.
 proc getNonce*(
     gui: GUI
-): int {.forceCheck: [].} =
+): int {.forceCheck: [], fcBoundsOverride.} =
     try:
         #Get the address.
         var address: string = gui.call("personal", "getWallet")["address"].getStr()
@@ -99,6 +99,8 @@ proc addTo*(
                         data[1],
                         nonce
                     )["hash"].getStr()
+                except IndexError as e:
+                    doAssert(false, "GUI didn't call Personal.send with enough data: " & e.msg)
                 except KeyError as e:
                     gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
                 except RPCError as e:
@@ -142,6 +144,8 @@ proc addTo*(
                         data[1],
                         nonce
                     )["hash"].getStr()
+                except IndexError as e:
+                    doAssert(false, "GUI didn't call Personal.receive with enough data: " & e.msg)
                 except KeyError as e:
                     gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
                 except RPCError as e:

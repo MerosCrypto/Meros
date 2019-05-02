@@ -76,6 +76,39 @@ proc newVerifierObj*(
     #Populate with the info from the DB.
     result.height = result.archived + 1
 
+# [] operator.
+proc `[]`*(
+    verifier: Verifier,
+    nonce: Natural
+): Verification {.forceCheck: [
+    IndexError
+].} =
+    #Check that the nonce isn't out of bounds.
+    if nonce >= verifier.height:
+        raise newException(IndexError, "That Verifier doesn't have a Verification for that nonce.")
+
+    #If it's in the database...
+    if nonce <= verifier.archived:
+        #Grab it and return it.
+        try:
+            result = newVerificationObj(
+                verifier.db.get("verifications_" & verifier.key.toString() & "_" & nonce.toBinary()).toHash(384)
+            )
+        except ValueError as e:
+            doAssert(false, "Couldn't parse a Verification we were asked for from the Database: " & e.msg)
+        except DBReadError as e:
+            doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
+
+        try:
+            result.verifier = verifier.key
+            result.nonce = nonce
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when loading a Verification: " & e.msg)
+        return
+
+    #Else, return it from memory.
+    result = verifier.verifications[nonce - (verifier.archived + 1)]
+
 #Add a Verification to a Verifier.
 proc add*(
     verifier: var Verifier,
@@ -91,8 +124,11 @@ proc add*(
     #Verify the Verification's Nonce.
     elif verif.nonce < verifier.height:
         #Verify they didn't submit two Verifications for the same nonce.
-        if verif.hash != verifier.verifications[verif.nonce].hash:
-            raise newException(MeritRemoval, "Verifier submitted two Verifications with the same nonce.")
+        try:
+            if verif.hash != verifier[verif.nonce].hash:
+                raise newException(MeritRemoval, "Verifier submitted two Verifications with the same nonce.")
+        except IndexError as e:
+            doAssert(false, "Couldn't grab a Verification we're supposed to have: " & e.msg)
 
         #Already added.
         raise newException(DataExists, "Verification has already been added.")
@@ -142,39 +178,7 @@ proc add*(
     except MeritRemoval as e:
         fcRaise e
 
-# [] operators.
-proc `[]`*(
-    verifier: Verifier,
-    nonce: Natural
-): Verification {.forceCheck: [
-    IndexError
-].} =
-    #Check that the nonce isn't out of bounds.
-    if nonce >= verifier.height:
-        raise newException(IndexError, "That Verifier doesn't have a Verification for that nonce.")
-
-    #If it's in the database...
-    if nonce <= verifier.archived:
-        #Grab it and return it.
-        try:
-            result = newVerificationObj(
-                verifier.db.get("verifications_" & verifier.key.toString() & "_" & nonce.toBinary()).toHash(384)
-            )
-        except ValueError as e:
-            doAssert(false, "Couldn't parse a Verification we were asked for from the Database: " & e.msg)
-        except DBReadError as e:
-            doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
-
-        try:
-            result.verifier = verifier.key
-            result.nonce = nonce
-        except FinalAttributeError as e:
-            doAssert(false, "Set a final attribute twice when loading a Verification: " & e.msg)
-        return
-
-    #Else, return it from memory.
-    result = verifier.verifications[nonce - (verifier.archived + 1)]
-
+#Slice operators.
 proc `[]`*(
     verifier: Verifier,
     slice: Slice[int]

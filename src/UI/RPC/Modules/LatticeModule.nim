@@ -27,7 +27,7 @@ import json
 
 proc toJSON*(
     entry: Entry
-): JSONNode {.forceCheck: [].} =
+): JSONNode {.forceCheck: [], fcBoundsOverride.} =
     #Set the Entry's fields.
     result = %* {
         "descendant": $entry.descendant,
@@ -138,7 +138,7 @@ proc lattice*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], async.} =
+) {.forceCheck: [], fcBoundsOverride, async.} =
     #Declare a var for the response.
     var res: JSONNode
 
@@ -179,12 +179,16 @@ proc lattice*(
                 res = %* {
                     "error": "Invalid method."
                 }
+    except KeyError:
+        res = %* {
+            "error": "Missing `args`."
+        }
     except ValueError:
         res = %* {
             "error": "Invalid hash passed to getEntryByHash."
         }
-    except KeyError:
+    except IndexError:
         res = %* {
-            "error": "Missing `args`."
+            "error": "Not enough args were passed."
         }
     reply(res)

@@ -1,6 +1,6 @@
 include MainVerifications
 
-proc mainMerit() {.forceCheck: [].} =
+proc mainMerit() {.forceCheck: [], fcBoundsOverride.} =
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(
@@ -25,7 +25,7 @@ proc mainMerit() {.forceCheck: [].} =
             nonce: int
         ): Block {.forceCheck: [
             IndexError
-        ].} =
+        ], fcBoundsOverride.} =
             try:
                 result = merit.blockchain[nonce]
             except IndexError as e:
@@ -39,7 +39,7 @@ proc mainMerit() {.forceCheck: [].} =
             IndexError,
             GapError,
             DataExists
-        ], async.} =
+        ], fcBoundsOverride, async.} =
             #If we already have this Block, raise.
             #This is a needed check, even though there's the same one in processBlock, because requested Blocks are rebroadcasted.
             #If a Client send us a back a Block, and we try to sync it, while they're still syncing, there's a standoff.

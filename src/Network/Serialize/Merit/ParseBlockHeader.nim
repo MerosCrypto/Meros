@@ -23,7 +23,7 @@ proc parseBlockHeader*(
     ValueError,
     ArgonError,
     BLSError
-].} =
+], fcBoundsOverride.} =
     #Nonce | Last Hash | Verifications Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(
         INT_LEN,

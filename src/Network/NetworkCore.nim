@@ -16,9 +16,13 @@ proc reply*(
     network: Network,
     msg: Message,
     res: Message
-) {.forceCheck: [], async.} =
+) {.forceCheck: [
+    IndexError
+], async.} =
     try:
         await network.clients.reply(msg, res)
+    except IndexError as e:
+        fcRaise e
     except Exception as e:
         doAssert(false, "Clients.reply(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
 #Constructor.
@@ -51,12 +55,16 @@ proc newNetwork*(
     result.networkFunctions.handle = proc (
         msg: Message
     ) {.forceCheck: [
+        IndexError,
         SocketError,
         ClientError,
         InvalidMessageError
     ], async.} =
-        if network.clients[msg.client].ourState == ClientState.Syncing:
-            doAssert(false, "We are attempting to handle a message yet we're Syncing, which shouldn't cause this code to be called.")
+        try:
+            if network.clients[msg.client].ourState == ClientState.Syncing:
+                doAssert(false, "We are attempting to handle a message yet we're Syncing, which shouldn't cause this code to be called.")
+        except IndexError as e:
+            fcRaise e
 
         #Handle the message.
         case msg.content:
@@ -88,6 +96,8 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                    except IndexError as e:
+                        fcRaise e
                     except SocketError as e:
                         fcRaise e
                     except ClientError as e:
@@ -100,17 +110,24 @@ proc newNetwork*(
                 if req == 0:
                     req = height - 1
 
-                #Since we have it, grab it, serialize it, and send it.
+                #Since we have it, grab it and serialize it.
+                var serialized: string
+                try:
+                    serialized = network.mainFunctions.merit.getBlock(req).serialize()
+                except IndexError as e:
+                    doAssert(false, "Couldn't grab a Block we've confirmed to have: " & e.msg)
+
+                #Send it.
                 try:
                     await network.clients.reply(
                         msg,
                         newMessage(
                             MessageType.Block,
-                            network.mainFunctions.merit.getBlock(req).serialize()
+                            serialized
                         )
                     )
                 except IndexError as e:
-                    doAssert(false, "Couldn't grab a Block we've confirmed to have: " & e.msg)
+                    fcRaise e
                 except SocketError as e:
                     fcRaise e
                 except ClientError as e:
@@ -119,18 +136,19 @@ proc newNetwork*(
                     doAssert(false, "Sending a block in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.VerificationRequest:
-                var
-                    req: seq[string] = msg.message.deserialize(
-                        BLS_PUBLIC_KEY_LEN,
-                        INT_LEN
-                    )
-                    key: BLSPublicKey
-                    nonce: int = req[1].fromBinary()
-                    height: int
-                try:
-                    key = newBLSPublicKey(req[0])
-                except BLSError as e:
-                    raise newException(InvalidMessageError, "`VerificationRequest` contained an invalid BLS Public Key: " & e.msg)
+                fcBoundsOverride:
+                    var
+                        req: seq[string] = msg.message.deserialize(
+                            BLS_PUBLIC_KEY_LEN,
+                            INT_LEN
+                        )
+                        key: BLSPublicKey
+                        nonce: int = req[1].fromBinary()
+                        height: int
+                    try:
+                        key = newBLSPublicKey(req[0])
+                    except BLSError as e:
+                        raise newException(InvalidMessageError, "`VerificationRequest` contained an invalid BLS Public Key: " & e.msg)
 
                 height = mainFunctions.verifications.getVerifierHeight(key)
                 if height <= nonce:
@@ -139,6 +157,8 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                    except IndexError as e:
+                        fcRaise e
                     except SocketError as e:
                         fcRaise e
                     except ClientError as e:
@@ -155,6 +175,8 @@ proc newNetwork*(
                             mainFunctions.verifications.getVerification(key, nonce).serialize()
                         )
                     )
+                except IndexError as e:
+                    fcRaise e
                 except SocketError as e:
                     fcRaise e
                 except ClientError as e:
@@ -180,6 +202,8 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                    except IndexError as e:
+                        fcRaise e
                     except SocketError as e:
                         fcRaise e
                     except ClientError as e:
@@ -195,6 +219,8 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                    except IndexError as e:
+                        fcRaise e
                     except SocketError as e:
                         fcRaise e
                     except ClientError as e:
@@ -224,6 +250,8 @@ proc newNetwork*(
                             entry.serialize()
                         )
                     )
+                except IndexError as e:
+                    fcRaise e
                 except SocketError as e:
                     fcRaise e
                 except ClientError as e:
@@ -307,8 +335,10 @@ proc newNetwork*(
                 var data: Data
                 try:
                     data = msg.message.parseData()
+                except ValueError as e:
+                    raise newException(InvalidMessageError, "Parsing the Data failed due to a ValueError: " & e.msg)
                 except ArgonError as e:
-                    raise newException(InvalidMessageError, "Parsing the Data caused an ArgonError: " & e.msg)
+                    raise newException(InvalidMessageError, "Parsing the Data failed due to an ArgonError: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Data contained an invalid ED25519 Public Key: " & e.msg)
 

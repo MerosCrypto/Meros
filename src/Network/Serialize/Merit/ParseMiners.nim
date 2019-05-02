@@ -17,13 +17,20 @@ import ../SerializeCommon
 proc parseMiners*(
     minersStr: string
 ): Miners {.forceCheck: [
+    ValueError,
     BLSError
-].} =
+], fcBoundsOverride.} =
     #Quantity | BLS Key 1 | Amount 1 .. BLS Key N | Amount N
     var
-        quantity: int = int(minersStr[0])
+        quantity: int
         minersSeq: seq[string]
-        miners: seq[Miner] = newSeq[Miner](quantity)
+        miners: seq[Miner]
+
+    try:
+        quantity = int(minersStr[0])
+    except IndexError as e:
+        raise newException(ValueError, "parseMiners not handed enough data to get the quantity: " & e.msg)
+    miners = newSeq[Miner](quantity)
 
     #Parse each Miner.
     for i in 0 ..< quantity:

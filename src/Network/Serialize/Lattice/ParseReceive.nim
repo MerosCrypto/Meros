@@ -25,7 +25,7 @@ proc parseReceive*(
     recvStr: string
 ): Receive {.forceCheck: [
     EdPublicKeyError
-].} =
+], fcBoundsOverride.} =
     var
         #Public Key | Nonce | Input Key | Input Nonce | Signature
         recvSeq: seq[string] = recvStr.deserialize(

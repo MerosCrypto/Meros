@@ -21,22 +21,31 @@ import ../SerializeCommon
 proc parseData*(
     dataStr: string
 ): Data {.forceCheck: [
+    ValueError,
     ArgonError,
     EdPublicKeyError
-].} =
+], fcBoundsOverride.} =
     var
         #Public Key | Nonce | Data Len | Data | Proof | Signature
         keyNonce: seq[string] = dataStr.deserialize(
             PUBLIC_KEY_LEN,
             INT_LEN
         )
+        dataLen: int
+
+    try:
+        dataLen = int(dataStr[PUBLIC_KEY_LEN + INT_LEN])
+    except IndexError as e:
+        raise newException(ValueError, "parseData wasn't passed enough data to to get the data length: " & e.msg)
+
+    var
         data: string = dataStr.substr(
             PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN,
-            PUBLIC_KEY_LEN + INT_LEN + int(dataStr[PUBLIC_KEY_LEN + INT_LEN])
+            PUBLIC_KEY_LEN + INT_LEN + dataLen
         )
         proofSig: seq[string] = dataStr
             .substr(
-                PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN + int(dataStr[PUBLIC_KEY_LEN + INT_LEN])
+                PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN + dataLen
             )
             .deserialize(
                 INT_LEN,

@@ -69,7 +69,7 @@ func newEpoch*(
 
 func newEpochsObj*(
     db: DatabaseFunctionBox
-): Epochs {.forceCheck: [].} =
+): Epochs {.forceCheck: [], fcBoundsOverride.} =
     #Create the seq.
     result = Epochs(
         db: db,
@@ -92,7 +92,7 @@ func add*(
     verifier: BLSPublicKey
 ) {.forceCheck: [
     NotInEpochs
-].} =
+], fcBoundsOverride.} =
     #Check every Epoch.
     try:
         for i in 0 ..< epochs.epochs.len:
@@ -112,7 +112,7 @@ func add*(
     epoch: var Epoch,
     hash: string,
     verifier: BLSPublicKey
-) {.forceCheck: [].} =
+) {.forceCheck: [], fcBoundsOverride.} =
     #Create the seq.
     try:
         epoch.hashes[hash] = @[]
@@ -130,7 +130,7 @@ proc shift*(
     epochs: var Epochs,
     epoch: Epoch,
     save: bool
-): Epoch {.forceCheck: [].} =
+): Epoch {.forceCheck: [], fcBoundsOverride.} =
     #Add the newest Epoch.
     epochs.epochs.add(epoch)
     #Set the result to the oldest.

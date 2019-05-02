@@ -10,7 +10,10 @@ switch("define", "DEFAULT_PORT=5132")
 
 when defined(release):
     #Disable checks.
-    switch("checks", "on")
+    switch("checks", "off")
+
+    #Re-enaable bound checks.
+    switch("boundChecks", "on")
 
     #Disable extra crash reporting.
     switch("lineDir", "off")

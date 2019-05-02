@@ -18,7 +18,11 @@ proc syncVerifications(
     result = @[]
 
     #Grab the Client.
-    var client: Client = network.clients[id]
+    var client: Client
+    try:
+        client = network.clients[id]
+    except IndexError as e:
+        raise newException(ClientError, "Couldn't grab the client: " & e.msg)
 
     #Send syncing.
     try:
@@ -74,7 +78,11 @@ proc syncEntries(
     result = @[]
 
     #Grab the Client.
-    var client: Client = network.clients[id]
+    var client: Client
+    try:
+        client = network.clients[id]
+    except IndexError as e:
+        raise newException(ClientError, "Couldn't grab the client: " & e.msg)
 
     #Send syncing.
     try:
@@ -122,7 +130,7 @@ proc sync*(
 ) {.forceCheck: [
     DataMissing,
     ValidityConcern
-], async.} =
+], fcBoundsOverride, async.} =
     var
         #Variable for gaps.
         gaps: seq[Gap] = @[]

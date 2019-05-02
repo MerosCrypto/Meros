@@ -48,7 +48,7 @@ proc add*(
     GapError,
     DataExists,
     MeritRemoval
-].} =
+], fcBoundsOverride.} =
     try:
         verifs[verif.verifier].add(verif)
     except GapError as e:
@@ -67,7 +67,7 @@ proc add*(
     BLSError,
     DataExists,
     MeritRemoval
-].} =
+], fcBoundsOverride.} =
     try:
         verifs[verif.verifier].add(verif)
     except GapError as e:
@@ -83,14 +83,17 @@ proc add*(
 proc archive*(
     verifs: Verifications,
     records: seq[VerifierRecord]
-) {.forceCheck: [].} =
+) {.forceCheck: [], fcBoundsOverride.} =
     #Iterate over every Record.
     for record in records:
         #Delete them from the seq.
-        verifs[record.key].verifications.delete(
-            0,
-            record.nonce - verifs[record.key].verifications[0].nonce
-        )
+        try:
+            verifs[record.key].verifications.delete(
+                0,
+                record.nonce - verifs[record.key].verifications[0].nonce
+            )
+        except IndexError as e:
+            doAssert(false, "Tried to archive Verifications from a Verifier without any pending Verifications: " & e.msg)
 
         #Reset the Merkle.
         verifs[record.key].merkle = newMerkle()

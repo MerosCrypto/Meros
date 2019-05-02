@@ -59,7 +59,7 @@ proc newBlockchainObj*(
     genesis: string,
     blockTime: Natural,
     startDifficultyArg: BN
-): Blockchain {.forceCheck: [].} =
+): Blockchain {.forceCheck: [], fcBoundsOverride.} =
     #Create the start difficulty.
     let startDifficulty: Difficulty = newDifficultyObj(
         0,
@@ -205,7 +205,7 @@ proc `[]`*(
     nonce: Natural
 ): Block {.forceCheck: [
     IndexError
-].} =
+], fcBoundsOverride.} =
     if nonce >= blockchain.height:
         raise newException(IndexError, "That nonce is greater than the Blockchain height.")
 
@@ -230,5 +230,5 @@ proc `[]`*(
 #Gets the last Block.
 func tip*(
     blockchain: Blockchain
-): Block {.inline, forceCheck: [].} =
+): Block {.inline, forceCheck: [], fcBoundsOverride.} =
     blockchain.blocks[^1]

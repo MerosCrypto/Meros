@@ -38,7 +38,7 @@ proc getVerification(
 #Get unarchived verifications.
 proc getUnarchivedVerifications(
     rpc: RPC
-): JSONNode {.forceCheck: [].} =
+): JSONNode {.forceCheck: [], fcBoundsOverride.} =
     #Get the records.
     var records: seq[VerifierRecord] = rpc.functions.verifications.getUnarchivedRecords()
 
@@ -73,7 +73,7 @@ proc verifications*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], async.} =
+) {.forceCheck: [], fcBoundsOverride, async.} =
     #Declare a var for the response.
     var res: JSONNode
 
@@ -107,6 +107,10 @@ proc verifications*(
     except KeyError:
         res = %* {
             "error": "Missing `args`."
+        }
+    except IndexError:
+        res = %* {
+            "error": "Not enough args were passed."
         }
     except BLSError:
         res = %* {

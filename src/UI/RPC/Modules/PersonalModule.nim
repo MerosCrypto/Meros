@@ -228,7 +228,7 @@ proc personal*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], async.} =
+) {.forceCheck: [], fcBoundsOverride, async.} =
     #Declare a var for the response.
     var res: JSONNode
 
@@ -274,13 +274,17 @@ proc personal*(
                 res = %* {
                     "error": "Invalid method."
                 }
+    except KeyError:
+        res = %* {
+            "error": "Missing `args`."
+        }
     except ValueError:
         res = %* {
             "error": "Invalid hex string passed."
         }
-    except KeyError:
+    except IndexError:
         res = %* {
-            "error": "Missing `args`."
+            "error": "Not enough args were passed."
         }
 
     reply(res)

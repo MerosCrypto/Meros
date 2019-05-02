@@ -1,13 +1,13 @@
 include MainDatabase
 
-proc mainVerifications() {.forceCheck: [].} =
+proc mainVerifications() {.forceCheck: [], fcBoundsOverride.} =
     {.gcsafe.}:
         verifications = newVerifications(functions.database)
 
         #Provide access to the verifier's height.
         functions.verifications.getVerifierHeight = proc (
             key: BLSPublicKey
-        ): int {.inline, forceCheck: [].} =
+        ): int {.inline, forceCheck: [], fcBoundsOverride.} =
             verifications[key].height
 
         #Provide access to verifications.
@@ -23,7 +23,7 @@ proc mainVerifications() {.forceCheck: [].} =
                 fcRaise e
 
         #Provide access to the VerifierRecords of verifiers with unarchived Verifications.
-        functions.verifications.getUnarchivedRecords = proc (): seq[VerifierRecord] {.forceCheck: [].} =
+        functions.verifications.getUnarchivedRecords = proc (): seq[VerifierRecord] {.forceCheck: [], fcBoundsOverride.} =
             #Check who has new Verifications.
             result = @[]
             for verifier in verifications.verifiers():
@@ -57,7 +57,7 @@ proc mainVerifications() {.forceCheck: [].} =
         ): BLSSignature {.forceCheck: [
             IndexError,
             BLSError
-        ].} =
+        ], fcBoundsOverride.} =
             var
                 #Grab the Verifier.
                 verifier: Verifier = verifications[key]
@@ -91,7 +91,7 @@ proc mainVerifications() {.forceCheck: [].} =
             nonce: int
         ): seq[Hash[384]] {.forceCheck: [
             IndexError
-        ].} =
+        ], fcBoundsOverride.} =
             result = @[]
 
             var

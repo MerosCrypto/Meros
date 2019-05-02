@@ -49,7 +49,7 @@ proc recv*(
 ): Future[Message] {.forceCheck: [
     SocketError,
     ClientError
-], async.} =
+], fcBoundsOverride, async.} =
     var
         content: MessageType
         size: int
@@ -197,7 +197,7 @@ proc handshake*(
     SocketError,
     ClientError,
     InvalidMessageError
-], async.} =
+], fcBoundsOverride, async.} =
     #Send a handshake.
     try:
         await client.send(

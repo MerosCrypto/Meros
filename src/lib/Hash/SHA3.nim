@@ -15,7 +15,7 @@ type
 #SHA3 256 hashing algorithm.
 proc SHA3_256*(
     bytesArg: string
-): SHA3_256Hash {.forceCheck: [].} =
+): SHA3_256Hash {.forceCheck: [], fcBoundsOverride.} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -31,7 +31,7 @@ proc SHA3_256*(
 #SHA3 512 hashing algorithm.
 proc SHA3_512*(
     bytesArg: string
-): SHA3_512Hash {.forceCheck: [].} =
+): SHA3_512Hash {.forceCheck: [], fcBoundsOverride.} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 

@@ -37,10 +37,10 @@ proc parseBlock*(
         header = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
         records = blockStr.substr(
             BLOCK_HEADER_LEN,
-            BLOCK_HEADER_LEN + INT_LEN + (blockStr[BLOCK_HEADER_LEN ..< BLOCK_HEADER_LEN + 4].fromBinary() * VERIFIER_INDEX_LEN)
+            BLOCK_HEADER_LEN + INT_LEN + (blockStr.substr(BLOCK_HEADER_LEN, BLOCK_HEADER_LEN + 4 - 1).fromBinary() * VERIFIER_INDEX_LEN)
         ).parseRecords()
         miners = blockStr.substr(
-            BLOCK_HEADER_LEN + INT_LEN + (blockStr[BLOCK_HEADER_LEN ..< BLOCK_HEADER_LEN + 4].fromBinary() * VERIFIER_INDEX_LEN)
+            BLOCK_HEADER_LEN + INT_LEN + (blockStr.substr(BLOCK_HEADER_LEN, BLOCK_HEADER_LEN + 4 - 1).fromBinary() * VERIFIER_INDEX_LEN)
         ).parseMiners()
     except ValueError as e:
         fcRaise e

@@ -15,7 +15,7 @@ type
 #SHA2 256 hash function.
 proc SHA2_256*(
     bytesArg: string
-): SHA2_256Hash {.forceCheck: [].} =
+): SHA2_256Hash {.forceCheck: [], fcBoundsOverride.} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 
@@ -31,7 +31,7 @@ proc SHA2_256*(
 #SHA2 512 hash function.
 proc SHA2_512*(
     bytesArg: string
-): SHA2_512Hash {.forceCheck: [].} =
+): SHA2_512Hash {.forceCheck: [], fcBoundsOverride.} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
 

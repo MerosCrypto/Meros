@@ -38,10 +38,13 @@ func records*(
     blockArg: Block
 ): seq[VerifierRecord] {.inline, forceCheck: [].} =
     blockArg.records
+
 func `records=`*(
     blockArg: var Block,
     records: seq[VerifierRecord]
-) {.forceCheck: [ValueError].} =
+) {.forceCheck: [
+    ValueError
+], fcBoundsOverride.} =
     #Verify no Verifier has multiple Records.
     var
         verifiers: Table[string, bool] = initTable[string, bool]()
@@ -59,10 +62,13 @@ func miners*(
     blockArg: Block
 ): Miners {.inline, forceCheck: [].} =
     blockArg.miners
+
 func `miners=`*(
     blockArg: var Block,
     miners: Miners
-) {.forceCheck: [ValueError].} =
+) {.forceCheck: [
+    ValueError
+].} =
     #Verify the Miners, unless this is the genesis Block.
     if blockArg.header.nonce != 0:
         if (miners.miners.len < 1) or (100 < miners.miners.len):

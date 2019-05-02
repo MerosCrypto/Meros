@@ -20,7 +20,7 @@ func toHash*(
     bits: static[int]
 ): Hash[bits] {.forceCheck: [
     ValueError
-].} =
+], fcBoundsOverride.} =
     if hash.len == bits div 8:
         for i in 0 ..< hash.len:
             result.data[i] = uint8(hash[i])

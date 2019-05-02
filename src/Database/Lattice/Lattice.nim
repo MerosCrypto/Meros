@@ -199,7 +199,7 @@ proc newLattice*(
     merit: Merit,
     sendDiff: string,
     dataDiff: string
-): Lattice {.forceCheck: [].} =
+): Lattice {.forceCheck: [], fcBoundsOverride.} =
     #Create the Lattice.
     result = newLatticeObj(
         db,
@@ -413,7 +413,7 @@ proc mint*(
 proc archive*(
     lattice: var Lattice,
     epoch: Epoch
-) {.forceCheck: [].} =
+) {.forceCheck: [], fcBoundsOverride.} =
     for hash in epoch.hashes.keys():
         #Grab the Index for this hash.
         var index: LatticeIndex
@@ -421,7 +421,7 @@ proc archive*(
             index = lattice.lookup[hash]
         #If we couldn't grab it, it's because we're handling hashes out of order and already handled this one.
         except KeyError:
-                continue
+            continue
 
         #If this index points to a newer Entry than the previously newest Entry out of Epochs...
         var confirmed: int

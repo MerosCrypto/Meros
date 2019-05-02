@@ -50,7 +50,7 @@ func inc*(
 proc verify*(
     blockArg: Block,
     verifs: Table[string, seq[Verification]]
-): bool {.forceCheck: [].} =
+): bool {.forceCheck: [], fcBoundsOverride.} =
     result = true
 
     #Make sure there's the same amount of Verifier as there are records.
@@ -58,7 +58,7 @@ proc verify*(
         return false
 
     #Aggregate Infos for each Verifier.
-    var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](verifs.len)
+    var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](blockArg.records.len)
     #Iterate over every Record.
     for r, record in blockArg.records:
         #Key in the record.

@@ -48,7 +48,7 @@ proc getDifficulty(
 proc getBlock(
     rpc: RPC,
     nonce: int
-): JSONNode {.forceCheck: [].} =
+): JSONNode {.forceCheck: [], fcBoundsOverride.} =
     #Get the Block.
     var gotBlock: Block
     try:
@@ -151,7 +151,7 @@ proc merit*(
     reply: proc (
         json: JSONNode
     ) {.raises: [].}
-) {.forceCheck: [], async.} =
+) {.forceCheck: [], fcBoundsOverride, async.} =
     #Declare a var for the response.
     var res: JSONNode
 
@@ -190,13 +190,17 @@ proc merit*(
                 res = %* {
                     "error": "Invalid method."
                 }
+    except KeyError:
+        res = %* {
+            "error": "Missing `args`."
+        }
     except ValueError:
         res = %* {
             "error": "Invalid hex string passed."
         }
-    except KeyError:
+    except IndexError:
         res = %* {
-            "error": "Missing `args`."
+            "error": "Not enough args were passed."
         }
 
     reply(res)

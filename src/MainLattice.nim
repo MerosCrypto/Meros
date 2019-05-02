@@ -3,7 +3,7 @@ include MainMerit
 #Creates and publishes a Verification.
 proc verify(
     entry: Entry
-) {.forceCheck: [], async.} =
+) {.forceCheck: [], fcBoundsOverride, async.} =
     #Make sure we're a Miner with Merit.
     if config.miner.initiated and (merit.state[config.miner.publicKey] > 0):
         #Make sure we didn't already verify an Entry at the same Index.
@@ -59,7 +59,7 @@ proc verify(
             verif.serialize()
         )
 
-proc mainLattice() {.forceCheck: [].} =
+proc mainLattice() {.forceCheck: [], fcBoundsOverride.} =
     {.gcsafe.}:
         #Create the Lattice.
         lattice = newLattice(
@@ -79,7 +79,7 @@ proc mainLattice() {.forceCheck: [].} =
             address: string
         ): int {.forceCheck: [
             AddressError
-        ].} =
+        ], fcBoundsOverride.} =
             try:
                 result = lattice[address].height
             except AddressError as e:
@@ -90,7 +90,7 @@ proc mainLattice() {.forceCheck: [].} =
             address: string
         ): BN {.forceCheck: [
             AddressError
-        ].} =
+        ], fcBoundsOverride.} =
             try:
                 result = lattice[address].balance
             except AddressError as e:

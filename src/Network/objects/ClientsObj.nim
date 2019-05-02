@@ -58,10 +58,13 @@ proc shutdown*(
 func `[]`*(
     clients: Clients,
     id: int
-): Client {.forceCheck: [].} =
+): Client {.forceCheck: [
+    IndexError
+].} =
     for client in clients.clients:
         if client.id == id:
             return client
+    raise newException(IndexError, "Couldn't find a Client with that ID.")
 
 #Iterator.
 iterator items*(

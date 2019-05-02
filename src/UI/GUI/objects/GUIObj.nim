@@ -45,7 +45,7 @@ proc call*(
     argsArg: varargs[JSONNode, `%*`]
 ): JSONNode {.forceCheck: [
     RPCError
-].} =
+], fcBoundsOverride.} =
     #Extract the args.
     var args: JSONNode = newJArray()
     for arg in argsArg:

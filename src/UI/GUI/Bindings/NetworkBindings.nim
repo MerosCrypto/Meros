@@ -13,7 +13,7 @@ import json
 #Add the GUI bindings to the GUI.
 proc addTo*(
     gui: GUI
-) {.forceCheck: [].} =
+) {.forceCheck: [], fcBoundsOverride.} =
     try:
         #Quit.
         gui.webview.bindProc(
@@ -21,7 +21,7 @@ proc addTo*(
             "connect",
             proc (
                 ip: string
-            ) {.forceCheck: [].} =
+            ) {.forceCheck: [], fcBoundsOverride.} =
                 try:
                     if ip.contains(':'):
                         discard gui.call(
