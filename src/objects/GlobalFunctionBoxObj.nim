@@ -70,7 +70,7 @@ type
     VerificationsFunctionBox* = ref object
         getVerifierHeight*: proc (
             key: BLSPublicKey
-        ): int {.raises: [].}
+        ): int {.inline, raises: [].}
 
         getVerification*: proc (
             key: BLSPublicKey,
@@ -115,9 +115,9 @@ type
         ].}
 
     MeritFunctionBox* = ref object
-        getHeight*: proc (): int {.raises: [].}
+        getHeight*: proc (): int {.inline, raises: [].}
 
-        getDifficulty*: proc (): Difficulty {.raises: [].}
+        getDifficulty*: proc (): Difficulty {.inline, raises: [].}
 
         getBlock*: proc (
             nonce: int
@@ -203,7 +203,7 @@ type
         ].}
 
     PersonalFunctionBox* = ref object
-        getWallet*: proc (): Wallet {.raises: [].}
+        getWallet*: proc (): Wallet {.inline, raises: [].}
 
         setSeed*: proc (
             seed: string

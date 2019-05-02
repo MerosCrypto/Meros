@@ -46,8 +46,7 @@ proc newNetwork*(
     result.networkFunctions.getProtocol = func (): int {.forceCheck: [].} =
         protocol
 
-    result.networkFunctions.getHeight = proc (): int {.forceCheck: [].} =
-        mainFunctions.merit.getHeight()
+    result.networkFunctions.getHeight = mainFunctions.merit.getHeight
 
     result.networkFunctions.handle = proc (
         msg: Message

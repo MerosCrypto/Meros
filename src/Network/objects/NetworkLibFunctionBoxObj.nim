@@ -19,7 +19,7 @@ type NetworkLibFunctionBox* = ref object
 
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
 
-    getHeight*: proc (): int {.raises: [].}
+    getHeight*: proc (): int {.inline, raises: [].}
 
     handle*: proc (
         msg: Message

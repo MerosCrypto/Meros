@@ -7,7 +7,7 @@ proc mainVerifications() {.forceCheck: [].} =
         #Provide access to the verifier's height.
         functions.verifications.getVerifierHeight = proc (
             key: BLSPublicKey
-        ): int {.forceCheck: [].} =
+        ): int {.inline, forceCheck: [].} =
             verifications[key].height
 
         #Provide access to verifications.

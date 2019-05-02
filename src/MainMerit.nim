@@ -13,11 +13,11 @@ proc mainMerit() {.forceCheck: [].} =
         )
 
         #Handle requests for the current height.
-        functions.merit.getHeight = proc (): int {.forceCheck: [].} =
+        functions.merit.getHeight = proc (): int {.inline, forceCheck: [].} =
             merit.blockchain.height
 
         #Handle requests for the current Difficulty.
-        functions.merit.getDifficulty = proc (): Difficulty {.forceCheck: [].} =
+        functions.merit.getDifficulty = proc (): Difficulty {.inline, forceCheck: [].} =
             merit.blockchain.difficulty
 
         #Handle requests for a Block.

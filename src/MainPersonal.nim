@@ -3,7 +3,7 @@ include MainLattice
 proc mainPersonal() {.forceCheck: [].} =
     {.gcsafe.}:
         #Get the Wallet.
-        functions.personal.getWallet = proc (): Wallet {.forceCheck: [].} =
+        functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
             wallet
 
         #Set the Wallet's seed.
