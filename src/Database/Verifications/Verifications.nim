@@ -42,7 +42,7 @@ proc newVerifications*(
 
 #Add a Verification.
 proc add*(
-    verifs: var Verifications,
+    verifs: Verifications,
     verif: Verification
 ) {.forceCheck: [
     GapError,
@@ -60,7 +60,7 @@ proc add*(
 
 #Add a MemoryVerification.
 proc add*(
-    verifs: var Verifications,
+    verifs: Verifications,
     verif: MemoryVerification
 ) {.forceCheck: [
     GapError,
@@ -81,7 +81,7 @@ proc add*(
 
 #For each provided Record, archive all Verifications from the account's last archived to the provided nonce.
 proc archive*(
-    verifs: var Verifications,
+    verifs: Verifications,
     records: seq[VerifierRecord]
 ) {.forceCheck: [].} =
     #Iterate over every Record.

@@ -19,6 +19,9 @@ import ../../common/Merkle
 #Verification object.
 import VerificationObj
 
+#Serialize lib.
+import ../../../Network/Serialize/Verifications/SerializeVerification
+
 #Finals lib.
 import finals
 
@@ -122,7 +125,7 @@ proc add*(
     #Verify the signature.
     try:
         verif.signature.setAggregationInfo(
-            newBLSAggregationInfo(verif.verifier, verif.hash.toString())
+            newBLSAggregationInfo(verif.verifier, cast[Verification](verif).serialize())
         )
         if not verif.signature.verify():
             raise newException(BLSError, "Failed to verify the Verification's signature.")

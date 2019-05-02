@@ -16,7 +16,7 @@ import ../Database/common/objects/VerifierRecordObj
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice
 
-#Verifications lib (for Verification/MemoryVerification).
+#Verifications lib.
 import ../Database/Verifications/Verifications
 
 #Block lib.

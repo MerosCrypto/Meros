@@ -195,7 +195,7 @@ proc verify*(
 #Constructor.
 proc newLattice*(
     db: DatabaseFunctionBox,
-    verifications: var Verifications,
+    verifications: Verifications,
     merit: Merit,
     sendDiff: string,
     dataDiff: string

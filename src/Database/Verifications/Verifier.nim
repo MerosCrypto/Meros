@@ -53,26 +53,3 @@ proc aggregate*(
         result = sigs.aggregate()
     except BLSError as e:
         fcRaise e
-
-#Verify an aggregate signature.
-proc verify*(
-    verifs: seq[Verification],
-    sig: BLSSignature
-): bool {.forceCheck: [].} =
-    #If there are no verifications, the signature should be null.
-    if verifs.len == 0:
-        return sig.isNil
-
-    #Create the Aggregation Infos.
-    var agInfos: seq[BLSAggregationInfo] = @[]
-    try:
-        for verif in verifs:
-            agInfos.add(newBLSAggregationInfo(verif.verifier, verif.hash.toString()))
-
-        #Set the AggregationInfo.
-        sig.setAggregationInfo(agInfos.aggregate())
-    except BLSError:
-        return false
-
-    #Verify the signature.
-    result = sig.verify()

@@ -13,6 +13,9 @@ import ../../Wallet/MinerWallet
 #VerifierRecord object.
 import ../common/objects/VerifierRecordObj
 
+#Verification lib.
+import ../Verifications/Verification
+
 #BlockHeader lib.
 import BlockHeader
 
@@ -20,8 +23,11 @@ import BlockHeader
 import objects/BlockObj
 export BlockObj
 
-#Serialization lib.
+#Serialize BlockHeader libs (for inc).
 import ../../Network/Serialize/Merit/SerializeBlockHeader
+
+#Serialize Verification lib (for verify).
+import ../../Network/Serialize/Verifications/SerializeVerification
 
 #Tables standard lib.
 import tables
@@ -43,7 +49,7 @@ func inc*(
 #Verify the aggregate signature for a table of Key -> seq[Hash].
 proc verify*(
     blockArg: Block,
-    verifs: Table[string, seq[Hash[384]]]
+    verifs: Table[string, seq[Verification]]
 ): bool {.forceCheck: [].} =
     result = true
 
@@ -55,15 +61,18 @@ proc verify*(
     var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](verifs.len)
     #Iterate over every Record.
     for r, record in blockArg.records:
+        #Key in the record.
+        var key: string = record.key.toString()
+
         #Aggregate Infos for this verifier.
         var verifierAgInfos: seq[BLSAggregationInfo]
         try:
             #Init this Verifier's
-            verifierAgInfos = newSeq[BLSAggregationInfo](verifs[record.key.toString()].len)
+            verifierAgInfos = newSeq[BLSAggregationInfo](verifs[key].len)
             #Iterate over this verifier's hashes.
-            for h, hash in verifs[record.key.toString()]:
+            for v, verif in verifs[key]:
                 #Create AggregationInfos.
-                verifierAgInfos[h] = newBLSAggregationInfo(record.key, hash.toString())
+                verifierAgInfos[v] = newBLSAggregationInfo(record.key, verif.serialize())
         #The presented Table has a different set of Verifiers than the records.
         except KeyError:
             return false

@@ -117,6 +117,7 @@ proc syncEntries(
 #Sync a Block's Verifications/Entries.
 proc sync*(
     network: Network,
+    verifications: Verifications,
     newBlock: Block
 ) {.forceCheck: [
     DataMissing,
@@ -125,10 +126,10 @@ proc sync*(
     var
         #Variable for gaps.
         gaps: seq[Gap] = @[]
-        #Hashes of every Verification archived in this block.
-        hashes: Table[string, seq[Hash[384]]] = initTable[string, seq[Hash[384]]]()
+        #Every Verification archived in this block.
+        verifs: Table[string, seq[Verification]] = initTable[string, seq[Verification]]()
         #Seq of missing Verifications.
-        verifications: seq[Verification] = @[]
+        missingVerifs: seq[Verification] = @[]
         #Hashes of the Entries mentioned in missing Verifications.
         entryHashes: seq[Hash[384]] = @[]
         #Entries mentioned in missing Verifications.
@@ -137,7 +138,7 @@ proc sync*(
     #Calculate the Verifications gaps.
     for record in newBlock.records:
         #Get the Verifier's height.
-        var verifHeight: int = network.mainFunctions.verifications.getVerifierHeight(record.key)
+        var verifHeight: int = verifications[record.key].height
 
         #If we're missing Verifications...
         if verifHeight <= record.nonce:
@@ -148,11 +149,8 @@ proc sync*(
                 record.nonce
             ))
 
-        #Grab their pending hashes and place it in hashes.
-        try:
-            hashes[record.key.toString()] = network.mainFunctions.verifications.getPendingHashes(record.key, verifHeight - 1)
-        except IndexError as e:
-            doAssert(false, "Couldn't grab pending hashes we've confirmed to have: " & e.msg)
+        #Grab their pending verifs and place it in verifs.
+        verifs[record.key.toString()] = verifications[record.key].verifications
 
     #Sync the missing Verifications.
     if gaps.len != 0:
@@ -167,7 +165,7 @@ proc sync*(
                 continue
 
             try:
-                verifications = await network.syncVerifications(client.id, gaps)
+                missingVerifs = await network.syncVerifications(client.id, gaps)
             #If the Client had problems, disconnect them.
             except SocketError, ClientError:
                 toDisconnect.add(client.id)
@@ -198,10 +196,10 @@ proc sync*(
             raise newException(DataMissing, "Couldn't sync all the Verifications in a Block.")
 
     #Handle each Verification.
-    for verif in verifications:
-        #Add its hash to the list of hashes for this verifier.
+    for verif in missingVerifs:
+        #Add its hash to the list of verifs for this verifier.
         try:
-            hashes[verif.verifier.toString()].add(verif.hash)
+            verifs[verif.verifier.toString()].add(verif)
         except KeyError as e:
             doAssert(false, "Couldn't add a hash to a seq in a table we recently created: " & e.msg)
 
@@ -209,7 +207,7 @@ proc sync*(
         entryHashes.add(verif.hash)
 
     #Check the Block's aggregate.
-    if not newBlock.verify(hashes):
+    if not newBlock.verify(verifs):
         raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
 
     #Sync the missing Entries.
@@ -301,7 +299,7 @@ proc sync*(
             raise newException(DataMissing, "Couldn't sync all the Entries in a Block.")
 
     #Since we now have every Entry, add the Verifications.
-    for verif in verifications:
+    for verif in missingVerifs:
         try:
             network.mainFunctions.verifications.addVerification(verif)
         except ValueError as e:
@@ -314,6 +312,7 @@ proc sync*(
 #Request a Block.
 proc requestBlock*(
     network: Network,
+    verifications: Verifications,
     nonce: int
 ): Future[Block] {.forceCheck: [
     DataMissing,
@@ -324,7 +323,7 @@ proc requestBlock*(
         #Only sync from Clients which aren't syncing from us.
         if client.theirState == Syncing:
             continue
-        
+
         #Start syncing.
         try:
             await client.startSyncing()
@@ -373,7 +372,7 @@ proc requestBlock*(
 
     #Sync the Block's contents.
     try:
-        await network.sync(result)
+        await network.sync(verifications, result)
     except DataMissing as e:
         fcRaise e
     except ValidityConcern as e:

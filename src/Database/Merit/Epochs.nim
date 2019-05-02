@@ -45,7 +45,7 @@ import tables
 #If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
 proc shift*(
     epochs: var Epochs,
-    verifications: var Verifications,
+    verifications: Verifications,
     records: seq[VerifierRecord],
     tips: TableRef[string, int] = nil
 ): Epoch {.forceCheck: [].} =
@@ -95,7 +95,7 @@ proc shift*(
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
     db: DatabaseFunctionBox,
-    verifications: var Verifications,
+    verifications: Verifications,
     blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
     #Create the Epochs objects.
