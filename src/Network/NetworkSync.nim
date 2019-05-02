@@ -61,7 +61,7 @@ proc syncVerifications(
         doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 #Sync a list of Entries from a specific Client.
-proc syncEntries*(
+proc syncEntries(
     network: Network,
     id: int,
     entries: seq[Hash[384]]
@@ -162,6 +162,10 @@ proc sync*(
         #Try syncing with every client.
         var synced: bool = false
         for client in network.clients:
+            #Only sync from Clients which aren't syncing from us.
+            if client.theirState == Syncing:
+                continue
+
             try:
                 verifications = await network.syncVerifications(client.id, gaps)
             #If the Client had problems, disconnect them.
@@ -219,6 +223,10 @@ proc sync*(
         #Try syncing with every client.
         var synced: bool = false
         for client in network.clients:
+            #Only sync from Clients which aren't syncing from us.
+            if client.theirState == Syncing:
+                continue
+
             try:
                 entries = await network.syncEntries(client.id, entryHashes)
             #If the Client had problems, disconnect them.
@@ -313,6 +321,10 @@ proc requestBlock*(
 ], async.} =
     var toDisconnect: seq[int] = @[]
     for client in network.clients:
+        #Only sync from Clients which aren't syncing from us.
+        if client.theirState == Syncing:
+            continue
+        
         #Start syncing.
         try:
             await client.startSyncing()
