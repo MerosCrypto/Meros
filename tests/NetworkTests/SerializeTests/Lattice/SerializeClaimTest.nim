@@ -42,9 +42,6 @@ for i in 1 .. 20:
     var claimParsed: Claim = claim.serialize().parseClaim()
 
     #Test the serialized versions.
-    echo claim.serialize().toHex()
-    echo "\r\n"
-    echo claimParsed.serialize().toHex()
     assert(claim.serialize() == claimParsed.serialize())
 
     #Test the Entry properties.
