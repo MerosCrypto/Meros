@@ -19,6 +19,8 @@ The syncee can only send:
 - `Send`
 - `Receive`
 - `Data`
+- `Lock`
+- `Unlock`
 - `MemoryVerification`
 - `Block`
 - `Verification`
@@ -35,19 +37,19 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of zero. After re
 
 ### EntryRequest
 
-A `EntryRequest` is followed by the 48 byte Entry hash, with an expected response being a `Claim`, `Send`, `Receive`, or `Data` containing the Entry with the same hash. If a `Mint` has the requested hash, the syncer should send `DataMissing`.
+An `EntryRequest` has a message length of 48 bytes; the Entry hash, with the expected response being a `Claim`, `Send`, `Receive`, or `Data` containing the Entry with the same hash. If a `Mint` has the requested hash, the syncer should send `DataMissing`.
 
 ### MemoryVerificationRequest
 
-A `MemoryVerificationRequest` has a message length of 52 bytes; the 48 byte Verifier public key followed by the 4 byte nonce of the verification, with an expected response being a `MemoryVerification` containing the memory verification at the requested location. If a verifier had multiple verifications at that location, the syncee should respond with a `MeritRemoval` containing every memory verification at that index.
+A `MemoryVerificationRequest` has a message length of 52 bytes; the 48 byte Verifier public key followed by the 4 byte nonce of the verification, with the expected response being a `MemoryVerification` containing the memory verification at the requested location. If a verifier had multiple verifications at that location, the syncee should respond with a `MeritRemoval` containing any two memory verifications at that index.
 
 ### BlockRequest
 
-A `BlockRequest` is followed by the 48 byte block hash, with an expected response being a `Block` containing the block. If a zero'd hash is provided, the syncee should respond with a `Block` containing their tail block.
+A `BlockRequest` is followed by the 48 byte block hash, with the expected response being a `Block` containing the block. If a zero'd out hash is provided, the syncee should respond with a `Block` containing their tail block.
 
 ### VerificationRequest
 
-A `VerificationRequest` is identical to a `MemoryVerificationRequest`, except for the fact that is a verifier has a singular verification at the requested nonce, the expected response is a `Verification` containing the verification at the requested location.
+A `VerificationRequest` is identical to a `MemoryVerificationRequest`, except for the fact that if a verifier has a singular verification at the requested nonce, the expected response is a `Verification` containing the verification at the requested location.
 
 ### Violations in Meros
 

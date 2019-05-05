@@ -6,6 +6,7 @@ Wallet:
 - HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 
 Database:
+- Add a `version` key to the DB in order to track when to upgrade a DB.
 - If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
@@ -131,7 +132,7 @@ UI/RPC:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Use Nim Documentation Comments.
 - In docs/Protocol/Syncing, explain `GetAccountHeight`, `GetHashesAtIndex`, and `GetVerifierHeight`.
-- docs/Protocol/Lattice.
+- In docs/Protocol/Lattice, explain `Claim`, `Send`, `Receive`, `Data`, `Lock`, and `Unlock`.
 - docs/Protocol/Verifications.
 - docs/Protocol/Merit.
 - Meros Whitepaper.
