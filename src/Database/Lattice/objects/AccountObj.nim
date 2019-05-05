@@ -130,15 +130,9 @@ proc add*(
     EdPublicKeyError,
     DataExists
 ].} =
-    #Check the Signature.
-    #If it's a valid minter Entry...
-    if (
-        (account.address == "minter") and
-        (entry.descendant == EntryType.Mint)
-    ):
-        #Override as there's no signatures for minters.
+    #Check the Signature, if it's not a mint.
+    if entry.descendant == EntryType.Mint:
         discard
-    #Else, if it's an invalid signature...
     else:
         var pubKey: EdPublicKey
         try:

@@ -139,31 +139,10 @@ proc verify*(
             #Update the balance now that the Entry is confirmed.
             var changedBalance: bool = true
             case entry.descendant:
-                #If it's a Send Entry...
-                of EntryType.Send:
-                    #Cast it to a var.
-                    var send: Send = cast[Send](entry)
-                    #Update the balance.
-                    account.balance -= send.amount
-                #If it's a Receive Entry...
-                of EntryType.Receive:
-                    var
-                        #Cast it to a var.
-                        recv: Receive = cast[Receive](entry)
-                        #Get the Send it's Receiving.
-                        send: Send
-                    try:
-                        send = cast[Send](lattice[recv.index])
-                    except ValueError as e:
-                        doAssert(false, "Receive was confirmed before Send: " & e.msg)
-                    except IndexError as e:
-                        doAssert(false, "Confirmed Receive receives Send that's beyond the Account height: " & e.msg)
-
-                    #Update the balance.
-                    account.balance += send.amount
+                #If it's a Claim Entry...
                 of EntryType.Claim:
                     var
-                        #Cast it to a var.
+                        #Cast it to a Claim.
                         claim: Claim = cast[Claim](entry)
                         #Get the Mint it's Claiming.
                         mint: Mint
@@ -178,6 +157,28 @@ proc verify*(
 
                     #Update the balance.
                     account.balance += mint.amount
+                #If it's a Send Entry...
+                of EntryType.Send:
+                    #Cast it to a Send.
+                    var send: Send = cast[Send](entry)
+                    #Update the balance.
+                    account.balance -= send.amount
+                #If it's a Receive Entry...
+                of EntryType.Receive:
+                    var
+                        #Cast it to a Receive.
+                        recv: Receive = cast[Receive](entry)
+                        #Get the Send it's Receiving.
+                        send: Send
+                    try:
+                        send = cast[Send](lattice[recv.index])
+                    except ValueError as e:
+                        doAssert(false, "Receive was confirmed before Send: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Confirmed Receive receives Send that's beyond the Account height: " & e.msg)
+
+                    #Update the balance.
+                    account.balance += send.amount
                 else:
                     changedBalance = false
 
@@ -255,18 +256,21 @@ proc add*(
     DataExists
 ].} =
     #Make sure the sender is only minter when mintOverride is true.
-    if (
-        (entry.sender == "minter") and
-        (not mintOverride)
-    ):
-        raise newException(ValueError, "Adding an Entry to minter without mintOverride being true.")
+    if (entry.descendant == EntryType.Mint) and (not mintOverride):
+        doAssert(false, "Adding an Entry to minter without mintOverride being true.")
 
     #Get the Account.
     var account: Account
-    try:
-        account = lattice[entry.sender]
-    except AddressError as e:
-        fcRaise e
+    if entry.descendant == EntryType.Mint:
+        try:
+            account = lattice["minter"]
+        except AddressError as e:
+            doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken: " & e.msg)
+    else:
+        try:
+            account = lattice[entry.sender]
+        except AddressError as e:
+            fcRaise e
 
     try:
         case entry.descendant:
@@ -356,8 +360,8 @@ proc mint*(
     #Store the height as the result.
     try:
         result = lattice["minter"].height
-    except AddressError:
-        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
+    except AddressError as e:
+        doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken: " & e.msg)
 
     #Create the Mint Entry.
     var mint: Mint

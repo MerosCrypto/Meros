@@ -39,7 +39,6 @@ func newMintObj*(
 
     #Set the constant entry fields.
     try:
-        result.sender = "minter"
         result.descendant = EntryType.Mint
         result.verified = true
     except FinalAttributeError as e:
