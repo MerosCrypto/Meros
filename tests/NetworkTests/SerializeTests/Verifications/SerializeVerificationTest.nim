@@ -43,10 +43,10 @@ for i in 1 .. 20:
     verif.nonce = nonce
 
     #Serialize it and parse it back.
-    var verifParsed: Verification = verif.serialize().parseVerification()
+    var verifParsed: Verification = verif.serialize(false).parseVerification()
 
     #Test the serialized versions.
-    assert(verif.serialize() == verifParsed.serialize())
+    assert(verif.serialize(false) == verifParsed.serialize(false))
 
     #Test the Verification's properties.
     assert(verif.verifier == verifParsed.verifier)

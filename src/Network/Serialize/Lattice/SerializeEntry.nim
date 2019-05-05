@@ -23,7 +23,7 @@ proc serialize*(
     try:
         case entry.descendant:
             of EntryType.Mint:
-                result = cast[Mint](entry).serialize()
+                result = cast[Mint](entry).serialize(false)
             of EntryType.Claim:
                 result = cast[Claim](entry).serialize()
             of EntryType.Send:

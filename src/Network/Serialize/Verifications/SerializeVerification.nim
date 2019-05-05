@@ -18,9 +18,13 @@ import ../SerializeCommon
 
 #Serialize a Verification.
 func serialize*(
-    verif: Verification
+    verif: Verification,
+    signingOrVerifying: bool
 ): string {.forceCheck: [].} =
     result =
         verif.verifier.toString() &
         verif.nonce.toBinary().pad(INT_LEN) &
         verif.hash.toString()
+
+    if signingOrVerifying:
+        result = "verification" & result

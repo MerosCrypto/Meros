@@ -26,7 +26,7 @@ import BN
 import random
 
 #Seed Random via the time.
-randomize(int(getTime()))
+randomize(getTime())
 
 #Test 20 serializations.
 for i in 1 .. 20:
@@ -40,10 +40,10 @@ for i in 1 .. 20:
     )
 
     #Serialize it and parse it back.
-    var mintParsed: Mint = mint.serialize().parseMint()
+    var mintParsed: Mint = mint.serialize(false).parseMint()
 
     #Test the serialized versions.
-    assert(mint.serialize() == mintParsed.serialize())
+    assert(mint.serialize(false) == mintParsed.serialize(false))
 
     #Test the Entry properties.
     assert(mint.descendant == mintParsed.descendant)

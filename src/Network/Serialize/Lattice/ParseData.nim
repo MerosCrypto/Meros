@@ -76,7 +76,7 @@ proc parseData*(
         result.nonce = nonce
 
         #Set the hash.
-        result.hash = Blake384(keyNonce[0] & keyNonce[1] & char(result.data.len) & data)
+        result.hash = Blake384("data" & keyNonce[0] & keyNonce[1] & char(result.data.len) & data)
         #Set the proof.
         result.proof = proof
 

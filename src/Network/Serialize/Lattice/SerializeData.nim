@@ -36,3 +36,5 @@ func serialize*(
             result &
             data.proof.toBinary().pad(INT_LEN) &
             data.signature
+    else:
+        result = "data" & result

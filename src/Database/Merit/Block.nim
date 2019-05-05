@@ -72,7 +72,7 @@ proc verify*(
             #Iterate over this verifier's hashes.
             for v, verif in verifs[key]:
                 #Create AggregationInfos.
-                verifierAgInfos[v] = newBLSAggregationInfo(record.key, verif.serialize())
+                verifierAgInfos[v] = newBLSAggregationInfo(record.key, verif.serialize(true))
         #The presented Table has a different set of Verifiers than the records.
         except KeyError:
             return false

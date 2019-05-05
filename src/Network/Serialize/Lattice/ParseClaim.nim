@@ -70,7 +70,7 @@ proc parseClaim*(
         result.bls = bls
 
         #Set the hash.
-        result.hash = Blake384(claimSeq.reserialize(1, 3))
+        result.hash = Blake384("claim" & claimSeq.reserialize(1, 3))
         #Set the signature.
         result.signature = signature
     except FinalAttributeError as e:

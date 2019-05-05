@@ -43,3 +43,5 @@ proc serialize*(
             result &
             send.proof.toBinary().pad(INT_LEN) &
             send.signature
+    else:
+        result = "send" & result

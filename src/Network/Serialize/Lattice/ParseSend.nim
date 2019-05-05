@@ -69,7 +69,7 @@ proc parseSend*(
         result.nonce = nonce
 
         #Set the Blake384 hash.
-        result.hash = Blake384(sendSeq.reserialize(0, 3))
+        result.hash = Blake384("send" & sendSeq.reserialize(0, 3))
         #Set the proof.
         result.proof = proof.fromBinary()
 

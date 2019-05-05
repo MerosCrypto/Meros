@@ -42,6 +42,6 @@ proc newMint*(
         #Set the nonce.
         result.nonce = nonce
         #Set the hash.
-        result.hash = Blake384(result.serialize())
+        result.hash = Blake384(result.serialize(true))
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)

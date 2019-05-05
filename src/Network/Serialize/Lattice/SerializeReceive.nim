@@ -45,3 +45,5 @@ func serialize*(
             sender &
             result &
             recv.signature
+    else:
+        result = "receive" & result

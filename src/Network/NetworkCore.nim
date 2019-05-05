@@ -171,7 +171,7 @@ proc newNetwork*(
                         msg,
                         newMessage(
                             MessageType.Verification,
-                            mainFunctions.verifications.getVerification(key, nonce).serialize()
+                            mainFunctions.verifications.getVerification(key, nonce).serialize(false)
                         )
                     )
                 except IndexError as e:

@@ -89,7 +89,7 @@ proc parseMint*(
         #Set the nonce.
         result.nonce = nonce
         #Set the hash.
-        result.hash = Blake384(mintStr)
+        result.hash = Blake384("mint" & mintStr)
     except ValueError as e:
         fcRaise e
     except FinalAttributeError as e:

@@ -67,7 +67,7 @@ proc parseReceive*(
         result.nonce = nonce
 
         #Set the hash.
-        result.hash = Blake384(recvSeq.reserialize(1, 3))
+        result.hash = Blake384("receive" & recvSeq.reserialize(1, 3))
         #Set the signature.
         result.signature = signature
     except FinalAttributeError as e:

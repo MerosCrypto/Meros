@@ -39,3 +39,5 @@ func serialize*(
             sender &
             result &
             claim.signature
+    else:
+        result = "claim" & result
