@@ -168,10 +168,13 @@ proc mainVerifications() {.forceCheck: [].} =
             #Add the MemoryVerification to the Verifications DAG.
             try:
                 verifications.add(verif)
+            #Invalid signature.
+            except ValueError as e:
+                fcRaise e
             #Missing Verifications before this Verification.
             except GapError as e:
                 fcRaise e
-            #Invalid signature.
+            #BLS Error.
             except BLSError as e:
                 fcRaise e
             #Memory Verification was already added.

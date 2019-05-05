@@ -63,6 +63,7 @@ proc add*(
     verifs: Verifications,
     verif: MemoryVerification
 ) {.forceCheck: [
+    ValueError,
     GapError,
     BLSError,
     DataExists,
@@ -70,6 +71,8 @@ proc add*(
 ].} =
     try:
         verifs[verif.verifier].add(verif)
+    except ValueError as e:
+        fcRaise e
     except GapError as e:
         fcRaise e
     except BLSError as e:

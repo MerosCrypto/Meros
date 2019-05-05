@@ -31,8 +31,8 @@ proc verify(
         #Add the verif to verifications.
         try:
             verifications.add(verif)
-        except IndexError as e:
-            doAssert(false, "Created a MemoryVerification which we already added: " & e.msg)
+        except ValueError as e:
+            doAssert(false, "Created a MemoryVerification with an invalid signature: " & e.msg)
         except GapError as e:
             doAssert(false, "Created a MemoryVerification with an invalid nonce: " & e.msg)
         except BLSError as e:
