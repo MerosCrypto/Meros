@@ -6,8 +6,8 @@ import ../lib/Util
 
 #Ed25519 lib.
 import Ed25519
-#Export the critical objects.
-export EdSeed, EdPrivateKey, EdPublicKey
+#Export the objects.
+export EdSeed, EdPublicKey, EdSignature
 
 #Address lib.
 import Address
@@ -71,15 +71,21 @@ func newEdPublicKey*(
     else:
         raise newException(EdPublicKeyError, "Invalid length Public Key passed to newEdPublicKey.")
 
-#Stringify a Seed/PublicKey.
+#Create a new Signature from a string.
+func newEdSignature*(
+    sig: var string
+): EdSignature {.forceCheck: [].} =
+    copyMem(addr result[0], addr sig[0], 64)
+
+#Stringify a Seed/PublicKey/Signature.
 func toString*(
-    key: EdSeed or EdPublicKey
+    key: EdSeed or EdPublicKey or EdSignature
 ): string {.forceCheck: [].} =
     for b in key:
         result = result & char(b)
 
 func `$`*(
-    key: EdSeed or EdPublicKey
+    key: EdSeed or EdPublicKey or EdSignature
 ): string {.inline, forceCheck: [].} =
     key.toString().toHex()
 
@@ -143,7 +149,7 @@ func newWallet*(
 func sign*(
     wallet: Wallet,
     msg: string
-): string {.forceCheck: [
+): EdSignature {.forceCheck: [
     SodiumError
 ].} =
     try:
@@ -155,7 +161,7 @@ func sign*(
 func verify*(
     key: EdPublicKey,
     msg: string,
-    sig: string
+    sig: EdSignature
 ): bool {.forceCheck: [].} =
     try:
         result = Ed25519.verify(key, msg, sig)
@@ -166,7 +172,7 @@ func verify*(
 func verify*(
     wallet: Wallet,
     msg: string,
-    sig: string
+    sig: EdSignature
 ): bool {.forceCheck: [].} =
     try:
         result = wallet.publicKey.verify(msg, sig)

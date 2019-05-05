@@ -58,7 +58,7 @@ proc parseData*(
         #Get the proof.
         proof: int = proofSig[0].fromBinary()
         #Get the signature.
-        signature: string = proofSig[1]
+        signature: EdSignature = newEdSignature(proofSig[1])
 
     try:
         sender = newAddress(newEdPublicKey(keyNonce[0]))
@@ -84,6 +84,7 @@ proc parseData*(
         result.argon = Argon(result.hash.toString(), proof.toBinary(), true)
         #Set the signature.
         result.signature = signature
+        result.signed = true
     except ArgonError as e:
         fcRaise e
     except FinalAttributeError as e:

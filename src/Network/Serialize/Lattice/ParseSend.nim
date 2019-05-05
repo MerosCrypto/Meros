@@ -48,7 +48,7 @@ proc parseSend*(
         #Get the proof.
         proof: string = sendSeq[4]
         #Get the signature.
-        signature: string = sendSeq[5]
+        signature: EdSignature = newEdSignature(sendSeq[5])
 
     try:
         sender = newAddress(sendSeq[0])
@@ -77,6 +77,7 @@ proc parseSend*(
         result.argon = Argon(result.hash.toString(), proof, true)
         #Set the signature.
         result.signature = signature
+        result.signed = true
     except ArgonError as e:
         fcRaise e
     except FinalAttributeError as e:

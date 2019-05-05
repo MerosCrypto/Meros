@@ -59,6 +59,7 @@ proc sign*(
 
         #Sign the hash of the Claim.
         claim.signature = wallet.sign(claim.hash.toString())
+        claim.signed = true
     except AddressError as e:
         fcRaise e
     except BLSError as e:

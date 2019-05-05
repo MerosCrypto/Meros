@@ -45,7 +45,7 @@ proc parseClaim*(
         #Get the BLS signature.
         bls: BLSSignature
         #Get the signature.
-        signature: string = claimSeq[4]
+        signature: EdSignature = newEdSignature(claimSeq[4])
 
     try:
         sender = newEdPublicKey(claimSeq[0])
@@ -73,5 +73,6 @@ proc parseClaim*(
         result.hash = Blake384("claim" & claimSeq.reserialize(1, 3))
         #Set the signature.
         result.signature = signature
+        result.signed = true
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Claim: " & e.msg)

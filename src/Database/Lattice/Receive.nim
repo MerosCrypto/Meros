@@ -57,6 +57,7 @@ func sign*(
         recv.sender = wallet.address
         #Sign the hash of the Receive.
         recv.signature = wallet.sign(recv.hash.toString())
+        recv.signed = true
     except SodiumError as e:
         fcRaise e
     except FinalAttributeError as e:

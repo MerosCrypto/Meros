@@ -4,8 +4,9 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#Address lib.
+#Address anmd Wallet libraries.
 import ../../../Wallet/Address
+import ../../../Wallet/Wallet
 
 #Entry and Data objects.
 import ../../../Database/Lattice/objects/EntryObj
@@ -31,10 +32,10 @@ func serialize*(
         data.nonce.toBinary().pad(INT_LEN) &
         char(data.data.len) & data.data
 
-    if data.signature.len != 0:
+    if data.signed:
         result =
             result &
             data.proof.toBinary().pad(INT_LEN) &
-            data.signature
+            data.signature.toString()
     else:
         result = "data" & result

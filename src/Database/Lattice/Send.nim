@@ -68,6 +68,7 @@ proc sign*(
         send.hash = Blake384(send.serialize())
         #Sign the hash of the Send.
         send.signature = wallet.sign(send.hash.toString())
+        send.signed = true
     except AddressError as e:
         fcRaise e
     except SodiumError as e:

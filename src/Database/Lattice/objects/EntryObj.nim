@@ -1,6 +1,9 @@
 #Hash lib.
 import ../../../lib/Hash
 
+#Wallet lib.
+import ../../../Wallet/Wallet
+
 #Finals lib.
 import finals
 
@@ -25,6 +28,8 @@ finalsd:
             #Hash.
             hash* {.final.}: Hash[384]
             #Signature.
-            signature* {.final.}: string
+            signature* {.final.}: EdSignature
+            #Signed.
+            signed* {.final.}: bool
             #Verified.
             verified*: bool

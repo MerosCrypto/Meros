@@ -9,6 +9,9 @@ import ../../../../src/lib/Hash
 #BLS lib.
 import ../../../../src/Wallet/MinerWallet
 
+#Wallet lib.
+import ../../../../src/Wallet/Wallet
+
 #Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
 
@@ -50,7 +53,7 @@ for i in 1 .. 20:
     assert(mint.sender == mintParsed.sender)
     assert(mint.nonce == mintParsed.nonce)
     assert(mint.hash == mintParsed.hash)
-    assert(mint.signature == mintParsed.signature)
+    assert(mint.signature.toString() == mintParsed.signature.toString())
     assert(mint.verified == mintParsed.verified)
 
     #Test the Mint properties.

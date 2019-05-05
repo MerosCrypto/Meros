@@ -63,8 +63,8 @@ for i in 1 .. 20:
         "Hash:\r\n" & $recv.hash & "\r\n" & $recvParsed.hash
     )
     assert(
-        recv.signature == recvParsed.signature,
-        "Signature:\r\n" & recv.signature & "\r\n" & recvParsed.signature
+        recv.signature.toString() == recvParsed.signature.toString(),
+        "Signature:\r\n" & $recv.signature & "\r\n" & $recvParsed.signature
     )
     assert(
         recv.verified == recvParsed.verified,

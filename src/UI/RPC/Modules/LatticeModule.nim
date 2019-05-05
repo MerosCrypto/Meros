@@ -10,6 +10,9 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#Wallet lib.
+import ../../../Wallet/Wallet
+
 #Lattice lib.
 import ../../../Database/Lattice/Lattice
 
@@ -34,7 +37,7 @@ proc toJSON*(
         "sender": entry.sender,
         "nonce": entry.nonce,
         "hash": $entry.hash,
-        "signature": entry.signature.toHex(),
+        "signature": $entry.signature,
         "verified": entry.verified
     }
 

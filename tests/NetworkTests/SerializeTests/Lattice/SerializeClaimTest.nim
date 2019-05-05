@@ -16,6 +16,8 @@ import ../../../../src/Database/Lattice/Claim
 import ../../../../src/Network/Serialize/Lattice/SerializeClaim
 import ../../../../src/Network/Serialize/Lattice/ParseClaim
 
+import strutils
+
 #Test 20 serializations.
 for i in 1 .. 20:
     echo "Testing Claim Serialization/Parsing, iteration " & $i & "."
@@ -40,6 +42,9 @@ for i in 1 .. 20:
     var claimParsed: Claim = claim.serialize().parseClaim()
 
     #Test the serialized versions.
+    echo claim.serialize().toHex()
+    echo "\r\n"
+    echo claimParsed.serialize().toHex()
     assert(claim.serialize() == claimParsed.serialize())
 
     #Test the Entry properties.
@@ -60,8 +65,8 @@ for i in 1 .. 20:
         "Hash:\r\n" & $claim.hash & "\r\n" & $claimParsed.hash
     )
     assert(
-        claim.signature == claimParsed.signature,
-        "Signature:\r\n" & claim.signature & "\r\n" & claimParsed.signature
+        claim.signature.toString() == claimParsed.signature.toString(),
+        "Signature:\r\n" & $claim.signature & "\r\n" & $claimParsed.signature
     )
     assert(
         claim.verified == claimParsed.verified,

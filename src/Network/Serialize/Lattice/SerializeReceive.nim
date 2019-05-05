@@ -4,8 +4,9 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#Address library.
+#Address anmd Wallet libraries.
 import ../../../Wallet/Address
+import ../../../Wallet/Wallet
 
 #LatticeIndex object.
 import ../../../Database/common/objects/LatticeIndexObj
@@ -34,7 +35,7 @@ func serialize*(
         input &
         recv.index.nonce.toBinary().pad(INT_LEN)
 
-    if recv.signature.len != 0:
+    if recv.signed:
         var sender: string
         try:
             sender = Address.toPublicKey(recv.sender)
@@ -44,6 +45,6 @@ func serialize*(
         result =
             sender &
             result &
-            recv.signature
+            recv.signature.toString()
     else:
         result = "receive" & result

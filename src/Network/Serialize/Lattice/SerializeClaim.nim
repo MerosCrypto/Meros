@@ -7,8 +7,9 @@ import ../../../lib/Util
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Address lib.
+#Address anmd Wallet libraries.
 import ../../../Wallet/Address
+import ../../../Wallet/Wallet
 
 #Entry and Claim objects.
 import ../../../Database/Lattice/objects/EntryObj
@@ -28,7 +29,7 @@ func serialize*(
         claim.mintNonce.toBinary().pad(INT_LEN) &
         claim.bls.toString()
 
-    if claim.signature.len != 0:
+    if claim.signed:
         var sender: string
         try:
             sender = Address.toPublicKey(claim.sender)
@@ -38,6 +39,6 @@ func serialize*(
         result =
             sender &
             result &
-            claim.signature
+            claim.signature.toString()
     else:
         result = "claim" & result

@@ -7,8 +7,9 @@ import ../../../lib/Util
 #BN/Raw lib.
 import ../../../lib/Raw
 
-#Address lib.
+#Address anmd Wallet libraries.
 import ../../../Wallet/Address
+import ../../../Wallet/Wallet
 
 #Entry and Send objects.
 import ../../../Database/Lattice/objects/EntryObj
@@ -38,10 +39,10 @@ proc serialize*(
         output &
         send.amount.toRaw().pad(MEROS_LEN)
 
-    if send.signature.len != 0:
+    if send.signed:
         result =
             result &
             send.proof.toBinary().pad(INT_LEN) &
-            send.signature
+            send.signature.toString()
     else:
         result = "send" & result

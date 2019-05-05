@@ -44,7 +44,7 @@ proc parseReceive*(
         #Get the input nonce.
         inputNonce: int = recvSeq[3].fromBinary()
         #Get the signature.
-        signature: string = recvSeq[4]
+        signature: EdSignature = newEdSignature(recvSeq[4])
 
     try:
         sender = newAddress(recvSeq[0])
@@ -70,5 +70,6 @@ proc parseReceive*(
         result.hash = Blake384("receive" & recvSeq.reserialize(1, 3))
         #Set the signature.
         result.signature = signature
+        result.signed = true
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Receive: " & e.msg)

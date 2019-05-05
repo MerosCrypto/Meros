@@ -125,6 +125,7 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
+- Update `Entry` to use a case defined type instead of polymorphism.
 - Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
 - Disable the need for having bound checks on.
 

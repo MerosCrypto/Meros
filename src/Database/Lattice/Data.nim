@@ -60,6 +60,7 @@ proc sign*(
         data.hash = Blake384(data.serialize())
         #Sign the hash of the Data.
         data.signature = wallet.sign(data.hash.toString())
+        data.signed = true
     except AddressError as e:
         fcRaise e
     except SodiumError as e:

@@ -15,6 +15,7 @@ type
     EdSeed* = Seed
     EdPrivateKey* = PrivateKey
     EdPublicKey* = PublicKey
+    EdSignature* = array[64, uint8]
 
 #Seed constructor.
 proc newEdSeed*(): Seed {.forceCheck: [
@@ -50,7 +51,7 @@ func newEdKeyPair*(
 func sign*(
     key: PrivateKey,
     msgArg: string
-): string {.forceCheck: [
+): EdSignature {.forceCheck: [
     SodiumError
 ].} =
     #Extract the message arg.
@@ -66,22 +67,21 @@ func sign*(
         raise newException(SodiumError, "Sodium could not update a State.")
 
     #Create the signature.
-    result = newString(64)
-    if sodiumSign(addr state, addr result[0], nil, key) != 0:
+    if sodiumSign(addr state, cast[ptr char](addr result[0]), nil, key) != 0:
         raise newException(SodiumError, "Sodium could not sign a message.")
 
 #Nim function for verifying a message.
 func verify*(
     key: PublicKey,
     msgArg: string,
-    sigArg: string
+    sigArg: EdSignature
 ): bool {.forceCheck: [
     SodiumError
 ].} =
     #Extract the args.
     var
         msg: string = SIGN_PREFIX & msgArg
-        sig: string = sigArg
+        sig: EdSignature = sigArg
 
     #Declare the State.
     var state: ED25519State
@@ -93,7 +93,7 @@ func verify*(
         raise newException(SodiumError, "Sodium could not update a State.")
 
     #Verify the signature.
-    if sodiumVerify(addr state, addr sig[0], key) != 0:
+    if sodiumVerify(addr state, cast[ptr char](addr sig[0]), key) != 0:
         return false
 
     result = true
