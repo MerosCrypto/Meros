@@ -23,37 +23,24 @@ proc parseMemoryVerification*(
     ValueError,
     BLSError
 ].} =
-    var
-        #BLS Public Key | Nonce | Entry Hash | BLS Signature
-        verifSeq: seq[string] = verifStr.deserialize(
-            BLS_PUBLIC_KEY_LEN,
-            INT_LEN,
-            HASH_LEN,
-            BLS_SIGNATURE_LEN
-        )
-        #Verifier's Public Key.
-        verifier: BLSPublicKey
-        #Nonce.
-        nonce: int = verifSeq[1].fromBinary()
-        #Get the Entry hash.
-        entry: string = verifSeq[2]
-        #BLS signature.
-        sig: BLSSignature
-
-    try:
-        verifier = newBLSPublicKey(verifSeq[0])
-        sig = newBLSSignature(verifSeq[3])
-    except BLSError as e:
-        fcRaise e
+    #BLS Public Key | Nonce | Entry Hash | BLS Signature
+    var verifSeq: seq[string] = verifStr.deserialize(
+        BLS_PUBLIC_KEY_LEN,
+        INT_LEN,
+        HASH_LEN,
+        BLS_SIGNATURE_LEN
+    )
 
     #Create the Verification.
     try:
         result = newMemoryVerificationObj(
-            entry.toHash(384)
+            verifSeq[2].toHash(384)
         )
-        result.verifier = verifier
-        result.nonce = nonce
-        result.signature = sig
+        result.verifier = newBLSPublicKey(verifSeq[0])
+        result.nonce = verifSeq[1].fromBinary()
+        result.signature = newBLSSignature(verifSeq[3])
+    except BLSError as e:
+        fcRaise e
     except ValueError as e:
         fcRaise e
     except FinalAttributeError as e:

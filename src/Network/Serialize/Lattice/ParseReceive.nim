@@ -26,50 +26,40 @@ proc parseReceive*(
 ): Receive {.forceCheck: [
     EdPublicKeyError
 ].} =
-    var
-        #Public Key | Nonce | Input Key | Input Nonce | Signature
-        recvSeq: seq[string] = recvStr.deserialize(
-            PUBLIC_KEY_LEN,
-            INT_LEN,
-            PUBLIC_KEY_LEN,
-            INT_LEN,
-            SIGNATURE_LEN
-        )
-        #Sender.
-        sender: string
-        #Get the nonce.
-        nonce: int = recvSeq[1].fromBinary()
-        #Input.
-        inputAddress: string
-        #Get the input nonce.
-        inputNonce: int = recvSeq[3].fromBinary()
-        #Get the signature.
-        signature: EdSignature = newEdSignature(recvSeq[4])
+    #Public Key | Nonce | Input Key | Input Nonce | Signature
+    var recvSeq: seq[string] = recvStr.deserialize(
+        PUBLIC_KEY_LEN,
+        INT_LEN,
+        PUBLIC_KEY_LEN,
+        INT_LEN,
+        SIGNATURE_LEN
+    )
 
+    #Create the Receive.
     try:
-        sender = newAddress(recvSeq[0])
-        inputAddress = newAddress(recvSeq[2])
+        result = newReceiveObj(
+            newLatticeIndex(
+                newAddress(recvSeq[2]),
+                recvSeq[3].fromBinary()
+            )
+        )
     except EdPublicKeyError as e:
         fcRaise e
 
-    #Create the Receive.
-    result = newReceiveObj(
-        newLatticeIndex(
-            inputAddress,
-            inputNonce
-        )
-    )
-
     try:
         #Set the sender.
-        result.sender = sender
+        try:
+            result.sender = newAddress(recvSeq[0])
+        except EdPublicKeyError as e:
+            fcRaise e
+        
         #Set the nonce.
-        result.nonce = nonce
+        result.nonce = recvSeq[1].fromBinary()
 
         #Set the hash.
         result.hash = Blake384("receive" & recvSeq.reserialize(1, 3))
         #Set the signature.
-        result.signature = signature
+        result.signature = newEdSignature(recvSeq[4])
         result.signed = true
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Receive: " & e.msg)

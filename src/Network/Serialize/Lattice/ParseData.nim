@@ -51,39 +51,31 @@ proc parseData*(
                 INT_LEN,
                 SIGNATURE_LEN
             )
-        #Sender.
-        sender: string
-        #Get the nonce.
-        nonce: int = keyNonce[1].fromBinary()
-        #Get the proof.
-        proof: int = proofSig[0].fromBinary()
-        #Get the signature.
-        signature: EdSignature = newEdSignature(proofSig[1])
-
-    try:
-        sender = newAddress(newEdPublicKey(keyNonce[0]))
-    except EdPublicKeyError as e:
-        fcRaise e
 
     #Create the Data.
     result = newDataObj(
         data
     )
+
     try:
         #Set the sender.
-        result.sender = sender
+        try:
+            result.sender = newAddress(newEdPublicKey(keyNonce[0]))
+        except EdPublicKeyError as e:
+            fcRaise e
+
         #Set the nonce.
-        result.nonce = nonce
+        result.nonce = keyNonce[1].fromBinary()
 
         #Set the hash.
         result.hash = Blake384("data" & keyNonce[0] & keyNonce[1] & char(result.data.len) & data)
         #Set the proof.
-        result.proof = proof
+        result.proof = proofSig[0].fromBinary()
 
         #Set the Argon hash.
-        result.argon = Argon(result.hash.toString(), proof.toBinary(), true)
+        result.argon = Argon(result.hash.toString(), result.proof.toBinary(), true)
         #Set the signature.
-        result.signature = signature
+        result.signature = newEdSignature(proofSig[1])
         result.signed = true
     except ArgonError as e:
         fcRaise e

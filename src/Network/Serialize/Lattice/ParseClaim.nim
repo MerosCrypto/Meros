@@ -27,52 +27,38 @@ proc parseClaim*(
     BLSError,
     EdPublicKeyError
 ].} =
-    var
-        #Public Key | Nonce | Mint Nonce | BLS Signature | Signature
-        claimSeq: seq[string] = claimStr.deserialize(
-            PUBLIC_KEY_LEN,
-            INT_LEN,
-            INT_LEN,
-            BLS_SIGNATURE_LEN,
-            SIGNATURE_LEN
-        )
-        #Get the sender's Public Key.
-        sender: EdPublicKey
-        #Get the nonce.
-        nonce: int = claimSeq[1].fromBinary()
-        #Get the mint nonce.
-        mintNonce: int = claimSeq[2].fromBinary()
-        #Get the BLS signature.
-        bls: BLSSignature
-        #Get the signature.
-        signature: EdSignature = newEdSignature(claimSeq[4])
-
-    try:
-        sender = newEdPublicKey(claimSeq[0])
-    except EdPublicKeyError as e:
-        fcRaise e
-
-    try:
-        bls = newBLSSignature(claimSeq[3])
-    except BLSError as e:
-        fcRaise e
+    #Public Key | Nonce | Mint Nonce | BLS Signature | Signature
+    var claimSeq: seq[string] = claimStr.deserialize(
+        PUBLIC_KEY_LEN,
+        INT_LEN,
+        INT_LEN,
+        BLS_SIGNATURE_LEN,
+        SIGNATURE_LEN
+    )
 
     #Create the Claim.
     result = newClaim(
-        mintNonce,
-        nonce
+        claimSeq[2].fromBinary(),
+        claimSeq[1].fromBinary()
     )
 
     try:
         #Set the sender.
-        result.sender = newAddress(sender)
+        try:
+            result.sender = newAddress(newEdPublicKey(claimSeq[0]))
+        except EdPublicKeyError as e:
+            fcRaise e
+
         #Set the BLS signature.
-        result.bls = bls
+        try:
+            result.bls = newBLSSignature(claimSeq[3])
+        except BLSError as e:
+            fcRaise e
 
         #Set the hash.
         result.hash = Blake384("claim" & claimSeq.reserialize(1, 3))
         #Set the signature.
-        result.signature = signature
+        result.signature = newEdSignature(claimSeq[4])
         result.signed = true
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Claim: " & e.msg)

@@ -26,10 +26,10 @@ proc parseMiners*(
         minersSeq: seq[string]
         miners: seq[Miner]
 
-    try:
-        quantity = int(minersStr[0])
-    except IndexError as e:
-        raise newException(ValueError, "parseMiners not handed enough data to get the quantity: " & e.msg)
+    if minersStr.len == 0:
+        raise newException(ValueError, "parseMiners not handed enough data to get the quantity.")
+
+    quantity = int(minersStr[0])
     miners = newSeq[Miner](quantity)
 
     #Parse each Miner.
@@ -42,6 +42,9 @@ proc parseMiners*(
             )
 
         try:
+            if minersSeq[1].len == 0:
+                raise newException(ValueError, "parseMiners not handed enough data to get an amount to reward a miner.")
+
             miners[i] = newMinerObj(
                 newBLSPublicKey(minersSeq[0]),
                 int(minersSeq[1][0])

@@ -27,57 +27,44 @@ proc parseSend*(
     ArgonError,
     EdPublicKeyError
 ].} =
-    var
-        #Public Key | Nonce | Output | Amount | Proof | Signature
-        sendSeq: seq[string] = sendStr.deserialize(
-            PUBLIC_KEY_LEN,
-            INT_LEN,
-            PUBLIC_KEY_LEN,
-            MEROS_LEN,
-            INT_LEN,
-            SIGNATURE_LEN
-        )
-        #Sender.
-        sender: string
-        #Get the nonce.
-        nonce: int = sendSeq[1].fromBinary()
-        #Output.
-        output: string
-        #Get the amount.
-        amount: BN = sendSeq[3].toBNFromRaw()
-        #Get the proof.
-        proof: string = sendSeq[4]
-        #Get the signature.
-        signature: EdSignature = newEdSignature(sendSeq[5])
+    #Public Key | Nonce | Output | Amount | Proof | Signature
+    var sendSeq: seq[string] = sendStr.deserialize(
+        PUBLIC_KEY_LEN,
+        INT_LEN,
+        PUBLIC_KEY_LEN,
+        MEROS_LEN,
+        INT_LEN,
+        SIGNATURE_LEN
+    )
 
+
+    #Create the Send.
     try:
-        sender = newAddress(sendSeq[0])
-        output = newAddress(sendSeq[2])
+        result = newSendObj(
+            newAddress(sendSeq[2]),
+            sendSeq[3].toBNFromRaw()
+        )
     except EdPublicKeyError as e:
         fcRaise e
 
-    #Create the Send.
-    result = newSendObj(
-        output,
-        amount
-    )
-
     try:
         #Set the sender.
-        result.sender = sender
+        result.sender = newAddress(sendSeq[0])
         #Set the nonce.
-        result.nonce = nonce
+        result.nonce = sendSeq[1].fromBinary()
 
         #Set the Blake384 hash.
         result.hash = Blake384("send" & sendSeq.reserialize(0, 3))
         #Set the proof.
-        result.proof = proof.fromBinary()
+        result.proof = sendSeq[4].fromBinary()
 
         #Set the Argon hash.
-        result.argon = Argon(result.hash.toString(), proof, true)
+        result.argon = Argon(result.hash.toString(), sendSeq[4], true)
         #Set the signature.
-        result.signature = signature
+        result.signature = newEdSignature(sendSeq[5])
         result.signed = true
+    except EdPublicKeyError as e:
+        fcRaise e
     except ArgonError as e:
         fcRaise e
     except FinalAttributeError as e:

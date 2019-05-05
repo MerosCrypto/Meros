@@ -60,34 +60,25 @@ proc parseMint*(
     ValueError,
     BLSError
 ].} =
-    var
-        #Nonce | Output | Amount
-        mintSeq: seq[string] = mintStr.deserialize(
-            INT_LEN,
-            BLS_PUBLIC_KEY_LEN,
-            MEROS_LEN
-        )
-        #Get the nonce.
-        nonce: int = mintSeq[0].fromBinary()
-        #Output.
-        output: BLSPublicKey
-        #Get the amount.
-        amount: BN = mintSeq[2].toBNFromRaw()
+    #Nonce | Output | Amount
+    var mintSeq: seq[string] = mintStr.deserialize(
+        INT_LEN,
+        BLS_PUBLIC_KEY_LEN,
+        MEROS_LEN
+    )
 
-    #Parse the output.
+    #Create the Mint.
     try:
-        output = newBLSPublicKey(mintSeq[1])
+        result = newMintObj(
+            newBLSPublicKey(mintSeq[1]),
+            mintSeq[2].toBNFromRaw()
+        )
     except BLSError as e:
         fcRaise e
 
-    #Create the Mint.
-    result = newMintObj(
-        output,
-        amount
-    )
     try:
         #Set the nonce.
-        result.nonce = nonce
+        result.nonce = mintSeq[0].fromBinary()
         #Set the hash.
         result.hash = Blake384("mint" & mintStr)
     except ValueError as e:
