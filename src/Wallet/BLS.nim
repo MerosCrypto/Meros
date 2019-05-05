@@ -71,7 +71,9 @@ proc newBLSSignature*(
 proc newBLSAggregationInfo*(
     key: BLSPublicKey,
     msg: string
-): BLSAggregationInfo {.forceCheck: [BLSError].} =
+): BLSAggregationInfo {.forceCheck: [
+    BLSError
+].} =
     try:
         result = newAggregationInfoFromMsg(key, msg)
     except Exception:
@@ -79,9 +81,6 @@ proc newBLSAggregationInfo*(
             BLSError,
             "Couldn't create a BLS AggregationInfo from a Message: " & getCurrentExceptionMsg()
         )
-
-#Getters.
-export getAggregationInfo
 
 #Equality operators.
 export `==`
@@ -92,8 +91,32 @@ export toString
 export `$`
 
 #Signature functions.
-export setAggregationInfo
-export verify
+proc setAggregationInfo*(
+    signature: BLSSignature,
+    agInfo: BLSAggregationInfo
+) {.forceCheck: [
+    BLSError
+].} =
+    try:
+        mc_bls.setAggregationInfo(signature, agInfo)
+    except Exception as e:
+        raise newException(
+            BLSError,
+            "Couldn't set a BLS Signature's Aggregation Info: " & e.msg
+        )
+
+proc verify*(
+    signature: BLSSignature
+): bool {.forceCheck: [
+    BLSError
+].} =
+    try:
+        result = mc_bls.verify(signature)
+    except Exception as e:
+        raise newException(
+            BLSError,
+            "Couldn't verify a BLS Signature: " & e.msg
+        )
 
 #Private Key functions.
 proc sign*(

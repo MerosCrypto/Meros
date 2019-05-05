@@ -99,6 +99,10 @@ proc verify*(
 
     #If it's not null, verify it.
     if not agInfo.isNil:
-        blockArg.header.aggregate.setAggregationInfo(agInfo)
-        if not blockArg.header.aggregate.verify():
+        try:
+            blockArg.header.aggregate.setAggregationInfo(agInfo)
+
+            if not blockArg.header.aggregate.verify():
+                return false
+        except BLSError:
             return false

@@ -74,12 +74,12 @@ proc add*(
                 mint.nonce.toBinary() & Address.toPublicKey(account.address)
             )
         )
+        if not claim.bls.verify():
+            raise newException(ValueError, "Claim had invalid BLS signature.")
     except AddressError:
         doAssert(false, "Created an account with an invalid address.")
     except BLSError as e:
         fcRaise e
-    if not claim.bls.verify():
-        raise newException(ValueError, "Claim had invalid BLS signature.")
 
     #Verify it's unclaimed.
 
