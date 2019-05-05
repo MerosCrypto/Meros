@@ -71,7 +71,7 @@ proc add*(
         claim.bls.setAggregationInfo(
             newBLSAggregationInfo(
                 mint.output,
-                mint.nonce.toBinary() & Address.toPublicKey(account.address)
+                "claim" & mint.nonce.toBinary() & Address.toPublicKey(account.address)
             )
         )
         if not claim.bls.verify():
