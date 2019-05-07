@@ -51,7 +51,7 @@ Send Entries have the following fields:
 - amount The amount of Meri to send.
 - proof: Work that proves this isn't spam.
 
-Send hashes are defined as `Blake2b-384(sender + nonce + output + amount)`, where sender takes up 32 bytes, nonce four bytes, output 32 bytes, and amount eight bytes.
+Send hashes are defined as `Blake2b-384("send" + sender + nonce + output + amount)`, where sender takes up 32 bytes, nonce four bytes, output 32 bytes, and amount eight bytes.
 
 amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are confirmed. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
 
@@ -66,11 +66,40 @@ Argon2d(
 ) > sendDiffuclty
 ```
 
-Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance, and added to the output's Account's balance.
+Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance.
 
 ### Receive
 
+Receive Entries have the following fields:
+- input: The Ed25519 Public Key who owns the Account which has the Send we're receiving.
+- inputNonce: The nonce of the Send we're receiving.
+
+Receive hashes are defined as `Blake2b-384("receive" + nonce + input + inputNonce)`, where nonce takes up four bytes, input 32 bytes, and inputNonce four bytes.
+
+The Entry on input's Account at inputNonce must be a Send, with an output of sender, which doesn't have a matching receive yet.
+
+The sender's Account's balance, when combined with the amount from the Send, must be lower than the max value of an uint64.
+
+Once the Receive has been confirmed, the Send's amount is added to the sender's Account's balance.
+
 ### Data
+
+Data Entries have the following fields:
+- data: The Data to store in the Entry.
+- proof: Work that proves this isn't spam.
+
+Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce four bytes, data length one byte, and data variable bytes.
+
+The proof must satisfy the following check:
+```
+Argon2d(
+    iterations = 1,
+    memory = 8,
+    parallelism = 1
+    data = hash,
+    salt = proof with no leading zeros
+) > dataDiffuclty
+```
 
 ### Lock
 
