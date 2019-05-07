@@ -1,6 +1,6 @@
 # Lattice
 
-The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array), indexed by Ed25519 Public Keys. Only the key pair behind an Account can add an Entry to it.
+The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array), indexed by Ed25519 Public Keys, with an additional two properties of sendDifficulty and dataDifficulty (384 bit hashes set via methods described in the Verifications documentation). Only the key pair behind an Account can add an Entry to it.
 
 Every Entry has the following fields:
 - descendant: Entry Sub-type
@@ -34,13 +34,39 @@ Claim Entries are created in response to a Mint, and have the following fields:
 - mintNonce: The nonce of the Mint this is claiming.
 - bls: BLS Signature that proves the verifier which earned the new Meros wants this Account to receive their reward.
 
+Claim hashes are defined as `Blake2b-384("claim" + nonce + mintNonce + bls)`, where nonce takes up four bytes, mintNonce four bytes, and bls 48 bytes.
+
 mintNonce must be lower than the height of the "minter" Account, and the Mint at that location must not have been previously claimed.
 
 bls must be the BLS signature produced by the Private Key for the Mint's output signing `"claim" + mintNonce + sender`.
 
-Once a Claim has been confirmed, the Mint's amount should be added to the sender's Account's balance.
+The sender's Account's balance, when combined with the amount from the Mint, must be lower than the max value of an uint64.
+
+Once a Claim has been confirmed, the Mint's amount is added to the sender's Account's balance.
 
 ### Send
+
+Send Entries have the following fields:
+- output: The Ed25519 Public Key to transfer funds to.
+- amount The amount of Meri to send.
+- proof: Work that proves this isn't spam.
+
+Send hashes are defined as `Blake2b-384(sender + nonce + output + amount)`, where sender takes up 32 bytes, nonce four bytes, output 32 bytes, and amount eight bytes.
+
+amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are confirmed. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
+
+The proof must satisfy the following check:
+```
+Argon2d(
+    iterations = 1,
+    memory = 8,
+    parallelism = 1
+    data = hash,
+    salt = proof with no leading zeros
+) > sendDiffuclty
+```
+
+Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance, and added to the output's Account's balance.
 
 ### Receive
 

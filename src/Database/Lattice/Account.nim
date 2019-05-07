@@ -110,7 +110,7 @@ proc add*(
     DataExists
 ].} =
     #Verify the work.
-    if send.argon.toBN() < difficulty:
+    if send.argon.toBN() <= difficulty:
         raise newException(ValueError, "Failed to verify the Send's work.")
 
     #Verify the output is a valid address.
@@ -187,7 +187,7 @@ proc add*(
     DataExists
 ].} =
     #Verify the work.
-    if data.argon.toBN() < difficulty:
+    if data.argon.toBN() <= difficulty:
         raise newException(ValueError, "Failed to verify the Data's work.")
 
     #Add the Data.
