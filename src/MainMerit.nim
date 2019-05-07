@@ -145,7 +145,7 @@ proc mainMerit() {.forceCheck: [].} =
                 try:
                     var mintNonce: int = lattice.mint(
                         key,
-                        newBN(reward.score) * newBN(50)
+                        reward.score * 50
                     )
 
                     #If we have a miner wallet, check if the mint was to us.

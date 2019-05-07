@@ -19,9 +19,6 @@ import ../../../Database/Lattice/Lattice
 #RPC object.
 import ../objects/RPCObj
 
-#BN lib.
-import BN
-
 #Async standard lib.
 import asyncdispatch
 
@@ -87,7 +84,7 @@ proc getBalance(
     account: string
 ): JSONNode {.forceCheck: [].} =
     #Get the balance.
-    var balance: BN
+    var balance: uint64
     try:
         balance = rpc.functions.lattice.getBalance(account)
     except AddressError as e:

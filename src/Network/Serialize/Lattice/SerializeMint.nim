@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN/Raw lib.
-import ../../../lib/Raw
-
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
@@ -25,7 +22,7 @@ proc serialize*(
     result =
         mint.nonce.toBinary().pad(INT_LEN) &
         mint.output.toString() &
-        mint.amount.toRaw().pad(MEROS_LEN)
+        mint.amount.toBinary().pad(MEROS_LEN)
 
     if hashing:
         result = "mint" & result

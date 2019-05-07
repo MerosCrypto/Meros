@@ -21,13 +21,10 @@ export SendObj
 #Import the Serialization library.
 import ../../Network/Serialize/Lattice/SerializeSend
 
-#BN lib.
-import BN
-
 #Create a new Send.
 func newSend*(
     output: string,
-    amount: BN,
+    amount: uint64,
     nonce: Natural
 ): Send {.forceCheck: [
     ValueError,
@@ -38,8 +35,8 @@ func newSend*(
         raise newException(AddressError, "Send output address is not valid.")
 
     #Verify the amount.
-    if amount <= newBN(0):
-        raise newException(ValueError, "Send amount is negative or zero.")
+    if amount == 0:
+        raise newException(ValueError, "Send amount is zero.")
 
     #Create the result.
     result = newSendObj(
@@ -79,13 +76,13 @@ proc sign*(
 #'Mine' a TX (beat the spam filter).
 proc mine*(
     send: Send,
-    networkDifficulty: BN
+    networkDifficulty: Hash[384]
 ) {.forceCheck: [
     ValueError,
     ArgonError
 ].} =
     #Make sure the hash was set.
-    if send.hash.toBN() == newBN():
+    if not send.signed:
         raise newException(ValueError, "Send wasn't signed.")
 
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
@@ -94,7 +91,7 @@ proc mine*(
         hash: ArgonHash
     try:
         hash = Argon(send.hash.toString(), proof.toBinary(), true)
-        while hash.toBN() <= networkDifficulty:
+        while hash <= networkDifficulty:
             inc(proof)
             hash = Argon(send.hash.toString(), proof.toBinary(), true)
     except ArgonError as e:

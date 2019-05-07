@@ -9,9 +9,6 @@ import ../../../src/lib/Util
 #Hash lib.
 import ../../../src/lib/Hash
 
-#BN/Hex lib.
-import ../../../src/lib/Hex
-
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
@@ -249,7 +246,7 @@ for i in 0 ..< 3:
 addBlock(@[verifiers[0]], @[])
 
 #Mint some coins to the first Verifier, and claim them by the first Account.
-assert(lattice.mint(verifiers[0].publicKey, newBN(300)) == 0)
+assert(lattice.mint(verifiers[0].publicKey, 300) == 0)
 assert(db.get("lattice_" & db.get("lattice_minter_" & 0.toBinary())) == char(EntryType.Mint) & lattice["minter"][0].serialize())
 
 var claim: Claim = newClaim(0, 0)
@@ -261,15 +258,15 @@ assert(db.get("lattice_" & claim.hash.toString()) == char(claim.descendant) & cl
 verifiers[0].verify(lattice[accounts[0].address][0].hash.toString())
 
 #Send 100 Meros to the second account, and 50 to the third.
-var send: Send = newSend(accounts[1].address, newBN(100), 1)
+var send: Send = newSend(accounts[1].address, 100, 1)
 accounts[0].sign(send)
-send.mine("".pad(96, '0').toBNFromHex())
+send.mine("".pad(48).toHash(384))
 lattice.add(send)
 assert(db.get("lattice_" & send.hash.toString()) == char(send.descendant) & send.serialize())
 
-send = newSend(accounts[2].address, newBN(50), 2)
+send = newSend(accounts[2].address, 50, 2)
 accounts[0].sign(send)
-send.mine("".pad(96, '0').toBNFromHex())
+send.mine("".pad(96, '0').toHash(384))
 lattice.add(send)
 assert(db.get("lattice_" & send.hash.toString()) == char(send.descendant) & send.serialize())
 
@@ -310,7 +307,7 @@ verifiers[0].verify(lattice[accounts[1].address][0].hash.toString())
 #Add a Data to the second account.
 var data: Data = newData("1", 1)
 accounts[1].sign(data)
-data.mine("".pad(96, '0').toBNFromHex())
+data.mine("".pad(96, '0').toHash(384))
 lattice.add(data)
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
@@ -356,14 +353,14 @@ addBlock(@[verifiers[2]], @[])
 #Add a Data to the first account.
 data = newData("2", 3)
 accounts[0].sign(data)
-data.mine("".pad(96, '0').toBNFromHex())
+data.mine("".pad(96, '0').toHash(384))
 lattice.add(data)
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 
 #Add a conflicting Data.
 data = newData("3", 3)
 accounts[0].sign(data)
-data.mine("".pad(96, '0').toBNFromHex())
+data.mine("".pad(96, '0').toHash(384))
 lattice.add(data)
 assert(db.get("lattice_" & data.hash.toString()) == char(data.descendant) & data.serialize())
 

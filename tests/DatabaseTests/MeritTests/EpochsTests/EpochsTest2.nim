@@ -30,16 +30,13 @@ import ../../../../src/Database/Merit/Merit
 #Merit Testing functions.
 import ../TestMerit
 
-#BN lib.
-import BN
-
 var
     #Database Function Box.
     functions: DatabaseFunctionBox = newTestDatabase()
     #Verifications.
     verifications: Verifications = newVerifications(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_2", 1, newBN(0))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_2", 1, "".pad(48).toHash(384))
     #State.
     state: State = newState(functions, 100)
     #Epochs.

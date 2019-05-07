@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN/Raw lib.
-import ../../../lib/Raw
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -50,7 +47,7 @@ finalsd:
         #seq of the Entries (actually a seq of seqs so we can handle unconfirmed Entries).
         entries*: seq[seq[Entry]]
         #Balance of the address.
-        balance*: BN
+        balance*: uint64
 
 #Creates a new account object.
 proc newAccountObj*(
@@ -70,7 +67,7 @@ proc newAccountObj*(
         height: 0,
         confirmed: 0,
         entries: @[],
-        balance: newBN()
+        balance: 0
     )
     result.ffinalizeAddress()
 
@@ -78,13 +75,13 @@ proc newAccountObj*(
     try:
         result.height = result.db.get("lattice_" & result.address).fromBinary()
         result.confirmed = result.db.get("lattice_" & result.address & "_confirmed").fromBinary()
-        result.balance = result.db.get("lattice_" & result.address & "_balance").toBNFromRaw()
+        result.balance = uint64(result.db.get("lattice_" & result.address & "_balance").fromBinary())
     #The Account must not exist.
     except DBReadError:
         try:
             result.db.put("lattice_" & result.address, 0.toBinary())
             result.db.put("lattice_" & result.address & "_confirmed", 0.toBinary())
-            result.db.put("lattice_" & result.address & "_balance", newBN().toRaw())
+            result.db.put("lattice_" & result.address & "_balance", "")
         except DBWriteError as e:
             doAssert(false, "Couldn't save a new Account to the Database: " & e.msg)
 

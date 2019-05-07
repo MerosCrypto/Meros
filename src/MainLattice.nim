@@ -88,7 +88,7 @@ proc mainLattice() {.forceCheck: [].} =
         #Handle requests for an account's balance.
         functions.lattice.getBalance = proc (
             address: string
-        ): BN {.forceCheck: [
+        ): uint64 {.forceCheck: [
             AddressError
         ].} =
             try:

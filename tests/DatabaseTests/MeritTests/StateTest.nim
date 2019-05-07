@@ -24,9 +24,6 @@ import ../../../src/Database/Merit/State
 #Merit Testing functions.
 import TestMerit
 
-#BN lib.
-import BN
-
 #Finals lib.
 import finals
 
@@ -41,7 +38,7 @@ var
         db,
         "STATE_TEST",
         30,
-        newBN()
+        "".pad(48).toHash(384)
     )
     #State.
     state: State = newState(

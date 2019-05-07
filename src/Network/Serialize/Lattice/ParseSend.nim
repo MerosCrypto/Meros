@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN/Raw lib.
-import ../../../lib/Raw
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -37,12 +34,11 @@ proc parseSend*(
         INT_LEN
     )
 
-
     #Create the Send.
     try:
         result = newSendObj(
             newAddress(sendSeq[2]),
-            sendSeq[3].toBNFromRaw()
+            uint64(sendSeq[3].fromBinary())
         )
     except EdPublicKeyError as e:
         fcRaise e

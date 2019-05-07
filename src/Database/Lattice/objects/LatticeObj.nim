@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#BN/Hex lib.
-import ../../../lib/Hex
-
 #Hash lib.
 import ../../../lib/Hash
 

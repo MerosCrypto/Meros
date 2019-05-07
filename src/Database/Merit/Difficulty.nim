@@ -29,7 +29,7 @@ proc verify*(
     hash: Hash[384]
 ): bool {.forceCheck: [].} =
     try:
-        result = hash.toBN() > diff.difficulty
+        result = hash > diff.difficulty
     except ValueError:
         return false
 
@@ -43,8 +43,9 @@ proc calculateNextDifficulty*(
     var
         #Last difficulty.
         last: Difficulty = blockchain.difficulty
+        lastDifficulty: BN = last.difficulty.toString().toBNFromRaw()
         #New difficulty.
-        difficulty: BN = last.difficulty
+        difficulty: BN = lastDifficulty
         #Target time.
         targetTime: int = blockchain.blockTime * blocksPerPeriod
         #Start time of this period.
@@ -54,7 +55,7 @@ proc calculateNextDifficulty*(
         #Period time.
         actualTime: int64
         #Possible values.
-        possible: BN = MAX - last.difficulty
+        possible: BN = MAX - lastDifficulty
         #Change.
         change: BN
 
@@ -86,7 +87,7 @@ proc calculateNextDifficulty*(
             change = possible / newBN(10)
 
         #Set the difficulty.
-        difficulty = last.difficulty + change
+        difficulty = lastDifficulty + change
     #If we went slower...
     elif actualTime > targetTime:
         #Set the change to be:
@@ -94,7 +95,7 @@ proc calculateNextDifficulty*(
             #Multipled by the targetTime (smaller)
             #Divided by the actualTime (bigger)
         #Since we need the difficulty to decrease.
-        change = last.difficulty * newBN(targetTime div actualTime)
+        change = lastDifficulty * newBN(targetTime div actualTime)
 
         #If we're decreasing the difficulty by more than 10% of the possible values...
         if possible / newBN(10) < change:
@@ -102,15 +103,21 @@ proc calculateNextDifficulty*(
             change = possible / newBN(10)
 
         #Set the difficulty.
-        difficulty = last.difficulty - change
+        difficulty = lastDifficulty - change
 
     #If the difficulty is lower than the starting difficulty, use that.
-    if difficulty < blockchain.startDifficulty.difficulty:
-        difficulty = blockchain.startDifficulty.difficulty
+    if difficulty < blockchain.startDifficulty.difficulty.toString().toBNFromRaw():
+        difficulty = blockchain.startDifficulty.difficulty.toString().toBNFromRaw()
 
     #Create the new difficulty.
-    result = newDifficultyObj(
-        last.endBlock + 1,
-        last.endBlock + blocksPerPeriod,
-        difficulty
-    )
+    try:
+        result = newDifficultyObj(
+            last.endBlock + 1,
+            last.endBlock + blocksPerPeriod,
+            difficulty.toRaw().pad(48).toHash(384)
+        )
+    except ValueError:
+        #This is a doAssert false as this problem is due to our half-move off of BNs.
+        #This problem (likely) won't exist once we fully move off.
+        #That said, this except shouldn't trigger anyways.
+        doAssert(false, "Couldn't convert the Difficulty to a Hash.")

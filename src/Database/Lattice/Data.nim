@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#BNl lib.
-import BN
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -71,13 +68,13 @@ proc sign*(
 #'Mine' the data (beat the spam filter).
 proc mine*(
     data: Data,
-    networkDifficulty: BN
+    networkDifficulty: Hash[384]
 ) {.forceCheck: [
     ValueError,
     ArgonError
 ].} =
     #Make sure the hash was set.
-    if data.hash.toBN() == newBN():
+    if not data.signed:
         raise newException(ValueError, "Data wasn't signed.")
 
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
@@ -86,7 +83,7 @@ proc mine*(
         hash: ArgonHash
     try:
         hash = Argon(data.hash.toString(), proof.toBinary(), true)
-        while hash.toBN() <= networkDifficulty:
+        while hash <= networkDifficulty:
             inc(proof)
             hash = Argon(data.hash.toString(), proof.toBinary(), true)
     except ArgonError as e:

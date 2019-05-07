@@ -17,20 +17,17 @@ export MintObj
 #Import the Serialization library.
 import ../../Network/Serialize/Lattice/SerializeMint
 
-#BN lib.
-import BN
-
 #Create a new Mint.
 proc newMint*(
     output: BLSPublicKey,
-    amount: BN,
+    amount: uint64,
     nonce: Natural
 ): Mint {.forceCheck: [
     ValueError
 ].} =
     #Verify the amount.
-    if amount <= newBN(0):
-        raise newException(ValueError, "Mint amount is negative or zero.")
+    if amount == 0:
+        raise newException(ValueError, "Mint amount is zero.")
 
     #Create the result.
     result = newMintObj(

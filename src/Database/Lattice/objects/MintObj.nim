@@ -10,9 +10,6 @@ import ../../../Wallet/MinerWallet
 #Entry object.
 import EntryObj
 
-#BN lib.
-import BN
-
 #Finals lib.
 import finals
 
@@ -22,12 +19,12 @@ finalsd:
         #Destination key.
         output* {.final.}: BLSPublicKey
         #Amount transacted.
-        amount* {.final.}: BN
+        amount* {.final.}: uint64
 
 #Constructor.
 func newMintObj*(
     output: BLSPublicKey,
-    amount: BN
+    amount: uint64
 ): Mint {.forceCheck: [].} =
     #Set the Mint fields.
     result = Mint(

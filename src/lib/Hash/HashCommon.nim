@@ -4,9 +4,6 @@ import ../Errors
 #Util lib.
 import ../Util
 
-#BN/Raw lib.
-import ../Raw
-
 #Hash master type.
 type Hash*[bits: static[int]] = object
     data*: array[bits div 8, uint8]
@@ -44,8 +41,71 @@ func `$`*(
     for b in hash.data:
         result &= b.toHex()
 
-#To BN.
-proc toBN*(
-    hash: Hash
-): BN {.inline, forceCheck: [].} =
-    hash.toString().toBNFromRaw()
+#Compare hash values.
+func `<`*[bits: static[int]](
+    lhs: Hash[bits],
+    rhs: Hash[bits]
+): bool =
+    var bytes: int = bits div 8
+    for i in 0 ..< bytes:
+        if lhs.data[i] == rhs.data[i]:
+            continue
+        elif lhs.data[i] < rhs.data[i]:
+            return true
+        else:
+            return false
+    return false
+
+func `<=`*[bits: static[int]](
+    lhs: Hash[bits],
+    rhs: Hash[bits]
+): bool =
+    var bytes: int = bits div 8
+    for i in 0 ..< bytes:
+        if lhs.data[i] == rhs.data[i]:
+            continue
+        elif lhs.data[i] < rhs.data[i]:
+            return true
+        else:
+            return false
+    return true
+
+func `>`*[bits: static[int]](
+    lhs: Hash[bits],
+    rhs: Hash[bits]
+): bool =
+    var bytes: int = bits div 8
+    for i in 0 ..< bytes:
+        if lhs.data[i] == rhs.data[i]:
+            continue
+        elif lhs.data[i] > rhs.data[i]:
+            return true
+        else:
+            return false
+    return false
+
+func `>=`*[bits: static[int]](
+    lhs: Hash[bits],
+    rhs: Hash[bits]
+): bool =
+    var bytes: int = bits div 8
+    for i in 0 ..< bytes:
+        if lhs.data[i] == rhs.data[i]:
+            continue
+        elif lhs.data[i] > rhs.data[i]:
+            return true
+        else:
+            return false
+    return true
+
+func `==`*[bits: static[int]](
+    lhs: Hash[bits],
+    rhs: Hash[bits]
+): bool =
+    var bytes: int = bits div 8
+    for i in 0 ..< bytes:
+        if lhs.data[i] == rhs.data[i]:
+            continue
+        else:
+            return false
+    return true

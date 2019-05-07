@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN/Hex lib.
-import ../../../lib/Hex
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -42,7 +39,7 @@ proc getDifficulty(
     rpc: RPC
 ): JSONnode {.forceCheck: [].} =
     result = %* {
-        "difficulty": rpc.functions.merit.getDifficulty().difficulty.toHex()
+        "difficulty": $rpc.functions.merit.getDifficulty().difficulty
     }
 
 proc getBlock(

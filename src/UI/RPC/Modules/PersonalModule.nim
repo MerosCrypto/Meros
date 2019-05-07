@@ -24,9 +24,6 @@ import ../../../Network/Serialize/Lattice/SerializeData
 #RPC object.
 import ../objects/RPCObj
 
-#BN lib.
-import BN
-
 #Async standard lib.
 import asyncdispatch
 
@@ -69,7 +66,7 @@ proc getWallet(
 proc send(
     rpc: RPC,
     address: string,
-    amount: BN,
+    amount: uint64,
     nonce: int
 ): JSONNode {.forceCheck: [].} =
     #Create the Send.
@@ -253,7 +250,7 @@ proc personal*(
             of "send":
                 res = rpc.send(
                     json["args"][0].getStr(),
-                    newBN(json["args"][1].getStr()),
+                    uint64(parseUInt(json["args"][1].getStr())),
                     json["args"][2].getInt()
                 )
 

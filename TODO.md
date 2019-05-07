@@ -15,7 +15,7 @@ Verifications:
 - Load unarchived Verifications from the DB.
 
 Merit:
-- Remove the BNs we use for hashes. Generally, we use an array, but we occasionally convert to a BN for comparisons, which can be replaced a `for` loop.
+- Remove BNs from Difficulty.
 - Checkpoints.
 - If a TX wasn't confirmed, but doesn't have any competitors, default it to confirmed.
 - Improve the Difficulty algorithm.
@@ -32,7 +32,6 @@ Verifications & Merit:
 - Verification Exclusions: Verifications that we can't find the TX for, so the Block says to ignore, which are validated by checkpoints.
 
 Lattice:
-- Remove the BNs we use for balances with uint64s. They're capable of storing 1.8 billion Meros (including ten decimals).
 - Cache the UXTO set.
 - Have work precalculable for 100 `Send`'s/`Data`'s in advance.
 - Difficulty voting.
@@ -66,6 +65,7 @@ lib:
 - lib/Hash/SHA2 (384) Test.
 - lib/Hash/Keccak (384) Test.
 - lib/Hash/SHA3 (384) Test.
+- lib/Hash/HashCommon Tests.
 - lib/Logger Test.
 
 Wallet:

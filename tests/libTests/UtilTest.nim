@@ -21,4 +21,11 @@ assert(u32 == uint32(u32.toBinary().fromBinary()))
 #Make sure that leading 0 bytes are ignored.
 assert(0.toBinary() == "")
 
+#Test an extremely high number (21 million Meros).
+var u64: uint64 = uint64(210000000000000000)
+assert(u64 == uint64(u64.toBinary().fromBinary()))
+
+#Test the same number yet with the Nim standard lib.
+assert(u64 == uint64(parseUInt($u64)))
+
 echo "Finished the lib/Util Test."

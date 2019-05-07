@@ -22,9 +22,6 @@ import ../../../../src/Database/Lattice/Mint
 import ../../../../src/Network/Serialize/Lattice/SerializeMint
 import ../../../../src/Network/Serialize/Lattice/ParseMint
 
-#BN lib.
-import BN
-
 #Random standard lib.
 import random
 
@@ -38,7 +35,7 @@ for i in 1 .. 20:
     #Mint (for a random amount).
     var mint: Mint = newMint(
         newBLSPrivateKeyFromSeed(rand(150000).toBinary()).getPublicKey(),
-        newBN(rand(100000000)),
+        uint64(rand(100000000)),
         rand(75000)
     )
 

@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#BN/Raw lib.
-import ../../lib/Raw
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -185,7 +182,7 @@ proc verify*(
             #If the balance was changed, save the new Balance to the DB.
             if changedBalance:
                 try:
-                    lattice.db.put("lattice_" & entry.sender & "_balance", lattice.accounts[entry.sender].balance.toRaw())
+                    lattice.db.put("lattice_" & entry.sender & "_balance", lattice.accounts[entry.sender].balance.toBinary())
                 except KeyError as e:
                     doAssert(false, "Couldn't grab the confirmed Entry's sender's updated balance: " & e.msg)
                 except AddressError as e:
@@ -349,7 +346,7 @@ proc add*(
 proc mint*(
     lattice: var Lattice,
     key: BLSPublicKey,
-    amount: BN
+    amount: uint64
 ): int {.forceCheck: [
     ValueError,
     IndexError,

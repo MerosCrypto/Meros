@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#BN/Hex lib.
-import ../../lib/Hex
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -55,9 +52,9 @@ proc newMerit*(
     live: Natural
 ): Merit {.forceCheck: [].} =
     #Extract the Difficulty.
-    var startDifficulty: BN
+    var startDifficulty: Hash[384]
     try:
-        startDifficulty = startDifficultyArg.toBNFromHex()
+        startDifficulty = startDifficultyArg.toHash(384)
     except ValueError as e:
         doAssert(false, "Invalid chain specs (start difficulty) passed to newMerit: " & e.msg)
 

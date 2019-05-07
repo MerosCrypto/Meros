@@ -37,9 +37,6 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN/Raw lib.
-import ../../../lib/Raw
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -71,7 +68,7 @@ proc parseMint*(
     try:
         result = newMintObj(
             newBLSPublicKey(mintSeq[1]),
-            mintSeq[2].toBNFromRaw()
+            uint64(mintSeq[2].fromBinary())
         )
     except BLSError as e:
         fcRaise e

@@ -2,8 +2,8 @@ discard """
 Epochs Test 1. Verifies that 1 Verification = 1000.
 """
 
-#BN lib.
-import BN
+#Util lib.
+import ../../../../src/lib/Util
 
 #Hash lib.
 import ../../../../src/lib/Hash
@@ -35,7 +35,7 @@ var
     #Verifications.
     verifications: Verifications = newVerifications(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_1", 1, newBN(0))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_1", 1, "".pad(48).toHash(384))
     #State.
     state: State = newState(functions, 100)
     #Epochs.

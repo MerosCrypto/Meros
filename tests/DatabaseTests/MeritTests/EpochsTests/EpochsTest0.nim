@@ -2,8 +2,11 @@ discard """
 Epochs Test 0. Verifies that No Verifications = No Rewards.
 """
 
-#BN lib.
-import BN
+#Util lib.
+import ../../../../src/lib/Util
+
+#Hash lib.
+import ../../../../src/lib/Hash
 
 #Verifications lib.
 import ../../../../src/Database/Verifications/Verifications
@@ -26,7 +29,7 @@ var
     #Verifications.
     verifications: Verifications = newVerifications(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_0", 1, newBN(0))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_0", 1, "".pad(48).toHash(384))
     #State.
     state: State = newState(functions, 1)
     #Epochs.

@@ -5,8 +5,6 @@ import ../src/lib/Errors
 import ../src/lib/Util
 import ../src/lib/Logger
 
-import ../src/lib/Raw
-import ../src/lib/Hex
 import ../src/lib/Base32
 
 import ../src/lib/Hash

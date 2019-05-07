@@ -9,10 +9,6 @@ import ../../../src/lib/Util
 #Hash lib.
 import ../../../src/lib/Hash
 
-#BN/Raw and BN/Hex libs.
-import ../../../src/lib/Raw
-import ../../../src/lib/Hex
-
 #VerifierRecord object.
 import ../../../src/Database/common/objects/VerifierRecordObj
 
@@ -41,7 +37,7 @@ proc test*(blocks: int) =
         #Database.
         db: DatabaseFunctionBox = newTestDatabase()
         #Starting Difficultty.
-        startDifficulty: BN = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toBNFromHex()
+        startDifficulty: Hash[384] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(384)
         #Blockchain.
         blockchain: Blockchain = newBlockchain(
             db,
@@ -59,7 +55,7 @@ proc test*(blocks: int) =
         echo "Mining Block " & $i & "."
 
         #Grab the Difficulty.
-        var diffCopy: BN = blockchain.difficulty.difficulty
+        var diffCopy: Hash[384] = blockchain.difficulty.difficulty
 
         difficulty = newDifficultyObj(
             blockchain.difficulty.start,

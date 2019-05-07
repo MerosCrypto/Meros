@@ -3,9 +3,6 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#BN/Hex lib.
-import ../../../../src/lib/Hex
-
 #Hash lib.
 import ../../../../src/lib/Hash
 
@@ -62,7 +59,7 @@ for i in 1 .. 20:
     #Sign it.
     wallet.sign(data)
     #Mine the Data.
-    data.mine("3333333333333333333333333333333333333333333333333333333333333333".toBNFromHex())
+    data.mine("333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".toHash(384))
 
     #Serialize it and parse it back.
     var dataParsed: Data = data.serialize().parseData()

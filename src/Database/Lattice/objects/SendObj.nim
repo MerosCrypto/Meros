@@ -7,9 +7,6 @@ import ../../../lib/Hash
 #Entry object.
 import EntryObj
 
-#BN lib.
-import BN
-
 #Finals lib.
 import finals
 
@@ -20,7 +17,7 @@ finalsd:
         #Destination address.
         output* {.final.}: string
         #Amount transacted.
-        amount* {.final.}: BN
+        amount* {.final.}: uint64
 
         #Proof this isn't spam.
         proof* {.final.}: int
@@ -30,7 +27,7 @@ finalsd:
 #New Send object.
 func newSendObj*(
     output: string,
-    amount: BN
+    amount: uint64
 ): Send {.forceCheck: [].} =
     result = Send(
         output: output,

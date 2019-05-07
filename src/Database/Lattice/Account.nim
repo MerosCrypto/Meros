@@ -26,9 +26,6 @@ import objects/DataObj
 import objects/AccountObj
 export AccountObj
 
-#BN lib.
-import BN
-
 #Add a Mint.
 proc add*(
     account: Account,
@@ -101,7 +98,7 @@ proc add*(
 proc add*(
     account: Account,
     send: Send,
-    difficulty: BN
+    difficulty: Hash[384]
 ) {.forceCheck: [
     ValueError,
     IndexError,
@@ -110,7 +107,7 @@ proc add*(
     DataExists
 ].} =
     #Verify the work.
-    if send.argon.toBN() <= difficulty:
+    if send.argon <= difficulty:
         raise newException(ValueError, "Failed to verify the Send's work.")
 
     #Verify the output is a valid address.
@@ -178,7 +175,7 @@ proc add*(
 proc add*(
     account: Account,
     data: Data,
-    difficulty: BN
+    difficulty: Hash[384]
 ) {.forceCheck: [
     ValueError,
     IndexError,
@@ -187,7 +184,7 @@ proc add*(
     DataExists
 ].} =
     #Verify the work.
-    if data.argon.toBN() <= difficulty:
+    if data.argon <= difficulty:
         raise newException(ValueError, "Failed to verify the Data's work.")
 
     #Add the Data.

@@ -11,11 +11,10 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN/Raw lib.
-import ../../../lib/Raw
-import ../../../lib/Hex
+#Hash lib.
+import ../../../lib/Hash
 
-#Miners object.
+#Difficulty object.
 import ../../../Database/Merit/objects/DifficultyObj
 
 #Common serialization functions.
@@ -28,4 +27,4 @@ proc serialize*(
     result =
         difficulty.start.toBinary().pad(INT_LEN) &
         difficulty.endBlock.toBinary().pad(INT_LEN) &
-        difficulty.difficulty.toRaw().pad(HASH_LEN)
+        difficulty.difficulty.toString()

@@ -1,13 +1,13 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#BN/Hex lib.
-import ../../../lib/Hex
+#Hash lib.
+import ../../../lib/Hash
 
 type
     Difficulties* = object
-        send*: BN
-        data*: BN
+        send*: Hash[384]
+        data*: Hash[384]
 
 proc newDifficultiesObj*(
     sendArg: string,
@@ -15,8 +15,8 @@ proc newDifficultiesObj*(
 ): Difficulties {.forceCheck: [].} =
     try:
         result = Difficulties(
-            send: sendArg.toBNFromHex(),
-            data: dataArg.toBNFromHex()
+            send: sendArg.toHash(384),
+            data: dataArg.toHash(384)
         )
     except ValueError as e:
         doAssert(false, "Invalid Lattice Difficulties: " & e.msg)

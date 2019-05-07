@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#BN/Raw lib.
-import ../../../lib/Raw
-
 #Address anmd Wallet libraries.
 import ../../../Wallet/Address
 import ../../../Wallet/Wallet
@@ -37,7 +34,7 @@ proc serialize*(
         sender &
         send.nonce.toBinary().pad(INT_LEN) &
         output &
-        send.amount.toRaw().pad(MEROS_LEN)
+        send.amount.toBinary().pad(MEROS_LEN)
 
     if send.signed:
         result =

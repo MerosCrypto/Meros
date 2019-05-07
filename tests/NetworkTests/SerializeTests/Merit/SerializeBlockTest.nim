@@ -30,7 +30,7 @@ import random
 import algorithm
 
 #Seed Random via the time.
-randomize(int(getTime()))
+randomize(getTime())
 
 for i in 1 .. 20:
     echo "Testing Block Serialization/Parsing, iteration " & $i & "."

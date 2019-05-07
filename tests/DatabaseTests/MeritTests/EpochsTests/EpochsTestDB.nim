@@ -32,9 +32,6 @@ import ../../../../src/Database/Merit/Epochs
 #Merit Testing functions.
 import ../TestMerit
 
-#BN lib.
-import BN
-
 #Tables standard lib.
 import tables
 
@@ -51,7 +48,7 @@ proc test(blocks: int) =
             db,
             "EPOCHS_TEST_DB",
             30,
-            newBN()
+            "".pad(48).toHash(384)
         )
         #Epochs.
         epochs: Epochs = newEpochs(

@@ -23,9 +23,6 @@ import ../../../src/Network/Serialize/Merit/SerializeBlock
 import ../TestDatabase
 export TestDatabase
 
-#BN lib.
-import BN
-
 #Creates a Block, with every setting optional.
 proc newTestBlock*(
     nonce: Natural = 0,

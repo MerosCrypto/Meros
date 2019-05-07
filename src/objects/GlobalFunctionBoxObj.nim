@@ -37,9 +37,6 @@ import ../Database/Lattice/objects/DataObj
 #Message object.
 import ../Network/objects/MessageObj
 
-#BN lib.
-import BN
-
 #Async lib.
 import asyncdispatch
 
@@ -140,7 +137,7 @@ type
 
         getBalance*: proc (
             address: string
-        ): BN {.raises: [
+        ): uint64 {.raises: [
             AddressError
         ].}
 

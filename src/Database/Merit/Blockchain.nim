@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Hash lib.
+import ../../lib/Hash
+
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
@@ -19,15 +22,12 @@ export BlockchainObj
 #Serialize Difficulty lib.
 import ../../Network/Serialize/Merit/SerializeDifficulty
 
-#BN lib.
-import BN
-
 #Create a new Blockchain.
 proc newBlockchain*(
     db: DatabaseFunctionBox,
     genesis: string,
     blockTime: Natural,
-    startDifficulty: BN
+    startDifficulty: Hash[384]
 ): Blockchain {.forceCheck: [].} =
     newBlockchainObj(
         db,

@@ -49,9 +49,6 @@ import objects/GlobalFunctionBoxObj
 #Config object.
 import objects/ConfigObj
 
-#BN lib.
-import BN
-
 #OS standard lib.
 import os
 

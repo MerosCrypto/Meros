@@ -26,9 +26,6 @@ import ../../../Network/Serialize/Merit/ParseBlock
 import ../../../Network/Serialize/Merit/SerializeDifficulty
 import ../../../Network/Serialize/Merit/ParseDifficulty
 
-#BN lib.
-import BN
-
 #Finals lib.
 import finals
 
@@ -58,7 +55,7 @@ proc newBlockchainObj*(
     db: DatabaseFunctionBox,
     genesis: string,
     blockTime: Natural,
-    startDifficultyArg: BN
+    startDifficultyArg: Hash[384]
 ): Blockchain {.forceCheck: [].} =
     #Create the start difficulty.
     let startDifficulty: Difficulty = newDifficultyObj(
@@ -176,6 +173,8 @@ proc newBlockchainObj*(
     #Load the Difficulty.
     try:
         result.difficulty = parseDifficulty(db.get("merit_difficulty"))
+    except ValueError as e:
+        doAssert(false, "Loaded an invalid Difficulty from the Database: " & e.msg)
     except DBReadError as e:
         doAssert(false, "Couldn't load the Difficulty from the Database: " & e.msg)
 

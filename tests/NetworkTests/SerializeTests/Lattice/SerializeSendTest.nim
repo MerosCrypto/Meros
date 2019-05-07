@@ -1,8 +1,5 @@
 #Serialize Send Test.
 
-#BN/Hex lib.
-import ../../../../src/lib/Hex
-
 #Hash lib.
 import ../../../../src/lib/Hash
 
@@ -30,13 +27,13 @@ for i in 1 .. 20:
         #Send (for 1 MR).
         send: Send = newSend(
             receiver.address,
-            newBN("10000000000"),
+            uint64(10000000000),
             0
         )
     #Sign it.
     sender.sign(send)
     #Mine the Send.
-    send.mine("3333333333333333333333333333333333333333333333333333333333333333".toBNFromHex())
+    send.mine("333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".toHash(384))
 
     #Serialize it and parse it back.
     var sendParsed: Send = send.serialize().parseSend()
