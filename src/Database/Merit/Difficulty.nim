@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#BN/Raw lib.
-import ../../lib/Raw
-
 #Hash lib.
 import ../../lib/Hash
 
@@ -20,8 +17,14 @@ import Block
 import objects/DifficultyObj
 export DifficultyObj
 
-#Highest difficulty.
-let MAX: BN = "".pad(48, char(255)).toBNFromRaw()
+#StInt lib.
+import StInt
+
+let
+    #Ten.
+    TEN: StUint[512] = stuint(10, 512)
+    #Highest difficulty.
+    MAX: StUint[512] = "".pad(96, 'F').parse(StUint[512], 16)
 
 #Verifies a hash beats a difficulty.
 proc verify*(
@@ -29,9 +32,9 @@ proc verify*(
     hash: Hash[384]
 ): bool {.forceCheck: [].} =
     try:
-        result = hash > diff.difficulty
+        result = hash > diff.difficulty.toByteArrayBE()[16 .. 63].toHash(384)
     except ValueError:
-        return false
+        result = false
 
 #Calculate the next difficulty using the blockchain and blocks per period.
 proc calculateNextDifficulty*(
@@ -43,21 +46,20 @@ proc calculateNextDifficulty*(
     var
         #Last difficulty.
         last: Difficulty = blockchain.difficulty
-        lastDifficulty: BN = last.difficulty.toString().toBNFromRaw()
         #New difficulty.
-        difficulty: BN = lastDifficulty
+        difficulty: StUint[512] = last.difficulty
         #Target time.
         targetTime: int = blockchain.blockTime * blocksPerPeriod
         #Start time of this period.
-        start: int64
+        start: Time
         #End time.
-        endTime: int64 = blockchain.tip.header.time
+        endTime: Time = blockchain.tip.header.time
         #Period time.
-        actualTime: int64
+        actualTime: Time
         #Possible values.
-        possible: BN = MAX - lastDifficulty
+        possible: StUint[512] = MAX - last.difficulty
         #Change.
-        change: BN
+        change: StUint[512]
 
     #Grab the start time.
     try:
@@ -72,49 +74,52 @@ proc calculateNextDifficulty*(
     if actualTime == 0:
         actualTime = 1
 
-    #If we went faster...
-    if actualTime < targetTime:
-        #Set the change to be:
-            #The possible values multipled by
-                #The targetTime (bigger) minus the actualTime (smaller)
-                #Over the targetTime
-        #Since we need the difficulty to increase.
-        change = (possible * newBN(targetTime - actualTime)) div newBN(targetTime)
+    try:
+        #If we went faster...
+        if actualTime < targetTime:
+            #Set the change to be:
+                #The possible values multipled by
+                    #The targetTime (bigger) minus the actualTime (smaller)
+                    #Over the targetTime
+            #Since we need the difficulty to increase.
+            change = (possible * stuint(targetTime - actualTime, 512)) div stuint(targetTime, 512)
 
-        #If we're increasing the difficulty by more than 10%...
-        if possible / newBN(10) < change:
-            #Set the change to be 10%.
-            change = possible / newBN(10)
+            #If we're increasing the difficulty by more than 10%...
+            if possible div TEN < change:
+                #Set the change to be 10%.
+                change = possible div TEN
 
-        #Set the difficulty.
-        difficulty = lastDifficulty + change
-    #If we went slower...
-    elif actualTime > targetTime:
-        #Set the change to be:
-            #The invalid values
-            #Multipled by the targetTime (smaller)
-            #Divided by the actualTime (bigger)
-        #Since we need the difficulty to decrease.
-        change = lastDifficulty * newBN(targetTime div actualTime)
+            #Set the difficulty.
+            difficulty = last.difficulty + change
+        #If we went slower...
+        elif actualTime > targetTime:
+            #Set the change to be:
+                #The invalid values
+                #Multipled by the targetTime (smaller)
+                #Divided by the actualTime (bigger)
+            #Since we need the difficulty to decrease.
+            change = last.difficulty * stuint(targetTime div actualTime, 512)
 
-        #If we're decreasing the difficulty by more than 10% of the possible values...
-        if possible / newBN(10) < change:
-            #Set the change to be 10% of the possible values.
-            change = possible / newBN(10)
+            #If we're decreasing the difficulty by more than 10% of the possible values...
+            if possible div TEN < change:
+                #Set the change to be 10% of the possible values.
+                change = possible div TEN
 
-        #Set the difficulty.
-        difficulty = lastDifficulty - change
+            #Set the difficulty.
+            difficulty = last.difficulty - change
+    except DivByZeroError as e:
+        doAssert(false, "Dividing by ten raised a DivByZeroError: " & e.msg)
 
     #If the difficulty is lower than the starting difficulty, use that.
-    if difficulty < blockchain.startDifficulty.difficulty.toString().toBNFromRaw():
-        difficulty = blockchain.startDifficulty.difficulty.toString().toBNFromRaw()
+    if difficulty < blockchain.startDifficulty.difficulty:
+        difficulty = blockchain.startDifficulty.difficulty
 
     #Create the new difficulty.
     try:
         result = newDifficultyObj(
             last.endBlock + 1,
             last.endBlock + blocksPerPeriod,
-            difficulty.toRaw().pad(48).toHash(384)
+            difficulty
         )
     except ValueError:
         #This is a doAssert false as this problem is due to our half-move off of BNs.

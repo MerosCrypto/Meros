@@ -30,6 +30,12 @@ import TestMerit
 #Finals lib.
 import finals
 
+#StInt lib..
+import StInt
+
+#String utils standard lib (for toUpper).
+import strutils
+
 proc test*(blocks: int) =
     echo "Testing Blockchain mining and DB interactions with " & $blocks & " blocks (plus genesis)."
 
@@ -37,7 +43,7 @@ proc test*(blocks: int) =
         #Database.
         db: DatabaseFunctionBox = newTestDatabase()
         #Starting Difficultty.
-        startDifficulty: Hash[384] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(384)
+        startDifficulty: Hash[384] = "11AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(384)
         #Blockchain.
         blockchain: Blockchain = newBlockchain(
             db,
@@ -55,7 +61,7 @@ proc test*(blocks: int) =
         echo "Mining Block " & $i & "."
 
         #Grab the Difficulty.
-        var diffCopy: Hash[384] = blockchain.difficulty.difficulty
+        var diffCopy: StUint[512] = blockchain.difficulty.difficulty
 
         difficulty = newDifficultyObj(
             blockchain.difficulty.start,
@@ -84,7 +90,7 @@ proc test*(blocks: int) =
         assert(db.get("merit_" & mining.header.hash.toString()) == mining.serialize())
 
         #Verify the Start Difficulty is the same.
-        assert(blockchain.startDifficulty.difficulty == startDifficulty)
+        assert(blockchain.startDifficulty.difficulty.toHex().pad(96, '0').toUpper() == $startDifficulty)
         assert(blockchain.startDifficulty.start == 0)
         assert(blockchain.startDifficulty.endBlock == 1)
 

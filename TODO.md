@@ -15,7 +15,6 @@ Verifications:
 - Load unarchived Verifications from the DB.
 
 Merit:
-- Remove BNs from Difficulty.
 - Checkpoints.
 - If a TX wasn't confirmed, but doesn't have any competitors, default it to confirmed.
 - Improve the Difficulty algorithm.
@@ -59,7 +58,6 @@ objects:
 - objects/Config Test.
 
 lib:
-- lib/Raw Test.
 - lib/Hash/Argon Test.
 - lib/Hash/Blake2 Test.
 - lib/Hash/SHA2 (384) Test.

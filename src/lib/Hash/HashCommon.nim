@@ -11,7 +11,7 @@ type Hash*[bits: static[int]] = object
 #Empty uint8 'array'.
 var EmptyHash*: ptr uint8
 
-#toHash function.
+#toHash functions.
 func toHash*(
     hash: string,
     bits: static[int]
@@ -24,6 +24,19 @@ func toHash*(
     elif hash.len div 2 == bits div 8:
         for i in countup(0, hash.len - 1, 2):
             result.data[i div 2] = uint8(parseHexInt(hash[i .. i + 1]))
+    else:
+        raise newException(ValueError, "toHash not handed the right amount of data.")
+
+#toHash dedicated for Stint.
+func toHash*(
+    hash: openArray[byte],
+    bits: static[int]
+): Hash[bits] {.forceCheck: [
+    ValueError
+].} =
+    if hash.len == bits div 8:
+        for i in 0 ..< hash.len:
+            result.data[i] = uint8(hash[i])
     else:
         raise newException(ValueError, "toHash not handed the right amount of data.")
 

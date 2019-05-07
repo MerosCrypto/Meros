@@ -58,11 +58,15 @@ proc newBlockchainObj*(
     startDifficultyArg: Hash[384]
 ): Blockchain {.forceCheck: [].} =
     #Create the start difficulty.
-    let startDifficulty: Difficulty = newDifficultyObj(
-        0,
-        1,
-        startDifficultyArg
-    )
+    var startDifficulty: Difficulty
+    try:
+        startDifficulty = newDifficultyObj(
+            0,
+            1,
+            startDifficultyArg
+        )
+    except ValueError:
+        doAssert(false, "Couldn't create the Blockchain's starting difficulty.")
 
     #Create the Blockchain.
     result = Blockchain(

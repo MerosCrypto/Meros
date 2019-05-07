@@ -11,16 +11,13 @@ Meros requires:
 - Nim devel
 - Nimble
 
-- GMP
 - Chia's BLS library
 - LibSodium
 - LMDB
 
 For instructions on settting up Nim/Nimble, see https://github.com/dom96/choosenim.
 
-To install the Nimble packages: `nimble install BN https://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals nimcrypto`
-
-For GMP, go to https://github.com/Legrandin/mpir-windows-builds. Download the MPIR DLL for your platform, and put it in your `/build` directory as `libgmp.dll`.
+To install the Nimble packages: `nimble install 1ttps://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals stint nimcrypto`
 
 For instructions on setting up BLS, see https://github.com/MerosCrypto/mc_bls.
 

@@ -17,6 +17,9 @@ import ../../../Database/Merit/objects/DifficultyObj
 #Common serialization functions.
 import ../SerializeCommon
 
+#StInt lib.
+import StInt
+
 #Parse function.
 proc parseDifficulty*(
     difficultyStr: string
@@ -27,15 +30,22 @@ proc parseDifficulty*(
     var difficultySeq: seq[string] = difficultyStr.deserialize(
         INT_LEN,
         INT_LEN,
-        HASH_LEN
+        DIFFICULTY_LEN
     )
 
-    #Add each miner/amount.
+    #Create the Difficulty.
+    if difficultySeq[2].len < 48:
+        raise newException(ValueError, "parseDifficulty not handed enough data to get the difficulty.")
+
+    var be: array[64, byte]
+    for i in 16 ..< 64:
+        be[i] = byte(difficultySeq[2][i - 16])
+
     try:
         result = newDifficultyObj(
             difficultySeq[0].fromBinary(),
             difficultySeq[1].fromBinary(),
-            difficultySeq[2].toHash(384)
+            fromBytesBE(StUint[512], be)
         )
     except ValueError as e:
         raise e

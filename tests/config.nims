@@ -8,7 +8,10 @@ switch("define", "ADDRESS_HRP=Mr")
 switch("define", "SIGN_PREFIX=MEROS")
 switch("define", "DEFAULT_PORT=5132")
 
-when defined(release):
+when defined(merosRelease):
+    #Define release.
+    switch("define", "release")
+
     #Disable checks.
     switch("checks", "off")
 
@@ -21,8 +24,11 @@ when defined(release):
     switch("stackTrace", "off")
     switch("excessiveStackTrace", "off")
 else:
-    #Define debug.
-    switch("define", "debug")
+    #Define release.
+    switch("define", "release")
+
+    #Enable finals.
+    switch("define", "finalsOn")
 
     #Enable checks.
     switch("checks", "on")
