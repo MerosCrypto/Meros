@@ -26,7 +26,9 @@ Mint Entries are locally created when blocks are added to the blockchain, as des
 - output: The BLS Public Key of the verifier who earned the new Meros.
 - amount: The amount of Meri created.
 
-Meros names the account Mints are added to "minter", yet the protocol is indifferent as Mints are never sent across the network. Meros does not set the sender or signature fields of Mints, as there's no point. Meros does set the hash field, even though the hash is never broadcasted or needed to verify a signature, to allow looking up Mints. In order to maintain consistency across software, the protocol defines the hash as `Blake2b-384("mint" + nonce + output + amount)`, where nonce takes up four bytes, output 48 bytes, and amount eight bytes.
+Meros names the account Mints are added to "minter", yet the protocol is indifferent. Meros does not set the sender or signature fields of Mints, as there's no point. Meros does set the hash field, even though the hash is never broadcasted or needed to verify a signature, to allow looking up Mints. In order to maintain consistency across software, the protocol defines the hash as `Blake2b-384("mint" + nonce + output + amount)`, where nonce takes up four bytes, output 48 bytes, and amount eight bytes.
+
+Mints are never broadcasted across the network, and should only be created by the local node.
 
 ### Claim
 
@@ -34,7 +36,7 @@ Claim Entries are created in response to a Mint, and have the following fields:
 - mintNonce: The nonce of the Mint this is claiming.
 - bls: BLS Signature that proves the verifier which earned the new Meros wants this Account to receive their reward.
 
-Claim hashes are defined as `Blake2b-384("claim" + nonce + mintNonce + bls)`, where nonce takes up four bytes, mintNonce four bytes, and bls 48 bytes.
+Claim hashes are defined as `Blake2b-384("claim" + nonce + mintNonce + bls)`, where nonce takes up four bytes, mintNonce four bytes, and bls 96 bytes.
 
 mintNonce must be lower than the height of the "minter" Account, and the Mint at that location must not have been previously claimed.
 
@@ -43,6 +45,8 @@ bls must be the BLS signature produced by the Private Key for the Mint's output 
 The sender's Account's balance, when combined with the amount from the Mint, must be lower than the max value of an uint64.
 
 Once a Claim has been confirmed, the Mint's amount is added to the sender's Account's balance.
+
+`Claim` has a message length of 200 bytes; the 32 byte sender, the four byte nonce, the four byte mintNonce, the 96 byte BLS signature, and the 64 byte Ed25519 signature.
 
 ### Send
 
@@ -68,6 +72,8 @@ Argon2d(
 
 Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance.
 
+`Send` has a message length of 144 bytes; the 32 byte sender, the four byte nonce, the 32 byte output, the eight byte amount, the four byte proof, and the 64 byte Ed25519 signature.
+
 ### Receive
 
 Receive Entries have the following fields:
@@ -81,6 +87,8 @@ The Entry on input's Account at inputNonce must be a Send, with an output of sen
 The sender's Account's balance, when combined with the amount from the Send, must be lower than the max value of an uint64.
 
 Once the Receive has been confirmed, the Send's amount is added to the sender's Account's balance.
+
+`Receive` has a message length of 136 bytes; the 32 byte sender, the four byte nonce, the 32 byte input, the four byte mintNonce, and the 64 byte Ed25519 signature.
 
 ### Data
 
@@ -100,6 +108,8 @@ Argon2d(
     salt = proof with no leading zeros
 ) > dataDiffuclty
 ```
+
+`Data` has a message length of 105 bytes, plus the variable length data; the 32 byte sender, the four byte nonce, the one byte data length, the variable byte data, the four byte proof, and the 64 byte Ed25519 signature.
 
 ### Lock
 
