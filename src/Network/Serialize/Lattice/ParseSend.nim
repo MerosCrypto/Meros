@@ -33,8 +33,8 @@ proc parseSend*(
         INT_LEN,
         PUBLIC_KEY_LEN,
         MEROS_LEN,
-        INT_LEN,
-        SIGNATURE_LEN
+        SIGNATURE_LEN,
+        INT_LEN
     )
 
 
@@ -56,12 +56,12 @@ proc parseSend*(
         #Set the Blake384 hash.
         result.hash = Blake384("send" & sendSeq.reserialize(0, 3))
         #Set the proof.
-        result.proof = sendSeq[4].fromBinary()
+        result.proof = sendSeq[5].fromBinary()
 
         #Set the Argon hash.
-        result.argon = Argon(result.hash.toString(), sendSeq[4], true)
+        result.argon = Argon(result.hash.toString(), result.proof.toBinary(), true)
         #Set the signature.
-        result.signature = newEdSignature(sendSeq[5])
+        result.signature = newEdSignature(sendSeq[4])
         result.signed = true
     except EdPublicKeyError as e:
         fcRaise e

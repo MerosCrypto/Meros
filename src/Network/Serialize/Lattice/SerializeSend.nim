@@ -42,7 +42,7 @@ proc serialize*(
     if send.signed:
         result =
             result &
-            send.proof.toBinary().pad(INT_LEN) &
-            send.signature.toString()
+            send.signature.toString() &
+            send.proof.toBinary().pad(INT_LEN)
     else:
         result = "send" & result

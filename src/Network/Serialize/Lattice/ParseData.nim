@@ -43,13 +43,13 @@ proc parseData*(
             PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN,
             PUBLIC_KEY_LEN + INT_LEN + dataLen
         )
-        proofSig: seq[string] = dataStr
+        sigProof: seq[string] = dataStr
             .substr(
                 PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN + dataLen
             )
             .deserialize(
-                INT_LEN,
-                SIGNATURE_LEN
+                SIGNATURE_LEN,
+                INT_LEN
             )
 
     #Create the Data.
@@ -70,12 +70,12 @@ proc parseData*(
         #Set the hash.
         result.hash = Blake384("data" & keyNonce[0] & keyNonce[1] & char(result.data.len) & data)
         #Set the proof.
-        result.proof = proofSig[0].fromBinary()
+        result.proof = sigProof[1].fromBinary()
 
         #Set the Argon hash.
         result.argon = Argon(result.hash.toString(), result.proof.toBinary(), true)
         #Set the signature.
-        result.signature = newEdSignature(proofSig[1])
+        result.signature = newEdSignature(sigProof[0])
         result.signed = true
     except ArgonError as e:
         fcRaise e

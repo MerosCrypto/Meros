@@ -39,8 +39,6 @@ Lattice:
 - Lock boxes.
 
 Network:
-- Switch the order of signature and proof for Send/Data.
-
 - Don't rebroadcast data that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 

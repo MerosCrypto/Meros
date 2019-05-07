@@ -72,7 +72,7 @@ Argon2d(
 
 Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance.
 
-`Send` has a message length of 144 bytes; the 32 byte sender, the four byte nonce, the 32 byte output, the eight byte amount, the four byte proof, and the 64 byte Ed25519 signature.
+`Send` has a message length of 144 bytes; the 32 byte sender, the four byte nonce, the 32 byte output, the eight byte amount, the 64 byte Ed25519 signature, and the four byte proof.
 
 ### Receive
 
@@ -109,7 +109,7 @@ Argon2d(
 ) > dataDiffuclty
 ```
 
-`Data` has a message length of 105 bytes, plus the variable length data; the 32 byte sender, the four byte nonce, the one byte data length, the variable byte data, the four byte proof, and the 64 byte Ed25519 signature.
+`Data` has a message length of 105 bytes, plus the variable length data; the 32 byte sender, the four byte nonce, the one byte data length, the variable byte data, the 64 byte Ed25519 signature, and the four byte proof.
 
 ### Lock
 
