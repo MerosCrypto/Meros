@@ -115,7 +115,7 @@ proc add*(
         raise newException(ValueError, "Failed to verify the Send's output.")
 
     #Verify the account has enough money.
-    if account.balance < send.amount:
+    if account.balance - account.potentialDebt < send.amount:
         raise newException(ValueError, "Sender doesn't have enough monery for this Send.")
 
     #Add the Send.
