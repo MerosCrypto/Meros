@@ -20,6 +20,9 @@ import ../../common/objects/LatticeIndexObj
 #Entry object.
 import EntryObj
 
+#Send object.
+import SendObj
+
 #Serialize/Parse Entry functions.
 import ../../../Network/Serialize/Lattice/SerializeEntry
 import ../../../Network/Serialize/Lattice/ParseEntry
@@ -48,6 +51,10 @@ finalsd:
         entries*: seq[seq[Entry]]
         #Balance of the address.
         balance*: uint64
+
+        #Amount of money spent in pending Entries.
+        #https://github.com/MerosCrypto/Meros/issues/42
+        potentialDebt*: uint64
 
 #Creates a new account object.
 proc newAccountObj*(
@@ -91,6 +98,9 @@ proc newAccountObj*(
     #Load every Entry still in the Epochs (or yet to enter an Epoch).
     result.entries = newSeq[seq[Entry]](result.height - result.confirmed)
     for i in result.confirmed ..< result.height:
+        #Max debt for this unconfirmed Entry.
+        var maxDebt: uint64 = 0
+
         #Load the potential hashes.
         var hashes: string
         try:
@@ -103,8 +113,9 @@ proc newAccountObj*(
         for h in countup(0, hashes.len - 1, 48):
             result.lookup[hashes[h ..< h + 48]] = newLatticeIndex(result.address, i)
 
+            var loadedEntry: Entry
             try:
-                result.entries[i - result.confirmed][h div 48] = result.db.get("lattice_" & hashes[h ..< h + 48]).parseEntry()
+                loadedEntry = result.db.get("lattice_" & hashes[h ..< h + 48]).parseEntry()
             except ValueError as e:
                 doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
             except ArgonError as e:
@@ -115,6 +126,13 @@ proc newAccountObj*(
                 doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
             except DBReadError as e:
                 doAssert(false, "Couldn't load an unconfirmed Entry from the Database: " & e.msg)
+            result.entries[i - result.confirmed][h div 48] = loadedEntry
+
+            if loadedEntry.descendant == EntryType.Send:
+                if cast[Send](loadedEntry).amount > maxDebt:
+                    maxDebt = cast[Send](loadedEntry).amount
+
+            result.potentialDebt += maxDebt
 
 #Add a Entry to an account.
 proc add*(
@@ -144,23 +162,33 @@ proc add*(
         if not pubKey.verify(entry.hash.toString(), entry.signature):
             raise newException(ValueError, "Failed to verify the Entry's signature.")
 
-    #Correct for the Entries no longer in RAM.
-    var i: int = entry.nonce - account.confirmed
+    var
+        #Correct for the Entries no longer in RAM.
+        i: int = entry.nonce - account.confirmed
+        #Variable for the max potential debt.
+        maxDebt: uint64 = 0
+
+    #If this is a Send, set the initial max debt value to it.
+    if entry.descendant == EntryType.Send:
+        maxDebt = cast[Send](entry).amount
 
     if entry.nonce < account.height:
         #Make sure we're not overwriting something outside of the cache.
         if entry.nonce < account.confirmed:
             raise newException(IndexError, "Account has a verified Entry at this position.")
 
-        #Make sure we're not adding it twice.
+        #Make sure we're not adding it twice (and calculate the max potential debt).
         for e in account.entries[i]:
+            if e.descendant == EntryType.Send:
+                if cast[Send](e).amount > maxDebt:
+                    maxDebt = cast[Send](e).amount
+
             if e.hash == entry.hash:
                 raise newException(DataExists, "Account already has this Entry.")
 
-    #Add the Entry to the proper seq.
-    if entry.nonce < account.height:
-        #Add to an existing seq.
+        #Add the Entry to the proper seq.
         account.entries[i].add(entry)
+    #Else, if it's a new index.
     elif entry.nonce == account.height:
         #Increase the account height.
         inc(account.height)
@@ -168,6 +196,7 @@ proc add*(
         account.entries.add(@[
             entry
         ])
+
         #Save the new height to the DB.
         try:
             account.db.put("lattice_" & account.address, account.height.toBinary())
@@ -175,6 +204,9 @@ proc add*(
             doAssert(false, "Couldn't save an Account's new height to the Database: " & e.msg)
     else:
         raise newException(GapError, "Account has holes in its chain.")
+
+    #Update the Account's pending potential debt.
+    account.potentialDebt += maxDebt
 
     #Save the Entry to the DB.
     try:

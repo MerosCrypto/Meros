@@ -64,7 +64,7 @@ proc verify*(
     save: bool = true
 ) {.forceCheck: [
     ValueError,
-    IndexError
+    DataExists
 ].} =
     #Make sure the verifier has weight.
     if merit.state[verif.verifier] == 0:
@@ -85,7 +85,7 @@ proc verify*(
     try:
         for verifier in lattice.verifications[hash]:
             if verifier == verif.verifier:
-                raise newException(IndexError, "Verification was already added.")
+                raise newException(DataExists, "Verification was already added.")
     except KeyError as e:
         doAssert(false, "Couldn't grab the Verifications seq despite guarantreeing it existed: " & e.msg)
 
@@ -118,9 +118,15 @@ proc verify*(
         except AddressError as e:
             doAssert(false, "Calculating the weight of a valid Entry without being able to grab the account due to an AddressError: " & e.msg)
 
-        #Get said Entry.
-        var entry: Entry = nil
+        #Get said Entry (and calculate the max potential debt).
+        var
+            entry: Entry = nil
+            maxDebt: uint64 = 0
         for e in account.entries[i]:
+            if e.descendant == EntryType.Send:
+                if cast[Send](e).amount > maxDebt:
+                    maxDebt = cast[Send](e).amount
+
             if e.hash == verif.hash:
                 entry = e
         if entry.isNil:
@@ -128,6 +134,9 @@ proc verify*(
 
         #Set it to verified.
         entry.verified = true
+
+        #Remove the max potential debt from this Entry from the Account's potential debt.
+        account.potentialDebt -= maxDebt
 
         #If we're not just reloading Verifications, and should update balances/save results to the DB...
         if save:
@@ -236,6 +245,8 @@ proc newLattice*(
             except ValueError as e:
                 doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
             except IndexError as e:
+                doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
+            except DataExists as e:
                 doAssert(false, "Reloaded a Verification twice, which is likely a false positive: " & e.msg)
 
 #Add a Entry to the Lattice.

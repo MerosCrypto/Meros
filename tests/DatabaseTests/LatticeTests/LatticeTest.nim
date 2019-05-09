@@ -101,6 +101,8 @@ proc test() =
     #Test the `lattice_accounts`.
     assert(db.get("lattice_accounts") == accountsStr)
 
+    echo "Reloading the Lattice..."
+
     #Reload the database.
     var reloaded: Lattice = newLattice(
         db,
@@ -149,6 +151,7 @@ proc test() =
         assert(originalAccount.confirmed == reloadedAccount.confirmed)
         assert(originalAccount.entries.len == reloadedAccount.entries.len)
         assert(originalAccount.balance == reloadedAccount.balance)
+        #assert(originalAccount.potentialDebt == reloadedAccount.potentialDebt)
 
         #Check every Entry.
         for h in 0 ..< originalAccount.height:
