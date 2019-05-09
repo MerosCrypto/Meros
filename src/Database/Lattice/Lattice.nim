@@ -137,7 +137,6 @@ proc verify*(
 
         #Remove the max potential debt from this Entry from the Account's potential debt.
         account.potentialDebt -= maxDebt
-        echo "Subtracted ", maxDebt, " from account, and save is ", save
 
         #If we're not just reloading Verifications, and should update balances/save results to the DB...
         if save:
@@ -218,12 +217,12 @@ proc newLattice*(
     #Grab every Verifier mentioned in the last 6 Blocks of Verifications.
     var verifiers: seq[BLSPublicKey] = @[]
     try:
-        if merit.blockchain.height < 6:
+        if merit.blockchain.height < 5:
             for b in 0 ..< merit.blockchain.height:
                 for record in merit.blockchain[b].records:
                     verifiers.add(record.key)
         else:
-            for b in merit.blockchain.height - 6 ..< merit.blockchain.height:
+            for b in merit.blockchain.height - 5 ..< merit.blockchain.height:
                 for record in merit.blockchain[b].records:
                     verifiers.add(record.key)
     except IndexError as e:

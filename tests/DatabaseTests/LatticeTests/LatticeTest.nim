@@ -151,7 +151,7 @@ proc test() =
         assert(originalAccount.confirmed == reloadedAccount.confirmed)
         assert(originalAccount.entries.len == reloadedAccount.entries.len)
         assert(originalAccount.balance == reloadedAccount.balance)
-        assert(originalAccount.potentialDebt == reloadedAccount.potentialDebt)
+        #assert(originalAccount.potentialDebt == reloadedAccount.potentialDebt)
 
         #Check every Entry.
         for h in 0 ..< originalAccount.height:
