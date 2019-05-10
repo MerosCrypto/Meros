@@ -132,8 +132,7 @@ UI/RPC:
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Use Nim Documentation Comments.
-- In docs/Protocol/Syncing, explain `GetAccountHeight`, `GetHashesAtIndex`, and `GetVerifierHeight`.
-- In docs/Protocol/Lattice, explain `Claim`, `Send`, `Receive`, `Data`, `Lock`, and `Unlock`.
+- In docs/Protocol/Lattice, explain `Lock`, and `Unlock`.
 - docs/Protocol/Verifications.
 - docs/Protocol/Merit.
 - Meros Whitepaper.

@@ -5,7 +5,7 @@ The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array)
 Every Entry has the following fields:
 - descendant: Entry Sub-type
 - sender: Account that the Entry belongs to. The protocol defines this as the Ed25519 Public Key, but Meros uses addresses internally.
-- nonce: Index of the Entry on the Account. Starts at zero and increments by one for every added Entry.
+- nonce: Index of the Entry on the Account. Starts at 0 and increments by 1 for every added Entry.
 - hash: Blake2b-384 hash of the Entry; each sub-type hashes differently.
 - signature: Signature of the hash signed by the sender.
 
@@ -26,7 +26,7 @@ Mint Entries are locally created when blocks are added to the blockchain, as des
 - output: The BLS Public Key of the verifier who earned the new Meros.
 - amount: The amount of Meri created.
 
-Meros names the account Mints are added to "minter", yet the protocol is indifferent. Meros does not set the sender or signature fields of Mints, as there's no point. Meros does set the hash field, even though the hash is never broadcasted or needed to verify a signature, to allow looking up Mints. In order to maintain consistency across software, the protocol defines the hash as `Blake2b-384("mint" + nonce + output + amount)`, where nonce takes up four bytes, output 48 bytes, and amount eight bytes.
+Meros names the account Mints are added to "minter", yet the protocol is indifferent. Meros does not set the sender or signature fields of Mints, as there's no point. Meros does set the hash field, even though the hash is never broadcasted or needed to verify a signature, to allow looking up Mints. In order to maintain consistency across software, the protocol defines the hash as `Blake2b-384("mint" + nonce + output + amount)`, where nonce takes up 4 bytes, output 48 bytes, and amount 8 bytes.
 
 Mints are never broadcasted across the network, and should only be created by the local node.
 
@@ -36,7 +36,7 @@ Claim Entries are created in response to a Mint, and have the following fields:
 - mintNonce: The nonce of the Mint this is claiming.
 - bls: BLS Signature that proves the verifier which earned the new Meros wants this Account to receive their reward.
 
-Claim hashes are defined as `Blake2b-384("claim" + nonce + mintNonce + bls)`, where nonce takes up four bytes, mintNonce four bytes, and bls 96 bytes.
+Claim hashes are defined as `Blake2b-384("claim" + nonce + mintNonce + bls)`, where nonce takes up 4 bytes, mintNonce 4 bytes, and bls 96 bytes.
 
 mintNonce must be lower than the height of the "minter" Account, and the Mint at that location must not have been previously claimed.
 
@@ -46,7 +46,7 @@ The sender's Account's balance, when combined with the amount from the Mint, mus
 
 Once a Claim has been confirmed, the Mint's amount is added to the sender's Account's balance.
 
-`Claim` has a message length of 200 bytes; the 32 byte sender, the four byte nonce, the four byte mintNonce, the 96 byte BLS signature, and the 64 byte Ed25519 signature.
+`Claim` has a message length of 200 bytes; the 32 byte sender, the 4 byte nonce, the 4 byte mintNonce, the 96 byte BLS signature, and the 64 byte Ed25519 signature.
 
 ### Send
 
@@ -55,7 +55,7 @@ Send Entries have the following fields:
 - amount The amount of Meri to send.
 - proof: Work that proves this isn't spam.
 
-Send hashes are defined as `Blake2b-384("send" + sender + nonce + output + amount)`, where sender takes up 32 bytes, nonce four bytes, output 32 bytes, and amount eight bytes.
+Send hashes are defined as `Blake2b-384("send" + sender + nonce + output + amount)`, where sender takes up 32 bytes, nonce 4 bytes, output 32 bytes, and amount 8 bytes.
 
 amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are confirmed. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
 
@@ -66,13 +66,13 @@ Argon2d(
     memory = 8,
     parallelism = 1
     data = hash,
-    salt = proof with no leading zeros
+    salt = proof with no leading 0s
 ) > sendDiffuclty
 ```
 
 Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance.
 
-`Send` has a message length of 144 bytes; the 32 byte sender, the four byte nonce, the 32 byte output, the eight byte amount, the 64 byte Ed25519 signature, and the four byte proof.
+`Send` has a message length of 144 bytes; the 32 byte sender, the 4 byte nonce, the 32 byte output, the 8 byte amount, the 64 byte Ed25519 signature, and the 4 byte proof.
 
 ### Receive
 
@@ -80,7 +80,7 @@ Receive Entries have the following fields:
 - input: The Ed25519 Public Key who owns the Account which has the Send we're receiving.
 - inputNonce: The nonce of the Send we're receiving.
 
-Receive hashes are defined as `Blake2b-384("receive" + nonce + input + inputNonce)`, where nonce takes up four bytes, input 32 bytes, and inputNonce four bytes.
+Receive hashes are defined as `Blake2b-384("receive" + nonce + input + inputNonce)`, where nonce takes up 4 bytes, input 32 bytes, and inputNonce 4 bytes.
 
 The Entry on input's Account at inputNonce must be a Send, with an output of sender, which doesn't have a matching receive yet.
 
@@ -88,7 +88,7 @@ The sender's Account's balance, when combined with the amount from the Send, mus
 
 Once the Receive has been confirmed, the Send's amount is added to the sender's Account's balance.
 
-`Receive` has a message length of 136 bytes; the 32 byte sender, the four byte nonce, the 32 byte input, the four byte mintNonce, and the 64 byte Ed25519 signature.
+`Receive` has a message length of 136 bytes; the 32 byte sender, the 4 byte nonce, the 32 byte input, the 4 byte mintNonce, and the 64 byte Ed25519 signature.
 
 ### Data
 
@@ -96,7 +96,7 @@ Data Entries have the following fields:
 - data: The Data to store in the Entry.
 - proof: Work that proves this isn't spam.
 
-Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce four bytes, data length one byte, and data variable bytes.
+Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce 4 bytes, data length 1 byte, and data variable bytes.
 
 The proof must satisfy the following check:
 ```
@@ -105,11 +105,11 @@ Argon2d(
     memory = 8,
     parallelism = 1
     data = hash,
-    salt = proof with no leading zeros
+    salt = proof with no leading 0s
 ) > dataDiffuclty
 ```
 
-`Data` has a message length of 105 bytes, plus the variable length data; the 32 byte sender, the four byte nonce, the one byte data length, the variable byte data, the 64 byte Ed25519 signature, and the four byte proof.
+`Data` has a message length of 105 bytes, plus the variable length data; the 32 byte sender, the 4 byte nonce, the 1 byte data length, the variable byte data, the 64 byte Ed25519 signature, and the 4 byte proof.
 
 ### Lock
 
@@ -117,4 +117,5 @@ Argon2d(
 
 ### Violations in Meros
 
+- Meros doesn't confirm a Claim/Receive won't overflow the balance, unless Nim's overflow checks are enabled, which they aren't on release.
 - Meros doesn't support either `Lock` or `Unlock`.
