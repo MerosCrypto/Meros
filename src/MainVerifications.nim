@@ -122,11 +122,14 @@ proc mainVerifications() {.forceCheck: [].} =
             verif: Verification
         ) {.forceCheck: [
             ValueError,
-            IndexError,
             DataExists
         ].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
+
+            #Verify the Verifier has Merit.
+            if merit.state[verif.verifier] == 0:
+                raise newException(ValueError, "Verifier doesn't hold any Merit.")
 
             #Add the Verification to the Verifications DAG.
             try:
@@ -144,11 +147,11 @@ proc mainVerifications() {.forceCheck: [].} =
 
             #Add the Verification to the Lattice.
             try:
-                lattice.verify(merit, verif)
+                lattice.verify(verif, merit.state[verif.verifier], merit.state.live)
             except ValueError as e:
                 fcRaise e
-            except IndexError as e:
-                fcRaise e
+            except DataExists as e:
+                doAssert(false, "Lattice had a Verification the Verifications DAG didn't have: " & e.msg)
 
             echo "Successfully added a new Verification."
 
@@ -157,13 +160,16 @@ proc mainVerifications() {.forceCheck: [].} =
             verif: MemoryVerification
         ) {.forceCheck: [
             ValueError,
-            IndexError,
             GapError,
             BLSError,
             DataExists
         ].} =
             #Print that we're adding the MemoryVerification.
             echo "Adding a new MemoryVerification."
+
+            #Verify the Verifier has Merit.
+            if merit.state[verif.verifier] == 0:
+                raise newException(ValueError, "Verifier doesn't hold any Merit.")
 
             #Add the MemoryVerification to the Verifications DAG.
             try:
@@ -186,11 +192,11 @@ proc mainVerifications() {.forceCheck: [].} =
 
             #Add the Verification to the Lattice.
             try:
-                lattice.verify(merit, verif)
+                lattice.verify(verif, merit.state[verif.verifier], merit.state.live)
             except ValueError as e:
                 fcRaise e
-            except IndexError as e:
-                fcRaise e
+            except DataExists as e:
+                doAssert(false, "Lattice had a MemoryVerification the Verifications DAG didn't have: " & e.msg)
 
             echo "Successfully added a new MemoryVerification."
 

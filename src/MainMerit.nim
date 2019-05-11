@@ -133,7 +133,7 @@ proc mainMerit() {.forceCheck: [].} =
             #Calculate the rewards.
             var rewards: Rewards = epoch.calculate(merit.state)
 
-            #Create the Mints (which ends up minting a total of 50000 MR).
+            #Create the Mints (which ends up minting a total of 50000 Meri).
             var ourMint: int = -1
             for reward in rewards:
                 var key: BLSPublicKey
@@ -145,7 +145,7 @@ proc mainMerit() {.forceCheck: [].} =
                 try:
                     var mintNonce: int = lattice.mint(
                         key,
-                        reward.score * 50
+                        uint64(reward.score) * uint64(50)
                     )
 
                     #If we have a miner wallet, check if the mint was to us.

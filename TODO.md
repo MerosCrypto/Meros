@@ -31,6 +31,7 @@ Verifications & Merit:
 - Verification Exclusions: Verifications that we can't find the TX for, so the Block says to ignore, which are validated by checkpoints.
 
 Lattice:
+- Optimize Lattize loading by only performing the needed reverts once, and not any catch ups.
 - Cache the UXTO set.
 - Have work precalculable for 100 `Send`'s/`Data`'s in advance.
 - Difficulty voting.

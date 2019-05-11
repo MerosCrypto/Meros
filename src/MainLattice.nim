@@ -40,18 +40,18 @@ proc verify(
         except MeritRemoval as e:
             doAssert(false, "Created a MemoryVerification which causes a Merit Removal: " & e.msg)
         except DataExists as e:
-            doAssert(false, "Created a MemoryVerification which already exists: " & e.msg)
+            doAssert(false, "Created a MemoryVerification already added to the Verifications DAG: " & e.msg)
 
         #Release the verify lock.
         release(verifyLock)
 
         #Add the Verification to the Lattice.
         try:
-            lattice.verify(merit, verif)
+            lattice.verify(verif, merit.state[verif.verifier], merit.state.live)
         except ValueError as e:
             doAssert(false, "Tried verifying an Entry when we didn't have Merit/tried verifying a non-existant/dated Entry: " & e.msg)
-        except IndexError as e:
-            doAssert(false, "Created a MemoryVerification which we already added: " & e.msg)
+        except DataExists as e:
+            doAssert(false, "Created a MemoryVerification already added to the Lattice: " & e.msg)
 
         #Broadcast the Verification.
         functions.network.broadcast(
