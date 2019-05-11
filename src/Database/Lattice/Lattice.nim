@@ -239,6 +239,18 @@ proc newLattice*(
         doAssert(false, "Couldn't grab a block when reloading the Lattice: " & e.msg)
     verifiers = verifiers.deduplicate()
 
+    #Create a seq of States.
+    var states: seq[State] = newSeq[State](
+        min(merit.blockchain.height, 5) + 1
+    )
+
+    #Copu the latest state to the end.
+    states[^1] = merit.state
+    #Revert the states.
+    for s in countdown(states.len - 2, 0):
+        states[^1].revert(merit.blockchain, states[^1].processedBlocks - 1)
+        states[s] = states[^1]
+
     #Iterate over every Verifier.
     for verifier in verifiers:
         #Define the tips,
@@ -271,8 +283,8 @@ proc newLattice*(
             if tips[t] == -1:
                 continue
 
-            #Revert the Merit's State.
-            merit.state.revert(merit.blockchain, merit.blockchain.height - (tips.len - (t + 1)))
+            #Grab the State.
+            var state: State = states[^(tips.len - (t + 1))]
 
             #Load the Verifications archived in this Block.
             var
@@ -283,17 +295,19 @@ proc newLattice*(
                 nextTip = tips[nextT]
 
             for v in tips[t] ..< nextTip:
+                var verif: Verification
                 try:
-                    result.verify(verifications[verifier][v], merit.state[verifier], merit.state.live, false)
-                except ValueError as e:
-                    doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
+                    verif = verifications[verifier][v]
                 except IndexError as e:
                     doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
-                except DataExists as e:
-                    doAssert(false, "Reloaded a Verification twice, which is likely a false positive: " & e.msg)
 
-        #Restore the State for the next Verifier.
-        merit.state.catchup(merit.blockchain)
+                try:
+                    result.verify(verif, state[verifier], state.live, false)
+                except ValueError as e:
+                    doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
+                except DataExists as e:
+                    doAssert(false, "Reloaded a Verification twice,  which is likely a false positive: " & e.msg)
+
 
 #Add a Entry to the Lattice.
 proc add*(

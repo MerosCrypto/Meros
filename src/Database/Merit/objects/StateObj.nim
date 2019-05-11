@@ -18,6 +18,7 @@ import tables
 
 #State object.
 finalsd:
+    #This cannot be a ref object due to how we copy it for reversions.
     type State* = object
         #DB.
         db: DatabaseFunctionBox
