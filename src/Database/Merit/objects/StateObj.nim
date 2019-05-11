@@ -30,7 +30,10 @@ finalsd:
         deadBlocks* {.final.}: Natural
         #Live Merit.
         live: Natural
-        #Address -> Merit
+
+        #Amount of Blocks processed.
+        processedBlocks*: int
+        #BLSPublicKey -> Merit
         holders: Table[string, int]
 
 #Constructor.
@@ -44,18 +47,21 @@ proc newStateObj*(
 
         deadBlocks: deadBlocks,
         live: 0,
+
+        processedBlocks: 1,
         holders: initTable[string, int]()
     )
     result.ffinalizeDeadBlocks()
 
     #Load the live Merit and the holders from the DB.
     try:
-        result.live = result.db.get("merit_live").fromBinary()
-        result.holdersStr = result.db.get("merit_holders")
+        result.live = result.db.get("state_live").fromBinary()
+        result.processedBlocks = result.db.get("state_processed").fromBinary()
+        result.holdersStr = result.db.get("state_holders")
     #If these don't exist, confirm we didn't load one but not the other.
     except DBReadError:
         if result.live != 0:
-            doAssert(false, "Loaded the amount of live Merit but not any holders from the database.")
+            doAssert(false, "Loaded the amount of live Merit but not the amount of processed blocks or any holders from the database.")
 
     #Handle each holder.
     var holder: string
@@ -64,7 +70,7 @@ proc newStateObj*(
         holder = result.holdersStr[i .. i + 47]
         #Load their balance.
         try:
-            result.holders[holder] = result.db.get("merit_" & holder).fromBinary()
+            result.holders[holder] = result.db.get("state_" & holder).fromBinary()
         except DBReadError as e:
             doAssert(false, "Couldn't load a holder's state: " & e.msg)
 
@@ -144,15 +150,19 @@ proc save*(
         #Iterate over every pending account.
         for key in state.pending:
             #Save the new balance to the DB.
-            state.db.put("merit_" & key, state[key].toBinary())
+            state.db.put("state_" & key, state[key].toBinary())
+
         #Clear pending.
         state.pending = @[]
 
         #Save the new Merit quantity.
-        state.db.put("merit_live", state.live.toBinary())
+        state.db.put("state_live", state.live.toBinary())
 
         #Save the holdersStr.
-        state.db.put("merit_holders", state.holdersStr)
+        state.db.put("state_holders", state.holdersStr)
+
+        #Save the amount of processed blocks.
+        state.db.put("state_processed", state.processedBlocks.toBinary())
 
     except DBWriteError as e:
         doAssert(false, "Couldn't save the State to the DB: " & e.msg)

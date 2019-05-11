@@ -19,7 +19,7 @@ import ../../../src/Database/Merit/objects/MinersObj
 import ../../../src/Database/Merit/Difficulty
 import ../../../src/Database/Merit/Block
 import ../../../src/Database/Merit/Blockchain
-import ../../../src/Database/Merit/State
+import ../../../src/Database/Merit/State as StateFile
 
 #Merit Testing functions.
 import TestMerit
@@ -40,17 +40,33 @@ var
         30,
         "".pad(48).toHash(384)
     )
-    #State.
-    state: State = newState(
+    #Current State.
+    current: State = newState(
         db,
         5
     )
+    #States.
+    states: seq[State] = newSeq[State](10)
     #Miners we're mining to.
     miners: seq[Miners] = @[]
     #Table of wo has how much Merit.
     balances: OrderedTable[string, int] = initOrderedTable[string, int]()
     #Block we're mining.
     mining: Block
+
+#Compare two different States.
+proc test(
+    original: var State,
+    reloaded: var State
+) =
+    #Check the fields.
+    assert(original.deadBlocks == reloaded.deadBlocks)
+    assert(original.live == reloaded.live)
+    assert(original.processedBlocks == reloaded.processedBlocks)
+
+    #Check the balances.
+    for k in balances.keys():
+        assert(original[k] == reloaded[k])
 
 echo "Testing State processing and DB interactions."
 
@@ -103,7 +119,7 @@ for i in 1 .. 10:
         raise newException(ValueError, "Valid Block wasn't successfully added: " & e.msg)
 
     #Add it to the State.
-    state.processBlock(blockchain, mining)
+    current.processBlock(blockchain, mining)
 
     #If we're past 5 blocks...
     if i > 5:
@@ -114,29 +130,39 @@ for i in 1 .. 10:
             #Subtract the old Merit payouts.
             balances[key.toString()] -= miners[i - 6].miners[m].amount
 
+    #Reload and test the State.
+    states[i - 1] = newState(db, 5)
+    test(current, states[i - 1])
+
     #Check the amount of Merit in existence.
-    assert(state.live == min(i, 5) * 100)
-    assert(db.get("merit_live").fromBinary() == min(i, 5) * 100)
+    assert(current.live == min(i, 5) * 100)
+    assert(db.get("state_live").fromBinary() == min(i, 5) * 100)
+
+    #Checked the processed blocks tally.
+    assert(current.processedBlocks == blockchain.height)
+    assert(db.get("state_processed").fromBinary() == blockchain.height)
 
     #Check the balances.
     var holdersStr: string = ""
     for k in balances.keys():
         holdersStr &= k
-        assert(state[k] == balances[k])
-        assert(db.get("merit_" & k).fromBinary() == balances[k])
+        assert(current[k] == balances[k])
+        assert(db.get("state_" & k).fromBinary() == balances[k])
 
     #Check the holders string.
-    assert(holdersStr == db.get("merit_holders"))
+    assert(holdersStr == db.get("state_holders"))
 
-#Reload the State.
-state = newState(db, 5)
-#Check the live Merit.
-assert(state.live == 500)
+#Test reversions.
+for i in 1 .. 10:
+    echo "Reverting State " & $i & "."
+    var copy: State = current
+    copy.revert(blockchain, states[i - 1].processedBlocks)
+    test(copy, states[i - 1])
 
-#Check the balances.
-var holdersStr: string = ""
-for k in balances.keys():
-    holdersStr &= k
-    assert(state[k] == balances[k])
+#Test catch ups.
+for i in 1 .. 10:
+    echo "Catching Up State " & $i & "."
+    states[i - 1].catchup(blockchain)
+    test(states[i - 1], current)
 
 echo "Finished the Database/Merit/State Test."
