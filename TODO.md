@@ -12,7 +12,7 @@ Database:
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Verifications:
-- Load unarchived Verifications from the DB.
+- Load unarchived Verifications from the DB. Doing this, without any changes to the Lattice, will break loading Verifications with the proper State.
 
 Merit:
 - Checkpoints.

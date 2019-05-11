@@ -59,17 +59,14 @@ import tables
 #Add a Verification to the Verifications' table.
 proc verify*(
     lattice: var Lattice,
-    merit: Merit,
     verif: Verification,
+    merit: int,
+    liveMerit: int,
     save: bool = true
 ) {.forceCheck: [
     ValueError,
     DataExists
 ].} =
-    #Make sure the verifier has weight.
-    if merit.state[verif.verifier] == 0:
-        raise newException(ValueError, "Verifier doesn't have weight.")
-
     #Turn the hash into a string.
     var hash: string = verif.hash.toString()
 
@@ -99,11 +96,11 @@ proc verify*(
     var weight: int = 0
     try:
         for i in lattice.verifications[hash]:
-            weight += merit.state[i]
+            weight += merit
     except KeyError as e:
         doAssert(false, "Couldn't add the Entry's weight together despite guaranteeing it had a seq: " & e.msg)
     #If the Entry has at least 50.1% of the weight...
-    if weight > (merit.state.live div 2) + 1:
+    if weight > (liveMerit div 2) + 1:
         #Get the Index, Account, and calculate in `entries`.
         var
             index: LatticeIndex
@@ -231,23 +228,59 @@ proc newLattice*(
 
     #Iterate over every Verifier.
     for verifier in verifiers:
-        #Grab their epoch tip from the Merit database.
-        var tip: int
-        try:
-            tip = db.get("lattice_" & verifier.toString() & "_epoch").fromBinary()
-        except DBReadError:
-            tip = 0
+        #Define the tips,
+        var tips: seq[int] = newSeq[int](1)
 
-        #Load every verification.
-        for v in tip ..< verifications[verifier].height:
+        #Grab their out-of-epoch tip from the Merit database.
+        try:
+            tips[0] = db.get("lattice_" & verifier.toString() & "_epoch").fromBinary()
+        except DBReadError:
+            tips[0] = 0
+
+        #Grab their tips in the Blocks.
+        for b in max(merit.blockchain.height - 5, 1) ..< merit.blockchain.height:
+            var tip: int = -1
             try:
-                result.verify(merit, verifications[verifier][v], false)
-            except ValueError as e:
-                doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
+                for record in merit.blockchain[b].records:
+                    if record.key == verifier:
+                        tip = record.nonce
+                        break
             except IndexError as e:
-                doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
-            except DataExists as e:
-                doAssert(false, "Reloaded a Verification twice, which is likely a false positive: " & e.msg)
+                doAssert(false, "Couldn't grab a Block when reloading the Lattice's Verifications: " & e.msg)
+            tips.add(tip)
+
+        #Add their height to the end.
+        tips.add(verifications[verifier].height)
+
+        #Iterate over every tip.
+        for t in countdown(tips.len - 2, 0):
+            #If we weren't mentioned in a Block, continue.
+            if tips[t] == -1:
+                continue
+
+            #Revert the Merit's State.
+            merit.state.revert(merit.blockchain, merit.blockchain.height - (tips.len - (t + 1)))
+
+            #Load the Verifications archived in this Block.
+            var
+                nextT: int = t + 1
+                nextTip: int = tips[nextT]
+            while nextTip == -1:
+                inc(nextT)
+                nextTip = tips[nextT]
+
+            for v in tips[t] ..< nextTip:
+                try:
+                    result.verify(verifications[verifier][v], merit.state[verifier], merit.state.live, false)
+                except ValueError as e:
+                    doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
+                except IndexError as e:
+                    doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
+                except DataExists as e:
+                    doAssert(false, "Reloaded a Verification twice, which is likely a false positive: " & e.msg)
+
+        #Restore the State for the next Verifier.
+        merit.state.catchup(merit.blockchain)
 
 #Add a Entry to the Lattice.
 proc add*(

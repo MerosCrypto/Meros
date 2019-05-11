@@ -159,6 +159,16 @@ for i in 1 .. 10:
     copy.revert(blockchain, states[i - 1].processedBlocks)
     test(copy, states[i - 1])
 
+#Test chained reversions.
+var
+    chained: State = current
+    currentCopy: State = current
+chained.revert(blockchain, chained.processedBlocks - 1)
+chained.revert(blockchain, chained.processedBlocks - 1)
+chained.revert(blockchain, chained.processedBlocks - 1)
+currentCopy.revert(blockchain, chained.processedBlocks)
+test(chained, currentCopy)
+
 #Test catch ups.
 for i in 1 .. 10:
     echo "Catching Up State " & $i & "."

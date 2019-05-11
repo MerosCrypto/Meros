@@ -59,10 +59,9 @@ proc revert*(
     state: var State,
     blockchain: Blockchain,
     height: int
-) {.forceCheck: [
-    IndexError
-].} =
-    for i in countdown(blockchain.height - 1, height):
+) {.forceCheck: [].} =
+    #Restore dead Merit first so we stay in the `Natural` range.
+    for i in countdown(state.processedBlocks - 1, height):
         #If the i is over the dead blocks quantity, meaning there is a block to remove from the state...
         if i > state.deadBlocks:
             #For each miner, add their Merit back to the State.
@@ -77,7 +76,7 @@ proc revert*(
         try:
             miners = blockchain[i].miners.miners
         except IndexError as e:
-            raise newException(IndexError, "Told to revert to a height higher than we have: " & e.msg)
+            doAssert(false, "Told to revert to a height higher than we have: " & e.msg)
 
         #For each miner, remove their Merit from the State.
         for miner in miners:

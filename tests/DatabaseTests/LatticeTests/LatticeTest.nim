@@ -122,6 +122,7 @@ proc test() =
     #Test the verifications tables.
     for hash in lattice.verifications.keys():
         assert(reloaded.verifications.hasKey(hash))
+        assert(lattice.verifications[hash].len == reloaded.verifications[hash].len)
         for verifier in lattice.verifications[hash]:
             assert(reloaded.verifications[hash].contains(verifier))
     for hash in reloaded.verifications.keys():
@@ -151,7 +152,7 @@ proc test() =
         assert(originalAccount.confirmed == reloadedAccount.confirmed)
         assert(originalAccount.entries.len == reloadedAccount.entries.len)
         assert(originalAccount.balance == reloadedAccount.balance)
-        #assert(originalAccount.potentialDebt == reloadedAccount.potentialDebt)
+        assert(originalAccount.potentialDebt == reloadedAccount.potentialDebt)
 
         #Check every Entry.
         for h in 0 ..< originalAccount.height:
@@ -235,7 +236,7 @@ proc verify(wallet: MinerWallet, hash: string) =
     var verif: MemoryVerification = newMemoryVerificationObj(hash.toHash(384))
     wallet.sign(verif, verifications[wallet.publicKey].height)
     verifications.add(verif)
-    lattice.verify(merit, verif)
+    lattice.verify(verif, merit.state[wallet.publicKey], merit.state.live)
 
 #Create three Verifiers.
 for i in 0 ..< 3:
