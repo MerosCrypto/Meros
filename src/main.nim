@@ -39,5 +39,9 @@ else:
     spawn main()
     #Run the GUI on the main thread,
     mainGUI()
-    #Sync the threads.
-    sync()
+    #If WebView exits...
+    toRPC.send(%* {
+        "module": "system",
+        "method": "quit",
+        "args": []
+    })
