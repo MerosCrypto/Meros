@@ -239,6 +239,9 @@ proc newLattice*(
         doAssert(false, "Couldn't grab a block when reloading the Lattice: " & e.msg)
     verifiers = verifiers.deduplicate()
 
+    if verifiers.len == 0:
+        return
+
     #Create a seq of States.
     var states: seq[State] = newSeq[State](
         min(merit.blockchain.height, 5) + 1
@@ -307,7 +310,6 @@ proc newLattice*(
                     doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
                 except DataExists as e:
                     doAssert(false, "Reloaded a Verification twice,  which is likely a false positive: " & e.msg)
-
 
 #Add a Entry to the Lattice.
 proc add*(
