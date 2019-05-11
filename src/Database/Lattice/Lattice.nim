@@ -196,6 +196,19 @@ proc verify*(
                 except DBWriteError as e:
                     doAssert(false, "Couldn't save an updated balance to the Database: " & e.msg)
 
+            #If this was a Claim or a Receive, mark the input as claimed.
+            if entry.descendant == EntryType.Claim:
+                try:
+                    lattice["minter"].rmClaimable(cast[Claim](entry).mintNonce)
+                except AddressError as e:
+                    doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken: " & e.msg)
+            if entry.descendant == EntryType.Receive:
+                var recv: Receive = cast[Receive](entry)
+                try:
+                    lattice[recv.index.address].rmClaimable(recv.index.nonce)
+                except AddressError as e:
+                    doAssert(false, "Created an invalid address from an Ed25519 Public Key in a Receive: " & e.msg)
+
 #Constructor.
 proc newLattice*(
     db: DatabaseFunctionBox,
@@ -323,10 +336,10 @@ proc add*(
                 #Cast it to a claim.
                 var claim: Claim = cast[Claim](entry)
 
-                #Add the casted entry (and the Mint it's trying to claim).
+                #Add the casted entry (and the Minter Account).
                 account.add(
                     claim,
-                    cast[Mint](lattice["minter"][claim.mintNonce])
+                    lattice["minter"]
                 )
 
             of EntryType.Send:
@@ -347,10 +360,8 @@ proc add*(
                 account.add(
                     #Receive Entry.
                     recv,
-                    #Supposed Send Entry.
-                    lattice[
-                        recv.index
-                    ]
+                    #Supposed Sender.
+                    lattice[recv.index.address]
                 )
 
             of EntryType.Data:

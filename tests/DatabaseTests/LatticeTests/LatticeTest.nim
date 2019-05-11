@@ -47,21 +47,23 @@ On Lattice creation:
 
 On Account creation:
     If the Account doesn't exist, add them to `accountsStr` and save it.
-    Load `lattice_SENDER` and `lattice_SENDER_confirmed`, which is the height and the nonce of the highest verified Entry, where all previous Entries are also Verified.
+    Load `lattice_SENDER`, `lattice_SENDER_confirmed`, and `lattice_SENDER_claimable`, which are the height and the nonce of the highest Entry out of epochs, as well as the nonces of the Claims/Sends which can be claimed.
     For each Entry between confirmed and height, load it into the cache.
-    If it doesn't exist, save 0, 0, 0 to `lattice_SENDER`, `lattice_SENDER_confirmed`, and `lattice_SENDER_balance`.
+    If it doesn't exist, save 0, 0, 0, "" to `lattice_SENDER`, `lattice_SENDER_confirmed`, `lattice_SENDER_balance`, and `lattice_SENDER_claimable`.
 
 On Entry addition:
     Save the Entry to `lattice_HASH` (prefixed with a byte of the EntryType).
     For every unconfirmed Entry at that index, save their hashes to `lattice_SENDER_NONCE`.
     Save the Account height to `lattice_SENDER`.
+    If this is a Mint or Send, add the NONCE to `lattice_SENDER_claimable`.
 
 On verification:
     Save the confirmed Entry's hash to `lattice_SENDER_NONCE`.
     Update the Account's confirmed value, and save it to `lattice_SENDER_confirmed`.
     If the balance was changed, save the Account balance to `lattice_SENDER_balance`.
+    If this is a Claim or Receive, remove the NONCE of the claimed Entry from the claimed Entry's sender's `lattice_SENDER_claimable`.
 
-We cache every Entry from the Account's earliest unconfirmed Entry to their tip.
+We cache every Entry that has yet to exit the Epochs.
 We save every Entry without their verified field.
 """
 
@@ -147,11 +149,18 @@ proc test() =
         assert(originalAccount.lookup.isNil)
         assert(reloadedAccount.lookup.isNil)
 
-        #Check the heights and balanced are the same.
+        #Check the rest of the fields.
+        assert(originalAccount.balance == reloadedAccount.balance)
+
         assert(originalAccount.height == reloadedAccount.height)
         assert(originalAccount.confirmed == reloadedAccount.confirmed)
+
         assert(originalAccount.entries.len == reloadedAccount.entries.len)
-        assert(originalAccount.balance == reloadedAccount.balance)
+        assert(originalAccount.claimableStr == reloadedAccount.claimableStr)
+        assert(originalAccount.claimable.len == reloadedAccount.claimable.len)
+        for key in originalAccount.claimable.keys():
+            assert(reloadedAccount.claimable.hasKey(key))
+
         assert(originalAccount.potentialDebt == reloadedAccount.potentialDebt)
 
         #Check every Entry.

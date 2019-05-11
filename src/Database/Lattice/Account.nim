@@ -14,6 +14,9 @@ import ../../Wallet/MinerWallet
 import ../../Wallet/Address
 import ../../Wallet/Wallet
 
+#LatticeIndex object.
+import ../common/objects/LatticeIndexObj
+
 #Entry object and descendants.
 import objects/EntryObj
 import objects/MintObj
@@ -25,6 +28,9 @@ import objects/DataObj
 #Account object.
 import objects/AccountObj
 export AccountObj
+
+#Tables lib.
+import tables
 
 #Add a Mint.
 proc add*(
@@ -54,7 +60,7 @@ proc add*(
 proc add*(
     account: Account,
     claim: Claim,
-    mint: Mint
+    minter: Account
 ) {.forceCheck: [
     ValueError,
     IndexError,
@@ -63,7 +69,23 @@ proc add*(
     BLSError,
     DataExists
 ].} =
-    #Verify the BLS signature is for this mint and this person.
+    #Verify it's unclaimed.
+    #This also confirms the Minter has an Entry at said nonce.
+    try:
+        discard minter.claimable[claim.mintNonce]
+    #Not claimable.
+    except KeyError:
+        raise newException(ValueError, "Claim is for a claimed Mint.")
+
+    #Verify the BLS signature is for this Mint and this person.
+    var mint: Mint
+    try:
+        mint = cast[Mint](minter[claim.mintNonce])
+    except ValueError as e:
+        doAssert(false, "Couldn't grab a Mint despite it being claimable due to a ValueError: " & e.msg)
+    except IndexError as e:
+        doAssert(false, "Couldn't grab a Mint despite it being claimable due to an IndexError: " & e.msg)
+
     try:
         claim.bls.setAggregationInfo(
             newBLSAggregationInfo(
@@ -77,8 +99,6 @@ proc add*(
         doAssert(false, "Created an account with an invalid address.")
     except BLSError as e:
         fcRaise e
-
-    #Verify it's unclaimed.
 
     #Add the Claim.
     try:
@@ -136,7 +156,7 @@ proc add*(
 proc add*(
     account: Account,
     recv: Receive,
-    sendArg: Entry
+    sender: Account
 ) {.forceCheck: [
     ValueError,
     IndexError,
@@ -144,18 +164,28 @@ proc add*(
     EdPublicKeyError,
     DataExists
 ].} =
-    #Verify the entry is a Send.
-    if sendArg.descendant != EntryType.Send:
-        raise newException(ValueError, "Trying to Receive from an Entry that isn't a Send.")
+    #Verify it's unclaimed.
+    try:
+        discard sender.claimable[recv.index.nonce]
+    #Not claimable.
+    except KeyError:
+        raise newException(ValueError, "Receive is for a claimed Entry.")
 
-    #Cast it to a Send.
-    var send: Send = cast[Send](sendArg)
+    #Verify it's a Send.
+    if sender.address == "minter":
+        raise newException(ValueError, "Receive is for a Mint. This should never happen.")
 
     #Verify the Send's output address.
-    if account.address != send.output:
-        raise newException(ValueError, "Receiver is trying to receive from a Send which isn't for them.")
-
-    #Verify it's unclaimed.
+    try:
+        if recv.sender != cast[Send](sender[recv.index.nonce]).output:
+            raise newException(GapError, "Receive is for a Send not to the Receive's sender.")
+    #Use GapError as it's a custom error that's guaranteed to not be raised, when we do have to handle ValueError..
+    except ValueError as e:
+        doAssert(false, "Couldn't grab a Send despite it being claimable due to a ValueError: " & e.msg)
+    except IndexError as e:
+        doAssert(false, "Couldn't grab a Send despite it being claimable due to an IndexError: " & e.msg)
+    except GapError as e:
+        raise newException(ValueError, e.msg)
 
     #Add the Receive.
     try:

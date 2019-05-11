@@ -43,14 +43,20 @@ finalsd:
 
         #Chain owner.
         address* {.final.}: string
+        #Balance of the address.
+        balance*: uint64
+
         #Account height.
         height*: Natural
         #Nonce of the highest Entry popped out of Epochs.
         confirmed*: Natural
+
         #seq of the Entries (actually a seq of seqs so we can handle unconfirmed Entries).
         entries*: seq[seq[Entry]]
-        #Balance of the address.
-        balance*: uint64
+        #Table of claimable Entry nonces to bools of false.
+        claimable*: Table[int, bool]
+        #String of claimable Entries to save to the DB.
+        claimableStr: string
 
         #Amount of money spent in pending Entries.
         #https://github.com/MerosCrypto/Meros/issues/42
@@ -71,10 +77,13 @@ proc newAccountObj*(
         db: db,
 
         address: address,
+        balance: 0,
+
         height: 0,
         confirmed: 0,
+
         entries: @[],
-        balance: 0
+        claimable: initTable[int, bool]()
     )
     result.ffinalizeAddress()
 
@@ -83,12 +92,14 @@ proc newAccountObj*(
         result.height = result.db.get("lattice_" & result.address).fromBinary()
         result.confirmed = result.db.get("lattice_" & result.address & "_confirmed").fromBinary()
         result.balance = uint64(result.db.get("lattice_" & result.address & "_balance").fromBinary())
+        result.claimableStr = result.db.get("lattice_" & result.address & "_claimable")
     #The Account must not exist.
     except DBReadError:
         try:
             result.db.put("lattice_" & result.address, 0.toBinary())
             result.db.put("lattice_" & result.address & "_confirmed", 0.toBinary())
             result.db.put("lattice_" & result.address & "_balance", "")
+            result.db.put("lattice_" & result.address & "_claimable", "")
         except DBWriteError as e:
             doAssert(false, "Couldn't save a new Account to the Database: " & e.msg)
 
@@ -133,6 +144,10 @@ proc newAccountObj*(
                     maxDebt = cast[Send](loadedEntry).amount
 
             result.potentialDebt += maxDebt
+
+    #Load every nonce from the claimable string, and add them to the table.
+    for c in countup(0, result.claimableStr.len - 1, 4):
+        result.claimable[result.claimableStr.substr(c, c + 3).fromBinary()] = false
 
 #Add a Entry to an account.
 proc add*(
@@ -208,6 +223,15 @@ proc add*(
     #Update the Account's pending potential debt.
     account.potentialDebt += maxDebt
 
+    #If this was a Mint or a Send, add its nonce to claimable.
+    if (entry.descendant == EntryType.Mint) or (entry.descendant == EntryType.Send):
+        account.claimable[entry.nonce] = false
+        account.claimableStr &= entry.nonce.toBinary().pad(4)
+        try:
+            account.db.put("lattice_" & account.address & "_claimable", account.claimableStr)
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save an Account's claimable nonces to the Database after adding a nonce: " & e.msg)
+
     #Save the Entry to the DB.
     try:
         account.db.put("lattice_" & entry.hash.toString(), char(entry.descendant) & entry.serialize())
@@ -223,25 +247,48 @@ proc add*(
     except DBWriteError as e:
         doAssert(false, "Couldn't save the list of hashes for an index to the Database: " & e.msg)
 
+#Remove a Claimable nonce.
+proc rmClaimable*(
+    account: var Account,
+    nonceArg: int
+) {.forceCheck: [].} =
+    #Remove it from the table.
+    account.claimable.del(nonceArg)
+
+    #Remove it from the claimableStr.
+    var nonce: string = nonceArg.toBinary().pad(4)
+    for n in countup(0, account.claimableStr.len - 1, 4):
+        if account.claimableStr.substr(n, n + 3) == nonce:
+            account.claimableStr = account.claimableStr.substr(0, n - 1) & account.claimableStr.substr(n + 4)
+
+            #Save the new claimableStr to the DB.
+            try:
+                account.db.put("lattice_" & account.address & "_claimable", account.claimableStr)
+            except DBWriteError as e:
+                doAssert(false, "Couldn't save an Account's claimable nonces to the Database after removing a nonce: " & e.msg)
+
+            #Break.
+            break
+
 #Getter.
 proc `[]`*(
     account: Account,
-    index: int
+    nonce: int
 ): Entry {.forceCheck: [
     ValueError,
     IndexError
 ].} =
-    #Check the index is in bounds.
-    if index >= account.height:
-        raise newException(IndexError, "Account index out of bounds.")
+    #Check the nonce is in bounds.
+    if nonce >= account.height:
+        raise newException(IndexError, "Account nonce out of bounds.")
 
     #If it's in the database...
-    if index < account.confirmed:
+    if nonce < account.confirmed:
         try:
             #Grab it.
             result = account.db.get(
                 "lattice_" &
-                account.db.get("lattice_" & account.address & "_" & index.toBinary())
+                account.db.get("lattice_" & account.address & "_" & nonce.toBinary())
             ).parseEntry()
         except ValueError as e:
             doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
@@ -262,7 +309,7 @@ proc `[]`*(
         return
 
     #Else, check if there is a singular Entry we can return from memory.
-    var i: int = index - account.confirmed
+    var i: int = nonce - account.confirmed
     if account.entries[i].len != 1:
         for e in account.entries[i]:
             if e.verified:
@@ -273,10 +320,10 @@ proc `[]`*(
 #Getter used exlusively by Lattice[hash]. That getter confirms the entry is in RAM.
 proc `[]`*(
     account: Account,
-    index: int,
+    nonce: int,
     hash: Hash[384]
 ): Entry {.forceCheck: [].} =
-    var i: int = index - account.confirmed
+    var i: int = nonce - account.confirmed
     if i >= account.entries.len:
         doAssert(false, "Entry we tried to retrieve by hash wasn't actually in RAM, as checked by the i value.")
 
@@ -285,3 +332,15 @@ proc `[]`*(
             if entry.hash == hash:
                 return entry
     doAssert(false, "Entry we tried to retrieve by hash wasn't actually in RAM, as checked by the hash.")
+
+#Getters for claimable/claimableStr.
+#Mainly used for testing purposes.
+proc claimable*(
+    account: Account
+): Table[int, bool] {.forceCheck: [].} =
+    account.claimable
+
+proc claimableStr*(
+    account: Account
+): string {.forceCheck: [].} =
+    account.claimableStr
