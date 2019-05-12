@@ -3,13 +3,13 @@
 Syncing is a state between two nodes where one needs to catch up. To initiate syncing, the node missing data (the "syncer") sends `Syncing`. In response, the node which received `Syncing` (the "syncee") sends `SyncingAcknowledged`. The syncer should ignore all messages from the syncee until it receives `SyncingAcknowledged`, in order to not confuse normal network traffic with data relevant to its syncing.
 
 During syncing, the syncer can only send:
+- `BlockRequest`
+- `ElementRequest`
+- `EntryRequest`
 - `GetAccountHeight`
 - `GetHashesAtIndex`
 - `GetVerifierHeight`
-- `EntryRequest`
-- `MemoryVerificationRequest`
-- `BlockRequest`
-- `VerificationRequest`
+- `SignedElementRequest`
 - `SyncingOver`
 
 The syncee can only send:
@@ -22,9 +22,17 @@ The syncee can only send:
 - `Data`
 - `Lock`
 - `Unlock`
-- `MemoryVerification`
+- `SignedVerification`
+- `SignedSendDifficulty`
+- `SignedDataDifficulty`
+- `SignedGasPrice`
+- `SignedMeritRemoval`
 - `Block`
 - `Verification`
+- `SendDifficulty`
+- `DataDifficulty`
+- `GasPrice`
+- `MeritRemoval`
 - `DataMissing`
 
 The syncee should also only send messages in direct response to a request from the syncer.
@@ -49,17 +57,17 @@ A `GetHashesAtIndex` has a message length of 36 bytes; the Account's 32 byte Ed2
 
 An `EntryRequest` has a message length of 48 bytes; the Entry hash, with the expected response being a `Claim`, `Send`, `Receive`, or `Data` containing the Entry with the same hash. If a Mint has the requested hash, the syncer should send `DataMissing`.
 
-### MemoryVerificationRequest
+### SignedElementRequest
 
-A `MemoryVerificationRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Verification, with the expected response being a `MemoryVerification` containing the MemoryVerification at the requested location. If a verifier had multiple Verifications at that location, the syncee should respond with a `MeritRemoval` containing any 2 MemoryVerifications at that index.
+A `SignedElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval`, containing the Element at the requested location, including its BLS Signature. If the request Element has already had its signature aggregated in a Block, the syncer should send `DataMissing`.
 
 ### BlockRequest
 
 A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `Block` containing the Block. If a 0'd out hash is provided, the syncee should respond with a `Block` containing their tail Block.
 
-### VerificationRequest
+### ElementRequest
 
-A `VerificationRequest` is identical to a `MemoryVerificationRequest`, except for the fact that if a Verifier has a singular Verification at the requested nonce, the expected response is a `Verification` containing the Verification at the requested location.
+A `ElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element at the requested location, without its BLS Signature.
 
 ### DataMissing
 
@@ -74,5 +82,6 @@ A `VerificationRequest` is identical to a `MemoryVerificationRequest`, except fo
 - Meros doesn't support the `GetAccountHeight` and `AccountHeight` message types.
 - Meros doesn't support the `GetHashesAtIndex` and `HashesAtIndex` message types.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
-- Meros doesn't support the `MemoryVerificationRequest` message type.
+- Meros's Consensus DAG only supports Verification and SignedVerifications. Therefore, it will only answer an ElementRequest with one of the two.
+- Meros doesn't support the `SignedElementRequest` message type.
 - A `BlockRequest` is followed by 4 bytes representing the nonce of the Block, as Meros currently doesn't support chain reorgs in any form. To get the tail Block, Meros sends 4 0 bytes.

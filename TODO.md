@@ -12,6 +12,8 @@ Database:
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Verifications:
+- Update the name Verifications to Consensus.
+- Update the name of MemoryVerification to SignedVerification.
 - Load unarchived Verifications from the DB. Doing this, without any changes to the Lattice, will break loading Verifications with the proper State.
 
 Merit:
@@ -38,6 +40,8 @@ Lattice:
 - Lock boxes.
 
 Network:
+- Update the name of MemoryVerification to SignedVerification.
+
 - Don't rebroadcast data that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 
