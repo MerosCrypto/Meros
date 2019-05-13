@@ -3,6 +3,7 @@
 The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array), indexed by Ed25519 Public Keys, with an additional two properties of sendDifficulty and dataDifficulty (384 bit hashes set via methods described in the Verifications documentation). Only the key pair behind an Account can add an Entry to it.
 
 Every Entry has the following fields:
+
 - descendant: Entry Sub-type
 - sender: Account that the Entry belongs to. The protocol defines this as the Ed25519 Public Key, but Meros uses addresses internally.
 - nonce: Index of the Entry on the Account. Starts at 0 and increments by 1 for every added Entry.
@@ -10,6 +11,7 @@ Every Entry has the following fields:
 - signature: Signature of the hash signed by the sender.
 
 The Entry sub-types are as follows:
+
 - Mint
 - Claim
 - Send
@@ -18,11 +20,12 @@ The Entry sub-types are as follows:
 - Lock
 - Unlock
 
-When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, if long as the signature is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is confirmed, as described in the Verifications documentation, both must remain on the Account.
+When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, if long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is confirmed, as described in the Verifications documentation, both must remain on the Account.
 
 ### Mint
 
 Mint Entries are locally created when blocks are added to the blockchain, as described in the Merit documentation, and never sent over the network. They also have the following fields:
+
 - output: The BLS Public Key of the verifier who earned the new Meros.
 - amount: The amount of Meri created.
 
@@ -33,6 +36,7 @@ Mints are never broadcasted across the network, and should only be created by th
 ### Claim
 
 Claim Entries are created in response to a Mint, and have the following fields:
+
 - mintNonce: The nonce of the Mint this is claiming.
 - bls: BLS Signature that proves the verifier which earned the new Meros wants this Account to receive their reward.
 
@@ -51,6 +55,7 @@ Once a Claim has been confirmed, the Mint's amount is added to the sender's Acco
 ### Send
 
 Send Entries have the following fields:
+
 - output: The Ed25519 Public Key to transfer funds to.
 - amount The amount of Meri to send.
 - proof: Work that proves this isn't spam.
@@ -60,6 +65,7 @@ Send hashes are defined as `Blake2b-384("send" + sender + nonce + output + amoun
 amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are confirmed. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
 
 The proof must satisfy the following check:
+
 ```
 Argon2d(
     iterations = 1,
@@ -77,6 +83,7 @@ Once a Send has been confirmed, the amount is subtracted from the sender's Accou
 ### Receive
 
 Receive Entries have the following fields:
+
 - input: The Ed25519 Public Key who owns the Account which has the Send we're receiving.
 - inputNonce: The nonce of the Send we're receiving.
 
@@ -93,12 +100,14 @@ Once the Receive has been confirmed, the Send's amount is added to the sender's 
 ### Data
 
 Data Entries have the following fields:
+
 - data: The Data to store in the Entry.
 - proof: Work that proves this isn't spam.
 
 Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce 4 bytes, data length 1 byte, and data variable bytes.
 
 The proof must satisfy the following check:
+
 ```
 Argon2d(
     iterations = 1,

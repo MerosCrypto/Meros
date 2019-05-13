@@ -12,7 +12,8 @@ Database:
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Verifications:
-- Update the name Verifications to Consensus.
+- Update the name of Verifications to Consensus.
+- Update the name of Verifier to MeritHolder.
 - Update the name of MemoryVerification to SignedVerification.
 - Load unarchived Verifications from the DB. Doing this, without any changes to the Lattice, will break loading Verifications with the proper State.
 
@@ -33,7 +34,6 @@ Verifications & Merit:
 - Verification Exclusions: Verifications that we can't find the TX for, so the Block says to ignore, which are validated by checkpoints.
 
 Lattice:
-- Optimize Lattize loading by only performing the needed reverts once, and not any catch ups.
 - Cache the UXTO set.
 - Have work precalculable for 100 `Send`'s/`Data`'s in advance.
 - Difficulty voting.

@@ -3,6 +3,7 @@
 Syncing is a state between two nodes where one needs to catch up. To initiate syncing, the node missing data (the "syncer") sends `Syncing`. In response, the node which received `Syncing` (the "syncee") sends `SyncingAcknowledged`. The syncer should ignore all messages from the syncee until it receives `SyncingAcknowledged`, in order to not confuse normal network traffic with data relevant to its syncing.
 
 During syncing, the syncer can only send:
+
 - `BlockRequest`
 - `ElementRequest`
 - `EntryRequest`
@@ -13,6 +14,7 @@ During syncing, the syncer can only send:
 - `SyncingOver`
 
 The syncee can only send:
+
 - `AccountHeight`
 - `HashesAtIndex`
 - `VerifierHeight`

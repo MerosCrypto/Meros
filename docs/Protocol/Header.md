@@ -3,6 +3,7 @@
 A single byte header informing nodes of the type of message is prefixed before every message. This header is used to figure out the message length and how to handle the message.
 
 The message types are as follows (with their list number being their byte header):
+
 <ol start="0">
 <li><code>Handshake</code></li>
 <br>
@@ -49,4 +50,5 @@ Even if the state is syncing, the node which didn't start syncing can send every
 When the state isn't syncing, only `Handshake`, `Syncing`, and everything after `SyncingOver` (exclusive) can be sent,
 
 ### Violations in Meros:
-- Meros doesn't support several message types, as specified in the other documentation. Meros generates an enum without said message types, which causes a different header byte to be used,
+
+- Meros doesn't support several message types, as specified in the other documentation. Meros generates an enum without said message types, which causes different header bytes to be used.
