@@ -22,6 +22,9 @@ import ../../../Network/Serialize/Merit/ParseBlock
 #RPC object.
 import ../objects/RPCObj
 
+#StInt lib.
+import StInt
+
 #Async standard lib.
 import asyncdispatch
 
@@ -38,8 +41,14 @@ proc getHeight(
 proc getDifficulty(
     rpc: RPC
 ): JSONnode {.forceCheck: [].} =
+    var
+        bytes: array[64, byte] = rpc.functions.merit.getDifficulty().difficulty.toByteArrayBE()
+        difficulty: string = newString(48)
+    for i in 16 ..< 64:
+        difficulty[i - 16] = char(bytes[i])
+
     result = %* {
-        "difficulty": $rpc.functions.merit.getDifficulty().difficulty
+        "difficulty": difficulty.toHex()
     }
 
 proc getBlock(
