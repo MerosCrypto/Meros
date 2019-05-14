@@ -69,7 +69,7 @@ They have the following fields:
 
 - price: Price in Meri an unit of gas should cost.
 
-`GasPrice` has a message length of 56 bytes; the 48 byte sender, the 4 byte nonce, and the 4 byte price (setting a max price of 4.29 Meros per unit of gas).
+`GasPrice` has a message length of 56 bytes; the 48 byte sender, the 4 byte nonce, and the 4 byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "gasPrice".
 
 ### MeritRemoval
 
@@ -87,21 +87,13 @@ MeritRemovals have the following fields:
 
 `MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte sender, the 4 byte nonce, the 4 byte cause nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the sender/nonce, the 1 byte message header for the Element, and the serialized version of the second Element without the sender/nonce.
 
-### SignedVerification
+### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, SignedMeritRemoval
 
-SgnedVerifications are the same as Verifications, yet they contain the Verification's BLS Signature, instead of relying on a Block's aggregate signature. They have the extra field of:
+Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
-- signature: BLS Signature of the Verification.
+- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of Element1 and Element2.
 
-`SignedVerification` has a message length of 196 bytes; the serialized `Verification` with the 96 byte signature appended.
-
-### SignedSendDifficulty
-
-### SignedDataDifficulty
-
-### SignedGasPrice
-
-### SignedMeritRemoval
+Their message lengths are their non-"Signed" message length plus 96 bytes; the 96 byte signature which is appended to the end of the serialized non-"Signed" version.
 
 ### Violations in Meros
 
