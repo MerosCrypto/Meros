@@ -49,7 +49,3 @@ The message types are as follows (with their list number being their byte header
 Even if the state is syncing, the node which didn't start syncing can send every message between `Claim` (inclusive) and `MeritRemoval` (inclusive).
 
 When the state isn't syncing, only `Handshake`, `Syncing`, and everything after `SyncingOver` (exclusive) can be sent,
-
-### Violations in Meros:
-
-- Meros doesn't support several message types, as specified in the other documentation. Meros generates an enum without said message types, which causes different header bytes to be used.
