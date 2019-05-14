@@ -9,6 +9,7 @@ The message types are as follows (with their list number being their byte header
 <br>
 <li><code>Syncing</code></li>
 <li><code>SyncingAcknowledged</code></li>
+<li><code>BlockHeaderRequest</code></li>
 <li><code>BlockRequest</code></li>
 <li><code>ElementRequest</code></li>
 <li><code>EntryRequest</code></li>
@@ -43,7 +44,7 @@ The message types are as follows (with their list number being their byte header
 <li><code>MeritRemoval</code></li>
 </ol>
 
-`Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive), can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing docs.
+`Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive), can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing documentation.
 
 Even if the state is syncing, the node which didn't start syncing can send every message between `Claim` (inclusive) and `MeritRemoval` (inclusive).
 

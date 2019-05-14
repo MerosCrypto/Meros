@@ -4,6 +4,7 @@ Syncing is a state between two nodes where one needs to catch up. To initiate sy
 
 During syncing, the syncer can only send:
 
+- `BlockHeaderRequest`
 - `BlockRequest`
 - `ElementRequest`
 - `EntryRequest`
@@ -63,9 +64,13 @@ An `EntryRequest` has a message length of 48 bytes; the Entry hash, with the exp
 
 A `SignedElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval`, containing the Element at the requested location, including its BLS Signature. If the request Element has already had its signature aggregated in a Block, the syncer should send `DataMissing`.
 
+### BlockHeaderRequest
+
+A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `BlockHeader` containing the requested BlockHeader. If a 0'd out hash is provided, the syncee should respond with a `BlockHeader` containing their tail Block's BlockHeader.
+
 ### BlockRequest
 
-A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `Block` containing the Block. If a 0'd out hash is provided, the syncee should respond with a `Block` containing their tail Block.
+A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `Block` containing the requested Block. If a 0'd out hash is provided, the syncee should respond with a `Block` containing their tail Block.
 
 ### ElementRequest
 
@@ -84,6 +89,7 @@ A `ElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS 
 - Meros doesn't support the `GetAccountHeight` and `AccountHeight` message types.
 - Meros doesn't support the `GetHashesAtIndex` and `HashesAtIndex` message types.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
+- Meros doesn't support the `BlockHeaderRequest` message type.
 - Meros's Consensus DAG only supports Verification and SignedVerifications. Therefore, it will only answer an ElementRequest with one of the two.
 - Meros doesn't support the `SignedElementRequest` message type.
 - A `BlockRequest` is followed by 4 bytes representing the nonce of the Block, as Meros currently doesn't support chain reorgs in any form. To get the tail Block, Meros sends 4 0 bytes.
