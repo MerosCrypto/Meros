@@ -15,7 +15,7 @@ var
     rpc: MerosRPC = waitFor newMerosRPC()
     #DB.
     db: JSONNode = %* {
-        "verifications": {},
+        "consensus": {},
         "blockchain": [],
         "lattice": {}
     }
@@ -29,12 +29,12 @@ for nonce in 0 ..< waitFor rpc.merit.getHeight():
 #Get every Verification.
 for syncBlock in db["blockchain"]:
     for record in syncBlock["records"]:
-        if not db["verifications"].hasKey(record["verifier"].getStr()):
-            db["verifications"][record["verifier"].getStr()] = %* []
+        if not db["consensus"].hasKey(record["holder"].getStr()):
+            db["consensus"][record["holder"].getStr()] = %* []
 
-        for nonce in db["verifications"][record["verifier"].getStr()].len .. record["nonce"].getInt():
-            var hash: JSONNode = (waitFor rpc.verifications.getVerification(record["verifier"].getStr(), nonce))["hash"]
-            db["verifications"][record["verifier"].getStr()].add(
+        for nonce in db["consensus"][record["holder"].getStr()].len .. record["nonce"].getInt():
+            var hash: JSONNode = (waitFor rpc.consensus.getElement(record["holder"].getStr(), nonce))["hash"]
+            db["consensus"][record["holder"].getStr()].add(
                 hash
             )
             hashes.add(hash.getStr())

@@ -1,6 +1,5 @@
 #Use C++ instead of C.
-if getCommand() == "c":
-    setCommand("cpp")
+setCommand("cpp")
 
 #Necessary flags.
 switch("threads", "on")
@@ -8,10 +7,16 @@ switch("define", "ADDRESS_HRP=Mr")
 switch("define", "SIGN_PREFIX=MEROS")
 switch("define", "DEFAULT_PORT=5132")
 
-when defined(release):
+when defined(merosRelease):
+    #Define release.
+    switch("define", "release")
+
     #Disable assertions and checks.
     switch("assertions", "off")
     switch("checks", "off")
+
+    #Re-enaable bound checks.
+    switch("boundChecks", "on")
 
     #Disable extra crash reporting.
     switch("lineDir", "off")
@@ -19,8 +24,11 @@ when defined(release):
     switch("stackTrace", "off")
     switch("excessiveStackTrace", "off")
 else:
-    #Define debug.
-    switch("define", "debug")
+    #Define release.
+    switch("define", "release")
+
+    #Enable finals.
+    switch("define", "finalsOn")
 
     #Enable assertions and checks.
     switch("assertions", "on")
