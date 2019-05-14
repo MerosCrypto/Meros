@@ -2,7 +2,7 @@
 
 "Consensus" is a DAG, similarly structured to the Lattice, containing Verifications, MeritRemovals, Difficulty Updates, and Gas Price sets. The reason it's called Consensus is because even though the Blockchain has the final say, the Blockchain solely distributes Merit (used to weight Consensus) and archives Elements from the Consensus layer,
 
-"Consensus" is made up of MeritHolders (Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it. MeritHolders are trusted to only ever have one Element per nonce, unlike Accounts. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
+"Consensus" is made up of MeritHolders (Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it, except in the case of a MeritRemoval. MeritHolders are trusted to only ever have one Element per nonce, unlike Accounts. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
 
 Every Element has the following fields:
 
@@ -33,7 +33,7 @@ They have the following fields:
 
 ### SendDifficulty
 
-A SendDifficulty is a MeritHolder voting to lower the difficulty of the spam filter applied to Sends. Every MeritHolder gets one vote per 10,000 Merit. Every MeritHolder can specify a singular difficulty which all their votes goes towards. The difficulty that is the median of all votes is chosen.
+A SendDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Sends. Every MeritHolder gets one vote per 10,000 Merit. Every MeritHolder can specify a singular difficulty which all their votes goes towards. The difficulty that is the median of all votes is chosen.
 
 The 10,000 Merit limit creates a maximum of 525 votes. The multiple votes per MeritHolder means MeritHolders with more Merit get more power. The median means that if the difficulty is 10, and a MeritHolder wants it to be 9, they can't game the system by voting for 8.
 
@@ -41,19 +41,51 @@ When the difficulty is lowered, there's a chance transactions based off the new 
 
 In the case no SendDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "AA" bytes.
 
+They have the following fields:
+
+- difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
+
 `SendDifficulty` has a message length of 100 bytes; the 48 byte sender, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "sendDifficulty".
 
 ### DataDifficulty
 
-A DataDifficulty is a MeritHolder voting to lower the difficulty of the spam filter applied to Datas. Every MeritHolder gets one vote per 10,000 Merit. Every MeritHolder can specify a singular difficulty which all their votes goes towards. The difficulty that is the median of all votes is chosen.
+A DataDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined.
 
 In the case no DataDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "CC" bytes.
+
+They have the following fields:
+
+- difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
 `DataDifficulty` has a message length of 100 bytes; the 48 byte sender, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "dataDifficulty".
 
 ### GasPrice
 
+Unlock Entries execute MerosScript. Each MerosScript operation has a different amount of "gas" required to be executed. In order to reward MeritHolders for executing MerosScipt, the sender of the Unlock must pay `gasPrice * gas` in Meros.
+
+A GasPrice is a MeritHolder voting to update the gasPrice variable. The way the gasPrice is determined is the exact same as the way the spam filters determine their difficulty.
+
+They have the following fields:
+
+- price: Price in Meri an unit of gas should cost.
+
+`GasPrice` has a message length of 56 bytes; the 48 byte sender, the 4 byte nonce, and the 4 byte price (setting a max price of 4.29 Meros per unit of gas).
+
 ### MeritRemoval
+
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, nodes add a MeritRemoval to the MeritHolder. When a MeritRemoval is created, all unarchived Elements have their actions reversed. If the Elements with the same nonce are present at an archived nonce, the MeritRemoval is added right after the archived Elements. If the Elements with the same nonce are at an unarchived nonce, the MeritRemoval is added right after the Elements that caused it. Everything after a MeritRemoval can be safely pruned, and any newly received Elements from that Verifier should be ignored.
+
+The creation of a MeritRemoval causes the MeritHolder's Merit to exit the system, so their Merit no longer affects the total. This is further described in the Merit documentation.
+
+If a MeritRemoval is triggered at multiple nonces, or with more than two Elements, the first one will have already reverted unarchived actions and strip the MeritHolder of their Merit. The question becomes solely where to place the MeritRemoval and with what Elements as the cause. This is at the next Block's miner's discretion, and whatever nonce/Elements they pick becomes the nonce/Elements for the entire network.
+
+MeritRemovals have the following fields:
+
+- causeNonce: The nonce of the Elements which conflict.
+- Element1: The first Element.
+- Element2: The second Element.
+
+`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte sender, the 4 byte nonce, the 4 byte cause nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the sender/nonce, the 1 byte message header for the Element, and the serialized version of the second Element without the sender/nonce.
 
 ### SignedVerification
 
@@ -61,7 +93,7 @@ SgnedVerifications are the same as Verifications, yet they contain the Verificat
 
 - signature: BLS Signature of the Verification.
 
-`SignedVerification` has a message length of 196 bytes; the `Verification` message with the 86 byte signature appended.
+`SignedVerification` has a message length of 196 bytes; the serialized `Verification` with the 96 byte signature appended.
 
 ### SignedSendDifficulty
 
