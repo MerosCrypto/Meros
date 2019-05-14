@@ -37,8 +37,8 @@ type
     DBWriteError* = object of DBError #Used when writing to the DB fails.
     DBReadError*  = object of DBError #Used when reading from the DB fails.
 
-    #Database/Verifications Errors.
-    MeritRemoval* = object of Exception #Used when a Verifier commits a malicious act against the network.
+    #Database/Consensus Errors.
+    MeritRemoval* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
 
     #Database/Blockchain Errors.
     NotInEpochs* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.

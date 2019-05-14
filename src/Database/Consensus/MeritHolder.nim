@@ -13,32 +13,32 @@ import ../common/Merkle
 #Verification lib.
 import Verification
 
-#Verifier object.
-import objects/VerifierObj
-export VerifierObj
+#MeritHolder object.
+import objects/MeritHolderObj
+export MeritHolderObj
 
 #Calculate the Merkle.
 proc calculateMerkle*(
-    verifier: Verifier,
+    holder: MeritHolder,
     nonce: Natural
 ): Hash[384] {.forceCheck: [
     IndexError
 ].} =
     #Calculate how many leaves we're trimming.
-    let toTrim: int = verifier.height - (nonce + 1)
+    let toTrim: int = holder.height - (nonce + 1)
     if toTrim < 0:
         raise newException(IndexError, "Nonce is out of bounds.")
 
-    #Return the hash of this Verifier's trimmed Merkle.
-    result = verifier.merkle.trim(toTrim).hash
+    #Return the hash of this MeritHolder's trimmed Merkle.
+    result = holder.merkle.trim(toTrim).hash
 
 #Calculate the aggregate signature.
 proc aggregate*(
-    verifs: seq[MemoryVerification]
+    verifs: seq[SignedVerification]
 ): BLSSignature {.forceCheck: [
     BLSError
 ].} =
-    #If there's no Verifications...
+    #If there are no Elements...
     if verifs.len == 0:
         return nil
 

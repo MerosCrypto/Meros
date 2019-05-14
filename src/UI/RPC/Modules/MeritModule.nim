@@ -10,8 +10,8 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Verifications lib.
-import ../../../Database/Verifications/Verifications
+#Consensus lib.
+import ../../../Database/Consensus/Consensus
 
 #Merit lib.
 import ../../../Database/Merit/Merit
@@ -74,7 +74,7 @@ proc getBlock(
         result["records"] = %* []
         for index in gotBlock.records:
             result["records"].add(%* {
-                "verifier": $index.key,
+                "holder": $index.key,
                 "nonce":    index.nonce,
                 "merkle":   $index.merkle
             })

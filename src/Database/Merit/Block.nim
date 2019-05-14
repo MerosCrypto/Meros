@@ -10,11 +10,11 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#VerifierRecord object.
-import ../common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../common/objects/MeritHolderRecordObj
 
 #Verification lib.
-import ../Verifications/Verification
+import ../Consensus/Verification
 
 #BlockHeader lib.
 import BlockHeader
@@ -27,7 +27,7 @@ export BlockObj
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
 #Serialize Verification lib (for verify).
-import ../../Network/Serialize/Verifications/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeVerification
 
 #Tables standard lib.
 import tables
@@ -53,36 +53,36 @@ proc verify*(
 ): bool {.forceCheck: [].} =
     result = true
 
-    #Make sure there's the same amount of Verifier as there are records.
+    #Make sure there's the same amount of MeritHolder as there are records.
     if verifs.len != blockArg.records.len:
         return false
 
-    #Aggregate Infos for each Verifier.
+    #Aggregate Infos for each MeritHolder.
     var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](blockArg.records.len)
     #Iterate over every Record.
     for r, record in blockArg.records:
         #Key in the record.
         var key: string = record.key.toString()
 
-        #Aggregate Infos for this verifier.
-        var verifierAgInfos: seq[BLSAggregationInfo]
+        #Aggregate Infos for this holder.
+        var holderAgInfos: seq[BLSAggregationInfo]
         try:
-            #Init this Verifier's
-            verifierAgInfos = newSeq[BLSAggregationInfo](verifs[key].len)
-            #Iterate over this verifier's hashes.
+            #Init this MeritHolder's
+            holderAgInfos = newSeq[BLSAggregationInfo](verifs[key].len)
+            #Iterate over this holder's hashes.
             for v, verif in verifs[key]:
                 #Create AggregationInfos.
-                verifierAgInfos[v] = newBLSAggregationInfo(record.key, verif.serialize(true))
-        #The presented Table has a different set of Verifiers than the records.
+                holderAgInfos[v] = newBLSAggregationInfo(record.key, verif.serialize(true))
+        #The presented Table has a different set of MeritHolders than the records.
         except KeyError:
             return false
         #Couldn't create an AggregateInfo out of a BLSPublicKey and a hash.
         except BLSError:
             return false
 
-        #Create the aggregate AggregateInfo for this Verifier.
+        #Create the aggregate AggregateInfo for this MeritHolder.
         try:
-            agInfos[r] = verifierAgInfos.aggregate()
+            agInfos[r] = holderAgInfos.aggregate()
         except BLSError:
             return false
 

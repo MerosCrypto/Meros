@@ -21,7 +21,7 @@ import ../../Network/Serialize/Merit/SerializeBlockHeader
 func newBlockHeader*(
     nonce: Natural,
     last: ArgonHash,
-    verifs: BLSSignature,
+    elements: BLSSignature,
     miners: Blake384Hash,
     time: Natural,
     proof: Natural
@@ -31,7 +31,7 @@ func newBlockHeader*(
     result = newBlockHeaderObj(
         nonce,
         last,
-        verifs,
+        elements,
         miners,
         time,
         proof

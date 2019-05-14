@@ -12,19 +12,19 @@ import objects/VerificationObj
 export VerificationObj
 
 #Serialize lib.
-import ../../Network/Serialize/Verifications/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeVerification
 
 #Sign a Verification.
 proc sign*(
     miner: MinerWallet,
-    verif: MemoryVerification,
+    verif: SignedVerification,
     nonce: Natural
 ) {.forceCheck: [
     BLSError
 ].} =
     try:
-        #Set the verifier.
-        verif.verifier = miner.publicKey
+        #Set the holder.
+        verif.holder = miner.publicKey
         #Set the nonce.
         verif.nonce = nonce
         #Sign the hash of the Verification.

@@ -9,8 +9,8 @@ import ../../../src/lib/Util
 #Hash lib.
 import ../../../src/lib/Hash
 
-#VerifierRecord object.
-import ../../../src/Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../../src/Database/common/objects/MeritHolderRecordObj
 
 #Miners object.
 import ../../../src/Database/Merit/objects/MinersObj

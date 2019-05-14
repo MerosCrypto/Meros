@@ -10,14 +10,14 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#LatticeIndex and VerifierRecord objects.
+#LatticeIndex and MeritHolderRecord objects.
 import ../common/objects/LatticeIndexObj
-import ../common/objects/VerifierRecordObj
+import ../common/objects/MeritHolderRecordObj
 #Export the LatticeIndex object.
 export LatticeIndexObj
 
-#Verifications lib.
-import ../Verifications/Verifications
+#Consensus lib.
+import ../Consensus/Consensus
 
 #Merit lib.
 import ../Merit/Merit
@@ -56,7 +56,7 @@ import sequtils
 #Tables standard lib.
 import tables
 
-#Add a Verification to the Verifications' table.
+#Add a Verification to the Elements' table.
 proc verify*(
     lattice: var Lattice,
     verif: Verification,
@@ -80,15 +80,15 @@ proc verify*(
 
     #Return if the Verification already exists.
     try:
-        for verifier in lattice.verifications[hash]:
-            if verifier == verif.verifier:
+        for holder in lattice.verifications[hash]:
+            if holder == verif.holder:
                 raise newException(DataExists, "Verification was already added.")
     except KeyError as e:
-        doAssert(false, "Couldn't grab the Verifications seq despite guarantreeing it existed: " & e.msg)
+        doAssert(false, "Couldn't grab the Elements seq despite guarantreeing it existed: " & e.msg)
 
     #Add the Verification.
     try:
-        lattice.verifications[hash].add(verif.verifier)
+        lattice.verifications[hash].add(verif.holder)
     except KeyError as e:
         doAssert(false, "Couldn't add a Verification despite guaranteeing it had a seq: " & e.msg)
 
@@ -135,7 +135,7 @@ proc verify*(
         #Remove the max potential debt from this Entry from the Account's potential debt.
         account.potentialDebt -= maxDebt
 
-        #If we're not just reloading Verifications, and should update balances/save results to the DB...
+        #If we're not just reloading Elements, and should update balances/save results to the DB...
         if save:
             echo hash.toHex() & " was verified."
 
@@ -212,7 +212,7 @@ proc verify*(
 #Constructor.
 proc newLattice*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    consensus: Consensus,
     merit: Merit,
     sendDiff: string,
     dataDiff: string
@@ -224,22 +224,22 @@ proc newLattice*(
         dataDiff
     )
 
-    #Grab every Verifier mentioned in the last 6 Blocks of Verifications.
-    var verifiers: seq[BLSPublicKey] = @[]
+    #Grab every MeritHolder mentioned in the last 6 Blocks of Elements.
+    var holders: seq[BLSPublicKey] = @[]
     try:
         if merit.blockchain.height < 5:
             for b in 0 ..< merit.blockchain.height:
                 for record in merit.blockchain[b].records:
-                    verifiers.add(record.key)
+                    holders.add(record.key)
         else:
             for b in merit.blockchain.height - 5 ..< merit.blockchain.height:
                 for record in merit.blockchain[b].records:
-                    verifiers.add(record.key)
+                    holders.add(record.key)
     except IndexError as e:
         doAssert(false, "Couldn't grab a block when reloading the Lattice: " & e.msg)
-    verifiers = verifiers.deduplicate()
+    holders = holders.deduplicate()
 
-    if verifiers.len == 0:
+    if holders.len == 0:
         return
 
     #Create a seq of States.
@@ -254,14 +254,14 @@ proc newLattice*(
         states[^1].revert(merit.blockchain, states[^1].processedBlocks - 1)
         states[s] = states[^1]
 
-    #Iterate over every Verifier.
-    for verifier in verifiers:
+    #Iterate over every MeritHolder.
+    for holder in holders:
         #Define the tips,
         var tips: seq[int] = newSeq[int](1)
 
         #Grab their out-of-epoch tip from the Merit database.
         try:
-            tips[0] = db.get("lattice_" & verifier.toString() & "_epoch").fromBinary()
+            tips[0] = db.get("lattice_" & holder.toString() & "_epoch").fromBinary()
         except DBReadError:
             tips[0] = 0
 
@@ -270,15 +270,15 @@ proc newLattice*(
             var tip: int = -1
             try:
                 for record in merit.blockchain[b].records:
-                    if record.key == verifier:
+                    if record.key == holder:
                         tip = record.nonce
                         break
             except IndexError as e:
-                doAssert(false, "Couldn't grab a Block when reloading the Lattice's Verifications: " & e.msg)
+                doAssert(false, "Couldn't grab a Block when reloading the Lattice's Elements: " & e.msg)
             tips.add(tip)
 
         #Add their height to the end.
-        tips.add(verifications[verifier].height)
+        tips.add(consensus[holder].height)
 
         #Iterate over every tip.
         for t in countdown(tips.len - 2, 0):
@@ -289,7 +289,7 @@ proc newLattice*(
             #Grab the State.
             var state: State = states[^(tips.len - (t + 1))]
 
-            #Load the Verifications archived in this Block.
+            #Load the Elements archived in this Block.
             var
                 nextT: int = t + 1
                 nextTip: int = tips[nextT]
@@ -297,15 +297,15 @@ proc newLattice*(
                 inc(nextT)
                 nextTip = tips[nextT]
 
-            for v in tips[t] ..< nextTip:
+            for e in tips[t] ..< nextTip:
                 var verif: Verification
                 try:
-                    verif = verifications[verifier][v]
+                    verif = consensus[holder][e]
                 except IndexError as e:
                     doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
 
                 try:
-                    result.verify(verif, state[verifier], state.live, false)
+                    result.verify(verif, state[holder], state.live, false)
                 except ValueError as e:
                     doAssert(false, "Couldn't reload a Verification when reloading the Lattice: " & e.msg)
                 except DataExists as e:
@@ -481,7 +481,7 @@ proc mint*(
     except AddressError:
         doAssert(false, "Lattice is trying to recreate \"minter\" AND `newAccountObj`'s \"minter\" override for the address validity check is broken.")
 
-#Remove every hash in this Epoch from the cache/RAM, updating confirmed and the amount of Verifications to reload.
+#Remove every hash in this Epoch from the cache/RAM, updating confirmed and the amount of Elements to reload.
 proc archive*(
     lattice: var Lattice,
     epoch: Epoch
@@ -508,7 +508,7 @@ proc archive*(
                     (lattice[index.address].entries.len > 0) and
                     (lattice[index.address].entries[0][0].nonce <= index.nonce)
                 ):
-                    #Remove the hashes of all Entries at this position from the lookup/verifications table.
+                    #Remove the hashes of all Entries at this position from the lookup/consensus table.
                     try:
                         for e in lattice[index.address].entries[0]:
                             lattice.rmHash(e.hash)
@@ -544,7 +544,7 @@ proc archive*(
             except AddressError as e:
                 doAssert(false, "Trying to access the entries of an Account we're archiving, yet the Lattice just tried creating the account and detected it as invalid: " & e.msg)
 
-    #Save the records to lattice_VERIFIER_epoch so we can reload Verifications.
+    #Save the records to lattice_VERIFIER_epoch so we can reload Elements.
     #Epoch, in the Merit DB, means the record shifted 10+ Epochs ago.
     #Here, it means the record shifted 5+ Epochs ago.
     for record in epoch.records:

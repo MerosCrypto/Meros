@@ -15,12 +15,12 @@ import ../lib/Hash
 import ../Wallet/MinerWallet
 import ../Wallet/Wallet
 
-#LatticeIndex and VerifierRecord objects.
+#LatticeIndex and MeritHolderRecord objects.
 import ../Database/common/objects/LatticeIndexObj
-import ../Database/common/objects/VerifierRecordObj
+import ../Database/common/objects/MeritHolderRecordObj
 
 #Verification object.
-import ../Database/Verifications/objects/VerificationObj
+import ../Database/Consensus/objects/VerificationObj
 
 #Difficulty and Block objects.
 import ../Database/Merit/objects/DifficultyObj
@@ -64,19 +64,19 @@ type
             DBWriteError
         ].}
 
-    VerificationsFunctionBox* = ref object
-        getVerifierHeight*: proc (
+    ConsensusFunctionBox* = ref object
+        getMeritHolderHeight*: proc (
             key: BLSPublicKey
         ): int {.inline, raises: [].}
 
-        getVerification*: proc (
+        getElement*: proc (
             key: BLSPublicKey,
             nonce: int
         ): Verification {.raises: [
             IndexError
         ].}
 
-        getUnarchivedRecords*: proc (): seq[VerifierRecord] {.raises: [].}
+        getUnarchivedRecords*: proc (): seq[MeritHolderRecord] {.raises: [].}
 
         getPendingAggregate*: proc (
             key: BLSPublicKey,
@@ -101,8 +101,8 @@ type
             DataExists
         ].}
 
-        addMemoryVerification*: proc (
-            verif: MemoryVerification
+        addSignedVerification*: proc (
+            verif: SignedVerification
         ) {.raises: [
             ValueError,
             IndexError,
@@ -244,7 +244,7 @@ type
     GlobalFunctionBox* = ref object
         system*:        SystemFunctionBox
         database*:      DatabaseFunctionBox
-        verifications*: VerificationsFunctionBox
+        consensus*:     ConsensusFunctionBox
         merit*:         MeritFunctionBox
         lattice*:       LatticeFunctionBox
         personal*:      PersonalFunctionBox
@@ -255,7 +255,7 @@ func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
     GlobalFunctionBox(
         system:        SystemFunctionBox(),
         database:      DatabaseFunctionBox(),
-        verifications: VerificationsFunctionBox(),
+        consensus:     ConsensusFunctionBox(),
         merit:         MeritFunctionBox(),
         lattice:       LatticeFunctionBox(),
         personal:      PersonalFunctionBox(),

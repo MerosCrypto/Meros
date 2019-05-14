@@ -11,17 +11,17 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Verification object.
-import ../../../Database/Verifications/objects/VerificationObj
+import ../../../Database/Consensus/objects/VerificationObj
 
 #Common serialization functions.
 import ../SerializeCommon
 
 #Serialize a Memory Verification.
 func serialize*(
-    verif: MemoryVerification
+    verif: SignedVerification
 ): string {.forceCheck: [].} =
     result =
-        verif.verifier.toString() &
+        verif.holder.toString() &
         verif.nonce.toBinary().pad(INT_LEN) &
         verif.hash.toString() &
         verif.signature.toString()

@@ -15,7 +15,7 @@ import ../src/Wallet/MinerWallet
 
 #Database.
 import ../src/Database/Filesystem/DB
-import ../src/Database/Verifications/Verifications
+import ../src/Database/Consensus/Consensus
 import ../src/Database/Lattice/Lattice
 import ../src/Database/Merit/Merit
 
@@ -34,11 +34,11 @@ import ../src/Network/Serialize/Merit/ParseMiners
 import ../src/Network/Serialize/Merit/ParseBlockHeader
 import ../src/Network/Serialize/Merit/ParseBlock
 
-import ../src/Network/Serialize/Verifications/SerializeVerification
-import ../src/Network/Serialize/Verifications/SerializeMemoryVerification
+import ../src/Network/Serialize/Consensus/SerializeVerification
+import ../src/Network/Serialize/Consensus/SerializeSignedVerification
 
-import ../src/Network/Serialize/Verifications/ParseVerification
-import ../src/Network/Serialize/Verifications/ParseMemoryVerification
+import ../src/Network/Serialize/Consensus/ParseVerification
+import ../src/Network/Serialize/Consensus/ParseSignedVerification
 
 import ../src/Network/Serialize/Lattice/SerializeEntry
 import ../src/Network/Serialize/Lattice/SerializeMint

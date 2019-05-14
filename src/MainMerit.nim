@@ -1,11 +1,11 @@
-include MainVerifications
+include MainConsensus
 
 proc mainMerit() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(
             functions.database,
-            verifications,
+            consensus,
             GENESIS,
             BLOCK_TIME,
             BLOCK_DIFFICULTY,
@@ -55,7 +55,7 @@ proc mainMerit() {.forceCheck: [].} =
                 for nonce in merit.blockchain.height ..< newBlock.header.nonce:
                     #Get and test the Block.
                     try:
-                        await functions.merit.addBlock(await network.requestBlock(verifications, nonce))
+                        await functions.merit.addBlock(await network.requestBlock(consensus, nonce))
                     #Redefine as a GapError since a failure to sync produces a gap.
                     except DataMissing as e:
                         raise newException(GapError, e.msg)
@@ -74,7 +74,7 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Sync this Block.
             try:
-                await network.sync(verifications, newBlock)
+                await network.sync(consensus, newBlock)
             except DataMissing as e:
                 raise newException(GapError, e.msg)
             except ValidityConcern as e:
@@ -84,27 +84,27 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Verify Record validity (nonce and Merkle), as well as whether or not the verified Entries are out of Epochs yet.
             for record in newBlock.records:
-                #Grab the Verifier.
-                var verifier: Verifier = verifications[record.key]
+                #Grab the MeritHolder.
+                var holder: MeritHolder = consensus[record.key]
 
-                #Verify this isn't archiving archived Verifications.
-                if record.nonce <= verifier.archived:
-                    raise newException(IndexError, "Block has a VerifierRecord which archives archived Verifications.")
+                #Verify this isn't archiving archived Elements.
+                if record.nonce <= holder.archived:
+                    raise newException(IndexError, "Block has a MeritHolderRecord which archives archived Elements.")
 
                 #Verify the merkle.
                 var merkle: Hash[384]
                 try:
-                    merkle = verifier.calculateMerkle(record.nonce)
+                    merkle = holder.calculateMerkle(record.nonce)
                 except IndexError as e:
                     fcRaise e
                 if merkle != record.merkle:
-                    raise newException(ValueError, "Block has a VerifierRecord with a competing Merkle.")
+                    raise newException(ValueError, "Block has a MeritHolderRecord with a competing Merkle.")
 
-                #Seq of the relevant verifications for this Verifier.
+                #Seq of the relevant Elements for this MeritHolder.
                 var verifs: seq[Verification]
-                #Grab the verifications.
+                #Grab the consensus.
                 try:
-                    verifs = verifier[verifier.archived + 1 .. record.nonce]
+                    verifs = holder[holder.archived + 1 .. record.nonce]
                 except IndexError as e:
                     fcRaise e
 
@@ -116,7 +116,7 @@ proc mainMerit() {.forceCheck: [].} =
             #Add the Block to the Merit.
             var epoch: Epoch
             try:
-                epoch = merit.processBlock(verifications, newBlock)
+                epoch = merit.processBlock(consensus, newBlock)
             except ValueError as e:
                 fcRaise e
             except GapError as e:
@@ -124,8 +124,8 @@ proc mainMerit() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
-            #Archive the Verifications mentioned in the Block.
-            verifications.archive(newBlock.records)
+            #Archive the Elements mentioned in the Block.
+            consensus.archive(newBlock.records)
 
             #Archive the hashes handled by the popped Epoch.
             lattice.archive(epoch)

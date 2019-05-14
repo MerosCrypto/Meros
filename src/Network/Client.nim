@@ -13,8 +13,8 @@ import ../Wallet/MinerWallet
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice
 
-#Verifications lib (for Verification/MemoryVerification).
-import ../Database/Verifications/Verifications
+#Consensus lib (for Verification/SignedVerification).
+import ../Database/Consensus/Consensus
 
 #Block lib.
 import ../Database/Merit/Block as BlockFile
@@ -28,8 +28,8 @@ import Serialize/Lattice/ParseSend
 import Serialize/Lattice/ParseReceive
 import Serialize/Lattice/ParseData
 
-import Serialize/Verifications/ParseVerification
-import Serialize/Verifications/ParseMemoryVerification
+import Serialize/Consensus/ParseVerification
+import Serialize/Consensus/ParseSignedVerification
 
 import Serialize/Merit/ParseBlock
 
@@ -101,7 +101,7 @@ proc recv*(
         of MessageType.Data:
             size = DATA_PREFIX_LEN
 
-        of MessageType.MemoryVerification:
+        of MessageType.SignedVerification:
             size = MEMORY_VERIFICATION_LEN
         of MessageType.Block:
             size = BLOCK_HEADER_LEN + INT_LEN
@@ -389,7 +389,7 @@ proc syncEntry*(
 #Sync a Verification.
 proc syncVerification*(
     client: Client,
-    verifier: BLSPublicKey,
+    holder: BLSPublicKey,
     nonce: int
 ): Future[Verification] {.forceCheck: [
     SocketError,
@@ -407,7 +407,7 @@ proc syncVerification*(
         await client.send(
             newMessage(
                 MessageType.VerificationRequest,
-                verifier.toString() & nonce.toBinary().pad(INT_LEN)
+                holder.toString() & nonce.toBinary().pad(INT_LEN)
             )
         )
     except SocketError as e:
@@ -443,7 +443,7 @@ proc syncVerification*(
         else:
             raise newException(InvalidMessageError, "Client didn't respond properly to our VerificationRequest.")
 
-    if (result.verifier != verifier) or (result.nonce != nonce):
+    if (result.holder != holder) or (result.nonce != nonce):
         raise newException(InvalidMessageError, "Synced a Verification that we didn't request.")
 
 #Sync a Block.

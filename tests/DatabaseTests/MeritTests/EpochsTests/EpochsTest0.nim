@@ -8,8 +8,8 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Verifications lib.
-import ../../../../src/Database/Verifications/Verifications
+#Consensus lib.
+import ../../../../src/Database/Consensus/Consensus
 
 #Blockchain lib.
 import ../../../../src/Database/Merit/Blockchain
@@ -26,17 +26,17 @@ import ../TestMerit
 var
     #Database Function Box.
     functions: DatabaseFunctionBox = newTestDatabase()
-    #Verifications.
-    verifications: Verifications = newVerifications(functions)
+    #Consensus.
+    consensus: Consensus = newConsensus(functions)
     #Blockchain.
     blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_0", 1, "".pad(48).toHash(384))
     #State.
     state: State = newState(functions, 1)
     #Epochs.
-    epochs: Epochs = newEpochs(functions, verifications, blockchain)
+    epochs: Epochs = newEpochs(functions, consensus, blockchain)
     #Rewards.
     rewards: Rewards = epochs.shift(
-        verifications,
+        consensus,
         @[]
     ).calculate(state)
 

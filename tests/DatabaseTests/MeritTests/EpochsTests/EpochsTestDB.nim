@@ -12,11 +12,11 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Verifications lib.
-import ../../../../src/Database/Verifications/Verifications
+#Consensus lib.
+import ../../../../src/Database/Consensus/Consensus
 
-#VerifierRecord object.
-import ../../../../src/Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../../../src/Database/common/objects/MeritHolderRecordObj
 
 #Miners object.
 import ../../../../src/Database/Merit/objects/MinersObj
@@ -41,8 +41,8 @@ proc test(blocks: int) =
     var
         #Database.
         db: DatabaseFunctionBox = newTestDatabase()
-        #Verifications.
-        verifications: Verifications = newVerifications(db)
+        #Consensus.
+        consensus: Consensus = newConsensus(db)
         #Blockchain.
         blockchain: Blockchain = newBlockchain(
             db,
@@ -53,7 +53,7 @@ proc test(blocks: int) =
         #Epochs.
         epochs: Epochs = newEpochs(
             db,
-            verifications,
+            consensus,
             blockchain
         )
         #MinerWallets.
@@ -62,10 +62,10 @@ proc test(blocks: int) =
         miners: Miners
         #Hashes we're verifying.
         hashes: seq[seq[Hash[384]]] = @[]
-        #Table of hashes -> verifiers.
+        #Table of hashes -> holders.
         verified: Table[string, seq[BLSPublicKey]] = initTable[string, seq[BLSPublicKey]]()
-        #VerifierRecords.
-        records: seq[seq[VerifierRecord]] = @[]
+        #MeritHolderRecords.
+        records: seq[seq[MeritHolderRecord]] = @[]
         #Block we're mining.
         mining: Block
         #Epoch we popped.
@@ -116,9 +116,9 @@ proc test(blocks: int) =
         #Have the first miner verify everything instantly.
         for hash in hashes[^1]:
             #Create the Verification.
-            var verif: MemoryVerification = newMemoryVerificationObj(hash)
-            wallets[0].sign(verif, verifications[wallets[0].publicKey].height)
-            verifications.add(verif)
+            var verif: SignedVerification = newSignedVerificationObj(hash)
+            wallets[0].sign(verif, consensus[wallets[0].publicKey].height)
+            consensus.add(verif)
 
             #Say this wallet verified this hash.
             verified[hash.toString()].add(wallets[0].publicKey)
@@ -131,9 +131,9 @@ proc test(blocks: int) =
                     continue
 
                 #Create the Verification.
-                var verif: MemoryVerification = newMemoryVerificationObj(hash)
-                wallets[w].sign(verif, verifications[wallets[w].publicKey].height)
-                verifications.add(verif)
+                var verif: SignedVerification = newSignedVerificationObj(hash)
+                wallets[w].sign(verif, consensus[wallets[w].publicKey].height)
+                consensus.add(verif)
 
                 #Say this wallet verified this hash.
                 verified[hash.toString()].add(wallets[w].publicKey)
@@ -146,9 +146,9 @@ proc test(blocks: int) =
                     continue
 
                 #Create the Verification.
-                var verif: MemoryVerification = newMemoryVerificationObj(hash)
-                wallets[w].sign(verif, verifications[wallets[w].publicKey].height)
-                verifications.add(verif)
+                var verif: SignedVerification = newSignedVerificationObj(hash)
+                wallets[w].sign(verif, consensus[wallets[w].publicKey].height)
+                consensus.add(verif)
 
                 #Say this wallet verified this hash.
                 verified[hash.toString()].add(wallets[w].publicKey)
@@ -156,23 +156,23 @@ proc test(blocks: int) =
         #Create the new records.
         records.add(@[])
         for wallet in wallets:
-            #Grab the Verifier.
-            var verifier: BLSPublicKey = wallet.publicKey
+            #Grab the MeritHolder.
+            var holder: BLSPublicKey = wallet.publicKey
 
-            #Skip over Verifiers with no Verifications, if any manage to exist.
-            if verifications[verifier].height == 0:
+            #Skip over MeritHolders with no Verifications, if any manage to exist.
+            if consensus[holder].height == 0:
                 continue
 
             #Continue if this user doesn't have unarchived Verifications.
-            if verifications[verifier].verifications.len == 0:
+            if consensus[holder].elements.len == 0:
                 continue
 
-            #Since there are unarchived verifications, add the VerifierRecord.
-            var nonce: int = verifications[verifier].height - 1
-            records[^1].add(newVerifierRecord(
-                verifier,
+            #Since there are unarchived consensus, add the MeritHolderRecord.
+            var nonce: int = consensus[holder].height - 1
+            records[^1].add(newMeritHolderRecord(
+                holder,
                 nonce,
-                verifications[verifier].calculateMerkle(nonce)
+                consensus[holder].calculateMerkle(nonce)
             ))
 
         #Create the Block. We don't need to pass an aggregate signature because the blockchain doesn't test for that; MainMerit does.
@@ -194,10 +194,10 @@ proc test(blocks: int) =
             raise newException(ValueError, "Valid Block wasn't successfully added: " & e.msg)
 
         #Shift the records onto the Epochs.
-        epoch = epochs.shift(verifications, records[^1])
+        epoch = epochs.shift(consensus, records[^1])
 
         #Mark the records as archived.
-        verifications.archive(records[^1])
+        consensus.archive(records[^1])
 
         #Make sure the Epoch has the same hashes as we do.
         for hash in epoch.hashes.keys():
@@ -205,12 +205,12 @@ proc test(blocks: int) =
         for hash in hashes[^6]:
             assert(epoch.hashes.hasKey(hash.toString()))
 
-        #Make sure the Epoch has the same list of verifiers as we do.
+        #Make sure the Epoch has the same list of holders as we do.
         for hash in hashes[^6]:
-            for verifier in epoch.hashes[hash.toString()]:
-                assert(verified[hash.toString()].contains(verifier))
-            for verifier in verified[hash.toString()]:
-                assert(epoch.hashes[hash.toString()].contains(verifier))
+            for holder in epoch.hashes[hash.toString()]:
+                assert(verified[hash.toString()].contains(holder))
+            for holder in verified[hash.toString()]:
+                assert(epoch.hashes[hash.toString()].contains(holder))
 
         #Test that the saved records are accurate.
         for record in records[^11]:
@@ -224,13 +224,13 @@ proc test(blocks: int) =
 
     #Reload the Epochs.
     echo "Reloading the Epochs..."
-    epochs = newEpochs(db, verifications, blockchain)
+    epochs = newEpochs(db, consensus, blockchain)
 
     echo "Testing the reloaded Epochs..."
 
     #Shift 5 blank sets of records.
     for i in 0 ..< 5:
-        epoch = epochs.shift(verifications, @[])
+        epoch = epochs.shift(consensus, @[])
 
         #Make sure the Epoch has the same hashes as we do.
         for hash in epoch.hashes.keys():
@@ -238,12 +238,12 @@ proc test(blocks: int) =
         for hash in hashes[^(5 - i)]:
             assert(epoch.hashes.hasKey(hash.toString()))
 
-        #Make sure the Epoch has the same list of verifiers as we do.
+        #Make sure the Epoch has the same list of holders as we do.
         for hash in hashes[^(5 - i)]:
-            for verifier in epoch.hashes[hash.toString()]:
-                assert(verified[hash.toString()].contains(verifier))
-            for verifier in verified[hash.toString()]:
-                assert(epoch.hashes[hash.toString()].contains(verifier))
+            for holder in epoch.hashes[hash.toString()]:
+                assert(verified[hash.toString()].contains(holder))
+            for holder in verified[hash.toString()]:
+                assert(epoch.hashes[hash.toString()].contains(holder))
 
     #Test that the saved records are accurate.
     for record in records[^6]:

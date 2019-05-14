@@ -7,15 +7,15 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#Verifications lib.
-import ../Verifications/Verifications
+#Consensus lib.
+import ../Consensus/Consensus
 
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#VerifierRecord object.
-import ../common/objects/VerifierRecordObj
-export VerifierRecordObj
+#MeritHolderRecord object.
+import ../common/objects/MeritHolderRecordObj
+export MeritHolderRecordObj
 
 #Miners object.
 import objects/MinersObj
@@ -45,7 +45,7 @@ type Merit* = ref object
 #Constructor.
 proc newMerit*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    consensus: Consensus,
     genesis: string,
     blockTime: Natural,
     startDifficultyArg: string,
@@ -69,12 +69,12 @@ proc newMerit*(
 
         state: newState(db, live)
     )
-    result.epochs = newEpochs(db, verifications, result.blockchain)
+    result.epochs = newEpochs(db, consensus, result.blockchain)
 
 #Add a block.
 proc processBlock*(
     merit: Merit,
-    verifications: Verifications,
+    consensus: Consensus,
     newBlock: Block
 ): Epoch {.forceCheck: [
     ValueError,
@@ -96,6 +96,6 @@ proc processBlock*(
 
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
-        verifications,
+        consensus,
         newBlock.records
     )

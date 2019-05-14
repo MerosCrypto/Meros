@@ -14,8 +14,8 @@ import Database/common/Merkle
 import Wallet/MinerWallet
 import Wallet/Wallet
 
-#Verifications.
-import Database/Verifications/Verifications
+#Consensus.
+import Database/Consensus/Consensus
 
 #Merit.
 import Database/Merit/Merit
@@ -30,7 +30,7 @@ import Database/Filesystem/DB
 import Network/Network
 
 #Serialization libs.
-import Network/Serialize/Verifications/SerializeMemoryVerification
+import Network/Serialize/Consensus/SerializeSignedVerification
 
 import Network/Serialize/Merit/SerializeMiners
 import Network/Serialize/Merit/SerializeBlock

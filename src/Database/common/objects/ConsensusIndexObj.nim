@@ -8,17 +8,17 @@ import ../../../Wallet/MinerWallet
 import finals
 
 finalsd:
-    #VerificationsIndex object. Specifies a position on the Verifications DAG.
-    type VerificationsIndex* = object of RootObj
+    #ConsensusIndex object. Specifies a position on the Consensus DAG.
+    type ConsensusIndex* = object of RootObj
         key* {.final.}: BLSPublicKey
         nonce* {.final.}: int
 
 #Constructor.
-func newVerificationsIndex*(
+func newConsensusIndex*(
     key: BLSPublicKey,
     nonce: Natural
-): VerificationsIndex {.forceCheck: [].} =
-    result = VerificationsIndex(
+): ConsensusIndex {.forceCheck: [].} =
+    result = ConsensusIndex(
         key: key,
         nonce: nonce
     )

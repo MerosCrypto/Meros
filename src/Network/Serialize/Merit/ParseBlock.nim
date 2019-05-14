@@ -4,8 +4,8 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#VerifierRecord object.
-import ../../../Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../../Database/common/objects/MeritHolderRecordObj
 
 #Miners object.
 import ../../../Database/Merit/objects/MinersObj
@@ -28,10 +28,10 @@ proc parseBlock*(
     ArgonError,
     BLSError
 ].} =
-    #Header | Verifications | Miners
+    #Header | Elements | Miners
     var
         header: BlockHeader
-        records: seq[VerifierRecord]
+        records: seq[MeritHolderRecord]
         miners: Miners
     try:
         header = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()

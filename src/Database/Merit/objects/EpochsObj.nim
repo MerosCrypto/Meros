@@ -10,8 +10,8 @@ import ../../../Wallet/MinerWallet
 #DB Function Box object.
 import ../../../objects/GlobalFunctionBoxObj
 
-#VerifierRecord object.
-import ../../common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../common/objects/MeritHolderRecordObj
 
 #Tables standard lib.
 import tables
@@ -33,7 +33,7 @@ finalsd:
         #Epoch object. Entry Hash -> Public Keys
         Epoch* = object
             hashes*: Table[string, seq[BLSPublicKey]]
-            records*: seq[VerifierRecord]
+            records*: seq[MeritHolderRecord]
 
         #Epochs object.
         Epochs* = object
@@ -42,8 +42,8 @@ finalsd:
 
             #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
-            #The last five VerifierRecords to have been shifted out of Epochs.
-            records*: seq[seq[VerifierRecord]]
+            #The last five MeritHolderRecords to have been shifted out of Epochs.
+            records*: seq[seq[MeritHolderRecord]]
 
 #Constructors.
 func newReward*(
@@ -60,7 +60,7 @@ func newRewards*(): Rewards {.inline, forceCheck: [].} =
     newSeq[Reward]()
 
 func newEpoch*(
-    records: seq[VerifierRecord]
+    records: seq[MeritHolderRecord]
 ): Epoch {.inline, forceCheck: [].} =
     Epoch(
         hashes: initTable[string, seq[BLSPublicKey]](),
@@ -74,7 +74,7 @@ func newEpochsObj*(
     result = Epochs(
         db: db,
         epochs: newSeq[Epoch](5),
-        records: newSeq[seq[VerifierRecord]](5)
+        records: newSeq[seq[MeritHolderRecord]](5)
     )
 
     #Place blank epochs in.
@@ -89,19 +89,19 @@ func newEpochsObj*(
 func add*(
     epochs: var Epochs,
     hash: string,
-    verifier: BLSPublicKey
+    holder: BLSPublicKey
 ) {.forceCheck: [
     NotInEpochs
 ].} =
     #Check every Epoch.
     try:
         for i in 0 ..< epochs.epochs.len:
-            #If we found the hash, add the verifier and return true.
+            #If we found the hash, add the holder and return true.
             if epochs.epochs[i].hashes.hasKey(hash):
                 for key in epochs.epochs[i].hashes[hash]:
-                    if key == verifier:
+                    if key == holder:
                         return
-                epochs.epochs[i].hashes[hash].add(verifier)
+                epochs.epochs[i].hashes[hash].add(holder)
                 return
     except KeyError as e:
         doAssert(false, "Couldn't add a hash to an Epoch which already has said hash: " & e.msg)
@@ -111,7 +111,7 @@ func add*(
 func add*(
     epoch: var Epoch,
     hash: string,
-    verifier: BLSPublicKey
+    holder: BLSPublicKey
 ) {.forceCheck: [].} =
     #Create the seq.
     try:
@@ -121,7 +121,7 @@ func add*(
 
     #Add the key.
     try:
-        epoch.hashes[hash].add(verifier)
+        epoch.hashes[hash].add(holder)
     except KeyError as e:
         doAssert(false, "Couldn't add a hash to a newly created seq in the Epoch: " & e.msg)
 
@@ -141,7 +141,7 @@ proc shift*(
     #Add the newly shifted records.
     epochs.records.add(result.records)
     #Grab the oldest.
-    let records: seq[VerifierRecord] = epochs.records[0]
+    let records: seq[MeritHolderRecord] = epochs.records[0]
     #Remove the oldest.
     epochs.records.delete(0)
 

@@ -9,12 +9,12 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Verifications lib.
-import ../../../../src/Database/Verifications/Verifications
+#Consensus lib.
+import ../../../../src/Database/Consensus/Consensus
 
 #Serialize lib.
-import ../../../../src/Network/Serialize/Verifications/SerializeVerification
-import ../../../../src/Network/Serialize/Verifications/ParseVerification
+import ../../../../src/Network/Serialize/Consensus/SerializeVerification
+import ../../../../src/Network/Serialize/Consensus/ParseVerification
 
 #Random standard lib.
 import random
@@ -27,8 +27,8 @@ for i in 1 .. 20:
     echo "Testing Verification Serialization/Parsing, iteration " & $i & "."
 
     var
-        #Create a Wallet for the 'Verifier'.
-        verifier: MinerWallet = newMinerWallet()
+        #Create a Wallet for the 'MeritHolder'.
+        holder: MinerWallet = newMinerWallet()
         #Create a nonce.
         nonce: uint = uint(rand(65000))
         #Create a hash.
@@ -39,7 +39,7 @@ for i in 1 .. 20:
 
     #Create the Verification.
     var verif: Verification = newVerificationObj(hash)
-    verif.verifier = verifier.publicKey
+    verif.holder = holder.publicKey
     verif.nonce = nonce
 
     #Serialize it and parse it back.
@@ -49,8 +49,8 @@ for i in 1 .. 20:
     assert(verif.serialize(false) == verifParsed.serialize(false))
 
     #Test the Verification's properties.
-    assert(verif.verifier == verifParsed.verifier)
+    assert(verif.holder == verifParsed.holder)
     assert(verif.nonce == verifParsed.nonce)
     assert(verif.hash == verifParsed.hash)
 
-echo "Finished the Network/Serialize/Verifications/Verification Test."
+echo "Finished the Network/Serialize/Consensus/Verification Test."

@@ -1,7 +1,7 @@
 #Modules Tests.
 
 import ModulesTests/SystemModuleTest
-import ModulesTests/VerificationsModuleTest
+import ModulesTests/ConsensusModuleTest
 import ModulesTests/MeritModuleTest
 import ModulesTests/LatticeModuleTest
 import ModulesTests/PersonalModuleTest

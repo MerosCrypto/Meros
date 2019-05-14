@@ -149,7 +149,7 @@ proc newNetwork*(
                 except BLSError as e:
                     raise newException(InvalidMessageError, "`VerificationRequest` contained an invalid BLS Public Key: " & e.msg)
 
-                height = mainFunctions.verifications.getVerifierHeight(key)
+                height = mainFunctions.consensus.getMeritHolderHeight(key)
                 if height <= nonce:
                     try:
                         await network.clients.reply(
@@ -171,7 +171,7 @@ proc newNetwork*(
                         msg,
                         newMessage(
                             MessageType.Verification,
-                            mainFunctions.verifications.getVerification(key, nonce).serialize(false)
+                            mainFunctions.consensus.getElement(key, nonce).serialize(false)
                         )
                     )
                 except IndexError as e:
@@ -356,25 +356,25 @@ proc newNetwork*(
                 except DataExists:
                     return
 
-            of MessageType.MemoryVerification:
-                var verif: MemoryVerification
+            of MessageType.SignedVerification:
+                var verif: SignedVerification
                 try:
-                    verif = msg.message.parseMemoryVerification()
+                    verif = msg.message.parseSignedVerification()
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "MemoryVerification didn't contain a valid hash: " & e.msg)
+                    raise newException(InvalidMessageError, "SignedVerification didn't contain a valid hash: " & e.msg)
                 except BLSError as e:
-                    raise newException(InvalidMessageError, "MemoryVerification contained an invalid BLS Public Key: " & e.msg)
+                    raise newException(InvalidMessageError, "SignedVerification contained an invalid BLS Public Key: " & e.msg)
 
                 try:
-                    mainFunctions.verifications.addMemoryVerification(verif)
+                    mainFunctions.consensus.addSignedVerification(verif)
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the MemoryVerification failed due to a ValueError: " & e.msg)
+                    raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
                 except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the MemoryVerification failed due to a IndexError: " & e.msg)
+                    raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a IndexError: " & e.msg)
                 except GapError:
                     return
                 except BLSError as e:
-                    raise newException(InvalidMessageError, "Adding the MemoryVerification failed due to a BLSError: " & e.msg)
+                    raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a BLSError: " & e.msg)
                 except DataExists:
                     return
 

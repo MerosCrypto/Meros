@@ -22,40 +22,40 @@ proc verify(
                 doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
 
         #Verify the Entry.
-        var verif: MemoryVerification = newMemoryVerificationObj(entry.hash)
+        var verif: SignedVerification = newSignedVerificationObj(entry.hash)
         try:
-            config.miner.sign(verif, verifications[config.miner.publicKey].height)
+            config.miner.sign(verif, consensus[config.miner.publicKey].height)
         except BLSError as e:
-            doAssert(false, "Couldn't create a MemoryVerification due to a BLSError: " & e.msg)
+            doAssert(false, "Couldn't create a SignedVerification due to a BLSError: " & e.msg)
 
-        #Add the verif to verifications.
+        #Add the verif to consensus.
         try:
-            verifications.add(verif)
+            consensus.add(verif)
         except ValueError as e:
-            doAssert(false, "Created a MemoryVerification with an invalid signature: " & e.msg)
+            doAssert(false, "Created a SignedVerification with an invalid signature: " & e.msg)
         except GapError as e:
-            doAssert(false, "Created a MemoryVerification with an invalid nonce: " & e.msg)
+            doAssert(false, "Created a SignedVerification with an invalid nonce: " & e.msg)
         except BLSError as e:
-            doAssert(false, "Couldn't add a MemoryVerification due to a BLSError: " & e.msg)
+            doAssert(false, "Couldn't add a SignedVerification due to a BLSError: " & e.msg)
         except MeritRemoval as e:
-            doAssert(false, "Created a MemoryVerification which causes a Merit Removal: " & e.msg)
+            doAssert(false, "Created a SignedVerification which causes a Merit Removal: " & e.msg)
         except DataExists as e:
-            doAssert(false, "Created a MemoryVerification already added to the Verifications DAG: " & e.msg)
+            doAssert(false, "Created a SignedVerification already added to the Consensus DAG: " & e.msg)
 
         #Release the verify lock.
         release(verifyLock)
 
         #Add the Verification to the Lattice.
         try:
-            lattice.verify(verif, merit.state[verif.verifier], merit.state.live)
+            lattice.verify(verif, merit.state[verif.holder], merit.state.live)
         except ValueError as e:
             doAssert(false, "Tried verifying an Entry when we didn't have Merit/tried verifying a non-existant/dated Entry: " & e.msg)
         except DataExists as e:
-            doAssert(false, "Created a MemoryVerification already added to the Lattice: " & e.msg)
+            doAssert(false, "Created a SignedVerification already added to the Lattice: " & e.msg)
 
         #Broadcast the Verification.
         functions.network.broadcast(
-            MessageType.MemoryVerification,
+            MessageType.SignedVerification,
             verif.serialize()
         )
 
@@ -64,7 +64,7 @@ proc mainLattice() {.forceCheck: [].} =
         #Create the Lattice.
         lattice = newLattice(
             functions.database,
-            verifications,
+            consensus,
             merit,
             SEND_DIFFICULTY,
             DATA_DIFFICULTY

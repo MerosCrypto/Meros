@@ -10,8 +10,8 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#VerifierRecord object.
-import ../../../Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../../Database/common/objects/MeritHolderRecordObj
 
 #Common serialization functions.
 import ../SerializeCommon
@@ -19,7 +19,7 @@ import ../SerializeCommon
 #Parse Records.
 proc parseRecords*(
     recordsStr: string
-): seq[VerifierRecord] {.forceCheck: [
+): seq[MeritHolderRecord] {.forceCheck: [
     ValueError,
     BLSError
 ].} =
@@ -29,9 +29,9 @@ proc parseRecords*(
         recordSeq: seq[string]
 
     #Init the result.
-    result = newSeq[VerifierRecord](quantity)
+    result = newSeq[MeritHolderRecord](quantity)
 
-    #Parse each VerifierRecord.
+    #Parse each MeritHolderRecord.
     for i in 0 ..< quantity:
         recordSeq = recordsStr
             .substr(INT_LEN + (i * VERIFIER_INDEX_LEN))
@@ -42,7 +42,7 @@ proc parseRecords*(
             )
 
         try:
-            result[i] = newVerifierRecord(
+            result[i] = newMeritHolderRecord(
                 newBLSPublicKey(recordSeq[0]),
                 recordSeq[1].fromBinary(),
                 recordSeq[2].toHash(384)

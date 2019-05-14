@@ -13,8 +13,8 @@ import ../../../Wallet/MinerWallet
 #Block Header lib.
 import ../BlockHeader
 
-#VerifierRecord and Miners objects.
-import ../../common/objects/VerifierRecordObj
+#MeritHolderRecord and Miners objects.
+import ../../common/objects/MeritHolderRecordObj
 import MinersObj
 
 #Finals lib.
@@ -28,32 +28,32 @@ type Block* = object
     #Block Header.
     header*: BlockHeader
 
-    #Verifier Records.
-    records: seq[VerifierRecord]
+    #MeritHolder Records.
+    records: seq[MeritHolderRecord]
     #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
     miners: Miners
 
 #Records getter/setter.
 func records*(
     blockArg: Block
-): seq[VerifierRecord] {.inline, forceCheck: [].} =
+): seq[MeritHolderRecord] {.inline, forceCheck: [].} =
     blockArg.records
 
 func `records=`*(
     blockArg: var Block,
-    records: seq[VerifierRecord]
+    records: seq[MeritHolderRecord]
 ) {.forceCheck: [
     ValueError
 ].} =
-    #Verify no Verifier has multiple Records.
+    #Verify no MeritHolder has multiple Records.
     var
-        verifiers: Table[string, bool] = initTable[string, bool]()
-        verifier: string
+        holders: Table[string, bool] = initTable[string, bool]()
+        holder: string
     for record in records:
-        verifier = record.key.toString()
-        if verifiers.hasKey(verifier):
-            raise newException(ValueError, "One Verifier has two Records.")
-        verifiers[verifier] = true
+        holder = record.key.toString()
+        if holders.hasKey(holder):
+            raise newException(ValueError, "One MeritHolder has two Records.")
+        holders[holder] = true
 
     blockArg.records = records
 
@@ -90,7 +90,7 @@ func newBlockObj*(
     nonce: Natural,
     last: ArgonHash,
     aggregate: BLSSignature,
-    records: seq[VerifierRecord],
+    records: seq[MeritHolderRecord],
     miners: Miners,
     time: int64 = getTime(),
     proof: Natural = 0

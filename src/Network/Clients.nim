@@ -7,8 +7,8 @@ import ../lib/Util
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice
 
-#Verifications lib (for Verification/MemoryVerification).
-import ../Database/Verifications/Verifications
+#Consensus lib (for Verification/SignedVerification).
+import ../Database/Consensus/Consensus
 
 #Block lib.
 import ../Database/Merit/Block

@@ -1,4 +1,4 @@
-#VerifierRecord is under common, yet serialized in a Block. Therefore, it's under Serialize/Merit.
+#MeritHolderRecord is under common, yet serialized in a Block. Therefore, it's under Serialize/Merit.
 
 #Errors lib.
 import ../../../lib/Errors
@@ -12,20 +12,20 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#VerifierRecord object.
-import ../../../Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../../Database/common/objects/MeritHolderRecordObj
 
 #Common serialization functions.
 import ../SerializeCommon
 
 #Serialize Records.
 proc serialize*(
-    records: seq[VerifierRecord]
+    records: seq[MeritHolderRecord]
 ): string {.forceCheck: [].} =
     #Set the quantity.
     result = records.len.toBinary().pad(INT_LEN)
 
-    #Iterate over every VerifierRecord.
+    #Iterate over every MeritHolderRecord.
     for record in records:
         #Serialize their data.
         result &=

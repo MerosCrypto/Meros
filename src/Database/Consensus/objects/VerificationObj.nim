@@ -15,14 +15,14 @@ finalsd:
         #Verification object.
         Verification* = ref object of RootObj
             #BLS Key.
-            verifier* {.final.}: BLSPublicKey
+            holder* {.final.}: BLSPublicKey
             #Nonce.
             nonce* {.final.}: Natural
             #Entry Hash.
             hash* {.final.}: Hash[384]
 
         #Verification object for the mempool.
-        MemoryVerification* = ref object of Verification
+        SignedVerification* = ref object of Verification
             #BLS signature for aggregation in a block.
             signature* {.final.}: BLSSignature
 
@@ -35,11 +35,11 @@ func newVerificationObj*(
     )
     result.ffinalizeHash()
 
-#New MemoryVerification object.
-func newMemoryVerificationObj*(
+#New SignedVerification object.
+func newSignedVerificationObj*(
     hash: Hash[384]
-): MemoryVerification {.forceCheck: [].} =
-    result = MemoryVerification(
+): SignedVerification {.forceCheck: [].} =
+    result = SignedVerification(
         hash: hash
     )
     result.ffinalizeHash()

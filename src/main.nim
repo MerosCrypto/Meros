@@ -3,8 +3,8 @@
 #MainImports is included by MainConstants.
 #MainConstants is included by MainGlobals.
 #MainGlobals is included by MainDatabase.
-#MainDatabase is included by MainVerifications.
-#MainVerifications is included by MainMerit.
+#MainDatabase is included by MainConsensus.
+#MainConsensus is included by MainMerit.
 #MainMerit is included by MainLattice.
 #MainLattice is included by MainPersonal.
 #MainPersonal is included by MainNetwork.
@@ -20,7 +20,7 @@ include MainUI
 #Spawn the core stuff on a thread since the UI must be on the main thread.
 proc main() {.thread.} =
     mainDatabase()
-    mainVerifications()
+    mainConsensus()
     mainMerit()
     mainLattice()
     mainPersonal()

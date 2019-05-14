@@ -6,7 +6,7 @@
 
 Every Element has the following fields:
 
-- sender: BLS Public Key of the MeritHolder that the Element belongs to.
+- holder: BLS Public Key of the MeritHolder that the Element belongs to.
 - nonce: Index of the Element on the MeritHolder. Starts at 0 and increments by 1 for every added Element.
 
 The Element sub-types are as follows:
@@ -17,7 +17,7 @@ The Element sub-types are as follows:
 - GasPrice
 - MeritRemoval
 
-When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval` message, it should be added to the sender's MeritHolder, as long as the signature is correct and any other checks imposed by the sub-type pass. Elements don't have hashes, so the signature is produced by signing the serialized version with a prefix. That said, MeritHolders who don't have any Merit can safely have their Elements ignored, as they mean nothing.
+When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval` message, it should be added to the holder's MeritHolder, as long as the signature is correct and any other checks imposed by the sub-type pass. Elements don't have hashes, so the signature is produced by signing the serialized version with a prefix. That said, MeritHolders who don't have any Merit can safely have their Elements ignored, as they mean nothing.
 
 The `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, and `MeritRemoval` messages are only used when syncing, and their signature data is contained in a Block's aggregate signature, as described in the Merit documentation.
 
@@ -29,7 +29,7 @@ They have the following fields:
 
 - hash: Hash of the Entry verified.
 
-`Verification` has a message length of 100 bytes; the 48 byte sender, the 4 byte nonce, and the 48 byte hash. The signature is produced with a prefix of "verification".
+`Verification` has a message length of 100 bytes; the 48 byte holder, the 4 byte nonce, and the 48 byte hash. The signature is produced with a prefix of "verification".
 
 ### SendDifficulty
 
@@ -45,7 +45,7 @@ They have the following fields:
 
 - difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
 
-`SendDifficulty` has a message length of 100 bytes; the 48 byte sender, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "sendDifficulty".
+`SendDifficulty` has a message length of 100 bytes; the 48 byte holder, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "sendDifficulty".
 
 ### DataDifficulty
 
@@ -57,7 +57,7 @@ They have the following fields:
 
 - difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
-`DataDifficulty` has a message length of 100 bytes; the 48 byte sender, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "dataDifficulty".
+`DataDifficulty` has a message length of 100 bytes; the 48 byte holder, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "dataDifficulty".
 
 ### GasPrice
 
@@ -69,7 +69,7 @@ They have the following fields:
 
 - price: Price in Meri an unit of gas should cost.
 
-`GasPrice` has a message length of 56 bytes; the 48 byte sender, the 4 byte nonce, and the 4 byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "gasPrice".
+`GasPrice` has a message length of 56 bytes; the 48 byte holder, the 4 byte nonce, and the 4 byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "gasPrice".
 
 ### MeritRemoval
 
@@ -85,7 +85,7 @@ MeritRemovals have the following fields:
 - Element1: The first Element.
 - Element2: The second Element.
 
-`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte sender, the 4 byte nonce, the 4 byte cause nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the sender/nonce, the 1 byte message header for the Element, and the serialized version of the second Element without the sender/nonce.
+`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte holder, the 4 byte nonce, the 4 byte cause nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the holder/nonce, the 1 byte message header for the Element, and the serialized version of the second Element without the holder/nonce.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, SignedMeritRemoval
 

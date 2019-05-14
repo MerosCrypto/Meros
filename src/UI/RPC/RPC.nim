@@ -11,7 +11,7 @@ export RPCObj
 #RPC modules.
 import Modules/SystemModule
 import Modules/PersonalModule
-import Modules/VerificationsModule
+import Modules/ConsensusModule
 import Modules/MeritModule
 import Modules/LatticeModule
 import Modules/NetworkModule
@@ -64,8 +64,8 @@ proc handle(
                 await rpc.system(msg, reply)
             of "personal":
                 await rpc.personal(msg, reply)
-            of "verifications":
-                await rpc.verifications(msg, reply)
+            of "consensus":
+                await rpc.consensus(msg, reply)
             of "merit":
                 await rpc.merit(msg, reply)
             of "lattice":

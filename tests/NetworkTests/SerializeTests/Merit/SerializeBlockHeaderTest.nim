@@ -9,8 +9,8 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Verifications lib.
-import ../../../../src/Database/Verifications/Verifications
+#Consensus lib.
+import ../../../../src/Database/Consensus/Consensus
 
 #BlockHeader object.
 import ../../../../src/Database/Merit/objects/BlockHeaderObj
@@ -38,7 +38,7 @@ for i in 1 .. 20:
         last: ArgonHash
         #Miner Wallet.
         miner: MinerWallet = newMinerWallet()
-        #Aggregate Signature of the Verifications.
+        #Aggregate Signature of the Elements.
         agg: BLSSignature
         #Miners Hash.
         miners: Blake384Hash

@@ -9,8 +9,8 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#VerifierRecord object.
-import ../../../../src/Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../../../src/Database/common/objects/MeritHolderRecordObj
 
 #Miner object.
 import ../../../../src/Database/Merit/objects/MinersObj
@@ -47,10 +47,10 @@ for i in 1 .. 20:
         #Aggregate Signature.
         aggregate: BLSSignature
         #Records.
-        records: seq[VerifierRecord] = newSeq[VerifierRecord](rand(384))
-        #Temporary key/merkle strings for creating VerifierRecordes.
-        vKey: string
-        vMerkle: string
+        records: seq[MeritHolderRecord] = newSeq[MeritHolderRecord](rand(384))
+        #Temporary key/merkle strings for creating MeritHolderRecordes.
+        rKey: string
+        rMerkle: string
         #Miners.
         miners: seq[Miner] = newSeq[Miner](rand(99) + 1)
         #Remaining Merit in the Block.
@@ -70,23 +70,23 @@ for i in 1 .. 20:
     aggregate = miner.sign(rand(100000).toBinary())
 
     #Randomize the Records.
-    for v in 0 ..< records.len:
+    for r in 0 ..< records.len:
         #Reset the key and merkle.
-        vKey = newString(48)
-        vMerkle = newString(48)
+        rKey = newString(48)
+        rMerkle = newString(48)
 
         #Randomize the key.
-        for b in 0 ..< vKey.len:
-            vKey[b] = char(rand(255))
+        for b in 0 ..< rKey.len:
+            rKey[b] = char(rand(255))
 
         #Randomize the merkle.
-        for b in 0 ..< vMerkle.len:
-            vMerkle[b] = char(rand(255))
+        for b in 0 ..< rMerkle.len:
+            rMerkle[b] = char(rand(255))
 
-        records[v] = newVerifierRecord(
-            newBLSPrivateKeyFromSeed(vKey).getPublicKey(),
+        records[r] = newMeritHolderRecord(
+            newBLSPrivateKeyFromSeed(rKey).getPublicKey(),
             rand(100000),
-            vMerkle.toHash(384)
+            rMerkle.toHash(384)
         )
 
     #Fill up the Miners.
@@ -145,10 +145,10 @@ for i in 1 .. 20:
 
     #Test the Records.
     assert(newBlock.records.len == blockParsed.records.len)
-    for v in 0 ..< newBlock.records.len:
-        assert(newBlock.records[v].key == blockParsed.records[v].key)
-        assert(newBlock.records[v].nonce == blockParsed.records[v].nonce)
-        assert(newBlock.records[v].merkle == blockParsed.records[v].merkle)
+    for r in 0 ..< newBlock.records.len:
+        assert(newBlock.records[r].key == blockParsed.records[r].key)
+        assert(newBlock.records[r].nonce == blockParsed.records[r].nonce)
+        assert(newBlock.records[r].merkle == blockParsed.records[r].merkle)
 
     #Test the Miners.
     assert(newBlock.miners.miners.len == blockParsed.miners.miners.len)

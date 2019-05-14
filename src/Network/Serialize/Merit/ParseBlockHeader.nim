@@ -24,7 +24,7 @@ proc parseBlockHeader*(
     ArgonError,
     BLSError
 ].} =
-    #Nonce | Last Hash | Verifications Aggregate Signature | Miners Merkle | Time | Proof
+    #Nonce | Last Hash | Elements Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(
         INT_LEN,
         HASH_LEN,

@@ -10,14 +10,14 @@ import ../lib/Hash
 #MinerWallet lib.
 import ../Wallet/MinerWallet
 
-#VerifierRecord object.
-import ../Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../Database/common/objects/MeritHolderRecordObj
 
 #Lattice lib (for all Entry types).
 import ../Database/Lattice/Lattice
 
-#Verifications lib.
-import ../Database/Verifications/Verifications
+#Consensus lib.
+import ../Database/Consensus/Consensus
 
 #Block lib.
 import ../Database/Merit/Block as BlockFile
@@ -33,7 +33,7 @@ import Serialize/SerializeCommon
 
 #Serialize libs.
 import Serialize/Merit/SerializeBlock
-import Serialize/Verifications/SerializeVerification
+import Serialize/Consensus/SerializeVerification
 import Serialize/Lattice/SerializeEntry
 
 #Parse libs.
@@ -42,8 +42,8 @@ import Serialize/Lattice/ParseSend
 import Serialize/Lattice/ParseReceive
 import Serialize/Lattice/ParseData
 
-import Serialize/Verifications/ParseVerification
-import Serialize/Verifications/ParseMemoryVerification
+import Serialize/Consensus/ParseVerification
+import Serialize/Consensus/ParseSignedVerification
 
 import Serialize/Merit/ParseBlock
 

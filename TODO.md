@@ -11,11 +11,8 @@ Database:
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
-Verifications:
-- Update the name of Verifications to Consensus.
-- Update the name of Verifier to MeritHolder.
-- Update the name of MemoryVerification to SignedVerification.
-- Load unarchived Verifications from the DB. Doing this, without any changes to the Lattice, will break loading Verifications with the proper State.
+Consensus:
+- Load unarchived Elements from the DB. Doing this, without any changes to the Lattice, will break loading Elements with the proper State.
 
 Merit:
 - Checkpoints.
@@ -28,10 +25,9 @@ Merit:
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
 - Remove holders who lost all their Merit from `merit_holders`.
 
-Verifications & Merit:
+Consensus & Merit:
 - Merit Removal.
-- Currently, Blockchains archive Verifications via the tip; we should also add a start nonce to ignore unarchived Verifications which are past their Epoch.
-- Verification Exclusions: Verifications that we can't find the TX for, so the Block says to ignore, which are validated by checkpoints.
+- Currently, Blockchains archive Elements via the tip; we should also add a start nonce to ignore unarchived Elements which are past their Epoch.
 
 Lattice:
 - Cache the UXTO set.
@@ -51,10 +47,10 @@ Network:
 
 - Multi-client syncing.
 - Sync Entries not on the Blockchain.
-- Sync Verifications not on the Blockchain.
-- Sync gaps (if we get data with nonce 2 but we only have 0; applies to both the Lattice and Verifications).
+- Sync Elements not archived on the Blockchain.
+- Sync gaps (if we get data with nonce 2 but we only have 0; applies to both the Lattice and Elements).
 
-- Move Entries and Verifications to UDP.
+- Move Entries and Elements to UDP.
 
 ### Tests:
 Cleanup Tests (as in, they need to be cleaned (especially LatticeTest)).
@@ -76,16 +72,16 @@ Wallet:
 - Wallet/MinerWallet Test.
 - Wallet/Wallet Test.
 
-Database/Verifications:
-- Database/Verifications/Verifier Test.
-- Database/Verifications/Verification Test.
+Database/Consensus:
+- Database/Consensus/Verifier Test.
+- Database/Consensus/Verification Test.
 
 Database/Merit:
 - Database/Merit/BlockHeader Test.
 - Database/Merit/Block Test.
 - Database/Merit/Difficulty Test.
 - Database/Merit/Merit Test.
-- Add DB writeups, like the one in the VerificationsTest, to BlockchainTest, StateTest, and EpochsTest.
+- Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
 
 Database/Lattice:
 - Database/Lattice/Entry Test.
@@ -95,7 +91,7 @@ Database/Lattice:
 - Database/Lattice/Receive Test.
 - Database/Lattice/Data Test.
 - Database/Lattice/Account Test.
-- Clean the Database/Lattice/Lattice Test and test loading Verifications after 6 and 9 Blocks.
+- Clean the Database/Lattice/Lattice Test and test loading Elements after 6 and 9 Blocks.
 
 Network:
 - Tests.
@@ -107,7 +103,7 @@ Network/Serialize/Lattice:
 UI/RPC:
 - UI/RPC/RPC Test.
 - UI/RPC/Modules/SystemModule Test.
-- UI/RPC/Modules/VerificationsModule Test.
+- UI/RPC/Modules/ConsensusModule Test.
 - UI/RPC/Modules/MeritModule Test.
 - UI/RPC/Modules/LatticeModule Test.
 - UI/RPC/Modules/PersonalModule Test.
@@ -121,7 +117,7 @@ UI/RPC:
 - Have the RPC match the JSON-RPC 2.0 spec.
 - Have the RPC dynamically get the nonce (it's currently an argument).
 - `network.rebroadcast(address | verifier, nonce)` RPC method.
-- Expose more of the Verifications RPC.
+- Expose more of the Consensus RPC.
 
 - Loading screen.
 - Show the existing wallet on reload of `Main.html`.
@@ -136,7 +132,5 @@ UI/RPC:
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Use Nim Documentation Comments.
-- In docs/Protocol/Lattice, explain `Lock`, and `Unlock`.
-- docs/Protocol/Verifications.
 - docs/Protocol/Merit.
 - Meros Whitepaper.

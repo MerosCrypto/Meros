@@ -4,8 +4,8 @@ include NetworkCore
 #Tuple to define missing data.
 type Gap = tuple[key: BLSPublicKey, start: int, last: int]
 
-#Sync missing Verifications from a specific Client.
-proc syncVerifications(
+#Sync missing Elements from a specific Client.
+proc syncElements(
     network: Network,
     id: int,
     gaps: seq[Gap]
@@ -34,7 +34,7 @@ proc syncVerifications(
     except Exception as e:
         doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Ask for missing Verifications.
+    #Ask for missing Elements.
     for gap in gaps:
         #Send the Requests.
         for nonce in gap.start .. gap.last:
@@ -122,10 +122,10 @@ proc syncEntries(
     except Exception as e:
         doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Sync a Block's Verifications/Entries.
+#Sync a Block's Elements/Entries.
 proc sync*(
     network: Network,
-    verifications: Verifications,
+    consensus: Consensus,
     newBlock: Block
 ) {.forceCheck: [
     DataMissing,
@@ -135,32 +135,32 @@ proc sync*(
         #Variable for gaps.
         gaps: seq[Gap] = @[]
         #Every Verification archived in this block.
-        verifs: Table[string, seq[Verification]] = initTable[string, seq[Verification]]()
-        #Seq of missing Verifications.
+        elements: Table[string, seq[Verification]] = initTable[string, seq[Verification]]()
+        #Seq of missing Elements.
         missingVerifs: seq[Verification] = @[]
-        #Hashes of the Entries mentioned in missing Verifications.
+        #Hashes of the Entries mentioned in missing Elements.
         entryHashes: seq[Hash[384]] = @[]
-        #Entries mentioned in missing Verifications.
+        #Entries mentioned in missing Elements.
         entries: seq[SyncEntryResponse] = @[]
 
-    #Calculate the Verifications gaps.
+    #Calculate the Elements gaps.
     for record in newBlock.records:
-        #Get the Verifier's height.
-        var verifHeight: int = verifications[record.key].height
+        #Get the MeritHolder's height.
+        var holderHeigher: int = consensus[record.key].height
 
-        #If we're missing Verifications...
-        if verifHeight <= record.nonce:
+        #If we're missing Elements...
+        if holderHeigher <= record.nonce:
             #Add the gap.
             gaps.add((
                 record.key,
-                verifHeight,
+                holderHeigher,
                 record.nonce
             ))
 
-        #Grab their pending verifs and place it in verifs.
-        verifs[record.key.toString()] = verifications[record.key].verifications
+        #Grab their pending elements and place it in elements.
+        elements[record.key.toString()] = consensus[record.key].elements
 
-    #Sync the missing Verifications.
+    #Sync the missing Elements.
     if gaps.len != 0:
         #List of Clients to disconnect.
         var toDisconnect: seq[int] = @[]
@@ -173,7 +173,7 @@ proc sync*(
                 continue
 
             try:
-                missingVerifs = await network.syncVerifications(client.id, gaps)
+                missingVerifs = await network.syncElements(client.id, gaps)
             #If the Client had problems, disconnect them.
             except SocketError, ClientError:
                 toDisconnect.add(client.id)
@@ -190,7 +190,7 @@ proc sync*(
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
             except Exception as e:
-                doAssert(false, "Syncing a Block's Verifications and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Syncing a Block's Elements and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             #If we made it through that without raising or continuing, set synced to true.
             synced = true
@@ -201,13 +201,13 @@ proc sync*(
 
         #If we tried every client and didn't sync the needed data, raise a DataMissing.
         if not synced:
-            raise newException(DataMissing, "Couldn't sync all the Verifications in a Block.")
+            raise newException(DataMissing, "Couldn't sync all the Elements in a Block.")
 
     #Handle each Verification.
     for verif in missingVerifs:
-        #Add its hash to the list of verifs for this verifier.
+        #Add its hash to the list of elements for this holder.
         try:
-            verifs[verif.verifier.toString()].add(verif)
+            elements[verif.holder.toString()].add(verif)
         except KeyError as e:
             doAssert(false, "Couldn't add a hash to a seq in a table we recently created: " & e.msg)
 
@@ -215,7 +215,7 @@ proc sync*(
         entryHashes.add(verif.hash)
 
     #Check the Block's aggregate.
-    if not newBlock.verify(verifs):
+    if not newBlock.verify(elements):
         raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
 
     #Sync the missing Entries.
@@ -251,7 +251,7 @@ proc sync*(
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
             except Exception as e:
-                doAssert(false, "Syncing a Block's Verifications and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Syncing a Block's Elements and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             #Handle each Entry.
             try:
@@ -306,10 +306,10 @@ proc sync*(
         if not synced:
             raise newException(DataMissing, "Couldn't sync all the Entries in a Block.")
 
-    #Since we now have every Entry, add the Verifications.
+    #Since we now have every Entry, add the Elements.
     for verif in missingVerifs:
         try:
-            network.mainFunctions.verifications.addVerification(verif)
+            network.mainFunctions.consensus.addVerification(verif)
         except ValueError as e:
             doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
         except IndexError as e:
@@ -320,7 +320,7 @@ proc sync*(
 #Request a Block.
 proc requestBlock*(
     network: Network,
-    verifications: Verifications,
+    consensus: Consensus,
     nonce: int
 ): Future[Block] {.forceCheck: [
     DataMissing,
@@ -380,7 +380,7 @@ proc requestBlock*(
 
     #Sync the Block's contents.
     try:
-        await network.sync(verifications, result)
+        await network.sync(consensus, result)
     except DataMissing as e:
         fcRaise e
     except ValidityConcern as e:

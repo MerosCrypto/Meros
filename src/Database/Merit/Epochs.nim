@@ -10,14 +10,14 @@ import ../../lib/Hash
 #MinerWallet lib (for BLSPublicKey's toString).
 import ../../Wallet/MinerWallet
 
-#Verifications lib.
-import ../Verifications/Verifications
+#Consensus lib.
+import ../Consensus/Consensus
 
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#VerifierRecord object.
-import ../common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../common/objects/MeritHolderRecordObj
 
 #Block, Blockcain, and State lib.
 import Block
@@ -41,18 +41,18 @@ import tables
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-# - Saves the VerifierRecords in the Epoch to-be-returned to the Database.
-#If tips is provided, which it is when loading from the DB, those are used instead of verifier.archived.
+# - Saves the MeritHolderRecords in the Epoch to-be-returned to the Database.
+#If tips is provided, which it is when loading from the DB, those are used instead of holder.archived.
 proc shift*(
     epochs: var Epochs,
-    verifications: Verifications,
-    records: seq[VerifierRecord],
+    consensus: Consensus,
+    records: seq[MeritHolderRecord],
     tips: TableRef[string, int] = nil
 ): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch(records)
-        #Loop variable of what verification to start with.
+        #Loop variable of what Element to start with.
         start: int
         #Verifications we're handling.
         verifs: seq[Verification]
@@ -65,14 +65,14 @@ proc shift*(
                 start = tips[record.key.toString()]
             except KeyError as e:
                 doAssert(false, "Reloading Epochs from the DB using invalid tips: " & e.msg)
-        #Else, use the verifier's archived.
+        #Else, use the holder's archived.
         else:
-            start = verifications[record.key].archived
+            start = consensus[record.key].archived
 
         #Grab the Verifs.
         try:
-            verifs = verifications[record.key][start .. record.nonce]
-        #This will be thrown if we access a verif too high, which shouldn't happen as we check a Block only has valid tips.
+            verifs = consensus[record.key][start .. record.nonce]
+        #This will be thrown if we access a nonce too high, which shouldn't happen as we check a Block only has valid tips.
         except IndexError as e:
             doAssert(false, "An invalid tip was passed to shift: " & e.msg)
 
@@ -80,10 +80,10 @@ proc shift*(
         for verif in verifs:
             #Try adding this hash to an existing Epoch.
             try:
-                epochs.add(verif.hash.toString(), verif.verifier)
+                epochs.add(verif.hash.toString(), verif.holder)
             #If it wasn't in any existing Epoch, add it to the new one.
             except NotInEpochs:
-                newEpoch.add(verif.hash.toString(), verif.verifier)
+                newEpoch.add(verif.hash.toString(), verif.holder)
 
         #If we were passed a set of tips, update them.
         if not tips.isNil:
@@ -95,7 +95,7 @@ proc shift*(
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
     db: DatabaseFunctionBox,
-    verifications: Verifications,
+    consensus: Consensus,
     blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
     #Create the Epochs objects.
@@ -129,11 +129,11 @@ proc newEpochs*(
         try:
             tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
         except DBReadError:
-            #If this failed, it's because they have Merit but don't have Verifications older than 5 blocks.
+            #If this failed, it's because they have Merit but don't have Elements older than 5 blocks.
             tips[holder] = 0
 
     #Shift the last 10 blocks. Why?
-    #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late verifications aren't labelled as first appearances.
+    #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late consensus aren't labelled as first appearances.
     var start: int = 10
     #If the blockchain is smaller than 10, load every block.
     if blockchain.height < 10:
@@ -142,7 +142,7 @@ proc newEpochs*(
     try:
         for i in countdown(start, 1):
             discard result.shift(
-                verifications,
+                consensus,
                 blockchain[blockchain.height - i].records,
                 tips
             )
@@ -171,7 +171,7 @@ func calculate*(
         result = newRewards()
         total = 0
 
-        #Iterate over the result who verified an entry.
+        #Iterate over the person who verified an entry.
         try:
             for person in epoch.hashes[entry]:
                 #Add them to our seq with their Merit.
@@ -254,4 +254,4 @@ func calculate*(
         for i in 0 ..< result.len:
             result[i].score = result[i].score * 1000 div total
     except FinalAttributeError as e:
-        doAssert(false, "Couldn't normalize the scores of the Verifiers due to finals: " & e.msg)
+        doAssert(false, "Couldn't normalize the scores of the MeritHolders due to finals: " & e.msg)

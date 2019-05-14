@@ -7,25 +7,25 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Verifications Index object.
-import VerificationsIndexObj
-export VerificationsIndexObj
+#ConsensusIndex object.
+import ConsensusIndexObj
+export ConsensusIndexObj
 
 #Finals lib.
 import finals
 
 finalsd:
-    #VerifierRecord object. Specifies a verifier, tip, and merkle of all entries to that point.
-    type VerifierRecord* = object of VerificationsIndex
+    #MeritHolderRecord object. Specifies a holder, tip, and merkle of all entries to that point.
+    type MeritHolderRecord* = object of ConsensusIndex
         merkle* {.final.}: Hash[384]
 
 #Constructor.
-func newVerifierRecord*(
+func newMeritHolderRecord*(
     key: BLSPublicKey,
     nonce: Natural,
     merkle: Hash[384]
-): VerifierRecord {.forceCheck: [].} =
-    result = VerifierRecord(
+): MeritHolderRecord {.forceCheck: [].} =
+    result = MeritHolderRecord(
         merkle: merkle
     )
     result.ffinalizeMerkle()
@@ -34,4 +34,4 @@ func newVerifierRecord*(
         result.key = key
         result.nonce = nonce
     except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a VerifierRecord: " & e.msg)
+        doAssert(false, "Set a final attribute twice when creating a MeritHolderRecord: " & e.msg)

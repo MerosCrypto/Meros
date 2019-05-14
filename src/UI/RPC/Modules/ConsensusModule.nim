@@ -7,11 +7,11 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#VerifierRecord object.
-import ../../../Database/common/objects/VerifierRecordObj
+#MeritHolderRecord object.
+import ../../../Database/common/objects/MeritHolderRecordObj
 
-#Verifications lib.
-import ../../../Database/Verifications/Verifications
+#Consensus lib.
+import ../../../Database/Consensus/Consensus
 
 #RPC object.
 import ../objects/RPCObj
@@ -23,30 +23,30 @@ import asyncdispatch
 import json
 
 #Get a Verification.
-proc getVerification(
+proc getElement(
     rpc: RPC,
     key: BLSPublicKey,
     nonce: int
 ): JSONnode {.forceCheck: [].} =
     try:
         result = %* {
-            "hash": $rpc.functions.verifications.getVerification(key, nonce).hash
+            "hash": $rpc.functions.consensus.getElement(key, nonce).hash
         }
     except IndexError as e:
         returnError()
 
-#Get unarchived verifications.
-proc getUnarchivedVerifications(
+#Get unarchived Merit Holder Records.
+proc getUnarchivedMeritHolderRecords(
     rpc: RPC
 ): JSONNode {.forceCheck: [].} =
     #Get the records.
-    var records: seq[VerifierRecord] = rpc.functions.verifications.getUnarchivedRecords()
+    var records: seq[MeritHolderRecord] = rpc.functions.consensus.getUnarchivedRecords()
 
     #Get the aggregates.
     var aggregates: seq[BLSSignature] = newSeq[BLSSignature](records.len)
     for i in 0 ..< records.len:
         try:
-            aggregates[i] = rpc.functions.verifications.getPendingAggregate(
+            aggregates[i] = rpc.functions.consensus.getPendingAggregate(
                 records[i].key,
                 records[i].nonce
             )
@@ -60,14 +60,14 @@ proc getUnarchivedVerifications(
     #Add each index/merkle.
     for i in 0 ..< records.len:
         result.add(%* {
-            "verifier":  $records[i].key,
+            "holder":  $records[i].key,
             "nonce":     records[i].nonce,
             "merkle":    $records[i].merkle,
             "signature": $aggregates[i]
         })
 
 #Handler.
-proc verifications*(
+proc consensus*(
     rpc: RPC,
     json: JSONNode,
     reply: proc (
@@ -89,16 +89,16 @@ proc verifications*(
 
     try:
         case methodStr:
-            of "getVerification":
+            of "getElement":
                 var key: BLSPublicKey = newBLSPublicKey(json["args"][0].getStr())
 
-                res = rpc.getVerification(
+                res = rpc.getElement(
                     key,
                     json["args"][1].getInt()
                 )
 
-            of "getUnarchivedVerifications":
-                res = rpc.getUnarchivedVerifications()
+            of "getUnarchivedMeritHolderRecords":
+                res = rpc.getUnarchivedMeritHolderRecords()
 
             else:
                 res = %* {

@@ -27,7 +27,7 @@ finalsd:
         #Argon hash of the last block.
         last* {.final.}: ArgonHash
 
-        #Aggregate Signatue of the Verifications.
+        #Aggregate Signatue of the Elements.
         aggregate*: BLSSignature
         #Merkle tree hash of the Miners.
         miners*: Blake384Hash

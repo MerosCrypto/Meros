@@ -8,8 +8,8 @@ var
     #Config.
     config: Config = newConfig()
 
-    #Verifications.
-    verifications {.threadvar.}: Verifications
+    #Consensus.
+    consensus {.threadvar.}: Consensus
 
     #Merit.
     merit {.threadvar.}: Merit
@@ -21,7 +21,7 @@ var
     db {.threadvar.}: DB
 
     #Personal.
-    verifyLock: Lock             #Verify lock to stop us from trigerring a MeritRemoval.
+    verifyLock: Lock             #Verify lock to stop us from triggering a MeritRemoval.
     wallet {.threadvar.}: Wallet #Wallet.
 
     #Network.
