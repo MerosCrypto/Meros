@@ -30,9 +30,9 @@ For instructions on setting up LMDB, see https://github.com/MerosCrypto/mc_lmdb.
 ```
 git clone https://github.com/MerosCrypto/Meros.git
 cd Meros
-nim c src/main.nim
+nim c -f src/main.nim
 ```
 
-If you want to build an optimized version, put `-d:release` after `c`. There's also a headless version which doesn't import any GUI files available via `-d:nogui`.
+There's also a headless version which doesn't import any GUI files available via adding `-d:nogui` to the Nim command.
 
 The binary will be available under `build/`.
