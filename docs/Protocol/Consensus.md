@@ -33,7 +33,23 @@ They have the following fields:
 
 ### SendDifficulty
 
+A SendDifficulty is a MeritHolder voting to lower the difficulty of the spam filter applied to Sends. Every MeritHolder gets one vote per 10,000 Merit. Every MeritHolder can specify a singular difficulty which all their votes goes towards. The difficulty that is the median of all votes is chosen.
+
+The 10,000 Merit limit creates a maximum of 525 votes. The multiple votes per MeritHolder means MeritHolders with more Merit get more power. The median means that if the difficulty is 10, and a MeritHolder wants it to be 9, they can't game the system by voting for 8.
+
+When the difficulty is lowered, there's a chance transactions based off the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance transactions based off the old difficulty may still be accepted by nodes still using the old difficulty. The first just adds a delay to the system, and adding a Block will catch all the nodes up. The second risks rewinding Entries. Therefore, if an Entry doesn't beat the spam filter, but does still get the needed Verifications to become confirmed, it's still valid.
+
+In the case no SendDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "AA" bytes.
+
+`SendDifficulty` has a message length of 100 bytes; the 48 byte sender, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "sendDifficulty".
+
 ### DataDifficulty
+
+A DataDifficulty is a MeritHolder voting to lower the difficulty of the spam filter applied to Datas. Every MeritHolder gets one vote per 10,000 Merit. Every MeritHolder can specify a singular difficulty which all their votes goes towards. The difficulty that is the median of all votes is chosen.
+
+In the case no DataDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "CC" bytes.
+
+`DataDifficulty` has a message length of 100 bytes; the 48 byte sender, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "dataDifficulty".
 
 ### GasPrice
 
@@ -41,7 +57,7 @@ They have the following fields:
 
 ### SignedVerification
 
-SgnedVerifications are the same as Verifications, yet they contain their BLS Signature, instead of relying on a Block's aggregate signature. They have the extra field of:
+SgnedVerifications are the same as Verifications, yet they contain the Verification's BLS Signature, instead of relying on a Block's aggregate signature. They have the extra field of:
 
 - signature: BLS Signature of the Verification.
 

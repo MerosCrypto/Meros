@@ -1,6 +1,6 @@
 # Lattice
 
-The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array), indexed by Ed25519 Public Keys, with an additional two properties of sendDifficulty and dataDifficulty (384 bit hashes set via methods described in the Verifications documentation). Only the key pair behind an Account can add an Entry to it.
+The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array), indexed by Ed25519 Public Keys, with an additional two properties of sendDifficulty and dataDifficulty (384 bit hashes set via methods described in the Consensus documentation). Only the key pair behind an Account can add an Entry to it.
 
 Every Entry has the following fields:
 
@@ -20,11 +20,11 @@ The Entry sub-types are as follows:
 - Lock
 - Unlock
 
-When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, if long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is confirmed, as described in the Verifications documentation, both must remain on the Account.
+When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, if long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is confirmed, as described in the Consensus documentation, both must remain on the Account.
 
 ### Mint
 
-Mint Entries are locally created when blocks are added to the blockchain, as described in the Merit documentation, and never sent over the network. They also have the following fields:
+Mint Entries are locally created when Blocks are added to the Blockchain, as described in the Merit documentation, and never sent over the network. They also have the following fields:
 
 - output: The BLS Public Key of the verifier who earned the new Meros.
 - amount: The amount of Meri created.
@@ -64,7 +64,7 @@ Send hashes are defined as `Blake2b-384("send" + sender + nonce + output + amoun
 
 amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are confirmed. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
 
-The proof must satisfy the following check:
+The proof must satisfy the following check, where `sendDifficulty` is the Sends' spam filter's difficulty (described in the Consensus documentation):
 
 ```
 Argon2d(
@@ -73,7 +73,7 @@ Argon2d(
     parallelism = 1
     data = hash,
     salt = proof with no leading 0s
-) > sendDiffuclty
+) > sendDifficulty
 ```
 
 Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance.
@@ -106,7 +106,7 @@ Data Entries have the following fields:
 
 Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce 4 bytes, data length 1 byte, and data variable bytes.
 
-The proof must satisfy the following check:
+The proof must satisfy the following check, where `dataDifficulty` is the Datas' spam filter's difficulty (described in the Consensus documentation):
 
 ```
 Argon2d(
@@ -115,7 +115,7 @@ Argon2d(
     parallelism = 1
     data = hash,
     salt = proof with no leading 0s
-) > dataDiffuclty
+) > dataDifficulty
 ```
 
 `Data` has a message length of 105 bytes, plus the variable length data; the 32 byte sender, the 4 byte nonce, the 1 byte data length, the variable byte data, the 64 byte Ed25519 signature, and the 4 byte proof.
