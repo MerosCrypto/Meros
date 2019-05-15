@@ -83,7 +83,7 @@ proc add*(
         mint = cast[Mint](minter[claim.mintNonce])
     except ValueError as e:
         doAssert(false, "Couldn't grab a Mint because the Minter had competing Entries: " & e.msg)
-    except IndexError as e:
+    except IndexError:
         raise newException(ValueError, "Claim tries to claim an invalid Mint.")
 
     try:
@@ -183,12 +183,12 @@ proc add*(
             raise newException(GapError, "Receive is for an unconfirmed Send.")
         if recv.sender != send.output:
             raise newException(GapError, "Receive is for a Send not to the Receive's sender.")
-    except ValueError as e:
+    except ValueError:
         #There are multiple Entries at that index.
         raise newException(ValueError, "Receive's input has competing Entries.")
     except IndexError as e:
         #That index is invalid.
-        raise newException(IndexError, "Receive has an invalid input.")
+        raise newException(IndexError, "Receive has an invalid input: " & e.msg)
     except GapError as e:
         raise newException(ValueError, e.msg)
 

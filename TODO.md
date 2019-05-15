@@ -21,7 +21,6 @@ Merit:
 - Improve the Difficulty algorithm.
 
 Lattice:
-- Don't reload Verifications for Lattice Entries out-of-Epochs (which is possible).
 - Cache the UXTO set.
 
 Network:

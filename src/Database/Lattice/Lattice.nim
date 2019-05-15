@@ -230,14 +230,9 @@ proc newLattice*(
     #Grab every MeritHolder mentioned in the last 6 Blocks of Elements.
     var holders: seq[BLSPublicKey] = @[]
     try:
-        if merit.blockchain.height < 6:
-            for b in 0 ..< merit.blockchain.height:
-                for record in merit.blockchain[b].records:
-                    holders.add(record.key)
-        else:
-            for b in merit.blockchain.height - 6 ..< merit.blockchain.height:
-                for record in merit.blockchain[b].records:
-                    holders.add(record.key)
+        for b in max(merit.blockchain.height - 6, 0) ..< merit.blockchain.height:
+            for record in merit.blockchain[b].records:
+                holders.add(record.key)
     except IndexError as e:
         doAssert(false, "Couldn't grab a block when reloading the Lattice: " & e.msg)
     holders = holders.deduplicate()
@@ -317,6 +312,9 @@ proc newLattice*(
                     verif = consensus[holder][e]
                 except IndexError as e:
                     doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
+
+                if not result.lookup.hasKey(verif.hash.toString()):
+                    continue
 
                 try:
                     result.verify(verif, state[holder], state.live, false)
