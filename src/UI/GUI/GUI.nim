@@ -87,9 +87,7 @@ proc newGUI*(
 
                 #Start the loop.
                 try:
-                    js = &"""
-                        setInterval(GUI.loop, 100);
-                    """
+                    js = "setInterval(GUI.loop, 100);"
                 except ValueError as e:
                     doAssert(false, "Couldn't format the JS to load the main page: " & e.msg)
 

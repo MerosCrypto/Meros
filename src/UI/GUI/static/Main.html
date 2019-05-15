@@ -1,27 +1,27 @@
 <html>
     <body>
         <h1>Meros</h1>
-        <button onclick=\"GUI.load('main')\">Main</button>
-        <button onclick=\"GUI.load('send')\">Send</button>
-        <button onclick=\"GUI.load('receive')\">Receive</button>
-        <button onclick=\"GUI.quit()\">Quit</button>
+        <button onclick="GUI.load('main')">Main</button>
+        <button onclick="GUI.load('send')">Send</button>
+        <button onclick="GUI.load('receive')">Receive</button>
+        <button onclick="GUI.quit()">Quit</button>
         <hr>
 
         If you don't have a seed, leave the field blank to create one.
         <br>
-        Seed: <input type='text' id='seedInput'></input> <button onclick=\"
+        Seed: <input type="text" id="seedInput"></input> <button onclick="
             Personal.setSeed(document.getElementById('seedInput').value);
             Personal.getWallet();
-        \">Set Seed</button>
+        ">Set Seed</button>
 
         <br>
         <hr>
         <br>
 
-        <div id='seed'></div>
+        <div id="seed"></div>
         <br>
-        <div id='publicKey'></div>
+        <div id="publicKey"></div>
         <br>
-        <div id='address'></div>
+        <div id="address"></div>
     </body>
 </html>

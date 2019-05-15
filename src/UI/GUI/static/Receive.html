@@ -1,26 +1,26 @@
 <html>
     <body>
         <h1>Receive</h1>
-        <button onclick=\"GUI.load('main')\">Main</button>
-        <button onclick=\"GUI.load('send')\">Send</button>
-        <button onclick=\"GUI.load('receive')\">Receive</button>
-        <button onclick=\"GUI.quit()\">Quit</button>
+        <button onclick="GUI.load('main')">Main</button>
+        <button onclick="GUI.load('send')">Send</button>
+        <button onclick="GUI.load('receive')">Receive</button>
+        <button onclick="GUI.quit()">Quit</button>
         <hr>
 
-        Sender: <input type='text' id='sender'></input>
+        Sender: <input type="text" id="sender"></input>
         <br>
-        Input Nonce: <input type='text' id='inputNonce'></input>
+        Input Nonce: <input type="text" id="inputNonce"></input>
         <br>
-        <button onclick=\"
+        <button onclick="
             var sender = document.getElementById('sender').value;
             var inputNonce = document.getElementById('inputNonce').value;
             Personal.receive(sender + ' ' + inputNonce);
-        \">Generate</button>
+        ">Generate</button>
 
         <br>
         <hr>
         <br>
 
-        <div id='hash'></div>
+        <div id="hash"></div>
     </body>
 </html>
