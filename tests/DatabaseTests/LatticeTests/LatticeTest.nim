@@ -199,8 +199,8 @@ proc test() =
                         assert(cast[Send](originalEntries[e]).proof == cast[Send](reloadedEntries[e]).proof)
                         assert(cast[Send](originalEntries[e]).argon == cast[Send](reloadedEntries[e]).argon)
                     of EntryType.Receive:
-                        assert(cast[Receive](originalEntries[e]).index.address == cast[Receive](reloadedEntries[e]).index.address)
-                        assert(cast[Receive](originalEntries[e]).index.nonce == cast[Receive](reloadedEntries[e]).index.nonce)
+                        assert(cast[Receive](originalEntries[e]).input.address == cast[Receive](reloadedEntries[e]).input.address)
+                        assert(cast[Receive](originalEntries[e]).input.nonce == cast[Receive](reloadedEntries[e]).input.nonce)
                     of EntryType.Data:
                         assert(cast[Data](originalEntries[e]).data == cast[Data](reloadedEntries[e]).data)
                         assert(cast[Data](originalEntries[e]).proof == cast[Data](reloadedEntries[e]).proof)

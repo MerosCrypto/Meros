@@ -166,7 +166,7 @@ proc add*(
 ].} =
     #Verify it's unclaimed.
     try:
-        discard sender.claimable[recv.index.nonce]
+        discard sender.claimable[recv.input.nonce]
     #Not claimable.
     except KeyError:
         raise newException(ValueError, "Receive is for a claimed Entry.")
@@ -177,7 +177,7 @@ proc add*(
 
     #Verify the Send's output address.
     try:
-        if recv.sender != cast[Send](sender[recv.index.nonce]).output:
+        if recv.sender != cast[Send](sender[recv.input.nonce]).output:
             raise newException(GapError, "Receive is for a Send not to the Receive's sender.")
     #Use GapError as it's a custom error that's guaranteed to not be raised, when we do have to handle ValueError..
     except ValueError as e:

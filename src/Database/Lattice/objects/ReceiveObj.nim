@@ -14,16 +14,16 @@ import finals
 finalsd:
     type Receive* = ref object of Entry
         #LatticeIndex.
-        index* {.final.}: LatticeIndex
+        input* {.final.}: LatticeIndex
 
 #New Receive object.
 func newReceiveObj*(
-    index: LatticeIndex
+    input: LatticeIndex
 ): Receive {.forceCheck: [].} =
     result = Receive(
-        index: index
+        input: input
     )
-    result.ffinalizeIndex()
+    result.ffinalizeInput()
 
     try:
         result.descendant = EntryType.Receive

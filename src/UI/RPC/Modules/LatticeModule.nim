@@ -52,9 +52,9 @@ proc toJSON*(
             result["proof"]  = % cast[Send](entry).proof
             result["argon"]  = % $cast[Send](entry).argon
         of EntryType.Receive:
-            result["index"] = %* {
-                "address": cast[Receive](entry).index.address,
-                "nonce":   cast[Receive](entry).index.nonce
+            result["input"] = %* {
+                "address": cast[Receive](entry).input.address,
+                "nonce":   cast[Receive](entry).input.nonce
             }
         of EntryType.Data:
             result["data"]  = % cast[Data](entry).data.toHex()

@@ -26,14 +26,14 @@ func serialize*(
 ].} =
     var input: string
     try:
-        input = Address.toPublicKey(recv.index.address)
+        input = Address.toPublicKey(recv.input.address)
     except AddressError as e:
         fcRaise e
 
     result =
         recv.nonce.toBinary().pad(INT_LEN) &
         input &
-        recv.index.nonce.toBinary().pad(INT_LEN)
+        recv.input.nonce.toBinary().pad(INT_LEN)
 
     if recv.signed:
         var sender: string

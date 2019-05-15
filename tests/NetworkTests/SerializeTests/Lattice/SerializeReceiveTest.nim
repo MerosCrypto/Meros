@@ -73,12 +73,12 @@ for i in 1 .. 20:
 
     #Test the Receive properties.
     assert(
-        recv.index.address == recvParsed.index.address,
-        "Input Address:\r\n" & recv.index.address & "\r\n" & recvParsed.index.address
+        recv.input.address == recvParsed.input.address,
+        "Input Address:\r\n" & recv.input.address & "\r\n" & recvParsed.input.address
     )
     assert(
-        recv.index.nonce == recvParsed.index.nonce,
-        "Input Nonce:\r\n" & $recv.index.nonce & "\r\n" & $recvParsed.index.nonce
+        recv.input.nonce == recvParsed.input.nonce,
+        "Input Nonce:\r\n" & $recv.input.nonce & "\r\n" & $recvParsed.input.nonce
     )
 
 echo "Finished the Network/Serialize/Lattice/Receive Test."
