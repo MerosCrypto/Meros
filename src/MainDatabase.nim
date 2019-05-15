@@ -5,12 +5,23 @@ proc mainDatabase() {.forceCheck: [].} =
         #Open the database.
         try:
             db = newDB(config.dataDir / config.db, MAX_DB_SIZE)
-        except DBError as e:
+        except Exception as e:
             doAssert(false, "Couldn't open the DB: " & e.msg)
+
+        var version: int = DB_VERSION
+        try:
+            version = db.get("version").fromBinary()
+        #If this fails because this is a brand new DB, save the current version.
+        except Exception:
+            try:
+                db.put("version", DB_VERSION.toBinary())
+            except Exception as e:
+                doAssert(false, "Couldn't save the DB version: " & e.msg)
 
         #Allow access to put/get/delete.
         functions.database.put = proc (
-            key: string, val: string
+            key: string,
+            val: string
         ) {.forceCheck: [
             DBWriteError
         ].} =

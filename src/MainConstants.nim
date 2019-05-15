@@ -6,6 +6,7 @@ include MainImports
 const
     #DB constants.
     MAX_DB_SIZE: int64 = 107374182400 #Max DB size.
+    DB_VERSION: int = 0               #DB Version.
 
     #Merit constants.
     GENESIS: string =          #Genesis string.
