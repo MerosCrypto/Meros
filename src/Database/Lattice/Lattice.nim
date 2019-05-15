@@ -77,6 +77,7 @@ proc verify*(
     #Create a blank seq if there's not already a seq.
     if not lattice.verifications.hasKey(hash):
         lattice.verifications[hash] = @[]
+        lattice.weights[hash] = 0
 
     #Return if the Verification already exists.
     try:
@@ -92,13 +93,15 @@ proc verify*(
     except KeyError as e:
         doAssert(false, "Couldn't add a Verification despite guaranteeing it had a seq: " & e.msg)
 
-    #Calculate the weight.
-    var weight: int = 0
+    #Add the new weight.
+    var weight: int
     try:
-        for i in lattice.verifications[hash]:
-            weight += merit
+        weight = lattice.weights[hash]
     except KeyError as e:
-        doAssert(false, "Couldn't add the Entry's weight together despite guaranteeing it had a seq: " & e.msg)
+        doAssert(false, "Couldn't get an Entry's weight despite guaranteeing it had a weight: " & e.msg)
+    weight += merit
+    lattice.weights[hash] = weight
+
     #If the Entry has at least 50.1% of the weight...
     if weight > (liveMerit div 2) + 1:
         #Get the Index, Account, and calculate in `entries`.
@@ -227,12 +230,12 @@ proc newLattice*(
     #Grab every MeritHolder mentioned in the last 6 Blocks of Elements.
     var holders: seq[BLSPublicKey] = @[]
     try:
-        if merit.blockchain.height < 5:
+        if merit.blockchain.height < 6:
             for b in 0 ..< merit.blockchain.height:
                 for record in merit.blockchain[b].records:
                     holders.add(record.key)
         else:
-            for b in merit.blockchain.height - 5 ..< merit.blockchain.height:
+            for b in merit.blockchain.height - 6 ..< merit.blockchain.height:
                 for record in merit.blockchain[b].records:
                     holders.add(record.key)
     except IndexError as e:
@@ -244,15 +247,15 @@ proc newLattice*(
 
     #Create a seq of States.
     var states: seq[State] = newSeq[State](
-        min(merit.blockchain.height, 5) + 1
+        min(merit.blockchain.height - 1, 6) + 1
     )
 
-    #Copu the latest state to the end.
-    states[^1] = merit.state
-    #Revert the states.
-    for s in countdown(states.len - 2, 0):
-        states[^1].revert(merit.blockchain, states[^1].processedBlocks - 1)
-        states[s] = states[^1]
+    #Copy the State for reverting.
+    var reverted: State = merit.state
+    #Fill the States.
+    for s in countdown(states.len - 1, 0):
+        states[s] = reverted
+        reverted.revert(merit.blockchain, reverted.processedBlocks - 1)
 
     #Iterate over every MeritHolder.
     for holder in holders:
@@ -263,10 +266,10 @@ proc newLattice*(
         try:
             tips[0] = db.get("lattice_" & holder.toString() & "_epoch").fromBinary()
         except DBReadError:
-            tips[0] = 0
+            tips[0] = -2
 
         #Grab their tips in the Blocks.
-        for b in max(merit.blockchain.height - 5, 1) ..< merit.blockchain.height:
+        for b in max(merit.blockchain.height - 6, 1) ..< merit.blockchain.height:
             var tip: int = -1
             try:
                 for record in merit.blockchain[b].records:
@@ -278,16 +281,24 @@ proc newLattice*(
             tips.add(tip)
 
         #Add their height to the end.
-        tips.add(consensus[holder].height)
+        tips.add(consensus[holder].height - 1)
 
         #Iterate over every tip.
-        for t in countdown(tips.len - 2, 0):
+        for t in 0 ..< tips.len - 1:
             #If we weren't mentioned in a Block, continue.
             if tips[t] == -1:
                 continue
 
+            #If this is the last tip, which is equivalent to the height, continue.
+            if (t == tips.len - 2) and (tips[t] == tips[t + 1]):
+                continue
+
+            #If we don't have a tip out-of-epochs, change this to an usable value.
+            if tips[t] == -2:
+                tips[t] = -1
+
             #Grab the State.
-            var state: State = states[^(tips.len - (t + 1))]
+            var state: State = states[t + 1]
 
             #Load the Elements archived in this Block.
             var
@@ -297,7 +308,10 @@ proc newLattice*(
                 inc(nextT)
                 nextTip = tips[nextT]
 
-            for e in tips[t] ..< nextTip:
+            #Update the State accordingly.
+            state = states[nextT - 1]
+
+            for e in tips[t] + 1 .. nextTip:
                 var verif: Verification
                 try:
                     verif = consensus[holder][e]

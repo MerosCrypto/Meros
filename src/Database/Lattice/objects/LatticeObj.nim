@@ -53,6 +53,12 @@ type
             seq[BLSPublicKey]
         ]
 
+        #Weights. Hash -> amnount of Merit behind it.
+        weights*: Table[
+            string,
+            int
+        ]
+
         #Accounts (address -> account).
         accounts*: Table[
             string,
@@ -72,6 +78,7 @@ proc newLatticeObj*(
         difficulties: newDifficultiesObj(sendDiff, dataDiff),
         lookup: initTable[string, LatticeIndex](),
         verifications: initTable[string, seq[BLSPublicKey]](),
+        weights: initTable[string, int](),
         accounts: initTable[string, Account]()
     )
 
@@ -120,13 +127,15 @@ func addHash*(
 ) {.forceCheck: [].} =
     lattice.lookup[hash.toString()] = index
 
-#Deletes a hash from the lookup/verifications.
+#Deletes a hash from the lookup/verifications/weights.
 func rmHash*(
     lattice: var Lattice,
-    hash: Hash[384]
+    hashArg: Hash[384]
 ) {.forceCheck: [].} =
-    lattice.lookup.del(hash.toString())
-    lattice.verifications.del(hash.toString())
+    var hash: string = hashArg.toString()
+    lattice.lookup.del(hash)
+    lattice.verifications.del(hash)
+    lattice.weights.del(hash)
 
 #Creates a new Account on the Lattice.
 proc add*(

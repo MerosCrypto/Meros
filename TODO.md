@@ -12,7 +12,7 @@ Database:
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Consensus:
-- Load unarchived Elements from the DB. Doing this, without any changes to the Lattice, will break loading Elements with the proper State.
+- Load unarchived Elements from the DB.
 
 Merit:
 - Checkpoints.
@@ -36,8 +36,6 @@ Lattice:
 - Lock boxes.
 
 Network:
-- Update the name of MemoryVerification to SignedVerification.
-
 - Don't rebroadcast data that we're syncing.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 

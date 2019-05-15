@@ -122,15 +122,18 @@ proc test() =
         assert(lattice.lookup.hasKey(hash))
 
     #Test the verifications tables.
+    assert(lattice.verifications.len == reloaded.verifications.len)
     for hash in lattice.verifications.keys():
         assert(reloaded.verifications.hasKey(hash))
         assert(lattice.verifications[hash].len == reloaded.verifications[hash].len)
         for holder in lattice.verifications[hash]:
             assert(reloaded.verifications[hash].contains(holder))
-    for hash in reloaded.verifications.keys():
-        assert(lattice.verifications.hasKey(hash))
-        for holder in reloaded.verifications[hash]:
-            assert(lattice.verifications[hash].contains(holder))
+
+    #Test the weights tables.
+    assert(lattice.weights.len == reloaded.weights.len)
+    for hash in lattice.weights.keys():
+        assert(reloaded.weights.hasKey(hash))
+        assert(lattice.weights[hash] == reloaded.weights[hash])
 
     #Test each account.
     for address in lattice.accounts.keys():
@@ -181,7 +184,7 @@ proc test() =
                 assert(originalEntries[e].nonce == reloadedEntries[e].nonce)
                 assert(originalEntries[e].hash == reloadedEntries[e].hash)
                 assert(originalEntries[e].signature == reloadedEntries[e].signature)
-                #assert(originalEntries[e].verified == reloadedEntries[e].verified)
+                assert(originalEntries[e].verified == reloadedEntries[e].verified)
 
                 case originalEntries[e].descendant:
                     of EntryType.Mint:
@@ -240,8 +243,13 @@ proc addBlock(wallets: seq[MinerWallet], records: seq[MeritHolderRecord]) =
     except:
         raise newException(ValueError, "Valid Block wasn't successfully added. " & getCurrentExceptionMsg())
 
+    consensus.archive(mining.records)
+
 #Adds a Verification for an Entry.
-proc verify(wallet: MinerWallet, hash: string) =
+proc verify(
+    wallet: MinerWallet,
+    hash: string
+) =
     var verif: SignedVerification = newSignedVerificationObj(hash.toHash(384))
     wallet.sign(verif, consensus[wallet.publicKey].height)
     consensus.add(verif)
@@ -396,7 +404,6 @@ addBlock(
         newMeritHolderRecord(holders[1].publicKey, 0, "".pad(48).toHash(384))
     ]
 )
-consensus.archive(merit.blockchain.tip.records)
 #Test.
 test()
 
