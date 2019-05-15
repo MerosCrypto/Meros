@@ -71,6 +71,9 @@ BLSSignature aggregate = verifierSignatures.aggregate()
 
 `Block` has a variable message length; the 208 byte BlockHeader (serialized as described above), the 4 byte amount of records, the records (each with a 48 byte BLS Public Key, 4 byte nonce, and 48 byte Merkle tree hash), the 1 byte amount of miners, and the miners (each with a 48 byte BLS Public Key and 1 byte amount).
 
+### Checkpoint
+
 ### Violations in Meros
 
 - Meros doesn't support the `BlockHeader` message type.
+- Meros doesn't support the `Checkpoint` message type.

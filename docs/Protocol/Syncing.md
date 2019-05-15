@@ -8,6 +8,7 @@ During syncing, the syncer can only send:
 - `BlockRequest`
 - `ElementRequest`
 - `EntryRequest`
+- `CheckpointRequest`
 - `GetAccountHeight`
 - `GetHashesAtIndex`
 - `GetVerifierHeight`
@@ -36,6 +37,7 @@ The syncee can only send:
 - `DataDifficulty`
 - `GasPrice`
 - `MeritRemoval`
+- `Checkpoint`
 - `DataMissing`
 
 The syncee should also only send messages in direct response to a request from the syncer.
@@ -76,6 +78,8 @@ A `BlockRequest` is followed by the 48 byte Block hash, with the expected respon
 
 A `ElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element at the requested location, without its BLS Signature.
 
+### CheckpointRequest
+
 ### DataMissing
 
 `DataMissing` has a message length of 0 and is a valid response to any request. It signifies the syncee doesn't have the requested data.
@@ -89,7 +93,7 @@ A `ElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS 
 - Meros doesn't support the `GetAccountHeight` and `AccountHeight` message types.
 - Meros doesn't support the `GetHashesAtIndex` and `HashesAtIndex` message types.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
-- Meros doesn't support the `BlockHeaderRequest` message type.
+- Meros doesn't support the `BlockHeaderRequest` and `CheckpointRequest` message types.
 - Meros's Consensus DAG only supports Verification and SignedVerifications. Therefore, it will only answer an ElementRequest with one of the two.
 - Meros doesn't support the `SignedElementRequest` message type.
 - A `BlockRequest` is followed by 4 bytes representing the nonce of the Block, as Meros currently doesn't support chain reorgs in any form. To get the tail Block, Meros sends 4 0 bytes.

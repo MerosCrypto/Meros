@@ -25,22 +25,22 @@ finalsd:
             BlockRequest = 4,
             VerificationRequest = 5,
             EntryRequest = 6,
-            DataMissing = 14,
-            SyncingOver = 15,
+            DataMissing = 15,
+            SyncingOver = 16,
 
-            Claim = 16,
-            Send = 17,
-            Receive = 18,
-            Data = 19,
+            Claim = 17,
+            Send = 18,
+            Receive = 19,
+            Data = 20,
 
-            SignedVerification = 22,
+            SignedVerification = 23,
 
-            Block = 27,
-            Verification = 28,
+            Block = 28,
+            Verification = 29,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 33
+            End = 35
 
         #Message object.
         Message* = object
