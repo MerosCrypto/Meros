@@ -14,6 +14,8 @@ The message types are as follows (with their list number being their byte header
 <li><code>ElementRequest</code></li>
 <li><code>EntryRequest</code></li>
 <li><code>CheckpointRequest</code></li>
+<li><code>GetBlockHash</code></li>
+<li><code>BlockHash</code></li>
 <li><code>GetAccountHeight</code></li>
 <li><code>AccountHeight</code></li>
 <li><code>GetHashesAtIndex</code></li>
