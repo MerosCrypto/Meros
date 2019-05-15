@@ -106,6 +106,8 @@ Data Entries have the following fields:
 
 Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce 4 bytes, data length 1 byte, and data variable bytes.
 
+The data must be less than 256 bytes (enforced by only providing a single byte to store the data length in).
+
 The proof must satisfy the following check, where `dataDifficulty` is the Datas' spam filter's difficulty (described in the Consensus documentation):
 
 ```
