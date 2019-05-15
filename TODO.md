@@ -4,6 +4,7 @@
 Wallet:
 - Mnemonic file to convert a Mnemonic to seed, and vice versa.
 - HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
+- OpenCAP support.
 
 Database:
 - Add a `version` key to the DB in order to track when to upgrade a DB.
@@ -15,25 +16,14 @@ Consensus:
 - Load unarchived Elements from the DB.
 
 Merit:
-- Checkpoints.
-- If a TX wasn't confirmed, but doesn't have any competitors, default it to confirmed.
-- Improve the Difficulty algorithm.
-- Dead Merit.
-- Resolve Merit forks.
-- Have cutoff Rewards carry over.
+- Chain reorgs.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
-- Remove holders who lost all their Merit from `merit_holders`.
-
-Consensus & Merit:
-- Merit Removal.
-- Currently, Blockchains archive Elements via the tip; we should also add a start nonce to ignore unarchived Elements which are past their Epoch.
+- Improve the Difficulty algorithm.
 
 Lattice:
+- Don't reload Verifications for Lattice Entries out-of-Epochs (which is possible).
 - Cache the UXTO set.
-- Have work precalculable for 100 `Send`'s/`Data`'s in advance.
-- Difficulty voting.
-- Lock boxes.
 
 Network:
 - Don't rebroadcast data that we're syncing.
@@ -44,11 +34,7 @@ Network:
 - Node karma.
 
 - Multi-client syncing.
-- Sync Entries not on the Blockchain.
-- Sync Elements not archived on the Blockchain.
-- Sync gaps (if we get data with nonce 2 but we only have 0; applies to both the Lattice and Elements).
-
-- Move Entries and Elements to UDP.
+- Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Lattice and Consensus DAGs).
 
 ### Tests:
 Cleanup Tests (as in, they need to be cleaned (especially LatticeTest)).
@@ -124,19 +110,24 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
-- Edit Status's Milagro wrapper to use the same curve as Chia and update mc_bls to use that.
-- Disable the need for having bound checks on.
+- Remove holders who lost all their Merit from `merit_holders`.
+- Swap Chia for Herumi.
+- Remove the need for having bound checks on.
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Use Nim Documentation Comments.
 
 - Explain `Lock`s/`Unlock`s.
+
 - Define what happens when a Verifier confirms X + 1, but not X, when X has yet to be mentioned in a Block.
 - Define what happens when a Verifier confirms a Receive who's Send doesn't become confirmed.
+
 - Define the Difficulty algorithm.
 - Define the Merkle tree construction for miners (in Merit)/MeritHolders (in Consensus).
+- Explain Dead Merit.
 - Explain Checkpoints.
+- Explain Rewards (including how cutoff rewards are carried over).
 - Talk about chain reorgs.
 
 - Meros Whitepaper.
