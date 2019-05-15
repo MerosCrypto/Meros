@@ -38,8 +38,10 @@ proc addTo*(
                         )
                 except ValueError as e:
                     gui.webview.error("Value Error", "Invalid port number: " & e.msg)
+                    return
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
+                    return
         )
     except KeyError as e:
         doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)

@@ -15,9 +15,6 @@ when defined(merosRelease):
     #Disable checks.
     switch("checks", "off")
 
-    #Re-enaable bound checks.
-    switch("boundChecks", "on")
-
     #Disable extra crash reporting.
     switch("lineDir", "off")
     switch("lineTrace", "off")

@@ -24,6 +24,7 @@ proc addTo*(
                     discard gui.call("system", "quit")
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
+                    return
         )
 
         #Loop function to allow the GUI thread to do something other than WebView.
@@ -62,6 +63,7 @@ proc addTo*(
                 #Load the page.
                 if gui.webview.eval(page) != 0:
                     gui.webview.error("RPC Error", "Couldn't eval the JS to load a new page.")
+                    return
         )
     except KeyError as e:
         doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)

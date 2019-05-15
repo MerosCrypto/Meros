@@ -83,6 +83,9 @@ proc addTo*(
             ) {.forceCheck: [].} =
                 #Split the data up.
                 var data: seq[string] = dataArg.split(" ")
+                if data.len != 2:
+                    gui.webview.error("GUI Error", "Personal.send was handed the wrong amount of arguments.")
+                    return
 
                 #Get the nonce.
                 var nonce: int = gui.getNonce()
@@ -99,12 +102,12 @@ proc addTo*(
                         data[1],
                         nonce
                     )["hash"].getStr()
-                except IndexError as e:
-                    doAssert(false, "GUI didn't call Personal.send with enough data: " & e.msg)
                 except KeyError as e:
                     gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
+                    return
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
+                    return
 
                 #Display the hash.
                 var js: string
@@ -114,9 +117,11 @@ proc addTo*(
                     """
                 except ValueError as e:
                     gui.webview.error("Value Error", "Couldn't format the JS to display the Send's hash: " & e.msg)
+                    return
 
                 if gui.webview.eval(js) != 0:
                     gui.webview.error("RPC Error", "Couldn't eval the JS to display the Send's hash.")
+                    return
         )
 
         #Receive.
@@ -128,6 +133,9 @@ proc addTo*(
             ) {.forceCheck: [].} =
                 #Split the data.
                 var data: seq[string] = dataArg.split(" ")
+                if data.len != 2:
+                    gui.webview.error("GUI Error", "Personal.receive was handed the wrong amount of arguments.")
+                    return
 
                 #Get the nonce.
                 var nonce: int = gui.getNonce()
@@ -144,12 +152,12 @@ proc addTo*(
                         data[1],
                         nonce
                     )["hash"].getStr()
-                except IndexError as e:
-                    doAssert(false, "GUI didn't call Personal.receive with enough data: " & e.msg)
                 except KeyError as e:
                     gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
+                    return
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
+                    return
 
                 #Display the hash.
                 var js: string
@@ -159,9 +167,11 @@ proc addTo*(
                     """
                 except ValueError as e:
                     gui.webview.error("Value Error", "Couldn't fromat the JS to display the Receive's hash: " & e.msg)
+                    return
 
                 if gui.webview.eval(js) != 0:
                     gui.webview.error("RPC Error", "Couldn't eval the JS to display the Receive's hash.")
+                    return
         )
     except KeyError as e:
         doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)

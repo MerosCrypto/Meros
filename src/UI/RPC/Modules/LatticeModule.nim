@@ -155,25 +155,45 @@ proc lattice*(
     try:
         case methodStr:
             of "getHeight":
-                res = rpc.getHeight(
-                    json["args"][0].getStr()
-                )
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.getHeight(
+                        json["args"][0].getStr()
+                    )
 
             of "getBalance":
-                res = rpc.getBalance(
-                    json["args"][0].getStr()
-                )
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.getBalance(
+                        json["args"][0].getStr()
+                    )
 
             of "getEntryByHash":
-                res = rpc.getEntryByHash(
-                    json["args"][0].getStr().toHash(384)
-                )
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.getEntryByHash(
+                        json["args"][0].getStr().toHash(384)
+                    )
 
             of "getEntryByIndex":
-                res = rpc.getEntryByIndex(
-                    json["args"][0].getStr(),
-                    json["args"][1].getInt()
-                )
+                if json["args"].len < 2:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.getEntryByIndex(
+                        json["args"][0].getStr(),
+                        json["args"][1].getInt()
+                    )
 
             else:
                 res = %* {
@@ -186,9 +206,5 @@ proc lattice*(
     except ValueError:
         res = %* {
             "error": "Invalid hash passed to getEntryByHash."
-        }
-    except IndexError:
-        res = %* {
-            "error": "Not enough args were passed."
         }
     reply(res)

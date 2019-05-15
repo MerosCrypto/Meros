@@ -180,17 +180,27 @@ proc merit*(
                 res = rpc.getDifficulty()
 
             of "getBlock":
-                res = rpc.getBlock(
-                    json["args"][0].getInt()
-                )
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.getBlock(
+                        json["args"][0].getInt()
+                    )
 
             of "publishBlock":
-                try:
-                    res = await rpc.publishBlock(
-                        json["args"][0].getStr().parseHexStr()
-                    )
-                except Exception as e:
-                    doAssert(false, "publishBlock threw an Exception despite not naturally throwing anything: " & e.msg)
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    try:
+                        res = await rpc.publishBlock(
+                            json["args"][0].getStr().parseHexStr()
+                        )
+                    except Exception as e:
+                        doAssert(false, "publishBlock threw an Exception despite not naturally throwing anything: " & e.msg)
 
             else:
                 res = %* {
@@ -203,10 +213,6 @@ proc merit*(
     except ValueError:
         res = %* {
             "error": "Invalid hex string passed."
-        }
-    except IndexError:
-        res = %* {
-            "error": "Not enough args were passed."
         }
 
     reply(res)

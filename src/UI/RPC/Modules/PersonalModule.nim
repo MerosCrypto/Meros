@@ -242,30 +242,50 @@ proc personal*(
     try:
         case methodStr:
             of "setSeed":
-                res = rpc.setSeed(json["args"][0].getStr())
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.setSeed(json["args"][0].getStr())
 
             of "getWallet":
                 res = rpc.getWallet()
 
             of "send":
-                res = rpc.send(
-                    json["args"][0].getStr(),
-                    uint64(parseUInt(json["args"][1].getStr())),
-                    json["args"][2].getInt()
-                )
+                if json["args"].len < 3:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.send(
+                        json["args"][0].getStr(),
+                        uint64(parseUInt(json["args"][1].getStr())),
+                        json["args"][2].getInt()
+                    )
 
             of "receive":
-                res = rpc.receive(
-                    json["args"][0].getStr(),
-                    json["args"][1].getInt(),
-                    json["args"][2].getInt()
-                )
+                if json["args"].len < 3:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.receive(
+                        json["args"][0].getStr(),
+                        json["args"][1].getInt(),
+                        json["args"][2].getInt()
+                    )
 
             of "data":
-                res = rpc.data(
-                    json["args"][0].getStr().parseHexStr(),
-                    json["args"][1].getInt()
-                )
+                if json["args"].len < 2:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.data(
+                        json["args"][0].getStr().parseHexStr(),
+                        json["args"][1].getInt()
+                    )
 
             else:
                 res = %* {
@@ -278,10 +298,6 @@ proc personal*(
     except ValueError:
         res = %* {
             "error": "Invalid hex string passed."
-        }
-    except IndexError:
-        res = %* {
-            "error": "Not enough args were passed."
         }
 
     reply(res)

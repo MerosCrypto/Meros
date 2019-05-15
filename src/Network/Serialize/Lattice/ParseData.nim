@@ -25,18 +25,16 @@ proc parseData*(
     ArgonError,
     EdPublicKeyError
 ].} =
+    if dataStr.len < PUBLIC_KEY_LEN + INT_LEN + 1:
+        raise newException(ValueError, "parseData wasn't passed enough data to to get the data length.")
+
     var
         #Public Key | Nonce | Data Len | Data | Proof | Signature
         keyNonce: seq[string] = dataStr.deserialize(
             PUBLIC_KEY_LEN,
             INT_LEN
         )
-        dataLen: int
-
-    try:
-        dataLen = int(dataStr[PUBLIC_KEY_LEN + INT_LEN])
-    except IndexError as e:
-        raise newException(ValueError, "parseData wasn't passed enough data to to get the data length: " & e.msg)
+        dataLen: int = int(dataStr[PUBLIC_KEY_LEN + INT_LEN])
 
     var
         data: string = dataStr.substr(

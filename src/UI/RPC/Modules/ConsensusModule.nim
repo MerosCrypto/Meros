@@ -90,12 +90,15 @@ proc consensus*(
     try:
         case methodStr:
             of "getElement":
-                var key: BLSPublicKey = newBLSPublicKey(json["args"][0].getStr())
-
-                res = rpc.getElement(
-                    key,
-                    json["args"][1].getInt()
-                )
+                if json["args"].len < 2:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.getElement(
+                        newBLSPublicKey(json["args"][0].getStr()),
+                        json["args"][1].getInt()
+                    )
 
             of "getUnarchivedMeritHolderRecords":
                 res = rpc.getUnarchivedMeritHolderRecords()
@@ -107,10 +110,6 @@ proc consensus*(
     except KeyError:
         res = %* {
             "error": "Missing `args`."
-        }
-    except IndexError:
-        res = %* {
-            "error": "Not enough args were passed."
         }
     except BLSError:
         res = %* {

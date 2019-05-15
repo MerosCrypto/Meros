@@ -25,7 +25,6 @@ Lattice:
 
 Network:
 - Don't rebroadcast data that we're syncing.
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
 
 - Prevent the same client from connecting multiple times.
 - Peer finding.
@@ -108,9 +107,12 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
-- Remove holders who lost all their Merit from `merit_holders`.
 - Swap Chia for Herumi.
-- Remove the need for having bound checks on.
+
+- Cache the Lattice's UXTO set.
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
+
+- Remove holders who lost all their Merit from `merit_holders`.
 
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.

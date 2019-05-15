@@ -50,13 +50,18 @@ proc network*(
     try:
         case methodStr:
             of "connect":
-                try:
-                    res = await rpc.connect(
-                        json["args"][0].getStr(),
-                        if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
-                    )
-                except Exception as e:
-                    doAssert(false, "NetworkModule's connect threw an Exception despite not naturally throwing anything: " & e.msg)
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    try:
+                        res = await rpc.connect(
+                            json["args"][0].getStr(),
+                            if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
+                        )
+                    except Exception as e:
+                        doAssert(false, "NetworkModule's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
 
             else:
@@ -67,9 +72,5 @@ proc network*(
         res = %* {
             "error": "Missing `args`."
         }
-    except IndexError:
-        res = %* {
-            "error": "Not enough args were passed."
-        }
-
+    
     reply(res)
