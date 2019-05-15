@@ -130,5 +130,9 @@ UI/RPC:
 ### Documentation:
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Use Nim Documentation Comments.
-- docs/Protocol/Merit.
+- Define what happens when a Verifier confirms X + 1, but not X, when X has yet to be mentioned in a Block.
+- Define what happens when a Verifier confirms a Receive who's Send doesn't become confirmed.
+- Define the Difficulty algorithm.
+- Define the Merkle tree construction for miners (in Merit)/MeritHolders (in Consensus).
+- Define checkpoints and chain reorgs.
 - Meros Whitepaper.
