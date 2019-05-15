@@ -177,7 +177,7 @@ proc verify*(
                         #Get the Send it's Receiving.
                         send: Send
                     try:
-                        send = cast[Send](lattice[recv.index])
+                        send = cast[Send](lattice[recv.input])
                     except ValueError as e:
                         doAssert(false, "Receive was confirmed before Send: " & e.msg)
                     except IndexError as e:
@@ -208,7 +208,7 @@ proc verify*(
             if entry.descendant == EntryType.Receive:
                 var recv: Receive = cast[Receive](entry)
                 try:
-                    lattice[recv.index.address].rmClaimable(recv.index.nonce)
+                    lattice[recv.input.address].rmClaimable(recv.input.nonce)
                 except AddressError as e:
                     doAssert(false, "Created an invalid address from an Ed25519 Public Key in a Receive: " & e.msg)
 
@@ -391,7 +391,7 @@ proc add*(
                     #Receive Entry.
                     recv,
                     #Supposed Sender.
-                    lattice[recv.index.address]
+                    lattice[recv.input.address]
                 )
 
             of EntryType.Data:

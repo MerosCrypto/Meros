@@ -82,9 +82,9 @@ proc add*(
     try:
         mint = cast[Mint](minter[claim.mintNonce])
     except ValueError as e:
-        doAssert(false, "Couldn't grab a Mint despite it being claimable due to a ValueError: " & e.msg)
+        doAssert(false, "Couldn't grab a Mint because the Minter had competing Entries: " & e.msg)
     except IndexError as e:
-        doAssert(false, "Couldn't grab a Mint despite it being claimable due to an IndexError: " & e.msg)
+        raise newException(ValueError, "Claim tries to claim an invalid Mint.")
 
     try:
         claim.bls.setAggregationInfo(
@@ -177,13 +177,18 @@ proc add*(
 
     #Verify the Send's output address.
     try:
-        if recv.sender != cast[Send](sender[recv.input.nonce]).output:
+        var send: Send = cast[Send](sender[recv.input.nonce])
+        if not send.verified:
+            #Use GapError as it's a custom error that's guaranteed to not be raised, when we do have to handle ValueError.
+            raise newException(GapError, "Receive is for an unconfirmed Send.")
+        if recv.sender != send.output:
             raise newException(GapError, "Receive is for a Send not to the Receive's sender.")
-    #Use GapError as it's a custom error that's guaranteed to not be raised, when we do have to handle ValueError..
     except ValueError as e:
-        doAssert(false, "Couldn't grab a Send despite it being claimable due to a ValueError: " & e.msg)
+        #There are multiple Entries at that index.
+        raise newException(ValueError, "Receive's input has competing Entries.")
     except IndexError as e:
-        doAssert(false, "Couldn't grab a Send despite it being claimable due to an IndexError: " & e.msg)
+        #That index is invalid.
+        raise newException(IndexError, "Receive has an invalid input.")
     except GapError as e:
         raise newException(ValueError, e.msg)
 
