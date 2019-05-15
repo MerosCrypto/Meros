@@ -135,7 +135,7 @@ proc newNetwork*(
                 except Exception as e:
                     doAssert(false, "Sending a block in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            of MessageType.VerificationRequest:
+            of MessageType.ElementRequest:
                 var
                     req: seq[string] = msg.message.deserialize(
                         BLS_PUBLIC_KEY_LEN,
@@ -147,7 +147,7 @@ proc newNetwork*(
                 try:
                     key = newBLSPublicKey(req[0])
                 except BLSError as e:
-                    raise newException(InvalidMessageError, "`VerificationRequest` contained an invalid BLS Public Key: " & e.msg)
+                    raise newException(InvalidMessageError, "`ElementRequest` contained an invalid BLS Public Key: " & e.msg)
 
                 height = mainFunctions.consensus.getMeritHolderHeight(key)
                 if height <= nonce:
@@ -163,7 +163,7 @@ proc newNetwork*(
                     except ClientError as e:
                         fcRaise e
                     except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `VerificationRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        doAssert(false, "Sending `DataMissing` in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
                     return
 
                 try:
@@ -181,7 +181,7 @@ proc newNetwork*(
                 except ClientError as e:
                     fcRaise e
                 except Exception as e:
-                    doAssert(false, "Sending a Verification in response to a `VerificationRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                    doAssert(false, "Sending a Verification in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.EntryRequest:
                 #Declare the Entry and a MessageType used to send it with.

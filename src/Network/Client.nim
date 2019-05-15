@@ -83,7 +83,7 @@ proc recv*(
             size = 0
         of MessageType.BlockRequest:
             size = INT_LEN
-        of MessageType.VerificationRequest:
+        of MessageType.ElementRequest:
             size = BLS_PUBLIC_KEY_LEN + INT_LEN
         of MessageType.EntryRequest:
             size = HASH_LEN
@@ -406,7 +406,7 @@ proc syncVerification*(
     try:
         await client.send(
             newMessage(
-                MessageType.VerificationRequest,
+                MessageType.ElementRequest,
                 holder.toString() & nonce.toBinary().pad(INT_LEN)
             )
         )
@@ -415,7 +415,7 @@ proc syncVerification*(
     except ClientError as e:
         fcRaise e
     except Exception as e:
-        doAssert(false, "Sending an `VerificationRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        doAssert(false, "Sending an `ElementRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
     var msg: Message
@@ -426,22 +426,22 @@ proc syncVerification*(
     except ClientError as e:
         fcRaise e
     except Exception as e:
-        doAssert(false, "Receiving the response to an `VerificationRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        doAssert(false, "Receiving the response to an `ElementRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     case msg.content:
         of MessageType.Verification:
             try:
                 result = msg.message.parseVerification()
             except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, as pointed out by a ValueError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our ElementRequest, as pointed out by a ValueError: " & e.msg)
             except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our VerificationRequest, as pointed out by a BLSError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our ElementRequest, as pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
             raise newException(DataMissing, "Client didn't have the requested Verification.")
 
         else:
-            raise newException(InvalidMessageError, "Client didn't respond properly to our VerificationRequest.")
+            raise newException(InvalidMessageError, "Client didn't respond properly to our ElementRequest.")
 
     if (result.holder != holder) or (result.nonce != nonce):
         raise newException(InvalidMessageError, "Synced a Verification that we didn't request.")
