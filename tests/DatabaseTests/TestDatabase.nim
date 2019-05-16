@@ -24,7 +24,7 @@ proc newTestDatabase*(): DatabaseFunctionBox =
     removeFile("./data/test")
 
     #Open the database.
-    db = newDB("./data/test", 1073741824)
+    db = newDB("./data/test", 1073741824, 256)
 
     #Create the Function Box.
     result = DatabaseFunctionBox()
