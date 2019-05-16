@@ -104,34 +104,33 @@ proc verify*(
 
     #If the Entry has at least 50.1% of the weight...
     if weight > (liveMerit div 2) + 1:
-        #Get the Index, Account, and calculate in `entries`.
+        #Grab the Entry.
         var
             index: LatticeIndex
             account: Account
-            i: int
+            entry: Entry
         try:
             index = lattice.lookup[hash]
             account = lattice[index.address]
-            i = index.nonce - lattice[index.address].confirmed
+            entry = account[index.nonce, verif.hash]
         except KeyError as e:
-            doAssert(false, "Couldn't grab the confirmed Entry's Index/Account/cache offsetted index: " & e.msg)
+            doAssert(false, "Couldn't grab the confirmed Entry's index despite confirming it's in the lookup: " & e.msg)
         except AddressError as e:
-            doAssert(false, "Calculating the weight of a valid Entry without being able to grab the account due to an AddressError: " & e.msg)
+            doAssert(false, "Couldn't grab the Account of a confirmed Entry due to an AddressError: " & e.msg)
 
-        #Get said Entry (and calculate the max potential debt).
-        var
-            entry: Entry = nil
-            maxDebt: uint64 = 0
+        #If the Entry was already verified, return.
+        if entry.verified:
+            return
+
+        #Calculate the index in `entries`.
+        var i: int = index.nonce - account.confirmed
+
+        #Calculate the max potential debt.
+        var maxDebt: uint64 = 0
         for e in account.entries[i]:
             if e.descendant == EntryType.Send:
                 if cast[Send](e).amount > maxDebt:
                     maxDebt = cast[Send](e).amount
-
-            if e.hash == verif.hash:
-                entry = e
-        if entry.isNil:
-            doAssert(false, "Confirmed an Entry but then failed to find that Entry.")
-
         #Set it to verified.
         entry.verified = true
 
@@ -313,6 +312,7 @@ proc newLattice*(
                 except IndexError as e:
                     doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
 
+                #Handle the possibility this Verifies an Entry out of Epochs.
                 if not result.lookup.hasKey(verif.hash.toString()):
                     continue
 
@@ -531,7 +531,7 @@ proc archive*(
 
                     #Save the verified Entry's hash to the DB under SENDER_NONCE.
                     try:
-                        lattice.db.put("lattice_" & lattice[index].sender & "_" & lattice[index.address].entries[0][0].nonce.toBinary(), lattice[index.address][0].hash.toString())
+                        lattice.db.put("lattice_" & index.address & "_" & lattice[index.address].entries[0][0].nonce.toBinary(), lattice[index.address].entries[0][0].hash.toString())
                     except ValueError as e:
                         doAssert(false, "Couldn't access the first Entry on the Account because there's multiple Entries with none confirmed: " & e.msg)
                     except IndexError as e:
@@ -561,6 +561,6 @@ proc archive*(
     #Here, it means the record shifted 5+ Epochs ago.
     for record in epoch.records:
         try:
-            lattice.db.put("lattice_" & record.key.toString() & "_epoch", (record.nonce + 1).toBinary())
+            lattice.db.put("lattice_" & record.key.toString() & "_epoch", record.nonce.toBinary())
         except DBWriteError as e:
             doAssert(false, "Couldn't write a shifted record to the database: " & e.msg)

@@ -72,7 +72,7 @@ Database/Lattice:
 - Database/Lattice/Receive Test.
 - Database/Lattice/Data Test.
 - Database/Lattice/Account Test.
-- Clean the Database/Lattice/Lattice Test and test loading Elements after 6 and 9 Blocks.
+- Add competing Entries to the Lattice's DB Test.
 
 Network:
 - Tests.
