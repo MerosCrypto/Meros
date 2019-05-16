@@ -11,14 +11,11 @@ Database:
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
-Consensus:
-- Load unarchived Elements from the DB.
-
 Merit:
 - Chain reorgs.
+- Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
-- Improve the Difficulty algorithm.
 
 Lattice:
 - Cache the UXTO set.
@@ -34,7 +31,7 @@ Network:
 - Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Lattice and Consensus DAGs).
 
 ### Tests:
-Cleanup Tests (as in, they need to be cleaned (especially LatticeTest)).
+Cleanup Tests (as in, they need to be cleaned).
 
 objects:
 - objects/Config Test.
@@ -120,14 +117,9 @@ UI/RPC:
 
 - Explain `Lock`s/`Unlock`s.
 
-- Define what happens when a Verifier confirms X + 1, but not X, when X has yet to be mentioned in a Block.
 - Define what happens when a Verifier confirms a Receive who's Send doesn't become confirmed.
 
-- Define the Difficulty algorithm.
 - Define the Merkle tree construction for miners (in Merit)/MeritHolders (in Consensus).
-- Explain Dead Merit.
-- Explain Checkpoints.
 - Explain Rewards (including how cutoff rewards are carried over).
-- Talk about chain reorgs.
 
 - Meros Whitepaper.
