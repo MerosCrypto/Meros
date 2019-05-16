@@ -73,7 +73,7 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Entries, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned.
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Entries, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned once the MeritRemoval is included in a Block.
 
 The creation of a MeritRemoval causes the MeritHolder's Merit to exit the system, so their Merit no longer affects the amount of live Merit in the system. This is further described in the Merit documentation.
 
@@ -84,7 +84,7 @@ MeritRemovals have the following fields:
 - Element1: The first Element.
 - Element2: The second Element.
 
-`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte holder, the 4 byte nonce, the 4 byte cause nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the holder, the 1 byte message header for the Element, and the serialized version of the second Element without the holder.
+`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte holder, the 4 byte nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the holder, the 1 byte message header for the Element, and the serialized version of the second Element without the holder.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, SignedMeritRemoval
 
