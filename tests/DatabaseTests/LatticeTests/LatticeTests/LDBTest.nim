@@ -319,5 +319,4 @@ for i in 0 ..< 20:
     #Test the Lattices.
     test()
 
-
 echo "Finished the Database/Lattice/Lattice/DB Test."

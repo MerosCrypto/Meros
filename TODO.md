@@ -117,8 +117,6 @@ UI/RPC:
 
 - Explain `Lock`s/`Unlock`s.
 
-- Define what happens when a Verifier confirms a Receive who's Send doesn't become confirmed.
-
 - Define the Merkle tree construction for miners (in Merit)/MeritHolders (in Consensus).
 - Explain Rewards (including how cutoff rewards are carried over).
 

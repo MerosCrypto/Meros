@@ -2,7 +2,7 @@
 
 Merit is a blockchain used to:
 
-- Archive the Consensus DAG, providing a complete overview.
+- Archive Consensus, providing a complete overview, which then provides nodes with a complete overview of the Lattice.
 - Distribute Merit.
 - Mint new Meros.
 

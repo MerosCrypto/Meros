@@ -23,7 +23,7 @@ The `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, and `MeritRe
 
 ### Verification
 
-A Verification is a MeritHolder staking their Merit behind a Entry and approving it. Once a Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is confirmed. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks an Entry can have Verifications added during. A Entry can also be confirmed through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without a transaction becoming confirmed at that index, the Entry with the most Merit at that index, that is mentioned in a Block, becomes confirmed.
+A Verification is a MeritHolder staking their Merit behind a Entry and approving it. Once a Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks an Entry can have Verifications added during. A Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without a transaction becoming verified at that index, the Entry with the most Merit at that index, that is mentioned in a Block, becomes verified.
 
 They have the following fields:
 
@@ -37,7 +37,7 @@ A SendDifficulty is a MeritHolder voting to update the difficulty of the spam fi
 
 The 10,000 Merit limit creates a maximum of 525 votes. The multiple votes per MeritHolder means MeritHolders with more Merit get more power. The median means that if the difficulty is 10, and a MeritHolder wants it to be 9, they can't game the system by voting for 8.
 
-When the difficulty is lowered, there's a chance Entries based off the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Entries based off the old difficulty may still be accepted by nodes still using the old difficulty. The first just adds a delay to the system, and adding a Block will catch all the nodes up. The second risks rewinding Entries. Therefore, if an Entry doesn't beat the spam filter, but does still get the needed Verifications to become confirmed, it's still valid.
+When the difficulty is lowered, there's a chance Entries based off the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Entries based off the old difficulty may still be accepted by nodes still using the old difficulty. The first just adds a delay to the system, and adding a Block will catch all the nodes up. The second risks rewinding Entries. Therefore, if an Entry doesn't beat the spam filter, but does still get the needed Verifications to become verified, it's still valid.
 
 In the case no SendDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "AA" bytes.
 

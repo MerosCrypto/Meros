@@ -20,7 +20,7 @@ The Entry sub-types are as follows:
 - Lock
 - Unlock
 
-When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, if long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is confirmed, as described in the Consensus documentation, both must remain on the Account.
+When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, if long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is verified, as described in the Consensus documentation, both must remain on the Account.
 
 ### Mint
 
@@ -48,7 +48,7 @@ bls must be the BLS signature produced by the Private Key for the Mint's output 
 
 The sender's Account's balance, when combined with the amount from the Mint, must be lower than the max value of an uint64.
 
-Once a Claim has been confirmed, the Mint's amount is added to the sender's Account's balance.
+Once a Claim has been verified, the Mint's amount is added to the sender's Account's balance.
 
 `Claim` has a message length of 200 bytes; the 32 byte sender, the 4 byte nonce, the 4 byte mintNonce, the 96 byte BLS signature, and the 64 byte Ed25519 signature.
 
@@ -62,7 +62,7 @@ Send Entries have the following fields:
 
 Send hashes are defined as `Blake2b-384("send" + sender + nonce + output + amount)`, where sender takes up 32 bytes, nonce 4 bytes, output 32 bytes, and amount 8 bytes.
 
-amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are confirmed. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
+amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are verified. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
 
 The proof must satisfy the following check, where `sendDifficulty` is the Sends' spam filter's difficulty (described in the Consensus documentation):
 
@@ -76,7 +76,7 @@ Argon2d(
 ) > sendDifficulty
 ```
 
-Once a Send has been confirmed, the amount is subtracted from the sender's Account's balance.
+Once a Send has been verified, the amount is subtracted from the sender's Account's balance.
 
 `Send` has a message length of 144 bytes; the 32 byte sender, the 4 byte nonce, the 32 byte output, the 8 byte amount, the 64 byte Ed25519 signature, and the 4 byte proof.
 
@@ -89,11 +89,11 @@ Receive Entries have the following fields:
 
 Receive hashes are defined as `Blake2b-384("receive" + nonce + input + inputNonce)`, where nonce takes up 4 bytes, input 32 bytes, and inputNonce 4 bytes.
 
-The Entry on input's Account at inputNonce must be a Send, with an output of sender, which doesn't have a matching receive yet.
+The Entry on input's Account at inputNonce must be a verified Send, with an output of sender, which doesn't have a matching receive yet.
 
 The sender's Account's balance, when combined with the amount from the Send, must be lower than the max value of an uint64.
 
-Once the Receive has been confirmed, the Send's amount is added to the sender's Account's balance.
+Once the Receive has been verified, the Send's amount is added to the sender's Account's balance.
 
 `Receive` has a message length of 136 bytes; the 32 byte sender, the 4 byte nonce, the 32 byte input, the 4 byte mintNonce, and the 64 byte Ed25519 signature.
 
