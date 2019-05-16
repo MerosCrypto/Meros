@@ -42,4 +42,4 @@ var
 
 assert(rewards.len == 0)
 
-echo "Finished the Database/Merit/Epochs Test #0."
+echo "Finished the Database/Merit/Epochs Empty Test."

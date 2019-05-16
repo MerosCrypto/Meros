@@ -1,9 +1,9 @@
 #Epochs Tests.
 
-import EpochsTests/EpochsTestDB
+import EpochsTests/EDBTest
 
-import EpochsTests/EpochsTest0
-import EpochsTests/EpochsTest1
-import EpochsTests/EpochsTest2
+import EpochsTests/EmptyTest
+import EpochsTests/SingleTest
+import EpochsTests/SplitTest
 
 echo "Finished the Database/Merit/Epochs Tests."

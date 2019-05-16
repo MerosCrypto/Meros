@@ -92,4 +92,4 @@ assert(rewards.len == 1)
 assert(rewards[0].key == miner.publicKey.toString())
 assert(rewards[0].score == 1000)
 
-echo "Finished the Database/Merit/Epochs Test #1."
+echo "Finished the Database/Merit/Epochs Single Test."

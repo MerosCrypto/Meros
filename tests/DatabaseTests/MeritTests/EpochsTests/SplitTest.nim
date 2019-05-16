@@ -133,4 +133,4 @@ assert(rewards[0].key != rewards[1].key)
 assert(rewards[0].score == 500)
 assert(rewards[1].score == 500)
 
-echo "Finished the Database/Merit/Epochs Test #2."
+echo "Finished the Database/Merit/Epochs Split Test."
