@@ -73,19 +73,18 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, nodes add a MeritRemoval to the MeritHolder. When a MeritRemoval is created, all unarchived Elements have their actions reversed. If the Elements with the same nonce are present at an archived nonce, the MeritRemoval is added right after the archived Elements. If the Elements with the same nonce are at an unarchived nonce, the MeritRemoval is added right after the Elements that caused it. Everything after a MeritRemoval can be safely pruned, and any newly received Elements from that Verifier should be ignored.
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Entries, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned.
 
-The creation of a MeritRemoval causes the MeritHolder's Merit to exit the system, so their Merit no longer affects the total. This is further described in the Merit documentation.
+The creation of a MeritRemoval causes the MeritHolder's Merit to exit the system, so their Merit no longer affects the amount of live Merit in the system. This is further described in the Merit documentation.
 
-If a MeritRemoval is triggered at multiple nonces, or with more than two Elements, the first one will have already reverted unarchived actions and strip the MeritHolder of their Merit. The question becomes solely where to place the MeritRemoval and with what Elements as the cause. This is at the next Block's miner's discretion, and whatever nonce/Elements they pick becomes the nonce/Elements for the entire network.
+If a MeritRemoval is triggered at multiple nonces, or with more than two Elements, the first one will have already reverted unarchived actions and strip the MeritHolder of their Merit. The question becomes solely what Elements to name as the MeritRemoval's cause. This is at the next Block's miner's discretion, and whatever Elements they pick becomes the cause for the entire network.
 
 MeritRemovals have the following fields:
 
-- causeNonce: The nonce of the Elements which conflict.
 - Element1: The first Element.
 - Element2: The second Element.
 
-`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte holder, the 4 byte nonce, the 4 byte cause nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the holder/nonce, the 1 byte message header for the Element, and the serialized version of the second Element without the holder/nonce.
+`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte holder, the 4 byte nonce, the 4 byte cause nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the holder, the 1 byte message header for the Element, and the serialized version of the second Element without the holder.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, SignedMeritRemoval
 
