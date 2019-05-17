@@ -27,6 +27,8 @@ type Config* = object
     #DB Path.
     db*: string
 
+    #Listening for Meros connections or not.
+    server*: bool
     #Port for our server to listen on.
     tcpPort*: int
     #Port for the RPC to listen on.
@@ -60,6 +62,7 @@ proc newConfig*(): Config {.forceCheck: [].} =
     result = Config(
         dataDir: "./data",
         db: "db",
+        server: true,
         tcpPort: 5132,
         rpcPort: 5133
     )
@@ -104,6 +107,13 @@ proc newConfig*(): Config {.forceCheck: [].} =
             discard
 
         try:
+            result.server = json.get("server", JBool).getBool()
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
+
+        try:
             result.tcpPort = json.get("tcpPort", JInt).getInt()
         except ValueError as e:
             doAssert(false, e.msg)
@@ -139,6 +149,9 @@ proc newConfig*(): Config {.forceCheck: [].} =
                 case paramStr(i):
                     of "--db":
                         result.db = paramStr(i + 1)
+
+                    of "--server":
+                        result.server = (paramStr(i + 1) == "true")
 
                     of "--tcpPort":
                         result.tcpPort = parseInt(paramStr(i + 1))

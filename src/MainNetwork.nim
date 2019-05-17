@@ -5,11 +5,12 @@ proc mainNetwork() {.forceCheck: [].} =
         #Create the Network..
         network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, functions)
 
-        #Start listening.
-        try:
-            asyncCheck network.listen(config)
-        except Exception:
-            discard
+        #Start listening, if we're supposed to.
+        if config.server:
+            try:
+                asyncCheck network.listen(config)
+            except Exception:
+                discard
 
         #Handle network events.
         #Connect to another node.
