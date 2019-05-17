@@ -75,7 +75,7 @@ proc recv*(
     #Switch based on the content to determine the Message Size.
     case content:
         of MessageType.Handshake:
-            size = BYTE_LEN + BYTE_LEN + INT_LEN
+            size = BYTE_LEN + BYTE_LEN + BYTE_LEN + INT_LEN
 
         of MessageType.Syncing:
             size = 0
@@ -192,6 +192,7 @@ proc handshake*(
     client: Client,
     id: int,
     protocol: int,
+    server: bool,
     height: int
 ): Future[HandshakeState] {.forceCheck: [
     SocketError,
@@ -203,7 +204,10 @@ proc handshake*(
         await client.send(
             newMessage(
                 MessageType.Handshake,
-                char(id) & char(protocol) & height.toBinary().pad(INT_LEN)
+                char(id) &
+                char(protocol) &
+                (if server: char(255) else: char(0)) &
+                height.toBinary().pad(INT_LEN)
             )
         )
     except SocketError as e:
@@ -232,6 +236,7 @@ proc handshake*(
     var handshakeSeq: seq[string] = handshake.message.deserialize(
         BYTE_LEN,
         BYTE_LEN,
+        BYTE_LEN,
         INT_LEN
     )
     #Verify their Network ID.
@@ -241,8 +246,14 @@ proc handshake*(
     if int(handshakeSeq[1][0]) != protocol:
         raise newException(InvalidMessageError, "Client responded to a Handshake with a different Protocol Version.")
 
+    if int(handshakeSeq[2][0]) == 255:
+        try:
+            client.server = true
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when handshaking with a Client: " & e.msg)
+
     #Get their Blockchain height.
-    var theirHeight: int = handshakeSeq[2].fromBinary()
+    var theirHeight: int = handshakeSeq[3].fromBinary()
 
     #If they have more blocks than us, return that we're missing blocks.
     if height < theirHeight:

@@ -22,8 +22,6 @@ finalsd:
 
             Syncing = 1,
             SyncingAcknowledged = 2,
-            PeerRequest = 3,
-            Peers = 4,
             BlockRequest = 6,
             ElementRequest = 7,
             EntryRequest = 8,

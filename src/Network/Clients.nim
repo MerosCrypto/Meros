@@ -94,6 +94,7 @@ proc add*(
     clients: Clients,
     ip: string,
     port: int,
+    server: bool,
     socket: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [], async.} =
@@ -113,6 +114,7 @@ proc add*(
         state = await client.handshake(
             networkFunctions.getNetworkID(),
             networkFunctions.getProtocol(),
+            server,
             networkFunctions.getHeight()
         )
     except SocketError:

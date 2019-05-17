@@ -23,6 +23,8 @@ finalsd:
             ip* {.final.}: string
             #Port.
             port* {.final.}: int
+            #Server who can accept connections.
+            server* {.final.}: bool
             #ID.
             id* {.final.}: int
             #Our state.
@@ -42,6 +44,7 @@ func newClient*(
     result = Client(
         ip: ip,
         port: port,
+        server: false,
         id: id,
         ourState: ClientState.Ready,
         theirState: ClientState.Ready,

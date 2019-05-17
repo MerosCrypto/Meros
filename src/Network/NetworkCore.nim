@@ -455,6 +455,7 @@ proc listen*(
             asyncCheck network.clients.add(
                 client.address,
                 0,
+                true,
                 client.client,
                 network.networkFunctions
             )
@@ -489,6 +490,7 @@ proc connect*(
         asyncCheck network.clients.add(
             ip,
             port,
+            not network.server.isNil,
             socket,
             network.networkFunctions
         )
