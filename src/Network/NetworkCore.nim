@@ -102,7 +102,7 @@ proc newNetwork*(
                     else:
                         res = network.mainFunctions.merit.getBlockByHash(req)
                 #If we don't have that block, send them DataMissing.
-                except IndexError as e:
+                except IndexError:
                     try:
                         await network.clients.reply(
                             msg,
@@ -275,7 +275,7 @@ proc newNetwork*(
                     else:
                         res = network.mainFunctions.merit.getBlockByNonce(req).hash
                 #If we don't have that block, send them DataMissing.
-                except IndexError as e:
+                except IndexError:
                     try:
                         await network.clients.reply(
                             msg,

@@ -40,18 +40,24 @@ proc disconnect*(
     clients: Clients,
     id: int
 ) {.forceCheck: [].} =
+    var toDelete: int
     for i, client in clients.clients:
         if client.id == id:
             client.close()
-            clients.clients.delete(i)
+            toDelete = i
+            break
+    clients.clients.delete(toDelete)
 
 #Disconnects every client.
 proc shutdown*(
     clients: Clients
 ) {.forceCheck: [].} =
-    for client in clients.clients:
-        client.close()
-        #Delete the first client. Since we iterate from start to finish, and always delete the client, this will always delete this client.
+    #Delete the first client until there is no first client.
+    while clients.clients.len != 0:
+        try:
+            clients.clients[0].close()
+        except Exception:
+            discard
         clients.clients.delete(0)
 
 #Getter.

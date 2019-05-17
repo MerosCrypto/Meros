@@ -293,9 +293,11 @@ proc shutdown*(
         rpc.server.close()
     except Exception:
         discard
+
     #Close each client.
-    for client in rpc.clients:
+    while rpc.clients.len != 0:
         try:
-            client.socket.close()
+            rpc.clients[0].socket.close()
         except Exception:
             discard
+        rpc.clients.delete(0)
