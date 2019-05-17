@@ -4,19 +4,29 @@ Syncing is a state between two nodes where one needs to catch up. To initiate sy
 
 During syncing, the syncer can only send:
 
+- `PeerRequest`
+
 - `BlockHeaderRequest`
 - `BlockRequest`
+
 - `ElementRequest`
+
 - `EntryRequest`
+
 - `CheckpointRequest`
+
 - `GetBlockHash`
 - `GetVerifierHeight`
 - `GetAccountHeight`
 - `GetHashesAtIndex`
+
 - `SignedElementRequest`
+
 - `SyncingOver`
 
 The syncee can only send:
+
+- `Peers`
 
 - `BlockHeader`
 - `Block`
@@ -55,27 +65,33 @@ The syncee should also only send messages in direct response to a request from t
 
 Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After receiving `SyncingAcknowledged`, the syncer may send requests for missing data, one at a time. Sending multiple requests before receiving a response to the first request will lead to undefined behavior.
 
+### PeerRequest and Peers
+
+`PeerRequest` is used to request the connection info of other Meros nodes. It has a message length of 0, with the expected response being a `Peers`. `Peers` has a variable message length; the 1 byte amount of peers, and for each peer, the 4 byte IPv4 address and 2 byte port. The peers sent in a `Peers` message is completely up to the syncee.
+
 ### BlockHeaderRequest
 
-A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `BlockHeader` containing the requested BlockHeader. If a 0'd out hash is provided, the syncee should respond with a `BlockHeader` containing their tail Block's BlockHeader.
+A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `BlockHeader` containing the BlockHeader. If a 0'd out hash is provided, the syncee should respond with a `BlockHeader` containing their tail Block's BlockHeader.
 
 ### BlockRequest
 
-A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `Block` containing the requested Block. If a 0'd out hash is provided, the syncee should respond with a `Block` containing their tail Block.
+A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `Block` containing the Block. If a 0'd out hash is provided, the syncee should respond with a `Block` containing their tail Block.
 
 ### ElementRequest
 
-A `ElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element at the requested location, without its BLS Signature.
+A `ElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element, without its BLS Signature.
 
 ### EntryRequest
 
-An `EntryRequest` has a message length of 48 bytes; the Entry hash, with the expected response being a `Claim`, `Send`, `Receive`, or `Data` containing the Entry with the same hash. If a Mint has the requested hash, the syncer should send `DataMissing`.
+An `EntryRequest` has a message length of 48 bytes; the 48 byte Entry hash, with the expected response being a `Claim`, `Send`, `Receive`, or `Data` containing the Entry with the same hash. If a Mint has the requested hash, the syncer should send `DataMissing`.
 
 ### CheckpointRequest
 
+A `CheckpointRequest` has a message length of 48 bytes; the 47 byte Block hash to get the Checkpoint of, with the expected response being a `Checkpoint` containing the Checkpoint.
+
 ### GetBlockHash and BlockHash
 
-`GetBlockHash` has a message length of 4 bytes; the nonce of the Block to get the hash of, with the expected response being a `BlockHash`. `BlockHash` has a message length of 52 bytes; the 4 byte nonce and the 48 byte hash.
+`GetBlockHash` has a message length of 4 bytes; the nonce of the Block to get the hash of, with the expected response being a `BlockHash` containing the Block at that nonce's hash. `BlockHash` has a message length of 52 bytes; the 4 byte nonce and the 48 byte hash. If a 0'd out hash was sent, the syncee should respond with a `BlockHash` containing their tail Block's nonce and hash.
 
 ### GetVerifierHeight and VerifierHeight
 
@@ -103,6 +119,7 @@ A `SignedElementRequest` has a message length of 52 bytes; the Verifier's 48 byt
 
 ### Violations in Meros
 
+- Meros doesn't support the `PeerRequest` and `Peers` message types.
 - Meros doesn't support the `BlockHeaderRequest` and `CheckpointRequest` message types.
 - Meros doesn't support the `GetBlockHash` and `BlockHash` message types.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.

@@ -9,6 +9,8 @@ The message types are as follows (with their list number being their byte header
 <br>
 <li><code>Syncing</code></li>
 <li><code>SyncingAcknowledged</code></li>
+<li><code>PeerRequest</code></li>
+<li><code>Peers</code></li>
 <li><code>BlockHeaderRequest</code></li>
 <li><code>BlockRequest</code></li>
 <li><code>ElementRequest</code></li>
