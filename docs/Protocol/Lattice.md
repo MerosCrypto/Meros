@@ -128,5 +128,4 @@ Argon2d(
 
 ### Violations in Meros
 
-- Meros doesn't confirm a Claim/Receive won't overflow the balance, unless Nim's overflow checks are enabled, which they aren't on release.
 - Meros doesn't support either `Lock` or `Unlock`.

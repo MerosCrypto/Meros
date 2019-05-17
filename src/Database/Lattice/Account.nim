@@ -32,6 +32,9 @@ export AccountObj
 #Tables lib.
 import tables
 
+#Max balance.
+const MAX_BALANCE: uint64 = not uint64(0)
+
 #Add a Mint.
 proc add*(
     account: Account,
@@ -75,7 +78,7 @@ proc add*(
         discard minter.claimable[claim.mintNonce]
     #Not claimable.
     except KeyError:
-        raise newException(ValueError, "Claim is for a claimed Mint.")
+        raise newException(ValueError, "Claim is for an unclaimable Mint.")
 
     #Verify the BLS signature is for this Mint and this person.
     var mint: Mint
@@ -83,8 +86,8 @@ proc add*(
         mint = cast[Mint](minter[claim.mintNonce])
     except ValueError as e:
         doAssert(false, "Couldn't grab a Mint because the Minter had competing Entries: " & e.msg)
-    except IndexError:
-        raise newException(ValueError, "Claim tries to claim an invalid Mint.")
+    except IndexError as e:
+        doAssert(false, "Claim has a invalid, yet claimable, input: " & e.msg)
 
     try:
         claim.bls.setAggregationInfo(
@@ -99,6 +102,10 @@ proc add*(
         doAssert(false, "Created an account with an invalid address.")
     except BLSError as e:
         fcRaise e
+
+    #Verify this won't overflow the balance.
+    if MAX_BALANCE - account.balance < mint.amount:
+        raise newException(ValueError, "This Claim would overflow the Account's balance.")
 
     #Add the Claim.
     try:
@@ -169,15 +176,16 @@ proc add*(
         discard sender.claimable[recv.input.nonce]
     #Not claimable.
     except KeyError:
-        raise newException(ValueError, "Receive is for a claimed Entry.")
+        raise newException(ValueError, "Receive is for an unclaimable Send.")
 
     #Verify it's a Send.
     if sender.address == "minter":
         raise newException(ValueError, "Receive is for a Mint. This should never happen.")
 
     #Verify the Send's output address.
+    var send: Send
     try:
-        var send: Send = cast[Send](sender[recv.input.nonce])
+        send = cast[Send](sender[recv.input.nonce])
         if not send.verified:
             #Use GapError as it's a custom error that's guaranteed to not be raised, when we do have to handle ValueError.
             raise newException(GapError, "Receive is for an unconfirmed Send.")
@@ -187,10 +195,14 @@ proc add*(
         #There are multiple Entries at that index.
         raise newException(ValueError, "Receive's input has competing Entries.")
     except IndexError as e:
-        #That index is invalid.
-        raise newException(IndexError, "Receive has an invalid input: " & e.msg)
+        #That index is invalid, despite being claimable.
+        doAssert(false, "Receive has a invalid, yet claimable, input: " & e.msg)
     except GapError as e:
         raise newException(ValueError, e.msg)
+
+    #Verify this won't overflow the balance.
+    if MAX_BALANCE - account.balance < send.amount:
+        raise newException(ValueError, "This Receive would overflow the Account's balance.")
 
     #Add the Receive.
     try:
