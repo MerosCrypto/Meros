@@ -62,7 +62,7 @@ proc startSyncing*(
 proc syncEntry*(
     client: Client,
     hash: Hash[384]
-): Future[SyncEntryResponse] {.forceCheck: [
+): Future[Entry] {.forceCheck: [
     SocketError,
     ClientError,
     SyncConfigError,
@@ -98,9 +98,7 @@ proc syncEntry*(
     try:
         case msg.content:
             of MessageType.Claim .. MessageType.Data:
-                result = newSyncEntryResponse(
-                    (char(int(msg.content) - int(MessageType.Claim) + 1) & msg.message).parseEntry()
-                )
+                result = (char(int(msg.content) - int(MessageType.Claim) + 1) & msg.message).parseEntry()
 
             of MessageType.DataMissing:
                 raise newException(DataMissing, "Client didn't have the requested Entry.")

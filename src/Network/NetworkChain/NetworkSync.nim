@@ -69,7 +69,7 @@ proc syncEntries(
     network: Network,
     id: int,
     entries: seq[Hash[384]]
-): Future[seq[SyncEntryResponse]] {.forceCheck: [
+): Future[seq[Entry]] {.forceCheck: [
     SocketError,
     ClientError,
     InvalidMessageError,
@@ -141,7 +141,7 @@ proc sync*(
         #Hashes of the Entries mentioned in missing Elements.
         entryHashes: seq[Hash[384]] = @[]
         #Entries mentioned in missing Elements.
-        entries: seq[SyncEntryResponse] = @[]
+        entries: seq[Entry] = @[]
 
     #Calculate the Elements gaps.
     for record in newBlock.records:
@@ -257,10 +257,10 @@ proc sync*(
             try:
                 for entry in entries:
                     #Add it.
-                    case entry.entry:
+                    case entry.descendant:
                         of EntryType.Claim:
                             try:
-                                network.mainFunctions.lattice.addClaim(entry.claim)
+                                network.mainFunctions.lattice.addClaim(cast[Claim](entry))
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError, BLSError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
@@ -268,7 +268,7 @@ proc sync*(
 
                         of EntryType.Send:
                             try:
-                                network.mainFunctions.lattice.addSend(entry.send)
+                                network.mainFunctions.lattice.addSend(cast[Send](entry))
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
@@ -276,7 +276,7 @@ proc sync*(
 
                         of EntryType.Receive:
                             try:
-                                network.mainFunctions.lattice.addReceive(entry.receive)
+                                network.mainFunctions.lattice.addReceive(cast[Receive](entry))
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
@@ -284,14 +284,14 @@ proc sync*(
 
                         of EntryType.Data:
                             try:
-                                network.mainFunctions.lattice.addData(entry.data)
+                                network.mainFunctions.lattice.addData(cast[Data](entry))
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
                                 continue
 
                         else:
-                            doAssert(false, "SyncEntryResponse exists for an unsyncable type.")
+                            doAssert(false, "Synced an Entry of an unsyncable type.")
             except InvalidMessageError:
                 continue
 

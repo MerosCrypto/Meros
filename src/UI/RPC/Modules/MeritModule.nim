@@ -84,8 +84,8 @@ proc getBlock(
         for index in gotBlock.records:
             result["records"].add(%* {
                 "holder": $index.key,
-                "nonce":    index.nonce,
-                "merkle":   $index.merkle
+                "nonce":  index.nonce,
+                "merkle": $index.merkle
             })
     except KeyError as e:
         doAssert(false, "Couldn't add a Record to a Block's JSON representation despite declaring an array for the Records: " & e.msg)
