@@ -56,7 +56,7 @@ proc processBlock*(
         raise newException(DataExists, "Invalid nonce.")
 
     #If the last hash is off...
-    if newBlock.header.last != blockchain.tip.header.hash:
+    if newBlock.header.last != blockchain.tip.hash:
         raise newException(ValueError, "Invalid last hash.")
 
     #If the time is before the last block's...
@@ -86,7 +86,7 @@ proc processBlock*(
         blocksPerPeriod = 144
 
     #If the difficulty wasn't beat...
-    if not blockchain.difficulty.verify(newBlock.header.hash):
+    if not blockchain.difficulty.verify(newBlock.hash):
         raise newException(ValueError, "Difficulty wasn't beat.")
 
     #Add the Block.

@@ -58,7 +58,7 @@ proc getBlock(
     #Get the Block.
     var gotBlock: Block
     try:
-        gotBlock = rpc.functions.merit.getBlock(nonce)
+        gotBlock = rpc.functions.merit.getBlockByNonce(nonce)
     except IndexError as e:
         returnError()
 

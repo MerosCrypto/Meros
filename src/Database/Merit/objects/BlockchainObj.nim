@@ -104,7 +104,7 @@ proc newBlockchainObj*(
         except ArgonError as e:
             doAssert(false, "Couldn't create the Genesis Block due to an ArgonError: " & e.msg)
         #Grab the tip.
-        tip = genesisBlock.header.hash.toString()
+        tip = genesisBlock.hash.toString()
 
         #Save the tip, the Genesis Block, and the starting Difficulty.
         try:
@@ -197,12 +197,12 @@ proc add*(
 
     #Save the block to the database.
     try:
-        blockchain.db.put("merit_" & newBlock.header.hash.toString(), newBlock.serialize())
-        blockchain.db.put("merit_tip", newBlock.header.hash.toString())
+        blockchain.db.put("merit_" & newBlock.hash.toString(), newBlock.serialize())
+        blockchain.db.put("merit_tip", newBlock.hash.toString())
     except DBWriteError as e:
         doAssert(false, "Couldn't save a block to the Database: " & e.msg)
 
-#Block getter.
+#Block getters.
 proc `[]`*(
     blockchain: Blockchain,
     nonce: Natural
@@ -229,6 +229,26 @@ proc `[]`*(
         except DBReadError as e:
             doAssert(false, "Couldn't load a Block we were asked for from the Database: " & e.msg)
 
+proc `[]`*(
+    blockchain: Blockchain,
+    hash: Hash[384]
+): Block {.forceCheck: [
+    IndexError
+].} =
+    for cached in blockchain.blocks:
+        if cached.hash == hash:
+            return cached
+
+    try:
+        result = parseBlock(blockchain.db.get("merit_" & hash.toString()))
+    except ValueError as e:
+        doAssert(false, "Couldn't parse a Block we were asked for from the Database: " & e.msg)
+    except BLSError as e:
+        doAssert(false, "Couldn't parse a Block we were asked for's Aggregate Signature OR Miners from the Database: " & e.msg)
+    except ArgonError as e:
+        doAssert(false, "Couldn't hash a Block we were asked for from the Database: " & e.msg)
+    except DBReadError:
+        raise newException(IndexError, "Block not found.")
 
 #Gets the last Block.
 func tip*(

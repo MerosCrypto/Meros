@@ -74,23 +74,35 @@ proc newNetwork*(
             #These five messages should never make it to handle.
             of MessageType.Syncing:
                 raise newException(InvalidMessageError, "Client sent us a `Syncing` which made its way to handle.")
-            of MessageType.SyncingAcknowledged:
-                raise newException(InvalidMessageError, "Client sent us a `SyncingAcknowledged` when we aren't syncing.")
             of MessageType.SyncingOver:
                 raise newException(InvalidMessageError, "Client sent us a `SyncingOver` which made its way to handle.")
+            of MessageType.SyncingAcknowledged:
+                raise newException(InvalidMessageError, "Client sent us a `SyncingAcknowledged` when we aren't syncing.")
             of MessageType.DataMissing:
                 raise newException(InvalidMessageError, "Client sent us a `DataMissing` when we aren't syncing.")
+            of MessageType.BlockHash:
+                raise newException(InvalidMessageError, "Client sent us a `BlockHash` when we aren't syncing.")
             of MessageType.Verification:
                 raise newException(InvalidMessageError, "Client sent us a Verification when we aren't syncing.")
 
             of MessageType.BlockRequest:
-                #Grab our chain height and parse the requested nonce.
+                #Grab our chain height and parse the requested hash.
                 var
                     height: int = mainFunctions.merit.getHeight()
-                    req: int = msg.message.fromBinary()
+                    req: Hash[384]
+                    res: Block
+                try:
+                    req = msg.message.toHash(384)
+                except ValueError as e:
+                    raise newException(ClientError, "`BlockRequest` contained an invalid hash: " & e.msg)
 
+                try:
+                    if req.empty:
+                        res = network.mainFunctions.merit.getBlockByNonce(height - 1)
+                    else:
+                        res = network.mainFunctions.merit.getBlockByHash(req)
                 #If we don't have that block, send them DataMissing.
-                if height <= req:
+                except IndexError as e:
                     try:
                         await network.clients.reply(
                             msg,
@@ -106,16 +118,8 @@ proc newNetwork*(
                         doAssert(false, "Sending `DataMissing` in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
                     return
 
-                #If they asked for Block 0, they want the tail.
-                if req == 0:
-                    req = height - 1
-
-                #Since we have it, grab it and serialize it.
-                var serialized: string
-                try:
-                    serialized = network.mainFunctions.merit.getBlock(req).serialize()
-                except IndexError as e:
-                    doAssert(false, "Couldn't grab a Block we've confirmed to have: " & e.msg)
+                #Since we have the Block, serialize it.
+                var serialized: string = res.serialize()
 
                 #Send it.
                 try:
@@ -193,7 +197,7 @@ proc newNetwork*(
                     #Try to get the Entry.
                     entry = mainFunctions.lattice.getEntryByHash(msg.message.toHash(384))
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "`EntryRequest` contained an invalid hash: " & e.msg)
+                    raise newException(ClientError, "`EntryRequest` contained an invalid hash: " & e.msg)
                 except IndexError:
                     #If that failed, return DataMissing.
                     try:
@@ -257,6 +261,53 @@ proc newNetwork*(
                     fcRaise e
                 except Exception as e:
                     doAssert(false, "Sending an Entry in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+            of MessageType.GetBlockHash:
+                #Grab our chain height and parse the requested nonce.
+                var
+                    height: int = mainFunctions.merit.getHeight()
+                    req: int = msg.message.fromBinary()
+                    res: Hash[384]
+
+                try:
+                    if req == 0:
+                        res = network.mainFunctions.merit.getBlockByNonce(height - 1).hash
+                    else:
+                        res = network.mainFunctions.merit.getBlockByNonce(req).hash
+                #If we don't have that block, send them DataMissing.
+                except IndexError as e:
+                    try:
+                        await network.clients.reply(
+                            msg,
+                            newMessage(MessageType.DataMissing)
+                        )
+                    except IndexError as e:
+                        fcRaise e
+                    except SocketError as e:
+                        fcRaise e
+                    except ClientError as e:
+                        fcRaise e
+                    except Exception as e:
+                        doAssert(false, "Sending `DataMissing` in response to a `GetBlockHash` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                    return
+
+                #Send it.
+                try:
+                    await network.clients.reply(
+                        msg,
+                        newMessage(
+                            MessageType.BlockHash,
+                            res.toString()
+                        )
+                    )
+                except IndexError as e:
+                    fcRaise e
+                except SocketError as e:
+                    fcRaise e
+                except ClientError as e:
+                    fcRaise e
+                except Exception as e:
+                    doAssert(false, "Sending a `BlockHash` in response to a `GetBlockHash` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.Claim:
                 var claim: Claim

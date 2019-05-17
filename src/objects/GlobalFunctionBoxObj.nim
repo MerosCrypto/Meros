@@ -116,8 +116,14 @@ type
 
         getDifficulty*: proc (): Difficulty {.inline, raises: [].}
 
-        getBlock*: proc (
+        getBlockByNonce*: proc (
             nonce: int
+        ): Block {.raises: [
+            IndexError
+        ].}
+
+        getBlockByHash*: proc (
+            hash: Hash[384]
         ): Block {.raises: [
             IndexError
         ].}

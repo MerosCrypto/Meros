@@ -2,24 +2,48 @@
 
 ### Core:
 Wallet:
+
 - Mnemonic file to convert a Mnemonic to seed, and vice versa.
 - HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 - OpenCAP support.
 
 Database:
+
 - If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Merit:
+
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
 
 Lattice:
+
 - Cache the UXTO set.
 
 Network:
+
+- Syncing currently works by:
+    - Get the hash of the next Block.
+    - Get the Block.
+    - Sync all the Elements from the Block.
+    - Sync all the Entries from the Elements.
+
+	Switching this to:
+
+    - Get the hash of the next Block who's nonce modulus 5 == 0.
+    - Get the Checkpoint.
+    - Sync every Block in the checkpoint, in reverse order.
+    - For each Block, in order:
+        - Sync all the Elements from the Block.
+        - Sync all the Entries from the Elements.
+    - When there are no more Checkpoint, get the hash of each individual Block...
+
+	Will reduce network traffic and increase security.
+
+
 - Don't rebroadcast data that we're syncing.
 
 - Prevent the same client from connecting multiple times.
@@ -33,9 +57,11 @@ Network:
 Cleanup Tests (as in, they need to be cleaned).
 
 objects:
+
 - objects/Config Test.
 
 lib:
+
 - lib/Hash/Argon Test.
 - lib/Hash/Blake2 Test.
 - lib/Hash/SHA2 (384) Test.
@@ -45,15 +71,18 @@ lib:
 - lib/Logger Test.
 
 Wallet:
+
 - Wallet/Ed25519 Test.
 - Wallet/MinerWallet Test.
 - Wallet/Wallet Test.
 
 Database/Consensus:
+
 - Database/Consensus/Verifier Test.
 - Database/Consensus/Verification Test.
 
 Database/Merit:
+
 - Database/Merit/BlockHeader Test.
 - Database/Merit/Block Test.
 - Database/Merit/Difficulty Test.
@@ -61,6 +90,7 @@ Database/Merit:
 - Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
 
 Database/Lattice:
+
 - Database/Lattice/Entry Test.
 - Database/Lattice/Mint Test.
 - Database/Lattice/Claim Test.
@@ -71,13 +101,16 @@ Database/Lattice:
 - Add competing Entries to the Lattice's DB Test.
 
 Network:
+
 - Tests.
 
 Network/Serialize/Lattice:
+
 - Network/Serialize/Lattice/SerializeEntry Test.
 - Network/Serialize/Lattice/ParseEntry Test.
 
 UI/RPC:
+
 - UI/RPC/RPC Test.
 - UI/RPC/Modules/SystemModule Test.
 - UI/RPC/Modules/ConsensusModule Test.
@@ -87,6 +120,7 @@ UI/RPC:
 - UI/RPC/Modules/NetworkModule Test.
 
 ### Features:
+
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
@@ -103,6 +137,7 @@ UI/RPC:
 - Network page on the GUI.
 
 ### Improvements:
+
 - Swap Chia for Herumi.
 
 - Cache the Lattice's UXTO set.
@@ -111,6 +146,7 @@ UI/RPC:
 - Remove holders who lost all their Merit from `merit_holders`.
 
 ### Documentation:
+
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Use Nim Documentation Comments.
 

@@ -82,10 +82,14 @@ proc recv*(
         of MessageType.SyncingAcknowledged:
             size = 0
         of MessageType.BlockRequest:
-            size = INT_LEN
+            size = HASH_LEN
         of MessageType.ElementRequest:
             size = BLS_PUBLIC_KEY_LEN + INT_LEN
         of MessageType.EntryRequest:
+            size = HASH_LEN
+        of MessageType.GetBlockHash:
+            size = INT_LEN
+        of MessageType.BlockHash:
             size = HASH_LEN
         of MessageType.DataMissing:
             size = 0
@@ -444,15 +448,15 @@ proc syncVerification*(
             try:
                 result = msg.message.parseVerification()
             except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our ElementRequest, as pointed out by a ValueError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our `ElementRequest`, as pointed out by a ValueError: " & e.msg)
             except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our ElementRequest, as pointed out by a BLSError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our `ElementRequest`, as pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
             raise newException(DataMissing, "Client didn't have the requested Verification.")
 
         else:
-            raise newException(InvalidMessageError, "Client didn't respond properly to our ElementRequest.")
+            raise newException(InvalidMessageError, "Client didn't respond properly to our `ElementRequest`.")
 
     if (result.holder != holder) or (result.nonce != nonce):
         raise newException(InvalidMessageError, "Synced a Verification that we didn't request.")
@@ -472,9 +476,41 @@ proc syncBlock*(
     if client.ourState != ClientState.Syncing:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
+    #Get the Block hash.
+    try:
+        await client.send(newMessage(MessageType.GetBlockHash, nonce.toBinary().pad(INT_LEN)))
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending an `GetBlockHash` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Get their response.
+    var msg: Message
+    try:
+        msg = await client.recv()
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Receiving the response to an `GetBlockHash` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Grab the hash.
+    case msg.content:
+        of MessageType.BlockHash:
+            discard
+
+        of MessageType.DataMissing:
+            raise newException(DataMissing, "Client didn't have the requested Block.")
+
+        else:
+            raise newException(InvalidMessageError, "Client didn't respond properly to our `GetBlockHash`.")
+
     #Send the request.
     try:
-        await client.send(newMessage(MessageType.BlockRequest, nonce.toBinary().pad(INT_LEN)))
+        await client.send(newMessage(MessageType.BlockRequest, msg.message))
     except SocketError as e:
         fcRaise e
     except ClientError as e:
@@ -483,7 +519,6 @@ proc syncBlock*(
         doAssert(false, "Sending an `BlockRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
-    var msg: Message
     try:
         msg = await client.recv()
     except SocketError as e:
@@ -498,17 +533,17 @@ proc syncBlock*(
             try:
                 result = msg.message.parseBlock()
             except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, as pointed out by a ValueError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our `BlockRequest`, as pointed out by a ValueError: " & e.msg)
             except ArgonError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, as pointed out by a ArgonError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our `BlockRequest`, as pointed out by a ArgonError: " & e.msg)
             except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our BlockRequest, as pointed out by a BLSError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our `BlockRequest`, as pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
             raise newException(DataMissing, "Client didn't have the requested Block.")
 
         else:
-            raise newException(InvalidMessageError, "Client didn't respond properly to our BlockRequest.")
+            raise newException(InvalidMessageError, "Client didn't respond properly to our `BlockRequest`.")
 
 #Tell the Client we're done syncing.
 proc stopSyncing*(

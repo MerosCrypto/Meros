@@ -33,6 +33,12 @@ type Block* = object
     #Who to attribute the Merit to (amount is 0 (exclusive) to 100 (inclusive)).
     miners: Miners
 
+#Hash getter.
+proc hash*(
+    blockArg: Block
+): Hash[384] {.inline, forceCheck: [].} =
+    blockArg.header.hash
+
 #Records getter/setter.
 func records*(
     blockArg: Block

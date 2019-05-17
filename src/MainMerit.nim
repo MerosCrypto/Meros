@@ -21,13 +21,23 @@ proc mainMerit() {.forceCheck: [].} =
             merit.blockchain.difficulty
 
         #Handle requests for a Block.
-        functions.merit.getBlock = proc (
+        functions.merit.getBlockByNonce = proc (
             nonce: int
         ): Block {.forceCheck: [
             IndexError
         ].} =
             try:
                 result = merit.blockchain[nonce]
+            except IndexError as e:
+                fcRaise e
+
+        functions.merit.getBlockByHash = proc (
+            hash: Hash[384]
+        ): Block {.forceCheck: [
+            IndexError
+        ].} =
+            try:
+                result = merit.blockchain[hash]
             except IndexError as e:
                 fcRaise e
 

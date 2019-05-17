@@ -25,6 +25,8 @@ finalsd:
             BlockRequest = 6,
             ElementRequest = 7,
             EntryRequest = 8,
+            GetBlockHash = 10,
+            BlockHash = 11,
             DataMissing = 19,
             SyncingOver = 20,
 

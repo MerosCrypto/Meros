@@ -121,10 +121,8 @@ A `SignedElementRequest` has a message length of 52 bytes; the Verifier's 48 byt
 
 - Meros doesn't support the `PeerRequest` and `Peers` message types.
 - Meros doesn't support the `BlockHeaderRequest` and `CheckpointRequest` message types.
-- Meros doesn't support the `GetBlockHash` and `BlockHash` message types.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
 - Meros doesn't support the `GetAccountHeight` and `AccountHeight` message types.
 - Meros doesn't support the `GetHashesAtIndex` and `HashesAtIndex` message types.
 - Meros's Consensus DAG only supports Verification and SignedVerifications. Therefore, it will only answer an `ElementRequest` with one of the two.
 - Meros doesn't support the `SignedElementRequest` message type.
-- A `BlockRequest` is currently followed by 4 bytes representing the nonce of the Block, as Meros currently doesn't support chain reorgs in any form. To get the tail Block, Meros sends 4 0 bytes.

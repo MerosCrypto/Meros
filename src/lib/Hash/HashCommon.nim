@@ -54,6 +54,14 @@ func `$`*(
     for b in hash.data:
         result &= b.toHex()
 
+proc empty*(
+    hash: Hash
+): bool {.forceCheck: [].} =
+    for b in hash.data:
+        if b != 0:
+            return false
+    result = true
+
 #Compare hash values.
 func `<`*[bits: static[int]](
     lhs: Hash[bits],
