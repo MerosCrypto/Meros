@@ -85,9 +85,6 @@ proc revert*(
         #Increment the amount of processed Blocks.
         dec(state.processedBlocks)
 
-        #Save the reverted State to the DB.
-        state.save()
-
 proc catchup*(
     state: var State,
     blockchain: Blockchain
