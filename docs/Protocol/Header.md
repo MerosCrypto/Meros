@@ -12,7 +12,7 @@ The message types are as follows (with their list number being their byte header
 <li><code>PeerRequest</code></li>
 <li><code>Peers</code></li>
 <li><code>BlockHeaderRequest</code></li>
-<li><code>BlockRequest</code></li>
+<li><code>BlockBodyRequest</code></li>
 <li><code>ElementRequest</code></li>
 <li><code>EntryRequest</code></li>
 <li><code>CheckpointRequest</code></li>
@@ -41,7 +41,8 @@ The message types are as follows (with their list number being their byte header
 <li><code>SignedGasPrice</code></li>
 <li><code>SignedMeritRemoval</code></li>
 <br>
-<li><code>Block</code></li>
+<li><code>BlockHeader</code></li>
+<li><code>BlockBody</code></li>
 <li><code>Verification</code></li>
 <li><code>SendDifficulty</code></li>
 <li><code>DataDifficulty</code></li>
@@ -54,4 +55,4 @@ The message types are as follows (with their list number being their byte header
 
 Even if the state is syncing, the node which didn't start syncing can send every message between `Claim` (inclusive) and `Checkpoint` (inclusive).
 
-When the state isn't syncing, only `Handshake`, `Syncing`, and everything after `SyncingOver` (exclusive) can be sent,
+When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive) can be sent, nor `BlockBody`,

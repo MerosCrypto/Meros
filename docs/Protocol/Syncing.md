@@ -7,7 +7,7 @@ During syncing, the syncer can only send:
 - `PeerRequest`
 
 - `BlockHeaderRequest`
-- `BlockRequest`
+- `BlockBodyRequest`
 
 - `ElementRequest`
 
@@ -29,7 +29,7 @@ The syncee can only send:
 - `Peers`
 
 - `BlockHeader`
-- `Block`
+- `BlockBody`
 
 - `Verification`
 - `SendDifficulty`
@@ -69,13 +69,9 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 `PeerRequest` is used to request the connection info of other Meros nodes. It has a message length of 0, with the expected response being a `Peers`. `Peers` has a variable message length; the 1 byte amount of peers, and for each peer, the 4 byte IPv4 address and 2 byte port. The peers sent in a `Peers` message is completely up to the syncee.
 
-### BlockHeaderRequest
+### BlockHeaderRequest and BlockBodyRequest
 
-A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `BlockHeader` containing the BlockHeader. If a 0'd out hash is provided, the syncee should respond with a `BlockHeader` containing their tail Block's BlockHeader.
-
-### BlockRequest
-
-A `BlockRequest` is followed by the 48 byte Block hash, with the expected response being a `Block` containing the Block. If a 0'd out hash is provided, the syncee should respond with a `Block` containing their tail Block.
+`BlockHeaderRequest` and `BlockBodyRequest` both have a message length of 48 bytes; the 48 byte Block hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` with the requested BlockHeader. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested Block's body. If a 0'd out hash is provided in a `BlockHeaderRequest`, the syncee should respond with a `BlockHeader` containing their tail Block's header.
 
 ### ElementRequest
 
@@ -120,7 +116,7 @@ A `SignedElementRequest` has a message length of 52 bytes; the Verifier's 48 byt
 ### Violations in Meros
 
 - Meros doesn't support the `PeerRequest` and `Peers` message types.
-- Meros doesn't support the `BlockHeaderRequest` and `CheckpointRequest` message types.
+- Meros doesn't support the `BlockHeaderRequest`, `BlockBodyRequest`, and `CheckpointRequest` message types. It does support a dated `BlockRequest` message type.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
 - Meros doesn't support the `GetAccountHeight` and `AccountHeight` message types.
 - Meros doesn't support the `GetHashesAtIndex` and `HashesAtIndex` message types.

@@ -86,9 +86,9 @@ When a Block is added, every miner in miners should get their amount of Merit. T
 
 `BlockHeader` has a message length of 208 bytes; the 4 byte nonce, 48 byte last hash, 96 byte aggregate signature, 48 byte miners Merkle tree hash, 8 byte time, and 4 byte proof.
 
-### Block
+### BlockBody
 
-`Block` has a variable message length; the 208 byte BlockHeader (serialized as described above), 4 byte amount of records, the records (each with a 48 byte BLS Public Key, 4 byte nonce, and 48 byte Merkle tree hash), 1 byte amount of miners, and the miners (each with a 48 byte BLS Public Key and 1 byte amount).
+`BlockBody` has a variable message length; the 4 byte amount of records, the records (each with a 48 byte BLS Public Key, 4 byte nonce, and 48 byte Merkle tree hash), 1 byte amount of miners, and the miners (each with a 48 byte BLS Public Key and 1 byte amount).
 
 ### Checkpoint
 
@@ -115,5 +115,5 @@ BLSSignature aggregate = verifierSignatures.aggregate()
 
 - Meros doesn't support dead Merit.
 - Meros doesn't support chain re-organizations.
-- Meros doesn't support the `BlockHeader` message type.
+- Meros doesn't support the `BlockHeader` or `BlockBody` message types. It does support a dated `Block` message type.
 - Meros doesn't support the `Checkpoint` message type.
