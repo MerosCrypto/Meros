@@ -114,5 +114,6 @@ BLSSignature aggregate = verifierSignatures.aggregate()
 ```
 
 - Meros doesn't support dead Merit.
+- Meros doesn't support chain re-organizations.
 - Meros doesn't support the `BlockHeader` message type.
 - Meros doesn't support the `Checkpoint` message type.

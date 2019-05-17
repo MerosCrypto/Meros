@@ -12,7 +12,6 @@ Database:
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Merit:
-- Chain reorgs.
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
 - Don't just hash the block header; include random sampling to force miners to run full nodes.

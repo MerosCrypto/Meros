@@ -23,11 +23,13 @@ The `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, and `MeritRe
 
 ### Verification
 
-A Verification is a MeritHolder staking their Merit behind a Entry and approving it. Once a Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks an Entry can have Verifications added during. A Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without a transaction becoming verified at that index, the Entry with the most Merit at that index, that is mentioned in a Block, becomes verified.
+A Verification is a MeritHolder staking their Merit behind a Entry and approving it. Once a Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks an Entry can have Verifications added during. A Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without an Entry becoming verified at that index, the Entry with the most Merit at that index (or if there's a tie, the Entry with the higher hash), that is mentioned in a Block becomes verified.
 
 They have the following fields:
 
 - hash: Hash of the Entry verified.
+
+Verifications can actually be of any hash; if the node locates the relevant Entry, at the time it receives the Verification or within the next six blocks, the Verification should be used to verify an Entry. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a valid Entry. This is to enable pruning of unverified competing Entries.
 
 `Verification` has a message length of 100 bytes; the 48 byte holder, the 4 byte nonce, and the 48 byte hash. The signature is produced with a prefix of "verification".
 
@@ -97,6 +99,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 ### Violations in Meros
 
 - Meros doesn't support defaulting.
+- Meros doesn't support Verifications with 'invalid' hashes.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
