@@ -190,7 +190,33 @@ proc add*(
     except Exception as e:
         doAssert(false, "Handling a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Sends a message to all clients.
+#Reply to a message.
+proc reply*(
+    clients: Clients,
+    msg: Message,
+    res: Message
+) {.forceCheck: [
+    IndexError
+], async.} =
+    #Get the client.
+    var client: Client
+    try:
+        client = clients[msg.client]
+    except IndexError as e:
+        fcRaise e
+
+    #Try to send the message.
+    try:
+        await client.send(res)
+    #If that failed, disconnect the client.
+    except SocketError:
+        clients.disconnect(client.id)
+    except ClientError:
+        clients.disconnect(client.id)
+    except Exception as e:
+        doAssert(false, "Replying to a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+#Broadcast a message to all clients.
 proc broadcast*(
     clients: Clients,
     msg: Message
@@ -222,29 +248,3 @@ proc broadcast*(
     #Disconnect the clients marked for disconnection.
     for id in toDisconnect:
         clients.disconnect(id)
-
-#Reply to a message.
-proc reply*(
-    clients: Clients,
-    msg: Message,
-    res: Message
-) {.forceCheck: [
-    IndexError
-], async.} =
-    #Get the client.
-    var client: Client
-    try:
-        client = clients[msg.client]
-    except IndexError as e:
-        fcRaise e
-
-    #Try to send the message.
-    try:
-        await client.send(res)
-    #If that failed, disconnect the client.
-    except SocketError:
-        clients.disconnect(client.id)
-    except ClientError:
-        clients.disconnect(client.id)
-    except Exception as e:
-        doAssert(false, "Replying to a message threw an Exception despite catching all thrown Exceptions: " & e.msg)

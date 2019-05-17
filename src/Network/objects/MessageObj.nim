@@ -106,39 +106,35 @@ func newMessage*(
 
 #SyncEntryResponse constructors.
 func newSyncEntryResponse*(
-    claim: Claim
+    entry: Entry
 ): SyncEntryResponse {.forceCheck: [].} =
-    SyncEntryResponse(
-        entry: EntryType.Claim,
-        claim: claim
-    )
+    case entry.descendant:
+        of EntryType.Mint:
+            doAssert(false, "Sync Entry Received a Mint and tried to handle it.")
 
-func newSyncEntryResponse*(
-    send: Send
-): SyncEntryResponse {.forceCheck: [].} =
-    SyncEntryResponse(
-        entry: EntryType.Send,
-        send: send
-    )
-
-func newSyncEntryResponse*(
-    recv: Receive
-): SyncEntryResponse {.forceCheck: [].} =
-    SyncEntryResponse(
-        entry: EntryType.Receive,
-        receive: recv
-    )
-
-func newSyncEntryResponse*(
-    data: Data
-): SyncEntryResponse {.forceCheck: [].} =
-    SyncEntryResponse(
-        entry: EntryType.Data,
-        data: data
-    )
+        of EntryType.Claim:
+            result = SyncEntryResponse(
+                entry: EntryType.Claim,
+                claim: cast[Claim](entry)
+            )
+        of EntryType.Send:
+            result = SyncEntryResponse(
+                entry: EntryType.Send,
+                send: cast[Send](entry)
+            )
+        of EntryType.Receive:
+            result = SyncEntryResponse(
+                entry: EntryType.Receive,
+                receive: cast[Receive](entry)
+            )
+        of EntryType.Data:
+            result = SyncEntryResponse(
+                entry: EntryType.Data,
+                data: cast[Data](entry)
+            )
 
 #Stringify.
-func `$`*(
+func toString*(
     msg: Message
 ): string {.forceCheck: [].} =
     char(msg.content) & msg.message
