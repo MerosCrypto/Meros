@@ -22,7 +22,8 @@ finalsd:
 
             Syncing = 1,
             SyncingAcknowledged = 2,
-            BlockRequest = 7,
+            BlockHeaderRequest = 6,
+            BlockBodyRequest = 7,
             ElementRequest = 8,
             EntryRequest = 9,
             GetBlockHash = 10,
@@ -37,7 +38,8 @@ finalsd:
 
             SignedVerification = 27,
 
-            Block = 34,
+            BlockHeader = 33,
+            BlockBody = 34,
             Verification = 35,
 
             #End is used to mark the end of the Enum.
@@ -50,21 +52,6 @@ finalsd:
             content* {.final.}: MessageType
             len* {.final.}: int
             message* {.final.}: string
-
-        #syncEntry response.
-        #This has its own type to stop a segfault that occurs when we cast things around.
-        SyncEntryResponse* = object
-            case entry*: EntryType:
-                of EntryType.Claim:
-                    claim* {.final.}: Claim
-                of EntryType.Send:
-                    send* {.final.}: Send
-                of EntryType.Receive:
-                    receive* {.final.}: Receive
-                of EntryType.Data:
-                    data* {.final.}: Data
-                else:
-                    discard
 
 #Finalize the Message.
 func finalize(
@@ -103,35 +90,6 @@ func newMessage*(
         message: message
     )
     result.finalize()
-
-#SyncEntryResponse constructors.
-func newSyncEntryResponse*(
-    entry: Entry
-): SyncEntryResponse {.forceCheck: [].} =
-    case entry.descendant:
-        of EntryType.Mint:
-            doAssert(false, "Sync Entry Received a Mint and tried to handle it.")
-
-        of EntryType.Claim:
-            result = SyncEntryResponse(
-                entry: EntryType.Claim,
-                claim: cast[Claim](entry)
-            )
-        of EntryType.Send:
-            result = SyncEntryResponse(
-                entry: EntryType.Send,
-                send: cast[Send](entry)
-            )
-        of EntryType.Receive:
-            result = SyncEntryResponse(
-                entry: EntryType.Receive,
-                receive: cast[Receive](entry)
-            )
-        of EntryType.Data:
-            result = SyncEntryResponse(
-                entry: EntryType.Data,
-                data: cast[Data](entry)
-            )
 
 #Stringify.
 func toString*(

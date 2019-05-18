@@ -82,10 +82,12 @@ proc newNetwork*(
                 raise newException(InvalidMessageError, "Client sent us a `DataMissing` when we aren't syncing.")
             of MessageType.BlockHash:
                 raise newException(InvalidMessageError, "Client sent us a `BlockHash` when we aren't syncing.")
+            of MessageType.BlockBody:
+                raise newException(InvalidMessageError, "Client sent us a `BlockBody` when we aren't syncing.")
             of MessageType.Verification:
-                raise newException(InvalidMessageError, "Client sent us a Verification when we aren't syncing.")
+                raise newException(InvalidMessageError, "Client sent us a `Verification` when we aren't syncing.")
 
-            of MessageType.BlockRequest:
+            of MessageType.BlockHeaderRequest, MessageType.BlockBodyRequest:
                 #Grab our chain height and parse the requested hash.
                 var
                     height: int = mainFunctions.merit.getHeight()
@@ -94,10 +96,10 @@ proc newNetwork*(
                 try:
                     req = msg.message.toHash(384)
                 except ValueError as e:
-                    raise newException(ClientError, "`BlockRequest` contained an invalid hash: " & e.msg)
+                    raise newException(ClientError, "`BlockHeaderRequest`/`BlockBodyRequest` contained an invalid hash: " & e.msg)
 
                 try:
-                    if req.empty:
+                    if req.empty and (msg.content == MessageType.BlockHeaderRequest):
                         res = network.mainFunctions.merit.getBlockByNonce(height - 1)
                     else:
                         res = network.mainFunctions.merit.getBlockByHash(req)
@@ -115,18 +117,24 @@ proc newNetwork*(
                     except ClientError as e:
                         fcRaise e
                     except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        doAssert(false, "Sending `DataMissing` in response to a `BlockHeaderRequest`/`BlockBodyRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
                     return
 
-                #Since we have the Block, serialize it.
-                var serialized: string = res.serialize()
+                #Since we have the Block, serialize the requested part.
+                var serialized: string
+                if msg.content == MessageType.BlockHeaderRequest:
+                    serialized = res.header.serialize()
+                elif msg.content == MessageType.BlockBodyRequest:
+                    serialized = res.body.serialize()
+                else:
+                    doAssert(false, "Handling a message other than a `BlockHeaderRequest`/`BlockBodyRequest` in a branch for only those two messages.")
 
                 #Send it.
                 try:
                     await network.clients.reply(
                         msg,
                         newMessage(
-                            MessageType.Block,
+                            if msg.content == MessageType.BlockHeaderRequest: MessageType.BlockHeader else: MessageType.BlockBody,
                             serialized
                         )
                     )
@@ -137,7 +145,7 @@ proc newNetwork*(
                 except ClientError as e:
                     fcRaise e
                 except Exception as e:
-                    doAssert(false, "Sending a block in response to a `BlockRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                    doAssert(false, "Sending a BlockHeader/BlockBody in response to a `BlockHeaderRequest`/`BlockBodyRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.ElementRequest:
                 var
@@ -429,10 +437,10 @@ proc newNetwork*(
                 except DataExists:
                     return
 
-            of MessageType.Block:
-                var newBlock: Block
+            of MessageType.BlockHeader:
+                var header: BlockHeader
                 try:
-                    newBlock = msg.message.parseBlock()
+                    header = msg.message.parseBlockHeader()
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Block didn't contain a valid hash: " & e.msg)
                 except ArgonError as e:
@@ -441,7 +449,7 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Block contained an invalid BLS Public Key: " & e.msg)
 
                 try:
-                    await mainFunctions.merit.addBlock(newBlock)
+                    await mainFunctions.merit.addBlockByHeader(header)
                 except ValueError as e:
                     echo "Failed to add the Block due to a ValueError: " & e.msg
                     raise newException(InvalidMessageError, "Adding the Block failed due to a ValueError: " & e.msg)

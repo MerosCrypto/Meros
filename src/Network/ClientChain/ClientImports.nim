@@ -16,7 +16,8 @@ import ../../Database/Lattice/Lattice
 #Consensus lib (for Verification/SignedVerification).
 import ../../Database/Consensus/Consensus
 
-#Block lib.
+#BlockHeader and Block lib.
+import ../../Database/Merit/BlockHeader
 import ../../Database/Merit/Block as BlockFile
 
 #Serialization common lib.
@@ -26,7 +27,8 @@ import ../Serialize/SerializeCommon
 import ../Serialize/Lattice/ParseEntry
 import ../Serialize/Consensus/ParseVerification
 
-import ../Serialize/Merit/ParseBlock
+import ../Serialize/Merit/ParseBlockHeader
+import ../Serialize/Merit/ParseBlockBody
 
 #Message and Client objects.
 import ../objects/MessageObj

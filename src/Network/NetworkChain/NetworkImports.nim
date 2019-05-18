@@ -20,6 +20,7 @@ import ../../Database/Lattice/Lattice
 import ../../Database/Consensus/Consensus
 
 #Block lib.
+import ../../Database/Merit/BlockHeader
 import ../../Database/Merit/Block as BlockFile
 
 #Global Function Box object.
@@ -32,9 +33,12 @@ import ../../objects/ConfigObj
 import ../Serialize/SerializeCommon
 
 #Serialize libs.
-import ../Serialize/Merit/SerializeBlock
-import ../Serialize/Consensus/SerializeVerification
 import ../Serialize/Lattice/SerializeEntry
+
+import ../Serialize/Consensus/SerializeVerification
+
+import ../Serialize/Merit/SerializeBlockHeader
+import ../Serialize/Merit/SerializeBlockBody
 
 #Parse libs.
 import ../Serialize/Lattice/ParseClaim
@@ -45,7 +49,8 @@ import ../Serialize/Lattice/ParseData
 import ../Serialize/Consensus/ParseVerification
 import ../Serialize/Consensus/ParseSignedVerification
 
-import ../Serialize/Merit/ParseBlock
+import ../Serialize/Merit/ParseBlockHeader
+import ../Serialize/Merit/ParseBlockBody
 
 #Message and Network objects.
 import ../objects/MessageObj

@@ -114,7 +114,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 ### Violations in Meros
 
 - Meros doesn't support the `PeerRequest` and `Peers` message types.
-- Meros doesn't support the `BlockHeaderRequest`, `BlockBodyRequest`, and `CheckpointRequest` message types. It does support a dated `BlockRequest` message type.
+- Meros doesn't support the `CheckpointRequest` message type.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
 - Meros doesn't support the `GetAccountHeight` and `AccountHeight` message types.
 - Meros doesn't support the `GetHashesAtIndex` and `HashesAtIndex` message types.

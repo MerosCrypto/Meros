@@ -30,15 +30,14 @@ import Database/Filesystem/DB
 import Network/Network
 
 #Serialization libs.
-import Network/Serialize/Consensus/SerializeSignedVerification
-
-import Network/Serialize/Merit/SerializeMiners
-import Network/Serialize/Merit/SerializeBlock
-
 import Network/Serialize/Lattice/SerializeClaim
 import Network/Serialize/Lattice/SerializeSend
 import Network/Serialize/Lattice/SerializeReceive
 import Network/Serialize/Lattice/SerializeData
+
+import Network/Serialize/Consensus/SerializeSignedVerification
+
+import Network/Serialize/Merit/SerializeBlockHeader
 
 #UI.
 import UI/UI

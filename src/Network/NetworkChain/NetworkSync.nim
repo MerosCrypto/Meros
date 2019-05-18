@@ -46,7 +46,7 @@ proc syncElements(
             except ClientError as e:
                 fcRaise e
             except SyncConfigError as e:
-                doAssert(false, "Client we attempted to sync a Verification from wasn't configured for syncing: " & e.msg)
+                doAssert(false, "Client we attempted to sync a Verification from a Client that wasn't configured for syncing: " & e.msg)
             except InvalidMessageError as e:
                 fcRaise e
             except DataMissing as e:
@@ -104,7 +104,7 @@ proc syncEntries(
         except ClientError as e:
             fcRaise e
         except SyncConfigError as e:
-            doAssert(false, "Client we attempted to sync an Entry from wasn't configured for syncing: " & e.msg)
+            doAssert(false, "Client we attempted to sync an Entry from a Client that wasn't configured for syncing: " & e.msg)
         except InvalidMessageError as e:
             fcRaise e
         except DataMissing as e:
@@ -317,6 +317,71 @@ proc sync*(
         except DataExists:
             continue
 
+#Sync a Block's Body.
+proc sync*(
+    network: Network,
+    header: BlockHeader
+): Future[BlockBody] {.forceCheck: [
+    DataMissing
+], async.} =
+    var
+        toDisconnect: seq[int] = @[]
+        synced: bool
+    for client in network.clients:
+        #Only sync from Clients which aren't syncing from us.
+        if client.theirState == Syncing:
+            continue
+
+        #Start syncing.
+        try:
+            await client.startSyncing()
+        except SocketError, ClientError:
+            toDisconnect.add(client.id)
+            continue
+        except Exception as e:
+            doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Get the BlockBody.
+        try:
+            result = await client.syncBlockBody(header.hash)
+            synced = true
+        except SocketError, ClientError:
+            toDisconnect.add(client.id)
+            continue
+        except SyncConfigError as e:
+            doAssert(false, "Client we attempted to sync a BlockBody from a Client that wasn't configured for syncing: " & e.msg)
+        except InvalidMessageError, DataMissing:
+            #Stop syncing.
+            try:
+                await client.stopSyncing()
+            #If that failed, disconnect the Client.
+            except SocketError, ClientError:
+                toDisconnect.add(client.id)
+            except Exception as e:
+                doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            continue
+        except Exception as e:
+            doAssert(false, "Syncing a BlockBody threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #If we made it this far, stop syncing.
+        try:
+            await client.stopSyncing()
+        #If that failed, disconnect the Client.
+        except SocketError, ClientError:
+            toDisconnect.add(client.id)
+        except Exception as e:
+            doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Break out of the loop.
+        break
+
+    #Disconnect any Clients marked for disconnection.
+    for id in toDisconnect:
+        network.clients.disconnect(id)
+
+    if not synced:
+        raise newException(DataMissing, "Couldn't sync the BlockBody for the specified BlockHeader.")
+
 #Request a Block.
 proc requestBlock*(
     network: Network,
@@ -348,7 +413,7 @@ proc requestBlock*(
             toDisconnect.add(client.id)
             continue
         except SyncConfigError as e:
-            doAssert(false, "Client we attempted to sync an Entry from wasn't configured for syncing: " & e.msg)
+            doAssert(false, "Client we attempted to sync a Block from a Client that wasn't configured for syncing: " & e.msg)
         except InvalidMessageError, DataMissing:
             #Stop syncing.
             try:

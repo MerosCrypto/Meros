@@ -57,7 +57,9 @@ proc recv*(
             size = 0
         of MessageType.SyncingAcknowledged:
             size = 0
-        of MessageType.BlockRequest:
+        of MessageType.BlockHeaderRequest:
+            size = HASH_LEN
+        of MessageType.BlockBodyRequest:
             size = HASH_LEN
         of MessageType.ElementRequest:
             size = BLS_PUBLIC_KEY_LEN + INT_LEN
@@ -83,8 +85,11 @@ proc recv*(
 
         of MessageType.SignedVerification:
             size = MEMORY_VERIFICATION_LEN
-        of MessageType.Block:
-            size = BLOCK_HEADER_LEN + INT_LEN
+
+        of MessageType.BlockHeader:
+            size = BLOCK_HEADER_LEN
+        of MessageType.BlockBody:
+            size = INT_LEN
         of MessageType.Verification:
             size = VERIFICATION_LEN
 
@@ -104,36 +109,28 @@ proc recv*(
     #If this is a MessageType with more data...
     case content:
         of MessageType.Data:
-            var len: int = int(msg[^1])
-            size += len
-
+            var len: int = int(msg[^1]) + DATA_SUFFIX_LEN
             try:
                 msg &= await client.socket.recv(len)
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+            size += len
 
-            size += DATA_SUFFIX_LEN
-
+        of MessageType.BlockBody:
+            var len: int = (msg.fromBinary() * MERIT_HOLDER_RECORD_LEN) + BYTE_LEN
             try:
-                msg &= await client.socket.recv(DATA_SUFFIX_LEN)
+                msg &= await client.socket.recv(len)
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
-        of MessageType.Block:
-            var quantity: int = msg.substr(msg.len - 4).fromBinary()
-            size += (quantity * MERIT_HOLDER_RECORD_LEN) + BYTE_LEN
+            size += len
 
+            len = int(msg[^1]) * MINER_LEN
             try:
-                msg &= await client.socket.recv((quantity * MERIT_HOLDER_RECORD_LEN) + BYTE_LEN)
+                msg &= await client.socket.recv(len)
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+            size += len
 
-            quantity = int(msg[^1])
-            size += quantity * MINER_LEN
-
-            try:
-                msg &= await client.socket.recv(quantity * MINER_LEN)
-            except Exception as e:
-                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
         else:
             discard
 

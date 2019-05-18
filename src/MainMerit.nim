@@ -176,8 +176,8 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Broadcast the Block.
             functions.network.broadcast(
-                MessageType.Block,
-                newBlock.serialize()
+                MessageType.BlockHeader,
+                newBlock.header.serialize()
             )
 
             #If we got a Mint...
@@ -251,10 +251,11 @@ proc mainMerit() {.forceCheck: [].} =
 
             var body: BlockBody
             try:
-                discard
-                #network.syncBlockBody(header.hash)
-            except Exception:
-                discard
+                body = await network.sync(header)
+            except DataMissing as e:
+                raise newException(ValueError, e.msg)
+            except Exception as e:
+                doAssert(false, "addBlockByHeader threw an Exception despite catching all Exceptions: " & e.msg)
 
             try:
                 await functions.merit.addBlock(
@@ -272,4 +273,4 @@ proc mainMerit() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
             except Exception as e:
-                doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)
+                doAssert(false, "addBlockByHeader threw an Exception despite catching all Exceptions: " & e.msg)

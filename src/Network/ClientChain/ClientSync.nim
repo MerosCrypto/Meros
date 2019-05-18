@@ -178,6 +178,57 @@ proc syncVerification*(
     if (result.holder != holder) or (result.nonce != nonce):
         raise newException(InvalidMessageError, "Synced a Verification that we didn't request.")
 
+#Sync a Block Body.
+proc syncBlockBody*(
+    client: Client,
+    hash: Hash[384]
+): Future[BlockBody] {.forceCheck: [
+    SocketError,
+    ClientError,
+    SyncConfigError,
+    InvalidMessageError,
+    DataMissing
+], async.} =
+    #If we're not syncing, raise an error.
+    if client.ourState != ClientState.Syncing:
+        raise newException(SyncConfigError, "This Client isn't configured to sync data.")
+
+    try:
+        await client.send(newMessage(MessageType.BlockBodyRequest, hash.toString()))
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending an `BlockBodyRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Get their response.
+    var msg: Message
+    try:
+        msg = await client.recv()
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Receiving the response to an `BlockBodyRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Grab the body.
+    case msg.content:
+        of MessageType.BlockBody:
+            try:
+                result = msg.message.parseBlockBody()
+            except ValueError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid BlockBody to our `BlockBodyRequest`, as pointed out by a ValueError: " & e.msg)
+            except BLSError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid BlockBody to our `BlockBodyRequest`, as pointed out by a BLSError: " & e.msg)
+
+        of MessageType.DataMissing:
+            raise newException(DataMissing, "Client didn't have the requested BlockBody.")
+
+        else:
+            raise newException(InvalidMessageError, "Client didn't respond properly to our `BlockBodyRequest`.")
+
 #Sync a Block.
 proc syncBlock*(
     client: Client,
@@ -215,9 +266,10 @@ proc syncBlock*(
         doAssert(false, "Receiving the response to an `GetBlockHash` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Grab the hash.
+    var hash: string
     case msg.content:
         of MessageType.BlockHash:
-            discard
+            hash = msg.message
 
         of MessageType.DataMissing:
             raise newException(DataMissing, "Client didn't have the requested Block.")
@@ -225,15 +277,15 @@ proc syncBlock*(
         else:
             raise newException(InvalidMessageError, "Client didn't respond properly to our `GetBlockHash`.")
 
-    #Send the request.
+    #Get the BlockHeader.
     try:
-        await client.send(newMessage(MessageType.BlockRequest, msg.message))
+        await client.send(newMessage(MessageType.BlockHeaderRequest, hash))
     except SocketError as e:
         fcRaise e
     except ClientError as e:
         fcRaise e
     except Exception as e:
-        doAssert(false, "Sending an `BlockRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        doAssert(false, "Sending an `BlockHeaderRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
     try:
@@ -243,24 +295,48 @@ proc syncBlock*(
     except ClientError as e:
         fcRaise e
     except Exception as e:
-        doAssert(false, "Receiving the response to an `BlockRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        doAssert(false, "Receiving the response to an `BlockHeaderRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
+    #Grab the header.
+    var header: BlockHeader
     case msg.content:
-        of MessageType.Block:
+        of MessageType.BlockHeader:
             try:
-                result = msg.message.parseBlock()
+                header = msg.message.parseBlockHeader()
             except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our `BlockRequest`, as pointed out by a ValueError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid BlockHeader to our `BlockHeaderRequest`, as pointed out by a ValueError: " & e.msg)
             except ArgonError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our `BlockRequest`, as pointed out by a ArgonError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid BlockHeader to our `BlockHeaderRequest`, as pointed out by a ArgonError: " & e.msg)
             except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Block to our `BlockRequest`, as pointed out by a BLSError: " & e.msg)
+                raise newException(InvalidMessageError, "Client didn't respond with a valid BlockHeader to our `BlockHeaderRequest`, as pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
-            raise newException(DataMissing, "Client didn't have the requested Block.")
+            raise newException(DataMissing, "Client didn't have the requested BlockHeader.")
 
         else:
-            raise newException(InvalidMessageError, "Client didn't respond properly to our `BlockRequest`.")
+            raise newException(InvalidMessageError, "Client didn't respond properly to our `BlockHeaderRequest`.")
+
+    #Get the BlockBody.
+    var body: BlockBody
+    try:
+        body = await client.syncBlockBody(header.hash)
+    except ValueError as e:
+        raise newException(InvalidMessageError, e.msg)
+    except SocketError as e:
+        fcRaise e
+    except ClientError as e:
+        fcRaise e
+    except SyncConfigError as e:
+        fcRaise e
+    except InvalidMessageError as e:
+        fcRaise e
+    except DataMissing as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Syncing a BlockBody threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Return the Block.
+    result = newBlockObj(header, body)
 
 #Tell the Client we're done syncing.
 proc stopSyncing*(
