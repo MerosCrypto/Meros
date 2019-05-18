@@ -7,8 +7,7 @@ import ../../../Database/Merit/Block
 #Serialize/Deserialize functions.
 import ../SerializeCommon
 import SerializeBlockHeader
-import SerializeRecords
-import SerializeMiners
+import SerializeBlockBody
 
 #Serialize a Block.
 proc serialize*(
@@ -16,5 +15,4 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     result =
         blockArg.header.serialize() &
-        blockArg.records.serialize() &
-        blockArg.miners.serialize()
+        blockArg.body.serialize()

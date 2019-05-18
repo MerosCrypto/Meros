@@ -1,4 +1,4 @@
-#Serialize Block Test.
+#Serialize BlockBody Test.
 
 #Util lib.
 import ../../../../src/lib/Util
@@ -12,16 +12,13 @@ import ../../../../src/Wallet/MinerWallet
 #MeritHolderRecord object.
 import ../../../../src/Database/common/objects/MeritHolderRecordObj
 
-#Miner object.
+#Miners and BlockBody object.
 import ../../../../src/Database/Merit/objects/MinersObj
-
-#BlockHeader and Block lib.
-import ../../../../src/Database/Merit/BlockHeader
-import ../../../../src/Database/Merit/Block
+import ../../../../src/Database/Merit/objects/BlockBodyObj
 
 #Serialize libs.
-import ../../../../src/Network/Serialize/Merit/SerializeBlock
-import ../../../../src/Network/Serialize/Merit/ParseBlock
+import ../../../../src/Network/Serialize/Merit/SerializeBlockBody
+import ../../../../src/Network/Serialize/Merit/ParseBlockBody
 
 #Random standard lib.
 import random
@@ -33,19 +30,13 @@ import algorithm
 randomize(getTime())
 
 for i in 1 .. 20:
-    echo "Testing Block Serialization/Parsing, iteration " & $i & "."
+    echo "Testing BlockBody Serialization/Parsing, iteration " & $i & "."
 
     var
-        #Block.
-        newBlock: Block
-        #Nonce.
-        nonce: int = rand(6500)
-        #Last hash.
-        last: Hash[384]
+        #BlockBody.
+        body: BlockBody
         #MinerWallet used to create random BLSSignatures.
         miner: MinerWallet = newMinerWallet()
-        #Aggregate Signature.
-        aggregate: BLSSignature
         #Records.
         records: seq[MeritHolderRecord] = newSeq[MeritHolderRecord](rand(256))
         #Temporary key/merkle strings for creating MeritHolderRecordes.
@@ -57,17 +48,6 @@ for i in 1 .. 20:
         remaining: int = 100
         #Amount of Merit to give each Miner.
         amount: int
-        #Time.
-        time: int = rand(2000000000)
-        #Proof.
-        proof: int = rand(500000)
-
-    #Randomize the last hash.
-    for b in 0 ..< 48:
-        last.data[b] = uint8(rand(255))
-
-    #Create a random BLSSignature.
-    aggregate = miner.sign(rand(100000).toBinary())
 
     #Randomize the Records.
     for r in 0 ..< records.len:
@@ -115,45 +95,29 @@ for i in 1 .. 20:
             rand(1000)
     )
 
-    #Create the Block.
-    newBlock = newBlockObj(
-        nonce,
-        last,
-        aggregate,
+    #Create the BlockBody.
+    body = newBlockBodyObj(
         records,
-        newMinersObj(miners),
-        time,
-        proof
+        newMinersObj(miners)
     )
 
     #Serialize it and parse it back.
-    var blockParsed: Block = newBlock.serialize().parseBlock()
+    var bodyParsed: BlockBody = body.serialize().parseBlockBody()
 
     #Test the serialized versions.
-    assert(newBlock.serialize() == blockParsed.serialize())
-
-    #Test the Header.
-    assert(newBlock.header.nonce == blockParsed.header.nonce)
-    assert(newBlock.header.last == blockParsed.header.last)
-    assert(newBlock.header.aggregate == blockParsed.header.aggregate)
-    assert(newBlock.header.miners == blockParsed.header.miners)
-    assert(newBlock.header.time == blockParsed.header.time)
-    assert(newBlock.header.proof == blockParsed.header.proof)
-
-    #Test the hash.
-    assert(newBlock.header.hash == blockParsed.header.hash)
+    assert(body.serialize() == bodyParsed.serialize())
 
     #Test the Records.
-    assert(newBlock.records.len == blockParsed.records.len)
-    for r in 0 ..< newBlock.records.len:
-        assert(newBlock.records[r].key == blockParsed.records[r].key)
-        assert(newBlock.records[r].nonce == blockParsed.records[r].nonce)
-        assert(newBlock.records[r].merkle == blockParsed.records[r].merkle)
+    assert(body.records.len == bodyParsed.records.len)
+    for r in 0 ..< body.records.len:
+        assert(body.records[r].key == bodyParsed.records[r].key)
+        assert(body.records[r].nonce == bodyParsed.records[r].nonce)
+        assert(body.records[r].merkle == bodyParsed.records[r].merkle)
 
     #Test the Miners.
-    assert(newBlock.miners.miners.len == blockParsed.miners.miners.len)
-    for m in 0 ..< newBlock.miners.miners.len:
-        assert(newBlock.miners.miners[m].miner == blockParsed.miners.miners[m].miner)
-        assert(newBlock.miners.miners[m].amount == blockParsed.miners.miners[m].amount)
+    assert(body.miners.miners.len == bodyParsed.miners.miners.len)
+    for m in 0 ..< body.miners.miners.len:
+        assert(body.miners.miners[m].miner == bodyParsed.miners.miners[m].miner)
+        assert(body.miners.miners[m].amount == bodyParsed.miners.miners[m].amount)
 
-echo "Finished the Network/Serialize/Merit/Block Test."
+echo "Finished the Network/Serialize/Merit/BlockBody Test."

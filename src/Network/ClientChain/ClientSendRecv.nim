@@ -120,10 +120,10 @@ proc recv*(
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
         of MessageType.Block:
             var quantity: int = msg.substr(msg.len - 4).fromBinary()
-            size += (quantity * VERIFIER_INDEX_LEN) + BYTE_LEN
+            size += (quantity * MERIT_HOLDER_RECORD_LEN) + BYTE_LEN
 
             try:
-                msg &= await client.socket.recv((quantity * VERIFIER_INDEX_LEN) + BYTE_LEN)
+                msg &= await client.socket.recv((quantity * MERIT_HOLDER_RECORD_LEN) + BYTE_LEN)
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 

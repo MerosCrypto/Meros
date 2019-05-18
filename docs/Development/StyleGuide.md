@@ -5,7 +5,7 @@
 3. Try to remain under 80 characters per line.
 
 4. For `var`/`let`, use pascalCase for naming.
-5. For `type`/`type` values, use CamelCase.
+5. For `type` values, use CamelCase.
 6. For `const`, use ALL_CAPS, with underscores between words.
 7. Use a single `var`/`let`/`type` block when defining things next to each other.
 8. Always define the type of your `var`s, `let`s, and `proc` arguments INDIVIDUALLY (don’t group multiple arguments with a single type).

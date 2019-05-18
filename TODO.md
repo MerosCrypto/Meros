@@ -21,6 +21,7 @@ Merit:
 
 Lattice:
 
+- The claimable table is currently no better than a seq. Either use it with the benefits of a Table and turn it into a seq.
 - Cache the UXTO set.
 
 Network:

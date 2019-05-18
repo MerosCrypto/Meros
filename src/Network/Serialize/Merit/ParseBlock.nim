@@ -7,18 +7,18 @@ import ../../../lib/Util
 #MeritHolderRecord object.
 import ../../../Database/common/objects/MeritHolderRecordObj
 
-#Miners object.
+#Miners and BlockBody objects.
 import ../../../Database/Merit/objects/MinersObj
+import ../../../Database/Merit/objects/BlockBodyObj
 
-#BlockHeader and lib.
+#BlockHeader and Block libs.
 import ../../../Database/Merit/BlockHeader
 import ../../../Database/Merit/Block
 
 #Deserialize/parse functions.
 import ../SerializeCommon
 import ParseBlockHeader
-import ParseRecords
-import ParseMiners
+import ParseBlockBody
 
 #Parse a Block.
 proc parseBlock*(
@@ -28,20 +28,13 @@ proc parseBlock*(
     ArgonError,
     BLSError
 ].} =
-    #Header | Elements | Miners
+    #Header | Body
     var
         header: BlockHeader
-        records: seq[MeritHolderRecord]
-        miners: Miners
+        body: BlockBody
     try:
         header = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
-        records = blockStr.substr(
-            BLOCK_HEADER_LEN,
-            BLOCK_HEADER_LEN + INT_LEN + (blockStr.substr(BLOCK_HEADER_LEN, BLOCK_HEADER_LEN + 4 - 1).fromBinary() * VERIFIER_INDEX_LEN)
-        ).parseRecords()
-        miners = blockStr.substr(
-            BLOCK_HEADER_LEN + INT_LEN + (blockStr.substr(BLOCK_HEADER_LEN, BLOCK_HEADER_LEN + 4 - 1).fromBinary() * VERIFIER_INDEX_LEN)
-        ).parseMiners()
+        body = blockStr.substr(BLOCK_HEADER_LEN).parseBlockBody()
     except ValueError as e:
         fcRaise e
     except ArgonError as e:
@@ -50,17 +43,7 @@ proc parseBlock*(
         fcRaise e
 
     #Create the Block Object.
-    try:
-        result = newBlockObj(
-            header.nonce,
-            header.last,
-            header.aggregate,
-            records,
-            miners,
-            header.time,
-            header.proof
-        )
-    except ValueError as e:
-        fcRaise e
-    except ArgonError as e:
-        fcRaise e
+    result = newBlockObj(
+        header,
+        body
+    )

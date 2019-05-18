@@ -34,7 +34,7 @@ proc parseRecords*(
     #Parse each MeritHolderRecord.
     for i in 0 ..< quantity:
         recordSeq = recordsStr
-            .substr(INT_LEN + (i * VERIFIER_INDEX_LEN))
+            .substr(INT_LEN + (i * MERIT_HOLDER_RECORD_LEN))
             .deserialize(
                 BLS_PUBLIC_KEY_LEN,
                 INT_LEN,

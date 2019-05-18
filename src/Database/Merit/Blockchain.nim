@@ -4,8 +4,14 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
+
 #DB Function Box object.
 import ../../objects/GlobalFunctionBoxObj
+
+#MeritHolderRecord object.
+import ../common/objects/MeritHolderRecordObj
 
 #Miners object.
 import objects/MinersObj
@@ -21,6 +27,9 @@ export BlockchainObj
 
 #Serialize Difficulty lib.
 import ../../Network/Serialize/Merit/SerializeDifficulty
+
+#Tables lib.
+import tables
 
 #Create a new Blockchain.
 proc newBlockchain*(
@@ -66,6 +75,30 @@ proc processBlock*(
     #Verify the Block Header's Merkle Hash of the Miners matches the Block's Miners.
     if newBlock.header.miners != newBlock.miners.merkle.hash:
         raise newException(ValueError, "Invalid Miners' merkle.")
+
+    #Verify no MeritHolder has multiple Records.
+    var
+        holders: Table[string, bool] = initTable[string, bool]()
+        holder: string
+    for record in newBlock.records:
+        holder = record.key.toString()
+        try:
+            if holders[holder]:
+                raise newException(ValueError, "One MeritHolder has two Records.")
+        except KeyError:
+            discard
+        holders[holder] = true
+
+    #Verify the miners.
+    if (newBlock.miners.miners.len < 1) or (100 < newBlock.miners.miners.len):
+        raise newException(ValueError, "Invalid Miners quantity.")
+    var total: int = 0
+    for miner in newBlock.miners.miners:
+        if (miner.amount < 1) or (100 < miner.amount):
+            raise newException(ValueError, "Invalid Miner amount.")
+        total += miner.amount
+    if total != 100:
+        raise newException(ValueError, "Invalid total Miner amount.")
 
     #Set the period length.
     var blocksPerPeriod: int
