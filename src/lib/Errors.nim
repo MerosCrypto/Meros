@@ -40,7 +40,8 @@ type
     #Database/Consensus Errors.
     MeritRemoval* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
 
-    #Database/Blockchain Errors.
+    #Database/Merit Errors.
+    UncleBlock*  = object of Exception #Used when we test a BlockHeader and it's on an alternative chain.
     NotInEpochs* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Network Errors.

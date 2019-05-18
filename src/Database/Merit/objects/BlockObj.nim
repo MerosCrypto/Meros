@@ -15,6 +15,7 @@ import ../BlockHeader
 
 #Block Body object.
 import BlockBodyObj
+export BlockBodyObj
 
 #MeritHolderRecord and Miners objects.
 import ../../common/objects/MeritHolderRecordObj

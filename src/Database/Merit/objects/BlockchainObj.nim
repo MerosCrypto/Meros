@@ -43,7 +43,7 @@ finalsd:
         #Height.
         height*: Natural
         #seq of every Blok Header.
-        headers: seq[BlockHeader]
+        headers*: seq[BlockHeader]
         #seq of all the Blocks in RAM.
         blocks: seq[Block]
 

@@ -22,8 +22,9 @@ import ../Database/common/objects/MeritHolderRecordObj
 #Verification object.
 import ../Database/Consensus/objects/VerificationObj
 
-#Difficulty and Block objects.
+#Difficulty, BlockHeader, and Block objects.
 import ../Database/Merit/objects/DifficultyObj
+import ../Database/Merit/objects/BlockHeaderObj
 import ../Database/Merit/objects/BlockObj
 
 #Difficulties and Entry objects.
@@ -130,6 +131,10 @@ type
 
         addBlock*: proc (
             newBlock: Block
+        ): Future[void]
+
+        addBlockByHeader*: proc (
+            header: BlockHeader
         ): Future[void]
 
     LatticeFunctionBox* = ref object

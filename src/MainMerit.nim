@@ -228,3 +228,48 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Failed to add a Claim for a Mint due to a BLSError: " & e.msg)
                 except DataExists:
                     echo "Already added a Claim for the incoming Mint."
+
+        functions.merit.addBlockByHeader = proc (
+            header: BlockHeader
+        ) {.forceCheck: [
+            ValueError,
+            IndexError,
+            GapError,
+            DataExists
+        ], async.} =
+            try:
+                merit.blockchain.testBlockHeader(header)
+            except ValueError as e:
+                fcRaise e
+            except GapError as e:
+                fcRaise e
+            except UncleBlock as e:
+                raise newException(ValueError, e.msg)
+            except DataExists as e:
+                fcRaise e
+
+
+            var body: BlockBody
+            try:
+                discard
+                #network.syncBlockBody(header.hash)
+            except Exception:
+                discard
+
+            try:
+                await functions.merit.addBlock(
+                    newBlockObj(
+                        header,
+                        body
+                    )
+                )
+            except ValueError as e:
+                fcRaise e
+            except IndexError as e:
+                fcRaise e
+            except GapError as e:
+                fcRaise e
+            except DataExists as e:
+                fcRaise e
+            except Exception as e:
+                doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)

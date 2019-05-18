@@ -45,6 +45,33 @@ proc newBlockchain*(
         startDifficulty
     )
 
+#Test a BlockHeader.
+proc testBlockHeader*(
+    blockchain: Blockchain,
+    header: BlockHeader
+) {.forceCheck: [
+    ValueError,
+    GapError,
+    UncleBlock,
+    DataExists
+]} =
+    #If the nonce is off...
+    if header.nonce > blockchain.height:
+        raise newException(GapError, "Missing blocks before the Block we're trying to add.")
+    elif header.nonce < blockchain.height:
+        if blockchain.headers[header.nonce].hash == header.hash:
+            raise newException(DataExists, "BlockHeader was already added.")
+        else:
+            raise newException(UncleBlock, "Old BlockHeader with a different hash than our BlockHeader at that nonce.")
+
+    #If the last hash is off...
+    if header.last != blockchain.tip.hash:
+        raise newException(ValueError, "Invalid last hash.")
+
+    #If the time is before the last block's...
+    if header.time < blockchain.tip.header.time:
+        raise newException(ValueError, "Invalid time.")
+
 #Adds a block to the blockchain.
 proc processBlock*(
     blockchain: var Blockchain,
@@ -54,23 +81,17 @@ proc processBlock*(
     GapError,
     DataExists
 ].} =
-    #Blocks Per Month.
-    let blocksPerMonth: int = 2592000 div blockchain.blockTime
-
     #Verify the Block Header.
-    #If the nonce is off...
-    if newBlock.header.nonce > blockchain.height:
-        raise newException(GapError, "Missing blocks before the Block we're trying to add.")
-    elif newBlock.header.nonce < blockchain.height:
-        raise newException(DataExists, "Invalid nonce.")
-
-    #If the last hash is off...
-    if newBlock.header.last != blockchain.tip.hash:
-        raise newException(ValueError, "Invalid last hash.")
-
-    #If the time is before the last block's...
-    if newBlock.header.time < blockchain.tip.header.time:
-        raise newException(ValueError, "Invalid time.")
+    try:
+        blockchain.testBlockHeader(newBlock.header)
+    except ValueError as e:
+        fcRaise e
+    except GapError as e:
+        fcRaise e
+    except UncleBlock as e:
+        raise newException(ValueError, e.msg)
+    except DataExists as e:
+        fcRaise e
 
     #Verify the Block Header's Merkle Hash of the Miners matches the Block's Miners.
     if newBlock.header.miners != newBlock.miners.merkle.hash:
@@ -100,8 +121,12 @@ proc processBlock*(
     if total != 100:
         raise newException(ValueError, "Invalid total Miner amount.")
 
+    var
+        #Blocks Per Month.
+        blocksPerMonth: int = 2592000 div blockchain.blockTime
+        #Period Length.
+        blocksPerPeriod: int
     #Set the period length.
-    var blocksPerPeriod: int
     #If we're in the first month, the period length is one block.
     if blockchain.height < blocksPerMonth:
         blocksPerPeriod = 1
