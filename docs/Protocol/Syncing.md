@@ -6,14 +6,13 @@ During syncing, the syncer can only send:
 
 - `PeerRequest`
 
+- `CheckpointRequest`
 - `BlockHeaderRequest`
 - `BlockBodyRequest`
 
 - `ElementRequest`
 
 - `EntryRequest`
-
-- `CheckpointRequest`
 
 - `GetBlockHash`
 - `GetVerifierHeight`
@@ -28,6 +27,7 @@ The syncee can only send:
 
 - `Peers`
 
+- `Checkpoint`
 - `BlockHeader`
 - `BlockBody`
 
@@ -43,8 +43,6 @@ The syncee can only send:
 - `Data`
 - `Lock`
 - `Unlock`
-
-- `Checkpoint`
 
 - `BlockHash`
 - `VerifierHeight`
@@ -67,43 +65,43 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### PeerRequest and Peers
 
-`PeerRequest` is used to request the connection info of other Meros nodes. It has a message length of 0, with the expected response being a `Peers`. `Peers` has a variable message length; the 1 byte amount of peers, and for each peer, the 4 byte IPv4 address and 2 byte port. The peers sent in a `Peers` message is completely up to the syncee.
-
-### BlockHeaderRequest and BlockBodyRequest
-
-`BlockHeaderRequest` and `BlockBodyRequest` both have a message length of 48 bytes; the 48 byte Block hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` with the requested BlockHeader. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested Block's body. If a 0'd out hash is provided in a `BlockHeaderRequest`, the syncee should respond with a `BlockHeader` containing their tail Block's header.
-
-### ElementRequest
-
-A `ElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element, without its BLS Signature.
-
-### EntryRequest
-
-An `EntryRequest` has a message length of 48 bytes; the 48 byte Entry hash, with the expected response being a `Claim`, `Send`, `Receive`, or `Data` containing the Entry with the same hash. If a Mint has the requested hash, the syncer should send `DataMissing`.
+`PeerRequest` is used to request the connection info of other Meros nodes, and has a message length of 0 bytes. The expected response is a `Peers`, which has a variable message length; the 1-byte amount of peers, and for each peer, the 4-byte IPv4 address and 2-byte port. The peers sent in a `Peers` message is completely up to the syncee.
 
 ### CheckpointRequest
 
-A `CheckpointRequest` has a message length of 48 bytes; the 47 byte Block hash to get the Checkpoint of, with the expected response being a `Checkpoint` containing the Checkpoint.
+`CheckpointRequest` has a message length of 48 bytes; the Block's 48-byte hash. The expected response is a `Checkpoint` containing the Checkpoint for the specified Block.
+
+### BlockHeaderRequest and BlockBodyRequest
+
+`BlockHeaderRequest` and `BlockBodyRequest` both have a message length of 48 bytes; the Block's 48-byte hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` with the requested BlockHeader. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested Block's body. If a zeroed out hash is provided in a `BlockHeaderRequest`, the syncee should respond with a `BlockHeader` containing the syncee's tail BlockHeader.
+
+### ElementRequest
+
+`ElementRequest` has a message length of 52 bytes; the Verifier's 48-byte BLS Public Key and the Element's 4-byte nonce. The expected response is a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element, without its BLS Signature.
+
+### EntryRequest
+
+`EntryRequest` has a message length of 48 bytes; the Entry's 48-byte hash. The expected response is a `Claim`, `Send`, `Receive`, or `Data` containing the requested Entry. If a Mint has the requested hash, the syncer should send `DataMissing`.
 
 ### GetBlockHash and BlockHash
 
-`GetBlockHash` has a message length of 4 bytes; the nonce of the Block to get the hash of, with the expected response being a `BlockHash` containing the Block at that nonce's hash. `BlockHash` has a message length of 52 bytes; the 4 byte nonce and the 48 byte hash. If a 0'd out hash was sent, the syncee should respond with a `BlockHash` containing their tail Block's nonce and hash.
+`GetBlockHash` has a message length of 4 bytes; the nonce of the Block. The expected response is a `BlockHash` containing the Block at the specified nonce's hash. `BlockHash` has a message length of 52 bytes; the 4-byte nonce and the 48-byte hash. If a zeroed out hash was sent, the syncee should respond with a `BlockHash` containing the syncee's tail Block's nonce and hash.
 
 ### GetVerifierHeight and VerifierHeight
 
-`GetAccountHeight` has a message length of 48 bytes; the Verifier's 48 byte BLS Public Key, with the expected response being a `VerifierHeight`. `VerifierHeight` has a message length of 52 bytes; the Verifier's 48 byte BLSPublicKey and the Verifier's 4 byte height.
+`GetVerifierHeight` has a message length of 48 bytes; the Verifier's 48-byte BLS Public Key. The expected response is a `VerifierHeight`, containing the height of the specified Verifier. `VerifierHeight` has a message length of 52 bytes; the Verifier's 48-byte BLSPublicKey and the Verifier's 4-byte height.
 
 ### GetAccountHeight and AccountHeight
 
-`GetAccountHeight` has a message length of 32 bytes; the Account's 32 byte Ed25519 Public Key, with the expected response being an `AccountHeight`. `AccountHeight` has a message length of 37 bytes; the Account's 32 byte Ed25519 Public Key and the 4 byte height.
+`GetAccountHeight` has a message length of 32 bytes; the Account's 32-byte Ed25519 Public Key. The expected response is an `AccountHeight`, containing the height of the specified Account. `AccountHeight` has a message length of 36 bytes; the Account's 32-byte Ed25519 Public Key and the 4-byte height.
 
 ### GetHashesAtIndex and HashesAtIndex
 
-A `GetHashesAtIndex` has a message length of 36 bytes; the Account's 32 byte Ed25519 Public Key followed by the 4 byte nonce, with the expected response being a `HashesAtIndex`. `HashesAtIndex` has a message length of 1 byte, plus a variable amount of bytes for the hashes; the single byte containing the amount of potential Entries at the specified index it's replying with, followed by the 48-byte hashes of each Entry. If there's a confirmed Entry at the specified index, it is the only potential Entry. If there are more than 8 Entries at the specified index, the response should only contain the 8 Entries with the most Merit behind them. In the case of a tie at the 8th position, the node has discretion over which Entry to reply with.
+`GetHashesAtIndex` has a message length of 36 bytes; the Account's 32-byte Ed25519 Public Key and 4-byte nonce. The expected response is a `HashesAtIndex`, which has a variable message length; the 1-byte amount of hashes included in this message and the 48-byte hashes of every potential Entry at the specified index. If there's a confirmed Entry at the specified index, it is the only potential Entry. If there are more than 4 Entries at the specified index, the response should only contain the 4 Entries with the most Merit behind them. In the case of a tie at the 4th position, the node has discretion over which Entry to send at the 4th position.
 
 ### SignedElementRequest
 
-A `SignedElementRequest` has a message length of 52 bytes; the Verifier's 48 byte BLS Public Key followed by the 4 byte nonce of the Element, with the expected response being a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval`, containing the Element at the requested location, including its BLS Signature. If the request Element has already had its signature aggregated in a Block, the syncer should send `DataMissing`.
+`SignedElementRequest` has a message length of 52 bytes; the Verifier's 48-byte BLS Public Key and the Element's 4-byte nonce. The expected response is a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval`, containing the Element at the requested location, including its BLS Signature. If the request Element has already had its signature aggregated in a Block, the syncer should send `DataMissing`.
 
 ### DataMissing
 

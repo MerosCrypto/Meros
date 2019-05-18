@@ -22,9 +22,9 @@ finalsd:
 
             Syncing = 1,
             SyncingAcknowledged = 2,
-            BlockRequest = 6,
-            ElementRequest = 7,
-            EntryRequest = 8,
+            BlockRequest = 7,
+            ElementRequest = 8,
+            EntryRequest = 9,
             GetBlockHash = 10,
             BlockHash = 11,
             DataMissing = 19,
@@ -37,12 +37,12 @@ finalsd:
 
             SignedVerification = 27,
 
-            Block = 32,
-            Verification = 33,
+            Block = 34,
+            Verification = 35,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 39
+            End = 40
 
         #Message object.
         Message* = object

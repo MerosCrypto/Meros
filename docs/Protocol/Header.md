@@ -1,6 +1,6 @@
 # Header
 
-A single byte header informing nodes of the type of message is prefixed before every message. This header is used to figure out the message length and how to handle the message.
+A 1-byte header is prefixed before every message to inform nodes of the type of message. Once a node knows the type of message, it can figure out the message length and how to handle the message.
 
 The message types are as follows (with their list number being their byte header):
 
@@ -11,11 +11,11 @@ The message types are as follows (with their list number being their byte header
 <li><code>SyncingAcknowledged</code></li>
 <li><code>PeerRequest</code></li>
 <li><code>Peers</code></li>
+<li><code>CheckpointRequest</code></li>
 <li><code>BlockHeaderRequest</code></li>
 <li><code>BlockBodyRequest</code></li>
 <li><code>ElementRequest</code></li>
 <li><code>EntryRequest</code></li>
-<li><code>CheckpointRequest</code></li>
 <li><code>GetBlockHash</code></li>
 <li><code>BlockHash</code></li>
 <li><code>GetAccountHeight</code></li>
@@ -41,6 +41,7 @@ The message types are as follows (with their list number being their byte header
 <li><code>SignedGasPrice</code></li>
 <li><code>SignedMeritRemoval</code></li>
 <br>
+<li><code>Checkpoint</code></li>
 <li><code>BlockHeader</code></li>
 <li><code>BlockBody</code></li>
 <li><code>Verification</code></li>
@@ -48,11 +49,10 @@ The message types are as follows (with their list number being their byte header
 <li><code>DataDifficulty</code></li>
 <li><code>GasPrice</code></li>
 <li><code>MeritRemoval</code></li>
-<li><code>Checkpoint</code></li>
 </ol>
 
-`Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive), can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing documentation.
+`Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive) can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing documentation.
 
 Even if the state is syncing, the node which didn't start syncing can send every message between `Claim` (inclusive) and `Checkpoint` (inclusive).
 
-When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive) can be sent, nor `BlockBody`,
+When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive), nor `BlockBody`, can be sent.

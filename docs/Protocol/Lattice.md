@@ -50,7 +50,7 @@ The sender's Account's balance, when combined with the amount from the Mint, mus
 
 Once a Claim has been verified, the Mint's amount is added to the sender's Account's balance.
 
-`Claim` has a message length of 200 bytes; the 32 byte sender, the 4 byte nonce, the 4 byte mintNonce, the 96 byte BLS signature, and the 64 byte Ed25519 signature.
+`Claim` has a message length of 200 bytes; the 32-byte sender, the 4-byte nonce, the 4-byte mintNonce, the 96-byte BLS signature, and the 64-byte Ed25519 signature.
 
 ### Send
 
@@ -78,7 +78,7 @@ Argon2d(
 
 Once a Send has been verified, the amount is subtracted from the sender's Account's balance.
 
-`Send` has a message length of 144 bytes; the 32 byte sender, the 4 byte nonce, the 32 byte output, the 8 byte amount, the 64 byte Ed25519 signature, and the 4 byte proof.
+`Send` has a message length of 144 bytes; the 32-byte sender, the 4-byte nonce, the 32-byte output, the 8-byte amount, the 64-byte Ed25519 signature, and the 4-byte proof.
 
 ### Receive
 
@@ -95,7 +95,7 @@ The sender's Account's balance, when combined with the amount from the Send, mus
 
 Once the Receive has been verified, the Send's amount is added to the sender's Account's balance.
 
-`Receive` has a message length of 136 bytes; the 32 byte sender, the 4 byte nonce, the 32 byte input, the 4 byte mintNonce, and the 64 byte Ed25519 signature.
+`Receive` has a message length of 136 bytes; the 32-byte sender, the 4-byte nonce, the 32-byte input, the 4-byte mintNonce, and the 64-byte Ed25519 signature.
 
 ### Data
 
@@ -106,7 +106,7 @@ Data Entries have the following fields:
 
 Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce 4 bytes, data length 1 byte, and data variable bytes.
 
-The data must be less than 256 bytes (enforced by only providing a single byte to store the data length in).
+The data must be less than 256 bytes (enforced by only providing a single-byte to store the data length in).
 
 The proof must satisfy the following check, where `dataDifficulty` is the Datas' spam filter's difficulty (described in the Consensus documentation):
 
@@ -120,7 +120,7 @@ Argon2d(
 ) > dataDifficulty
 ```
 
-`Data` has a message length of 105 bytes, plus the variable length data; the 32 byte sender, the 4 byte nonce, the 1 byte data length, the variable byte data, the 64 byte Ed25519 signature, and the 4 byte proof.
+`Data` has a message length of 105 bytes, plus the variable length data; the 32-byte sender, the 4-byte nonce, the 1-byte data length, the variable-byte data, the 64-byte Ed25519 signature, and the 4-byte proof.
 
 ### Lock
 

@@ -43,8 +43,8 @@ When a new Block is received, it should be tested for validity. A Meros MainNet 
 - The genesis block has a:
 	-  Nonce of 0.
 	-  Last hash of "MEROS_MAINNET", left padded with 0s until it has a length of 48 bytes.
-	-  0'd out aggregate field.
-	-  0'd out miners field.
+	-  Zeroed out aggregate field.
+	-  Zeroed out miners field.
 	-  Time of 0.
 	-  Proof of 0.
 	-  Empty list of records,
@@ -55,7 +55,7 @@ When a new Block is received, it should be tested for validity. A Meros MainNet 
 - No Block has a record with a nonce lower than the previous record for that key.
 - No Block has a record with an invalid Merkle tree hash (as described in the Consensus documentation).
 - No Block archives a Verification for an Entry when an Entry before it has yet to be mentioned in any archived Verification and isn't mentioned in a Verification archived in this Block either.
-- Every BlockHeader for a Block with no records has a 0'd out aggregate signature.
+- Every BlockHeader for a Block with no records has a zeroed out aggregate signature.
 - Every BlockHeader for a Block with records has an aggregate signature created by the following algorithm:
 
 ```
@@ -82,17 +82,17 @@ Chain re-organizations can happen if a different, valid chain has a higher cumul
 
 When a Block is added, every miner in miners should get their amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements for an entire Checkpoint period, it is no longer live. To restore it to live, they must get an Element mentioned in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit 5 Blocks after their Element is mentioned. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
 
+### Checkpoint
+
+`Checkpoint` has a variable message length; the 48 Block hash, 4-byte amount of signers, every signer's 96-byte BLS Public Key, and the 96-byte aggregate signature.
+
 ### BlockHeader
 
-`BlockHeader` has a message length of 208 bytes; the 4 byte nonce, 48 byte last hash, 96 byte aggregate signature, 48 byte miners Merkle tree hash, 8 byte time, and 4 byte proof.
+`BlockHeader` has a message length of 208 bytes; the 4-byte nonce, 48-byte last hash, 96-byte aggregate signature, 48-byte miners Merkle tree hash, 8-byte time, and 4-byte proof.
 
 ### BlockBody
 
-`BlockBody` has a variable message length; the 4 byte amount of records, the records (each with a 48 byte BLS Public Key, 4 byte nonce, and 48 byte Merkle tree hash), 1 byte amount of miners, and the miners (each with a 48 byte BLS Public Key and 1 byte amount).
-
-### Checkpoint
-
-`Checkpoint` has a variable message length; the 48 Block hash, 4 byte amount of signers, every signer's 96 byte BLS Public Key, and the 96 byte aggregate signature.
+`BlockBody` has a variable message length; the 4-byte amount of records, the records (each with a 48-byte BLS Public Key, 4-byte nonce, and 48-byte Merkle tree hash), 1-byte amount of miners, and the miners (each with a 48-byte BLS Public Key and 1-byte amount).
 
 ### Violations in Meros
 

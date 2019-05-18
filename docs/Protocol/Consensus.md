@@ -31,7 +31,7 @@ They have the following fields:
 
 Verifications can actually be of any hash; if the node locates the relevant Entry, at the time it receives the Verification or within the next six blocks, the Verification should be used to verify an Entry. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a valid Entry. This is to enable pruning of unverified competing Entries.
 
-`Verification` has a message length of 100 bytes; the 48 byte holder, the 4 byte nonce, and the 48 byte hash. The signature is produced with a prefix of "verification".
+`Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "verification".
 
 ### SendDifficulty
 
@@ -47,7 +47,7 @@ They have the following fields:
 
 - difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
 
-`SendDifficulty` has a message length of 100 bytes; the 48 byte holder, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "sendDifficulty".
+`SendDifficulty` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "sendDifficulty".
 
 ### DataDifficulty
 
@@ -59,7 +59,7 @@ They have the following fields:
 
 - difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
-`DataDifficulty` has a message length of 100 bytes; the 48 byte holder, the 4 byte nonce, and the 48 byte difficulty. The signature is produced with a prefix of "dataDifficulty".
+`DataDifficulty` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "dataDifficulty".
 
 ### GasPrice
 
@@ -71,7 +71,7 @@ They have the following fields:
 
 - price: Price in Meri an unit of gas should cost.
 
-`GasPrice` has a message length of 56 bytes; the 48 byte holder, the 4 byte nonce, and the 4 byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "gasPrice".
+`GasPrice` has a message length of 56 bytes; the 48-byte holder, the 4-byte nonce, and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "gasPrice".
 
 ### MeritRemoval
 
@@ -86,7 +86,7 @@ MeritRemovals have the following fields:
 - Element1: The first Element.
 - Element2: The second Element.
 
-`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48 byte holder, the 4 byte nonce, the 1 byte message header for the first Element, the serialized version of the first Element without the holder, the 1 byte message header for the Element, and the serialized version of the second Element without the holder.
+`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48-byte holder, the 4-byte nonce, the 1-byte message header for the first Element, the serialized version of the first Element without the holder, the 1-byte message header for the Element, and the serialized version of the second Element without the holder.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, SignedMeritRemoval
 
@@ -94,7 +94,7 @@ Every "Signed" object is the same as their non-"Signed" counterpart, except they
 
 - signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of Element1 and Element2.
 
-Their message lengths are their non-"Signed" message length plus 96 bytes; the 96 byte signature which is appended to the end of the serialized non-"Signed" version.
+Their message lengths are their non-"Signed" message length plus 96 bytes; the 96-byte signature which is appended to the end of the serialized non-"Signed" version.
 
 ### Violations in Meros
 
