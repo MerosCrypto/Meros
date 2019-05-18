@@ -7,46 +7,44 @@ switch("define", "ADDRESS_HRP=Mr")
 switch("define", "SIGN_PREFIX=MEROS")
 switch("define", "DEFAULT_PORT=5132")
 
-when defined(merosRelease):
-    #Define release.
-    switch("define", "release")
-
-    #Disable assertions and checks.
-    switch("assertions", "off")
-    switch("checks", "off")
-
-    #Disable extra crash reporting.
-    switch("lineDir", "off")
-    switch("lineTrace", "off")
-    switch("stackTrace", "off")
-    switch("excessiveStackTrace", "off")
-else:
-    #Define release.
-    switch("define", "release")
-
-    #Enable finals.
-    switch("define", "finalsOn")
-
-    #Enable assertions and checks.
-    switch("assertions", "on")
-    switch("checks", "on")
-
-    #Enable extra crash reporting.
-    switch("debuginfo")
-    switch("lineDir", "on")
-    switch("lineTrace", "on")
-    switch("stackTrace", "on")
-    switch("excessiveStackTrace", "on")
-
 #Optimize for size (which is faster than `opt=speed` for Meros (at least on x86_64)).
 switch("opt", "size")
 
-#Enable parallel building.
-switch("parallelBuild", "0")
+#Define release for usable StInt performance.
+switch("define", "release")
+
+#Enable stackTrace and lineTrace so users can submit workable crash reports.
+switch("stackTrace", "on")
+switch("lineTrace", "on")
+
+#Disable assertions and checks.
+#On branches that should never be executed, we use doAssert which is independent of this flag.
+#We previously had checks enabled. This creates inconsistent release/debug conditions.
+switch("assertions", "off")
+switch("checks", "off")
 
 #Enable hints.
 switch("hints", "on")
 
+#Enable parallel building.
+switch("parallelBuild", "0")
+
 #Specify where to output built objects.
 switch("nimcache", "build/nimcache")
-switch("out", "build/Sample")
+switch("out", "build/Meros")
+
+when defined(merosRelease):
+    #Disable finals.
+    switch("define", "finalsOff")
+
+    #Disable extra debug info.
+    switch("excessiveStackTrace", "off")
+    switch("lineDir", "off")
+else:
+    #Enable finals.
+    switch("define", "finalsOn")
+
+    #Enable extra debug info.
+    switch("debuginfo")
+    switch("excessiveStackTrace", "on")
+    switch("lineDir", "on")
