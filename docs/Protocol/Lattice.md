@@ -1,6 +1,6 @@
 # Lattice
 
-The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array), indexed by Ed25519 Public Keys, with an additional two properties of sendDifficulty and dataDifficulty (384 bit hashes set via methods described in the Consensus documentation). Only the key pair behind an Account can add an Entry to it.
+The Lattice is a DAG made up of Accounts (balance + two dimensional Entry array) indexed by Ed25519 Public Keys, with an additional two properties of sendDifficulty and dataDifficulty (384 bit hashes set via methods described in the Consensus documentation). Only the key pair behind an Account can add an Entry to it.
 
 Every Entry has the following fields:
 
@@ -20,7 +20,7 @@ The Entry sub-types are as follows:
 - Lock
 - Unlock
 
-When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, if long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is verified, as described in the Consensus documentation, both must remain on the Account.
+When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, as long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is verified, as described in the Consensus documentation, both must remain on the Account.
 
 ### Mint
 
@@ -29,16 +29,16 @@ Mint Entries are locally created when Blocks are added to the Blockchain, as des
 - output: The BLS Public Key of the verifier who earned the new Meros.
 - amount: The amount of Meri created.
 
-Meros names the account Mints are added to "minter", yet the protocol is indifferent. Meros does not set the sender or signature fields of Mints, as there's no point. Meros does set the hash field, even though the hash is never broadcasted or needed to verify a signature, to allow looking up Mints. In order to maintain consistency across software, the protocol defines the hash as `Blake2b-384("mint" + nonce + output + amount)`, where nonce takes up 4 bytes, output 48 bytes, and amount 8 bytes.
+Every Mint has a sender of "minter", yet the signature is left blank as there's no way to produce a valid signature. The hash is defined as `Blake2b-384("mint" + nonce + output + amount)`, where nonce takes up 4 bytes, output 48 bytes, and amount 8 bytes.
 
-Mints are never broadcasted across the network, and should only be created by the local node.
+Mints are never broadcast across the network and should only be created by the local node.
 
 ### Claim
 
 Claim Entries are created in response to a Mint, and have the following fields:
 
-- mintNonce: The nonce of the Mint this is claiming.
-- bls: BLS Signature that proves the verifier which earned the new Meros wants this Account to receive their reward.
+- mintNonce: The nonce of the Mint that is being claimed.
+- bls: BLS Signature that proves the Merit Holder which earned the newly minted Meros wants this Account to receive their reward.
 
 Claim hashes are defined as `Blake2b-384("claim" + nonce + mintNonce + bls)`, where nonce takes up 4 bytes, mintNonce 4 bytes, and bls 96 bytes.
 
@@ -56,7 +56,7 @@ Once a Claim has been verified, the Mint's amount is added to the sender's Accou
 
 Send Entries have the following fields:
 
-- output: The Ed25519 Public Key to transfer funds to.
+- output: The Ed25519 Public Key to allow to receive these funds.
 - amount The amount of Meri to send.
 - proof: Work that proves this isn't spam.
 
@@ -64,7 +64,7 @@ Send hashes are defined as `Blake2b-384("send" + sender + nonce + output + amoun
 
 amount must be less than or equal to the sender's Account's balance, after all Entries with a lower nonce are verified. The output's Account's balance, when combined with amount, must be lower than the max value of an uint64.
 
-The proof must satisfy the following check, where `sendDifficulty` is the Sends' spam filter's difficulty (described in the Consensus documentation):
+The proof must satisfy the following check, where sendDifficulty is the Sends' spam filter's difficulty (described in the Consensus documentation):
 
 ```
 Argon2d(
@@ -106,9 +106,9 @@ Data Entries have the following fields:
 
 Data hashes are defined as `Blake2b-384("data" + sender + nonce + data.length + data)`, where sender takes up 32 bytes, nonce 4 bytes, data length 1 byte, and data variable bytes.
 
-The data must be less than 256 bytes (enforced by only providing a single-byte to store the data length in).
+The data must be less than 256 bytes (enforced by only providing a single byte to store the data length).
 
-The proof must satisfy the following check, where `dataDifficulty` is the Datas' spam filter's difficulty (described in the Consensus documentation):
+The proof must satisfy the following check, where dataDifficulty is the Datas' spam filter's difficulty (described in the Consensus documentation):
 
 ```
 Argon2d(

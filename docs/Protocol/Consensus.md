@@ -1,12 +1,12 @@
 # Consensus
 
-"Consensus" is a DAG, similarly structured to the Lattice, containing Verifications, MeritRemovals, Difficulty Updates, and Gas Price sets. The reason it's called Consensus is because even though the Blockchain has the final say, the Blockchain solely distributes Merit (used to weight Consensus) and archives Elements from the Consensus layer,
+"Consensus" is a DAG, similarly structured to the Lattice, containing Verifications, MeritRemovals, Difficulty Updates, and Gas Price sets. The reason it's called Consensus is because even though the Blockchain has the final say, the Blockchain solely distributes Merit (used to weight Consensus) and archives Elements from the Consensus layer.
 
-"Consensus" is made up of MeritHolders (Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it, except in the case of a MeritRemoval. MeritHolders are trusted to only ever have one Element per nonce, unlike Accounts. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
+"Consensus" is made up of MeritHolders (Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it, except in the case of a MeritRemoval. MeritHolders are trusted to always have one Element per nonce, unlike Accounts. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
 
 Every Element has the following fields:
 
-- holder: BLS Public Key of the MeritHolder that the Element belongs to.
+- holder: BLS Public Key of the MeritH older who created the Element.
 - nonce: Index of the Element on the MeritHolder. Starts at 0 and increments by 1 for every added Element.
 
 The Element sub-types are as follows:
@@ -23,23 +23,25 @@ The `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, and `MeritRe
 
 ### Verification
 
-A Verification is a MeritHolder staking their Merit behind a Entry and approving it. Once a Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks an Entry can have Verifications added during. A Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without an Entry becoming verified at that index, the Entry with the most Merit at that index (or if there's a tie, the Entry with the higher hash), that is mentioned in a Block becomes verified.
+A Verification is a MeritHolder staking their Merit behind an Entry and approving it. Once an Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for an Entry can be archived. A Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without an Entry becoming verified at that index, the Entry with the most Merit at that index, which is also mentioned in a Block, or if there's a tie, the Entry with the higher hash, becomes verified.
+
+It is possible for a MeritHolder who votes on competing Entries at the same index to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting an Entry's verification. There are multiple ways to prevent this handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Entries at an index, it will wait for the index to default, not allowing for verification via Verifications alone.
 
 They have the following fields:
 
 - hash: Hash of the Entry verified.
 
-Verifications can actually be of any hash; if the node locates the relevant Entry, at the time it receives the Verification or within the next six blocks, the Verification should be used to verify an Entry. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a valid Entry. This is to enable pruning of unverified competing Entries.
+Verifications can be of any hash. If the node locates the specified Entry, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Entry. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Entry. This enables pruning of unverified competing Entries.
 
 `Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "verification".
 
 ### SendDifficulty
 
-A SendDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Sends. Every MeritHolder gets one vote per 10,000 Merit. Every MeritHolder can specify a singular difficulty which all their votes goes towards. The difficulty that is the median of all votes is chosen.
+A SendDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Sends. Every MeritHolder gets one vote per 10,000 Merit. Every MeritHolder can specify a singular difficulty which is voted on by all their votes. The difficulty that is the median of all votes is chosen.
 
-The 10,000 Merit limit creates a maximum of 525 votes. The multiple votes per MeritHolder means MeritHolders with more Merit get more power. The median means that if the difficulty is 10, and a MeritHolder wants it to be 9, they can't game the system by voting for 8.
+The 10,000 Merit limit creates a maximum of 525 votes. The multiple votes per MeritHolder means MeritHolders with more Merit get more power. The median means that if the difficulty is 10, and a MeritHolder wants it to be 9, they can't game the system by voting for a radically lower difficulty, like they could with an average.
 
-When the difficulty is lowered, there's a chance Entries based off the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Entries based off the old difficulty may still be accepted by nodes still using the old difficulty. The first just adds a delay to the system, and adding a Block will catch all the nodes up. The second risks rewinding Entries. Therefore, if an Entry doesn't beat the spam filter, but does still get the needed Verifications to become verified, it's still valid.
+When the difficulty is lowered, there's a chance Entries based on the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Entries based on the old difficulty may still be accepted by nodes who have yet to update. The first scenario adds a delay to the system, and adding a Block will catch all the nodes up. The second scenario risks rewinding Entries. Therefore, if an Entry doesn't beat the spam filter, but does still get the needed Verifications to become verified, it's still valid.
 
 In the case no SendDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "AA" bytes.
 
@@ -75,11 +77,11 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Entries, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned once the MeritRemoval is included in a Block.
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Entries, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned once the MeritRemoval is included in a Block. It should be noted if a MeritHolder verifies competing Entries, those competing Entries can no longer be pruned.
 
 The creation of a MeritRemoval causes the MeritHolder's Merit to exit the system, so their Merit no longer affects the amount of live Merit in the system. This is further described in the Merit documentation.
 
-If a MeritRemoval is triggered at multiple nonces, or with more than two Elements, the first one will have already reverted unarchived actions and strip the MeritHolder of their Merit. The question becomes solely what Elements to name as the MeritRemoval's cause. This is at the next Block's miner's discretion, and whatever Elements they pick becomes the cause for the entire network.
+If multiple MeritRemovals are triggered, the first one will have already reverted unarchived actions and stripped the MeritHolder of their Merit. The remaining work becomes achieving consensus on what Elements to name as the MeritRemoval's cause. This is achieved when the next Block is mined, and the next Block's miner decides what Elements are the MeritRemoval's cause for the entire network.
 
 MeritRemovals have the following fields:
 
@@ -88,7 +90,7 @@ MeritRemovals have the following fields:
 
 `MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48-byte holder, the 4-byte nonce, the 1-byte message header for the first Element, the serialized version of the first Element without the holder, the 1-byte message header for the Element, and the serialized version of the second Element without the holder.
 
-### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, SignedMeritRemoval
+### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
