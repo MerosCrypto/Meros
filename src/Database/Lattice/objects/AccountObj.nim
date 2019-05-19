@@ -49,9 +49,9 @@ finalsd:
         #Account height.
         height*: Natural
         #Nonce of the highest Entry popped out of Epochs.
-        confirmed*: Natural
+        archived*: Natural
 
-        #seq of the Entries (actually a seq of seqs so we can handle unconfirmed Entries).
+        #seq of the Entries (actually a seq of seqs so we can handle unverified Entries).
         entries*: seq[seq[Entry]]
         #Table of claimable Entry nonces to bools of false.
         claimable*: Table[int, bool]
@@ -80,7 +80,7 @@ proc newAccountObj*(
         balance: 0,
 
         height: 0,
-        confirmed: 0,
+        archived: 0,
 
         entries: @[],
         claimable: initTable[int, bool]()
@@ -90,14 +90,14 @@ proc newAccountObj*(
     #Load the heights/balance.
     try:
         result.height = result.db.get("lattice_" & result.address).fromBinary()
-        result.confirmed = result.db.get("lattice_" & result.address & "_confirmed").fromBinary()
+        result.archived = result.db.get("lattice_" & result.address & "_archived").fromBinary()
         result.balance = uint64(result.db.get("lattice_" & result.address & "_balance").fromBinary())
         result.claimableStr = result.db.get("lattice_" & result.address & "_claimable")
     #The Account must not exist.
     except DBReadError:
         try:
             result.db.put("lattice_" & result.address, 0.toBinary())
-            result.db.put("lattice_" & result.address & "_confirmed", 0.toBinary())
+            result.db.put("lattice_" & result.address & "_archived", 0.toBinary())
             result.db.put("lattice_" & result.address & "_balance", "")
             result.db.put("lattice_" & result.address & "_claimable", "")
         except DBWriteError as e:
@@ -107,9 +107,9 @@ proc newAccountObj*(
     result.lookup = newTable[string, LatticeIndex]()
 
     #Load every Entry still in the Epochs (or yet to enter an Epoch).
-    result.entries = newSeq[seq[Entry]](result.height - result.confirmed)
-    for i in result.confirmed ..< result.height:
-        #Max debt for this unconfirmed Entry.
+    result.entries = newSeq[seq[Entry]](result.height - result.archived)
+    for i in result.archived ..< result.height:
+        #Max debt for this unverified nonce.
         var maxDebt: uint64 = 0
 
         #Load the potential hashes.
@@ -117,10 +117,10 @@ proc newAccountObj*(
         try:
             hashes = result.db.get("lattice_" & result.address & "_" & i.toBinary())
         except DBReadError as e:
-            doAssert(false, "Couldn't load the unconfirmed hashes from the Database: " & e.msg)
+            doAssert(false, "Couldn't load the unarchived hashes from the Database: " & e.msg)
 
         #Load the Entries.
-        result.entries[i - result.confirmed] = newSeq[Entry](hashes.len div 48)
+        result.entries[i - result.archived] = newSeq[Entry](hashes.len div 48)
         for h in countup(0, hashes.len - 1, 48):
             result.lookup[hashes[h ..< h + 48]] = newLatticeIndex(result.address, i)
 
@@ -128,16 +128,16 @@ proc newAccountObj*(
             try:
                 loadedEntry = result.db.get("lattice_" & hashes[h ..< h + 48]).parseEntry()
             except ValueError as e:
-                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
+                doAssert(false, "Couldn't parse an unarchived Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
             except ArgonError as e:
-                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a ArgonError: " & e.msg)
+                doAssert(false, "Couldn't parse an unarchived Entry, which was successfully retrieved from the Database, due to a ArgonError: " & e.msg)
             except BLSError as e:
-                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a BLSError: " & e.msg)
+                doAssert(false, "Couldn't parse an unarchived Entry, which was successfully retrieved from the Database, due to a BLSError: " & e.msg)
             except EdPublicKeyError as e:
-                doAssert(false, "Couldn't parse an unconfirmed Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
+                doAssert(false, "Couldn't parse an unarchived Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
             except DBReadError as e:
-                doAssert(false, "Couldn't load an unconfirmed Entry from the Database: " & e.msg)
-            result.entries[i - result.confirmed][h div 48] = loadedEntry
+                doAssert(false, "Couldn't load an unarchived Entry from the Database: " & e.msg)
+            result.entries[i - result.archived][h div 48] = loadedEntry
 
             if loadedEntry.descendant == EntryType.Send:
                 if cast[Send](loadedEntry).amount > maxDebt:
@@ -179,7 +179,7 @@ proc add*(
 
     var
         #Correct for the Entries no longer in RAM.
-        i: int = entry.nonce - account.confirmed
+        i: int = entry.nonce - account.archived
         #Variable for the max potential debt.
         maxDebt: uint64 = 0
 
@@ -189,7 +189,7 @@ proc add*(
 
     if entry.nonce < account.height:
         #Make sure we're not overwriting something outside of the cache.
-        if entry.nonce < account.confirmed:
+        if entry.nonce < account.archived:
             raise newException(IndexError, "Account has a verified Entry at this position.")
 
         #Make sure we're not adding it twice (and calculate the max potential debt).
@@ -283,7 +283,7 @@ proc `[]`*(
         raise newException(IndexError, "Account nonce out of bounds.")
 
     #If it's in the database...
-    if nonce < account.confirmed:
+    if nonce < account.archived:
         try:
             #Grab it.
             result = account.db.get(
@@ -291,13 +291,13 @@ proc `[]`*(
                 account.db.get("lattice_" & account.address & "_" & nonce.toBinary())
             ).parseEntry()
         except ValueError as e:
-            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
+            doAssert(false, "Couldn't parse an archived Entry, which was successfully retrieved from the Database, due to a ValueError: " & e.msg)
         except ArgonError as e:
-            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a ArgonError: " & e.msg)
+            doAssert(false, "Couldn't parse an archived Entry, which was successfully retrieved from the Database, due to a ArgonError: " & e.msg)
         except BLSError as e:
-            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a BLSError: " & e.msg)
+            doAssert(false, "Couldn't parse an archived Entry, which was successfully retrieved from the Database, due to a BLSError: " & e.msg)
         except EdPublicKeyError as e:
-            doAssert(false, "Couldn't parse an confirmed Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
+            doAssert(false, "Couldn't parse an archived Entry, which was successfully retrieved from the Database, due to a EdPublicKeyError: " & e.msg)
         except DBReadError as e:
             doAssert(false, "Couldn't load a Entry we were asked for from the Database: " & e.msg)
         try:
@@ -309,7 +309,7 @@ proc `[]`*(
         return
 
     #Else, check if there is a singular Entry we can return from memory.
-    var i: int = nonce - account.confirmed
+    var i: int = nonce - account.archived
     if account.entries[i].len != 1:
         for e in account.entries[i]:
             if e.verified:
@@ -323,7 +323,7 @@ proc `[]`*(
     nonce: int,
     hash: Hash[384]
 ): Entry {.forceCheck: [].} =
-    var i: int = nonce - account.confirmed
+    var i: int = nonce - account.archived
     if i >= account.entries.len:
         doAssert(false, "Entry we tried to retrieve by hash wasn't actually in RAM, as checked by the i value.")
 

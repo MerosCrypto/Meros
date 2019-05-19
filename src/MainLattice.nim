@@ -8,7 +8,7 @@ proc verify(
     if config.miner.initiated and (merit.state[config.miner.publicKey] > 0):
         #Make sure we didn't already verify an Entry at the same Index.
         try:
-            if lattice[entry.sender].entries[entry.nonce - lattice[entry.sender].confirmed].len != 1:
+            if lattice[entry.sender].entries[entry.nonce - lattice[entry.sender].archived].len != 1:
                 return
         except AddressError:
             doAssert(false, "Tried to verify an Entry who's sender was an invalid address.")

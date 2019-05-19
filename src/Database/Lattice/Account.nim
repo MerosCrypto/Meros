@@ -188,7 +188,7 @@ proc add*(
         send = cast[Send](sender[recv.input.nonce])
         if not send.verified:
             #Use GapError as it's a custom error that's guaranteed to not be raised, when we do have to handle ValueError.
-            raise newException(GapError, "Receive is for an unconfirmed Send.")
+            raise newException(GapError, "Receive is for an unverified Send.")
         if recv.sender != send.output:
             raise newException(GapError, "Receive is for a Send not to the Receive's sender.")
     except ValueError:

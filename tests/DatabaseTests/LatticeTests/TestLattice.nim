@@ -54,9 +54,9 @@ proc compare*(
     #Test they have the same balance.
     assert(a1.balance == a2.balance)
 
-    #Test they have the same height/confirmed.
+    #Test they have the same height/archived.
     assert(a1.height == a2.height)
-    assert(a1.confirmed == a2.confirmed)
+    assert(a1.archived == a2.archived)
 
     #Test the Entries, as well as the claimable table.
     assert(a1.entries.len == a2.entries.len)
@@ -75,12 +75,12 @@ proc compare*(
             a1Entries: seq[Entry]
             a2Entries: seq[Entry]
 
-        if e < a1.confirmed:
+        if e < a1.archived:
             a1Entries = @[a1[e]]
             a2Entries = @[a2[e]]
         else:
-            a1Entries = a1.entries[e - a2.confirmed]
-            a2Entries = a2.entries[e - a2.confirmed]
+            a1Entries = a1.entries[e - a2.archived]
+            a2Entries = a2.entries[e - a2.archived]
 
         for e in 0 ..< a1Entries.len:
             compare(a1Entries[e], a2Entries[e])
