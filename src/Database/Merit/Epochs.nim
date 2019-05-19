@@ -149,76 +149,85 @@ proc newEpochs*(
     except IndexError as e:
         doAssert(false, "Couldn't shift the last blocks of the chain: " & e.msg)
 
-#Calculate what share each person deserves of the minted Meros.
+#Calculate what share each holder deserves of the minted Meros.
 func calculate*(
     epoch: Epoch,
     state: var State
-): Rewards {.forceCheck: [].} =
+): seq[Reward] {.forceCheck: [].} =
     #If the epoch is empty, do nothing.
     if epoch.hashes.len == 0:
         return @[]
 
     var
-        #Score of a person. This is their combined normalized Entry values.
-        scores: Table[string, int] = initTable[string, int]()
+        #Score of a holder.
+        scores: Table[string, uint64] = initTable[string, uint64]()
+        #Total score.
+        total: uint64
+        #Total normalized score.
+        normalized: int
         #Total Merit behind an Entry.
-        total: int
+        weight: int
 
-    #Iterate over each Entry.
+    #Remove Entriies which didn't get verified.
     for entry in epoch.hashes.keys():
-        #Clear the loop variables.
-        #We use result as a loop variable because we don't need it till later.
-        result = newRewards()
-        total = 0
+        #Clear the loop variable.
+        weight = 0
 
-        #Iterate over the person who verified an entry.
         try:
-            for person in epoch.hashes[entry]:
-                #Add them to our seq with their Merit.
-                result.add(
-                    newReward(
-                        person.toString(),
-                        state[person]
-                    )
-                )
-                #Add the Merit to the total.
-                total += result[^1].score
+            #Iterate over every holder who verified an entry.
+            for holder in epoch.hashes[entry]:
+                #Add their Merit to the Entry's weight.
+                weight += state[holder]
         except KeyError as e:
-            doAssert(false, "Couldn't grab the keys for a hash in the Epoch guaranteed to exist: " & e.msg)
+            doAssert(false, "Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.hashes.keys(): " & e.msg)
 
         #Make sure the Entry was verified.
-        if total < ((state.live div 2) + 1):
-            #If it wasn't, move on.
+        if weight < ((state.live div 2) + 1):
             continue
 
-    try:
-        #Normalize each person to a share of 1000.
-        for person in result:
-            #Make sure they have a score.
-            if not scores.hasKey(person.key):
-                scores[person.key] = 0
+        #If it was, increment every verifier's score.
+        var holder: string
+        try:
+            for holderLoop in epoch.hashes[entry]:
+                holder = holderLoop.toString()
+                if not scores.hasKey(holder):
+                    scores[holder] = 0
+                scores[holder] += 1
+        except KeyError as e:
+            doAssert(false, "Either couldn't grab the verifiers for an Entry in the Epoch or the score of a holder: " & e.msg)
 
-            #Add this to their score.
-            scores[person.key] += person.score * 1000 div total
+    #Multiply every score by how much Merit the holder has.
+    try:
+        for holder in scores.keys():
+            scores[holder] = scores[holder] * uint64(state[holder])
+            #Add the update score to the total.
+            total += scores[holder]
     except KeyError as e:
-        doAssert(false, "Couldn't set the score of a person guaranteed to be in the table: " & e.msg)
+        doAssert(false, "Couldn't update a holder's score despite grabbing the holder by scores.keys(): " & e.msg)
+
+    #Normalize each holder to a share of 1000.
+    try:
+        for holder in scores.keys():
+            scores[holder] = scores[holder] * 1000 div total
+            normalized += int(scores[holder])
+    except KeyError as e:
+        doAssert(false, "Couldn't normalize the score of a holder grabbed from scores.keys(): " & e.msg)
 
     #Turn the table into a seq.
-    #Here's where we clear result and actually put in the data that will be returned.
-    result = newRewards()
+    result = newSeq[Reward]()
     try:
-        for key in scores.keys():
+        for holder in scores.keys():
             result.add(
                 newReward(
-                    key,
-                    scores[key]
+                    holder,
+                    scores[holder]
                 )
             )
     except KeyError as e:
-        doAssert(false, "Couldn't grab the score of a key grabbed from table.keys(): " & e.msg)
+        doAssert(false, "Couldn't grab the score of a holder grabbed from scores.keys(): " & e.msg)
 
-    #Make sure we're dealing with a maximum of 100 results.
-    if epoch.hashes.len > 100:
+    #Make sure we're dealing with a maximum of 100 results (plus ties).
+    if result.len > 100:
         #Sort them by greatest score.
         result.sort(
             func (
@@ -244,14 +253,6 @@ func calculate*(
         #Delete everything after the edge.
         result.delete(edge, result.len - 1)
 
-    #Reuse total to calculate the total score.
-    total = 0
-    for person in result:
-        total += person.score
-
-    #Normalize each person to a score of 1000.
-    try:
-        for i in 0 ..< result.len:
-            result[i].score = result[i].score * 1000 div total
-    except FinalAttributeError as e:
-        doAssert(false, "Couldn't normalize the scores of the MeritHolders due to finals: " & e.msg)
+    #If the score isn't a perfect 1000, attribute everything left over to the top verifier.
+    if normalized < 1000:
+        result[0].score += 1000 - normalized

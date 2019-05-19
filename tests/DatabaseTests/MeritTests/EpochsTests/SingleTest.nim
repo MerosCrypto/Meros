@@ -1,5 +1,5 @@
 discard """
-Epochs Test 1. Verifies that 1 Verification = 1000.
+Epochs Single Test. Verifies that 1 Verification = 1000.
 """
 
 #Util lib.
@@ -35,7 +35,7 @@ var
     #Consensus.
     consensus: Consensus = newConsensus(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_1", 1, "".pad(48).toHash(384))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_SINGLE_TEST", 1, "".pad(48).toHash(384))
     #State.
     state: State = newState(functions, 100)
     #Epochs.
@@ -50,7 +50,7 @@ var
     #MeritHolderRecords.
     verifs: seq[MeritHolderRecord] = @[]
     #Rewards.
-    rewards: Rewards
+    rewards: seq[Reward]
 
 #Give Key 0 Merit.
 state.processBlock(

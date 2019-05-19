@@ -1,5 +1,5 @@
 discard """
-Epochs Test 0. Verifies that No Verifications = No Rewards.
+Epochs Empty Test. Verifies that No Verifications = No Rewards.
 """
 
 #Util lib.
@@ -29,13 +29,13 @@ var
     #Consensus.
     consensus: Consensus = newConsensus(functions)
     #Blockchain.
-    blockchain: Blockchain = newBlockchain(functions, "EPOCH_TEST_0", 1, "".pad(48).toHash(384))
+    blockchain: Blockchain = newBlockchain(functions, "EPOCH_EMPTY_TEST", 1, "".pad(48).toHash(384))
     #State.
     state: State = newState(functions, 1)
     #Epochs.
     epochs: Epochs = newEpochs(functions, consensus, blockchain)
     #Rewards.
-    rewards: Rewards = epochs.shift(
+    rewards: seq[Reward] = epochs.shift(
         consensus,
         @[]
     ).calculate(state)

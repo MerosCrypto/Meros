@@ -24,11 +24,7 @@ finalsd:
         #Reward object. Declares a BLS Public Key (as a string) and a number which adds up to 1000.
         Reward* = object
             key* {.final.}: string
-            score* {.final.}: Natural #This is final, even though we double set it (once with a raw value, once with a normalized value). How?
-                                      #We initially set the score in this value via the constructor.
-                                      #Since we set the score in this file, and we don't call the finalize, finals thinks it's unset.
-        #Seq of Rewards.
-        Rewards* = seq[Reward]
+            score*: Natural
 
         #Epoch object. Entry Hash -> Public Keys
         Epoch* = object
@@ -55,9 +51,6 @@ func newReward*(
         score: score
     )
     result.ffinalizeKey()
-
-func newRewards*(): Rewards {.inline, forceCheck: [].} =
-    newSeq[Reward]()
 
 func newEpoch*(
     records: seq[MeritHolderRecord]
