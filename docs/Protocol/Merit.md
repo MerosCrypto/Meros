@@ -15,13 +15,7 @@ BlockHeaders have the following fields:
 - time: Time this Block was mined at.
 - proof: Arbitrary data used to beat the difficulty.
 
-Blocks have the following fields:
-
-- header: Block's BlockHeader.
-- records: List of MeritHolders (BLS Public Keys), Nonces, and Merkle tree hashes.
-- miners: List of Miners (BLS Public Keys) and Merit amounts to payout.
-
-A Block's hash is defined as follows:
+A BlockHeader's hash is defined as follows:
 
 ```
 Argon2d(
@@ -33,6 +27,20 @@ Argon2d(
 )
 ```
 
+BlockBodies have the following fields:
+
+- records: List of MeritHolders (BLS Public Keys), Nonces, and Merkle tree hashes.
+- miners: List of Miners (BLS Public Keys) and Merit amounts to payout.
+
+The BlockHeader's miners Merkle tree uses Blake2b-384 as a hash algorithm and consists of the the BlockBody's miners. Each leaf is the Blake2b-384 hash of a serialized miner (48-byte BLS Public Key and 1-byte amount). If there is only one leaf in the tree, the tree's hash is the leaf's hash.
+
+Blocks have the following fields:
+
+- header: The BlockHeader.
+- body: The BlockBody.
+
+A Block's hash is defined as its BlockHeader's hash.
+
 Checkpoints have the following fields:
 
 - signers: List of MeritHolders (BLS Public Keys) who signed this Block.
@@ -40,7 +48,7 @@ Checkpoints have the following fields:
 
 When a new Block is received, it should be tested for validity. A Meros MainNet Blockchain is valid if:
 
-- The genesis block has a:
+- The genesis Block's BlockBody has a:
 	-  Nonce of 0.
 	-  Last hash of "MEROS_MAINNET", left padded with 0s until it has a length of 48 bytes.
 	-  Zeroed out aggregate field.
@@ -49,14 +57,14 @@ When a new Block is received, it should be tested for validity. A Meros MainNet 
 	-  Proof of 0.
 	-  Empty list of records,
 	-  Empty list of miners,
-- BlockHeader nonces always increment by one as the blockchain progresses.
+- BlockHeader nonces always increment by one as the Blockchain progresses.
 - The last field of each BlockHeader is the hash of the previous Block.
-- No Block has multiple records for a single key.
-- No Block has a record with a nonce lower than the previous record for that key.
-- No Block has a record with an invalid Merkle tree hash (as described in the Consensus documentation).
-- No Block archives a Verification for an Entry when an Entry before it has yet to be mentioned in any archived Verification and isn't mentioned in a Verification archived in this Block either.
-- Every BlockHeader for a Block with no records has a zeroed out aggregate signature.
-- Every BlockHeader for a Block with records has an aggregate signature created by the following algorithm:
+- No BlockBody has multiple records for a single key.
+- No BlockBody has a record with a nonce lower than the previous record for that key.
+- No BlockBody has a record with a Merkle tree hash which is different than what that MeritHolder's Merkle tree hash would be for that nonce (as described in the Consensus documentation).
+- No BlockBody archives a Verification for an Entry when an Entry before it has yet to be mentioned in any archived Verification and isn't mentioned in a Verification archived in this BlockBody either.
+- Every BlockHeader for a BlockBody with no records has a zeroed out aggregate signature.
+- Every BlockHeader for a BlockBody with records has an aggregate signature created by the following algorithm:
 
 ```
 List[BLSSignature] signatures
@@ -68,19 +76,19 @@ for r in records:
 BLSSignature aggregate = signatures.aggregate()
 ```
 
-- No Block has a miner with an invalid key and the total of every miner in that Block's amount equals 100.
-- No Block has a miner with an amount less than 1.
+- No BlockBody has a miner with an invalid key and the total of every miner in that BlockBody's amount equals 100.
+- No BlockBody has a miner with an amount less than 1.
 - Every BlockHeader's miners Merkle tree hash is accurate.
 - Every BlockHeader's time is greater than the previous BlockHeader's time.
 - Every BlockHeader's time is less than 20 minutes into the future.
 - Every BlockHeader's hash beat their Difficulty.
-- Every Block who's nonce modulus 5 is 0 has a corresponding Checkpoint. This Checkpoint's signers should represent a majority of the live Merit (explained below), and the signature should be the aggregate signature of every signer's signature of the Block hash.
+- Every Block who's BlockHeader's nonce modulus 5 is 0 has a corresponding Checkpoint. This Checkpoint's signers should represent a majority of the live Merit (explained below), and the signature should be the aggregate signature of every signer's signature of the Block hash.
 
 The role of Checkpoints are stop 51% attacks. An Entry can be reverted by having it verified as normal, but then wiping out all the Blocks that mention its Verifications, and adding in Blocks which have a competing Entry default. Every Entry has a checkpoint during the time it takes to default, so by not allowing the chain to advance until it gets a Checkpoint, malicious actors cannot cause an Entry to default. They do not stop chain re-organizations.
 
-Chain re-organizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the chain who's tail Block has the higher is the proper blockchain.
+Chain re-organizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the chain who's tail Block has the higher hash is the proper Blockchain.
 
-When a Block is added, every miner in miners should get their amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements for an entire Checkpoint period, it is no longer live. To restore it to live, they must get an Element mentioned in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit 5 Blocks after their Element is mentioned. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
+When a Block is added, every miner in the BlockBody's miners should get their amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements for an entire Checkpoint period, it is no longer live. To restore it to live, they must get an Element mentioned in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit 5 Blocks after their Element is mentioned. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
 
 ### Checkpoint
 
@@ -96,9 +104,9 @@ When a Block is added, every miner in miners should get their amount of Merit. T
 
 ### Violations in Meros
 
-- Meros produces the Block hash with a BlockHeader serialization containing the proof.
+- Meros produces the BlockHeader hash with a BlockHeader serialization containing the proof.
 - Meros allows archived Verifications to skip over Entries.
-- Meros produces the Block aggregate using the following algorithm:
+- Meros produces the BlockHeader aggregate using the following algorithm:
 
 ```
 List[BLSSignature] verifierSignatures

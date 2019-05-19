@@ -9,7 +9,8 @@ Wallet:
 
 Database:
 
-- If we actually create three separate database, instead of using `verifications_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
+- Abstract the Database. Caching should still be handled by the Lattice/Consensus/Merit, but Database should have its own Serialize folder and supply `save(entry: Entry)` and so on.
+- If we actually create three separate database, instead of using `consensus`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
@@ -28,22 +29,26 @@ Network:
 
 - Syncing currently works by:
     - Get the hash of the next Block.
-    - Get the Block.
+    - Get the BlockHeader.
+    - Get the BlockBody.
     - Sync all the Elements from the Block.
     - Sync all the Entries from the Elements.
+    - Add the Block.
 
 	Switching this to:
 
     - Get the hash of the next Block who's nonce modulus 5 == 0.
     - Get the Checkpoint.
-    - Sync every Block in the checkpoint, in reverse order.
-    - For each Block, in order:
+    - Sync every BlockHeader in the checkpoint, in reverse order.
+    - For each BlockHeader, in order:
+        - Test the BlockHeader.
+        - Sync the BlockBody.
         - Sync all the Elements from the Block.
         - Sync all the Entries from the Elements.
-    - When there are no more Checkpoint, get the hash of each individual Block...
+        - Add the Block.
+    - When there are no more Checkpoints, get the hash of each individual Block...
 
 	Will reduce network traffic and increase security.
-
 
 - Don't rebroadcast data that we're syncing.
 
@@ -152,8 +157,6 @@ UI/RPC:
 - Use Nim Documentation Comments.
 
 - Explain `Lock`s/`Unlock`s.
-
-- Define the Merkle tree construction for miners (in Merit)/MeritHolders (in Consensus).
 - Explain Rewards (including how cutoff rewards are carried over).
 
 - Meros Whitepaper.

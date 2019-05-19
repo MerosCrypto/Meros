@@ -2,7 +2,7 @@
 
 "Consensus" is a DAG, similarly structured to the Lattice, containing Verifications, MeritRemovals, Difficulty Updates, and Gas Price sets. The reason it's called Consensus is because even though the Blockchain has the final say, the Blockchain solely distributes Merit (used to weight Consensus) and archives Elements from the Consensus layer.
 
-"Consensus" is made up of MeritHolders (Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it, except in the case of a MeritRemoval. MeritHolders are trusted to always have one Element per nonce, unlike Accounts. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
+"Consensus" is made up of MeritHolders (Merkle tree + Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it, except in the case of a MeritRemoval. MeritHolders are trusted to always have one Element per nonce, unlike Accounts. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
 
 Every Element has the following fields:
 
@@ -20,6 +20,8 @@ The Element sub-types are as follows:
 When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval` message, it should be added to the holder's MeritHolder, as long as the signature is correct and any other checks imposed by the sub-type pass. Elements don't have hashes, so the signature is produced by signing the serialized version with a prefix. That said, MeritHolders who don't have any Merit can safely have their Elements ignored, as they mean nothing.
 
 The `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, and `MeritRemoval` messages are only used when syncing, and their signature data is contained in a Block's aggregate signature, as described in the Merit documentation.
+
+The Merkle tree each MeritHolder has uses Blake2b-384 as a hash algorithm and consists of the MeritHolder's unarchived Elements, as described in the Merit documentation. Each leaf is the Blake2b-384 hash of a serialized Element with the prefix used to create the signature. If there is only one leaf in the tree, the tree's hash is the leaf's hash.
 
 ### Verification
 
@@ -106,3 +108,4 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
 - Meros doesn't support `SignedMeritRemoval` or `MeritRemoval`.
+- Meros's Merit Holder's Merkle trees are created using the hash of the Entry verified in the Verification (the only supported Element).

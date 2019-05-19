@@ -67,6 +67,6 @@ proc add*(
     miners.merkle.add(
         Blake384(
             miner.miner.toString() &
-            miner.amount.toBinary()
+            char(miner.amount)
         )
     )
