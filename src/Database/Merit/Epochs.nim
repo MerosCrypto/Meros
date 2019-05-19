@@ -159,16 +159,16 @@ func calculate*(
         return @[]
 
     var
+        #Total Merit behind an Entry.
+        weight: int
         #Score of a holder.
         scores: Table[string, uint64] = initTable[string, uint64]()
         #Total score.
         total: uint64
         #Total normalized score.
         normalized: int
-        #Total Merit behind an Entry.
-        weight: int
 
-    #Remove Entriies which didn't get verified.
+    #Find out how many Verifications for verified Entries were created by each Merit Holder.
     for entry in epoch.hashes.keys():
         #Clear the loop variable.
         weight = 0
@@ -205,14 +205,6 @@ func calculate*(
     except KeyError as e:
         doAssert(false, "Couldn't update a holder's score despite grabbing the holder by scores.keys(): " & e.msg)
 
-    #Normalize each holder to a share of 1000.
-    try:
-        for holder in scores.keys():
-            scores[holder] = scores[holder] * 1000 div total
-            normalized += int(scores[holder])
-    except KeyError as e:
-        doAssert(false, "Couldn't normalize the score of a holder grabbed from scores.keys(): " & e.msg)
-
     #Turn the table into a seq.
     result = newSeq[Reward]()
     try:
@@ -226,7 +218,7 @@ func calculate*(
     except KeyError as e:
         doAssert(false, "Couldn't grab the score of a holder grabbed from scores.keys(): " & e.msg)
 
-    #Make sure we're dealing with a maximum of 100 results (plus ties).
+    #Make sure we're dealing with a maximum of 100 results.
     if result.len > 100:
         #Sort them by greatest score.
         result.sort(
@@ -243,16 +235,14 @@ func calculate*(
             , SortOrder.Descending
         )
 
-        #Declare the cutoff edge.
-        var edge: int = 100
-        #If the result at the edge are tied...
-        while result[edge - 1].score == result[edge].score:
-            #Increase the edge.
-            inc(edge)
+        #Delete everything after 100.
+        result.delete(100, result.len - 1)
 
-        #Delete everything after the edge.
-        result.delete(edge, result.len - 1)
+    #Normalize each holder to a share of 1000.
+    for i in 0 ..< result.len:
+        result[i].score = result[i].score * 1000 div total
+        normalized += int(result[i].score)
 
     #If the score isn't a perfect 1000, attribute everything left over to the top verifier.
     if normalized < 1000:
-        result[0].score += 1000 - normalized
+        result[0].score += uint64(1000 - normalized)

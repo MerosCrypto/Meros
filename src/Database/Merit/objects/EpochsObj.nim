@@ -24,7 +24,7 @@ finalsd:
         #Reward object. Declares a BLS Public Key (as a string) and a number which adds up to 1000.
         Reward* = object
             key* {.final.}: string
-            score*: Natural
+            score*: uint64
 
         #Epoch object. Entry Hash -> Public Keys
         Epoch* = object
@@ -44,7 +44,7 @@ finalsd:
 #Constructors.
 func newReward*(
     key: string,
-    score: Natural
+    score: uint64
 ): Reward {.forceCheck: [].} =
     result = Reward(
         key: key,
