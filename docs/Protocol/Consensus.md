@@ -6,7 +6,7 @@
 
 Every Element has the following fields:
 
-- holder: BLS Public Key of the MeritH older who created the Element.
+- holder: BLS Public Key of the Merit Holder who created the Element.
 - nonce: Index of the Element on the MeritHolder. Starts at 0 and increments by 1 for every added Element.
 
 The Element sub-types are as follows:
@@ -27,7 +27,7 @@ The Merkle tree each MeritHolder has uses Blake2b-384 as a hash algorithm and co
 
 A Verification is a MeritHolder staking their Merit behind an Entry and approving it. Once an Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for an Entry can be archived. A Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without an Entry becoming verified at that index, the Entry with the most Merit at that index, which is also mentioned in a Block, or if there's a tie, the Entry with the higher hash, becomes verified.
 
-It is possible for a MeritHolder who votes on competing Entries at the same index to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting an Entry's verification. There are multiple ways to prevent this handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Entries at an index, it will wait for the index to default, not allowing for verification via Verifications alone.
+It is possible for a MeritHolder who votes on competing Entries at the same index to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting an Entry's verification. There are multiple ways to prevent this and handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Entries at an index, it will wait for the index to default, not allowing for verification via Verifications alone.
 
 They have the following fields:
 
