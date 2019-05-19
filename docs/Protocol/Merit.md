@@ -33,7 +33,7 @@ Argon2d(
 
 ### Block Data Type
 
-Blocks are the backbone of every blockchain. In Meros, they reference the latest Element on a MeritHolder, with a verifiable proof of every Element the MeritHolder has created, thereby archiving the Consensus DAG, and specify who to reward with the newly mined Merit.
+Blocks are the backbone of every blockchain. In Meros, they reference the latest Element on a MeritHolder, with a verifiable proof of every Element the MeritHolder has created, thereby archiving the Consensus DAG, and specify who to reward with the newly-mined Merit.
 
 Blocks have the following fields:
 
@@ -55,7 +55,7 @@ The genesis Block on the Meros mainnet Blockchain has a:
 
 ### Checkpoint Data Type
 
-Checkpoints mitigate 51% attacks. By requiring the majority of Merit Holders, by weight, to agree on every 5th block, and not allowing the Blockchain to advance without a checkpoint, a 51% attack would need to have not just 51% of the hash power, but 51% of the Merit. In order to obtain that much Merit, an attacker would need to sustain the attack for an entire year. That said, they do not stop chain re-organizations.
+Checkpoints mitigate 51% attacks. By requiring the majority of Merit Holders, by weight, to agree on every 5th block, and not allowing the Blockchain to advance without a checkpoint, a 51% attack would need to have not just 51% of the hash power, but 51% of the Merit. In order to obtain that much Merit, an attacker would need to sustain the attack for an entire year. Checkpoints do not stop chain reorganizations.
 
 Checkpoints have the following fields:
 
@@ -64,7 +64,7 @@ Checkpoints have the following fields:
 
 ### BlockHeader
 
-When a new BlockHeader is received, it should be tested for validity. The BlockHeader is valid if:
+When a new BlockHeader is received, it's tested for validity. The BlockHeader is valid if:
 
 - nonce must be equivalent to the current Blockchain height.
 - last must be equivalent to the hash of the current tail Block.
@@ -73,7 +73,7 @@ When a new BlockHeader is received, it should be tested for validity. The BlockH
 - hash must beat the current difficulty.
 
 
-If the BlockHeader is valid, the rest of the Block should be synced with a BlockBodyRequest.
+If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
 `BlockHeader` has a message length of 208 bytes; the 4-byte nonce, 48-byte last hash, 96-byte aggregate signature, 48-byte miners Merkle tree hash, 8-byte time, and 4-byte proof.
 
@@ -96,7 +96,7 @@ BLSSignature aggregate = signatures.aggregate()
 
 - records doesn’t contain multiple records for a single key.
 - records doesn’t have a record with a nonce lower than the previous record for the same key.
-- Every records in records has a Merkle tree hash equivalent to the Merkle tree hash for the mentioned key at the mentioned nonce (as described in the Consensus documentation).
+- Every record in records has a Merkle tree hash equivalent to the Merkle tree hash for the mentioned key at the mentioned nonce (as described in the Consensus documentation).
 - Every Entry verified in Verifications archived in this Block has all predecessors on the same Account mentioned in a past Block or in this Block.
 - Every miner has an unique and valid key.
 - Every miner has an amount greater than or equal to 1.
@@ -104,11 +104,11 @@ BLSSignature aggregate = signatures.aggregate()
 - If there is only one miner, the BlockHeader’s miners is equivalent to the Blake2b-384 hash of the serialized miner (48-byte BLS Public Key and 1-byte amount).
 - If there are multiple miners, the BlockHeader’s miners is equivalent to the Merkle tree hash of a Blake2b-384 Merkle tree where each leaf is the Blake2b-384 hash of a serialized miner.
 
-If the Block is valid, it should be added, triggering two events. The first event is the emission of newly mined Merit and the second event is the emission of newly minted Meros.
+If the Block is valid, it's added, triggering two events. The first event is the emission of newly-mined Merit and the second event is the emission of newly-minted Meros.
 
-On Block addition, every miner in the Block's miners should get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements, which get archived in a Block, for an entire Checkpoint period, it is no longer live. To restore it to live, they must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
+On Block addition, every miner in the Block's miners get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements, which get archived in a Block, for an entire Checkpoint period, their Merit is no longer live. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
 
-Adding a Block also creates a new Epoch. An Epoch keeps track of who verified an Entry. Every Entry that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Entry wasn’t first verified in that Block, it’s added to the Epoch of the Block it was verified in, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is popped off. This oldest Epoch has all of its Entries which didn't get verified removed, and is then used to calculate rewards.
+Adding a Block also creates a new Epoch. Epochs keep track of who verified an Entry. Every Entry that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Entry wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its unverified Entries removed and is then used to calculate rewards.
 
 In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
 
@@ -121,7 +121,7 @@ for holder in scores:
     scores[holder] *= live_merit(holder)
 ```
 
-The scores are then ordered from highest to lowest, with ties placing the Merit Holder with the higher key first. Only the top 100 Merit Holders receive Mints, with the rest of the scores rolling over to the next Block. Once the top 100 Merit Holders are identified, and the rest deleted, the scores should be normalized to 1000 as such:
+The scores are then ordered from highest to lowest. When there is a tie, the Merit Holder with the higher key is placed first. Only the top 100 scoring Merit Holders receive Mints, with the rest of the scores rolling over to the next Block. Once the top 100 scoring Merit Holders are identified, the scores are normalized to 1000 as such:
 
 ```
 total = sum(scores)
@@ -129,19 +129,19 @@ for holder in scores:
     scores[holder] = scores[holder] * 1000 / total
 ```
 
-If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then created for each Merit Holder, in order, with an amount of `score * multiplier`.
+If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference between 1000 and the sum of the scores. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then created for each Merit Holder, in order, with an amount of `score * multiplier`.
 
-`BlockBody` has a variable message length; the 4-byte amount of records, the records (each with a 48-byte BLS Public Key, 4-byte nonce, and 48-byte Merkle tree hash), 1-byte amount of miners, and the miners (serialized as serialized during Merkle tree construction).
+`BlockBody` has a variable message length; the 4-byte amount of records, the records (each with a 48-byte BLS Public Key, 4-byte nonce, and 48-byte Merkle tree hash), 1-byte amount of miners, and the miners (each with a 48-byte BLS Public Key and 1-byte amount).
 
 ### Checkpoint
 
-Every Block who's BlockHeader's nonce modulus 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the live Merit, and the signature should be the aggregate signature of every signer's signature of the Block hash. Without a Checkpoint at the proper location, a Blockchain cannot advance.
+Every Block whose BlockHeader's nonce modulus 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the live Merit, and the signature is the aggregate signature of every signer's signature of the Block hash. Without a Checkpoint at the proper location, a Blockchain cannot advance.
 
-Even with Checkpoints, Blockchain re-organizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain who's tail Block has the higher hash is the proper Blockchain.
+Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the higher hash is the proper Blockchain.
 
-Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace an Entry via chain re-organization and defaulting manipulation. An Entry can be replaced by having it verified as normal, but then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Entry default. Once the Entry defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Entry has a Checkpoint during the time it takes to default, attackers cannot not use a momentary hash power surge to force an Entry to be verified.
+Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace an Entry via chain reorganization and defaulting manipulation. An Entry can be replaced by having it verified via normal operation, then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Entry default. Once the Entry defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Entry has a Checkpoint during the time it takes to default, attackers cannot use a momentary hash power surge to force an Entry to be verified.
 
-`Checkpoint` has a variable message length; the 48 Block hash, 4-byte amount of signers, every signer's 96-byte BLS Public Key, and the 96-byte aggregate signature.
+`Checkpoint` has a variable message length; the 48-byte Block hash, 4-byte amount of signers, every signer's 96-byte BLS Public Key, and the 96-byte aggregate signature.
 
 ### Violations in Meros
 
@@ -163,6 +163,6 @@ BLSSignature aggregate = verifierSignatures.aggregate()
 
 - Meros allows archived Verifications to skip over Entries.
 - Meros doesn't support dead Merit.
-- Meros doesn't support chain re-organizations.
+- Meros doesn't support chain reorganizations.
 - Meros doesn't handle reward-score tie breaks properly, rollover rewards, or use a negative sigmoid.
 - Meros doesn't support the `Checkpoint` message type.

@@ -20,7 +20,7 @@ The Entry sub-types are as follows:
 - Lock
 - Unlock
 
-When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it should be added to the sender's Account, as long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is verified, as described in the Consensus documentation, both must remain on the Account.
+When a new Entry is received via a `Claim`, `Send`, `Receive`, `Data`, `Lock`, or `Unlock` message, it's be added to the sender's Account, as long as the signature (produced by the sender signing the hash) is correct and any other checks imposed by the sub-type pass. The reason why the array is two dimensional is in case two different Entries share the same sender/nonce. Until one is verified, as described in the Consensus documentation, both must remain on the Account.
 
 ### Mint
 
@@ -31,7 +31,7 @@ Mint Entries are locally created when Blocks are added to the Blockchain, as des
 
 Every Mint has a sender of "minter", yet the signature is left blank as there's no way to produce a valid signature. The hash is defined as `Blake2b-384("mint" + nonce + output + amount)`, where nonce takes up 4 bytes, output 48 bytes, and amount 8 bytes.
 
-Mints are never broadcast across the network and should only be created by the local node.
+Mints are never broadcast across the network and are only be created by the local node.
 
 ### Claim
 
