@@ -102,10 +102,10 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 ### Violations in Meros
 
+- Meros's Merit Holder's Merkle trees are created using the hash of the Entry verified in the Verification (the only supported Element).
 - Meros doesn't support defaulting.
 - Meros doesn't support Verifications with 'invalid' hashes.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
 - Meros doesn't support `SignedMeritRemoval` or `MeritRemoval`.
-- Meros's Merit Holder's Merkle trees are created using the hash of the Entry verified in the Verification (the only supported Element).

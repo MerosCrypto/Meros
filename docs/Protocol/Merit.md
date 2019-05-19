@@ -90,6 +90,29 @@ Chain re-organizations can happen if a different, valid chain has a higher cumul
 
 When a Block is added, every miner in the BlockBody's miners should get their amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements for an entire Checkpoint period, it is no longer live. To restore it to live, they must get an Element mentioned in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit 5 Blocks after their Element is mentioned. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
 
+Also, when a Block is added, a new Epoch is created. An Epoch keeps track of who verified an Entry. Every Entry that is first mentioned in that Block, via its archived Verifications, is added to the new Epoch, along with the list of Merit Holders who verified it. If the Entry was mentioned in a previous Epoch, which has not yet been finalized, the newly archived Verification has its holder added to the list of Merit Holders which verified the Entry. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is popped off. This oldest Epoch has all of its Entries which didn't get verified removed, and is then used to calculate rewards.
+
+In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
+
+```
+for entry in epoch:
+    for verifier of epochs[entry]:
+        scores[verifier] += 1
+
+for holder in scores:
+    scores[holder] *= live_merit(holder)
+```
+
+The Merit Holders are then ordered from highest score to lowest, with ties placing the Merit Holder with the higher key first. Only the top 100 Merit Holders receive Mints, with the rest of the scores rolling over to the next Block. Once the top 100 Merit Holders are identified, and the rest deleted, the scores should be normalized to 1000 as such:
+
+```
+total = sum(scores)
+for holder in scores:
+    scores[holder] = scores[holder] * 1000 / total
+```
+
+If the sum of every score is less than 1000, the top Merit Holder receives the difference. A negative sigmoid which uses the current difficulty for its x value produces a multiplier. Mints are then created for each Merit Holder, starting with the one who scored the highest, with an amount of `score * multiplier`.
+
 ### Checkpoint
 
 `Checkpoint` has a variable message length; the 48 Block hash, 4-byte amount of signers, every signer's 96-byte BLS Public Key, and the 96-byte aggregate signature.
@@ -123,4 +146,5 @@ BLSSignature aggregate = verifierSignatures.aggregate()
 
 - Meros doesn't support dead Merit.
 - Meros doesn't support chain re-organizations.
+- Meros doesn't rollover rewards or use a negative sigmoid for reward calculation.
 - Meros doesn't support the `Checkpoint` message type.

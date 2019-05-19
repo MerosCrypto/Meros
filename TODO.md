@@ -155,8 +155,4 @@ UI/RPC:
 
 - If a piece of code had a GitHub Issue, put a link to the issue in a comment. Shed some light on the decision making process.
 - Use Nim Documentation Comments.
-
-- Explain `Lock`s/`Unlock`s.
-- Explain Rewards (including how cutoff rewards are carried over).
-
 - Meros Whitepaper.
