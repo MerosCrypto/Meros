@@ -108,7 +108,7 @@ If the Block is valid, it's added, triggering two events. The first event is the
 
 On Block addition, every miner in the Block's miners get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements, which get archived in a Block, for an entire Checkpoint period, their Merit is no longer live. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
 
-Adding a Block also creates a new Epoch. Epochs keep track of who verified an Entry. Every Entry that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Entry wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its unverified Entries removed and is then used to calculate rewards.
+Adding a Block also creates a new Epoch. Epochs keep track of who verified an Entry. Every Entry that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Entry wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Entries which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
 
 In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
 
@@ -135,7 +135,7 @@ If the sum of every score is less than 1000, the Merit Holder with the top score
 
 ### Checkpoint
 
-Every Block whose BlockHeader's nonce modulus 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the live Merit, and the signature is the aggregate signature of every signer's signature of the Block hash. Without a Checkpoint at the proper location, a Blockchain cannot advance.
+Every Block where the remainder of the BlockHeader's nonce divided by 5 is 0 has a corresponding Checkpoint. The Checkpoint's signers must represent a majority of the live Merit, and the signature is the aggregate signature of every signer's signature of the Block hash. Without a Checkpoint at the proper location, a Blockchain cannot advance.
 
 Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the higher hash is the proper Blockchain.
 
