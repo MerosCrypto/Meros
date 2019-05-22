@@ -4,6 +4,8 @@ Syncing is a state between two nodes where one needs to catch up. To initiate sy
 
 During syncing, the syncer can only send:
 
+- `Handshake`
+
 - `PeerRequest`
 
 - `CheckpointRequest`
@@ -24,6 +26,8 @@ During syncing, the syncer can only send:
 - `SyncingOver`
 
 The syncee can only send:
+
+- `BlockHeight`
 
 - `Peers`
 

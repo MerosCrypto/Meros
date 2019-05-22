@@ -6,6 +6,7 @@ The message types are as follows (with their list number being their byte header
 
 <ol start="0">
 <li><code>Handshake</code></li>
+<li><code>BlockHeight</code></li>
 <br>
 <li><code>Syncing</code></li>
 <li><code>SyncingAcknowledged</code></li>
@@ -53,6 +54,6 @@ The message types are as follows (with their list number being their byte header
 
 `Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive) can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing documentation.
 
-Even if the state is syncing, the node which didn't start syncing can send every message between `Claim` (inclusive) and `Checkpoint` (inclusive).
+Even if the state is syncing, the node which didn't start syncing can send `BlockHeight`, along with every message between `Claim` (inclusive) and `Checkpoint` (inclusive).
 
 When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive), nor `BlockBody`, can be sent.
