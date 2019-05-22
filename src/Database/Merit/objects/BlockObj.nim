@@ -72,7 +72,7 @@ func newBlockObj*(
     #Create the Block Header.
     var header: BlockHeader
     try:
-        header = newBlockheader(
+        header = newBlockHeader(
             nonce,
             last,
             aggregate,

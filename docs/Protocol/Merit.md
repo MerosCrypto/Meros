@@ -145,7 +145,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros produces the BlockHeader hash with a BlockHeader serialization containing the proof.
 - Meros produces the BlockHeader aggregate using the following algorithm:
 
 ```

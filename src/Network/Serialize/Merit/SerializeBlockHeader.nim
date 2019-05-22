@@ -21,12 +21,15 @@ import ../SerializeCommon
 
 #Serialize a Block Header.
 func serialize*(
-    header: BlockHeader
+    header: BlockHeader,
+    withoutProof: bool = false
 ): string {.forceCheck: [].} =
     result =
         header.nonce.toBinary().pad(INT_LEN) &
         header.last.toString() &
         header.aggregate.toString() &
         header.miners.toString() &
-        header.time.toBinary().pad(INT_LEN) &
-        header.proof.toBinary().pad(INT_LEN)
+        header.time.toBinary().pad(INT_LEN)
+
+    if not withoutProof:
+        result &= header.proof.toBinary().pad(INT_LEN)
