@@ -27,6 +27,8 @@ Lattice:
 
 Network:
 
+- Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
+
 - Syncing currently works by:
     - Get the hash of the next Block.
     - Get the BlockHeader.

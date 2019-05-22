@@ -19,32 +19,33 @@ finalsd:
         #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
         MessageType* {.pure.} = enum
             Handshake = 0,
+            BlockHeight = 1,
 
-            Syncing = 1,
-            SyncingAcknowledged = 2,
-            BlockHeaderRequest = 6,
-            BlockBodyRequest = 7,
-            ElementRequest = 8,
-            EntryRequest = 9,
-            GetBlockHash = 10,
-            BlockHash = 11,
-            DataMissing = 19,
-            SyncingOver = 20,
+            Syncing = 2,
+            SyncingAcknowledged = 3,
+            BlockHeaderRequest = 7,
+            BlockBodyRequest = 8,
+            ElementRequest = 9,
+            EntryRequest = 10,
+            GetBlockHash = 11,
+            BlockHash = 12,
+            DataMissing = 20,
+            SyncingOver = 21,
 
-            Claim = 21,
-            Send = 22,
-            Receive = 23,
-            Data = 24,
+            Claim = 22,
+            Send = 23,
+            Receive = 24,
+            Data = 25,
 
-            SignedVerification = 27,
+            SignedVerification = 28,
 
-            BlockHeader = 33,
-            BlockBody = 34,
-            Verification = 35,
+            BlockHeader = 34,
+            BlockBody = 35,
+            Verification = 36,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 40
+            End = 41
 
         #Message object.
         Message* = object

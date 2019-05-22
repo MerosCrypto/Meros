@@ -52,6 +52,8 @@ proc recv*(
     case content:
         of MessageType.Handshake:
             size = BYTE_LEN + BYTE_LEN + BYTE_LEN + INT_LEN
+        of MessageType.BlockHeight:
+            size = 4
 
         of MessageType.Syncing:
             size = 0
@@ -138,10 +140,13 @@ proc recv*(
     if msg.len != size:
         raise newException(ClientError, "Didn't get a full message.")
 
-    #Create a proper Message and return it.
+    #Create a proper Message to be returned.
     result = newMessage(
         client.id,
         content,
         size,
         msg
     )
+
+    #Update the time of their last message.
+    client.last = getTime()

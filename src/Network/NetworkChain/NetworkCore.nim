@@ -25,6 +25,7 @@ proc reply*(
         fcRaise e
     except Exception as e:
         doAssert(false, "Clients.reply(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
+
 #Constructor.
 proc newNetwork*(
     id: int,
@@ -68,10 +69,7 @@ proc newNetwork*(
 
         #Handle the message.
         case msg.content:
-            of MessageType.Handshake:
-                raise newException(InvalidMessageError, "Client tried handshaking despite having already connected.")
-
-            #These five messages should never make it to handle.
+            #These messages should never make it to handle.
             of MessageType.Syncing:
                 raise newException(InvalidMessageError, "Client sent us a `Syncing` which made its way to handle.")
             of MessageType.SyncingOver:
@@ -86,6 +84,28 @@ proc newNetwork*(
                 raise newException(InvalidMessageError, "Client sent us a `BlockBody` when we aren't syncing.")
             of MessageType.Verification:
                 raise newException(InvalidMessageError, "Client sent us a `Verification` when we aren't syncing.")
+
+            of MessageType.Handshake:
+                try:
+                    await network.clients.reply(
+                        msg,
+                        newMessage(
+                            MessageType.BlockHeight,
+                            mainFunctions.merit.getHeight().toBinary().pad(INT_LEN)
+                        )
+                    )
+                except IndexError:
+                    raise newException(ClientError, "Couldn't respond to a Handshake sent as a keep-alive message.")
+                except Exception as e:
+                    doAssert(false, "Replying `Handshake` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+            of MessageType.BlockHeight:
+                try:
+                    if network.clients[msg.client].theirState == ClientState.Syncing:
+                        raise newException(InvalidMessageError, "Client sent us a BlockHeight when they are syncing.")
+                except IndexError:
+                    raise newException(ClientError, "Couldn't grab a Client who sent us a `BlockHeight`.")
+                discard
 
             of MessageType.BlockHeaderRequest, MessageType.BlockBodyRequest:
                 #Grab our chain height and parse the requested hash.

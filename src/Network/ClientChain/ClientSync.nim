@@ -28,7 +28,9 @@ proc startSyncing*(
         addTimer(
             5000,
             true,
-            func (fd: AsyncFD): bool {.forceCheck: [].} =
+            func (
+                fd: AsyncFD
+            ): bool {.forceCheck: [].} =
                 shouldWait = false
         )
     except OSError as e:

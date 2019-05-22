@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Util lib.
+import ../../lib/Util
+
 #Finals lib.
 import finals
 
@@ -31,6 +34,8 @@ finalsd:
             ourState*: ClientState
             #Their state.
             theirState*: ClientState
+            #Time of their last message.
+            last*: Time
             #Socket.
             socket* {.final.}: AsyncSocket
 
@@ -48,12 +53,14 @@ func newClient*(
         id: id,
         ourState: ClientState.Ready,
         theirState: ClientState.Ready,
-        socket: socket
+        socket: socket,
+        last: 0
     )
     result.ffinalizeIP()
     result.ffinalizePort()
     result.ffinalizeID()
     result.ffinalizeSocket()
+
 
 #Check if a Client is closed.
 func isClosed*(

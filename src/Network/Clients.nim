@@ -132,6 +132,43 @@ proc add*(
     #Add the new Client to Clients.
     clients.add(client)
 
+    #Add a repeating timer which confirms this node is active.
+    try:
+        addTimer(
+            20000,
+            false,
+            proc (
+                fd: AsyncFD
+            ): bool {.gcsafe.} =
+                if client.last + 40 <= getTime():
+                    var height: int
+                    {.gcsafe.}:
+                        height = networkFunctions.getHeight()
+
+                    try:
+                        asyncCheck client.send(
+                            newMessage(
+                                MessageType.Handshake,
+                                char(networkFunctions.getNetworkID()) &
+                                char(networkFunctions.getProtocol()) &
+                                (if server: char(255) else: char(0)) &
+                                height.toBinary().pad(INT_LEN)
+                            )
+                        )
+                    except SocketError:
+                        client.close()
+                    except ClientError:
+                        client.close()
+                    except Exception as e:
+                        doAssert(false, "Sending to a client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                if client.last + 60 <= getTime():
+                    client.close()
+        )
+    except OSError as e:
+        doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
+
     #If we are missing Blocks, sync the last one, which will trigger syncing the others.
     if state == HandshakeState.MissingBlocks:
         var tail: Block
