@@ -1,6 +1,9 @@
 #Networking standard libs.
 import asyncdispatch, asyncnet
 
+#String utils standard lib.
+import strutils
+
 #JSON standard lib.
 import json
 
@@ -9,6 +12,12 @@ var
     client: AsyncSocket = newAsyncSocket()
     #JSON.
     payload: JSONNode
+    #RPC port.
+    port: int
+
+#Get the port.
+echo "What is the RPC port of your node?"
+port = parseInt(stdin.readLine())
 
 echo "What IP do you want to connect to? "
 payload = %* {
@@ -21,7 +30,7 @@ payload = %* {
 
 #Connect to the server.
 echo "Connecting..."
-waitFor client.connect("127.0.0.1", Port(5133))
+waitFor client.connect("127.0.0.1", Port(port))
 echo "Connected."
 
 #Send the JSON.
