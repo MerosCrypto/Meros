@@ -40,12 +40,12 @@ func newEdSeed*(
     #If it's binary...
     if seed.len == 32:
         for i in 0 ..< 32:
-            result[i] = seed[i]
+            result.data[i] = seed[i]
     #If it's hex...
     elif seed.len == 64:
         try:
             for i in countup(0, 63, 2):
-                result[i div 2] = cuchar(parseHexInt(seed[i .. i + 1]))
+                result.data[i div 2] = cuchar(parseHexInt(seed[i .. i + 1]))
         except ValueError:
             raise newException(EdSeedError, "Hex-length Seed with invalid Hex data passed to newEdSeed.")
     else:
@@ -60,12 +60,12 @@ func newEdPublicKey*(
     #If it's binary...
     if key.len == 32:
         for i in 0 ..< 32:
-            result[i] = key[i]
+            result.data[i] = key[i]
     #If it's hex...
     elif key.len == 64:
         try:
             for i in countup(0, 63, 2):
-                result[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
+                result.data[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
         except ValueError:
             raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newEdSeed.")
     else:
@@ -75,19 +75,19 @@ func newEdPublicKey*(
 func newEdSignature*(
     sig: var string
 ): EdSignature {.forceCheck: [].} =
-    copyMem(addr result[0], addr sig[0], 64)
+    copyMem(addr result.data[0], addr sig[0], 64)
 
 #Stringify a Seed/PublicKey/Signature.
 func toString*(
-    key: EdSeed or EdPublicKey or EdSignature
+    data: EdSeed or EdPublicKey or EdSignature
 ): string {.forceCheck: [].} =
-    for b in key:
+    for b in data.data:
         result = result & char(b)
 
 func `$`*(
-    key: EdSeed or EdPublicKey or EdSignature
+    data: EdSeed or EdPublicKey or EdSignature
 ): string {.inline, forceCheck: [].} =
-    key.toString().toHex()
+    data.toString().toHex()
 
 #Constructor.
 func newWallet*(

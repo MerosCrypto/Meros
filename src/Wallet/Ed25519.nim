@@ -12,44 +12,48 @@ const SIGN_PREFIX {.strdefine.}: string = "MEROS"
 
 #Export the Private/Public Key objects (with a prefix).
 type
-    EdSeed* = Seed
-    EdPrivateKey* = PrivateKey
-    EdPublicKey* = PublicKey
-    EdSignature* = array[64, uint8]
+    EdSeed* = object
+        data*: Seed
+    EdPrivateKey* = object
+        data*: PrivateKey
+    EdPublicKey* = object
+        data*: PublicKey
+    EdSignature* = object
+        data*: array[64, uint8]
 
 #Seed constructor.
-proc newEdSeed*(): Seed {.forceCheck: [
+proc newEdSeed*(): EdSeed {.forceCheck: [
     RandomError
 ].} =
     #Fill the Seed with random bytes.
     try:
-        randomFill(result)
+        randomFill(result.data)
     except RandomError:
         raise newException(RandomError, "Couldn't randomly fill the Seed.")
 
 #Key Pair constrcutor.
 func newEdKeyPair*(
-    seedArg: Seed
+    seedArg: EdSeed
 ): tuple[
-    priv: PrivateKey,
-    pub: PublicKey
+    priv: EdPrivateKey,
+    pub: EdPublicKey
 ] {.forceCheck: [
     SodiumError
 ].} =
     #Extract the Seed.
-    var seed: Seed = seedArg
+    var seed: Seed = seedArg.data
 
     #Call the C function and verify the result.
     if sodiumKeyPair(
-        addr result.pub[0],
-        addr result.priv[0],
+        addr result.pub.data[0],
+        addr result.priv.data[0],
         addr seed[0]
     ) != 0:
         raise newException(SodiumError, "Sodium could not create a Key Pair from the passed Seed.")
 
 #Nim function for signing a message.
 func sign*(
-    key: PrivateKey,
+    key: EdPrivateKey,
     msgArg: string
 ): EdSignature {.forceCheck: [
     SodiumError
@@ -67,12 +71,12 @@ func sign*(
         raise newException(SodiumError, "Sodium could not update a State.")
 
     #Create the signature.
-    if sodiumSign(addr state, cast[ptr char](addr result[0]), nil, key) != 0:
+    if sodiumSign(addr state, cast[ptr char](addr result.data[0]), nil, key.data) != 0:
         raise newException(SodiumError, "Sodium could not sign a message.")
 
 #Nim function for verifying a message.
 func verify*(
-    key: PublicKey,
+    key: EdPublicKey,
     msgArg: string,
     sigArg: EdSignature
 ): bool {.forceCheck: [
@@ -93,7 +97,7 @@ func verify*(
         raise newException(SodiumError, "Sodium could not update a State.")
 
     #Verify the signature.
-    if sodiumVerify(addr state, cast[ptr char](addr sig[0]), key) != 0:
+    if sodiumVerify(addr state, cast[ptr char](addr sig.data[0]), key.data) != 0:
         return false
 
     result = true

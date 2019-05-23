@@ -45,39 +45,15 @@ for i in 1 .. 20:
     assert(claim.serialize() == claimParsed.serialize())
 
     #Test the Entry properties.
-    assert(
-        claim.descendant == claimParsed.descendant,
-        "Descendant:\r\n" & $claim.descendant & "\r\n" & $claimParsed.descendant
-    )
-    assert(
-        claim.sender == claimParsed.sender,
-        "Sender:\r\n" & claim.sender & "\r\n" & claimParsed.sender
-    )
-    assert(
-        claim.nonce == claimParsed.nonce,
-        "Nonce:\r\n" & $claim.nonce & "\r\n" & $claimParsed.nonce
-    )
-    assert(
-        claim.hash == claimParsed.hash,
-        "Hash:\r\n" & $claim.hash & "\r\n" & $claimParsed.hash
-    )
-    assert(
-        claim.signature.toString() == claimParsed.signature.toString(),
-        "Signature:\r\n" & $claim.signature & "\r\n" & $claimParsed.signature
-    )
-    assert(
-        claim.verified == claimParsed.verified,
-        "Verified:\r\n" & $claim.verified & "\r\n" & $claimParsed.verified,
-    )
+    assert(claim.descendant == claimParsed.descendant)
+    assert(claim.sender == claimParsed.sender)
+    assert(claim.nonce == claimParsed.nonce)
+    assert(claim.hash == claimParsed.hash)
+    assert(claim.signature.toString() == claimParsed.signature.toString())
+    assert(claim.verified == claimParsed.verified)
 
     #Test the Claim properties.
-    assert(
-        claim.mintNonce == claimParsed.mintNonce,
-        "Mint Nonce:\r\n" & $claim.mintNonce & "\r\n" & $claimParsed.mintNonce
-    )
-    assert(
-        claim.bls == claimParsed.bls,
-        "BLS Signature:\r\n" & $claim.bls & "\r\n" & $claimParsed.bls
-    )
+    assert(claim.mintNonce == claimParsed.mintNonce)
+    assert(claim.bls == claimParsed.bls)
 
 echo "Finished the Network/Serialize/Lattice/Claim Test."

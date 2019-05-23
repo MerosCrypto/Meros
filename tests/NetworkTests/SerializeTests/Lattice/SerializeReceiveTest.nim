@@ -46,39 +46,15 @@ for i in 1 .. 20:
     assert(recv.serialize() == recvParsed.serialize())
 
     #Test the Entry properties.
-    assert(
-        recv.descendant == recvParsed.descendant,
-        "Descendant:\r\n" & $recv.descendant & "\r\n" & $recvParsed.descendant
-    )
-    assert(
-        recv.sender == recvParsed.sender,
-        "Sender:\r\n" & recv.sender & "\r\n" & recvParsed.sender
-    )
-    assert(
-        recv.nonce == recvParsed.nonce,
-        "Nonce:\r\n" & $recv.nonce & "\r\n" & $recvParsed.nonce
-    )
-    assert(
-        recv.hash == recvParsed.hash,
-        "Hash:\r\n" & $recv.hash & "\r\n" & $recvParsed.hash
-    )
-    assert(
-        recv.signature.toString() == recvParsed.signature.toString(),
-        "Signature:\r\n" & $recv.signature & "\r\n" & $recvParsed.signature
-    )
-    assert(
-        recv.verified == recvParsed.verified,
-        "Verified:\r\n" & $recv.verified & "\r\n" & $recvParsed.verified,
-    )
+    assert(recv.descendant == recvParsed.descendant)
+    assert(recv.sender == recvParsed.sender)
+    assert(recv.nonce == recvParsed.nonce)
+    assert(recv.hash == recvParsed.hash)
+    assert(recv.signature.toString() == recvParsed.signature.toString())
+    assert(recv.verified == recvParsed.verified)
 
     #Test the Receive properties.
-    assert(
-        recv.input.address == recvParsed.input.address,
-        "Input Address:\r\n" & recv.input.address & "\r\n" & recvParsed.input.address
-    )
-    assert(
-        recv.input.nonce == recvParsed.input.nonce,
-        "Input Nonce:\r\n" & $recv.input.nonce & "\r\n" & $recvParsed.input.nonce
-    )
+    assert(recv.input.address == recvParsed.input.address)
+    assert(recv.input.nonce == recvParsed.input.nonce)
 
 echo "Finished the Network/Serialize/Lattice/Receive Test."
