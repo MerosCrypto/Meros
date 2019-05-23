@@ -41,8 +41,8 @@ var
     socket: AsyncSocket = newAsyncSocket()    #Socket.
 
 #Create the Miner Wallet.
-echo "What's the BLS Private Key? "
-miner = newMinerWallet(newBLSPrivateKeyFromBytes(stdin.readLine()))
+echo "What's the BLS Seed? "
+miner = newMinerWallet(stdin.readLine())
 
 #Create the Wallet.
 echo "What's the Wallet's Seed? "

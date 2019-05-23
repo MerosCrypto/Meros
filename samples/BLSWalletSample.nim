@@ -5,8 +5,6 @@ import ../src/Wallet/MinerWallet
 var miner: MinerWallet = newMinerWallet()
 
 #Print the info.
-echo "Private Key:"
-echo miner.privateKey
+echo "Seed: ", miner.seed
 echo "----"
-echo "Public Key:"
-echo miner.publicKey
+echo "Public Key: ", miner.publicKey
