@@ -203,7 +203,7 @@ proc newNetwork*(
                         msg,
                         newMessage(
                             MessageType.Verification,
-                            mainFunctions.consensus.getElement(key, nonce).serialize(false)
+                            mainFunctions.consensus.getElement(key, nonce).serialize()
                         )
                     )
                 except IndexError as e:

@@ -62,7 +62,10 @@ Network:
 - Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Lattice and Consensus DAGs).
 
 ### Tests:
-Cleanup Tests (as in, they need to be cleaned).
+Cleanup
+    Database/Consensus
+    Database/Merit:
+    Network/Merit
 
 objects:
 
@@ -75,7 +78,8 @@ lib:
 - lib/Hash/SHA2 (384) Test.
 - lib/Hash/Keccak (384) Test.
 - lib/Hash/SHA3 (384) Test.
-- lib/Hash/HashCommon Tests.
+- lib/Hash/HashCommon Test.
+- Fuzzy lib/Util Test.
 - lib/Logger Test.
 
 Wallet:

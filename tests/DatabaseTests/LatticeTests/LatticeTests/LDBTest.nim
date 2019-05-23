@@ -27,8 +27,8 @@ import ../../../../src/Database/Lattice/Lattice
 #Test Database lib.
 import ../../TestDatabase
 
-#Test Lattice lib.
-import ../TestLattice
+#Compare Lattice lib.
+import ../CompareLattice
 
 #Random standard lib.
 import random

@@ -19,7 +19,7 @@ import ../SerializeCommon
 #Serialize a Verification.
 func serialize*(
     verif: Verification,
-    signingOrVerifying: bool
+    signingOrVerifying: bool = false
 ): string {.forceCheck: [].} =
     result =
         verif.holder.toString() &

@@ -3,14 +3,9 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
-
-#BLS lib.
-import ../../../../src/Wallet/MinerWallet
-
-#Wallet lib.
+#Wallet libs.
 import ../../../../src/Wallet/Wallet
+import ../../../../src/Wallet/MinerWallet
 
 #Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
@@ -22,39 +17,38 @@ import ../../../../src/Database/Lattice/Mint
 import ../../../../src/Network/Serialize/Lattice/SerializeMint
 import ../../../../src/Network/Serialize/Lattice/ParseMint
 
+#Compare Lattice lib.
+import ../../../DatabaseTests/LatticeTests/CompareLattice
+
 #Random standard lib.
 import random
 
-#Seed Random via the time.
+#Seed random.
 randomize(getTime())
 
-#Test 20 serializations.
-for i in 1 .. 20:
-    echo "Testing Mint Serialization/Parsing, iteration " & $i & "."
+var
+    #Mint Entry.
+    mint: Mint
+    #Reloaded Mint Entry.
+    reloaded: Mint
 
-    #Mint (for a random amount).
-    var mint: Mint = newMint(
-        newBLSPrivateKeyFromSeed(rand(150000).toBinary()).getPublicKey(),
-        uint64(rand(100000000)),
-        rand(75000)
+#Test 256 serializations.
+for _ in 0 .. 255:
+    #Create the Mint.
+    mint = newMint(
+        newBLSPrivateKeyFromSeed(rand(high(int32)).toBinary()).getPublicKey(),
+        #This would be an uint64 in an ideal world, but Nim is quirky about int64/uint64 and Ordinal.
+        uint64(rand(high(int32))),
+        rand(high(int32))
     )
 
     #Serialize it and parse it back.
-    var mintParsed: Mint = mint.serialize(false).parseMint()
+    reloaded = mint.serialize().parseMint()
 
     #Test the serialized versions.
-    assert(mint.serialize(false) == mintParsed.serialize(false))
+    assert(mint.serialize() == reloaded.serialize())
 
-    #Test the Entry properties.
-    assert(mint.descendant == mintParsed.descendant)
-    assert(mint.sender == mintParsed.sender)
-    assert(mint.nonce == mintParsed.nonce)
-    assert(mint.hash == mintParsed.hash)
-    assert(mint.signature.toString() == mintParsed.signature.toString())
-    assert(mint.verified == mintParsed.verified)
-
-    #Test the Mint properties.
-    assert(mint.output == mintParsed.output)
-    assert(mint.amount == mintParsed.amount)
+    #Compare the Entries.
+    compare(mint, reloaded)
 
 echo "Finished the Network/Serialize/Lattice/Mint Test."

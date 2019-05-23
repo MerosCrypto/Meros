@@ -1,4 +1,4 @@
-#Test for all the Lattice Serialize/Parse functions.
+#Test all the Lattice Serialize/Parse functions.
 
 import Lattice/SerializeMintTest
 import Lattice/SerializeClaimTest

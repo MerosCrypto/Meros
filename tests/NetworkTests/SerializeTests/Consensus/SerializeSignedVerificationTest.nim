@@ -9,48 +9,48 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Consensus lib.
-import ../../../../src/Database/Consensus/Consensus
+#Verification lib.
+import ../../../../src/Database/Consensus/Verification
 
-#Serialize lib.
+#Serialization libs.
 import ../../../../src/Network/Serialize/Consensus/SerializeSignedVerification
 import ../../../../src/Network/Serialize/Consensus/ParseSignedVerification
+
+#Compare Consensus lib.
+import ../../../DatabaseTests/ConsensusTests/CompareConsensus
 
 #Random standard lib.
 import random
 
-#Seed Random via the time.
-randomize(int(getTime()))
+#Seed random.
+randomize(getTime())
 
-#Test 20 SignedVerification serializations.
-for i in 1 .. 20:
-    echo "Testing SignedVerification Serialization/Parsing, iteration " & $i & "."
+var
+    #Hash.
+    hash: Hash[384]
+    #Signed Verification Element.
+    verif: SignedVerification
+    #Reloaded Signed Verification Element.
+    reloaded: SignedVerification
 
-    var
-        #Create a Wallet for the MeritHolder.
-        holder: MinerWallet = newMinerWallet()
-        #Create a nonce.
-        nonce: uint = uint(rand(65000))
-        #Create a hash.
-        hash: Hash[384]
-    #Set the hash to a random value.
+#Test 256 serializations.
+for _ in 0 .. 255:
     for i in 0 ..< 48:
         hash.data[i] = uint8(rand(255))
 
     #Create the SignedVerification.
-    var verif: SignedVerification = newSignedVerificationObj(hash)
-    holder.sign(verif, nonce)
+    verif = newSignedVerificationObj(hash)
+
+    #Sign it.
+    newMinerWallet().sign(verif, rand(high(int32)))
 
     #Serialize it and parse it back.
-    var verifParsed: SignedVerification = verif.serialize().parseSignedVerification()
+    reloaded = verif.serialize().parseSignedVerification()
 
     #Test the serialized versions.
-    assert(verif.serialize() == verifParsed.serialize())
+    assert(verif.serialize() == reloaded.serialize())
 
-    #Test the SignedVerification's properties.
-    assert(verif.holder == verifParsed.holder)
-    assert(verif.nonce == verifParsed.nonce)
-    assert(verif.hash == verifParsed.hash)
-    assert(verif.signature == verifParsed.signature)
+    #Compare the Elements.
+    compare(verif, reloaded)
 
 echo "Finished the Network/Serialize/Consensus/SignedVerification Test."

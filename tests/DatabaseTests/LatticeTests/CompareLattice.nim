@@ -7,6 +7,7 @@ import ../../../src/Database/Lattice/Lattice
 #Tables lib.
 import tables
 
+#Compare two Entries to make sure they have the same value.
 proc compare*(
     e1: Entry,
     e2: Entry
@@ -40,6 +41,7 @@ proc compare*(
             assert(cast[Data](e1).proof == cast[Data](e2).proof)
             assert(cast[Data](e1).argon == cast[Data](e2).argon)
 
+#Compare two Accounts to make sure they have the same values.
 proc compare*(
     a1: Account,
     a2: Account
@@ -85,6 +87,7 @@ proc compare*(
         for e in 0 ..< a1Entries.len:
             compare(a1Entries[e], a2Entries[e])
 
+#Compare two Lattices to make sure they have the same values.
 proc compare*(
     l1: var Lattice,
     l2: var Lattice

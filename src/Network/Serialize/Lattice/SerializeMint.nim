@@ -17,7 +17,7 @@ import ../SerializeCommon
 #Serialize a Mint.
 proc serialize*(
     mint: Mint,
-    hashing: bool
+    hashing: bool = false
 ): string {.forceCheck: [].} =
     result =
         mint.nonce.toBinary().pad(INT_LEN) &

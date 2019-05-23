@@ -1,5 +1,8 @@
 #Serialize Send Test.
 
+#Util lib.
+import ../../../../src/lib/Util
+
 #Hash lib.
 import ../../../../src/lib/Hash
 
@@ -16,43 +19,43 @@ import ../../../../src/Database/Lattice/Send
 import ../../../../src/Network/Serialize/Lattice/SerializeSend
 import ../../../../src/Network/Serialize/Lattice/ParseSend
 
-#Test 20 serializations.
-for i in 1 .. 20:
-    echo "Testing Send Serialization/Parsing, iteration " & $i & "."
+#Compare Lattice lib.
+import ../../../DatabaseTests/LatticeTests/CompareLattice
 
-    var
-        #Wallets.
-        sender: Wallet = newWallet()
-        receiver: Wallet = newWallet()
-        #Send (for 1 MR).
-        send: Send = newSend(
-            receiver.address,
-            uint64(10000000000),
-            0
-        )
+#Random standard lib.
+import random
+
+#Seed random.
+randomize(getTime())
+
+var
+    #Send Entry.
+    send: Send
+    #Reloaded Send Entry.
+    reloaded: Send
+
+#Test 256 serializations.
+for _ in 0 .. 255:
+    #Create the Send.
+    send = newSend(
+        newWallet().address,
+        #This would be an uint64 in an ideal world, but Nim is quirky about int64/uint64 and Ordinal.
+        uint64(rand(high(int32))),
+        rand(high(int32))
+    )
+
     #Sign it.
-    sender.sign(send)
+    newWallet().sign(send)
     #Mine the Send.
     send.mine("333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".toHash(384))
 
     #Serialize it and parse it back.
-    var sendParsed: Send = send.serialize().parseSend()
+    reloaded = send.serialize().parseSend()
 
     #Test the serialized versions.
-    assert(send.serialize() == sendParsed.serialize())
+    assert(send.serialize() == reloaded.serialize())
 
-    #Test the Entry properties.
-    assert(send.descendant == sendParsed.descendant)
-    assert(send.sender == sendParsed.sender)
-    assert(send.nonce == sendParsed.nonce)
-    assert(send.hash == sendParsed.hash)
-    assert(send.signature.toString() == sendParsed.signature.toString())
-    assert(send.verified == sendParsed.verified)
-
-    #Test the Send properties.
-    assert(send.output == sendParsed.output)
-    assert(send.amount == sendParsed.amount)
-    assert(send.proof == sendParsed.proof)
-    assert(send.argon == sendParsed.argon)
+    #Compare the Entries.
+    compare(send, reloaded)
 
 echo "Finished the Network/Serialize/Lattice/Send Test."

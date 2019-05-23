@@ -9,19 +9,17 @@ import ../../src/lib/Base32
 #Random standard lib.
 import random
 
-#Seed Random via the time.
-randomize(int(getTime()))
+#Seed random.
+randomize(getTime())
 
 #Verify isBase32.
 assert("qpzry9x8gf2tvdw0s3jn54khce6mua7l".isBase32(), "Base 32 rejected valid input.")
 assert(not "0ob".isBase32(), "Base 32 accepted invalid input.")
 assert(not "@&*(])".isBase32(), "Base 32 accepted invalid input.")
 
-for i in 1 .. 20:
-    echo "Testing Base32 encoding/decoding, iteration " & $i & "."
-
+for i in 0 .. 255:
     #Seq of random bytes.
-    var byteSeq: seq[uint8] = newSeq[uint8](rand(20))
+    var byteSeq: seq[uint8] = newSeq[uint8](rand(i))
     for b in 0 ..< byteSeq.len:
         byteSeq[b] = uint8(rand(255))
 

@@ -1,10 +1,11 @@
-#Serialize Claim Tests.
+#Serialize Claim Test.
 
-#MinerWallet lib.
-import ../../../../src/Wallet/MinerWallet
+#Util lib.
+import ../../../../src/lib/Util
 
-#Wallet lib.
+#Wallet libs.
 import ../../../../src/Wallet/Wallet
+import ../../../../src/Wallet/MinerWallet
 
 #Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
@@ -16,44 +17,39 @@ import ../../../../src/Database/Lattice/Claim
 import ../../../../src/Network/Serialize/Lattice/SerializeClaim
 import ../../../../src/Network/Serialize/Lattice/ParseClaim
 
-import strutils
+#Compare Lattice lib.
+import ../../../DatabaseTests/LatticeTests/CompareLattice
 
-#Test 20 serializations.
-for i in 1 .. 20:
-    echo "Testing Claim Serialization/Parsing, iteration " & $i & "."
+#Random standard lib.
+import random
 
-    var
-        #People.
-        miner: MinerWallet = newMinerWallet()
-        claimer: Wallet = newWallet()
-        #Claim.
-        claim: Claim
+#Seed random.
+randomize(getTime())
 
+var
+    #Claim Entry.
+    claim: Claim
+    #Reloaded Claim Entry.
+    reloaded: Claim
+
+#Test 256 serializations.
+for _ in 0 .. 255:
     #Create the Claim.
     claim = newClaim(
-        0,
-        0
+        rand(high(int32)),
+        rand(high(int32))
     )
 
     #Sign it.
-    claim.sign(miner, claimer)
+    claim.sign(newMinerWallet(), newWallet())
 
     #Serialize it and parse it back.
-    var claimParsed: Claim = claim.serialize().parseClaim()
+    reloaded = claim.serialize().parseClaim()
 
     #Test the serialized versions.
-    assert(claim.serialize() == claimParsed.serialize())
+    assert(claim.serialize() == reloaded.serialize())
 
-    #Test the Entry properties.
-    assert(claim.descendant == claimParsed.descendant)
-    assert(claim.sender == claimParsed.sender)
-    assert(claim.nonce == claimParsed.nonce)
-    assert(claim.hash == claimParsed.hash)
-    assert(claim.signature.toString() == claimParsed.signature.toString())
-    assert(claim.verified == claimParsed.verified)
-
-    #Test the Claim properties.
-    assert(claim.mintNonce == claimParsed.mintNonce)
-    assert(claim.bls == claimParsed.bls)
+    #Compare the Entries.
+    compare(claim, reloaded)
 
 echo "Finished the Network/Serialize/Lattice/Claim Test."

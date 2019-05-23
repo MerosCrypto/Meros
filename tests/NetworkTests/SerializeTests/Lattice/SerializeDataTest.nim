@@ -19,65 +19,48 @@ import ../../../../src/Database/Lattice/Data
 import ../../../../src/Network/Serialize/Lattice/SerializeData
 import ../../../../src/Network/Serialize/Lattice/ParseData
 
-#Test data.
-var tests: seq[string] = @[
-    "",
-    "123",
-    "abc",
-    "abcdefghijklmnopqrstuvwxyz",
-    "Test",
-    "Test1",
-    "Test2",
-    "This is a longer Test.",
-    "Now we have special character.\r\n",
-    "\0\0This Test starts with leading 0s and is meant to Test Issue #46.",
-    "Write the tests they said.",
-    "Make up phrases they said.",
-    "Well here are the phrases.",
-    "#^&^%^&*",
-    "Phrase.",
-    "Another phrase.",
-    "Yet another phrase.",
-    "This is 32 characters long.     ",
-    "".pad(8, " This is 255 characters long.   ").substr(1),
-    "This is the 20th Test because I wanted a nice number."
-]
+#Compare Lattice lib.
+import ../../../DatabaseTests/LatticeTests/CompareLattice
 
-#Test 20 serializations.
-for i in 1 .. 20:
-    echo "Testing Data Serialization/Parsing, iteration " & $i & "."
+#Random standard lib.
+import random
 
-    var
-        #Wallet.
-        wallet: Wallet = newWallet()
-        #Data.
-        data: Data = newData(
-            tests[i - 1],
-            0
-        )
+#Seed random.
+randomize(getTime())
+
+var
+    #Data string.
+    dataStr: string
+    #Data Entry.
+    data: Data
+    #Reloaded Data Entry.
+    reloaded: Data
+
+#Test 256 serializations.
+for i in 0 .. 255:
+    #Create a data string.
+    dataStr = ""
+    for _ in 0 ..< i:
+        dataStr &= char(rand(255))
+
+    #Create the Data.
+    data = newData(
+        dataStr,
+        rand(high(int32))
+    )
 
     #Sign it.
-    wallet.sign(data)
+    newWallet().sign(data)
     #Mine the Data.
     data.mine("333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".toHash(384))
 
     #Serialize it and parse it back.
-    var dataParsed: Data = data.serialize().parseData()
+    reloaded = data.serialize().parseData()
 
     #Test the serialized versions.
-    assert(data.serialize() == dataParsed.serialize())
+    assert(data.serialize() == reloaded.serialize())
 
-    #Test the Entry properties.
-    assert(data.descendant == dataParsed.descendant)
-    assert(data.sender == dataParsed.sender)
-    assert(data.nonce == dataParsed.nonce)
-    assert(data.hash == dataParsed.hash)
-    assert(data.signature.toString() == dataParsed.signature.toString())
-    assert(data.verified == dataParsed.verified)
-
-    #Test the Data properties.
-    assert(data.data == dataParsed.data)
-    assert(data.proof == dataParsed.proof)
-    assert(data.argon == dataParsed.argon)
+    #Compare the Entries.
+    compare(data, reloaded)
 
 echo "Finished the Network/Serialize/Lattice/Data Test."

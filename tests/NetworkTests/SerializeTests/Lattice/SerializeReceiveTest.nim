@@ -1,4 +1,7 @@
-#Serialize Receive Tests.
+#Serialize Receive Test.
+
+#Util lib.
+import ../../../../src/lib/Util
 
 #Wallet lib.
 import ../../../../src/Wallet/Wallet
@@ -16,45 +19,42 @@ import ../../../../src/Database/Lattice/Receive
 import ../../../../src/Network/Serialize/Lattice/SerializeReceive
 import ../../../../src/Network/Serialize/Lattice/ParseReceive
 
-#Test 20 serializations.
-for i in 1 .. 20:
-    echo "Testing Receive Serialization/Parsing, iteration " & $i & "."
+#Compare Lattice lib.
+import ../../../DatabaseTests/LatticeTests/CompareLattice
 
-    var
-        #People.
-        sender: string = newWallet().address
-        receiver: Wallet = newWallet()
-        #Receive.
-        recv: Receive
+#Random standard lib.
+import random
 
+#Seed random.
+randomize(getTime())
+
+var
+    #Receive Entry.
+    recv: Receive
+    #Reloaded Receive Entry.
+    reloaded: Receive
+
+#Test 256 serializations.
+for _ in 0 .. 255:
     #Create the Receive.
     recv = newReceive(
         newLatticeIndex(
-            sender,
-            0,
+            newWallet().address,
+            rand(high(int32))
         ),
-        0
+        rand(high(int32))
     )
 
     #Sign it.
-    receiver.sign(recv)
+    newWallet().sign(recv)
 
     #Serialize it and parse it back.
-    var recvParsed: Receive = recv.serialize().parseReceive()
+    reloaded = recv.serialize().parseReceive()
 
     #Test the serialized versions.
-    assert(recv.serialize() == recvParsed.serialize())
+    assert(recv.serialize() == reloaded.serialize())
 
-    #Test the Entry properties.
-    assert(recv.descendant == recvParsed.descendant)
-    assert(recv.sender == recvParsed.sender)
-    assert(recv.nonce == recvParsed.nonce)
-    assert(recv.hash == recvParsed.hash)
-    assert(recv.signature.toString() == recvParsed.signature.toString())
-    assert(recv.verified == recvParsed.verified)
-
-    #Test the Receive properties.
-    assert(recv.input.address == recvParsed.input.address)
-    assert(recv.input.nonce == recvParsed.input.nonce)
+    #Compare the Entries.
+    compare(recv, reloaded)
 
 echo "Finished the Network/Serialize/Lattice/Receive Test."
