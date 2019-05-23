@@ -176,7 +176,7 @@ proc test(blocks: int) =
             ))
 
         #Create the Block. We don't need to pass an aggregate signature because the blockchain doesn't test for that; MainMerit does.
-        mining = newTestBlock(
+        mining = newBlankBlock(
             nonce = i,
             last = blockchain.tip.header.hash,
             records = records[^1],

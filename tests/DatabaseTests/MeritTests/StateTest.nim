@@ -102,7 +102,7 @@ for i in 1 .. 10:
         balances[key.toString()] += amount
 
     #Create the Block.
-    mining = newTestBlock(
+    mining = newBlankBlock(
         nonce = i,
         last = blockchain.tip.header.hash,
         miners = miners[^1]

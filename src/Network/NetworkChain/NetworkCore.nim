@@ -341,6 +341,8 @@ proc newNetwork*(
                 var claim: Claim
                 try:
                     claim = msg.message.parseClaim()
+                except ValueError as e:
+                    raise newException(InvalidMessageError, "Claim contained an invalid Signature: " & e.msg)
                 except BLSError as e:
                     raise newException(InvalidMessageError, "Claim contained an invalid BLS Public Key: " & e.msg)
                 except EdPublicKeyError as e:
@@ -367,6 +369,8 @@ proc newNetwork*(
                 var send: Send
                 try:
                     send = msg.message.parseSend()
+                except ValueError as e:
+                    raise newException(InvalidMessageError, "Send contained an invalid Signature: " & e.msg)
                 except ArgonError as e:
                     raise newException(InvalidMessageError, "Parsing the Send caused an ArgonError: " & e.msg)
                 except EdPublicKeyError as e:
@@ -391,6 +395,8 @@ proc newNetwork*(
                 var recv: Receive
                 try:
                     recv = msg.message.parseReceive()
+                except ValueError as e:
+                    raise newException(InvalidMessageError, "Receive contained an invalid Signature: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Receive contained an invalid ED25519 Public Key: " & e.msg)
 

@@ -62,10 +62,10 @@ Network:
 - Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Lattice and Consensus DAGs).
 
 ### Tests:
-Cleanup
-    Database/Consensus
-    Database/Merit:
-    Network/Merit
+Cleanup:
+
+- Database/Consensus Cleanup.
+- Database/Merit Cleanup.
 
 objects:
 
@@ -117,7 +117,10 @@ Network:
 Network/Serialize/Lattice:
 
 - Network/Serialize/Lattice/SerializeEntry Test.
-- Network/Serialize/Lattice/ParseEntry Test.
+
+Network/Serialize/Merit:
+
+- Investgate why the Network/Serialize/Merit/SerializeBlockHeader Test takes so long compared to the SerializeBlockBody test.
 
 UI/RPC:
 

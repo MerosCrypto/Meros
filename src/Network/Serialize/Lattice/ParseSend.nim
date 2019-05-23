@@ -21,6 +21,7 @@ import ../SerializeCommon
 proc parseSend*(
     sendStr: string
 ): Send {.forceCheck: [
+    ValueError,
     ArgonError,
     EdPublicKeyError
 ].} =
@@ -59,9 +60,11 @@ proc parseSend*(
         #Set the signature.
         result.signature = newEdSignature(sendSeq[4])
         result.signed = true
-    except EdPublicKeyError as e:
+    except ValueError as e:
         fcRaise e
     except ArgonError as e:
+        fcRaise e
+    except EdPublicKeyError as e:
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Mint: " & e.msg)

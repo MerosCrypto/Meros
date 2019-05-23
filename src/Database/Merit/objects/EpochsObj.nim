@@ -106,11 +106,9 @@ func add*(
     hash: string,
     holder: BLSPublicKey
 ) {.forceCheck: [].} =
-    #Create the seq.
-    try:
+    #Create the seq, if one doesn't already exist.
+    if not epoch.hashes.hasKey(hash):
         epoch.hashes[hash] = @[]
-    except KeyError as e:
-        doAssert(false, "Couldn't add a seq to an Epoch: " & e.msg)
 
     #Add the key.
     try:

@@ -75,6 +75,8 @@ proc parseData*(
         #Set the signature.
         result.signature = newEdSignature(sigProof[0])
         result.signed = true
+    except ValueError as e:
+        fcRaise e
     except ArgonError as e:
         fcRaise e
     except FinalAttributeError as e:

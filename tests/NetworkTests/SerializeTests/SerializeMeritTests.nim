@@ -1,4 +1,4 @@
-#Test for all the Merit Serialize/Parse functions.
+#Test all the Merit Serialize/Parse functions.
 
 #Merit Serialize.
 import Merit/SerializeDifficultyTest

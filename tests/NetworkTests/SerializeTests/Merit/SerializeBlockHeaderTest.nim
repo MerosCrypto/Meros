@@ -1,4 +1,4 @@
-#Serialize Block Header Test.
+#Serialize BlockHeader Test.
 
 #Util lib.
 import ../../../../src/lib/Util
@@ -9,72 +9,56 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Consensus lib.
-import ../../../../src/Database/Consensus/Consensus
-
-#BlockHeader object.
-import ../../../../src/Database/Merit/objects/BlockHeaderObj
+#BlockHeader lib.
+import ../../../../src/Database/Merit/BlockHeader
 
 #Serialize lib.
 import ../../../../src/Network/Serialize/Merit/SerializeBlockHeader
 import ../../../../src/Network/Serialize/Merit/ParseBlockHeader
 
+#Compare Merit lib.
+import ../../../DatabaseTests/MeritTests/CompareMerit
+
 #Random standard lib.
 import random
 
-#Seed Random via the time.
-randomize(int(getTime()))
+#Seed random.
+randomize(getTime())
 
-#Test 20 serializations.
-for i in 1 .. 20:
-    echo "Testing BlockHeader Serialization/Parsing, iteration " & $i & "."
+var
+    #Last Block's Hash.
+    last: ArgonHash
+    #Miners Hash.
+    miners: Blake384Hash
+    #Block Header.
+    header: BlockHeader
+    #Reloaded Block Header.
+    reloaded: BlockHeader
 
-    var
-        #Header.
-        header: BlockHeader = BlockHeader()
-        #Nonce.
-        nonce: uint = uint(rand(65000))
-        #Last Block's Hash.
-        last: ArgonHash
-        #Miner Wallet.
-        miner: MinerWallet = newMinerWallet()
-        #Aggregate Signature of the Elements.
-        agg: BLSSignature
-        #Miners Hash.
-        miners: Blake384Hash
-        #Time.
-        time: int64 = getTime()
-        #Proof.
-        proof: int = rand(500000)
-
-    #Randomze the hashes.
+#Test 255 serializations.
+for _ in 0 .. 255:
+    #Randomize the hashes.
     for b in 0 ..< 48:
         last.data[b] = uint8(rand(255))
         miners.data[b] = uint8(rand(255))
 
-    #Create a Random BLS signature.
-    agg = miner.sign(last.toString())
-
-    #Create the Header.
-    header.nonce = uint(nonce)
-    header.last = last
-    header.aggregate = agg
-    header.miners = miners
-    header.time = time
-    header.proof = proof
+    #Create the BlockHeaader.
+    header = newBlockHeader(
+        rand(high(int32)),
+        last,
+        newMinerWallet().sign(rand(high(int32)).toBinary()),
+        miners,
+        rand(high(int32)),
+        rand(high(int32))
+    )
 
     #Serialize it and parse it back.
-    var headerParsed: BlockHeader = header.serialize().parseBlockHeader()
+    reloaded = header.serialize().parseBlockHeader()
 
     #Test the serialized versions.
-    assert(header.serialize() == headerParsed.serialize())
+    assert(header.serialize() == reloaded.serialize())
 
-    #Test each field.
-    assert(header.nonce == headerParsed.nonce)
-    assert(header.last == headerParsed.last)
-    assert(header.aggregate == headerParsed.aggregate)
-    assert(header.miners == headerParsed.miners)
-    assert(header.time == headerParsed.time)
-    assert(header.proof == headerParsed.proof)
+    #Compare the BlockHeaders.
+    compare(header, reloaded)
 
 echo "Finished the Network/Serialize/Merit/BlockHeader Test."

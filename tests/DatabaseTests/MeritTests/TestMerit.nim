@@ -15,16 +15,12 @@ import ../../../src/Database/common/objects/MeritHolderRecordObj
 #Merit lib.
 import ../../../src/Database/Merit/Merit
 
-#Serialize libs.
-import ../../../src/Network/Serialize/Merit/SerializeDifficulty
-import ../../../src/Network/Serialize/Merit/SerializeBlock
-
 #Test Database lib.
 import ../TestDatabase
 export TestDatabase
 
-#Creates a Block, with every setting optional.
-proc newTestBlock*(
+#Create a Block, with every setting optional.
+proc newBlankBlock*(
     nonce: Natural = 0,
     last: ArgonHash = "".pad(48).toArgonHash(),
     aggregate: BLSSignature = nil,

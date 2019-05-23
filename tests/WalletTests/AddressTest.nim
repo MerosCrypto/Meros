@@ -7,8 +7,6 @@ import ../../src/Wallet/Wallet
 #Wallet.
 var wallet: Wallet
 
-echo "Testing Address creation and verification."
-
 #Run 100 times.
 for i in 1 .. 100:
     #Create a new wallet.

@@ -24,6 +24,7 @@ import ../SerializeCommon
 proc parseClaim*(
     claimStr: string
 ): Claim {.forceCheck: [
+    ValueError,
     BLSError,
     EdPublicKeyError
 ].} =
@@ -60,5 +61,7 @@ proc parseClaim*(
         #Set the signature.
         result.signature = newEdSignature(claimSeq[4])
         result.signed = true
+    except ValueError as e:
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Claim: " & e.msg)

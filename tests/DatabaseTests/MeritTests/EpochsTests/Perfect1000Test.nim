@@ -56,7 +56,7 @@ var
 #Give both Keys Merit.
 state.processBlock(
     blockchain,
-    newTestBlock(
+    newBlankBlock(
         miners = newMinersObj(@[
             newMinerObj(
                 miners[0].publicKey,
@@ -67,7 +67,7 @@ state.processBlock(
 )
 state.processBlock(
     blockchain,
-    newTestBlock(
+    newBlankBlock(
         miners = newMinersObj(@[
             newMinerObj(
                 miners[1].publicKey,
@@ -78,7 +78,7 @@ state.processBlock(
 )
 state.processBlock(
     blockchain,
-    newTestBlock(
+    newBlankBlock(
         miners = newMinersObj(@[
             newMinerObj(
                 miners[2].publicKey,

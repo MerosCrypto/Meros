@@ -22,8 +22,6 @@ var
     wSig: BLSSignature
     rSig: BLSSignature
 
-echo "Testing MinerWallet functionality."
-
 #Run 100 times.
 for _ in 1 .. 100:
     #Create a new wallet.

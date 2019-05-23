@@ -70,7 +70,7 @@ proc test*(blocks: int) =
         )
 
         #Create the Block.
-        mining = newTestBlock(
+        mining = newBlankBlock(
             i,
             blockchain.tip.header.hash
         )

@@ -23,8 +23,6 @@ var
     wSig: EdSignature
     rSig: EdSignature
 
-echo "Testing Wallet functionality."
-
 #Run 100 times.
 for _ in 1 .. 100:
     #Create a new wallet.

@@ -12,7 +12,7 @@ import ../../../../src/Wallet/MinerWallet
 #MeritHolderRecord object.
 import ../../../../src/Database/common/objects/MeritHolderRecordObj
 
-#Miners and BlockBody object.
+#Miners and BlockBody objects.
 import ../../../../src/Database/Merit/objects/MinersObj
 import ../../../../src/Database/Merit/objects/BlockBodyObj
 
@@ -20,56 +20,50 @@ import ../../../../src/Database/Merit/objects/BlockBodyObj
 import ../../../../src/Network/Serialize/Merit/SerializeBlockBody
 import ../../../../src/Network/Serialize/Merit/ParseBlockBody
 
+#Compare Merit lib.
+import ../../../DatabaseTests/MeritTests/CompareMerit
+
 #Random standard lib.
 import random
-
-#Algorithm standard lib; used to randomize the Records/Miners order.
-import algorithm
 
 #Seed Random via the time.
 randomize(getTime())
 
-for i in 1 .. 20:
-    echo "Testing BlockBody Serialization/Parsing, iteration " & $i & "."
+var
+    #Hash.
+    hash: Hash[384]
+    #Records.
+    records: seq[MeritHolderRecord]
+    #Miners.
+    miners: seq[Miner]
+    #Remaining amount of Merit.
+    remaining: int = 100
+    #Amount to pay this miner.
+    amount: int
+    #Block Body.
+    body: BlockBody
+    #Reloaded Block Body.
+    reloaded: BlockBody
 
-    var
-        #BlockBody.
-        body: BlockBody
-        #MinerWallet used to create random BLSSignatures.
-        miner: MinerWallet = newMinerWallet()
-        #Records.
-        records: seq[MeritHolderRecord] = newSeq[MeritHolderRecord](rand(256))
-        #Temporary key/merkle strings for creating MeritHolderRecordes.
-        rKey: string
-        rMerkle: string
-        #Miners.
-        miners: seq[Miner] = newSeq[Miner](rand(99) + 1)
-        #Remaining Merit in the Block.
-        remaining: int = 100
-        #Amount of Merit to give each Miner.
-        amount: int
+#Test 255 serializations.
+for s in 0 .. 255:
+    #Randomize the records.
+    records = @[]
+    for _ in 0 ..< s:
+        for b in 0 ..< 48:
+            hash.data[b] = uint8(rand(255))
 
-    #Randomize the Records.
-    for r in 0 ..< records.len:
-        #Reset the key and merkle.
-        rKey = newString(48)
-        rMerkle = newString(48)
-
-        #Randomize the key.
-        for b in 0 ..< rKey.len:
-            rKey[b] = char(rand(255))
-
-        #Randomize the merkle.
-        for b in 0 ..< rMerkle.len:
-            rMerkle[b] = char(rand(255))
-
-        records[r] = newMeritHolderRecord(
-            newBLSPrivateKeyFromSeed(rKey).getPublicKey(),
-            rand(100000),
-            rMerkle.toHash(384)
+        records.add(
+            newMeritHolderRecord(
+                newMinerWallet().publicKey,
+                rand(high(int32)),
+                hash
+            )
         )
 
-    #Fill up the Miners.
+    #Randomize the miners.
+    miners = newSeq[Miner](rand(99) + 1)
+    remaining = 100
     for m in 0 ..< miners.len:
         #Set the amount to pay the miner.
         amount = rand(remaining - 1) + 1
@@ -83,17 +77,11 @@ for i in 1 .. 20:
         #Set the Miner.
         miners[m] = newMinerObj(
             newMinerWallet().publicKey,
-            uint(amount)
+            amount
         )
 
         #Subtract the amount from remaining.
         remaining -= amount
-
-    #Randomly order the miners.
-    miners.sort(
-        proc (x: Miner, y: Miner): int =
-            rand(1000)
-    )
 
     #Create the BlockBody.
     body = newBlockBodyObj(
@@ -102,22 +90,12 @@ for i in 1 .. 20:
     )
 
     #Serialize it and parse it back.
-    var bodyParsed: BlockBody = body.serialize().parseBlockBody()
+    reloaded = body.serialize().parseBlockBody()
 
     #Test the serialized versions.
-    assert(body.serialize() == bodyParsed.serialize())
+    assert(body.serialize() == reloaded.serialize())
 
-    #Test the Records.
-    assert(body.records.len == bodyParsed.records.len)
-    for r in 0 ..< body.records.len:
-        assert(body.records[r].key == bodyParsed.records[r].key)
-        assert(body.records[r].nonce == bodyParsed.records[r].nonce)
-        assert(body.records[r].merkle == bodyParsed.records[r].merkle)
-
-    #Test the Miners.
-    assert(body.miners.miners.len == bodyParsed.miners.miners.len)
-    for m in 0 ..< body.miners.miners.len:
-        assert(body.miners.miners[m].miner == bodyParsed.miners.miners[m].miner)
-        assert(body.miners.miners[m].amount == bodyParsed.miners.miners[m].amount)
+    #Compare the BlockBodies.
+    compare(body, reloaded)
 
 echo "Finished the Network/Serialize/Merit/BlockBody Test."

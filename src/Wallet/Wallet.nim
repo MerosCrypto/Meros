@@ -74,8 +74,20 @@ func newEdPublicKey*(
 #Create a new Signature from a string.
 func newEdSignature*(
     sigArg: string
-): EdSignature {.forceCheck: [].} =
-    var sig: string = sigArg
+): EdSignature {.forceCheck: [
+    ValueError
+].} =
+    var sig: string
+    if sigArg.len == 64:
+        sig = sigArg
+    elif sigArg.len == 128:
+        try:
+            sig = sigArg.parseHexStr()
+        except ValueError:
+            raise newException(ValueError, "Hex-length Signature with invalid Hex data passed to newEdSignature.")
+    else:
+        raise newException(ValueError, "Invalid length Signature passed to new EdSignature.")
+
     copyMem(addr result.data[0], addr sig[0], 64)
 
 #Stringify a Seed/PublicKey/Signature.

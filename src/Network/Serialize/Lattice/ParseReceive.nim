@@ -24,6 +24,7 @@ import ../SerializeCommon
 proc parseReceive*(
     recvStr: string
 ): Receive {.forceCheck: [
+    ValueError,
     EdPublicKeyError
 ].} =
     #Public Key | Nonce | Input Key | Input Nonce | Signature
@@ -52,7 +53,7 @@ proc parseReceive*(
             result.sender = newAddress(recvSeq[0])
         except EdPublicKeyError as e:
             fcRaise e
-        
+
         #Set the nonce.
         result.nonce = recvSeq[1].fromBinary()
 
@@ -61,5 +62,7 @@ proc parseReceive*(
         #Set the signature.
         result.signature = newEdSignature(recvSeq[4])
         result.signed = true
+    except ValueError as e:
+        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Receive: " & e.msg)

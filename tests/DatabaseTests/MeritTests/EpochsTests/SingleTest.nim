@@ -55,7 +55,7 @@ var
 #Give Key 0 Merit.
 state.processBlock(
     blockchain,
-    newTestBlock(
+    newBlankBlock(
         miners = newMinersObj(@[
             newMinerObj(
                 miner.publicKey,
