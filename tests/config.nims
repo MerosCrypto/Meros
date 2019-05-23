@@ -3,7 +3,6 @@ setCommand("cpp")
 
 #Necessary flags.
 switch("threads", "on")
-switch("assertions", "on")
 switch("define", "ADDRESS_HRP=Mr")
 switch("define", "SIGN_PREFIX=MEROS")
 switch("define", "DEFAULT_PORT=5132")
@@ -21,6 +20,9 @@ switch("lineTrace", "on")
 #Disable checks.
 #We previously had checks enabled. This creates inconsistent release/debug conditions.
 switch("checks", "off")
+
+#Re-enable assertions.
+switch("assertions", "on")
 
 #Enable hints.
 switch("hints", "on")

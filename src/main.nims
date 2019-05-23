@@ -17,10 +17,9 @@ switch("define", "release")
 switch("stackTrace", "on")
 switch("lineTrace", "on")
 
-#Disable assertions and checks.
+#Disable checks (which also disables assertions).
 #On branches that should never be executed, we use doAssert which is independent of this flag.
 #We previously had checks enabled. This creates inconsistent release/debug conditions.
-switch("assertions", "off")
 switch("checks", "off")
 
 #Enable hints.
