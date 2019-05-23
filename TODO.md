@@ -81,8 +81,6 @@ lib:
 Wallet:
 
 - Wallet/Ed25519 Test.
-- Wallet/MinerWallet Test.
-- Wallet/Wallet Test.
 
 Database/Consensus:
 

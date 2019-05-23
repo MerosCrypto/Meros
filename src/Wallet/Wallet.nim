@@ -73,8 +73,9 @@ func newEdPublicKey*(
 
 #Create a new Signature from a string.
 func newEdSignature*(
-    sig: var string
+    sigArg: string
 ): EdSignature {.forceCheck: [].} =
+    var sig: string = sigArg
     copyMem(addr result.data[0], addr sig[0], 64)
 
 #Stringify a Seed/PublicKey/Signature.
@@ -142,7 +143,7 @@ func newWallet*(
         fcRaise e
 
     #Verify the integrity via the Address.
-    if address.isValid(result.publicKey):
+    if not Address.isValid(address, result.publicKey):
         raise newException(AddressError, "Invalid Address for this Wallet.")
 
 #Sign a message via a Wallet.

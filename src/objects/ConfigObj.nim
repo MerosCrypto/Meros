@@ -129,9 +129,7 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
         try:
             result.miner = newMinerWallet(
-                newBLSPrivateKeyFromBytes(
-                    json.get("miner", JString).getStr()
-                )
+                json.get("miner", JString).getStr()
             )
         except ValueError as e:
             doAssert(false, e.msg)
@@ -161,11 +159,9 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
                     of "--miner":
                         try:
-                            result.miner = newMinerWallet(
-                                newBLSPrivateKeyFromBytes(
-                                    paramStr(i + 1)
-                                )
-                            )
+                            result.miner = newMinerWallet(paramStr(i + 1))
+                        except ValueError as e:
+                            doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
                         except BLSError as e:
                             doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
         except ValueError as e:
