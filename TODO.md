@@ -118,10 +118,6 @@ Network/Serialize/Lattice:
 
 - Network/Serialize/Lattice/SerializeEntry Test.
 
-Network/Serialize/Merit:
-
-- Investgate why the Network/Serialize/Merit/SerializeBlockHeader Test takes so long compared to the SerializeBlockBody test.
-
 UI/RPC:
 
 - UI/RPC/RPC Test.
