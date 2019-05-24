@@ -30,7 +30,7 @@ switch("parallelBuild", "0")
 
 #Specify where to output built objects.
 switch("nimcache", "build/nimcache")
-switch("out", "build/Meros")
+switch("out", "build/Sample")
 
 when defined(merosRelease):
     #Disable finals.
