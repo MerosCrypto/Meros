@@ -56,7 +56,7 @@ Once a Claim has been verified, the Mint's amount is added to the sender's Accou
 
 Send Entries have the following fields:
 
-- output: The Ed25519 Public Key to allow to receive these funds.
+- output: The Ed25519 Public Key to allow to receive these funds. This doesn't need to be a valid Public Key.
 - amount The amount of Meri to send.
 - proof: Work that proves this isn't spam.
 

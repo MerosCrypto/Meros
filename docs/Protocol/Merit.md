@@ -48,10 +48,10 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 48 bytes.
 - Zeroed out aggregate signature.
 - Zeroed out miners merkle hash.
--  time of 0.
--  proof of 0.
--  Empty list of records.
--  Empty list of miners.
+- time of 0.
+- proof of 0.
+- Empty list of records.
+- Empty list of miners.
 
 ### Checkpoint Data Type
 
