@@ -46,7 +46,7 @@ proc parseClaim*(
     try:
         #Set the sender.
         try:
-            result.sender = newAddress(newEdPublicKey(claimSeq[0]))
+            result.sender = newAddress(claimSeq[0])
         except EdPublicKeyError as e:
             fcRaise e
 

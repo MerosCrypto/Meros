@@ -30,7 +30,7 @@ proc parseData*(
 
     var
         #Public Key | Nonce | Data Len | Data | Proof | Signature
-        keyNonce: seq[string] = dataStr.deserialize(
+        senderNonce: seq[string] = dataStr.deserialize(
             PUBLIC_KEY_LEN,
             INT_LEN
         )
@@ -58,15 +58,15 @@ proc parseData*(
     try:
         #Set the sender.
         try:
-            result.sender = newAddress(newEdPublicKey(keyNonce[0]))
+            result.sender = newAddress(senderNonce[0])
         except EdPublicKeyError as e:
             fcRaise e
 
         #Set the nonce.
-        result.nonce = keyNonce[1].fromBinary()
+        result.nonce = senderNonce[1].fromBinary()
 
         #Set the hash.
-        result.hash = Blake384("data" & keyNonce[0] & keyNonce[1] & char(result.data.len) & data)
+        result.hash = Blake384("data" & senderNonce[0] & senderNonce[1] & char(result.data.len) & data)
         #Set the proof.
         result.proof = sigProof[1].fromBinary()
 

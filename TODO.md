@@ -64,7 +64,6 @@ Network:
 ### Tests:
 Cleanup:
 
-- Database/Consensus Cleanup.
 - Database/Merit Cleanup.
 
 objects:
@@ -73,13 +72,16 @@ objects:
 
 lib:
 
-- lib/Hash/Argon Test.
 - lib/Hash/Blake2 Test.
+- lib/Hash/Argon Test.
+- lib/Hash/RandomX Test.
+
 - lib/Hash/SHA2 (384) Test.
 - lib/Hash/Keccak (384) Test.
 - lib/Hash/SHA3 (384) Test.
+
 - lib/Hash/HashCommon Test.
-- Fuzzy lib/Util Test.
+
 - lib/Logger Test.
 
 Wallet:
@@ -88,7 +90,7 @@ Wallet:
 
 Database/Consensus:
 
-- Database/Consensus/Verifier Test.
+- Database/Consensus/MeritHolder Test.
 - Database/Consensus/Verification Test.
 
 Database/Merit:
@@ -147,7 +149,7 @@ UI/RPC:
 
 ### Improvements:
 
-- Swap Chia for Herumi.
+- Swap Chia for Milagro.
 
 - Cache the Lattice's UXTO set.
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
