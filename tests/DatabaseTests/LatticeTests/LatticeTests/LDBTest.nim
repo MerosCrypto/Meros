@@ -98,9 +98,9 @@ var
     #Pending Sends.
     sends: seq[Send] = @[]
 
-#Tests the Lattice against the reloaded Lattice.
+#Test the Lattice against the reloaded Lattice.
 proc test() =
-    echo "Reloading and testing the Lattice..."
+    #Reload the Lattice.
     var reloaded: Lattice = newLattice(
         db,
         consensus,
@@ -109,10 +109,8 @@ proc test() =
         $lattice.difficulties.data
     )
 
-    compare(
-        lattice,
-        reloaded
-    )
+    #Compare the Lattices.
+    compare(lattice, reloaded)
 
 #Adds a Block, containing the passed records.
 proc addBlock() =
@@ -230,9 +228,9 @@ for i in 0 ..< rand(2) + 1:
 addBlock()
 
 #Iterate over 20 'rounds'.
-for i in 0 ..< 20:
+for _ in 0 ..< 20:
     #Create a random amount of Accounts.
-    for i in 0 ..<  rand(2) + 1:
+    for _ in 0 ..<  rand(2) + 1:
         wallets.add(newWallet())
 
     #Iterate over each pending Send.
@@ -273,7 +271,7 @@ for i in 0 ..< 20:
             account: Account = lattice[wallets[sender].address]
 
         #Create a Send.
-        if rand(2) == 0:
+        if rand(1) == 0:
             #Decide how much to Send.
             var amount: uint64 = uint64(rand(10000))
 

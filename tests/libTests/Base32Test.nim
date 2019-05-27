@@ -12,10 +12,16 @@ import random
 #Seed random.
 randomize(getTime())
 
-#Verify isBase32.
-assert("qpzry9x8gf2tvdw0s3jn54khce6mua7l".isBase32(), "Base 32 rejected valid input.")
-assert(not "0ob".isBase32(), "Base 32 accepted invalid input.")
-assert(not "@&*(])".isBase32(), "Base 32 accepted invalid input.")
+#Test isBase32.
+var base32: string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+for c in 0 .. 255:
+    for b in base32:
+        if char(c) == b:
+            assert(($char(c)).isBase32())
+            break
+
+        if b == base32[^1]:
+            assert(not ($char(c)).isBase32())
 
 for i in 0 .. 255:
     #Seq of random bytes.
@@ -23,21 +29,20 @@ for i in 0 .. 255:
     for b in 0 ..< byteSeq.len:
         byteSeq[b] = uint8(rand(255))
 
-    #Base32 object.
-    var base32: Base32 = byteSeq.toBase32()
-
     var
+        #Base32 object.
+        base32: Base32 = byteSeq.toBase32()
+        #Reverted Base32 seq.
+        base32Seq: seq[uint8] = base32.toSeq()
         #Base 32 string.
         base32String: string = $base32
-        #Array -> Base32 -> Seq
-        base32Seq: seq[uint8] = base32.toSeq()
 
     #Verify the seq.
-    assert(byteSeq.len == base32Seq.len, "Base 32 seq's length didn't match the array's length.")
+    assert(byteSeq.len == base32Seq.len)
     for b in 0 ..< byteSeq.len:
-        assert(byteSeq[b] == base32Seq[b], "Base 32 seq didn't match the array.")
+        assert(byteSeq[b] == base32Seq[b])
 
-    #Verify parsing strings works.
-    assert(base32String == $base32String.toBase32(), "Base 32's parsed data doesn't match the data input.")
+    #Verify parsing/reserializing the string.
+    assert(base32String == $base32String.toBase32())
 
 echo "Finished the lib/Base32 Test."

@@ -12,27 +12,27 @@ import ../../../src/Database/common/Merkle
 #Random standard lib.
 import random
 
-#Seed Random via the time.
+#Seed Random.
 randomize(getTime())
 
 #Test nil Merle trees.
+assert(newMerkle().isLeaf)
 assert(newMerkle().hash == "".pad(48).toHash(384))
 
 #Test leaves.
 assert(newMerkle("1".pad(48).toHash(384)).hash == "1".pad(48).toHash(384))
 
 #Test that a blank Merkle tree with an added leaf is the same as a tree created with said leaf.
-assert(newMerkle().isLeaf)
-assert(newMerkle("".pad(48).toHash(384)).isLeaf)
-var one: Merkle = newMerkle()
-one.add("".pad(48).toHash(384))
-assert(one.isLeaf)
-assert(one.hash == newMerkle("".pad(48).toHash(384)).hash)
+var
+    created: Merkle = newMerkle("".pad(48).toHash(384))
+    added: Merkle = newMerkle()
+added.add("".pad(48).toHash(384))
+assert(created.isLeaf)
+assert(added.isLeaf)
+assert(added.hash == created.hash)
 
-#Test 20 trees.
-for i in 1 .. 20:
-    echo "Testing Merkle Trees, iteration " & $i & "."
-
+#Test 255 trees.
+for i in 0 .. 255:
     #Create a random amount of hashes.
     var
         hashLen: int = rand(900) + 100

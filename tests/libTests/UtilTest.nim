@@ -1,25 +1,54 @@
 #Util lib.
 import ../../src/lib/Util
 
-#Various number types.
-var
-    i8: int8 = int8(73)
-    u8: uint8 = uint8(156)
-    i16: int16 = int16(16920)
-    u16: uint16 = uint16(45198)
-    i32: int32 = int32(98194)
-    u32: uint32 = uint32(3631343488)
+#Random standard lib.
+import random
 
-#Test the conversions work.
-assert(i8 == int8(i8.toBinary().fromBinary()))
-assert(u8 == uint8(u8.toBinary().fromBinary()))
-assert(i16 == int16(i16.toBinary().fromBinary()))
-assert(u16 == uint16(u16.toBinary().fromBinary()))
-assert(i32 == int32(i32.toBinary().fromBinary()))
-assert(u32 == uint32(u32.toBinary().fromBinary()))
+#Seed random.
+randomize(getTime())
 
-#Make sure that leading 0 bytes are ignored.
+#Get the maximum value for each bit size.
+const
+    MAXI8: int = high(int8)
+    MAXU8: int = int(not uint8(0))
+    MAXI16: int = high(int16)
+    MAXU16: int = int(not uint16(0))
+    MAXI32: int = high(int32)
+    MAXU32: int = int(not uint32(0))
+
+#Make sure leading 0 bytes are ignored.
 assert(0.toBinary() == "")
+assert("\0\0\0\0".fromBinary() == 0)
+
+#Test int8 serialization/parsing,
+for _ in 0 .. 255:
+    var i8: int8 = int8(rand(MAXI8))
+    assert(i8 == int8(i8.toBinary().fromBinary()))
+
+#Test uint8 serialization/parsing,
+for _ in 0 .. 255:
+    var u8: uint8 = uint8(rand(MAXU8))
+    assert(u8 == uint8(u8.toBinary().fromBinary()))
+
+#Test int16 serialization/parsing,
+for _ in 0 .. 255:
+    var i16: int16 = int16(rand(MAXI16))
+    assert(i16 == int16(i16.toBinary().fromBinary()))
+
+#Test uint16 serialization/parsing,
+for _ in 0 .. 255:
+    var u16: uint16 = uint16(rand(MAXU16))
+    assert(u16 == uint16(u16.toBinary().fromBinary()))
+
+#Test int32 serialization/parsing,
+for _ in 0 .. 255:
+    var i32: int32 = int32(rand(MAXI32))
+    assert(i32 == int32(i32.toBinary().fromBinary()))
+
+#Test uint32 serialization/parsing,
+for _ in 0 .. 255:
+    var u32: uint32 = uint32(rand(MAXU32))
+    assert(u32 == uint32(u32.toBinary().fromBinary()))
 
 #Test an extremely high number (21 million Meros).
 var u64: uint64 = uint64(210000000000000000)
