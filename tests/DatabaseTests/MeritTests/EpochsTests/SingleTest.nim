@@ -1,6 +1,4 @@
-discard """
-Epochs Single Test. Verifies that 1 Verification = 1000.
-"""
+#Epochs Single Test. Verifies that 1 Verification = 1000.
 
 #Util lib.
 import ../../../../src/lib/Util

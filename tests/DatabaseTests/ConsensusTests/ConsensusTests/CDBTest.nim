@@ -1,4 +1,4 @@
-#Consensus Test.
+#Consensus DB Test.
 
 #Errors lib.
 import ../../../../src/lib/Errors

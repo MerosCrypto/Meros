@@ -30,7 +30,8 @@ proc newState*(
 proc processBlock*(
     state: var State,
     blockchain: Blockchain,
-    newBlock: Block
+    newBlock: Block,
+    save: bool = true
 ) {.forceCheck: [].} =
     #Grab the miners.
     var miners: seq[Miner] = newBlock.miners.miners
@@ -40,10 +41,10 @@ proc processBlock*(
         state[miner.miner] = state[miner.miner] + miner.amount
 
     #If the Blockchain's height is over the dead blocks quantity, meaning there is a block to remove from the state...
-    if (newBlock.header.nonce + 1) > state.deadBlocks:
+    if (newBlock.nonce + 1) > state.deadBlocks:
         #For each miner, remove their Merit from the State.
         try:
-            for miner in blockchain[newBlock.header.nonce - state.deadBlocks].miners.miners:
+            for miner in blockchain[newBlock.nonce - state.deadBlocks].miners.miners:
                 state[miner.miner] = state[miner.miner] - miner.amount
         except IndexError as e:
             doAssert(false, "State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
@@ -52,7 +53,8 @@ proc processBlock*(
     inc(state.processedBlocks)
 
     #Save the State to the DB.
-    state.save()
+    if save:
+        state.save()
 
 #Revert to a certain block height.
 proc revert*(
@@ -94,6 +96,6 @@ proc catchup*(
 
     for i in state.processedBlocks ..< blockchain.height:
         try:
-            state.processBlock(blockchain, blockchain[i])
+            state.processBlock(blockchain, blockchain[i], false)
         except IndexError as e:
             doAssert(false, "Tried to catch up to a Blockchain yet failed to get a Block: " & e.msg)

@@ -1,6 +1,4 @@
-discard """
-Epochs Perfect 1000 Test. Verifies that 3 Verifications still result in a total of 1000.
-"""
+#Epochs Perfect 1000 Test. Verifies that 3 Verifications still result in a total of 1000.
 
 #Util lib.
 import ../../../../src/lib/Util

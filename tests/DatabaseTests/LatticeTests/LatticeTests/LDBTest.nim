@@ -1,4 +1,4 @@
-#Lattice Test.
+#Lattice DB Test.
 
 #Util lib.
 import ../../../../src/lib/Util

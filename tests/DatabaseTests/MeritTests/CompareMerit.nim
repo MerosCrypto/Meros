@@ -87,10 +87,29 @@ proc compare*(
 
 #Compare two States to make sure they have the same value.
 proc compare*(
-    bb1: State,
-    bb2: State
+    s1: var State,
+    s2: var State
 ) =
-    discard
+    assert(s1.deadBlocks == s2.deadBlocks)
+    assert(s1.live == s2.live)
+    assert(s1.processedBlocks == s2.processedBlocks)
+
+    var
+        s1Holders: seq[string] = @[]
+        s2Holders: seq[string] = @[]
+    for k in s1.holders():
+        if s1[k] == 0:
+            continue
+        s1Holders.add(k)
+    for k in s2.holders():
+        if s2[k] == 0:
+            continue
+        s2Holders.add(k)
+
+    assert(s1Holders.len == s2Holders.len)
+    for k in s1Holders:
+        assert(s2Holders.contains(k))
+        assert(s1[k] == s2[k])
 
 #Compare two Epochs to make sure they have the same value.
 proc compare*(

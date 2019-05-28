@@ -167,3 +167,10 @@ proc save*(
 
     except DBWriteError as e:
         doAssert(false, "Couldn't save the State to the DB: " & e.msg)
+
+#Iterator for every holder.
+iterator holders*(
+    state: State
+): string {.forceCheck: [].} =
+    for holder in state.holders.keys():
+        yield holder

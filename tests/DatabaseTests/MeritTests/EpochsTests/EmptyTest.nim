@@ -1,6 +1,4 @@
-discard """
-Epochs Empty Test. Verifies that No Verifications = No Rewards.
-"""
+#Epochs Empty Test. Verifies that No Verifications = No Rewards.
 
 #Util lib.
 import ../../../../src/lib/Util
