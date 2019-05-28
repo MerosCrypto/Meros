@@ -129,7 +129,7 @@ for holder in scores:
     scores[holder] = scores[holder] * 1000 / total
 ```
 
-If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference between 1000 and the sum of the scores. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then created for each Merit Holder, in order, with an amount of `score * multiplier`.
+If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference between 1000 and the sum of the scores. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then queued for each Merit Holder, in order, with an amount of `score * multiplier`. After 10 more Blocks, the mints are added to the Lattice.
 
 `BlockBody` has a variable message length; the 4-byte amount of records, the records (each with a 48-byte BLS Public Key, 4-byte nonce, and 48-byte Merkle tree hash), 1-byte amount of miners, and the miners (each with a 48-byte BLS Public Key and 1-byte amount).
 
@@ -164,4 +164,5 @@ BLSSignature aggregate = verifierSignatures.aggregate()
 - Meros doesn't support dead Merit.
 - Meros doesn't support chain reorganizations.
 - Meros doesn't handle reward-score tie breaks properly, rollover rewards, or use a negative sigmoid.
+- Merps doesn't wait 10 Blocks to create Mints.
 - Meros doesn't support the `Checkpoint` message type.
