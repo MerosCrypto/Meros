@@ -31,6 +31,12 @@ type Block* = object
     #Block Body.
     body*: BlockBody
 
+#Nonce getter.
+proc nonce*(
+    blockArg: Block
+): int {.inline, forceCheck: [].} =
+    blockArg.header.nonce
+
 #Hash getter.
 proc hash*(
     blockArg: Block

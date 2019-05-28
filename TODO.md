@@ -1,16 +1,15 @@
 # TODO
 
 ### Core:
-Wallet:
 
-- Mnemonic file to convert a Mnemonic to seed, and vice versa.
-- HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
-- OpenCAP support.
+Config:
+
+- Enable testnet connectivity via the config.
 
 Database:
 
 - Abstract the Database. Caching should still be handled by the Lattice/Consensus/Merit, but Database should have its own Serialize folder and supply `save(entry: Entry)` and so on.
-- If we actually create three separate database, instead of using `consensus`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
+- If we actually create three separate database, instead of using `consensus_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
@@ -24,6 +23,16 @@ Lattice:
 
 - The claimable table is currently no better than a seq. Either use it with the benefits of a Table and turn it into a seq.
 - Cache the UXTO set.
+
+Wallet:
+
+- Mnemonic file to convert a Mnemonic to seed, and vice versa.
+- HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
+- OpenCAP support.
+
+UI:
+
+- Passworded RPC.
 
 Network:
 

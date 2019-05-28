@@ -160,7 +160,7 @@ proc newBlockchainObj*(
             var loading: Block
             for h in countdown(headers.len - 1, 0):
                 loading = parseBlock(db.get("merit_" & headers[h].hash.toString()))
-                result.blocks[loading.header.nonce] = loading
+                result.blocks[loading.nonce] = loading
         else:
             #We store the headers in reverse order.
             for h in 0 ..< 10:

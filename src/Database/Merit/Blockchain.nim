@@ -151,7 +151,7 @@ proc processBlock*(
     blockchain.add(newBlock)
 
     #If the difficulty needs to be updated...
-    if newBlock.header.nonce == blockchain.difficulty.endBlock:
+    if newBlock.nonce == blockchain.difficulty.endBlock:
         try:
             blockchain.difficulty = blockchain.calculateNextDifficulty(blocksPerPeriod)
         except IndexError as e:
