@@ -12,9 +12,6 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Merkle lib.
-import ../../../../src/Database/common/Merkle
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
@@ -51,84 +48,66 @@ var
     ]
     #SignedVerification object.
     verif: SignedVerification
-    #MeritHolderRecords.
-    verifs: seq[MeritHolderRecord] = @[]
     #Rewards.
     rewards: seq[Reward]
 
-#Give both Keys Merit.
-state.processBlock(
-    blockchain,
-    newBlankBlock(
-        miners = newMinersObj(@[
-            newMinerObj(
-                miners[0].publicKey,
-                50
-            ),
-
-            newMinerObj(
-                miners[1].publicKey,
-                50
-            )
-        ])
+for miner in miners:
+    #Give the miner Merit.
+    state.processBlock(
+        blockchain,
+        newBlankBlock(
+            miners = newMinersObj(@[
+                newMinerObj(
+                    miner.publicKey,
+                    100
+                )
+            ])
+        )
     )
-)
 
-#Add a Key 0 Verification.
-verif = newSignedVerificationObj(hash)
-miners[0].sign(verif, 0)
-#Add it the Consensus.
-consensus.add(verif)
-#Add a MeritHolderRecord.
-verifs.add(newMeritHolderRecord(
-    miners[0].publicKey,
-    0,
-    newMerkle(hash).hash
-))
+    #Create and add the Verification.
+    verif = newSignedVerificationObj(hash)
+    miner.sign(verif, 0)
+    consensus.add(verif)
 
-#Shift on the Verifications.
-rewards = epochs.shift(consensus, verifs).calculate(state)
-assert(rewards.len == 0)
-
-#Clear the MeritHolderRecords.
-verifs = @[]
-
-#Add a Key 1 Verification.
-verif = newSignedVerificationObj(hash)
-miners[1].sign(verif, 0)
-#Add it the Consensus.
-consensus.add(verif)
-#Add a MeritHolderRecord.
-verifs.add(newMeritHolderRecord(
-    miners[1].publicKey,
-    0,
-    newMerkle(hash).hash
-))
-
-#Shift on the Verifications.
-rewards = epochs.shift(consensus, verifs).calculate(state)
-assert(rewards.len == 0)
+    #Shift on the record.
+    rewards = epochs.shift(
+        consensus,
+        @[
+            newMeritHolderRecord(
+                miner.publicKey,
+                0,
+                hash
+            )
+        ]
+    ).calculate(state)
+    assert(rewards.len == 0)
 
 #Shift 3 over.
 for _ in 0 ..< 3:
     rewards = epochs.shift(consensus, @[]).calculate(state)
     assert(rewards.len == 0)
 
-#Next shift should result in a Rewards of Key 0, 500 and Key 1, 500.
+#Next shift should result in a Rewards of key 0, 500 and key 1, 500.
 rewards = epochs.shift(consensus, @[]).calculate(state)
+
 #Veirfy the length.
 assert(rewards.len == 2)
-#Verify each Key in the Rewards was one of the two Keys.
-assert(
-    (rewards[0].key == miners[0].publicKey.toString()) or
-    (rewards[0].key == miners[1].publicKey.toString())
-)
-assert(
-    (rewards[1].key == miners[0].publicKey.toString()) or
-    (rewards[1].key == miners[1].publicKey.toString())
-)
-#Verify the keys weren't the same.
-assert(rewards[0].key != rewards[1].key)
+
+#Verify each key is unique and one of our keys.
+for r1 in 0 ..< rewards.len:
+    for r2 in 0 ..< rewards.len:
+        if r1 == r2:
+            continue
+        assert(rewards[r1].key != rewards[r2].key)
+
+    for m in 0 ..< miners.len:
+        if rewards[r1].key == miners[m].publicKey.toString():
+            break
+
+        if m == miners.len - 1:
+            assert(false)
+
 #Verify the scores.
 assert(rewards[0].score == 500)
 assert(rewards[1].score == 500)

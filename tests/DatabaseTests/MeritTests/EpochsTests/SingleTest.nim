@@ -6,9 +6,6 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Merkle lib.
-import ../../../../src/Database/common/Merkle
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
@@ -24,9 +21,6 @@ import ../../../../src/Database/Merit/Merit
 #Merit Testing functions.
 import ../TestMerit
 
-#String utils standard lib.
-import strutils
-
 var
     #Database Function Box.
     functions: DatabaseFunctionBox = newTestDatabase()
@@ -40,17 +34,15 @@ var
     epochs: Epochs = newEpochs(functions, consensus, blockchain)
 
     #Hash.
-    hash: Hash[384] = "aa".repeat(48).toHash(384)
-    #MinerWallet.
+    hash: Hash[384] = "".pad(48, char(128)).toHash(384)
+    #MinerWallets.
     miner: MinerWallet = newMinerWallet()
     #SignedVerification object.
     verif: SignedVerification
-    #MeritHolderRecords.
-    verifs: seq[MeritHolderRecord] = @[]
     #Rewards.
     rewards: seq[Reward]
 
-#Give Key 0 Merit.
+#Give the miner Merit.
 state.processBlock(
     blockchain,
     newBlankBlock(
@@ -63,20 +55,22 @@ state.processBlock(
     )
 )
 
-#Add a Verification.
+#Create and add the Verification.
 verif = newSignedVerificationObj(hash)
 miner.sign(verif, 0)
-#Add it the Consensus.
 consensus.add(verif)
-#Add a MeritHolderRecord.
-verifs.add(newMeritHolderRecord(
-    miner.publicKey,
-    0,
-    newMerkle(hash).hash
-))
 
-#Shift on the Verifications.
-rewards = epochs.shift(consensus, verifs).calculate(state)
+#Shift on the records.
+rewards = epochs.shift(
+    consensus,
+    @[
+        newMeritHolderRecord(
+            miner.publicKey,
+            0,
+            hash
+        )
+    ]
+).calculate(state)
 assert(rewards.len == 0)
 
 #Shift 4 over.
@@ -84,7 +78,7 @@ for _ in 0 ..< 4:
     rewards = epochs.shift(consensus, @[]).calculate(state)
     assert(rewards.len == 0)
 
-#Next shift should result in a Rewards of Key 0, 1000.
+#Next shift should result in a Rewards of key 0, 1000.
 rewards = epochs.shift(consensus, @[]).calculate(state)
 assert(rewards.len == 1)
 assert(rewards[0].key == miner.publicKey.toString())
