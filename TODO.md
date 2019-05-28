@@ -73,7 +73,7 @@ Network:
 ### Tests:
 Cleanup:
 
-- Database/Merit Cleanup.
+- Database/Merit/Blockchain Cleanup.
 
 objects:
 

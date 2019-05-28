@@ -26,6 +26,7 @@ finalsd:
             key* {.final.}: string
             score*: uint64
 
+        #The tests reyly on Epoch and Epochs not being refs.
         #Epoch object. Entry Hash -> Public Keys
         Epoch* = object
             hashes*: Table[string, seq[BLSPublicKey]]

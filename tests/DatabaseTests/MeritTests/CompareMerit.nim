@@ -10,6 +10,9 @@ import ../../../src/Database/Merit/Merit
 #StInt lib.
 import StInt
 
+#Tables standard lib.
+import tables
+
 #Compare two BlockHeaders to make sure they have the same value.
 proc compare*(
     bh1: BlockHeader,
@@ -23,6 +26,15 @@ proc compare*(
     assert(bh1.time == bh2.time)
     assert(bh1.proof == bh2.proof)
 
+#Compare two MeritHolderRecords to make sure they have the same value.
+proc compare*(
+    mhr1: MeritHolderRecord,
+    mhr2: MeritHolderRecord
+) =
+    assert(mhr1.key == mhr2.key)
+    assert(mhr1.nonce == mhr2.nonce)
+    assert(mhr1.merkle == mhr2.merkle)
+
 #Compare two sets of MeritHolderRecords to make sure they have the same value.
 proc compare*(
     mhr1: seq[MeritHolderRecord],
@@ -30,9 +42,7 @@ proc compare*(
 ) =
     assert(mhr1.len == mhr2.len)
     for i in 0 ..< mhr1.len:
-        assert(mhr1[i].key == mhr2[i].key)
-        assert(mhr1[i].nonce == mhr2[i].nonce)
-        assert(mhr1[i].merkle == mhr2[i].merkle)
+        compare(mhr1[i], mhr2[i])
 
 #Compare two Miners to make sure they have the same value.
 proc compare*(
@@ -113,7 +123,35 @@ proc compare*(
 
 #Compare two Epochs to make sure they have the same value.
 proc compare*(
-    bb1: Epoch,
-    bb2: Epoch
+    e1Arg: Epochs,
+    e2Arg: Epochs
 ) =
-    discard
+    var
+        #Extract the arguments.
+        e1: Epochs = e1Arg
+        e2: Epochs = e2Arg
+        #Popped Epochs.
+        p1: Epoch
+        p2: Epoch
+
+    for _ in 0 ..< 6:
+        #Check the Epochs' records.
+        assert(e1.records.len == e2.records.len)
+        for r1 in 0 ..< e1.records.len:
+            assert(e1.records[r1].len == e2.records[r1].len)
+            for r2 in 0 ..< e1.records[r1].len:
+                compare(e1.records[r1][r2], e2.records[r1][r2])
+
+        #Shift on an Epoch.
+        p1 = e1.shift(nil, @[])
+        p2 = e2.shift(nil, @[])
+
+        #Make sure the Epochs are equivalent.
+        assert(p1.hashes.len == p2.hashes.len)
+        for h in p1.hashes.keys():
+            assert(p1.hashes[h].len == p2.hashes[h].len)
+            for k in 0 ..< p1.hashes[h].len:
+                assert(p1.hashes[h][k] == p2.hashes[h][k])
+
+        assert(p1.records.len == p2.records.len)
+        compare(p1.records, p2.records)

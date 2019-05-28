@@ -40,8 +40,9 @@ var
         30,
         "".pad(48).toHash(384)
     )
-    #Current State.
+    #State.
     state: State = newState(db, 5)
+
     #List of MeritHolders.
     holders: seq[MinerWallet] = @[]
     #List of MeritHolders used to grab a miner from.
@@ -57,7 +58,7 @@ var
     #Block we're mining.
     mining: Block
 
-#Compare two different States.
+#Test the State against the reloaded State.
 proc test() =
     #Reload the State.
     var reloaded: State = newState(db, 5)

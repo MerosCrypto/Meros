@@ -6,9 +6,6 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Consensus lib.
-import ../../../../src/Database/Consensus/Consensus
-
 #Blockchain lib.
 import ../../../../src/Database/Merit/Blockchain
 
@@ -24,17 +21,15 @@ import ../TestMerit
 var
     #Database Function Box.
     functions: DatabaseFunctionBox = newTestDatabase()
-    #Consensus.
-    consensus: Consensus = newConsensus(functions)
     #Blockchain.
     blockchain: Blockchain = newBlockchain(functions, "EPOCH_EMPTY_TEST", 1, "".pad(48).toHash(384))
     #State.
     state: State = newState(functions, 1)
     #Epochs.
-    epochs: Epochs = newEpochs(functions, consensus, blockchain)
+    epochs: Epochs = newEpochs(functions, nil, blockchain)
     #Rewards.
     rewards: seq[Reward] = epochs.shift(
-        consensus,
+        nil,
         @[]
     ).calculate(state)
 
