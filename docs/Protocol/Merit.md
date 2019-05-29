@@ -163,6 +163,6 @@ BLSSignature aggregate = verifierSignatures.aggregate()
 - Meros allows archived Verifications to skip over Entries.
 - Meros doesn't support dead Merit.
 - Meros doesn't support chain reorganizations.
-- Meros doesn't handle reward-score tie breaks properly, rollover rewards, or use a negative sigmoid.
+- Meros doesn't rollover rewards or use a negative sigmoid.
 - Merps doesn't wait 10 Blocks to create Mints.
 - Meros doesn't support the `Checkpoint` message type.

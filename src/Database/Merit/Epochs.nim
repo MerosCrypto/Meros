@@ -218,24 +218,30 @@ func calculate*(
     except KeyError as e:
         doAssert(false, "Couldn't grab the score of a holder grabbed from scores.keys(): " & e.msg)
 
-    #Make sure we're dealing with a maximum of 100 results.
-    if result.len > 100:
-        #Sort them by greatest score.
-        result.sort(
-            func (
-                x: Reward,
-                y: Reward
-            ): int =
-                if x.score > y.score:
-                    result = 1
-                elif x.score == y.score:
-                    result = 0
-                else:
-                    result = -1
-            , SortOrder.Descending
-        )
+    #Sort them by greatest score.
+    result.sort(
+        func (
+            x: Reward,
+            y: Reward
+        ): int =
+            if x.score > y.score:
+                result = 1
+            elif x.score == y.score:
+                for b in 0 ..< x.key.len:
+                    if x.key[b] > y.key[b]:
+                        return 1
+                    elif x.key[b] == y.key[b]:
+                        continue
+                    else:
+                        return -1
+                doAssert(false, "Epochs generated two rewards for the same key.")
+            else:
+                result = -1
+        , SortOrder.Descending
+    )
 
-        #Delete everything after 100.
+    #Delete everything after 100.
+    if result.len > 100:
         result.delete(100, result.len - 1)
 
     #Normalize each holder to a share of 1000.
