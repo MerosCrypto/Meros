@@ -1,8 +1,5 @@
 #Consensus DB Test.
 
-#Errors lib.
-import ../../../../src/lib/Errors
-
 #Util lib.
 import ../../../../src/lib/Util
 

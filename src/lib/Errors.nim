@@ -29,11 +29,11 @@ type
     AddressError*     = object of Exception #Used when passed an invalid Address.
 
     #Database/common Errors.
-    GapError* = object of Exception   #Used when trying to add an item, yet missing items before said item.
+    GapError*   = object of Exception #Used when trying to add an item, yet missing items before said item.
     DataExists* = object of Exception #Used when trying to add data which was already added.
 
     #Database/Filesystem Errors.
-    DBError*      = object of LMDBError
+    DBError*      = LMDBError
     DBWriteError* = object of DBError #Used when writing to the DB fails.
     DBReadError*  = object of DBError #Used when reading from the DB fails.
 

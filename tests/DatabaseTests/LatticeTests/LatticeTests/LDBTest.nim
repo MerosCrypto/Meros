@@ -186,11 +186,7 @@ proc addBlock() =
         inc(newBlock)
 
     #Add it,
-    var epoch: Epoch
-    try:
-        epoch = merit.processBlock(consensus, newBlock)
-    except:
-        doAssert(false, "Valid Block wasn't successfully added: " & getCurrentExceptionMsg())
+    var epoch: Epoch = merit.processBlock(consensus, newBlock)
 
     #Archive the Records.
     consensus.archive(newBlock.records)

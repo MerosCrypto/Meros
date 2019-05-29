@@ -16,5 +16,5 @@ proc newDB*(
 ].} =
     try:
         result = newLMDB(path, size, readers)
-    except LMDBError as e:
+    except DBError as e:
         raise newException(DBError, e.msg)
