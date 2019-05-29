@@ -26,7 +26,7 @@ var
     #Miner Seq.
     minerSeq: seq[Miner]
     #Remaining amount of Merit.
-    remaining: int = 100
+    remaining: int
     #Amount to pay this miner.
     amount: int
     #Miners.
@@ -35,7 +35,7 @@ var
     reloaded: Miners
 
 #Test 255 serializations.
-for s in 0 .. 255:
+for _ in 0 .. 255:
     #Randomize the miners.
     minerSeq = newSeq[Miner](rand(99) + 1)
     remaining = 100

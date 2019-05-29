@@ -71,9 +71,6 @@ Network:
 - Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Lattice and Consensus DAGs).
 
 ### Tests:
-Cleanup:
-
-- Database/Merit/Blockchain Cleanup.
 
 objects:
 
@@ -150,11 +147,7 @@ UI/RPC:
 - `network.rebroadcast(address | verifier, nonce)` RPC method.
 - Expose more of the Consensus RPC.
 
-- Loading screen.
-- Show the existing wallet on reload of `Main.html`.
-- Claim creation via the GUI.
-- `Account` history viewing via the GUI.
-- Network page on the GUI.
+- Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
 ### Improvements:
 
