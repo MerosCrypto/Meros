@@ -6,27 +6,24 @@ proc mainPersonal() {.forceCheck: [].} =
         functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
             wallet
 
-        #Set the Wallet's seed.
-        functions.personal.setSeed = proc (
-            seed: string
+        #Set the Wallet's secret.
+        functions.personal.setSecret = proc (
+            secret: string
         ) {.forceCheck: [
-            RandomError,
-            EdSeedError,
-            SodiumError
+            ValueError,
+            RandomError
         ].} =
-            if seed.len == 0:
+            if secret.len == 0:
                 try:
-                    wallet = newWallet()
-                except RandomError as e:
+                    wallet = newHDWallet()
+                except ValueError as e:
                     fcRaise e
-                except SodiumError as e:
+                except RandomError as e:
                     fcRaise e
             else:
                 try:
-                    wallet = newWallet(newEdSeed(seed))
-                except EdSeedError as e:
-                    fcRaise e
-                except SodiumError as e:
+                    wallet = newHDWallet(secret)
+                except ValueError as e:
                     fcRaise e
 
         #Sign a Send.

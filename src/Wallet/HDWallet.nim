@@ -65,7 +65,7 @@ proc newHDWallet*(
     privateKey.data[31] = cuchar(uint8(privateKey.data[31]) or             0b01000000)
 
     #Create the Public Key.
-    multiplyBase(addr publicKey.data[0], addr privateKey.data[0])
+    publicKey = privateKey.toPublicKey()
 
     result = HDWallet(
         #Set the Wallet fields.
@@ -85,10 +85,14 @@ proc newHDWallet*(
 proc newHDWallet*(): HDWallet {.forceCheck: [
     RandomError
 ].} =
+    var secret: string = newString(32)
     try:
-        result = newHDWallet(newEdSeed().toString())
+        randomFill(secret)
     except RandomError as e:
         fcRaise e
+
+    try:
+        result = newHDWallet(secret)
     except ValueError:
         result = newHDWallet()
 
@@ -180,8 +184,7 @@ proc derive*(
         privateKey.data[63 - i] = cuchar(tempR[i + 32])
 
     #Create the Public Key.
-    var publicKey: EdPublicKey
-    multiplyBase(addr publicKey.data[0], addr privateKey.data[0])
+    var publicKey: EdPublicKey = privateKey.toPublicKey()
 
     try:
         result = HDWallet(

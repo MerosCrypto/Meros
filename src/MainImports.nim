@@ -12,7 +12,7 @@ import Database/common/Merkle
 
 #Wallet.
 import Wallet/MinerWallet
-import Wallet/Wallet
+import Wallet/HDWallet
 
 #Consensus.
 import Database/Consensus/Consensus

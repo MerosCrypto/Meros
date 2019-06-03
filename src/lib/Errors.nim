@@ -22,9 +22,7 @@ type
 
     #Wallet Errors.
     BLSError*         = object of Exception #Used when the BLS lib fails.
-    SodiumError*      = object of Exception #Used when LibSodium fails.
 
-    EdSeedError*      = object of Exception #Used when passed an invalid Ed25519 Seed.
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
     AddressError*     = object of Exception #Used when passed an invalid Address.
 

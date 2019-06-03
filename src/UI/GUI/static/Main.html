@@ -7,18 +7,18 @@
         <button onclick="GUI.quit()">Quit</button>
         <hr>
 
-        If you don't have a seed, leave the field blank to create one.
+        If you don't have a secret, leave the field blank to create one.
         <br>
-        Seed: <input type="text" id="seedInput"></input> <button onclick="
-            Personal.setSeed(document.getElementById('seedInput').value);
+        secret: <input type="text" id="secretInput"></input> <button onclick="
+            Personal.setSecret(document.getElementById('secretInput').value);
             Personal.getWallet();
-        ">Set Seed</button>
+        ">Set secret</button>
 
         <br>
         <hr>
         <br>
 
-        <div id="seed"></div>
+        <div id="secret"></div>
         <br>
         <div id="publicKey"></div>
         <br>

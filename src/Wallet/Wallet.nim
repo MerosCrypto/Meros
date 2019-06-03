@@ -7,7 +7,7 @@ import ../lib/Util
 #Ed25519 lib.
 import Ed25519
 #Export the objects.
-export EdSeed, EdPublicKey, EdSignature
+export EdPublicKey, EdSignature
 
 #Address lib.
 import Address
@@ -45,7 +45,7 @@ func newEdPublicKey*(
             for i in countup(0, 63, 2):
                 result.data[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
         except ValueError:
-            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newEdSeed.")
+            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newEdPublicKey.")
     else:
         raise newException(EdPublicKeyError, "Invalid length Public Key passed to newEdPublicKey.")
 
@@ -72,13 +72,8 @@ func newEdSignature*(
 func sign*(
     wallet: Wallet,
     msg: string
-): EdSignature {.forceCheck: [
-    SodiumError
-].} =
-    try:
-        result = wallet.privateKey.sign(msg)
-    except SodiumError as e:
-        fcRaise e
+): EdSignature {.forceCheck: [].} =
+    wallet.privateKey.sign(wallet.publicKey, msg)
 
 #Verify a signature.
 func verify*(
@@ -86,10 +81,7 @@ func verify*(
     msg: string,
     sig: EdSignature
 ): bool {.forceCheck: [].} =
-    try:
-        result = Ed25519.verify(key, msg, sig)
-    except SodiumError:
-        return false
+    Ed25519.verify(key, msg, sig)
 
 #Verify a signature via a Wallet.
 func verify*(
@@ -97,19 +89,16 @@ func verify*(
     msg: string,
     sig: EdSignature
 ): bool {.forceCheck: [].} =
-    try:
-        result = wallet.publicKey.verify(msg, sig)
-    except SodiumError:
-        return false
+    wallet.publicKey.verify(msg, sig)
 
-#Stringify a Seed/PublicKey/Signature.
+#Stringify a PublicKey/Signature.
 func toString*(
-    data: EdSeed or EdPrivateKey or EdPublicKey or EdSignature
+    data: EdPrivateKey or EdPublicKey or EdSignature
 ): string {.forceCheck: [].} =
     for b in data.data:
         result = result & char(b)
 
 func `$`*(
-    data: EdSeed or EdPrivateKey or EdPublicKey or EdSignature
+    data: EdPrivateKey or EdPublicKey or EdSignature
 ): string {.inline, forceCheck: [].} =
     data.toString().toHex()

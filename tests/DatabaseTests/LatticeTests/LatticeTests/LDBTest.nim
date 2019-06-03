@@ -93,7 +93,7 @@ var
     #MeritHolders.
     holders: seq[MinerWallet] = @[]
     #Accounts.
-    wallets: seq[Wallet] = @[]
+    wallets: seq[HDWallet] = @[]
 
     #Pending Sends.
     sends: seq[Send] = @[]

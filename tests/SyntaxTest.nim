@@ -11,6 +11,7 @@ import ../src/lib/Hash
 
 #Wallet.
 import ../src/Wallet/Wallet
+import ../src/Wallet/HDWallet
 import ../src/Wallet/MinerWallet
 
 #Database.
