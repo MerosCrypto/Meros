@@ -84,8 +84,6 @@ proc send(
         rpc.functions.personal.signSend(send)
     except AddressError as e:
         doAssert(false, "Couldn't sign the Send we created due to an AddressError (which means it failed to serialize): " & e.msg)
-    except SodiumError as e:
-        returnError()
 
     #Mine the Send.
     try:
@@ -107,8 +105,6 @@ proc send(
     except AddressError as e:
         returnError()
     except EdPublicKeyError as e:
-        returnError()
-    except SodiumError as e:
         returnError()
     except DataExists as e:
         returnError()
@@ -138,10 +134,7 @@ proc receive(
         doAssert(false, "Couldn't sign the Receive we created due to an AddressError (which means it failed to serialize): " & e.msg)
 
     #Sign the Receive.
-    try:
-        rpc.functions.personal.signReceive(recv)
-    except SodiumError as e:
-        returnError()
+    rpc.functions.personal.signReceive(recv)
 
     #Add it.
     try:
@@ -184,8 +177,6 @@ proc data(
         rpc.functions.personal.signData(data)
     except AddressError as e:
         doAssert(false, "Couldn't sign the Data we created due to an AddressError (which means it failed to serialize): " & e.msg)
-    except SodiumError as e:
-        returnError()
 
     #Mine the Data.
     try:

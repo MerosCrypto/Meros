@@ -223,21 +223,17 @@ type
         signSend*: proc (
             send: Send
         ) {.raises: [
-            AddressError,
-            SodiumError
+            AddressError
         ].}
 
         signReceive*: proc (
             recv: Receive
-        ) {.raises: [
-            SodiumError
-        ].}
+        ) {.raises: [].}
 
         signData*: proc (
             data: Data
         ) {.raises: [
-            AddressError,
-            SodiumError
+            AddressError
         ].}
 
     NetworkFunctionBox* = ref object

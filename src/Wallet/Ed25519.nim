@@ -4,7 +4,7 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
-#LibSodium Ed25519 components.
+#Ed25519 library.
 import mc_ed25519
 
 #SIGN_PREFIX applied to every message, stopping cross-network replays.

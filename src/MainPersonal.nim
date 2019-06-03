@@ -30,34 +30,23 @@ proc mainPersonal() {.forceCheck: [].} =
         functions.personal.signSend = proc (
             send: Send
         ) {.forceCheck: [
-            AddressError,
-            SodiumError
+            AddressError
         ].} =
             try:
                 wallet.sign(send)
             except AddressError as e:
                 fcRaise e
-            except SodiumError as e:
-                fcRaise e
 
         #Sign a Receive.
         functions.personal.signReceive = proc (
             recv: Receive
-        ) {.forceCheck: [
-            SodiumError
-        ].} =
-            try:
-                wallet.sign(recv)
-            except SodiumError as e:
-                fcRaise e
+        ) {.forceCheck: [].} =
+            wallet.sign(recv)
 
         functions.personal.signData = proc (data: Data) {.forceCheck: [
-            AddressError,
-            SodiumError
+            AddressError
         ].} =
             try:
                 wallet.sign(data)
             except AddressError as e:
-                fcRaise e
-            except SodiumError as e:
                 fcRaise e

@@ -208,8 +208,6 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Failed to sign a Claim for a Mint due to a AddressError: " & e.msg)
                 except BLSError as e:
                     doAssert(false, "Failed to sign a Claim for a Mint due to a BLSError: " & e.msg)
-                except SodiumError as e:
-                    doAssert(false, "Failed to sign a Claim for a Mint due to a SodiumError: " & e.msg)
 
                 #Emit it.
                 try:

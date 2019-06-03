@@ -49,16 +49,12 @@ proc newReceive*(
 func sign*(
     wallet: Wallet,
     recv: Receive
-) {.forceCheck: [
-    SodiumError
-].} =
+) {.forceCheck: [].} =
     try:
         #Set the sender behind the Entry.
         recv.sender = wallet.address
         #Sign the hash of the Receive.
         recv.signature = wallet.sign(recv.hash.toString())
         recv.signed = true
-    except SodiumError as e:
-        fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when signing a Receive: " & e.msg)
