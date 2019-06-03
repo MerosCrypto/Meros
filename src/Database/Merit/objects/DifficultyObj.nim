@@ -49,7 +49,7 @@ func newDifficultyObj*(
         result = newDifficultyObj(
             start,
             endBlock,
-            ($difficulty).pad(128, '0').parse(StUint[512], 16)
+            ($difficulty).parse(StUint[512], 16)
         )
     except ValueError as e:
         raise e

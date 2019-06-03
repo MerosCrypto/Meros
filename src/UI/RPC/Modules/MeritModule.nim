@@ -199,6 +199,10 @@ proc merit*(
                         res = await rpc.publishBlock(
                             json["args"][0].getStr().parseHexStr()
                         )
+                    except ValueError:
+                        res = %* {
+                            "error": "Invalid hex string paased."
+                        }
                     except Exception as e:
                         doAssert(false, "publishBlock threw an Exception despite not naturally throwing anything: " & e.msg)
 

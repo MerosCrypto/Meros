@@ -55,7 +55,6 @@ func get(
             doAssert(false, "Couldn't get a JSON field despite confirming it exists: " & e.msg)
     raise newException(IndexError, "Key is not present in this JSON.")
 
-
 #Constructor.
 proc newConfig*(): Config {.forceCheck: [].} =
     #Create the config with the default options.
