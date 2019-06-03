@@ -15,7 +15,7 @@ randomize(getTime())
 
 var
     #Wallet.
-    wallet: HDWallet
+    wallet: Wallet
     #Message.
     msg: string
     #Signature.
@@ -24,7 +24,7 @@ var
 #Run 255 times.
 for _ in 1 .. 255:
     #Create a new wallet.
-    wallet = newHDWallet()
+    wallet = newHDWallet().next()
 
     #Test recreating the Public Key.
     assert(newEdPublicKey(wallet.publicKey.toString()).toString() == wallet.publicKey.toString())

@@ -19,7 +19,7 @@ import finals
 
 finalsd:
     #Wallet object.
-    type Wallet* = object of RootObj
+    type Wallet* = ref object of RootObj
         #Initiated.
         initiated*: bool
         #Private Key.

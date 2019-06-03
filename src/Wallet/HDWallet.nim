@@ -31,7 +31,7 @@ let
 
 finalsd:
     #HDWallet.
-    type HDWallet* = object of Wallet
+    type HDWallet* = ref object of Wallet
             #Child index on the parent.
             i* {.final.}: uint32
             #Chain Code.

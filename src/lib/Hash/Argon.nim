@@ -11,7 +11,7 @@ import Argon2
 type ArgonHash* = HashCommon.Hash[384]
 
 #Take in data and a salt; return a ArgonHash.
-func Argon*(
+proc Argon*(
     data: string,
     salt: string,
     reduced: bool = false

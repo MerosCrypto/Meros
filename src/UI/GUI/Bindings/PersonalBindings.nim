@@ -51,7 +51,7 @@ proc addTo*(
                 var js: string
                 try:
                     js = &"""
-                        document.getElementById("secret").innerHTML = "{wallet["secret"].getStr()}";
+                        document.getElementById("privateKey").innerHTML = "{wallet["privateKey"].getStr()}";
                         document.getElementById("publicKey").innerHTML = "{wallet["publicKey"].getStr()}";
                         document.getElementById("address").innerHTML = "{wallet["address"].getStr()}";
                     """
