@@ -27,7 +27,6 @@ Lattice:
 Wallet:
 
 - Mnemonic file to convert a Mnemonic to seed, and vice versa.
-- HDWallet type which meets the specs defined in https://cardanolaunch.com/assets/Ed25519_BIP.pdf and creates Wallets.
 - OpenCAP support.
 
 UI:
