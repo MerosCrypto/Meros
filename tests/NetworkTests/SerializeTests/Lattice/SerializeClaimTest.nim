@@ -4,7 +4,7 @@
 import ../../../../src/lib/Util
 
 #Wallet libs.
-import ../../../../src/Wallet/Wallet
+import ../../../../src/Wallet/HDWallet
 import ../../../../src/Wallet/MinerWallet
 
 #Entry object.
@@ -41,7 +41,7 @@ for _ in 0 .. 255:
     )
 
     #Sign it.
-    claim.sign(newMinerWallet(), newWallet())
+    claim.sign(newMinerWallet(), newHDWallet().next())
 
     #Serialize it and parse it back.
     reloaded = claim.serialize().parseClaim()

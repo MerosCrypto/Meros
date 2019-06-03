@@ -55,8 +55,7 @@ proc sign*(
     wallet: Wallet,
     send: Send
 ) {.forceCheck: [
-    AddressError,
-    SodiumError
+    AddressError
 ].} =
     try:
         #Set the sender behind the Entry.
@@ -67,8 +66,6 @@ proc sign*(
         send.signature = wallet.sign(send.hash.toString())
         send.signed = true
     except AddressError as e:
-        fcRaise e
-    except SodiumError as e:
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when signing a Send: " & e.msg)

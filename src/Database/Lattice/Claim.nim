@@ -44,8 +44,7 @@ proc sign*(
     wallet: Wallet
 ) {.forceCheck: [
     AddressError,
-    BLSError,
-    SodiumError
+    BLSError
 ].} =
     try:
         #Set the sender behind the Entry.
@@ -63,8 +62,6 @@ proc sign*(
     except AddressError as e:
         fcRaise e
     except BLSError as e:
-        fcRaise e
-    except SodiumError as e:
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)

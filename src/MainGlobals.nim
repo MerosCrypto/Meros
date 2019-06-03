@@ -21,8 +21,8 @@ var
     db {.threadvar.}: DB
 
     #Personal.
-    verifyLock: Lock             #Verify lock to stop us from triggering a MeritRemoval.
-    wallet {.threadvar.}: Wallet #Wallet.
+    verifyLock: Lock               #Verify lock to stop us from triggering a MeritRemoval.
+    wallet {.threadvar.}: HDWallet #Wallet.
 
     #Network.
     network {.threadvar.}: Network #Network.

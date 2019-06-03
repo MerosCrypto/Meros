@@ -6,8 +6,8 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Wallet lib.
-import ../../../../src/Wallet/Wallet
+#HDWallet lib.
+import ../../../../src/Wallet/HDWallet
 
 #Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
@@ -50,7 +50,7 @@ for i in 0 .. 255:
     )
 
     #Sign it.
-    newWallet().sign(data)
+    newHDWallet().next().sign(data)
     #Mine the Data.
     data.mine("333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".toHash(384))
 

@@ -51,7 +51,7 @@ proc addTo*(
                 var js: string
                 try:
                     js = &"""
-                        document.getElementById("seed").innerHTML = "{wallet["seed"].getStr()}";
+                        document.getElementById("secret").innerHTML = "{wallet["secret"].getStr()}";
                         document.getElementById("publicKey").innerHTML = "{wallet["publicKey"].getStr()}";
                         document.getElementById("address").innerHTML = "{wallet["address"].getStr()}";
                     """
@@ -61,15 +61,15 @@ proc addTo*(
                     gui.webview.error("RPC Error", "Couldn't eval the JS to display the Wallet.")
         )
 
-        #Create a Wallet from a Seed.
+        #Create a Wallet from a secret.
         gui.webview.bindProc(
             "Personal",
-            "setSeed",
+            "setSecret",
             proc (
-                seed: string
+                secret: string
             ) {.forceCheck: [].} =
                 try:
-                    discard gui.call("personal", "setSeed", seed)
+                    discard gui.call("personal", "setSecret", secret)
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
         )

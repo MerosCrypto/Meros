@@ -250,10 +250,7 @@ proc mainLattice() {.forceCheck: [].} =
                         doAssert(false, "One of our Wallets (" & wallet.address & ") has an invalid Address: " & e.msg)
 
                     #Sign it.
-                    try:
-                        wallet.sign(recv)
-                    except SodiumError as e:
-                        doAssert(false, "Failed to sign a Receive for a Send: " & e.msg)
+                    wallet.sign(recv)
 
                     #Emit it.
                     try:

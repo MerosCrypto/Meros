@@ -9,8 +9,8 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Wallet lib.
-import ../../../../src/Wallet/Wallet
+#HDWallet lib.
+import ../../../../src/Wallet/HDWallet
 
 #MeritHolderRecord object.
 import ../../../../src/Database/common/objects/MeritHolderRecordObj
@@ -93,7 +93,7 @@ var
     #MeritHolders.
     holders: seq[MinerWallet] = @[]
     #Accounts.
-    wallets: seq[Wallet] = @[]
+    wallets: seq[HDWallet] = @[]
 
     #Pending Sends.
     sends: seq[Send] = @[]
@@ -227,7 +227,7 @@ addBlock()
 for _ in 0 ..< 20:
     #Create a random amount of Accounts.
     for _ in 0 ..<  rand(2) + 1:
-        wallets.add(newWallet())
+        wallets.add(newHDWallet().next())
 
     #Iterate over each pending Send.
     var i: int = 0

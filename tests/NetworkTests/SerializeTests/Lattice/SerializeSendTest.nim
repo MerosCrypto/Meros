@@ -6,8 +6,8 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Wallet lib.
-import ../../../../src/Wallet/Wallet
+#HDWallet lib.
+import ../../../../src/Wallet/HDWallet
 
 #Entry object.
 import ../../../../src/Database/Lattice/objects/EntryObj
@@ -38,14 +38,14 @@ var
 for _ in 0 .. 255:
     #Create the Send.
     send = newSend(
-        newWallet().address,
+        newHDWallet().next().address,
         #This would be an uint64 in an ideal world, but Nim is quirky about int64/uint64 and Ordinal.
         uint64(rand(high(int32))),
         rand(high(int32))
     )
 
     #Sign it.
-    newWallet().sign(send)
+    newHDWallet().next().sign(send)
     #Mine the Send.
     send.mine("333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".toHash(384))
 

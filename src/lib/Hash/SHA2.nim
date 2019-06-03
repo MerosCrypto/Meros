@@ -44,6 +44,13 @@ proc SHA2_512*(
     #Digest the byte array.
     result.data = sha512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
+#SHA2 512 HMAC function.
+proc HMAC_SHA2_512*(
+    key: string,
+    bytes: string
+): SHA2_512Hash {.forceCheck: [].} =
+    result.data = sha512.hmac(key, bytes).data
+
 #String to SHA2_256Hash.
 func toSHA2_256Hash*(
     hash: string

@@ -5,7 +5,7 @@ import ../../src/lib/Util
 
 #Wallet libs.
 import ../../src/Wallet/Address
-import ../../src/Wallet/Wallet
+import ../../src/Wallet/HDWallet
 
 #Random standard lib.
 import random
@@ -14,57 +14,32 @@ import random
 randomize(getTime())
 
 var
-    #Wallets.
-    wallet: Wallet
-    reloaded: Wallet
+    #Wallet.
+    wallet: HDWallet
     #Message.
     msg: string
-    #Signatures.
-    wSig: EdSignature
-    rSig: EdSignature
+    #Signature.
+    sig: EdSignature
 
-#Run 100 times.
-for _ in 1 .. 100:
+#Run 255 times.
+for _ in 1 .. 255:
     #Create a new wallet.
-    wallet = newWallet()
-
-    #Test recreating the Seed.
-    assert(newEdSeed(wallet.seed.toString()).toString() == wallet.seed.toString())
-    assert($newEdSeed($wallet.seed) == $wallet.seed)
+    wallet = newHDWallet()
 
     #Test recreating the Public Key.
     assert(newEdPublicKey(wallet.publicKey.toString()).toString() == wallet.publicKey.toString())
     assert($newEdPublicKey($wallet.publicKey) == $wallet.publicKey)
 
-    #Reload the Wallet.
-    reloaded = newWallet(wallet.seed)
-    assert(wallet.seed.toString() == reloaded.seed.toString())
-    assert(wallet.publicKey.toString() == reloaded.publicKey.toString())
-    reloaded = newWallet(wallet.seed, wallet.address)
-    assert(wallet.seed.toString() == reloaded.seed.toString())
-    assert(wallet.publicKey.toString() == reloaded.publicKey.toString())
-
     #Create messages.
-    for m in 1 .. 100:
+    for m in 1 .. 255:
         msg = ""
         for _ in 0 ..< m:
             msg &= char(rand(255))
 
-        #Sign the messages.
-        wSig = wallet.sign(msg)
-        rSig = reloaded.sign(msg)
-
-        #Verify they're the same signature..
-        assert(wSig.toString() == rSig.toString())
-
-        #Test recreating the signatures.
-        assert(newEdSignature(wSig.toString()).toString() == wSig.toString())
-        assert($newEdSignature($wSig) == $wSig)
+        #Sign the message.
+        sig = wallet.sign(msg)
 
         #Verify the signature.
-        assert(wallet.verify(msg, wSig))
-        assert(wallet.publicKey.verify(msg, wSig))
-        assert(reloaded.verify(msg, wSig))
-        assert(reloaded.publicKey.verify(msg, wSig))
+        assert(wallet.verify(msg, sig))
 
 echo "Finished the Wallet/Wallet Test."

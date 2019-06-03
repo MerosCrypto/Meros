@@ -30,20 +30,17 @@ import asyncdispatch
 #JSON standard lib.
 import json
 
-#Set the Wallet's Seed.
-proc setSeed(
+#Set the Wallet's secret.
+proc setSecret(
     rpc: RPC,
-    seed: string
+    secret: string
 ): JSONNode {.forceCheck: [].} =
     try:
-        rpc.functions.personal.setSeed(seed)
+        rpc.functions.personal.setSecret(secret)
+    except ValueError as e:
+        returnError()
     except RandomError as e:
-        doAssert(seed.len == 0, "personal.setSeed threw a RandomError despite being passed a seed: " & e.msg)
-        returnError()
-    except EdSeedError as e:
-        doAssert(seed.len != 0, "personal.setSeed threw a EdSeedError despite not being passed a seed: " & e.msg)
-        returnError()
-    except SodiumError as e:
+        doAssert(secret.len == 0, "personal.setSecret threw a RandomError despite being passed a secret: " & e.msg)
         returnError()
 
 #Get the Wallet info.
@@ -57,7 +54,7 @@ proc getWallet(
         }
 
     result = %* {
-        "seed": $wallet.seed,
+        "privateKey": $wallet.privateKey,
         "publicKey": $wallet.publicKey,
         "address": wallet.address
     }
@@ -87,8 +84,6 @@ proc send(
         rpc.functions.personal.signSend(send)
     except AddressError as e:
         doAssert(false, "Couldn't sign the Send we created due to an AddressError (which means it failed to serialize): " & e.msg)
-    except SodiumError as e:
-        returnError()
 
     #Mine the Send.
     try:
@@ -110,8 +105,6 @@ proc send(
     except AddressError as e:
         returnError()
     except EdPublicKeyError as e:
-        returnError()
-    except SodiumError as e:
         returnError()
     except DataExists as e:
         returnError()
@@ -141,10 +134,7 @@ proc receive(
         doAssert(false, "Couldn't sign the Receive we created due to an AddressError (which means it failed to serialize): " & e.msg)
 
     #Sign the Receive.
-    try:
-        rpc.functions.personal.signReceive(recv)
-    except SodiumError as e:
-        returnError()
+    rpc.functions.personal.signReceive(recv)
 
     #Add it.
     try:
@@ -187,8 +177,6 @@ proc data(
         rpc.functions.personal.signData(data)
     except AddressError as e:
         doAssert(false, "Couldn't sign the Data we created due to an AddressError (which means it failed to serialize): " & e.msg)
-    except SodiumError as e:
-        returnError()
 
     #Mine the Data.
     try:
@@ -241,13 +229,13 @@ proc personal*(
 
     try:
         case methodStr:
-            of "setSeed":
+            of "setSecret":
                 if json["args"].len < 1:
                     res = %* {
                         "error": "Not enough args were passed."
                     }
                 else:
-                    res = rpc.setSeed(json["args"][0].getStr())
+                    res = rpc.setSecret(json["args"][0].getStr())
 
             of "getWallet":
                 res = rpc.getWallet()
