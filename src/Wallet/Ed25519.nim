@@ -6,6 +6,7 @@ import ../lib/Util
 
 #LibSodium Ed25519 components.
 import mc_ed25519
+export multiplyBase
 
 #SIGN_PREFIX applied to every message, stopping cross-network replays.
 const SIGN_PREFIX {.strdefine.}: string = "MEROS"
@@ -21,7 +22,7 @@ type
     EdSignature* = object
         data*: array[64, uint8]
 
-#Seed constructor.
+#Seed constructors.
 proc newEdSeed*(): EdSeed {.forceCheck: [
     RandomError
 ].} =
@@ -31,47 +32,39 @@ proc newEdSeed*(): EdSeed {.forceCheck: [
     except RandomError:
         raise newException(RandomError, "Couldn't randomly fill the Seed.")
 
-#Key Pair constrcutor.
-func newEdKeyPair*(
-    seedArg: EdSeed
-): tuple[
-    priv: EdPrivateKey,
-    pub: EdPublicKey
-] {.forceCheck: [
-    SodiumError
+func newEdSeed*(
+    seed: string
+): EdSeed {.forceCheck: [
+    EdSeedError
 ].} =
-    #Extract the Seed.
-    var seed: Seed = seedArg.data
-
-    #Call the C function and verify the result.
-    if sodiumKeyPair(
-        addr result.pub.data[0],
-        addr result.priv.data[0],
-        addr seed[0]
-    ) != 0:
-        raise newException(SodiumError, "Sodium could not create a Key Pair from the passed Seed.")
+    #If it's binary...
+    if seed.len == 32:
+        for i in 0 ..< 32:
+            result.data[i] = seed[i]
+    #If it's hex...
+    elif seed.len == 64:
+        try:
+            for i in countup(0, 63, 2):
+                result.data[i div 2] = cuchar(parseHexInt(seed[i .. i + 1]))
+        except ValueError:
+            raise newException(EdSeedError, "Hex-length Seed with invalid Hex data passed to newEdSeed.")
+    else:
+        raise newException(EdSeedError, "Invalid length Seed passed to newEdSeed.")
 
 #Nim function for signing a message.
 func sign*(
-    key: EdPrivateKey,
+    keyArg: EdPrivateKey,
     msgArg: string
 ): EdSignature {.forceCheck: [
     SodiumError
 ].} =
-    #Extract the message arg.
-    var msg: string = SIGN_PREFIX & msgArg
-
-    #Declare the State.
-    var state: ED25519State
-    if sodiumInitState(addr state) != 0:
-        raise newException(SodiumError, "Sodium could not initiate a State.")
-
-    #Update the State with the message.
-    if sodiumUpdateState(addr state, addr msg[0], cast[culong](msg.len)) != 0:
-        raise newException(SodiumError, "Sodium could not update a State.")
+    #Extract the arguments.
+    var
+        key: EdPrivateKey = keyArg
+        msg: string = SIGN_PREFIX & msgArg
 
     #Create the signature.
-    if sodiumSign(addr state, cast[ptr char](addr result.data[0]), nil, key.data) != 0:
+    if sign(cast[ptr char](addr result.data[0]), nil, addr msg[0], culonglong(msg.len), cast[ptr cuchar](addr key.data[0])) != 0:
         raise newException(SodiumError, "Sodium could not sign a message.")
 
 #Nim function for verifying a message.
@@ -88,16 +81,16 @@ func verify*(
         sig: EdSignature = sigArg
 
     #Declare the State.
-    var state: ED25519State
-    if sodiumInitState(addr state) != 0:
+    var state: State
+    if init(addr state) != 0:
         raise newException(SodiumError, "Sodium could not initiate a State.")
 
     #Update the State with the message.
-    if sodiumUpdateState(addr state, addr msg[0], cast[culong](msg.len)) != 0:
+    if update(addr state, addr msg[0], cast[culong](msg.len)) != 0:
         raise newException(SodiumError, "Sodium could not update a State.")
 
     #Verify the signature.
-    if sodiumVerify(addr state, cast[ptr char](addr sig.data[0]), key.data) != 0:
+    if verify(addr state, cast[ptr char](addr sig.data[0]), key.data) != 0:
         return false
 
     result = true

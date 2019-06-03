@@ -5,5 +5,6 @@ import WalletTests/BLSTest
 
 import WalletTests/AddressTest
 import WalletTests/WalletTest
+import WalletTests/HDWalletTest
 
 import WalletTests/MinerWalletTest

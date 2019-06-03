@@ -57,7 +57,7 @@ proc getWallet(
         }
 
     result = %* {
-        "seed": $wallet.seed,
+        "privateKey": $wallet.privateKey,
         "publicKey": $wallet.publicKey,
         "address": wallet.address
     }

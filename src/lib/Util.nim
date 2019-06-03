@@ -31,6 +31,14 @@ func pad*(
     while result.len < len:
         result = prefix & result
 
+#Reverse a string.
+func reverse*(
+    data: string
+) : string {.forceCheck: [].} =
+    result = newString(data.len)
+    for i in 0 ..< data.len:
+        result[data.len - 1 - i] = data[i]
+
 #Converts a number to a binary string.
 func toBinary*(
     number: SomeNumber

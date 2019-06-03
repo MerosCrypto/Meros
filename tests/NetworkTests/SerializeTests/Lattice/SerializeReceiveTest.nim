@@ -3,8 +3,8 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Wallet lib.
-import ../../../../src/Wallet/Wallet
+#HDWallet lib.
+import ../../../../src/Wallet/HDWallet
 
 #LatticeIndex object.
 import ../../../../src/Database/common/objects/LatticeIndexObj
@@ -39,14 +39,14 @@ for _ in 0 .. 255:
     #Create the Receive.
     recv = newReceive(
         newLatticeIndex(
-            newWallet().address,
+            newHDWallet().next().address,
             rand(high(int32))
         ),
         rand(high(int32))
     )
 
     #Sign it.
-    newWallet().sign(recv)
+    newHDWallet().next().sign(recv)
 
     #Serialize it and parse it back.
     reloaded = recv.serialize().parseReceive()

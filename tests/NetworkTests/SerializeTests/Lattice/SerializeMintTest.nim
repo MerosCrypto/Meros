@@ -3,8 +3,7 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Wallet libs.
-import ../../../../src/Wallet/Wallet
+#MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
 #Entry object.
