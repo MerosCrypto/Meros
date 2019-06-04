@@ -25,7 +25,7 @@ The Merkle tree each MeritHolder has uses Blake2b-384 as a hash algorithm and co
 
 ### Verification
 
-A Verification is a MeritHolder staking their Merit behind an Entry and approving it. Once an Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for an Entry can be archived. An Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without an Entry becoming verified at that index, the Entry with the most Merit at that index, which is also mentioned in a Block, or if there's a tie, the Entry with the higher hash, becomes verified.
+A Verification is a MeritHolder staking their Merit behind an Entry and approving it. Once an Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for an Entry can be archived. If a Verification isn't archived by the end of these 6 Blocks, it should not be counted towards the Entry's Merit. An Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without an Entry at that index obtaining the needed Merit, the Entry with the most Merit at that index, which is also mentioned in a Block, or if there's a tie, the Entry with the higher hash, becomes verified.
 
 It is possible for a MeritHolder who votes on competing Entries at the same index to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting an Entry's verification. There are multiple ways to prevent this and handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Entries at an index, it will wait for the index to default, not allowing for verification via Verifications alone.
 
@@ -103,6 +103,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 ### Violations in Meros
 
 - Meros's Merit Holder's Merkle trees are created using the hash of the Entry verified in the Verification (the only supported Element).
+- Meros counts Verifications which were never archived.
 - Meros doesn't support defaulting.
 - Meros doesn't support Verifications with 'invalid' hashes.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
