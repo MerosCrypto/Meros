@@ -1,8 +1,8 @@
 # Consensus
 
-"Consensus" is a DAG, similarly structured to the Lattice, containing Verifications, MeritRemovals, Difficulty Updates, and Gas Price sets. The reason it's called Consensus is because even though the Blockchain has the final say, the Blockchain solely distributes Merit (used to weight Consensus) and archives Elements from the Consensus layer.
+"Consensus" is a DAG, specifically a Block Lattice, containing Verifications, MeritRemovals, Difficulty Updates, and Gas Price sets. The reason it's called Consensus is because even though the Blockchain has the final say, the Blockchain solely distributes Merit (used to weight Consensus), archives Elements from the Consensus layer, and mints Meris.
 
-"Consensus" is made up of MeritHolders (Merkle tree + Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it, except in the case of a MeritRemoval. MeritHolders are trusted to always have one Element per nonce, unlike Accounts. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
+"Consensus" is made up of MeritHolders (Merkle tree + Element array), indexed by BLS Public Keys. Only the key pair behind a MeritHolder can add an Element to it, except in the case of a MeritRemoval. MeritHolders are trusted to always have one Element per nonce. If a MeritHolder ever has multiple Elements per nonce, they lose all their Merit.
 
 Every Element has the following fields:
 
@@ -25,15 +25,15 @@ The Merkle tree each MeritHolder has uses Blake2b-384 as a hash algorithm and co
 
 ### Verification
 
-A Verification is a MeritHolder staking their Merit behind an Entry and approving it. Once an Entry has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for an Entry can be archived. If a Verification isn't archived by the end of these 6 Blocks, it should not be counted towards the Entry's Merit. An Entry can also be verified through a process known as "defaulting". Once an index is mentioned in a Block, if five more Blocks pass without an Entry at that index obtaining the needed Merit, the Entry with the most Merit at that index, which is also mentioned in a Block, or if there's a tie, the Entry with the higher hash, becomes verified after the next Checkpoint.
+A Verification is a MeritHolder staking their Merit behind a Transaction and approving it. Once a Transaction has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for a Transaction can be archived. If a Verification isn't archived by the end of these 6 Blocks, it should not be counted towards the Transaction's Merit. a Transaction can also be verified through a process known as "defaulting". Once an input is used in a Transaction mentioned in a Block, if five more Blocks pass without a Transaction using that input obtaining the needed Merit, the Transaction with the most Merit which uses that input, which is also mentioned in a Block, or if there's a tie, the Transaction with the higher hash, becomes verified after the next Checkpoint.
 
-It is possible for a MeritHolder who votes on competing Entries at the same index to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting an Entry's verification. There are multiple ways to prevent this and handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Entries at an index, it will wait for the index to default, not allowing for verification via Verifications alone.
+It is possible for a MeritHolder who votes on competing Transactions using the same input to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting a Transaction's verification. There are multiple ways to prevent this and handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Transactions sharing an input, it will wait for a Transaction to default, not allowing for verification via Verifications alone.
 
 They have the following fields:
 
-- hash: Hash of the Entry verified.
+- hash: Hash of the Transaction verified.
 
-Verifications can be of any hash. If the node locates the specified Entry, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Entry. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Entry. This enables pruning of unverified competing Entries.
+Verifications can be of any hash. If the node locates the specified Transaction, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Transaction. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Transaction. This enables pruning of unverified competing Transactions.
 
 `Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "verification".
 
@@ -43,7 +43,7 @@ A SendDifficulty is a MeritHolder voting to update the difficulty of the spam fi
 
 The 10,000 Merit limit creates a maximum of 525 votes. The multiple votes per MeritHolder means MeritHolders with more Merit get more power. The median means that if the difficulty is 10, and a MeritHolder wants it to be 9, they can't game the system by voting for a radically lower difficulty, like they could with an average.
 
-When the difficulty is lowered, there's a chance Entries based on the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Entries based on the old difficulty may still be accepted by nodes who have yet to update. The first scenario adds a delay to the system, and adding a Block will catch all the nodes up. The second scenario risks rewinding Entries. Therefore, if an Entry doesn't beat the spam filter, but does still get the needed Verifications to become verified, it's still valid.
+When the difficulty is lowered, there's a chance Transactions based on the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Transactions based on the old difficulty may still be accepted by nodes who have yet to update. The first scenario adds a delay to the system, and adding a Block will catch all the nodes up. The second scenario risks rewinding Transactions. Therefore, if a Transaction doesn't beat the spam filter, but does still get the needed Verifications to become verified, it's still valid.
 
 In the case no SendDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "AA" bytes.
 
@@ -67,7 +67,7 @@ They have the following fields:
 
 ### GasPrice
 
-Unlock Entries execute MerosScript. Each MerosScript operation has a different amount of "gas" required to be executed. In order to reward MeritHolders for executing MerosScipt, the sender of the Unlock must pay `gasPrice * gas` in Meros.
+Unlock Transactions execute MerosScript. Each MerosScript operation has a different amount of "gas" required to be executed. In order to reward MeritHolders for executing MerosScipt, the sender of the Unlock must pay `gasPrice * gas` in Meros.
 
 A GasPrice is a MeritHolder voting to update the gasPrice variable. The way the gasPrice is determined is the exact same as the way the spam filters determine their difficulty.
 
@@ -79,7 +79,7 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Entries, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned once the MeritRemoval is included in a Block. It should be noted if a MeritHolder verifies competing Entries, those competing Entries can no longer be pruned.
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Transactions, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned once the MeritRemoval is included in a Block. It should be noted if a MeritHolder verifies competing Transactions, those competing Transactions can no longer be pruned.
 
 The creation of a MeritRemoval causes the MeritHolder's Merit to exit the system, so their Merit no longer affects the amount of live Merit in the system. This is further described in the Merit documentation.
 
@@ -102,7 +102,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 ### Violations in Meros
 
-- Meros's Merit Holder's Merkle trees are created using the hash of the Entry verified in the Verification (the only supported Element).
+- Meros's Merit Holder's Merkle trees are created using the hash of the Transaction verified in the Verification (the only supported Element).
 - Meros counts Verifications which were never archived.
 - Meros doesn't support defaulting.
 - Meros doesn't support Verifications with 'invalid' hashes.

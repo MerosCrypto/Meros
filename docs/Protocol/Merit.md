@@ -1,4 +1,4 @@
-# Merit
+Transactions# Merit
 
 Merit is a blockchain used to:
 
@@ -68,7 +68,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 - nonce must be equivalent to the current Blockchain height.
 - last must be equivalent to the hash of the current tail Block.
-- time must be greater than the current Block’s time.
+- time must be greater tha The current Block’s time.
 - time must be less than 20 minutes into the future.
 - hash must beat the current difficulty.
 
@@ -95,9 +95,9 @@ BLSSignature aggregate = signatures.aggregate()
 ```
 
 - records doesn’t contain multiple records for a single key.
-- records doesn’t have a record with a nonce lower than the previous record for the same key.
+- records doesn’t have a record with a nonce lower tha The previous record for the same key.
 - Every record in records has a Merkle tree hash equivalent to the Merkle tree hash for the mentioned key at the mentioned nonce (as described in the Consensus documentation).
-- Every Entry verified in Verifications archived in this Block has all predecessors on the same Account mentioned in a past Block or in this Block.
+- Every Transaction verified in Verifications archived in this Block has all inputs mentioned in a past Block or in this Block.
 - Every miner has an unique and valid key.
 - Every miner has an amount greater than or equal to 1.
 - The total of every miner’s amount equals 100.
@@ -108,13 +108,13 @@ If the Block is valid, it's added, triggering two events. The first event is the
 
 On Block addition, every miner in the Block's miners get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements, which get archived in a Block, for an entire Checkpoint period, their Merit is no longer live. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
 
-Adding a Block also creates a new Epoch. Epochs keep track of who verified an Entry. Every Entry that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Entry wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Entries which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
+Adding a Block also creates a new Epoch. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Transaction wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
 
 In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
 
 ```
-for entry in epoch:
-    for verifier of epoch[entry]:
+for tx in epoch:
+    for verifier of epoch[tx]:
         scores[verifier] += 1
 
 for holder in scores:
@@ -139,7 +139,7 @@ Every Block where the remainder of the BlockHeader's nonce divided by 5 is 0 has
 
 Even with Checkpoints, Blockchain reorganizations can happen if a different, valid chain has a higher cumulative difficulty. In the case the cumulative difficulties are the same, the Blockchain whose tail Block has the higher hash is the proper Blockchain.
 
-Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace an Entry via chain reorganization and defaulting manipulation. An Entry can be replaced by having it verified via normal operation, then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Entry default. Once the Entry defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Entry has a Checkpoint during the time it takes to default, attackers cannot use a momentary hash power surge to force an Entry to be verified.
+Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace a Transaction via chain reorganization and defaulting manipulation. A Transaction can be replaced by having it verified via normal operation, then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Transaction default. Once the Transaction defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Transaction has a Checkpoint during the time it takes to default, attackers cannot use a momentary hash power surge to force a Transaction to be verified.
 
 `Checkpoint` has a variable message length; the 48-byte Block hash, 4-byte amount of signers, every signer's 96-byte BLS Public Key, and the 96-byte aggregate signature.
 

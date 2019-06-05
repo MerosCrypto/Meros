@@ -77,13 +77,13 @@ proc syncEntry*(
 
     #Send the request.
     try:
-        await client.send(newMessage(MessageType.EntryRequest, hash.toString()))
+        await client.send(newMessage(MessageType.TransactionRequest, hash.toString()))
     except SocketError as e:
         fcRaise e
     except ClientError as e:
         fcRaise e
     except Exception as e:
-        doAssert(false, "Sending an `EntryRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        doAssert(false, "Sending an `TransactionRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
     var msg: Message
@@ -94,7 +94,7 @@ proc syncEntry*(
     except ClientError as e:
         fcRaise e
     except Exception as e:
-        doAssert(false, "Receiving the response to an `EntryRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        doAssert(false, "Receiving the response to an `TransactionRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Parse the response.
     try:
@@ -106,15 +106,15 @@ proc syncEntry*(
                 raise newException(DataMissing, "Client didn't have the requested Entry.")
 
             else:
-                raise newException(InvalidMessageError, "Client didn't respond properly to our EntryRequest.")
+                raise newException(InvalidMessageError, "Client didn't respond properly to our TransactionRequest.")
     except ValueError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a ValueError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
     except ArgonError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a ArgonError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a ArgonError: " & e.msg)
     except BLSError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a BLSError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a BLSError: " & e.msg)
     except EdPublicKeyError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our EntryRequest, as pointed out by a EdPublicKeyError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a EdPublicKeyError: " & e.msg)
     except InvalidMessageError as e:
         fcRaise e
     except DataMissing as e:

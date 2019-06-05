@@ -1,0 +1,113 @@
+# Transactions
+
+Transactions is a DAG made up of Transactions, each defining inputs and outputs, with an additional two properties of sendDifficulty and dataDifficulty (384 bit hashes set via methods described in the Consensus documentation).
+
+Every Transaction has the following fields:
+
+- descendant: Transaction sub-type.
+- inputs: Array of `(txHash, txOutputIndex)` which feed this Transaction.
+- outputs: Array of `(key, amount)` which were created by this Transaction.
+- hash: Blake2b-384 hash of the Transaction; each sub-type hashes differently.
+- signature: Signature of the hash signed by the sender.
+
+The Transaction sub-types are as follows:
+
+- Mint
+- Claim
+- Send
+- Data
+- Lock
+- Unlock
+
+When a new Transaction is received via a `Send`, `Data`, `Lock`, or `Unlock` message, it's be added to the Transactions DAG, as long as the checks imposed by the sub-type pass.
+
+### Mint
+
+Mint Transactions are locally created when Blocks are added to the Blockchain, as described in the Merit documentation, and are never sent over the network. They have the following additional field:
+
+- mintNonce: The nonce for this Mint. The first has a nonce of 0, the second has a nonce of 1...
+
+Mints have no inputs, yet are considered to be created by "minter". It has a single output, whose key is a BLS Public Key and whose amount is the amount being minted.
+
+The hash is defined as `Blake2b-384("\0" + mintNonce + output.key + output.amount)`, where mintNonce takes up 4 bytes, output's key takes up 48 bytes and output's amount 8 bytes.
+
+### Claim
+
+Claim Transactions are created in response to a Mint, and have the following additional field:
+
+- bls: BLS Signature that proves the Merit Holder which earned the newly minted Meros wants this person to receive their reward.
+
+Claims have a single input; the hash of the Mint being claimed, which cannot have been previously claimed. The Claim's singular output is an Ed25519 Public Key with the amount of the Mint's output. The specified key does not need to be a valid Ed25519 Public Key.
+
+bls must be the BLS signature produced by the BLS Private Key for the Mint's output's key signing `"\1" + mint.hash + claim.output.key`, where mint.hash takes up 48 bytes and claim.output.key takes up 32 bytes.
+
+Claim hashes are defined as `Blake2b-384("\1" + bls)`, where bls takes up 96 bytes.
+
+Claim's signature field goes unused.
+
+`Claim` has a message length of 184 bytes; the 48-byte input, 32-byte output's key, 8-byte output's amount, and the 96-byte BLS signature.
+
+### Send
+
+Send Transactions have the following additional field:
+
+- proof: Work that proves this isn't spam.
+
+Every transaction input must be either a Claim or a Send, where the specified output is to the sender. If the specified outputs are to different keys, the sender is the MuSig Public Key, where `Hagg = SHA2-512("AGG" || data)`, created out of the unique keys. No transaction outputs specified as inputs must have been used as inputs before.
+
+Every output's key must be an Ed25519 Public Key. The specified key does not need to be a valid Ed25519 Public Key. The sum of the amount of every output must be equal to the sum of the amount of every input.
+
+Send hashes are defined as `Blake2b-384("\2" + inputs[0] + ... + inputs[n] + outputs[0] + ... outputs[n])`, where every input takes up 49 bytes (the 48-byte hash and 1-byte output index) and every output takes up 40 bytes (the 32-byte key and 8-byte amount).
+
+Send's signature must be the signature produced by the sender signing the hash.
+
+The proof must satisfy the following check, where sendDifficulty is the Sends' spam filter's difficulty (described in the Consensus documentation):
+
+```
+Argon2d(
+    iterations = 1,
+    memory = 8,
+    parallelism = 1
+    data = hash,
+    salt = proof with no leading 0s
+) > sendDifficulty
+```
+
+`Send` has a variable message length; the 1-byte amount of inputs, the inputs (each 49 bytes), 1-byte amount of outputs, the outputs (each 40 bytes), the 64-byte Ed25519 signature, and the 4-byte proof.
+
+### Data
+
+Data Transactions have the following fields:
+
+- data: The Data to store in the Transaction.
+- proof: Work that proves this isn't spam.
+
+Data Transactions are sequential. The first Data Transaction a sender creates has a single input of their Ed25519 Public Key, left-padded with 16 zeroed out bytes. From then on, Data Transactions always have a single input of the previous Data Transaction created by that sender. Data Transactions' input's index and outputs are not used.
+
+Data hashes are defined as `Blake2b-384("\3" + input.txHash + data)`, where input.txHash takes up 48 bytes and data variable bytes.
+
+Data's signature must be the signature produced by the sender signing the hash.
+
+The data must be less than 256 bytes long (enforced by only providing a single byte to store the data length).
+
+The proof must satisfy the following check, where dataDifficulty is the Datas' spam filter's difficulty (described in the Consensus documentation):
+
+```
+Argon2d(
+    iterations = 1,
+    memory = 8,
+    parallelism = 1
+    data = hash,
+    salt = proof with no leading 0s
+) > dataDifficulty
+```
+
+`Data` has a variable message length; the 48-byte input, the 1-byte data length, the variable-byte data, the 64-byte Ed25519 signature, and the 4-byte proof.
+
+### Lock
+
+### Unlock
+
+### Violations in Meros
+
+- Meros uses a completely different DAG for Transactions_.

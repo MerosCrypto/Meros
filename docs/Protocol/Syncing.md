@@ -14,12 +14,10 @@ During syncing, the syncer can only send:
 
 - `ElementRequest`
 
-- `EntryRequest`
+- `TransactionRequest`
 
 - `GetBlockHash`
 - `GetVerifierHeight`
-- `GetAccountHeight`
-- `GetHashesAtIndex`
 
 - `SignedElementRequest`
 
@@ -43,15 +41,12 @@ The syncee can only send:
 
 - `Claim`
 - `Send`
-- `Receive`
 - `Data`
 - `Lock`
 - `Unlock`
 
 - `BlockHash`
 - `VerifierHeight`
-- `AccountHeight`
-- `HashesAtIndex`
 
 - `SignedVerification`
 - `SignedSendDifficulty`
@@ -83,9 +78,9 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 `ElementRequest` has a message length of 52 bytes; the Verifier's 48-byte BLS Public Key and the Element's 4-byte nonce. The expected response is a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element, without its BLS Signature.
 
-### EntryRequest
+### TransactionRequest
 
-`EntryRequest` has a message length of 48 bytes; the Entry's 48-byte hash. The expected response is a `Claim`, `Send`, `Receive`, or `Data` containing the requested Entry. If a Mint has the requested hash, the syncer sends `DataMissing`.
+`TransactionRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `Claim`, `Send`, or `Data` containing the requested Transaction. If a Mint has the requested hash, the syncer sends `DataMissing`.
 
 ### GetBlockHash and BlockHash
 
@@ -94,14 +89,6 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 ### GetVerifierHeight and VerifierHeight
 
 `GetVerifierHeight` has a message length of 48 bytes; the Verifier's 48-byte BLS Public Key. The expected response is a `VerifierHeight`, containing the height of the specified Verifier. `VerifierHeight` has a message length of 52 bytes; the Verifier's 48-byte BLSPublicKey and the Verifier's 4-byte height.
-
-### GetAccountHeight and AccountHeight
-
-`GetAccountHeight` has a message length of 32 bytes; the Account's 32-byte Ed25519 Public Key. The expected response is an `AccountHeight`, containing the height of the specified Account. `AccountHeight` has a message length of 36 bytes; the Account's 32-byte Ed25519 Public Key and the 4-byte height.
-
-### GetHashesAtIndex and HashesAtIndex
-
-`GetHashesAtIndex` has a message length of 36 bytes; the Account's 32-byte Ed25519 Public Key and 4-byte nonce. The expected response is a `HashesAtIndex`, which has a variable message length; the 1-byte amount of hashes included in this message and the 48-byte hashes of every potential Entry at the specified index. If there's a confirmed Entry at the specified index, it is the only potential Entry. If there are more than 4 Entries at the specified index, the response can only contain the 4 Entries with the most Merit behind them. In the case of a tie at the 4th position, the node has discretion over which Entry to send at the 4th position.
 
 ### SignedElementRequest
 
@@ -120,7 +107,5 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 - Meros doesn't support the `PeerRequest` and `Peers` message types.
 - Meros doesn't support the `CheckpointRequest` message type.
 - Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
-- Meros doesn't support the `GetAccountHeight` and `AccountHeight` message types.
-- Meros doesn't support the `GetHashesAtIndex` and `HashesAtIndex` message types.
 - Meros's Consensus DAG only supports Verification and SignedVerifications. Therefore, it will only answer an `ElementRequest` with one of the two.
 - Meros doesn't support the `SignedElementRequest` message type.
