@@ -65,7 +65,7 @@ proc recv*(
             size = HASH_LEN
         of MessageType.ElementRequest:
             size = BLS_PUBLIC_KEY_LEN + INT_LEN
-        of MessageType.EntryRequest:
+        of MessageType.TransactionRequest:
             size = HASH_LEN
         of MessageType.GetBlockHash:
             size = INT_LEN
@@ -80,8 +80,6 @@ proc recv*(
             size = CLAIM_LEN
         of MessageType.Send:
             size = SEND_LEN
-        of MessageType.Receive:
-            size = RECEIVE_LEN
         of MessageType.Data:
             size = DATA_PREFIX_LEN
 

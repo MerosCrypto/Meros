@@ -274,14 +274,6 @@ proc sync*(
                             except DataExists:
                                 continue
 
-                        of EntryType.Receive:
-                            try:
-                                network.mainFunctions.lattice.addReceive(cast[Receive](entry))
-                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
-                                raise newException(InvalidMessageError, "Failed to add the Claim.")
-                            except DataExists:
-                                continue
-
                         of EntryType.Data:
                             try:
                                 network.mainFunctions.lattice.addData(cast[Data](entry))

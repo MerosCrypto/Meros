@@ -215,7 +215,7 @@ proc newNetwork*(
                 except Exception as e:
                     doAssert(false, "Sending a Verification in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            of MessageType.EntryRequest:
+            of MessageType.TransactionRequest:
                 #Declare the Entry and a MessageType used to send it with.
                 var
                     entry: Entry
@@ -225,7 +225,7 @@ proc newNetwork*(
                     #Try to get the Entry.
                     entry = mainFunctions.lattice.getEntryByHash(msg.message.toHash(384))
                 except ValueError as e:
-                    raise newException(ClientError, "`EntryRequest` contained an invalid hash: " & e.msg)
+                    raise newException(ClientError, "`TransactionRequest` contained an invalid hash: " & e.msg)
                 except IndexError:
                     #If that failed, return DataMissing.
                     try:
@@ -240,7 +240,7 @@ proc newNetwork*(
                     except ClientError as e:
                         fcRaise e
                     except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 #Verify we didn't get a Mint, which should not be transmitted.
                 if entry.descendant == EntryType.Mint:
@@ -257,7 +257,7 @@ proc newNetwork*(
                     except ClientError as e:
                         fcRaise e
                     except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 #If we did get an Entry, that wasn't a Mint, set the MessageType.
                 case entry.descendant:
@@ -267,8 +267,6 @@ proc newNetwork*(
                         msgType = MessageType.Claim
                     of EntryType.Send:
                         msgType = MessageType.Send
-                    of EntryType.Receive:
-                        msgType = MessageType.Receive
                     of EntryType.Data:
                         msgType = MessageType.Data
 
@@ -288,7 +286,7 @@ proc newNetwork*(
                 except ClientError as e:
                     fcRaise e
                 except Exception as e:
-                    doAssert(false, "Sending an Entry in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                    doAssert(false, "Sending an Entry in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.GetBlockHash:
                 #Grab our chain height and parse the requested nonce.
