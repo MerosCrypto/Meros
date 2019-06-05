@@ -29,7 +29,7 @@ Mint Transactions are locally created when Blocks are added to the Blockchain, a
 
 Mints have no inputs, yet are considered to be created by "minter". It has a single output, whose key is a BLS Public Key and whose amount is the amount being minted.
 
-The hash is defined as `Blake2b-384("\0" + mintNonce + output.key + output.amount)`, where mintNonce takes up 4 bytes, output's key takes up 48 bytes and output's amount 8 bytes.
+The hash is defined as `Blake2b-384("\0" + mintNonce + output.key + output.amount)`, where mintNonce takes up 4 bytes, the output key 48 bytes, and the output amount 8 bytes.
 
 ### Claim
 
@@ -37,15 +37,15 @@ Claim Transactions are created in response to a Mint, and have the following add
 
 - bls: BLS Signature that proves the Merit Holder which earned the newly minted Meros wants this person to receive their reward.
 
-Claims have a single input; the hash of the Mint being claimed, which cannot have been previously claimed. The Claim's singular output is an Ed25519 Public Key with the amount of the Mint's output. The specified key does not need to be a valid Ed25519 Public Key.
+Claim inputs are hashes of Mints which have yet to be claimed. As Mints have a singular output, the input index is not used. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the Mint amounts. The specified key does not need to be a valid Ed25519 Public Key.
 
-bls must be the BLS signature produced by the BLS Private Key for the Mint's output's key signing `"\1" + mint.hash + claim.output.key`, where mint.hash takes up 48 bytes and claim.output.key takes up 32 bytes.
+bls must be the BLS signature produced by Mint's designated claimee signing `"\1" + mint.hash + claim.output.key`, where mint.hash takes up 48 bytes and claim.output.key takes up 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key created from every unique BLS Public Key.
 
 Claim hashes are defined as `Blake2b-384("\1" + bls)`, where bls takes up 96 bytes.
 
 Claim's signature field goes unused.
 
-`Claim` has a message length of 184 bytes; the 48-byte input, 32-byte output's key, 8-byte output's amount, and the 96-byte BLS signature.
+`Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 48 bytes), the 32-byte output key, the 8-byte output amount, and the 96-byte BLS signature.
 
 ### Send
 
