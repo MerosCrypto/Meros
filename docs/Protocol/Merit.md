@@ -68,7 +68,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 - nonce must be equivalent to the current Blockchain height.
 - last must be equivalent to the hash of the current tail Block.
-- time must be greater tha The current Block’s time.
+- time must be greater than the current Block’s time.
 - time must be less than 20 minutes into the future.
 - hash must beat the current difficulty.
 
@@ -95,7 +95,7 @@ BLSSignature aggregate = signatures.aggregate()
 ```
 
 - records doesn’t contain multiple records for a single key.
-- records doesn’t have a record with a nonce lower tha The previous record for the same key.
+- records doesn’t have a record with a nonce lower than the previous record for the same key.
 - Every record in records has a Merkle tree hash equivalent to the Merkle tree hash for the mentioned key at the mentioned nonce (as described in the Consensus documentation).
 - Every Transaction verified in Verifications archived in this Block has all inputs mentioned in a past Block or in this Block.
 - Every miner has an unique and valid key.
