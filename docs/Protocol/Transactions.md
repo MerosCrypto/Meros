@@ -19,17 +19,17 @@ The Transaction sub-types are as follows:
 - Lock
 - Unlock
 
-When a new Transaction is received via a `Send`, `Data`, `Lock`, or `Unlock` message, it's be added to the Transactions DAG, as long as the checks imposed by the sub-type pass.
+When a new Transaction is received via a `Claim`, `Send`, `Data`, `Lock`, or `Unlock` message, it's added to the Transactions DAG, as long as it has at least one input and the checks imposed by the sub-type pass.
 
 ### Mint
 
 Mint Transactions are locally created when Blocks are added to the Blockchain, as described in the Merit documentation, and are never sent over the network. They have the following additional field:
 
-- mintNonce: The nonce for this Mint. The first has a nonce of 0, the second has a nonce of 1...
+- nonce: The nonce for this Mint. The first has a nonce of 0, the second has a nonce of 1...
 
 Mints have no inputs, yet are considered to be created by "minter". It has a single output, whose key is a BLS Public Key and whose amount is the amount being minted.
 
-The hash is defined as `Blake2b-384("\0" + mintNonce + output.key + output.amount)`, where mintNonce takes up 4 bytes, the output key 48 bytes, and the output amount 8 bytes.
+The hash is defined as `Blake2b-384("\0" + nonce + output.key + output.amount)`, where nonce takes up 4 bytes, the output key 48 bytes, and the output amount 8 bytes.
 
 ### Claim
 
@@ -45,7 +45,7 @@ Claim hashes are defined as `Blake2b-384("\1" + bls)`, where bls takes up 96 byt
 
 Claim's signature field goes unused.
 
-`Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 48 bytes), the 32-byte output key, the 8-byte output amount, and the 96-byte BLS signature.
+`Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 48 bytes), the 32-byte output key, and the 96-byte BLS signature.
 
 ### Send
 
@@ -53,7 +53,7 @@ Send Transactions have the following additional field:
 
 - proof: Work that proves this isn't spam.
 
-Every transaction input must be either a Claim or a Send, where the specified output is to the sender. If the specified outputs are to different keys, the sender is the MuSig Public Key, where `Hagg = SHA2-512("AGG" || data)`, created out of the unique keys. No transaction outputs specified as inputs must have been used as inputs before.
+Every transaction input must be either a Claim or a Send, where the specified output is to the sender. If the specified outputs are to different keys, the sender is the MuSig Public Key, where `Hagg = SHA2-512("MR_AGG" || data)`, created out of the unique keys. No transaction outputs specified as inputs must have been used as inputs before.
 
 Every output's key must be an Ed25519 Public Key. The specified key does not need to be a valid Ed25519 Public Key. The sum of the amount of every output must be equal to the sum of the amount of every input.
 
