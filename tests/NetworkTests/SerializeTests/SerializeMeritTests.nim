@@ -1,6 +1,5 @@
-#Test all the Merit Serialize/Parse functions.
+#Merit Serialization Tests.
 
-#Merit Serialize.
 import Merit/SerializeDifficultyTest
 import Merit/SerializeRecordsTest
 import Merit/SerializeMinersTest

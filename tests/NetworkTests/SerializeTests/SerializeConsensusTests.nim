@@ -1,5 +1,4 @@
-#Test all the Consensus Serialize/Parse functions.
+#Consensus Serialization Tests.
 
-#Consensus Serialize.
 import Consensus/SerializeVerificationTest
 import Consensus/SerializeSignedVerificationTest
