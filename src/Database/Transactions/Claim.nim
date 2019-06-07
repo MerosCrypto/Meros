@@ -1,39 +1,58 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Transaction lib.
-import Transaction
+#Hash lib.
+import ../../lib/Hash
+
+#Wallet libs.
+import ../../Wallet/Wallet
+import ../../Wallet/MinerWallet
 
 #Claim object.
 import objects/ClaimObj
 export ClaimObj
 
+#Mint object.
+import objects/MintObj
+
 #Create a new Claim.
-func newClaim*(
-    inputs: seq[Input],
-    output: ClaimOutput
+proc newClaim*(
+    mints: seq[Mint],
+    output: EdPublicKey
 ): Claim {.forceCheck: [
     ValueError
 ].} =
-    #Verify the inputs length.
-    if inputs.len == 0:
-        raise newException(ValueError, "Claim doesn't have any inputs.")
+    #Verify the mints length.
+    if mints.len == 0:
+        raise newException(ValueError, "Claim doesn't have any mints.")
 
     #Create the result.
     result = newClaimObj(
-        output,
-        amount
+        mints,
+        output
     )
 
     #Hash it.
-    discard result.hash
+    try:
+        discard
+        #result.hash = Blake384(result.serializeHash())
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)
 
 #Sign a Claim.
 proc sign*(
     wallet: MinerWallet,
     claim: Claim
-) {.forceCheck: [].} =
+) {.forceCheck: [
+    BLSError
+].} =
     var signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
-    for i in 0 ..< signatures.len:
-        signatures[i] = wallet.sign("\1" + claim.inputs[i].hash.toString() + claim.outputs[0].key.toString())
-    claim.bls = signatures.aggregate()
+    try:
+        for i in 0 ..< signatures.len:
+            signatures[i] = wallet.sign("\1" & claim.inputs[i].hash.toString() & cast[SendOutput](claim.outputs[0]).key.toString())
+        try:
+            claim.bls = signatures.aggregate()
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when signing a Claim: " & e.msg)
+    except BLSError as e:
+        fcRaise e

@@ -6,6 +6,7 @@ import ../../../lib/Hash
 
 #Transaction object.
 import TransactionObj
+export TransactionObj
 
 #Finals lib.
 import finals
@@ -24,12 +25,13 @@ func newSendObj*(
     outputs: seq[SendOutput]
 ): Send {.forceCheck: [].} =
     #Sreate the Send.
-    result = Send()
+    result = Send(
+        inputs: cast[seq[Input]](inputs),
+        outputs: cast[seq[Output]](outputs)
+    )
 
     #Set the Transaction fields.
     try:
         result.descendant = TransactionType.Send
-        result.inputs = inputs
-        result.outputs = outputs
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)

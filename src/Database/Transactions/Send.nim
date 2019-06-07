@@ -1,15 +1,18 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Transaction lib.
-import Transaction
+#Util lib.
+import ../../lib/Util
+
+#Hash lib.
+import ../../lib/Hash
 
 #Send object.
 import objects/SendObj
 export SendObj
 
 #Create a new Send.
-func newSend*(
+proc newSend*(
     inputs: seq[SendInput],
     outputs: seq[SendOutput]
 ): Send {.forceCheck: [
@@ -19,25 +22,18 @@ func newSend*(
     if inputs.len == 0:
         raise newException(ValueError, "Send doesn't have any inputs.")
 
-    #Verify the amounts are the same.
-    var
-        inputAmount: uint64 = 0
-        outputAmount: uint64 = 0
-    for input in inputs:
-        inputAmount += input.amount
-    for output in outputs:
-        outputAmount += output.amount
-    if inputAmount != outputAmount:
-        raise newException(ValueError, "Send doesn't spend the amount it can spend.")
-
     #Create the result.
     result = newSendObj(
-        output,
-        amount
+        inputs,
+        outputs
     )
 
     #Hash it.
-    discard result.hash
+    try:
+        discard
+        #result.hash = Blake384(result.serializeHash())
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)
 
 #Mine the Send.
 proc mine*(
