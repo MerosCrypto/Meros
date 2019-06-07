@@ -8,7 +8,7 @@ Meros requires:
 - Make (for LMDB)
 - CMake (for BLS)
 
-- Nim devel
+- Nim 0.20.0
 - Nimble
 
 - Chia's BLS library
@@ -19,7 +19,7 @@ To install the needed apt packages: `sudo apt-get install gcc g++ make cmake cur
 To install Nim/Nimble:
 ```
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
-choosenim devel
+choosenim stable
 ```
 
 To install the Nimble packages: `nimble install https://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals stint nimcrypto`
