@@ -131,7 +131,7 @@ proc receive(
             nonce
         )
     except AddressError as e:
-        doAssert(false, "Couldn't sign the Receive we created due to an AddressError (which means it failed to serialize): " & e.msg)
+        returnError()
 
     #Sign the Receive.
     rpc.functions.personal.signReceive(recv)
