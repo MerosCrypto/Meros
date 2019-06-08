@@ -7,9 +7,15 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
+#Wallet lib.
+import ../../Wallet/Wallet
+
 #Send object.
 import objects/SendObj
 export SendObj
+
+#Serialization lib.
+import ../../Network/Serialize/Transactions/SerializeSend
 
 #Create a new Send.
 proc newSend*(
@@ -19,10 +25,13 @@ proc newSend*(
     ValueError
 ].} =
     #Verify the inputs length.
-    if inputs.len == 0:
-        raise newException(ValueError, "Send doesn't have any inputs.")
+    if inputs.len < 1 or 255 < inputs.len:
+        raise newException(ValueError, "Send has too little or too many inputs.")
+    #Verify the outputs length.
+    if outputs.len < 1 or 255 < outputs.len:
+        raise newException(ValueError, "Send has too little or too many outputs.")
 
-    #Create the result.
+    #Create the Send.
     result = newSendObj(
         inputs,
         outputs
@@ -30,23 +39,27 @@ proc newSend*(
 
     #Hash it.
     try:
-        discard
-        #result.hash = Blake384(result.serializeHash())
+        result.hash = Blake384(result.serializeHash())
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)
+
+#Sign a Send.
+proc sign*(
+    wallet: Wallet,
+    send: Send
+) {.forceCheck: [].} =
+    try:
+        send.signature = wallet.sign(send.hash.toString())
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when signing a Send: " & e.msg)
 
 #Mine the Send.
 proc mine*(
     send: Send,
     networkDifficulty: Hash[384]
 ) {.forceCheck: [
-    ValueError,
     ArgonError
 ].} =
-    #Make sure the hash was set.
-    if not send.hashed:
-        raise newException(ValueError, "Send wasn't hashed.")
-
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: int = 0
