@@ -8,12 +8,15 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 import ../../Wallet/MinerWallet
 
+#Mint object.
+import objects/MintObj
+
 #Claim object.
 import objects/ClaimObj
 export ClaimObj
 
-#Mint object.
-import objects/MintObj
+#Serialization lib.
+import ../../Network/Serialize/Transactions/SerializeClaim
 
 #Create a new Claim.
 proc newClaim*(
@@ -23,21 +26,19 @@ proc newClaim*(
     ValueError
 ].} =
     #Verify the mints length.
-    if mints.len == 0:
-        raise newException(ValueError, "Claim doesn't have any mints.")
+    if mints.len < 1 or 255 < mints.len:
+        raise newException(ValueError, "Claim has too little or too many Mints.")
+
+    #Convert the inputs.
+    var inputs: seq[Input] = newSeq[Input](mints.len)
+    for i in 0 ..< mints.len:
+        inputs[i] = newInput(mints[i].hash)
 
     #Create the result.
     result = newClaimObj(
-        mints,
+        inputs,
         output
     )
-
-    #Hash it.
-    try:
-        discard
-        #result.hash = Blake384(result.serializeHash())
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)
 
 #Sign a Claim.
 proc sign*(
@@ -46,13 +47,26 @@ proc sign*(
 ) {.forceCheck: [
     BLSError
 ].} =
-    var signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
+    #Create a seq of signatures.
+    var
+        #Final signature.
+        signature: BLSSignature
+        #Signature of each input.
+        signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
+
     try:
+        #Sign every input.
         for i in 0 ..< signatures.len:
             signatures[i] = wallet.sign("\1" & claim.inputs[i].hash.toString() & cast[SendOutput](claim.outputs[0]).key.toString())
-        try:
-            claim.bls = signatures.aggregate()
-        except FinalAttributeError as e:
-            doAssert(false, "Set a final attribute twice when signing a Claim: " & e.msg)
+
+        #Aggregate the input signatures.
+        signature = signatures.aggregate()
     except BLSError as e:
         fcRaise e
+
+    #Set the signature and hash the Claim.
+    try:
+        claim.bls = signature
+        claim.hash = Blake384(claim.serializeHash())
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)

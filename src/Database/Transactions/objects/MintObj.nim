@@ -29,10 +29,7 @@ func newMintObj*(
         inputs: @[],
         outputs: cast[seq[Output]](
             @[
-                newMintOutput(
-                    key,
-                    amount
-                )
+                newMintOutput(key, amount)
             ]
         )
     )

@@ -40,7 +40,6 @@ for s in 0 .. 255:
         uint64(rand(high(int32)))
     )
 
-
     #Serialize it and parse it back.
     reloaded = mint.serialize().parseMint()
 

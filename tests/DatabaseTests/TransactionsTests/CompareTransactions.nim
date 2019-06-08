@@ -30,17 +30,19 @@ proc compare*(
     assert(e1.signature == e2.signature)
     assert(e1.verified == e2.verified)
 
-
     #Test the sub-type fields.
     case e1.descendant:
         of TransactionType.Mint:
             for o in 0 ..< e1.outputs.len:
                 assert(cast[MintOutput](e1.outputs[o]).key == cast[MintOutput](e2.outputs[o]).key)
             assert(cast[Mint](e1).nonce == cast[Mint](e2).nonce)
+
         of TransactionType.Claim:
+            assert(e1.outputs[0].amount == 0)
             for o in 0 ..< e1.outputs.len:
                 assert(cast[SendOutput](e1.outputs[o]).key == cast[SendOutput](e2.outputs[o]).key)
             assert(cast[Claim](e1).bls == cast[Claim](e2).bls)
+        
         of TransactionType.Send:
             for i in 0 ..< e1.inputs.len:
                 assert(cast[SendInput](e1.inputs[i]).nonce == cast[SendInput](e2.inputs[i]).nonce)

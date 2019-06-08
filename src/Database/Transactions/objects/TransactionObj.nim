@@ -31,7 +31,7 @@ finalsd:
             key* {.final.}: EdPublicKey
 
         #Enum of the various Transaction Types.
-        TransactionType* = enum
+        TransactionType* {.pure.} = enum
             Mint = 0,
             Claim = 1,
             Send = 2

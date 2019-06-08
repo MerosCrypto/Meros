@@ -31,7 +31,7 @@ proc parseMint*(
     )
 
     if mintSeq[1].len < 48:
-        raise newException(ValueError, "parseMint not handed enough data to get the mint.")
+        raise newException(ValueError, "parseMint not handed enough data to get the output.")
 
     #Create the Mint.
     try:

@@ -23,26 +23,15 @@ finalsd:
 
 #Claim constructor.
 func newClaimObj*(
-    mints: seq[Mint],
+    inputs: seq[Input],
     output: EdPublicKey
 ): Claim {.forceCheck: [].} =
-    #Create the Claim inputs and output amount.
-    var
-        inputs: seq[Input] = @[]
-        amount: uint64 = 0
-    for mint in mints:
-        result.inputs.add(newInput(mint.hash))
-        amount += mint.outputs[0].amount
-
     #Create the Claim.
     result = Claim(
         inputs: inputs,
         outputs: cast[seq[Output]](
             @[
-                newSendOutput(
-                    output,
-                    amount
-                )
+                newSendOutput(output, 0)
             ]
         )
     )
