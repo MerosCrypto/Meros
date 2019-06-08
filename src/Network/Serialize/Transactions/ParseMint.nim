@@ -20,7 +20,6 @@ import ../SerializeCommon
 proc parseMint*(
     mintStr: string
 ): Mint {.forceCheck: [
-    ValueError,
     BLSError
 ].} =
     #Nonce | Recepient | Meros
@@ -29,9 +28,6 @@ proc parseMint*(
         BLS_PUBLIC_KEY_LEN,
         MEROS_LEN
     )
-
-    if mintSeq[1].len < 48:
-        raise newException(ValueError, "parseMint not handed enough data to get the output.")
 
     #Create the Mint.
     try:

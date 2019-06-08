@@ -73,7 +73,12 @@ func toBinary*(
         #Put the byte in the string.
         result &= char(b)
 
-#Converts a binary string to a number.
+#Converts a binary char/string to a number.
+func fromBinary*(
+    number: char
+): int {.forceCheck: [].} =
+    result = int(number)
+
 func fromBinary*(
     number: string
 ): int {.forceCheck: [].} =

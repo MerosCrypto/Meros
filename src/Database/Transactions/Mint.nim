@@ -20,7 +20,7 @@ proc newMint*(
     key: BLSPublicKey,
     amount: uint64
 ): Mint {.forceCheck: [].} =
-    #Create the result.
+    #Create the Mint.
     result = newMintObj(
         nonce,
         key,

@@ -29,7 +29,7 @@ proc newClaim*(
     if mints.len < 1 or 255 < mints.len:
         raise newException(ValueError, "Claim has too little or too many Mints.")
 
-    #Convert the inputs.
+    #Convert the Claim.
     var inputs: seq[Input] = newSeq[Input](mints.len)
     for i in 0 ..< mints.len:
         inputs[i] = newInput(mints[i].hash)
@@ -69,4 +69,4 @@ proc sign*(
         claim.bls = signature
         claim.hash = Blake384(claim.serializeHash())
     except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)
+        doAssert(false, "Set a final attribute twice when signing a Claim: " & e.msg)

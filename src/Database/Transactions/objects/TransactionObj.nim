@@ -44,8 +44,6 @@ finalsd:
             inputs*: seq[Input]
             #Outputs,
             outputs*: seq[Output]
-            #Hashed or not.
-            hashed* {.final.}: bool
             #Hash.
             hash* {.final.}: Hash[384]
             #Signature.

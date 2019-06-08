@@ -43,10 +43,10 @@ for s in 0 .. 255:
     #Serialize it and parse it back.
     reloaded = mint.serialize().parseMint()
 
+    #Compare the Mints.
+    compare(mint, reloaded)
+
     #Test the serialized versions.
     assert(mint.serialize() == reloaded.serialize())
-
-    #Compare the Mint.
-    compare(mint, reloaded)
 
 echo "Finished the Network/Serialize/Transactions/Mint Test."

@@ -25,13 +25,14 @@ proc parseClaim*(
     EdPublicKeyError,
     BLSError
 ].} =
-    if claimStr.len < 1:
+    #Verify the input length.
+    if claimStr.len < BYTE_LEN:
         raise newException(ValueError, "parseClaim not handed enough data to get the amount of inputs.")
 
-    #InputLen | Input Hashes | Output Ed25519 Key | BLS Signatture
+    #Inputs Length | Input Hashes | Output Ed25519 Key | BLS Signatture
     var claimSeq: seq[string] = claimStr.deserialize(
         BYTE_LEN,
-        ($claimStr[0]).fromBinary() * HASH_LEN,
+        claimStr[0].fromBinary() * HASH_LEN,
         ED_PUBLIC_KEY_LEN,
         BLS_SIGNATURE_LEN
     )

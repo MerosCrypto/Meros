@@ -1,3 +1,10 @@
+#Hash lib.
+import ../../../src/lib/Hash
+
+#Wallet libs.
+import ../../../src/Wallet/Wallet
+import ../../../src/Wallet/MinerWallet
+
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
@@ -25,7 +32,6 @@ proc compare*(
     assert(e1.outputs.len == e2.outputs.len)
     for o in 0 ..< e1.outputs.len:
         assert(e1.outputs[o].amount == e2.outputs[o].amount)
-    assert(e1.hashed == e2.hashed)
     assert(e1.hash == e2.hash)
     assert(e1.signature == e2.signature)
     assert(e1.verified == e2.verified)
@@ -42,7 +48,7 @@ proc compare*(
             for o in 0 ..< e1.outputs.len:
                 assert(cast[SendOutput](e1.outputs[o]).key == cast[SendOutput](e2.outputs[o]).key)
             assert(cast[Claim](e1).bls == cast[Claim](e2).bls)
-        
+
         of TransactionType.Send:
             for i in 0 ..< e1.inputs.len:
                 assert(cast[SendInput](e1.inputs[i]).nonce == cast[SendInput](e2.inputs[i]).nonce)

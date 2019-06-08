@@ -59,10 +59,10 @@ for s in 0 .. 255:
     #Serialize it and parse it back.
     reloaded = claim.serialize().parseClaim()
 
+    #Compare the Claims.
+    compare(claim, reloaded)
+
     #Test the serialized versions.
     assert(claim.serialize() == reloaded.serialize())
-
-    #Compare the Claim.
-    compare(claim, reloaded)
 
 echo "Finished the Network/Serialize/Transactions/Claim Test."
