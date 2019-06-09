@@ -13,7 +13,7 @@ import Modules/SystemModule
 import Modules/PersonalModule
 import Modules/ConsensusModule
 import Modules/MeritModule
-import Modules/LatticeModule
+import Modules/TransactionsModule
 import Modules/NetworkModule
 
 #Async standard lib.
@@ -68,8 +68,8 @@ proc handle(
                 await rpc.consensus(msg, reply)
             of "merit":
                 await rpc.merit(msg, reply)
-            of "lattice":
-                await rpc.lattice(msg, reply)
+            of "transactions":
+                await rpc.transactions(msg, reply)
             of "network":
                 await rpc.network(msg, reply)
             else:

@@ -10,16 +10,16 @@ import ../../../lib/Hash
 #Wallet lib.
 import ../../../Wallet/Wallet
 
-#Lattice lib.
-import ../../../Database/Lattice/Lattice
+#Transactions lib.
+import ../../../Database/Transactions/Transactions
 
 #Message object.
 import ../../../Network/objects/MessageObj
 
 #Serialization libs.
-import ../../../Network/Serialize/Lattice/SerializeSend
-import ../../../Network/Serialize/Lattice/SerializeReceive
-import ../../../Network/Serialize/Lattice/SerializeData
+import ../../../Network/Serialize/Transactions/SerializeSend
+import ../../../Network/Serialize/Transactions/SerializeReceive
+import ../../../Network/Serialize/Transactions/SerializeData
 
 #RPC object.
 import ../objects/RPCObj
@@ -59,7 +59,7 @@ proc getWallet(
         "address": wallet.address
     }
 
-#Create a Send Entry.
+#Create a Send Transaction.
 proc send(
     rpc: RPC,
     address: string,
@@ -87,7 +87,7 @@ proc send(
 
     #Mine the Send.
     try:
-        send.mine(rpc.functions.lattice.getDifficulties().send)
+        send.mine(rpc.functions.transactions.getDifficulties().send)
     except ValueError as e:
         doAssert(false, "Couldn't mine the Send we created due to an ValueError (meaning it wasn't signed): " & e.msg)
     except ArgonError as e:
@@ -95,7 +95,7 @@ proc send(
 
     #Add it.
     try:
-        rpc.functions.lattice.addSend(send)
+        rpc.functions.transactions.addSend(send)
     except ValueError as e:
         returnError()
     except IndexError as e:
@@ -113,50 +113,7 @@ proc send(
         "hash": $send.hash
     }
 
-#Create a Receive Entry.
-proc receive(
-    rpc: RPC,
-    address: string,
-    inputNonce: int,
-    nonce: int
-): JSONNode {.forceCheck: [].} =
-    #Create the Receive.
-    var recv: Receive
-    try:
-        recv = newReceive(
-            newLatticeIndex(
-                address,
-                inputNonce,
-            ),
-            nonce
-        )
-    except AddressError as e:
-        doAssert(false, "Couldn't sign the Receive we created due to an AddressError (which means it failed to serialize): " & e.msg)
-
-    #Sign the Receive.
-    rpc.functions.personal.signReceive(recv)
-
-    #Add it.
-    try:
-        rpc.functions.lattice.addReceive(recv)
-    except ValueError as e:
-        returnError()
-    except IndexError as e:
-        returnError()
-    except GapError as e:
-        returnError()
-    except AddressError as e:
-        returnError()
-    except EdPublicKeyError as e:
-        returnError()
-    except DataExists as e:
-        returnError()
-
-    result = %* {
-        "hash": $recv.hash
-    }
-
-#Create a Data Entry.
+#Create a Data Transaction.
 proc data(
     rpc: RPC,
     dataArg: string,
@@ -180,7 +137,7 @@ proc data(
 
     #Mine the Data.
     try:
-        data.mine(rpc.functions.lattice.getDifficulties().data)
+        data.mine(rpc.functions.transactions.getDifficulties().data)
     except ValueError as e:
         doAssert(false, "Couldn't mine the Data we created due to an ValueError (meaning it wasn't signed): " & e.msg)
     except ArgonError as e:
@@ -188,7 +145,7 @@ proc data(
 
     #Add it.
     try:
-        rpc.functions.lattice.addData(data):
+        rpc.functions.transactions.addData(data):
     except ValueError as e:
         returnError()
     except IndexError as e:

@@ -18,7 +18,7 @@ finalsd:
             holder* {.final.}: BLSPublicKey
             #Nonce.
             nonce* {.final.}: Natural
-            #Entry Hash.
+            #Transaction Hash.
             hash* {.final.}: Hash[384]
 
         #Verification object for the mempool.

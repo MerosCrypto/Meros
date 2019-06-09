@@ -16,7 +16,7 @@ const
     BLOCK_TIME: int = 600      #Block time in seconds.
     LIVE_MERIT: int = 1000     #Blocks before Merit dies.
 
-    #Lattice constants.
+    #Transactions constants.
     SEND_DIFFICULTY: string = #Send difficulty at the start.
         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     DATA_DIFFICULTY: string = #Data difficulty at the start.

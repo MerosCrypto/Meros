@@ -60,11 +60,11 @@ proc startSyncing*(
     #Update our state.
     client.ourState = ClientState.Syncing
 
-#Sync an Entry.
-proc syncEntry*(
+#Sync an Transaction.
+proc syncTransaction*(
     client: Client,
     hash: Hash[384]
-): Future[Entry] {.forceCheck: [
+): Future[Transaction] {.forceCheck: [
     SocketError,
     ClientError,
     SyncConfigError,
@@ -100,21 +100,21 @@ proc syncEntry*(
     try:
         case msg.content:
             of MessageType.Claim .. MessageType.Data:
-                result = (char(int(msg.content) - int(MessageType.Claim) + 1) & msg.message).parseEntry()
+                result = (char(int(msg.content) - int(MessageType.Claim) + 1) & msg.message).parseTransaction()
 
             of MessageType.DataMissing:
-                raise newException(DataMissing, "Client didn't have the requested Entry.")
+                raise newException(DataMissing, "Client didn't have the requested Transaction.")
 
             else:
                 raise newException(InvalidMessageError, "Client didn't respond properly to our TransactionRequest.")
     except ValueError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
     except ArgonError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a ArgonError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ArgonError: " & e.msg)
     except BLSError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a BLSError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a BLSError: " & e.msg)
     except EdPublicKeyError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Entry to our TransactionRequest, as pointed out by a EdPublicKeyError: " & e.msg)
+        raise newException(InvalidMessageError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a EdPublicKeyError: " & e.msg)
     except InvalidMessageError as e:
         fcRaise e
     except DataMissing as e:

@@ -15,8 +15,7 @@ import ../lib/Hash
 import ../Wallet/MinerWallet
 import ../Wallet/Wallet
 
-#LatticeIndex and MeritHolderRecord objects.
-import ../Database/common/objects/LatticeIndexObj
+#MeritHolderRecord object.
 import ../Database/common/objects/MeritHolderRecordObj
 
 #Verification object.
@@ -27,13 +26,13 @@ import ../Database/Merit/objects/DifficultyObj
 import ../Database/Merit/objects/BlockHeaderObj
 import ../Database/Merit/objects/BlockObj
 
-#Difficulties and Entry objects.
-import ../Database/Lattice/objects/DifficultiesObj
-import ../Database/Lattice/objects/EntryObj
-import ../Database/Lattice/objects/ClaimObj
-import ../Database/Lattice/objects/SendObj
-import ../Database/Lattice/objects/ReceiveObj
-import ../Database/Lattice/objects/DataObj
+#Difficulties and Transaction objects.
+import ../Database/Transactions/objects/DifficultiesObj
+import ../Database/Transactions/objects/TransactionObj
+import ../Database/Transactions/objects/ClaimObj
+import ../Database/Transactions/objects/SendObj
+import ../Database/Transactions/objects/ReceiveObj
+import ../Database/Transactions/objects/DataObj
 
 #Message object.
 import ../Network/objects/MessageObj
@@ -137,7 +136,7 @@ type
             header: BlockHeader
         ): Future[void]
 
-    LatticeFunctionBox* = ref object
+    TransactionsFunctionBox* = ref object
         getDifficulties*: proc (): Difficulties {.raises: [].}
 
         getHeight*: proc (
@@ -152,16 +151,9 @@ type
             AddressError
         ].}
 
-        getEntryByHash*: proc (
+        getTransaction*: proc (
             hash: Hash[384]
-        ): Entry {.raises: [
-            IndexError
-        ].}
-
-        getEntryByIndex*: proc (
-            index: LatticeIndex
-        ): Entry {.raises: [
-            ValueError,
+        ): Transaction {.raises: [
             IndexError
         ].}
 
@@ -248,22 +240,22 @@ type
         ) {.raises: [].}
 
     GlobalFunctionBox* = ref object
-        system*:        SystemFunctionBox
-        database*:      DatabaseFunctionBox
-        consensus*:     ConsensusFunctionBox
-        merit*:         MeritFunctionBox
-        lattice*:       LatticeFunctionBox
-        personal*:      PersonalFunctionBox
-        network*:       NetworkFunctionBox
+        system*:       SystemFunctionBox
+        database*:     DatabaseFunctionBox
+        consensus*:    ConsensusFunctionBox
+        merit*:        MeritFunctionBox
+        transactions*: TransactionsFunctionBox
+        personal*:     PersonalFunctionBox
+        network*:      NetworkFunctionBox
 
 #Constructor.
 func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
     GlobalFunctionBox(
-        system:        SystemFunctionBox(),
-        database:      DatabaseFunctionBox(),
-        consensus:     ConsensusFunctionBox(),
-        merit:         MeritFunctionBox(),
-        lattice:       LatticeFunctionBox(),
-        personal:      PersonalFunctionBox(),
-        network:       NetworkFunctionBox()
+        system:       SystemFunctionBox(),
+        database:     DatabaseFunctionBox(),
+        consensus:    ConsensusFunctionBox(),
+        merit:        MeritFunctionBox(),
+        transactions: TransactionsFunctionBox(),
+        personal:     PersonalFunctionBox(),
+        network:      NetworkFunctionBox()
     )

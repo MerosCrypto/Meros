@@ -7,7 +7,7 @@ import ../objects/GUIObj
 #Each of the scopes.
 import GUIBindings
 import PersonalBindings
-import LatticeBindings
+import TransactionsBindings
 import NetworkBindings
 
 #Create the bindings.
@@ -24,7 +24,7 @@ proc createBindings*(
         doAssert(false, "GUIBindings.addTo threw a WebViewError just by passing it loop, despite having a blank raises pragma: " & e.msg)
     #Add the Wallet bindings.
     PersonalBindings.addTo(gui)
-    #Add the Lattice bindings.
-    LatticeBindings.addTo(gui)
+    #Add the Transactions bindings.
+    TransactionsBindings.addTo(gui)
     #Add the Network bindings.
     NetworkBindings.addTo(gui)

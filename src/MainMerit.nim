@@ -92,7 +92,7 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Couldn't sync this Block: " & e.msg)
 
-            #Verify Record validity (nonce and Merkle), as well as whether or not the verified Entries are out of Epochs yet.
+            #Verify Record validity (nonce and Merkle), as well as whether or not the verified Transactions are out of Epochs yet.
             for record in newBlock.records:
                 #Grab the MeritHolder.
                 var holder: MeritHolder = consensus[record.key]
@@ -118,10 +118,10 @@ proc mainMerit() {.forceCheck: [].} =
                 except IndexError as e:
                     fcRaise e
 
-                #Make sure the Lattice has the verified Entries.
+                #Make sure Transactions has the verified Transactions.
                 for v in 0 ..< verifs.len:
-                    if not lattice.lookup.hasKey(verifs[v].hash.toString()):
-                        raise newException(GapError, "Block refers to missing Entries, or Entries already out of an Epoch.")
+                    if not transactions.transactions.hasKey(verifs[v].hash.toString()):
+                        raise newException(GapError, "Block refers to missing Transactions, or Transactions already out of an Epoch.")
 
             #Add the Block to the Merit.
             var epoch: Epoch
@@ -138,7 +138,7 @@ proc mainMerit() {.forceCheck: [].} =
             consensus.archive(newBlock.records)
 
             #Archive the hashes handled by the popped Epoch.
-            lattice.archive(epoch)
+            transactions.archive(epoch)
 
             #Calculate the rewards.
             var rewards: seq[Reward] = epoch.calculate(merit.state)
@@ -153,7 +153,7 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Couldn't extract a key from a Reward: " & e.msg)
 
                 try:
-                    var mintNonce: int = lattice.mint(
+                    var mintNonce: int = transactions.mint(
                         key,
                         reward.score * uint64(50)
                     )
@@ -192,7 +192,7 @@ proc mainMerit() {.forceCheck: [].} =
                     claim: Claim
                     claimNonce: int
                 try:
-                    claimNonce = lattice[wallet.address].height
+                    claimNonce = transactions[wallet.address].height
                 except AddressError as e:
                     doAssert(false, "One of our Wallets (" & wallet.address & ") has an invalid Address: " & e.msg)
 
@@ -211,7 +211,7 @@ proc mainMerit() {.forceCheck: [].} =
 
                 #Emit it.
                 try:
-                    functions.lattice.addClaim(claim)
+                    functions.transactions.addClaim(claim)
                 except ValueError as e:
                     doAssert(false, "Failed to add a Claim for a Mint due to a ValueError: " & e.msg)
                 except IndexError as e:

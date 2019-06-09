@@ -64,12 +64,12 @@ proc syncElements(
     except Exception as e:
         doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Sync a list of Entries from a specific Client.
-proc syncEntries(
+#Sync a list of Transactions from a specific Client.
+proc syncTransactions(
     network: Network,
     id: int,
-    entries: seq[Hash[384]]
-): Future[seq[Entry]] {.forceCheck: [
+    transactions: seq[Hash[384]]
+): Future[seq[Transaction]] {.forceCheck: [
     SocketError,
     ClientError,
     InvalidMessageError,
@@ -94,23 +94,23 @@ proc syncEntries(
     except Exception as e:
         doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Ask for missing Entries.
-    for entry in entries:
-        #Sync the Entry.
+    #Ask for missing Transactions.
+    for tx in transactions:
+        #Sync the Transaction.
         try:
-            result.add(await client.syncEntry(entry))
+            result.add(await client.syncTransaction(tx))
         except SocketError as e:
             fcRaise e
         except ClientError as e:
             fcRaise e
         except SyncConfigError as e:
-            doAssert(false, "Client we attempted to sync an Entry from a Client that wasn't configured for syncing: " & e.msg)
+            doAssert(false, "Client we attempted to sync an Transaction from a Client that wasn't configured for syncing: " & e.msg)
         except InvalidMessageError as e:
             fcRaise e
         except DataMissing as e:
             fcRaise e
         except Exception as e:
-            doAssert(false, "Syncing an Entry in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            doAssert(false, "Syncing an Transaction in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Stop syncing.
     try:
@@ -122,7 +122,7 @@ proc syncEntries(
     except Exception as e:
         doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Sync a Block's Elements/Entries.
+#Sync a Block's Elements/Transactions.
 proc sync*(
     network: Network,
     consensus: Consensus,
@@ -138,10 +138,10 @@ proc sync*(
         elements: Table[string, seq[Verification]] = initTable[string, seq[Verification]]()
         #Seq of missing Elements.
         missingVerifs: seq[Verification] = @[]
-        #Hashes of the Entries mentioned in missing Elements.
-        entryHashes: seq[Hash[384]] = @[]
-        #Entries mentioned in missing Elements.
-        entries: seq[Entry] = @[]
+        #Hashes of the Transactions mentioned in missing Elements.
+        txHashes: seq[Hash[384]] = @[]
+        #Transactions mentioned in missing Elements.
+        transactions: seq[Transaction] = @[]
 
     #Calculate the Elements gaps.
     for record in newBlock.records:
@@ -190,7 +190,7 @@ proc sync*(
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
             except Exception as e:
-                doAssert(false, "Syncing a Block's Elements and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Syncing a Block's Elements and Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             #If we made it through that without raising or continuing, set synced to true.
             synced = true
@@ -211,17 +211,17 @@ proc sync*(
         except KeyError as e:
             doAssert(false, "Couldn't add a hash to a seq in a table we recently created: " & e.msg)
 
-        #Add the Entry hash it verifies to entryHashes.
-        entryHashes.add(verif.hash)
+        #Add the Transaction hash it verifies to txHashes.
+        txHashes.add(verif.hash)
 
     #Check the Block's aggregate.
     if not newBlock.verify(elements):
         raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
 
-    #Sync the missing Entries.
-    if entryHashes.len != 0:
-        #Dedeuplicate the list of Entries.
-        entryHashes = entryHashes.deduplicate()
+    #Sync the missing Transactions.
+    if txHashes.len != 0:
+        #Dedeuplicate the list of Transactions.
+        txHashes = txHashes.deduplicate()
 
         #List of Clients to disconnect.
         var toDisconnect: seq[int] = @[]
@@ -234,7 +234,7 @@ proc sync*(
                 continue
 
             try:
-                entries = await network.syncEntries(client.id, entryHashes)
+                transactions = await network.syncTransactions(client.id, txHashes)
             #If the Client had problems, disconnect them.
             except SocketError, ClientError:
                 toDisconnect.add(client.id)
@@ -251,39 +251,31 @@ proc sync*(
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
             except Exception as e:
-                doAssert(false, "Syncing a Block's Elements and Entries threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Syncing a Block's Elements and Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            #Handle each Entry.
+            #Handle each Transaction.
             try:
-                for entry in entries:
+                for tx in transactions:
                     #Add it.
-                    case entry.descendant:
-                        of EntryType.Claim:
+                    case tx.descendant:
+                        of TransactionType.Claim:
                             try:
-                                network.mainFunctions.lattice.addClaim(cast[Claim](entry))
+                                network.mainFunctions.transactions.addClaim(cast[Claim](tx))
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError, BLSError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
                                 continue
 
-                        of EntryType.Send:
+                        of TransactionType.Send:
                             try:
-                                network.mainFunctions.lattice.addSend(cast[Send](entry))
-                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
-                                raise newException(InvalidMessageError, "Failed to add the Claim.")
-                            except DataExists:
-                                continue
-
-                        of EntryType.Data:
-                            try:
-                                network.mainFunctions.lattice.addData(cast[Data](entry))
+                                network.mainFunctions.transactions.addSend(cast[Send](tx))
                             except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
                                 continue
 
                         else:
-                            doAssert(false, "Synced an Entry of an unsyncable type.")
+                            doAssert(false, "Synced an Transaction of an unsyncable type.")
             except InvalidMessageError:
                 continue
 
@@ -296,9 +288,9 @@ proc sync*(
 
         #If we tried every client and didn't sync the needed data, raise a DataMissing.
         if not synced:
-            raise newException(DataMissing, "Couldn't sync all the Entries in a Block.")
+            raise newException(DataMissing, "Couldn't sync all the Transactions in a Block.")
 
-    #Since we now have every Entry, add the Elements.
+    #Since we now have every Transaction, add the Elements.
     for verif in missingVerifs:
         try:
             network.mainFunctions.consensus.addVerification(verif)

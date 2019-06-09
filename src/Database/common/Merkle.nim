@@ -75,7 +75,7 @@ func isBranch(
 ): bool {.inline, forceCheck: [].} =
     not tree.isLeaf
 
-#Checks if this tree has any duplicated entries, anywhere.
+#Checks if this tree has any duplicated transactions, anywhere.
 func isFull(
     tree: Merkle
 ): bool {.forceCheck: [].} =

@@ -4,8 +4,8 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
-#Lattice lib (for all Entry types).
-import ../Database/Lattice/Lattice
+#Transactions lib (for all Transaction types).
+import ../Database/Transactions/Transactions
 
 #Consensus lib (for Verification/SignedVerification).
 import ../Database/Consensus/Consensus

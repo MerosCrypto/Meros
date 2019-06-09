@@ -8,7 +8,7 @@ Config:
 
 Database:
 
-- Abstract the Database. Caching should still be handled by the Lattice/Consensus/Merit, but Database should have its own Serialize folder and supply `save(entry: Entry)` and so on.
+- Abstract the Database. Caching should still be handled by the Transactions/Consensus/Merit, but Database should have its own Serialize folder and supply `save(tx: Transaction)` and so on.
 - If we actually create three separate database, instead of using `consensus_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
 - Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
@@ -18,11 +18,6 @@ Merit:
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
-
-Lattice:
-
-- The claimable table is currently no better than a seq. Either use it with the benefits of a Table and turn it into a seq.
-- Cache the UXTO set.
 
 Wallet:
 
@@ -67,7 +62,7 @@ Network:
 - Node karma.
 
 - Multi-client syncing.
-- Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Lattice and Consensus DAGs).
+- Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Transactions and Consensus DAGs).
 
 ### Tests:
 
@@ -106,24 +101,17 @@ Database/Merit:
 - Database/Merit/Merit Test.
 - Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
 
-Database/Lattice:
+Database/Transactions:
 
-- Database/Lattice/Entry Test.
-- Database/Lattice/Mint Test.
-- Database/Lattice/Claim Test.
-- Database/Lattice/Send Test.
-- Database/Lattice/Receive Test.
-- Database/Lattice/Data Test.
-- Database/Lattice/Account Test.
-- Add competing Entries to the Lattice's DB Test.
+- Database/Transactions/Transaction Test.
+- Database/Transactions/Mint Test.
+- Database/Transactions/Claim Test.
+- Database/Transactions/Send Test.
+- Database/Transactions/Data Test.
 
 Network:
 
 - Tests.
-
-Network/Serialize/Lattice:
-
-- Network/Serialize/Lattice/SerializeEntry Test.
 
 UI/RPC:
 
@@ -131,7 +119,7 @@ UI/RPC:
 - UI/RPC/Modules/SystemModule Test.
 - UI/RPC/Modules/ConsensusModule Test.
 - UI/RPC/Modules/MeritModule Test.
-- UI/RPC/Modules/LatticeModule Test.
+- UI/RPC/Modules/TransactionsModule Test.
 - UI/RPC/Modules/PersonalModule Test.
 - UI/RPC/Modules/NetworkModule Test.
 
@@ -152,8 +140,7 @@ UI/RPC:
 
 - Swap Chia for Milagro.
 
-- Cache the Lattice's UXTO set.
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Transaction (stop DoS attacks).
 
 - Remove holders who lost all their Merit from `merit_holders`.
 

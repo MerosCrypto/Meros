@@ -14,8 +14,8 @@ var
     #Merit.
     merit {.threadvar.}: Merit
 
-    #Lattice.
-    lattice {.threadvar.}: Lattice
+    #Transactions.
+    transactions {.threadvar.}: Transactions
 
     #DB.
     db {.threadvar.}: DB

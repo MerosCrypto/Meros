@@ -145,14 +145,6 @@ proc mainConsensus() {.forceCheck: [].} =
             except MeritRemoval:
                 discard
 
-            #Add the Verification to the Lattice.
-            try:
-                lattice.verify(verif, merit.state[verif.holder], merit.state.live)
-            except ValueError as e:
-                fcRaise e
-            except DataExists as e:
-                doAssert(false, "Lattice had a Verification the Consensus DAG didn't have: " & e.msg)
-
             echo "Successfully added a new Verification."
 
         #Handle SignedElements.
@@ -189,14 +181,6 @@ proc mainConsensus() {.forceCheck: [].} =
             #MeritHolder committed a malicious act against the network.
             except MeritRemoval:
                 discard
-
-            #Add the Verification to the Lattice.
-            try:
-                lattice.verify(verif, merit.state[verif.holder], merit.state.live)
-            except ValueError as e:
-                fcRaise e
-            except DataExists as e:
-                doAssert(false, "Lattice had a SignedVerification the Consensus DAG didn't have: " & e.msg)
 
             echo "Successfully added a new SignedVerification."
 

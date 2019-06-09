@@ -6,7 +6,7 @@ The Main files are an "incude chain". They include each other sequentially, in t
     MainDatabase
     MainConsensus
     MainMerit
-    MainLattice
+    MainTransactions
     MainPersonal
     MainNetwork
     MainUI
@@ -23,7 +23,7 @@ proc main() {.thread.} =
     mainDatabase()
     mainConsensus()
     mainMerit()
-    mainLattice()
+    mainTransactions()
     mainPersonal()
     mainNetwork()
     mainRPC()

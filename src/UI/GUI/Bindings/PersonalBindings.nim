@@ -14,22 +14,6 @@ import strformat
 #JSON standard lib.
 import json
 
-#Get the nonce to use with new transactions.
-proc getNonce*(
-    gui: GUI
-): int {.forceCheck: [].} =
-    try:
-        #Get the address.
-        var address: string = gui.call("personal", "getWallet")["address"].getStr()
-
-        #Get the nonce.
-        result = gui.call("lattice", "getHeight", address)["height"].getInt()
-    except KeyError as e:
-        gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have an address/height field: " & e.msg)
-    except RPCError as e:
-        gui.webview.error("RPC Error", e.msg)
-        return -1
-
 #Add the Wallet bindings to the GUI.
 proc addTo*(
     gui: GUI

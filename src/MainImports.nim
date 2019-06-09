@@ -20,8 +20,8 @@ import Database/Consensus/Consensus
 #Merit.
 import Database/Merit/Merit
 
-#Lattice.
-import Database/Lattice/Lattice
+#Transactions.
+import Database/Transactions/Transactions
 
 #DB.
 import Database/Filesystem/DB
@@ -30,10 +30,10 @@ import Database/Filesystem/DB
 import Network/Network
 
 #Serialization libs.
-import Network/Serialize/Lattice/SerializeClaim
-import Network/Serialize/Lattice/SerializeSend
-import Network/Serialize/Lattice/SerializeReceive
-import Network/Serialize/Lattice/SerializeData
+import Network/Serialize/Transactions/SerializeClaim
+import Network/Serialize/Transactions/SerializeSend
+import Network/Serialize/Transactions/SerializeReceive
+import Network/Serialize/Transactions/SerializeData
 
 import Network/Serialize/Consensus/SerializeSignedVerification
 

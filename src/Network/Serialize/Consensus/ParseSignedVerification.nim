@@ -23,7 +23,7 @@ proc parseSignedVerification*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Nonce | Entry Hash | BLS Signature
+    #BLS Public Key | Nonce | Transaction Hash | BLS Signature
     var verifSeq: seq[string] = verifStr.deserialize(
         BLS_PUBLIC_KEY_LEN,
         INT_LEN,
