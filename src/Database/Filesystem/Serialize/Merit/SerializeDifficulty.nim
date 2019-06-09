@@ -1,24 +1,17 @@
-discard """
-We never send a Difficulty over the Network.
-
-That said, we do store one in the DB, so we need to convert a Difficulty object to a string and back.
-Even though this has no relation to the Network code, it does have relation to the Serialize code.
-"""
-
 #Errors lib.
-import ../../../lib/Errors
+import ../../../../lib/Errors
 
 #Util lib.
-import ../../../lib/Util
+import ../../../../lib/Util
 
 #Hash lib.
-import ../../../lib/Hash
+import ../../../../lib/Hash
 
 #Difficulty object.
-import ../../../Database/Merit/objects/DifficultyObj
+import ../../../../Database/Merit/objects/DifficultyObj
 
 #Common serialization functions.
-import ../SerializeCommon
+import ../../../../Network/Serialize/SerializeCommon
 
 #StInt lib.
 import StInt

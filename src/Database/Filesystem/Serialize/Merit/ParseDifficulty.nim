@@ -1,21 +1,17 @@
-discard """
-Read the note in SerializeDifficulty before working with this file.
-"""
-
 #Errors lib.
-import ../../../lib/Errors
+import ../../../../lib/Errors
 
 #Util lib.
-import ../../../lib/Util
+import ../../../../lib/Util
 
 #Hash lib.
-import ../../../lib/Hash
+import ../../../../lib/Hash
 
 #Difficulty object.
-import ../../../Database/Merit/objects/DifficultyObj
+import ../../../../Database/Merit/objects/DifficultyObj
 
 #Common serialization functions.
-import ../SerializeCommon
+import ../../../../Network/Serialize/SerializeCommon
 
 #StInt lib.
 import StInt

@@ -1,15 +1,15 @@
 #Errors lib.
-import ../../../lib/Errors
+import ../../../../lib/Errors
 
 #Transaction objects.
-import ../../../Database/Transactions/objects/MintObj
-import ../../../Database/Transactions/objects/ClaimObj
-import ../../../Database/Transactions/objects/SendObj
+import ../../../../Database/Transactions/objects/MintObj
+import ../../../../Database/Transactions/objects/ClaimObj
+import ../../../../Database/Transactions/objects/SendObj
 
 #Serialization libs.
 import SerializeMint
-import SerializeClaim
-import SerializeSend
+import ../../../../Network/Serialize/Transactions/SerializeClaim
+import ../../../../Network/Serialize/Transactions/SerializeSend
 
 #Serialize the TransactionObj.
 proc serialize*(
