@@ -14,7 +14,9 @@ import ../../../../src/Database/Transactions/Mint
 
 #Serialize libs.
 import ../../../../src/Network/Serialize/Transactions/SerializeMint
+import ../../../../src/Network/Serialize/Transactions/SerializeTransaction
 import ../../../../src/Network/Serialize/Transactions/ParseMint
+import ../../../../src/Network/Serialize/Transactions/ParseTransaction
 
 #Compare Transactions lib.
 import ../../../DatabaseTests/TransactionsTests/CompareTransactions
@@ -48,5 +50,11 @@ for s in 0 .. 255:
 
     #Test the serialized versions.
     assert(mint.serialize() == reloaded.serialize())
+
+    #Test Transaction.serialize() and Transaction.parse().
+    reloaded = cast[Mint](("\0" & cast[Transaction](mint).serialize()).parseTransaction())
+    compare(mint, reloaded)
+    assert(cast[Transaction](mint).serialize() == cast[Transaction](reloaded).serialize())
+    assert(cast[Transaction](mint).serialize() == mint.serialize())
 
 echo "Finished the Network/Serialize/Transactions/Mint Test."
