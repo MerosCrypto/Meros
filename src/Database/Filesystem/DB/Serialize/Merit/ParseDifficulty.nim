@@ -1,17 +1,17 @@
 #Errors lib.
-import ../../../../lib/Errors
+import ../../../../../lib/Errors
 
 #Util lib.
-import ../../../../lib/Util
+import ../../../../../lib/Util
 
 #Hash lib.
-import ../../../../lib/Hash
+import ../../../../../lib/Hash
 
 #Difficulty object.
-import ../../../../Database/Merit/objects/DifficultyObj
+import ../../../../../Database/Merit/objects/DifficultyObj
 
 #Common serialization functions.
-import ../../../../Network/Serialize/SerializeCommon
+import ../../../../../Network/Serialize/SerializeCommon
 
 #StInt lib.
 import StInt

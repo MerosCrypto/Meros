@@ -1,20 +1,20 @@
 #Errors lib.
-import ../../../../lib/Errors
+import ../../../../../lib/Errors
 
 #Util lib.
-import ../../../../lib/Util
+import ../../../../../lib/Util
 
 #Hash lib.
-import ../../../../lib/Hash
+import ../../../../../lib/Hash
 
 #MinerWallet lib.
-import ../../../../Wallet/MinerWallet
+import ../../../../../Wallet/MinerWallet
 
 #Mint object.
-import ../../../../Database/Transactions/objects/MintObj
+import ../../../../../Database/Transactions/objects/MintObj
 
 #Common serialization functions.
-import ../../../../Network/Serialize/SerializeCommon
+import ../../../../../Network/Serialize/SerializeCommon
 
 #Parse function.
 proc parseMint*(
