@@ -32,7 +32,7 @@ randomize(getTime())
 
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Blockchain.
     blockchain: Blockchain = newBlockchain(
         db,

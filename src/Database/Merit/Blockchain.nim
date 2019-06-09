@@ -7,8 +7,8 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../Filesystem/DB/MeritDB
 
 #MeritHolderRecord object.
 import ../common/objects/MeritHolderRecordObj
@@ -25,15 +25,12 @@ import Block
 import objects/BlockchainObj
 export BlockchainObj
 
-#Serialize Difficulty lib.
-import ../../Network/Serialize/Merit/SerializeDifficulty
-
 #Tables lib.
 import tables
 
 #Create a new Blockchain.
 proc newBlockchain*(
-    db: DatabaseFunctionBox,
+    db: DB,
     genesis: string,
     blockTime: Natural,
     startDifficulty: Hash[384]
@@ -158,6 +155,6 @@ proc processBlock*(
             doAssert(false, "Added a Block successfully but failed to calculate the next difficulty: " & e.msg)
 
         try:
-            blockchain.db.put("merit_difficulty", blockchain.difficulty.serialize())
+            blockchain.db.save(blockchain.difficulty)
         except DBWriteError as e:
             doAssert(false, "Failed to write the difficulty to the DB: " & e.msg)

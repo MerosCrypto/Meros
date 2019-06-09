@@ -7,8 +7,8 @@ import ../../../lib/Util
 #MinerWallet lib (for BLSPublicKey).
 import ../../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../../Filesystem/DB/MeritDB
 
 #Finals lib.
 import finals
@@ -21,11 +21,7 @@ finalsd:
     #This cannot be a ref object due to how we copy it for reversions.
     type State* = object
         #DB.
-        db: DatabaseFunctionBox
-        #String of every holder.
-        holdersStr: string
-        #List of unsaved accounts.
-        pending: seq[string]
+        db: DB
 
         #Blocks until Merit is dead.
         deadBlocks* {.final.}: Natural
@@ -39,41 +35,38 @@ finalsd:
 
 #Constructor.
 proc newStateObj*(
-    db: DatabaseFunctionBox,
-    deadBlocks: Natural
+    db: DB,
+    deadBlocks: Natural,
+    blockchainHeight: int
 ): State {.forceCheck: [].} =
     result = State(
         db: db,
-        pending: @[],
 
         deadBlocks: deadBlocks,
         live: 0,
 
-        processedBlocks: 1,
+        processedBlocks: blockchainHeight,
         holders: initTable[string, int]()
     )
     result.ffinalizeDeadBlocks()
 
     #Load the live Merit and the holders from the DB.
+    var holders: seq[string]
     try:
-        result.live = result.db.get("state_live").fromBinary()
-        result.processedBlocks = result.db.get("state_processed").fromBinary()
-        result.holdersStr = result.db.get("state_holders")
+        result.live = result.db.loadLiveMerit()
+        holders = result.db.loadHolders()
     #If these don't exist, confirm we didn't load one but not the other.
     except DBReadError:
         if result.live != 0:
             doAssert(false, "Loaded the amount of live Merit but not the amount of processed blocks or any holders from the database.")
 
     #Handle each holder.
-    var holder: string
-    for i in countup(0, result.holdersStr.len - 1, 48):
-        #Extract the holder.
-        holder = result.holdersStr[i .. i + 47]
+    for holder in holders:
         #Load their balance.
         try:
-            result.holders[holder] = result.db.get("state_" & holder).fromBinary()
+            result.holders[holder] = result.db.loadMerit(holder)
         except DBReadError as e:
-            doAssert(false, "Couldn't load a holder's state: " & e.msg)
+            doAssert(false, "Couldn't load a holder's Merit: " & e.msg)
 
 #Add a Holder to the State.
 func add(
@@ -86,9 +79,7 @@ func add(
 
     #Add them to the table.
     state.holders[key] = 0
-
-    #Add them to the holders' string.
-    state.holdersStr &= key
+    state.db.save(key, 0)
 
 #Getters.
 func `[]`*(
@@ -132,8 +123,9 @@ func `[]=`*(
     else:
         state.live -= previous - value
 
-    #Mark them as pending to be saved.
-    state.pending.add(key)
+    #Save the update values.
+    state.db.save(key, value)
+    state.db.saveLiveMerit(state.live)
 
 func `[]=`*(
     state: var State,
@@ -141,32 +133,6 @@ func `[]=`*(
     value: Natural
 ) {.inline, forceCheck: [].} =
     state[key.toString()] = value
-
-#Save the State to the DB.
-proc save*(
-    state: var State
-) {.forceCheck: [].} =
-    #Save the State
-    try:
-        #Iterate over every pending account.
-        for key in state.pending:
-            #Save the new balance to the DB.
-            state.db.put("state_" & key, state[key].toBinary())
-
-        #Clear pending.
-        state.pending = @[]
-
-        #Save the new Merit quantity.
-        state.db.put("state_live", state.live.toBinary())
-
-        #Save the holdersStr.
-        state.db.put("state_holders", state.holdersStr)
-
-        #Save the amount of processed blocks.
-        state.db.put("state_processed", state.processedBlocks.toBinary())
-
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save the State to the DB: " & e.msg)
 
 #Iterator for every holder.
 iterator holders*(

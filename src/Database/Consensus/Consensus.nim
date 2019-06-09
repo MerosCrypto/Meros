@@ -7,8 +7,8 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../objects/GlobalFunctionBoxObj
+#Consensus DB lib.
+import ../Filesystem/DB/ConsensusDB
 
 #Merkle lib.
 import ../common/Merkle
@@ -36,7 +36,7 @@ import tables
 
 #Constructor wrapper.
 proc newConsensus*(
-    db: DatabaseFunctionBox
+    db: DB
 ): Consensus {.forceCheck: [].} =
     newConsensusObj(db)
 

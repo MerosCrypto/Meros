@@ -4,8 +4,8 @@ import ../../../lib/Errors
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../../objects/GlobalFunctionBoxObj
+#Consensus DB lib.
+import ../../Filesystem/DB/ConsensusDB
 
 #ConsensusIndex object.
 import ../../common/objects/ConsensusIndexObj
@@ -25,7 +25,7 @@ import finals
 #Consensus object.
 type Consensus* = ref object
     #DB.
-    db*: DatabaseFunctionBox
+    db*: DB
     #List of every MeritHolder.
     holdersStr: string
 
@@ -34,7 +34,7 @@ type Consensus* = ref object
 
 #Consensus constructor.
 proc newConsensusObj*(
-    db: DatabaseFunctionBox
+    db: DB
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(

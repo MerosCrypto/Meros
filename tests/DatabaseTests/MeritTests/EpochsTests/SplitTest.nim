@@ -29,7 +29,7 @@ import ../TestMerit
 
 var
     #Database Function Box.
-    functions: DatabaseFunctionBox = newTestDatabase()
+    functions: DB = newTestDatabase()
     #Consensus.
     consensus: Consensus = newConsensus(functions)
     #Blockchain.

@@ -20,7 +20,7 @@ import ../TestMerit
 
 var
     #Database Function Box.
-    functions: DatabaseFunctionBox = newTestDatabase()
+    functions: DB = newTestDatabase()
     #Blockchain.
     blockchain: Blockchain = newBlockchain(functions, "EPOCH_EMPTY_TEST", 1, "".pad(48).toHash(384))
     #State.

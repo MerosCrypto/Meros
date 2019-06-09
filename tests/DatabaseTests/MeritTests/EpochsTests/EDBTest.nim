@@ -43,7 +43,7 @@ import random
 randomize(getTime())
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Consensus.
     consensus: Consensus = newConsensus(db)
     #Blockchain.

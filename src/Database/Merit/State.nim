@@ -4,8 +4,8 @@ import ../../lib/Errors
 #MinerWallet lib (for BLSPublicKey's toString).
 import ../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../Filesystem/DB/MeritDB
 
 #Miners object.
 import objects/MinersObj
@@ -21,17 +21,17 @@ export StateObj
 
 #Constructor.
 proc newState*(
-    db: DatabaseFunctionBox,
-    deadBlocks: Natural
+    db: DB,
+    deadBlocks: Natural,
+    blockchainHeight: Natural,
 ): State {.forceCheck: [].} =
-    newStateObj(db, deadBlocks)
+    newStateObj(db, deadBlocks, blockchainHeight)
 
 #Process a block.
 proc processBlock*(
     state: var State,
     blockchain: Blockchain,
-    newBlock: Block,
-    save: bool = true
+    newBlock: Block
 ) {.forceCheck: [].} =
     #Grab the miners.
     var miners: seq[Miner] = newBlock.miners.miners
@@ -51,10 +51,6 @@ proc processBlock*(
 
     #Increment the amount of processed Blocks.
     inc(state.processedBlocks)
-
-    #Save the State to the DB.
-    if save:
-        state.save()
 
 #Revert to a certain block height.
 proc revert*(
@@ -96,6 +92,6 @@ proc catchup*(
 
     for i in state.processedBlocks ..< blockchain.height:
         try:
-            state.processBlock(blockchain, blockchain[i], false)
+            state.processBlock(blockchain, blockchain[i])
         except IndexError as e:
             doAssert(false, "Tried to catch up to a Blockchain yet failed to get a Block: " & e.msg)

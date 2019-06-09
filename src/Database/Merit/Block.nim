@@ -23,7 +23,7 @@ import BlockHeader
 import objects/BlockObj
 export BlockObj
 
-#Serialize BlockHeader libs (for inc).
+#Serialize BlockHeader lib (for inc).
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
 #Serialize Verification lib (for verify).

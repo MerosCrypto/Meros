@@ -13,8 +13,8 @@ import ../../Wallet/MinerWallet
 #Consensus lib.
 import ../Consensus/Consensus
 
-#DB Function Box object.
-import ../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../Filesystem/DB/MeritDB
 
 #MeritHolderRecord object.
 import ../common/objects/MeritHolderRecordObj
@@ -94,7 +94,7 @@ proc shift*(
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
-    db: DatabaseFunctionBox,
+    db: DB,
     consensus: Consensus,
     blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
@@ -103,31 +103,28 @@ proc newEpochs*(
 
     #Regenerate the Epochs.
     var
-        #String of every holder.
-        holders: string
+        #Seq of every holder.
+        holders: seq[string]
         #Table of every archived tip before the current Epochs.
         tips: TableRef[string, int] = newTable[string, int]()
 
     try:
-        holders = db.get("merit_holders")
+        holders = db.loadHolders()
     except DBReadError:
         #If there are no holders, there's no mined Blocks and therefore no Epochs to regenerate.
-        holders = ""
+        holders = @[]
 
     #We don't just return in the above except in case an empty holders is saved to the DB.
     #That should be impossible, as the State, as of right now, only saves the holders once it has some.
     #That said, if we change how the State operates the DB, it shouldn't break this.
-    if holders == "":
+    if holders.len == 0:
         return
 
     #Use the Holders string from the State.
-    for i in countup(0, holders.len - 1, 48):
-        #Extract the holder.
-        var holder = holders[i ..< i + 48]
-
+    for holder in holders:
         #Load their tip.
         try:
-            tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
+            tips[holder] = db.loadHolderEpoch(holder)
         except DBReadError:
             #If this failed, it's because they have Merit but don't have Elements older than 5 blocks.
             tips[holder] = 0

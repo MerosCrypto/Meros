@@ -22,7 +22,7 @@ import tables
 type
     Transactions = ref object
         #DB Function Box.
-        db*: DatabaseFunctionBox
+        db*: DB
 
         #Send/Data difficulties.
         difficulties: Difficulties
@@ -51,7 +51,7 @@ type
 
 #Transactions constructor
 proc newTransactionsObj*(
-    db: DatabaseFunctionBox,
+    db: DB,
     sendDiff: string,
     dataDiff: string
 ): Transactions {.forceCheck: [].} =

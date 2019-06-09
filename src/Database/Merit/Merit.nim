@@ -10,8 +10,8 @@ import ../../lib/Hash
 #Consensus lib.
 import ../Consensus/Consensus
 
-#DB Function Box object.
-import ../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../Filesystem/DB/MeritDB
 
 #MeritHolderRecord object.
 import ../common/objects/MeritHolderRecordObj
@@ -44,7 +44,7 @@ type Merit* = ref object
 
 #Constructor.
 proc newMerit*(
-    db: DatabaseFunctionBox,
+    db: DB,
     consensus: Consensus,
     genesis: string,
     blockTime: Natural,
@@ -65,10 +65,9 @@ proc newMerit*(
             genesis,
             blockTime,
             startDifficulty
-        ),
-
-        state: newState(db, live)
+        )
     )
+    result.state = newState(db, live, result.blockchain.height)
     result.epochs = newEpochs(db, consensus, result.blockchain)
 
 #Add a block.

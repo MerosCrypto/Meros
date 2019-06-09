@@ -10,8 +10,8 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../../objects/GlobalFunctionBoxObj
+#Consensus DB lib.
+import ../../Filesystem/DB/ConsensusDB
 
 #Merkle lib.
 import ../../common/Merkle
@@ -29,7 +29,7 @@ import finals
 finalsd:
     type MeritHolder* = ref object
         #DB Function Box.
-        db: DatabaseFunctionBox
+        db: DB
 
         #Chain owner.
         key* {.final.}: BLSPublicKey
@@ -46,7 +46,7 @@ finalsd:
 
 #Constructor.
 proc newMeritHolderObj*(
-    db: DatabaseFunctionBox,
+    db: DB,
     key: BLSPublicKey
 ): MeritHolder {.forceCheck: [].} =
     result = MeritHolder(
