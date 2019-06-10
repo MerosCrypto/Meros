@@ -110,4 +110,6 @@ Argon2d(
 
 ### Violations in Meros
 
-- Meros uses a completely different DAG for Transactions_.
+- Meros doesn't support Data, Lock, or Unlock Transactions.
+- Meros doesn't check Sends' proofs against the difficulty.
+- Meros doesn't check signatures.

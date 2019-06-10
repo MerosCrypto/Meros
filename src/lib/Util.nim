@@ -76,8 +76,8 @@ func toBinary*(
 #Converts a binary char/string to a number.
 func fromBinary*(
     number: char
-): int {.forceCheck: [].} =
-    result = int(number)
+): int {.inline, forceCheck: [].} =
+    int(number)
 
 func fromBinary*(
     number: string

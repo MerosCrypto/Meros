@@ -1,5 +1,15 @@
 # TODO
 
+### Transactions and DB Redo
+
+- Reload Transactions from the DB.
+- Transactions.add(Mint)
+- Transactions.add(Claim)
+- Transactions.add(Send)
+- New Transactions RPC.
+- Rebuild the Personal RPC.
+- MainTransactions.
+
 ### Core:
 
 Config:

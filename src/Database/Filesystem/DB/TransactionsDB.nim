@@ -1,6 +1,12 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Util lib.
+import ../../../lib/Util
+
+#Hash lib.
+import ../../../lib/Hash
+
 #Transaction object.
 import ../../Transactions/objects/TransactionObj
 
@@ -16,6 +22,12 @@ proc save*(
     db: DB,
     tx: Transaction
 ) {.forceCheck: [].} =
+    discard
+
+proc load*(
+    db: DB,
+    hash: Hash[384]
+): Transaction {.forceCheck: [].} =
     discard
 
 proc commit*(

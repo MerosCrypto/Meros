@@ -76,7 +76,7 @@ proc save*(
     DBWriteError
 ].} =
     try:
-        db.put(verif.holder.toString() & "_" & verif.nonce.toBinary(), verif.hash.toString())
+        db.put(verif.holder.toString() & verif.nonce.toBinary().pad(1), verif.hash.toString())
     except DBWriteError as e:
         fcRaise e
 
@@ -115,7 +115,7 @@ proc load*(
 ].} =
     try:
         result = newVerificationObj(
-            db.get(holder.toString() & "_" & nonce.toBinary()).toHash(384)
+            db.get(holder.toString() & nonce.toBinary().pad(1)).toHash(384)
         )
         result.holder = holder
         result.nonce = nonce

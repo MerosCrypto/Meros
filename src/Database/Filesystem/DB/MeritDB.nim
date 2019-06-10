@@ -129,7 +129,7 @@ proc saveHolderEpoch*(
     DBWriteError
 ].} =
     try:
-        db.put(holder.toString() & "_epoch", epoch.toBinary())
+        db.put(holder.toString() & "epoch", epoch.toBinary())
     except DBWriteError as e:
         fcRaise e
 
@@ -219,7 +219,7 @@ proc loadHolderEpoch*(
     DBReadError
 ].} =
     try:
-        result = db.get(holder & "_epoch").fromBinary()
+        result = db.get(holder & "epoch").fromBinary()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
