@@ -14,9 +14,7 @@ import ../../../../src/Database/Transactions/Send
 
 #Serialize libs.
 import ../../../../src/Network/Serialize/Transactions/SerializeSend
-import ../../../../src/Network/Serialize/Transactions/SerializeTransaction
 import ../../../../src/Network/Serialize/Transactions/ParseSend
-import ../../../../src/Network/Serialize/Transactions/ParseTransaction
 
 #Compare Transactions lib.
 import ../../../DatabaseTests/TransactionsTests/CompareTransactions
@@ -75,11 +73,5 @@ for s in 0 .. 255:
 
     #Test the serialized versions.
     assert(send.serialize() == reloaded.serialize())
-
-    #Test Transaction.serialize() and Transaction.parse().
-    reloaded = cast[Send](("\2" & cast[Transaction](send).serialize()).parseTransaction())
-    compare(send, reloaded)
-    assert(cast[Transaction](send).serialize() == cast[Transaction](reloaded).serialize())
-    assert(cast[Transaction](send).serialize() == send.serialize())
 
 echo "Finished the Network/Serialize/Transactions/Send Test."

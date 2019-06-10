@@ -1,6 +1,5 @@
 #Merit Serialization Tests.
 
-import Merit/SerializeDifficultyTest
 import Merit/SerializeRecordsTest
 import Merit/SerializeMinersTest
 import Merit/SerializeBlockHeaderTest

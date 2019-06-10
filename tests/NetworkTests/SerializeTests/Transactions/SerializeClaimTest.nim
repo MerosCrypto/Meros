@@ -16,9 +16,7 @@ import ../../../../src/Database/Transactions/Claim
 
 #Serialize libs.
 import ../../../../src/Network/Serialize/Transactions/SerializeClaim
-import ../../../../src/Network/Serialize/Transactions/SerializeTransaction
 import ../../../../src/Network/Serialize/Transactions/ParseClaim
-import ../../../../src/Network/Serialize/Transactions/ParseTransaction
 
 #Compare Transactions lib.
 import ../../../DatabaseTests/TransactionsTests/CompareTransactions
@@ -66,11 +64,5 @@ for s in 0 .. 255:
 
     #Test the serialized versions.
     assert(claim.serialize() == reloaded.serialize())
-
-    #Test Transaction.serialize() and Transaction.parse().
-    reloaded = cast[Claim](("\1" & cast[Transaction](claim).serialize()).parseTransaction())
-    compare(claim, reloaded)
-    assert(cast[Transaction](claim).serialize() == cast[Transaction](reloaded).serialize())
-    assert(cast[Transaction](claim).serialize() == claim.serialize())
 
 echo "Finished the Network/Serialize/Transactions/Claim Test."

@@ -71,42 +71,52 @@ objects:
 
 lib:
 
-- lib/Hash/Blake2 Test.
-- lib/Hash/Argon Test.
-- lib/Hash/RandomX Test.
+- Hash/Blake2 Test.
+- Hash/Argon Test.
+- Hash/RandomX Test.
 
-- lib/Hash/SHA2 (384) Test.
-- lib/Hash/Keccak (384) Test.
-- lib/Hash/SHA3 (384) Test.
+- Hash/SHA2 (384) Test.
+- Hash/Keccak (384) Test.
+- Hash/SHA3 (384) Test.
 
-- lib/Hash/HashCommon Test.
+- Hash/HashCommon Test.
 
-- lib/Logger Test.
+- Logger Test.
 
 Wallet:
 
-- Wallet/Ed25519 Test.
+- Ed25519 Test.
+
+
+Datbase/Filesystem/DB/Serialize:
+
+- Transactions/SerializeTransaction Test.
+
+Datbase/Filesystem/DB:
+
+- TransactionsDB Test.
+- ConsensusDB Test.
+- MeritDB Test.
 
 Database/Consensus:
 
-- Database/Consensus/MeritHolder Test.
-- Database/Consensus/Verification Test.
+- MeritHolder Test.
+- Verification Test.
 
 Database/Merit:
 
-- Database/Merit/BlockHeader Test.
-- Database/Merit/Block Test.
-- Database/Merit/Difficulty Test.
-- Database/Merit/Merit Test.
+- BlockHeader Test.
+- Block Test.
+- Difficulty Test.
+- Merit Test.
 - Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
 
 Database/Transactions:
 
-- Database/Transactions/Transaction Test.
-- Database/Transactions/Mint Test.
-- Database/Transactions/Claim Test.
-- Database/Transactions/Send Test.
-- Database/Transactions/Data Test.
+- Transaction Test.
+- Mint Test.
+- Claim Test.
+- Send Test.
 
 Network:
 
