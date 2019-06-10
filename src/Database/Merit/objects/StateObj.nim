@@ -69,7 +69,7 @@ proc newStateObj*(
             doAssert(false, "Couldn't load a holder's Merit: " & e.msg)
 
 #Add a Holder to the State.
-func add(
+proc add(
     state: var State,
     key: string
 ) {.forceCheck: [].} =
@@ -79,10 +79,13 @@ func add(
 
     #Add them to the table.
     state.holders[key] = 0
-    state.db.save(key, 0)
+    try:
+        state.db.save(key, 0)
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save a holder's Merit: " & e.msg)
 
 #Getters.
-func `[]`*(
+proc `[]`*(
     state: var State,
     key: string
 ): int {.forceCheck: [].} =
@@ -95,7 +98,7 @@ func `[]`*(
     except KeyError as e:
         doAssert(false, "State threw a KeyError when getting a value, despite calling add before attempting." & e.msg)
 
-func `[]`*(
+proc `[]`*(
     state: var State,
     key: BLSPublicKey
 ): int {.inline, forceCheck: [].} =
@@ -108,7 +111,7 @@ func live*(
     state.live
 
 #Setters.
-func `[]=`*(
+proc `[]=`*(
     state: var State,
     key: string,
     value: Natural
@@ -124,10 +127,13 @@ func `[]=`*(
         state.live -= previous - value
 
     #Save the update values.
-    state.db.save(key, value)
-    state.db.saveLiveMerit(state.live)
+    try:
+        state.db.save(key, value)
+        state.db.saveLiveMerit(state.live)
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save a holder's Merit/the live Merit: " & e.msg)
 
-func `[]=`*(
+proc `[]=`*(
     state: var State,
     key: BLSPublicKey,
     value: Natural

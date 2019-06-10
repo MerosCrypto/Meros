@@ -15,6 +15,7 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 
 #Common serialization functions.
 import ../SerializeCommon
+export BLOCK_HEADER_LEN
 
 #Parse function.
 proc parseBlockHeader*(
@@ -24,6 +25,9 @@ proc parseBlockHeader*(
     ArgonError,
     BLSError
 ].} =
+    if headerStr.len != BLOCK_HEADER_LEN:
+        raise newException(ValueError, "parseBlockHeader handed too much data.")
+
     #Nonce | Last Hash | Elements Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(
         INT_LEN,

@@ -30,7 +30,7 @@ proc newDB*(
             merit: initTable[string, string]()
         )
         result.lmdb.open("transactions")
-        result.lmdb.open("tconsensus")
+        result.lmdb.open("consensus")
         result.lmdb.open("merit")
     except Exception as e:
         raise newException(DBError, "Couldn't open the DB: " & e.msg)

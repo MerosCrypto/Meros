@@ -37,7 +37,7 @@ proc parseMint*(
             uint64(mintSeq[2].fromBinary())
         )
     except BLSError as e:
-        raise e
+        fcRaise e
 
     #Hash it.
     try:

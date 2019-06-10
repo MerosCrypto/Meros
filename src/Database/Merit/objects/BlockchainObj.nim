@@ -74,7 +74,7 @@ proc newBlockchainObj*(
     #Grab the tip from the DB.
     var tip: Hash[384]
     try:
-        tip = db.loadTip()
+        tip = result.db.loadTip()
     #If the tip isn't defined, this is the first boot.
     except DBReadError:
         #Create a Genesis Block.
@@ -98,9 +98,9 @@ proc newBlockchainObj*(
 
         #Save the tip, the Genesis Block, and the starting Difficulty.
         try:
-            db.saveTip(tip)
-            db.save(genesisBlock)
-            db.save(result.difficulty)
+            result.db.saveTip(tip)
+            result.db.save(genesisBlock)
+            result.db.save(result.difficulty)
         except DBWriteError as e:
             doAssert(false, "Couldn't write the Genesis Block to the DB: " & e.msg)
 
@@ -110,7 +110,7 @@ proc newBlockchainObj*(
         last: BlockHeader
         i: int = 0
     try:
-        last = db.loadBlockHeader(tip)
+        last = result.db.loadBlockHeader(tip)
     except DBReadError as e:
         doAssert(false, "Couldn't load a Block Header from the Database: " & e.msg)
     headers = newSeq[BlockHeader](last.nonce + 1)
@@ -118,7 +118,7 @@ proc newBlockchainObj*(
     while last.nonce != 0:
         headers[i] = last
         try:
-            last = db.loadBlockHeader(last.last)
+            last = result.db.loadBlockHeader(last.last)
         except DBReadError as e:
             doAssert(false, "Couldn't load a Block Header from the Database: " & e.msg)
         inc(i)
@@ -137,18 +137,18 @@ proc newBlockchainObj*(
         if headers.len < 10:
             var loading: Block
             for h in countdown(headers.len - 1, 0):
-                loading = db.loadBlock(headers[h].hash)
+                loading = result.db.loadBlock(headers[h].hash)
                 result.blocks[loading.nonce] = loading
         else:
             #We store the headers in reverse order.
             for h in 0 ..< 10:
-                result.blocks[9 - h] = db.loadBlock(headers[h].hash)
+                result.blocks[9 - h] = result.db.loadBlock(headers[h].hash)
     except DBReadError as e:
         doAssert(false, "Couldn't load a Block we're supposed to cache from the Database: " & e.msg)
 
     #Load the Difficulty.
     try:
-        result.difficulty = db.loadDifficulty()
+        result.difficulty = result.db.loadDifficulty()
     except DBReadError as e:
         doAssert(false, "Couldn't load the Difficulty from the Database: " & e.msg)
 

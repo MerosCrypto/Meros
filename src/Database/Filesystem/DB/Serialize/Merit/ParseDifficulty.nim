@@ -44,4 +44,4 @@ proc parseDifficulty*(
             fromBytesBE(StUint[512], be)
         )
     except ValueError as e:
-        raise e
+        fcRaise e

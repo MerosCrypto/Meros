@@ -147,7 +147,7 @@ proc newEpochs*(
         doAssert(false, "Couldn't shift the last blocks of the chain: " & e.msg)
 
 #Calculate what share each holder deserves of the minted Meros.
-func calculate*(
+proc calculate*(
     epoch: Epoch,
     state: var State
 ): seq[Reward] {.forceCheck: [].} =

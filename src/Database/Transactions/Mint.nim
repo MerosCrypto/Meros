@@ -12,7 +12,7 @@ import objects/MintObj
 export MintObj
 
 #Serialization lib.
-import ../../Network/Serialize/Transactions/SerializeMint
+import ../Filesystem/DB/Serialize/Transactions/SerializeMint
 
 #Create a new Mint.
 proc newMint*(
