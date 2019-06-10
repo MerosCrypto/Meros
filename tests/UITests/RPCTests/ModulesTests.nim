@@ -1,8 +1,8 @@
 #Modules Tests.
 
 import ModulesTests/SystemModuleTest
+import ModulesTests/TransactionsModuleTest
 import ModulesTests/ConsensusModuleTest
 import ModulesTests/MeritModuleTest
-import ModulesTests/LatticeModuleTest
 import ModulesTests/PersonalModuleTest
 import ModulesTests/NetworkModuleTest

@@ -54,7 +54,7 @@ var
         "".pad(48).toHash(384)
     )
     #State.
-    state: State = newState(db, 5)
+    state: State = newState(db, 5, blockchain.height)
     #Epochs.
     epochs: Epochs = newEpochs(
         db,

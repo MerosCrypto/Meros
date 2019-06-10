@@ -58,6 +58,9 @@ proc revert*(
     blockchain: Blockchain,
     height: int
 ) {.forceCheck: [].} =
+    #Mark the State as working with old data.
+    state.oldData = true
+
     #Restore dead Merit first so we stay in the `Natural` range.
     for i in countdown(state.processedBlocks - 1, height):
         #If the i is over the dead blocks quantity, meaning there is a block to remove from the state...
@@ -83,6 +86,8 @@ proc revert*(
         #Increment the amount of processed Blocks.
         dec(state.processedBlocks)
 
+    state.oldData = false
+
 proc catchup*(
     state: var State,
     blockchain: Blockchain
@@ -90,8 +95,13 @@ proc catchup*(
     if state.processedBlocks > blockchain.height:
         doAssert(false, "Trying to catch up to a chain which is shorter than the amount of Blocks processed by the State already.")
 
+    #Mark the State as working with old data.
+    state.oldData = true
+
     for i in state.processedBlocks ..< blockchain.height:
         try:
             state.processBlock(blockchain, blockchain[i])
         except IndexError as e:
             doAssert(false, "Tried to catch up to a Blockchain yet failed to get a Block: " & e.msg)
+
+    state.oldData = false

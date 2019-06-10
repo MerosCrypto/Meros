@@ -27,6 +27,9 @@ import Serialize/Merit/ParseBlock
 import objects/DBObj
 export DBObj
 
+#Tables standard lib.
+import tables
+
 #Put/Get for the Merit DB.
 proc put(
     db: DB,
@@ -103,6 +106,16 @@ proc save*(
 ) {.forceCheck: [
     DBWriteError
 ].} =
+    try:
+        discard db.merit.holders[holder]
+    except KeyError:
+        db.merit.holders[holder] = true
+        db.merit.holdersStr &= holder
+        try:
+            db.put("holders", db.merit.holdersStr)
+        except DBWriteError as e:
+            fcRaise e
+
     try:
         db.put(holder, merit.toBinary())
     except DBWriteError as e:

@@ -9,13 +9,38 @@ export get, put
 import tables
 
 type
+    TransactionsDB* = ref object
+        cache*: Table[string, string]
+
+    ConsensusDB* = ref object
+        cache*: Table[string, string]
+
+    MeritDB* = ref object
+        cache*: Table[string, string]
+        holders*: Table[string, bool]
+        holdersStr*: string
+
     DB* = ref object
         lmdb*: LMDB
-        transactions*: Table[string, string]
-        consensus*: Table[string, string]
-        merit*: Table[string, string]
+        transactions*: TransactionsDB
+        consensus*: ConsensusDB
+        merit*: MeritDB
 
-#Constructor.
+#Constructors.
+proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
+    TransactionsDB(
+        cache: initTable[string, string]()
+    )
+proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
+    ConsensusDB(
+        cache: initTable[string, string]()
+    )
+proc newMeritDB(): MeritDB {.inline, forceCheck: [].} =
+    MeritDB(
+        cache: initTable[string, string](),
+        holders: initTable[string, bool]()
+    )
+
 proc newDB*(
     path: string,
     size: int64
@@ -25,9 +50,9 @@ proc newDB*(
     try:
         result = DB(
             lmdb: newLMDB(path, size, 3),
-            transactions: initTable[string, string](),
-            consensus: initTable[string, string](),
-            merit: initTable[string, string]()
+            transactions: newTransactionsDB(),
+            consensus: newConsensusDB(),
+            merit: newMeritDB()
         )
         result.lmdb.open("transactions")
         result.lmdb.open("consensus")

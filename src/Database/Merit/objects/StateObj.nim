@@ -22,6 +22,8 @@ finalsd:
     type State* = object
         #DB.
         db: DB
+        #Reverting/Catching up.
+        oldData*: bool
 
         #Blocks until Merit is dead.
         deadBlocks* {.final.}: Natural
@@ -41,6 +43,7 @@ proc newStateObj*(
 ): State {.forceCheck: [].} =
     result = State(
         db: db,
+        oldData: false,
 
         deadBlocks: deadBlocks,
         live: 0,
@@ -79,10 +82,13 @@ proc add(
 
     #Add them to the table.
     state.holders[key] = 0
-    try:
-        state.db.save(key, 0)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save a holder's Merit: " & e.msg)
+
+    #Only save them if this is new data.
+    if not state.oldData:
+        try:
+            state.db.save(key, 0)
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save a holder's Merit: " & e.msg)
 
 #Getters.
 proc `[]`*(
@@ -126,12 +132,13 @@ proc `[]=`*(
     else:
         state.live -= previous - value
 
-    #Save the update values.
-    try:
-        state.db.save(key, value)
-        state.db.saveLiveMerit(state.live)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save a holder's Merit/the live Merit: " & e.msg)
+    #Save the updated values.
+    if not state.oldData:
+        try:
+            state.db.save(key, value)
+            state.db.saveLiveMerit(state.live)
+        except DBWriteError as e:
+            doAssert(false, "Couldn't save a holder's Merit/the live Merit: " & e.msg)
 
 proc `[]=`*(
     state: var State,

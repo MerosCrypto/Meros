@@ -44,7 +44,7 @@ var
         "".pad(48).toHash(384)
     )
     #State.
-    state: State = newState(db, 5)
+    state: State = newState(db, 5, blockchain.height)
     #Table of wo has how much Merit.
     balances: OrderedTable[string, int] = initOrderedTable[string, int]()
     #List of MeritHolders.

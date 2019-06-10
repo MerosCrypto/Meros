@@ -35,7 +35,7 @@ var
     #Blockchain.
     blockchain: Blockchain = newBlockchain(functions, "EPOCH_SPLIT_TEST", 1, "".pad(48).toHash(384))
     #State.
-    state: State = newState(functions, 100)
+    state: State = newState(functions, 100, blockchain.height)
     #Epochs.
     epochs: Epochs = newEpochs(functions, consensus, blockchain)
 
