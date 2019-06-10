@@ -15,7 +15,7 @@ export DBObj
 proc save*(
     db: DB,
     tx: Transaction
-): {.forceCheck: [].} =
+) {.forceCheck: [].} =
     discard
 
 proc commit*(

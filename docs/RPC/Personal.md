@@ -13,24 +13,8 @@ It returns:
 - `address`    (string)
 
 ### `send`
-`send` will create and publish a Send using the Wallet on the Node. It takes in three arguments:
+`send` will create and publish a Send using the Wallet on the Node. It takes in two arguments:
 - Destination Address (string)
 - Amount (string)
-- Nonce  (int)
-It returns:
-- `hash` (string)
-
-### `receive`
-`receive` will create and publish a Receive using the Wallet on the Node. It takes in three arguments:
-- Input Address (string)
-- Input Nonce   (string)
-- Nonce         (int)
-It returns:
-- `hash` (string)
-
-### `data`
-`data` will create and publish a Data using the Wallet on the Node. It takes in two arguments:
-- Data  (string)
-- Nonce (int)
 It returns:
 - `hash` (string)
