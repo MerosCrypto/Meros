@@ -17,11 +17,11 @@ import ../../Merit/objects/BlockObj
 
 #Serialization libs.
 import Serialize/Merit/SerializeDifficulty
-import Serialize/Merit/SerializeBlock
+import Serialize/Merit/DBSerializeBlock
 
 import Serialize/Merit/ParseDifficulty
-import Serialize/Merit/ParseBlockHeader
-import Serialize/Merit/ParseBlock
+import Serialize/Merit/DBParseBlockHeader
+import Serialize/Merit/DBParseBlock
 
 #DB object.
 import objects/DBObj
@@ -133,6 +133,7 @@ proc saveHolderEpoch*(
     except DBWriteError as e:
         fcRaise e
 
+#Load functions.
 proc loadDifficulty*(
     db: DB
 ): Difficulty {.forceCheck: [
