@@ -113,6 +113,6 @@ proc archive*(
 
         #Update the DB.
         try:
-            consensus.db.put("consensus_" & record.key.toString(), $record.nonce)
+            consensus.db.save(record.key, record.nonce)
         except DBWriteError as e:
             doAssert(false, "Couldn't save a MeritHolder's tip to the Database: " & e.msg)

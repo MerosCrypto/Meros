@@ -63,13 +63,13 @@ proc newMeritHolderObj*(
 
     #Load our data from the DB.
     try:
-        result.archived = parseInt(result.db.get("consensus_" & result.keyStr))
+        result.archived = result.db.load(result.key)
     except ValueError as e:
         doAssert(false, "Couldn't parse the MeritHolder's archived which was successfully retrieved from the Database: " & e.msg)
     #If we're not in the DB, add ourselves.
     except DBReadError:
         try:
-            result.db.put("consensus_" & result.keyStr, $result.archived)
+            result.db.save(result.key, result.archived)
         except DBWriteError as e:
             doAssert(false, "Couldn't save a new MeritHolder to the Database: " & e.msg)
 
@@ -91,19 +91,9 @@ proc `[]`*(
     if nonce <= holder.archived:
         #Grab it and return it.
         try:
-            result = newVerificationObj(
-                holder.db.get("consensus_" & holder.key.toString() & "_" & nonce.toBinary()).toHash(384)
-            )
-        except ValueError as e:
-            doAssert(false, "Couldn't parse a Verification we were asked for from the Database: " & e.msg)
+            result = holder.db.load(holder.key, nonce)
         except DBReadError as e:
             doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
-
-        try:
-            result.holder = holder.key
-            result.nonce = nonce
-        except FinalAttributeError as e:
-            doAssert(false, "Set a final attribute twice when loading a Verification: " & e.msg)
         return
 
     #Else, return it from memory.
@@ -144,7 +134,7 @@ proc add*(
 
     #Add the Verification to the Database.
     try:
-        holder.db.put("consensus_" & holder.key.toString() & "_" & verif.nonce.toBinary(), verif.hash.toString())
+        holder.db.save(verif)
     except DBWriteError as e:
         doAssert(false, "Couldn't save a Verification to the Database: " & e.msg)
 
