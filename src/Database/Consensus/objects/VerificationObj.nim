@@ -4,20 +4,15 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
 #Finals lib.
 import finals
+
+import ElementObj
 
 finalsd:
     type
         #Verification object.
-        Verification* = ref object of RootObj
-            #BLS Key.
-            holder* {.final.}: BLSPublicKey
-            #Nonce.
-            nonce* {.final.}: Natural
+        Verification* = ref object of Element
             #Transaction Hash.
             hash* {.final.}: Hash[384]
 
