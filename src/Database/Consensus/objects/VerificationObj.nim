@@ -1,6 +1,8 @@
 #Errors lib.
 import ../../../lib/Errors
 
+import ../../../Wallet/BLS
+
 #Hash lib.
 import ../../../lib/Hash
 
@@ -8,6 +10,7 @@ import ../../../lib/Hash
 import finals
 
 import ElementObj
+export ElementObj
 
 finalsd:
     type

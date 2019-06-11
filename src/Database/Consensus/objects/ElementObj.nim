@@ -1,4 +1,4 @@
-import ../../Wallet/MinerWallet
+import ../../../Wallet/BLS
 
 import finals
 

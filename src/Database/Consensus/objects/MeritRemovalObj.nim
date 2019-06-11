@@ -1,10 +1,13 @@
 import ../../../lib/Errors
 
+import ../../../Wallet/BLS
+
 import ../../../lib/Hash
 
 import finals
 
 import ElementObj
+export ElementObj
 
 finalsd:
     type
@@ -15,7 +18,7 @@ finalsd:
         SignedMeritRemoval* = ref object of MeritRemoval
             signature* {.final.}: BLSSignature
 
-func newMeritRemoval*(
+func newMeritRemovalObj*(
     element1: Element,
     element2: Element
 ): MeritRemoval {.forceCheck: [].} =
@@ -26,7 +29,7 @@ func newMeritRemoval*(
     result.ffinalizeElement1()
     result.ffainlizeElement2()
 
-func newSignedMeritRemoval*(
+func newSignedMeritRemovalObj*(
     element1: Element,
     element2: Element
 ): SignedMeritRemoval {.forceCheck: [].} =

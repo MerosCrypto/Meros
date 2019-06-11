@@ -1,10 +1,13 @@
 import ../../../lib/Errors
 
+import ../../../Wallet/BLS
+
 import ../../../lib/Hash
 
 import finals
 
 import ElementObj
+export ElementObj
 
 finalsd:
     type
@@ -14,7 +17,7 @@ finalsd:
         SignedDataDifficulty* = ref object of DataDifficulty
             signature* {.final.}: BLSSignature
 
-func newDataDifficulty*(
+func newDataDifficultyObj*(
     difficulty: Hash[384]
 ): DataDifficulty {.forceCheck: [].} =
     result = DataDifficulty(
@@ -22,7 +25,7 @@ func newDataDifficulty*(
     )
     result.ffinalizeDifficulty()
 
-func newSignedDataDifficulty*(
+func newSignedDataDifficultyObj*(
     difficulty: Hash[384]
 ): SignedDataDifficulty {.forceCheck: [].} =
     result = SignedDataDifficulty(

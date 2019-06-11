@@ -1,10 +1,13 @@
 import ../../../lib/Errors
 
+import ../../../Wallet/BLS
+
 import ../../../lib/hash
 
 import finals
 
 import ElementObj
+export ElementObj
 
 finalsd:
     type
@@ -14,7 +17,7 @@ finalsd:
         SignedGasPrice* = ref object of GasPrice
             signature* {.final.}: BLSSignature
 
-func newGasPrice*(
+func newGasPriceObj*(
     price: int
 ): GasPrice {.forceCheck: [].} =
     result = GasPrice(
@@ -22,7 +25,7 @@ func newGasPrice*(
     )
     result.ffinalizePrice()
 
-func newSignedGasPrice*(
+func newSignedGasPriceObj*(
     price: int
 ): SignedGasPrice {.forceCheck: [].} =
     result = SignedGasPrice(
