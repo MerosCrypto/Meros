@@ -4,7 +4,8 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
-#MinerWallet lib.
+#Wallet libs.
+import ../../Wallet/Wallet
 import ../../Wallet/MinerWallet
 
 #Consensus lib.
@@ -78,17 +79,21 @@ proc verify*(
 
         #Guarantee all spent UTXOs are still available.
         for input in tx.inputs:
-            if tx,descendant == TransactionType.Claim:
-                try:
-                    discard transactions.mints[input.hash.toString()]
-                except KeyError:
-                    doAssert(false, "Verified Claim spends no longer spendable Mints."
+            case tx.descendant:
+                of TransactionType.Claim:
+                    try:
+                        discard transactions.mints[input.hash.toString()]
+                    except KeyError:
+                        doAssert(false, "Verified Claim spends no longer spendable Mints.")
 
-            if tx,descendant == TransactionType.Send:
-                try:
-                    discard transactions.sends[input.hash.toString() & char(cast[SendInput](input).nonce)]
-                except KeyError:
-                    doAssert(false, "Verified Send spends no longer spendable UTXOs.")
+                of TransactionType.Send:
+                    try:
+                        discard transactions.sends[input.hash.toString() & char(cast[SendInput](input).nonce)]
+                    except KeyError:
+                        doAssert(false, "Verified Send spends no longer spendable UTXOs.")
+
+                else:
+                    discard
 
         #Set it to verified.
         tx.verified = true
@@ -105,6 +110,7 @@ proc verify*(
                         transactions.mints.del(input.hash.toString())
                     #One output created.
                     transactions.sends[hash] = cast[SendOutput](tx.outputs[0])
+
                 of TransactionType.Send:
                     #Up to 255 Send UTXOs spent.
                     for input in tx.inputs:
@@ -112,6 +118,9 @@ proc verify*(
                     #Up to 255 Send UTXOs created.
                     for i in 0 ..< tx.outputs.len:
                         transactions.sends[hash & char(i)] = cast[SendOutput](tx.outputs[i])
+
+                else:
+                    discard
 
 #Constructor.
 proc newTransactions*(
@@ -131,21 +140,109 @@ proc add*(
     transactions: var Transactions,
     mint: Mint
 ) {.forceCheck: [].} =
-    discard
+    transactions.add(cast[Transaction](mint))
+    transactions.mints[mint.hash.toString()] = cast[MintOutput](mint.outputs[0])
 
 #Add a Claim.
 proc add*(
     transactions: var Transactions,
     claim: Claim
-) {.forceCheck: [].} =
-    discard
+) {.forceCheck: [
+    ValueError
+].} =
+    var
+        #Claimer.
+        claimer: BLSPublicKey
+
+        #Output loop variable.
+        output: MintOutput
+        #Amount this Claim is claiming.
+        amount: uint64 = 0
+
+    #Grab the Claimer.
+    try:
+         claimer = transactions.mints[claim.inputs[0].hash.toString()].key
+    except KeyError:
+        raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
+
+    #Add the amount the inputs provide.
+    for input in claim.inputs:
+        try:
+            output = transactions.mints[input.hash.toString()]
+        except KeyError:
+            raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
+
+        if output.key != claimer:
+            raise newException(ValueError, "Claim inputs have different keys.")
+
+        amount += output.amount
+
+    #Set the Claim's output amount to the amount.
+    try:
+        claim.outputs[0].amount = amount
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when adding a Claim: " & e.msg)
+
+    #Verify the signature.
+    if not claim.verify(claimer):
+        raise newException(ValueError, "Claim has an invalid Signature.")
+
+    #Add the Claim.
+    transactions.add(cast[Transaction](claim))
 
 #Add a Send.
 proc add*(
     transactions: var Transactions,
     send: Send
-) {.forceCheck: [].} =
-    discard
+) {.forceCheck: [
+    ValueError
+].} =
+    #Verify the Send's proof.
+    if send.argon < transactions.difficulties.send:
+        raise newException(ValueError, "Send has an invalid proof.")
+
+    var
+        #Sender.
+        sender: EdPublicKey
+
+        #Output loop variable.
+        output: SendOutput
+        #Amount this transaction is processing.
+        amount: uint64 = 0
+
+    #Grab the Sender.
+    try:
+        sender = transactions.sends[send.inputs[0].hash.toString() & char(cast[SendInput](send.inputs[0]).nonce)].key
+    except KeyError:
+        raise newException(ValueError, "Send spends a non-existant or spent output.")
+
+    #Add the amount the inputs provide.
+    for input in send.inputs:
+        try:
+            output = transactions.sends[input.hash.toString() & char(cast[SendInput](input).nonce)]
+        except KeyError:
+            raise newException(ValueError, "Send spends a non-existant or spent output.")
+
+        if output.key != sender:
+            raise newException(ValueError, "Send inputs have different keys.")
+
+        amount += output.amount
+
+    #Subtract the amount the outpts spend.
+    for ouput in send.outputs:
+        amount -= output.amount
+
+    #If the amount is not 9, there's a problem
+    #It should be noted, amount can underflow. It's impossible to spend the full underflow.
+    if amount != 0:
+        raise newException(ValueError, "Send outputs don't spend the amount provided by the inputs.")
+
+    #Verify the signature.
+    if not sender.verify(send.hash.toString(), send.signature):
+        raise newException(ValueError, "Send has an invalid Signature.")
+
+    #Add the Send.
+    transactions.add(cast[Transaction](send))
 
 #Mint Meros to the specified key.
 proc mint*(

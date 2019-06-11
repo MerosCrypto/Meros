@@ -2,13 +2,11 @@
 
 ### Transactions and DB Redo
 
+- Data Transactions.
 - Reload Transactions from the DB.
-- Transactions.add(Mint)
-- Transactions.add(Claim)
-- Transactions.add(Send)
+- MainTransactions.
 - New Transactions RPC.
 - Rebuild the Personal RPC.
-- MainTransactions.
 
 ### Core:
 
