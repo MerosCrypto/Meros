@@ -9,7 +9,7 @@ import ElementObj
 finalsd:
     type
         GasPrice* = ref object of Element
-            price* {.final.}: int
+            price* {.final.}: uint32
 
         SignedGasPrice* = ref object of GasPrice
             signature* {.final.}: BLSSignature
