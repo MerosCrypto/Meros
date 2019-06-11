@@ -33,7 +33,6 @@ proc compare*(
     for o in 0 ..< e1.outputs.len:
         assert(e1.outputs[o].amount == e2.outputs[o].amount)
     assert(e1.hash == e2.hash)
-    assert(e1.signature == e2.signature)
     assert(e1.verified == e2.verified)
 
     #Test the sub-type fields.
@@ -47,12 +46,13 @@ proc compare*(
             assert(e1.outputs[0].amount == 0)
             for o in 0 ..< e1.outputs.len:
                 assert(cast[SendOutput](e1.outputs[o]).key == cast[SendOutput](e2.outputs[o]).key)
-            assert(cast[Claim](e1).bls == cast[Claim](e2).bls)
+            assert(cast[Claim](e1).signature == cast[Claim](e2).signature)
 
         of TransactionType.Send:
             for i in 0 ..< e1.inputs.len:
                 assert(cast[SendInput](e1.inputs[i]).nonce == cast[SendInput](e2.inputs[i]).nonce)
             for o in 0 ..< e1.outputs.len:
                 assert(cast[SendOutput](e1.outputs[o]).key == cast[SendOutput](e2.outputs[o]).key)
+            assert(cast[Send](e1).signature == cast[Send](e2).signature)
             assert(cast[Send](e1).proof == cast[Send](e2).proof)
             assert(cast[Send](e1).argon == cast[Send](e2).argon)

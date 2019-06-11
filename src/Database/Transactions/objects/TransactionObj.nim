@@ -46,8 +46,6 @@ finalsd:
             outputs*: seq[Output]
             #Hash.
             hash* {.final.}: Hash[384]
-            #Signature.
-            signature* {.final.}: EdSignature
             #Verified.
             verified*: bool
 
@@ -89,6 +87,14 @@ func newMintOutput*(
     )
     result.ffinalizeKey()
     result.ffinalizeAmount()
+
+func newClaimOutput*(
+    key: EdPublicKey
+): SendOutput {.inline, forceCheck: [].} =
+    result = SendOutput(
+        key: key
+    )
+    result.ffinalizeKey()
 
 func newSendOutput*(
     key: EdPublicKey,

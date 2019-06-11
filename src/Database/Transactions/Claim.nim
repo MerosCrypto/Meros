@@ -66,7 +66,26 @@ proc sign*(
 
     #Set the signature and hash the Claim.
     try:
-        claim.bls = signature
+        claim.signature = signature
         claim.hash = Blake384(claim.serializeHash())
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when signing a Claim: " & e.msg)
+
+#Verify a Claim.
+proc verify*(
+    claim: Claim,
+    claimer: BLSPublicKey
+): bool {.forceCheck: [].} =
+    #Create a seq of AggregationInfos.
+    var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](claim.inputs.len)
+
+    try:
+        #Create each AggregationInfo.
+        for i in 0 ..< claim.inputs.len:
+                agInfos[i] = newBLSAggregationInfo(claimer, "\1" & claim.inputs[i].hash.toString() & cast[SendOutput](claim.outputs[0]).key.toString())
+
+        #Verify the signature.
+        claim.signature.setAggregationInfo(agInfos.aggregate())
+        result = claim.signature.verify()
+    except BLSError:
+        return false

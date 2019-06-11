@@ -4,6 +4,9 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
+#Wallet lib.
+import ../../../Wallet/Wallet
+
 #Transaction object.
 import TransactionObj
 export TransactionObj
@@ -14,6 +17,8 @@ import finals
 #Send object.
 finalsd:
     type Send* = ref object of Transaction
+        #Signature.
+        signature* {.final.}: EdSignature
         #Proof this isn't spam.
         proof* {.final.}: int
         #Argon hash.

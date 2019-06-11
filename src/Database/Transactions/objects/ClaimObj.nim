@@ -19,7 +19,7 @@ import finals
 finalsd:
     type Claim* = ref object of Transaction
         #BLS Signature that proves the Merit Holder which earned these Mints wants the specified output to receive their reward.
-        bls* {.final.}: BLSSignature
+        signature* {.final.}: BLSSignature
 
 #Claim constructor.
 func newClaimObj*(
@@ -31,7 +31,7 @@ func newClaimObj*(
         inputs: inputs,
         outputs: cast[seq[Output]](
             @[
-                newSendOutput(output, 0)
+                newClaimOutput(output)
             ]
         )
     )

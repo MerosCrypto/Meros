@@ -43,6 +43,8 @@ proc parseSend*(
 
     #Convert the inputs.
     var inputs: seq[SendInput] = newSeq[SendInput](sendSeq[0].fromBinary())
+    if inputs.len == 0:
+        raise newException(ValueError, "parseSend handed a Send with no inputs.")
     for i in countup(0, sendSeq[1].len - 1, 49):
         try:
             inputs[i div 49] = newSendInput(sendSeq[1][i ..< i + 48].toHash(384), sendSeq[1][i + 48].fromBinary())
@@ -51,6 +53,8 @@ proc parseSend*(
 
     #Convert the outputs.
     var outputs: seq[SendOutput] = newSeq[SendOutput](sendSeq[2].fromBinary())
+    if outputs.len == 0:
+        raise newException(ValueError, "parseSend handed a Send with no outputs.")
     for i in countup(0, sendSeq[3].len - 1, 40):
         try:
             outputs[i div 40] = newSendOutput(newEdPublicKey(sendSeq[3][i ..< i + 32]), uint64(sendSeq[3][i + 32 ..< i + 40].fromBinary()))
@@ -66,10 +70,12 @@ proc parseSend*(
     #Hash it and set its signature/proof/argon.
     try:
         result.hash = Blake384("\2" & sendSeq[1] & sendSeq[3])
+
         try:
             result.signature = newEdSignature(sendSeq[4])
         except ValueError as e:
             fcRaise e
+        
         result.proof = sendSeq[5].fromBinary()
         try:
             result.argon = Argon(result.hash.toString(), sendSeq[5], true)

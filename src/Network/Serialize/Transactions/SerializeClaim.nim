@@ -21,7 +21,7 @@ import ../SerializeCommon
 proc serializeHash*(
     claim: Claim
 ): string {.forceCheck: [].} =
-    result = "\1" & claim.bls.toString()
+    result = "\1" & claim.signature.toString()
 
 proc serialize*(
     claim: Claim
@@ -34,4 +34,4 @@ proc serialize*(
     #Serialize the output and signature.
     result &=
         cast[SendOutput](claim.outputs[0]).key.toString() &
-        claim.bls.toString()
+        claim.signature.toString()
