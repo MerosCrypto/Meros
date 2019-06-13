@@ -12,7 +12,7 @@ import objects/VerificationObj
 export VerificationObj
 
 #Serialize lib.
-import ../../Network/Serialize/Consensus/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeElement
 
 #Sign a Verification.
 proc sign*(
@@ -29,7 +29,7 @@ proc sign*(
         verif.nonce = nonce
         #Sign the hash of the Verification.
         try:
-            verif.signature = miner.sign(cast[Verification](verif).serialize(true))
+            verif.signature = miner.sign(verif.serialize(true))
         except BLSError as e:
             fcRaise e
     except FinalAttributeError as e:

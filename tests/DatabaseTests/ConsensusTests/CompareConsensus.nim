@@ -4,15 +4,34 @@ import ../../../src/Wallet/MinerWallet
 #Consensus lib.
 import ../../../src/Database/Consensus/Consensus
 
+import ../../../src/Database/Consensus/objects/SendDifficultyObj
+import ../../../src/Database/Consensus/objects/VerificationObj
+import ../../../src/Database/Consensus/objects/DataDifficultyObj
+import ../../../src/Database/Consensus/objects/GasPriceObj
+import ../../../src/Database/Consensus/objects/MeritRemovalObj
+
 #Compare two Verifications to make sure they have the same value.
 proc compare*(
-    v1: Verification,
-    v2: Verification
+    v1: Element,
+    v2: Element
 ) =
     #Test the Entry fields.
     assert(v1.holder == v2.holder)
     assert(v1.nonce == v2.nonce)
-    assert(v1.hash == v2.hash)
+
+    if v1 of Verification and v2 of Verification:
+      assert(cast[Verification](v1).hash == cast[Verification](v2).hash)
+    # STUBS!!
+    elif v1 of SendDifficulty and v2 of SendDifficulty:
+      discard
+    elif v1 of DataDifficulty and v2 of DataDifficulty:
+      discard
+    elif v1 of MeritRemoval and v2 of MeritRemoval:
+      discard
+    elif v1 of GasPrice and v2 of GasPrice:
+      discard
+    else:  # types don't match
+      assert false
 
 #Compare two Signed Verifications to make sure they have the same value.
 proc compare*(

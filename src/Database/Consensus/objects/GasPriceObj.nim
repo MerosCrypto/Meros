@@ -2,7 +2,7 @@ import ../../../lib/Errors
 
 import ../../../Wallet/BLS
 
-import ../../../lib/hash
+import ../../../lib/Hash
 
 import finals
 
@@ -18,7 +18,7 @@ finalsd:
             signature* {.final.}: BLSSignature
 
 func newGasPriceObj*(
-    price: int
+    price: uint32
 ): GasPrice {.forceCheck: [].} =
     result = GasPrice(
         price: price
@@ -26,7 +26,7 @@ func newGasPriceObj*(
     result.ffinalizePrice()
 
 func newSignedGasPriceObj*(
-    price: int
+    price: uint32
 ): SignedGasPrice {.forceCheck: [].} =
     result = SignedGasPrice(
         price: price

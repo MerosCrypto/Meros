@@ -17,7 +17,7 @@ import ../../../Database/Consensus/objects/VerificationObj
 import ../SerializeCommon
 
 #Serialize a Verification.
-func serialize*(
+method serialize*(
     verif: Verification,
     signingOrVerifying: bool = false
 ): string {.forceCheck: [].} =

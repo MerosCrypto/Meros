@@ -55,7 +55,7 @@ proc shift*(
         #Loop variable of what Element to start with.
         start: int
         #Verifications we're handling.
-        verifs: seq[Verification]
+        elements: seq[Element]
 
     #Loop over each Verification.
     for record in records:
@@ -71,19 +71,22 @@ proc shift*(
 
         #Grab the Verifs.
         try:
-            verifs = consensus[record.key][start .. record.nonce]
+            elements = consensus[record.key][start .. record.nonce]
         #This will be thrown if we access a nonce too high, which shouldn't happen as we check a Block only has valid tips.
         except IndexError as e:
             doAssert(false, "An invalid tip was passed to shift: " & e.msg)
 
         #Iterate over every Verification.
-        for verif in verifs:
-            #Try adding this hash to an existing Epoch.
-            try:
-                epochs.add(verif.hash.toString(), verif.holder)
-            #If it wasn't in any existing Epoch, add it to the new one.
-            except NotInEpochs:
-                newEpoch.add(verif.hash.toString(), verif.holder)
+        for element in elements:
+            if element of Verification:
+                #Try adding this hash to an existing Epoch.
+                try:
+                    epochs.add(cast[Verification](element).hash.toString(), element.holder)
+                #If it wasn't in any existing Epoch, add it to the new one.
+                except NotInEpochs:
+                    newEpoch.add(cast[Verification](element).hash.toString(), element.holder)
+            else:  # STUB!!
+              assert false
 
         #If we were passed a set of tips, update them.
         if not tips.isNil:

@@ -10,8 +10,8 @@ import ../../Filesystem/DB/ConsensusDB
 #ConsensusIndex object.
 import ../../common/objects/ConsensusIndexObj
 
-#Verification object.
-import VerificationObj
+#Element object.
+import ElementObj
 
 #MeritHolder object.
 import MeritHolderObj
@@ -92,14 +92,14 @@ proc `[]`*(
     except KeyError as e:
         doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
 
-#Gets a Verification by its Index.
+#Gets a Element by its Index.
 proc `[]`*(
     consensus: Consensus,
     index: ConsensusIndex
-): Verification {.forceCheck: [IndexError].} =
+): Element {.forceCheck: [IndexError].} =
     #Check the nonce isn't out of bounds.
     if consensus[index.key].height <= index.nonce:
-        raise newException(IndexError, "MeritHolder doesn't have a Verification for that nonce.")
+        raise newException(IndexError, "MeritHolder doesn't have an Element for that nonce.")
 
     try:
         result = consensus.holders[index.key.toString()][index.nonce]

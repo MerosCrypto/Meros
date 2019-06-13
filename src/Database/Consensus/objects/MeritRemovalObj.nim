@@ -27,7 +27,7 @@ func newMeritRemovalObj*(
         element2: element2
     )
     result.ffinalizeElement1()
-    result.ffainlizeElement2()
+    result.ffinalizeElement2()
 
 func newSignedMeritRemovalObj*(
     element1: Element,
@@ -38,4 +38,4 @@ func newSignedMeritRemovalObj*(
         element2: element2
     )
     result.ffinalizeElement1()
-    result.ffainlizeElement2()
+    result.ffinalizeElement2()

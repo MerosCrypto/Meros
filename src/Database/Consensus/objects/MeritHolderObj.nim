@@ -16,14 +16,21 @@ import ../../Filesystem/DB/ConsensusDB
 #Merkle lib.
 import ../../common/Merkle
 
-#Verification object.
-import VerificationObj
+#Element object.
+import ElementObj
+import SignedElement
 
 #Serialize lib.
-import ../../../Network/Serialize/Consensus/SerializeVerification
+import ../../../Network/Serialize/Consensus/SerializeElement
 
 #Finals lib.
 import finals
+
+import SendDifficultyObj
+import VerificationObj
+import DataDifficultyObj
+import GasPriceObj
+import MeritRemovalObj
 
 #MeritHolder object.
 finalsd:
@@ -40,7 +47,7 @@ finalsd:
         #Amount of Elements which have been archived.
         archived*: int
         #seq of the Elements.
-        elements*: seq[Verification]
+        elements*: seq[Element]
         #Merkle of the Elements.
         merkle*: Merkle
 
@@ -80,12 +87,12 @@ proc newMeritHolderObj*(
 proc `[]`*(
     holder: MeritHolder,
     nonce: Natural
-): Verification {.forceCheck: [
+): Element {.forceCheck: [
     IndexError
 ].} =
     #Check that the nonce isn't out of bounds.
     if nonce >= holder.height:
-        raise newException(IndexError, "That MeritHolder doesn't have a Verification for that nonce.")
+        raise newException(IndexError, "That MeritHolder doesn't have an Element for that nonce.")
 
     #If it's in the database...
     if nonce <= holder.archived:
@@ -93,77 +100,110 @@ proc `[]`*(
         try:
             result = holder.db.load(holder.key, nonce)
         except DBReadError as e:
-            doAssert(false, "Couldn't load a Verification we were asked for from the Database: " & e.msg)
+            doAssert(false, "Couldn't load a Element we were asked for from the Database: " & e.msg)
         return
 
     #Else, return it from memory.
     result = holder.elements[nonce - (holder.archived + 1)]
 
-#Add a Verification to a MeritHolder.
+#Add an Element to a MeritHolder.
 proc add*(
     holder: var MeritHolder,
-    verif: Verification
+    element: Element
 ) {.forceCheck: [
     GapError,
     DataExists,
-    MeritRemoval
+    Errors.MeritRemoval
 ].} =
     #Verify we're not missing Elements.
-    if verif.nonce > holder.height:
-        raise newException(GapError, "Missing Elements before this Verification.")
-    #Verify the Verification's Nonce.
-    elif verif.nonce < holder.height:
+    if element.nonce > holder.height:
+        raise newException(GapError, "Missing Elements before this Element.")
+    #Verify the Element's Nonce.
+    elif element.nonce < holder.height:
         #Verify they didn't submit two Elements for the same nonce.
+
+        var existing: Element
         try:
-            if verif.hash != holder[verif.nonce].hash:
-                raise newException(MeritRemoval, "MeritHolder submitted two Elements with the same nonce.")
+            existing = holder[element.nonce]
         except IndexError as e:
-            doAssert(false, "Couldn't grab a Verification we're supposed to have: " & e.msg)
+            doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
+
+        # stubs
+        if element of SendDifficulty:
+            discard
+        elif element of Verification:
+                if not (existing of Verification) or cast[Verification](element).hash != cast[Verification](existing).hash:
+                    raise newException(Errors.MeritRemoval, "MeritHolder submitted two Elements with the same nonce.")
+        elif element of DataDifficulty:
+            discard
+        elif element of GasPrice:
+            discard
+        elif element of MeritRemovalObj.MeritRemoval:
+            discard
 
         #Already added.
-        raise newException(DataExists, "Verification has already been added.")
+        raise newException(DataExists, "Element has already been added.")
 
-    #Verify this MeritHolder isn't verifying conflicting Transactions.
+    #Verify this MeritHolder isn't elementying conflicting Transactions.
 
     #Increase the height.
     holder.height = holder.height + 1
-    #Add the Verification to the seq.
-    holder.elements.add(verif)
-    #Add the Verification to the Merkle.
-    holder.merkle.add(verif.hash)
+    #Add the Element to the seq.
+    holder.elements.add(element)
+    #Add the Element to the Merkle.
+    # stubs
+    if element of SendDifficulty:
+        discard
+    elif element of Verification:
+        holder.merkle.add(cast[Verification](element).hash)
+    elif element of DataDifficulty:
+        discard
+    elif element of GasPrice:
+        discard
+    elif element of MeritRemovalObj.MeritRemoval:
+        discard
 
-    #Add the Verification to the Database.
+    #Add the Element to the Database.
     try:
-        holder.db.save(verif)
+        holder.db.save(element)
     except DBWriteError as e:
-        doAssert(false, "Couldn't save a Verification to the Database: " & e.msg)
+        doAssert(false, "Couldn't save a Element to the Database: " & e.msg)
 
-#Add a SignedVerification to a MeritHolder.
+proc castUnsigned(
+  element: SignedElement
+): Element {.forceCheck: [].} =
+  if element of Verification: return cast[SignedVerification](element)
+  elif element of SendDifficulty: return cast[SignedSendDifficulty](element)
+  elif element of DataDifficulty: return cast[SignedDataDifficulty](element)
+  elif element of MeritRemoval: return cast[SignedMeritRemoval](element)
+  elif element of GasPrice: return cast[SignedGasPrice](element)
+
+#Add a SignedElement to a MeritHolder.
 proc add*(
     holder: var MeritHolder,
-    verif: SignedVerification
+    element: SignedElement
 ) {.forceCheck: [
     ValueError,
     GapError,
     BLSError,
     DataExists,
-    MeritRemoval
+    Errors.MeritRemoval
 ].} =
     #Verify the signature.
     try:
-        verif.signature.setAggregationInfo(
-            newBLSAggregationInfo(verif.holder, cast[Verification](verif).serialize(true))
+        element.signature.setAggregationInfo(
+            newBLSAggregationInfo(element.holder, element.serialize(true))
         )
-        if not verif.signature.verify():
-            raise newException(ValueError, "Failed to verify the Verification's signature.")
+        if not element.signature.verify():
+            raise newException(ValueError, "Failed to verify the Element's signature.")
     except ValueError as e:
         fcRaise e
     except BLSError as e:
         fcRaise e
 
-    #Add the Verification.
+    #Add the Element.
     try:
-        holder.add(cast[Verification](verif))
+        holder.add(castUnsigned(element))
     except GapError as e:
         fcRaise e
     except DataExists as e:
@@ -175,7 +215,7 @@ proc add*(
 proc `[]`*(
     holder: MeritHolder,
     slice: Slice[int]
-): seq[Verification] {.forceCheck: [
+): seq[Element] {.forceCheck: [
     IndexError
 ].} =
     #Extract the slice values.
@@ -190,14 +230,14 @@ proc `[]`*(
     #Make sure it's a valid slice.
     #We would use Natural for this, except `a` can be -1.
     if 0 > a:
-        raise newException(IndexError, "Can't get Verification Slice from MeritHolder; a was negative.")
+        raise newException(IndexError, "Can't get Element Slice from MeritHolder; a was negative.")
     if a > b:
-        raise newException(IndexError, "Can't get Verification Slice from MeritHolder; b was less than a.")
+        raise newException(IndexError, "Can't get Element Slice from MeritHolder; b was less than a.")
 
     #Create a seq.
-    result = newSeq[Verification](b - a + 1)
+    result = newSeq[Element](b - a + 1)
 
-    #Grab every Verification.
+    #Grab every Element.
     try:
         for i in a .. b:
             result[i - a] = holder[i]
@@ -207,7 +247,7 @@ proc `[]`*(
 proc `{}`*(
     holder: MeritHolder,
     slice: Slice[int]
-): seq[SignedVerification] {.forceCheck: [
+): seq[Element] {.forceCheck: [
     IndexError
 ].} =
     #Extract the slice values.
@@ -219,14 +259,11 @@ proc `{}`*(
     if a == -1:
         a = 0
 
-    #Make sure it's a valid slice.
-    if 0 > a:
-        raise newException(IndexError, "Can't get SignedVerification Slice from MeritHolder; a was negative.")
-    if a > b:
-        raise newException(IndexError, "Can't get SignedVerification Slice from MeritHolder; b was less than a.")
+    if slice.a <= holder.archived:
+      raise IndexError.newException("Invalid slice")
 
     #Grab the Elements and cast them.
     try:
-        result = cast[seq[SignedVerification]](holder[a .. b])
+        result = holder[a .. b]
     except IndexError as e:
         fcRaise e
