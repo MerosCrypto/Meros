@@ -15,7 +15,7 @@ proc compare*(
     v1: Element,
     v2: Element
 ) =
-    #Test the Entry fields.
+    #Test the Element fields.
     assert(v1.holder == v2.holder)
     assert(v1.nonce == v2.nonce)
 
