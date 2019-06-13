@@ -71,29 +71,30 @@ proc verify*(
         try:
             tx = transactions.transactions[hash]
         except KeyError:
-            raise newException(ValueError, "Couldn't get a Transaction despite confirming it's in the cache.")
+            doAssert(false, "Couldn't get a Transaction despite confirming it's in the cache.")
 
         #If the Transaction was already verified, return.
         if tx.verified:
             return
 
-        #Guarantee all spent UTXOs are still available.
-        for input in tx.inputs:
-            case tx.descendant:
-                of TransactionType.Claim:
-                    try:
-                        discard transactions.mints[input.hash.toString()]
-                    except KeyError:
-                        doAssert(false, "Verified Claim spends no longer spendable Mints.")
+        if not save:
+            #Guarantee all spent UTXOs are still available.
+            for input in tx.inputs:
+                case tx.descendant:
+                    of TransactionType.Claim:
+                        try:
+                            discard transactions.getUTXO(input.hash)
+                        except DBreadError:
+                            doAssert(false, "Verified Claim spends no longer spendable Mints.")
 
-                of TransactionType.Send:
-                    try:
-                        discard transactions.sends[input.hash.toString() & char(cast[SendInput](input).nonce)]
-                    except KeyError:
-                        doAssert(false, "Verified Send spends no longer spendable UTXOs.")
+                    of TransactionType.Send:
+                        try:
+                            discard transactions.getUTXO(cast[SendInput](input))
+                        except DBreadError:
+                            doAssert(false, "Verified Send spends no longer spendable UTXOs.")
 
-                else:
-                    discard
+                    else:
+                        discard
 
         #Set it to verified.
         tx.verified = true
@@ -107,17 +108,16 @@ proc verify*(
                 of TransactionType.Claim:
                     #Up to 255 Mint UTXOs spent.
                     for input in tx.inputs:
-                        transactions.mints.del(input.hash.toString())
-                    #One output created.
-                    transactions.sends[hash] = cast[SendOutput](tx.outputs[0])
+                        transactions.spend(input.hash)
+                    #Svae the output.
+                    transactions.saveUTXOs(tx.hash, cast[seq[SendOutput]](tx.outputs))
 
                 of TransactionType.Send:
                     #Up to 255 Send UTXOs spent.
                     for input in tx.inputs:
-                        transactions.sends.del(input.hash.toString() & char(cast[SendInput](input).nonce))
-                    #Up to 255 Send UTXOs created.
-                    for i in 0 ..< tx.outputs.len:
-                        transactions.sends[hash & char(i)] = cast[SendOutput](tx.outputs[i])
+                        transactions.spend(cast[SendInput](input))
+                    #Svae the outputs.
+                    transactions.saveUTXOs(tx.hash, cast[seq[SendOutput]](tx.outputs))
 
                 else:
                     discard
@@ -125,23 +125,22 @@ proc verify*(
 #Constructor.
 proc newTransactions*(
     db: DB,
+    consensus: Consensus,
+    merit: Merit,
     sendDiff: string,
     dataDiff: string
 ): Transactions {.forceCheck: [].} =
     #Create the Transactions.
-    newTransactionsObj(
+    result = newTransactionsObj(
         db,
+        consensus,
+        merit,
         sendDiff,
         dataDiff
     )
 
-#Add a Mint.
-proc add*(
-    transactions: var Transactions,
-    mint: Mint
-) {.forceCheck: [].} =
-    transactions.add(cast[Transaction](mint))
-    transactions.mints[mint.hash.toString()] = cast[MintOutput](mint.outputs[0])
+    #Reload the Verifications.
+    discard
 
 #Add a Claim.
 proc add*(
@@ -161,15 +160,15 @@ proc add*(
 
     #Grab the Claimer.
     try:
-         claimer = transactions.mints[claim.inputs[0].hash.toString()].key
-    except KeyError:
+         claimer = transactions.getUTXO(claim.inputs[0].hash).key
+    except DBreadError:
         raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
 
     #Add the amount the inputs provide.
     for input in claim.inputs:
         try:
-            output = transactions.mints[input.hash.toString()]
-        except KeyError:
+            output = transactions.getUTXO(input.hash)
+        except DBreadError:
             raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
 
         if output.key != claimer:
@@ -212,15 +211,15 @@ proc add*(
 
     #Grab the Sender.
     try:
-        sender = transactions.sends[send.inputs[0].hash.toString() & char(cast[SendInput](send.inputs[0]).nonce)].key
-    except KeyError:
+        sender = transactions.getUTXO(cast[SendInput](send.inputs[0])).key
+    except DBreadError:
         raise newException(ValueError, "Send spends a non-existant or spent output.")
 
     #Add the amount the inputs provide.
     for input in send.inputs:
         try:
-            output = transactions.sends[input.hash.toString() & char(cast[SendInput](input).nonce)]
-        except KeyError:
+            output = transactions.getUTXO(cast[SendInput](input))
+        except DBreadError:
             raise newException(ValueError, "Send spends a non-existant or spent output.")
 
         if output.key != sender:
@@ -250,14 +249,16 @@ proc mint*(
     key: BLSPublicKey,
     amount: uint64
 ) {.forceCheck: [].} =
-    #Create the Mint transaction and add it to the Transactions.
-    transactions.add(
-        newMint(
-            transactions.mintNonce,
-            key,
-            amount
-        )
+    #Create the Mint.
+    var mint: Mint = newMint(
+        transactions.mintNonce,
+        key,
+        amount
     )
+
+    #Add it to Transactions.
+    transactions.add(cast[Transaction](mint))
+    transactions.saveUTXO(mint.hash, cast[MintOutput](mint.outputs[0]))
 
     #Increment the mint nonce.
     inc(transactions.mintNonce)

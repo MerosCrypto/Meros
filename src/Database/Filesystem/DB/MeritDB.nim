@@ -106,9 +106,7 @@ proc save*(
 ) {.forceCheck: [
     DBWriteError
 ].} =
-    try:
-        discard db.merit.holders[holder]
-    except KeyError:
+    if not db.merit.holders.hasKey(holder):
         db.merit.holders[holder] = true
         db.merit.holdersStr &= holder
         try:
