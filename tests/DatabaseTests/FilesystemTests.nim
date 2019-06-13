@@ -1,7 +1,3 @@
 #Filesystem Tests.
 
-import FilesystemTests/DBTest
-import FilesystemTests/SerializeTests
-import FilesystemTests/TransactionsDBTest
-import FilesystemTests/ConsensusDBTest
-import FilesystemTests/MeritDBTest
+import FilesystemTests/DBTests

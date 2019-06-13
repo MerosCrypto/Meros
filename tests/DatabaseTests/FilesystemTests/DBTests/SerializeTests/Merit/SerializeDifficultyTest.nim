@@ -1,20 +1,20 @@
 #Serialize Difficulty Test.
 
 #Util lib.
-import ../../../../../src/lib/Util
+import ../../../../../../src/lib/Util
 
 #Hash lib.
-import ../../../../../src/lib/Hash
+import ../../../../../../src/lib/Hash
 
 #Difficulty object.
-import ../../../../../src/Database/Merit/objects/DifficultyObj
+import ../../../../../../src/Database/Merit/objects/DifficultyObj
 
 #Serialize libs.
-import ../../../../../src/Database/Filesystem/DB/Serialize/Merit/SerializeDifficulty
-import ../../../../../src/Database/Filesystem/DB/Serialize/Merit/ParseDifficulty
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Merit/SerializeDifficulty
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Merit/ParseDifficulty
 
 #Compare Merit lib.
-import ../../..//MeritTests/CompareMerit
+import ../../../../MeritTests/CompareMerit
 
 #StInt.
 import StInt

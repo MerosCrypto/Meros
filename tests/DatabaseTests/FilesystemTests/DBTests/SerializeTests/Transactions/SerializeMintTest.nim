@@ -1,23 +1,23 @@
 #Serialize Mint Test.
 
 #Util lib.
-import ../../../../../src/lib/Util
+import ../../../../../../src/lib/Util
 
 #Hash lib.
-import ../../../../../src/lib/Hash
+import ../../../../../../src/lib/Hash
 
 #MinerWallet lib,
-import ../../../../../src/Wallet/MinerWallet
+import ../../../../../../src/Wallet/MinerWallet
 
 #Mint lib.
-import ../../../../../src/Database/Transactions/Mint
+import ../../../../../../src/Database/Transactions/Mint
 
 #Serialize libs.
-import ../../../../../src/Database/Filesystem/DB/Serialize/Transactions/SerializeMint
-import ../../../../../src/Database/Filesystem/DB/Serialize/Transactions/ParseMint
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/SerializeMint
+import ../../../../../../src/Database/Filesystem/DB/Serialize/Transactions/ParseMint
 
 #Compare Transactions lib.
-import ../../../TransactionsTests/CompareTransactions
+import ../../../../TransactionsTests/CompareTransactions
 
 #Random standard lib.
 import random
