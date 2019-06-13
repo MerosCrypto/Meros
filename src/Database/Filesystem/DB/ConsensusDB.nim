@@ -86,8 +86,9 @@ proc save*(
         discard
     elif element of Verification:
         try:
-            template verif: Verification = cast[Verification](element)
-            db.put(verif.holder.toString() & verif.nonce.toBinary().pad(1), verif.hash.toString())
+            db.put(cast[Verification](element).holder.toString() &
+                     cast[Verification](element).nonce.toBinary().pad(1),
+                   cast[Verification](element).hash.toString())
         except DBWriteError as e:
             fcRaise e
     elif element of DataDifficulty:

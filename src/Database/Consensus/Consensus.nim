@@ -18,13 +18,14 @@ import ../common/objects/ConsensusIndexObj
 import ../common/objects/MeritHolderRecordObj
 export ConsensusIndex
 
-import objects/VerificationObj
-
 #Verification and MeritHolder libs.
-import Verification
+import Verification as VerificationLib
 import MeritHolder
-export Verification
+export VerificationLib
 export MeritHolder
+
+import objects/ElementObj
+export ElementObj
 
 #Consensus object.
 import objects/ConsensusObj
@@ -108,8 +109,8 @@ proc archive*(
         #Reset the Merkle.
         consensus[record.key].merkle = newMerkle()
         for element in consensus[record.key].elements:
-            if element of VerificationObj.Verification:
-                consensus[record.key].merkle.add(cast[VerificationObj.Verification](element).hash)
+            if element of Verification:
+                consensus[record.key].merkle.add(cast[Verification](element).hash)
             else: # STUB!!
                 doAssert(false, "Element should be Verification")
 

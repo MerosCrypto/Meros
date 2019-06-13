@@ -7,5 +7,5 @@ import ../SerializeCommon
 method serialize*(
     element: Element,
     signingOrVerifying: bool = false
-): string {.forceCheck: [].} = # {.base, forceCheck: [].}--forceCheck currently incompatible with .base.
+): string {.base, forceCheck: [].} =
     doAssert(false, "Unimplemented base method")
