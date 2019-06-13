@@ -5,6 +5,7 @@
 - Data Transactions.
 - Reload Transactions from the DB.
 - MainTransactions.
+- Correct Network.
 - New Transactions RPC.
 - Rebuild the Personal RPC.
 
@@ -105,6 +106,13 @@ Datbase/Filesystem/DB:
 - ConsensusDB Test.
 - MeritDB Test.
 
+Database/Transactions:
+
+- Mint Test.
+- Claim Test.
+- Send Test.
+- Transactions Test.
+
 Database/Consensus:
 
 - MeritHolder Test.
@@ -117,13 +125,6 @@ Database/Merit:
 - Difficulty Test.
 - Merit Test.
 - Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
-
-Database/Transactions:
-
-- Transaction Test.
-- Mint Test.
-- Claim Test.
-- Send Test.
 
 Network:
 
