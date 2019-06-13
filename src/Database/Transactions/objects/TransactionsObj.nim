@@ -131,12 +131,23 @@ proc newTransactionsObj*(
 
     #Load each transaction.
     for hash in hashes.keys():
-        try:
-            result.add(db.load(hashes[hash]), false)
-        except KeyError:
-            doAssert(false, "Couldn't get a value by a key produced from .keys().")
-        except DBReadError as e:
-            doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
+        if not result.transactions.hasKey(hash):
+            try:
+                result.add(db.load(hashes[hash]), false)
+            except KeyError:
+                doAssert(false, "Couldn't get a value by a key produced from .keys().")
+            except DBReadError as e:
+                doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
+
+#Mark a Transaction as verified.
+proc verify*(
+    transaction: Transactions,
+    hash: Hash[384]
+) {.forceCheck: [].} =
+    try:
+        transaction.db.saveVerified(hash)
+    except DBWriteError:
+        doAssert(false, "Couldn't save a Transaction's verified field.")
 
 #Save a MeritHolder's out-of-Epoch tip.
 proc save*(

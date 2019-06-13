@@ -31,6 +31,7 @@ import Send
 
 #Transactions object.
 import objects/TransactionsObj
+export Transactions
 
 #Seq utils standard lib.
 import sequtils
@@ -101,7 +102,8 @@ proc verify*(
 
         #If we're not just reloading Verifications, and should update UTXOs...
         if save:
-            echo verif.hash, " was verified."
+            echo tx.hash, " was verified."
+            transactions.verify(tx.hash)
 
             #Mark spent UTXOs as spent and create new UTXOs.
             case tx.descendant:

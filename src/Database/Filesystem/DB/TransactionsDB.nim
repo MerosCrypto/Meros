@@ -73,6 +73,17 @@ proc save*(
     except DBWriteError as e:
         raise e
 
+proc saveVerified*(
+    db: DB,
+    hash: Hash[384]
+) {.forceCheck: [
+    DBWriteError
+].} =
+    try:
+        db.put(hash.toString() & "vrf", "")
+    except DBWriteError as e:
+        raise e
+
 proc save*(
     db: DB,
     key: BLSPublicKey,
@@ -149,12 +160,20 @@ proc deleteUTXO*(
 #Load functions.
 proc load*(
     db: DB,
-    hash: Hash[384]
+    hashArg: Hash[384]
 ): Transaction {.forceCheck: [
     DBReadError
 ].} =
+    var hash: string = hashArg.toString()
     try:
-        result = db.get(hash.toString()).parseTransaction()
+        result = db.get(hash).parseTransaction()
+
+        result.verified = true
+        try:
+            discard db.get(hash & "vrf")
+        except DBReadError:
+            result.verified = false
+
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
