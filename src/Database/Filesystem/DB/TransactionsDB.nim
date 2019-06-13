@@ -26,7 +26,7 @@ import Serialize/Transactions/ParseTransaction
 import objects/DBObj
 export DBObj
 
-#Put/Get for the Transactions DB.
+#Put/Get/Delete for the Transactions DB.
 proc put(
     db: DB,
     key: string,
@@ -61,6 +61,7 @@ proc delete(
     except Exception as e:
         raise newException(DBWriteError, e.msg)
 
+#Save functions.
 proc save*(
     db: DB,
     tx: Transaction
@@ -121,6 +122,7 @@ proc save*(
         except DBWriteError as e:
             raise e
 
+#Delete functions.
 proc deleteUTXO*(
     db: DB,
     hash: Hash[384]
@@ -144,6 +146,7 @@ proc deleteUTXO*(
     except DBWriteError as e:
         fcRaise e
 
+#Load functions.
 proc load*(
     db: DB,
     hash: Hash[384]

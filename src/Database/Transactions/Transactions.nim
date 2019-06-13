@@ -140,8 +140,108 @@ proc newTransactions*(
     )
 
     #Reload the Verifications.
-    discard
 
+    #Grab every MeritHolder mentioned in the last 6 Blocks of Elements.
+    var mentioned: Table[string, BLSPublicKey] = initTable[string, BLSPublicKey]()
+    try:
+        for nonce in max(0, merit.blockchain.height - 5) ..< merit.blockchain.height:
+            for record in merit.blockchain[nonce].records:
+                mentioned[record.key.toString()] = record.key
+    except IndexError as e:
+        doAssert(false, "Couldn't load records from the Blockchain while reloading Transactions: " & e.msg)
+
+    if mentioned.len == 0:
+        return
+
+    #Create a seq of States.
+    var states: seq[State] = newSeq[State](
+        min(merit.blockchain.height - 1, 6) + 1
+    )
+
+    #Copy the State for reverting.
+    var reverted: State = merit.state
+    #Fill the States seq with the historicval States.
+    for s in countdown(states.len - 1, 0):
+        states[s] = reverted
+        reverted.revert(merit.blockchain, reverted.processedBlocks - 1)
+
+    #Iterate over every MeritHolder.
+    for holderStr in mentioned.keys():
+        var
+            #Holder as a BLSPublicKey.
+            holder: BLSPublicKey
+            #Define the tips,
+            tips: seq[int] = newSeq[int](1)
+        #Extract the holder.
+        try:
+            holder = mentioned[holderStr]
+        except KeyError:
+            doAssert(false, "Couldn't get a value by a key produced from .keys().")
+
+        #Grab their out-of-epoch tip.
+        try:
+            tips[0] = result.load(holder)
+        except DBReadError:
+            tips[0] = -2
+
+        #Grab their tips in the Blocks.
+        for b in max(merit.blockchain.height - 6, 1) ..< merit.blockchain.height:
+            var tip: int = -1
+            try:
+                for record in merit.blockchain[b].records:
+                    if record.key == holder:
+                        tip = record.nonce
+                        break
+            except IndexError as e:
+                doAssert(false, "Couldn't grab a Block when reloading Transactions' Verifications: " & e.msg)
+            tips.add(tip)
+
+        #Add their height to the end.
+        tips.add(consensus[holder].height - 1)
+
+        #Iterate over every tip.
+        for t in 0 ..< tips.len - 1:
+            #If we weren't mentioned in a Block, continue.
+            if tips[t] == -1:
+                continue
+
+            #If this is the last tip, which is equivalent to the height, continue.
+            if (t == tips.len - 2) and (tips[t] == tips[t + 1]):
+                continue
+
+            #If we don't have a tip out-of-epochs, change this to an usable value.
+            if tips[t] == -2:
+                tips[t] = -1
+
+            #Grab the State used at the time.
+            var state: State = states[t + 1]
+
+            #Load the Elements archived in this Block.
+            var
+                nextT: int = t + 1
+                nextTip: int = tips[nextT]
+            while nextTip == -1:
+                inc(nextT)
+                nextTip = tips[nextT]
+
+            #Update the State accordingly.
+            state = states[nextT - 1]
+
+            for e in tips[t] + 1 .. nextTip:
+                var verif: Verification
+                try:
+                    verif = consensus[holder][e]
+                except IndexError as e:
+                    doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
+
+                #Handle the possibility this verifies a Transaction out of Epochs.
+                if not result.weights.hasKey(verif.hash.toString()):
+                    continue
+
+                try:
+                    result.verify(verif, state[holder], state.live, false)
+                except ValueError as e:
+                    doAssert(false, "Couldn't reload a Verification when reloading Transactions: " & e.msg)
 #Add a Claim.
 proc add*(
     transactions: var Transactions,
@@ -262,3 +362,18 @@ proc mint*(
 
     #Increment the mint nonce.
     inc(transactions.mintNonce)
+
+#Remove every hash in this Epoch from the cache/RAM, updating archived and the amount of Elements to reload.
+proc archive*(
+    transactions: var Transactions,
+    epoch: Epoch
+) {.forceCheck: [].} =
+    for hash in epoch.hashes.keys():
+        transactions.del(hash)
+
+    #Save the popped height so we can reload Elements.
+    for record in epoch.records:
+        try:
+            transactions.save(record.key, record.nonce)
+        except DBWriteError as e:
+            doAssert(false, "Couldn't write a shifted record to the database: " & e.msg)

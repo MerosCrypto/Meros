@@ -3,7 +3,8 @@
 ### Transactions and DB Redo
 
 - Data Transactions.
-- Reload Transactions from the DB.
+- Save whether or not transactions were verified to the DB.
+- Clear unverified transactions from the cache.
 - MainTransactions.
 - Correct Network.
 - New Transactions RPC.

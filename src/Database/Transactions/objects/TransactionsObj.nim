@@ -138,6 +138,19 @@ proc newTransactionsObj*(
         except DBReadError as e:
             doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
 
+#Save a MeritHolder's out-of-Epoch tip.
+proc save*(
+    transactions: Transactions,
+    key: BLSPublicKey,
+    nonce: int
+) {.forceCheck: [
+    DBWriteError
+].} =
+    try:
+        transactions.db.save(key, nonce)
+    except DBWriteError as e:
+        fcRaise e
+
 #Save a Mint UTXO.
 proc saveUTXO*(
     transactions: Transactions,
@@ -183,15 +196,24 @@ proc spend*(
 #Delete a hash from the cache.
 func del*(
     transactions: var Transactions,
-    hashArg: Hash[384]
+    hash: string
 ) {.forceCheck: [].} =
-    #Extract the hash.
-    var hash: string = hashArg.toString()
-
     #Delete the Transaction from the cache.
     transactions.transactions.del(hash)
     #Delete its weight.
     transactions.weights.del(hash)
+
+#Load a MeritHolder's out-of-Epoch tip.
+proc load*(
+    transactions: Transactions,
+    key: BLSPublicKey
+): int {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = transactions.db.load(key)
+    except DBReadError as e:
+        fcRaise e
 
 #Get a Transaction by its hash.
 proc `[]`*(
