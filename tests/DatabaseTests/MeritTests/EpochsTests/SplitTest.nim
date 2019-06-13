@@ -1,9 +1,9 @@
 discard """
 Epochs Split Test. Verifies that:
     - 2 Verifications
-    - For the same Entry
+    - For the same Transaction
     - A block apart
-Result in 500/500 when the Entry first appeared.
+Result in 500/500 when the Transaction first appeared.
 """
 
 #Util lib.

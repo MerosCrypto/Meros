@@ -19,7 +19,7 @@ import ../../../src/Database/Transactions/Send
 #Tables lib.
 import tables
 
-#Compare two Entries to make sure they have the same value.
+#Compare two Transactions to make sure they have the same value.
 proc compare*(
     e1: Transaction,
     e2: Transaction
