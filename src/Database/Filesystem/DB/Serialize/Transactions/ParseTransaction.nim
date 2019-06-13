@@ -26,6 +26,7 @@ proc parseTransaction*(
                 result = tx.substr(1).parseMint()
             except BLSError as e:
                 fcRaise e
+
         of TransactionType.Claim:
             try:
                 result = tx.substr(1).parseClaim()
@@ -35,6 +36,7 @@ proc parseTransaction*(
                 fcRaise e
             except BLSError as e:
                 fcRaise e
+
         of TransactionType.Send:
             try:
                 result = tx.substr(1).parseSend()

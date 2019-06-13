@@ -19,40 +19,54 @@ import ../../../src/Database/Transactions/Send
 #Tables lib.
 import tables
 
+#Compare two MintOutputs to make sure they have the same value.
+proc compare*(
+    so1: MintOutput,
+    so2: MintOutput
+) =
+    assert(so1.amount == so2.amount)
+    assert(so1.key == so2.key)
+
+#Compare two SendOutputs to make sure they have the same value.
+proc compare*(
+    so1: SendOutput,
+    so2: SendOutput
+) =
+    assert(so1.amount == so2.amount)
+    assert(so1.key == so2.key)
+
 #Compare two Transactions to make sure they have the same value.
 proc compare*(
-    e1: Transaction,
-    e2: Transaction
+    tx1: Transaction,
+    tx2: Transaction
 ) =
     #Test the Transaction fields.
-    assert(e1.descendant == e2.descendant)
-    assert(e1.inputs.len == e2.inputs.len)
-    for i in 0 ..< e1.inputs.len:
-        assert(e1.inputs[i].hash == e2.inputs[i].hash)
-    assert(e1.outputs.len == e2.outputs.len)
-    for o in 0 ..< e1.outputs.len:
-        assert(e1.outputs[o].amount == e2.outputs[o].amount)
-    assert(e1.hash == e2.hash)
-    assert(e1.verified == e2.verified)
+    assert(tx1.descendant == tx2.descendant)
+    assert(tx1.inputs.len == tx2.inputs.len)
+    for i in 0 ..< tx1.inputs.len:
+        assert(tx1.inputs[i].hash == tx2.inputs[i].hash)
+    assert(tx1.outputs.len == tx2.outputs.len)
+    assert(tx1.hash == tx2.hash)
+    assert(tx1.verified == tx2.verified)
 
     #Test the sub-type fields.
-    case e1.descendant:
+    case tx1.descendant:
         of TransactionType.Mint:
-            for o in 0 ..< e1.outputs.len:
-                assert(cast[MintOutput](e1.outputs[o]).key == cast[MintOutput](e2.outputs[o]).key)
-            assert(cast[Mint](e1).nonce == cast[Mint](e2).nonce)
+            for o in 0 ..< tx1.outputs.len:
+                compare(cast[MintOutput](tx1.outputs[o]), cast[MintOutput](tx2.outputs[o]))
+                assert(cast[Mint](tx1).nonce == cast[Mint](tx2).nonce)
 
         of TransactionType.Claim:
-            assert(e1.outputs[0].amount == 0)
-            for o in 0 ..< e1.outputs.len:
-                assert(cast[SendOutput](e1.outputs[o]).key == cast[SendOutput](e2.outputs[o]).key)
-            assert(cast[Claim](e1).signature == cast[Claim](e2).signature)
+            assert(tx1.outputs[0].amount == 0)
+            for o in 0 ..< tx1.outputs.len:
+                compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
+            assert(cast[Claim](tx1).signature == cast[Claim](tx2).signature)
 
         of TransactionType.Send:
-            for i in 0 ..< e1.inputs.len:
-                assert(cast[SendInput](e1.inputs[i]).nonce == cast[SendInput](e2.inputs[i]).nonce)
-            for o in 0 ..< e1.outputs.len:
-                assert(cast[SendOutput](e1.outputs[o]).key == cast[SendOutput](e2.outputs[o]).key)
-            assert(cast[Send](e1).signature == cast[Send](e2).signature)
-            assert(cast[Send](e1).proof == cast[Send](e2).proof)
-            assert(cast[Send](e1).argon == cast[Send](e2).argon)
+            for i in 0 ..< tx1.inputs.len:
+                assert(cast[SendInput](tx1.inputs[i]).nonce == cast[SendInput](tx2.inputs[i]).nonce)
+            for o in 0 ..< tx1.outputs.len:
+                compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
+            assert(cast[Send](tx1).signature == cast[Send](tx2).signature)
+            assert(cast[Send](tx1).proof == cast[Send](tx2).proof)
+            assert(cast[Send](tx1).argon == cast[Send](tx2).argon)
