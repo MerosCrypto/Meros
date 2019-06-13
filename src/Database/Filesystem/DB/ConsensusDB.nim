@@ -86,9 +86,10 @@ proc save*(
         discard
     elif element of Verification:
         try:
-            db.put(cast[Verification](element).holder.toString() &
-                     cast[Verification](element).nonce.toBinary().pad(1),
-                   cast[Verification](element).hash.toString())
+            db.put(
+                element.holder.toString() & element.nonce.toBinary().pad(1),
+                cast[Verification](element).hash.toString()
+            )
         except DBWriteError as e:
             fcRaise e
     elif element of DataDifficulty:
