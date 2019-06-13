@@ -85,8 +85,6 @@ proc shift*(
                 #If it wasn't in any existing Epoch, add it to the new one.
                 except NotInEpochs:
                     newEpoch.add(cast[Verification](element).hash.toString(), element.holder)
-            else:  # STUB!!
-              assert false
 
         #If we were passed a set of tips, update them.
         if not tips.isNil:

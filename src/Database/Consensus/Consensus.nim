@@ -19,9 +19,9 @@ import ../common/objects/MeritHolderRecordObj
 export ConsensusIndex
 
 #Verification and MeritHolder libs.
-import Verification as VerificationLib
+import Verification as VerificationFile
 import MeritHolder
-export VerificationLib
+export VerificationFile
 export MeritHolder
 
 import objects/ElementObj

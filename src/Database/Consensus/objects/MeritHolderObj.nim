@@ -144,7 +144,7 @@ proc add*(
         #Already added.
         raise newException(DataExists, "Element has already been added.")
 
-    #Verify this MeritHolder isn't elementying conflicting Transactions.
+    #Verify this MeritHolder isn't verifying conflicting Transactions.
 
     #Increase the height.
     holder.height = holder.height + 1
