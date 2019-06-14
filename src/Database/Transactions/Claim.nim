@@ -20,7 +20,7 @@ import ../../Network/Serialize/Transactions/SerializeClaim
 
 #Create a new Claim.
 proc newClaim*(
-    mints: seq[Mint],
+    mints: varargs[Mint],
     output: EdPublicKey
 ): Claim {.forceCheck: [
     ValueError

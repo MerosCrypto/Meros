@@ -23,12 +23,12 @@ finalsd:
 
 #Claim constructor.
 func newClaimObj*(
-    inputs: seq[Input],
+    inputs: varargs[Input],
     output: EdPublicKey
 ): Claim {.forceCheck: [].} =
     #Create the Claim.
     result = Claim(
-        inputs: inputs,
+        inputs: @inputs,
         outputs: cast[seq[Output]](
             @[
                 newClaimOutput(output)

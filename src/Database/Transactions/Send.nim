@@ -19,8 +19,8 @@ import ../../Network/Serialize/Transactions/SerializeSend
 
 #Create a new Send.
 proc newSend*(
-    inputs: seq[SendInput],
-    outputs: seq[SendOutput]
+    inputs: varargs[SendInput],
+    outputs: varargs[SendOutput]
 ): Send {.forceCheck: [
     ValueError
 ].} =
