@@ -29,9 +29,13 @@ import Mint
 import Claim
 import Send
 
+export Mint
+export Claim
+export Send
+
 #Transactions object.
 import objects/TransactionsObj
-export Transactions
+export TransactionsObj.Transactions, `[]`
 
 #Seq utils standard lib.
 import sequtils
@@ -45,7 +49,7 @@ proc verify*(
     verif: Verification,
     merit: int,
     liveMerit: int,
-    save: bool
+    save: bool = true
 ) {.forceCheck: [
     ValueError
 ].} =
@@ -331,6 +335,8 @@ proc add*(
 
     #Subtract the amount the outpts spend.
     for ouput in send.outputs:
+        if output.amount == 0:
+            raise newException(ValueError, "Send output has an amount of 0.")
         amount -= output.amount
 
     #If the amount is not 9, there's a problem
@@ -350,7 +356,7 @@ proc mint*(
     transactions: var Transactions,
     key: BLSPublicKey,
     amount: uint64
-) {.forceCheck: [].} =
+): Hash[384] {.forceCheck: [].} =
     #Create the Mint.
     var mint: Mint = newMint(
         transactions.mintNonce,
@@ -364,6 +370,9 @@ proc mint*(
 
     #Increment the mint nonce.
     inc(transactions.mintNonce)
+
+    #Return the mint hash.
+    result = mint.hash
 
 #Remove every hash in this Epoch from the cache/RAM, updating archived and the amount of Elements to reload.
 proc archive*(
