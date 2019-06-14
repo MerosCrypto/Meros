@@ -3,8 +3,7 @@
 ### Transactions and DB Redo
 
 - Data Transactions.
-- Save whether or not transactions were verified to the DB.
-- Clear unverified transactions from the cache.
+- Track spendable UTXOs for every address.
 - MainTransactions.
 - Correct Network.
 - New Transactions RPC.

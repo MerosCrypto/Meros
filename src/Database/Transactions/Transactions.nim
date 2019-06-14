@@ -368,13 +368,32 @@ proc mint*(
 #Remove every hash in this Epoch from the cache/RAM, updating archived and the amount of Elements to reload.
 proc archive*(
     transactions: var Transactions,
+    consensus: Consensus,
     epoch: Epoch
 ) {.forceCheck: [].} =
-    for hash in epoch.hashes.keys():
-        transactions.del(hash)
-
-    #Save the popped height so we can reload Elements.
     for record in epoch.records:
+        #Remove every hash from this Epoch.
+        #If we used the hashes in the Epoch, we'd only remove confirmed hashes.
+        #We need to iterate over every Element archived in this hash and remove every verified hash.
+        var
+            #Previously popped height.
+            prev: int
+            #Elements.
+            elems: seq[Verification]
+        try:
+            prev = transactions.load(record.key)
+        except DBReadError:
+            prev = -1
+        try:
+            elems = consensus[record.key][prev + 1 .. record.nonce]
+        except IndexError as e:
+            doAssert(false, "Couldn't load Elements which were archived: " & e.msg)
+
+        #Iterate over every archived Element,
+        for elem in elems:
+            transactions.del(elem.hash.toString())
+
+        #Save the popped height so we can reload Elements.
         try:
             transactions.save(record.key, record.nonce)
         except DBWriteError as e:
