@@ -111,7 +111,6 @@ Database/Transactions:
 - Mint Test.
 - Claim Test.
 - Send Test.
-- Transactions Test.
 
 Database/Consensus:
 

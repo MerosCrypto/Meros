@@ -5,16 +5,8 @@ import ../../../src/lib/Hash
 import ../../../src/Wallet/Wallet
 import ../../../src/Wallet/MinerWallet
 
-#MinerWallet lib.
-import ../../../src/Wallet/MinerWallet
-
-#Transaction object.
-import ../../../src/Database/Transactions/objects/TransactionObj
-
 #Various Transaction libs.
-import ../../../src/Database/Transactions/Mint
-import ../../../src/Database/Transactions/Claim
-import ../../../src/Database/Transactions/Send
+import ../../../src/Database/Transactions/Transactions
 
 #Tables lib.
 import tables
@@ -54,10 +46,9 @@ proc compare*(
         of TransactionType.Mint:
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[MintOutput](tx1.outputs[o]), cast[MintOutput](tx2.outputs[o]))
-                assert(cast[Mint](tx1).nonce == cast[Mint](tx2).nonce)
+            assert(cast[Mint](tx1).nonce == cast[Mint](tx2).nonce)
 
         of TransactionType.Claim:
-            assert(tx1.outputs[0].amount == 0)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
             assert(cast[Claim](tx1).signature == cast[Claim](tx2).signature)
@@ -70,3 +61,25 @@ proc compare*(
             assert(cast[Send](tx1).signature == cast[Send](tx2).signature)
             assert(cast[Send](tx1).proof == cast[Send](tx2).proof)
             assert(cast[Send](tx1).argon == cast[Send](tx2).argon)
+
+#Compare two Transactions DAGs to make sure they have the same value.
+proc compare*(
+    txs1: Transactions,
+    txs2: Transactions
+) =
+    #Test the difficulties.
+    assert(txs1.difficulties.send == txs2.difficulties.send)
+    assert(txs1.difficulties.data == txs2.difficulties.data)
+
+    #Test the mint nonce.
+    assert(txs1.mintNonce == txs2.mintNonce)
+
+    #Test the transactions.
+    assert(txs1.transactions.len == txs2.transactions.len)
+    for hash in txs1.transactions.keys():
+        compare(txs1.transactions[hash], txs2.transactions[hash])
+
+    #Test the weights.
+    assert(txs1.weights.len == txs2.weights.len)
+    for hash in txs1.weights.keys():
+        assert(txs1.weights[hash] == txs2.weights[hash])

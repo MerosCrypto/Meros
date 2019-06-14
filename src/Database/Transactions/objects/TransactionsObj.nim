@@ -19,8 +19,9 @@ import ../../Filesystem/DB/TransactionsDB
 #Difficulties object.
 import DifficultiesObj
 
-#Transaction object.
+#Transaction and Claim objects.
 import TransactionObj
+import ClaimObj
 
 #Tables standard library.
 import tables
@@ -52,13 +53,14 @@ proc add*(
     tx: Transaction,
     save: bool = true
 ) {.forceCheck: [].} =
-    #Extract the hash.
-    var hash: string = tx.hash.toString()
+    if tx.descendant != TransactionType.Mint:
+        #Extract the hash.
+        var hash: string = tx.hash.toString()
 
-    #Add the Transaction to the cache.
-    transactions.transactions[hash] = tx
-    #Set its weight to 0.
-    transactions.weights[hash] = 0
+        #Add the Transaction to the cache.
+        transactions.transactions[hash] = tx
+        #Set its weight to 0.
+        transactions.weights[hash] = 0
 
     if save:
         #Save the TX.
@@ -66,6 +68,30 @@ proc add*(
             transactions.db.save(tx)
         except DBWriteError as e:
             doAssert(false, "Couldn't save a Transaction to the Database: " & e.msg)
+
+#Get a Transaction by its hash.
+proc `[]`*(
+    transactions: Transactions,
+    hash: Hash[384]
+): Transaction {.forceCheck: [
+    IndexError
+].} =
+    #Extract the hash.
+    var hashStr: string = hash.toString()
+
+    #Check if the Transaction is in the cache.
+    if transactions.transactions.hasKey(hashStr):
+        #If it is, return it from the cache.
+        try:
+            return transactions.transactions[hashStr]
+        except KeyError as e:
+            doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
+
+    #Load the hash from the DB.
+    try:
+        result = transactions.db.load(hash)
+    except DBReadError:
+        raise newException(IndexError, "Hash doesn't map to any Transaction.")
 
 #Transactions constructor
 proc newTransactionsObj*(
@@ -104,10 +130,13 @@ proc newTransactionsObj*(
 
     #Go through each Verifier.
     var
+        #Properties of each Verifier.
         key: BLSPublicKey
         outOfEpochs: int
         height: int
         elements: seq[Verification]
+
+        #Hashes of the TXs to reload.
         hashes: Table[string, Hash[384]]
     for keyStr in mentioned.keys():
         try:
@@ -130,6 +159,7 @@ proc newTransactionsObj*(
             hashes[element.hash.toString()] = element.hash
 
     #Load each transaction.
+    var claims: seq[string] = @[]
     for hash in hashes.keys():
         if not result.transactions.hasKey(hash):
             try:
@@ -138,6 +168,42 @@ proc newTransactionsObj*(
                 doAssert(false, "Couldn't get a value by a key produced from .keys().")
             except DBReadError as e:
                 doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
+
+            try:
+                if result.transactions[hash].descendant == TransactionType.Claim:
+                    claims.add(hash)
+            except KeyError as e:
+                doAssert(false, "Couldn't get a value we just added: " & e.msg)
+
+    #Recalculate the output amount for every Claim.
+    var
+        claim: Claim
+        amount: uint64 = 0
+    for claimHash in claims:
+        try:
+            claim = cast[Claim](result.transactions[claimHash])
+        except KeyError as e:
+            doAssert(false, "Couldn't get a Claim we just reloaded: " & e.msg)
+
+        amount = 0
+        for input in claim.inputs:
+            try:
+                amount += result[input.hash].outputs[0].amount
+            except IndexError as e:
+                doAssert(false, "Saved Claim couldn't be loaded from the cache or the DB: " & e.msg)
+        try:
+            claim.outputs[0].amount = amount
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when reloading a Claim: " & e.msg)
+
+#Save a mint nonce.
+proc saveMintNonce*(
+    transactions: Transactions
+) {.forceCheck: [].} =
+    try:
+        transactions.db.saveMintNonce(transactions.mintNonce)
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save Transactions' mint nonce: " & e.msg)
 
 #Mark a Transaction as verified.
 proc verify*(
@@ -225,30 +291,6 @@ proc load*(
         result = transactions.db.load(key)
     except DBReadError as e:
         fcRaise e
-
-#Get a Transaction by its hash.
-proc `[]`*(
-    transactions: Transactions,
-    hash: Hash[384]
-): Transaction {.forceCheck: [
-    IndexError
-].} =
-    #Extract the hash.
-    var hashStr: string = hash.toString()
-
-    #Check if the Transaction is in the cache.
-    if transactions.transactions.hasKey(hashStr):
-        #If it is, return it from the cache.
-        try:
-            return transactions.transactions[hashStr]
-        except KeyError as e:
-            doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
-
-    #Load the hash from the DB.
-    try:
-        result = transactions.db.load(hash)
-    except DBReadError:
-        raise newException(IndexError, "Hash doesn't map to any Transaction.")
 
 #Get a Mint UTXO.
 proc getUTXO*(

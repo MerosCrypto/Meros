@@ -310,8 +310,8 @@ proc add*(
         #Sender.
         sender: EdPublicKey
 
-        #Output loop variable.
-        output: SendOutput
+        #Spent output loop variable.
+        spent: SendOutput
         #Amount this transaction is processing.
         amount: uint64 = 0
 
@@ -324,19 +324,20 @@ proc add*(
     #Add the amount the inputs provide.
     for input in send.inputs:
         try:
-            output = transactions.getUTXO(cast[SendInput](input))
+            spent = transactions.getUTXO(cast[SendInput](input))
         except DBreadError:
             raise newException(ValueError, "Send spends a non-existant or spent output.")
 
-        if output.key != sender:
+        if spent.key != sender:
             raise newException(ValueError, "Send inputs have different keys.")
 
-        amount += output.amount
+        amount += spent.amount
 
     #Subtract the amount the outpts spend.
-    for ouput in send.outputs:
+    for output in send.outputs:
         if output.amount == 0:
             raise newException(ValueError, "Send output has an amount of 0.")
+
         amount -= output.amount
 
     #If the amount is not 9, there's a problem
@@ -370,6 +371,9 @@ proc mint*(
 
     #Increment the mint nonce.
     inc(transactions.mintNonce)
+
+    #Save the mint nonce.
+    transactions.saveMintNonce()
 
     #Return the mint hash.
     result = mint.hash

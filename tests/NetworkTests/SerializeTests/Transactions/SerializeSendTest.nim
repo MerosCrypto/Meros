@@ -63,7 +63,7 @@ for s in 0 .. 255:
     newHDWallet().sign(send)
 
     #mine the Send.
-    send.mine("".pad(48, "aa").toHash(384))
+    send.mine("".pad(96, "aa").toHash(384))
 
     #Serialize it and parse it back.
     reloaded = send.serialize().parseSend()

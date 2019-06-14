@@ -1,3 +1,5 @@
-#Transactions Test.
+#Transactions Tests.
 
-echo "The Database/Transactions/Transactions Test is empty."
+import TransactionsTests/TDBTest
+
+echo "Finished the Database/Transactions/Transactions Tests."
