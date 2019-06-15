@@ -4,7 +4,6 @@
 
 - Data Transactions.
 - Track spendable UTXOs for every address.
-- MainTransactions.
 - Correct Network.
 - New Transactions RPC.
 - Rebuild the Personal RPC.

@@ -22,6 +22,7 @@ import ../common/objects/MeritHolderRecordObj
 
 #Difficulties object.
 import objects/DifficultiesObj
+export DifficultiesObj
 
 #Transaction object, along with the Mint, Claim, and Send libraries.
 import objects/TransactionObj
