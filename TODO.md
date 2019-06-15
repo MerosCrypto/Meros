@@ -8,6 +8,7 @@
 - Correct Network.
 - New Transactions RPC.
 - Rebuild the Personal RPC.
+- Update the GUI's send functionality.
 
 ### Core:
 
@@ -18,7 +19,7 @@ Config:
 Database:
 
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
-- Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
+- Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Merit:
 
@@ -34,6 +35,7 @@ Wallet:
 UI:
 
 - Passworded RPC.
+- Usable GUI.
 
 Network:
 
@@ -147,7 +149,7 @@ UI/RPC:
 
 - Have the RPC match the JSON-RPC 2.0 spec.
 - Have the RPC dynamically get the nonce (it's currently an argument).
-- `network.rebroadcast(address | verifier, nonce)` RPC method.
+- `network.rebroadcast(hash or (verifier, nonce))` RPC method.
 - Expose more of the Consensus RPC.
 
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
@@ -157,8 +159,6 @@ UI/RPC:
 - Swap Chia for Milagro.
 
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Transaction (stop DoS attacks).
-
-- Remove holders who lost all their Merit from `merit_holders`.
 
 ### Documentation:
 

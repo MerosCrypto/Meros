@@ -253,8 +253,16 @@ proc add*(
     transactions: var Transactions,
     claim: Claim
 ) {.forceCheck: [
-    ValueError
+    ValueError,
+    DataExists
 ].} =
+    #Verify it wasn't already added.
+    try:
+        discard transactions[claim.hash]
+        raise newException(DataExists, "Claim was already added.")
+    except IndexError:
+        discard
+
     var
         #Claimer.
         claimer: BLSPublicKey
@@ -267,7 +275,7 @@ proc add*(
     #Grab the Claimer.
     try:
          claimer = transactions.getUTXO(claim.inputs[0].hash).key
-    except DBreadError:
+    except DBReadError:
         raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
 
     #Add the amount the inputs provide.
@@ -300,11 +308,19 @@ proc add*(
     transactions: var Transactions,
     send: Send
 ) {.forceCheck: [
-    ValueError
+    ValueError,
+    DataExists
 ].} =
     #Verify the Send's proof.
     if send.argon < transactions.difficulties.send:
         raise newException(ValueError, "Send has an invalid proof.")
+
+    #Verify it wasn't already added.
+    try:
+        discard transactions[send.hash]
+        raise newException(DataExists, "Send was already added.")
+    except IndexError:
+        discard
 
     var
         #Sender.
@@ -411,3 +427,16 @@ proc archive*(
             transactions.save(record.key, record.nonce)
         except DBWriteError as e:
             doAssert(false, "Couldn't write a shifted record to the database: " & e.msg)
+
+#Checks if an Transaction was the first to spend all of its inputs.
+proc isFirst*(
+    transactions: Transactions,
+    tx: Transaction
+): bool {.forceCheck: [].} =
+    for input in tx.inputs:
+        try:
+            if transactions.spent[input.toString(tx.descendant)] != tx.hash:
+                return false
+        except KeyError as e:
+            doAssert(false, "Spent input isn't in the spent table: " & e.msg)
+    result = true

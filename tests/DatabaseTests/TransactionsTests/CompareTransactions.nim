@@ -83,3 +83,8 @@ proc compare*(
     assert(txs1.weights.len == txs2.weights.len)
     for hash in txs1.weights.keys():
         assert(txs1.weights[hash] == txs2.weights[hash])
+
+    #Test the spent table.
+    assert(txs1.spent.len == txs2.spent.len)
+    for input in txs1.spent.keys():
+        assert(txs1.spent[input] == txs2.spent[input])

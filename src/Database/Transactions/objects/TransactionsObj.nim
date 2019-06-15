@@ -47,6 +47,25 @@ type
             int
         ]
 
+        #Table of inputs to whoever first spent them.
+        spent*: Table[
+            string,
+            Hash[384]
+        ]
+
+#Helper functions to convert an input to a string.
+proc toString*(
+    input: Input,
+    inputType: TransactionType
+): string {.forceCheck: [].} =
+    case inputType:
+        of TransactionType.Mint:
+            discard
+        of TransactionType.Claim:
+            result = input.hash.toString()
+        of TransactionType.Send:
+            result = input.hash.toString() & char(cast[SendInput](input).nonce)
+
 #Add a Transaction to the DAG.
 proc add*(
     transactions: var Transactions,
@@ -61,6 +80,17 @@ proc add*(
         transactions.transactions[hash] = tx
         #Set its weight to 0.
         transactions.weights[hash] = 0
+
+        #Mark the inputs as spent.
+        var inputStr: string
+        for input in tx.inputs:
+            inputStr = input.toString(tx.descendant)
+
+            #If a previous TX marked this input as spent, don't overwrite it.
+            if transactions.spent.hasKey(inputStr):
+                continue
+
+            transactions.spent[inputStr] = tx.hash
 
     if save:
         #Save the TX.
@@ -275,10 +305,21 @@ func del*(
     transactions: var Transactions,
     hash: string
 ) {.forceCheck: [].} =
+    #Grab the transaction.
+    var tx: Transaction
+    try:
+        tx = transactions.transactions[hash]
+    except KeyError:
+        return
+
     #Delete the Transaction from the cache.
     transactions.transactions.del(hash)
     #Delete its weight.
     transactions.weights.del(hash)
+
+    #Clear the spent inputs.
+    for input in tx.inputs:
+        transactions.spent.del(input.toString(tx.descendant))
 
 #Load a MeritHolder's out-of-Epoch tip.
 proc load*(
