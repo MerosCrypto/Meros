@@ -17,9 +17,9 @@ var
     db: JSONNode = %* {
         "consensus": {},
         "blockchain": [],
-        "lattice": {}
+        "transactions": {}
     }
-    #List of Lattice Entries.
+    #List of Transactions Entries.
     hashes: seq[string] = @[]
 
 #Get every Block.
@@ -39,15 +39,10 @@ for syncBlock in db["blockchain"]:
             )
             hashes.add(hash.getStr())
 
-#Get every Entry.
+#Get every Transaction.
 hashes = hashes.deduplicate()
 for hash in hashes:
-    db["lattice"][hash] = waitFor rpc.lattice.getEntryByHash(hash)
-
-#Get every Mint.
-for nonce in 0 ..< waitFor rpc.lattice.getHeight("minter"):
-    var mint: JSONNode = waitFor rpc.lattice.getEntryByIndex("minter", nonce)
-    db["lattice"][mint["hash"].getStr()] = mint
+    db["transactions"][hash] = waitFor rpc.transactions.getTransaction(hash)
 
 #Write it to a file.
 "data/db.json".writeFile(db.pretty(4))
