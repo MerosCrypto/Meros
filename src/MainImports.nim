@@ -10,7 +10,7 @@ import lib/Hash
 #Merkle lib.
 import Database/common/Merkle
 
-#Wallet.
+#Wallet libs.
 import Wallet/MinerWallet
 import Wallet/HDWallet
 
@@ -24,16 +24,15 @@ import Database/Merit/Merit
 import Database/Transactions/Transactions
 
 #DB.
-import Database/Filesystem/DB
+import Database/Filesystem/DB/objects/DBObj
 
 #Network.
-import Network/Network
+#import Network/Network
+import Network/objects/MessageObj
 
 #Serialization libs.
 import Network/Serialize/Transactions/SerializeClaim
 import Network/Serialize/Transactions/SerializeSend
-import Network/Serialize/Transactions/SerializeReceive
-import Network/Serialize/Transactions/SerializeData
 
 import Network/Serialize/Consensus/SerializeSignedVerification
 

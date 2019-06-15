@@ -36,17 +36,3 @@ proc mainPersonal() {.forceCheck: [].} =
                 wallet.sign(send)
             except AddressError as e:
                 fcRaise e
-
-        #Sign a Receive.
-        functions.personal.signReceive = proc (
-            recv: Receive
-        ) {.forceCheck: [].} =
-            wallet.sign(recv)
-
-        functions.personal.signData = proc (data: Data) {.forceCheck: [
-            AddressError
-        ].} =
-            try:
-                wallet.sign(data)
-            except AddressError as e:
-                fcRaise e

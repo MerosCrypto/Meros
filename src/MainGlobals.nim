@@ -18,14 +18,14 @@ var
     transactions {.threadvar.}: Transactions
 
     #DB.
-    db {.threadvar.}: DB
+    database {.threadvar.}: DB
 
     #Personal.
     verifyLock: Lock               #Verify lock to stop us from triggering a MeritRemoval.
     wallet {.threadvar.}: HDWallet #Wallet.
 
     #Network.
-    network {.threadvar.}: Network #Network.
+    #network {.threadvar.}: Network #Network.
 
     #UI.
     fromMain: Channel[string] #Channel from the 'main' thread to the UI thread.
@@ -47,11 +47,11 @@ functions.system.quit = proc () {.forceCheck: [].} =
     rpc.shutdown()
 
     #Shut down the Network.
-    network.shutdown()
+    #network.shutdown()
 
     #Shut down the DB.
     try:
-        db.close()
+        database.close()
     except DBError as e:
         echo "Couldn't shutdown the DB: " & e.msg
 

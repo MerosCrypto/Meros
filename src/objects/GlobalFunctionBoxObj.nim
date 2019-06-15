@@ -42,6 +42,29 @@ type
     SystemFunctionBox* = ref object
         quit*: proc () {.raises: [].}
 
+    TransactionsFunctionBox* = ref object
+        getDifficulties*: proc (): Difficulties {.raises: [].}
+
+        getTransaction*: proc (
+            hash: Hash[384]
+        ): Transaction {.raises: [
+            IndexError
+        ].}
+
+        addClaim*: proc (
+            claim: Claim
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
+
+        addSend*: proc (
+            send: Send
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
+
     ConsensusFunctionBox* = ref object
         getMeritHolderHeight*: proc (
             key: BLSPublicKey
@@ -114,38 +137,6 @@ type
             header: BlockHeader
         ): Future[void]
 
-    TransactionsFunctionBox* = ref object
-        getDifficulties*: proc (): Difficulties {.raises: [].}
-
-        getTransaction*: proc (
-            hash: Hash[384]
-        ): Transaction {.raises: [
-            IndexError
-        ].}
-
-        addClaim*: proc (
-            claim: Claim
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            BLSError,
-            DataExists
-        ].}
-
-        addSend*: proc (
-            send: Send
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            DataExists
-        ].}
-
     PersonalFunctionBox* = ref object
         getWallet*: proc (): Wallet {.inline, raises: [].}
 
@@ -175,9 +166,9 @@ type
 
     GlobalFunctionBox* = ref object
         system*:       SystemFunctionBox
+        transactions*: TransactionsFunctionBox
         consensus*:    ConsensusFunctionBox
         merit*:        MeritFunctionBox
-        transactions*: TransactionsFunctionBox
         personal*:     PersonalFunctionBox
         network*:      NetworkFunctionBox
 
@@ -185,9 +176,9 @@ type
 func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
     GlobalFunctionBox(
         system:       SystemFunctionBox(),
+        transactions: TransactionsFunctionBox(),
         consensus:    ConsensusFunctionBox(),
         merit:        MeritFunctionBox(),
-        transactions: TransactionsFunctionBox(),
         personal:     PersonalFunctionBox(),
         network:      NetworkFunctionBox()
     )
