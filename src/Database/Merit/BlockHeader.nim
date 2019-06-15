@@ -14,7 +14,7 @@ import ../../Wallet/MinerWallet
 import objects/BlockHeaderObj
 export BlockHeaderObj
 
-#Serialization lib,
+#Serialization lib.
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
 #Constructor.

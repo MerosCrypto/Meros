@@ -272,7 +272,7 @@ for _ in 0 ..< 20:
                 #Update balance.
                 balance += transactions[mintHash].outputs[0].amount
 
-                #Add the UXTO.
+                #Add the UTXO.
                 utxos[wallet.publicKey.toString()].add(newSendInput(claim.hash, 0))
 
             #Create the Send.

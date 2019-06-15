@@ -1,6 +1,6 @@
 #Merit Testing Functions.
 
-#Util lib,
+#Util lib.
 import ../../../src/lib/Util
 
 #Hash lib.

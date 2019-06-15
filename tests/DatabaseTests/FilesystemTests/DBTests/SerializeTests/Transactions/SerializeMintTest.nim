@@ -6,7 +6,7 @@ import ../../../../../../src/lib/Util
 #Hash lib.
 import ../../../../../../src/lib/Hash
 
-#MinerWallet lib,
+#MinerWallet lib.
 import ../../../../../../src/Wallet/MinerWallet
 
 #Mint lib.
