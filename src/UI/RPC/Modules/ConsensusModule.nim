@@ -60,7 +60,7 @@ proc getUnarchivedMeritHolderRecords(
     #Add each index/merkle.
     for i in 0 ..< records.len:
         result.add(%* {
-            "holder":  $records[i].key,
+            "holder":    $records[i].key,
             "nonce":     records[i].nonce,
             "merkle":    $records[i].merkle,
             "signature": $aggregates[i]

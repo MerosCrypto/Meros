@@ -5,7 +5,6 @@
 - Data Transactions.
 - Track spendable UTXOs for every address.
 - Correct Network.
-- New Transactions RPC.
 - Rebuild the Personal RPC.
 - Update the GUI's send functionality.
 
@@ -142,12 +141,13 @@ UI/RPC:
 
 ### Features:
 
+- Add Mints to DBDumpSample.
+
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
 
 - Have the RPC match the JSON-RPC 2.0 spec.
-- Have the RPC dynamically get the nonce (it's currently an argument).
 - `network.rebroadcast(hash or (verifier, nonce))` RPC method.
 - Expose more of the Consensus RPC.
 
