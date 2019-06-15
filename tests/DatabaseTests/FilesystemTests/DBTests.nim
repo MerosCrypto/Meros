@@ -2,6 +2,6 @@
 
 import DBTests/DBTest
 import DBTests/SerializeTests
-import DBTests/TransactionsDBTest
+import DBTests/TransactionsDBTests
 import DBTests/ConsensusDBTest
 import DBTests/MeritDBTest

@@ -36,7 +36,7 @@ export Send
 
 #Transactions object.
 import objects/TransactionsObj
-export TransactionsObj.Transactions, `[]`
+export TransactionsObj.Transactions, `[]`, getUTXOs
 
 #Seq utils standard lib.
 import sequtils

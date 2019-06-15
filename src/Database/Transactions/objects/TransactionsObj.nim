@@ -4,8 +4,9 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib.
+#Wallet libs.
 import ../../../Wallet/MinerWallet
+import ../../../Wallet/Wallet
 
 #Consensus lib.
 import ../../Consensus/Consensus
@@ -226,6 +227,16 @@ proc newTransactionsObj*(
         except FinalAttributeError as e:
             doAssert(false, "Set a final attribute twice when reloading a Claim: " & e.msg)
 
+#Load a Public Key's UTXOs.
+proc getUTXOs*(
+    transactions: Transactions,
+    key: EdPublicKey
+): seq[SendInput] {.forceCheck: [].} =
+    try:
+        result = transactions.db.loadSpendable(key)
+    except DBReadError as e:
+        doAssert(false, "Couldn't load a Ed Public Key's UTXOs: " & e.msg)
+
 #Save a mint nonce.
 proc saveMintNonce*(
     transactions: Transactions
@@ -297,6 +308,8 @@ proc spend*(
 ) {.forceCheck: [].} =
     try:
         transactions.db.deleteUTXO(input.hash, input.nonce)
+    except DBReadError as e:
+        doAssert(false, "Trying to delete a deleted UTXO: " & e.msg)
     except DBWriteError as e:
         doAssert(false, "Couldn't delete a Send UTXO to the Database: " & e.msg)
 
