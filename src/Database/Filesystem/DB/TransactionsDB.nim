@@ -7,8 +7,9 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib.
+#Wallet libs.
 import ../../../Wallet/MinerWallet
+import ../../../Wallet/Wallet
 
 #Transaction object.
 import ../../Transactions/objects/TransactionObj
@@ -126,12 +127,22 @@ proc save*(
 ) {.forceCheck: [
     DBWriteError
 ].} =
-    var hash: string = hashArg.toString()
+    var
+        hash: string = hashArg.toString()
+        spendable: string
     for i in 0 ..< utxos.len:
         try:
             db.put(hash & char(i), utxos[i].serialize())
+            spendable = db.get(utxos[i].key.toString())
         except DBWriteError as e:
             raise e
+        except DBReadError:
+            spendable = ""
+
+        try:
+            db.put(utxos[i].key.toString(), spendable & hash & char(i))
+        except DBWriteError as e:
+            fcRaise e
 
 #Delete functions.
 proc deleteUTXO*(
@@ -150,10 +161,36 @@ proc deleteUTXO*(
     hash: Hash[384],
     nonce: int
 ) {.forceCheck: [
+    DBReadError,
     DBWriteError
 ].} =
+    var
+        utxoLoc: string = hash.toString() & char(nonce)
+        utxoStr: string
     try:
-        db.delete(hash.toString() & char(nonce))
+        utxoStr = db.get(utxoLoc)
+        db.delete(utxoLoc)
+    except DBReadError as e:
+        fcRaise e
+    except DBWriteError as e:
+        fcRaise e
+
+    var
+        utxo: SendOutput
+        spendable: string
+    try:
+        utxo = utxoStr.parseSendOutput()
+        spendable = db.get(utxo.key.toString())
+    except Exception as e:
+        raise newException(DBReadError, e.msg)
+
+    for i in countup(0, spendable.len - 1, 49):
+        if spendable[i ..< i + 49] == utxoLoc:
+            spendable = spendable.substr(0, i - 1) & spendable.substr(i + 49)
+            break
+
+    try:
+        db.put(utxo.key.toString(), spendable)
     except DBWriteError as e:
         fcRaise e
 
@@ -220,6 +257,29 @@ proc loadSendUTXO*(
         result = db.get(hash.toString() & char(nonce)).parseSendOutput()
     except Exception as e:
         raise newException(DBReadError, e.msg)
+
+proc loadSpendable*(
+    db: DB,
+    key: EdPublicKey
+): seq[SendInput] {.forceCheck: [
+    DBReadError
+].} =
+    var spendable: string
+    try:
+        spendable = db.get(key.toString())
+    except Exception as e:
+        raise newException(DBReadError, e.msg)
+
+    for i in countup(0, spendable.len - 1, 49):
+        try:
+            result.add(
+                newSendInput(
+                    spendable[i ..< i + 48].toHash(384),
+                    int(spendable[i + 48])
+                )
+            )
+        except ValueError as e:
+            raise newException(DBReadError, e.msg)
 
 proc commit*(
     db: DB

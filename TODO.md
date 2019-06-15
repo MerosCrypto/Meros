@@ -3,7 +3,6 @@
 ### Transactions and DB Redo
 
 - Data Transactions.
-- Track spendable UTXOs for every address.
 - Correct Network.
 - Rebuild the Personal RPC.
 - Update the GUI's send functionality.
@@ -102,7 +101,7 @@ Datbase/Filesystem/DB/Serialize:
 
 Datbase/Filesystem/DB:
 
-- TransactionsDB Test.
+- TransactionsDB Tests.
 - ConsensusDB Test.
 - MeritDB Test.
 
