@@ -75,8 +75,8 @@ proc parseSend*(
             result.signature = newEdSignature(sendSeq[4])
         except ValueError as e:
             fcRaise e
-        
-        result.proof = sendSeq[5].fromBinary()
+
+        result.proof = uint32(sendSeq[5].fromBinary())
         try:
             result.argon = Argon(result.hash.toString(), sendSeq[5], true)
         except ArgonError as e:

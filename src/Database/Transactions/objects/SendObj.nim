@@ -20,7 +20,7 @@ finalsd:
         #Signature.
         signature* {.final.}: EdSignature
         #Proof this isn't spam.
-        proof* {.final.}: int
+        proof* {.final.}: uint32
         #Argon hash.
         argon* {.final.}: ArgonHash
 

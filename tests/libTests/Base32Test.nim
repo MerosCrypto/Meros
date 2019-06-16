@@ -10,7 +10,7 @@ import ../../src/lib/Base32
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 #Test isBase32.
 var base32: string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"

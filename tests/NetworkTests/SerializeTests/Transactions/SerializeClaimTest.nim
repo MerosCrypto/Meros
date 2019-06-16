@@ -25,7 +25,7 @@ import ../../../DatabaseTests/TransactionsTests/CompareTransactions
 import random
 
 #Seed Random via the time.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Mints.
@@ -41,7 +41,7 @@ for s in 0 .. 255:
     mints = newSeq[Mint](rand(254) + 1)
     for m in 0 ..< mints.len:
         mints[m] = newMint(
-            rand(high(int32)),
+            uint32(rand(high(int32))),
             newMinerWallet().publicKey,
             uint64(rand(high(int32)))
         )

@@ -23,7 +23,7 @@ import ../../../../TransactionsTests/CompareTransactions
 import random
 
 #Seed Random via the time.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Mint.
@@ -35,7 +35,7 @@ var
 for s in 0 .. 255:
     #Create the Mint.
     mint = newMint(
-        rand(high(int32)),
+        uint32(rand(high(int32))),
         newMinerWallet().publicKey,
         uint64(rand(high(int32)))
     )

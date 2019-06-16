@@ -99,7 +99,7 @@ proc save*(
 
 proc saveMintNonce*(
     db: DB,
-    nonce: int
+    nonce: uint32
 ) {.forceCheck: [
     DBWriteError
 ].} =
@@ -227,11 +227,11 @@ proc load*(
 
 proc loadMintNonce*(
     db: DB
-): int {.forceCheck: [
+): uint32 {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get("mint").fromBinary()
+        result = uint32(db.get("mint").fromBinary())
     except DBReadError as e:
         fcRaise e
 

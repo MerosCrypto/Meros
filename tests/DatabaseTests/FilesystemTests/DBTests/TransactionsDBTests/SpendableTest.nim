@@ -29,7 +29,7 @@ import tables
 import random
 
 #Seed Random via the time.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #DB.

@@ -35,7 +35,7 @@ import tables
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 discard """
 On Transactions creation:

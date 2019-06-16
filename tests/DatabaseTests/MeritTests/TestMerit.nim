@@ -31,8 +31,8 @@ proc newBlankBlock*(
             uint(100)
         )
     ]),
-    time: int64 = getTime(),
-    proof: Natural = 0
+    time: uint32 = getTime(),
+    proof: uint32 = 0
 ): Block =
     newBlockObj(
         nonce,

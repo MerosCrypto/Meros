@@ -13,7 +13,7 @@ import ../../../src/Database/common/Merkle
 import random
 
 #Seed Random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 #Test nil Merle trees.
 assert(newMerkle().isLeaf)

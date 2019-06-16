@@ -70,8 +70,8 @@ func newBlockObj*(
     aggregate: BLSSignature,
     records: seq[MeritHolderRecord],
     miners: Miners,
-    time: int64 = getTime(),
-    proof: Natural = 0
+    time: uint32 = getTime(),
+    proof: uint32 = 0
 ): Block {.forceCheck: [
     ArgonError
 ].} =

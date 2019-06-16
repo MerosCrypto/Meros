@@ -25,7 +25,7 @@ import ../CompareConsensus
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 discard """
 On Consensus creation:

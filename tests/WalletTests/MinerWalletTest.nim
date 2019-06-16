@@ -10,7 +10,7 @@ import ../../src/Wallet/MinerWallet
 import random
 
 #PrivateKey random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #MinerWallets.

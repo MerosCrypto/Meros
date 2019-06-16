@@ -32,7 +32,7 @@ proc parseMint*(
     #Create the Mint.
     try:
         result = newMintObj(
-            mintSeq[0].fromBinary(),
+            uint32(mintSeq[0].fromBinary()),
             newBLSPublicKey(mintSeq[1]),
             uint64(mintSeq[2].fromBinary())
         )

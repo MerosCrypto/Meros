@@ -35,7 +35,7 @@ type
         #Send/Data difficulties.
         difficulties*: Difficulties
         #Mint Nonce.
-        mintNonce*: int
+        mintNonce*: uint32
 
         #Transactions which have yet to leave Epochs.
         transactions*: Table[

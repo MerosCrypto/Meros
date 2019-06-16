@@ -13,12 +13,9 @@ export toHex, parseHexInt, parseHexStr
 #Nimcrypto lib (for secure RNG).
 import nimcrypto
 
-#Custom Time type (Natural int64 range).
-type Time* = range[0'i64 .. high(int64)]
-
 #Gets the epoch and returns it as a Time.
-proc getTime*(): Time {.inline, forceCheck: [].} =
-    Time(times.getTime().toUnix())
+proc getTime*(): uint32 {.inline, forceCheck: [].} =
+    uint32(times.getTime().toUnix())
 
 #Left-pads data, with a char or string, until the data is a certain length.
 func pad*(

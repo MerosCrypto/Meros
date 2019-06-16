@@ -5,7 +5,7 @@ import ../../src/lib/Util
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 #Make sure leading 0 bytes are ignored.
 assert(0.toBinary() == "")

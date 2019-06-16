@@ -27,7 +27,7 @@ import ../../../DatabaseTests/MeritTests/CompareMerit
 import random
 
 #Seed Random via the time.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Hash.

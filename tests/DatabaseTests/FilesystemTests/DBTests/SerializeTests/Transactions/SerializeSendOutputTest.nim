@@ -20,7 +20,7 @@ import ../../../../TransactionsTests/CompareTransactions
 import random
 
 #Seed Random via the time.
-randomize(getTime())
+randomize(int64(getTime()))
 
 #SendOutputs.
 var

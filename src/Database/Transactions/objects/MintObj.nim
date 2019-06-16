@@ -15,11 +15,11 @@ import finals
 finalsd:
     type Mint* = ref object of Transaction
         #Nonce of the Mint.
-        nonce* {.final.}: int
+        nonce* {.final.}: uint32
 
 #Mint constructor.
 func newMintObj*(
-    nonce: int,
+    nonce: uint32,
     key: BLSPublicKey,
     amount: uint64
 ): Mint {.forceCheck: [].} =

@@ -31,7 +31,7 @@ import tables
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Database.
