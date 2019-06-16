@@ -22,7 +22,7 @@ proc parseMintOutput*(
     #Key | Amount
     var outputSeq: seq[string] = outputStr.deserialize(
         BLS_PUBLIC_KEY_LEN,
-        INT_LEN
+        MEROS_LEN
     )
 
     #Create the MintOutput.

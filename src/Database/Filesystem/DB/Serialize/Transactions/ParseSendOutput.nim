@@ -22,7 +22,7 @@ proc parseSendOutput*(
     #Key | Amount
     var outputSeq: seq[string] = outputStr.deserialize(
         ED_PUBLIC_KEY_LEN,
-        INT_LEN
+        MEROS_LEN
     )
 
     #Create the SendOutput.

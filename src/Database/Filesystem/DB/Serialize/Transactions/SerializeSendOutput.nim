@@ -19,4 +19,4 @@ proc serialize*(
 ): string {.inline, forceCheck: [].} =
     result =
         output.key.toString() &
-        output.amount.toBinary().pad(INT_LEN)
+        output.amount.toBinary().pad(MEROS_LEN)
