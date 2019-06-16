@@ -33,7 +33,7 @@ They have the following fields:
 
 - hash: Hash of the Transaction verified.
 
-Verifications can be of any hash. If the node locates the specified Transaction, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Transaction. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Transaction. This enables pruning of unverified competing Transactions.
+Verifications can be of any hash. If the node locates the specified Transaction, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Transaction. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Transaction. This enables pruning of unverified competing Transactions. Verifications for Mints are considered Verifications for unknown hashes.
 
 `Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "verification".
 
@@ -55,7 +55,7 @@ They have the following fields:
 
 ### DataDifficulty
 
-A DataDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined.
+A DataDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound.
 
 In the case no DataDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "CC" bytes.
 
