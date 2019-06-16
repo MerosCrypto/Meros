@@ -13,9 +13,6 @@ import ../../../Wallet/Wallet
 #Transactions lib.
 import ../../../Database/Transactions/Transactions
 
-#Message object.
-import ../../../Network/objects/MessageObj
-
 #RPC object.
 import ../objects/RPCObj
 
@@ -54,6 +51,34 @@ proc getWallet(
         "address": wallet.address
     }
 
+#Create a Send Transaction.
+proc send(
+    rpc: RPC,
+    destination: string,
+    amount: string
+): JSONNode {.forceCheck: [].} =
+    try:
+        result = %* {
+            "hash": $rpc.functions.personal.send(destination, amount)
+        }
+    except ValueError as e:
+        returnError()
+    except AddressError as e:
+        returnError()
+    except NotEnoughMeros as e:
+        returnError()
+
+
+#Create a Data Transaction.
+proc data(
+    rpc: RPC,
+    data: string
+): JSONNode {.forceCheck: [].} =
+    result = %* {
+        "hash": $rpc.functions.personal.data(data)
+    }
+
+
 #Handler.
 proc personal*(
     rpc: RPC,
@@ -87,6 +112,22 @@ proc personal*(
 
             of "getWallet":
                 res = rpc.getWallet()
+
+            of "send":
+                if json["args"].len < 2:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.send(json["args"][0].getStr(), json["args"][1].getStr())
+
+            of "data":
+                if json["args"].len < 1:
+                    res = %* {
+                        "error": "Not enough args were passed."
+                    }
+                else:
+                    res = rpc.data(json["args"][0].getStr().parseHexStr())
 
             else:
                 res = %* {

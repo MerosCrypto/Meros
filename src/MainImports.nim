@@ -14,14 +14,14 @@ import Database/common/Merkle
 import Wallet/MinerWallet
 import Wallet/HDWallet
 
+#Transactions.
+import Database/Transactions/Transactions
+
 #Consensus.
 import Database/Consensus/Consensus
 
 #Merit.
 import Database/Merit/Merit
-
-#Transactions.
-import Database/Transactions/Transactions
 
 #DB.
 import Database/Filesystem/DB/objects/DBObj
@@ -33,6 +33,7 @@ import Network/objects/MessageObj
 #Serialization libs.
 import Network/Serialize/Transactions/SerializeClaim
 import Network/Serialize/Transactions/SerializeSend
+import Network/Serialize/Transactions/SerializeData
 
 import Network/Serialize/Consensus/SerializeSignedVerification
 
@@ -61,6 +62,9 @@ import asyncdispatch
 
 #JSON standard lib.
 import json
+
+#Seq utils standard lib.
+import sequtils
 
 #Tables standard lib.
 import tables

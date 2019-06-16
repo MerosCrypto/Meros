@@ -31,6 +31,7 @@ import ../Database/Transactions/objects/DifficultiesObj
 import ../Database/Transactions/objects/TransactionObj
 import ../Database/Transactions/objects/ClaimObj
 import ../Database/Transactions/objects/SendObj
+import ../Database/Transactions/objects/DataObj
 
 #Message object.
 import ../Network/objects/MessageObj
@@ -60,6 +61,13 @@ type
 
         addSend*: proc (
             send: Send
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
+
+        addData*: proc (
+            data: Data
         ) {.raises: [
             ValueError,
             DataExists
@@ -147,11 +155,18 @@ type
             RandomError
         ].}
 
-        signSend*: proc (
-            send: Send
-        ) {.raises: [
-            AddressError
+        send*: proc (
+            destination: string,
+            amount: string
+        ): Hash[384] {.raises: [
+            ValueError,
+            AddressError,
+            NotEnoughMeros
         ].}
+
+        data*: proc (
+            data: string
+        ): Hash[384] {.raises: [].}
 
     NetworkFunctionBox* = ref object
         connect*: proc (

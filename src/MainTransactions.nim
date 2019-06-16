@@ -147,3 +147,37 @@ proc mainTransactions() {.forceCheck: [].} =
                 asyncCheck verify(send)
             except Exception as e:
                 doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+
+        #Handle Datas.
+        functions.transactions.addData = proc (
+            data: Data
+        ) {.forceCheck: [
+            ValueError,
+            DataExists
+        ].} =
+            #Print that we're adding the Data.
+            echo "Adding a new Data."
+
+            #Add the Data.
+            try:
+                transactions.add(data)
+            #Invalid Data.
+            except ValueError as e:
+                fcRaise e
+            #Data already exisrs.
+            except DataExists as e:
+                fcRaise e
+
+            echo "Successfully added the Data."
+
+            #Broadcast the Data.
+            functions.network.broadcast(
+                MessageType.Data,
+                data.serialize()
+            )
+
+            #Create a Verification.
+            try:
+                asyncCheck verify(data)
+            except Exception as e:
+                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
