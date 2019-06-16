@@ -20,9 +20,10 @@ import ../../Filesystem/DB/TransactionsDB
 #Difficulties object.
 import DifficultiesObj
 
-#Transaction and Claim objects.
+#Transaction, Claim, and Data objects.
 import TransactionObj
 import ClaimObj
+import DataObj
 
 #Tables standard library.
 import tables
@@ -66,6 +67,8 @@ proc toString*(
             result = input.hash.toString()
         of TransactionType.Send:
             result = input.hash.toString() & char(cast[SendInput](input).nonce)
+        of TransactionType.Data:
+            result = input.hash.toString()
 
 #Add a Transaction to the DAG.
 proc add*(
@@ -81,17 +84,6 @@ proc add*(
         transactions.transactions[hash] = tx
         #Set its weight to 0.
         transactions.weights[hash] = 0
-
-        #Mark the inputs as spent.
-        var inputStr: string
-        for input in tx.inputs:
-            inputStr = input.toString(tx.descendant)
-
-            #If a previous TX marked this input as spent, don't overwrite it.
-            if transactions.spent.hasKey(inputStr):
-                continue
-
-            transactions.spent[inputStr] = tx.hash
 
     if save:
         #Save the TX.
@@ -291,6 +283,19 @@ proc saveUTXOs*(
     except DBWriteError as e:
         doAssert(false, "Couldn't save Send UTXOs to the Database: " & e.msg)
 
+#Save a sender's last Data.
+proc saveData*(
+    transactions: Transactions,
+    sender: EdPublicKey,
+    hash: Hash[384]
+) {.forceCheck: [].} =
+    try:
+        transactions.db.saveData(sender, hash)
+    except DBReadError as e:
+        doAssert(false, "Couldn't parse the sender's previous Data from the Database: " & e.msg)
+    except DBWriteError as e:
+        doAssert(false, "Couldn't save the sender's most recent Data to the Database: " & e.msg)
+
 #Spend a Mint UTXO.
 proc spend*(
     transactions: Transactions,
@@ -346,8 +351,8 @@ proc load*(
     except DBReadError as e:
         fcRaise e
 
-#Get a Mint UTXO.
-proc getUTXO*(
+#Load a Mint UTXO.
+proc loadUTXO*(
     transactions: Transactions,
     tx: Hash[384]
 ): MintOutput {.forceCheck: [
@@ -358,8 +363,8 @@ proc getUTXO*(
     except DBReadError as e:
         fcRaise e
 
-#Get a Send UTXO.
-proc getUTXO*(
+#Load a Send UTXO.
+proc loadUTXO*(
     transactions: Transactions,
     input: SendInput
 ): SendOutput {.forceCheck: [
@@ -367,5 +372,24 @@ proc getUTXO*(
 ].} =
     try:
         result = transactions.db.loadSendUTXO(input.hash, input.nonce)
+    except DBReadError as e:
+        fcRaise e
+
+#Check if a sender has a Data.
+proc hasData*(
+    transactions: Transactions,
+    sender: EdPublicKey
+): bool {.forceCheck: [].} =
+    transactions.db.hasData(sender)
+
+#Load the sender of a tip Data.
+proc loadSender*(
+    transactions: Transactions,
+    data: Hash[384]
+): EdPublicKey {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = transactions.db.loadSender(data)
     except DBReadError as e:
         fcRaise e

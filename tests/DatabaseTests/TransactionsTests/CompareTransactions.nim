@@ -62,6 +62,9 @@ proc compare*(
             assert(cast[Send](tx1).proof == cast[Send](tx2).proof)
             assert(cast[Send](tx1).argon == cast[Send](tx2).argon)
 
+        of TransactionType.Data:
+            assert(cast[Data](tx1).data == cast[Data](tx2).data)
+
 #Compare two Transactions DAGs to make sure they have the same value.
 proc compare*(
     txs1: Transactions,
@@ -84,7 +87,21 @@ proc compare*(
     for hash in txs1.weights.keys():
         assert(txs1.weights[hash] == txs2.weights[hash])
 
-    #Test the spent table.
-    assert(txs1.spent.len == txs2.spent.len)
+    #Test the spent tables.
     for input in txs1.spent.keys():
-        assert(txs1.spent[input] == txs2.spent[input])
+        #We only create 1 potential Send.
+        #As Datas are sequential, we do create multiple potential Datas.
+        #Without a sorting algorithm when reloading, we can't guarantee consistency.
+        #As long as the Data is marked as spent by SOMETHING, we don't risk creating new Verifications.
+        if txs1[input.substr(0, 47).toHash(384)].descendant != TransactionType.Data:
+            assert(txs1.spent[input] == txs2.spent[input])
+
+    #Beyond that, if a Data doesn't get verified, and a later Data is added:
+    #TXS1 will think only the original Data was there.
+    #TXS2 will only reload the newer Data.
+    #TXS2 will therefore have a spent entry TXS1 doesn't have, and the lengths will be different.
+    #We need to replicate the above loop in reverse still ignoring Datas.
+    #This will not be a problem in mainnet Meros thanks to defaulting.
+    for input in txs2.spent.keys():
+        if txs2[input.substr(0, 47).toHash(384)].descendant != TransactionType.Data:
+            assert(txs1.spent[input] == txs2.spent[input])

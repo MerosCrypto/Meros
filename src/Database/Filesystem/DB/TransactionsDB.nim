@@ -144,6 +144,30 @@ proc save*(
         except DBWriteError as e:
             fcRaise e
 
+proc saveData*(
+    db: DB,
+    sender: EdPublicKey,
+    hash: Hash[384]
+) {.forceCheck: [
+    DBReadError,
+    DBWriteError
+].} =
+    try:
+        var hash: Hash[384] = db.get(sender.toString() & "d").toHash(384)
+        db.delete(hash.toString() & "s")
+    except DBReadError:
+        discard
+    except ValueError as e:
+        raise newException(DBReadError, e.msg)
+    except DBWriteError as e:
+        fcRaise e
+
+    try:
+        db.put(sender.toString() & "d", hash.toString())
+        db.put(hash.toString() & "s", sender.toString())
+    except DBWriteError as e:
+        fcRaise e
+
 #Delete functions.
 proc deleteUTXO*(
     db: DB,
@@ -257,6 +281,27 @@ proc loadSendUTXO*(
         result = db.get(hash.toString() & char(nonce)).parseSendOutput()
     except Exception as e:
         raise newException(DBReadError, e.msg)
+
+proc loadSender*(
+    db: DB,
+    hash: Hash[384]
+): EdPublicKey {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = newEdPublicKey(db.get(hash.toString() & "s"))
+    except Exception as e:
+        raise newException(DBReadError, e.msg)
+
+proc hasData*(
+    db: DB,
+    key: EdPublicKey
+): bool {.forceCheck: [].} =
+    try:
+        discard db.get(key.toString() & "d")
+    except DBReadError:
+        return false
+    result = true
 
 proc loadSpendable*(
     db: DB,

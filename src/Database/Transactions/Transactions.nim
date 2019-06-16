@@ -29,10 +29,12 @@ import objects/TransactionObj
 import Mint
 import Claim
 import Send
+import Data
 
 export Mint
 export Claim
 export Send
+export Data
 
 #Transactions object.
 import objects/TransactionsObj
@@ -43,6 +45,23 @@ import sequtils
 
 #Tables standard lib.
 import tables
+
+#Helper function to check if a Data's inputs are valid, and if so, return the sender.
+proc getSender*(
+    transactions: Transactions,
+    data: Data
+): EdPublicKey {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = transactions.loadSender(data.inputs[0].hash)
+    except DBReadError:
+        for b in 0 ..< 16:
+            if data.inputs[0].hash.data[b] != 0:
+                raise newException(ValueError, "Data's input is a Data we don't have or already used as an input.")
+
+        for b in 16 ..< 48:
+            result.data[b - 16] = cuchar(data.inputs[0].hash.data[b])
 
 #Add a Verification to the weights table.
 proc verify*(
@@ -70,48 +89,76 @@ proc verify*(
     except KeyError as e:
         doAssert(false, "Couldn't get a Transaction's weight despite guaranteeing it had a weight: " & e.msg)
 
+    #Grab the Transaction.
+    var tx: Transaction
+    try:
+        tx = transactions.transactions[hash]
+    except KeyError:
+        doAssert(false, "Couldn't get a Transaction despite confirming it's in the cache.")
+
+    #Now that the Transaction has one Verification and can be defaulted, update spent.
+    if not (
+        (tx.descendant == TransactionType.Data) and
+        (cast[Data](tx).isFirstData)
+    ):
+        var inputStr: string
+        for input in tx.inputs:
+            inputStr = input.toString(tx.descendant)
+
+            #If a previous TX marked this input as spent, don't overwrite it.
+            if transactions.spent.hasKey(inputStr):
+                continue
+
+            transactions.spent[inputStr] = tx.hash
+
     #If the Transaction has at least 50.1% of the weight (+ 600 for the Meros minted while a Transaction can be verified)...
     if weight > (liveMerit div 2) + 601:
-        #Grab the Transaction.
-        var tx: Transaction
-        try:
-            tx = transactions.transactions[hash]
-        except KeyError:
-            doAssert(false, "Couldn't get a Transaction despite confirming it's in the cache.")
-
         #If the Transaction was already verified, return.
         if tx.verified:
             return
 
+        #Guarantee all spent UTXOs are still available.
         if not save:
-            #Guarantee all spent UTXOs are still available.
             for input in tx.inputs:
                 case tx.descendant:
+                    of TransactionType.Mint:
+                        discard
+
                     of TransactionType.Claim:
                         try:
-                            discard transactions.getUTXO(input.hash)
+                            discard transactions.loadUTXO(input.hash)
                         except DBreadError:
                             doAssert(false, "Verified Claim spends no longer spendable Mints.")
 
                     of TransactionType.Send:
                         try:
-                            discard transactions.getUTXO(cast[SendInput](input))
+                            discard transactions.loadUTXO(cast[SendInput](input))
                         except DBreadError:
                             doAssert(false, "Verified Send spends no longer spendable UTXOs.")
 
-                    else:
+                    of TransactionType.Data:
                         discard
+
+            if tx.descendant == TransactionType.Data:
+                try:
+                    if cast[Data](tx).isFirstData and transactions.hasData(transactions.getSender(cast[Data](tx))):
+                        doAssert(false, "Verified Data is 'first' yet a competing 'first' Data is already verified.")
+                except ValueError:
+                    doAssert(false, "Verified Data 'spends' an unknown/spent Data.")
 
         #Set it to verified.
         tx.verified = true
 
         #If we're not just reloading Verifications, and should update UTXOs...
         if save:
-            echo tx.hash, " was verified."
+            echo tx.descendant, " ", tx.hash, " was verified."
             transactions.verify(tx.hash)
 
             #Mark spent UTXOs as spent and create new UTXOs.
             case tx.descendant:
+                of TransactionType.Mint:
+                    discard
+
                 of TransactionType.Claim:
                     #Up to 255 Mint UTXOs spent.
                     for input in tx.inputs:
@@ -126,8 +173,14 @@ proc verify*(
                     #Svae the outputs.
                     transactions.saveUTXOs(tx.hash, cast[seq[SendOutput]](tx.outputs))
 
-                else:
-                    discard
+                of TransactionType.Data:
+                    #Save this as the tip data.
+                    var sender: EdPublicKey
+                    try:
+                        sender = transactions.getSender(cast[Data](tx))
+                    except ValueError as e:
+                        doAssert(false, "Couldn't get the sender of an added Data: " & e.msg)
+                    transactions.saveData(sender, tx.hash)
 
 #Constructor.
 proc newTransactions*(
@@ -275,14 +328,14 @@ proc add*(
 
     #Grab the Claimer.
     try:
-         claimer = transactions.getUTXO(claim.inputs[0].hash).key
+         claimer = transactions.loadUTXO(claim.inputs[0].hash).key
     except DBReadError:
         raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
 
     #Add the amount the inputs provide.
     for input in claim.inputs:
         try:
-            output = transactions.getUTXO(input.hash)
+            output = transactions.loadUTXO(input.hash)
         except DBreadError:
             raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
 
@@ -323,6 +376,10 @@ proc add*(
     except IndexError:
         discard
 
+    #Verify the inputs length.
+    if send.inputs.len == 0:
+        raise newException(ValueError, "Send has no inputs.")
+
     var
         #Sender.
         sender: EdPublicKey
@@ -334,14 +391,14 @@ proc add*(
 
     #Grab the Sender.
     try:
-        sender = transactions.getUTXO(cast[SendInput](send.inputs[0])).key
+        sender = transactions.loadUTXO(cast[SendInput](send.inputs[0])).key
     except DBreadError:
         raise newException(ValueError, "Send spends a non-existant or spent output.")
 
     #Add the amount the inputs provide.
     for input in send.inputs:
         try:
-            spent = transactions.getUTXO(cast[SendInput](input))
+            spent = transactions.loadUTXO(cast[SendInput](input))
         except DBreadError:
             raise newException(ValueError, "Send spends a non-existant or spent output.")
 
@@ -368,6 +425,49 @@ proc add*(
 
     #Add the Send.
     transactions.add(cast[Transaction](send))
+
+#Add a Data.
+proc add*(
+    transactions: var Transactions,
+    data: Data
+) {.forceCheck: [
+    ValueError,
+    DataExists
+].} =
+    #Verify the Data's proof.
+    if data.argon < transactions.difficulties.data:
+        raise newException(ValueError, "Data has an invalid proof.")
+
+    #Verify it wasn't already added.
+    try:
+        discard transactions[data.hash]
+        raise newException(DataExists, "Data was already added.")
+    except IndexError:
+        discard
+
+    #Verify the inputs length.
+    if data.inputs.len == 0:
+        raise newException(ValueError, "Data has no inputs.")
+
+    #Sender.
+    var sender: EdPublicKey
+
+    #Load the sender (which also verifies the input, if it's not the sender's key).
+    try:
+        sender = transactions.getSender(data)
+    except ValueError as e:
+        fcRaise e
+
+    #Verify the input, if it is the sender's key.
+    if data.isFirstData and transactions.hasData(sender):
+        raise newException(ValueError, "Verified Data is 'first' yet a competing 'first' Data has already been verified.")
+
+    #Verify the signature.
+    if not sender.verify(data.hash.toString(), data.signature):
+        raise newException(ValueError, "Data has an invalid Signature.")
+
+    #Add the Send.
+    transactions.add(cast[Transaction](data))
 
 #Mint Meros to the specified key.
 proc mint*(

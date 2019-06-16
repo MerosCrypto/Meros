@@ -94,6 +94,8 @@ var
 
     #UTXOs.
     utxos: Table[string, seq[SendInput]] = initTable[string, seq[SendInput]]()
+    #Data tips.
+    datas: Table[string, Hash[384]] = initTable[string, Hash[384]]()
 
 #Test the Transactions against the reloaded Transactions.
 proc test() =
@@ -208,7 +210,7 @@ proc verify(
     else:
         #Grab holders to verify wuth.
         for holder in holders:
-            if rand(100) > 50:
+            if rand(100) > 30:
                 verifiers.add(holder)
         #If we didn't add any holders, pick one at random.
         if verifiers.len == 0:
@@ -308,7 +310,35 @@ for _ in 0 ..< 20:
 
         #Create a Data.
         else:
-            discard
+            if not datas.hasKey(wallet.publicKey.toString()):
+                var dataStr: string = newString(rand(254) + 1)
+                for c in 0 ..< dataStr.len:
+                    dataStr[c] = char(rand(255))
+
+                var data: Data = newData(
+                    wallet.publicKey,
+                    dataStr
+                )
+                wallet.sign(data)
+                data.mine(transactions.difficulties.data)
+                transactions.add(data)
+                verify(data.hash, true)
+                datas[wallet.publicKey.toString()] = data.hash
+
+            var dataStr: string = newString(rand(254) + 1)
+            for c in 0 ..< dataStr.len:
+                dataStr[c] = char(rand(255))
+
+            var data: Data = newData(
+                datas[wallet.publicKey.toString()],
+                dataStr
+            )
+            wallet.sign(data)
+            data.mine(transactions.difficulties.data)
+            transactions.add(data)
+            verify(data.hash)
+            if transactions[data.hash].verified:
+                datas[wallet.publicKey.toString()] = data.hash
 
     #Create a random amount of MeritHolders.
     for i in 0 ..< rand(3):

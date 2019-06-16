@@ -2,7 +2,6 @@
 
 ### Transactions and DB Redo
 
-- Data Transactions.
 - Correct Network.
 - Rebuild the Personal RPC.
 - Update the GUI's send functionality.
@@ -68,7 +67,7 @@ Network:
 - Node karma.
 
 - Multi-client syncing.
-- Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Transactions and Consensus DAGs).
+- Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
 
 ### Tests:
 

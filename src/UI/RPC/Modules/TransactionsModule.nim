@@ -91,6 +91,19 @@ proc getTransaction*(
                 result["signature"] = % $send.signature
                 result["proof"] = % send.proof
                 result["argon"] = % $send.argon
+
+            of TransactionType.Data:
+                for input in tx.inputs:
+                    result["inputs"].add(%* {
+                        "hash": $input.hash
+                    })
+
+                var data: Data = cast[Data](tx)
+                result["data"] = % data.data.toHex()
+                result["signature"] = % $data.signature
+                result["proof"] = % data.proof
+                result["argon"] = % $data.argon
+
     except KeyError as e:
         doAssert(false, "Couldn't append inputs/outputs: " & e.msg)
 
