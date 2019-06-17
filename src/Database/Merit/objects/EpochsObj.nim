@@ -7,8 +7,8 @@ import ../../../lib/Util
 #MinerWallet lib (for BLSPublicKey).
 import ../../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../../Filesystem/DB/MeritDB
 
 #MeritHolderRecord object.
 import ../../common/objects/MeritHolderRecordObj
@@ -27,7 +27,7 @@ finalsd:
             score*: uint64
 
         #The tests reyly on Epoch and Epochs not being refs.
-        #Epoch object. Entry Hash -> Public Keys
+        #Epoch object. Transaction Hash -> BLS Public Keys of verifiers.
         Epoch* = object
             hashes*: Table[string, seq[BLSPublicKey]]
             records*: seq[MeritHolderRecord]
@@ -35,7 +35,7 @@ finalsd:
         #Epochs object.
         Epochs* = object
             #Database.
-            db: DatabaseFunctionBox
+            db: DB
 
             #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
@@ -62,7 +62,7 @@ func newEpoch*(
     )
 
 func newEpochsObj*(
-    db: DatabaseFunctionBox
+    db: DB
 ): Epochs {.forceCheck: [].} =
     #Create the seq.
     result = Epochs(
@@ -153,6 +153,6 @@ proc shift*(
 
         try:
             for record in records:
-                epochs.db.put("merit_" & record.key.toString() & "_epoch", record.nonce.toBinary())
+                epochs.db.saveHolderEpoch(record.key, record.nonce)
         except DBWriteError as e:
             doAssert(false, "Couldn't save the new Epoch tip to the Database: " & e.msg)

@@ -15,8 +15,7 @@ import ../lib/Hash
 import ../Wallet/MinerWallet
 import ../Wallet/Wallet
 
-#LatticeIndex and MeritHolderRecord objects.
-import ../Database/common/objects/LatticeIndexObj
+#MeritHolderRecord object.
 import ../Database/common/objects/MeritHolderRecordObj
 
 #Verification object.
@@ -27,13 +26,12 @@ import ../Database/Merit/objects/DifficultyObj
 import ../Database/Merit/objects/BlockHeaderObj
 import ../Database/Merit/objects/BlockObj
 
-#Difficulties and Entry objects.
-import ../Database/Lattice/objects/DifficultiesObj
-import ../Database/Lattice/objects/EntryObj
-import ../Database/Lattice/objects/ClaimObj
-import ../Database/Lattice/objects/SendObj
-import ../Database/Lattice/objects/ReceiveObj
-import ../Database/Lattice/objects/DataObj
+#Difficulties and Transaction objects.
+import ../Database/Transactions/objects/DifficultiesObj
+import ../Database/Transactions/objects/TransactionObj
+import ../Database/Transactions/objects/ClaimObj
+import ../Database/Transactions/objects/SendObj
+import ../Database/Transactions/objects/DataObj
 
 #Message object.
 import ../Network/objects/MessageObj
@@ -45,24 +43,34 @@ type
     SystemFunctionBox* = ref object
         quit*: proc () {.raises: [].}
 
-    DatabaseFunctionBox* = ref object
-        put*: proc (
-            key: string,
-            val: string
-        ) {.raises: [
-            DBWriteError
+    TransactionsFunctionBox* = ref object
+        getDifficulties*: proc (): Difficulties {.raises: [].}
+
+        getTransaction*: proc (
+            hash: Hash[384]
+        ): Transaction {.raises: [
+            IndexError
         ].}
 
-        get*: proc (
-            key: string
-        ): string {.raises: [
-            DBReadError
+        addClaim*: proc (
+            claim: Claim
+        ) {.raises: [
+            ValueError,
+            DataExists
         ].}
 
-        delete*: proc (
-            key: string
+        addSend*: proc (
+            send: Send
         ) {.raises: [
-            DBWriteError
+            ValueError,
+            DataExists
+        ].}
+
+        addData*: proc (
+            data: Data
+        ) {.raises: [
+            ValueError,
+            DataExists
         ].}
 
     ConsensusFunctionBox* = ref object
@@ -137,79 +145,6 @@ type
             header: BlockHeader
         ): Future[void]
 
-    LatticeFunctionBox* = ref object
-        getDifficulties*: proc (): Difficulties {.raises: [].}
-
-        getHeight*: proc (
-            address: string
-        ): int {.raises: [
-            AddressError
-        ].}
-
-        getBalance*: proc (
-            address: string
-        ): uint64 {.raises: [
-            AddressError
-        ].}
-
-        getEntryByHash*: proc (
-            hash: Hash[384]
-        ): Entry {.raises: [
-            IndexError
-        ].}
-
-        getEntryByIndex*: proc (
-            index: LatticeIndex
-        ): Entry {.raises: [
-            ValueError,
-            IndexError
-        ].}
-
-        addClaim*: proc (
-            claim: Claim
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            BLSError,
-            DataExists
-        ].}
-
-        addSend*: proc (
-            send: Send
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            DataExists
-        ].}
-
-        addReceive*: proc (
-            recv: Receive
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            DataExists
-        ].}
-
-        addData*: proc (
-            data: Data
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            DataExists
-        ].}
-
     PersonalFunctionBox* = ref object
         getWallet*: proc (): Wallet {.inline, raises: [].}
 
@@ -220,20 +155,21 @@ type
             RandomError
         ].}
 
-        signSend*: proc (
-            send: Send
-        ) {.raises: [
-            AddressError
+        send*: proc (
+            destination: string,
+            amount: string
+        ): Hash[384] {.raises: [
+            ValueError,
+            AddressError,
+            NotEnoughMeros,
+            DataExists
         ].}
 
-        signReceive*: proc (
-            recv: Receive
-        ) {.raises: [].}
-
-        signData*: proc (
-            data: Data
-        ) {.raises: [
-            AddressError
+        data*: proc (
+            data: string
+        ): Hash[384] {.raises: [
+            ValueError,
+            DataExists
         ].}
 
     NetworkFunctionBox* = ref object
@@ -248,22 +184,20 @@ type
         ) {.raises: [].}
 
     GlobalFunctionBox* = ref object
-        system*:        SystemFunctionBox
-        database*:      DatabaseFunctionBox
-        consensus*:     ConsensusFunctionBox
-        merit*:         MeritFunctionBox
-        lattice*:       LatticeFunctionBox
-        personal*:      PersonalFunctionBox
-        network*:       NetworkFunctionBox
+        system*:       SystemFunctionBox
+        transactions*: TransactionsFunctionBox
+        consensus*:    ConsensusFunctionBox
+        merit*:        MeritFunctionBox
+        personal*:     PersonalFunctionBox
+        network*:      NetworkFunctionBox
 
 #Constructor.
 func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
     GlobalFunctionBox(
-        system:        SystemFunctionBox(),
-        database:      DatabaseFunctionBox(),
-        consensus:     ConsensusFunctionBox(),
-        merit:         MeritFunctionBox(),
-        lattice:       LatticeFunctionBox(),
-        personal:      PersonalFunctionBox(),
-        network:       NetworkFunctionBox()
+        system:       SystemFunctionBox(),
+        transactions: TransactionsFunctionBox(),
+        consensus:    ConsensusFunctionBox(),
+        merit:        MeritFunctionBox(),
+        personal:     PersonalFunctionBox(),
+        network:      NetworkFunctionBox()
     )

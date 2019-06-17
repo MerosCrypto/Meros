@@ -5,7 +5,15 @@ import ../../src/lib/Util
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
+
+#Make sure leading 0 bytes are ignored.
+assert(0.toBinary() == "")
+assert("\0\0\0\0".fromBinary() == 0)
+
+#Test char fromBinary behaves the same as string fromBinary.
+for i in 0 .. 2555:
+    assert(char(i).fromBinary() == ($char(i)).fromBinary())
 
 #Get the maximum value for each bit size.
 const
@@ -15,10 +23,6 @@ const
     MAXU16: int = int(not uint16(0))
     MAXI32: int = high(int32)
     MAXU32: int = int(not uint32(0))
-
-#Make sure leading 0 bytes are ignored.
-assert(0.toBinary() == "")
-assert("\0\0\0\0".fromBinary() == 0)
 
 #Test int8 serialization/parsing,
 for _ in 0 .. 255:

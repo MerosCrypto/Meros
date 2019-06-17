@@ -1,9 +1,9 @@
 discard """
 Epochs Split Test. Verifies that:
     - 2 Verifications
-    - For the same Entry
+    - For the same Transaction
     - A block apart
-Result in 500/500 when the Entry first appeared.
+Result in 500/500 when the Transaction first appeared.
 """
 
 #Util lib.
@@ -29,13 +29,13 @@ import ../TestMerit
 
 var
     #Database Function Box.
-    functions: DatabaseFunctionBox = newTestDatabase()
+    functions: DB = newTestDatabase()
     #Consensus.
     consensus: Consensus = newConsensus(functions)
     #Blockchain.
     blockchain: Blockchain = newBlockchain(functions, "EPOCH_SPLIT_TEST", 1, "".pad(48).toHash(384))
     #State.
-    state: State = newState(functions, 100)
+    state: State = newState(functions, 100, blockchain.height)
     #Epochs.
     epochs: Epochs = newEpochs(functions, consensus, blockchain)
 

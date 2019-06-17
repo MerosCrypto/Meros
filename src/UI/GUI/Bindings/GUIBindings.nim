@@ -50,9 +50,7 @@ proc addTo*(
                         page = MAIN
                     of "send":
                         page = SEND
-                    of "receive":
-                        page = RECEIVE
-
+                
                 #Format it as a line of JS code.
                 try:
                     page = &"document.body.innerHTML = (`{page}`);"

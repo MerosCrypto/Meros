@@ -10,9 +10,12 @@ import lib/Hash
 #Merkle lib.
 import Database/common/Merkle
 
-#Wallet.
+#Wallet libs.
 import Wallet/MinerWallet
 import Wallet/HDWallet
+
+#Transactions.
+import Database/Transactions/Transactions
 
 #Consensus.
 import Database/Consensus/Consensus
@@ -20,20 +23,16 @@ import Database/Consensus/Consensus
 #Merit.
 import Database/Merit/Merit
 
-#Lattice.
-import Database/Lattice/Lattice
-
 #DB.
-import Database/Filesystem/DB
+import Database/Filesystem/DB/objects/DBObj
 
 #Network.
 import Network/Network
 
 #Serialization libs.
-import Network/Serialize/Lattice/SerializeClaim
-import Network/Serialize/Lattice/SerializeSend
-import Network/Serialize/Lattice/SerializeReceive
-import Network/Serialize/Lattice/SerializeData
+import Network/Serialize/Transactions/SerializeClaim
+import Network/Serialize/Transactions/SerializeSend
+import Network/Serialize/Transactions/SerializeData
 
 import Network/Serialize/Consensus/SerializeSignedVerification
 
@@ -62,6 +61,9 @@ import asyncdispatch
 
 #JSON standard lib.
 import json
+
+#Seq utils standard lib.
+import sequtils
 
 #Tables standard lib.
 import tables

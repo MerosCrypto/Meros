@@ -28,11 +28,11 @@ import ../CompareMerit
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Blockchain.
     blockchain: Blockchain = newBlockchain(
         db,
@@ -41,7 +41,7 @@ var
         "".pad(48).toHash(384)
     )
     #State.
-    state: State = newState(db, 5)
+    state: State = newState(db, 5, blockchain.height)
 
     #List of MeritHolders.
     holders: seq[MinerWallet] = @[]
@@ -61,7 +61,7 @@ var
 #Test the State against the reloaded State.
 proc test() =
     #Reload the State.
-    var reloaded: State = newState(db, 5)
+    var reloaded: State = newState(db, 5, blockchain.height)
 
     #Compare the States.
     compare(state, reloaded)

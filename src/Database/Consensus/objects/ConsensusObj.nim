@@ -4,8 +4,8 @@ import ../../../lib/Errors
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../../objects/GlobalFunctionBoxObj
+#Consensus DB lib.
+import ../../Filesystem/DB/ConsensusDB
 
 #ConsensusIndex object.
 import ../../common/objects/ConsensusIndexObj
@@ -25,16 +25,14 @@ import finals
 #Consensus object.
 type Consensus* = ref object
     #DB.
-    db*: DatabaseFunctionBox
-    #List of every MeritHolder.
-    holdersStr: string
+    db*: DB
 
     #MeritHolder -> Account.
     holders: TableRef[string, MeritHolder]
 
 #Consensus constructor.
 proc newConsensusObj*(
-    db: DatabaseFunctionBox
+    db: DB
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(
@@ -42,19 +40,16 @@ proc newConsensusObj*(
         holders: newTable[string, MeritHolder]()
     )
 
-    #Grab the MeritHolders' string, if it exists.
+    #Grab the MeritHolders', if any exist.
+    var holders: seq[string]
     try:
-        result.holdersStr = result.db.get("consensus_holders")
+        holders = result.db.loadHolders()
     #If it doesn't, set the MeritHolders' string to "",
     except DBReadError:
-        result.holdersStr = ""
+        holders = @[]
 
-    #Create a MeritHolder for each one in the string.
-    for i in countup(0, result.holdersStr.len - 1, 48):
-        #Extract the holder.
-        var holder: string = result.holdersStr[i ..< i + 48]
-
-        #Load the MeritHolder.
+    #Load each MeritHolder.
+    for holder in holders:
         try:
             result.holders[holder] = newMeritHolderObj(result.db, newBLSPublicKey(holder))
         except BLSError as e:
@@ -75,11 +70,11 @@ proc add(
     #Create a new MeritHolder.
     consensus.holders[holderStr] = newMeritHolderObj(consensus.db, holder)
 
-    #Add the MeritHolder to the MeritHolder's string.
-    consensus.holdersStr &= holderStr
-    #Update the MeritHolder's String in the DB.
+    #Add the MeritHolder to the DB.
     try:
-        consensus.db.put("consensus_holders", consensus.holdersStr)
+        consensus.db.save(holder, consensus.holders[holderStr].archived)
+    except KeyError as e:
+        doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
     except DBWriteError as e:
         doAssert(false, "Couldn't update the MeritHolders' string: " & e.msg)
 

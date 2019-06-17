@@ -23,13 +23,13 @@ proc parseVerification*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Nonce | Entry Hash
+    #BLS Public Key | Nonce | Transaction Hash
     var verifSeq: seq[string] = verifStr.deserialize(
         BLS_PUBLIC_KEY_LEN,
         INT_LEN,
         HASH_LEN
     )
-    
+
     #Create the Verification.
     try:
         result = newSignedVerificationObj(

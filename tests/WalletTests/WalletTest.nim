@@ -11,7 +11,7 @@ import ../../src/Wallet/HDWallet
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Wallet.

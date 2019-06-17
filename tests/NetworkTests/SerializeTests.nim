@@ -1,5 +1,5 @@
 #Serialize/Parse Tests.
 
-import SerializeTests/SerializeLatticeTests
+import SerializeTests/SerializeTransactionsTests
 import SerializeTests/SerializeConsensusTests
 import SerializeTests/SerializeMeritTests

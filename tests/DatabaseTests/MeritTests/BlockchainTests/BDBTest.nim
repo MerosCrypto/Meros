@@ -33,11 +33,11 @@ import StInt
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Starting Difficultty.
     startDifficulty: Hash[384] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(384)
     #Blockchain.

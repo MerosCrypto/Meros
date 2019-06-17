@@ -15,7 +15,7 @@ export ConsensusIndexObj
 import finals
 
 finalsd:
-    #MeritHolderRecord object. Specifies a holder, tip, and merkle of all entries to that point.
+    #MeritHolderRecord object. Specifies a holder, tip, and merkle of all transactions to that point.
     type MeritHolderRecord* = object of ConsensusIndex
         merkle* {.final.}: Hash[384]
 

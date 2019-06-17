@@ -28,11 +28,11 @@ import ../CompareMerit
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Blockchain.
     blockchain: Blockchain = newBlockchain(
         db,
@@ -61,7 +61,8 @@ var
 states.add(
     newState(
         db,
-        5
+        5,
+        blockchain.height
     )
 )
 
@@ -125,7 +126,7 @@ for s in 1 ..< states.len:
     copy.revert(blockchain, states[revertTo].processedBlocks)
     compare(copy, states[revertTo])
 
-    reloaded = newState(db, 5)
+    reloaded = newState(db, 5, blockchain.height)
     compare(states[^1], reloaded)
 
 #Test chained reversions.
@@ -140,7 +141,7 @@ for _ in 1 .. 5:
     revertedAtOnce.revert(blockchain, copy.processedBlocks)
     compare(copy, revertedAtOnce)
 
-    reloaded = newState(db, 5)
+    reloaded = newState(db, 5, blockchain.height)
     compare(states[^1], reloaded)
 
 #Test catch ups.
@@ -148,7 +149,7 @@ for s in 0 ..< states.len - 1:
     states[s].catchup(blockchain)
     compare(states[s], states[^1])
 
-    reloaded = newState(db, 5)
+    reloaded = newState(db, 5, blockchain.height)
     compare(states[^1], reloaded)
 
 echo "Finished the Database/Merit/State/Revert Test."

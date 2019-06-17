@@ -7,24 +7,14 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#DB Function Box object.
-import ../../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../../Filesystem/DB/MeritDB
 
 #Difficulty, Miners, BlockHeader, and Block objects.
 import DifficultyObj
 import MinersObj
 import BlockHeaderObj
 import BlockObj
-
-#Serialize libs.
-import ../../../Network/Serialize/SerializeCommon
-
-import ../../../Network/Serialize/Merit/SerializeBlock
-import ../../../Network/Serialize/Merit/ParseBlockHeader
-import ../../../Network/Serialize/Merit/ParseBlock
-
-import ../../../Network/Serialize/Merit/SerializeDifficulty
-import ../../../Network/Serialize/Merit/ParseDifficulty
 
 #Finals lib.
 import finals
@@ -33,7 +23,7 @@ import finals
 finalsd:
     type Blockchain* = object
         #DB Function Box.
-        db*: DatabaseFunctionBox
+        db*: DB
 
         #Block time (part of the chain params).
         blockTime* {.final.}: Natural
@@ -52,7 +42,7 @@ finalsd:
 
 #Create a Blockchain object.
 proc newBlockchainObj*(
-    db: DatabaseFunctionBox,
+    db: DB,
     genesis: string,
     blockTime: Natural,
     startDifficultyArg: Hash[384]
@@ -82,9 +72,9 @@ proc newBlockchainObj*(
     result.ffinalizeStartDifficulty()
 
     #Grab the tip from the DB.
-    var tip: string = ""
+    var tip: Hash[384]
     try:
-        tip = db.get("merit_tip")
+        tip = result.db.loadTip()
     #If the tip isn't defined, this is the first boot.
     except DBReadError:
         #Create a Genesis Block.
@@ -104,13 +94,13 @@ proc newBlockchainObj*(
         except ArgonError as e:
             doAssert(false, "Couldn't create the Genesis Block due to an ArgonError: " & e.msg)
         #Grab the tip.
-        tip = genesisBlock.hash.toString()
+        tip = genesisBlock.hash
 
         #Save the tip, the Genesis Block, and the starting Difficulty.
         try:
-            db.put("merit_tip", tip)
-            db.put("merit_" & tip, genesisBlock.serialize())
-            db.put("merit_difficulty", result.difficulty.serialize())
+            result.db.saveTip(tip)
+            result.db.save(genesisBlock)
+            result.db.save(result.difficulty)
         except DBWriteError as e:
             doAssert(false, "Couldn't write the Genesis Block to the DB: " & e.msg)
 
@@ -120,29 +110,17 @@ proc newBlockchainObj*(
         last: BlockHeader
         i: int = 0
     try:
-        last = parseBlockHeader(db.get("merit_" & tip).substr(0, BLOCK_HEADER_LEN - 1))
-    except ValueError as e:
-        doAssert(false, "Couldn't parse a Block Header from the Database: " & e.msg)
-    except BLSError as e:
-        doAssert(false, "Couldn't parse a Block Header's Aggregate Signature from the Database: " & e.msg)
-    except ArgonError as e:
-        doAssert(false, "Couldn't hash a Block Header from the Database: " & e.msg)
+        last = result.db.loadBlockHeader(tip)
     except DBReadError as e:
-        doAssert(false, "Couldn't find/load a Block Header from the Database: " & e.msg)
+        doAssert(false, "Couldn't load a Block Header from the Database: " & e.msg)
     headers = newSeq[BlockHeader](last.nonce + 1)
 
     while last.nonce != 0:
         headers[i] = last
         try:
-            last = parseBlockHeader(db.get("merit_" & last.last.toString()).substr(0, BLOCK_HEADER_LEN - 1))
-        except ValueError as e:
-            doAssert(false, "Couldn't parse a Block Header from the Database: " & e.msg)
-        except BLSError as e:
-            doAssert(false, "Couldn't parse a Block Header's Aggregate Signature from the Database: " & e.msg)
-        except ArgonError as e:
-            doAssert(false, "Couldn't hash a Block Header from the Database: " & e.msg)
+            last = result.db.loadBlockHeader(last.last)
         except DBReadError as e:
-            doAssert(false, "Couldn't find/load a Block Header from the Database: " & e.msg)
+            doAssert(false, "Couldn't load a Block Header from the Database: " & e.msg)
         inc(i)
     headers[i] = last
 
@@ -159,26 +137,18 @@ proc newBlockchainObj*(
         if headers.len < 10:
             var loading: Block
             for h in countdown(headers.len - 1, 0):
-                loading = parseBlock(db.get("merit_" & headers[h].hash.toString()))
+                loading = result.db.loadBlock(headers[h].hash)
                 result.blocks[loading.nonce] = loading
         else:
             #We store the headers in reverse order.
             for h in 0 ..< 10:
-                result.blocks[9 - h] = parseBlock(db.get("merit_" & headers[h].hash.toString()))
-    except ValueError as e:
-        doAssert(false, "Couldn't parse a Block we're supposed to cache from the Database: " & e.msg)
-    except BLSError as e:
-        doAssert(false, "Couldn't parse a Block we're supposed to cache's Aggregate Signature OR Miners from the Database: " & e.msg)
-    except ArgonError as e:
-        doAssert(false, "Couldn't hash a Block we're supposed to cache from the Database: " & e.msg)
+                result.blocks[9 - h] = result.db.loadBlock(headers[h].hash)
     except DBReadError as e:
         doAssert(false, "Couldn't load a Block we're supposed to cache from the Database: " & e.msg)
 
     #Load the Difficulty.
     try:
-        result.difficulty = parseDifficulty(db.get("merit_difficulty"))
-    except ValueError as e:
-        doAssert(false, "Loaded an invalid Difficulty from the Database: " & e.msg)
+        result.difficulty = result.db.loadDifficulty()
     except DBReadError as e:
         doAssert(false, "Couldn't load the Difficulty from the Database: " & e.msg)
 
@@ -197,8 +167,8 @@ proc add*(
 
     #Save the block to the database.
     try:
-        blockchain.db.put("merit_" & newBlock.hash.toString(), newBlock.serialize())
-        blockchain.db.put("merit_tip", newBlock.hash.toString())
+        blockchain.db.save(newBlock)
+        blockchain.db.saveTip(newBlock.hash)
     except DBWriteError as e:
         doAssert(false, "Couldn't save a block to the Database: " & e.msg)
 
@@ -219,13 +189,7 @@ proc `[]`*(
         result = blockchain.blocks[nonce - (blockchain.height - 10)]
     else:
         try:
-            result = parseBlock(blockchain.db.get("merit_" & blockchain.headers[nonce].hash.toString()))
-        except ValueError as e:
-            doAssert(false, "Couldn't parse a Block we were asked for from the Database: " & e.msg)
-        except BLSError as e:
-            doAssert(false, "Couldn't parse a Block we were asked for's Aggregate Signature OR Miners from the Database: " & e.msg)
-        except ArgonError as e:
-            doAssert(false, "Couldn't hash a Block we were asked for from the Database: " & e.msg)
+            result = blockchain.db.loadBlock(blockchain.headers[nonce].hash)
         except DBReadError as e:
             doAssert(false, "Couldn't load a Block we were asked for from the Database: " & e.msg)
 
@@ -240,13 +204,7 @@ proc `[]`*(
             return cached
 
     try:
-        result = parseBlock(blockchain.db.get("merit_" & hash.toString()))
-    except ValueError as e:
-        doAssert(false, "Couldn't parse a Block we were asked for from the Database: " & e.msg)
-    except BLSError as e:
-        doAssert(false, "Couldn't parse a Block we were asked for's Aggregate Signature OR Miners from the Database: " & e.msg)
-    except ArgonError as e:
-        doAssert(false, "Couldn't hash a Block we were asked for from the Database: " & e.msg)
+        result = blockchain.db.loadBlock(hash)
     except DBReadError:
         raise newException(IndexError, "Block not found.")
 

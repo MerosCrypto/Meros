@@ -23,7 +23,7 @@ finalsd:
         hash*: ArgonHash
 
         #Nonce.
-        nonce* {.final.}: Natural
+        nonce* {.final.}: int
         #Argon hash of the last block.
         last* {.final.}: ArgonHash
 
@@ -33,9 +33,9 @@ finalsd:
         miners*: Blake384Hash
 
         #Timestamp.
-        time*: Time
+        time*: uint32
         #Proof.
-        proof*: Natural
+        proof*: uint32
 
 #Constructor.
 func newBlockHeaderObj*(
@@ -43,8 +43,8 @@ func newBlockHeaderObj*(
     last: ArgonHash,
     aggregate: BLSSignature,
     miners: Blake384Hash,
-    time: Time,
-    proof: Natural
+    time: uint32,
+    proof: uint32
 ): BlockHeader {.forceCheck: [].} =
     result = BlockHeader(
         nonce: nonce,

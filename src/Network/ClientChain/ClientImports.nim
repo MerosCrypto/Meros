@@ -10,8 +10,8 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#Lattice lib (for all Entry types).
-import ../../Database/Lattice/Lattice
+#Transactions lib (for all Transaction types).
+import ../../Database/Transactions/Transactions
 
 #Consensus lib (for Verification/SignedVerification).
 import ../../Database/Consensus/Consensus
@@ -24,7 +24,10 @@ import ../../Database/Merit/Block as BlockFile
 import ../Serialize/SerializeCommon
 
 #Serialization parsing libs.
-import ../Serialize/Lattice/ParseEntry
+import ../Serialize/Transactions/ParseClaim
+import ../Serialize/Transactions/ParseSend
+import ../Serialize/Transactions/ParseData
+
 import ../Serialize/Consensus/ParseVerification
 
 import ../Serialize/Merit/ParseBlockHeader

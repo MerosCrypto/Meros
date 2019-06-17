@@ -14,22 +14,6 @@ import strformat
 #JSON standard lib.
 import json
 
-#Get the nonce to use with new transactions.
-proc getNonce*(
-    gui: GUI
-): int {.forceCheck: [].} =
-    try:
-        #Get the address.
-        var address: string = gui.call("personal", "getWallet")["address"].getStr()
-
-        #Get the nonce.
-        result = gui.call("lattice", "getHeight", address)["height"].getInt()
-    except KeyError as e:
-        gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have an address/height field: " & e.msg)
-    except RPCError as e:
-        gui.webview.error("RPC Error", e.msg)
-        return -1
-
 #Add the Wallet bindings to the GUI.
 proc addTo*(
     gui: GUI
@@ -51,8 +35,6 @@ proc addTo*(
                 var js: string
                 try:
                     js = &"""
-                        document.getElementById("privateKey").innerHTML = "{wallet["privateKey"].getStr()}";
-                        document.getElementById("publicKey").innerHTML = "{wallet["publicKey"].getStr()}";
                         document.getElementById("address").innerHTML = "{wallet["address"].getStr()}";
                     """
                 except ValueError as e:
@@ -74,104 +56,17 @@ proc addTo*(
                     gui.webview.error("RPC Error", e.msg)
         )
 
-        #Send.
+        #Create a Send.
         gui.webview.bindProc(
             "Personal",
             "send",
             proc (
-                dataArg: string
+                data: string
             ) {.forceCheck: [].} =
-                #Split the data up.
-                var data: seq[string] = dataArg.split(" ")
-                if data.len != 2:
-                    gui.webview.error("GUI Error", "Personal.send was handed the wrong amount of arguments.")
-                    return
-
-                #Get the nonce.
-                var nonce: int = gui.getNonce()
-                if nonce == -1:
-                    return
-
-                #Create the Send and grab the hash.
-                var hash: string
                 try:
-                    hash = gui.call(
-                        "personal",
-                        "send",
-                        data[0],
-                        data[1],
-                        nonce
-                    )["hash"].getStr()
-                except KeyError as e:
-                    gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
-                    return
+                    discard gui.call("personal", "send", data.split("|")[0], data.split("|")[1])
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
-                    return
-
-                #Display the hash.
-                var js: string
-                try:
-                    js = &"""
-                        document.getElementById("hash").innerHTML = "{hash}";
-                    """
-                except ValueError as e:
-                    gui.webview.error("Value Error", "Couldn't format the JS to display the Send's hash: " & e.msg)
-                    return
-
-                if gui.webview.eval(js) != 0:
-                    gui.webview.error("RPC Error", "Couldn't eval the JS to display the Send's hash.")
-                    return
-        )
-
-        #Receive.
-        gui.webview.bindProc(
-            "Personal",
-            "receive",
-            proc (
-                dataArg: string
-            ) {.forceCheck: [].} =
-                #Split the data.
-                var data: seq[string] = dataArg.split(" ")
-                if data.len != 2:
-                    gui.webview.error("GUI Error", "Personal.receive was handed the wrong amount of arguments.")
-                    return
-
-                #Get the nonce.
-                var nonce: int = gui.getNonce()
-                if nonce == -1:
-                    return
-
-                #Create the Receive and grab the hash.
-                var hash: string
-                try:
-                    hash = gui.call(
-                        "personal",
-                        "receive",
-                        data[0],
-                        data[1],
-                        nonce
-                    )["hash"].getStr()
-                except KeyError as e:
-                    gui.webview.error("Key Error", "gui.call didn't throw an RPCError but doesn't have a hash field: " & e.msg)
-                    return
-                except RPCError as e:
-                    gui.webview.error("RPC Error", e.msg)
-                    return
-
-                #Display the hash.
-                var js: string
-                try:
-                    js = &"""
-                        document.getElementById("hash").innerHTML = "{hash}";
-                    """
-                except ValueError as e:
-                    gui.webview.error("Value Error", "Couldn't fromat the JS to display the Receive's hash: " & e.msg)
-                    return
-
-                if gui.webview.eval(js) != 0:
-                    gui.webview.error("RPC Error", "Couldn't eval the JS to display the Receive's hash.")
-                    return
         )
     except KeyError as e:
         doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)

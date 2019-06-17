@@ -13,8 +13,8 @@ import ../../Wallet/MinerWallet
 #Consensus lib.
 import ../Consensus/Consensus
 
-#DB Function Box object.
-import ../../objects/GlobalFunctionBoxObj
+#Merit DB lib.
+import ../Filesystem/DB/MeritDB
 
 #MeritHolderRecord object.
 import ../common/objects/MeritHolderRecordObj
@@ -50,7 +50,7 @@ proc shift*(
     tips: TableRef[string, int] = nil
 ): Epoch {.forceCheck: [].} =
     var
-        #New Epoch for any Verifications belonging to Entries that aren't in an older Epoch.
+        #New Epoch for any Verifications belonging to Transactions that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch(records)
         #Loop variable of what Element to start with.
         start: int
@@ -94,7 +94,7 @@ proc shift*(
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
-    db: DatabaseFunctionBox,
+    db: DB,
     consensus: Consensus,
     blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
@@ -103,31 +103,28 @@ proc newEpochs*(
 
     #Regenerate the Epochs.
     var
-        #String of every holder.
-        holders: string
+        #Seq of every holder.
+        holders: seq[string]
         #Table of every archived tip before the current Epochs.
         tips: TableRef[string, int] = newTable[string, int]()
 
     try:
-        holders = db.get("merit_holders")
+        holders = db.loadHolders()
     except DBReadError:
         #If there are no holders, there's no mined Blocks and therefore no Epochs to regenerate.
-        holders = ""
+        holders = @[]
 
     #We don't just return in the above except in case an empty holders is saved to the DB.
     #That should be impossible, as the State, as of right now, only saves the holders once it has some.
     #That said, if we change how the State operates the DB, it shouldn't break this.
-    if holders == "":
+    if holders.len == 0:
         return
 
     #Use the Holders string from the State.
-    for i in countup(0, holders.len - 1, 48):
-        #Extract the holder.
-        var holder = holders[i ..< i + 48]
-
+    for holder in holders:
         #Load their tip.
         try:
-            tips[holder] = db.get("merit_" & holder & "_epoch").fromBinary()
+            tips[holder] = db.loadHolderEpoch(holder)
         except DBReadError:
             #If this failed, it's because they have Merit but don't have Elements older than 5 blocks.
             tips[holder] = 0
@@ -150,7 +147,7 @@ proc newEpochs*(
         doAssert(false, "Couldn't shift the last blocks of the chain: " & e.msg)
 
 #Calculate what share each holder deserves of the minted Meros.
-func calculate*(
+proc calculate*(
     epoch: Epoch,
     state: var State
 ): seq[Reward] {.forceCheck: [].} =
@@ -159,7 +156,7 @@ func calculate*(
         return @[]
 
     var
-        #Total Merit behind an Entry.
+        #Total Merit behind an Transaction.
         weight: int
         #Score of a holder.
         scores: Table[string, uint64] = initTable[string, uint64]()
@@ -168,33 +165,33 @@ func calculate*(
         #Total normalized score.
         normalized: int
 
-    #Find out how many Verifications for verified Entries were created by each Merit Holder.
-    for entry in epoch.hashes.keys():
+    #Find out how many Verifications for verified Transactions were created by each Merit Holder.
+    for tx in epoch.hashes.keys():
         #Clear the loop variable.
         weight = 0
 
         try:
-            #Iterate over every holder who verified an entry.
-            for holder in epoch.hashes[entry]:
-                #Add their Merit to the Entry's weight.
+            #Iterate over every holder who verified a tx.
+            for holder in epoch.hashes[tx]:
+                #Add their Merit to the Transaction's weight.
                 weight += state[holder]
         except KeyError as e:
             doAssert(false, "Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.hashes.keys(): " & e.msg)
 
-        #Make sure the Entry was verified.
+        #Make sure the Transaction was verified.
         if weight < ((state.live div 2) + 1):
             continue
 
         #If it was, increment every verifier's score.
         var holder: string
         try:
-            for holderLoop in epoch.hashes[entry]:
+            for holderLoop in epoch.hashes[tx]:
                 holder = holderLoop.toString()
                 if not scores.hasKey(holder):
                     scores[holder] = 0
                 scores[holder] += 1
         except KeyError as e:
-            doAssert(false, "Either couldn't grab the verifiers for an Entry in the Epoch or the score of a holder: " & e.msg)
+            doAssert(false, "Either couldn't grab the verifiers for an Transaction in the Epoch or the score of a holder: " & e.msg)
 
     #Multiply every score by how much Merit the holder has.
     try:

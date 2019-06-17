@@ -15,9 +15,6 @@ import ../../../../src/Database/common/objects/MeritHolderRecordObj
 #Consensus lib.
 import ../../../../src/Database/Consensus/Consensus
 
-#Serialize Verification lib.
-import ../../../../src/Network/Serialize/Consensus/SerializeVerification
-
 #Test Database lib.
 import ../../TestDatabase
 
@@ -28,7 +25,7 @@ import ../CompareConsensus
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 discard """
 On Consensus creation:
@@ -54,7 +51,7 @@ We don't load unarchived Elements.
 
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Consensus.
     consensus: Consensus = newConsensus(db)
 

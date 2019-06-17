@@ -31,11 +31,11 @@ import tables
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Blockchain.
     blockchain: Blockchain = newBlockchain(
         db,
@@ -44,7 +44,7 @@ var
         "".pad(48).toHash(384)
     )
     #State.
-    state: State = newState(db, 5)
+    state: State = newState(db, 5, blockchain.height)
     #Table of wo has how much Merit.
     balances: OrderedTable[string, int] = initOrderedTable[string, int]()
     #List of MeritHolders.

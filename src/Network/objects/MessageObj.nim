@@ -1,13 +1,6 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Lattice Entries (we don't just import Lattice due to a circular dependcy).
-import ../../Database/Lattice/objects/EntryObj
-import ../../Database/Lattice/objects/ClaimObj
-import ../../Database/Lattice/objects/SendObj
-import ../../Database/Lattice/objects/ReceiveObj
-import ../../Database/Lattice/objects/DataObj
-
 #Serialization common lib.
 import ../Serialize/SerializeCommon
 
@@ -26,26 +19,25 @@ finalsd:
             BlockHeaderRequest = 7,
             BlockBodyRequest = 8,
             ElementRequest = 9,
-            EntryRequest = 10,
+            TransactionRequest = 10,
             GetBlockHash = 11,
             BlockHash = 12,
-            DataMissing = 20,
-            SyncingOver = 21,
+            DataMissing = 16,
+            SyncingOver = 17,
 
-            Claim = 22,
-            Send = 23,
-            Receive = 24,
-            Data = 25,
+            Claim = 18,
+            Send = 19,
+            Data = 20,
 
-            SignedVerification = 28,
+            SignedVerification = 23,
 
-            BlockHeader = 34,
-            BlockBody = 35,
-            Verification = 36,
+            BlockHeader = 29,
+            BlockBody = 30,
+            Verification = 31,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 41
+            End = 36
 
         #Message object.
         Message* = object

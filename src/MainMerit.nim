@@ -4,7 +4,7 @@ proc mainMerit() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(
-            functions.database,
+            database,
             consensus,
             GENESIS,
             BLOCK_TIME,
@@ -76,7 +76,7 @@ proc mainMerit() {.forceCheck: [].} =
                     except IndexError as e:
                         fcRaise e
                     except GapError as e:
-                        doAssert(false, "Couldn't add Blocks in the gap before this Block due to a GapError: " & e.msg)
+                        raise newException(ValueError, e.msg)
                     except DataExists as e:
                         doAssert(false, "Couldn't add a Block in the gap before this Block because DataExists: " & e.msg)
                     except Exception as e:
@@ -92,7 +92,7 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Couldn't sync this Block: " & e.msg)
 
-            #Verify Record validity (nonce and Merkle), as well as whether or not the verified Entries are out of Epochs yet.
+            #Verify Record validity (nonce and Merkle), as well as whether or not the verified Transactions are out of Epochs yet.
             for record in newBlock.records:
                 #Grab the MeritHolder.
                 var holder: MeritHolder = consensus[record.key]
@@ -118,10 +118,10 @@ proc mainMerit() {.forceCheck: [].} =
                 except IndexError as e:
                     fcRaise e
 
-                #Make sure the Lattice has the verified Entries.
+                #Make sure Transactions has the verified Transactions.
                 for v in 0 ..< verifs.len:
-                    if not lattice.lookup.hasKey(verifs[v].hash.toString()):
-                        raise newException(GapError, "Block refers to missing Entries, or Entries already out of an Epoch.")
+                    if not transactions.transactions.hasKey(verifs[v].hash.toString()):
+                        raise newException(GapError, "Block refers to missing Transactions, or Transactions already out of an Epoch.")
 
             #Add the Block to the Merit.
             var epoch: Epoch
@@ -138,13 +138,13 @@ proc mainMerit() {.forceCheck: [].} =
             consensus.archive(newBlock.records)
 
             #Archive the hashes handled by the popped Epoch.
-            lattice.archive(epoch)
+            transactions.archive(consensus, epoch)
 
             #Calculate the rewards.
             var rewards: seq[Reward] = epoch.calculate(merit.state)
 
             #Create the Mints (which ends up minting a total of 50000 Meri).
-            var ourMint: int = -1
+            var ourMint: ref Hash[384]
             for reward in rewards:
                 var key: BLSPublicKey
                 try:
@@ -153,14 +153,15 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Couldn't extract a key from a Reward: " & e.msg)
 
                 try:
-                    var mintNonce: int = lattice.mint(
+                    var mintHash: Hash[384] = transactions.mint(
                         key,
                         reward.score * uint64(50)
                     )
 
                     #If we have a miner wallet, check if the mint was to us.
                     if (config.miner.initiated) and (config.miner.publicKey.toString() == reward.key):
-                        ourMint = mintNonce
+                        ourMint = new(Hash[384])
+                        ourMint[] = mintHash
                 except ValueError as e:
                     doAssert(false, "Minting a Block Reward failed due to a ValueError: " & e.msg)
                 except IndexError as e:
@@ -181,49 +182,35 @@ proc mainMerit() {.forceCheck: [].} =
             )
 
             #If we got a Mint...
-            if ourMint != -1:
+            if not ourMint.isNil:
                 #Confirm we have a wallet.
                 if not wallet.initiated:
-                    echo "We got a Mint with nonce ", ourMint, ", however, we don't have a Wallet to Claim it to."
+                    echo "We got a Mint with hash ", ourMint[], ", however, we don't have a Wallet to Claim it to."
                     return
 
                 #Claim the Reward.
-                var
-                    claim: Claim
-                    claimNonce: int
+                var claim: Claim
                 try:
-                    claimNonce = lattice[wallet.address].height
-                except AddressError as e:
-                    doAssert(false, "One of our Wallets (" & wallet.address & ") has an invalid Address: " & e.msg)
-
-                claim = newClaim(
-                    ourMint,
-                    claimNonce
-                )
+                    claim = newClaim(
+                        cast[Mint](transactions[ourMint[]]),
+                        wallet.publicKey
+                    )
+                except ValueError as e:
+                    doAssert(false, "Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
+                except IndexError as e:
+                    doAssert(false, "Couldn't grab a Mint we just added: " & e.msg)
 
                 #Sign the claim.
                 try:
-                    claim.sign(config.miner, wallet)
-                except AddressError as e:
-                    doAssert(false, "Failed to sign a Claim for a Mint due to a AddressError: " & e.msg)
+                    config.miner.sign(claim)
                 except BLSError as e:
-                    doAssert(false, "Failed to sign a Claim for a Mint due to a BLSError: " & e.msg)
+                    doAssert(false, "Failed to sign a Claim due to a BLSError: " & e.msg)
 
                 #Emit it.
                 try:
-                    functions.lattice.addClaim(claim)
+                    functions.transactions.addClaim(claim)
                 except ValueError as e:
-                    doAssert(false, "Failed to add a Claim for a Mint due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    doAssert(false, "Failed to add a Claim for a Mint due to a IndexError: " & e.msg)
-                except GapError as e:
-                    doAssert(false, "Failed to add a Claim for a Mint due to a GapError: " & e.msg)
-                except AddressError as e:
-                    doAssert(false, "Failed to add a Claim for a Mint due to a AddressError: " & e.msg)
-                except EdPublicKeyError as e:
-                    doAssert(false, "Failed to add a Claim for a Mint due to a EdPublicKeyError: " & e.msg)
-                except BLSError as e:
-                    doAssert(false, "Failed to add a Claim for a Mint due to a BLSError: " & e.msg)
+                    doAssert(false, "Failed to add a Claim due to a ValueError: " & e.msg)
                 except DataExists:
                     echo "Already added a Claim for the incoming Mint."
 
@@ -249,7 +236,8 @@ proc mainMerit() {.forceCheck: [].} =
 
             var body: BlockBody
             try:
-                body = await network.sync(header)
+                #body = await network.sync(header)
+                raise newException(DataMissing, "")
             except DataMissing as e:
                 raise newException(ValueError, e.msg)
             except Exception as e:

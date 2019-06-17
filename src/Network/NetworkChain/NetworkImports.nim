@@ -13,8 +13,8 @@ import ../../Wallet/MinerWallet
 #MeritHolderRecord object.
 import ../../Database/common/objects/MeritHolderRecordObj
 
-#Lattice lib (for all Entry types).
-import ../../Database/Lattice/Lattice
+#Transactions lib (for all Transaction types).
+import ../../Database/Transactions/Transactions
 
 #Consensus lib.
 import ../../Database/Consensus/Consensus
@@ -33,7 +33,9 @@ import ../../objects/ConfigObj
 import ../Serialize/SerializeCommon
 
 #Serialize libs.
-import ../Serialize/Lattice/SerializeEntry
+import ../Serialize/Transactions/SerializeClaim
+import ../Serialize/Transactions/SerializeSend
+import ../Serialize/Transactions/SerializeData
 
 import ../Serialize/Consensus/SerializeVerification
 
@@ -41,10 +43,9 @@ import ../Serialize/Merit/SerializeBlockHeader
 import ../Serialize/Merit/SerializeBlockBody
 
 #Parse libs.
-import ../Serialize/Lattice/ParseClaim
-import ../Serialize/Lattice/ParseSend
-import ../Serialize/Lattice/ParseReceive
-import ../Serialize/Lattice/ParseData
+import ../Serialize/Transactions/ParseClaim
+import ../Serialize/Transactions/ParseSend
+import ../Serialize/Transactions/ParseData
 
 import ../Serialize/Consensus/ParseVerification
 import ../Serialize/Consensus/ParseSignedVerification

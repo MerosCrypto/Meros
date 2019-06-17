@@ -8,21 +8,14 @@ Config:
 
 Database:
 
-- Abstract the Database. Caching should still be handled by the Lattice/Consensus/Merit, but Database should have its own Serialize folder and supply `save(entry: Entry)` and so on.
-- If we actually create three separate database, instead of using `consensus_`, `merit_`, and `lattice_`, we'd save space on disk and likely have better performance.
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
-- Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
+- Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Merit:
 
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
 - Don't just hash the block header; include random sampling to force miners to run full nodes.
-
-Lattice:
-
-- The claimable table is currently no better than a seq. Either use it with the benefits of a Table and turn it into a seq.
-- Cache the UXTO set.
 
 Wallet:
 
@@ -32,6 +25,7 @@ Wallet:
 UI:
 
 - Passworded RPC.
+- Usable GUI.
 
 Network:
 
@@ -67,7 +61,7 @@ Network:
 - Node karma.
 
 - Multi-client syncing.
-- Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Lattice and Consensus DAGs).
+- Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
 
 ### Tests:
 
@@ -77,53 +71,55 @@ objects:
 
 lib:
 
-- lib/Hash/Blake2 Test.
-- lib/Hash/Argon Test.
-- lib/Hash/RandomX Test.
+- Hash/Blake2 Test.
+- Hash/Argon Test.
+- Hash/RandomX Test.
 
-- lib/Hash/SHA2 (384) Test.
-- lib/Hash/Keccak (384) Test.
-- lib/Hash/SHA3 (384) Test.
+- Hash/SHA2 (384) Test.
+- Hash/Keccak (384) Test.
+- Hash/SHA3 (384) Test.
 
-- lib/Hash/HashCommon Test.
+- Hash/HashCommon Test.
 
-- lib/Logger Test.
+- Logger Test.
 
 Wallet:
 
-- Wallet/Ed25519 Test.
+- Ed25519 Test.
+
+
+Datbase/Filesystem/DB/Serialize:
+
+- Transactions/SerializeTransaction Test.
+
+Datbase/Filesystem/DB:
+
+- TransactionsDB Tests.
+- ConsensusDB Test.
+- MeritDB Test.
+
+Database/Transactions:
+
+- Mint Test.
+- Claim Test.
+- Send Test.
 
 Database/Consensus:
 
-- Database/Consensus/MeritHolder Test.
-- Database/Consensus/Verification Test.
+- MeritHolder Test.
+- Verification Test.
 
 Database/Merit:
 
-- Database/Merit/BlockHeader Test.
-- Database/Merit/Block Test.
-- Database/Merit/Difficulty Test.
-- Database/Merit/Merit Test.
+- BlockHeader Test.
+- Block Test.
+- Difficulty Test.
+- Merit Test.
 - Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
-
-Database/Lattice:
-
-- Database/Lattice/Entry Test.
-- Database/Lattice/Mint Test.
-- Database/Lattice/Claim Test.
-- Database/Lattice/Send Test.
-- Database/Lattice/Receive Test.
-- Database/Lattice/Data Test.
-- Database/Lattice/Account Test.
-- Add competing Entries to the Lattice's DB Test.
 
 Network:
 
 - Tests.
-
-Network/Serialize/Lattice:
-
-- Network/Serialize/Lattice/SerializeEntry Test.
 
 UI/RPC:
 
@@ -131,19 +127,20 @@ UI/RPC:
 - UI/RPC/Modules/SystemModule Test.
 - UI/RPC/Modules/ConsensusModule Test.
 - UI/RPC/Modules/MeritModule Test.
-- UI/RPC/Modules/LatticeModule Test.
+- UI/RPC/Modules/TransactionsModule Test.
 - UI/RPC/Modules/PersonalModule Test.
 - UI/RPC/Modules/NetworkModule Test.
 
 ### Features:
+
+- Add Mints to DBDumpSample.
 
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
 
 - Have the RPC match the JSON-RPC 2.0 spec.
-- Have the RPC dynamically get the nonce (it's currently an argument).
-- `network.rebroadcast(address | verifier, nonce)` RPC method.
+- `network.rebroadcast(hash or (verifier, nonce))` RPC method.
 - Expose more of the Consensus RPC.
 
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
@@ -152,10 +149,7 @@ UI/RPC:
 
 - Swap Chia for Milagro.
 
-- Cache the Lattice's UXTO set.
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Entry (stop DoS attacks).
-
-- Remove holders who lost all their Merit from `merit_holders`.
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Transaction (stop DoS attacks).
 
 ### Documentation:
 

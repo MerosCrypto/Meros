@@ -49,13 +49,13 @@ proc calculateNextDifficulty*(
         #New difficulty.
         difficulty: StUint[512] = last.difficulty
         #Target time.
-        targetTime: int = blockchain.blockTime * blocksPerPeriod
+        targetTime: uint32 = uint32(blockchain.blockTime * blocksPerPeriod)
         #Start time of this period.
-        start: Time
+        start: uint32
         #End time.
-        endTime: Time = blockchain.tip.header.time
+        endTime: uint32 = blockchain.tip.header.time
         #Period time.
-        actualTime: Time
+        actualTime: uint32
         #Possible values.
         possible: StUint[512] = MAX - last.difficulty
         #Change.

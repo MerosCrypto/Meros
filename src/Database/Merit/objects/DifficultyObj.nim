@@ -52,4 +52,4 @@ func newDifficultyObj*(
             ($difficulty).parse(StUint[512], 16)
         )
     except ValueError as e:
-        raise e
+        fcRaise e

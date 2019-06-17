@@ -23,13 +23,13 @@ import ../TestMerit
 
 var
     #Database Function Box.
-    functions: DatabaseFunctionBox = newTestDatabase()
+    functions: DB = newTestDatabase()
     #Consensus.
     consensus: Consensus = newConsensus(functions)
     #Blockchain.
     blockchain: Blockchain = newBlockchain(functions, "EPOCH_TIE_BREAK_TEST", 1, "".pad(48).toHash(384))
     #State.
-    state: State = newState(functions, 100)
+    state: State = newState(functions, 100, blockchain.height)
     #Epochs.
     epochs: Epochs = newEpochs(functions, consensus, blockchain)
 

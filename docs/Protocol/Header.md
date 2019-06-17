@@ -16,13 +16,9 @@ The message types are as follows (with their list number being their byte header
 <li><code>BlockHeaderRequest</code></li>
 <li><code>BlockBodyRequest</code></li>
 <li><code>ElementRequest</code></li>
-<li><code>EntryRequest</code></li>
+<li><code>TransactionRequest</code></li>
 <li><code>GetBlockHash</code></li>
 <li><code>BlockHash</code></li>
-<li><code>GetAccountHeight</code></li>
-<li><code>AccountHeight</code></li>
-<li><code>GetHashesAtIndex</code></li>
-<li><code>HashesAtIndex</code></li>
 <li><code>GetVerifierHeight</code></li>
 <li><code>VerifierHeight</code></li>
 <li><code>SignedElementRequest</code></li>
@@ -31,7 +27,6 @@ The message types are as follows (with their list number being their byte header
 <br>
 <li><code>Claim</code></li>
 <li><code>Send</code></li>
-<li><code>Receive</code></li>
 <li><code>Data</code></li>
 <li><code>Lock</code></li>
 <li><code>Unlock</code></li>

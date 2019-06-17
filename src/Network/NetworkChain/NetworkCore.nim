@@ -215,17 +215,17 @@ proc newNetwork*(
                 except Exception as e:
                     doAssert(false, "Sending a Verification in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            of MessageType.EntryRequest:
-                #Declare the Entry and a MessageType used to send it with.
+            of MessageType.TransactionRequest:
+                #Declare the Transaction and a MessageType used to send it with.
                 var
-                    entry: Entry
+                    tx: Transaction
                     msgType: MessageType
 
                 try:
-                    #Try to get the Entry.
-                    entry = mainFunctions.lattice.getEntryByHash(msg.message.toHash(384))
+                    #Try to get the Transaction.
+                    tx = mainFunctions.transactions.getTransaction(msg.message.toHash(384))
                 except ValueError as e:
-                    raise newException(ClientError, "`EntryRequest` contained an invalid hash: " & e.msg)
+                    raise newException(ClientError, "`TransactionRequest` contained an invalid hash: " & e.msg)
                 except IndexError:
                     #If that failed, return DataMissing.
                     try:
@@ -240,10 +240,10 @@ proc newNetwork*(
                     except ClientError as e:
                         fcRaise e
                     except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 #Verify we didn't get a Mint, which should not be transmitted.
-                if entry.descendant == EntryType.Mint:
+                if tx.descendant == TransactionType.Mint:
                     #Return DataMissing.
                     try:
                         await network.clients.reply(
@@ -257,28 +257,30 @@ proc newNetwork*(
                     except ClientError as e:
                         fcRaise e
                     except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-                #If we did get an Entry, that wasn't a Mint, set the MessageType.
-                case entry.descendant:
-                    of EntryType.Mint:
+                #If we did get an Transaction, that wasn't a Mint, set the MessageType and serialize it.
+                var serialized: string
+                case tx.descendant:
+                    of TransactionType.Mint:
                         discard
-                    of EntryType.Claim:
+                    of TransactionType.Claim:
                         msgType = MessageType.Claim
-                    of EntryType.Send:
+                        serialized = cast[Claim](tx).serialize()
+                    of TransactionType.Send:
                         msgType = MessageType.Send
-                    of EntryType.Receive:
-                        msgType = MessageType.Receive
-                    of EntryType.Data:
+                        serialized = cast[Send](tx).serialize()
+                    of TransactionType.Data:
                         msgType = MessageType.Data
+                        serialized = cast[Data](tx).serialize()
 
-                #Send the Entry.
+                #Send the Transaction.
                 try:
                     await network.clients.reply(
                         msg,
                         newMessage(
                             msgType,
-                            entry.serialize()
+                            serialized
                         )
                     )
                 except IndexError as e:
@@ -288,7 +290,7 @@ proc newNetwork*(
                 except ClientError as e:
                     fcRaise e
                 except Exception as e:
-                    doAssert(false, "Sending an Entry in response to a `EntryRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                    doAssert(false, "Sending an Transaction in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.GetBlockHash:
                 #Grab our chain height and parse the requested nonce.
@@ -349,19 +351,9 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Claim contained an invalid ED25519 Public Key: " & e.msg)
 
                 try:
-                    mainFunctions.lattice.addClaim(claim)
+                    mainFunctions.transactions.addClaim(claim)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the Claim failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a IndexError: " & e.msg)
-                except GapError:
-                    return
-                except AddressError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a AddressError: " & e.msg)
-                except BLSError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a BLSError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a EdPublicKeyError: " & e.msg)
                 except DataExists:
                     return
 
@@ -377,41 +369,9 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Send contained an invalid ED25519 Public Key: " & e.msg)
 
                 try:
-                    mainFunctions.lattice.addSend(send)
+                    mainFunctions.transactions.addSend(send)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the Send failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Send failed due to a IndexError: " & e.msg)
-                except GapError:
-                    return
-                except AddressError as e:
-                    raise newException(InvalidMessageError, "Adding the Send failed due to a AddressError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Adding the Send failed due to a EdPublicKeyError: " & e.msg)
-                except DataExists:
-                    return
-
-            of MessageType.Receive:
-                var recv: Receive
-                try:
-                    recv = msg.message.parseReceive()
-                except ValueError as e:
-                    raise newException(InvalidMessageError, "Receive contained an invalid Signature: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Receive contained an invalid ED25519 Public Key: " & e.msg)
-
-                try:
-                    mainFunctions.lattice.addReceive(recv)
-                except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the Receive failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Receive failed due to a IndexError: " & e.msg)
-                except GapError:
-                    return
-                except AddressError as e:
-                    raise newException(InvalidMessageError, "Adding the Receive failed due to a AddressError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Adding the Receive failed due to a EdPublicKeyError: " & e.msg)
                 except DataExists:
                     return
 
@@ -423,21 +383,11 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Parsing the Data failed due to a ValueError: " & e.msg)
                 except ArgonError as e:
                     raise newException(InvalidMessageError, "Parsing the Data failed due to an ArgonError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Data contained an invalid ED25519 Public Key: " & e.msg)
 
                 try:
-                    mainFunctions.lattice.addData(data)
+                    mainFunctions.transactions.addData(data)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the Data failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Data failed due to a IndexError: " & e.msg)
-                except GapError:
-                    return
-                except AddressError as e:
-                    raise newException(InvalidMessageError, "Adding the Data failed due to a AddressError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Adding the Data failed due to a EdPublicKeyError: " & e.msg)
                 except DataExists:
                     return
 

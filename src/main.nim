@@ -6,7 +6,7 @@ The Main files are an "incude chain". They include each other sequentially, in t
     MainDatabase
     MainConsensus
     MainMerit
-    MainLattice
+    MainTransactions
     MainPersonal
     MainNetwork
     MainUI
@@ -20,15 +20,16 @@ include MainUI
 
 #Enable running main on a thread since the GUI must always run on the main thread.
 proc main() {.thread.} =
-    mainDatabase()
-    mainConsensus()
-    mainMerit()
-    mainLattice()
-    mainPersonal()
-    mainNetwork()
-    mainRPC()
+    {.gcsafe.}:
+        mainDatabase()
+        mainConsensus()
+        mainMerit()
+        mainTransactions()
+        mainPersonal()
+        mainNetwork()
+        mainRPC()
 
-    runForever()
+        runForever()
 
 #If there's no GUI...
 when defined(nogui):

@@ -7,8 +7,8 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#DB Function Box object.
-import ../../objects/GlobalFunctionBoxObj
+#Consensus DB lib.
+import ../Filesystem/DB/ConsensusDB
 
 #Merkle lib.
 import ../common/Merkle
@@ -36,7 +36,7 @@ import tables
 
 #Constructor wrapper.
 proc newConsensus*(
-    db: DatabaseFunctionBox
+    db: DB
 ): Consensus {.forceCheck: [].} =
     newConsensusObj(db)
 
@@ -94,7 +94,7 @@ proc archive*(
             doAssert(false, "Tried to archive Elements from a MeritHolder without any pending Elements.")
 
         #Make sure this MeritHolder has enough Elements.
-        if (record.nonce - consensus[record.key].elements[0].nonce) + 1 < consensus[record.key].elements.len:
+        if record.nonce > consensus[record.key].elements[0].nonce + consensus[record.key].elements.len - 1:
             doAssert(false, "Tried to archive more Elements than this MeritHolder has pending.")
 
         #Delete them from the seq.
@@ -113,6 +113,6 @@ proc archive*(
 
         #Update the DB.
         try:
-            consensus.db.put("consensus_" & record.key.toString(), $record.nonce)
+            consensus.db.save(record.key, record.nonce)
         except DBWriteError as e:
             doAssert(false, "Couldn't save a MeritHolder's tip to the Database: " & e.msg)

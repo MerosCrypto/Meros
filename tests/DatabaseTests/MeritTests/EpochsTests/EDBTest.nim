@@ -40,10 +40,10 @@ import tables
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 var
     #Database.
-    db: DatabaseFunctionBox = newTestDatabase()
+    db: DB = newTestDatabase()
     #Consensus.
     consensus: Consensus = newConsensus(db)
     #Blockchain.
@@ -54,7 +54,7 @@ var
         "".pad(48).toHash(384)
     )
     #State.
-    state: State = newState(db, 5)
+    state: State = newState(db, 5, blockchain.height)
     #Epochs.
     epochs: Epochs = newEpochs(
         db,

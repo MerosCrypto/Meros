@@ -23,7 +23,7 @@ import ../../../DatabaseTests/MeritTests/CompareMerit
 import random
 
 #Seed random.
-randomize(getTime())
+randomize(int64(getTime()))
 
 var
     #Last Block's Hash.
@@ -48,8 +48,8 @@ for _ in 0 .. 255:
         last,
         newMinerWallet().sign(rand(high(int32)).toBinary()),
         miners,
-        rand(high(int32)),
-        rand(high(int32))
+        uint32(rand(high(int32))),
+        uint32(rand(high(int32)))
     )
 
     #Serialize it and parse it back.
