@@ -124,6 +124,7 @@ proc mainPersonal() {.forceCheck: [].} =
         try:
             try:
                 data = newData(
+                    transactions.loadData(wallet.publicKey),
                     dataStr
                 )
                 echo "Data input is a Data."
