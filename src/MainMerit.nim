@@ -76,7 +76,7 @@ proc mainMerit() {.forceCheck: [].} =
                     except IndexError as e:
                         fcRaise e
                     except GapError as e:
-                        doAssert(false, "Couldn't add Blocks in the gap before this Block due to a GapError: " & e.msg)
+                        raise newException(ValueError, e.msg)
                     except DataExists as e:
                         doAssert(false, "Couldn't add a Block in the gap before this Block because DataExists: " & e.msg)
                     except Exception as e:
