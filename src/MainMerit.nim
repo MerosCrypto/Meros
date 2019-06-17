@@ -86,7 +86,7 @@ proc mainMerit() {.forceCheck: [].} =
             #Sync this Block.
             try:
                 #await network.sync(consensus, newBlock)
-                raise newException(DataMissing, "")
+                discard
             except DataMissing as e:
                 raise newException(GapError, e.msg)
             except ValidityConcern as e:

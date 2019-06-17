@@ -94,7 +94,7 @@ proc archive*(
             doAssert(false, "Tried to archive Elements from a MeritHolder without any pending Elements.")
 
         #Make sure this MeritHolder has enough Elements.
-        if (record.nonce - consensus[record.key].elements[0].nonce) + 1 < consensus[record.key].elements.len:
+        if record.nonce > consensus[record.key].elements[0].nonce + consensus[record.key].elements.len - 1:
             doAssert(false, "Tried to archive more Elements than this MeritHolder has pending.")
 
         #Delete them from the seq.

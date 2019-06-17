@@ -548,9 +548,6 @@ proc isFirst*(
     tx: Transaction
 ): bool {.forceCheck: [].} =
     for input in tx.inputs:
-        try:
-            if transactions.spent[input.toString(tx.descendant)] != tx.hash:
-                return false
-        except KeyError as e:
-            doAssert(false, "Spent input isn't in the spent table: " & e.msg)
+        if transactions.spent.hasKey(input.toString(tx.descendant)):
+            return false
     result = true

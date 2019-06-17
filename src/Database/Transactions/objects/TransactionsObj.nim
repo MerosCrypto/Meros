@@ -226,8 +226,8 @@ proc getUTXOs*(
 ): seq[SendInput] {.forceCheck: [].} =
     try:
         result = transactions.db.loadSpendable(key)
-    except DBReadError as e:
-        doAssert(false, "Couldn't load a Ed Public Key's UTXOs: " & e.msg)
+    except DBReadError:
+        result = @[]
 
 #Save a mint nonce.
 proc saveMintNonce*(

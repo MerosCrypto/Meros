@@ -53,6 +53,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 var i: int = 0
                 while i < utxos.len:
                     #Skip UTXOs that are spent but only spent in pending TXs.
+                    #Pending is defined as TXs with one verification; not anything created and broadcasted.
                     if transactions.spent.hasKey(utxos[i].toString(TransactionType.Send)):
                         utxos.delete(i)
                         continue
@@ -62,7 +63,8 @@ proc mainPersonal() {.forceCheck: [].} =
 
                     #Remove uneeded UTXOs.
                     if amountIn >= amountOut:
-                        utxos.delete(i + 1, utxos.len)
+                        if i + 1 < utxos.len:
+                            utxos.delete(i + 1, utxos.len - 1)
                         break
             except IndexError as e:
                 doAssert(false, "Couldn't load a transaction we have an UTXO for: " & e.msg)
