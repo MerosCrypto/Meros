@@ -38,7 +38,7 @@ proc serialize*(
     for input in send.inputs:
         result &=
             input.hash.toString() &
-            cast[SendInput](input).nonce.toBinary().pad(BYTE_LEN)
+            char(cast[SendInput](input).nonce)
 
     #Serialize the outputs.
     result &= char(send.outputs.len)

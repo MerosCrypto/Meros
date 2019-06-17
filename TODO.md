@@ -1,11 +1,5 @@
 # TODO
 
-### Transactions and DB Redo
-
-- Correct Network.
-- Rebuild the Personal RPC.
-- Update the GUI's send functionality.
-
 ### Core:
 
 Config:

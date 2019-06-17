@@ -44,11 +44,13 @@ import ../src/Network/Serialize/Consensus/ParseSignedVerification
 
 import ../src/Network/Serialize/Transactions/SerializeClaim
 import ../src/Network/Serialize/Transactions/SerializeSend
+import ../src/Network/Serialize/Transactions/SerializeData
 
 import ../src/Network/Serialize/Transactions/ParseClaim
 import ../src/Network/Serialize/Transactions/ParseSend
+import ../src/Network/Serialize/Transactions/ParseData
 
-# import ../src/Network/Network
+import ../src/Network/Network
 
 #UI.
 import ../src/UI/UI

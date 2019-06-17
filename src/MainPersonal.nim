@@ -141,9 +141,7 @@ proc mainPersonal() {.forceCheck: [].} =
                     transactions.loadData(wallet.publicKey),
                     dataStr
                 )
-                echo "Data input is a Data."
-            except DBReadError as e:
-                echo "Data input is a Key: " & e.msg
+            except DBReadError:
                 data = newData(
                     wallet.publicKey,
                     dataStr

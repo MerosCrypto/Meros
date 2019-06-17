@@ -25,7 +25,7 @@ var
     wallet {.threadvar.}: HDWallet #Wallet.
 
     #Network.
-    #network {.threadvar.}: Network #Network.
+    network {.threadvar.}: Network #Network.
 
     #UI.
     fromMain: Channel[string] #Channel from the 'main' thread to the UI thread.
@@ -47,7 +47,7 @@ functions.system.quit = proc () {.forceCheck: [].} =
     rpc.shutdown()
 
     #Shut down the Network.
-    #network.shutdown()
+    network.shutdown()
 
     #Shut down the DB.
     try:

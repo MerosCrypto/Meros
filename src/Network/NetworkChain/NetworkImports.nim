@@ -33,6 +33,10 @@ import ../../objects/ConfigObj
 import ../Serialize/SerializeCommon
 
 #Serialize libs.
+import ../Serialize/Transactions/SerializeClaim
+import ../Serialize/Transactions/SerializeSend
+import ../Serialize/Transactions/SerializeData
+
 import ../Serialize/Consensus/SerializeVerification
 
 import ../Serialize/Merit/SerializeBlockHeader
@@ -41,6 +45,7 @@ import ../Serialize/Merit/SerializeBlockBody
 #Parse libs.
 import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend
+import ../Serialize/Transactions/ParseData
 
 import ../Serialize/Consensus/ParseVerification
 import ../Serialize/Consensus/ParseSignedVerification

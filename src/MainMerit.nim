@@ -65,8 +65,7 @@ proc mainMerit() {.forceCheck: [].} =
                 for nonce in merit.blockchain.height ..< newBlock.header.nonce:
                     #Get and test the Block.
                     try:
-                        #await functions.merit.addBlock(await network.requestBlock(consensus, nonce))
-                        raise newException(DataMissing, "")
+                        await functions.merit.addBlock(await network.requestBlock(consensus, nonce))
                     #Redefine as a GapError since a failure to sync produces a gap.
                     except DataMissing as e:
                         raise newException(GapError, e.msg)
@@ -85,8 +84,7 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Sync this Block.
             try:
-                #await network.sync(consensus, newBlock)
-                discard
+                await network.sync(consensus, newBlock)
             except DataMissing as e:
                 raise newException(GapError, e.msg)
             except ValidityConcern as e:

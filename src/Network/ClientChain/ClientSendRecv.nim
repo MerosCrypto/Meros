@@ -77,9 +77,9 @@ proc recv*(
             size = 0
 
         of MessageType.Claim:
-            size = CLAIM_LEN
+            size = CLAIM_LENS[0]
         of MessageType.Send:
-            size = SEND_LEN
+            size = SEND_LENS[0]
         of MessageType.Data:
             size = DATA_PREFIX_LEN
 
@@ -108,6 +108,32 @@ proc recv*(
 
     #If this is a MessageType with more data...
     case content:
+        of MessageType.Claim:
+            echo "Syncing Claim Part 2"
+            var len: int = (int(msg[0]) * CLAIM_LENS[1]) + CLAIM_LENS[2]
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+            echo "Got it"
+
+        of MessageType.Send:
+            echo "Syncing Send Part 2"
+            var len: int = (int(msg[0]) * SEND_LENS[1]) + SEND_LENS[2]
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
+            echo "Syncing Send Part 3"
+            len = (int(msg[^1]) * SEND_LENS[2]) + SEND_LENS[4]
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
+            echo "Got it"
+
         of MessageType.Data:
             var len: int = int(msg[^1]) + DATA_SUFFIX_LEN
             try:
