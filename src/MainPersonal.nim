@@ -33,7 +33,8 @@ proc mainPersonal() {.forceCheck: [].} =
         ): Hash[384] {.forceCheck: [
             ValueError,
             AddressError,
-            NotEnoughMeros
+            NotEnoughMeros,
+            DataExists
         ].} =
             var
                 #Spendable UTXOs.
@@ -49,8 +50,17 @@ proc mainPersonal() {.forceCheck: [].} =
 
             #Grab the needed UTXOs.
             try:
-                for i in 0 ..< utxos.len:
+                var i: int = 0
+                while i < utxos.len:
+                    #Skip UTXOs that are spent but only spent in pending TXs.
+                    if transactions.spent.hasKey(utxos[i].toString(TransactionType.Send)):
+                        utxos.delete(i)
+                        continue
+
+                    #Add this UTXO's amount to the amount in.
                     amountIn += transactions[utxos[i].hash].outputs[utxos[i].nonce].amount
+
+                    #Remove uneeded UTXOs.
                     if amountIn >= amountOut:
                         utxos.delete(i + 1, utxos.len)
                         break
@@ -97,34 +107,51 @@ proc mainPersonal() {.forceCheck: [].} =
             except ValueError as e:
                 doAssert(false, "Created a Send which was invalid: " & e.msg)
             except DataExists as e:
-                doAssert(false, "Created a Send which already existed: " & e.msg)
+                fcRaise e
 
             #Retun the hash.
             result = send.hash
 
-    discard """
     #Create a Data Transaction.
     functions.personal.data = proc (
-        data: string
-    ) {.forceCheck: [
-        NotEnoughMeros
+        dataStr: string
+    ): Hash[384] {.forceCheck: [
+        ValueError,
+        DataExists
     ].} =
         #Create the Data.
-        var data: Data = newData(
-            data
-        )
+        var data: Data
+        try:
+            try:
+                data = newData(
+                    dataStr
+                )
+                echo "Data input is a Data."
+            except DBReadError as e:
+                echo "Data input is a Key: " & e.msg
+                data = newData(
+                    wallet.publicKey,
+                    dataStr
+                )
+        except ValueError as e:
+            fcRaise e
 
         #Sign the Data.
         wallet.sign(data)
 
-        #Mine the Send.
-        data.mine(transactions.difficulties.data)
+        #Mine the Data.
+        try:
+            data.mine(transactions.difficulties.data)
+        except ArgonError as e:
+            doAssert(false, "Couldn't mine a Data: " & e.msg)
 
-        #Add the Send.
+        #Add the Data.
         try:
             functions.transactions.addData(data)
         except ValueError as e:
-            doAssert(false, "Created a Send which was invalid: " & e.msg)
+            doAssert(false, "Created a Data which was invalid: " & e.msg)
         except DataExists as e:
-            doAssert(false, "Created a Send which already existed: " & e.msg)
-    """
+            fcRaise e
+
+        #Retun the hash.
+        result = data.hash

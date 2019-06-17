@@ -67,17 +67,22 @@ proc send(
         returnError()
     except NotEnoughMeros as e:
         returnError()
-
+    except DataExists as e:
+        returnError()
 
 #Create a Data Transaction.
 proc data(
     rpc: RPC,
     data: string
 ): JSONNode {.forceCheck: [].} =
-    result = %* {
-        "hash": $rpc.functions.personal.data(data)
-    }
-
+    try:
+        result = %* {
+            "hash": $rpc.functions.personal.data(data)
+        }
+    except ValueError as e:
+        returnError()
+    except DataExists as e:
+        returnError()
 
 #Handler.
 proc personal*(

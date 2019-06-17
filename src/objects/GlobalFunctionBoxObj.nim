@@ -161,12 +161,16 @@ type
         ): Hash[384] {.raises: [
             ValueError,
             AddressError,
-            NotEnoughMeros
+            NotEnoughMeros,
+            DataExists
         ].}
 
         data*: proc (
             data: string
-        ): Hash[384] {.raises: [].}
+        ): Hash[384] {.raises: [
+            ValueError,
+            DataExists
+        ].}
 
     NetworkFunctionBox* = ref object
         connect*: proc (
