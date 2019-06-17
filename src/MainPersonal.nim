@@ -73,26 +73,38 @@ proc mainPersonal() {.forceCheck: [].} =
             if amountIn < amountOut:
                 raise newException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
 
-            #Create the Send.
-            var send: Send
+            #Create the outputs.
+            var outputs: seq[SendOutput]
             try:
-                send = newSend(
-                    utxos,
+                outputs = @[
                     newSendOutput(
                         newEdPublicKey(destination.toPublicKey()),
                         amountOut
-                    ),
+                    )
+                ]
+            except EdPublicKeyError as e:
+                raise newException(AddressError, e.msg)
+            except AddressError as e:
+                fcRaise e
+
+            #Add a change output.
+            if amountIn != amountOut:
+                outputs.add(
                     newSendOutput(
                         wallet.publicKey,
                         amountIn - amountOut
                     )
                 )
+
+            #Create the Send.
+            var send: Send
+            try:
+                send = newSend(
+                    utxos,
+                    outputs
+                )
             except ValueError as e:
-                raise newException(AddressError, e.msg)
-            except AddressError as e:
-                fcRaise e
-            except EdPublicKeyError as e:
-                raise newException(AddressError, e.msg)
+                raise newException(ValueError, e.msg)
 
             #Sign the Send.
             wallet.sign(send)
