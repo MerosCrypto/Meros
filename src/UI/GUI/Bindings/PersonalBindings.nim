@@ -35,8 +35,6 @@ proc addTo*(
                 var js: string
                 try:
                     js = &"""
-                        document.getElementById("privateKey").innerHTML = "{wallet["privateKey"].getStr()}";
-                        document.getElementById("publicKey").innerHTML = "{wallet["publicKey"].getStr()}";
                         document.getElementById("address").innerHTML = "{wallet["address"].getStr()}";
                     """
                 except ValueError as e:
@@ -54,6 +52,19 @@ proc addTo*(
             ) {.forceCheck: [].} =
                 try:
                     discard gui.call("personal", "setSecret", secret)
+                except RPCError as e:
+                    gui.webview.error("RPC Error", e.msg)
+        )
+
+        #Create a Send.
+        gui.webview.bindProc(
+            "Personal",
+            "send",
+            proc (
+                data: string
+            ) {.forceCheck: [].} =
+                try:
+                    discard gui.call("personal", "send", data.split("|")[0], data.split("|")[1])
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
         )
