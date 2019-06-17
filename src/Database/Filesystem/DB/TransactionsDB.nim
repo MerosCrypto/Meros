@@ -293,15 +293,18 @@ proc loadSender*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc hasData*(
+proc loadData*(
     db: DB,
     key: EdPublicKey
-): bool {.forceCheck: [].} =
+): Hash[384] {.forceCheck: [
+    DBReadError
+].} =
     try:
-        discard db.get(key.toString() & "d")
-    except DBReadError:
-        return false
-    result = true
+        result = db.get(key.toString() & "d").toHash(384)
+    except DBReadError as e:
+        fcRaise e
+    except ValueError as e:
+        raise newException(DBReadError, e.msg)
 
 proc loadSpendable*(
     db: DB,

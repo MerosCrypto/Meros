@@ -38,7 +38,9 @@ export Data
 
 #Transactions object.
 import objects/TransactionsObj
-export TransactionsObj.Transactions, `[]`, getUTXOs
+export TransactionsObj.Transactions, `[]`
+export getUTXOs, toString
+export loadData
 
 #Seq utils standard lib.
 import sequtils
@@ -140,11 +142,16 @@ proc verify*(
                         discard
 
             if tx.descendant == TransactionType.Data:
+                var hasData: bool
                 try:
-                    if cast[Data](tx).isFirstData and transactions.hasData(transactions.getSender(cast[Data](tx))):
-                        doAssert(false, "Verified Data is 'first' yet a competing 'first' Data is already verified.")
+                    discard transactions.loadData(transactions.getSender(cast[Data](tx)))
+                    hasData = true
+                except DBReadError:
+                    hasData = false
                 except ValueError:
                     doAssert(false, "Verified Data 'spends' an unknown/spent Data.")
+                if cast[Data](tx).isFirstData and hasData:
+                    doAssert(false, "Verified Data is 'first' yet a competing 'first' Data is already verified.")
 
         #Set it to verified.
         tx.verified = true
@@ -459,7 +466,13 @@ proc add*(
         fcRaise e
 
     #Verify the input, if it is the sender's key.
-    if data.isFirstData and transactions.hasData(sender):
+    var hasData: bool
+    try:
+        discard transactions.loadData(sender)
+        hasData = true
+    except DBReadError:
+        hasData = false
+    if data.isFirstData and hasData:
         raise newException(ValueError, "Verified Data is 'first' yet a competing 'first' Data has already been verified.")
 
     #Verify the signature.

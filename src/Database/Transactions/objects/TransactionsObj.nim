@@ -376,11 +376,16 @@ proc loadUTXO*(
         fcRaise e
 
 #Check if a sender has a Data.
-proc hasData*(
+proc loadData*(
     transactions: Transactions,
     sender: EdPublicKey
-): bool {.forceCheck: [].} =
-    transactions.db.hasData(sender)
+): Hash[384] {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = transactions.db.loadData(sender)
+    except DBReadError as e:
+        fcRaise e
 
 #Load the sender of a tip Data.
 proc loadSender*(
