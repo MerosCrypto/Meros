@@ -1,14 +1,20 @@
+#Errors lib.
 import ../../../lib/Errors
 
-import ../../../Wallet/BLS
-
+#Hash lib/
 import ../../../lib/Hash
 
-import finals
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
+#Element object.
 import ElementObj
 export ElementObj
 
+#Finals lib.
+import finals
+
+#SendDifficulty objects.
 finalsd:
     type
         SendDifficulty* = ref object of Element
@@ -17,6 +23,7 @@ finalsd:
         SignedSendDifficulty* = ref object of SendDifficulty
             signature* {.final.}: BLSSignature
 
+#Constructors/
 func newSendDifficultyObj*(
     difficulty: Hash[384]
 ): SendDifficulty {.forceCheck: [].} =

@@ -16,21 +16,19 @@ import ../../Filesystem/DB/ConsensusDB
 #Merkle lib.
 import ../../common/Merkle
 
-#Element object.
-import ElementObj
-import SignedElement
+#Element objects.
+import VerificationObj
+import SendDifficultyObj
+import DataDifficultyObj
+import GasPriceObj
+import MeritRemovalObj
+import SignedElementObj
 
 #Serialize lib.
 import ../../../Network/Serialize/Consensus/SerializeElement
 
 #Finals lib.
 import finals
-
-import SendDifficultyObj
-import VerificationObj
-import DataDifficultyObj
-import GasPriceObj
-import MeritRemovalObj
 
 #MeritHolder object.
 finalsd:
@@ -121,19 +119,17 @@ proc add*(
     #Verify the Element's Nonce.
     elif element.nonce < holder.height:
         #Verify they didn't submit two Elements for the same nonce.
-
         var existing: Element
         try:
             existing = holder[element.nonce]
         except IndexError as e:
             doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
 
-        # stubs
-        if element of SendDifficulty:
+        if element of Verification:
+            if (not (existing of Verification)) or (cast[Verification](element).hash != cast[Verification](existing).hash):
+                raise newException(Errors.MeritRemoval, "MeritHolder submitted two Elements with the same nonce.")
+        elif element of SendDifficulty:
             discard
-        elif element of Verification:
-                if not (existing of Verification) or cast[Verification](element).hash != cast[Verification](existing).hash:
-                    raise newException(Errors.MeritRemoval, "MeritHolder submitted two Elements with the same nonce.")
         elif element of DataDifficulty:
             discard
         elif element of GasPrice:
@@ -144,14 +140,11 @@ proc add*(
         #Already added.
         raise newException(DataExists, "Element has already been added.")
 
-    #Verify this MeritHolder isn't verifying conflicting Transactions.
-
     #Increase the height.
     holder.height = holder.height + 1
     #Add the Element to the seq.
     holder.elements.add(element)
     #Add the Element to the Merkle.
-    # stubs
     if element of SendDifficulty:
         discard
     elif element of Verification:
@@ -169,15 +162,6 @@ proc add*(
     except DBWriteError as e:
         doAssert(false, "Couldn't save a Element to the Database: " & e.msg)
 
-proc castUnsigned(
-  element: SignedElement
-): Element {.forceCheck: [].} =
-  if element of Verification: return cast[SignedVerification](element)
-  elif element of SendDifficulty: return cast[SignedSendDifficulty](element)
-  elif element of DataDifficulty: return cast[SignedDataDifficulty](element)
-  elif element of MeritRemoval: return cast[SignedMeritRemoval](element)
-  elif element of GasPrice: return cast[SignedGasPrice](element)
-
 #Add a SignedElement to a MeritHolder.
 proc add*(
     holder: var MeritHolder,
@@ -192,7 +176,7 @@ proc add*(
     #Verify the signature.
     try:
         element.signature.setAggregationInfo(
-            newBLSAggregationInfo(element.holder, element.serialize(true))
+            newBLSAggregationInfo(element.holder, element.serializeSignature())
         )
         if not element.signature.verify():
             raise newException(ValueError, "Failed to verify the Element's signature.")
@@ -203,7 +187,7 @@ proc add*(
 
     #Add the Element.
     try:
-        holder.add(castUnsigned(element))
+        holder.add(cast[Element](element))
     except GapError as e:
         fcRaise e
     except DataExists as e:
@@ -247,7 +231,7 @@ proc `[]`*(
 proc `{}`*(
     holder: MeritHolder,
     slice: Slice[int]
-): seq[Element] {.forceCheck: [
+): seq[SignedElement] {.forceCheck: [
     IndexError
 ].} =
     #Extract the slice values.
@@ -255,12 +239,8 @@ proc `{}`*(
         a: int = slice.a
         b: int = slice.b
 
-    #Support the initial MeritHolder.archived value (-1).
-    if a == -1:
-        a = 0
-
     if slice.a <= holder.archived:
-      raise IndexError.newException("Invalid slice")
+        raise newException(IndexError, "Signed Slice Operator passed an `a` who's Element no longer has a signature.")
 
     #Grab the Elements and cast them.
     try:

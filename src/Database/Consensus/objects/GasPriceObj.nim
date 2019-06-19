@@ -1,14 +1,17 @@
+#Errors lib.
 import ../../../lib/Errors
 
-import ../../../Wallet/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
-import ../../../lib/Hash
-
-import finals
-
+#Element object.
 import ElementObj
 export ElementObj
 
+#Finals lib.
+import finals
+
+#GasPrice objects.
 finalsd:
     type
         GasPrice* = ref object of Element
@@ -17,6 +20,7 @@ finalsd:
         SignedGasPrice* = ref object of GasPrice
             signature* {.final.}: BLSSignature
 
+#Constructors.
 func newGasPriceObj*(
     price: uint32
 ): GasPrice {.forceCheck: [].} =

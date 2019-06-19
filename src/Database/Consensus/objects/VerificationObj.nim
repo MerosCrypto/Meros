@@ -1,30 +1,29 @@
 #Errors lib.
 import ../../../lib/Errors
 
-import ../../../Wallet/BLS
-
 #Hash lib.
 import ../../../lib/Hash
+
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
+
+#Element object.
+import ElementObj
+export ElementObj
 
 #Finals lib.
 import finals
 
-import ElementObj
-export ElementObj
-
+#Verification objects.
 finalsd:
     type
-        #Verification object.
         Verification* = ref object of Element
-            #Transaction Hash.
             hash* {.final.}: Hash[384]
 
-        #Verification object for the mempool.
         SignedVerification* = ref object of Verification
-            #BLS signature for aggregation in a block.
             signature* {.final.}: BLSSignature
 
-#New Verification object.
+#Constructors.
 func newVerificationObj*(
     hash: Hash[384]
 ): Verification {.forceCheck: [].} =
@@ -33,7 +32,6 @@ func newVerificationObj*(
     )
     result.ffinalizeHash()
 
-#New SignedVerification object.
 func newSignedVerificationObj*(
     hash: Hash[384]
 ): SignedVerification {.forceCheck: [].} =

@@ -13,19 +13,20 @@ import ../Filesystem/DB/ConsensusDB
 #Merkle lib.
 import ../common/Merkle
 
-#ConsensusIndex and MeritHolderRecord object.
+#ConsensusIndex and MeritHolderRecord objects.
 import ../common/objects/ConsensusIndexObj
 import ../common/objects/MeritHolderRecordObj
 export ConsensusIndex
 
+#Signed Element object.
+import objects/SignedElementObj
+export SignedElementObj
+
 #Verification and MeritHolder libs.
 import Verification as VerificationFile
-import MeritHolder
 export VerificationFile
+import MeritHolder
 export MeritHolder
-
-import objects/ElementObj
-export ElementObj
 
 #Consensus object.
 import objects/ConsensusObj

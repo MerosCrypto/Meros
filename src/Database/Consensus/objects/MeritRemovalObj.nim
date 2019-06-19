@@ -1,14 +1,17 @@
+#Errors lib.
 import ../../../lib/Errors
 
-import ../../../Wallet/BLS
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
-import ../../../lib/Hash
-
-import finals
-
+#Element object.
 import ElementObj
 export ElementObj
 
+#Finals lib.
+import finals
+
+#MeritRemoval objects.
 finalsd:
     type
         MeritRemoval* = ref object of Element
@@ -18,6 +21,7 @@ finalsd:
         SignedMeritRemoval* = ref object of MeritRemoval
             signature* {.final.}: BLSSignature
 
+#Constructors.
 func newMeritRemovalObj*(
     element1: Element,
     element2: Element

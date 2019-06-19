@@ -35,7 +35,7 @@ They have the following fields:
 
 Verifications can be of any hash. If the node locates the specified Transaction, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Transaction. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Transaction. This enables pruning of unverified competing Transactions. Verifications for Mints are considered Verifications for unknown hashes.
 
-`Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "verification".
+`Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
 
 ### SendDifficulty
 
@@ -51,7 +51,7 @@ They have the following fields:
 
 - difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
 
-`SendDifficulty` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "sendDifficulty".
+`SendDifficulty` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "\1".
 
 ### DataDifficulty
 
@@ -63,7 +63,7 @@ They have the following fields:
 
 - difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
-`DataDifficulty` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "dataDifficulty".
+`DataDifficulty` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "\2".
 
 ### GasPrice
 
@@ -75,7 +75,7 @@ They have the following fields:
 
 - price: Price in Meri an unit of gas should cost.
 
-`GasPrice` has a message length of 56 bytes; the 48-byte holder, the 4-byte nonce, and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "gasPrice".
+`GasPrice` has a message length of 56 bytes; the 48-byte holder, the 4-byte nonce, and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\3".
 
 ### MeritRemoval
 
@@ -103,7 +103,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 ### Violations in Meros
 
 - Meros's Merit Holder's Merkle trees are created using the hash of the Transaction verified in the Verification (the only supported Element).
-- Meros counts Verifications which were never archived.
+- Meros counts Verifications which were never archived for a Transaction's weight.
 - Meros doesn't support defaulting.
 - Meros doesn't support Verifications with 'invalid' hashes.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.

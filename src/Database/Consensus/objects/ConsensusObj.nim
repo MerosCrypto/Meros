@@ -40,13 +40,13 @@ proc newConsensusObj*(
         holders: newTable[string, MeritHolder]()
     )
 
-    #Grab the MeritHolders', if any exist.
+    #Grab the MeritHolders, if any exist.
     var holders: seq[string]
     try:
         holders = result.db.loadHolders()
-    #If it doesn't, set the MeritHolders' string to "",
+    #If none exist, return.
     except DBReadError:
-        holders = @[]
+        return
 
     #Load each MeritHolder.
     for holder in holders:
@@ -76,7 +76,7 @@ proc add(
     except KeyError as e:
         doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
     except DBWriteError as e:
-        doAssert(false, "Couldn't update the MeritHolders' string: " & e.msg)
+        doAssert(false, "Couldn't update a MeritHolders archived: " & e.msg)
 
 #Gets a MeritHolder by their key.
 proc `[]`*(
