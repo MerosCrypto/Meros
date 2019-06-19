@@ -36,3 +36,11 @@ method serializeSignature*(
     result =
         "\0" &
         verif.serialize()
+
+#Serialize a Signed Verification.
+method signedSerialize*(
+    verif: SignedVerification
+): string {.forceCheck: [].} =
+    result =
+        verif.serialize() &
+        verif.signature.toString()

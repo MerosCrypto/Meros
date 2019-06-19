@@ -14,9 +14,7 @@ import ../../../../src/Database/Consensus/Verification
 
 #Serialization libs.
 import ../../../../src/Network/Serialize/Consensus/SerializeVerification
-import ../../../../src/Network/Serialize/Consensus/SerializeSignedVerification
 import ../../../../src/Network/Serialize/Consensus/ParseVerification
-import ../../../../src/Network/Serialize/Consensus/ParseSignedVerification
 
 #Compare Consensus lib.
 import ../../../DatabaseTests/ConsensusTests/CompareConsensus
@@ -48,15 +46,15 @@ for _ in 0 .. 255:
     newMinerWallet().sign(verif, rand(high(int32)))
 
     #Serialize it and parse it back.
-    reloadedV = cast[Verification](verif).serialize().parseVerification()
-    reloadedSV = verif.serialize().parseSignedVerification()
+    reloadedV = verif.serialize().parseVerification()
+    reloadedSV = verif.signedSerialize().parseSignedVerification()
 
     #Test the serialized versions.
-    assert(cast[Verification](verif).serialize() == reloadedV.serialize())
-    assert(verif.serialize() == reloadedSV.serialize())
+    assert(verif.serialize() == reloadedV.serialize())
+    assert(verif.signedSerialize() == reloadedSV.signedSerialize())
 
     #Compare the Elements.
     compare(verif, reloadedSV)
-    compare(cast[Verification](verif), reloadedV)
+    compare(verif, reloadedV)
 
 echo "Finished the Network/Serialize/Consensus/Verification Test."

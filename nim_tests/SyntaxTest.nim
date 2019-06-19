@@ -37,10 +37,8 @@ import ../src/Network/Serialize/Merit/ParseBlockHeader
 import ../src/Network/Serialize/Merit/ParseBlock
 
 import ../src/Network/Serialize/Consensus/SerializeVerification
-import ../src/Network/Serialize/Consensus/SerializeSignedVerification
 
 import ../src/Network/Serialize/Consensus/ParseVerification
-import ../src/Network/Serialize/Consensus/ParseSignedVerification
 
 import ../src/Network/Serialize/Transactions/SerializeClaim
 import ../src/Network/Serialize/Transactions/SerializeSend
