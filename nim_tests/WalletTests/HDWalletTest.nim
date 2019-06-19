@@ -27,7 +27,7 @@ var
     reloaded: HDWallet
 
     #Test vectors.
-    vectors: JSONNode = parseJSON(readFile("." / "tests" / "WalletTests" / "Vectors" / "HDWalletVectors.json"))
+    vectors: JSONNode = parseJSON(readFile("." / "nim_tests" / "WalletTests" / "Vectors" / "HDWalletVectors.json"))
 
     #Path.
     path: seq[uint32]
