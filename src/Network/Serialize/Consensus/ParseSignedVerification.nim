@@ -16,7 +16,7 @@ import ../../../Database/Consensus/objects/VerificationObj
 #Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Parse a Memory Verification.
+#Parse a Signed Verification.
 proc parseSignedVerification*(
     verifStr: string
 ): SignedVerification {.forceCheck: [
@@ -39,9 +39,9 @@ proc parseSignedVerification*(
         result.holder = newBLSPublicKey(verifSeq[0])
         result.nonce = verifSeq[1].fromBinary()
         result.signature = newBLSSignature(verifSeq[3])
-    except BLSError as e:
-        fcRaise e
     except ValueError as e:
         fcRaise e
+    except BLSError as e:
+        fcRaise e
     except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when parsing a Memory Verification: " & e.msg)
+        doAssert(false, "Set a final attribute twice when parsing a Signed Verification: " & e.msg)

@@ -1,4 +1,3 @@
 #Consensus Serialization Tests.
 
 import Consensus/SerializeVerificationTest
-import Consensus/SerializeSignedVerificationTest

@@ -1,5 +1,9 @@
 #Consensus Tests.
 
-import ConsensusTests/VerificationTest
+import ConsensusTests/ElementTest
+import ConsensusTests/SendDifficultyTest
+import ConsensusTests/DataDifficultyTest
+import ConsensusTests/GasPriceTest
+import ConsensusTests/MeritRemovalTest
 import ConsensusTests/MeritHolderTest
 import ConsensusTests/ConsensusTest

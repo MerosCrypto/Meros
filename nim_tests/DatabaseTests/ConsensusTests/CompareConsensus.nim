@@ -4,43 +4,22 @@ import ../../../src/Wallet/MinerWallet
 #Consensus lib.
 import ../../../src/Database/Consensus/Consensus
 
-import ../../../src/Database/Consensus/objects/SendDifficultyObj
-import ../../../src/Database/Consensus/objects/VerificationObj
-import ../../../src/Database/Consensus/objects/DataDifficultyObj
-import ../../../src/Database/Consensus/objects/GasPriceObj
-import ../../../src/Database/Consensus/objects/MeritRemovalObj
-
 #Compare two Verifications to make sure they have the same value.
 proc compare*(
-    v1: Element,
-    v2: Element
+    e1: Element,
+    e2: Element
 ) =
     #Test the Element fields.
-    assert(v1.holder == v2.holder)
-    assert(v1.nonce == v2.nonce)
+    assert(e1.holder == e2.holder)
+    assert(e1.nonce == e2.nonce)
 
-    if v1 of Verification and v2 of Verification:
-      assert(cast[Verification](v1).hash == cast[Verification](v2).hash)
-    # STUBS!!
-    elif v1 of SendDifficulty and v2 of SendDifficulty:
-      discard
-    elif v1 of DataDifficulty and v2 of DataDifficulty:
-      discard
-    elif v1 of MeritRemoval and v2 of MeritRemoval:
-      discard
-    elif v1 of GasPrice and v2 of GasPrice:
-      discard
-    else:  # types don't match
-      assert false
+    #Test the descendant fields.
+    if (e1 of Verification) and (e2 of Verification):
+        assert(cast[Verification](e1).hash == cast[Verification](e2).hash)
+    else:
+        assert(false)
 
-#Compare two Signed Verifications to make sure they have the same value.
-proc compare*(
-    v1: SignedVerification,
-    v2: SignedVerification
-) =
-    compare(cast[Verification](v1), cast[Verification](v2))
-    assert(v1.signature == v2.signature)
-
+#Compare two MeritHolders to make sure they have the same value.
 proc compare*(
     mh1: MeritHolder,
     mh2: MeritHolder
@@ -54,6 +33,7 @@ proc compare*(
     for i in 0 .. mh1.archived:
         compare(mh1[i], mh2[i])
 
+#Compare two Consensuses to make sure they have the same value.
 proc compare*(
     c1: Consensus,
     c2: Consensus
