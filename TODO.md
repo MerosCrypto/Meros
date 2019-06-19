@@ -1,13 +1,5 @@
 # TODO
 
-### Transactions and DB Redo
-
-- Data Transactions.
-- Reload Transactions from the DB.
-- MainTransactions.
-- New Transactions RPC.
-- Rebuild the Personal RPC.
-
 ### Core:
 
 Config:
@@ -17,7 +9,7 @@ Config:
 Database:
 
 - If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
-- Assign a local nickname to every hash. The first vote takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
+- Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Merit:
 
@@ -33,6 +25,7 @@ Wallet:
 UI:
 
 - Passworded RPC.
+- Usable GUI.
 
 Network:
 
@@ -68,7 +61,7 @@ Network:
 - Node karma.
 
 - Multi-client syncing.
-- Sync gaps (if we get data with nonce 2 but we only have 0, sync 1 and 2; applies to both the Transactions and Consensus DAGs).
+- Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
 
 ### Tests:
 
@@ -101,9 +94,15 @@ Datbase/Filesystem/DB/Serialize:
 
 Datbase/Filesystem/DB:
 
-- TransactionsDB Test.
+- TransactionsDB Tests.
 - ConsensusDB Test.
 - MeritDB Test.
+
+Database/Transactions:
+
+- Mint Test.
+- Claim Test.
+- Send Test.
 
 Database/Consensus:
 
@@ -117,13 +116,6 @@ Database/Merit:
 - Difficulty Test.
 - Merit Test.
 - Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
-
-Database/Transactions:
-
-- Transaction Test.
-- Mint Test.
-- Claim Test.
-- Send Test.
 
 Network:
 
@@ -141,13 +133,14 @@ UI/RPC:
 
 ### Features:
 
+- Add Mints to DBDumpSample.
+
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
 
 - Have the RPC match the JSON-RPC 2.0 spec.
-- Have the RPC dynamically get the nonce (it's currently an argument).
-- `network.rebroadcast(address | verifier, nonce)` RPC method.
+- `network.rebroadcast(hash or (verifier, nonce))` RPC method.
 - Expose more of the Consensus RPC.
 
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
@@ -157,8 +150,6 @@ UI/RPC:
 - Swap Chia for Milagro.
 
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Transaction (stop DoS attacks).
-
-- Remove holders who lost all their Merit from `merit_holders`.
 
 ### Documentation:
 

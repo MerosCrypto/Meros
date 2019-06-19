@@ -19,8 +19,8 @@ import ../../Network/Serialize/Transactions/SerializeSend
 
 #Create a new Send.
 proc newSend*(
-    inputs: seq[SendInput],
-    outputs: seq[SendOutput]
+    inputs: varargs[SendInput],
+    outputs: varargs[SendOutput]
 ): Send {.forceCheck: [
     ValueError
 ].} =
@@ -62,7 +62,7 @@ proc mine*(
 ].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
-        proof: int = 0
+        proof: uint32 = 0
         hash: ArgonHash
     try:
         hash = Argon(send.hash.toString(), proof.toBinary(), true)

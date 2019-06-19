@@ -20,19 +20,19 @@ finalsd:
         #Signature.
         signature* {.final.}: EdSignature
         #Proof this isn't spam.
-        proof* {.final.}: int
+        proof* {.final.}: uint32
         #Argon hash.
         argon* {.final.}: ArgonHash
 
 #Send constructor.
 func newSendObj*(
-    inputs: seq[SendInput],
-    outputs: seq[SendOutput]
+    inputs: varargs[SendInput],
+    outputs: varargs[SendOutput]
 ): Send {.forceCheck: [].} =
     #Sreate the Send.
     result = Send(
-        inputs: cast[seq[Input]](inputs),
-        outputs: cast[seq[Output]](outputs)
+        inputs: cast[seq[Input]](@inputs),
+        outputs: cast[seq[Output]](@outputs)
     )
 
     #Set the Transaction fields.

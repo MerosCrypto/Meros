@@ -30,13 +30,16 @@ const
         ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN
     ]
 
-    SEND_LENS*:  seq[int] = @[
+    SEND_LENS*: seq[int] = @[
         BYTE_LEN,
         HASH_LEN + BYTE_LEN,
         BYTE_LEN,
         ED_PUBLIC_KEY_LEN + MEROS_LEN,
         ED_SIGNATURE_LEN + INT_LEN
     ]
+
+    DATA_PREFIX_LEN*: int = HASH_LEN + BYTE_LEN
+    DATA_SUFFIX_LEN*: int = ED_SIGNATURE_LEN + INT_LEN
 
 #Deseralizes a string by getting the length of the next set of bytes, slicing that out, and moving on.
 func deserialize*(

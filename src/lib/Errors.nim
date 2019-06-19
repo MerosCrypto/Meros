@@ -22,12 +22,13 @@ type
 
     #Wallet Errors.
     BLSError*         = object of Exception #Used when the BLS lib fails.
-
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
     AddressError*     = object of Exception #Used when passed an invalid Address.
 
     #Database/common Errors.
     GapError*   = object of Exception #Used when trying to add an item, yet missing items before said item.
+
+    #Database/common Statuses.
     DataExists* = object of Exception #Used when trying to add data which was already added.
 
     #Database/Filesystem Errors.
@@ -35,10 +36,10 @@ type
     DBWriteError* = object of DBError #Used when writing to the DB fails.
     DBReadError*  = object of DBError #Used when reading from the DB fails.
 
-    #Database/Consensus Errors.
+    #Database/Consensus Statuses.
     MeritRemoval* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
 
-    #Database/Merit Errors.
+    #Database/Merit Statuses.
     UncleBlock*  = object of Exception #Used when we test a BlockHeader and it's on an alternative chain.
     NotInEpochs* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
@@ -47,9 +48,14 @@ type
     ClientError*         = object of Exception #Used when we try interacting with a disconnected Client or a Client who's breaking the protocol.
     InvalidMessageError* = object of Exception #Used when a Client follows the protocol, yet sends an improper message for the situation.
     SyncConfigError*     = object of Exception #Used when a Socket which isn't set for syncing is used to sync.
+
+    #Network Statuses.
     DataMissing*         = object of Exception #Used when a Client is missing requested data.
     ValidityConcern*     = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
 
     #UI/GUI Errors.
     WebViewError* = object of Exception #Used when WebView fails.
     RPCError*     = object of Exception #Used when the GUI makes an invalid RPC call.
+
+    #UI Statuses.
+    NotEnoughMeros* = object of Exception #Used when the RPC is instructed to create a Send for more Meros than it can.

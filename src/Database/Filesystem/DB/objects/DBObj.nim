@@ -3,7 +3,7 @@ import ../../../../lib/Errors
 
 #DB lib.
 import mc_lmdb
-export get, put
+export put, get, delete
 
 #Tables standard lib.
 import tables

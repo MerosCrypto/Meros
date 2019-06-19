@@ -24,6 +24,10 @@ import ../../Database/Merit/Block as BlockFile
 import ../Serialize/SerializeCommon
 
 #Serialization parsing libs.
+import ../Serialize/Transactions/ParseClaim
+import ../Serialize/Transactions/ParseSend
+import ../Serialize/Transactions/ParseData
+
 import ../Serialize/Consensus/ParseVerification
 
 import ../Serialize/Merit/ParseBlockHeader

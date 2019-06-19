@@ -14,7 +14,7 @@ import ../../Wallet/MinerWallet
 import objects/BlockHeaderObj
 export BlockHeaderObj
 
-#Serialization lib,
+#Serialization lib.
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
 #Constructor.
@@ -23,8 +23,8 @@ func newBlockHeader*(
     last: ArgonHash,
     aggregate: BLSSignature,
     miners: Blake384Hash,
-    time: Natural,
-    proof: Natural
+    time: uint32,
+    proof: uint32
 ): BlockHeader {.forceCheck: [
     ArgonError
 ].} =

@@ -10,6 +10,7 @@ import ../../../../../Database/Transactions/objects/SendObj
 import ParseMint
 import ../../../../../Network/Serialize/Transactions/ParseClaim
 import ../../../../../Network/Serialize/Transactions/ParseSend
+import ../../../../../Network/Serialize/Transactions/ParseData
 
 #Serialize the TransactionObj.
 proc parseTransaction*(
@@ -26,6 +27,7 @@ proc parseTransaction*(
                 result = tx.substr(1).parseMint()
             except BLSError as e:
                 fcRaise e
+
         of TransactionType.Claim:
             try:
                 result = tx.substr(1).parseClaim()
@@ -35,6 +37,7 @@ proc parseTransaction*(
                 fcRaise e
             except BLSError as e:
                 fcRaise e
+
         of TransactionType.Send:
             try:
                 result = tx.substr(1).parseSend()
@@ -43,4 +46,12 @@ proc parseTransaction*(
             except ArgonError as e:
                 fcRaise e
             except EdPublicKeyError as e:
+                fcRaise e
+
+        of TransactionType.Data:
+            try:
+                result = tx.substr(1).parseData()
+            except ValueError as e:
+                fcRaise e
+            except ArgonError as e:
                 fcRaise e

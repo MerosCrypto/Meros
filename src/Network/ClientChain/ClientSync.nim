@@ -99,8 +99,12 @@ proc syncTransaction*(
     #Parse the response.
     try:
         case msg.content:
-            of MessageType.Claim .. MessageType.Data:
-                result = (char(int(msg.content) - int(MessageType.Claim) + 1) & msg.message).parseTransaction()
+            of MessageType.Claim:
+                result = msg.message.parseClaim()
+            of MessageType.Send:
+                result = msg.message.parseSend()
+            of MessageType.Data:
+                result = msg.message.parseData()
 
             of MessageType.DataMissing:
                 raise newException(DataMissing, "Client didn't have the requested Transaction.")

@@ -16,7 +16,7 @@ import ../Filesystem/DB/Serialize/Transactions/SerializeMint
 
 #Create a new Mint.
 proc newMint*(
-    nonce: int,
+    nonce: uint32,
     key: BLSPublicKey,
     amount: uint64
 ): Mint {.forceCheck: [].} =

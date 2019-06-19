@@ -259,14 +259,20 @@ proc newNetwork*(
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-                #If we did get an Transaction, that wasn't a Mint, set the MessageType.
+                #If we did get an Transaction, that wasn't a Mint, set the MessageType and serialize it.
+                var serialized: string
                 case tx.descendant:
                     of TransactionType.Mint:
                         discard
                     of TransactionType.Claim:
                         msgType = MessageType.Claim
+                        serialized = cast[Claim](tx).serialize()
                     of TransactionType.Send:
                         msgType = MessageType.Send
+                        serialized = cast[Send](tx).serialize()
+                    of TransactionType.Data:
+                        msgType = MessageType.Data
+                        serialized = cast[Data](tx).serialize()
 
                 #Send the Transaction.
                 try:
@@ -274,7 +280,7 @@ proc newNetwork*(
                         msg,
                         newMessage(
                             msgType,
-                            tx.serialize()
+                            serialized
                         )
                     )
                 except IndexError as e:
@@ -348,16 +354,6 @@ proc newNetwork*(
                     mainFunctions.transactions.addClaim(claim)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the Claim failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a IndexError: " & e.msg)
-                except GapError:
-                    return
-                except AddressError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a AddressError: " & e.msg)
-                except BLSError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a BLSError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a EdPublicKeyError: " & e.msg)
                 except DataExists:
                     return
 
@@ -376,14 +372,6 @@ proc newNetwork*(
                     mainFunctions.transactions.addSend(send)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the Send failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Send failed due to a IndexError: " & e.msg)
-                except GapError:
-                    return
-                except AddressError as e:
-                    raise newException(InvalidMessageError, "Adding the Send failed due to a AddressError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Adding the Send failed due to a EdPublicKeyError: " & e.msg)
                 except DataExists:
                     return
 
@@ -395,21 +383,11 @@ proc newNetwork*(
                     raise newException(InvalidMessageError, "Parsing the Data failed due to a ValueError: " & e.msg)
                 except ArgonError as e:
                     raise newException(InvalidMessageError, "Parsing the Data failed due to an ArgonError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Data contained an invalid ED25519 Public Key: " & e.msg)
 
                 try:
                     mainFunctions.transactions.addData(data)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the Data failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Data failed due to a IndexError: " & e.msg)
-                except GapError:
-                    return
-                except AddressError as e:
-                    raise newException(InvalidMessageError, "Adding the Data failed due to a AddressError: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Adding the Data failed due to a EdPublicKeyError: " & e.msg)
                 except DataExists:
                     return
 

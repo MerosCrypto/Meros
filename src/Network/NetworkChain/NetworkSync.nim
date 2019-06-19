@@ -261,7 +261,7 @@ proc sync*(
                         of TransactionType.Claim:
                             try:
                                 network.mainFunctions.transactions.addClaim(cast[Claim](tx))
-                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError, BLSError:
+                            except ValueError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
                                 continue
@@ -269,7 +269,15 @@ proc sync*(
                         of TransactionType.Send:
                             try:
                                 network.mainFunctions.transactions.addSend(cast[Send](tx))
-                            except ValueError, IndexError, GapError, AddressError, EdPublicKeyError:
+                            except ValueError:
+                                raise newException(InvalidMessageError, "Failed to add the Claim.")
+                            except DataExists:
+                                continue
+
+                        of TransactionType.Data:
+                            try:
+                                network.mainFunctions.transactions.addData(cast[Data](tx))
+                            except ValueError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
                                 continue

@@ -18,3 +18,9 @@ It returns:
 - Amount (string)
 It returns:
 - `hash` (string)
+
+### `data`
+`data` will create and publish a Send using the Wallet on the Node. It takes in one argument:
+- Data (string)
+It returns:
+- `hash` (string)

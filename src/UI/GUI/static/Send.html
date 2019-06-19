@@ -3,7 +3,6 @@
         <h1>Send</h1>
         <button onclick="GUI.load('main')">Main</button>
         <button onclick="GUI.load('send')">Send</button>
-        <button onclick="GUI.load('receive')">Receive</button>
         <button onclick="GUI.quit()">Quit</button>
         <hr>
 
@@ -14,7 +13,7 @@
         <button onclick="
             var destination = document.getElementById('destination').value;
             var amount = document.getElementById('amount').value;
-            Personal.send(destination + ' ' + amount);
+            Personal.send(destination + '|' + amount);
         ">Generate</button>
 
         <br>

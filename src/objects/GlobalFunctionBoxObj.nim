@@ -31,6 +31,7 @@ import ../Database/Transactions/objects/DifficultiesObj
 import ../Database/Transactions/objects/TransactionObj
 import ../Database/Transactions/objects/ClaimObj
 import ../Database/Transactions/objects/SendObj
+import ../Database/Transactions/objects/DataObj
 
 #Message object.
 import ../Network/objects/MessageObj
@@ -41,6 +42,36 @@ import asyncdispatch
 type
     SystemFunctionBox* = ref object
         quit*: proc () {.raises: [].}
+
+    TransactionsFunctionBox* = ref object
+        getDifficulties*: proc (): Difficulties {.raises: [].}
+
+        getTransaction*: proc (
+            hash: Hash[384]
+        ): Transaction {.raises: [
+            IndexError
+        ].}
+
+        addClaim*: proc (
+            claim: Claim
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
+
+        addSend*: proc (
+            send: Send
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
+
+        addData*: proc (
+            data: Data
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
 
     ConsensusFunctionBox* = ref object
         getMeritHolderHeight*: proc (
@@ -114,38 +145,6 @@ type
             header: BlockHeader
         ): Future[void]
 
-    TransactionsFunctionBox* = ref object
-        getDifficulties*: proc (): Difficulties {.raises: [].}
-
-        getTransaction*: proc (
-            hash: Hash[384]
-        ): Transaction {.raises: [
-            IndexError
-        ].}
-
-        addClaim*: proc (
-            claim: Claim
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            BLSError,
-            DataExists
-        ].}
-
-        addSend*: proc (
-            send: Send
-        ) {.raises: [
-            ValueError,
-            IndexError,
-            GapError,
-            AddressError,
-            EdPublicKeyError,
-            DataExists
-        ].}
-
     PersonalFunctionBox* = ref object
         getWallet*: proc (): Wallet {.inline, raises: [].}
 
@@ -156,10 +155,21 @@ type
             RandomError
         ].}
 
-        signSend*: proc (
-            send: Send
-        ) {.raises: [
-            AddressError
+        send*: proc (
+            destination: string,
+            amount: string
+        ): Hash[384] {.raises: [
+            ValueError,
+            AddressError,
+            NotEnoughMeros,
+            DataExists
+        ].}
+
+        data*: proc (
+            data: string
+        ): Hash[384] {.raises: [
+            ValueError,
+            DataExists
         ].}
 
     NetworkFunctionBox* = ref object
@@ -175,9 +185,9 @@ type
 
     GlobalFunctionBox* = ref object
         system*:       SystemFunctionBox
+        transactions*: TransactionsFunctionBox
         consensus*:    ConsensusFunctionBox
         merit*:        MeritFunctionBox
-        transactions*: TransactionsFunctionBox
         personal*:     PersonalFunctionBox
         network*:      NetworkFunctionBox
 
@@ -185,9 +195,9 @@ type
 func newGlobalFunctionBox*(): GlobalFunctionBox {.forceCheck: [].} =
     GlobalFunctionBox(
         system:       SystemFunctionBox(),
+        transactions: TransactionsFunctionBox(),
         consensus:    ConsensusFunctionBox(),
         merit:        MeritFunctionBox(),
-        transactions: TransactionsFunctionBox(),
         personal:     PersonalFunctionBox(),
         network:      NetworkFunctionBox()
     )

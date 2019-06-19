@@ -5,11 +5,13 @@ import ../../../../../lib/Errors
 import ../../../../../Database/Transactions/objects/MintObj
 import ../../../../../Database/Transactions/objects/ClaimObj
 import ../../../../../Database/Transactions/objects/SendObj
+import ../../../../../Database/Transactions/objects/DataObj
 
 #Serialization libs.
 import SerializeMint
 import ../../../../../Network/Serialize/Transactions/SerializeClaim
 import ../../../../../Network/Serialize/Transactions/SerializeSend
+import ../../../../../Network/Serialize/Transactions/SerializeData
 
 #Serialize the TransactionObj.
 proc serialize*(
@@ -17,8 +19,10 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     case tx.descendant:
         of TransactionType.Mint:
-            result = cast[Mint](tx).serialize()
+            result = char(TransactionType.Mint) & cast[Mint](tx).serialize()
         of TransactionType.Claim:
-            result = cast[Claim](tx).serialize()
+            result = char(TransactionType.Claim) & cast[Claim](tx).serialize()
         of TransactionType.Send:
-            result = cast[Send](tx).serialize()
+            result = char(TransactionType.Send) & cast[Send](tx).serialize()
+        of TransactionType.Data:
+            result = char(TransactionType.Data) & cast[Data](tx).serialize()

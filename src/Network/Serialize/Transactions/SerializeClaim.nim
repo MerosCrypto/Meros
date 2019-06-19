@@ -27,7 +27,7 @@ proc serialize*(
     claim: Claim
 ): string {.inline, forceCheck: [].} =
     #Serialize the inputs.
-    result = claim.inputs.len.toBinary().pad(BYTE_LEN)
+    result = $char(claim.inputs.len)
     for input in claim.inputs:
         result &= input.hash.toString()
 

@@ -45,8 +45,8 @@ proc parseBlockHeader*(
             headerSeq[1].toArgonHash(),
             newBLSSignature(headerSeq[2]),
             headerSeq[3].toBlake384Hash(),
-            headerSeq[4].fromBinary(),
-            headerSeq[5].fromBinary()
+            uint32(headerSeq[4].fromBinary()),
+            uint32(headerSeq[5].fromBinary())
         )
         result.hash = Argon(headerStr.substr(0, headerStr.len - 5), headerSeq[5])
     except ValueError as e:

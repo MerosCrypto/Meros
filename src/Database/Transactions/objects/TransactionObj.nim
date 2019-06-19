@@ -34,7 +34,8 @@ finalsd:
         TransactionType* {.pure.} = enum
             Mint = 0,
             Claim = 1,
-            Send = 2
+            Send = 2,
+            Data = 3
 
         #Transaction object.
         Transaction* = ref object of RootObj

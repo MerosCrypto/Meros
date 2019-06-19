@@ -35,7 +35,7 @@ finalsd:
             #Their state.
             theirState*: ClientState
             #Time of their last message.
-            last*: Time
+            last*: uint32
             #Socket.
             socket* {.final.}: AsyncSocket
 

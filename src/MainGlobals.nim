@@ -18,7 +18,7 @@ var
     transactions {.threadvar.}: Transactions
 
     #DB.
-    db {.threadvar.}: DB
+    database {.threadvar.}: DB
 
     #Personal.
     verifyLock: Lock               #Verify lock to stop us from triggering a MeritRemoval.
@@ -51,7 +51,7 @@ functions.system.quit = proc () {.forceCheck: [].} =
 
     #Shut down the DB.
     try:
-        db.close()
+        database.close()
     except DBError as e:
         echo "Couldn't shutdown the DB: " & e.msg
 

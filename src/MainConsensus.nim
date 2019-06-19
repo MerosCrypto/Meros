@@ -2,7 +2,7 @@ include MainDatabase
 
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
-        consensus = newConsensus(functions.database)
+        consensus = newConsensus(database)
 
         #Provide access to the holder's height.
         functions.consensus.getMeritHolderHeight = proc (
