@@ -157,7 +157,7 @@ proc newTransactionsObj*(
         key: BLSPublicKey
         outOfEpochs: int
         height: int
-        elements: seq[Verification]
+        elements: seq[Element]
 
         #Hashes of the TXs to reload.
         hashes: Table[string, Hash[384]]
@@ -179,7 +179,8 @@ proc newTransactionsObj*(
         except IndexError as e:
             doAssert(false, "Couldn't load elements from a MeritHolder while reloading Transactions: " & e.msg)
         for element in elements:
-            hashes[element.hash.toString()] = element.hash
+            if element of Verification:
+                hashes[cast[Verification](element).hash.toString()] = cast[Verification](element).hash
 
     #Load each transaction.
     var claims: seq[string] = @[]

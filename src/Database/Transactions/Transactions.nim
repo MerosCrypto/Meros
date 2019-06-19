@@ -295,18 +295,22 @@ proc newTransactions*(
             state = states[nextT - 1]
 
             for e in tips[t] + 1 .. nextTip:
-                var verif: Verification
+                var elem: Element
                 try:
-                    verif = consensus[holder][e]
+                    elem = consensus[holder][e]
                 except IndexError as e:
-                    doAssert(false, "Couldn't grab a Verification we know we have: " & e.msg)
+                    doAssert(false, "Couldn't grab a Element we know we have: " & e.msg)
+
+                #Continue if this isn't a Verification.
+                if not (elem of Verification):
+                    continue
 
                 #Handle the possibility this verifies a Transaction out of Epochs.
-                if not result.weights.hasKey(verif.hash.toString()):
+                if not result.weights.hasKey(cast[Verification](elem).hash.toString()):
                     continue
 
                 try:
-                    result.verify(verif, state[holder], state.live, false)
+                    result.verify(cast[Verification](elem), state[holder], state.live, false)
                 except ValueError as e:
                     doAssert(false, "Couldn't reload a Verification when reloading Transactions: " & e.msg)
 #Add a Claim.
@@ -522,7 +526,7 @@ proc archive*(
             #Previously popped height.
             prev: int
             #Elements.
-            elems: seq[Verification]
+            elems: seq[Element]
         try:
             prev = transactions.load(record.key)
         except DBReadError:
@@ -534,7 +538,7 @@ proc archive*(
 
         #Iterate over every archived Element,
         for elem in elems:
-            transactions.del(elem.hash.toString())
+            transactions.del(cast[Verification](elem).hash.toString())
 
         #Save the popped height so we can reload Elements.
         try:
