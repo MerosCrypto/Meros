@@ -9,7 +9,7 @@ proc syncElements(
     network: Network,
     id: int,
     gaps: seq[Gap]
-): Future[seq[Verification]] {.forceCheck: [
+): Future[seq[Element]] {.forceCheck: [
     SocketError,
     ClientError,
     InvalidMessageError,
@@ -38,21 +38,21 @@ proc syncElements(
     for gap in gaps:
         #Send the Requests.
         for nonce in gap.start .. gap.last:
-            #Sync the Verification.
+            #Sync the Element.
             try:
-                result.add(await client.syncVerification(gap.key, nonce))
+                result.add(await client.syncElement(gap.key, nonce))
             except SocketError as e:
                 fcRaise e
             except ClientError as e:
                 fcRaise e
             except SyncConfigError as e:
-                doAssert(false, "Client we attempted to sync a Verification from a Client that wasn't configured for syncing: " & e.msg)
+                doAssert(false, "Client we attempted to sync a Element from wasn't configured for syncing: " & e.msg)
             except InvalidMessageError as e:
                 fcRaise e
             except DataMissing as e:
                 fcRaise e
             except Exception as e:
-                doAssert(false, "Syncing a Verification in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Syncing an Element in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Stop syncing.
     try:
@@ -134,10 +134,10 @@ proc sync*(
     var
         #Variable for gaps.
         gaps: seq[Gap] = @[]
-        #Every Verification archived in this block.
-        elements: Table[string, seq[Verification]] = initTable[string, seq[Verification]]()
+        #Every Element archived in this block.
+        elements: Table[string, seq[Element]] = initTable[string, seq[Element]]()
         #Seq of missing Elements.
-        missingVerifs: seq[Verification] = @[]
+        missingElems: seq[Element] = @[]
         #Hashes of the Transactions mentioned in missing Elements.
         txHashes: seq[Hash[384]] = @[]
         #Transactions mentioned in missing Elements.
@@ -173,7 +173,7 @@ proc sync*(
                 continue
 
             try:
-                missingVerifs = await network.syncElements(client.id, gaps)
+                missingElems = await network.syncElements(client.id, gaps)
             #If the Client had problems, disconnect them.
             except SocketError, ClientError:
                 toDisconnect.add(client.id)
@@ -203,16 +203,17 @@ proc sync*(
         if not synced:
             raise newException(DataMissing, "Couldn't sync all the Elements in a Block.")
 
-    #Handle each Verification.
-    for verif in missingVerifs:
+    #Handle each Element.
+    for elem in missingElems:
         #Add its hash to the list of elements for this holder.
         try:
-            elements[verif.holder.toString()].add(verif)
+            elements[elem.holder.toString()].add(elem)
         except KeyError as e:
             doAssert(false, "Couldn't add a hash to a seq in a table we recently created: " & e.msg)
 
-        #Add the Transaction hash it verifies to txHashes.
-        txHashes.add(verif.hash)
+        #If this is a Verification, add the Transaction hash it verifies to txHashes.
+        if elem of Verification:
+            txHashes.add(cast[Verification](elem).hash)
 
     #Check the Block's aggregate.
     if not newBlock.verify(elements):
@@ -299,13 +300,13 @@ proc sync*(
             raise newException(DataMissing, "Couldn't sync all the Transactions in a Block.")
 
     #Since we now have every Transaction, add the Elements.
-    for verif in missingVerifs:
+    for elem in missingElems:
         try:
-            network.mainFunctions.consensus.addVerification(verif)
+            network.mainFunctions.consensus.addVerification(cast[Verification](elem))
         except ValueError as e:
-            doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
+            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
         except IndexError as e:
-            doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
+            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
         except DataExists:
             continue
 

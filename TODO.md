@@ -87,7 +87,6 @@ Wallet:
 
 - Ed25519 Test.
 
-
 Datbase/Filesystem/DB/Serialize:
 
 - Transactions/SerializeTransaction Test.
@@ -103,11 +102,19 @@ Database/Transactions:
 - Mint Test.
 - Claim Test.
 - Send Test.
+- Update the Transactions DB Test's writeup.
 
 Database/Consensus:
 
-- MeritHolder Test.
+- Element Test.
 - Verification Test.
+- SendDifficulty Test.
+- DataDifficulty Test.
+- GasPrice Test.
+- MeritRemoval Test.
+- MeritHolder Test.
+- Expand the Consensus DB Test to work with other Elements.
+- Update the Consensus DB Test's writeup.
 
 Database/Merit:
 

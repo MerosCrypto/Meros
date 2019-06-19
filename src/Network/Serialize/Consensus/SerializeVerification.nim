@@ -16,15 +16,31 @@ import ../../../Database/Consensus/objects/VerificationObj
 #Common serialization functions.
 import ../SerializeCommon
 
+#SerializeElement method.
+import SerializeElement
+export SerializeElement
+
 #Serialize a Verification.
-func serialize*(
-    verif: Verification,
-    signingOrVerifying: bool = false
+method serialize*(
+    verif: Verification
 ): string {.forceCheck: [].} =
     result =
         verif.holder.toString() &
         verif.nonce.toBinary().pad(INT_LEN) &
         verif.hash.toString()
 
-    if signingOrVerifying:
-        result = "verification" & result
+#Serialize a Verification for signing.
+method serializeSignature*(
+    verif: Verification
+): string {.forceCheck: [].} =
+    result =
+        "\0" &
+        verif.serialize()
+
+#Serialize a Signed Verification.
+method signedSerialize*(
+    verif: SignedVerification
+): string {.forceCheck: [].} =
+    result =
+        verif.serialize() &
+        verif.signature.toString()

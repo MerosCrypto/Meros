@@ -6,8 +6,11 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Verification object.
-import ../../../../src/Database/Consensus/objects/VerificationObj
+#MinerWallet lib.
+import ../../../../src/Wallet/MinerWallet
+
+#Verification lib.
+import ../../../../src/Database/Consensus/Verification
 
 #Serialization libs.
 import ../../../../src/Network/Serialize/Consensus/SerializeVerification
@@ -25,26 +28,33 @@ randomize(int64(getTime()))
 var
     #Hash.
     hash: Hash[384]
-    #Verification Element.
-    verif: Verification
+    #SignedVerification Element.
+    verif: SignedVerification
     #Reloaded Verification Element.
-    reloaded: Verification
+    reloadedV: Verification
+    #Reloaded SignedVerification Element.
+    reloadedSV: SignedVerification
 
 #Test 256 serializations.
 for _ in 0 .. 255:
     for i in 0 ..< 48:
         hash.data[i] = uint8(rand(255))
 
-    #Create the Verification.
-    verif = newVerificationObj(hash)
+    #Create the SignedVerification.
+    verif = newSignedVerificationObj(hash)
+    #Sign it.
+    newMinerWallet().sign(verif, rand(high(int32)))
 
     #Serialize it and parse it back.
-    reloaded = verif.serialize().parseVerification()
+    reloadedV = verif.serialize().parseVerification()
+    reloadedSV = verif.signedSerialize().parseSignedVerification()
 
     #Test the serialized versions.
-    assert(verif.serialize() == reloaded.serialize())
+    assert(verif.serialize() == reloadedV.serialize())
+    assert(verif.signedSerialize() == reloadedSV.signedSerialize())
 
     #Compare the Elements.
-    compare(verif, reloaded)
+    compare(verif, reloadedSV)
+    compare(verif, reloadedV)
 
 echo "Finished the Network/Serialize/Consensus/Verification Test."

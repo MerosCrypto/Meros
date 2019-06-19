@@ -13,15 +13,19 @@ import ../Filesystem/DB/ConsensusDB
 #Merkle lib.
 import ../common/Merkle
 
-#ConsensusIndex and MeritHolderRecord object.
+#ConsensusIndex and MeritHolderRecord objects.
 import ../common/objects/ConsensusIndexObj
 import ../common/objects/MeritHolderRecordObj
 export ConsensusIndex
 
+#Signed Element object.
+import objects/SignedElementObj
+export SignedElementObj
+
 #Verification and MeritHolder libs.
-import Verification
+import Verification as VerificationFile
+export VerificationFile
 import MeritHolder
-export Verification
 export MeritHolder
 
 #Consensus object.
@@ -105,8 +109,11 @@ proc archive*(
 
         #Reset the Merkle.
         consensus[record.key].merkle = newMerkle()
-        for verif in consensus[record.key].elements:
-            consensus[record.key].merkle.add(verif.hash)
+        for element in consensus[record.key].elements:
+            if element of Verification:
+                consensus[record.key].merkle.add(cast[Verification](element).hash)
+            else: # STUB!!
+                doAssert(false, "Element should be Verification")
 
         #Update the archived field.
         consensus[record.key].archived = record.nonce

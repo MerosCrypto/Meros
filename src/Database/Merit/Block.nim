@@ -13,8 +13,8 @@ import ../../Wallet/MinerWallet
 #MeritHolderRecord object.
 import ../common/objects/MeritHolderRecordObj
 
-#Verification lib.
-import ../Consensus/Verification
+#Consensus lib.
+import ../Consensus/Consensus
 
 #BlockHeader lib.
 import BlockHeader
@@ -49,12 +49,12 @@ func inc*(
 #Verify the aggregate signature for a table of Key -> seq[Hash].
 proc verify*(
     blockArg: Block,
-    verifs: Table[string, seq[Verification]]
+    elems: Table[string, seq[Element]]
 ): bool {.forceCheck: [].} =
     result = true
 
     #Make sure there's the same amount of MeritHolder as there are records.
-    if verifs.len != blockArg.records.len:
+    if elems.len != blockArg.records.len:
         return false
 
     #Aggregate Infos for each MeritHolder.
@@ -68,11 +68,11 @@ proc verify*(
         var holderAgInfos: seq[BLSAggregationInfo]
         try:
             #Init this MeritHolder's
-            holderAgInfos = newSeq[BLSAggregationInfo](verifs[key].len)
+            holderAgInfos = newSeq[BLSAggregationInfo](elems[key].len)
             #Iterate over this holder's hashes.
-            for v, verif in verifs[key]:
+            for e, elem in elems[key]:
                 #Create AggregationInfos.
-                holderAgInfos[v] = newBLSAggregationInfo(record.key, verif.serialize(true))
+                holderAgInfos[e] = newBLSAggregationInfo(record.key, elem.serialize())
         #The presented Table has a different set of MeritHolders than the records.
         except KeyError:
             return false

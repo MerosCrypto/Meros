@@ -124,12 +124,12 @@ proc syncTransaction*(
     except DataMissing as e:
         fcRaise e
 
-#Sync a Verification.
-proc syncVerification*(
+#Sync an Element.
+proc syncElement*(
     client: Client,
     holder: BLSPublicKey,
     nonce: int
-): Future[Verification] {.forceCheck: [
+): Future[Element] {.forceCheck: [
     SocketError,
     ClientError,
     SyncConfigError,
@@ -176,13 +176,13 @@ proc syncVerification*(
                 raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our `ElementRequest`, as pointed out by a BLSError: " & e.msg)
 
         of MessageType.DataMissing:
-            raise newException(DataMissing, "Client didn't have the requested Verification.")
+            raise newException(DataMissing, "Client didn't have the requested Element.")
 
         else:
             raise newException(InvalidMessageError, "Client didn't respond properly to our `ElementRequest`.")
 
     if (result.holder != holder) or (result.nonce != nonce):
-        raise newException(InvalidMessageError, "Synced a Verification that we didn't request.")
+        raise newException(InvalidMessageError, "Synced a Element that we didn't request.")
 
 #Sync a Block Body.
 proc syncBlockBody*(
