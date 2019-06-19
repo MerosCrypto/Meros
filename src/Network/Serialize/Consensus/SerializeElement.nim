@@ -1,11 +1,16 @@
+#Errors lib.
 import ../../../lib/Errors
 
+#Element object.
 import ../../../Database/Consensus/objects/ElementObj
 
-import ../SerializeCommon
-
+#Base serialize functions.
 method serialize*(
-    element: Element,
-    signingOrVerifying: bool = false
+    element: Element
 ): string {.base, forceCheck: [].} =
-    doAssert(false, "Unimplemented base method")
+    doAssert(false, "Element serialize method called.")
+
+method serializeSignature*(
+    element: Element
+): string {.base, forceCheck: [].} =
+    doAssert(false, "Element serialize method called.")

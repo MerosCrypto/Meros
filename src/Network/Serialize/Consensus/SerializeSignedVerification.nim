@@ -13,15 +13,17 @@ import ../../../Wallet/MinerWallet
 #Verification object.
 import ../../../Database/Consensus/objects/VerificationObj
 
-#Common serialization functions.
-import ../SerializeCommon
+#Serialize Verification lib.
+import SerializeVerification
 
-#Serialize a Memory Verification.
-func serialize*(
+#SerializeElement method.
+import SerializeElement
+export SerializeElement
+
+#Serialize a Signed Verification.
+method serialize*(
     verif: SignedVerification
 ): string {.forceCheck: [].} =
     result =
-        verif.holder.toString() &
-        verif.nonce.toBinary().pad(INT_LEN) &
-        verif.hash.toString() &
+        cast[Verification](verif).serialize() &
         verif.signature.toString()

@@ -37,9 +37,9 @@ proc parseVerification*(
         )
         result.holder = newBLSPublicKey(verifSeq[0])
         result.nonce = verifSeq[1].fromBinary()
-    except BLSError as e:
-        fcRaise e
     except ValueError as e:
+        fcRaise e
+    except BLSError as e:
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Verification: " & e.msg)

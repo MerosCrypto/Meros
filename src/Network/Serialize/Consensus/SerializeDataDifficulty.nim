@@ -18,4 +18,4 @@ method serialize*(
         dd.difficulty.toString()
 
     if signingOrVerifying:
-        result = "dataDifficulty" & result
+        result = "\2" & result
