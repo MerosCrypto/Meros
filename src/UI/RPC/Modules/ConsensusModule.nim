@@ -38,9 +38,12 @@ proc getElement(
         "holder": $elem.holder,
         "nonce": elem.nonce
     }
-    if elem of Verification:
-        result["descendant"] = %"verification"
-        result["hash"] = %($cast[Verification](elem).hash)
+    case elem:
+        of Verification as verif:
+            result["descendant"] = %"verification"
+            result["hash"] = %($verif.hash)
+        else:
+            doAssert(false, "Element should be a Verification.")
 
 #Get unarchived Merit Holder Records.
 proc getUnarchivedMeritHolderRecords(

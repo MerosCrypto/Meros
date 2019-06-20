@@ -10,13 +10,8 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Verification object.
-import ../../Consensus/objects/ElementObj
-import ../../Consensus/objects/SendDifficultyObj
-import ../../Consensus/objects/VerificationObj
-import ../../Consensus/objects/DataDifficultyObj
-import ../../Consensus/objects/GasPriceObj
-import ../../Consensus/objects/MeritRemovalObj
+#Element lib.
+import ../../Consensus/Element
 
 #DB object.
 import objects/DBObj
@@ -76,29 +71,22 @@ proc save*(
 
 proc save*(
     db: DB,
-    element: Element
+    elem: Element
 ) {.forceCheck: [
     DBWriteError
 ].} =
+    case elem:
+        of Verification as verif:
+            try:
+                db.put(
+                    verif.holder.toString() & verif.nonce.toBinary().pad(1),
+                    verif.hash.toString()
+                )
+            except DBWriteError as e:
+                fcRaise e
 
-    # stubs
-    if element of SendDifficulty:
-        discard
-    elif element of Verification:
-        try:
-            db.put(
-                element.holder.toString() & element.nonce.toBinary().pad(1),
-                cast[Verification](element).hash.toString()
-            )
-        except DBWriteError as e:
-            fcRaise e
-    elif element of DataDifficulty:
-        discard
-    elif element of GasPrice:
-        discard
-    elif element of MeritRemovalObj.MeritRemoval:
-        discard
-
+        else:
+            doAssert(false, "Element should be Verification.")
 
 proc loadHolders*(
     db: DB

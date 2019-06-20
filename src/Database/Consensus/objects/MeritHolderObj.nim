@@ -125,17 +125,12 @@ proc add*(
         except IndexError as e:
             doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
 
-        if element of Verification:
-            if (not (existing of Verification)) or (cast[Verification](element).hash != cast[Verification](existing).hash):
-                raise newException(MaliciousMeritHolder, "MeritHolder submitted two Elements with the same nonce.")
-        elif element of SendDifficulty:
-            discard
-        elif element of DataDifficulty:
-            discard
-        elif element of GasPrice:
-            discard
-        elif element of MeritRemoval:
-            discard
+        case element:
+            of Verification as verif:
+                if (not (existing of Verification)) or (verif.hash != cast[Verification](existing).hash):
+                    raise newException(MaliciousMeritHolder, "MeritHolder submitted two Elements with the same nonce.")
+            else:
+                doAssert(false, "Element should be a Verification.")
 
         #Already added.
         raise newException(DataExists, "Element has already been added.")
@@ -145,16 +140,11 @@ proc add*(
     #Add the Element to the seq.
     holder.elements.add(element)
     #Add the Element to the Merkle.
-    if element of SendDifficulty:
-        discard
-    elif element of Verification:
-        holder.merkle.add(cast[Verification](element).hash)
-    elif element of DataDifficulty:
-        discard
-    elif element of GasPrice:
-        discard
-    elif element of MeritRemoval:
-        discard
+    case element:
+        of Verification as verif:
+            holder.merkle.add(verif.hash)
+        else:
+            doAssert(false, "Element should be a Verification.")
 
     #Add the Element to the Database.
     try:
