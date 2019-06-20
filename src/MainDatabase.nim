@@ -5,17 +5,19 @@ proc mainDatabase() {.forceCheck: [].} =
         #Open the database.
         try:
             database = newDB(config.dataDir / config.db, MAX_DB_SIZE)
-        except DBerror as e:
+        except DBError as e:
             doAssert(false, "Couldn't create the DB: " & e.msg)
 
-        discard """
         var version: int = DB_VERSION
         try:
-            version = db.get("version").fromBinary()
+            version = database.lmdb.get("merit", "version").fromBinary()
         #If this fails because this is a brand new DB, save the current version.
-        except DBerror:
+        except Exception:
             try:
-                db.put("version", DB_VERSION.toBinary())
-            except DBerror as e:
+                database.lmdb.put("merit", "version", DB_VERSION.toBinary())
+            except Exception as e:
                 doAssert(false, "Couldn't save the DB version: " & e.msg)
-        """
+
+        #Confirm the version.
+        if version != DB_VERSION:
+            doAssert(false, "DB has a different version.")
