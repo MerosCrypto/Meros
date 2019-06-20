@@ -14,7 +14,7 @@ proc mainConsensus() {.forceCheck: [].} =
         functions.consensus.getElement = proc (
             key: BLSPublicKey,
             nonce: int
-        ): Verification {.forceCheck: [
+        ): Element {.forceCheck: [
             IndexError
         ].} =
             try:
@@ -72,10 +72,12 @@ proc mainConsensus() {.forceCheck: [].} =
             else:
                 return nil
 
-            #Iterate over every unarchived verification, up to and including the nonce.
+            #Iterate over every unarchived Element, up to and including the nonce.
             try:
-                for verif in holder{start .. nonce}:
-                    sigs.add(verif.signature)
+                var elems: seq[Element] = holder{start .. nonce}
+                for elem in elems:
+                    if elem of Verification:
+                        sigs.add(cast[SignedVerification](elem).signature)
             except IndexError as e:
                 fcRaise e
 
@@ -112,8 +114,9 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the hashes.
             try:
-                for verif in consensus[key][start .. nonce]:
-                    result.add(verif.hash)
+                for elem in consensus[key][start .. nonce]:
+                    if elem of Verification:
+                        result.add(cast[Verification](elem).hash)
             except IndexError as e:
                 fcRaise e
 
@@ -187,5 +190,5 @@ proc mainConsensus() {.forceCheck: [].} =
             #Broadcast the SignedVerification.
             functions.network.broadcast(
                 MessageType.SignedVerification,
-                verif.serialize()
+                verif.signedSerialize()
             )

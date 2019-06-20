@@ -28,12 +28,19 @@ proc getElement(
     key: BLSPublicKey,
     nonce: int
 ): JSONnode {.forceCheck: [].} =
+    var elem:  Element
     try:
-        result = %* {
-            "hash": $rpc.functions.consensus.getElement(key, nonce).hash
-        }
+        elem = rpc.functions.consensus.getElement(key, nonce)
     except IndexError as e:
         returnError()
+
+    result = %* {
+        "holder": $elem.holder,
+        "nonce": elem.nonce
+    }
+    if elem of Verification:
+        result["descendant"] = %"verification"
+        result["hash"] = %($cast[Verification](elem).hash)
 
 #Get unarchived Merit Holder Records.
 proc getUnarchivedMeritHolderRecords(

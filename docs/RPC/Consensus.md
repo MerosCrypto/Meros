@@ -5,7 +5,12 @@
 - Verifier (string)
 - Nonce    (int)
 It returns:
-- `hash` (string)
+- `descendant` (string)
+- `holder`     (string)
+- `nonce`      (int)
+
+When `descendant` == "verification":
+    - `hash` (string)
 
 ### `getUnarchivedMeritHolderRecords`
 `getUnarchivedMeritHolderRecords` will fetch and return all MeritHolderRecords for all MeritHolders with unarchived Elements (plus an aggregate signature). It takes in zero arguments and returns an array of objects, each as follows:

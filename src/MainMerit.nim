@@ -111,17 +111,20 @@ proc mainMerit() {.forceCheck: [].} =
                     raise newException(ValueError, "Block has a MeritHolderRecord with a competing Merkle.")
 
                 #Seq of the relevant Elements for this MeritHolder.
-                var verifs: seq[Verification]
+                var elems: seq[Element]
                 #Grab the consensus.
                 try:
-                    verifs = holder[holder.archived + 1 .. record.nonce]
+                    elems = holder[holder.archived + 1 .. record.nonce]
                 except IndexError as e:
                     fcRaise e
 
                 #Make sure Transactions has the verified Transactions.
-                for v in 0 ..< verifs.len:
-                    if not transactions.transactions.hasKey(verifs[v].hash.toString()):
-                        raise newException(GapError, "Block refers to missing Transactions, or Transactions already out of an Epoch.")
+                for e in 0 ..< elems.len:
+                    if elems[e] of Verification:
+                        try:
+                            discard transactions[cast[Verification](elems[e]).hash]
+                        except IndexError:
+                            raise newException(GapError, "Block refers to missing Transactions.")
 
             #Add the Block to the Merit.
             var epoch: Epoch

@@ -81,7 +81,7 @@ type
         getElement*: proc (
             key: BLSPublicKey,
             nonce: int
-        ): Verification {.raises: [
+        ): Element {.raises: [
             IndexError
         ].}
 

@@ -231,7 +231,7 @@ proc `[]`*(
 proc `{}`*(
     holder: MeritHolder,
     slice: Slice[int]
-): seq[SignedElement] {.forceCheck: [
+): seq[Element] {.forceCheck: [
     IndexError
 ].} =
     #Extract the slice values.

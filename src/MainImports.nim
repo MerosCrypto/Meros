@@ -34,7 +34,7 @@ import Network/Serialize/Transactions/SerializeClaim
 import Network/Serialize/Transactions/SerializeSend
 import Network/Serialize/Transactions/SerializeData
 
-import Network/Serialize/Consensus/SerializeSignedVerification
+import Network/Serialize/Consensus/SerializeVerification
 
 import Network/Serialize/Merit/SerializeBlockHeader
 
