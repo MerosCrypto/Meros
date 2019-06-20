@@ -145,7 +145,7 @@ proc mainConsensus() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
-            except MeritRemoval:
+            except MaliciousMeritHolder:
                 discard
 
             echo "Successfully added a new Verification."
@@ -182,7 +182,7 @@ proc mainConsensus() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
-            except MeritRemoval:
+            except MaliciousMeritHolder:
                 discard
 
             echo "Successfully added a new SignedVerification."

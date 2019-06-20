@@ -111,7 +111,7 @@ proc add*(
 ) {.forceCheck: [
     GapError,
     DataExists,
-    Errors.MeritRemoval
+    MaliciousMeritHolder
 ].} =
     #Verify we're not missing Elements.
     if element.nonce > holder.height:
@@ -127,14 +127,14 @@ proc add*(
 
         if element of Verification:
             if (not (existing of Verification)) or (cast[Verification](element).hash != cast[Verification](existing).hash):
-                raise newException(Errors.MeritRemoval, "MeritHolder submitted two Elements with the same nonce.")
+                raise newException(MaliciousMeritHolder, "MeritHolder submitted two Elements with the same nonce.")
         elif element of SendDifficulty:
             discard
         elif element of DataDifficulty:
             discard
         elif element of GasPrice:
             discard
-        elif element of MeritRemovalObj.MeritRemoval:
+        elif element of MeritRemoval:
             discard
 
         #Already added.
@@ -153,7 +153,7 @@ proc add*(
         discard
     elif element of GasPrice:
         discard
-    elif element of MeritRemovalObj.MeritRemoval:
+    elif element of MeritRemoval:
         discard
 
     #Add the Element to the Database.
@@ -171,7 +171,7 @@ proc add*(
     GapError,
     BLSError,
     DataExists,
-    Errors.MeritRemoval
+    MaliciousMeritHolder
 ].} =
     #Verify the signature.
     try:
@@ -192,7 +192,7 @@ proc add*(
         fcRaise e
     except DataExists as e:
         fcRaise e
-    except MeritRemoval as e:
+    except MaliciousMeritHolder as e:
         fcRaise e
 
 #Slice operators.

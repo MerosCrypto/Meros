@@ -51,7 +51,7 @@ proc add*(
 ) {.forceCheck: [
     GapError,
     DataExists,
-    MeritRemoval
+    MaliciousMeritHolder
 ].} =
     try:
         consensus[verif.holder].add(verif)
@@ -59,7 +59,7 @@ proc add*(
         fcRaise e
     except DataExists as e:
         fcRaise e
-    except MeritRemoval as e:
+    except MaliciousMeritHolder as e:
         fcRaise e
 
 #Add a SignedVerification.
@@ -71,7 +71,7 @@ proc add*(
     GapError,
     BLSError,
     DataExists,
-    MeritRemoval
+    MaliciousMeritHolder
 ].} =
     try:
         consensus[verif.holder].add(verif)
@@ -83,7 +83,7 @@ proc add*(
         fcRaise e
     except DataExists as e:
         fcRaise e
-    except MeritRemoval as e:
+    except MaliciousMeritHolder as e:
         fcRaise e
 
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.

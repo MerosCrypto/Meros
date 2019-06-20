@@ -37,7 +37,7 @@ type
     DBReadError*  = object of DBError #Used when reading from the DB fails.
 
     #Database/Consensus Statuses.
-    MeritRemoval* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
+    MaliciousMeritHolder* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
 
     #Database/Merit Statuses.
     UncleBlock*  = object of Exception #Used when we test a BlockHeader and it's on an alternative chain.

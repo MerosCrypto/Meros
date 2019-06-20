@@ -34,7 +34,7 @@ proc verify(
             doAssert(false, "Created a SignedVerification with an invalid nonce: " & e.msg)
         except BLSError as e:
             doAssert(false, "Couldn't add a SignedVerification due to a BLSError: " & e.msg)
-        except MeritRemoval as e:
+        except MaliciousMeritHolder as e:
             doAssert(false, "Created a SignedVerification which causes a Merit Removal: " & e.msg)
         except DataExists as e:
             doAssert(false, "Created a SignedVerification already added to the Consensus DAG: " & e.msg)
