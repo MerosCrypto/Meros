@@ -1,3 +1,4 @@
 #PersonalModule Test.
 
-echo "The UI/RPC/Modules/PersonalModule Test is empty."
+proc test*() =
+    echo "The UI/RPC/Modules/PersonalModule Test is empty."

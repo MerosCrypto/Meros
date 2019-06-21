@@ -25,6 +25,8 @@ objectsTests.addTests(tests)
 libTests.addTests(tests)
 WalletTests.addTests(tests)
 DatabaseTests.addTests(tests)
+UITests.addTests(tests)
+NetworkTests.addTests(tests)
 
 proc grabTest(): int =
     {.gcsafe.}:
@@ -33,7 +35,7 @@ proc grabTest(): int =
         inc(testID)
         release(testLock)
 
-proc test*(i: int) {.thread.} =
+proc test*() {.thread.} =
     {.gcsafe.}:
         while true:
             var id: int = grabTest()
@@ -42,8 +44,8 @@ proc test*(i: int) {.thread.} =
 
             tests[id]()
 
-for i in 0 ..< 8:
-    spawn test(i)
+for _ in 0 ..< 8:
+    spawn test()
 
 sync()
 
