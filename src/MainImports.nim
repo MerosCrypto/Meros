@@ -24,7 +24,7 @@ import Database/Consensus/Consensus
 import Database/Merit/Merit
 
 #DB.
-import Database/Filesystem/DB/objects/DBObj
+import Database/Filesystem/DB/DB
 
 #Network.
 import Network/Network

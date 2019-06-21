@@ -119,7 +119,4 @@ proc archive*(
         consensus[record.key].archived = record.nonce
 
         #Update the DB.
-        try:
-            consensus.db.save(record.key, record.nonce)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't save a MeritHolder's tip to the Database: " & e.msg)
+        consensus.db.save(record.key, record.nonce)

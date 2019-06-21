@@ -177,6 +177,9 @@ proc mainMerit() {.forceCheck: [].} =
                 except EdPublicKeyError as e:
                     doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 
+            #Commit the DBs.
+            database.commit()
+
             echo "Successfully added the Block."
 
             if not syncing:

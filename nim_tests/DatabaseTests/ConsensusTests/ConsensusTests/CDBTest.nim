@@ -27,28 +27,6 @@ import random
 #Seed random.
 randomize(int64(getTime()))
 
-discard """
-On Consensus creation:
-    Load `consensus_holders`.
-    For each, add the MeritHolder.
-
-On MeritHolder creation:
-    If the MeritHolder doesn't exist, add them to `holdersStr` and save it.
-    Load `consensus_KEY`, which is the quantity archived in string format (not binary).
-    For each archived Verification, load `consensus_KEY_NONCE`, which is the hash, and regenerate the Merkle.
-    If it doesn't exist, save "-1" to `consensus_KEY`.
-
-On Verification addition:
-    Save the verified hash to `consensus_KEY_NONCE`.
-
-On archive:
-    Store the archived tip to `consensus_KEY` as a string.
-
-We cache unarchived Elements.
-We save unarchived Elements without their signatures.
-We don't load unarchived Elements.
-"""
-
 var
     #Database.
     db: DB = newTestDatabase()
@@ -114,6 +92,9 @@ for _ in 0 ..< 20:
         )
     #Archive the records.
     consensus.archive(archiving)
+
+    #Commit the DB.
+    db.commit()
 
     #Test the Consensus.
     test()

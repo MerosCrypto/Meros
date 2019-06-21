@@ -85,10 +85,7 @@ proc add(
 
     #Only save them if this is new data.
     if not state.oldData:
-        try:
-            state.db.save(key, 0)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't save a holder's Merit: " & e.msg)
+        state.db.save(key, 0)
 
 #Getters.
 proc `[]`*(
@@ -134,11 +131,8 @@ proc `[]=`*(
 
     #Save the updated values.
     if not state.oldData:
-        try:
-            state.db.save(key, value)
-            state.db.saveLiveMerit(state.live)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't save a holder's Merit/the live Merit: " & e.msg)
+        state.db.save(key, value)
+        state.db.saveLiveMerit(state.live)
 
 proc `[]=`*(
     state: var State,

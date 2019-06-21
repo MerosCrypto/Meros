@@ -3,8 +3,8 @@
 #Errors lib.
 import ../../src/lib/Errors
 
-#DB.
-import ../../src/Database/Filesystem/DB/objects/DBObj
+#DB lib.
+import ../../src/Database/Filesystem/DB/DB
 export DB
 
 #OS standard lib.
@@ -23,3 +23,7 @@ proc newTestDatabase*(): DB =
     #Open the database.
     db = newDB("./data/test", 1073741824)
     result = db
+
+#Commit the Database.
+proc commit*() =
+    db.commit()

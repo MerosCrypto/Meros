@@ -75,8 +75,6 @@ proc add(
         consensus.db.save(holder, consensus.holders[holderStr].archived)
     except KeyError as e:
         doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't update a MeritHolders archived: " & e.msg)
 
 #Gets a MeritHolder by their key.
 proc `[]`*(

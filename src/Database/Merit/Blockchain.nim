@@ -154,7 +154,4 @@ proc processBlock*(
         except IndexError as e:
             doAssert(false, "Added a Block successfully but failed to calculate the next difficulty: " & e.msg)
 
-        try:
-            blockchain.db.save(blockchain.difficulty)
-        except DBWriteError as e:
-            doAssert(false, "Failed to write the difficulty to the DB: " & e.msg)
+        blockchain.db.save(blockchain.difficulty)

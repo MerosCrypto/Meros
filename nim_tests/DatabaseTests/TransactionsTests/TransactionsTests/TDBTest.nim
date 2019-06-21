@@ -37,32 +37,6 @@ import random
 #Seed random.
 randomize(int64(getTime()))
 
-discard """
-On Transactions creation:
-    Scan the Blockchain for the records in Epochs.
-    Iterate over every Element archived by these records.
-    If the Element is a Verification, load the Transaction it verified.
-
-    Scan the Blockchain for the records in Epochs.
-    Grab every mentioned MeritHolder.
-    For each MeritHolder, grab their archived tip and tips in Epochs.
-    Load every Verification from their archived tip to their height, with the State used at the time.
-
-On Transaction addition:
-    Save the Transaction to `HASH` (prefixed with a byte of the TransactionType).
-    If the Transaction is a Mint, save the MintOutput to `HASH + char(0)`.
-
-On Transaction verification:
-    Delete every UTXO it spends from the Database.
-    Save every SendOutput to `HASH + char(OUTPUT_NONCE)`.
-    Save "" to `HASH + "vrf"`.
-
-On Transactions archival:
-    Iterate over every Element archived by the Epoch's records.
-    Clear transactions mentioned in the archived Elements from the cache.
-    Save the newly archived tip to `KEY + "mh"`
-"""
-
 var
     #Database.
     db: DB = newTestDatabase()
@@ -346,6 +320,9 @@ for _ in 0 ..< 20:
 
     #Mine a Block.
     addBlock()
+
+    #Commit the DB.
+    commit()
 
     #Test the Transactionss.
     test()

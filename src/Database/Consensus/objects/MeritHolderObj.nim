@@ -73,10 +73,7 @@ proc newMeritHolderObj*(
         doAssert(false, "Couldn't parse the MeritHolder's archived which was successfully retrieved from the Database: " & e.msg)
     #If we're not in the DB, add ourselves.
     except DBReadError:
-        try:
-            result.db.save(result.key, result.archived)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't save a new MeritHolder to the Database: " & e.msg)
+        result.db.save(result.key, result.archived)
 
     #Populate with the info from the DB.
     result.height = result.archived + 1
@@ -157,10 +154,7 @@ proc add*(
         discard
 
     #Add the Element to the Database.
-    try:
-        holder.db.save(element)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save a Element to the Database: " & e.msg)
+    holder.db.save(element)
 
 #Add a SignedElement to a MeritHolder.
 proc add*(

@@ -132,7 +132,10 @@ for _ in 1 .. 20:
 
     #Add it.
     blockchain.processBlock(mining)
-    
+
+    #Commit the DB.
+    db.commit()
+
     test()
 
 echo "Finished the Database/Merit/Blockchain/DB Test."

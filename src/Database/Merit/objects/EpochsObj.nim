@@ -151,8 +151,5 @@ proc shift*(
         Therefore, we need to save the nonce that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
         """
 
-        try:
-            for record in records:
-                epochs.db.saveHolderEpoch(record.key, record.nonce)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't save the new Epoch tip to the Database: " & e.msg)
+        for record in records:
+            epochs.db.saveHolderEpoch(record.key, record.nonce)

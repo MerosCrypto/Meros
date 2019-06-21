@@ -8,7 +8,7 @@ Config:
 
 Database:
 
-- If we don't commit after every edit, but instead after a new Block, we create a more-fault tolerant DB that will likely also handle becoming threaded better.
+- Use a single LMDB Transaction when we commit.
 - Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Merit:
@@ -100,7 +100,6 @@ Database/Transactions:
 - Mint Test.
 - Claim Test.
 - Send Test.
-- Update the Transactions DB Test's writeup.
 
 Database/Consensus:
 
@@ -112,7 +111,6 @@ Database/Consensus:
 - MeritRemoval Test.
 - MeritHolder Test.
 - Expand the Consensus DB Test to work with other Elements.
-- Update the Consensus DB Test's writeup.
 
 Database/Merit:
 
@@ -120,7 +118,6 @@ Database/Merit:
 - Block Test.
 - Difficulty Test.
 - Merit Test.
-- Add DB writeups, like the one in the ConsensusTest, to BlockchainTest, StateTest, and EpochsTest.
 
 Network:
 

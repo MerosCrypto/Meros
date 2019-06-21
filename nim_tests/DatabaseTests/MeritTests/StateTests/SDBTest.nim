@@ -113,6 +113,9 @@ for _ in 1 .. 20:
     #Add it to the State.
     state.processBlock(blockchain, mining)
 
+    #Commit the DB.
+    db.commit()
+
     #Test the State.
     test()
 

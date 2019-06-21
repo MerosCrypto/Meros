@@ -209,6 +209,9 @@ for i in 1 .. 20:
     #Mark the records as archived.
     consensus.archive(records)
 
+    #Commit the DB.
+    db.commit()
+
     #Test the Epochs.
     test()
 

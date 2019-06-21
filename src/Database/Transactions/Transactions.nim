@@ -541,10 +541,7 @@ proc archive*(
             transactions.del(cast[Verification](elem).hash.toString())
 
         #Save the popped height so we can reload Elements.
-        try:
-            transactions.save(record.key, record.nonce)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't write a shifted record to the database: " & e.msg)
+        transactions.save(record.key, record.nonce)
 
 #Checks if an Transaction was the first to spend all of its inputs.
 proc isFirst*(

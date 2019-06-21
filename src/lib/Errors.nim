@@ -33,7 +33,6 @@ type
 
     #Database/Filesystem Errors.
     DBError*      = LMDBError
-    DBWriteError* = object of DBError #Used when writing to the DB fails.
     DBReadError*  = object of DBError #Used when reading from the DB fails.
 
     #Database/Consensus Statuses.
