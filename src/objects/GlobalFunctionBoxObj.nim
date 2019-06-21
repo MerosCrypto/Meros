@@ -53,21 +53,24 @@ type
         ].}
 
         addClaim*: proc (
-            claim: Claim
+            claim: Claim,
+            syncing: bool = false
         ) {.raises: [
             ValueError,
             DataExists
         ].}
 
         addSend*: proc (
-            send: Send
+            send: Send,
+            syncing: bool = false
         ) {.raises: [
             ValueError,
             DataExists
         ].}
 
         addData*: proc (
-            data: Data
+            data: Data,
+            syncing: bool = false
         ) {.raises: [
             ValueError,
             DataExists
@@ -138,7 +141,8 @@ type
         ].}
 
         addBlock*: proc (
-            newBlock: Block
+            newBlock: Block,
+            syncing: bool = false
         ): Future[void]
 
         addBlockByHeader*: proc (

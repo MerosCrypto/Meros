@@ -261,7 +261,7 @@ proc sync*(
                     case tx.descendant:
                         of TransactionType.Claim:
                             try:
-                                network.mainFunctions.transactions.addClaim(cast[Claim](tx))
+                                network.mainFunctions.transactions.addClaim(cast[Claim](tx), true)
                             except ValueError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
@@ -269,7 +269,7 @@ proc sync*(
 
                         of TransactionType.Send:
                             try:
-                                network.mainFunctions.transactions.addSend(cast[Send](tx))
+                                network.mainFunctions.transactions.addSend(cast[Send](tx), true)
                             except ValueError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:
@@ -277,7 +277,7 @@ proc sync*(
 
                         of TransactionType.Data:
                             try:
-                                network.mainFunctions.transactions.addData(cast[Data](tx))
+                                network.mainFunctions.transactions.addData(cast[Data](tx), true)
                             except ValueError:
                                 raise newException(InvalidMessageError, "Failed to add the Claim.")
                             except DataExists:

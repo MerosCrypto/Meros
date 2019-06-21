@@ -54,8 +54,6 @@ Network:
 
 	Will reduce network traffic and increase security.
 
-- Don't rebroadcast data that we're syncing.
-
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
