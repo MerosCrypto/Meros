@@ -19,28 +19,29 @@ import ../../../../TransactionsTests/CompareTransactions
 #Random standard lib.
 import random
 
-#Seed Random via the time.
-randomize(int64(getTime()))
+proc test*() =
+    #Seed Random via the time.
+    randomize(int64(getTime()))
 
-#SendOutputs.
-var
-    output: SendOutput
-    reloaded: SendOutput
+    #SendOutputs.
+    var
+        output: SendOutput
+        reloaded: SendOutput
 
-for _ in 0 .. 255:
-    #Create the SendOutput.
-    output = newSendOutput(
-        newHDWallet().publicKey,
-        uint64(rand(int32.high))
-    )
+    for _ in 0 .. 255:
+        #Create the SendOutput.
+        output = newSendOutput(
+            newHDWallet().publicKey,
+            uint64(rand(int32.high))
+        )
 
-    #Serialize it and parse it back.
-    reloaded = output.serialize().parseSendOutput()
+        #Serialize it and parse it back.
+        reloaded = output.serialize().parseSendOutput()
 
-    #Compare the SendOutputs.
-    compare(output, reloaded)
+        #Compare the SendOutputs.
+        compare(output, reloaded)
 
-    #Test the serialized versions.
-    assert(output.serialize() == reloaded.serialize())
+        #Test the serialized versions.
+        assert(output.serialize() == reloaded.serialize())
 
-echo "Finished the Database/Filesystem/DB/Serialize/Transactions/SendOutput Test."
+    echo "Finished the Database/Filesystem/DB/Serialize/Transactions/SendOutput Test."

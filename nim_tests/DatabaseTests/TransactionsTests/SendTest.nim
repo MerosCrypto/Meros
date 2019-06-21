@@ -1,3 +1,4 @@
 #Send Test.
 
-echo "The Database/Transactions/Send Test is empty."
+proc test*() =
+    echo "The Database/Transactions/Send Test is empty."

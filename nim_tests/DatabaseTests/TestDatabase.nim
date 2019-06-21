@@ -11,17 +11,17 @@ export DB
 import os
 
 #Creates a database.
-var db: DB = nil
+var db {.threadvar.}: DB
 proc newTestDatabase*(): DB =
     #Close any existing DB.
     if not db.isNil:
         db.close()
 
     #Delete any old database.
-    removeFile("./data/test")
+    removeFile("./data/test" & $getThreadID())
 
     #Open the database.
-    db = newDB("./data/test", 1073741824)
+    db = newDB("./data/test" & $getThreadID(), 1073741824)
     result = db
 
 #Commit the Database.

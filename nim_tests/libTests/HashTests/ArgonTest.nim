@@ -1,3 +1,4 @@
 #Argon Test.
 
-echo "The lib/Hash/Argon Test is empty."
+proc test*() =
+    echo "The lib/Hash/Argon Test is empty."

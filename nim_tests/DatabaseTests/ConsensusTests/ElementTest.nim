@@ -1,3 +1,4 @@
 #Element Test.
 
-echo "The Database/Consensus/Element Test is empty."
+proc test*() =
+    echo "The Database/Consensus/Element Test is empty."

@@ -1,3 +1,4 @@
 #MeritRemoval Test.
 
-echo "The Database/Consensus/MeritRemoval Test is empty."
+proc test*() =
+    echo "The Database/Consensus/MeritRemoval Test is empty."

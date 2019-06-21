@@ -24,79 +24,79 @@ import ../CompareConsensus
 #Random standard lib.
 import random
 
-#Seed random.
-randomize(int64(getTime()))
+proc test*() =
+    #Seed random.
+    randomize(int64(getTime()))
 
-var
-    #Database.
-    db: DB = newTestDatabase()
-    #Consensus.
-    consensus: Consensus = newConsensus(db)
+    var
+        #Database.
+        db: DB = newTestDatabase()
+        #Consensus.
+        consensus: Consensus = newConsensus(db)
 
-    #MeritHolders.
-    holders: seq[MinerWallet]
-    #SignedVerification we just created.
-    verif: SignedVerification
-    #Tips we're archiving.
-    archiving: seq[MeritHolderRecord]
+        #MeritHolders.
+        holders: seq[MinerWallet]
+        #SignedVerification we just created.
+        verif: SignedVerification
+        #Tips we're archiving.
+        archiving: seq[MeritHolderRecord]
 
-#Tests the Consensus against the reloaded Consensus.
-proc test() =
-    #Reload the Consensus.
-    var reloaded: Consensus = newConsensus(db)
+    #Compare the Consensus against the reloaded Consensus.
+    proc compare() =
+        #Reload the Consensus.
+        var reloaded: Consensus = newConsensus(db)
 
-    #Compare the Consensus DAGs.
-    compare(consensus, reloaded)
+        #Compare the Consensus DAGs.
+        compare(consensus, reloaded)
 
-#Iterate over 20 'rounds'.
-for _ in 0 ..< 20:
-    #Create a random amount of MeritHolders.
-    for _ in 0 ..<  rand(2) + 1:
-        holders.add(newMinerWallet())
+    #Iterate over 20 'rounds'.
+    for _ in 0 ..< 20:
+        #Create a random amount of MeritHolders.
+        for _ in 0 ..<  rand(2) + 1:
+            holders.add(newMinerWallet())
+        #Create Elements.
+        for e in 0 ..< rand(10):
+            var
+                #Grab a random MeritHolder.
+                i: int = rand(holders.len - 1)
+                holder: MinerWallet = holders[i]
+                #Hash used in a SignedVerification.
+                hash: Hash[384]
+            #Randomize the hash.
+            for b in 0 ..< hash.data.len:
+                hash.data[b] = uint8(rand(255))
+            #Create the Verification.
+            verif = newSignedVerificationObj(hash)
+            #Sign it.
+            holder.sign(verif, consensus[holder.publicKey].height)
 
-    #Create Elements.
-    for e in 0 ..< rand(10):
-        var
-            #Grab a random MeritHolder.
-            i: int = rand(holders.len - 1)
-            holder: MinerWallet = holders[i]
-            #Hash used in a SignedVerification.
-            hash: Hash[384]
-        #Randomize the hash.
-        for b in 0 .. hash.data.len:
-            hash.data[b] = uint8(rand(255))
-        #Create the Verification.
-        verif = newSignedVerificationObj(hash)
-        #Sign it.
-        holder.sign(verif, consensus[holder.publicKey].height)
+            #Add it as a SignedVerification.
+            if rand(1) == 0:
+                consensus.add(verif)
+            #Add it as a Verification.
+            else:
+                consensus.add(cast[Verification](verif))
 
-        #Add it as a SignedVerification.
-        if rand(1) == 0:
-            consensus.add(verif)
-        #Add it as a Verification.
-        else:
-            consensus.add(cast[Verification](verif))
+        #Clear archiving and recalculate it.
+        archiving = @[]
+        for h in 0 ..< holders.len:
+            if consensus[holders[h].publicKey].height - 1 == consensus[holders[h].publicKey].archived:
+                continue
 
-    #Clear archiving and recalculate it.
-    archiving = @[]
-    for h in 0 ..< holders.len:
-        if consensus[holders[h].publicKey].height - 1 == consensus[holders[h].publicKey].archived:
-            continue
-
-        archiving.add(
-            newMeritHolderRecord(
-                holders[h].publicKey,
-                consensus[holders[h].publicKey].height - 1,
-                consensus[holders[h].publicKey].merkle.hash
+            archiving.add(
+                newMeritHolderRecord(
+                    holders[h].publicKey,
+                    consensus[holders[h].publicKey].height - 1,
+                    consensus[holders[h].publicKey].merkle.hash
+                )
             )
-        )
-    #Archive the records.
-    consensus.archive(archiving)
+        #Archive the records.
+        consensus.archive(archiving)
 
-    #Commit the DB.
-    db.commit()
+        #Commit the DB.
+        db.commit()
 
-    #Test the Consensus.
-    test()
+        #Compare the Consensus DAGs.
+        compare()
 
-echo "Finished the Database/Consensus/Consensus/DB Test."
+    echo "Finished the Database/Consensus/Consensus/DB Test."

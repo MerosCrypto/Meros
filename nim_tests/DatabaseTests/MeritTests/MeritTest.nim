@@ -1,3 +1,4 @@
 #Merit Test.
 
-echo "The Database/Merit/Merit Test is empty."
+proc test*() =
+    echo "The Database/Merit/Merit Test is empty."

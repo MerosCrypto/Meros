@@ -22,38 +22,39 @@ import StInt
 #Random standard lib.
 import random
 
-#Seed Random via the time.
-randomize(int64(getTime()))
+proc test*() =
+    #Seed Random via the time.
+    randomize(int64(getTime()))
 
-var
-    #Difficulty value.
-    value: string
-    #Difficulty.
-    difficulty: Difficulty
-    #Reloaded Difficulty.
-    reloaded: Difficulty
+    var
+        #Difficulty value.
+        value: string
+        #Difficulty.
+        difficulty: Difficulty
+        #Reloaded Difficulty.
+        reloaded: Difficulty
 
-#Test 255 serializations.
-for s in 0 .. 255:
-    #Randomize the value.
-    value = "".pad(16)
-    for _ in 0 ..< 48:
-        value &= char(rand(255))
+    #Test 255 serializations.
+    for s in 0 .. 255:
+        #Randomize the value.
+        value = "".pad(16)
+        for _ in 0 ..< 48:
+            value &= char(rand(255))
 
-    #Create the Difficulty.
-    difficulty = newDifficultyObj(
-        rand(high(int32)),
-        rand(high(int32)),
-        value.toHex().parse(StUint[512], 16)
-    )
+        #Create the Difficulty.
+        difficulty = newDifficultyObj(
+            rand(high(int32)),
+            rand(high(int32)),
+            value.toHex().parse(StUint[512], 16)
+        )
 
-    #Serialize it and parse it back.
-    reloaded = difficulty.serialize().parseDifficulty()
+        #Serialize it and parse it back.
+        reloaded = difficulty.serialize().parseDifficulty()
 
-    #Test the serialized versions.
-    assert(difficulty.serialize() == reloaded.serialize())
+        #Test the serialized versions.
+        assert(difficulty.serialize() == reloaded.serialize())
 
-    #Compare the Difficulty.
-    compare(difficulty, reloaded)
+        #Compare the Difficulty.
+        compare(difficulty, reloaded)
 
-echo "Finished the Database/Filesystem/DB/Serialize/Merit/Difficulty Test."
+    echo "Finished the Database/Filesystem/DB/Serialize/Merit/Difficulty Test."
