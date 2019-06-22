@@ -22,31 +22,32 @@ import ../../../../TransactionsTests/CompareTransactions
 #Random standard lib.
 import random
 
-#Seed Random via the time.
-randomize(int64(getTime()))
+proc test*() =
+    #Seed Random via the time.
+    randomize(int64(getTime()))
 
-var
-    #Mint.
-    mint: Mint
-    #Reloaded Mint.
-    reloaded: Mint
+    var
+        #Mint.
+        mint: Mint
+        #Reloaded Mint.
+        reloaded: Mint
 
-#Test 255 serializations.
-for s in 0 .. 255:
-    #Create the Mint.
-    mint = newMint(
-        uint32(rand(high(int32))),
-        newMinerWallet().publicKey,
-        uint64(rand(high(int32)))
-    )
+    #Test 255 serializations.
+    for s in 0 .. 255:
+        #Create the Mint.
+        mint = newMint(
+            uint32(rand(high(int32))),
+            newMinerWallet().publicKey,
+            uint64(rand(high(int32)))
+        )
 
-    #Serialize it and parse it back.
-    reloaded = mint.serialize().parseMint()
+        #Serialize it and parse it back.
+        reloaded = mint.serialize().parseMint()
 
-    #Compare the Mints.
-    compare(mint, reloaded)
+        #Compare the Mints.
+        compare(mint, reloaded)
 
-    #Test the serialized versions.
-    assert(mint.serialize() == reloaded.serialize())
+        #Test the serialized versions.
+        assert(mint.serialize() == reloaded.serialize())
 
-echo "Finished the Database/Filesystem/DB/Serialize/Transactions/Mint Test."
+    echo "Finished the Database/Filesystem/DB/Serialize/Transactions/Mint Test."

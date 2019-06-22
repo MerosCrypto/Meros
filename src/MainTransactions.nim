@@ -15,6 +15,9 @@ proc verify(
                 doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
 
         #Make sure we didn't already verify a Transaction which spends the same inputs.
+        #This must absolutely be single-threaded/non-async.
+        #We only mark a TX as spent when the spoending TX has one Verification.
+        #If we check, then let other code run, then verify...
         if not transactions.isFirst(transaction):
             return
 
@@ -82,7 +85,8 @@ proc mainTransactions() {.forceCheck: [].} =
 
         #Handle Claims.
         functions.transactions.addClaim = proc (
-            claim: Claim
+            claim: Claim,
+            syncing: bool = false
         ) {.forceCheck: [
             ValueError,
             DataExists
@@ -102,21 +106,23 @@ proc mainTransactions() {.forceCheck: [].} =
 
             echo "Successfully added the Claim."
 
-            #Broadcast the Claim.
-            functions.network.broadcast(
-                MessageType.Claim,
-                claim.serialize()
-            )
+            if not syncing:
+                #Broadcast the Claim.
+                functions.network.broadcast(
+                    MessageType.Claim,
+                    claim.serialize()
+                )
 
-            #Create a Verification.
-            try:
-                asyncCheck verify(claim)
-            except Exception as e:
-                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+                #Create a Verification.
+                try:
+                    asyncCheck verify(claim)
+                except Exception as e:
+                    doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
         #Handle Sends.
         functions.transactions.addSend = proc (
-            send: Send
+            send: Send,
+            syncing: bool = false
         ) {.forceCheck: [
             ValueError,
             DataExists
@@ -136,21 +142,23 @@ proc mainTransactions() {.forceCheck: [].} =
 
             echo "Successfully added the Send."
 
-            #Broadcast the Send.
-            functions.network.broadcast(
-                MessageType.Send,
-                send.serialize()
-            )
+            if not syncing:
+                #Broadcast the Send.
+                functions.network.broadcast(
+                    MessageType.Send,
+                    send.serialize()
+                )
 
-            #Create a Verification.
-            try:
-                asyncCheck verify(send)
-            except Exception as e:
-                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+                #Create a Verification.
+                try:
+                    asyncCheck verify(send)
+                except Exception as e:
+                    doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
         #Handle Datas.
         functions.transactions.addData = proc (
-            data: Data
+            data: Data,
+            syncing: bool = false
         ) {.forceCheck: [
             ValueError,
             DataExists
@@ -170,14 +178,15 @@ proc mainTransactions() {.forceCheck: [].} =
 
             echo "Successfully added the Data."
 
-            #Broadcast the Data.
-            functions.network.broadcast(
-                MessageType.Data,
-                data.serialize()
-            )
+            if not syncing:
+                #Broadcast the Data.
+                functions.network.broadcast(
+                    MessageType.Data,
+                    data.serialize()
+                )
 
-            #Create a Verification.
-            try:
-                asyncCheck verify(data)
-            except Exception as e:
-                doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+                #Create a Verification.
+                try:
+                    asyncCheck verify(data)
+                except Exception as e:
+                    doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)

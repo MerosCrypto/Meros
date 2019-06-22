@@ -1,3 +1,4 @@
 #Config Test.
 
-echo "The objects/Config Test is empty."
+proc test*() =
+    echo "The objects/Config Test is empty."

@@ -24,45 +24,46 @@ import ../../../DatabaseTests/TransactionsTests/CompareTransactions
 #Random standard lib.
 import random
 
-#Seed Random via the time.
-randomize(int64(getTime()))
+proc test*() =
+    #Seed Random via the time.
+    randomize(int64(getTime()))
 
-var
-    #Mints.
-    mints: seq[Mint]
-    #Claim.
-    claim: Claim
-    #Reloaded Claim.
-    reloaded: Claim
+    var
+        #Mints.
+        mints: seq[Mint]
+        #Claim.
+        claim: Claim
+        #Reloaded Claim.
+        reloaded: Claim
 
-#Test 255 serializations.
-for s in 0 .. 255:
-    #Create Mints.
-    mints = newSeq[Mint](rand(254) + 1)
-    for m in 0 ..< mints.len:
-        mints[m] = newMint(
-            uint32(rand(high(int32))),
-            newMinerWallet().publicKey,
-            uint64(rand(high(int32)))
+    #Test 255 serializations.
+    for s in 0 .. 255:
+        #Create Mints.
+        mints = newSeq[Mint](rand(254) + 1)
+        for m in 0 ..< mints.len:
+            mints[m] = newMint(
+                uint32(rand(high(int32))),
+                newMinerWallet().publicKey,
+                uint64(rand(high(int32)))
+            )
+
+        #Create the Claim.
+        claim = newClaim(
+            mints,
+            newHDWallet().publicKey
         )
 
-    #Create the Claim.
-    claim = newClaim(
-        mints,
-        newHDWallet().publicKey
-    )
+        #The Meros protocol requires this signature be produced by the aggregate of every unique MinerWallet paid via the Mints.
+        #Serialization/Parsing doesn't care at all.
+        newMinerWallet().sign(claim)
 
-    #The Meros protocol requires this signature be produced by the aggregate of every unique MinerWallet paid via the Mints.
-    #Serialization/Parsing doesn't care at all.
-    newMinerWallet().sign(claim)
+        #Serialize it and parse it back.
+        reloaded = claim.serialize().parseClaim()
 
-    #Serialize it and parse it back.
-    reloaded = claim.serialize().parseClaim()
+        #Compare the Claims.
+        compare(claim, reloaded)
 
-    #Compare the Claims.
-    compare(claim, reloaded)
+        #Test the serialized versions.
+        assert(claim.serialize() == reloaded.serialize())
 
-    #Test the serialized versions.
-    assert(claim.serialize() == reloaded.serialize())
-
-echo "Finished the Network/Serialize/Transactions/Claim Test."
+    echo "Finished the Network/Serialize/Transactions/Claim Test."

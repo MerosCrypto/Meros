@@ -26,7 +26,8 @@ type NetworkLibFunctionBox* = ref object
     ): Future[void]
 
     handleBlock*: proc (
-        newBlock: Block
+        newBlock: Block,
+        syncing: bool = false
     ): Future[void]
 
 func newNetworkLibFunctionBox*(): NetworkLibFunctionBox {.forceCheck: [].} =

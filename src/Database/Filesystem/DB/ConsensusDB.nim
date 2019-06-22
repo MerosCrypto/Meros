@@ -20,18 +20,13 @@ export DBObj
 #Tables standard lib.
 import tables
 
-#Put/Get for the Consensus DB.
+#Put/Get/Commit for the Consensus DB.
 proc put(
     db: DB,
     key: string,
     val: string
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.lmdb.put("consensus", key, val)
-    except Exception as e:
-        raise newException(DBWriteError, e.msg)
+) {.forceCheck: [].} =
+    db.consensus.cache[key] = val
 
 proc get(
     db: DB,
@@ -39,19 +34,35 @@ proc get(
 ): string {.forceCheck: [
     DBReadError
 ].} =
+    if db.consensus.cache.hasKey(key):
+        try:
+            return db.consensus.cache[key]
+        except KeyError as e:
+            doAssert(false, "Couldn't get a key from a table confirmed to exist: " & e.msg)
+
     try:
         result = db.lmdb.get("consensus", key)
     except Exception as e:
         raise newException(DBReadError, e.msg)
+
+proc commit*(
+    db: DB
+) {.forceCheck: [].} =
+    for key in db.consensus.cache.keys():
+        try:
+            db.lmdb.put("consensus", key, db.consensus.cache[key])
+        except KeyError as e:
+            doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't save data to the Database: " & e.msg)
+    db.consensus.cache = initTable[string, string]()
 
 #Save functions.
 proc save*(
     db: DB,
     holder: BLSPublicKey,
     epoch: int
-) {.forceCheck: [
-    DBWriteError
-].} =
+) {.forceCheck: [].} =
     var holderStr: string = holder.toString()
 
     try:
@@ -59,31 +70,20 @@ proc save*(
     except KeyError:
         db.consensus.holders[holderStr] = true
         db.consensus.holdersStr &= holderStr
-        try:
-            db.put("holders", db.consensus.holdersStr)
-        except DBWriteError as e:
-            fcRaise e
+        db.put("holders", db.consensus.holdersStr)
 
-    try:
-        db.put(holderStr, $epoch)
-    except DBWriteError as e:
-        fcRaise e
+    db.put(holderStr, $epoch)
 
 proc save*(
     db: DB,
     elem: Element
-) {.forceCheck: [
-    DBWriteError
-].} =
+) {.forceCheck: [].} =
     case elem:
         of Verification as verif:
-            try:
-                db.put(
-                    verif.holder.toString() & verif.nonce.toBinary().pad(1),
-                    verif.hash.toString()
-                )
-            except DBWriteError as e:
-                fcRaise e
+            db.put(
+                verif.holder.toString() & verif.nonce.toBinary().pad(1),
+                verif.hash.toString()
+            )
 
         else:
             doAssert(false, "Element should be Verification.")
@@ -96,9 +96,9 @@ proc loadHolders*(
     var holders: string
     try:
         holders = db.get("holders")
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
-
+    except DBReadError as e:
+        fcRaise e
+    
     result = newSeq[string](holders.len div 48)
     for i in countup(0, holders.len - 1, 48):
         result[i div 48] = holders[i ..< i + 48]
@@ -129,8 +129,3 @@ proc load*(
         result.nonce = nonce
     except Exception as e:
         raise newException(DBReadError, e.msg)
-
-proc commit*(
-    db: DB
-) {.forceCheck: [].} =
-    discard

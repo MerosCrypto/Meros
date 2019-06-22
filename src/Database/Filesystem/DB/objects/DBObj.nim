@@ -11,6 +11,7 @@ import tables
 type
     TransactionsDB* = ref object
         cache*: Table[string, string]
+        deleted*: seq[string]
 
     ConsensusDB* = ref object
         cache*: Table[string, string]
@@ -31,7 +32,8 @@ type
 #Constructors.
 proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
     TransactionsDB(
-        cache: initTable[string, string]()
+        cache: initTable[string, string](),
+        deleted: @[]
     )
 proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
     ConsensusDB(

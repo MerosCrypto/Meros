@@ -1,3 +1,4 @@
 #ConsensusModule Test.
 
-echo "The UI/RPC/Modules/ConsensusModule Test is empty."
+proc test*() =
+    echo "The UI/RPC/Modules/ConsensusModule Test is empty."

@@ -87,10 +87,7 @@ proc add*(
 
     if save:
         #Save the TX.
-        try:
-            transactions.db.save(tx)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't save a Transaction to the Database: " & e.msg)
+        transactions.db.save(tx)
 
 #Get a Transaction by its hash.
 proc `[]`*(
@@ -234,33 +231,22 @@ proc getUTXOs*(
 proc saveMintNonce*(
     transactions: Transactions
 ) {.forceCheck: [].} =
-    try:
-        transactions.db.saveMintNonce(transactions.mintNonce)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save Transactions' mint nonce: " & e.msg)
+    transactions.db.saveMintNonce(transactions.mintNonce)
 
 #Mark a Transaction as verified.
 proc verify*(
     transaction: Transactions,
     hash: Hash[384]
 ) {.forceCheck: [].} =
-    try:
-        transaction.db.saveVerified(hash)
-    except DBWriteError:
-        doAssert(false, "Couldn't save a Transaction's verified field.")
+    transaction.db.saveVerified(hash)
 
 #Save a MeritHolder's out-of-Epoch tip.
 proc save*(
     transactions: Transactions,
     key: BLSPublicKey,
     nonce: int
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        transactions.db.save(key, nonce)
-    except DBWriteError as e:
-        fcRaise e
+) {.forceCheck: [].} =
+    transactions.db.save(key, nonce)
 
 #Save a Mint UTXO.
 proc saveUTXO*(
@@ -268,10 +254,7 @@ proc saveUTXO*(
     hash: Hash[384],
     utxo: MintOutput
 ) {.forceCheck: [].} =
-    try:
-        transactions.db.save(hash, utxo)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save a Mint UTXO to the Database: " & e.msg)
+    transactions.db.save(hash, utxo)
 
 #Save Send UTXOs.
 proc saveUTXOs*(
@@ -279,10 +262,7 @@ proc saveUTXOs*(
     hash: Hash[384],
     utxos: seq[SendOutput]
 ) {.forceCheck: [].} =
-    try:
-        transactions.db.save(hash, utxos)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save Send UTXOs to the Database: " & e.msg)
+    transactions.db.save(hash, utxos)
 
 #Save a sender's last Data.
 proc saveData*(
@@ -294,18 +274,13 @@ proc saveData*(
         transactions.db.saveData(sender, hash)
     except DBReadError as e:
         doAssert(false, "Couldn't parse the sender's previous Data from the Database: " & e.msg)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save the sender's most recent Data to the Database: " & e.msg)
 
 #Spend a Mint UTXO.
 proc spend*(
     transactions: Transactions,
     hash: Hash[384]
 ) {.forceCheck: [].} =
-    try:
-        transactions.db.deleteUTXO(hash)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't delete a Mint UTXO to the Database: " & e.msg)
+    transactions.db.deleteUTXO(hash)
 
 #Spend a Send UTXO.
 proc spend*(
@@ -316,8 +291,6 @@ proc spend*(
         transactions.db.deleteUTXO(input.hash, input.nonce)
     except DBReadError as e:
         doAssert(false, "Trying to delete a deleted UTXO: " & e.msg)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't delete a Send UTXO to the Database: " & e.msg)
 
 #Delete a hash from the cache.
 func del*(

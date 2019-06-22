@@ -97,12 +97,9 @@ proc newBlockchainObj*(
         tip = genesisBlock.hash
 
         #Save the tip, the Genesis Block, and the starting Difficulty.
-        try:
-            result.db.saveTip(tip)
-            result.db.save(genesisBlock)
-            result.db.save(result.difficulty)
-        except DBWriteError as e:
-            doAssert(false, "Couldn't write the Genesis Block to the DB: " & e.msg)
+        result.db.saveTip(tip)
+        result.db.save(genesisBlock)
+        result.db.save(result.difficulty)
 
     #Load every header.
     var
@@ -166,11 +163,8 @@ proc add*(
         blockchain.blocks.delete(0)
 
     #Save the block to the database.
-    try:
-        blockchain.db.save(newBlock)
-        blockchain.db.saveTip(newBlock.hash)
-    except DBWriteError as e:
-        doAssert(false, "Couldn't save a block to the Database: " & e.msg)
+    blockchain.db.save(newBlock)
+    blockchain.db.saveTip(newBlock.hash)
 
 #Block getters.
 proc `[]`*(

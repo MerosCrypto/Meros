@@ -1,3 +1,4 @@
 #BlockHeader Test.
 
-echo "The Database/Merit/BlockHeader Test is empty."
+proc test*() =
+    echo "The Database/Merit/BlockHeader Test is empty."

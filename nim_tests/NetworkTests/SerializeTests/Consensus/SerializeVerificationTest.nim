@@ -22,39 +22,40 @@ import ../../../DatabaseTests/ConsensusTests/CompareConsensus
 #Random standard lib.
 import random
 
-#Seed random.
-randomize(int64(getTime()))
+proc test*() =
+    #Seed random.
+    randomize(int64(getTime()))
 
-var
-    #Hash.
-    hash: Hash[384]
-    #SignedVerification Element.
-    verif: SignedVerification
-    #Reloaded Verification Element.
-    reloadedV: Verification
-    #Reloaded SignedVerification Element.
-    reloadedSV: SignedVerification
+    var
+        #Hash.
+        hash: Hash[384]
+        #SignedVerification Element.
+        verif: SignedVerification
+        #Reloaded Verification Element.
+        reloadedV: Verification
+        #Reloaded SignedVerification Element.
+        reloadedSV: SignedVerification
 
-#Test 256 serializations.
-for _ in 0 .. 255:
-    for i in 0 ..< 48:
-        hash.data[i] = uint8(rand(255))
+    #Test 256 serializations.
+    for _ in 0 .. 255:
+        for i in 0 ..< 48:
+            hash.data[i] = uint8(rand(255))
 
-    #Create the SignedVerification.
-    verif = newSignedVerificationObj(hash)
-    #Sign it.
-    newMinerWallet().sign(verif, rand(high(int32)))
+        #Create the SignedVerification.
+        verif = newSignedVerificationObj(hash)
+        #Sign it.
+        newMinerWallet().sign(verif, rand(high(int32)))
 
-    #Serialize it and parse it back.
-    reloadedV = verif.serialize().parseVerification()
-    reloadedSV = verif.signedSerialize().parseSignedVerification()
+        #Serialize it and parse it back.
+        reloadedV = verif.serialize().parseVerification()
+        reloadedSV = verif.signedSerialize().parseSignedVerification()
 
-    #Test the serialized versions.
-    assert(verif.serialize() == reloadedV.serialize())
-    assert(verif.signedSerialize() == reloadedSV.signedSerialize())
+        #Test the serialized versions.
+        assert(verif.serialize() == reloadedV.serialize())
+        assert(verif.signedSerialize() == reloadedSV.signedSerialize())
 
-    #Compare the Elements.
-    compare(verif, reloadedSV)
-    compare(verif, reloadedV)
+        #Compare the Elements.
+        compare(verif, reloadedSV)
+        compare(verif, reloadedV)
 
-echo "Finished the Network/Serialize/Consensus/Verification Test."
+    echo "Finished the Network/Serialize/Consensus/Verification Test."

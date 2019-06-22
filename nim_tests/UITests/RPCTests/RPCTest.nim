@@ -1,3 +1,4 @@
 #RPC Test.
 
-echo "The UI/RPC/RPC Test is empty."
+proc test*() =
+    echo "The UI/RPC/RPC Test is empty."

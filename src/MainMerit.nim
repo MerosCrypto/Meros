@@ -43,7 +43,8 @@ proc mainMerit() {.forceCheck: [].} =
 
         #Handle full blocks.
         functions.merit.addBlock = proc (
-            newBlock: Block
+            newBlock: Block,
+            syncing: bool = false
         ) {.forceCheck: [
             ValueError,
             IndexError,
@@ -65,7 +66,7 @@ proc mainMerit() {.forceCheck: [].} =
                 for nonce in merit.blockchain.height ..< newBlock.header.nonce:
                     #Get and test the Block.
                     try:
-                        await functions.merit.addBlock(await network.requestBlock(consensus, nonce))
+                        await functions.merit.addBlock(await network.requestBlock(consensus, nonce), true)
                     #Redefine as a GapError since a failure to sync produces a gap.
                     except DataMissing as e:
                         raise newException(GapError, e.msg)
@@ -176,46 +177,50 @@ proc mainMerit() {.forceCheck: [].} =
                 except EdPublicKeyError as e:
                     doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 
+            #Commit the DBs.
+            database.commit()
+
             echo "Successfully added the Block."
 
-            #Broadcast the Block.
-            functions.network.broadcast(
-                MessageType.BlockHeader,
-                newBlock.header.serialize()
-            )
+            if not syncing:
+                #Broadcast the Block.
+                functions.network.broadcast(
+                    MessageType.BlockHeader,
+                    newBlock.header.serialize()
+                )
 
-            #If we got a Mint...
-            if not ourMint.isNil:
-                #Confirm we have a wallet.
-                if not wallet.initiated:
-                    echo "We got a Mint with hash ", ourMint[], ", however, we don't have a Wallet to Claim it to."
-                    return
+                #If we got a Mint...
+                if not ourMint.isNil:
+                    #Confirm we have a wallet.
+                    if not wallet.initiated:
+                        echo "We got a Mint with hash ", ourMint[], ", however, we don't have a Wallet to Claim it to."
+                        return
 
-                #Claim the Reward.
-                var claim: Claim
-                try:
-                    claim = newClaim(
-                        cast[Mint](transactions[ourMint[]]),
-                        wallet.publicKey
-                    )
-                except ValueError as e:
-                    doAssert(false, "Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
-                except IndexError as e:
-                    doAssert(false, "Couldn't grab a Mint we just added: " & e.msg)
+                    #Claim the Reward.
+                    var claim: Claim
+                    try:
+                        claim = newClaim(
+                            cast[Mint](transactions[ourMint[]]),
+                            wallet.publicKey
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
+                    except IndexError as e:
+                        doAssert(false, "Couldn't grab a Mint we just added: " & e.msg)
 
-                #Sign the claim.
-                try:
-                    config.miner.sign(claim)
-                except BLSError as e:
-                    doAssert(false, "Failed to sign a Claim due to a BLSError: " & e.msg)
+                    #Sign the claim.
+                    try:
+                        config.miner.sign(claim)
+                    except BLSError as e:
+                        doAssert(false, "Failed to sign a Claim due to a BLSError: " & e.msg)
 
-                #Emit it.
-                try:
-                    functions.transactions.addClaim(claim)
-                except ValueError as e:
-                    doAssert(false, "Failed to add a Claim due to a ValueError: " & e.msg)
-                except DataExists:
-                    echo "Already added a Claim for the incoming Mint."
+                    #Emit it.
+                    try:
+                        functions.transactions.addClaim(claim)
+                    except ValueError as e:
+                        doAssert(false, "Failed to add a Claim due to a ValueError: " & e.msg)
+                    except DataExists:
+                        echo "Already added a Claim for the incoming Mint."
 
         functions.merit.addBlockByHeader = proc (
             header: BlockHeader

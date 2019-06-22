@@ -201,7 +201,7 @@ proc add*(
             doAssert(false, "Bootstraping the tail block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         try:
-            await networkFunctions.handleBlock(tail)
+            await networkFunctions.handleBlock(tail, true)
         except ValueError:
             client.close()
             return

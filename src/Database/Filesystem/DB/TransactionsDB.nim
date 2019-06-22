@@ -27,18 +27,16 @@ import Serialize/Transactions/ParseTransaction
 import objects/DBObj
 export DBObj
 
-#Put/Get/Delete for the Transactions DB.
+#Tables standard lib.
+import tables
+
+#Put/Get/Delete/Commit for the Transactions DB.
 proc put(
     db: DB,
     key: string,
     val: string
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.lmdb.put("transactions", key, val)
-    except Exception as e:
-        raise newException(DBWriteError, e.msg)
+) {.forceCheck: [].} =
+    db.transactions.cache[key] = val
 
 proc get(
     db: DB,
@@ -46,6 +44,12 @@ proc get(
 ): string {.forceCheck: [
     DBReadError
 ].} =
+    if db.transactions.cache.hasKey(key):
+        try:
+            return db.transactions.cache[key]
+        except KeyError as e:
+            doAssert(false, "Couldn't get a key from a table confirmed to exist: " & e.msg)
+
     try:
         result = db.lmdb.get("transactions", key)
     except Exception as e:
@@ -54,103 +58,86 @@ proc get(
 proc delete(
     db: DB,
     key: string
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.lmdb.delete("transactions", key)
-    except Exception as e:
-        raise newException(DBWriteError, e.msg)
+) {.forceCheck: [].} =
+    db.transactions.cache.del(key)
+    db.transactions.deleted.add(key)
+
+proc commit*(
+    db: DB
+) {.forceCheck: [].} =
+    for key in db.transactions.deleted:
+        try:
+            db.lmdb.delete("transactions", key)
+        except Exception:
+            #If we delete something before it's committed, it'll throw.
+            discard
+    db.transactions.deleted = @[]
+
+    for key in db.transactions.cache.keys():
+        try:
+            db.lmdb.put("transactions", key, db.transactions.cache[key])
+        except KeyError as e:
+            doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't save data to the Database: " & e.msg)
+    db.transactions.cache = initTable[string, string]()
 
 #Save functions.
 proc save*(
     db: DB,
     tx: Transaction
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put(tx.hash.toString(), tx.serialize())
-    except DBWriteError as e:
-        raise e
+) {.forceCheck: [].} =
+    db.put(tx.hash.toString(), tx.serialize())
 
 proc saveVerified*(
     db: DB,
     hash: Hash[384]
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put(hash.toString() & "vrf", "")
-    except DBWriteError as e:
-        raise e
+) {.forceCheck: [].} =
+    db.put(hash.toString() & "vrf", "")
 
 proc save*(
     db: DB,
     key: BLSPublicKey,
     height: int
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put(key.toString() & "mh", height.toBinary())
-    except DBWriteError as e:
-        raise e
+) {.forceCheck: [].} =
+    db.put(key.toString() & "mh", height.toBinary())
 
 proc saveMintNonce*(
     db: DB,
     nonce: uint32
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put("mint", nonce.toBinary())
-    except DBWriteError as e:
-        raise e
+) {.forceCheck: [].} =
+    db.put("mint", nonce.toBinary())
 
 proc save*(
     db: DB,
     hash: Hash[384],
     utxo: MintOutput
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put(hash.toString() & char(0), utxo.serialize())
-    except DBWriteError as e:
-        raise e
+) {.forceCheck: [].} =
+    db.put(hash.toString() & char(0), utxo.serialize())
 
 proc save*(
     db: DB,
     hashArg: Hash[384],
     utxos: seq[SendOutput]
-) {.forceCheck: [
-    DBWriteError
-].} =
+) {.forceCheck: [].} =
     var
         hash: string = hashArg.toString()
         spendable: string
     for i in 0 ..< utxos.len:
+        db.put(hash & char(i), utxos[i].serialize())
         try:
-            db.put(hash & char(i), utxos[i].serialize())
             spendable = db.get(utxos[i].key.toString())
-        except DBWriteError as e:
-            raise e
         except DBReadError:
             spendable = ""
 
-        try:
-            db.put(utxos[i].key.toString(), spendable & hash & char(i))
-        except DBWriteError as e:
-            fcRaise e
+        db.put(utxos[i].key.toString(), spendable & hash & char(i))
 
 proc saveData*(
     db: DB,
     sender: EdPublicKey,
     hash: Hash[384]
 ) {.forceCheck: [
-    DBReadError,
-    DBWriteError
+    DBReadError
 ].} =
     try:
         var hash: Hash[384] = db.get(sender.toString() & "d").toHash(384)
@@ -159,45 +146,32 @@ proc saveData*(
         discard
     except ValueError as e:
         raise newException(DBReadError, e.msg)
-    except DBWriteError as e:
-        fcRaise e
 
-    try:
-        db.put(sender.toString() & "d", hash.toString())
-        db.put(hash.toString() & "s", sender.toString())
-    except DBWriteError as e:
-        fcRaise e
+    db.put(sender.toString() & "d", hash.toString())
+    db.put(hash.toString() & "s", sender.toString())
 
 #Delete functions.
 proc deleteUTXO*(
     db: DB,
     hash: Hash[384]
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.delete(hash.toString() & char(0))
-    except DBWriteError as e:
-        fcRaise e
+) {.forceCheck: [].} =
+    db.delete(hash.toString() & char(0))
 
 proc deleteUTXO*(
     db: DB,
     hash: Hash[384],
     nonce: int
 ) {.forceCheck: [
-    DBReadError,
-    DBWriteError
+    DBReadError
 ].} =
     var
         utxoLoc: string = hash.toString() & char(nonce)
         utxoStr: string
     try:
         utxoStr = db.get(utxoLoc)
-        db.delete(utxoLoc)
     except DBReadError as e:
         fcRaise e
-    except DBWriteError as e:
-        fcRaise e
+    db.delete(utxoLoc)
 
     var
         utxo: SendOutput
@@ -213,10 +187,7 @@ proc deleteUTXO*(
             spendable = spendable.substr(0, i - 1) & spendable.substr(i + 49)
             break
 
-    try:
-        db.put(utxo.key.toString(), spendable)
-    except DBWriteError as e:
-        fcRaise e
+    db.put(utxo.key.toString(), spendable)
 
 #Load functions.
 proc load*(
@@ -328,8 +299,3 @@ proc loadSpendable*(
             )
         except ValueError as e:
             raise newException(DBReadError, e.msg)
-
-proc commit*(
-    db: DB
-) {.forceCheck: [].} =
-    discard

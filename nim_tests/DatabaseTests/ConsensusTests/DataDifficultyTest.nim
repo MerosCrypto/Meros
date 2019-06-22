@@ -1,3 +1,4 @@
 #DataDifficulty Test.
 
-echo "The Database/Consensus/DataDifficulty Test is empty."
+proc test*() =
+    echo "The Database/Consensus/DataDifficulty Test is empty."

@@ -30,18 +30,13 @@ export DBObj
 #Tables standard lib.
 import tables
 
-#Put/Get for the Merit DB.
+#Put/Get/Commit for the Merit DB.
 proc put(
     db: DB,
     key: string,
     val: string
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.lmdb.put("merit", key, val)
-    except Exception as e:
-        raise newException(DBWriteError, e.msg)
+) {.forceCheck: [].} =
+    db.merit.cache[key] = val
 
 proc get(
     db: DB,
@@ -49,87 +44,72 @@ proc get(
 ): string {.forceCheck: [
     DBReadError
 ].} =
+    if db.merit.cache.hasKey(key):
+        try:
+            return db.merit.cache[key]
+        except KeyError as e:
+            doAssert(false, "Couldn't get a key from a table confirmed to exist: " & e.msg)
+
     try:
         result = db.lmdb.get("merit", key)
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
+proc commit*(
+    db: DB
+) {.forceCheck: [].} =
+    for key in db.merit.cache.keys():
+        try:
+            db.lmdb.put("merit", key, db.merit.cache[key])
+        except KeyError as e:
+            doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't save data to the Database: " & e.msg)
+    db.merit.cache = initTable[string, string]()
+
 #Save functions.
 proc save*(
     db: DB,
     difficulty: Difficulty
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put("difficulty", difficulty.serialize())
-    except DBWriteError as e:
-        fcRaise e
+) {.forceCheck: [].} =
+    db.put("difficulty", difficulty.serialize())
 
 proc save*(
     db: DB,
     blockArg: Block
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put(blockArg.hash.toString(), blockArg.serialize())
-    except DBWriteError as e:
-        fcRaise e
+) {.forceCheck: [].} =
+    db.put(blockArg.hash.toString(), blockArg.serialize())
 
 proc saveTip*(
     db: DB,
     hash: Hash[384]
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put("tip", hash.toString())
-    except DBWriteError as e:
-        fcRaise e
+) {.forceCheck: [].} =
+    db.put("tip", hash.toString())
 
 proc saveLiveMerit*(
     db: DB,
     merit: int
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put("merit", merit.toBinary())
-    except DBWriteError as e:
-        fcRaise e
+) {.forceCheck: [].} =
+    db.put("merit", merit.toBinary())
 
 proc save*(
     db: DB,
     holder: string,
     merit: int
-) {.forceCheck: [
-    DBWriteError
-].} =
+) {.forceCheck: [].} =
     if not db.merit.holders.hasKey(holder):
         db.merit.holders[holder] = true
         db.merit.holdersStr &= holder
-        try:
-            db.put("holders", db.merit.holdersStr)
-        except DBWriteError as e:
-            fcRaise e
+        db.put("holders", db.merit.holdersStr)
 
-    try:
-        db.put(holder, merit.toBinary())
-    except DBWriteError as e:
-        fcRaise e
+    db.put(holder, merit.toBinary())
 
 proc saveHolderEpoch*(
     db: DB,
     holder: BLSPublicKey,
     epoch: int
-) {.forceCheck: [
-    DBWriteError
-].} =
-    try:
-        db.put(holder.toString() & "epoch", epoch.toBinary())
-    except DBWriteError as e:
-        fcRaise e
+) {.forceCheck: [].} =
+    db.put(holder.toString() & "epoch", epoch.toBinary())
 
 #Load functions.
 proc loadDifficulty*(
@@ -181,8 +161,8 @@ proc loadLiveMerit*(
 ].} =
     try:
         result = db.get("merit").fromBinary()
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
+    except DBReadError as e:
+        fcRaise e
 
 proc loadHolders*(
     db: DB
@@ -192,8 +172,8 @@ proc loadHolders*(
     var holders: string
     try:
         holders = db.get("holders")
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
+    except DBReadError as e:
+        fcRaise e
 
     result = newSeq[string](holders.len div 48)
     for i in countup(0, holders.len - 1, 48):
@@ -207,8 +187,8 @@ proc loadMerit*(
 ].} =
     try:
         result = db.get(holder).fromBinary()
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
+    except DBReadError as e:
+        fcRaise e
 
 proc loadHolderEpoch*(
     db: DB,
@@ -218,10 +198,5 @@ proc loadHolderEpoch*(
 ].} =
     try:
         result = db.get(holder & "epoch").fromBinary()
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
-
-proc commit*(
-    db: DB
-) {.forceCheck: [].} =
-    discard
+    except DBReadError as e:
+        fcRaise e

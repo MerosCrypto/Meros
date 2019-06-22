@@ -46,7 +46,7 @@ func sign*(
         msg: string = SIGN_PREFIX & msgArg
 
     #Create the signature.
-    sign(cast[ptr char](addr result.data[0]), addr msg[0], csize(msg.len), cast[ptr cuchar](addr privKey.data[0]), addr pubKey.data[0])
+    sign(cast[ptr cuchar](addr result.data[0]), cast[ptr cuchar](addr msg[0]), csize(msg.len), cast[ptr cuchar](addr privKey.data[0]), addr pubKey.data[0])
 
 #Nim function for verifying a message.
 func verify*(
@@ -60,7 +60,7 @@ func verify*(
         msg: string = SIGN_PREFIX & msgArg
         sig: EdSignature = sigArg
 
-    if verify(cast[ptr cuchar](addr sig.data[0]), addr msg[0], csize(msg.len), addr key.data[0]) != 0:
+    if verify(cast[ptr cuchar](addr sig.data[0]), cast[ptr cuchar](addr msg[0]), csize(msg.len), addr key.data[0]) != 0:
         return false
 
     result = true
