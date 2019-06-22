@@ -42,7 +42,7 @@ func inc*(
     inc(blockArg.header.proof)
     #Recalculate the hash.
     try:
-        blockArg.header.hash = Argon(blockArg.header.serialize(true), blockArg.header.proof.toBinary())
+        blockArg.header.hash = Argon(blockArg.header.serializeHash(), blockArg.header.proof.toBinary())
     except ArgonError as e:
         fcRaise e
 
