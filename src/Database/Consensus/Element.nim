@@ -2,6 +2,10 @@
 import Verification
 export Verification
 
+#Signed Element object.
+import objects/SignedElementObj
+export SIgnedElementObj
+
 #Macros standard lib.
 import macros
 
@@ -60,4 +64,3 @@ macro match*(
 
             else:
                 raise newException(Exception, "Invalid case statement syntax.")
-    echo treeRepr(result)

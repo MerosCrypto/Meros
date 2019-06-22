@@ -16,13 +16,8 @@ import ../../Filesystem/DB/ConsensusDB
 #Merkle lib.
 import ../../common/Merkle
 
-#Element objects.
-import VerificationObj
-import SendDifficultyObj
-import DataDifficultyObj
-import GasPriceObj
-import MeritRemovalObj
-import SignedElementObj
+#Element lin.
+import ../Element as ElementFile
 
 #Serialize lib.
 import ../../../Network/Serialize/Consensus/SerializeElement

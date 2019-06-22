@@ -109,7 +109,7 @@ proc archive*(
 
         #Reset the Merkle.
         consensus[record.key].merkle = newMerkle()
-        for element in consensus[record.key].elements:
+        for elem in consensus[record.key].elements:
             case elem:
                 of Verification as verif:
                     consensus[record.key].merkle.add(verif.hash)
