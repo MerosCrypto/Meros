@@ -200,7 +200,7 @@ proc mainMerit() {.forceCheck: [].} =
                     var claim: Claim
                     try:
                         claim = newClaim(
-                            cast[Mint](transactions[ourMint[]]),
+                            transactions[ourMint[]].hash,
                             wallet.publicKey
                         )
                     except ValueError as e:

@@ -20,7 +20,7 @@ import ../../Network/Serialize/Transactions/SerializeClaim
 
 #Create a new Claim.
 proc newClaim*(
-    mints: varargs[Mint],
+    mints: varargs[Hash[384]],
     output: EdPublicKey
 ): Claim {.forceCheck: [
     ValueError
@@ -32,7 +32,7 @@ proc newClaim*(
     #Convert the Claim.
     var inputs: seq[Input] = newSeq[Input](mints.len)
     for i in 0 ..< mints.len:
-        inputs[i] = newInput(mints[i].hash)
+        inputs[i] = newInput(mints[i])
 
     #Create the result.
     result = newClaimObj(

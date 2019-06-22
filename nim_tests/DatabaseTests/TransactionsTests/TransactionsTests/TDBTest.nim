@@ -239,7 +239,7 @@ proc test*() =
 
                     #Create the Claim.
                     var claim: Claim = newClaim(
-                        cast[Mint](transactions[mintHash]),
+                        mintHash,
                         wallet.publicKey
                     )
                     mintee.sign(claim)

@@ -30,7 +30,7 @@ proc test*() =
 
     var
         #Mints.
-        mints: seq[Mint]
+        mints: seq[Hash[384]]
         #Claim.
         claim: Claim
         #Reloaded Claim.
@@ -39,13 +39,13 @@ proc test*() =
     #Test 255 serializations.
     for s in 0 .. 255:
         #Create Mints.
-        mints = newSeq[Mint](rand(254) + 1)
+        mints = newSeq[Hash[384]](rand(254) + 1)
         for m in 0 ..< mints.len:
             mints[m] = newMint(
                 uint32(rand(high(int32))),
                 newMinerWallet().publicKey,
                 uint64(rand(high(int32)))
-            )
+            ).hash
 
         #Create the Claim.
         claim = newClaim(
