@@ -17,7 +17,7 @@ import ../../Transactions/objects/TransactionObj
 #Serialization libs.
 import Serialize/Transactions/SerializeMintOutput
 import Serialize/Transactions/SerializeSendOutput
-import Serialize/Transactions/SerializeTransaction
+import Serialize/Transactions/DBSerializeTransaction
 
 import Serialize/Transactions/ParseMintOutput
 import Serialize/Transactions/ParseSendOutput

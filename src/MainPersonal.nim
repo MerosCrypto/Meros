@@ -43,6 +43,8 @@ proc mainPersonal() {.forceCheck: [].} =
                 amountIn: uint64
                 #Amount out.
                 amountOut: uint64
+                #Send we'll end up creating.
+                send: Send
             try:
                 amountOut = parseUInt(amountStr)
             except ValueError as e:
@@ -54,7 +56,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 while i < utxos.len:
                     #Skip UTXOs that are spent but only spent in pending TXs.
                     #Pending is defined as TXs with one verification; not anything created and broadcasted.
-                    if transactions.spent.hasKey(utxos[i].toString(Send)):
+                    if transactions.spent.hasKey(utxos[i].toString(send)):
                         utxos.delete(i)
                         continue
 
@@ -97,7 +99,6 @@ proc mainPersonal() {.forceCheck: [].} =
                 )
 
             #Create the Send.
-            var send: Send
             try:
                 send = newSend(
                     utxos,

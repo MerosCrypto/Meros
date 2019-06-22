@@ -6,7 +6,7 @@ import ../../Wallet/Wallet
 
 #GUI object.
 import objects/GUIObj
-export GUIObj
+export GUI, newGUIObj, call
 
 #JS Bindings.
 import Bindings/Bindings
@@ -53,7 +53,7 @@ proc newGUI*(
 
     #Create the GUI.
     try:
-        gui = newGUIObject(
+        gui = newGUIObj(
             toRPC,
             toGUI,
             newWebView(
