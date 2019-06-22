@@ -16,8 +16,12 @@ import ../../../Database/Transactions/objects/DataObj
 #Common serialization functions.
 import ../SerializeCommon
 
+#SerializeTransaction method.
+import SerializeTransaction
+export SerializeTransaction
+
 #Serialization functions.
-proc serializeHash*(
+method serializeHash*(
     data: Data
 ): string {.forceCheck: [].} =
     result =
@@ -25,7 +29,7 @@ proc serializeHash*(
         data.inputs[0].hash.toString() &
         data.data
 
-proc serialize*(
+method serialize*(
     data: Data
 ): string {.inline, forceCheck: [].} =
     result =

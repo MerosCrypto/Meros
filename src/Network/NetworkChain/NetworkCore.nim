@@ -259,20 +259,18 @@ proc newNetwork*(
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-                #If we did get an Transaction, that wasn't a Mint, set the MessageType and serialize it.
-                var serialized: string
+                #Serialize the TX.
+                var serialized: string = tx.serialize()
+                #Set the message type.
                 case tx:
                     of Mint as _:
                         discard
-                    of Claim as claim:
+                    of Claim as _:
                         msgType = MessageType.Claim
-                        serialized = claim.serialize()
-                    of Send as send:
+                    of Send as _:
                         msgType = MessageType.Send
-                        serialized = send.serialize()
-                    of Data as data:
+                    of Data as _:
                         msgType = MessageType.Data
-                        serialized = data.serialize()
 
                 #Send the Transaction.
                 try:

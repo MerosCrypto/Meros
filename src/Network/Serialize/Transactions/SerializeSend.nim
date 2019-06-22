@@ -16,8 +16,12 @@ import ../../../Database/Transactions/objects/SendObj
 #Common serialization functions.
 import ../SerializeCommon
 
+#SerializeTransaction method.
+import SerializeTransaction
+export SerializeTransaction
+
 #Serialization functions.
-proc serializeHash*(
+method serializeHash*(
     send: Send
 ): string {.forceCheck: [].} =
     result = "\2"
@@ -30,7 +34,7 @@ proc serializeHash*(
             cast[SendOutput](output).key.toString() &
             output.amount.toBinary().pad(MEROS_LEN)
 
-proc serialize*(
+method serialize*(
     send: Send
 ): string {.inline, forceCheck: [].} =
     #Serialize the inputs.

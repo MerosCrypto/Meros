@@ -17,13 +17,17 @@ import ../../../Database/Transactions/objects/ClaimObj
 #Common serialization functions.
 import ../SerializeCommon
 
+#SerializeTransaction method.
+import SerializeTransaction
+export SerializeTransaction
+
 #Serialization functions.
-proc serializeHash*(
+method serializeHash*(
     claim: Claim
 ): string {.forceCheck: [].} =
     result = "\1" & claim.signature.toString()
 
-proc serialize*(
+method serialize*(
     claim: Claim
 ): string {.inline, forceCheck: [].} =
     #Serialize the inputs.
