@@ -24,17 +24,9 @@ import ../common/objects/MeritHolderRecordObj
 import objects/DifficultiesObj
 export DifficultiesObj
 
-#Transaction object, along with the Mint, Claim, and Send libraries.
-import objects/TransactionObj
-import Mint
-import Claim
-import Send
-import Data
-
-export Mint
-export Claim
-export Send
-export Data
+#Transaction lib.
+import Transaction
+export Transaction
 
 #Transactions object.
 import objects/TransactionsObj
@@ -100,12 +92,12 @@ proc verify*(
 
     #Now that the Transaction has one Verification and can be defaulted, update spent.
     if not (
-        (tx.descendant == TransactionType.Data) and
+        (tx of Data) and
         (cast[Data](tx).isFirstData)
     ):
         var inputStr: string
         for input in tx.inputs:
-            inputStr = input.toString(tx.descendant)
+            inputStr = input.toString(tx)
 
             #If a previous TX marked this input as spent, don't overwrite it.
             if transactions.spent.hasKey(inputStr):
@@ -122,26 +114,26 @@ proc verify*(
         #Guarantee all spent UTXOs are still available.
         if not save:
             for input in tx.inputs:
-                case tx.descendant:
-                    of TransactionType.Mint:
+                case tx:
+                    of Mint as _:
                         discard
 
-                    of TransactionType.Claim:
+                    of Claim as _:
                         try:
                             discard transactions.loadUTXO(input.hash)
                         except DBreadError:
                             doAssert(false, "Verified Claim spends no longer spendable Mints.")
 
-                    of TransactionType.Send:
+                    of Send as _:
                         try:
                             discard transactions.loadUTXO(cast[SendInput](input))
                         except DBreadError:
                             doAssert(false, "Verified Send spends no longer spendable UTXOs.")
 
-                    of TransactionType.Data:
+                    of Data as _:
                         discard
 
-            if tx.descendant == TransactionType.Data:
+            if tx of Data:
                 var hasData: bool
                 try:
                     discard transactions.loadData(transactions.getSender(cast[Data](tx)))
@@ -150,6 +142,7 @@ proc verify*(
                     hasData = false
                 except ValueError:
                     doAssert(false, "Verified Data 'spends' an unknown/spent Data.")
+
                 if cast[Data](tx).isFirstData and hasData:
                     doAssert(false, "Verified Data is 'first' yet a competing 'first' Data is already verified.")
 
@@ -158,36 +151,36 @@ proc verify*(
 
         #If we're not just reloading Verifications, and should update UTXOs...
         if save:
-            echo tx.descendant, " ", tx.hash, " was verified."
+            echo tx.hash, " was verified."
             transactions.verify(tx.hash)
 
             #Mark spent UTXOs as spent and create new UTXOs.
-            case tx.descendant:
-                of TransactionType.Mint:
+            case tx:
+                of Mint as _:
                     discard
 
-                of TransactionType.Claim:
+                of Claim as _:
                     #Up to 255 Mint UTXOs spent.
                     for input in tx.inputs:
                         transactions.spend(input.hash)
                     #Svae the output.
                     transactions.saveUTXOs(tx.hash, cast[seq[SendOutput]](tx.outputs))
 
-                of TransactionType.Send:
+                of Send as _:
                     #Up to 255 Send UTXOs spent.
                     for input in tx.inputs:
                         transactions.spend(cast[SendInput](input))
                     #Svae the outputs.
                     transactions.saveUTXOs(tx.hash, cast[seq[SendOutput]](tx.outputs))
 
-                of TransactionType.Data:
+                of Data as data:
                     #Save this as the tip data.
                     var sender: EdPublicKey
                     try:
-                        sender = transactions.getSender(cast[Data](tx))
+                        sender = transactions.getSender(data)
                     except ValueError as e:
                         doAssert(false, "Couldn't get the sender of an added Data: " & e.msg)
-                    transactions.saveData(sender, tx.hash)
+                    transactions.saveData(sender, data.hash)
 
 #Constructor.
 proc newTransactions*(
@@ -549,6 +542,6 @@ proc isFirst*(
     tx: Transaction
 ): bool {.forceCheck: [].} =
     for input in tx.inputs:
-        if transactions.spent.hasKey(input.toString(tx.descendant)):
+        if transactions.spent.hasKey(input.toString(tx)):
             return false
     result = true

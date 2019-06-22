@@ -39,13 +39,6 @@ func newDataObj*(
         data: data
     )
 
-    #Set the Transaction fields.
-    try:
-        result.descendant = TransactionType.Data
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)
-
-
 #Helper function to check if a Data is first.
 proc isFirstData*(
     data: Data

@@ -2,9 +2,7 @@
 import ../../../../../lib/Errors
 
 #Transaction objects.
-import ../../../../../Database/Transactions/objects/MintObj
-import ../../../../../Database/Transactions/objects/ClaimObj
-import ../../../../../Database/Transactions/objects/SendObj
+import ../../../../../Database/Transactions/Transaction
 
 #Serialization libs.
 import ParseMint
@@ -21,14 +19,14 @@ proc parseTransaction*(
     EdPublicKeyError,
     BLSError
 ].} =
-    case TransactionType(tx[0]):
-        of TransactionType.Mint:
+    case tx[0]:
+        of '\0':
             try:
                 result = tx.substr(1).parseMint()
             except BLSError as e:
                 fcRaise e
 
-        of TransactionType.Claim:
+        of '\1':
             try:
                 result = tx.substr(1).parseClaim()
             except ValueError as e:
@@ -38,7 +36,7 @@ proc parseTransaction*(
             except BLSError as e:
                 fcRaise e
 
-        of TransactionType.Send:
+        of '\2':
             try:
                 result = tx.substr(1).parseSend()
             except ValueError as e:
@@ -48,10 +46,13 @@ proc parseTransaction*(
             except EdPublicKeyError as e:
                 fcRaise e
 
-        of TransactionType.Data:
+        of '\3':
             try:
                 result = tx.substr(1).parseData()
             except ValueError as e:
                 fcRaise e
             except ArgonError as e:
                 fcRaise e
+
+        else:
+            doAssert(false, "Invalid Transaction Type loaded from the Database: " & $int(tx[0]))

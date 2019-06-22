@@ -30,17 +30,8 @@ finalsd:
         SendOutput* = ref object of Output
             key* {.final.}: EdPublicKey
 
-        #Enum of the various Transaction Types.
-        TransactionType* {.pure.} = enum
-            Mint = 0,
-            Claim = 1,
-            Send = 2,
-            Data = 3
-
         #Transaction object.
         Transaction* = ref object of RootObj
-            #Type of descendant.
-            descendant* {.final.}: TransactionType
             #Input transactions.
             inputs*: seq[Input]
             #Outputs,

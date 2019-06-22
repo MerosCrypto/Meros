@@ -37,7 +37,6 @@ func newMintObj*(
 
     #Set the Transaction fields.
     try:
-        result.descendant = TransactionType.Mint
         result.verified = true
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)

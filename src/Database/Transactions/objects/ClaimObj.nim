@@ -35,9 +35,3 @@ func newClaimObj*(
             ]
         )
     )
-
-    #Set the Transaction fields.
-    try:
-        result.descendant = TransactionType.Claim
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Claim: " & e.msg)

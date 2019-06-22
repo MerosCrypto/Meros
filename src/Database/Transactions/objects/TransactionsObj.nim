@@ -20,10 +20,8 @@ import ../../Filesystem/DB/TransactionsDB
 #Difficulties object.
 import DifficultiesObj
 
-#Transaction, Claim, and Data objects.
-import TransactionObj
-import ClaimObj
-import DataObj
+#Transaction lib.
+import ../Transaction as TransactionFile
 
 #Tables standard library.
 import tables
@@ -58,16 +56,16 @@ type
 #Helper functions to convert an input to a string.
 proc toString*(
     input: Input,
-    inputType: TransactionType
+    inputTX: Transaction
 ): string {.forceCheck: [].} =
-    case inputType:
-        of TransactionType.Mint:
+    case inputTX:
+        of Mint as _:
             discard
-        of TransactionType.Claim:
+        of Claim as _:
             result = input.hash.toString()
-        of TransactionType.Send:
+        of Send as _:
             result = input.hash.toString() & char(cast[SendInput](input).nonce)
-        of TransactionType.Data:
+        of Data as _:
             result = input.hash.toString()
 
 #Add a Transaction to the DAG.
@@ -76,7 +74,7 @@ proc add*(
     tx: Transaction,
     save: bool = true
 ) {.forceCheck: [].} =
-    if tx.descendant != TransactionType.Mint:
+    if not (tx of Mint):
         #Extract the hash.
         var hash: string = tx.hash.toString()
 
@@ -191,7 +189,7 @@ proc newTransactionsObj*(
                 doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
 
             try:
-                if result.transactions[hash].descendant == TransactionType.Claim:
+                if result.transactions[hash] of Claim:
                     claims.add(hash)
             except KeyError as e:
                 doAssert(false, "Couldn't get a value we just added: " & e.msg)
@@ -311,7 +309,7 @@ func del*(
 
     #Clear the spent inputs.
     for input in tx.inputs:
-        transactions.spent.del(input.toString(tx.descendant))
+        transactions.spent.del(input.toString(tx))
 
 #Load a MeritHolder's out-of-Epoch tip.
 proc load*(

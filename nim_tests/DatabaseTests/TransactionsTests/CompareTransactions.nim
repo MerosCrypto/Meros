@@ -33,7 +33,6 @@ proc compare*(
     tx2: Transaction
 ) =
     #Test the Transaction fields.
-    assert(tx1.descendant == tx2.descendant)
     assert(tx1.inputs.len == tx2.inputs.len)
     for i in 0 ..< tx1.inputs.len:
         assert(tx1.inputs[i].hash == tx2.inputs[i].hash)
@@ -42,28 +41,39 @@ proc compare*(
     assert(tx1.verified == tx2.verified)
 
     #Test the sub-type fields.
-    case tx1.descendant:
-        of TransactionType.Mint:
+    case tx1:
+        of Mint as mint:
+            if not (tx2 of Mint):
+                assert(false)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[MintOutput](tx1.outputs[o]), cast[MintOutput](tx2.outputs[o]))
-            assert(cast[Mint](tx1).nonce == cast[Mint](tx2).nonce)
+            assert(mint.nonce == cast[Mint](tx2).nonce)
 
-        of TransactionType.Claim:
+        of Claim as claim:
+            if not (tx2 of Claim):
+                assert(false)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
-            assert(cast[Claim](tx1).signature == cast[Claim](tx2).signature)
+            assert(claim.signature == cast[Claim](tx2).signature)
 
-        of TransactionType.Send:
+        of Send as send:
+            if not (tx2 of Send):
+                assert(false)
             for i in 0 ..< tx1.inputs.len:
                 assert(cast[SendInput](tx1.inputs[i]).nonce == cast[SendInput](tx2.inputs[i]).nonce)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
-            assert(cast[Send](tx1).signature == cast[Send](tx2).signature)
-            assert(cast[Send](tx1).proof == cast[Send](tx2).proof)
-            assert(cast[Send](tx1).argon == cast[Send](tx2).argon)
+            assert(send.signature == cast[Send](tx2).signature)
+            assert(send.proof == cast[Send](tx2).proof)
+            assert(send.argon == cast[Send](tx2).argon)
 
-        of TransactionType.Data:
-            assert(cast[Data](tx1).data == cast[Data](tx2).data)
+        of Data as data:
+            if not (tx2 of Data):
+                assert(false)
+            assert(data.data == cast[Data](tx2).data)
+            assert(data.signature == cast[Data](tx2).signature)
+            assert(data.proof == cast[Data](tx2).proof)
+            assert(data.argon == cast[Data](tx2).argon)
 
 #Compare two Transactions DAGs to make sure they have the same value.
 proc compare*(
@@ -93,7 +103,7 @@ proc compare*(
         #As Datas are sequential, we do create multiple potential Datas.
         #Without a sorting algorithm when reloading, we can't guarantee consistency.
         #As long as the Data is marked as spent by SOMETHING, we don't risk creating new Verifications.
-        if txs1[input.substr(0, 47).toHash(384)].descendant != TransactionType.Data:
+        if not (txs1[input.substr(0, 47).toHash(384)] of Data):
             assert(txs1.spent[input] == txs2.spent[input])
 
     #Beyond that, if a Data doesn't get verified, and a later Data is added:
@@ -103,5 +113,5 @@ proc compare*(
     #We need to replicate the above loop in reverse still ignoring Datas.
     #This will not be a problem in mainnet Meros thanks to defaulting.
     for input in txs2.spent.keys():
-        if txs2[input.substr(0, 47).toHash(384)].descendant != TransactionType.Data:
+        if not (txs2[input.substr(0, 47).toHash(384)] of Data):
             assert(txs1.spent[input] == txs2.spent[input])

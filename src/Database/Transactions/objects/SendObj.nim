@@ -34,9 +34,3 @@ func newSendObj*(
         inputs: cast[seq[Input]](@inputs),
         outputs: cast[seq[Output]](@outputs)
     )
-
-    #Set the Transaction fields.
-    try:
-        result.descendant = TransactionType.Send
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)

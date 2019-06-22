@@ -54,7 +54,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 while i < utxos.len:
                     #Skip UTXOs that are spent but only spent in pending TXs.
                     #Pending is defined as TXs with one verification; not anything created and broadcasted.
-                    if transactions.spent.hasKey(utxos[i].toString(TransactionType.Send)):
+                    if transactions.spent.hasKey(utxos[i].toString(Send)):
                         utxos.delete(i)
                         continue
 

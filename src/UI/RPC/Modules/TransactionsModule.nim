@@ -44,7 +44,6 @@ proc getTransaction*(
         }
 
     result = %* {
-        "descendant": $tx.descendant,
         "inputs": [],
         "outputs": [],
         "hash": $tx.hash,
@@ -52,17 +51,19 @@ proc getTransaction*(
     }
 
     try:
-        case tx.descendant:
-            of TransactionType.Mint:
+        case tx:
+            of Mint as mint:
+                result["descendant"] = % "mint"
                 for output in tx.outputs:
                     result["outputs"].add(%* {
                         "amount": output.amount.toBinary().toHex(),
                         "output": $cast[MintOutput](output).key
                     })
 
-                result["nonce"] = % cast[Mint](tx).nonce
+                result["nonce"] = % mint.nonce
 
-            of TransactionType.Claim:
+            of Claim as claim:
+                result["descendant"] = % "claim"
                 for input in tx.inputs:
                     result["inputs"].add(%* {
                         "hash": $input.hash
@@ -73,9 +74,10 @@ proc getTransaction*(
                         "output": $cast[SendOutput](output).key
                     })
 
-                result["signature"] = % $cast[Claim](tx).signature
+                result["signature"] = % $claim.signature
 
-            of TransactionType.Send:
+            of Send as send:
+                result["descendant"] = % "send"
                 for input in tx.inputs:
                     result["inputs"].add(%* {
                         "hash": $input.hash,
@@ -87,18 +89,17 @@ proc getTransaction*(
                         "output": $cast[SendOutput](output).key
                     })
 
-                var send: Send = cast[Send](tx)
                 result["signature"] = % $send.signature
                 result["proof"] = % send.proof
                 result["argon"] = % $send.argon
 
-            of TransactionType.Data:
+            of Data as data:
+                result["descendant"] = % "data"
                 for input in tx.inputs:
                     result["inputs"].add(%* {
                         "hash": $input.hash
                     })
 
-                var data: Data = cast[Data](tx)
                 result["data"] = % data.data.toHex()
                 result["signature"] = % $data.signature
                 result["proof"] = % data.proof
