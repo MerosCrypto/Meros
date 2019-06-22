@@ -3,6 +3,7 @@ setCommand("cpp")
 
 #Necessary flags.
 switch("threads", "on")
+switch("experimental", "caseStmtMacros")
 switch("define", "ADDRESS_HRP=Mr")
 switch("define", "SIGN_PREFIX=MEROS")
 switch("define", "DEFAULT_PORT=5132")
