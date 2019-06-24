@@ -84,6 +84,14 @@ func fromBinary*(
         #Add the byte after it's been properly shifted.
         result += int(number[b]) shl ((number.len - b - 1) * 8)
 
+#Extract a set of bits.
+func extractBits*(
+    data: uint16,
+    start: int,
+    bits: int
+): uint16 {.forceCheck: [].} =
+    (data shl start) shr (16 - bits)
+
 #Securely generates X random bytes,
 proc randomFill*[T](
     arr: var openArray[T]

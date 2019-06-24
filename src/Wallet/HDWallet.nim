@@ -50,6 +50,10 @@ proc newHDWallet*(
             secret = secretArg.parseHexStr()
         except ValueError:
             raise newException(ValueError, "Hex-length secret with invalid Hex data passed to newHDWallet.")
+    elif secret.len == 32:
+        discard
+    else:
+        raise newException(ValueError, "Invalid length secret passed to newHDWallet.")
 
     #Keys.
     var

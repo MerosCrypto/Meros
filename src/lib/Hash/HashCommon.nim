@@ -54,6 +54,7 @@ func `$`*(
     for b in hash.data:
         result &= b.toHex()
 
+#Check if a hash is empty.
 proc empty*(
     hash: Hash
 ): bool {.forceCheck: [].} =

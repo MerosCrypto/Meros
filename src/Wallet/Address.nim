@@ -45,12 +45,10 @@ func polymod(
     var b: uint32
     for value in values:
         b = result shr 25
-        result = ((result and 0x1ffffff) shl 5) xor value
-        for i in 0 .. 4:
+        result = ((result and 0x01ffffff) shl 5) xor value
+        for i in 0 ..< 5:
             if ((b shr i) and 1) == 1:
                 result = result xor BCH_VALUES[i]
-            else:
-                result = result xor 0
 
 
 #Generates a BCH code.
