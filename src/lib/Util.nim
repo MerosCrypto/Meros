@@ -92,6 +92,14 @@ func extractBits*(
 ): uint16 {.forceCheck: [].} =
     (data shl start) shr (16 - bits)
 
+#Extract a set of bits.
+func extractBits*(
+    data: uint32,
+    start: int,
+    bits: int
+): uint32 {.forceCheck: [].} =
+    (data shl start) shr (32 - bits)
+
 #Securely generates X random bytes,
 proc randomFill*[T](
     arr: var openArray[T]

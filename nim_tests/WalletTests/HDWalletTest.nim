@@ -6,7 +6,7 @@ import ../../src/lib/Util
 #Hash lib.
 import ../../src/lib/Hash
 
-#HDWallet libs.
+#HDWallet lib.
 import ../../src/Wallet/HDWallet
 
 #OS standard lib.
@@ -21,6 +21,9 @@ import strutils
 #JSON standard lib.
 import json
 
+#Vectors File.
+const vectorsFile: string = staticRead("Vectors" / "HDWallet.json")
+
 proc test*() =
     var
         #HDWallets.
@@ -28,7 +31,7 @@ proc test*() =
         reloaded: HDWallet
 
         #Test vectors.
-        vectors: JSONNode = parseJSON(readFile("." / "nim_tests" / "WalletTests" / "Vectors" / "HDWalletVectors.json"))
+        vectors: JSONNode = parseJSON(vectorsFile)
 
         #Path.
         path: seq[uint32]

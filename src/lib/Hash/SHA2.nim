@@ -6,6 +6,7 @@ import HashCommon
 
 #nimcrypto lib.
 import nimcrypto
+import nimcrypto/pbkdf2
 
 #Define the Hash Types.
 type
@@ -50,6 +51,14 @@ proc HMAC_SHA2_512*(
     bytes: string
 ): SHA2_512Hash {.forceCheck: [].} =
     result.data = sha512.hmac(key, bytes).data
+
+#PBKDF2 SHA2_512 HMAC function.
+proc PDKDF2_HMAC_SHA2_512*(
+    key: string,
+    password: string
+): SHA2_512Hash {.forceCheck: [].} =
+    var ctx: HMAC[sha512]
+    discard pbkdf2(ctx, key, password, 2048, result.data)
 
 #String to SHA2_256Hash.
 func toSHA2_256Hash*(
