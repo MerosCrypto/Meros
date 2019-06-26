@@ -68,6 +68,9 @@ proc mainPersonal() {.forceCheck: [].} =
                         if i + 1 < utxos.len:
                             utxos.delete(i + 1, utxos.len - 1)
                         break
+
+                    #Increment i.
+                    inc(i)
             except IndexError as e:
                 doAssert(false, "Couldn't load a transaction we have an UTXO for: " & e.msg)
 
