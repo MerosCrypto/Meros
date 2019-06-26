@@ -192,7 +192,7 @@ proc mainMerit() {.forceCheck: [].} =
                 #If we got a Mint...
                 if not ourMint.isNil:
                     #Confirm we have a wallet.
-                    if not wallet.initiated:
+                    if wallet.isNil:
                         echo "We got a Mint with hash ", ourMint[], ", however, we don't have a Wallet to Claim it to."
                         return
 

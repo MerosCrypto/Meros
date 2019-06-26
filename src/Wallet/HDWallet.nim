@@ -32,6 +32,8 @@ let
 finalsd:
     #HDWallet.
     type HDWallet* = ref object of Wallet
+            #Secret used to create the wallet.
+            secret*: string
             #Child index on the parent.
             i* {.final.}: uint32
             #Chain Code.
@@ -73,7 +75,7 @@ proc newHDWallet*(
 
     result = HDWallet(
         #Set the Wallet fields.
-        initiated: true,
+        secret: secret,
         privateKey: privateKey,
         publicKey: publicKey,
         address: newAddress(publicKey),
@@ -81,7 +83,7 @@ proc newHDWallet*(
         #Set the index to 0.
         i: 0,
         #Create the chain code.
-        chainCode: SHA2_256('\1' & secret),
+        chainCode: SHA2_256('\1' & secret)
     )
     result.ffinalizeI()
     result.ffinalizeChainCode()
@@ -193,7 +195,6 @@ proc derive*(
     try:
         result = HDWallet(
             #Set the Wallet fields.
-            initiated: true,
             privateKey: privateKey,
             publicKey: publicKey,
             address: newAddress(publicKey),
@@ -234,9 +235,6 @@ proc next*(
 ): HDWallet {.forceCheck: [
     ValueError
 ].} =
-    if path.len >= 2^20 - 1:
-        raise newException(ValueError, "Derivation path depth is too big.")
-
     var
         pathWallet: HDWallet
         i: uint32 = last + 1
@@ -249,6 +247,7 @@ proc next*(
         try:
             return pathWallet.derive(i)
         except ValueError:
-            if i == high(uint32):
-                raise newException(ValueError, "This path is out of keys.")
+            inc(i)
+            if i == (uint32(2) ^ 31):
+                raise newException(ValueError, "This path is out of non-hardened keys.")
             continue

@@ -20,8 +20,6 @@ import finals
 finalsd:
     #Wallet object.
     type Wallet* = ref object of RootObj
-        #Initiated.
-        initiated*: bool
         #Private Key.
         privateKey*: EdPrivateKey
         #Public Key.

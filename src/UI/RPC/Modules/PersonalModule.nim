@@ -40,7 +40,7 @@ proc getWallet(
     rpc: RPC
 ): JSONNode {.forceCheck: [].} =
     var wallet: Wallet = rpc.functions.personal.getWallet()
-    if not wallet.initiated:
+    if wallet.isNil:
         return %* {
             "error": "Personal does not have a Wallet."
         }
