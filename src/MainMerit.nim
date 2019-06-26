@@ -61,7 +61,6 @@ proc mainMerit() {.forceCheck: [].} =
                     #Get and test the Block.
                     var missingBlock: Block
                     try:
-                        echo "Requesting ", nonce
                         missingBlock = await network.requestBlock(consensus, nonce)
                     #Redefine as a GapError since a failure to sync produces a gap.
                     except DataMissing as e:
@@ -245,8 +244,7 @@ proc mainMerit() {.forceCheck: [].} =
 
             var body: BlockBody
             try:
-                #body = await network.sync(header)
-                raise newException(DataMissing, "")
+                body = await network.sync(header)
             except DataMissing as e:
                 raise newException(ValueError, e.msg)
             except Exception as e:
