@@ -155,7 +155,7 @@ proc add*(
     #Verify the signature.
     try:
         element.signature.setAggregationInfo(
-            newBLSAggregationInfo(element.holder, element.serializeSignature())
+            newBLSAggregationInfo(element.holder, element.serializeSign())
         )
         if not element.signature.verify():
             raise newException(ValueError, "Failed to verify the Element's signature.")

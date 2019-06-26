@@ -30,7 +30,7 @@ method serialize*(
         verif.hash.toString()
 
 #Serialize a Verification for signing.
-method serializeSignature*(
+method serializeSign*(
     verif: Verification
 ): string {.forceCheck: [].} =
     result =

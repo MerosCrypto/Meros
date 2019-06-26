@@ -10,10 +10,10 @@ method serialize*(
 ): string {.base, forceCheck: [].} =
     doAssert(false, "Element serialize method called.")
 
-method serializeSignature*(
+method serializeSign*(
     element: Element
 ): string {.base, forceCheck: [].} =
-    doAssert(false, "Element serializeSignature method called.")
+    doAssert(false, "Element serializeSign method called.")
 
 method signedSerialize*(
     element: Element

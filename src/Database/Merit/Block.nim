@@ -72,7 +72,7 @@ proc verify*(
             #Iterate over this holder's hashes.
             for e, elem in elems[key]:
                 #Create AggregationInfos.
-                holderAgInfos[e] = newBLSAggregationInfo(record.key, elem.serialize())
+                holderAgInfos[e] = newBLSAggregationInfo(record.key, elem.serializeSign())
         #The presented Table has a different set of MeritHolders than the records.
         except KeyError:
             return false

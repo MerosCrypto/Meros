@@ -29,7 +29,7 @@ proc sign*(
         verif.nonce = nonce
         #Sign the hash of the Verification.
         try:
-            verif.signature = miner.sign(verif.serializeSignature())
+            verif.signature = miner.sign(verif.serializeSign())
         except BLSError as e:
             fcRaise e
     except FinalAttributeError as e:
