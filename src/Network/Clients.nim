@@ -150,6 +150,9 @@ proc add*(
                     try:
                         asyncCheck (
                             proc (): Future[void] {.forceCheck: [], async.} =
+                                if client.theirState == ClientState.Syncing:
+                                    return
+
                                 try:
                                     await client.send(
                                         newMessage(

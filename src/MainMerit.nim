@@ -51,12 +51,6 @@ proc mainMerit() {.forceCheck: [].} =
             GapError,
             DataExists
         ], async.} =
-            #If we already have this Block, raise.
-            #This is a needed check, even though there's the same one in processBlock, because requested Blocks are rebroadcasted.
-            #If a Client send us a back a Block, and we try to sync it, while they're still syncing, there's a standoff.
-            if newBlock.header.nonce < merit.blockchain.height:
-                raise newException(DataExists, "Block already added.")
-
             #Print that we're adding the Block.
             echo "Adding Block ", newBlock.header.nonce, "."
 
@@ -65,13 +59,20 @@ proc mainMerit() {.forceCheck: [].} =
                 #Iterate over the missing Blocks.
                 for nonce in merit.blockchain.height ..< newBlock.header.nonce:
                     #Get and test the Block.
+                    var missingBlock: Block
                     try:
-                        await functions.merit.addBlock(await network.requestBlock(consensus, nonce), true)
+                        echo "Requesting ", nonce
+                        missingBlock = await network.requestBlock(consensus, nonce)
                     #Redefine as a GapError since a failure to sync produces a gap.
                     except DataMissing as e:
                         raise newException(GapError, e.msg)
                     except ValidityConcern as e:
                         raise newException(ValueError, e.msg)
+                    except Exception as e:
+                        doAssert(false, "Couldn't request a Block needed before verifying this Block, despite catching all naturally thrown Exceptions: " & e.msg)
+
+                    try:
+                        await functions.merit.addBlock(missingBlock, true)
                     except ValueError as e:
                         fcRaise e
                     except IndexError as e:
@@ -81,7 +82,7 @@ proc mainMerit() {.forceCheck: [].} =
                     except DataExists as e:
                         doAssert(false, "Couldn't add a Block in the gap before this Block because DataExists: " & e.msg)
                     except Exception as e:
-                        doAssert(false, "Couldn't request and add a Block needed before verifying this Block, despite catching all naturally thrown Exceptions: " & e.msg)
+                        doAssert(false, "Couldn't add a Block before this Block, despite catching all naturally thrown Exceptions: " & e.msg)
 
             #Sync this Block.
             try:
