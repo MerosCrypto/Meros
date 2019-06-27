@@ -8,7 +8,7 @@ import ../../../../../lib/Util
 import ../../../../../Wallet/MinerWallet
 
 #MintOutput object.
-import ../../../../../Database/Transactions/objects/TransactionObj
+import ../../../..//Transactions/objects/TransactionObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon

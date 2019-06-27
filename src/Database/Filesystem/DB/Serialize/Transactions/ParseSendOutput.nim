@@ -8,7 +8,7 @@ import ../../../../../lib/Util
 import ../../../../../Wallet/Wallet
 
 #SendOutput object.
-import ../../../../../Database/Transactions/objects/TransactionObj
+import ../../../..//Transactions/objects/TransactionObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon

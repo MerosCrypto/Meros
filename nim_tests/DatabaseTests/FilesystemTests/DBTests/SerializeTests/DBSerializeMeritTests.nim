@@ -1,4 +1,4 @@
-#Merit Serialization Tests.
+#DB Merit Serialization Tests.
 
 import Merit/SerializeDifficultyTest
 

@@ -1,4 +1,4 @@
-#Serialize Transactions Tests.
+#DB Serialize Transactions Tests.
 
 import Transactions/SerializeMintOutputTest
 import Transactions/SerializeSendOutputTest

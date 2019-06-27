@@ -11,7 +11,7 @@ import ../../../../../lib/Hash
 import ../../../../../Wallet/MinerWallet
 
 #Mint object.
-import ../../../../../Database/Transactions/objects/MintObj
+import ../../../..//Transactions/objects/MintObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon

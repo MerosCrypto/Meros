@@ -2,7 +2,7 @@
 import ../../../../../lib/Errors
 
 #Transaction objects.
-import ../../../../../Database/Transactions/Transaction
+import ../../../..//Transactions/Transaction
 
 #Serialization libs.
 import SerializeMint
