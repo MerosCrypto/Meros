@@ -39,8 +39,6 @@ finalsd:
         height*: Natural
         #Amount of Elements which have been archived.
         archived*: int
-        #seq of the Elements.
-        elements*: seq[Element]
         #Merkle of the Elements.
         merkle*: Merkle
 
@@ -56,7 +54,6 @@ proc newMeritHolderObj*(
         keyStr: key.toString(),
 
         archived: -1,
-        elements: @[],
         merkle: newMerkle()
     )
     result.ffinalizeKey()
@@ -84,17 +81,12 @@ proc `[]`*(
     if nonce >= holder.height:
         raise newException(IndexError, "That MeritHolder doesn't have an Element for that nonce.")
 
-    #If it's in the database...
-    if nonce <= holder.archived:
-        #Grab it and return it.
-        try:
-            result = holder.db.load(holder.key, nonce)
-        except DBReadError as e:
-            doAssert(false, "Couldn't load a Element we were asked for from the Database: " & e.msg)
-        return
-
-    #Else, return it from memory.
-    result = holder.elements[nonce - (holder.archived + 1)]
+    #Grab it and return it.
+    try:
+        result = holder.db.load(holder.key, nonce)
+    except DBReadError as e:
+        doAssert(false, "Couldn't load a Element we were asked for from the Database: " & e.msg)
+    return
 
 #Add an Element to a MeritHolder.
 proc add*(
@@ -129,8 +121,6 @@ proc add*(
 
     #Increase the height.
     holder.height = holder.height + 1
-    #Add the Element to the seq.
-    holder.elements.add(element)
     #Add the Element to the Merkle.
     case element:
         of Verification as verif:

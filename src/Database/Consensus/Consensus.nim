@@ -94,22 +94,22 @@ proc archive*(
     #Iterate over every Record.
     for record in records:
         #Make sure this MeritHolder has Elements to archive.
-        if consensus[record.key].elements.len == 0:
+        if consensus[record.key].archived == consensus[record.key].height - 1:
             doAssert(false, "Tried to archive Elements from a MeritHolder without any pending Elements.")
 
         #Make sure this MeritHolder has enough Elements.
-        if record.nonce > consensus[record.key].elements[0].nonce + consensus[record.key].elements.len - 1:
+        if record.nonce >= consensus[record.key].height:
             doAssert(false, "Tried to archive more Elements than this MeritHolder has pending.")
 
-        #Delete them from the seq.
-        consensus[record.key].elements.delete(
-            0,
-            record.nonce - consensus[record.key].elements[0].nonce
-        )
-
         #Reset the Merkle.
+        var elem: Element
         consensus[record.key].merkle = newMerkle()
-        for elem in consensus[record.key].elements:
+        for e in record.nonce + 1 ..< consensus[record.key].height:
+            try:
+                elem = consensus[record.key][e]
+            except IndexError as e:
+                doAssert(false, "Couldn't get an element we know we have: " & e.msg)
+
             case elem:
                 of Verification as verif:
                     consensus[record.key].merkle.add(verif.hash)
