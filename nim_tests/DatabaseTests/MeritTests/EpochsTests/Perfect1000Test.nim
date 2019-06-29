@@ -66,7 +66,7 @@ proc test*() =
         #Create and add the Verification.
         verif = newSignedVerificationObj(hash)
         miner.sign(verif, 0)
-        consensus.add(verif)
+        consensus.add(verif, true)
 
         #Add a MeritHolderRecord.
         records.add(newMeritHolderRecord(

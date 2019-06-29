@@ -195,7 +195,7 @@ proc test*() =
         for verifier in verifiers:
             var verif: SignedVerification = newSignedVerificationObj(hash)
             verifier.sign(verif, consensus[verifier.publicKey].height)
-            consensus.add(verif)
+            consensus.add(verif, true)
             transactions.verify(verif, merit.state[verifier.publicKey], merit.state.live)
 
     #Create a random amount of MeritHolders.

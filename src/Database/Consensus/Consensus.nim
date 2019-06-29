@@ -44,10 +44,29 @@ proc newConsensus*(
 ): Consensus {.forceCheck: [].} =
     newConsensusObj(db)
 
+#Handle unknown Verifications.
+proc handleUnknown*(
+    consensus: Consensus,
+    verif: Verification,
+    txExists: bool
+) {.forceCheck: [].} =
+    if txExists:
+        return
+
+    var hash: string = verif.hash.toString()
+    if not consensus.unknowns.hasKey(hash):
+        consensus.unknowns[hash] = newSeq[seq[BLSPublicKey]](6)
+
+    try:
+        consensus.unknowns[hash][5].add(verif.holder)
+    except KeyError as e:
+        doAssert(false, "Couldn't add a Merit Holder to a seq we've confirmed to exist: " & e.msg)
+
 #Add a Verification.
 proc add*(
     consensus: Consensus,
-    verif: Verification
+    verif: Verification,
+    txExists: bool
 ) {.forceCheck: [
     GapError,
     DataExists,
@@ -62,10 +81,13 @@ proc add*(
     except MaliciousMeritHolder as e:
         fcRaise e
 
+    consensus.handleUnknown(verif, txExists)
+
 #Add a SignedVerification.
 proc add*(
     consensus: Consensus,
-    verif: SignedVerification
+    verif: SignedVerification,
+    txExists: bool
 ) {.forceCheck: [
     ValueError,
     GapError,
@@ -85,6 +107,8 @@ proc add*(
         fcRaise e
     except MaliciousMeritHolder as e:
         fcRaise e
+
+    consensus.handleUnknown(verif, txExists)
 
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.
 proc archive*(
@@ -121,3 +145,24 @@ proc archive*(
 
         #Update the DB.
         consensus.db.save(record.key, record.nonce)
+
+    #Shift over the Verifications for unknown hashes.
+    var toDelete: seq[string] = @[]
+    for key in consensus.unknowns.keys():
+        try:
+            consensus.unknowns[key].add(@[])
+            consensus.unknowns[key].delete(0)
+            if consensus.unknowns[key][5].len != 0:
+                echo "HALT"
+
+            for i in 0 ..< 5:
+                if consensus.unknowns[key][i].len != 0:
+                    break
+
+                if i == 4:
+                    toDelete.add(key)
+        except KeyError as e:
+            doAssert(false, "Couldn't access a value with an a key we got with .keys(): " & e.msg)
+    for key in toDelete:
+        consensus.unknowns.del(key)
+    consensus.db.save(consensus.unknowns)

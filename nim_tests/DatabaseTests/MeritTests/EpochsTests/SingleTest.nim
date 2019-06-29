@@ -59,7 +59,7 @@ proc test*() =
     #Create and add the Verification.
     verif = newSignedVerificationObj(hash)
     miner.sign(verif, 0)
-    consensus.add(verif)
+    consensus.add(verif, true)
 
     #Shift on the records.
     rewards = epochs.shift(

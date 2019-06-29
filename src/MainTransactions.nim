@@ -30,7 +30,7 @@ proc verify(
 
         #Add the verif to consensus.
         try:
-            consensus.add(verif)
+            consensus.add(verif, true)
         except ValueError as e:
             doAssert(false, "Created a SignedVerification with an invalid signature: " & e.msg)
         except GapError as e:

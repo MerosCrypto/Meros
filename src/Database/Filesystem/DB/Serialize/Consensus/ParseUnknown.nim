@@ -13,6 +13,8 @@ import ../../../../Consensus/objects/VerificationObj
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
+const UNKNOWN_LEN*: int = BLS_PUBLIC_KEY_LEN + HASH_LEN
+
 #Parse function.
 proc parseUnknown*(
     unknownStr: string

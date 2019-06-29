@@ -4,6 +4,9 @@ import ../../../src/Wallet/MinerWallet
 #Consensus lib.
 import ../../../src/Database/Consensus/Consensus
 
+#Tables standard lib.
+import tables
+
 #Compare two Verifications to make sure they have the same value.
 proc compare*(
     e1: Element,
@@ -52,3 +55,13 @@ proc compare*(
     for holder in c1Holders:
         assert(c2Holders.contains(holder))
         compare(c1[holder], c2[holder])
+
+    #Compare the Unknowns.
+    assert(c1.unknowns.len == c2.unknowns.len)
+    for hash in c1.unknowns.keys():
+        assert(c1.unknowns[hash].len == 6)
+        assert(c2.unknowns[hash].len == 6)
+        for u in 0 ..< 6:
+            assert(c1.unknowns[hash][u].len == c2.unknowns[hash][u].len)
+            for v in 0 ..< c1.unknowns[hash][u].len:
+                assert(c1.unknowns[hash][u][v] == c2.unknowns[hash][u][v])

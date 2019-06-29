@@ -72,7 +72,7 @@ proc test*() =
             #Create and add the Verification.
             verif = newSignedVerificationObj(hash)
             miner.sign(verif, consensus[miner.publicKey].height)
-            consensus.add(verif)
+            consensus.add(verif, true)
 
             #Add the record.
             records.add(

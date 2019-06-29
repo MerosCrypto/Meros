@@ -54,6 +54,7 @@ proc test*() =
         #Create a random amount of MeritHolders.
         for _ in 0 ..<  rand(2) + 1:
             holders.add(newMinerWallet())
+
         #Create Elements.
         for e in 0 ..< rand(10):
             var
@@ -70,12 +71,19 @@ proc test*() =
             #Sign it.
             holder.sign(verif, consensus[holder.publicKey].height)
 
+            #Add it is an unknown TX or not.
+            var unknownTX: bool
+            if rand(4) == 0:
+                unknownTX = true
+            else:
+                unknownTX = false
+
             #Add it as a SignedVerification.
             if rand(1) == 0:
-                consensus.add(verif)
+                consensus.add(verif, unknownTX)
             #Add it as a Verification.
             else:
-                consensus.add(cast[Verification](verif))
+                consensus.add(cast[Verification](verif), unknownTX)
 
         #Clear archiving and recalculate it.
         archiving = @[]

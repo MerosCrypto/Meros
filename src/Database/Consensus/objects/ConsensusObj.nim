@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
@@ -10,8 +13,9 @@ import ../../Filesystem/DB/ConsensusDB
 #ConsensusIndex object.
 import ../../common/objects/ConsensusIndexObj
 
-#Element object.
+#Element and Verification objects.
 import ElementObj
+import VerificationObj
 
 #MeritHolder object.
 import MeritHolderObj
@@ -28,7 +32,9 @@ type Consensus* = ref object
     db*: DB
 
     #MeritHolder -> Account.
-    holders: TableRef[string, MeritHolder]
+    holders: Table[string, MeritHolder]
+    #Verifications of unknown transactions.
+    unknowns*: Table[string, seq[seq[BLSPublicKey]]]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -37,7 +43,8 @@ proc newConsensusObj*(
     #Create the Consensus object.
     result = Consensus(
         db: db,
-        holders: newTable[string, MeritHolder]()
+        holders: initTable[string, MeritHolder](),
+        unknowns: initTable[string, seq[seq[BLSPublicKey]]]()
     )
 
     #Grab the MeritHolders, if any exist.
@@ -54,6 +61,26 @@ proc newConsensusObj*(
             result.holders[holder] = newMeritHolderObj(result.db, newBLSPublicKey(holder))
         except BLSError as e:
             doAssert(false, "Couldn't create a BLS Public Key for a known MeritHolder: " & e.msg)
+
+    #Load the Verifications of unknown Transactions.
+    var
+        unknown: seq[seq[Verification]]
+        hash: string
+    try:
+         unknown = db.loadUnknown()
+    except DBReadError as e:
+        doAssert(false, "Couldn't load Verifications with unknown hashes: " & e.msg)
+
+    for u in 0 ..< unknown.len:
+        for verif in unknown[u]:
+            hash = verif.hash.toString()
+            if not result.unknowns.hasKey(hash):
+                result.unknowns[hash] = newSeq[seq[BLSPublicKey]](6)
+
+            try:
+                result.unknowns[hash][u].add(verif.holder)
+            except KeyError as e:
+                doAssert(false, "Couldn't access a seq in a table despite just creating the seq: " & e.msg)
 
 #Creates a new MeritHolder on the Consensus.
 proc add(
