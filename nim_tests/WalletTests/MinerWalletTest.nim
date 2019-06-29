@@ -67,4 +67,4 @@ proc test*() =
             )
             assert(wSig.verify())
 
-    echo "Finished the MinerWallet/MinerWallet Test."
+    echo "Finished the Wallet/MinerWallet Test."

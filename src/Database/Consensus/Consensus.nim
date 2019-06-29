@@ -62,6 +62,8 @@ proc handleUnknown*(
     except KeyError as e:
         doAssert(false, "Couldn't add a Merit Holder to a seq we've confirmed to exist: " & e.msg)
 
+    consensus.db.saveUnknown(verif)
+
 #Add a Verification.
 proc add*(
     consensus: Consensus,
@@ -152,8 +154,6 @@ proc archive*(
         try:
             consensus.unknowns[key].add(@[])
             consensus.unknowns[key].delete(0)
-            if consensus.unknowns[key][5].len != 0:
-                echo "HALT"
 
             for i in 0 ..< 5:
                 if consensus.unknowns[key][i].len != 0:
@@ -165,4 +165,5 @@ proc archive*(
             doAssert(false, "Couldn't access a value with an a key we got with .keys(): " & e.msg)
     for key in toDelete:
         consensus.unknowns.del(key)
-    consensus.db.save(consensus.unknowns)
+
+    consensus.db.advanceUnknown()

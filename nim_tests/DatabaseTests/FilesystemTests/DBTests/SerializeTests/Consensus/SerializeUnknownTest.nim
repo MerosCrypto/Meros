@@ -45,10 +45,10 @@ proc test*() =
         verif.holder = newMinerWallet().publicKey
 
         #Serialize it and parse it back.
-        reloaded = serializeUnknown(verif.hash.toString(), verif.holder).parseUnknown()
+        reloaded = verif.serializeUnknown().parseUnknown()
 
         #Test the serialized versions.
-        assert(serializeUnknown(verif.hash.toString(), verif.holder) == serializeUnknown(reloaded.hash.toString(), reloaded.holder))
+        assert(verif.serializeUnknown() == reloaded.serializeUnknown())
 
         #Compare the Verification.
         compare(verif, reloaded)

@@ -52,6 +52,9 @@ proc get(
 proc commit*(
     db: DB
 ) {.forceCheck: [].} =
+    for u in 0 ..< 5:
+        db.consensus.cache["u" & char(u)] = db.consensus.unknown[u]
+
     for key in db.consensus.cache.keys():
         try:
             db.lmdb.put("consensus", key, db.consensus.cache[key])
@@ -92,20 +95,18 @@ proc save*(
         else:
             doAssert(false, "Element should be Verification.")
 
-proc save*(
+proc saveUnknown*(
     db: DB,
-    unknowns: Table[string, seq[seq[BLSPublicKey]]]
+    verif: Verification
 ) {.forceCheck: [].} =
-    var unknownStr: string
-    for u in 0 ..< 5:
-        unknownStr = ""
-        for hash in unknowns.keys():
-            try:
-                for key in unknowns[hash][u]:
-                    unknownStr &= serializeUnknown(hash, key)
-            except KeyError as e:
-                doAssert(false, "Couldn't access a value by its key yielded by .keys(): " & e.msg)
-        db.put("u" & char(u), unknownStr)
+    db.consensus.unknown[5] &= verif.serializeUnknown()
+
+proc advanceUnknown*(
+    db: DB
+) {.forceCheck: [].} =
+    for i in 0 ..< 5:
+        db.consensus.unknown[i] = db.consensus.unknown[i + 1]
+    db.consensus.unknown[5] = ""
 
 proc loadHolders*(
     db: DB
