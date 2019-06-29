@@ -15,11 +15,9 @@ Merit:
 
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the 256 MB mode).
-- Don't just hash the block header; include random sampling to force miners to run full nodes.
 
 Wallet:
 
-- Mnemonic file to convert a Mnemonic to seed, and vice versa.
 - OpenCAP support.
 
 UI:

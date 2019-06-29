@@ -17,7 +17,7 @@ The Element sub-types are as follows:
 - GasPrice
 - MeritRemoval
 
-When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval` message, it's added to the holder's MeritHolder, as long as the signature is correct and any other checks imposed by the sub-type pass. Elements don't have hashes, so the signature is produced by signing the serialized version with a prefix. That said, MeritHolders who don't have any Merit can safely have their Elements ignored, as they mean nothing.
+When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval` message, it's added to the holder's MeritHolder, as long as the holder has Merit, the signature is correct, and any other checks imposed by the sub-type pass. Elements don't have hashes, so the signature is produced by signing the serialized version with a prefix.
 
 The `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, and `MeritRemoval` messages are only used when syncing, and their signature data is contained in a Block's aggregate signature, as described in the Merit documentation.
 
@@ -73,7 +73,7 @@ A GasPrice is a MeritHolder voting to update the gasPrice variable. The way the 
 
 They have the following fields:
 
-- price: Price in Meri an unit of gas should cost.
+- price: Price in Meri a unit of gas should cost.
 
 `GasPrice` has a message length of 56 bytes; the 48-byte holder, the 4-byte nonce, and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\3".
 
@@ -105,7 +105,8 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 - Meros's Merit Holder's Merkle trees are created using the hash of the Transaction verified in the Verification (the only supported Element).
 - Meros counts Verifications which were never archived for a Transaction's weight.
 - Meros doesn't support defaulting.
-- Meros doesn't support Verifications with 'invalid' hashes.
+- Meros doesn't apply Verifications with unknown hashes once they're known.
+- Meros doesn't check if Verifications for an unknown hash reaches majority Merit.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
