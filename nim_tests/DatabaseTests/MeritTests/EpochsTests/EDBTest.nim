@@ -140,7 +140,7 @@ proc test*() =
                 continue
 
             #Continue if this user doesn't have unarchived Verifications.
-            if consensus[holder.publicKey].elements.len == 0:
+            if consensus[holder.publicKey].archived == consensus[holder.publicKey].height - 1:
                 continue
 
             #Since there are unarchived Elements, add a MeritHolderRecord.

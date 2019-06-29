@@ -13,6 +13,10 @@ import ../../../Wallet/MinerWallet
 #Element lib.
 import ../../Consensus/Element
 
+#Serialize/parse libs.
+import Serialize/Consensus/SerializeUnknown
+import Serialize/Consensus/ParseUnknown
+
 #DB object.
 import objects/DBObj
 export DBObj
@@ -88,20 +92,35 @@ proc save*(
         else:
             doAssert(false, "Element should be Verification.")
 
+proc save*(
+    db: DB,
+    unknowns: Table[string, seq[seq[BLSPublicKey]]]
+) {.forceCheck: [].} =
+    var unknownStr: string
+    for u in 0 ..< 5:
+        unknownStr = ""
+        for hash in unknowns.keys():
+            try:
+                for key in unknowns[hash][u]:
+                    unknownStr &= serializeUnknown(hash, key)
+            except KeyError as e:
+                doAssert(false, "Couldn't access a value by its key yielded by .keys(): " & e.msg)
+        db.put("u" & char(u), unknownStr)
+
 proc loadHolders*(
     db: DB
 ): seq[string] {.forceCheck: [
     DBReadError
 ].} =
-    var holders: string
     try:
-        holders = db.get("holders")
+        db.consensus.holdersStr = db.get("holders")
     except DBReadError as e:
         fcRaise e
-    
-    result = newSeq[string](holders.len div 48)
-    for i in countup(0, holders.len - 1, 48):
-        result[i div 48] = holders[i ..< i + 48]
+
+    result = newSeq[string](db.consensus.holdersStr.len div 48)
+    for i in countup(0, db.consensus.holdersStr.len - 1, 48):
+        result[i div 48] = db.consensus.holdersStr[i ..< i + 48]
+        db.consensus.holders[db.consensus.holdersStr[i ..< i + 48]] = true
 
 proc load*(
     db: DB,
@@ -129,3 +148,25 @@ proc load*(
         result.nonce = nonce
     except Exception as e:
         raise newException(DBReadError, e.msg)
+
+proc loadUnknown*(
+    db: DB
+): seq[seq[Verification]] {.forceCheck: [
+    DBReadError
+].} =
+    var unknowns: string
+    result = newSeq[seq[Verification]](5)
+    for u in 0 ..< 5:
+        try:
+            unknowns = db.get("u" & char(u))
+        except DBReadError as e:
+            if u == 0:
+                return
+            else:
+                fcRaise e
+
+        for i in countup(0, unknowns.len - 1, UNKNOWN_LEN):
+            try:
+                result[u].add(unknowns[i ..< i + UNKNOWN_LEN].parseUnknown())
+            except Exception as e:
+                raise newException(DBReadError, e.msg)

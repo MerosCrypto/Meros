@@ -72,7 +72,6 @@ proc test*() =
         wallet = newHDWallet(vector["secret"].getStr()).derive(path)
 
         #Check the intiated field and index.
-        assert(wallet.initiated)
         if path.len == 0:
             assert(wallet.i == 0)
         else:
@@ -89,7 +88,6 @@ proc test*() =
 
         #Compare the Wallets.
         assert(wallet.i == reloaded.i)
-        assert(reloaded.initiated)
         assert(wallet.privateKey.toString() == reloaded.privateKey.toString())
         assert(wallet.publicKey.toString() == reloaded.publicKey.toString())
         assert(wallet.chainCode == reloaded.chainCode)
@@ -97,6 +95,5 @@ proc test*() =
     #Generate 100 random HDwallets.
     for _ in 0 .. 100:
         wallet = newHDWallet()
-        assert(wallet.initiated)
 
     echo "Finished the Wallet/HDWallet Test."

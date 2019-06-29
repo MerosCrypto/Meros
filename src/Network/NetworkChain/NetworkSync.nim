@@ -145,20 +145,27 @@ proc sync*(
 
     #Calculate the Elements gaps.
     for record in newBlock.records:
-        #Get the MeritHolder's height.
-        var holderHeigher: int = consensus[record.key].height
+        #Get the MeritHolder.
+        var holder: MeritHolder = consensus[record.key]
 
         #If we're missing Elements...
-        if holderHeigher <= record.nonce:
+        if holder.height <= record.nonce:
             #Add the gap.
             gaps.add((
                 record.key,
-                holderHeigher,
+                holder.height,
                 record.nonce
             ))
 
         #Grab their pending elements and place it in elements.
-        elements[record.key.toString()] = consensus[record.key].elements
+        elements[record.key.toString()] = newSeq[Element](holder.height - holder.archived - 1)
+        for e in holder.archived + 1 ..< holder.height:
+            try:
+                elements[record.key.toString()][e - (holder.archived + 1)] = holder[e]
+            except KeyError as e:
+                doAssert(false, "Couldn't access a seq in a table we just created: " & e.msg)
+            except IndexError as e:
+                doAssert(false, "Couldn't get an Element by it's index despite looping up to the Merit Holder's height: " & e.msg)
 
     #Sync the missing Elements.
     if gaps.len != 0:
@@ -218,6 +225,17 @@ proc sync*(
     #Check the Block's aggregate.
     if not newBlock.verify(elements):
         raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
+
+    #Add the Elements since we know they're valid.
+    for elem in missingElems:
+        try:
+            network.mainFunctions.consensus.addVerification(cast[Verification](elem))
+        except ValueError as e:
+            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
+        except IndexError as e:
+            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
+        except DataExists:
+            continue
 
     #Sync the missing Transactions.
     if txHashes.len != 0:
@@ -298,17 +316,6 @@ proc sync*(
         #If we tried every client and didn't sync the needed data, raise a DataMissing.
         if not synced:
             raise newException(DataMissing, "Couldn't sync all the Transactions in a Block.")
-
-    #Since we now have every Transaction, add the Elements.
-    for elem in missingElems:
-        try:
-            network.mainFunctions.consensus.addVerification(cast[Verification](elem))
-        except ValueError as e:
-            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
-        except IndexError as e:
-            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
-        except DataExists:
-            continue
 
 #Sync a Block's Body.
 proc sync*(

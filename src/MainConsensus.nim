@@ -32,7 +32,7 @@ proc mainConsensus() {.forceCheck: [].} =
                     continue
 
                 #Continue if this user doesn't have unarchived Elements.
-                if consensus[holder].elements.len == 0:
+                if consensus[holder].archived == consensus[holder].height - 1:
                     continue
 
                 #Since there are unarchived consensus, add the MeritHolderRecord.
@@ -67,8 +67,8 @@ proc mainConsensus() {.forceCheck: [].} =
                 start: int
 
             #If this MeritHolder has pending Elements...
-            if holder.elements.len > 0:
-                start = holder.elements[0].nonce
+            if holder.archived != holder.height - 1:
+                start = holder.archived + 1
             else:
                 return nil
 
@@ -107,8 +107,8 @@ proc mainConsensus() {.forceCheck: [].} =
                 return
 
             #If this MeritHolder has pending Elements...
-            if holder.elements.len > 0:
-                start = holder.elements[0].nonce
+            if holder.archived != holder.height - 1:
+                start = holder.archived + 1
             else:
                 return @[]
 
@@ -134,9 +134,17 @@ proc mainConsensus() {.forceCheck: [].} =
             if merit.state[verif.holder] == 0:
                 raise newException(ValueError, "MeritHolder doesn't hold any Merit.")
 
+            #See if the Transaction exists.
+            var txExists: bool
+            try:
+                discard transactions[verif.hash]
+                txExists = true
+            except IndexError:
+                txExists = false
+
             #Add the Verification to the Elements DAG.
             try:
-                consensus.add(verif)
+                consensus.add(verif, txExists)
             #Missing Elements before this Verification.
             #Since we got this from a Block, we should've already synced all previous Elements.
             except GapError:
@@ -166,9 +174,17 @@ proc mainConsensus() {.forceCheck: [].} =
             if merit.state[verif.holder] == 0:
                 raise newException(ValueError, "MeritHolder doesn't hold any Merit.")
 
+            #See if the Transaction exists.
+            var txExists: bool
+            try:
+                discard transactions[verif.hash]
+                txExists = true
+            except IndexError:
+                txExists = false
+
             #Add the SignedVerification to the Elements DAG.
             try:
-                consensus.add(verif)
+                consensus.add(verif, txExists)
             #Invalid signature.
             except ValueError as e:
                 fcRaise e

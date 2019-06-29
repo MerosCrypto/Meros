@@ -169,15 +169,15 @@ proc loadHolders*(
 ): seq[string] {.forceCheck: [
     DBReadError
 ].} =
-    var holders: string
     try:
-        holders = db.get("holders")
+        db.merit.holdersStr = db.get("holders")
     except DBReadError as e:
         fcRaise e
 
-    result = newSeq[string](holders.len div 48)
-    for i in countup(0, holders.len - 1, 48):
-        result[i div 48] = holders[i ..< i + 48]
+    result = newSeq[string](db.merit.holdersStr.len div 48)
+    for i in countup(0, db.merit.holdersStr.len - 1, 48):
+        result[i div 48] = db.merit.holdersStr[i ..< i + 48]
+        db.merit.holders[db.merit.holdersStr[i ..< i + 48]] = true
 
 proc loadMerit*(
     db: DB,
