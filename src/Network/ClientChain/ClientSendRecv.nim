@@ -124,7 +124,7 @@ proc recv*(
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
-            len = (int(msg[^1]) * SEND_LENS[2]) + SEND_LENS[4]
+            len = (int(msg[^1]) * SEND_LENS[3]) + SEND_LENS[4]
             size += len
             try:
                 msg &= await client.socket.recv(len)

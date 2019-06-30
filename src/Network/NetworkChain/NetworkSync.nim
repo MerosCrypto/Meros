@@ -391,7 +391,9 @@ proc requestBlock*(
     DataMissing,
     ValidityConcern
 ], async.} =
-    var toDisconnect: seq[int] = @[]
+    var
+        toDisconnect: seq[int] = @[]
+        synced: bool
     for client in network.clients:
         #Only sync from Clients which aren't syncing from us.
         if client.theirState == Syncing:
@@ -410,6 +412,7 @@ proc requestBlock*(
         try:
             result = await client.syncBlock(nonce)
         except SocketError, ClientError:
+            echo getCurrentExceptionMsg()
             toDisconnect.add(client.id)
             continue
         except SyncConfigError as e:
@@ -437,11 +440,16 @@ proc requestBlock*(
             doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         #Break out of the loop.
+        synced = true
         break
 
     #Disconnect any Clients marked for disconnection.
     for id in toDisconnect:
         network.clients.disconnect(id)
+
+    #Make sure we synced the Block.
+    if not synced:
+        raise newException(DataMissing, "Couldn't sync the specified BlockHeader.")
 
     #Sync the Block's contents.
     try:
