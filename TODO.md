@@ -27,6 +27,15 @@ UI:
 
 Network:
 
+- ```
+proc sync*(
+    network: Network,
+    consensus: Consensus,
+    newBlock: Block
+)
+```
+has several notes in `discard """ """` about syncing transactions which should be resolved.
+
 - Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
 
 - Syncing currently works by:

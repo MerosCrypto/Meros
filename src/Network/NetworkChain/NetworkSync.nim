@@ -246,7 +246,6 @@ proc sync*(
         var toDisconnect: seq[int] = @[]
 
         #Try syncing with every client.
-        var synced: bool = false
         for client in network.clients:
             #Only sync from Clients which aren't syncing from us.
             if client.theirState == Syncing:
@@ -272,50 +271,68 @@ proc sync*(
             except Exception as e:
                 doAssert(false, "Syncing a Block's Elements and Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            #Handle each Transaction.
-            try:
-                for tx in transactions:
-                    #Add it.
-                    case tx:
-                        of Claim as claim:
-                            try:
-                                network.mainFunctions.transactions.addClaim(claim, true)
-                            except ValueError:
-                                raise newException(InvalidMessageError, "Failed to add the Claim.")
-                            except DataExists:
-                                continue
-
-                        of Send as send:
-                            try:
-                                network.mainFunctions.transactions.addSend(send, true)
-                            except ValueError:
-                                raise newException(InvalidMessageError, "Failed to add the Claim.")
-                            except DataExists:
-                                continue
-
-                        of Data as data:
-                            try:
-                                network.mainFunctions.transactions.addData(data, true)
-                            except ValueError:
-                                raise newException(InvalidMessageError, "Failed to add the Claim.")
-                            except DataExists:
-                                continue
-
-                        else:
-                            doAssert(false, "Synced an Transaction of an unsyncable type.")
-            except InvalidMessageError:
-                continue
-
-            #If we made it through that without raising or continuing, set synced to true.
-            synced = true
-
         #Disconnect every Client marked for disconnection.
         for id in toDisconnect:
             network.clients.disconnect(id)
 
-        #If we tried every client and didn't sync the needed data, raise a DataMissing.
-        if not synced:
-            raise newException(DataMissing, "Couldn't sync all the Transactions in a Block.")
+        discard """
+        We are not confirmed to have every Transaction in this Block.
+        If the middle TX hash is invalid, every Client will fail in the middle.
+        The neccessary thing to do is use gap-syncing to get the needed Transactions we didn't sync.
+        That said, we can make this better by having syncTransactions try to get every Transaction from the Client, returning whatever it successfully grabbed.
+        """
+
+        #Handle each Transaction.
+        for tx in transactions:
+            #Add it.
+            case tx:
+                of Claim as claim:
+                    try:
+                        network.mainFunctions.transactions.addClaim(claim, true)
+                    except ValueError:
+                        discard """
+                            Whoever sent us this Transaction should be penalized.
+                            We should try again from a different client.
+                            This is coded like this because:
+                                - The Verification mentioning this hash may be 'unknown'.
+                                - A malicious node may have sent this an invalid TX with that hash to mess with us.
+                                - Even if the verified TX is invalid, the Block as a whole is valid.
+                        """
+                    except DataExists:
+                        continue
+
+                of Send as send:
+                    try:
+                        network.mainFunctions.transactions.addSend(send, true)
+                    except ValueError:
+                        discard """
+                            Whoever sent us this Transaction should be penalized.
+                            We should try again from a different client.
+                            This is coded like this because:
+                                - The Verification mentioning this hash may be 'unknown'.
+                                - A malicious node may have sent this an invalid TX with that hash to mess with us.
+                                - Even if the verified TX is invalid, the Block as a whole is valid.
+                        """
+                    except DataExists:
+                        continue
+
+                of Data as data:
+                    try:
+                        network.mainFunctions.transactions.addData(data, true)
+                    except ValueError:
+                        discard """
+                            Whoever sent us this Transaction should be penalized.
+                            We should try again from a different client.
+                            This is coded like this because:
+                                - The Verification mentioning this hash may be 'unknown'.
+                                - A malicious node may have sent this an invalid TX with that hash to mess with us.
+                                - Even if the verified TX is invalid, the Block as a whole is valid.
+                        """
+                    except DataExists:
+                        continue
+
+                else:
+                    doAssert(false, "Synced an Transaction of an unsyncable type.")
 
 #Sync a Block's Body.
 proc sync*(
