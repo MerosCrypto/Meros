@@ -104,6 +104,9 @@ proc mainTransactions() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
+            #Load previously unknown Verifications.
+            transactions.loadUnknown(consensus, merit.blockchain, merit.state, claim)
+
             echo "Successfully added the Claim."
 
             if not syncing:
@@ -140,6 +143,9 @@ proc mainTransactions() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
+            #Load previously unknown Verifications.
+            transactions.loadUnknown(consensus, merit.blockchain, merit.state, send)
+
             echo "Successfully added the Send."
 
             if not syncing:
@@ -175,6 +181,9 @@ proc mainTransactions() {.forceCheck: [].} =
             #Data already exisrs.
             except DataExists as e:
                 fcRaise e
+
+            #Load previously unknown Verifications.
+            transactions.loadUnknown(consensus, merit.blockchain, merit.state, data)
 
             echo "Successfully added the Data."
 

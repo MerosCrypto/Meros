@@ -306,6 +306,47 @@ proc newTransactions*(
                     result.verify(cast[Verification](elem), state[holder], state.live, false)
                 except ValueError as e:
                     doAssert(false, "Couldn't reload a Verification when reloading Transactions: " & e.msg)
+
+#Load Verifications of previously unknown hashes.
+proc loadUnknown*(
+    transactions: var Transactions,
+    consensus: Consensus,
+    blockchain: Blockchain,
+    stateArg: State,
+    tx: Transaction
+) {.forceCheck: [].} =
+    #If this transaction doesn't have previously unknown verifications, return.
+    if not consensus.unknowns.hasKey(tx.hash.toString()):
+        discard
+
+    var
+        #States.
+        state: State = stateArg
+        #Verification
+        verif: Verification
+    for u in countdown(5, max(5 - blockchain.height, 0), 1):
+        try:
+            for holder in consensus.unknowns[tx.hash.toString()][u]:
+                #Recreate the Verification.
+                verif = newVerificationObj(tx.hash)
+                try:
+                    verif.holder = holder
+                except FinalAttributeError as e:
+                    doAssert(false, "Set a final attribute twice when recreating a Verification: " & e.msg)
+
+                #Add the Verification.
+                try:
+                    transactions.verify(
+                        verif,
+                        state[holder],
+                        state.live
+                    )
+                except ValueError as e:
+                    doAssert(false, "Couldn't add a Verification for a Transaction we just added: " & e.msg)
+        except KeyError as e:
+            doAssert(false, "Couldn't get a value despite confirming we have the key: " & e.msg)
+        state.revert(blockchain, state.processedBlocks - 1)
+
 #Add a Claim.
 proc add*(
     transactions: var Transactions,
@@ -476,7 +517,7 @@ proc add*(
     if not sender.verify(data.hash.toString(), data.signature):
         raise newException(ValueError, "Data has an invalid Signature.")
 
-    #Add the Send.
+    #Add the Data.
     transactions.add(cast[Transaction](data))
 
 #Mint Meros to the specified key.

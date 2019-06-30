@@ -105,7 +105,6 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 - Meros's Merit Holder's Merkle trees are created using the hash of the Transaction verified in the Verification (the only supported Element).
 - Meros counts Verifications which were never archived for a Transaction's weight.
 - Meros doesn't support defaulting.
-- Meros doesn't apply Verifications with unknown hashes once they're known.
 - Meros doesn't check if Verifications for an unknown hash reaches majority Merit.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
