@@ -1,4 +1,4 @@
-Transactions# Merit
+# Merit
 
 Merit is a blockchain used to:
 
