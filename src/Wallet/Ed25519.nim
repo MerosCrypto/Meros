@@ -20,6 +20,44 @@ type
     EdSignature* = object
         data*: array[64, uint8]
 
+#Constructors.
+func newEdPublicKey*(
+    key: string
+): EdPublicKey {.forceCheck: [
+    EdPublicKeyError
+].} =
+    #If it's binary...
+    if key.len == 32:
+        for i in 0 ..< 32:
+            result.data[i] = key[i]
+        #If it's hex...
+    elif key.len == 64:
+        try:
+            for i in countup(0, 63, 2):
+                result.data[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
+        except ValueError:
+            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newEdPublicKey.")
+    else:
+        raise newException(EdPublicKeyError, "Invalid length Public Key passed to newEdPublicKey.")
+
+func newEdSignature*(
+    sigArg: string
+): EdSignature {.forceCheck: [
+    ValueError
+].} =
+    var sig: string
+    if sigArg.len == 64:
+        sig = sigArg
+    elif sigArg.len == 128:
+        try:
+            sig = sigArg.parseHexStr()
+        except ValueError:
+            raise newException(ValueError, "Hex-length Signature with invalid Hex data passed to newEdSignature.")
+    else:
+        raise newException(ValueError, "Invalid length Signature passed to new EdSignature.")
+
+    copyMem(addr result.data[0], addr sig[0], 64)
+
 proc toPublicKey*(
     keyArg: EdPrivateKey
 ): EdPublicKey {.forceCheck: [].} =
@@ -64,3 +102,15 @@ func verify*(
         return false
 
     result = true
+
+#Stringify.
+func toString*(
+    data: EdPrivateKey or EdPublicKey or EdSignature
+): string {.forceCheck: [].} =
+    for b in data.data:
+        result = result & char(b)
+
+func `$`*(
+    data: EdPrivateKey or EdPublicKey or EdSignature
+): string {.inline, forceCheck: [].} =
+    data.toString().toHex()

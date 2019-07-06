@@ -1,102 +1,72 @@
 #Errors lib.
 import ../lib/Errors
 
-#Util lib.
-import ../lib/Util
+#HDWallet lib,.
+import HDWallet
+export HDWallet
 
-#Ed25519 lib.
-import Ed25519
-#Export the objects.
-export EdPublicKey, EdSignature
-
-#Address lib.
-import Address
-#Export the Address lib.
-export Address
+#mnemonic lib.
+import Mnemonic
+export Mnemonic.Mnemonic
 
 #Finals lib.
 import finals
 
 finalsd:
-    #Wallet object.
-    type Wallet* = ref object of RootObj
-        #Private Key.
-        privateKey*: EdPrivateKey
-        #Public Key.
-        publicKey*: EdPublicKey
-        #Address.
-        address*: string
+    type Wallet* = ref object
+        mnemonic* {.final.}: Mnemonic
+        hd* {.final.}: HDWallet
 
-#Create a new Public Key from a string.
-func newEdPublicKey*(
-    key: string
-): EdPublicKey {.forceCheck: [
-    EdPublicKeyError
-].} =
-    #If it's binary...
-    if key.len == 32:
-        for i in 0 ..< 32:
-            result.data[i] = key[i]
-    #If it's hex...
-    elif key.len == 64:
-        try:
-            for i in countup(0, 63, 2):
-                result.data[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
-        except ValueError:
-            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newEdPublicKey.")
-    else:
-        raise newException(EdPublicKeyError, "Invalid length Public Key passed to newEdPublicKey.")
+#Constructors.
+proc newWallet*(): Wallet {.forceCheck: [].} =
+    result = Wallet()
+    try:
+        result.mnemonic = newMnemonic()
+        result.hd = newHDWallet(result.mnemonic.unlock()[0 ..< 32])
+    except ValueError:
+        result = newWallet()
 
-#Create a new Signature from a string.
-func newEdSignature*(
-    sigArg: string
-): EdSignature {.forceCheck: [
+proc newWallet*(
+    password: string
+): Wallet {.forceCheck: [].} =
+    result = Wallet()
+    try:
+        result.mnemonic = newMnemonic()
+        result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
+    except ValueError:
+        result = newWallet(password)
+
+proc newWallet*(
+    sentence: string,
+    password: string
+): Wallet {.forceCheck: [
     ValueError
 ].} =
-    var sig: string
-    if sigArg.len == 64:
-        sig = sigArg
-    elif sigArg.len == 128:
-        try:
-            sig = sigArg.parseHexStr()
-        except ValueError:
-            raise newException(ValueError, "Hex-length Signature with invalid Hex data passed to newEdSignature.")
-    else:
-        raise newException(ValueError, "Invalid length Signature passed to new EdSignature.")
+    result = Wallet()
+    try:
+        result.mnemonic = newMnemonic(sentence)
+        result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
+    except ValueError as e:
+        fcRaise e
 
-    copyMem(addr result.data[0], addr sig[0], 64)
+#Converter.
+converter toHDWallet*(
+    wallet: Wallet
+): HDWallet {.forceCheck: [].} =
+    wallet.hd
 
-#Sign a message via a Wallet.
-func sign*(
-    wallet: Wallet,
-    msg: string
-): EdSignature {.forceCheck: [].} =
-    wallet.privateKey.sign(wallet.publicKey, msg)
+#Getters.
+proc privateKey*(
+    wallet: Wallet
+): EdPrivateKey {.forceCheck: [].} =
+    wallet.hd.privateKey
 
-#Verify a signature.
-func verify*(
-    key: EdPublicKey,
-    msg: string,
-    sig: EdSignature
-): bool {.forceCheck: [].} =
-    Ed25519.verify(key, msg, sig)
+proc publicKey*(
+    wallet: Wallet
+): EdPublicKey {.forceCheck: [].} =
+    wallet.hd.publicKey
 
-#Verify a signature via a Wallet.
-func verify*(
-    wallet: Wallet,
-    msg: string,
-    sig: EdSignature
-): bool {.forceCheck: [].} =
-    wallet.publicKey.verify(msg, sig)
-
-#Stringify a PublicKey/Signature.
-func toString*(
-    data: EdPrivateKey or EdPublicKey or EdSignature
+proc address*(
+    wallet: Wallet
 ): string {.forceCheck: [].} =
-    for b in data.data:
-        result = result & char(b)
-
-func `$`*(
-    data: EdPrivateKey or EdPublicKey or EdSignature
-): string {.inline, forceCheck: [].} =
-    data.toString().toHex()
+    wallet.hd.address

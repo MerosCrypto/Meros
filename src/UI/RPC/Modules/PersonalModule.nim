@@ -22,17 +22,14 @@ import asyncdispatch
 #JSON standard lib.
 import json
 
-#Set the Wallet's secret.
-proc setSecret(
+#Set the Wallet's seed.
+proc setSeed(
     rpc: RPC,
-    secret: string
+    seed: string
 ): JSONNode {.forceCheck: [].} =
     try:
-        rpc.functions.personal.setSecret(secret)
+        rpc.functions.personal.setSeed(seed, "")
     except ValueError as e:
-        returnError()
-    except RandomError as e:
-        doAssert(secret.len == 0, "personal.setSecret threw a RandomError despite being passed a secret: " & e.msg)
         returnError()
 
 #Get the Wallet info.
@@ -46,8 +43,7 @@ proc getWallet(
         }
 
     result = %* {
-        "privateKey": $wallet.privateKey,
-        "publicKey": $wallet.publicKey,
+        "seed": wallet.mnemonic.sentence,
         "address": wallet.address
     }
 
@@ -107,13 +103,13 @@ proc personal*(
 
     try:
         case methodStr:
-            of "setSecret":
+            of "setSeed":
                 if json["args"].len < 1:
                     res = %* {
                         "error": "Not enough args were passed."
                     }
                 else:
-                    res = rpc.setSecret(json["args"][0].getStr())
+                    res = rpc.setSeed(json["args"][0].getStr())
 
             of "getWallet":
                 res = rpc.getWallet()

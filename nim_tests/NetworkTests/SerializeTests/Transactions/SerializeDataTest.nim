@@ -7,7 +7,7 @@ import ../../../../src/lib/Util
 import ../../../../src/lib/Hash
 
 #Wallet libs.
-import ../../../../src/Wallet/HDWallet
+import ../../../../src/Wallet/Wallet
 
 #Data lib.
 import ../../../../src/Database/Transactions/Data
@@ -35,6 +35,8 @@ proc test*() =
         data: Data
         #Reloaded Data.
         reloaded: Data
+        #Wallet.
+        wallet: Wallet = newWallet()
 
     #Test 255 serializations.
     for s in 0 .. 255:
@@ -54,7 +56,7 @@ proc test*() =
         )
 
         #Sign the Data.
-        newHDWallet().sign(data)
+        wallet.next(last = uint32(s * 1000)).sign(data)
 
         #mine the Data.
         data.mine("".pad(96, "cc").toHash(384))

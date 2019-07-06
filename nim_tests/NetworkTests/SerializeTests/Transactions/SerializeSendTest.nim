@@ -7,7 +7,7 @@ import ../../../../src/lib/Util
 import ../../../../src/lib/Hash
 
 #Wallet libs.
-import ../../../../src/Wallet/HDWallet
+import ../../../../src/Wallet/Wallet
 
 #Send lib.
 import ../../../../src/Database/Transactions/Send
@@ -37,6 +37,8 @@ proc test*() =
         send: Send
         #Reloaded Send.
         reloaded: Send
+        #Wallet.
+        wallet: Wallet = newWallet()
 
     #Test 255 serializations.
     for s in 0 .. 255:
@@ -51,7 +53,7 @@ proc test*() =
         #Create the outputs.
         outputs = newSeq[SendOutput](rand(254) + 1)
         for o in 0 ..< outputs.len:
-            outputs[o] = newSendOutput(newHDWallet().publicKey, uint64(rand(high(int32))))
+            outputs[o] = newSendOutput(wallet.next(last = uint32(s * 1000)).next(last = uint32(o * 1000)).publicKey, uint64(rand(high(int32))))
 
         #Create the Send.
         send = newSend(
@@ -61,7 +63,7 @@ proc test*() =
 
         #The Meros protocol requires this signature be produced by the MuSig of every unique Wallet paid via the inputs.
         #Serialization/Parsing doesn't care at all.
-        newHDWallet().sign(send)
+        wallet.next(last = uint32(s * 1000)).sign(send)
 
         #mine the Send.
         send.mine("".pad(96, "aa").toHash(384))

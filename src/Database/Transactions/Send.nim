@@ -45,7 +45,7 @@ proc newSend*(
 
 #Sign a Send.
 proc sign*(
-    wallet: Wallet,
+    wallet: HDWallet,
     send: Send
 ) {.forceCheck: [].} =
     try:

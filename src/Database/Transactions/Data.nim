@@ -60,7 +60,7 @@ proc newData*(
 
 #Sign a Data.
 proc sign*(
-    wallet: Wallet,
+    wallet: HDWallet,
     data: Data
 ) {.forceCheck: [].} =
     try:

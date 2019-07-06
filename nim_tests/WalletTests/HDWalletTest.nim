@@ -28,7 +28,6 @@ proc test*() =
     var
         #HDWallets.
         wallet: HDWallet
-        reloaded: HDWallet
 
         #Test vectors.
         vectors: JSONNode = parseJSON(vectorsFile)
@@ -71,29 +70,9 @@ proc test*() =
         #If this wallet is valid, load and derive it.
         wallet = newHDWallet(vector["secret"].getStr()).derive(path)
 
-        #Check the intiated field and index.
-        if path.len == 0:
-            assert(wallet.i == 0)
-        else:
-            assert(wallet.i == path[^1])
-
         #Compare the Wallet with the vector.
         assert($wallet.privateKey == (vector["node"]["kLP"].getStr() & vector["node"]["kRP"].getStr()).toUpper())
         assert($wallet.publicKey == vector["node"]["AP"].getStr().toUpper())
         assert($wallet.chainCode == vector["node"]["cP"].getStr().toUpper())
-
-        #Test loading wallets with a chain code.
-        wallet = newHDWallet(vector["secret"].getStr())
-        reloaded = newHDWallet(vector["secret"].getStr(), wallet.chainCode)
-
-        #Compare the Wallets.
-        assert(wallet.i == reloaded.i)
-        assert(wallet.privateKey.toString() == reloaded.privateKey.toString())
-        assert(wallet.publicKey.toString() == reloaded.publicKey.toString())
-        assert(wallet.chainCode == reloaded.chainCode)
-
-    #Generate 100 random HDwallets.
-    for _ in 0 .. 100:
-        wallet = newHDWallet()
 
     echo "Finished the Wallet/HDWallet Test."

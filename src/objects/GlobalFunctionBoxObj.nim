@@ -152,11 +152,11 @@ type
     PersonalFunctionBox* = ref object
         getWallet*: proc (): Wallet {.inline, raises: [].}
 
-        setSecret*: proc (
-            secret: string
+        setSeed*: proc (
+            seed: string,
+            paassword: string
         ) {.raises: [
-            ValueError,
-            RandomError
+            ValueError
         ].}
 
         send*: proc (

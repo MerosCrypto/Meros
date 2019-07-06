@@ -7,7 +7,7 @@ import ../../../../src/lib/Util
 import ../../../../src/lib/Hash
 
 #Wallet libs.
-import ../../../../src/Wallet/HDWallet
+import ../../../../src/Wallet/Wallet
 import ../../../../src/Wallet/MinerWallet
 
 #Mint and Claim lib.
@@ -35,6 +35,8 @@ proc test*() =
         claim: Claim
         #Reloaded Claim.
         reloaded: Claim
+        #Wallet.
+        wallet: Wallet = newWallet()
 
     #Test 255 serializations.
     for s in 0 .. 255:
@@ -50,7 +52,7 @@ proc test*() =
         #Create the Claim.
         claim = newClaim(
             mints,
-            newHDWallet().publicKey
+            wallet.next(last = uint32(s * 1000)).publicKey
         )
 
         #The Meros protocol requires this signature be produced by the aggregate of every unique MinerWallet paid via the Mints.

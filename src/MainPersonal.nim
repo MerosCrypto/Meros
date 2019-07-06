@@ -7,23 +7,22 @@ proc mainPersonal() {.forceCheck: [].} =
             wallet
 
         #Set the Wallet's secret.
-        functions.personal.setSecret = proc (
-            secret: string
+        functions.personal.setSeed = proc (
+            seed: string,
+            password: string
         ) {.forceCheck: [
-            ValueError,
-            RandomError
+            ValueError
         ].} =
-            if secret.len == 0:
+            if seed.len == 0:
                 try:
-                    wallet = newHDWallet()
+                    wallet = newWallet()
                 except ValueError as e:
-                    fcRaise e
-                except RandomError as e:
                     fcRaise e
             else:
                 try:
-                    wallet = newHDWallet(secret)
+                    wallet = newWallet(seed, password)
                 except ValueError as e:
+                    echo e.msg
                     fcRaise e
 
         #Create a Send Transaction.

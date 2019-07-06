@@ -9,10 +9,11 @@ import ../lib/Hash
 
 #Ed25519 lib.
 import Ed25519
+export Ed25519
 
-#Wallet lib.
-import Wallet
-export Wallet
+#Address lib.
+import Address
+export Address
 
 #StInt lib.
 import StInt
@@ -31,13 +32,30 @@ let
 
 finalsd:
     #HDWallet.
-    type HDWallet* = ref object of Wallet
-            #Secret used to create the wallet.
-            secret*: string
-            #Child index on the parent.
-            i* {.final.}: uint32
-            #Chain Code.
-            chainCode* {.final.}: SHA2_256Hash
+    type HDWallet* = object
+        #Chain Code.
+        chainCode* {.final.}: SHA2_256Hash
+        #Private Key.
+        privateKey*: EdPrivateKey
+        #Public Key.
+        publicKey*: EdPublicKey
+        #Address.
+        address*: string
+
+#Sign a message via a Wallet.
+func sign*(
+    wallet: HDWallet,
+    msg: string
+): EdSignature {.inline, forceCheck: [].} =
+    wallet.privateKey.sign(wallet.publicKey, msg)
+
+#Verify a signature via a Wallet.
+func verify*(
+    wallet: HDWallet,
+    msg: string,
+    sig: EdSignature
+): bool {.inline, forceCheck: [].} =
+    wallet.publicKey.verify(msg, sig)
 
 #Constructors.
 proc newHDWallet*(
@@ -65,7 +83,7 @@ proc newHDWallet*(
     #Create the Private Key.
     privateKey.data = cast[array[64, cuchar]](SHA2_512(secret).data)
     if (uint8(privateKey.data[31]) and 0b00100000) != 0:
-        raise newException(ValueError, "Secret generated an invalid private key,")
+        raise newException(ValueError, "Secret generated an invalid private key.")
     privateKey.data[0]  = cuchar(uint8(privateKey.data[0])  and (not uint8(0b00000111)))
     privateKey.data[31] = cuchar(uint8(privateKey.data[31]) and (not uint8(0b10000000)))
     privateKey.data[31] = cuchar(uint8(privateKey.data[31]) or             0b01000000)
@@ -75,45 +93,14 @@ proc newHDWallet*(
 
     result = HDWallet(
         #Set the Wallet fields.
-        secret: secret,
         privateKey: privateKey,
         publicKey: publicKey,
         address: newAddress(publicKey),
 
-        #Set the index to 0.
-        i: 0,
         #Create the chain code.
         chainCode: SHA2_256('\1' & secret)
     )
-    result.ffinalizeI()
     result.ffinalizeChainCode()
-
-proc newHDWallet*(): HDWallet {.forceCheck: [
-    RandomError
-].} =
-    var secret: string = newString(32)
-    try:
-        randomFill(secret)
-    except RandomError as e:
-        fcRaise e
-
-    try:
-        result = newHDWallet(secret)
-    except ValueError:
-        result = newHDWallet()
-
-proc newHDWallet*(
-    secret: string,
-    chainCode: SHA2_256Hash
-): HDWallet {.forceCheck: [
-    ValueError
-].} =
-    try:
-        result = newHDWallet(secret)
-    except ValueError as e:
-        fcRaise e
-    if result.chainCode != chainCode:
-        raise newException(ValueError, "Created an HDWallet yet the created wallet doesn't match the provided chain code.")
 
 #Derive a Child HD Wallet.
 proc derive*(
@@ -199,11 +186,9 @@ proc derive*(
             publicKey: publicKey,
             address: newAddress(publicKey),
 
-            #Set the index and chain code.
-            i: childArg,
+            #Set the chain code.
             chainCode: chainCode
         )
-        result.ffinalizeI()
         result.ffinalizeChainCode()
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when deriving a HDWallet: " & e.msg)

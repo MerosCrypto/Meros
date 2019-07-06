@@ -1,4 +1,4 @@
-#HDWallet Test.
+#Mnemonic Test.
 
 #Mnemonic lib.
 import ../../src/Wallet/Mnemonic
@@ -17,8 +17,9 @@ const vectorsFile: string = staticRead("Vectors" / "Mnemonic.json")
 
 proc test*() =
     var
-        #Mnemonic object.
+        #Mnemonic objects.
         mnemonic: Mnemonic
+        reloaded: Mnemonic
 
         #Test vectors.
         vectors: JSONNode = parseJSON(vectorsFile)
@@ -29,6 +30,15 @@ proc test*() =
         assert(mnemonic.entropy.toHex().toLower() == vector[0].getStr())
         assert(mnemonic.unlock("TREZOR").toHex().toLower() == vector[2].getStr())
 
-    echo "Finished the Wallet/Mnemonic Test."
+    #Test generated Mnemonics.
+    for _ in 1 .. 255:
+        mnemonic = newMnemonic()
+        reloaded = newMnemonic(mnemonic.sentence)
 
-test()
+        assert(mnemonic.entropy == reloaded.entropy)
+        assert(mnemonic.checksum == reloaded.checksum)
+        assert(mnemonic.sentence == reloaded.sentence)
+
+        assert(mnemonic.unlock("password") == reloaded.unlock("password"))
+
+    echo "Finished the Wallet/Mnemonic Test."

@@ -12,7 +12,7 @@ import Database/common/Merkle
 
 #Wallet libs.
 import Wallet/MinerWallet
-import Wallet/HDWallet
+import Wallet/Wallet
 
 #Transactions.
 import Database/Transactions/Transactions

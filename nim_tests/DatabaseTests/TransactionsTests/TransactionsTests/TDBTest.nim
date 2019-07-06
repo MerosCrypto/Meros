@@ -7,7 +7,7 @@ import ../../../../src/lib/Util
 import ../../../../src/lib/Hash
 
 #Wallet libs.
-import ../../../../src/Wallet/HDWallet
+import ../../../../src/Wallet/Wallet
 import ../../../../src/Wallet/MinerWallet
 
 #MeritHolderRecord object.
@@ -65,7 +65,7 @@ proc test*() =
         #MeritHolders.
         holders: seq[MinerWallet] = @[]
         #Accounts.
-        wallets: seq[HDWallet] = @[]
+        wallets: seq[Wallet] = @[]
 
         #UTXOs.
         utxos: Table[string, seq[SendInput]] = initTable[string, seq[SendInput]]()
@@ -209,7 +209,7 @@ proc test*() =
     for _ in 0 ..< 20:
         #Create a random amount of Wallets.
         for _ in 0 ..<  rand(2) + 1:
-            wallets.add(newHDWallet().next())
+            wallets.add(newWallet())
             utxos[wallets[^1].publicKey.toString()] = @[]
 
         #Create Transactions and verify them.

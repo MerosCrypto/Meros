@@ -7,8 +7,8 @@ import ../../../../../src/lib/Util
 #Hash lib.
 import ../../../../../src/lib/Hash
 
-#HDWallet lib.
-import ../../../../../src/Wallet/HDWallet
+#Wallet lib.
+import ../../../../../src/Wallet/Wallet
 
 #TransactionDB lib.
 import ../../../../../src/Database/Filesystem/DB/TransactionsDB
@@ -64,7 +64,7 @@ proc test*() =
 
     #Generate 10 wallets.
     for _ in 0 ..< 10:
-        wallets.add(newHDWallet())
+        wallets.add(newWallet())
 
     #Test 100 'Transaction's.
     for _ in 0 .. 100:

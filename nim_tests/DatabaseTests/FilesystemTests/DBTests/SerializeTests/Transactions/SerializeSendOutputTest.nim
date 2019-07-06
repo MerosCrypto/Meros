@@ -3,8 +3,8 @@
 #Util lib.
 import ../../../../../../src/lib/Util
 
-#HDWallet lib.
-import ../../../../../../src/Wallet/HDWallet
+#Wallet lib.
+import ../../../../../../src/Wallet/Wallet
 
 #SendOutput object.
 import ../../../../../../src/Database/Transactions/objects/TransactionObj
@@ -31,7 +31,7 @@ proc test*() =
     for _ in 0 .. 255:
         #Create the SendOutput.
         output = newSendOutput(
-            newHDWallet().publicKey,
+            newWallet().publicKey,
             uint64(rand(int32.high))
         )
 

@@ -35,6 +35,7 @@ proc addTo*(
                 var js: string
                 try:
                     js = &"""
+                        document.getElementById("seed").innerHTML = "{wallet["seed"].getStr()}";
                         document.getElementById("address").innerHTML = "{wallet["address"].getStr()}";
                     """
                 except ValueError as e:
@@ -46,12 +47,12 @@ proc addTo*(
         #Create a Wallet from a secret.
         gui.webview.bindProc(
             "Personal",
-            "setSecret",
+            "setSeed",
             proc (
-                secret: string
+                seed: string
             ) {.forceCheck: [].} =
                 try:
-                    discard gui.call("personal", "setSecret", secret)
+                    discard gui.call("personal", "setSeed", seed, "")
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
         )

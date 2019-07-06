@@ -72,6 +72,7 @@ proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
 
         #Increase the bit by 11.
         bit += 11
+    result.sentence = result.sentence[ 0 ..< result.sentence.len - 1]
 
     result.ffinalizeEntropy()
     result.ffinalizeChecksum()
@@ -83,11 +84,16 @@ proc newMnemonic*(
 ): Mnemonic  {.forceCheck: [
     ValueError
 ].} =
-    #Set the sentence in the mnemonic.
-    result.sentence = sentence
-
     #Split the sentence.
-    var words: seq[string] = sentence.split(" ")
+    var words: seq[string] = sentence.split(" ").filter(
+        proc (
+            word: string
+        ): bool {.forceCheck: [].} =
+            word != ""
+    )
+
+    #Set the sentence in the mnemonic.
+    result.sentence = words.join(" ")
 
     #Decode the sentence.
     var
@@ -143,7 +149,7 @@ proc newMnemonic*(
     var
         #Checksum length entropy length div 32.
         #This means the checksum length is bits mod 32 EXCEPT when the bits is over 32 * 32.
-        checksumLen: int = (bits mod 32) + ((bits div 1056) * 32)
+        checksumLen: int = (bits mod 32) + ((bits div (32 * 32)) * 32)
         #Entropy length is bits - checksum length/
         entropyLen: int = bits - checksumLen
 
@@ -181,6 +187,6 @@ proc newMnemonic*(
 #Generate a secret using the Mnemonic and the password.
 proc unlock*(
     mnemonic: Mnemonic,
-    password: string
+    password: string = ""
 ): string {.forceCheck: [].} =
     PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).toString()

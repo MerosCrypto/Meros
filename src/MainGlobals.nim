@@ -22,7 +22,7 @@ var
 
     #Personal.
     verifyLock: Lock               #Verify lock to stop us from triggering a MeritRemoval.
-    wallet {.threadvar.}: HDWallet #Wallet.
+    wallet {.threadvar.}: Wallet   #Wallet.
 
     #Network.
     network {.threadvar.}: Network #Network.
