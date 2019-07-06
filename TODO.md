@@ -27,7 +27,8 @@ UI:
 
 Network:
 
-- ```
+-
+```
 proc sync*(
     network: Network,
     consensus: Consensus,
