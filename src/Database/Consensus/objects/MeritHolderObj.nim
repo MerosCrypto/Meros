@@ -124,7 +124,7 @@ proc add*(
     #Add the Element to the Merkle.
     case element:
         of Verification as verif:
-            holder.merkle.add(verif.hash)
+            holder.merkle.add(Blake384(verif.serializeSign()))
         else:
             doAssert(false, "Element should be a Verification.")
 
