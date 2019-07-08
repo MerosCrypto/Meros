@@ -282,57 +282,94 @@ proc sync*(
         That said, we can make this better by having syncTransactions try to get every Transaction from the Client, returning whatever it successfully grabbed.
         """
 
-        #Handle each Transaction.
-        for tx in transactions:
-            #Add it.
-            case tx:
-                of Claim as claim:
-                    try:
-                        network.mainFunctions.transactions.addClaim(claim, true)
-                    except ValueError:
-                        discard """
-                            Whoever sent us this Transaction should be penalized.
-                            We should try again from a different client.
-                            This is coded like this because:
-                                - The Verification mentioning this hash may be 'unknown'.
-                                - A malicious node may have sent this an invalid TX with that hash to mess with us.
-                                - Even if the verified TX is invalid, the Block as a whole is valid.
-                        """
-                    except DataExists:
-                        continue
+        #List of Transactions we have yet to process.
+        var todo: seq[Transaction] = newSeq[Transaction](1)
+        #While we still have transactions to do...
+        while todo.len > 0:
+            #Clear todo.
+            todo = @[]
+            #Iterate over every transaction.
+            for tx in transactions:
+                block thisTX:
+                    echo "Handling ", tx.hash
+                    #Make sure we have already added every input.
+                    for input in tx.inputs:
+                        try:
+                            #If the TX doesn't exist, this will throw. If it does exist but isn't verified, throw a different error.
+                            if not network.mainFunctions.transactions.getTransaction(input.hash).verified:
+                                echo "Input is not verified"
+                                raise newException(ValueError, "")
+                        #This TX is missing an input.
+                        except IndexError:
+                            echo "Missing input"
+                            #Look for the input in the pending transactions.
+                            var found: bool = false
+                            for todoTX in transactions:
+                                if todoTX.hash == input.hash:
+                                    found = true
+                            #If it's found, add it.
+                            if found:
+                                todo.add(tx)
+                            else:
+                                echo "Input not found in other TXs"
 
-                of Send as send:
-                    try:
-                        network.mainFunctions.transactions.addSend(send, true)
-                    except ValueError:
-                        discard """
-                            Whoever sent us this Transaction should be penalized.
-                            We should try again from a different client.
-                            This is coded like this because:
-                                - The Verification mentioning this hash may be 'unknown'.
-                                - A malicious node may have sent this an invalid TX with that hash to mess with us.
-                                - Even if the verified TX is invalid, the Block as a whole is valid.
-                        """
-                    except DataExists:
-                        continue
+                            break thisTX
+                        #This TX spends an unconfirmed input.
+                        except ValueError:
+                            break thisTX
 
-                of Data as data:
-                    try:
-                        network.mainFunctions.transactions.addData(data, true)
-                    except ValueError:
-                        discard """
-                            Whoever sent us this Transaction should be penalized.
-                            We should try again from a different client.
-                            This is coded like this because:
-                                - The Verification mentioning this hash may be 'unknown'.
-                                - A malicious node may have sent this an invalid TX with that hash to mess with us.
-                                - Even if the verified TX is invalid, the Block as a whole is valid.
-                        """
-                    except DataExists:
-                        continue
+                    #Handle the tx.
+                    echo "Adding"
+                    case tx:
+                        of Claim as claim:
+                            try:
+                                network.mainFunctions.transactions.addClaim(claim, true)
+                            except ValueError:
+                                discard """
+                                    Whoever sent us this Transaction should be penalized.
+                                    We should try again from a different client.
+                                    This is coded like this because:
+                                        - The Verification mentioning this hash may be 'unknown'.
+                                        - A malicious node may have sent this an invalid TX with that hash to mess with us.
+                                        - Even if the verified TX is invalid, the Block as a whole is valid.
+                                """
+                            except DataExists:
+                                continue
 
-                else:
-                    doAssert(false, "Synced an Transaction of an unsyncable type.")
+                        of Send as send:
+                            try:
+                                network.mainFunctions.transactions.addSend(send, true)
+                            except ValueError:
+                                discard """
+                                    Whoever sent us this Transaction should be penalized.
+                                    We should try again from a different client.
+                                    This is coded like this because:
+                                        - The Verification mentioning this hash may be 'unknown'.
+                                        - A malicious node may have sent this an invalid TX with that hash to mess with us.
+                                        - Even if the verified TX is invalid, the Block as a whole is valid.
+                                """
+                            except DataExists:
+                                continue
+
+                        of Data as data:
+                            try:
+                                network.mainFunctions.transactions.addData(data, true)
+                            except ValueError:
+                                discard """
+                                    Whoever sent us this Transaction should be penalized.
+                                    We should try again from a different client.
+                                    This is coded like this because:
+                                        - The Verification mentioning this hash may be 'unknown'.
+                                        - A malicious node may have sent this an invalid TX with that hash to mess with us.
+                                        - Even if the verified TX is invalid, the Block as a whole is valid.
+                                """
+                            except DataExists:
+                                continue
+
+                        else:
+                            doAssert(false, "Synced an Transaction of an unsyncable type.")
+            #Set transactions to todo.
+            transactions = todo
 
 #Sync a Block's Body.
 proc sync*(

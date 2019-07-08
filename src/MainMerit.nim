@@ -119,14 +119,6 @@ proc mainMerit() {.forceCheck: [].} =
                 except IndexError as e:
                     fcRaise e
 
-                #Make sure Transactions has the verified Transactions.
-                for e in 0 ..< elems.len:
-                    if elems[e] of Verification:
-                        try:
-                            discard transactions[cast[Verification](elems[e]).hash]
-                        except IndexError:
-                            raise newException(GapError, "Block refers to missing Transactions.")
-
             #Add the Block to the Merit.
             var epoch: Epoch
             try:
