@@ -12,9 +12,10 @@ It returns:
 When `descendant` == "verification":
     - `hash` (string)
 
-### `getUnarchivedMeritHolderRecords`
-`getUnarchivedMeritHolderRecords` will fetch and return all MeritHolderRecords for all MeritHolders with unarchived Elements (plus an aggregate signature). It takes in zero arguments and returns an array of objects, each as follows:
-- `holder`    (string)
-- `nonce`     (int)
-- `merkle`    (string)
-- `signature` (string)
+### `getUnarchivedRecords`
+`getUnarchivedMeritHolderRecords` will fetch and return all MeritHolderRecords for all MeritHolders with unarchived Elements (plus an aggregate signature). It takes in zero arguments and returns:
+- `records` (array)
+    - `holder`    (string)
+    - `nonce`     (int)
+    - `merkle`    (string)
+- `aggregate` (string)

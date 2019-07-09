@@ -58,21 +58,17 @@ proc verify*(
         return false
 
     #Aggregate Infos for each MeritHolder.
-    var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](blockArg.records.len)
+    var agInfos: seq[BLSAggregationInfo] = @[]
     #Iterate over every Record.
     for r, record in blockArg.records:
         #Key in the record.
         var key: string = record.key.toString()
 
-        #Aggregate Infos for this holder.
-        var holderAgInfos: seq[BLSAggregationInfo]
         try:
-            #Init this MeritHolder's
-            holderAgInfos = newSeq[BLSAggregationInfo](elems[key].len)
-            #Iterate over this holder's hashes.
+            #Iterate over this holder's elements.
             for e, elem in elems[key]:
                 #Create AggregationInfos.
-                holderAgInfos[e] = newBLSAggregationInfo(record.key, elem.serializeSign())
+                agInfos.add(newBLSAggregationInfo(record.key, elem.serializeSign()))
         #The presented Table has a different set of MeritHolders than the records.
         except KeyError:
             return false
@@ -80,13 +76,7 @@ proc verify*(
         except BLSError:
             return false
 
-        #Create the aggregate AggregateInfo for this MeritHolder.
-        try:
-            agInfos[r] = holderAgInfos.aggregate()
-        except BLSError:
-            return false
-
-    #Calculate the aggregation info.
+    #Calculate the fianl aggregation info.
     var agInfo: BLSAggregationInfo
     try:
         agInfo = agInfos.aggregate()

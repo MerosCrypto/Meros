@@ -46,34 +46,26 @@ proc getElement(
             doAssert(false, "Element should be a Verification.")
 
 #Get unarchived Merit Holder Records.
-proc getUnarchivedMeritHolderRecords(
+proc getUnarchivedRecords(
     rpc: RPC
 ): JSONNode {.forceCheck: [].} =
     #Get the records.
-    var records: seq[MeritHolderRecord] = rpc.functions.consensus.getUnarchivedRecords()
-
-    #Get the aggregates.
-    var aggregates: seq[BLSSignature] = newSeq[BLSSignature](records.len)
-    for i in 0 ..< records.len:
-        try:
-            aggregates[i] = rpc.functions.consensus.getPendingAggregate(
-                records[i].key,
-                records[i].nonce
-            )
-        except IndexError as e:
-            returnError()
-        except BLSError as e:
-            returnError()
+    var records: tuple[
+        records: seq[MeritHolderRecord],
+        aggregate: BLSSignature
+    ] = rpc.functions.consensus.getUnarchivedRecords()
 
     #Create the JSON.
-    result = %* []
-    #Add each index/merkle.
-    for i in 0 ..< records.len:
+    result = %* {
+        "records": [],
+        "aggregate": $records.aggregate
+    }
+    #Add each record.
+    for i in 0 ..< records.records.len:
         result.add(%* {
-            "holder":    $records[i].key,
-            "nonce":     records[i].nonce,
-            "merkle":    $records[i].merkle,
-            "signature": $aggregates[i]
+            "holder":    $records.records[i].key,
+            "nonce":     records.records[i].nonce,
+            "merkle":    $records.records[i].merkle
         })
 
 #Handler.
@@ -110,8 +102,8 @@ proc consensus*(
                         json["args"][1].getInt()
                     )
 
-            of "getUnarchivedMeritHolderRecords":
-                res = rpc.getUnarchivedMeritHolderRecords()
+            of "getUnarchivedRecords":
+                res = rpc.getUnarchivedRecords()
 
             else:
                 res = %* {

@@ -88,15 +88,10 @@ type
             IndexError
         ].}
 
-        getUnarchivedRecords*: proc (): seq[MeritHolderRecord] {.raises: [].}
-
-        getPendingAggregate*: proc (
-            key: BLSPublicKey,
-            nonce: int
-        ): BLSSignature {.raises: [
-            IndexError,
-            BLSError
-        ].}
+        getUnarchivedRecords*: proc (): tuple[
+            records: seq[MeritHolderRecord],
+            aggregate: BLSSignature
+        ] {.raises: [].}
 
         getPendingHashes*: proc (
             key: BLSPublicKey,

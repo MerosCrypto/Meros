@@ -23,14 +23,15 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
 
         #Provide access to the MeritHolderRecords of holders with unarchived Elements.
-        functions.consensus.getUnarchivedRecords = proc (): seq[MeritHolderRecord] {.forceCheck: [].} =
-            #Check who has new Elements.
-            result = @[]
-            for holder in consensus.holders():
-                #Skip over MeritHolders with no Elements, if any manage to exist.
-                if consensus[holder].height == 0:
-                    continue
+        functions.consensus.getUnarchivedRecords = proc (): tuple[
+            records: seq[MeritHolderRecord],
+            aggregate: BLSSignature
+        ] {.forceCheck: [].} =
+            #Signatures.
+            var signatures: seq[BLSSignature] = @[]
 
+            #Iterate over every holder.
+            for holder in consensus.holders():
                 #Continue if this user doesn't have unarchived Elements.
                 if consensus[holder].archived == consensus[holder].height - 1:
                     continue
@@ -44,48 +45,28 @@ proc mainConsensus() {.forceCheck: [].} =
                 except IndexError as e:
                     doAssert(false, "MeritHolder.calculateMerkle() threw an IndexError when the index was holder.height - 1: " & e.msg)
 
-                result.add(newMeritHolderRecord(
+                result.records.add(newMeritHolderRecord(
                     holder,
                     nonce,
                     merkle
                 ))
 
-        #Provide access to pending aggregate signatures.
-        functions.consensus.getPendingAggregate = proc (
-            key: BLSPublicKey,
-            nonce: int
-        ): BLSSignature {.forceCheck: [
-            IndexError,
-            BLSError
-        ].} =
-            var
-                #Grab the MeritHolder.
-                holder: MeritHolder = consensus[key]
-                #Create a seq of signatures.
-                sigs: seq[BLSSignature] = @[]
-                #Start of the unarchived Elements.
-                start: int
+                #Add all the pending signatures to signatures.
+                try:
+                    for elem in consensus[holder]{consensus[holder].archived + 1 ..< consensus[holder].height}:
+                        case elem:
+                            of Verification as verif:
+                                signatures.add(cast[SignedVerification](verif).signature)
+                            else:
+                                doAssert(false, "Tried to get the signature of a non-Verification.")
+                except IndexError as e:
+                    doAssert(false, "Couldn't get an Element we know we have: " & e.msg)
 
-            #If this MeritHolder has pending Elements...
-            if holder.archived != holder.height - 1:
-                start = holder.archived + 1
-            else:
-                return nil
-
-            #Iterate over every unarchived Element, up to and including the nonce.
+            #Aggregate the Signatures.
             try:
-                var elems: seq[Element] = holder{start .. nonce}
-                for elem in elems:
-                    if elem of Verification:
-                        sigs.add(cast[SignedVerification](elem).signature)
-            except IndexError as e:
-                fcRaise e
-
-            #Return the aggregate.
-            try:
-                return sigs.aggregate()
+                result.aggregate = signatures.aggregate()
             except BLSError as e:
-                fcRaise e
+                doAssert(false, "Failed to aggregate the signatures: " & e.msg)
 
         #Used to calculate the aggregate with Elements we just downloaded.
         functions.consensus.getPendingHashes = proc (

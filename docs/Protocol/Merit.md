@@ -88,8 +88,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 List[BLSSignature] signatures
 for r in records:
 	for n in previousRecordNonce[r.key] + 1 .. r.nonce:
-    	signedElement = consenus[r.key][n]
-        signatures.add(signedElement.signature)
+        signatures.add(consenus[r.key][n].signature)
     previousRecordNonce[r.key] = r.nonce
 BLSSignature aggregate = signatures.aggregate()
 ```
@@ -144,21 +143,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 `Checkpoint` has a variable message length; the 48-byte Block hash, 4-byte amount of signers, every signer's 96-byte BLS Public Key, and the 96-byte aggregate signature.
 
 ### Violations in Meros
-
-- Meros produces the BlockHeader aggregate using the following algorithm:
-
-```
-List[BLSSignature] verifierSignatures
-for r in records:
-	for n in previousRecordNonce[r.key] + 1 .. r.nonce:
-    	signedElement = consenus[r.key][n]
-        elementSignatures.add(signedElement.signature)
-
-    verifierSignatures.add(elementSignatures.aggregate())
-    previousRecordNonce[r.key] = r.nonce
-
-BLSSignature aggregate = verifierSignatures.aggregate()
-```
 
 - Meros allows archived Verifications to skip over Transactions.
 - Meros doesn't support dead Merit.

@@ -36,7 +36,7 @@ finalsd:
         keyStr* {.final.}: string
 
         #MeritHolder height.
-        height*: Natural
+        height*: int
         #Amount of Elements which have been archived.
         archived*: int
         #Merkle of the Elements.
