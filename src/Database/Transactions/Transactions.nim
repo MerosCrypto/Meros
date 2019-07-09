@@ -317,7 +317,7 @@ proc loadUnknown*(
 ) {.forceCheck: [].} =
     #If this transaction doesn't have previously unknown verifications, return.
     if not consensus.unknowns.hasKey(tx.hash.toString()):
-        discard
+        return
 
     var
         #States.
