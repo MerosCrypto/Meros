@@ -25,6 +25,9 @@ import ../../../Network/Serialize/Consensus/SerializeElement
 #Finals lib.
 import finals
 
+#Tables standard lib.
+import tables
+
 #MeritHolder object.
 finalsd:
     type MeritHolder* = ref object
@@ -39,6 +42,9 @@ finalsd:
         height*: int
         #Amount of Elements which have been archived.
         archived*: int
+
+        #Signatures of pending Elements.
+        signatures*: Table[int, BLSSignature]
         #Merkle of the Elements.
         merkle*: Merkle
 
@@ -54,6 +60,8 @@ proc newMeritHolderObj*(
         keyStr: key.toString(),
 
         archived: -1,
+
+        signatures: initTable[int, BLSSignature](),
         merkle: newMerkle()
     )
     result.ffinalizeKey()
@@ -164,6 +172,9 @@ proc add*(
     except MaliciousMeritHolder as e:
         fcRaise e
 
+    #Cache the signature.
+    holder.signatures[element.nonce] = element.signature
+
 #Slice operators.
 proc `[]`*(
     holder: MeritHolder,
@@ -194,25 +205,5 @@ proc `[]`*(
     try:
         for i in a .. b:
             result[i - a] = holder[i]
-    except IndexError as e:
-        fcRaise e
-
-proc `{}`*(
-    holder: MeritHolder,
-    slice: Slice[int]
-): seq[Element] {.forceCheck: [
-    IndexError
-].} =
-    #Extract the slice values.
-    var
-        a: int = slice.a
-        b: int = slice.b
-
-    if slice.a <= holder.archived:
-        raise newException(IndexError, "Signed Slice Operator passed an `a` who's Element no longer has a signature.")
-
-    #Grab the Elements and cast them.
-    try:
-        result = holder[a .. b]
     except IndexError as e:
         fcRaise e

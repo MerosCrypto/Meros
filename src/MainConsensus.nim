@@ -53,12 +53,10 @@ proc mainConsensus() {.forceCheck: [].} =
 
                 #Add all the pending signatures to signatures.
                 try:
-                    for elem in consensus[holder]{consensus[holder].archived + 1 ..< consensus[holder].height}:
-                        case elem:
-                            of Verification as verif:
-                                signatures.add(cast[SignedVerification](verif).signature)
-                            else:
-                                doAssert(false, "Tried to get the signature of a non-Verification.")
+                    for e in consensus[holder].archived + 1 ..< consensus[holder].height:
+                        signatures.add(consensus[holder].signatures[e])
+                except KeyError as e:
+                    doAssert(false, "Couldn't get a signature of a pending Element we know we have: " & e.msg)
                 except IndexError as e:
                     doAssert(false, "Couldn't get an Element we know we have: " & e.msg)
 

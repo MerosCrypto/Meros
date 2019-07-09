@@ -60,13 +60,17 @@ proc getUnarchivedRecords(
         "records": [],
         "aggregate": $records.aggregate
     }
+
     #Add each record.
     for i in 0 ..< records.records.len:
-        result.add(%* {
-            "holder":    $records.records[i].key,
-            "nonce":     records.records[i].nonce,
-            "merkle":    $records.records[i].merkle
-        })
+        try:
+            result["records"].add(%* {
+                "holder":    $records.records[i].key,
+                "nonce":     records.records[i].nonce,
+                "merkle":    $records.records[i].merkle
+            })
+        except KeyError as e:
+            doAssert(false, "Couldn't access the records value of a JSON object we just created with said field: " & e.msg)
 
 #Handler.
 proc consensus*(
