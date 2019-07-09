@@ -111,5 +111,4 @@ Argon2d(
 
 ### Violations in Meros
 
-- Meros doesn't support Data, Lock, or Unlock Transactions.
-- Meros doesn't support multi-key Sends/Claims.
+- Meros doesn't support Lock or Unlock Transactions.

@@ -363,17 +363,17 @@ proc add*(
         discard
 
     var
-        #Claimer.
-        claimer: BLSPublicKey
+        #Claimers.
+        claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey](1)
 
         #Output loop variable.
         output: MintOutput
         #Amount this Claim is claiming.
         amount: uint64 = 0
 
-    #Grab the Claimer.
+    #Grab the first claimer.
     try:
-         claimer = transactions.loadUTXO(claim.inputs[0].hash).key
+         claimers[0] = transactions.loadUTXO(claim.inputs[0].hash).key
     except DBReadError:
         raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
 
@@ -384,9 +384,8 @@ proc add*(
         except DBreadError:
             raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
 
-        if output.key != claimer:
-            raise newException(ValueError, "Claim inputs have different keys.")
-
+        if not claimers.contains(output.key):
+            claimers.add(output.key)
         amount += output.amount
 
     #Set the Claim's output amount to the amount.
@@ -396,8 +395,11 @@ proc add*(
         doAssert(false, "Set a final attribute twice when adding a Claim: " & e.msg)
 
     #Verify the signature.
-    if not claim.verify(claimer):
-        raise newException(ValueError, "Claim has an invalid Signature.")
+    try:
+        if not claim.verify(claimers.aggregate()):
+            raise newException(ValueError, "Claim has an invalid Signature.")
+    except BLSError as e:
+        doAssert(false, "Failed to aggregate BLS Public Keys: " & e.msg)
 
     #Add the Claim.
     transactions.add(cast[Transaction](claim))
@@ -427,16 +429,16 @@ proc add*(
 
     var
         #Sender.
-        sender: EdPublicKey
+        senders: seq[EdPublicKey] = newSeq[EdPublicKey](1)
 
         #Spent output loop variable.
         spent: SendOutput
         #Amount this transaction is processing.
         amount: uint64 = 0
 
-    #Grab the Sender.
+    #Grab the first sender.
     try:
-        sender = transactions.loadUTXO(cast[SendInput](send.inputs[0])).key
+        senders[0] = transactions.loadUTXO(cast[SendInput](send.inputs[0])).key
     except DBreadError:
         raise newException(ValueError, "Send spends a non-existant or spent output.")
 
@@ -447,8 +449,8 @@ proc add*(
         except DBreadError:
             raise newException(ValueError, "Send spends a non-existant or spent output.")
 
-        if spent.key != sender:
-            raise newException(ValueError, "Send inputs have different keys.")
+        if not senders.contains(spent.key):
+            senders.add(spent.key)
 
         amount += spent.amount
 
@@ -465,7 +467,7 @@ proc add*(
         raise newException(ValueError, "Send outputs don't spend the amount provided by the inputs.")
 
     #Verify the signature.
-    if not sender.verify(send.hash.toString(), send.signature):
+    if not senders.aggregate().verify(send.hash.toString(), send.signature):
         raise newException(ValueError, "Send has an invalid Signature.")
 
     #Add the Send.

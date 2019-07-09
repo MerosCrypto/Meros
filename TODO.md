@@ -91,7 +91,7 @@ lib:
 
 Wallet:
 
-- Ed25519 Test.
+- Expand the Ed25519 Test.
 
 Datbase/Filesystem/DB/Serialize:
 

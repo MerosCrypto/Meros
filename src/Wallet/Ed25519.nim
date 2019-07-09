@@ -4,7 +4,10 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
-#Ed25519 library.
+#Hash lib.
+import ../lib/Hash
+
+#Ed25519 lib.
 import mc_ed25519
 
 #SIGN_PREFIX applied to every message, stopping cross-network replays.
@@ -12,7 +15,8 @@ const SIGN_PREFIX {.strdefine.}: string = "MEROS"
 
 #Export the Private/Public Key objects (with a prefix).
 type
-    EdPoint* = Point
+    EdPoint2* = Point2
+    EdPoint3* = Point3
     EdPrivateKey* = object
         data*: PrivateKey
     EdPublicKey* = object
@@ -65,11 +69,11 @@ proc toPublicKey*(
         #Extract the key argument.
         key: EdPrivateKey = keyArg
         #Public Key point.
-        publicKeyPoint: ptr EdPoint = cast[ptr EdPoint](alloc0(sizeof(EdPoint)))
+        publicKeyPoint3: ptr EdPoint3 = cast[ptr EdPoint3](alloc0(sizeof(EdPoint3)))
 
     #Multiply the Public Key against the base.
-    multiplyBase(publicKeyPoint, addr key.data[0])
-    serialize(addr result.data[0], publicKeyPoint)
+    multiplyBase(publicKeyPoint3, addr key.data[0])
+    serialize(addr result.data[0], publicKeyPoint3)
 
 #Nim function for signing a message.
 func sign*(
@@ -114,3 +118,49 @@ func `$`*(
     data: EdPrivateKey or EdPublicKey or EdSignature
 ): string {.inline, forceCheck: [].} =
     data.toString().toHex()
+
+#Aggregate Public Keys.
+var blankScalar: array[32, cuchar]
+proc aggregate*(
+    keys: var seq[EdPublicKey]
+): EdPublicKey {.forceCheck: [].} =
+    if keys.len == 1:
+        return keys[0]
+    
+    var
+        bytes: string
+        l: SHA2_256Hash
+        keyHash: SHA2_256Hash
+        keyPoint: EdPoint3
+        a: EdPoint2
+        tempRes: PointP1P1
+        tempCached: PointCached
+        res: EdPoint3
+
+    for key in keys:
+        bytes &= key.toString()
+    l = SHA2_256(bytes)
+
+    for k in 0 ..< keys.len:
+        keyHash = SHA2_256(l.toString() & keys[k].toString())
+        keyToNegativePoint(addr keyPoint, addr keys[k].data[0])
+        multiplyScalar(
+            addr a,
+            cast[ptr cuchar](addr keyHash.data[0]),
+            addr keyPoint,
+            addr blankScalar[0]
+        )
+        bytes = newString(32)
+        serialize(addr bytes[0], addr a)
+        keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
+
+        if k == 0:
+            res = keyPoint
+        else:
+            p3ToCached(addr tempCached, addr keyPoint)
+            bytes = newString(32)
+            serialize(addr bytes[0], addr res)
+            add(addr tempRes, addr res, addr tempCached)
+            p1p1ToP3(addr res, addr tempRes)
+
+    serialize(addr result.data[0], addr res)

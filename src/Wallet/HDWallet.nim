@@ -24,11 +24,8 @@ import finals
 #Math standard lib.
 import math
 
-let
-    #Ed25519's l value.
-    l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
-    #2^256.
-    TwoTwoFiftySix: StUInt[512] = "0000000000000000000000000000000000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF".parse(StUInt[512], 16)
+#Ed25519's l value.
+var l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
 
 finalsd:
     #HDWallet.
@@ -114,7 +111,7 @@ proc derive*(
         pChainCode: string = wallet.chainCode.toString()
         pPrivateKey: string = wallet.privateKey.toString()
         pPrivateKeyL: array[32, uint8]
-        pPrivateKeyR: array[64, uint8]
+        pPrivateKeyR: array[32, uint8]
         pPublicKey: string = wallet.publicKey.toString()
 
         #Child index, in little endian.
@@ -123,7 +120,7 @@ proc derive*(
         hardened: bool = childArg >= (uint32(2) ^ 31)
     for i in 0 ..< 32:
         pPrivateKeyL[31 - i] = uint8(pPrivateKey[i])
-        pPrivateKeyR[63 - i] = uint8(pPrivateKey[32 + i])
+        pPrivateKeyR[31 - i] = uint8(pPrivateKey[32 + i])
 
     #Calculate Z and the Chaincode.
     var
@@ -142,14 +139,14 @@ proc derive*(
     var
         #Z left and right.
         zL: array[32, uint8]
-        zR: array[64, uint8]
+        zR: array[32, uint8]
         #Key left and right.
         kL: StUInt[256]
-        kR: StUInt[512]
-    for i in 0 ..< 28:
-        zL[31 - i] = Z.data[i]
-    for i in 32 ..< 64:
-        zR[63 - (i - 32)] = Z.data[i]
+        kR: StUInt[256]
+    for i in 0 ..< 32:
+        if i < 28:
+            zL[31 - i] = Z.data[i]
+        zR[31 - i] = Z.data[i + 32]
 
     #Calculate the Private Key.
     try:
@@ -162,19 +159,16 @@ proc derive*(
     except DivByZeroError:
         doAssert(false, "Performing a modulus of Ed25519's l raised a DivByZeroError.")
 
-    try:
-        kR = readUIntBE[512](zR) + readUIntBE[512](pPrivateKeyR) mod TwoTwoFiftySix
-    except DivByZeroError:
-        doAssert(false, "Performing a modulus of 2^256 raised a DivByZeroError.")
+    kR = readUIntBE[256](zR) + readUIntBE[256](pPrivateKeyR)
 
     #Set the PrivateKey.
     var
         tempL: array[32, uint8] = kL.toByteArrayBE()
-        tempR: array[64, uint8] = kR.toByteArrayBE()
+        tempR: array[32, uint8] = kR.toByteArrayBE()
         privateKey: EdPrivateKey
     for i in 0 ..< 32:
         privateKey.data[31 - i] = cuchar(tempL[i])
-        privateKey.data[63 - i] = cuchar(tempR[i + 32])
+        privateKey.data[63 - i] = cuchar(tempR[i])
 
     #Create the Public Key.
     var publicKey: EdPublicKey = privateKey.toPublicKey()
