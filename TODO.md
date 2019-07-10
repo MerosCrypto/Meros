@@ -69,6 +69,23 @@ has several notes in `discard """ """` about syncing transactions which should b
 - Multi-client syncing.
 - Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
 
+### Merit Removals.
+
+Done:
+- Object/Lib files.
+- Serialize/Parse.
+- Check if MeritHolders create conflicting Elements.
+- Don't count malicious MeritHolders' verifications.
+
+TODO:
+- Check if MeritHolders verify conflicting Transactions.
+- Create/broadcast a MeritRemoval for malicious MeritHolders.
+- Reverse the MeritHolder's pending actions.
+- Apply the pending actions if the next Block doesn't contain the MeritRemoval.
+- When a Block comes with that MeritRemoval, remove the malicious Merit from the live Merit.
+- Save all of this to the database.
+
+
 ### Tests:
 
 objects:
