@@ -28,34 +28,11 @@ proc verify(
         except BLSError as e:
             doAssert(false, "Couldn't create a SignedVerification due to a BLSError: " & e.msg)
 
-        #Add the verif to consensus.
-        try:
-            consensus.add(verif, true)
-        except ValueError as e:
-            doAssert(false, "Created a SignedVerification with an invalid signature: " & e.msg)
-        except GapError as e:
-            doAssert(false, "Created a SignedVerification with an invalid nonce: " & e.msg)
-        except BLSError as e:
-            doAssert(false, "Couldn't add a SignedVerification due to a BLSError: " & e.msg)
-        except MaliciousMeritHolder as e:
-            doAssert(false, "Created a SignedVerification which causes a Merit Removal: " & e.msg)
-        except DataExists as e:
-            doAssert(false, "Created a SignedVerification already added to the Consensus DAG: " & e.msg)
+        #Add the Verification.
+        functions.consensus.addSignedVerification(verif)
 
         #Release the verify lock.
         release(verifyLock)
-
-        #Add the Verification to the Transactions.
-        try:
-            transactions.verify(verif, merit.state[verif.holder], merit.state.live)
-        except ValueError as e:
-            doAssert(false, "Tried verifying a non-existant (in the cache) Transaction: " & e.msg)
-
-        #Broadcast the Verification.
-        functions.network.broadcast(
-            MessageType.SignedVerification,
-            verif.serialize()
-        )
 
 proc mainTransactions() {.forceCheck: [].} =
     {.gcsafe.}:

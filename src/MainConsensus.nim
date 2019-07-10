@@ -1,5 +1,10 @@
 include MainDatabase
 
+proc removeMerit(
+    mh: MeritHolder
+) {.forceCheck: [].} =
+    discard
+
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         consensus = newConsensus(database)
@@ -133,9 +138,16 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder:
-                discard
+                consensus[verif.holder].removeMerit()
 
             echo "Successfully added a new Verification."
+
+            if txExists and (not consensus[verif.holder].malicious):
+                #Add the Verification to the Transactions.
+                try:
+                    transactions.verify(verif, merit.state[verif.holder], merit.state.live)
+                except ValueError as e:
+                    return
 
         #Handle SignedElements.
         functions.consensus.addSignedVerification = proc (
@@ -178,9 +190,16 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder:
-                discard
+                consensus[verif.holder].removeMerit()
 
             echo "Successfully added a new SignedVerification."
+
+            if txExists and (not consensus[verif.holder].malicious):
+                #Add the Verification to the Transactions.
+                try:
+                    transactions.verify(verif, merit.state[verif.holder], merit.state.live)
+                except ValueError as e:
+                    return
 
             #Broadcast the SignedVerification.
             functions.network.broadcast(
