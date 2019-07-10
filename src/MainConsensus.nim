@@ -1,10 +1,5 @@
 include MainDatabase
 
-proc removeMerit(
-    mh: MeritHolder
-) {.forceCheck: [].} =
-    discard
-
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         consensus = newConsensus(database)
@@ -138,7 +133,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder:
-                consensus[verif.holder].removeMerit()
+                consensus[verif.holder].malicious = true
 
             echo "Successfully added a new Verification."
 
@@ -190,7 +185,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder:
-                consensus[verif.holder].removeMerit()
+                consensus[verif.holder].malicious = true
 
             echo "Successfully added a new SignedVerification."
 

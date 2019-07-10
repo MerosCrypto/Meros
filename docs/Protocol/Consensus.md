@@ -69,7 +69,7 @@ They have the following fields:
 
 Unlock Transactions execute MerosScript. Each MerosScript operation has a different amount of "gas" required to be executed. In order to reward MeritHolders for executing MerosScipt, the sender of the Unlock must pay `gasPrice * gas` in Meros.
 
-A GasPrice is a MeritHolder voting to update the gasPrice variable. The way the gasPrice is determined is the exact same as the way the spam filters determine their difficulty.
+A GasPrice is a MeritHolder voting to update the gasPrice variable. The way the gasPrice is determined is the exact same as the way the spam filters determine their difficulty except that gas price updates only take effect once archived in a Block.
 
 They have the following fields:
 
@@ -79,9 +79,9 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Transactions, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Elements have their actions reversed, and can be safely pruned once the MeritRemoval is included in a Block. It should be noted if a MeritHolder verifies competing Transactions, those competing Transactions can no longer be pruned.
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Transactions, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Verifications are struck null and void, with all votes (SendDifficulty, DataDifficulty, and GasPrice) being completely removed from consideration. Pending Elements can be safely pruned once the MeritRemoval is included in a Block. It should be noted if a MeritHolder verifies competing Transactions, those competing Transactions can no longer be pruned.
 
-The creation of a MeritRemoval causes the MeritHolder's Merit to exit the system, so their Merit no longer affects the amount of live Merit in the system. This is further described in the Merit documentation.
+The creation of a MeritRemoval causes the MeritHolder's Merit to no longer be usable. Once the MeritRemoval is in a Block, the Merit no longer counts as 'live' in order to not raise the percentage of Merit needed to verify a transaction. This is further described in the Merit documentation.
 
 If multiple MeritRemovals are triggered, the first one will have already reverted unarchived actions and stripped the MeritHolder of their Merit. The remaining work becomes achieving consensus on what Elements to name as the MeritRemoval's cause. This is achieved when the next Block is mined, and the next Block's miner decides what Elements are the MeritRemoval's cause for the entire network.
 
