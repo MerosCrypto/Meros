@@ -32,7 +32,7 @@ proc parseVerification*(
 
     #Create the Verification.
     try:
-        result = newSignedVerificationObj(
+        result = newVerificationObj(
             verifSeq[2].toHash(384)
         )
         result.holder = newBLSPublicKey(verifSeq[0])
@@ -43,7 +43,7 @@ proc parseVerification*(
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Verification: " & e.msg)
-        
+
 #Parse a Signed Verification.
 proc parseSignedVerification*(
     verifStr: string

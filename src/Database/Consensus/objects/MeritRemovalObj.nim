@@ -4,7 +4,7 @@ import ../../../lib/Errors
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Element object.
+#Element lib.
 import ElementObj
 export ElementObj
 
@@ -23,6 +23,7 @@ finalsd:
 
 #Constructors.
 func newMeritRemovalObj*(
+    nonce: Natural,
     element1: Element,
     element2: Element
 ): MeritRemoval {.forceCheck: [].} =
@@ -33,13 +34,29 @@ func newMeritRemovalObj*(
     result.ffinalizeElement1()
     result.ffinalizeElement2()
 
+    try:
+        result.holder = element1.holder
+        result.nonce = nonce
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a MeritRemoval: " & e.msg)
+
 func newSignedMeritRemovalObj*(
+    nonce: Natural,
     element1: Element,
-    element2: Element
+    element2: Element,
+    signature: BLSSignature
 ): SignedMeritRemoval {.forceCheck: [].} =
     result = SignedMeritRemoval(
         element1: element1,
-        element2: element2
+        element2: element2,
+        signature: signature
     )
     result.ffinalizeElement1()
     result.ffinalizeElement2()
+    result.ffinalizeSignature()
+
+    try:
+        result.holder = element1.holder
+        result.nonce = nonce
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when creating a SignedMeritRemoval: " & e.msg)

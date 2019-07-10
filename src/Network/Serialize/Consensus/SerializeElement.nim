@@ -19,3 +19,9 @@ method signedSerialize*(
     element: Element
 ): string {.base, forceCheck:[].} =
     doAssert(false, "Element signedSerialize method called.")
+
+#Serialize a Verification for a MeritRemoval.
+method serializeRemoval*(
+    element: Element
+): string {.base, forceCheck: [].} =
+    doAssert(false, "Element serializeRemoval method called.")

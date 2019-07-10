@@ -17,10 +17,16 @@ proc compare*(
     assert(e1.nonce == e2.nonce)
 
     #Test the descendant fields.
-    if (e1 of Verification) and (e2 of Verification):
-        assert(cast[Verification](e1).hash == cast[Verification](e2).hash)
-    else:
-        assert(false)
+    case e1:
+        of Verification as v1:
+            assert(e2 of Verification)
+            assert(v1.hash == cast[Verification](e2).hash)
+        of MeritRemoval as mr1:
+            assert(e2 of MeritRemoval)
+            compare(mr1.element1, cast[MeritRemoval](e2).element1)
+            compare(mr1.element2, cast[MeritRemoval](e2).element2)
+        else:
+            assert(false)
 
 #Compare two MeritHolders to make sure they have the same value.
 proc compare*(

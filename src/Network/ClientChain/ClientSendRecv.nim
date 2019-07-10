@@ -84,7 +84,7 @@ proc recv*(
             size = DATA_PREFIX_LEN
 
         of MessageType.SignedVerification:
-            size = MEMORY_VERIFICATION_LEN
+            size = SIGNED_VERIFICATION_LEN
 
         of MessageType.BlockHeader:
             size = BLOCK_HEADER_LEN

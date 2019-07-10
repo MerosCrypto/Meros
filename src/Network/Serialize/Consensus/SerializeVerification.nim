@@ -34,7 +34,7 @@ method serializeSign*(
     verif: Verification
 ): string {.forceCheck: [].} =
     result =
-        "\0" &
+        char(VERIFICATION_PREFIX) &
         verif.serialize()
 
 #Serialize a Signed Verification.
@@ -44,3 +44,12 @@ method signedSerialize*(
     result =
         verif.serialize() &
         verif.signature.toString()
+
+#Serialize a Verification for a MeritRemoval.
+method serializeRemoval*(
+    verif: Verification
+): string {.forceCheck: [].} =
+    result =
+        char(VERIFICATION_PREFIX) &
+        verif.nonce.toBinary().pad(INT_LEN) &
+        verif.hash.toString()

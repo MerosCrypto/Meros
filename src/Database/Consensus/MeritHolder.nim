@@ -10,8 +10,9 @@ import ../../Wallet/MinerWallet
 #Merkle lib.
 import ../common/Merkle
 
-#Verification lib.
+#Element libs.
 import Verification
+import MeritRemoval
 
 #MeritHolder object.
 import objects/MeritHolderObj

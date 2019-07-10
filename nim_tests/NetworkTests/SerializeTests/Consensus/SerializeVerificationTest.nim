@@ -50,12 +50,13 @@ proc test*() =
         reloadedV = verif.serialize().parseVerification()
         reloadedSV = verif.signedSerialize().parseSignedVerification()
 
+        #Compare the Elements.
+        compare(verif, reloadedSV)
+        assert(verif.signature == reloadedSV.signature)
+        compare(verif, reloadedV)
+
         #Test the serialized versions.
         assert(verif.serialize() == reloadedV.serialize())
         assert(verif.signedSerialize() == reloadedSV.signedSerialize())
-
-        #Compare the Elements.
-        compare(verif, reloadedSV)
-        compare(verif, reloadedV)
 
     echo "Finished the Network/Serialize/Consensus/Verification Test."

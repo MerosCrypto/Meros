@@ -1,6 +1,8 @@
 #Element sub-type libs.
 import Verification
+import MeritRemoval
 export Verification
+export MeritRemoval
 
 #Signed Element object.
 import objects/SignedElementObj
