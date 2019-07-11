@@ -18,7 +18,6 @@ proc send*(
     else:
         raise newException(ClientError, "Client was closed.")
 
-
 #Receive a message.
 proc recv*(
     client: Client
@@ -85,6 +84,8 @@ proc recv*(
 
         of MessageType.SignedVerification:
             size = SIGNED_VERIFICATION_LEN
+        of MessageType.SignedMeritRemoval:
+            size = MERIT_REMOVAL_LENS[0]
 
         of MessageType.BlockHeader:
             size = BLOCK_HEADER_LEN
@@ -92,6 +93,8 @@ proc recv*(
             size = INT_LEN
         of MessageType.Verification:
             size = VERIFICATION_LEN
+        of MessageType.MeritRemoval:
+            size = MERIT_REMOVAL_LENS[0]
 
         of MessageType.End:
             doAssert(false, "Trying to Receive a Message of Type End despite explicitly checking the type was less than End.")
@@ -139,6 +142,21 @@ proc recv*(
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
+        of MessageType.SignedMeritRemoval:
+            var len: int = int(msg[^1]) + MERIT_REMOVAL_LENS[2]
+            size += len
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
+            len = int(msg[^1]) + MERIT_REMOVAL_LENS[4]
+            size += len
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
         of MessageType.BlockBody:
             var len: int = (msg.fromBinary() * MERIT_HOLDER_RECORD_LEN) + BYTE_LEN
             size += len
@@ -148,6 +166,21 @@ proc recv*(
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
             len = int(msg[^1]) * MINER_LEN
+            size += len
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
+        of MessageType.MeritRemoval:
+            var len: int = int(msg[^1]) + MERIT_REMOVAL_LENS[2]
+            size += len
+            try:
+                msg &= await client.socket.recv(len)
+            except Exception as e:
+                raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+
+            len = int(msg[^1])
             size += len
             try:
                 msg &= await client.socket.recv(len)

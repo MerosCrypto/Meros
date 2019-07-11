@@ -30,10 +30,12 @@ finalsd:
             Data = 20,
 
             SignedVerification = 23,
+            SignedMeritRemoval = 27,
 
             BlockHeader = 29,
             BlockBody = 30,
             Verification = 31,
+            MeritRemoval = 35,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.

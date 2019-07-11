@@ -29,6 +29,7 @@ import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
 import ../Serialize/Consensus/ParseVerification
+import ../Serialize/Consensus/ParseMeritRemoval
 
 import ../Serialize/Merit/ParseBlockHeader
 import ../Serialize/Merit/ParseBlockBody

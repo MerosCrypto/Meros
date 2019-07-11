@@ -228,14 +228,17 @@ proc sync*(
 
     #Add the Elements since we know they're valid.
     for elem in missingElems:
-        try:
-            network.mainFunctions.consensus.addVerification(cast[Verification](elem))
-        except ValueError as e:
-            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
-        except IndexError as e:
-            doAssert(false, "Couldn't add a synced Element from a Block, after confirming it's validity, due to a IndexError: " & e.msg)
-        except DataExists:
-            continue
+        case elem:
+            of Verification as verif:
+                try:
+                    network.mainFunctions.consensus.addVerification(verif)
+                except ValueError as e:
+                    doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
+                except DataExists:
+                    continue
+
+            of MeritRemoval as mr:
+                network.mainFunctions.consensus.addMeritRemoval(mr)
 
     #Sync the missing Transactions.
     if txHashes.len != 0:
@@ -291,17 +294,14 @@ proc sync*(
             #Iterate over every transaction.
             for tx in transactions:
                 block thisTX:
-                    echo "Handling ", tx.hash
                     #Make sure we have already added every input.
                     for input in tx.inputs:
                         try:
                             #If the TX doesn't exist, this will throw. If it does exist but isn't verified, throw a different error.
                             if not network.mainFunctions.transactions.getTransaction(input.hash).verified:
-                                echo "Input is not verified"
                                 raise newException(ValueError, "")
                         #This TX is missing an input.
                         except IndexError:
-                            echo "Missing input"
                             #Look for the input in the pending transactions.
                             var found: bool = false
                             for todoTX in transactions:
@@ -310,8 +310,6 @@ proc sync*(
                             #If it's found, add it.
                             if found:
                                 todo.add(tx)
-                            else:
-                                echo "Input not found in other TXs"
 
                             break thisTX
                         #This TX spends an unconfirmed input.
@@ -319,7 +317,6 @@ proc sync*(
                             break thisTX
 
                     #Handle the tx.
-                    echo "Adding"
                     case tx:
                         of Claim as claim:
                             try:
@@ -466,7 +463,6 @@ proc requestBlock*(
         try:
             result = await client.syncBlock(nonce)
         except SocketError, ClientError:
-            echo getCurrentExceptionMsg()
             toDisconnect.add(client.id)
             continue
         except SyncConfigError as e:

@@ -108,4 +108,4 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
-- Meros doesn't support `SignedMeritRemoval` or `MeritRemoval`.
+- `SignedMeritRemoval` or `MeritRemoval` are a work in progress.

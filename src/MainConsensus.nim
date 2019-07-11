@@ -103,8 +103,7 @@ proc mainConsensus() {.forceCheck: [].} =
         functions.consensus.addVerification = proc (
             verif: Verification
         ) {.forceCheck: [
-            ValueError,
-            DataExists
+            ValueError
         ].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
@@ -135,7 +134,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 #Add the Verification to the Transactions.
                 try:
                     transactions.verify(verif, merit.state[verif.holder], merit.state.live)
-                except ValueError as e:
+                except ValueError:
                     return
 
         #Handle SignedElements.
@@ -144,7 +143,6 @@ proc mainConsensus() {.forceCheck: [].} =
         ) {.forceCheck: [
             ValueError,
             GapError,
-            BLSError,
             DataExists
         ].} =
             #Print that we're adding the SignedVerification.
@@ -171,15 +169,12 @@ proc mainConsensus() {.forceCheck: [].} =
             #Missing Elements before this Verification.
             except GapError as e:
                 fcRaise e
-            #BLS Error.
-            except BLSError as e:
-                fcRaise e
             #Memory Verification was already added.
             except DataExists as e:
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
-                consensus.malicious[verif.holder.toString()].malicious = cast[SignedMeritRemoval](e.removal)
+                consensus.malicious[verif.holder.toString()] = cast[SignedMeritRemoval](e.removal)
                 functions.network.broadcast(
                     MessageType.SignedMeritRemoval,
                     cast[SignedMeritRemoval](e.removal).signedSerialize()
@@ -192,7 +187,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 #Add the Verification to the Transactions.
                 try:
                     transactions.verify(verif, merit.state[verif.holder], merit.state.live)
-                except ValueError as e:
+                except ValueError:
                     return
 
             #Broadcast the SignedVerification.
@@ -200,3 +195,13 @@ proc mainConsensus() {.forceCheck: [].} =
                 MessageType.SignedVerification,
                 verif.signedSerialize()
             )
+
+        functions.consensus.addMeritRemoval = proc (
+            mr: MeritRemoval
+        ) {.forceCheck: [].} =
+            discard
+
+        functions.consensus.addSignedMeritRemoval = proc (
+            mr: SignedMeritRemoval
+        ) {.forceCheck: [].} =
+            discard

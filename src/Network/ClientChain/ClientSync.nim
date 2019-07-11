@@ -175,6 +175,14 @@ proc syncElement*(
             except BLSError as e:
                 raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our `ElementRequest`, as pointed out by a BLSError: " & e.msg)
 
+        of MessageType.MeritRemoval:
+            try:
+                result = msg.message.parseMeritRemoval()
+            except ValueError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid MeritRemoval to our `ElementRequest`, as pointed out by a ValueError: " & e.msg)
+            except BLSError as e:
+                raise newException(InvalidMessageError, "Client didn't respond with a valid MeritRemoval to our `ElementRequest`, as pointed out by a BLSError: " & e.msg)
+
         of MessageType.DataMissing:
             raise newException(DataMissing, "Client didn't have the requested Element.")
 

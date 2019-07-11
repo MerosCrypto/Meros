@@ -130,7 +130,6 @@ proc add*(
 ) {.forceCheck: [
     ValueError,
     GapError,
-    BLSError,
     DataExists,
     MaliciousMeritHolder
 ].} =
@@ -144,7 +143,7 @@ proc add*(
     except ValueError as e:
         fcRaise e
     except BLSError as e:
-        fcRaise e
+        doAssert(false, "Failed to create a BLS Aggregation Info: " & e.msg)
 
     #Verify they didn't submit two Elements with the same nonce.
     if element.nonce < holder.height:

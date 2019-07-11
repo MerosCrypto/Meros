@@ -18,8 +18,9 @@ import ../Wallet/Wallet
 #MeritHolderRecord object.
 import ../Database/common/objects/MeritHolderRecordObj
 
-#Verification object.
+#Element objects.
 import ../Database/Consensus/objects/VerificationObj
+import ../Database/Consensus/objects/MeritRemovalObj
 
 #Difficulty, BlockHeader, and Block objects.
 import ../Database/Merit/objects/DifficultyObj
@@ -103,20 +104,24 @@ type
         addVerification*: proc (
             verif: Verification
         ) {.raises: [
-            ValueError,
-            IndexError,
-            DataExists
+            ValueError
         ].}
 
         addSignedVerification*: proc (
             verif: SignedVerification
         ) {.raises: [
             ValueError,
-            IndexError,
             GapError,
-            BLSError,
             DataExists
         ].}
+
+        addMeritRemoval*: proc (
+            mr: MeritRemoval
+        ) {.raises: [].}
+
+        addSignedMeritRemoval*: proc (
+            mr: SignedMeritRemoval
+        ) {.raises: [].}
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}

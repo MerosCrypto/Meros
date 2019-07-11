@@ -28,7 +28,8 @@ const
         BLS_PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN,
         0,
         BYTE_LEN,
-        0
+        0,
+        BLS_SIGNATURE_LEN
     ]
 
     DIFFICULTY_LEN*:          int = INT_LEN + INT_LEN + HASH_LEN

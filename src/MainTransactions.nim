@@ -29,7 +29,14 @@ proc verify(
             doAssert(false, "Couldn't create a SignedVerification due to a BLSError: " & e.msg)
 
         #Add the Verification.
-        functions.consensus.addSignedVerification(verif)
+        try:
+            functions.consensus.addSignedVerification(verif)
+        except ValueError as e:
+            doAssert(false, "Created a Verification with an invalid signature: " & e.msg)
+        except GapError as e:
+            doAssert(false, "Created a Verification with an invalid nonce: " & e.msg)
+        except DataExists as e:
+            doAssert(false, "Created a Verification which already exists: " & e.msg)
 
         #Release the verify lock.
         release(verifyLock)

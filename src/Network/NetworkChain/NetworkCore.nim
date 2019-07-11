@@ -84,6 +84,8 @@ proc newNetwork*(
                 raise newException(InvalidMessageError, "Client sent us a `BlockBody` when we aren't syncing.")
             of MessageType.Verification:
                 raise newException(InvalidMessageError, "Client sent us a `Verification` when we aren't syncing.")
+            of MessageType.MeritRemoval:
+                raise newException(InvalidMessageError, "Client sent us a `MeritRemoval` when we aren't syncing.")
 
             of MessageType.Handshake:
                 try:
@@ -402,14 +404,21 @@ proc newNetwork*(
                     mainFunctions.consensus.addSignedVerification(verif)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a IndexError: " & e.msg)
                 except GapError:
                     return
-                except BLSError as e:
-                    raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a BLSError: " & e.msg)
                 except DataExists:
                     return
+
+            of MessageType.SignedMeritRemoval:
+                var mr: SignedMeritRemoval
+                try:
+                    mr = msg.message.parseSignedMeritRemoval()
+                except ValueError as e:
+                    raise newException(InvalidMessageError, "Parsing the SignedVerification failed due to a ValueError: " & e.msg)
+                except BLSError as e:
+                    raise newException(InvalidMessageError, "Parsing the SignedVerification failed due to a BLSError: " & e.msg)
+
+                mainFunctions.consensus.addSignedMeritRemoval(mr)
 
             of MessageType.BlockHeader:
                 var header: BlockHeader

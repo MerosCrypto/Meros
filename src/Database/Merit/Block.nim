@@ -66,9 +66,18 @@ proc verify*(
 
         try:
             #Iterate over this holder's elements.
-            for e, elem in elems[key]:
-                #Create AggregationInfos.
-                agInfos.add(newBLSAggregationInfo(record.key, elem.serializeSign()))
+            for elem in elems[key]:
+                #Create AggregationInfos
+                case elem:
+                    of MeritRemoval as mr:
+                        agInfos.add(
+                            @[
+                                newBLSAggregationInfo(record.key, mr.element1.serializeSign()),
+                                newBLSAggregationInfo(record.key, mr.element2.serializeSign()),
+                            ].aggregate()
+                        )
+                    else:
+                        agInfos.add(newBLSAggregationInfo(record.key, elem.serializeSign()))
         #The presented Table has a different set of MeritHolders than the records.
         except KeyError:
             return false
