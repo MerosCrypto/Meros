@@ -76,14 +76,15 @@ Done:
 - Serialize/Parse.
 - Check if MeritHolders create conflicting Elements.
 - Don't count malicious MeritHolders' verifications.
+- Create/broadcast a MeritRemoval for malicious MeritHolders. This MeritRemoval only works where at least one Element's signature is in RAM. If only one signature is in RAM, the other Element must be archived on the current chain.
 
 TODO:
 - Check if MeritHolders verify conflicting Transactions.
-- Create/broadcast a MeritRemoval for malicious MeritHolders.
 - Reverse the MeritHolder's pending actions.
 - Apply the pending actions if the next Block doesn't contain the MeritRemoval.
 - When a Block comes with that MeritRemoval, remove the malicious Merit from the live Merit.
 - Save all of this to the database.
+- We need to create a Merit Removal if we are handed one, or two, aggregated signatures which contain signatures for Elements which would cause a Merit Removal.
 
 
 ### Tests:

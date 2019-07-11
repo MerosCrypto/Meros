@@ -37,6 +37,8 @@ type
 
     #Database/Consensus Statuses.
     MaliciousMeritHolder* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
+        #MeritRemoval.
+        removal*: pointer
 
     #Database/Merit Statuses.
     UncleBlock*  = object of Exception #Used when we test a BlockHeader and it's on an alternative chain.

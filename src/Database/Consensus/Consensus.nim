@@ -70,17 +70,11 @@ proc add*(
     verif: Verification,
     txExists: bool
 ) {.forceCheck: [
-    GapError,
-    DataExists,
-    MaliciousMeritHolder
+    GapError
 ].} =
     try:
         consensus[verif.holder].add(verif)
     except GapError as e:
-        fcRaise e
-    except DataExists as e:
-        fcRaise e
-    except MaliciousMeritHolder as e:
         fcRaise e
 
     consensus.handleUnknown(verif, txExists)

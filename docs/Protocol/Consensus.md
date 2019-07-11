@@ -87,8 +87,8 @@ If multiple MeritRemovals are triggered, the first one will have already reverte
 
 MeritRemovals have the following fields:
 
-- Element1: The first Element.
-- Element2: The second Element.
+- element1: The first Element.
+- element2: The second Element.
 
 `MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48-byte holder, the 4-byte nonce, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder.
 
@@ -96,7 +96,7 @@ MeritRemovals have the following fields:
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
-- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of Element1 and Element2.
+- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2. If one Element has already been archived in a Block, it is the signature of the other Element.
 
 Their message lengths are their non-"Signed" message length plus 96 bytes; the 96-byte signature which is appended to the end of the serialized non-"Signed" version.
 

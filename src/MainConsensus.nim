@@ -128,12 +128,6 @@ proc mainConsensus() {.forceCheck: [].} =
             #Since we got this from a Block, we should've already synced all previous Elements.
             except GapError:
                 doAssert(false, "Adding a Verification from a Block which we verified, despite not having all mentioned Elements.")
-            #Verification was already added.
-            except DataExists as e:
-                fcRaise e
-            #MeritHolder committed a malicious act against the network.
-            except MaliciousMeritHolder:
-                consensus[verif.holder].malicious = true
 
             echo "Successfully added a new Verification."
 
@@ -184,8 +178,13 @@ proc mainConsensus() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
-            except MaliciousMeritHolder:
+            except MaliciousMeritHolder as e:
                 consensus[verif.holder].malicious = true
+                functions.network.broadcast(
+                    MessageType.MeritRemoval,
+                    cast[SignedMeritRemoval](e.removal).serialize()
+                )
+                return
 
             echo "Successfully added a new SignedVerification."
 

@@ -103,34 +103,18 @@ proc add*(
     holder: var MeritHolder,
     element: Element
 ) {.forceCheck: [
-    GapError,
-    DataExists,
-    MaliciousMeritHolder
+    GapError
 ].} =
     #Verify we're not missing Elements.
     if element.nonce > holder.height:
         raise newException(GapError, "Missing Elements before this Element.")
     #Verify the Element's Nonce.
     elif element.nonce < holder.height:
-        #Verify they didn't submit two Elements for the same nonce.
-        var existing: Element
-        try:
-            existing = holder[element.nonce]
-        except IndexError as e:
-            doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
-
-        case element:
-            of Verification as verif:
-                if (not (existing of Verification)) or (verif.hash != cast[Verification](existing).hash):
-                    raise newException(MaliciousMeritHolder, "MeritHolder submitted two Elements with the same nonce.")
-            else:
-                doAssert(false, "Element should be a Verification.")
-
-        #Already added.
-        raise newException(DataExists, "Element has already been added.")
+        doAssert(false, "We are trying to add a Block with invalid records OR MeritHolder.add(SignedElement) did not implement this check.")
 
     #Increase the height.
     holder.height = holder.height + 1
+
     #Add the Element to the Merkle.
     case element:
         of Verification as verif:
@@ -164,14 +148,58 @@ proc add*(
     except BLSError as e:
         fcRaise e
 
+    #Verify they didn't submit two Elements with the same nonce.
+    if element.nonce < holder.height:
+        var
+            existing: Element
+            malicious: bool = false
+
+        try:
+            existing = holder[element.nonce]
+        except IndexError as e:
+            doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
+
+        if element of Verification:
+            if (not (existing of Verification)) or (cast[Verification](element).hash != cast[Verification](existing).hash):
+                malicious = true
+        else:
+            doAssert(false, "Element should be a Verification.")
+
+        #If the MeritHolder isn't malicious, we already added this Element.
+        if not malicious:
+            raise newException(DataExists, "Element has already been added.")
+        else:
+            var
+                status: ref MaliciousMeritHolder = newException(MaliciousMeritHolder, "MeritHolder submitted two Elements with the same nonce.")
+                signature: BLSSignature
+
+            if existing.nonce <= holder.archived:
+                signature = element.signature
+            else:
+                try:
+                    signature = @[
+                        holder.signatures[existing.nonce],
+                        element.signature
+                    ].aggregate()
+                except KeyError as e:
+                    doAssert(false, "Couldn't get the signature for an Element we know we have the signature for: " & e.msg)
+                except BLSError as e:
+                    doAssert(false, "Failed to aggregate BLS Signatures: " & e.msg)
+
+            status.removal = cast[pointer](
+                newSignedMeritRemoval(
+                    holder.archived + 1,
+                    existing,
+                    element,
+                    signature
+                )
+            )
+            raise status
+
     #Add the Element.
     try:
         holder.add(cast[Element](element))
     except GapError as e:
-        fcRaise e
-    except DataExists as e:
-        fcRaise e
-    except MaliciousMeritHolder as e:
         fcRaise e
 
     #Cache the signature.
