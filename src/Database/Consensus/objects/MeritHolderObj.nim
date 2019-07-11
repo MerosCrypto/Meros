@@ -42,8 +42,6 @@ finalsd:
         height*: int
         #Amount of Elements which have been archived.
         archived*: int
-        #Malicious or not.
-        malicious*: bool
 
         #Signatures of pending Elements.
         signatures*: Table[int, BLSSignature]

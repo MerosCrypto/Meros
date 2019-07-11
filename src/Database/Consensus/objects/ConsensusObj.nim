@@ -13,9 +13,10 @@ import ../../Filesystem/DB/ConsensusDB
 #ConsensusIndex object.
 import ../../common/objects/ConsensusIndexObj
 
-#Element and Verification objects.
+#Element objects.
 import ElementObj
 import VerificationObj
+import MeritRemovalObj
 
 #MeritHolder object.
 import MeritHolderObj
@@ -31,8 +32,11 @@ type Consensus* = ref object
     #DB.
     db*: DB
 
-    #MeritHolder -> Account.
+    #BLS Public Key -> MeritHolder.
     holders: Table[string, MeritHolder]
+    #BLS Public Key -> MeritRemoval.
+    malicious*: Table[string, MeritRemoval]
+
     #Verifications of unknown transactions.
     unknowns*: Table[string, seq[seq[BLSPublicKey]]]
 

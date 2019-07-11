@@ -81,11 +81,10 @@ Done:
 TODO:
 - Check if MeritHolders verify conflicting Transactions.
 - Reverse the MeritHolder's pending actions.
+- Receive MeritRemovals from the Network, both with signature and without.
 - Apply the pending actions if the next Block doesn't contain the MeritRemoval.
 - When a Block comes with that MeritRemoval, remove the malicious Merit from the live Merit.
 - Save all of this to the database.
-- We need to create a Merit Removal if we are handed one, or two, aggregated signatures which contain signatures for Elements which would cause a Merit Removal.
-
 
 ### Tests:
 

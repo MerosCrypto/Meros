@@ -131,7 +131,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             echo "Successfully added a new Verification."
 
-            if txExists and (not consensus[verif.holder].malicious):
+            if txExists and (not consensus.malicious.hasKey(verif.holder.toString())):
                 #Add the Verification to the Transactions.
                 try:
                     transactions.verify(verif, merit.state[verif.holder], merit.state.live)
@@ -179,16 +179,16 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
-                consensus[verif.holder].malicious = true
+                consensus.malicious[verif.holder.toString()].malicious = cast[SignedMeritRemoval](e.removal)
                 functions.network.broadcast(
-                    MessageType.MeritRemoval,
-                    cast[SignedMeritRemoval](e.removal).serialize()
+                    MessageType.SignedMeritRemoval,
+                    cast[SignedMeritRemoval](e.removal).signedSerialize()
                 )
                 return
 
             echo "Successfully added a new SignedVerification."
 
-            if txExists and (not consensus[verif.holder].malicious):
+            if txExists and (not consensus.malicious.hasKey(verif.holder.toString())):
                 #Add the Verification to the Transactions.
                 try:
                     transactions.verify(verif, merit.state[verif.holder], merit.state.live)
