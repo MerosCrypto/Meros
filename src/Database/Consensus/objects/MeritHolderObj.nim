@@ -159,6 +159,7 @@ proc add*(
         except IndexError as e:
             doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
 
+        #This doesn't use a case statement because of https://github.com/nim-lang/Nim/issues/11711.
         if element of Verification:
             if (not (existing of Verification)) or (cast[Verification](element).hash != cast[Verification](existing).hash):
                 malicious = true

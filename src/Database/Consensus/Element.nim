@@ -6,7 +6,7 @@ export MeritRemoval
 
 #Signed Element object.
 import objects/SignedElementObj
-export SIgnedElementObj
+export SignedElementObj
 
 #Macros standard lib.
 import macros
