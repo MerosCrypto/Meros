@@ -4,7 +4,6 @@
 
 Database:
 
-- Use a single LMDB Transaction when we commit.
 - Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
 
 Merit:

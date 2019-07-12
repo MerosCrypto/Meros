@@ -55,13 +55,20 @@ proc commit*(
     for u in 0 ..< 5:
         db.consensus.cache["u" & char(u)] = db.consensus.unknown[u]
 
-    for key in db.consensus.cache.keys():
-        try:
-            db.lmdb.put("consensus", key, db.consensus.cache[key])
-        except KeyError as e:
-            doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
-        except Exception as e:
-            doAssert(false, "Couldn't save data to the Database: " & e.msg)
+    var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.consensus.cache.len)
+    try:
+        var i: int = 0
+        for key in db.consensus.cache.keys():
+            items[i] = (key: key, value: db.consensus.cache[key])
+            inc(i)
+    except KeyError as e:
+        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+
+    try:
+        db.lmdb.put("consensus", items)
+    except Exception as e:
+        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+
     db.consensus.cache = initTable[string, string]()
 
 #Save functions.

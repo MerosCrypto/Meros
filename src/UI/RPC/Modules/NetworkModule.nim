@@ -63,7 +63,6 @@ proc network*(
                     except Exception as e:
                         doAssert(false, "NetworkModule's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
-
             else:
                 res = %* {
                     "error": "Invalid method."
@@ -72,5 +71,5 @@ proc network*(
         res = %* {
             "error": "Missing `args`."
         }
-    
+
     reply(res)

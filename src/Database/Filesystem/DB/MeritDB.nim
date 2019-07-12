@@ -58,13 +58,20 @@ proc get(
 proc commit*(
     db: DB
 ) {.forceCheck: [].} =
-    for key in db.merit.cache.keys():
-        try:
-            db.lmdb.put("merit", key, db.merit.cache[key])
-        except KeyError as e:
-            doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
-        except Exception as e:
-            doAssert(false, "Couldn't save data to the Database: " & e.msg)
+    var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.merit.cache.len)
+    try:
+        var i: int = 0
+        for key in db.merit.cache.keys():
+            items[i] = (key: key, value: db.merit.cache[key])
+            inc(i)
+    except KeyError as e:
+        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+
+    try:
+        db.lmdb.put("merit", items)
+    except Exception as e:
+        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+
     db.merit.cache = initTable[string, string]()
 
 #Save functions.

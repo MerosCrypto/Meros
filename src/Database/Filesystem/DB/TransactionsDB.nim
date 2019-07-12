@@ -73,13 +73,20 @@ proc commit*(
             discard
     db.transactions.deleted = @[]
 
-    for key in db.transactions.cache.keys():
-        try:
-            db.lmdb.put("transactions", key, db.transactions.cache[key])
-        except KeyError as e:
-            doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
-        except Exception as e:
-            doAssert(false, "Couldn't save data to the Database: " & e.msg)
+    var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.transactions.cache.len)
+    try:
+        var i: int = 0
+        for key in db.transactions.cache.keys():
+            items[i] = (key: key, value: db.transactions.cache[key])
+            inc(i)
+    except KeyError as e:
+        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+
+    try:
+        db.lmdb.put("transactions", items)
+    except Exception as e:
+        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+
     db.transactions.cache = initTable[string, string]()
 
 #Save functions.
