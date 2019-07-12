@@ -1,7 +1,7 @@
 discard """
 The Main files are an "incude chain". They include each other sequentially, in the following orders:
     MainImports
-    MainConstants
+    MainChainParams
     MainGlobals
     MainDatabase
     MainConsensus

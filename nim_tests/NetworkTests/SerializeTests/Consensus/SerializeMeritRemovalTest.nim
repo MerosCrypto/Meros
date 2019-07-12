@@ -85,4 +85,3 @@ proc test*() =
         assert(mr.signedSerialize() == reloadedSMR.signedSerialize())
 
     echo "Finished the Network/Serialize/Consensus/MeritRemoval Test."
-test()

@@ -22,6 +22,9 @@ import os
 import json
 
 type Config* = object
+    #Network we're connecting to.
+    network*: string
+
     #Data Directory.
     dataDir*: string
     #DB Path.
@@ -59,6 +62,7 @@ func get(
 proc newConfig*(): Config {.forceCheck: [].} =
     #Create the config with the default options.
     result = Config(
+        network: "testnet",
         dataDir: "./data",
         db: "db",
         server: true,
@@ -106,6 +110,13 @@ proc newConfig*(): Config {.forceCheck: [].} =
             discard
 
         try:
+            result.network = json.get("network", JString).getStr()
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
+
+        try:
             result.server = json.get("server", JBool).getBool()
         except ValueError as e:
             doAssert(false, e.msg)
@@ -144,6 +155,9 @@ proc newConfig*(): Config {.forceCheck: [].} =
             for i in countup(1, paramCount(), 2):
                 #Switch based off the param.
                 case paramStr(i):
+                    of "--network":
+                        result.network = paramStr(i + 1)
+                    
                     of "--db":
                         result.db = paramStr(i + 1)
 

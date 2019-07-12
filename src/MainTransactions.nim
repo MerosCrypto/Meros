@@ -48,8 +48,8 @@ proc mainTransactions() {.forceCheck: [].} =
             database,
             consensus,
             merit,
-            SEND_DIFFICULTY,
-            DATA_DIFFICULTY
+            params.SEND_DIFFICULTY,
+            params.DATA_DIFFICULTY
         )
 
         #Handle requests for the Difficulties.

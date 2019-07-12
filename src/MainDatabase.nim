@@ -4,7 +4,7 @@ proc mainDatabase() {.forceCheck: [].} =
     {.gcsafe.}:
         #Open the database.
         try:
-            database = newDB(config.dataDir / config.db, MAX_DB_SIZE)
+            database = newDB(config.dataDir / (config.network & "-" & config.db), MAX_DB_SIZE)
         except DBError as e:
             doAssert(false, "Couldn't create the DB: " & e.msg)
 

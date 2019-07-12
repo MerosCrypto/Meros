@@ -6,10 +6,10 @@ proc mainMerit() {.forceCheck: [].} =
         merit = newMerit(
             database,
             consensus,
-            GENESIS,
-            BLOCK_TIME,
-            BLOCK_DIFFICULTY,
-            LIVE_MERIT
+            params.GENESIS,
+            params.BLOCK_TIME,
+            params.BLOCK_DIFFICULTY,
+            params.LIVE_MERIT
         )
 
         #Handle requests for the current height.

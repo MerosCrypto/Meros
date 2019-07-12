@@ -3,7 +3,11 @@ include MainPersonal
 proc mainNetwork() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Network..
-        network = newNetwork(NETWORK_ID, NETWORK_PROTOCOL, functions)
+        network = newNetwork(
+            params.NETWORK_ID,
+            params.NETWORK_PROTOCOL,
+            functions
+        )
 
         #Start listening, if we're supposed to.
         if config.server:

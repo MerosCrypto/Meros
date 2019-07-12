@@ -2,10 +2,6 @@
 
 ### Core:
 
-Config:
-
-- Enable testnet connectivity via the config.
-
 Database:
 
 - Use a single LMDB Transaction when we commit.
