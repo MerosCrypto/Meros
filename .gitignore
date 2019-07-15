@@ -5,3 +5,6 @@ build
 #Data files.
 data
 settings.json
+
+#Python files.
+__pycache__

@@ -1,0 +1,50 @@
+#List type.
+from typing import Dict, List, Any
+
+#Socket lib.
+import socket
+
+#JSON lib.
+import json
+
+#RPC class.
+class RPC:
+    #Constructor.
+    def __init__(
+        self,
+        port: int = 5133
+    ) -> None:
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect(("127.0.0.1", port))
+
+    #Call an RPC method.
+    def call(
+        self,
+        module: str,
+        method: str,
+        args: List[Any] = []
+    ) -> Dict[str, Any]:
+        #Send the call.
+        self.socket.send(
+            bytes(
+                json.dumps(
+                    {
+                        "module": module,
+                        "method": method,
+                        "args": args
+                    }
+                ) + "\r\n",
+                "utf-8"
+            )
+        )
+
+        #Get the result.
+        result = self.socket.recv(2)
+        while result[-2:] != bytes("\r\n","utf-8"):
+            result += self.socket.recv(1)
+
+        #Raise an exception on error.
+        result = json.loads(result)
+        if "error" in result:
+            raise Exception(result["error"])
+        return result
