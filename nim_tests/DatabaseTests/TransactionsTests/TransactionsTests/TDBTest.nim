@@ -223,7 +223,7 @@ proc test*() =
             if rand(1) == 0:
                 var
                     #Decide how much to Send.
-                    amount: uint64 = uint64(rand(10000))
+                    amount: uint64 = uint64(rand(10000) + 1)
                     #Current balance.
                     balance: uint64 = 0
                 #Calculate the balance.
