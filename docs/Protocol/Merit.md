@@ -72,10 +72,9 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 - time must be less than 20 minutes into the future.
 - hash must beat the current difficulty.
 
-
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of 208 bytes; the 4-byte nonce, 48-byte last hash, 96-byte aggregate signature, 48-byte miners Merkle tree hash, 8-byte time, and 4-byte proof.
+`BlockHeader` has a message length of 204 bytes; the 4-byte nonce, 48-byte last hash, 96-byte aggregate signature, 48-byte miners Merkle tree hash, 4-byte time, and 4-byte proof.
 
 ### BlockBody
 
