@@ -37,6 +37,6 @@ func newBlockHeader*(
         proof
     )
     try:
-        result.hash = Argon(result.serializeHash(), result.proof.toBinary())
+        result.hash = Argon(result.serializeHash(), result.proof.toBinary().pad(8))
     except ArgonError as e:
         fcRaise e

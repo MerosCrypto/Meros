@@ -69,7 +69,7 @@ Argon2d(
     memory = 8,
     parallelism = 1
     data = hash,
-    salt = proof with no leading 0s
+    salt = proof left padded to be 8 bytes long
 ) > sendDifficulty
 ```
 
@@ -99,7 +99,7 @@ Argon2d(
     memory = 8,
     parallelism = 1
     data = hash,
-    salt = proof with no leading 0s
+    salt = proof left padded to be 8 bytes long
 ) > dataDifficulty
 ```
 

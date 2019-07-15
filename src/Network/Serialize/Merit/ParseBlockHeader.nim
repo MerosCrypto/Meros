@@ -48,7 +48,7 @@ proc parseBlockHeader*(
             uint32(headerSeq[4].fromBinary()),
             uint32(headerSeq[5].fromBinary())
         )
-        result.hash = Argon(headerStr.substr(0, headerStr.len - 5), headerSeq[5])
+        result.hash = Argon(headerStr.substr(0, headerStr.len - 5), headerSeq[5].pad(8))
     except ValueError as e:
         fcRaise e
     except ArgonError as e:

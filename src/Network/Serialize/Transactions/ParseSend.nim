@@ -78,7 +78,7 @@ proc parseSend*(
 
         result.proof = uint32(sendSeq[5].fromBinary())
         try:
-            result.argon = Argon(result.hash.toString(), result.proof.toBinary(), true)
+            result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
         except ArgonError as e:
             fcRaise e
     except FinalAttributeError as e:

@@ -80,10 +80,10 @@ proc mine*(
         proof: uint32 = 0
         hash: ArgonHash
     try:
-        hash = Argon(data.hash.toString(), proof.toBinary(), true)
+        hash = Argon(data.hash.toString(), proof.toBinary().pad(8), true)
         while hash <= networkDifficulty:
             inc(proof)
-            hash = Argon(data.hash.toString(), proof.toBinary(), true)
+            hash = Argon(data.hash.toString(), proof.toBinary().pad(8), true)
     except ArgonError as e:
         fcRaise e
 

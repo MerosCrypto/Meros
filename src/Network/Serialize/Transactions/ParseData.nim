@@ -59,7 +59,7 @@ proc parseData*(
 
         result.proof = uint32(dataSeq[4].fromBinary())
         try:
-            result.argon = Argon(result.hash.toString(), result.proof.toBinary(), true)
+            result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
         except ArgonError as e:
             fcRaise e
     except FinalAttributeError as e:

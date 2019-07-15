@@ -27,7 +27,7 @@ Argon2d(
     memory = 131072,
     parallelism = 1
     data = serialized BlockHeader without proof,
-    salt = proof with no leading 0s
+    salt = proof left padded to be 8 bytes long
 )
 ```
 
@@ -113,7 +113,7 @@ In the process of calculating rewards, first every Merit Holder is assigned a sc
 
 ```
 for tx in epoch:
-    for verifier of epoch[tx]:
+    for verifier in epoch[tx]:
         scores[verifier] += 1
 
 for holder in scores:
