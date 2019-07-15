@@ -118,28 +118,6 @@ proc processBlock*(
     if total != 100:
         raise newException(ValueError, "Invalid total Miner amount.")
 
-    var
-        #Blocks Per Month.
-        blocksPerMonth: int = 2592000 div blockchain.blockTime
-        #Period Length.
-        blocksPerPeriod: int
-    #Set the period length.
-    #If we're in the first month, the period length is one block.
-    if blockchain.height < blocksPerMonth:
-        blocksPerPeriod = 1
-    #If we're in the first three months, the period length is one hour.
-    elif blockchain.height < blocksPerMonth * 3:
-        blocksPerPeriod = 6
-    #If we're in the first six months, the period length is six hours.
-    elif blockchain.height < blocksPerMonth * 6:
-        blocksPerPeriod = 36
-    #If we're in the first year, the period length is twelve hours.
-    elif blockchain.height < blocksPerMonth * 12:
-        blocksPerPeriod = 72
-    #Else, if it's over an year, the period length is a day.
-    else:
-        blocksPerPeriod = 144
-
     #If the difficulty wasn't beat...
     if not blockchain.difficulty.verify(newBlock.hash):
         raise newException(ValueError, "Difficulty wasn't beat.")
@@ -149,6 +127,28 @@ proc processBlock*(
 
     #If the difficulty needs to be updated...
     if newBlock.nonce == blockchain.difficulty.endBlock:
+        var
+            #Blocks Per Month.
+            blocksPerMonth: int = 2592000 div blockchain.blockTime
+            #Period Length.
+            blocksPerPeriod: int
+        #Set the period length.
+        #If we're in the first month, the period length is one block.
+        if blockchain.height < blocksPerMonth:
+            blocksPerPeriod = 1
+        #If we're in the first three months, the period length is one hour.
+        elif blockchain.height < blocksPerMonth * 3:
+            blocksPerPeriod = 6
+        #If we're in the first six months, the period length is six hours.
+        elif blockchain.height < blocksPerMonth * 6:
+            blocksPerPeriod = 36
+        #If we're in the first year, the period length is twelve hours.
+        elif blockchain.height < blocksPerMonth * 12:
+            blocksPerPeriod = 72
+        #Else, if it's over an year, the period length is a day.
+        else:
+            blocksPerPeriod = 144
+
         try:
             blockchain.difficulty = blockchain.calculateNextDifficulty(blocksPerPeriod)
         except IndexError as e:

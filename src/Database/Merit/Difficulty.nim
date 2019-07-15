@@ -70,10 +70,6 @@ proc calculateNextDifficulty*(
     #Calculate the actual time.
     actualTime = endTime - start
 
-    #Handle divide by zeros.
-    if actualTime == 0:
-        actualTime = 1
-
     try:
         #If we went faster...
         if actualTime < targetTime:
