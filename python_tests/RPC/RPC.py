@@ -41,12 +41,12 @@ class RPC:
         )
 
         #Get the result.
-        result = self.socket.recv(2)
-        while result[-2:] != bytes("\r\n","utf-8"):
-            result += self.socket.recv(1)
+        response: bytes = self.socket.recv(2)
+        while response[-2:] != bytes("\r\n","utf-8"):
+            response += self.socket.recv(1)
 
         #Raise an exception on error.
-        result = json.loads(result)
+        result: Dict[str, Any] = json.loads(response)
         if "error" in result:
             raise Exception(result["error"])
         return result

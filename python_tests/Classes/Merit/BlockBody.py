@@ -23,7 +23,7 @@ class BlockBody:
     def getSerializedMiners(
         self
     ) -> List[bytes]:
-        result = []
+        result: List[bytes] = []
         for miner in self.miners:
             result.append(miner[0].serialize() + miner[1].to_bytes(1, byteorder="big"))
         return result
@@ -32,22 +32,42 @@ class BlockBody:
     def serialize(
         self
     ) -> bytes:
-        result = (
+        result: bytes = (
             len(self.records).to_bytes(4, byteorder="big") +
             len(self.miners).to_bytes(1, byteorder="big") +
             bytes().join(self.getSerializedMiners())
         )
         return result
 
-    #Convert to JSON.
-    def json(
+    #BlockBody -> JSON.
+    def toJSON(
         self
     ) -> Dict[str, Any]:
-        result = {
+        result: Dict[str, Any] = {
             "records": self.records,
             "miners": []
         }
         for miner in self.miners:
-            result["miners"].append((miner[0].serialize().hex(), miner[1]))
+            result["miners"].append({
+                "miner": miner[0].serialize().hex().upper(),
+                "amount": miner[1]
+            })
 
         return result
+
+    #JSON -> Blockbody.
+    @staticmethod
+    def fromJSON(
+        json: Dict[str, Any]
+    ) -> Any:
+        miners: List[Tuple[PublicKey, int]] = []
+        for miner in json["miners"]:
+            miners.append((
+                PublicKey.from_bytes(bytes.fromhex(miner["miner"])),
+                miner["amount"]
+            ))
+
+        return BlockBody(
+            json["records"],
+            miners
+        )

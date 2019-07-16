@@ -8,39 +8,6 @@ import argon2
 
 #BlockHeader class.
 class BlockHeader:
-    #Constructor.
-    def __init__(
-        self,
-        nonce: int,
-        last: bytes,
-        time: int,
-        aggregate: bytes = bytes(96),
-        miners: bytes = bytes(48),
-        proof: int = 0
-    ) -> None:
-        self.nonce: int = nonce
-        self.last: bytes = last
-        self.time: int = time
-        self.aggregate: bytes = aggregate
-        self.miners: bytes = miners
-        self.proof: int = proof
-
-        self.hash: bytes = bytes(48)
-
-    #Set aggregate.
-    def setAggregate(
-        self,
-        aggregate: bytes
-    ) -> None:
-        self.aggregate: bytes = aggregate
-
-    #Set miners.
-    def setMiners(
-        self,
-        miners: bytes
-     )-> None:
-        self.miners: bytes = miners
-
     #Serialize.
     def serialize(
         self
@@ -67,17 +34,63 @@ class BlockHeader:
             48,
             argon2.low_level.Type.D
         )
+    #Constructor.
+    def __init__(
+        self,
+        nonce: int,
+        last: bytes,
+        time: int,
+        aggregate: bytes = bytes(96),
+        miners: bytes = bytes(48),
+        proof: int = 0
+    ) -> None:
+        self.nonce: int = nonce
+        self.last: bytes = last
+        self.time: int = time
+        self.aggregate: bytes = aggregate
+        self.miners: bytes = miners
+        self.proof: int = proof
 
-    #Convert to JSON.
-    def json(
+        self.rehash()
+
+    #Set aggregate.
+    def setAggregate(
+        self,
+        aggregate: bytes
+    ) -> None:
+        self.aggregate: bytes = aggregate
+
+    #Set miners.
+    def setMiners(
+        self,
+        miners: bytes
+     )-> None:
+        self.miners: bytes = miners
+
+    #BlockHeader -> JSON.
+    def toJSON(
         self
     ) -> Dict[str, Any]:
         return {
             "nonce": self.nonce,
-            "last": self.last.hex(),
-            "aggregate": self.aggregate.hex(),
-            "miners": self.miners.hex(),
+            "last": self.last.hex().upper(),
+            "aggregate": self.aggregate.hex().upper(),
+            "miners": self.miners.hex().upper(),
             "time": self.time,
             "proof": self.proof,
-            "hash": self.hash.hex()
+            "hash": self.hash.hex().upper()
         }
+
+    #JSON -> BlockHeader.
+    @staticmethod
+    def fromJSON(
+        json: Dict[str, Any]
+    ) -> Any:
+        return BlockHeader(
+            json["nonce"],
+            bytes.fromhex(json["last"]),
+            json["time"],
+            bytes.fromhex(json["aggregate"]),
+            bytes.fromhex(json["miners"]),
+            json["proof"]
+        )

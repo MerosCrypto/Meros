@@ -37,10 +37,20 @@ class Block:
             self.body.serialize()
         )
 
-    #Convert to JSON.
-    def json(
+    #Block -> JSON.
+    def toJSON(
         self
     ) -> Dict[str, Any]:
-        result = self.body.json()
-        result["header"] = self.header.json()
+        result: Dict[str, Any] = self.body.toJSON()
+        result["header"] = self.header.toJSON()
         return result
+
+    #JSON -> Block.
+    @staticmethod
+    def fromJSON(
+        json: Dict[str, Any]
+    ) -> Any:
+        return Block(
+            BlockHeader.fromJSON(json["header"]),
+            BlockBody.fromJSON(json)
+        )
