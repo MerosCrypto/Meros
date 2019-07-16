@@ -1,21 +1,25 @@
 # pyright: strict
 
 #Types.
-from typing import List, Callable
+from typing import Callable, List
 
 #Meros classes.
 from python_tests.Meros.Meros import Meros
 from python_tests.Meros.RPC import RPC
 
 #Tests.
-from python_tests.Merit.ChainAdvancementTest import ChainAdvancementTest
+from python_tests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
+from python_tests.Tests.Merit.SyncTest import SyncTest
 
 #Time lib.
 import time
 
 port: int = 5132
-tests: List[Callable[[RPC], None]] = [
-    ChainAdvancementTest
+tests: List[
+    Callable[[RPC], None]
+] = [
+    ChainAdvancementTest,
+    SyncTest
 ]
 
 for test in tests:
@@ -30,5 +34,11 @@ for test in tests:
     time.sleep(1)
 
     rpc: RPC = RPC(meros)
-    test(rpc)
+    try:
+        test(rpc)
+    except Exception as e:
+        rpc.quit()
+        raise e
     rpc.quit()
+
+    print("--")

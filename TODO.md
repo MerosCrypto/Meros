@@ -154,7 +154,7 @@ UI/RPC:
 - UI/RPC/Modules/NetworkModule Test.
 
 ### Python Tests
-- Blank Block Syncing Test.
+- Expand SyncTest to sync back from the node.
 - https://github.com/MerosCrypto/Meros/issues/50 Test.
 - Merit Removal Tests.
 
