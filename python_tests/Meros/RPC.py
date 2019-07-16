@@ -3,21 +3,25 @@
 #Types.
 from typing import Dict, List, Any
 
-#Socket lib.
-import socket
+#Meros class.
+from python_tests.Meros.Meros import Meros
 
 #JSON lib.
 import json
+
+#Socket lib.
+import socket
 
 #RPC class.
 class RPC:
     #Constructor.
     def __init__(
         self,
-        port: int = 5133
+        meros: Meros
     ) -> None:
+        self.meros: Meros = meros
         self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(("127.0.0.1", port))
+        self.socket.connect(("127.0.0.1", meros.rpc))
 
     #Call an RPC method.
     def call(
@@ -50,3 +54,21 @@ class RPC:
         if "error" in result:
             raise Exception(result["error"])
         return result
+
+    #Quit Meros.
+    def quit(
+        self
+    ) -> None:
+        self.socket.send(
+            bytes(
+                json.dumps(
+                    {
+                        "module": "system",
+                        "method": "quit",
+                        "args": []
+                    }
+                ) + "\r\n",
+                "utf-8"
+            )
+        )
+        self.meros.quit()

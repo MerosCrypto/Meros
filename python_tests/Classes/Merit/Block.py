@@ -3,7 +3,7 @@
 #Types.
 from typing import Dict, Any
 
-#BlockHeader and BlockBody libs.
+#BlockHeader and BlockBody classes.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 

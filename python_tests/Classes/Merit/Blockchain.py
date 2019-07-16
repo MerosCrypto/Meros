@@ -3,7 +3,7 @@
 #Types.
 from typing import List
 
-#BlockHeader, BlockBody, and Block libs.
+#BlockHeader, BlockBody, and Block classes.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 from python_tests.Classes.Merit.Block import Block
