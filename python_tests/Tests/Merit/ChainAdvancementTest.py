@@ -18,8 +18,8 @@ def ChainAdvancementTest(
 ) -> None:
     #Blockchain.
     blockchain: Blockchain = Blockchain(
-        b"MEROS_DEVELOPER_TESTNET_2",
-        600,
+        b"MEROS_DEVELOPER_NETWORK",
+        60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
     )
     #Blocks.
@@ -42,8 +42,10 @@ def ChainAdvancementTest(
         if blockchain.difficulty != int(rpc.call("merit", "getDifficulty", [0])["difficulty"], 16):
             raise Exception("Difficulty doesn't match.")
 
+        #Verify the Block.
         if rpc.call("merit", "getBlock", [block.header.nonce]) != jsonBlock:
             raise Exception("Block doesn't match.")
 
+    #Verify the height.
     if rpc.call("merit", "getHeight")["height"] != len(blocks) + 1:
         raise Exception("Height doesn't match.")

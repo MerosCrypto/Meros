@@ -121,7 +121,6 @@ class Blockchain:
                 )
             )
         ]
-        self.blocks[0].header.rehash()
         for block in blocks:
             self.add(block)
 
