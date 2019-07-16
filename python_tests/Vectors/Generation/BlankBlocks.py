@@ -23,7 +23,7 @@ blockchain: Blockchain = Blockchain(
 )
 
 #Generate blocks.
-for i in range(1, 3):
+for i in range(1, 26):
     #Create the Block.
     block: Block = Block(
         BlockHeader(
