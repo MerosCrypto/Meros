@@ -1,5 +1,7 @@
-#List type.
-from typing import List, Tuple
+# pyright: strict
+
+#Types.
+from typing import Dict, List, Tuple, Any
 
 #BLS lib.
 from blspy import PrivateKey, PublicKey
@@ -14,8 +16,8 @@ class BlockBody:
             (PrivateKey.from_seed(b"").get_public_key(), 100)
         ]
     ) -> None:
-        self.records = []
-        self.miners = miners
+        self.records: List[None] = []
+        self.miners: List[Tuple[PublicKey, int]] = miners
 
     #Get the serialized miners.
     def getSerializedMiners(
@@ -35,4 +37,17 @@ class BlockBody:
             len(self.miners).to_bytes(1, byteorder="big") +
             bytes().join(self.getSerializedMiners())
         )
+        return result
+
+    #Convert to JSON.
+    def json(
+        self
+    ) -> Dict[str, Any]:
+        result = {
+            "records": self.records,
+            "miners": []
+        }
+        for miner in self.miners:
+            result["miners"].append((miner[0].serialize().hex(), miner[1]))
+
         return result

@@ -1,4 +1,6 @@
-#List type.
+# pyright: strict
+
+#Types.
 from typing import List
 
 #BlockHeader, BlockBody, and Block libs.
@@ -12,14 +14,14 @@ class Blockchain:
     def add(
         self,
         block: Block
-    ) -> bytes:
+    ) -> None:
         self.blocks.append(block)
 
         if block.header.nonce == self.difficultyUntil:
             #Blocks per months.
-            blocksPerMonth = 2592000 // self.blockTime
+            blocksPerMonth: int = 2592000 // self.blockTime
             #Blocks per difficulty period.
-            blocksPerPeriod = 0
+            blocksPerPeriod: int = 0
             #If we're in the first month, the period length is one block.
             if block.header.nonce + 1 < blocksPerMonth:
                 blocksPerPeriod = 1
@@ -38,16 +40,18 @@ class Blockchain:
             self.difficultyUntil += blocksPerPeriod
 
             #Last difficulty.
-            last = self.difficulty
+            last: int = self.difficulty
             #Target time.
-            targetTime = self.blockTime * blocksPerPeriod
+            targetTime: int = self.blockTime * blocksPerPeriod
             #Period time.
-            periodTime = block.header.time - self.blocks[block.header.nonce - blocksPerPeriod].header.time
+            periodTime: int = block.header.time - self.blocks[block.header.nonce - blocksPerPeriod].header.time
 
             #Possible values.
-            possible = self.maxDifficulty - self.difficulty
+            possible: int = self.maxDifficulty - self.difficulty
             #Change.
-            change = 0
+            change: int = 0
+            #New difficulty.
+            difficulty: int = 0
 
             #If we went faster...
             if periodTime < targetTime:
@@ -97,14 +101,14 @@ class Blockchain:
         startDifficulty: int,
         blocks: List[Block] = []
     ) -> None:
-        self.blockTime = blockTime
+        self.blockTime: int = blockTime
 
-        self.startDifficulty = startDifficulty
-        self.maxDifficulty = (2 ** 384) - 1
-        self.difficulty = startDifficulty
-        self.difficultyUntil = 1
+        self.startDifficulty: int = startDifficulty
+        self.maxDifficulty: int = (2 ** 384) - 1
+        self.difficulty: int = startDifficulty
+        self.difficultyUntil: int = 1
 
-        self.blocks = [
+        self.blocks: List[Block] = [
             Block(
                 BlockHeader(
                     0,

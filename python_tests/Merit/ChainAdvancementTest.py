@@ -1,5 +1,4 @@
-#Time lib.
-import time
+# pyright: strict
 
 #Merit libs.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
@@ -9,6 +8,9 @@ from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #RPC lib.
 from python_tests.RPC.RPC import RPC
+
+#Time lib.
+import time
 
 #Blockchain.
 blockchain = Blockchain(

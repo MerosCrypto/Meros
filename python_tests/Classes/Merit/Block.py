@@ -1,3 +1,8 @@
+# pyright: strict
+
+#Types.
+from typing import Dict, Any
+
 #BlockHeader and BlockBody libs.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
@@ -13,8 +18,8 @@ class Block:
         header: BlockHeader,
         body: BlockBody
     ) -> None:
-        self.header = header
-        self.body = body
+        self.header: BlockHeader = header
+        self.body: BlockBody = body
         if self.header.nonce != 0:
             self.header.setMiners(
                 blake2b(
@@ -31,3 +36,11 @@ class Block:
             self.header.serialize() +
             self.body.serialize()
         )
+
+    #Convert to JSON.
+    def json(
+        self
+    ) -> Dict[str, Any]:
+        result = self.body.json()
+        result["header"] = self.header.json()
+        return result

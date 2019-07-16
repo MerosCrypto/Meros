@@ -1,4 +1,6 @@
-#List type.
+# pyright: strict
+
+#Types.
 from typing import Dict, List, Any
 
 #Socket lib.
@@ -14,7 +16,7 @@ class RPC:
         self,
         port: int = 5133
     ) -> None:
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect(("127.0.0.1", port))
 
     #Call an RPC method.

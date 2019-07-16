@@ -1,3 +1,8 @@
+# pyright: strict
+
+#Types.
+from typing import Dict, Any
+
 #Argon2 lib.
 import argon2
 
@@ -13,28 +18,28 @@ class BlockHeader:
         miners: bytes = bytes(48),
         proof: int = 0
     ) -> None:
-        self.nonce = nonce
-        self.last = last
-        self.time = time
-        self.aggregate = aggregate
-        self.miners = miners
-        self.proof = proof
+        self.nonce: int = nonce
+        self.last: bytes = last
+        self.time: int = time
+        self.aggregate: bytes = aggregate
+        self.miners: bytes = miners
+        self.proof: int = proof
 
-        self.hash = bytes(48)
+        self.hash: bytes = bytes(48)
 
     #Set aggregate.
     def setAggregate(
         self,
         aggregate: bytes
     ) -> None:
-        self.aggregate = aggregate
+        self.aggregate: bytes = aggregate
 
     #Set miners.
     def setMiners(
         self,
         miners: bytes
      )-> None:
-        self.miners = miners
+        self.miners: bytes = miners
 
     #Serialize.
     def serialize(
@@ -53,7 +58,7 @@ class BlockHeader:
     def rehash(
         self
     ) -> None:
-        self.hash = argon2.low_level.hash_secret_raw(
+        self.hash: bytes = argon2.low_level.hash_secret_raw(
             self.serialize()[0 : 200],
             self.serialize()[200 : 204].rjust(8, b'\0'),
             1,
@@ -62,3 +67,17 @@ class BlockHeader:
             48,
             argon2.low_level.Type.D
         )
+
+    #Convert to JSON.
+    def json(
+        self
+    ) -> Dict[str, Any]:
+        return {
+            "nonce": self.nonce,
+            "last": self.last.hex(),
+            "aggregate": self.aggregate.hex(),
+            "miners": self.miners.hex(),
+            "time": self.time,
+            "proof": self.proof,
+            "hash": self.hash.hex()
+        }
