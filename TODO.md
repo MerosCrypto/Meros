@@ -57,6 +57,7 @@ has several notes in `discard """ """` about syncing transactions which should b
 
 	Will reduce network traffic and increase security.
 
+- Check requested data is requested data.
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.

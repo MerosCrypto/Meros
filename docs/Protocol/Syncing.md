@@ -84,7 +84,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### GetBlockHash and BlockHash
 
-`GetBlockHash` has a message length of 4 bytes; the nonce of the Block. The expected response is a `BlockHash` containing the Block at the specified nonce's hash. `BlockHash` has a message length of 52 bytes; the 4-byte nonce and the 48-byte hash. If a zeroed out hash was sent, the syncee responds with a `BlockHash` containing the syncee's tail Block's nonce and hash.
+`GetBlockHash` has a message length of 4 bytes; the nonce of the Block. The expected response is a `BlockHash` containing the Block at the specified nonce's hash. `BlockHash` has a message length of 48 bytes; the 48-byte hash. If a zeroed out nonce was sent, the syncee responds with a `BlockHash` containing the syncee's tail Block's nonce and hash.
 
 ### GetVerifierHeight and VerifierHeight
 
