@@ -80,7 +80,7 @@ TODO:
 - When a Block comes with that MeritRemoval, remove the malicious Merit from the live Merit.
 - Save all of this to the database.
 
-### Tests:
+### Nim Tests:
 
 objects:
 
@@ -151,6 +151,11 @@ UI/RPC:
 - UI/RPC/Modules/TransactionsModule Test.
 - UI/RPC/Modules/PersonalModule Test.
 - UI/RPC/Modules/NetworkModule Test.
+
+### Python Tests
+- Blank Block Syncing Test.
+- https://github.com/MerosCrypto/Meros/issues/50 Test.
+- Merit Removal Tests.
 
 ### Features:
 
