@@ -18,6 +18,9 @@ import ../Wallet/MinerWallet
 #OS standard lib.
 import os
 
+#String utils standard lib.
+import strutils
+
 #JSON standard lib.
 import json
 
@@ -157,7 +160,7 @@ proc newConfig*(): Config {.forceCheck: [].} =
                 case paramStr(i):
                     of "--network":
                         result.network = paramStr(i + 1)
-                    
+
                     of "--db":
                         result.db = paramStr(i + 1)
 
@@ -184,7 +187,9 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
     #Make sure the data directory exists.
     try:
-        discard existsOrCreateDir(result.dataDir)
+        var dirs: seq[string] = result.dataDir.split("/")
+        for d in 0 ..< dirs.len:
+            discard existsOrCreateDir(dirs[0 .. d].joinPath())
     except OSError as e:
         doAssert(false, "Couldn't create the data directory due to an OSError: " & e.msg)
     except IOError as e:
