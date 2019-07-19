@@ -31,7 +31,7 @@ for test in tests:
         port,
         port + 1
     )
-    time.sleep(1)
+    time.sleep(2)
 
     rpc: RPC = RPC(meros)
     try:

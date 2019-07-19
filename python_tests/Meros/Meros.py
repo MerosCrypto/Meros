@@ -57,6 +57,13 @@ class Meros:
         #Create the instance.
         self.process: Popen = Popen(["./build/Meros", "--network", "devnet", "--db", db, "--tcpPort", str(tcp), "--rpcPort", str(rpc)])
 
+    #Send a message.
+    def send(
+        self,
+        msg: bytes
+    ) -> None:
+        self.connection.send(msg)
+
     #Receive a message.
     def recv(
         self
@@ -133,8 +140,8 @@ class Meros:
         #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + MERIT_REMOVAL_LENS[4]
 
         if MessageType(result[0]) == MessageType.BlockBody:
-            self.connection.recv((int.from_bytes(result[1 : 5], byteorder="big") * 100) + 1)
-            self.connection.recv(int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + 49)
+            result += self.connection.recv((int.from_bytes(result[1 : 5], byteorder="big") * 100) + 1)
+            result += self.connection.recv(int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + 49)
 
         #elif MessageType(result[0]) == MessageType.MeritRemoval:
         #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + MERIT_REMOVAL_LENS[2]
@@ -158,7 +165,7 @@ class Meros:
         self.connection.connect(("127.0.0.1", self.tcp))
 
         #Send our handshake.
-        self.connection.send(
+        self.send(
             MessageType.Handshake.value.to_bytes(1, byteorder="big") +
             network.to_bytes(1, byteorder="big") +
             protocol.to_bytes(1, byteorder="big") +
@@ -184,60 +191,68 @@ class Meros:
     def handshake(
         self,
         height: int
-    ) -> None:
-        self.connection.send(
+    ) -> bytes:
+        res: bytes = (
             MessageType.Handshake.value.to_bytes(1, byteorder="big") +
             self.network.to_bytes(1, byteorder="big") +
             self.protocol.to_bytes(1, byteorder="big") +
             b'\0' +
             height.to_bytes(4, byteorder="big")
         )
+        self.send(res)
+        return res
 
     #Start syncing.
     def syncing(
         self
-    ) -> None:
-        self.connection.send(
-            MessageType.Syncing.value.to_bytes(1, byteorder="big")
-        )
+    ) -> bytes:
+        res: bytes = MessageType.Syncing.value.to_bytes(1, byteorder="big")
+        self.send(res)
+        return res
 
     #Acknowledge syncing.
     def acknowledgeSyncing(
         self
-    ) -> None:
-        self.connection.send(
-            MessageType.SyncingAcknowledged.value.to_bytes(1, byteorder="big")
-        )
+    ) -> bytes:
+        res: bytes = MessageType.SyncingAcknowledged.value.to_bytes(1, byteorder="big")
+        self.send(res)
+        return res
 
     #Send a Block Hash.
     def blockHash(
         self,
         hash: bytes
-    ) -> None:
-        self.connection.send(
+    ) -> bytes:
+        res: bytes = (
             MessageType.BlockHash.value.to_bytes(1, byteorder="big") +
             hash
         )
+        self.send(res)
+        return res
 
     #Send a Block Header.
     def blockHeader(
         self,
         header: BlockHeader
-    ) -> None:
-        self.connection.send(
+    ) -> bytes:
+        res: bytes = (
             MessageType.BlockHeader.value.to_bytes(1, byteorder="big") +
             header.serialize()
         )
+        self.send(res)
+        return res
 
     #Send a Block Body.
     def blockBody(
         self,
         body: BlockBody
-    ) -> None:
-        self.connection.send(
+    ) -> bytes:
+        res: bytes = (
             MessageType.BlockBody.value.to_bytes(1, byteorder="big") +
             body.serialize()
         )
+        self.send(res)
+        return res
 
     #Check the return code.
     def quit(

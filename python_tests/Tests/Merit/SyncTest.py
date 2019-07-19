@@ -39,38 +39,40 @@ def SyncTest(
         len(blockchain.blocks)
     )
 
+    msgs: List[bytes] = []
+    ress: List[bytes] = []
     sentLast: bool = False
     while True:
-        msg: bytes = rpc.meros.recv()
+        msgs.append(rpc.meros.recv())
 
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
+        if MessageType(msgs[-1][0]) == MessageType.Syncing:
+            ress.append(rpc.meros.acknowledgeSyncing())
 
-        elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder="big")
+        elif MessageType(msgs[-1][0]) == MessageType.GetBlockHash:
+            height: int = int.from_bytes(msgs[-1][1 : 5], byteorder="big")
             if height == 0:
-                rpc.meros.blockHash(blockchain.last())
+                ress.append(rpc.meros.blockHash(blockchain.last()))
             else:
                 if height >= len(blockchain.blocks):
                     raise Exception("Meros asked for a Block Hash we do not have.")
 
-                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
+                ress.append(rpc.meros.blockHash(blockchain.blocks[height].header.hash))
 
-        elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash: bytes = msg[1 : 49]
+        elif MessageType(msgs[-1][0]) == MessageType.BlockHeaderRequest:
+            hash: bytes = msgs[-1][1 : 49]
             for block in blockchain.blocks:
                 if block.header.hash == hash:
-                    rpc.meros.blockHeader(block.header)
+                    ress.append(rpc.meros.blockHeader(block.header))
                     break
 
                 if block.header.hash == blockchain.last():
                     raise Exception("Meros asked for a Block Header we do not have.")
 
-        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash: bytes = msg[1 : 49]
+        elif MessageType(msgs[-1][0]) == MessageType.BlockBodyRequest:
+            hash: bytes = msgs[-1][1 : 49]
             for block in blockchain.blocks:
                 if block.header.hash == hash:
-                    rpc.meros.blockBody(block.body)
+                    ress.append(rpc.meros.blockBody(block.body))
                     if block.header.hash == blockchain.blocks[len(blockchain.blocks) - 2].header.hash:
                         sentLast = True
                     break
@@ -78,7 +80,8 @@ def SyncTest(
                 if block.header.hash == blockchain.last():
                     raise Exception("Meros asked for a Block Nody we do not have.")
 
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
+        elif MessageType(msgs[-1][0]) == MessageType.SyncingOver:
+            ress.append(b'\xFF')
             if sentLast:
                 break
 
@@ -94,3 +97,10 @@ def SyncTest(
     for jsonBlock in blocks:
         if rpc.call("merit", "getBlock", [jsonBlock["header"]["nonce"]]) != jsonBlock:
             raise Exception("Block doesn't match.")
+
+    #Replay their messages and verify they sent what we sent.
+    for m in range(0, len(msgs)):
+        rpc.meros.send(msgs[m])
+        if ress[m] != b'\xFF':
+            if ress[m] != rpc.meros.recv():
+                raise Exception("Invalid sync response.")
