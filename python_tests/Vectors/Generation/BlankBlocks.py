@@ -9,10 +9,10 @@ from python_tests.Classes.Merit.BlockBody import BlockBody
 from python_tests.Classes.Merit.Block import Block
 from python_tests.Classes.Merit.Blockchain import Blockchain
 
-#Time function.
+#Time standard function.
 from time import time
 
-#JSON lib.
+#JSON standard lib.
 import json
 
 #Blockchain.

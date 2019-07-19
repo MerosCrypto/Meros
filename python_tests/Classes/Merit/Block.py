@@ -7,7 +7,7 @@ from typing import Dict, Any
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 
-#Blake2b.
+#Blake2b standard function.
 from hashlib import blake2b
 
 #Block class.

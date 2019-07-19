@@ -13,6 +13,7 @@ import os
 #Creates a database.
 var db {.threadvar.}: DB
 discard existsOrCreateDir("./data")
+discard existsOrCreateDir("./data/nim_tests")
 proc newTestDatabase*(): DB =
     #Close any existing DB.
     if not db.isNil:

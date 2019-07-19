@@ -11,7 +11,7 @@ from python_tests.Classes.Merit.Blockchain import Blockchain
 from python_tests.Meros.Meros import MessageType
 from python_tests.Meros.RPC import RPC
 
-#JSON lib.
+#JSON standard lib.
 import json
 
 def SyncTest(

@@ -11,8 +11,11 @@ from python_tests.Meros.RPC import RPC
 from python_tests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from python_tests.Tests.Merit.SyncTest import SyncTest
 
-#Time lib.
+#Time standard lib.
 import time
+
+#SHUtil standard lib.
+import shutil
 
 port: int = 5132
 tests: List[
@@ -22,8 +25,15 @@ tests: List[
     SyncTest
 ]
 
+#Delete the python_tests data directory.
+try:
+    shutil.rmtree("./data/python_tests")
+except FileNotFoundError:
+    pass
+
+#Run every test.
 for test in tests:
-    name: str = test.__name__ + str(int(time.time()))
+    name: str = test.__name__
     name.replace(" ", "")
 
     meros: Meros = Meros(

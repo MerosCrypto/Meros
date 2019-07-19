@@ -10,7 +10,7 @@ from python_tests.Classes.Merit.Blockchain import Blockchain
 #RPC class.
 from python_tests.Meros.RPC import RPC
 
-#JSON lib.
+#JSON standard lib.
 import json
 
 def ChainAdvancementTest(

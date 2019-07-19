@@ -6,10 +6,10 @@ from typing import Dict, List, Any
 #Meros class.
 from python_tests.Meros.Meros import Meros
 
-#JSON lib.
+#JSON standard lib.
 import json
 
-#Socket lib.
+#Socket standard lib.
 import socket
 
 #RPC class.
