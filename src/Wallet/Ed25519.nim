@@ -126,7 +126,7 @@ proc aggregate*(
 ): EdPublicKey {.forceCheck: [].} =
     if keys.len == 1:
         return keys[0]
-    
+
     var
         bytes: string
         l: SHA2_256Hash
