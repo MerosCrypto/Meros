@@ -10,8 +10,6 @@ import ../../src/Wallet/Wallet
 #Random standard lib.
 import random
 
-
-
 proc verify(
     wallet: Wallet
 ) =

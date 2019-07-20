@@ -90,6 +90,9 @@ proc test*() =
 
         #Spend outputs.
         for key in spendable.keys():
+            if spendable[key].len == 0:
+                continue
+
             var i: int = 0
             while true:
                 if rand(1) == 0:

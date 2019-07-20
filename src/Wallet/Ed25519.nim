@@ -88,7 +88,13 @@ func sign*(
         msg: string = SIGN_PREFIX & msgArg
 
     #Create the signature.
-    sign(cast[ptr cuchar](addr result.data[0]), cast[ptr cuchar](addr msg[0]), csize(msg.len), cast[ptr cuchar](addr privKey.data[0]), addr pubKey.data[0])
+    sign(
+        cast[ptr cuchar](addr result.data[0]),
+        cast[ptr cuchar](addr msg[0]),
+        csize(msg.len),
+        cast[ptr cuchar](addr pubKey.data[0]),
+        cast[ptr cuchar](addr privKey.data[0])
+    )
 
 #Nim function for verifying a message.
 func verify*(
@@ -102,10 +108,16 @@ func verify*(
         msg: string = SIGN_PREFIX & msgArg
         sig: EdSignature = sigArg
 
-    if verify(cast[ptr cuchar](addr sig.data[0]), cast[ptr cuchar](addr msg[0]), csize(msg.len), addr key.data[0]) != 0:
-        return false
+    #Verify the signature.
+    if verify(
+        cast[ptr cuchar](addr sig.data[0]),
+        cast[ptr cuchar](addr msg[0]),
+        csize(msg.len),
+        addr key.data[0]
+    ) == 1:
+        return true
 
-    result = true
+    result = false
 
 #Stringify.
 func toString*(
@@ -143,16 +155,18 @@ proc aggregate*(
 
     for k in 0 ..< keys.len:
         keyHash = SHA2_256(l.toString() & keys[k].toString())
+
         keyToNegativePoint(addr keyPoint, addr keys[k].data[0])
+        bytes = newString(32)
+        serialize(addr bytes[0], addr keyPoint)
+        keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
+
         multiplyScalar(
             addr a,
             cast[ptr cuchar](addr keyHash.data[0]),
             addr keyPoint,
             addr blankScalar[0]
         )
-        bytes = newString(32)
-        serialize(addr bytes[0], addr a)
-        keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
 
         if k == 0:
             res = keyPoint

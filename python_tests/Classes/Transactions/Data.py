@@ -37,7 +37,7 @@ class Data:
         self,
         privKey: bytes
     ) -> None:
-        self.signature: bytes = ed25519.SigningKey(privKey).sign(self.hash)
+        self.signature: bytes = ed25519.SigningKey(privKey).sign(b"MEROS" + self.hash)
 
     #Mine.
     def beat(
