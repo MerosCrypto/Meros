@@ -20,10 +20,10 @@ proc newTestDatabase*(): DB =
         db.close()
 
     #Delete any old database.
-    removeFile("./data/test" & $getThreadID())
+    removeFile("./data/nim_tests/test" & $getThreadID())
 
     #Open the database.
-    db = newDB("./data/test" & $getThreadID(), 1073741824)
+    db = newDB("./data/nim_tests/test" & $getThreadID(), 1073741824)
     result = db
 
 #Commit the Database.
