@@ -6,8 +6,7 @@ Integration tests written in Python to test Meros's networking code and the RPC.
 
 These tests require Python 3.5+ and pip. To install the needed modules:
 ```
-pip3 install argon2-cffi
-pip3 install blspy
+pip3 install argon2-cffi ed25519 blspy
 ```
 
 ### Running

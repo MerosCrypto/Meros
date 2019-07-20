@@ -4,6 +4,9 @@
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 
+#Transactions classes.
+from python_tests.Classes.Transactions.Data import Data
+
 #Enum class.
 from enum import Enum
 
@@ -40,6 +43,12 @@ class MessageType(Enum):
     BlockBody = 30
     Verification = 31
     MeritRemoval = 35
+
+    #MessageType -> byte.
+    def toByte(
+        self
+    ) -> bytes:
+        return self.value.to_bytes(1, byteorder="big")
 
 class Meros:
     #Constructor.
@@ -166,7 +175,7 @@ class Meros:
 
         #Send our handshake.
         self.send(
-            MessageType.Handshake.value.to_bytes(1, byteorder="big") +
+            MessageType.Handshake.toByte() +
             network.to_bytes(1, byteorder="big") +
             protocol.to_bytes(1, byteorder="big") +
             b'\0' +
@@ -193,7 +202,7 @@ class Meros:
         height: int
     ) -> bytes:
         res: bytes = (
-            MessageType.Handshake.value.to_bytes(1, byteorder="big") +
+            MessageType.Handshake.toByte() +
             self.network.to_bytes(1, byteorder="big") +
             self.protocol.to_bytes(1, byteorder="big") +
             b'\0' +
@@ -206,7 +215,7 @@ class Meros:
     def syncing(
         self
     ) -> bytes:
-        res: bytes = MessageType.Syncing.value.to_bytes(1, byteorder="big")
+        res: bytes = MessageType.Syncing.toByte()
         self.send(res)
         return res
 
@@ -214,7 +223,7 @@ class Meros:
     def acknowledgeSyncing(
         self
     ) -> bytes:
-        res: bytes = MessageType.SyncingAcknowledged.value.to_bytes(1, byteorder="big")
+        res: bytes = MessageType.SyncingAcknowledged.toByte()
         self.send(res)
         return res
 
@@ -224,7 +233,7 @@ class Meros:
         hash: bytes
     ) -> bytes:
         res: bytes = (
-            MessageType.BlockHash.value.to_bytes(1, byteorder="big") +
+            MessageType.BlockHash.toByte() +
             hash
         )
         self.send(res)
@@ -236,7 +245,7 @@ class Meros:
         header: BlockHeader
     ) -> bytes:
         res: bytes = (
-            MessageType.BlockHeader.value.to_bytes(1, byteorder="big") +
+            MessageType.BlockHeader.toByte() +
             header.serialize()
         )
         self.send(res)
@@ -248,8 +257,20 @@ class Meros:
         body: BlockBody
     ) -> bytes:
         res: bytes = (
-            MessageType.BlockBody.value.to_bytes(1, byteorder="big") +
+            MessageType.BlockBody.toByte() +
             body.serialize()
+        )
+        self.send(res)
+        return res
+
+    #Send a Data.
+    def data(
+        self,
+        data: Data
+    ) -> bytes:
+        res: bytes = (
+            MessageType.Data.toByte() +
+            data.serialize()
         )
         self.send(res)
         return res

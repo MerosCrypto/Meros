@@ -34,6 +34,7 @@ class BlockHeader:
             48,
             argon2.low_level.Type.D
         )
+    
     #Constructor.
     def __init__(
         self,

@@ -11,6 +11,8 @@ from python_tests.Meros.RPC import RPC
 from python_tests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from python_tests.Tests.Merit.SyncTest import SyncTest
 
+from python_tests.Tests.Transactions.DataTest import DataTest
+
 #Time standard lib.
 import time
 
@@ -22,7 +24,8 @@ tests: List[
     Callable[[RPC], None]
 ] = [
     ChainAdvancementTest,
-    SyncTest
+    SyncTest,
+    DataTest
 ]
 
 #Delete the python_tests data directory.

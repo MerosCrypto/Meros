@@ -8,26 +8,32 @@ It returns:
 
 - `inputs` (array of objects, each as follows)
     - `hash` (string)
-    When `descendant` == "Send":
+    When `descendant` == "send":
         - `nonce` (int)
 
 - `outputs` (array of objects, each as follows)
     - `amount` (string)
-    When `descendant` == "Mint":
+    When `descendant` == "mint":
         - `key` (string; BLS Public Key)
-    When `descendant` == "Claim" or `descendant` == "Send":
+    When `descendant` == "claim" or `descendant` == "send":
         - `key` (string; Ed25519 Public Key)
 
 - `hash`     (string)
 - `verified` (bool)
 
-When `descendant` == "Mint":
+When `descendant` == "mint":
     - `nonce` (int)
 
-When `descendant` == "Claim":
+When `descendant` == "claim":
     - `signature` (string)
 
-When `descendant` == "Send":
+When `descendant` == "send":
+    - `signature` (string)
+    - `proof`     (int)
+    - `argon`     (string)
+
+When `descendant` == "data":
+    - `data`      (string)
     - `signature` (string)
     - `proof`     (int)
     - `argon`     (string)
