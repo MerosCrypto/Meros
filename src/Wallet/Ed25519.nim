@@ -152,12 +152,15 @@ proc aggregate*(
     for key in keys:
         bytes &= key.toString()
     l = SHA2_256(bytes)
+    bytes = newString(64)
 
     for k in 0 ..< keys.len:
         keyHash = SHA2_256(l.toString() & keys[k].toString())
+        copyMem(addr bytes[0], addr keyHash.data[0], 32)
+        reduceScalar(cast[ptr cuchar](addr bytes[0]))
+        copyMem(addr keyHash.data[0], addr bytes[0], 32)
 
         keyToNegativePoint(addr keyPoint, addr keys[k].data[0])
-        bytes = newString(32)
         serialize(addr bytes[0], addr keyPoint)
         keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
 
@@ -168,12 +171,15 @@ proc aggregate*(
             addr blankScalar[0]
         )
 
+        serialize(addr bytes[0], addr a)
+        keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
+        serialize(addr bytes[0], addr keyPoint)
+        keyToNegativePoint(addr keyPoint, cast[ptr cuchar](addr bytes[0]))
+
         if k == 0:
             res = keyPoint
         else:
             p3ToCached(addr tempCached, addr keyPoint)
-            bytes = newString(32)
-            serialize(addr bytes[0], addr res)
             add(addr tempRes, addr res, addr tempCached)
             p1p1ToP3(addr res, addr tempRes)
 
