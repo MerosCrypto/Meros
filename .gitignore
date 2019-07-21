@@ -8,3 +8,4 @@ settings.json
 
 #Python files.
 __pycache__
+.mypy_cache

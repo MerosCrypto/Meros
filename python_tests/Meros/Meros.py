@@ -48,7 +48,8 @@ class MessageType(Enum):
     def toByte(
         self
     ) -> bytes:
-        return self.value.to_bytes(1, byteorder="big")
+        result: bytes = self.value.to_bytes(1, byteorder="big")
+        return result
 
 class Meros:
     #Constructor.

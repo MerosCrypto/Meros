@@ -10,6 +10,38 @@ from python_tests.Classes.Merit.Block import Block
 
 #Blockchain class.
 class Blockchain:
+    #Constructor.
+    #Even though this calls add, it is above add as it provides the class's type hints.
+    def __init__(
+        self,
+        genesis: bytes,
+        blockTime: int,
+        startDifficulty: int,
+        blocks: List[Block] = []
+    ) -> None:
+        self.blockTime: int = blockTime
+
+        self.startDifficulty: int = startDifficulty
+        self.maxDifficulty: int = (2 ** 384) - 1
+        self.difficulty: int = startDifficulty
+        self.difficultyUntil: int = 1
+
+        self.blocks: List[Block] = [
+            Block(
+                BlockHeader(
+                    0,
+                    genesis.rjust(48, b'\0'),
+                    0
+                ),
+                BlockBody(
+                    [],
+                    []
+                )
+            )
+        ]
+        for block in blocks:
+            self.add(block)
+
     #Add block.
     def add(
         self,
@@ -92,37 +124,6 @@ class Blockchain:
 
             #Set the new difficulty.
             self.difficulty = difficulty
-
-    #Constructor
-    def __init__(
-        self,
-        genesis: bytes,
-        blockTime: int,
-        startDifficulty: int,
-        blocks: List[Block] = []
-    ) -> None:
-        self.blockTime: int = blockTime
-
-        self.startDifficulty: int = startDifficulty
-        self.maxDifficulty: int = (2 ** 384) - 1
-        self.difficulty: int = startDifficulty
-        self.difficultyUntil: int = 1
-
-        self.blocks: List[Block] = [
-            Block(
-                BlockHeader(
-                    0,
-                    genesis.rjust(48, b'\0'),
-                    0
-                ),
-                BlockBody(
-                    [],
-                    []
-                )
-            )
-        ]
-        for block in blocks:
-            self.add(block)
 
     #Last hash.
     def last(

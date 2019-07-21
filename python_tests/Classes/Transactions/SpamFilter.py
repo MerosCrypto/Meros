@@ -1,3 +1,5 @@
+# pyright: strict
+
 #Types.
 from typing import Tuple
 
@@ -15,8 +17,8 @@ class SpamFilter:
     def run(
         data: bytes,
         nonce: int
-    ) -> bytes :
-        return argon2.low_level.hash_secret_raw(
+    ) -> bytes:
+        result: bytes = argon2.low_level.hash_secret_raw(
             data,
             nonce.to_bytes(8, byteorder="big"),
             1,
@@ -25,6 +27,7 @@ class SpamFilter:
             48,
             argon2.low_level.Type.D
         )
+        return result
 
     def beat(
         self,

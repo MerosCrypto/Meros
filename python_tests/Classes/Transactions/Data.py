@@ -30,14 +30,16 @@ class Data:
         ).digest()
 
         self.signature: bytes = signature
+
         self.proof: int = proof
+        self.argon: bytes = SpamFilter.run(self.hash, self.proof)
 
     #Sign.
     def sign(
         self,
         privKey: bytes
     ) -> None:
-        self.signature: bytes = ed25519.SigningKey(privKey).sign(b"MEROS" + self.hash)
+        self.signature = ed25519.SigningKey(privKey).sign(b"MEROS" + self.hash)
 
     #Mine.
     def beat(
@@ -45,8 +47,8 @@ class Data:
         filter: SpamFilter
     ) -> None:
         result: Tuple[bytes, int] = filter.beat(self.hash)
-        self.argon: bytes = result[0]
-        self.proof: int = result[1]
+        self.argon = result[0]
+        self.proof = result[1]
 
     #Serialize.
     def serialize(

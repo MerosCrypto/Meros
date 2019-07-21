@@ -34,7 +34,7 @@ class BlockHeader:
             48,
             argon2.low_level.Type.D
         )
-    
+
     #Constructor.
     def __init__(
         self,
@@ -59,14 +59,14 @@ class BlockHeader:
         self,
         aggregate: bytes
     ) -> None:
-        self.aggregate: bytes = aggregate
+        self.aggregate = aggregate
 
     #Set miners.
     def setMiners(
         self,
         miners: bytes
      )-> None:
-        self.miners: bytes = miners
+        self.miners = miners
 
     #BlockHeader -> JSON.
     def toJSON(

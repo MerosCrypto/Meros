@@ -42,6 +42,7 @@ def SyncTest(
     msgs: List[bytes] = []
     ress: List[bytes] = []
     sentLast: bool = False
+    hash: bytes = bytes()
     while True:
         msgs.append(rpc.meros.recv())
 
@@ -59,7 +60,7 @@ def SyncTest(
                 ress.append(rpc.meros.blockHash(blockchain.blocks[height].header.hash))
 
         elif MessageType(msgs[-1][0]) == MessageType.BlockHeaderRequest:
-            hash: bytes = msgs[-1][1 : 49]
+            hash= msgs[-1][1 : 49]
             for block in blockchain.blocks:
                 if block.header.hash == hash:
                     ress.append(rpc.meros.blockHeader(block.header))
@@ -69,7 +70,7 @@ def SyncTest(
                     raise Exception("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msgs[-1][0]) == MessageType.BlockBodyRequest:
-            hash: bytes = msgs[-1][1 : 49]
+            hash = msgs[-1][1 : 49]
             for block in blockchain.blocks:
                 if block.header.hash == hash:
                     ress.append(rpc.meros.blockBody(block.body))
