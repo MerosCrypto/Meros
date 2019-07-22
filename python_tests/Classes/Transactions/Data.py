@@ -57,10 +57,10 @@ class Data(Transaction):
     ) -> bytes:
         return (
             self.input +
-            len(self.data).to_bytes(1, byteorder="big") +
+            len(self.data).to_bytes(1, byteorder = "big") +
             self.data +
             self.signature +
-            self.proof.to_bytes(4, byteorder="big")
+            self.proof.to_bytes(4, byteorder = "big")
         )
 
     #Data -> JSON.

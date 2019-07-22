@@ -13,12 +13,12 @@ class BlockHeader:
         self
     ) -> bytes:
         return (
-            self.nonce.to_bytes(4, byteorder="big") +
+            self.nonce.to_bytes(4, byteorder = "big") +
             self.last +
             self.aggregate +
             self.miners +
-            self.time.to_bytes(4, byteorder="big") +
-            self.proof.to_bytes(4, byteorder="big")
+            self.time.to_bytes(4, byteorder = "big") +
+            self.proof.to_bytes(4, byteorder = "big")
         )
 
     #Hash.

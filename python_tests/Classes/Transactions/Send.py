@@ -1,7 +1,7 @@
 # pyright: strict
 
 #Types.
-from typing import Dict, Tuple, Any
+from typing import Dict, List, Tuple, Any
 
 #Transaction and SpamFilter class.
 from python_tests.Classes.Transactions.Transaction import Transaction
@@ -56,7 +56,7 @@ class Send(Transaction):
     ) -> bytes:
         result: bytes = bytes()
         for input in self.inputs:
-            result += input[0] + input[1].to_bytes(1, byteorder="big")
+            result += input[0] + input[1].to_bytes(1, byteorder = "big")
         return result
 
     #Serialize Outputs.
@@ -66,7 +66,7 @@ class Send(Transaction):
     ) -> bytes:
         result: bytes = bytes()
         for output in self.outputs:
-            result += output[0] + output[1].to_bytes(1, byteorder="big")
+            result += output[0] + output[1].to_bytes(1, byteorder = "big")
         return result
 
     #Serialize.
@@ -74,12 +74,12 @@ class Send(Transaction):
         self
     ) -> bytes:
         return (
-            len(self.inputs).to_bytes(1, byteorder="big") +
+            len(self.inputs).to_bytes(1, byteorder = "big") +
             self.serializeInputs() +
-            len(self.outputs.to_bytes(1, byteorder="big")) +
+            len(self.outputs).to_bytes(1, byteorder = "big") +
             self.serializeOutputs() +
             self.signature +
-            self.proof.to_bytes(4, byteorder="big")
+            self.proof.to_bytes(4, byteorder = "big")
         )
 
     #Send -> JSON.

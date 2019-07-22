@@ -19,7 +19,7 @@ def SyncTest(
 ) -> None:
     #Blockchain.
     blockchain: Blockchain = Blockchain(
-        b"MEROS_DEVELOPER_TESTNET_2",
+        b"MEROS_DEVELOPER_NETWORK",
         600,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
     )
@@ -50,7 +50,7 @@ def SyncTest(
             ress.append(rpc.meros.acknowledgeSyncing())
 
         elif MessageType(msgs[-1][0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msgs[-1][1 : 5], byteorder="big")
+            height: int = int.from_bytes(msgs[-1][1 : 5], byteorder = "big")
             if height == 0:
                 ress.append(rpc.meros.blockHash(blockchain.last()))
             else:

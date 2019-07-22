@@ -48,7 +48,7 @@ class MessageType(Enum):
     def toByte(
         self
     ) -> bytes:
-        result: bytes = self.value.to_bytes(1, byteorder="big")
+        result: bytes = self.value.to_bytes(1, byteorder = "big")
         return result
 
 class Meros:
@@ -140,22 +140,22 @@ class Meros:
 
         #elif MessageType(result[0]) == MessageType.Send:
         #    result += self.connection.recv((int.from_bytes(result[1]) * SEND_LENS[1]) + SEND_LENS[2]
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") * SEND_LENS[3]) + SEND_LENS[4]
+        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") * SEND_LENS[3]) + SEND_LENS[4]
 
         #elif MessageType(result[0]) == MessageType.Data:
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + DATA_SUFFIX_LEN
+        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + DATA_SUFFIX_LEN
 
         #elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + MERIT_REMOVAL_LENS[2]
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + MERIT_REMOVAL_LENS[4]
+        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + MERIT_REMOVAL_LENS[2]
+        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + MERIT_REMOVAL_LENS[4]
 
         if MessageType(result[0]) == MessageType.BlockBody:
-            result += self.connection.recv((int.from_bytes(result[1 : 5], byteorder="big") * 100) + 1)
-            result += self.connection.recv(int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + 49)
+            result += self.connection.recv((int.from_bytes(result[1 : 5], byteorder = "big") * 100) + 1)
+            result += self.connection.recv(int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + 49)
 
         #elif MessageType(result[0]) == MessageType.MeritRemoval:
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big") + MERIT_REMOVAL_LENS[2]
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder="big")
+        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + MERIT_REMOVAL_LENS[2]
+        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big")
 
         return result
 
@@ -177,10 +177,10 @@ class Meros:
         #Send our handshake.
         self.send(
             MessageType.Handshake.toByte() +
-            network.to_bytes(1, byteorder="big") +
-            protocol.to_bytes(1, byteorder="big") +
+            network.to_bytes(1, byteorder = "big") +
+            protocol.to_bytes(1, byteorder = "big") +
             b'\0' +
-            height.to_bytes(4, byteorder="big")
+            height.to_bytes(4, byteorder = "big")
         )
 
         #Receive their handshake.
@@ -195,7 +195,7 @@ class Meros:
             raise Exception("Connected to a node using a diffirent protocol.")
 
         #Return their height.
-        return int.from_bytes(response[3 : 7], byteorder="big")
+        return int.from_bytes(response[3 : 7], byteorder = "big")
 
     #Handshake.
     def handshake(
@@ -204,10 +204,10 @@ class Meros:
     ) -> bytes:
         res: bytes = (
             MessageType.Handshake.toByte() +
-            self.network.to_bytes(1, byteorder="big") +
-            self.protocol.to_bytes(1, byteorder="big") +
+            self.network.to_bytes(1, byteorder = "big") +
+            self.protocol.to_bytes(1, byteorder = "big") +
             b'\0' +
-            height.to_bytes(4, byteorder="big")
+            height.to_bytes(4, byteorder = "big")
         )
         self.send(res)
         return res
