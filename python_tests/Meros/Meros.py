@@ -1,5 +1,3 @@
-# pyright: strict
-
 #Merit classes.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody

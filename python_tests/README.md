@@ -10,7 +10,7 @@ These tests require Python 3.6+ and pip. To install the needed modules:
 
 ### Static Typing
 
-Meros supports static typing via both Pyright (`pyright`) and MyPy (`mypy --config-file python_tests/mypy.ini --namespace-packages python_tests`).
+Meros supports static typing via both Pyright (`pyright -p python_tests`) and MyPy (`mypy --config-file python_tests/mypy.ini --namespace-packages python_tests`).
 
 ### Running
 

@@ -1,0 +1,17 @@
+{
+    "pythonVersion": "3.6",
+
+    "typingsPath": "Stubs",
+    "strict": [
+        "Classes",
+        "Meros",
+        "Stubs",
+        "Tests",
+        "Vectors"
+    ],
+
+    "executionEnvironments": [{
+        "root": "../",
+        "pythonVersion": "3.6"
+    }]
+}

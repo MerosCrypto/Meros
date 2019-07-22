@@ -1,5 +1,3 @@
-# pyright: strict
-
 #Types.
 from typing import Dict, List, Any
 

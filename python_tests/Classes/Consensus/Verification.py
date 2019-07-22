@@ -1,5 +1,3 @@
-# pyright: strict
-
 #Types.
 from typing import Dict, Any
 
@@ -85,7 +83,7 @@ class SignedVerification(Verification):
         #the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
         return (
             self.holder +
-            self.nonce +
+            self.nonce.to_bytes(4, byteorder = "big") +
             self.hash +
             self.signature
         )

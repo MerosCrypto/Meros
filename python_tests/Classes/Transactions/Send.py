@@ -1,5 +1,3 @@
-# pyright: strict
-
 #Types.
 from typing import Dict, List, Tuple, Any
 
@@ -97,15 +95,16 @@ class Send(Transaction):
             "argon": self.argon.hex().upper()
         }
         for input in self.inputs:
-            result.inputs.append({
+            result["inputs"].append({
                 "hash": input[0].hex().upper(),
                 "nonce": input[1]
             })
         for output in self.outputs:
-            result.outputs.append({
+            result["outputs"].append({
                 "key": output[0].hex().upper(),
                 "amount": output[1]
             })
+        return result
 
     #JSON -> Send.
     @staticmethod
@@ -116,12 +115,12 @@ class Send(Transaction):
         outputs: List[Tuple[bytes, int]] = []
         for input in json["inputs"]:
             inputs.append((
-                bytes.fromHex(input["hash"]),
+                bytes.fromhex(input["hash"]),
                 input["nonce"]
             ))
         for output in json["outputs"]:
             outputs.append((
-                bytes.fromHex(output["key"]),
+                bytes.fromhex(output["key"]),
                 output["amount"]
             ))
 

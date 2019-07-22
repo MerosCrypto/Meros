@@ -1,3 +1,9 @@
+#Types.
+from typing import Dict, Any
+
 #Element root class.
 class Element:
-    pass
+    def toJSON(
+        self
+    ) -> Dict[str, Any]:
+        raise Exception("Base Element toJSON called.")

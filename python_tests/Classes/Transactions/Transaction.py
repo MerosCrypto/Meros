@@ -1,3 +1,9 @@
+#Types.
+from typing import Dict, Any
+
 #Transaction root class.
 class Transaction:
-    pass
+    def toJSON(
+        self
+    ) -> Dict[str, Any]:
+        raise Exception("Base Transaction toJSON called.")
