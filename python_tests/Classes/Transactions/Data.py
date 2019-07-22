@@ -38,9 +38,9 @@ class Data(Transaction):
     #Sign.
     def sign(
         self,
-        privKey: bytes
+        privKey: ed25519.SigningKey
     ) -> None:
-        self.signature = ed25519.SigningKey(privKey).sign(b"MEROS" + self.hash)
+        self.signature = privKey.sign(b"MEROS" + self.hash)
 
     #Mine.
     def beat(

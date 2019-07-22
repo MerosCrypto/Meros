@@ -13,8 +13,9 @@ from python_tests.Meros.RPC import RPC
 #Ed25519 lib.
 import ed25519
 
-pubKey = bytes.fromhex("81F27A00BBFFE6A64E0B33245FDA67A54E86088595691D039FB791C09C3CBBBA")
-privKey = bytes.fromhex("610EB27209471207A39EEDC72D46F55D212D1C854610166F44857A8CD9F1D0DA") + pubKey
+#Ed25519 keys.
+privKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+pubKey: ed25519.VerifyingKey = privKey.get_verifying_key()
 
 def DataTest(
     rpc: RPC
@@ -26,7 +27,7 @@ def DataTest(
 
     #Create the Data.
     data: Data = Data(
-        pubKey.rjust(48, b'\0'),
+        pubKey.to_bytes().rjust(48, b'\0'),
         b"Hello There! General Kenobi."
     )
     data.sign(privKey)
