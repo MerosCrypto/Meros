@@ -9,7 +9,6 @@ from python_tests.Classes.Merit.Block import Block
 #Blockchain class.
 class Blockchain:
     #Constructor.
-    #Even though this calls add, it is above add as it provides the class's type hints.
     def __init__(
         self,
         genesis: bytes,
@@ -31,8 +30,7 @@ class Blockchain:
                     0
                 ),
                 BlockBody(
-                    [],
-                    []
+                    miners = []
                 )
             )
         ]
