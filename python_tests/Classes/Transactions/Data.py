@@ -3,7 +3,8 @@
 #Types.
 from typing import Dict, Tuple, Any
 
-#SpamFilter class.
+#Transaction and SpamFilter class.
+from python_tests.Classes.Transactions.Transaction import Transaction
 from python_tests.Classes.Transactions.SpamFilter import SpamFilter
 
 #Ed25519 lib.
@@ -13,7 +14,7 @@ import ed25519
 from hashlib import blake2b
 
 #Data class.
-class Data:
+class Data(Transaction):
     #Constructor.
     def __init__(
         self,
