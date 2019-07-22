@@ -1,5 +1,3 @@
-# pyright: strict
-
 #Types.
 from typing import IO, Any
 
@@ -18,7 +16,7 @@ import json
 #Blockchain.
 blockchain: Blockchain = Blockchain(
     b"MEROS_DEVELOPER_NETWORK",
-    600,
+    60,
     int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
 )
 
@@ -44,9 +42,6 @@ for i in range(1, 26):
     blockchain.add(block)
     print("Generated Blank Block " + str(i) + ".")
 
-result = []
-for b in range(1, len(blockchain.blocks)):
-    result.append(blockchain.blocks[b].toJSON())
 vectors: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "w")
-vectors.write(json.dumps(result))
+vectors.write(json.dumps(blockchain.toJSON()))
 vectors.close()

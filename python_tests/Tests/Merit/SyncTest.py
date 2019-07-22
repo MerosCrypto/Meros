@@ -1,10 +1,7 @@
-# pyright: strict
-
 #Types.
-from typing import Dict, List, IO, Any
+from typing import List, IO, Any
 
 #Merit classes.
-from python_tests.Classes.Merit.Block import Block
 from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #Meros classes.
@@ -18,19 +15,14 @@ def SyncTest(
     rpc: RPC
 ) -> None:
     #Blockchain.
-    blockchain: Blockchain = Blockchain(
+    bbFile: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "r")
+    blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
-        600,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
+        60,
+        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        json.loads(bbFile.read())
     )
-    #Blocks.
-    vectors: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "r")
-    blocks: List[Dict[str, Any]] = json.loads(vectors.read())
-    vectors.close()
-
-    #Add all the Blocks locally.
-    for jsonBlock in blocks:
-        blockchain.add(Block.fromJSON(jsonBlock))
+    bbFile.close()
 
     #Handshake with the node.
     rpc.meros.connect(
@@ -60,7 +52,7 @@ def SyncTest(
                 ress.append(rpc.meros.blockHash(blockchain.blocks[height].header.hash))
 
         elif MessageType(msgs[-1][0]) == MessageType.BlockHeaderRequest:
-            hash= msgs[-1][1 : 49]
+            hash = msgs[-1][1 : 49]
             for block in blockchain.blocks:
                 if block.header.hash == hash:
                     ress.append(rpc.meros.blockHeader(block.header))
@@ -82,12 +74,15 @@ def SyncTest(
                     raise Exception("Meros asked for a Block Nody we do not have.")
 
         elif MessageType(msgs[-1][0]) == MessageType.SyncingOver:
-            ress.append(b'\xFF')
+            ress.append(bytes())
             if sentLast:
                 break
 
+        else:
+            raise Exception("Unexpected message sent: " + msgs[-1].hex().upper())
+
     #Verify the height.
-    if rpc.call("merit", "getHeight")["height"] != len(blocks) + 1:
+    if rpc.call("merit", "getHeight")["height"] != len(blockchain.blocks):
         raise Exception("Height doesn't match.")
 
     #Verify the difficulty.
@@ -95,13 +90,13 @@ def SyncTest(
         raise Exception("Difficulty doesn't match.")
 
     #Verify the blocks.
-    for jsonBlock in blocks:
-        if rpc.call("merit", "getBlock", [jsonBlock["header"]["nonce"]]) != jsonBlock:
+    for block in blockchain.blocks:
+        if rpc.call("merit", "getBlock", [block.header.nonce]) != block.toJSON():
             raise Exception("Block doesn't match.")
 
     #Replay their messages and verify they sent what we sent.
     for m in range(0, len(msgs)):
         rpc.meros.send(msgs[m])
-        if ress[m] != b'\xFF':
+        if len(ress[m]) != 0:
             if ress[m] != rpc.meros.recv():
                 raise Exception("Invalid sync response.")

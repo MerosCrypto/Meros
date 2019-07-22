@@ -1,5 +1,3 @@
-# pyright: strict
-
 #Types.
 from typing import Dict, List, IO, Any
 
@@ -23,19 +21,19 @@ def ChainAdvancementTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
     )
     #Blocks.
-    vectors: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "r")
-    blocks: List[Dict[str, Any]] = json.loads(vectors.read())
-    vectors.close()
+    bbFile: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "r")
+    blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
+    bbFile.close()
 
-    #Add Blocks.
+    #Publish Blocks.
     for jsonBlock in blocks:
-        #Create the Block.
+        #Parse the Block.
         block: Block = Block.fromJSON(jsonBlock)
 
         #Add it locally.
         blockchain.add(block)
 
-        #Add it to the node.
+        #Publish it.
         rpc.call("merit", "publishBlock", [block.serialize().hex()])
 
         #Verify the difficulty.

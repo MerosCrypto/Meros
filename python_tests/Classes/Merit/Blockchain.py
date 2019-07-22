@@ -1,7 +1,5 @@
-# pyright: strict
-
 #Types.
-from typing import List
+from typing import Dict, List, Any
 
 #BlockHeader, BlockBody, and Block classes.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
@@ -16,8 +14,7 @@ class Blockchain:
         self,
         genesis: bytes,
         blockTime: int,
-        startDifficulty: int,
-        blocks: List[Block] = []
+        startDifficulty: int
     ) -> None:
         self.blockTime: int = blockTime
 
@@ -39,8 +36,6 @@ class Blockchain:
                 )
             )
         ]
-        for block in blocks:
-            self.add(block)
 
     #Add block.
     def add(
@@ -130,3 +125,29 @@ class Blockchain:
         self
     ) -> bytes:
         return self.blocks[len(self.blocks) - 1].header.hash
+
+    #Blockchain -> JSON.
+    def toJSON(
+        self
+    ) -> List[Dict[str, Any]]:
+        result: List[Dict[str, Any]] = []
+        for b in range(1, len(self.blocks)):
+            result.append(self.blocks[b].toJSON())
+        return result
+
+    #JSON -> Blockchain.
+    @staticmethod
+    def fromJSON(
+        genesis: bytes,
+        blockTime: int,
+        startDifficulty: int,
+        blocks: List[Dict[str, Any]]
+    ) -> Any:
+        result = Blockchain(
+            genesis,
+            blockTime,
+            startDifficulty
+        )
+        for block in blocks:
+            result.add(Block.fromJSON(block))
+        return result
