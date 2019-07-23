@@ -5,6 +5,9 @@ from python_tests.Classes.Merit.BlockBody import BlockBody
 #Transactions classes.
 from python_tests.Classes.Transactions.Data import Data
 
+#Consensus classes.
+from python_tests.Classes.Consensus.Verification import Verification
+
 #Enum class.
 from enum import Enum
 
@@ -107,53 +110,67 @@ class Meros:
         elif MessageType(result[0]) == MessageType.SyncingOver:
             size = 0
 
-        #elif MessageType(result[0]) == MessageType.Claim:
-        #    size = CLAIM_LENS[0]
-        #elif MessageType(result[0]) == MessageType.Send:
-        #    size = SEND_LENS[0]
-        #elif MessageType(result[0]) == MessageType.Data:
-        #    size = DATA_PREFIX_LEN
+        elif MessageType(result[0]) == MessageType.Claim:
+            size = 1
+        elif MessageType(result[0]) == MessageType.Send:
+            size = 1
+        elif MessageType(result[0]) == MessageType.Data:
+            size = 49
 
-        #elif MessageType(result[0]) == MessageType.SignedVerification:
-        #    size = SIGNED_VERIFICATION_LEN
-        #elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
-        #    size = MERIT_REMOVAL_LENS[0]
+        elif MessageType(result[0]) == MessageType.SignedVerification:
+            size = 196
+        elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
+            size = 53
 
         elif MessageType(result[0]) == MessageType.BlockHeader:
             size = 204
         elif MessageType(result[0]) == MessageType.BlockBody:
             size = 4
-        #elif MessageType(result[0]) == MessageType.Verification:
-        #    size = VERIFICATION_LEN
-        #elif MessageType(result[0]) == MessageType.MeritRemoval:
-        #    size = MERIT_REMOVAL_LENS[0]
+        elif MessageType(result[0]) == MessageType.Verification:
+            size = 100
+        elif MessageType(result[0]) == MessageType.MeritRemoval:
+            size = 53
 
         #Now that we know how long the message is, get it (as long as there is one).
         if size > 0:
             result += self.connection.recv(size)
 
         #If this is a MessageType with more data...
-        #if MessageType(result[0]) == MessageType.Claim:
-        #    result += self.connection.recv((int.from_bytes(result[1]) * CLAIM_LENS[1]) + CLAIM_LENS[2])
+        if MessageType(result[0]) == MessageType.Claim:
+            result += self.connection.recv((result[1] * 48) + 128)
 
-        #elif MessageType(result[0]) == MessageType.Send:
-        #    result += self.connection.recv((int.from_bytes(result[1]) * SEND_LENS[1]) + SEND_LENS[2]
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") * SEND_LENS[3]) + SEND_LENS[4]
+        elif MessageType(result[0]) == MessageType.Send:
+            result += self.connection.recv((result[1] * 49) + 1)
+            result += self.connection.recv((result[-1] * 40) + 68)
 
-        #elif MessageType(result[0]) == MessageType.Data:
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + DATA_SUFFIX_LEN
+        elif MessageType(result[0]) == MessageType.Data:
+            result += self.connection.recv(result[-1] + 68)
 
-        #elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + MERIT_REMOVAL_LENS[2]
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + MERIT_REMOVAL_LENS[4]
+        elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
+            if result[-1] == 0:
+                result += self.connection.recv(69)
+            else:
+                raise Exception("Meros sent an Element we don't recognize.")
 
-        if MessageType(result[0]) == MessageType.BlockBody:
+            if result[-1] == 0:
+                result += self.connection.recv(132)
+            else:
+                raise Exception("Meros sent an Element we don't recognize.")
+
+        elif MessageType(result[0]) == MessageType.BlockBody:
             result += self.connection.recv((int.from_bytes(result[1 : 5], byteorder = "big") * 100) + 1)
-            result += self.connection.recv(int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + 49)
+            result += self.connection.recv(result[-1] + 49)
 
-        #elif MessageType(result[0]) == MessageType.MeritRemoval:
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big") + MERIT_REMOVAL_LENS[2]
-        #    result += self.connection.recv((int.from_bytes(result[len(result) - 1 : len(result)], byteorder = "big")
+        elif MessageType(result[0]) == MessageType.MeritRemoval:
+            if result[-1] == 0:
+                result += self.connection.recv(69)
+            else:
+                raise Exception("Meros sent an Element we don't recognize.")
+
+            if result[-1] == 0:
+                result += self.connection.recv(68)
+            else:
+                raise Exception("Meros sent an Element we don't recognize.")
 
         return result
 
@@ -258,6 +275,18 @@ class Meros:
         res: bytes = (
             MessageType.BlockBody.toByte() +
             body.serialize()
+        )
+        self.send(res)
+        return res
+
+    #Send a Verification.
+    def verification(
+        self,
+        verif: Verification
+    ) -> bytes:
+        res: bytes = (
+            MessageType.Verification.toByte() +
+            verif.serialize()
         )
         self.send(res)
         return res
