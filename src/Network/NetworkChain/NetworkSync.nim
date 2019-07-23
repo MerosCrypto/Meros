@@ -294,27 +294,39 @@ proc sync*(
             #Iterate over every transaction.
             for tx in transactions:
                 block thisTX:
-                    #Make sure we have already added every input.
-                    for input in tx.inputs:
-                        try:
-                            #If the TX doesn't exist, this will throw. If it does exist but isn't verified, throw a different error.
-                            if not network.mainFunctions.transactions.getTransaction(input.hash).verified:
-                                raise newException(ValueError, "")
-                        #This TX is missing an input.
-                        except IndexError:
-                            #Look for the input in the pending transactions.
-                            var found: bool = false
-                            for todoTX in transactions:
-                                if todoTX.hash == input.hash:
-                                    found = true
-                            #If it's found, add it.
-                            if found:
-                                todo.add(tx)
+                    #Handle initial datas.
+                    var first: bool = true
+                    if tx of Data:
+                        for i in 0 ..< 16:
+                            if tx.inputs[0].hash.data[i] != 0:
+                                first = false
+                                break
+                    else:
+                        first = false
 
-                            break thisTX
-                        #This TX spends an unconfirmed input.
-                        except ValueError:
-                            break thisTX
+
+                    #Make sure we have already added every input.
+                    if not first:
+                        for input in tx.inputs:
+                            try:
+                                #If the TX doesn't exist, this will throw. If it does exist but isn't verified, throw a different error.
+                                if not network.mainFunctions.transactions.getTransaction(input.hash).verified:
+                                    raise newException(ValueError, "")
+                            #This TX is missing an input.
+                            except IndexError:
+                                #Look for the input in the pending transactions.
+                                var found: bool = false
+                                for todoTX in transactions:
+                                    if todoTX.hash == input.hash:
+                                        found = true
+                                #If it's found, add it.
+                                if found:
+                                    todo.add(tx)
+
+                                break thisTX
+                            #This TX spends an unconfirmed input.
+                            except ValueError:
+                                break thisTX
 
                     #Handle the tx.
                     case tx:

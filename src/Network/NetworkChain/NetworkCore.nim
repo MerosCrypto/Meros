@@ -132,6 +132,7 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                        return
                     except IndexError as e:
                         fcRaise e
                     except SocketError as e:
@@ -140,7 +141,6 @@ proc newNetwork*(
                         fcRaise e
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `BlockHeaderRequest`/`BlockBodyRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-                    return
 
                 #Since we have the Block, serialize the requested part.
                 var serialized: string
@@ -190,6 +190,7 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                        return
                     except IndexError as e:
                         fcRaise e
                     except SocketError as e:
@@ -198,7 +199,6 @@ proc newNetwork*(
                         fcRaise e
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-                    return
 
                 try:
                     await network.clients.reply(
@@ -235,6 +235,7 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                        return
                     except IndexError as e:
                         fcRaise e
                     except SocketError as e:
@@ -252,6 +253,7 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                        return
                     except IndexError as e:
                         fcRaise e
                     except SocketError as e:
@@ -311,6 +313,7 @@ proc newNetwork*(
                             msg,
                             newMessage(MessageType.DataMissing)
                         )
+                        return
                     except IndexError as e:
                         fcRaise e
                     except SocketError as e:
@@ -319,7 +322,6 @@ proc newNetwork*(
                         fcRaise e
                     except Exception as e:
                         doAssert(false, "Sending `DataMissing` in response to a `GetBlockHash` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-                    return
 
                 #Send it.
                 try:
