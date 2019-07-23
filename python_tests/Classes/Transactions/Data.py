@@ -3,7 +3,7 @@ from typing import Dict, Tuple, Any
 
 #Transaction and SpamFilter class.
 from python_tests.Classes.Transactions.Transaction import Transaction
-from python_tests.Classes.Transactions.SpamFilter import SpamFilter
+from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 
 #Ed25519 lib.
 import ed25519
@@ -80,6 +80,13 @@ class Data(Transaction):
             "proof": self.proof,
             "argon": self.argon.hex().upper()
         }
+
+    #Transaction -> Data. Satisifes static typing requirements.
+    @staticmethod
+    def fromTransaction(
+        tx: Transaction
+    ) -> Any:
+        return tx
 
     #JSON -> Data.
     @staticmethod

@@ -43,6 +43,13 @@ class Verification(Element):
             "hash": self.hash.hex().upper()
         }
 
+    #Element -> Verification. Satisifes static typing requirements.
+    @staticmethod
+    def fromElement(
+        elem: Element
+    ) -> Any:
+        return elem
+
     #JSON -> Verification.
     @staticmethod
     def fromJSON(

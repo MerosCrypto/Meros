@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple, Any
 
 #Transaction and SpamFilter class.
 from python_tests.Classes.Transactions.Transaction import Transaction
-from python_tests.Classes.Transactions.SpamFilter import SpamFilter
+from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 
 #Ed25519 lib.
 import ed25519
@@ -105,6 +105,13 @@ class Send(Transaction):
                 "amount": output[1]
             })
         return result
+
+    #Transaction -> Send. Satisifes static typing requirements.
+    @staticmethod
+    def fromTransaction(
+        tx: Transaction
+    ) -> Any:
+        return tx
 
     #JSON -> Send.
     @staticmethod

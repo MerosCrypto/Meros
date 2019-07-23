@@ -4,13 +4,18 @@ from typing import Dict, List, Any
 #Element classes.
 from python_tests.Classes.Consensus.Element import Element
 from python_tests.Classes.Consensus.Verification import Verification
+from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 
 #Consensus class.
 class Consensus:
     #Constructor.
     def __init__(
-        self
+        self,
+        sendDiff: bytes,
+        dataDiff: bytes
     ) -> None:
+        self.sendFilter = SpamFilter(sendDiff)
+        self.dataFilter = SpamFilter(dataDiff)
         self.holders: Dict[bytes, List[Element]] = {}
 
     #Add an Element.
@@ -36,9 +41,14 @@ class Consensus:
     #JSON -> Consensus.
     @staticmethod
     def fromJSON(
+        sendDiff: bytes,
+        dataDiff: bytes,
         json: Dict[str, List[Dict[str, Any]]]
     ) -> Any:
-        result = Consensus()
+        result = Consensus(
+            sendDiff,
+            dataDiff
+        )
         for mh in json:
             for elem in json[mh]:
                 if elem["descendant"] == "verification":
