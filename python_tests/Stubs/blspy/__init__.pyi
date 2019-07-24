@@ -1,3 +1,6 @@
+#Types.
+from typing import List
+
 class PrivateKey:
     @staticmethod
     def from_seed(
@@ -29,6 +32,12 @@ class PublicKey:
         ...
 
 class Signature:
+    @staticmethod
+    def aggregate(
+        sigs: List[Signature]
+    ) -> Signature:
+        ...
+
     def serialize(
         self
     ) -> bytes:
