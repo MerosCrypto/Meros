@@ -1,7 +1,7 @@
 #Types.
 from typing import Dict, List, Tuple, Any
 
-#Transaction and SpamFilter class.
+#Transaction and SpamFilter classes.
 from python_tests.Classes.Transactions.Transaction import Transaction
 from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 
