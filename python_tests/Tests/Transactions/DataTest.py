@@ -43,7 +43,6 @@ def DataTest(
 
     #Verify the Data.
     dataJSON: Dict[str, Any] = data.toJSON()
-    dataJSON["verified"] = False
     if dataJSON != rpc.call("transactions", "getTransaction", [
         data.hash.hex()
     ]):

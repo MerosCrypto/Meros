@@ -32,6 +32,7 @@ class Data(Transaction):
 
         self.proof: int = proof
         self.argon: bytes = SpamFilter.run(self.hash, self.proof)
+        self.verified: bool = False
 
     #Sign.
     def sign(
@@ -78,7 +79,9 @@ class Data(Transaction):
             "data": self.data.hex().upper(),
             "signature": self.signature.hex().upper(),
             "proof": self.proof,
-            "argon": self.argon.hex().upper()
+            "argon": self.argon.hex().upper(),
+
+            "verified": self.verified
         }
 
     #Transaction -> Data. Satisifes static typing requirements.
@@ -93,9 +96,12 @@ class Data(Transaction):
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        return Data(
+        result: Data = Data(
             bytes.fromhex(json["inputs"][0]["hash"]),
             bytes.fromhex(json["data"]),
             bytes.fromhex(json["signature"]),
             json["proof"]
         )
+        if json["verified"]:
+            result.verified = True
+        return result

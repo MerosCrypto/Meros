@@ -18,9 +18,10 @@ class Mint(Transaction):
         nonce: int,
         output: Tuple[blspy.PublicKey, int]
     ) -> None:
-        self.nonce: nonce
+        self.nonce: int = nonce
         self.output: Tuple[blspy.PublicKey, int] = output
         self.hash = blake2b(b"\0" + self.nonce.to_bytes(4, byteorder = "big") + self.output[0].serialize() + self.output[1].to_bytes(8, byteorder = "big"), digest_size = 48).digest()
+        self.verified: bool = True
 
     #Mint -> JSON.
     def toJSON(
@@ -35,7 +36,9 @@ class Mint(Transaction):
             }],
             "hash": self.hash.hex().upper(),
 
-            "nonce": self.nonce
+            "nonce": self.nonce,
+
+            "verified": self.verified
         }
         return result
 
