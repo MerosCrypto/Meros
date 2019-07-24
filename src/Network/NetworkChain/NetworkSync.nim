@@ -304,7 +304,6 @@ proc sync*(
                     else:
                         first = false
 
-
                     #Make sure we have already added every input.
                     if not first:
                         for input in tx.inputs:

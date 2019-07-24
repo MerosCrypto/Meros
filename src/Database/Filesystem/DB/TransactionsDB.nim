@@ -11,8 +11,9 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 import ../../../Wallet/Wallet
 
-#Transaction object.
+#Transaction and Mint object.
 import ../../Transactions/objects/TransactionObj
+import ../../Transactions/objects/MintObj
 
 #Serialization libs.
 import Serialize/Transactions/SerializeMintOutput
@@ -207,11 +208,12 @@ proc load*(
     try:
         result = db.get(hash).parseTransaction()
 
-        result.verified = true
-        try:
-            discard db.get(hash & "vrf")
-        except DBReadError:
-            result.verified = false
+        if not (result of Mint):
+            result.verified = true
+            try:
+                discard db.get(hash & "vrf")
+            except DBReadError:
+                result.verified = false
 
     except Exception as e:
         raise newException(DBReadError, e.msg)

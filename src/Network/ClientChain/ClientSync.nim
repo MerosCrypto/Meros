@@ -105,10 +105,8 @@ proc syncTransaction*(
                 result = msg.message.parseSend()
             of MessageType.Data:
                 result = msg.message.parseData()
-
             of MessageType.DataMissing:
                 raise newException(DataMissing, "Client didn't have the requested Transaction.")
-
             else:
                 raise newException(InvalidMessageError, "Client didn't respond properly to our TransactionRequest.")
     except ValueError as e:
