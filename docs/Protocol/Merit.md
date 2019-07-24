@@ -102,11 +102,9 @@ BLSSignature aggregate = signatures.aggregate()
 - If there is only one miner, the BlockHeader’s miners is equivalent to the Blake2b-384 hash of the serialized miner (48-byte BLS Public Key and 1-byte amount).
 - If there are multiple miners, the BlockHeader’s miners is equivalent to the Merkle tree hash of a Blake2b-384 Merkle tree where each leaf is the Blake2b-384 hash of a serialized miner.
 
-If the Block is valid, it's added, triggering two events. The first event is the emission of newly-mined Merit and the second event is the emission of newly-minted Meros.
+If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
 
-On Block addition, every miner in the Block's miners get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements, which get archived in a Block, for an entire Checkpoint period, their Merit is no longer live. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
-
-Adding a Block also creates a new Epoch. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Transaction wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
+On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Transaction wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
 
 In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
 
@@ -129,6 +127,8 @@ for holder in scores:
 
 If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference between 1000 and the sum of the scores. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then queued for each Merit Holder, in order, with an amount of `score * multiplier`. After 10 more Blocks, the mints are added to the Transactions.
 
+After Mints are decided, every miner in the Block's miners get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements which get archived in a Block, for an entire Checkpoint period, their Merit is no longer live. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
+
 `BlockBody` has a variable message length; the 4-byte amount of records, the records (each with a 48-byte BLS Public Key, 4-byte nonce, and 48-byte Merkle tree hash), 1-byte amount of miners, and the miners (each with a 48-byte BLS Public Key and 1-byte amount).
 
 ### Checkpoint
@@ -144,6 +144,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 ### Violations in Meros
 
 - Meros allows archived Verifications to skip over Transactions.
+- Meros mints Merit before minting Meros.
 - Meros doesn't support dead Merit.
 - Meros doesn't support chain reorganizations.
 - Meros doesn't rollover rewards or use a negative sigmoid.
