@@ -74,6 +74,9 @@ class Epochs:
             if transactions.txs[tx].verified:
                 verified.append(tx)
 
+        if len(verified) == 0:
+            return []
+
         #Assign each Merit Holder 1 point per verified transaction.
         scores: Dict[bytes, int] = {}
         for tx in verified:
@@ -97,12 +100,12 @@ class Epochs:
 
         #Normalize each score to 1000.
         for i in range(0, len(tupleScores)):
-            tupleScores[i] = (tupleScores[i][0], tupleScores[i][1] * 1000 / total)
+            tupleScores[i] = (tupleScores[i][0], tupleScores[i][1] * 1000 // total)
 
         #If we don't have a perfect 1000, fix that.
         total = 0
-        for holder in tupleScores:
-            total += holder[1]
+        for tupleScore in tupleScores:
+            total += tupleScore[1]
         tupleScores[0] = (tupleScores[0][0], tupleScores[0][1] + (1000 - total))
 
         #Create Mints.

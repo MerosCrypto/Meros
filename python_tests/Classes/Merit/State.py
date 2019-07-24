@@ -43,7 +43,7 @@ class State:
 
         if block.header.nonce > self.lifetime:
             for minerTuple in blockchain.blocks[block.header.nonce - self.lifetime].body.miners:
-                miner: bytes = minerTuple[0].serialize()
+                miner = minerTuple[0].serialize()
                 if miner in self.live:
                     self.live[miner] -= minerTuple[1]
                     self.merit -= minerTuple[1]
@@ -52,7 +52,7 @@ class State:
 
         if not alwaysLive:
             for record in block.body.records:
-                miner: bytes = record[0].serialize()
+                miner = record[0].serialize()
                 if miner in self.live:
                     self.mentioned[miner] = True
                 else:

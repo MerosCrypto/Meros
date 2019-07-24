@@ -33,6 +33,7 @@ class Merit:
             lifetime
         )
         self.epochs = Epochs()
+        self.mints: List[Mint] = []
 
     #Add block.
     def add(
@@ -42,13 +43,17 @@ class Merit:
         block: Block
     ) -> List[Mint]:
         self.blockchain.add(block)
-        self.state.add(self.blockchain, block)
-        return self.epochs.add(
+
+        result: List[Mint] = self.epochs.add(
             transactions,
             consensus,
             self.state,
             block
         )
+        self.mints += result
+
+        self.state.add(self.blockchain, block)
+        return result
 
     #Merit -> JSON.
     def toJSON(
@@ -74,24 +79,26 @@ class Merit:
             0
         )
 
-        result.blockchain: Blockchain = Blockchain.fromJSON(
+        result.blockchain = Blockchain.fromJSON(
             genesis,
             blockTime,
             startDifficulty,
             json
         )
-        result.state: State = State(
+        result.state = State(
             lifetime
         )
         result.epochs = Epochs()
 
         for b in range(1, len(result.blockchain.blocks)):
-            result.epochs.add(
+            mints: List[Mint] = result.epochs.add(
                 transactions,
                 consensus,
                 result.state,
                 result.blockchain.blocks[b]
             )
+            result.mints += mints
+
             result.state.add(
                 result.blockchain,
                 result.blockchain.blocks[b]
