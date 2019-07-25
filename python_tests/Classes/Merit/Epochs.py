@@ -57,7 +57,8 @@ class Epochs:
                     epoch[tx].append(mh)
 
         #Move TXs belonging to an old Epoch to said Epoch.
-        for tx in epoch:
+        txs: List[bytes] = list(epoch.keys())
+        for tx in txs:
             for e in range(0, 5):
                 if tx in self.epochs[e]:
                     self.epochs[e][tx] += epoch[tx]

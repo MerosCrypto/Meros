@@ -57,7 +57,7 @@ proc getTransaction*(
                 for output in tx.outputs:
                     result["outputs"].add(%* {
                         "amount": output.amount.toBinary().toHex(),
-                        "output": $cast[MintOutput](output).key
+                        "key": $cast[MintOutput](output).key
                     })
 
                 result["nonce"] = % mint.nonce
@@ -70,8 +70,8 @@ proc getTransaction*(
                     })
                 for output in tx.outputs:
                     result["outputs"].add(%* {
-                        "amount": output.amount.toBinary().toHex(),
-                        "output": $cast[SendOutput](output).key
+                        "amount": $output.amount,
+                        "key": $cast[SendOutput](output).key
                     })
 
                 result["signature"] = % $claim.signature
@@ -85,8 +85,8 @@ proc getTransaction*(
                     })
                 for output in tx.outputs:
                     result["outputs"].add(%* {
-                        "amount": output.amount.toBinary().toHex(),
-                        "output": $cast[SendOutput](output).key
+                        "amount": $output.amount,
+                        "key": $cast[SendOutput](output).key
                     })
 
                 result["signature"] = % $send.signature

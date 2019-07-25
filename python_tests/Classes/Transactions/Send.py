@@ -65,7 +65,7 @@ class Send(Transaction):
     ) -> bytes:
         result: bytes = bytes()
         for output in self.outputs:
-            result += output[0] + output[1].to_bytes(1, byteorder = "big")
+            result += output[0] + output[1].to_bytes(8, byteorder = "big")
         return result
 
     #Serialize.
@@ -105,7 +105,7 @@ class Send(Transaction):
         for output in self.outputs:
             result["outputs"].append({
                 "key": output[0].hex().upper(),
-                "amount": output[1]
+                "amount": str(output[1])
             })
         return result
 
@@ -131,7 +131,7 @@ class Send(Transaction):
         for output in json["outputs"]:
             outputs.append((
                 bytes.fromhex(output["key"]),
-                output["amount"]
+                int(output["amount"])
             ))
 
         result: Send = Send(

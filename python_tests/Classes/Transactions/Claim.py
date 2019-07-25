@@ -103,7 +103,7 @@ class Claim(Transaction):
             bytes.fromhex(json["outputs"][0]["key"]),
             bytes.fromhex(json["signature"])
         )
-        result.amount = json["outputs"][0]["amount"]
+        result.amount = int(json["outputs"][0]["amount"])
         if json["verified"]:
             result.verified = True
         return result

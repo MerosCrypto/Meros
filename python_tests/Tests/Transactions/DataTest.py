@@ -42,8 +42,7 @@ def DataTest(
     rpc.meros.transaction(data)
 
     #Verify the Data.
-    dataJSON: Dict[str, Any] = data.toJSON()
-    if dataJSON != rpc.call("transactions", "getTransaction", [
+    if data.toJSON() != rpc.call("transactions", "getTransaction", [
         data.hash.hex()
     ]):
         raise Exception("Data doesn't match.")
