@@ -9,6 +9,6 @@ Meros sorts calls into the following modules:
 - `lattice`
 - `network`
 
-The JSON-RPC 2.0 `method` field is constructed via prefixing each RPC method with its module's name plus an underscore, as so: `module_method`. Every set of JSON-RPC 2.0 `params` is an array.
+The JSON-RPC 2.0 `method` field is constructed via prefixing each RPC method with its module's name plus an underscore, as so: `module_method`. Every JSON-RPC 2.0 `params` is an array.
 
 Bytes will always be sent, and expected, in hexadecimal notation.
