@@ -71,7 +71,7 @@ def SyncTest(
                     break
 
                 if block.header.hash == blockchain.last():
-                    raise Exception("Meros asked for a Block Nody we do not have.")
+                    raise Exception("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msgs[-1][0]) == MessageType.SyncingOver:
             ress.append(bytes())

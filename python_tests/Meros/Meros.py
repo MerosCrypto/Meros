@@ -3,6 +3,9 @@ from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 
 #Transactions classes.
+from python_tests.Classes.Transactions.Transaction import Transaction
+from python_tests.Classes.Transactions.Claim import Claim
+from python_tests.Classes.Transactions.Send import Send
 from python_tests.Classes.Transactions.Data import Data
 
 #Consensus classes.
@@ -291,15 +294,20 @@ class Meros:
         self.send(res)
         return res
 
-    #Send a Data.
-    def data(
+    #Send a Transaction.
+    def transaction(
         self,
-        data: Data
+        tx: Transaction
     ) -> bytes:
-        res: bytes = (
-            MessageType.Data.toByte() +
-            data.serialize()
-        )
+        res: bytes = bytes()
+        if isinstance(tx, Claim):
+            res = MessageType.Claim.toByte()
+        elif isinstance(tx, Send):
+            res = MessageType.Send.toByte()
+        elif isinstance(tx, Data):
+            res = MessageType.Data.toByte()
+        res += tx.serialize()
+
         self.send(res)
         return res
 

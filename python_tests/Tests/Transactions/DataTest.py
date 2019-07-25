@@ -39,7 +39,7 @@ def DataTest(
     )
 
     #Send the Data.
-    rpc.meros.data(data)
+    rpc.meros.transaction(data)
 
     #Verify the Data.
     dataJSON: Dict[str, Any] = data.toJSON()

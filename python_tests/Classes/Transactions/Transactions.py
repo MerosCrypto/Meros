@@ -3,6 +3,7 @@ from typing import Dict, Any
 
 #Transaction classes.
 from python_tests.Classes.Transactions.Transaction import Transaction
+from python_tests.Classes.Transactions.Claim import Claim
 from python_tests.Classes.Transactions.Send import Send
 from python_tests.Classes.Transactions.Data import Data
 
@@ -37,7 +38,9 @@ class Transactions:
     ) -> Any:
         result = Transactions()
         for tx in json:
-            if json[tx]["descendant"] == "send":
+            if json[tx]["descendant"] == "claim":
+                result.add(Claim.fromJSON(json[tx]))
+            elif json[tx]["descendant"] == "send":
                 result.add(Send.fromJSON(json[tx]))
             elif json[tx]["descendant"] == "data":
                 result.add(Data.fromJSON(json[tx]))
