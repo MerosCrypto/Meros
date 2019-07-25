@@ -24,7 +24,6 @@ class Verification(Element):
     def serialize(
         self
     ) -> bytes:
-        #the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
         return (
             self.holder +
             self.nonce.to_bytes(4, byteorder = "big") +
@@ -71,7 +70,16 @@ class SignedVerification(Verification):
         signature: bytes = bytes(96)
     ) -> None:
         Verification.__init__(self, holder, nonce, hash)
+
         self.signature: bytes = signature
+        if signature != bytes(96):
+            self.blsSignature: blspy.Signature = blspy.Signature.from_bytes(self.signature)
+            self.blsSignature.set_aggregation_info(
+                blspy.AggregationInfo.from_msg(
+                    blspy.PublicKey.from_bytes(holder),
+                    b'\0' + Verification.serialize(self)
+                )
+            )
 
     #Sign.
     def sign(
@@ -81,13 +89,14 @@ class SignedVerification(Verification):
     ) -> None:
         self.holder = privKey.get_public_key().serialize()
         self.nonce = nonce
-        self.signature = privKey.sign(b'\0' + Verification.serialize(self)).serialize()
+
+        self.blsSignature = privKey.sign(b'\0' + Verification.serialize(self))
+        self.signature = self.blsSignature.serialize()
 
     #Serialize.
     def serialize(
         self
     ) -> bytes:
-        #the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
         return (
             self.holder +
             self.nonce.to_bytes(4, byteorder = "big") +

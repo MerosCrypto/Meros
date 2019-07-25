@@ -13,7 +13,7 @@ from python_tests.Classes.Transactions.Data import Data
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
-from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
+from python_tests.Classes.Consensus.Verification import SignedVerification
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Ed25519 lib.
@@ -24,9 +24,6 @@ import blspy
 
 #Time standard function.
 from time import time
-
-#Blake2b standard function.
-from hashlib import blake2b
 
 #JSON standard lib.
 import json
@@ -56,7 +53,7 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
-blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b"")
+blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b"0")
 blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
 
 #Add 13 Blank Blocks.
@@ -85,16 +82,19 @@ block: Block = Block(
         14,
         merit.blockchain.last(),
         int(time()),
-        verif.signature
+        consensus.getAggregate(
+            blsPubKey,
+            0
+        )
     ),
     BlockBody([
         (
             blsPubKey,
             0,
-            blake2b(
-                b'\0' + Verification.serialize(verif),
-                digest_size = 48
-            ).digest()
+            consensus.getMerkle(
+                blsPubKey,
+                0
+            )
         )
     ])
 )
@@ -140,16 +140,19 @@ block = Block(
         20,
         merit.blockchain.last(),
         int(time()),
-        verif.signature
+        consensus.getAggregate(
+            blsPubKey,
+            1
+        )
     ),
     BlockBody([
         (
             blsPubKey,
             1,
-            blake2b(
-                b'\0' + Verification.serialize(verif),
-                digest_size = 48
-            ).digest()
+            consensus.getMerkle(
+                blsPubKey,
+                1
+            )
         )
     ])
 )
@@ -158,6 +161,7 @@ while int.from_bytes(block.header.hash, "big") < merit.blockchain.difficulty:
     block.header.proof += 1
     block.header.rehash()
 merit.add(transactions, consensus, block)
+print("Generated Claimed Mint Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": merit.blockchain.toJSON(),

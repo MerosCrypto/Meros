@@ -24,7 +24,7 @@ class Claim(Transaction):
         self.amount: int = 0
 
         self.signature: bytes = signature
-        self.hash = blake2b(b"\1" + self.signature, digest_size = 48).digest()
+        self.hash = blake2b(b'\1' + self.signature, digest_size = 48).digest()
 
         self.verified: bool = False
 
@@ -40,11 +40,8 @@ class Claim(Transaction):
         for i in range(1, len(self.inputs)):
             signatures.append(privKeys[i].sign(b'\1' + self.inputs[i] + self.output))
 
-        if len(signatures) == 1:
-            self.signature = signatures[0].serialize()
-        else:
-            self.signature = blspy.Signature.aggregate(signatures).serialize()
-        self.hash = blake2b(b"\1" + self.signature, digest_size = 48).digest()
+        self.signature = blspy.Signature.aggregate(signatures).serialize()
+        self.hash = blake2b(b'\1' + self.signature, digest_size = 48).digest()
 
     #Serialize.
     def serialize(

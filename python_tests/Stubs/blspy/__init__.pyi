@@ -31,11 +31,31 @@ class PublicKey:
     ) -> bytes:
         ...
 
+class AggregationInfo:
+    @staticmethod
+    def from_msg(
+        pubKey: PublicKey,
+        msg: bytes
+    ) -> AggregationInfo:
+        ...
+
 class Signature:
+    @staticmethod
+    def from_bytes(
+        pubKey: bytes
+    ) -> Signature:
+        ...
+
     @staticmethod
     def aggregate(
         sigs: List[Signature]
     ) -> Signature:
+        ...
+
+    def set_aggregation_info(
+        self,
+        agInfo: AggregationInfo
+    ) -> None:
         ...
 
     def serialize(
