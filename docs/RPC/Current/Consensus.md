@@ -14,7 +14,7 @@ When `descendant` == "verification":
 
 ### `getUnarchivedRecords`
 `getUnarchivedMeritHolderRecords` will fetch and return all MeritHolderRecords for all MeritHolders with unarchived Elements (plus an aggregate signature). It takes in zero arguments and returns:
-- `records` (array)
+- `records` (array of objects, each as follows)
     - `holder`    (string)
     - `nonce`     (int)
     - `merkle`    (string)
