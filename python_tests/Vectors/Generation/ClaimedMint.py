@@ -53,7 +53,7 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
-blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b"0")
+blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
 blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
 
 #Add 13 Blank Blocks.
@@ -83,8 +83,7 @@ block: Block = Block(
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate(
-            blsPubKey,
-            0
+            [(blsPubKey, 0)]
         )
     ),
     BlockBody([
@@ -141,8 +140,7 @@ block = Block(
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate(
-            blsPubKey,
-            1
+            [(blsPubKey, 1)]
         )
     ),
     BlockBody([

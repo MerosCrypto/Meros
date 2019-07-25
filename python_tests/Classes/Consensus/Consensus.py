@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple, Any
 
 #Element classes.
 from python_tests.Classes.Consensus.Element import Element, SignedElement
@@ -33,27 +33,27 @@ class Consensus:
             self.holders[elem.holder] = []
         self.holders[elem.holder].append(elem)
 
-    #Get a holder's aggregate
+    #Calculate a Block's aggregate
     def getAggregate(
         self,
-        holderArg: blspy.PublicKey,
-        start: int,
-        end: int = 0
+        records: List[
+            Tuple[blspy.PublicKey, int]
+        ]
     ) -> bytes:
-        holder: bytes = holderArg.serialize()
         signatures: List[blspy.Signature] = []
 
-        end += 1
-        if end == 1:
-            end = len(self.holders[holder])
+        for record in records:
+            holder: bytes = record[0].serialize()
+            start: int = record[1]
+            end: int = len(self.holders[holder])
 
-        for e in range(start, end):
-            signatures.append(SignedElement.fromElement(self.holders[holder][e]).blsSignature)
+            for e in range(start, end):
+                signatures.append(SignedElement.fromElement(self.holders[holder][e]).blsSignature)
 
         result: bytes = blspy.Signature.aggregate(signatures).serialize()
         return result
 
-    #Get a holder's merkle
+    #Calculate a holder's merkle
     def getMerkle(
         self,
         holderArg: blspy.PublicKey,
@@ -70,13 +70,11 @@ class Consensus:
         for e in range(start, end):
             prefix: bytes = bytes()
             if isinstance(self.holders[holder][e], Verification):
-                prefix = b'\0'
-
-            merkle.append(
-                blake2b(
-                    prefix + self.holders[holder][e].serialize(),
-                    digest_size = 48
-                ).digest()
+                merkle.append(
+                    blake2b(
+                        b'\0' + Verification.serialize(self.holders[holder][e]),
+                        digest_size = 48
+                    ).digest()
             )
 
         while len(merkle) != 1:

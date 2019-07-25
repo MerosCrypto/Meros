@@ -11,7 +11,7 @@ class BlockBody:
         self,
         records: List[Tuple[blspy.PublicKey, int, bytes]] = [],
         miners: List[Tuple[blspy.PublicKey, int]] = [
-            (blspy.PrivateKey.from_seed(b"0").get_public_key(), 100)
+            (blspy.PrivateKey.from_seed(b'\0').get_public_key(), 100)
         ]
     ) -> None:
         self.records: List[Tuple[blspy.PublicKey, int, bytes]] = records
