@@ -2,7 +2,7 @@
 
 ### `getTransaction`
 
-`getTransaction` fetches and return a Transaction. It takes in one argument:
+`getTransaction` replies with a Transaction. It takes in one argument:
 - Hash (string)
 
 The result is an object, as follows:
@@ -43,39 +43,46 @@ The result is an object, as follows:
     - `proof`     (int)
     - `argon`     (string)
 
+### `getWeight`
+
+`getWeight` replies with the Merit behind a Transaction still in Epochs. It takes in one argument:
+- Hash (string)
+
+The result is an int of the weight.
+
+### `getVerifiers`
+
+`getVerifiers` replies with the Merit Holders who verified a Transaction still in Epochs. It takes in one argument:
+- Hash (string)
+
+The result is an array of strings, each a Merit Holder's BLS Public Key.
+
 ### `getUTXOs`
 
-`getUTXOs` fecthes and replies with the addresses' UTXOs. It takes in one argument:
+`getUTXOs` replies with the addresses' UTXOs. It takes in one argument:
 - Address (string)
 
 The result is an array of objects, each as follows:
 - `hash` (string)
 - `nonce` (int)
 
-### `getWeight`
-
-`getWeight` fetches and replies with the Merit behind a Transaction. It takes in one argument:
-- Hash (string)
-
-The result is an int of the weight.
-
 ### `publishClaim`
 
-`publishClaim` parses the serialized Claim, add it to the local Transactions DAG, and if it's valid, publish it. It takes in one argument.
+`publishClaim` parses the serialized Claim, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
 - Claim (string).
 
 The result is a bool of true.
 
 ### `publishSend`
 
-`publishSend` parses the serialized Send, add it to the local Transactions DAG, and if it's valid, publish it. It takes in one argument.
+`publishSend` parses the serialized Send, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
 - Send (string).
 
 The result is a bool of true.
 
 ### `publishData`
 
-`publishData` parses the serialized Data, add it to the local Transactions DAG, and if it's valid, publish it. It takes in one argument.
+`publishData` parses the serialized Data, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
 - Data (string).
 
 The result is a bool of true.

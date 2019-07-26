@@ -10,17 +10,28 @@ The result is a bool of true.
 
 ### `getMnemonic`
 
-`getMnemonic` fetches and replies with the Node's Wallet's Mnemonic, without the password. It takes in zero arguments and the result is a string of the mnemonic.
+`getMnemonic` replies with the Node's Wallet's Mnemonic, without the password. It takes in zero arguments and the result is a string of the mnemonic.
 
 ### `getParentPublicKey`
 
-`getParentPublicKey` fetches and replies with the Parent Public Key for the Node's HD Wallet, after applying BIP 44 derivation. It takes in zero arguments and the result is a string of the Parent Public Key.
+`getParentPublicKey` replies with the Parent Public Key for the Node's HD Wallet, after applying BIP 44 derivation. It takes in zero arguments and the result is a string of the Parent Public Key.
 
 The result is a bool of true.
+
+### `getWatchedAddresses`
+
+`getWatchedAddresses` replies with every watched address. It takes in zero arguments and the result is an array of strings, each a watched address.
 
 ### `watchAddress`
 
 `watchAddress` instructs Meros to use inputs from the specified address when creating Send Templates (see below). It takes one argument:
+- `address` (string)
+
+The result is a bool of true.
+
+### `unwatchAddress`
+
+`watchAddress` instructs Meros to no longer watch an address. It takes one argument:
 - `address` (string)
 
 The result is a bool of true.
@@ -35,9 +46,10 @@ The result is a string of the hash.
 
 ### `send`
 
-`send` creates and publishes a Send using the Wallet on the Node. It takes in a variable amount of objects, each as follows:
+`send` creates and publishes a Send using the Wallet on the Node. It takes in an array, with a variable length, of objects, each as follows:
 - Destination Address (string)
 - Amount (string)
+
 The result is a string of the hash.
 
 ### `data`
