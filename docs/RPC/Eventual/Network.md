@@ -1,5 +1,11 @@
 # Network Module
 
+### `getPeers`
+`getPeers` replies with a list of every node we're connected it. It takes in zero arguments and replies with an array of objects, each as follows:
+- `ip`                                                              (string)
+- `server`                                                          (bool)
+- `port`: Only present we're connected to this peer's Server Socket (int)
+
 ### `connect`
 
 `connect` attempts to connect to another Meros node. It takes in two arguments:
