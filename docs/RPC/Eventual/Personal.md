@@ -2,9 +2,9 @@
 
 ### `setMnemonic`
 
-`setMnemonic` creates a new Wallet using the passed in Mnemonic and password, and set the Node's Wallet to it. It takes in two arguments, with both optional.
-- Mnemonic (string; optional; creates a new Mnemonic if omitted)
-- Password (string; optional; defaults to "", according to the BIP39 spec)
+`setMnemonic` creates a new Wallet using the passed in Mnemonic and password, and set the Node's Wallet to it. It takes in two arguments.
+- Mnemonic: Optional, creates a new Mnemonic if omitted                (string)
+- Password: Defaults to "" if omitted, as according to the BIP 39 spec (string)
 
 The result is a bool of true.
 
@@ -39,7 +39,7 @@ The result is a bool of true.
 ### `claim`
 
 `claim` creates and publishes a Claim using the Miner Wallet on the Node. It takes in two arguments:
-- Mint Hashes (array of strings)
+- Mint Hashes         (array of strings)
 - Destination Address (string)
 
 The result is a string of the hash.
@@ -48,7 +48,7 @@ The result is a string of the hash.
 
 `send` creates and publishes a Send using the Wallet on the Node. It takes in an array, with a variable length, of objects, each as follows:
 - Destination Address (string)
-- Amount (string)
+- Amount              (string)
 
 The result is a string of the hash.
 
@@ -62,12 +62,12 @@ The result is a string of the hash.
 ### `getClaimTemplate`
 
 `getClaimTemplate` replies with a template for remotely signing a Claim. It takes in two arguments:
-- Mint Hashes (array of strings)
+- Mint Hashes         (array of strings)
 - Destination Address (string)
 
 The result is an object, as follows:
 - `inputs` (array of strings)
-- `claim` (string)
+- `claim`  (string)
 
 There will be one input per mint hash, each to be signed by the BLS Private Key of the BLS Public Key the Mint was meant for. Aggregating the signatures and appending the result to `claim` will make it publishable via `transactions_publishClaim`.
 
@@ -76,11 +76,11 @@ There will be one input per mint hash, each to be signed by the BLS Private Key 
 `getSendTemplate` replies with a template for remotely signing a Send. It takes in two arguments:
 - Outputs (array of objects, each as follows):
     - `address` (string)
-    - `amount` (string)
-- Include Watch Only (bool; optional; defaults to true)
+    - `amount`  (string)
+- Include Watch Only (bool; optional, defaults to true)
 
 The result is an object, as follows:
-- `send`  (string)
+- `send`         (string)
 - `prefixedHash` (string)
 
 The prefixed hash should be signed by the proper key. If every input was to the same address, the key is the normal Private Key. If the inputs were to multiple addresses, the key is a MuSig Private Key. Appending the signature, and then valid work, to `send` will make it publishable via `transactions_publishSend`.
@@ -89,10 +89,10 @@ The prefixed hash should be signed by the proper key. If every input was to the 
 
 `getDataTemplate` replies with a template for remotely signing a Data. It takes in two arguments:
 - Sender (string)
-- Data (string)
+- Data   (string)
 
 The result is an object, as follows:
-- `data`  (string)
+- `data`         (string)
 - `prefixedHash` (string)
 
 The prefixed hash should be signed by the proper Private Key for the sender. Appending the signature, and then valid work, to `data` will make it publishable via `transactions_publishData`.

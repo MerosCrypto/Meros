@@ -18,10 +18,10 @@ The result is an object, as follows:
     - `amount` (string)
 
         When `descendant` == "mint":
-        - `key` (string; BLS Public Key)
+        - `key`: BLS Public Key (string)
 
         When `descendant` == "claim" or `descendant` == "send":
-        - `key` (string; Ed25519 Public Key)
+        - `key`: Ed25519 Public Key (string)
 
 - `hash`     (string)
 - `verified` (bool)
@@ -63,26 +63,26 @@ The result is an array of strings, each a Merit Holder's BLS Public Key.
 - Address (string)
 
 The result is an array of objects, each as follows:
-- `hash` (string)
+- `hash`  (string)
 - `nonce` (int)
 
 ### `publishClaim`
 
 `publishClaim` parses the serialized Claim, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
-- Claim (string).
+- Claim (string)
 
 The result is a bool of true.
 
 ### `publishSend`
 
 `publishSend` parses the serialized Send, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
-- Send (string).
+- Send (string)
 
 The result is a bool of true.
 
 ### `publishData`
 
 `publishData` parses the serialized Data, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.
-- Data (string).
+- Data (string)
 
 The result is a bool of true.

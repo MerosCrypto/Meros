@@ -11,7 +11,7 @@
 ### `getBlock`
 
 `getBlock` replies with a Block. It takes in one argument.
-- ID (int of the nonce or string of the hash)
+- ID: Int of the nonce or string of the hash (int/string)
 
 The result is an object, as follows:
 - `hash`          (string)
@@ -46,6 +46,6 @@ Mining the Block occurs by hashing it with an 8-byte left padded nonce, despite 
 ### `publishBlock`
 
 `publishBlock` adds the Block to the local Blockchain, and if it's valid, publishes it. It takes in one argument.
-- Block (string).
+- Block (string)
 
 The result is a bool of true.
