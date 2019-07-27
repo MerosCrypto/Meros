@@ -112,6 +112,9 @@ class Epochs:
         #Create Mints.
         result: List[Mint] = []
         for final in tupleScores:
+            if final[1] == 0:
+                continue
+            
             result.append(Mint(
                 self.mint,
                 (
