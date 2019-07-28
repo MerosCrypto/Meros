@@ -11,33 +11,33 @@ The result is an object, as follows:
 - `inputs` (array of objects, each as follows)
     - `hash` (string)
 
-    	When `descendant` == "send":
+    	When `descendant` == "Send":
         - `nonce` (int)
 
 - `outputs` (array of objects, each as follows)
     - `amount` (string)
 
-        When `descendant` == "mint":
+        When `descendant` == "Mint":
         - `key`: BLS Public Key (string)
 
-        When `descendant` == "claim" or `descendant` == "send":
+        When `descendant` == "Claim" or `descendant` == "Send":
         - `key`: Ed25519 Public Key (string)
 
 - `hash`     (string)
 - `verified` (bool)
 
-	When `descendant` == "mint":
+	When `descendant` == "Mint":
     - `nonce` (int)
 
-	When `descendant` == "claim":
+	When `descendant` == "Claim":
     - `signature` (string)
 
-	When `descendant` == "send":
+	When `descendant` == "Send":
     - `signature` (string)
     - `proof`     (int)
     - `argon`     (string)
 
-	When `descendant` == "data":
+	When `descendant` == "Data":
     - `data`      (string)
     - `signature` (string)
     - `proof`     (int)
