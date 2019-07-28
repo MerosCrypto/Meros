@@ -42,6 +42,6 @@ for i in range(1, 26):
     blockchain.add(block)
     print("Generated Blank Block " + str(i) + ".")
 
-vectors: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "w")
+vectors: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "w")
 vectors.write(json.dumps(blockchain.toJSON()))
 vectors.close()

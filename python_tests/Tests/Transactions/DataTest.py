@@ -1,6 +1,3 @@
-#Types.
-from typing import Dict, Any
-
 #Transactions classes.
 from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 from python_tests.Classes.Transactions.Data import Data

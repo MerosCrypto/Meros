@@ -21,7 +21,7 @@ def ChainAdvancementTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
     )
     #Blocks.
-    bbFile: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "r")
+    bbFile: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
     blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
     bbFile.close()
 

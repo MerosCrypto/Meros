@@ -4,17 +4,13 @@
 from typing import Dict, List, IO, Any
 
 #Merit classes.
-#from python_tests.Classes.Merit.Block import Block
 from python_tests.Classes.Merit.Merit import Merit
 
-#Transaction classes.
-from python_tests.Classes.Transactions.Transaction import Transaction
-#from python_tests.Classes.Consensus.SpamFilter import SpamFilter
+#Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
-#from python_tests.Classes.Consensus.Element import Element
-from python_tests.Classes.Consensus.Verification import Verification #, SignedVerification
+from python_tests.Classes.Consensus.Verification import Verification
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Meros classes.
@@ -27,7 +23,7 @@ import json
 def FiftyTest(
     rpc: RPC
 ) -> None:
-    cmFile: IO[Any] = open("python_tests/Vectors/Fifty.json", "r")
+    cmFile: IO[Any] = open("python_tests/Vectors/Transactions/Fifty.json", "r")
     cmVectors: Dict[str, Any] = json.loads(cmFile.read())
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(
@@ -111,10 +107,11 @@ def FiftyTest(
 
         elif MessageType(msgs[-1][0]) == MessageType.TransactionRequest:
             sentLast -= 1
-            tx: Transaction = transactions.txs[
-                msgs[-1][1 : 49]
-            ]
-            ress.append(rpc.meros.transaction(tx))
+            ress.append(
+                rpc.meros.transaction(transactions.txs[
+                    msgs[-1][1 : 49]
+                ])
+            )
 
         elif MessageType(msgs[-1][0]) == MessageType.SyncingOver:
             ress.append(bytes())
@@ -140,8 +137,6 @@ def FiftyTest(
     #Verify the Transactions.
     for tx in transactions.txs:
         if rpc.call("transactions", "getTransaction", [tx.hex()]) != transactions.txs[tx].toJSON():
-            print(rpc.call("transactions", "getTransaction", [tx.hex()]))
-            print(transactions.txs[tx].toJSON())
             raise Exception("Transaction doesn't match.")
 
     #Replay their messages and verify they sent what we sent.

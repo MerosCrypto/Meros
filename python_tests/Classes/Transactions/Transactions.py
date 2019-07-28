@@ -1,7 +1,7 @@
 #Types.
 from typing import Dict, Any
 
-#Transaction classes.
+#Transactions classes.
 from python_tests.Classes.Transactions.Transaction import Transaction
 from python_tests.Classes.Transactions.Claim import Claim
 from python_tests.Classes.Transactions.Send import Send

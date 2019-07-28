@@ -7,7 +7,7 @@ from python_tests.Classes.Merit.BlockBody import BlockBody
 from python_tests.Classes.Merit.Block import Block
 from python_tests.Classes.Merit.Merit import Merit
 
-#Transaction classes.
+#Transactions classes.
 from python_tests.Classes.Transactions.Send import Send
 from python_tests.Classes.Transactions.Claim import Claim
 from python_tests.Classes.Transactions.Transactions import Transactions
@@ -28,7 +28,7 @@ from time import time
 #JSON standard lib.
 import json
 
-cmFile: IO[Any] = open("python_tests/Vectors/ClaimedMint.json", "r")
+cmFile: IO[Any] = open("python_tests/Vectors/Transactions/ClaimedMint.json", "r")
 cmVectors: Dict[str, Any] = json.loads(cmFile.read())
 #Transactions.
 transactions: Transactions = Transactions.fromJSON(
@@ -249,6 +249,6 @@ result: Dict[str, Any] = {
     "transactions": transactions.toJSON(),
     "consensus":  consensus.toJSON()
 }
-vectors: IO[Any] = open("python_tests/Vectors/Fifty.json", "w")
+vectors: IO[Any] = open("python_tests/Vectors/Transactions/Fifty.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()

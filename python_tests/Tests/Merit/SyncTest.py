@@ -15,7 +15,7 @@ def SyncTest(
     rpc: RPC
 ) -> None:
     #Blockchain.
-    bbFile: IO[Any] = open("python_tests/Vectors/BlankBlocks.json", "r")
+    bbFile: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
