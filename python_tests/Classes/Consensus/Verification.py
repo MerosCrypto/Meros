@@ -16,9 +16,12 @@ class Verification(Element):
         nonce: int,
         hash: bytes
     ) -> None:
+        self.prefix: bytes = b'\0'
+
         self.holder: bytes = holder
-        self.hash: bytes = hash
         self.nonce: int = nonce
+
+        self.hash: bytes = hash
 
     #Serialize.
     def serialize(
@@ -77,7 +80,7 @@ class SignedVerification(Verification):
             self.blsSignature.set_aggregation_info(
                 blspy.AggregationInfo.from_msg(
                     blspy.PublicKey.from_bytes(holder),
-                    b'\0' + Verification.serialize(self)
+                    self.prefix + Verification.serialize(self)
                 )
             )
 
@@ -90,7 +93,7 @@ class SignedVerification(Verification):
         self.holder = privKey.get_public_key().serialize()
         self.nonce = nonce
 
-        self.blsSignature = privKey.sign(b'\0' + Verification.serialize(self))
+        self.blsSignature = privKey.sign(self.prefix + Verification.serialize(self))
         self.signature = self.blsSignature.serialize()
 
     #Serialize.
@@ -98,8 +101,34 @@ class SignedVerification(Verification):
         self
     ) -> bytes:
         return (
-            self.holder +
-            self.nonce.to_bytes(4, byteorder = "big") +
-            self.hash +
+            Verification.serialize(self) +
             self.signature
+        )
+
+    #SignedVerification -> JSON.
+    def toSignedJSON(
+        self
+    ) -> Dict[str, Any]:
+        return {
+            "descendant": "verification",
+
+            "holder": self.holder.hex().upper(),
+            "nonce": self.nonce,
+
+            "hash": self.hash.hex().upper(),
+
+            "signed": True,
+            "signature": self.signature.hex().upper()
+        }
+
+    #JSON -> Verification.
+    @staticmethod
+    def fromJSON(
+        json: Dict[str, Any]
+    ) -> Any:
+        return SignedVerification(
+            bytes.fromhex(json["hash"]),
+            bytes.fromhex(json["holder"]),
+            json["nonce"],
+            bytes.fromhex(json["signature"])
         )

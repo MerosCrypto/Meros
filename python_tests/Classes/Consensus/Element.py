@@ -6,6 +6,8 @@ import blspy
 
 #Element root class.
 class Element:
+    prefix: bytes
+
     holder: bytes
     nonce: int
 
@@ -28,3 +30,9 @@ class SignedElement(Element):
         elem: Element
     ) -> Any:
         return elem
+
+    #SignedElement -> JSON.
+    def toSignedJSON(
+        self
+    ) -> Dict[str, Any]:
+        raise Exception("Base SignedElement toSignedJSON called.")

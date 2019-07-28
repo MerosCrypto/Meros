@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple, Any
 
 #Element classes.
 from python_tests.Classes.Consensus.Element import Element, SignedElement
-from python_tests.Classes.Consensus.Verification import Verification
+from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
 from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 
 #BLS lib.
@@ -68,14 +68,16 @@ class Consensus:
             end = len(self.holders[holder])
 
         for e in range(start, end):
-            prefix: bytes = bytes()
             if isinstance(self.holders[holder][e], Verification):
                 merkle.append(
                     blake2b(
-                        b'\0' + Verification.serialize(self.holders[holder][e]),
+                        self.holders[holder][e].prefix + Verification.serialize(Verification.fromElement(self.holders[holder][e])),
                         digest_size = 48
                     ).digest()
             )
+
+        if len(merkle) == 0:
+            return b'\0' * 48
 
         while len(merkle) != 1:
             if len(merkle) % 2 == 1:
@@ -99,7 +101,10 @@ class Consensus:
         for holder in self.holders:
             result[holder.hex().upper()] = []
             for elem in self.holders[holder]:
-                result[holder.hex().upper()].append(elem.toJSON())
+                if hasattr(elem, "toSignedJSON"):
+                    result[holder.hex().upper()].append(SignedElement.fromElement(elem).toSignedJSON())
+                else:
+                    result[holder.hex().upper()].append(elem.toJSON())
         return result
 
     #JSON -> Consensus.
@@ -115,6 +120,10 @@ class Consensus:
         )
         for mh in json:
             for elem in json[mh]:
-                if elem["descendant"] == "verification":
-                    result.add(Verification.fromJSON(elem))
+                if "signed" in elem:
+                    if elem["descendant"] == "verification":
+                        result.add(SignedVerification.fromJSON(elem))
+                else:
+                    if elem["descendant"] == "verification":
+                        result.add(Verification.fromJSON(elem))
         return result
