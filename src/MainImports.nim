@@ -38,8 +38,8 @@ import Network/Serialize/Consensus/SerializeVerification
 
 import Network/Serialize/Merit/SerializeBlockHeader
 
-#UI.
-import UI/UI
+#Interfaces.
+import Interfaces/Interfaces
 
 #Global Function Box object.
 import objects/GlobalFunctionBoxObj

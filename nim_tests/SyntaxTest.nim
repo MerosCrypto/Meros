@@ -50,8 +50,8 @@ import ../src/Network/Serialize/Transactions/ParseData
 
 import ../src/Network/Network
 
-#UI.
-import ../src/UI/UI
+#Interfaces.
+import ../src/Interfaces/Interfaces
 
 #objects.
 import ../src/objects/GlobalFunctionBoxObj

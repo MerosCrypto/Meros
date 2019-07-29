@@ -9,14 +9,14 @@ The Main files are an "incude chain". They include each other sequentially, in t
     MainTransactions
     MainPersonal
     MainNetwork
-    MainUI
+    MainInterfaces
 
 We could include all of them in this file, but then all the other files would throw errors.
 IDEs can't, and shouldn't, detect that an external file includes that file, and the external file resolves the dependency requirements.
 """
 
 #Include the last file in the chain.
-include MainUI
+include MainInterfaces
 
 #Enable running main on a thread since the GUI must always run on the main thread.
 proc main() {.thread.} =

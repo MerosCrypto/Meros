@@ -1,6 +1,6 @@
-#UI Tests.
+#Interfaces Tests.
 
-import UITests/RPCTests
+import InterfacesTests/RPCTests
 
 proc addTests*(
     tests: var seq[proc ()]

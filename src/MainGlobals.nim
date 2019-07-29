@@ -30,8 +30,8 @@ var
     #Network.
     network {.threadvar.}: Network #Network.
 
-    #UI.
-    fromMain: Channel[string] #Channel from the 'main' thread to the UI thread.
+    #Interfaces.
+    fromMain: Channel[string] #Channel from the 'main' thread to the Interfaces thread.
     toRPC: Channel[JSONNode]  #Channel to the RPC from the GUI.
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
     rpc {.threadvar.}: RPC    #RPC object.

@@ -54,9 +54,9 @@ type
     DataMissing*         = object of Exception #Used when a Client is missing requested data.
     ValidityConcern*     = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
 
-    #UI/GUI Errors.
+    #Interfaces/GUI Errors.
     WebViewError* = object of Exception #Used when WebView fails.
     RPCError*     = object of Exception #Used when the GUI makes an invalid RPC call.
 
-    #UI Statuses.
+    #Interfaces Statuses.
     NotEnoughMeros* = object of Exception #Used when the RPC is instructed to create a Send for more Meros than it can.
