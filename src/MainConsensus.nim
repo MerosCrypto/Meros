@@ -5,7 +5,7 @@ proc mainConsensus() {.forceCheck: [].} =
         consensus = newConsensus(database)
 
         #Provide access to the holder's height.
-        functions.consensus.getMeritHolderHeight = proc (
+        functions.consensus.getHeight = proc (
             key: BLSPublicKey
         ): int {.inline, forceCheck: [].} =
             consensus[key].height

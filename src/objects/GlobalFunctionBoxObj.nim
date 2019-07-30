@@ -78,7 +78,7 @@ type
         ].}
 
     ConsensusFunctionBox* = ref object
-        getMeritHolderHeight*: proc (
+        getHeight*: proc (
             key: BLSPublicKey
         ): int {.inline, raises: [].}
 

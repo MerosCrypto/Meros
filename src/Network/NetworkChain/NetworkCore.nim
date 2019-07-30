@@ -183,7 +183,7 @@ proc newNetwork*(
                 except BLSError as e:
                     raise newException(InvalidMessageError, "`ElementRequest` contained an invalid BLS Public Key: " & e.msg)
 
-                height = mainFunctions.consensus.getMeritHolderHeight(key)
+                height = mainFunctions.consensus.getHeight(key)
                 if height <= nonce:
                     try:
                         await network.clients.reply(
