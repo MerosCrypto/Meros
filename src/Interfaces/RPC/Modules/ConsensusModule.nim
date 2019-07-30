@@ -16,110 +16,122 @@ import ../../../Database/Consensus/Consensus
 #RPC object.
 import ../objects/RPCObj
 
-#Async standard lib.
-import asyncdispatch
-
-#JSON standard lib.
-import json
-
-#Get a Verification.
-proc getElement(
-    rpc: RPC,
-    key: BLSPublicKey,
-    nonce: int
-): JSONnode {.forceCheck: [].} =
-    var elem:  Element
-    try:
-        elem = rpc.functions.consensus.getElement(key, nonce)
-    except IndexError as e:
-        returnError()
-
+#Element -> JSON.
+proc `%`(
+    elem: Element
+): JSONNode {.forceCheck: [].} =
     result = %* {
         "holder": $elem.holder,
         "nonce": elem.nonce
     }
+
     case elem:
         of Verification as verif:
-            result["descendant"] = %"verification"
-            result["hash"] = %($verif.hash)
-        else:
-            doAssert(false, "Element should be a Verification.")
+            result["descendant"] = % "Verification"
+            result["hash"] = % $verif.hash
+        of SendDifficulty as sd:
+            result["descendant"] = % "SendDifficulty"
+            result["difficulty"] = % $sd.difficulty
+        of DataDifficulty as dd:
+            result["descendant"] = % "DataDifficulty"
+            result["difficulty"] = % $dd.difficulty
+        of GasPrice as gp:
+            result["descendant"] = % "GasPrice"
+            result["price"] = % gp.price
+        of MeritRemoval as mr:
+            result["descendant"] = % "MeritRemoval"
+            result["elements"] = %* [
+                %element1,
+                %element2
+            ]
 
-#Get unarchived Merit Holder Records.
-proc getUnarchivedRecords(
-    rpc: RPC
-): JSONNode {.forceCheck: [].} =
-    #Get the records.
-    var records: tuple[
-        records: seq[MeritHolderRecord],
-        aggregate: BLSSignature
-    ] = rpc.functions.consensus.getUnarchivedRecords()
+#Create the RPC module.
+proc module*(
+    functions: GlobalFunctionBox
+): RPCFunctions {.forceCheck: [].} =
+    newRPCFunctions:
+        #Get Element by key/nonce.
+        "getElement" = proc (
+            res: var JSONNode,
+            params: JSONNode
+        ) {.forceCheck: [
+            ParamError,
+            RPCFunctionsError
+        ].} =
+            #Verify the parameters.
+            if (
+                (params.len != 2) or
+                (params[0].kind != JString) or
+                (params[1].kind != JInt)
+            ):
+                raise newException(ParamError)
 
-    #Create the JSON.
-    result = %* {
-        "records": [],
-        "aggregate": $records.aggregate
-    }
+            #Extract the parameters.
+            var
+                key: BLSPublicKey
+                nonce: int = params[1].getInt()
 
-    #Add each record.
-    for i in 0 ..< records.records.len:
-        try:
-            result["records"].add(%* {
-                "holder":    $records.records[i].key,
-                "nonce":     records.records[i].nonce,
-                "merkle":    $records.records[i].merkle
-            })
-        except KeyError as e:
-            doAssert(false, "Couldn't access the records value of a JSON object we just created with said field: " & e.msg)
+            try:
+                key = newBLSPublicKey(params[0].getStr())
+            except BLSError:
+                raise newException(ParamError)
 
-#Handler.
-proc consensus*(
-    rpc: RPC,
-    json: JSONNode,
-    reply: proc (
-        json: JSONNode
-    ) {.raises: [].}
-) {.forceCheck: [], async.} =
-    #Declare a var for the response.
-    var res: JSONNode
+            if nonce < 0:
+                raise newException(ParamError)
 
-    #Switch based off the method.
-    var methodStr: string
-    try:
-        methodStr = json["method"].getStr()
-    except KeyError:
-        reply(%* {
-            "error": "No method specified."
-        })
-        return
+            #Get the Element.
+            try:
+                res["result"] = %rpc.functions.consensus.getElement(key, nonce)
+            except IndexError as e:
+                raise newRPCFunctionsError(-1, "Element not found.", %* {
+                    "height": functions.consensus.getHeight(key)
+                })
 
-    try:
-        case methodStr:
-            of "getElement":
-                if json["args"].len < 2:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    res = rpc.getElement(
-                        newBLSPublicKey(json["args"][0].getStr()),
-                        json["args"][1].getInt()
-                    )
+    discard """
+        "publishSignedVerification" = proc (
+            res: var JSONNode,
+            params: JSONNode
+        ) {.forceCheck: [
+            ParamError,
+            RPCFunctionsError
+        ].} =
+            discard
 
-            of "getUnarchivedRecords":
-                res = rpc.getUnarchivedRecords()
+        "publishSignedSendDifficulty" = proc (
+            res: var JSONNode,
+            params: JSONNode
+        ) {.forceCheck: [
+            ParamError,
+            RPCFunctionsError
+        ].} =
+            discard
 
-            else:
-                res = %* {
-                    "error": "Invalid method."
-                }
-    except KeyError:
-        res = %* {
-            "error": "Missing `args`."
-        }
-    except BLSError:
-        res = %* {
-            "error": "Invalid BLS Public Key."
-        }
+        "publishSignedDataDifficulty" = proc (
+            res: var JSONNode,
+            params: JSONNode
+        ) {.forceCheck: [
+            ParamError,
+            RPCFunctionsError
+        ].} =
+            discard
 
-    reply(res)
+        "publishSignedGasPrice" = proc (
+            res: var JSONNode,
+            params: JSONNode
+        ) {.forceCheck: [
+            ParamError,
+            RPCFunctionsError
+        ].} =
+            discard
+
+        "publishSignedMeritRemoval" = proc (
+            res: var JSONNode,
+            params: JSONNode
+        ) {.forceCheck: [
+            ParamError,
+            RPCFunctionsError
+        ].} =
+            discard
+    """
+
+    result = ConsensusModule
