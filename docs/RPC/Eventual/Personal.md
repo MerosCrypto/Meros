@@ -3,8 +3,8 @@
 ### `setMnemonic`
 
 `setMnemonic` creates a new Wallet using the passed in Mnemonic and password, and set the Node's Wallet to it. It takes in two arguments.
-- Mnemonic: Optional, creates a new Mnemonic if omitted                (string)
-- Password: Defaults to "" if omitted, as according to the BIP 39 spec (string)
+- Mnemonic (string): Optional; creates a new Mnemonic if omitted.
+- Password (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
 
 The result is a bool of true.
 
@@ -84,7 +84,7 @@ There will be one input per mint hash, each to be signed by the BLS Private Key 
 - Outputs (array of objects, each as follows):
     - `address` (string)
     - `amount`  (string)
-- Include Watch Only (bool; optional, defaults to true)
+- Include Watch Only (bool): Optional, defaults to true.
 
 The result is an object, as follows:
 - `send`         (string)

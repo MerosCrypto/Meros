@@ -18,10 +18,10 @@ The result is an object, as follows:
     - `amount` (string)
 
         When `descendant` == "Mint":
-        - `key`: BLS Public Key (string)
+        - `key` (string): BLS Public Key.
 
         When `descendant` == "Claim" or `descendant` == "Send":
-        - `key`: Ed25519 Public Key (string)
+        - `key` (string): Ed25519 Public Key.
 
 - `hash`     (string)
 - `verified` (bool)
