@@ -173,6 +173,8 @@ UI/RPC:
 
 ### Improvements:
 
+- Remove Natural/ArgonError.
+
 - Swap Chia for Milagro.
 
 - Pass difficulties to the parsing functions to immediately check if work was put into a Block/Transaction (stop DoS attacks).
