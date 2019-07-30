@@ -1,6 +1,6 @@
 # Usage
 
-Meros RPC's is fully compliant with the JSON-RPC 2.0 standard, and is available on port 5133 by default. Calls are HTTP POSTed to the node.
+Meros RPC's is fully compliant with the JSON-RPC 2.0 standard, and is available on port 5133 by default. Calls are sent to the node via TCP.
 
 Meros sorts calls into the following modules:
 - `system`
