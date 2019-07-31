@@ -13,6 +13,9 @@ import ../../../Database/common/objects/MeritHolderRecordObj
 #Merit lib.
 import ../../../Database/Merit/Merit
 
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #RPC object.
 import ../objects/RPCObj
 
@@ -59,7 +62,7 @@ proc `%`(
     except KeyError as e:
         doAssert(false, "Couldn't add a Miner to a Block's JSON representation despite declaring an array for the Miners: " & e.msg)
 
-#Create the RPC module.
+#Create the Merit module.
 proc module*(
     functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
@@ -188,7 +191,7 @@ proc module*(
                     getTime(),
                     0
                 ).serializeHash(),
-                
+
                 "body": newBlockBody(
                     records.records,
                     miners
@@ -207,19 +210,21 @@ proc module*(
             except ValueError as e:
                 raise newJSONRPCError(-2, e.msg)
             except ArgonError as e:
-                raise newJSONRPCError(-2, e.msg)
+                raise newJSONRPCError(-99, e.msg)
             except BLSError as e:
-                raise newJSONRPCError(-2, e.msg)
+                raise newJSONRPCError(-4, e.msg)
 
             try:
                 await rpc.functions.merit.addBlock(newBlock)
             except ValueError as e:
-                raise newJSONRPCError(-3, e.msg)
+                raise newJSONRPCError(-2, e.msg)
             except IndexError as e:
-                raise newJSONRPCError(-3, e.msg)
+                raise newJSONRPCError(-1, e.msg)
             except GapError as e:
                 raise newJSONRPCError(-3, e.msg)
             except DataExists as e:
-                raise newJSONRPCError(-4, e.msg)
+                raise newJSONRPCError(0, e.msg)
             except Exception as e:
                 doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
+
+            res["result"] = % true

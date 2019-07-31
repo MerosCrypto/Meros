@@ -1,75 +1,47 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #RPC object.
 import ../objects/RPCObj
 
 #Async standard lib.
 import asyncdispatch
 
-#JSON standard lib.
-import json
-
 #Default network port.
 const DEFAULT_PORT {.intdefine.}: int = 5132
 
-#Connect to a new node.
-proc connect*(
-    rpc: RPC,
-    ip: string,
-    port: int
-): Future[JSONNode] {.forceCheck: [], async.} =
-    try:
-        await rpc.functions.network.connect(ip, port)
-    except ClientError as e:
-        return %* {
-            "error": e.msg
-        }
-    except Exception as e:
-        doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
+#Create the Network module.
+proc module*(
+    functions: GlobalFunctionBox
+): RPCFunctions {.forceCheck: [].} =
+    newRPCFunctions:
+        #Connect to a new node.
+        "connect" = proc (
+            res: var JSONNode,
+            params: JSONNode
+        ): Future[void] {.forceCheck: [], async.} =
+            #Verify the parameters length.
+            if (params.len != 1) and (params.len != 2):
+                raise newException(ParamError)
 
-#Handler.
-proc network*(
-    rpc: RPC,
-    json: JSONNode,
-    reply: proc (json: JSONNode)
-) {.forceCheck: [], async.} =
-    #Declare a var for the response.
-    var res: JSONNode
+            #Verify the paramters types.
+            if params[0].kind != JString:
+                raise newException(ParamError)
 
-    #Switch based off the method.
-    var methodStr: string
-    try:
-        methodStr = json["method"].getStr()
-    except KeyError:
-        reply(%* {
-            "error": "No method specified."
-        })
-        return
+            #Supply the optional port argument if needed.
+            if params.len == 1:
+                params.add(% DEFAULT_PORT)
+            if params[1].kind != JInt:
+                raise newException(ParamError)
 
-    try:
-        case methodStr:
-            of "connect":
-                if json["args"].len < 1:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    try:
-                        res = await rpc.connect(
-                            json["args"][0].getStr(),
-                            if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
-                        )
-                    except Exception as e:
-                        doAssert(false, "NetworkModule's connect threw an Exception despite not naturally throwing anything: " & e.msg)
+            try:
+                await rpc.functions.network.connect(params[0].getString(), params[1].getInt())
+            except ClientError as e:
+                raise newJSONRPCError()
+            except Exception as e:
+                doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
-            else:
-                res = %* {
-                    "error": "Invalid method."
-                }
-    except KeyError:
-        res = %* {
-            "error": "Missing `args`."
-        }
-
-    reply(res)
+            res["result"] = % true

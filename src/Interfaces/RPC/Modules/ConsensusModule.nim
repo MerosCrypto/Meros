@@ -13,6 +13,9 @@ import ../../../Database/common/objects/MeritHolderRecordObj
 #Consensus lib.
 import ../../../Database/Consensus/Consensus
 
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #RPC object.
 import ../objects/RPCObj
 
@@ -45,7 +48,7 @@ proc `%`(
                 %element2
             ]
 
-#Create the RPC module.
+#Create the Consensus module.
 proc module*(
     functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
@@ -83,7 +86,7 @@ proc module*(
             try:
                 res["result"] = %rpc.functions.consensus.getElement(key, nonce)
             except IndexError as e:
-                raise newRPCFunctionsError(-1, "Element not found.", %* {
+                raise newJSONRPCError(-1, "Element not found.", %* {
                     "height": functions.consensus.getHeight(key)
                 })
 
@@ -133,5 +136,3 @@ proc module*(
         ].} =
             discard
     """
-
-    result = ConsensusModule
