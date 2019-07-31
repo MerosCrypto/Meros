@@ -26,13 +26,15 @@ export json
 finalsd:
     type
         RPCFunction = proc (
-            res: var JSONNode,
+            res: JSONNode,
             params: JSONNode
         ): Future[void]
 
         RPCFunctions* = Table[string, RPCFunction]
 
         RPC* = ref object
+            alive*: bool
+
             functions*: RPCFunctions
             quit*: proc () {.raises: [].}
 
@@ -48,13 +50,11 @@ macro newRPCFunctions*(
 ): untyped =
     #Create a toTable call.
     result = newNimNode(nnkAsgn).add(
-        newIdentDefs(
-            ident("result"),
-            newCall(
-                ident("toTable")
-            ).add(
-                newNimNode(nnkTableConstr)
-            )
+        ident("result"),
+        newCall(
+            ident("toTable")
+        ).add(
+            newNimNode(nnkTableConstr)
         )
     )
 
@@ -75,7 +75,7 @@ macro newRPCFunctions*(
                 ident("void")
             )
 
-        result[0][2][1].add(
+        result[1][1].add(
             newNimNode(nnkExprColonExpr).add(
                 route[0],
                 route[1]
@@ -87,7 +87,7 @@ proc merge*(
     rpcs: varargs[
         tuple[prefix: string, rpc: RPCFunctions]
     ]
-): RPCFunctions {.forceCheck: [].} =
+): RPCFunctions {.raises: [].} =
     result = initTable[string, RPCFunction]()
 
     for rpc in rpcs:
@@ -96,6 +96,8 @@ proc merge*(
                 result[rpc.prefix & key] = rpc.rpc[key]
             except KeyError as e:
                 doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+            except Exception as e:
+                doAssert(false, "Couldn't set a value in a table: " & e.msg)
 
 #RPC Object Constructor.
 proc newRPCObj*(
@@ -105,7 +107,11 @@ proc newRPCObj*(
     toGUI: ptr Channel[JSONNode]
 ): RPC {.forceCheck: [].} =
     result = RPC(
+        alive: true,
+
         functions: functions,
+        quit: quit,
+
         toRPC: toRPC,
         toGUI: toGUI
     )

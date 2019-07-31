@@ -4,6 +4,9 @@ import ../../lib/Errors
 #Config object.
 import ../../objects/ConfigObj
 
+#GlobalFunctionBox object.
+import ../../objects/GlobalFunctionBoxObj
+
 #RPC object.
 import objects/RPCObj
 export RPCObj.RPC
@@ -39,7 +42,7 @@ proc newRPC*(
 
 #Add an error response to an existing JSONNode.
 proc error(
-    res: var JSONNode,
+    res: JSONNode,
     code: int,
     msg: string,
     data: JSONNode = nil
@@ -48,11 +51,15 @@ proc error(
         "code": code,
         "message": msg
     }
-    if not data.isNil:
-        res["error"]["data"] = data
+
+    try:
+        if not data.isNil:
+            res["error"]["data"] = data
+    except KeyError as e:
+        doAssert(false, "Couldn't set an error's data field, despite just creating the data: " & e.msg)
 
 #Create a new error response.
-proc error(
+proc newError(
     id: JSONNode,
     code: int,
     msg: string,
@@ -68,52 +75,80 @@ proc error(
 proc handle*(
     rpc: RPC,
     req: JSONNode,
-    res: var JSONNode,
+    res: ref JSONNode,
     reply: proc (
         res: JSONNode
     ) {.raises: [].}
 ) {.forceCheck: [], async.} =
     #Verify the version.
-    if (not req.hasKey("jsonrpc")) or (req["jsonrpc"].getStr() != "2.0"):
-        error(res, -32600, "Invalid Request")
-        return
+    try:
+        if (not req.hasKey("jsonrpc")) or (req["jsonrpc"].getStr() != "2.0"):
+            error(res[], -32600, "Invalid Request")
+            return
+    except KeyError as e:
+        doAssert(false, "Couldn't check the RPC version despite confirming its existence: " & e.msg)
 
     #Verify the method exists.
-    if (not req.hasKey("method")) or (req["method"].kind != JString):
-        error(res, -32600, "Invalid Request")
-        return
+    try:
+        if (not req.hasKey("method")) or (req["method"].kind != JString):
+            error(res[], -32600, "Invalid Request")
+            return
+    except KeyError as e:
+        doAssert(false, "Couldn't check the RPC method despite confirming its existence: " & e.msg)
 
     #Add params if it was omitted.
     if (not req.hasKey("params")):
         req["params"] = % []
 
     #Make sure the param were an array.
-    if req["params"].kind != JArray:
-        error(res, -32600, "Invalid Request")
-        return
+    try:
+        if req["params"].kind != JArray:
+            error(res[], -32600, "Invalid Request")
+            return
+    except KeyError as e:
+        doAssert(false, "Couldn't check the RPC params despite confirming their existence: " & e.msg)
 
     try:
-        #OVerride for system_quit.
-        if req["method"].getStr() == "system_quit":
-            res["result"] = true
-            reply(res)
-            await rpc.quit()
-
         #Make sure the method exists.
-        if not rpc.hasKey(req["method"].getStr()):
-            error(res, -32601, "Method not found")
+        if not rpc.functions.hasKey(req["method"].getStr()):
+            error(res[], -32601, "Method not found")
             return
 
+        #OVerride for system_quit.
+        try:
+            if req["method"].getStr() == "system_quit":
+                res[]["result"] = % true
+                reply(res[])
+                rpc.quit()
+        except KeyError as e:
+            doAssert(false, "Couldn't get the RPC method despite confirming its existence: " & e.msg)
+
         #Call the method.
-        await rpc.functions[req["method"].getStr()](res, req["params"])
+        try:
+            await rpc.functions[req["method"].getStr()](res[], req["params"])
+        except KeyError as e:
+            doAssert(false, "Couldn't call a RPC method despite confirming its existence: " & e.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't call a RPC method, despite catching all naturally thrown Exceptions: " & e.msg)
+
+        #If it's not null and has no result, provide one of true.
+        if (not res[].isNil) and (not res[].hasKey("result")):
+            res[]["result"] = % true
+
     #If there was an invalid parameter, create the proper error response.
     except ParamError:
-        res = error(req["id"], -32602, "Invalid params")
+        try:
+            res[] = newError(req["id"], -32602, "Invalid params")
+        except KeyError as e:
+            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
         return
 
     #If a parameter had an invalid value, create the proper response.
     except JSONRPCError as e:
-        res = error(req["id"], e.code, e.msg, e.data)
+        try:
+            res[] = newError(req["id"], e.code, e.msg, e.data)
+        except KeyError as e:
+            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
         return
 
     #If we doAssert(false), make sure it bubbles up.
@@ -123,7 +158,10 @@ proc handle*(
     #Else, respond that we had an internal error.
     #Generally, we would doAssert(false) here, yet the amount of custom data that can be entered makes that a worrysome prospect.
     except Exception:
-        res = error(req["id"], -32603, "Internal error")
+        try:
+            res[] = newError(req["id"], -32603, "Internal error")
+        except KeyError as e:
+            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
         return
 
 #Handle a request and return the result.
@@ -133,7 +171,10 @@ proc handle*(
     reply: proc (
         res: JSONNode
     ) {.raises: [].}
-): JSONNode {.forceCheck: [].} =
+): Future[ref JSONNode] {.forceCheck: [], async.} =
+    #Init the result.
+    result = new(ref JSONNode)
+
     #If this is a singular request...
     if req.kind == JObject:
         #Add an ID if it was omitted.
@@ -141,18 +182,25 @@ proc handle*(
             req["id"] = % nil
 
         #Create the response.
-        result = %* {
-            "jsonrpc": "2.0",
-            "id": req["id"]
-        }
+        try:
+            result[] = %* {
+                "jsonrpc": "2.0",
+                "id": req["id"]
+            }
+        except KeyError as e:
+            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
 
         #Handle it.
-        handle(rpc, req, result, reply)
+        try:
+            await handle(rpc, req, result, reply)
+        except Exception as e:
+            doAssert(false, "Couldn't handle the request (JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
 
     #If this was a batch request...
     elif req.kind == JArray:
         #Prepare the result.
-        var results: JSONNode = newJArray()
+        var results: ref JSONNode = new(ref JSONNode)
+        results[] = newJArray()
 
         #Iterate over each request.
         for reqElem in req:
@@ -161,47 +209,56 @@ proc handle*(
                 reqElem["id"] = % nil
 
             #Prepare this specific result.
-            result = %* {
-                "jsonrpc": "2.0",
-                "id": reqElem["id"]
-            }
+            try:
+                result[] = %* {
+                    "jsonrpc": "2.0",
+                    "id": reqElem["id"]
+                }
+            except KeyError as e:
+                doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
 
             #Check the request's type.
-            if reqElem.kind != JObject:
-                results.add(error(-32600, "Invalid Request"))
-                continue
+            try:
+                if reqElem.kind != JObject:
+                    results[].add(newError(reqElem["id"], -32600, "Invalid Request"))
+                    continue
+            except KeyError as e:
+                doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
 
             #Handle it.
-            handle(
-                rpc,
-                reqElem,
-                result,
-                proc (
-                    res: JSONNode
-                ) {.forceCheck: [].} =
-                    results.add(res)
-                    reply(results)
-            )
+            try:
+                await handle(
+                    rpc,
+                    reqElem,
+                    result,
+                    proc (
+                        res: JSONNode
+                    ) {.forceCheck: [].} =
+                        results[].add(res)
+                        reply(results[])
+                )
+            except Exception as e:
+                doAssert(false, "Couldn't handle the request (batch JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
 
             #If there was a result, add it.
-            if not result.isNil:
-                results.add(result)
+            if not result[].isNil:
+                results[].add(result[])
 
         #Set result to results.
         result = results
 
     else:
-        error(result, -32600, "Invalid Request")
+        error(result[], -32600, "Invalid Request")
         return
 
 #Handle a string and return a string.
 proc handle*(
     rpc: RPC,
-    reqStr: string
+    reqStr: string,
     reply: proc (
         res: string
     ) {.raises: [].}
-): string =
+): Future[string] {.forceCheck: [], async.} =
     var
         req: JSONNode
         res: JSONNode
@@ -209,17 +266,20 @@ proc handle*(
     #Parse the request.
     try:
         req = parseJSON(reqStr)
-    except JSONParsingError:
-        return $error(newJNull(), -32700, "Parse error")
+    except Exception:
+        return $newError(newJNull(), -32700, "Parse error")
 
     #Handle it.
-    res = rpc.handle(
-        req,
-        proc (
-            res: JSONNode
-        ) {.forceCheck: [].} =
-            reply($res)
-    )
+    try:
+        res = (await rpc.handle(
+            req,
+            proc (
+                res: JSONNode
+            ) {.forceCheck: [].} =
+                reply($res)
+        ))[]
+    except Exception as e:
+        doAssert(false, "Couldn't handle the request (string), despite catching all naturally thrown Exceptions: " & e.msg)
 
     #Return the string.
     if res.isNil:
@@ -231,7 +291,7 @@ proc handle*(
 proc start*(
     rpc: RPC
 ) {.forceCheck: [], async.} =
-    while rpc.listening:
+    while rpc.alive:
         #Allow other async code to execute.
         try:
             await sleepAsync(1)
@@ -255,14 +315,29 @@ proc start*(
             continue
 
         #Handle the request.
-        var res: JSONNode = rpc.handle(
-            req,
-            proc (
-                replyArg: JSONNode
-            ) {.forceCheck: [].} =
-                rpc.toGUI[].send(replyArg)
-        )
-        rpc.toGUI[].send(res)
+        var res: ref JSONNode
+        try:
+            res = await rpc.handle(
+                data.msg,
+                proc (
+                    replyArg: JSONNode
+                ) {.forceCheck: [].} =
+                    try:
+                        rpc.toGUI[].send(replyArg)
+                    except DeadThreadError as e:
+                        doAssert(false, "Couldn't send to a dead thread: " & e.msg)
+                    except Exception as e:
+                        doAssert(false, "Sending over a channel threw an Exception: " & e.msg)
+            )
+        except Exception as e:
+            doAssert(false, "Couldn't handle the request from the GUI, despite catching all naturally thrown Exceptions: " & e.msg)
+
+        try:
+            rpc.toGUI[].send(res[])
+        except DeadThreadError as e:
+            doAssert(false, "Couldn't send to a dead thread: " & e.msg)
+        except Exception as e:
+            doAssert(false, "Sending over a channel threw an Exception: " & e.msg)
 
 discard """
 #Start up the RPC's server socket.
@@ -341,7 +416,7 @@ proc shutdown*(
     #Close each client.
     while rpc.clients.len != 0:
         try:
-            rpc.clients[0].socket.close()
+            rpc.clients[0].close()
         except Exception:
             discard
         rpc.clients.delete(0)

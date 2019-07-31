@@ -140,6 +140,14 @@ type
             IndexError
         ].}
 
+        getTotalMerit*: proc (): int {.inline, raises: [].}
+
+        getLiveMerit*: proc (): int {.inline, raises: [].}
+
+        getMerit*: proc (
+            key: BLSPublicKey
+        ): int {.inline, raises: [].}
+
         addBlock*: proc (
             newBlock: Block,
             syncing: bool = false
