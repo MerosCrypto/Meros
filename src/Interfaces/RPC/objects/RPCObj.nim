@@ -33,10 +33,14 @@ finalsd:
         RPCFunctions* = Table[string, RPCFunction]
 
         RPC* = ref object
-            functions: RPCFunctions
+            functions*: RPCFunctions
+            quit*: proc () {.raises: [].}
+
             toRPC* {.final.}: ptr Channel[JSONNode]
             toGUI* {.final.}: ptr Channel[JSONNode]
+
             server* {.final.}: AsyncSocket
+            clients*: seq[AsyncSocket]
 
 #RPCFunctions constructor.
 macro newRPCFunctions*(
@@ -96,6 +100,7 @@ proc merge*(
 #RPC Object Constructor.
 proc newRPCObj*(
     functions: RPCFunctions,
+    quit: proc () {.raises: [].},
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
 ): RPC {.forceCheck: [].} =

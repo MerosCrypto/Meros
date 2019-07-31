@@ -6,27 +6,17 @@ import ../../objects/ConfigObj
 
 #RPC object.
 import objects/RPCObj
-export RPCObj
+export RPCObj.RPC
 
 #RPC modules.
-import Modules/SystemModule
-import Modules/PersonalModule
+import Modules/TransactionsModule
 import Modules/ConsensusModule
 import Modules/MeritModule
-import Modules/TransactionsModule
+import Modules/PersonalModule
 import Modules/NetworkModule
-
-#Async standard lib.
-import asyncdispatch
 
 #Networking standard lib.
 import asyncnet
-
-#JSON standard lib.
-import json
-
-#Sequtils standared lib.
-import sequtils
 
 #Constructor.
 proc newRPC*(
@@ -35,51 +25,207 @@ proc newRPC*(
     toGUI: ptr Channel[JSONNode]
 ): RPC {.forceCheck: [].} =
     newRPCObj(
-        functions,
+        merge(
+            (prefix: "transactions_", rpc: TransactionsModule.module(functions)),
+            (prefix: "consensus_",    rpc: ConsensusModule.module(functions)),
+            (prefix: "merit_",        rpc: MeritModule.module(functions)),
+            (prefix: "personal_",     rpc: PersonalModule.module(functions)),
+            (prefix: "network_",      rpc: NetworkModule.module(functions))
+        ),
+        functions.system.quit,
         toRPC,
         toGUI
     )
 
-#Handle a message.
-proc handle(
+#Add an error response to an existing JSONNode.
+proc error(
+    res: var JSONNode,
+    code: int,
+    msg: string,
+    data: JSONNode = nil
+) {.forceCheck: [].} =
+    res["error"] = %* {
+        "code": code,
+        "message": msg
+    }
+    if not data.isNil:
+        res["error"]["data"] = data
+
+#Create a new error response.
+proc error(
+    id: JSONNode,
+    code: int,
+    msg: string,
+    data: JSONNode = nil
+): JSONNode {.forceCheck: [].} =
+    result = %* {
+        "jsonrpc": "2.0",
+        "id": id
+    }
+    error(result, code,msg, data)
+
+#Handle a request and store the result in res.
+proc handle*(
     rpc: RPC,
-    msg: JSONNode,
+    req: JSONNode,
+    res: var JSONNode,
     reply: proc (
-        json: JSONNode
+        res: JSONNode
     ) {.raises: [].}
 ) {.forceCheck: [], async.} =
-    #Switch based off the moduke.
-    var moduleStr: string
-    try:
-        moduleStr = msg["module"].getStr()
-    except KeyError:
-        reply(%* {
-            "error": "No module specified."
-        })
+    #Verify the version.
+    if (not req.hasKey("jsonrpc")) or (req["jsonrpc"].getStr() != "2.0"):
+        error(res, -32600, "Invalid Request")
+        return
+
+    #Verify the method exists.
+    if (not req.hasKey("method")) or (req["method"].kind != JString):
+        error(res, -32600, "Invalid Request")
+        return
+
+    #Add params if it was omitted.
+    if (not req.hasKey("params")):
+        req["params"] = % []
+
+    #Make sure the param were an array.
+    if req["params"].kind != JArray:
+        error(res, -32600, "Invalid Request")
         return
 
     try:
-        case moduleStr:
-            of "system":
-                await rpc.system(msg, reply)
-            of "personal":
-                await rpc.personal(msg, reply)
-            of "consensus":
-                await rpc.consensus(msg, reply)
-            of "merit":
-                await rpc.merit(msg, reply)
-            of "transactions":
-                await rpc.transactions(msg, reply)
-            of "network":
-                await rpc.network(msg, reply)
-            else:
-                reply(
-                    %* {
-                        "error": "Unrecognized module."
-                    }
-                )
-    except Exception as e:
-        doAssert(false, "An RPC module/reply threw an Exception despite not naturally throwing anything: " & e.msg)
+        #OVerride for system_quit.
+        if req["method"].getStr() == "system_quit":
+            res["result"] = true
+            reply(res)
+            await rpc.quit()
+
+        #Make sure the method exists.
+        if not rpc.hasKey(req["method"].getStr()):
+            error(res, -32601, "Method not found")
+            return
+
+        #Call the method.
+        await rpc.functions[req["method"].getStr()](res, req["params"])
+    #If there was an invalid parameter, create the proper error response.
+    except ParamError:
+        res = error(req["id"], -32602, "Invalid params")
+        return
+
+    #If a parameter had an invalid value, create the proper response.
+    except JSONRPCError as e:
+        res = error(req["id"], e.code, e.msg, e.data)
+        return
+
+    #If we doAssert(false), make sure it bubbles up.
+    except AssertionError as e:
+        doAssert(false, "RPC caused a doAssert(false): " & e.msg)
+
+    #Else, respond that we had an internal error.
+    #Generally, we would doAssert(false) here, yet the amount of custom data that can be entered makes that a worrysome prospect.
+    except Exception:
+        res = error(req["id"], -32603, "Internal error")
+        return
+
+#Handle a request and return the result.
+proc handle*(
+    rpc: RPC,
+    req: JSONNode,
+    reply: proc (
+        res: JSONNode
+    ) {.raises: [].}
+): JSONNode {.forceCheck: [].} =
+    #If this is a singular request...
+    if req.kind == JObject:
+        #Add an ID if it was omitted.
+        if not req.hasKey("id"):
+            req["id"] = % nil
+
+        #Create the response.
+        result = %* {
+            "jsonrpc": "2.0",
+            "id": req["id"]
+        }
+
+        #Handle it.
+        handle(rpc, req, result, reply)
+
+    #If this was a batch request...
+    elif req.kind == JArray:
+        #Prepare the result.
+        var results: JSONNode = newJArray()
+
+        #Iterate over each request.
+        for reqElem in req:
+            #Add an ID if it was omitted.
+            if not reqElem.hasKey("id"):
+                reqElem["id"] = % nil
+
+            #Prepare this specific result.
+            result = %* {
+                "jsonrpc": "2.0",
+                "id": reqElem["id"]
+            }
+
+            #Check the request's type.
+            if reqElem.kind != JObject:
+                results.add(error(-32600, "Invalid Request"))
+                continue
+
+            #Handle it.
+            handle(
+                rpc,
+                reqElem,
+                result,
+                proc (
+                    res: JSONNode
+                ) {.forceCheck: [].} =
+                    results.add(res)
+                    reply(results)
+            )
+
+            #If there was a result, add it.
+            if not result.isNil:
+                results.add(result)
+
+        #Set result to results.
+        result = results
+
+    else:
+        error(result, -32600, "Invalid Request")
+        return
+
+#Handle a string and return a string.
+proc handle*(
+    rpc: RPC,
+    reqStr: string
+    reply: proc (
+        res: string
+    ) {.raises: [].}
+): string =
+    var
+        req: JSONNode
+        res: JSONNode
+
+    #Parse the request.
+    try:
+        req = parseJSON(reqStr)
+    except JSONParsingError:
+        return $error(newJNull(), -32700, "Parse error")
+
+    #Handle it.
+    res = rpc.handle(
+        req,
+        proc (
+            res: JSONNode
+        ) {.forceCheck: [].} =
+            reply($res)
+    )
+
+    #Return the string.
+    if res.isNil:
+        result = ""
+    else:
+        result = $res
 
 #Start up the RPC's connection to the GUI.
 proc start*(
@@ -103,123 +249,22 @@ proc start*(
             doAssert(false, "Couldn't read from the channel using tryRecv due to a ValueError: " & e.msg)
         except Exception as e:
             doAssert(false, "Couldn't read from the channel using tryRecv due to an Exception: " & e.msg)
+
         #If there's no data, continue.
         if not data.dataAvailable:
             continue
 
-        #Handle the data.
-        try:
-            asyncCheck rpc.handle(
-                data.msg,
-                proc (
-                    jsonArg: JSONNode
-                ) {.forceCheck: [].} =
-                    #Extract the JSON argument.
-                    var json: JSONNode = jsonArg
+        #Handle the request.
+        var res: JSONNode = rpc.handle(
+            req,
+            proc (
+                replyArg: JSONNode
+            ) {.forceCheck: [].} =
+                rpc.toGUI[].send(replyArg)
+        )
+        rpc.toGUI[].send(res)
 
-                    #If json is nil...
-                    if json.isNil:
-                        #Set a default response of success.
-                        json = %* {
-                            "success": true
-                        }
-
-                    try:
-                        rpc.toGUI[].send(json)
-                    except DeadThreadError as e:
-                        doAssert(false, "Couldn't send data to the GUI due to a DeadThreadError: " & e.msg)
-                    except Exception as e:
-                        doAssert(false, "Couldn't send data to the GUI due to an Exception: " & e.msg)
-            )
-        except Exception as e:
-            doAssert(false, "rpc.handle threw an Exception despite not naturally throwing anything: " & e.msg)
-
-#Handle a Socket Client.
-proc handle*(
-    rpc: RPC,
-    client: RPCSocketClient
-) {.forceCheck: [], async.} =
-    #Handle the client.
-    while not client.socket.isClosed():
-        #Read in a line.
-        var data: string
-        try:
-            data = await client.socket.recvLine()
-        except Exception:
-            discard
-
-        #If the line length is 0, the client is invalid. Stop handling it.
-        if data.len == 0:
-            try:
-                client.socket.close()
-            except Exception:
-                discard
-            for i in 0 ..< rpc.clients.len:
-                if rpc.clients[i].id == client.id:
-                    rpc.clients.delete(i)
-            break
-
-        #Parse the JSON.
-        var json: JSONNode
-        try:
-            json = parseJSON(data)
-        except Exception:
-            try:
-                asyncCheck client.socket.send(
-                    $(%* {
-                        "error": "Invalid RPC payload."
-                    }) & "\r\n"
-                )
-            except Exception:
-                try:
-                    client.socket.close()
-                except Exception:
-                    discard
-                for i in 0 ..< rpc.clients.len:
-                    if rpc.clients[i].id == client.id:
-                        rpc.clients.delete(i)
-                break
-            continue
-
-        #Handle the data.
-        try:
-            asyncCheck rpc.handle(
-                json,
-                proc (
-                    resArg: JSONNode
-                ) {.forceCheck: [].} =
-                    #Declare a var to send back.
-                    var res: string
-                    try:
-                        #If resArg is nil...
-                        if resArg.isNil:
-                            #Set a default response of success.
-                            res = $(%* {
-                                "success": true
-                            })
-                        #Else, use the resArg.
-                        else:
-                            res = $resArg
-                    except KeyError as e:
-                        doAssert(false, "Couldn't serialize a JSON response: " & e.msg)
-
-                    #Send it.
-                    try:
-                        asyncCheck client.socket.send(res & "\r\n")
-                    except Exception as e:
-                        echo "Couldn't send `" & res & "` to a RPC client: " & e.msg
-                        try:
-                            client.socket.close()
-                        except Exception:
-                            discard
-                        for i in 0 ..< rpc.clients.len:
-                            if rpc.clients[i].id == client.id:
-                                rpc.clients.delete(i)
-            )
-        except Exception as e:
-            doAssert(false, "Handle(JSONNode) threw an Exception despite not naturally throwing anything: " & e.msg)
-
-
+discard """
 #Start up the RPC's server socket.
 proc listen*(
     rpc: RPC,
@@ -280,19 +325,18 @@ proc listen*(
             doAssert(false, "Handle(RPCSocketClient) threw an Exception despite not naturally throwing anything: " & e.msg)
         #Increment the ID counter.
         inc(id)
+"""
 
 #Shutdown.
 proc shutdown*(
     rpc: RPC
 ) {.forceCheck: [].} =
-    #Set listening to false.
-    rpc.listening = false
-
-    #Close the server socket.
-    try:
-        rpc.server.close()
-    except Exception:
-        discard
+    #Close the server socket, if it exists.
+    if not rpc.server.isNil:
+        try:
+            rpc.server.close()
+        except Exception:
+            discard
 
     #Close each client.
     while rpc.clients.len != 0:
