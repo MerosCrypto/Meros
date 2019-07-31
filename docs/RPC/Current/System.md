@@ -2,4 +2,4 @@
 
 ### `quit`
 
-`quit` will finish up all of your Node's current operations, and safely shutdown (if it can). It takes in zero arguments and returns zero fields.
+`quit` will finish up all of current operations and attempt to safely shutdown. It takes in zero arguments and the result is always true.
