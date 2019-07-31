@@ -173,7 +173,7 @@ UI/RPC:
 
 ### Improvements:
 
-- Remove Natural/ArgonError.
+- Remove Natural/ArgonError/EdPublicKeyError.
 
 - Swap Chia for Milagro.
 

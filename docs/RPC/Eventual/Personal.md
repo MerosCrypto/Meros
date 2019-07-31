@@ -6,6 +6,8 @@
 - Mnemonic (string): Optional; creates a new Mnemonic if omitted.
 - Password (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
 
+In order to create a new Mnemonic with a password, pass `["", "oassword"]`.
+
 The result is a bool of true.
 
 ### `getMnemonic`

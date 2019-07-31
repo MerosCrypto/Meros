@@ -6,23 +6,19 @@ proc mainPersonal() {.forceCheck: [].} =
         functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
             wallet
 
-        #Set the Wallet's secret.
-        functions.personal.setSeed = proc (
-            seed: string,
+        #Set the Wallet's Mnemonic.
+        functions.personal.setMnemonic = proc (
+            mnemonic: string,
             password: string
         ) {.forceCheck: [
             ValueError
         ].} =
-            if seed.len == 0:
-                try:
-                    wallet = newWallet()
-                except ValueError as e:
-                    fcRaise e
+            if mnemonic.len == 0:
+                wallet = newWallet(password)
             else:
                 try:
-                    wallet = newWallet(seed, password)
+                    wallet = newWallet(mnemonic, password)
                 except ValueError as e:
-                    echo e.msg
                     fcRaise e
 
         #Create a Send Transaction.
@@ -32,8 +28,7 @@ proc mainPersonal() {.forceCheck: [].} =
         ): Hash[384] {.forceCheck: [
             ValueError,
             AddressError,
-            NotEnoughMeros,
-            DataExists
+            NotEnoughMeros
         ].} =
             var
                 #Spendable UTXOs.
@@ -124,7 +119,7 @@ proc mainPersonal() {.forceCheck: [].} =
             except ValueError as e:
                 doAssert(false, "Created a Send which was invalid: " & e.msg)
             except DataExists as e:
-                fcRaise e
+                doAssert(false, "Created a Send which already existed: " & e.msg)
 
             #Retun the hash.
             result = send.hash

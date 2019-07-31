@@ -208,7 +208,7 @@ proc module*(
             try:
                 newBlock = data.parseBlock()
             except ValueError as e:
-                raise newJSONRPCError(-2, e.msg)
+                raise newJSONRPCError(-3, e.msg)
             except ArgonError as e:
                 raise newJSONRPCError(-99, e.msg)
             except BLSError as e:
@@ -217,11 +217,11 @@ proc module*(
             try:
                 await rpc.functions.merit.addBlock(newBlock)
             except ValueError as e:
-                raise newJSONRPCError(-2, e.msg)
-            except IndexError as e:
-                raise newJSONRPCError(-1, e.msg)
-            except GapError as e:
                 raise newJSONRPCError(-3, e.msg)
+            except IndexError as e:
+                raise newJSONRPCError(-2, e.msg)
+            except GapError as e:
+                raise newJSONRPCError(-1, e.msg)
             except DataExists as e:
                 raise newJSONRPCError(0, e.msg)
             except Exception as e:

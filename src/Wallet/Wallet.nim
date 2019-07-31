@@ -18,14 +18,6 @@ finalsd:
         hd* {.final.}: HDWallet
 
 #Constructors.
-proc newWallet*(): Wallet {.forceCheck: [].} =
-    result = Wallet()
-    try:
-        result.mnemonic = newMnemonic()
-        result.hd = newHDWallet(result.mnemonic.unlock()[0 ..< 32])
-    except ValueError:
-        result = newWallet()
-
 proc newWallet*(
     password: string
 ): Wallet {.forceCheck: [].} =
@@ -37,14 +29,14 @@ proc newWallet*(
         result = newWallet(password)
 
 proc newWallet*(
-    sentence: string,
+    mnemonic: string,
     password: string
 ): Wallet {.forceCheck: [
     ValueError
 ].} =
     result = Wallet()
     try:
-        result.mnemonic = newMnemonic(sentence)
+        result.mnemonic = newMnemonic(mnemonic)
         result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
     except ValueError as e:
         fcRaise e

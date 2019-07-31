@@ -9,6 +9,7 @@ import macros
 
 #Async standard lib.
 import asyncdispatch
+export asyncdispatch
 
 #Networking standard lib.
 import asyncnet
@@ -19,6 +20,7 @@ export tables
 
 #JSON standard lib.
 import json
+export json
 
 #RPC object.
 finalsd:

@@ -40,7 +40,7 @@ proc module*(
             try:
                 await rpc.functions.network.connect(params[0].getString(), params[1].getInt())
             except ClientError as e:
-                raise newJSONRPCError()
+                raise newJSONRPCError(-6, e.msg)
             except Exception as e:
                 doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
