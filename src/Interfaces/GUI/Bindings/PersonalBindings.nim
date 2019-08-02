@@ -22,27 +22,31 @@ proc addTo*(
         #Get the Wallet.
         gui.webview.bindProcNoArg(
             "Personal",
-            "getMnemonic",
+            "getWallet",
             proc () {.forceCheck: [].} =
-                #Get the Mnemnoic.
-                var mnemonic: JSONNode
+                #Get the Mnemnoic and address.
+                var
+                    mnemonic: JSONNode
+                    address: JSONNode
                 try:
                     mnemonic = gui.call("personal", "getMnemonic")
+                    address = gui.call("personal", "getAddress")
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
                     return
 
-                #Display the Mnemnoic.
+                #Display the Mnemnoic and address.
                 var js: string
                 try:
                     js = &"""
                         document.getElementById("mnemonic").innerHTML = "{mnemonic.getStr()}";
+                        document.getElementById("address").innerHTML = "{address.getStr()}";
                     """
                 except ValueError as e:
-                    gui.webview.error("Value Error", "Couldn't format the JS to display the Mnemonic: " & e.msg)
+                    gui.webview.error("Value Error", "Couldn't format the JS to display the Mnemonic and address: " & e.msg)
                     return
                 if gui.webview.eval(js) != 0:
-                    gui.webview.error("RPC Error", "Couldn't eval the JS to display the Mnemonic.")
+                    gui.webview.error("RPC Error", "Couldn't eval the JS to display the Mnemonic and address.")
                     return
         )
 
