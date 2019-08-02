@@ -1,12 +1,12 @@
 # Usage
 
-The default Meros RPC port is 5133. Requests are sent as JSON with a new line after them. Requests are NOT HTTP POST requests.
+Meros RPC's is fully compliant with the JSON-RPC 2.0 standard, and is available on port 5133 by default. Calls are sent to the node via TCP.
 
-Every request has three fields.
-- `module`, a string of the name of the RPC module you're trying to access There's `system`, `personal`, `merit`, `transactions`, and `network`.
-- `method`, a string of the method you're calling. To see what methods are available, please see the docs for each individual module.
-- `args`, an array of the arguments you're passing to the method.
+Meros sorts calls into the following modules:
+- `system`
+- `personal`
+- `merit`
+- `transactions`
+- `network`
 
-Every call will have a response. If the call doesn't return anything, the response will contain a `success` boolean, with a value of true. If the call failed, the response will have a `error` field. That said, `system.quit` will always respond with an empty object.
-
-Bytes will always be sent via their hex representation.
+The JSON-RPC 2.0 `method` field is constructed via prefixing each RPC method with its module's name plus an underscore, as so: `module_method`. Every JSON-RPC 2.0 `params` is an array. In order to specify an optional argument after an argument you want to omit, supply the default value for that argument. Bytes are sent, and received, in hexadecimal notation.

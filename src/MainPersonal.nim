@@ -2,9 +2,9 @@ include MainTransactions
 
 proc mainPersonal() {.forceCheck: [].} =
     {.gcsafe.}:
-        #Get the Mnemonic.
-        functions.personal.getMnemonic = proc (): Mnemonic {.inline, forceCheck: [].} =
-            wallet.mnemonic
+        #Get the Wallet.
+        functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
+            wallet
 
         #Set the Wallet's Mnemonic.
         functions.personal.setMnemonic = proc (
@@ -147,7 +147,7 @@ proc mainPersonal() {.forceCheck: [].} =
             child = wallet.external.next()
         except ValueError as e:
             doAssert(false, "Wallet has no usable keys: " & e.msg)
-        
+
         try:
             try:
                 data = newData(

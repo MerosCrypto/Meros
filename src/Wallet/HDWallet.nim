@@ -219,6 +219,10 @@ proc `[]`*(
             COIN_TYPE + (uint32(2) ^ 31),
             account + (uint32(2) ^ 31)
         ])
+
+        #Guarantee the external and internal chains are usable.
+        discard result.derive(0)
+        discard result.derive(1)
     except ValueError as e:
         fcRaise e
 

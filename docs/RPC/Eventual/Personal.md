@@ -6,8 +6,6 @@
 - Mnemonic (string): Optional; creates a new Mnemonic if omitted.
 - Password (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
 
-In order to create a new Mnemonic with a password, pass `["", "oassword"]`.
-
 The result is a bool of true.
 
 ### `getMnemonic`
@@ -26,7 +24,7 @@ The result is a string of the Parent Public Key.
 `getAddress` replies with an address. It takes in three arguments:
 - Account (int):  Optional; defaults to 0; used in hardened derivation.
 - Change  (bool): Optional; defaults to false.
-- Index   (int):  Optional; defaults to the next unused index. If an index above the hardened threshold is specified, hardened derivation is used. If the next unused index is used, and it's above the hardened threshold, this will error.
+- Index   (int):  Optional; defaults to the next underived index. If an index above the hardened threshold is specified, hardened derivation is used. If the next unused index is used, and it's above the hardened threshold, this will error.
 
 The result is a string of the Wallet's address.
 

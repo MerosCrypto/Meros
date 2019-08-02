@@ -56,7 +56,51 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % functions.personal.getMnemonic().sentence
+                res["result"] = % functions.personal.getWallet().mnemonic.sentence
+
+            #Get an address from the Wallet.
+            "getAddress" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Supply optional parameters.
+                if params.len == 0:
+                    params.add(% 0)
+                if params.len == 1:
+                    params.add(% false)
+
+                #Verify the params.
+                if (
+                    (params.len != 2) or
+                    (params[0].kind != JInt) or
+                    (params[1].kind != JBool)
+                ):
+                    raise newException(ParamError, "")
+
+                #Get the account in question.
+                var wallet: HDWallet = functions.personal.getWallet()
+                try:
+                    wallet = wallet[uint32(params[0].getInt())]
+                except ValueError:
+                    raise newJSONRPCError(-3, "Unusable account")
+
+                #Get the tree in question.
+                try:
+                    if params[1].getBool():
+                        wallet = wallet.derive(1)
+                    else:
+                        wallet = wallet.derive(0)
+                except ValueError as e:
+                    doAssert(false, "Unusable external/internal trees despite checking for their validity: " & e.msg)
+
+                #Get the child.
+                try:
+                    res["result"] = % wallet.next().address
+                except ValueError:
+                    raise newJSONRPCError(-3, "Tree has no valid children")
 
             #Create and publish a Send.
             "send" = proc (

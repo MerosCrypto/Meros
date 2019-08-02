@@ -6,13 +6,19 @@
 - Mnemonic (string): Optional; creates a new Mnemonic if omitted.
 - Password (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
 
-In order to create a new Mnemonic with a password, pass `["", "oassword"]`.
-
 The result is a bool of true.
 
 ### `getMnemonic`
 
 `getMnemonic` replies with the Node's Wallet's Mnemonic, without the password. It takes in zero arguments and the result is a string of the mnemonic.
+
+### `getAddress`
+
+`getAddress` replies with an address. It takes in two arguments:
+- Account (int):  Optional; defaults to 0; used in hardened derivation.
+- Change  (bool): Optional; defaults to false.
+
+The result is a string of the Wallet's address.
 
 ### `send`
 
