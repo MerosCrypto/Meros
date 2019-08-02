@@ -56,7 +56,7 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % functions.personal.getWallet().mnemonic.sentence
+                res["result"] = % functions.personal.getMnemonic().sentence
 
             #Create and publish a Send.
             "send" = proc (

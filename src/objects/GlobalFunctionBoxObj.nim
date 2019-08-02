@@ -158,7 +158,7 @@ type
         ): Future[void]
 
     PersonalFunctionBox* = ref object
-        getWallet*: proc (): Wallet {.inline, raises: [].}
+        getMnemonic*: proc (): Mnemonic {.inline, raises: [].}
 
         setMnemonic*: proc (
             mnemonic: string,

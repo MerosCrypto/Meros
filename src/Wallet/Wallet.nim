@@ -16,6 +16,8 @@ finalsd:
     type Wallet* = ref object
         mnemonic* {.final.}: Mnemonic
         hd* {.final.}: HDWallet
+        external* {.final.}: HDWallet
+        internal* {.final.}: HDWallet
 
 #Constructors.
 proc newWallet*(
@@ -25,6 +27,11 @@ proc newWallet*(
     try:
         result.mnemonic = newMnemonic()
         result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
+
+        #Guarantee account 0 is usable.
+        discard result.hd[0]
+        result.external = result.hd[0].derive(0)
+        result.internal = result.hd[0].derive(1)
     except ValueError:
         result = newWallet(password)
 

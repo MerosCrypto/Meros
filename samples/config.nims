@@ -3,8 +3,10 @@ setCommand("cpp")
 
 #Necessary flags.
 switch("threads", "on")
-switch("define", "ADDRESS_HRP=Mr")
+switch("experimental", "caseStmtMacros")
 switch("define", "SIGN_PREFIX=MEROS")
+switch("define", "ADDRESS_HRP=Mr")
+switch("define", "COIN_TYPE=5132")
 switch("define", "DEFAULT_PORT=5132")
 
 #Optimize for size (which is faster than `opt=speed` for Meros (at least on x86_64)).

@@ -2,9 +2,9 @@ include MainTransactions
 
 proc mainPersonal() {.forceCheck: [].} =
     {.gcsafe.}:
-        #Get the Wallet.
-        functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
-            wallet
+        #Get the Mnemonic.
+        functions.personal.getMnemonic = proc (): Mnemonic {.inline, forceCheck: [].} =
+            wallet.mnemonic
 
         #Set the Wallet's Mnemonic.
         functions.personal.setMnemonic = proc (
@@ -31,14 +31,21 @@ proc mainPersonal() {.forceCheck: [].} =
             NotEnoughMeros
         ].} =
             var
+                #Wallet we're using.
+                child: HDWallet
                 #Spendable UTXOs.
-                utxos: seq[SendInput] = transactions.getUTXOs(wallet.publicKey)
+                utxos: seq[SendInput]
                 #Amount in.
                 amountIn: uint64
                 #Amount out.
                 amountOut: uint64
                 #Send we'll end up creating.
                 send: Send
+            try:
+                child = wallet.external.next()
+            except ValueError as e:
+                doAssert(false, "Wallet has no usable keys: " & e.msg)
+            utxos = transactions.getUTXOs(child.publicKey)
             try:
                 amountOut = parseUInt(amountStr)
             except ValueError as e:
@@ -90,7 +97,7 @@ proc mainPersonal() {.forceCheck: [].} =
             if amountIn != amountOut:
                 outputs.add(
                     newSendOutput(
-                        wallet.publicKey,
+                        child.publicKey,
                         amountIn - amountOut
                     )
                 )
@@ -105,7 +112,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 raise newException(ValueError, e.msg)
 
             #Sign the Send.
-            wallet.sign(send)
+            child.sign(send)
 
             #Mine the Send.
             try:
@@ -131,24 +138,32 @@ proc mainPersonal() {.forceCheck: [].} =
         ValueError,
         DataExists
     ].} =
-        #Create the Data.
-        var data: Data
+        var
+            #Wallet we're using.
+            child: HDWallet
+            #Data.
+            data: Data
+        try:
+            child = wallet.external.next()
+        except ValueError as e:
+            doAssert(false, "Wallet has no usable keys: " & e.msg)
+        
         try:
             try:
                 data = newData(
-                    transactions.loadData(wallet.publicKey),
+                    transactions.loadData(child.publicKey),
                     dataStr
                 )
             except DBReadError:
                 data = newData(
-                    wallet.publicKey,
+                    child.publicKey,
                     dataStr
                 )
         except ValueError as e:
             fcRaise e
 
         #Sign the Data.
-        wallet.sign(data)
+        child.sign(data)
 
         #Mine the Data.
         try:
