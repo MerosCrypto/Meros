@@ -31,7 +31,7 @@ proc test*() =
     for _ in 0 .. 255:
         #Create the SendOutput.
         output = newSendOutput(
-            newWallet().publicKey,
+            newWallet("").publicKey,
             uint64(rand(int32.high))
         )
 

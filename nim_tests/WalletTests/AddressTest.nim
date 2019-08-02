@@ -5,9 +5,8 @@ import ../../src/Wallet/Address
 import ../../src/Wallet/Wallet
 
 proc test*() =
-    var
-        #Wallet.
-        wallet: Wallet = newWallet()
+    #Wallet.
+    var wallet: Wallet = newWallet("")
 
     #Run 100 times.
     for i in 1 .. 100:

@@ -36,7 +36,7 @@ proc test*() =
         #Reloaded Claim.
         reloaded: Claim
         #Wallet.
-        wallet: Wallet = newWallet()
+        wallet: Wallet = newWallet("")
 
     #Test 255 serializations.
     for s in 0 .. 255:

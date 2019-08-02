@@ -38,7 +38,7 @@ proc test*() =
 
     #Create a new wallet and verify it.
     for _ in 1 .. 100:
-        verify(newWallet())
+        verify(newWallet(""))
 
     #Create a new wallet with a password and verify it.
     for _ in 1 .. 100:
