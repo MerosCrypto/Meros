@@ -26,12 +26,12 @@ finalsd:
         db*: DB
 
         #Block time (part of the chain params).
-        blockTime* {.final.}: Natural
+        blockTime* {.final.}: int
         #Starting Difficulty (part of the chain params).
         startDifficulty* {.final.}: Difficulty
 
         #Height.
-        height*: Natural
+        height*: int
         #seq of every Blok Header.
         headers*: seq[BlockHeader]
         #seq of all the Blocks in RAM.
@@ -44,7 +44,7 @@ finalsd:
 proc newBlockchainObj*(
     db: DB,
     genesis: string,
-    blockTime: Natural,
+    blockTime: int,
     startDifficultyArg: Hash[384]
 ): Blockchain {.forceCheck: [].} =
     #Create the start difficulty.
@@ -167,7 +167,7 @@ proc add*(
 #Block getters.
 proc `[]`*(
     blockchain: Blockchain,
-    nonce: Natural
+    nonce: int
 ): Block {.forceCheck: [
     IndexError
 ].} =

@@ -39,7 +39,7 @@ proc verify*(
 #Calculate the next difficulty using the blockchain and blocks per period.
 proc calculateNextDifficulty*(
     blockchain: Blockchain,
-    blocksPerPeriod: Natural
+    blocksPerPeriod: int
 ): Difficulty {.forceCheck: [
     IndexError
 ].} =

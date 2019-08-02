@@ -21,7 +21,7 @@ export MeritHolderObj
 #Calculate the Merkle.
 proc calculateMerkle*(
     holder: MeritHolder,
-    nonce: Natural
+    nonce: int
 ): Hash[384] {.forceCheck: [
     IndexError
 ].} =

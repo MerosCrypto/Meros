@@ -65,7 +65,7 @@ proc `miners=`*(
 
 #Constructor.
 func newBlockObj*(
-    nonce: Natural,
+    nonce: int,
     last: ArgonHash,
     aggregate: BLSSignature,
     records: seq[MeritHolderRecord],

@@ -9,7 +9,7 @@ import objects/MeritRemovalObj
 export MeritRemovalObj
 
 func newMeritRemoval*(
-    nonce: Natural,
+    nonce: int,
     element1: Element,
     element2: Element
 ): MeritRemoval {.inline, forceCheck: [].} =
@@ -20,7 +20,7 @@ func newMeritRemoval*(
     )
 
 func newSignedMeritRemoval*(
-    nonce: Natural,
+    nonce: int,
     element1: Element,
     element2: Element,
     signature: BLSSignature

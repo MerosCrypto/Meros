@@ -23,7 +23,7 @@ finalsd:
 
 #Constructors.
 func newMeritRemovalObj*(
-    nonce: Natural,
+    nonce: int,
     element1: Element,
     element2: Element
 ): MeritRemoval {.forceCheck: [].} =
@@ -41,7 +41,7 @@ func newMeritRemovalObj*(
         doAssert(false, "Set a final attribute twice when creating a MeritRemoval: " & e.msg)
 
 func newSignedMeritRemovalObj*(
-    nonce: Natural,
+    nonce: int,
     element1: Element,
     element2: Element,
     signature: BLSSignature

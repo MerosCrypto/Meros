@@ -26,9 +26,9 @@ finalsd:
         oldData*: bool
 
         #Blocks until Merit is dead.
-        deadBlocks* {.final.}: Natural
+        deadBlocks* {.final.}: int
         #Live Merit.
-        live: Natural
+        live: int
 
         #Amount of Blocks processed.
         processedBlocks*: int
@@ -38,7 +38,7 @@ finalsd:
 #Constructor.
 proc newStateObj*(
     db: DB,
-    deadBlocks: Natural,
+    deadBlocks: int,
     blockchainHeight: int
 ): State {.forceCheck: [].} =
     result = State(
@@ -117,7 +117,7 @@ func live*(
 proc `[]=`*(
     state: var State,
     key: string,
-    value: Natural
+    value: int
 ) {.forceCheck: [].} =
     #Get the previous value (uses the State `[]` so `add` is called).
     var previous: int = state[key]
@@ -137,7 +137,7 @@ proc `[]=`*(
 proc `[]=`*(
     state: var State,
     key: BLSPublicKey,
-    value: Natural
+    value: int
 ) {.inline, forceCheck: [].} =
     state[key.toString()] = value
 

@@ -21,7 +21,7 @@ finalsd:
         #Miner object.
         Miner* = object
             miner* {.final.}: BLSPublicKey
-            amount* {.final.}: Natural
+            amount* {.final.}: int
 
         #Miners object.
         Miners* = object
@@ -31,7 +31,7 @@ finalsd:
 #Miner Constructor.
 func newMinerObj*(
     miner: BLSPublicKey,
-    amount: Natural
+    amount: int
 ): Miner {.forceCheck: [].} =
     result = Miner(
         miner: miner,

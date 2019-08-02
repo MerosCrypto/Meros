@@ -39,7 +39,7 @@ finalsd:
 
 #Constructor.
 func newBlockHeaderObj*(
-    nonce: Natural,
+    nonce: int,
     last: ArgonHash,
     aggregate: BLSSignature,
     miners: Blake384Hash,

@@ -28,7 +28,7 @@ proc newBlankBlock*(
     miners: Miners = newMinersObj(@[
         newMinerObj(
             newBLSPrivateKeyFromSeed("TEST").getPublicKey(),
-            uint(100)
+            100
         )
     ]),
     time: uint32 = getTime(),

@@ -18,7 +18,7 @@ import ../../Network/Serialize/Consensus/SerializeVerification
 proc sign*(
     miner: MinerWallet,
     verif: SignedVerification,
-    nonce: Natural
+    nonce: int
 ) {.forceCheck: [
     BLSError
 ].} =

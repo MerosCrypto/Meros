@@ -32,7 +32,7 @@ import tables
 proc newBlockchain*(
     db: DB,
     genesis: string,
-    blockTime: Natural,
+    blockTime: int,
     startDifficulty: Hash[384]
 ): Blockchain {.forceCheck: [].} =
     newBlockchainObj(

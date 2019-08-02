@@ -11,4 +11,4 @@ finalsd:
             #Public key of owner
             holder* {.final.}: BLSPublicKey
             #Nonce
-            nonce* {.final.}: Natural
+            nonce* {.final.}: int

@@ -22,8 +22,8 @@ export StateObj
 #Constructor.
 proc newState*(
     db: DB,
-    deadBlocks: Natural,
-    blockchainHeight: Natural,
+    deadBlocks: int,
+    blockchainHeight: int,
 ): State {.forceCheck: [].} =
     newStateObj(db, deadBlocks, blockchainHeight)
 
@@ -61,7 +61,7 @@ proc revert*(
     #Mark the State as working with old data.
     state.oldData = true
 
-    #Restore dead Merit first so we stay in the `Natural` range.
+    #Restore dead Merit first so we stay positive.
     for i in countdown(state.processedBlocks - 1, height):
         #If the i is over the dead blocks quantity, meaning there is a block to remove from the state...
         if i > state.deadBlocks:

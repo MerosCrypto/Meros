@@ -47,9 +47,9 @@ proc newMerit*(
     db: DB,
     consensus: Consensus,
     genesis: string,
-    blockTime: Natural,
+    blockTime: int,
     startDifficultyArg: string,
-    live: Natural
+    live: int
 ): Merit {.forceCheck: [].} =
     #Extract the Difficulty.
     var startDifficulty: Hash[384]

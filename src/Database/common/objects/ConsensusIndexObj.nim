@@ -16,7 +16,7 @@ finalsd:
 #Constructor.
 func newConsensusIndex*(
     key: BLSPublicKey,
-    nonce: Natural
+    nonce: int
 ): ConsensusIndex {.forceCheck: [].} =
     result = ConsensusIndex(
         key: key,

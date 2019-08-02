@@ -81,7 +81,7 @@ proc newMeritHolderObj*(
 # [] operator.
 proc `[]`*(
     holder: MeritHolder,
-    nonce: Natural
+    nonce: int
 ): Element {.forceCheck: [
     IndexError
 ].} =
@@ -220,7 +220,6 @@ proc `[]`*(
         a = 0
 
     #Make sure it's a valid slice.
-    #We would use Natural for this, except `a` can be -1.
     if 0 > a:
         raise newException(IndexError, "Can't get Element Slice from MeritHolder; a was negative.")
     if a > b:

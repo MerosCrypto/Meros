@@ -22,7 +22,7 @@ finalsd:
 #Constructor.
 func newMeritHolderRecord*(
     key: BLSPublicKey,
-    nonce: Natural,
+    nonce: int,
     merkle: Hash[384]
 ): MeritHolderRecord {.forceCheck: [].} =
     result = MeritHolderRecord(

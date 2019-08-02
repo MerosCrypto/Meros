@@ -17,16 +17,16 @@ import StInt
 finalsd:
     type Difficulty* = object
         #Start of the period.
-        start* {.final.}: Natural
+        start* {.final.}: int
         #End of the period.
-        endBlock* {.final.}: Natural
+        endBlock* {.final.}: int
         #Difficulty to beat.
         difficulty* {.final.}: StUint[512]
 
 #Constructors.
 func newDifficultyObj*(
-    start: Natural,
-    endBlock: Natural,
+    start: int,
+    endBlock: int,
     difficulty: StUint[512]
 ): Difficulty {.forceCheck: [].} =
     result = Difficulty(
@@ -39,8 +39,8 @@ func newDifficultyObj*(
     result.ffinalizeDifficulty()
 
 func newDifficultyObj*(
-    start: Natural,
-    endBlock: Natural,
+    start: int,
+    endBlock: int,
     difficulty: Hash[384]
 ): Difficulty {.forceCheck: [
     ValueError
