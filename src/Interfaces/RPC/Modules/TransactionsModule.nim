@@ -19,6 +19,9 @@ import ../../../objects/GlobalFunctionBoxObj
 #RPC object.
 import ../objects/RPCObj
 
+#String utils standard lib.
+import strutils
+
 #Transaction -> JSON.
 proc `%`(
     tx: Transaction
@@ -48,8 +51,8 @@ proc `%`(
     case tx:
         of Mint as mint:
             result["descendant"] = % "Mint"
-            result["nonce"] = % mint.nonce
 
+            result["nonce"] = % mint.nonce
             try:
                 result["outputs"][0]["key"] = % $cast[MintOutput](mint.outputs[0]).key
             except KeyError as e:
@@ -57,7 +60,6 @@ proc `%`(
 
         of Claim as claim:
             result["descendant"] = % "Claim"
-            result["signature"] = % $claim.signature
 
             try:
                 for o in 0 ..< claim.outputs.len:
@@ -65,22 +67,28 @@ proc `%`(
             except KeyError as e:
                 doAssert(false, "Couldn't add a Claim's outputs' keys to its outputs: " & e.msg)
 
+            result["signature"] = % $claim.signature
+
         of Send as send:
             result["descendant"] = % "Send"
-            result["signature"] = % $send.signature
-            result["proof"] = % send.proof
-            result["argon"] = % $send.argon
 
             try:
                 for i in 0 ..< send.inputs.len:
-                    result["inputs"][i]["nonce"] = % $cast[SendInput](send.inputs[i]).nonce
+                    result["inputs"][i]["nonce"] = % cast[SendInput](send.inputs[i]).nonce
                 for o in 0 ..< send.outputs.len:
                     result["outputs"][o]["key"] = % $cast[SendOutput](send.outputs[o]).key
             except KeyError as e:
                 doAssert(false, "Couldn't add a Send's inputs' nonces/outputs' keys to its inputs/outputs: " & e.msg)
 
+            result["signature"] = % $send.signature
+            result["proof"] = % send.proof
+            result["argon"] = % $send.argon
+
         of Data as data:
             result["descendant"] = % "Data"
+
+            result["data"] = % data.data.toHex()
+
             result["signature"] = % $data.signature
             result["proof"] = % data.proof
             result["argon"] = % $data.argon

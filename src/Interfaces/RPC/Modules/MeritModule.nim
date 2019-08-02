@@ -249,7 +249,7 @@ proc module*(
 
                 var newBlock: Block
                 try:
-                    newBlock = parseBlock(params[0].getStr())
+                    newBlock = parseBlock(parseHexStr(params[0].getStr()))
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except ArgonError:
