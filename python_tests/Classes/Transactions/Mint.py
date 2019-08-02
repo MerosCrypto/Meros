@@ -28,7 +28,7 @@ class Mint(Transaction):
         self
     ) -> Dict[str, Any]:
         result: Dict[str, Any] = {
-            "descendant": "mint",
+            "descendant": "Mint",
             "inputs": [],
             "outputs": [{
                 "key": self.output[0].serialize().hex().upper(),

@@ -64,7 +64,7 @@ class Claim(Transaction):
             raise Exception("Python tests didn't set this Claim's value.")
 
         result: Dict[str, Any] = {
-            "descendant": "claim",
+            "descendant": "Claim",
             "inputs": [],
             "outputs": [{
                 "key": self.output.hex().upper(),

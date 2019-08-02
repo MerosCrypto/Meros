@@ -82,11 +82,11 @@ def SyncTest(
             raise Exception("Unexpected message sent: " + msgs[-1].hex().upper())
 
     #Verify the height.
-    if rpc.call("merit", "getHeight")["height"] != len(blockchain.blocks):
+    if rpc.call("merit", "getHeight") != len(blockchain.blocks):
         raise Exception("Height doesn't match.")
 
     #Verify the difficulty.
-    if blockchain.difficulty != int(rpc.call("merit", "getDifficulty", [0])["difficulty"], 16):
+    if blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
         raise Exception("Difficulty doesn't match.")
 
     #Verify the blocks.
@@ -100,3 +100,5 @@ def SyncTest(
         if len(ress[m]) != 0:
             if ress[m] != rpc.meros.recv():
                 raise Exception("Invalid sync response.")
+
+    print("Finished the Merit/Sync Test.")

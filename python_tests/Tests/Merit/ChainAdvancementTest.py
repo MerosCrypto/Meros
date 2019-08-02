@@ -37,7 +37,7 @@ def ChainAdvancementTest(
         rpc.call("merit", "publishBlock", [block.serialize().hex()])
 
         #Verify the difficulty.
-        if blockchain.difficulty != int(rpc.call("merit", "getDifficulty", [0])["difficulty"], 16):
+        if blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
             raise Exception("Difficulty doesn't match.")
 
         #Verify the Block.
@@ -45,5 +45,7 @@ def ChainAdvancementTest(
             raise Exception("Block doesn't match.")
 
     #Verify the height.
-    if rpc.call("merit", "getHeight")["height"] != len(blocks) + 1:
+    if rpc.call("merit", "getHeight") != len(blocks) + 1:
         raise Exception("Height doesn't match.")
+
+    print("Finished the Merit/ChainAdvancement Test.")
