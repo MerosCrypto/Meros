@@ -78,7 +78,7 @@ proc handle*(
     res: ref JSONNode,
     reply: proc (
         res: JSONNode
-    ) {.raises: [].}
+    ): Future[void]
 ) {.forceCheck: [], async.} =
     #Verify the version.
     try:
@@ -108,32 +108,30 @@ proc handle*(
     except KeyError as e:
         doAssert(false, "Couldn't check the RPC params despite confirming their existence: " & e.msg)
 
+    #Override for system_quit.
+    try:
+        if req["method"].getStr() == "system_quit":
+            res[]["result"] = % true
+            try:
+                await reply(res[])
+            except Exception as e:
+                doAssert(false, "Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
+            rpc.quit()
+    except KeyError as e:
+        doAssert(false, "Couldn't get the RPC method despite confirming its existence: " & e.msg)
+
     try:
         #Make sure the method exists.
         if not rpc.functions.hasKey(req["method"].getStr()):
             error(res[], -32601, "Method not found")
             return
 
-        #OVerride for system_quit.
-        try:
-            if req["method"].getStr() == "system_quit":
-                res[]["result"] = % true
-                reply(res[])
-                rpc.quit()
-        except KeyError as e:
-            doAssert(false, "Couldn't get the RPC method despite confirming its existence: " & e.msg)
-
         #Call the method.
-        try:
-            await rpc.functions[req["method"].getStr()](res[], req["params"])
-        except KeyError as e:
-            doAssert(false, "Couldn't call a RPC method despite confirming its existence: " & e.msg)
-        except Exception as e:
-            doAssert(false, "Couldn't call a RPC method, despite catching all naturally thrown Exceptions: " & e.msg)
+        await rpc.functions[req["method"].getStr()](res[], req["params"])
 
-        #If it's not null and has no result, provide one of true.
-        if (not res[].isNil) and (not res[].hasKey("result")):
-            res[]["result"] = % true
+    #Handle KeyErrors.
+    except KeyError as e:
+        doAssert(false, "Couldn't call a RPC method despite confirming its existence: " & e.msg)
 
     #If there was an invalid parameter, create the proper error response.
     except ParamError:
@@ -164,13 +162,17 @@ proc handle*(
             doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
         return
 
+    #If the result isn't null and has no result field, provide a result field of true.
+    if (not res[].isNil) and (not res[].hasKey("result")):
+        res[]["result"] = % true
+
 #Handle a request and return the result.
 proc handle*(
     rpc: RPC,
     req: JSONNode,
     reply: proc (
         res: JSONNode
-    ) {.raises: [].}
+    ): Future[void]
 ): Future[ref JSONNode] {.forceCheck: [], async.} =
     #Init the result.
     result = new(ref JSONNode)
@@ -233,9 +235,12 @@ proc handle*(
                     result,
                     proc (
                         res: JSONNode
-                    ) {.forceCheck: [].} =
+                    ) {.forceCheck: [], async.} =
                         results[].add(res)
-                        reply(results[])
+                        try:
+                            await reply(results[])
+                        except Exception as e:
+                            doAssert(false, "Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
                 )
             except Exception as e:
                 doAssert(false, "Couldn't handle the request (batch JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
@@ -257,11 +262,11 @@ proc handle*(
     reqStr: string,
     reply: proc (
         res: string
-    ) {.raises: [].}
+    ): Future[void]
 ): Future[string] {.forceCheck: [], async.} =
     var
         req: JSONNode
-        res: JSONNode
+        res: ref JSONNode
 
     #Parse the request.
     try:
@@ -271,21 +276,24 @@ proc handle*(
 
     #Handle it.
     try:
-        res = (await rpc.handle(
+        res = await rpc.handle(
             req,
             proc (
                 res: JSONNode
-            ) {.forceCheck: [].} =
-                reply($res)
-        ))[]
+            ) {.forceCheck: [], async.} =
+                try:
+                    await reply($res)
+                except Exception as e:
+                    doAssert(false, "Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
+        )
     except Exception as e:
         doAssert(false, "Couldn't handle the request (string), despite catching all naturally thrown Exceptions: " & e.msg)
 
     #Return the string.
-    if res.isNil:
+    if res[].isNil:
         result = ""
     else:
-        result = $res
+        result = $res[]
 
 #Start up the RPC's connection to the GUI.
 proc start*(
@@ -321,7 +329,7 @@ proc start*(
                 data.msg,
                 proc (
                     replyArg: JSONNode
-                ) {.forceCheck: [].} =
+                ) {.forceCheck: [], async.} =
                     try:
                         rpc.toGUI[].send(replyArg)
                     except DeadThreadError as e:
@@ -339,7 +347,74 @@ proc start*(
         except Exception as e:
             doAssert(false, "Sending over a channel threw an Exception: " & e.msg)
 
-discard """
+#Handle a connection.
+proc handle(
+    rpc: RPC,
+    client: AsyncSocket
+) {.forceCheck: [], async.} =
+    #Handle the client.
+    while not client.isClosed():
+        #Read in a message.
+        var
+            data: string = ""
+            counter: int = 0
+            oldLen: int = 1
+        while true:
+            try:
+                data &= await client.recv(1)
+            except Exception:
+                try:
+                    client.close()
+                except Exception:
+                    discard
+                return
+
+            if data.len != oldLen:
+                try:
+                    client.close()
+                except Exception:
+                    discard
+                return
+            inc(oldLen)
+
+            if data[^1] == data[0]:
+                inc(counter)
+            elif (data[^1] == ']') and (data[0] == '['):
+                dec(counter)
+            elif (data[^1] == '}') and (data[0] == '{'):
+                dec(counter)
+            if counter == 0:
+                break
+
+        #Handle the message.
+        var res: string
+        try:
+            res = await rpc.handle(
+                data,
+                proc (
+                    replyArg: string
+                ) {.forceCheck: [], async.} =
+                    try:
+                        await client.send(replyArg)
+                    except Exception:
+                        try:
+                            client.close()
+                        except Exception:
+                            discard
+                        return
+            )
+        except Exception as e:
+            doAssert(false, "RPC's handle threw an Exception despite not naturally throwing anything: " & e.msg)
+
+        try:
+            await client.send(res)
+        except Exception:
+            try:
+                client.close()
+            except Exception:
+                discard
+            return
+
 #Start up the RPC's server socket.
 proc listen*(
     rpc: RPC,
@@ -374,34 +449,25 @@ proc listen*(
         doAssert(false, "Failed to start listening on the RPC's server socket due to an Exception: " & e.msg)
 
     #Accept new connections infinitely.
-    var id: int = 0
-    while (rpc.listening) and (not rpc.server.isClosed()):
+    while not rpc.server.isClosed():
         #Add the Client to the seq.
         #Receive the new client.
-        var client: AsyncSocket
+        var connection: AsyncSocket
         try:
-            client = await rpc.server.accept()
+            connection = await rpc.server.accept()
         except Exception:
             #This could happen by a crtical error, a closed server socket, or a bad client. We don't have enough info.
             #In the first case, we should crash. In the second, break. #In the third, continue.
             #If the socket is closed, continuuing will break. Therefore, a continue covers two/three cases and tries to keep going.
             continue
 
-        rpc.clients.add(
-            newRPCSocketClient(
-                id,
-                client
-            )
-        )
-        #Handle it.
-        try:
-            asyncCheck rpc.handle(rpc.clients[^1])
-        except Exception as e:
-            doAssert(false, "Handle(RPCSocketClient) threw an Exception despite not naturally throwing anything: " & e.msg)
-        #Increment the ID counter.
-        inc(id)
-"""
+        #Add the new client to the list.
+        rpc.clients.add(connection)
 
+        try:
+            asyncCheck rpc.handle(connection)
+        except Exception as e:
+            doAssert(false, "Handle threw an Exception despite not naturally throwing anything: " & e.msg)
 #Shutdown.
 proc shutdown*(
     rpc: RPC

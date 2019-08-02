@@ -18,7 +18,7 @@ Wallet:
 
 UI:
 
-- Expose the RPC over TCP.
+- Clear dead RPC clients from the RPC clients seq.
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
 - Passworded RPC.

@@ -14,7 +14,7 @@ proc mainRPC() {.forceCheck: [].} =
             #Start the RPC.
             asyncCheck rpc.start()
             #Start listening.
-            #asyncCheck rpc.listen(config)
+            asyncCheck rpc.listen(config)
         except Exception as e:
             doAssert(false, "Couldn't start the RPC: " & e.msg)
 
