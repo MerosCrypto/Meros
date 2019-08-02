@@ -448,6 +448,26 @@ proc listen*(
     except Exception as e:
         doAssert(false, "Failed to start listening on the RPC's server socket due to an Exception: " & e.msg)
 
+    #Add a repeating timer to remove dead RPC clients.
+    try:
+        addTimer(
+            60000,
+            false,
+            proc (
+                fd: AsyncFD
+            ): bool {.forceCheck: [].} =
+                var i: int = 0
+                while i < rpc.clients.len:
+                    if rpc.clients[i].isClosed():
+                        rpc.clients.delete(i)
+                        continue
+                    inc(i)
+        )
+    except OSError as e:
+        doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
+
     #Accept new connections infinitely.
     while not rpc.server.isClosed():
         #Add the Client to the seq.
