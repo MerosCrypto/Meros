@@ -78,7 +78,7 @@ proc module*(
                 try:
                     res["result"] = % functions.consensus.getElement(key, nonce)
                 except IndexError:
-                    raise newJSONRPCError(-2, "Element not found.", %* {
+                    raise newJSONRPCError(-2, "Element not found", %* {
                         "height": functions.consensus.getHeight(key)
                     })
     except Exception as e:

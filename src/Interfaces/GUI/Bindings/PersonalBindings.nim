@@ -30,6 +30,7 @@ proc addTo*(
                     wallet = gui.call("personal", "getWallet")
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
+                    return
 
                 #Display the Wallet info.
                 var js: string
@@ -40,8 +41,10 @@ proc addTo*(
                     """
                 except ValueError as e:
                     gui.webview.error("Value Error", "Couldn't format the JS to display the wallet info: " & e.msg)
+                    return
                 if gui.webview.eval(js) != 0:
                     gui.webview.error("RPC Error", "Couldn't eval the JS to display the Wallet.")
+                    return
         )
 
         #Create a Wallet from a secret.
@@ -55,6 +58,7 @@ proc addTo*(
                     discard gui.call("personal", "setSeed", seed, "")
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
+                    return
         )
 
         #Create a Send.
@@ -68,6 +72,7 @@ proc addTo*(
                     discard gui.call("personal", "send", data.split("|")[0], data.split("|")[1])
                 except RPCError as e:
                     gui.webview.error("RPC Error", e.msg)
+                    return
         )
     except KeyError as e:
         doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)

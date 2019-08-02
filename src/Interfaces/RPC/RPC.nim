@@ -179,7 +179,7 @@ proc handle*(
     if req.kind == JObject:
         #Add an ID if it was omitted.
         if not req.hasKey("id"):
-            req["id"] = % nil
+            req["id"] = % newJNull()
 
         #Create the response.
         try:

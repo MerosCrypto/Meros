@@ -48,10 +48,8 @@ proc module*(
                 #Create the Wallet.
                 try:
                     functions.personal.setMnemonic(params[0].getStr(), params[1].getStr())
-                except ValueError as e:
-                    raise newJSONRPCError(-3, "Mnemnoic is either invalid or failed to generate a valid seed.", %* {
-                        "msg": e.msg
-                    })
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid Mnemonic")
 
             #Get the Node's Wallet's Mnemonic.
             "getMnemonic" = proc (
@@ -78,12 +76,12 @@ proc module*(
 
                 try:
                     res["result"] = % $functions.personal.send(params[0].getStr(), params[1].getStr())
-                except ValueError as e:
-                    raise newJSONRPCError(-3, e.msg)
-                except AddressError as e:
-                    raise newJSONRPCError(-5, e.msg)
-                except NotEnoughMeros as e:
-                    raise newJSONRPCError(1, e.msg)
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid amount")
+                except AddressError:
+                    raise newJSONRPCError(-5, "Invalid address")
+                except NotEnoughMeros:
+                    raise newJSONRPCError(1, "Not enough Meros")
 
             #Create and publish a Data.
             "data" = proc (
@@ -102,10 +100,10 @@ proc module*(
 
                 try:
                     res["result"] = % $functions.personal.data(params[0].getStr())
-                except ValueError as e:
-                    raise newJSONRPCError(-3, e.msg)
-                except DataExists as e:
-                    raise newJSONRPCError(0, e.msg)
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid data length")
+                except DataExists:
+                    raise newJSONRPCError(0, "Data exists")
 
             #Convert a Public Key to an address.
             "toAddress" = proc (
@@ -124,7 +122,7 @@ proc module*(
 
                 try:
                     res["result"] = % newAddress(params[0].getStr())
-                except EdPublicKeyError as e:
-                    raise newJSONRPCError(-3, e.msg)
+                except EdPublicKeyError:
+                    raise newJSONRPCError(-3, "Invalid Public Key")
     except Exception as e:
         doAssert(false, "Couldn't create the Consensus Module: " & e.msg)

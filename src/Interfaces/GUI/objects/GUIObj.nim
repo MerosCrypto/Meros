@@ -74,9 +74,10 @@ proc call*(
         doAssert(false, "Couldn't receive data from the RPC due to an ValueError: " & e.msg)
     except Exception as e:
         doAssert(false, "Couldn't receive data from the RPC due to an Exception: " & e.msg)
+
     #If it has an error, throw it.
     if result.hasKey("error"):
         try:
-            raise newException(RPCError, result["error"].getStr())
+            raise newException(RPCError, result["error"]["message"].getStr() & " (" & $result["error"]["code"] & ")" & ".")
         except KeyError as e:
             doAssert(false, "Couldn't get a JSON field despite confirming it exists: " & e.msg)

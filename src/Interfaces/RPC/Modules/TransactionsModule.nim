@@ -110,8 +110,8 @@ proc module*(
                 try:
                     res["result"] = % functions.transactions.getTransaction(params[0].getStr().toHash(384))
                 except IndexError:
-                    raise newJSONRPCError(-2, "Transaction not found.")
+                    raise newJSONRPCError(-2, "Transaction not found")
                 except ValueError:
-                    raise newJSONRPCError(-3, "Invalid hash.")
+                    raise newJSONRPCError(-3, "Invalid hash")
     except Exception as e:
         doAssert(false, "Couldn't create the Transactions Module: " & e.msg)

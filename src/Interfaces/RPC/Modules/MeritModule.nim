@@ -120,16 +120,16 @@ proc module*(
                     try:
                         res["result"] = % functions.merit.getBlockByNonce(params[0].getInt())
                     except IndexError:
-                        raise newJSONRPCError(-2, "Block not found.", %* {
+                        raise newJSONRPCError(-2, "Block not found", %* {
                             "height": functions.merit.getHeight()
                         })
                 elif params[0].kind == JString:
                     try:
                         res["result"] = % functions.merit.getBlockByHash(params[0].getStr().toHash(384))
                     except IndexError:
-                        raise newJSONRPCError(-2, "Block not found.")
+                        raise newJSONRPCError(-2, "Block not found")
                     except ValueError:
-                        raise newJSONRPCError(-3, "Invalid hash.")
+                        raise newJSONRPCError(-3, "Invalid hash")
                 else:
                     raise newException(ParamError, "")
 
@@ -199,8 +199,8 @@ proc module*(
                             newBLSPublicKey(params[p]["miner"].getStr()),
                             params[p]["amount"].getInt()
                         )
-                    except BLSError as e:
-                        raise newJSONRPCError(-4, e.msg)
+                    except BLSError:
+                        raise newJSONRPCError(-4, "Invalid miner")
                     except KeyError as e:
                         doAssert(false, "Couldn't get a Miner's miner/amount despite verifying their existence: " & e.msg)
                 miners = newMinersObj(minersSeq)
@@ -229,9 +229,9 @@ proc module*(
                         ).serialize()
                     }
                 except IndexError as e:
-                    raise newJSONRPCError(-1, e.msg)
-                except ArgonError as e:
-                    raise newJSONRPCError(-99, e.msg)
+                    doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
+                except ArgonError:
+                    raise newJSONRPCError(-99, "Argon failed")
 
             "publishBlock" = proc (
                 res: JSONNode,
@@ -250,23 +250,23 @@ proc module*(
                 var newBlock: Block
                 try:
                     newBlock = parseBlock(params[0].getStr())
-                except ValueError as e:
-                    raise newJSONRPCError(-3, e.msg)
-                except ArgonError as e:
-                    raise newJSONRPCError(-99, e.msg)
-                except BLSError as e:
-                    raise newJSONRPCError(-4, e.msg)
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid Block")
+                except ArgonError:
+                    raise newJSONRPCError(-99, "Argon failed")
+                except BLSError:
+                    raise newJSONRPCError(-4, "Invalid BLS data")
 
                 try:
                     await functions.merit.addBlock(newBlock)
-                except ValueError as e:
-                    raise newJSONRPCError(-3, e.msg)
-                except IndexError as e:
-                    raise newJSONRPCError(-2, e.msg)
-                except GapError as e:
-                    raise newJSONRPCError(-1, e.msg)
-                except DataExists as e:
-                    raise newJSONRPCError(0, e.msg)
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid Block")
+                except IndexError:
+                    raise newJSONRPCError(-2, "Invalid/missing Records")
+                except GapError:
+                    raise newJSONRPCError(-1, "Missing previous Block")
+                except DataExists:
+                    raise newJSONRPCError(0, "Block already exists")
                 except Exception as e:
                     doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
     except Exception as e:
