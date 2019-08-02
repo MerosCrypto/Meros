@@ -57,20 +57,14 @@ proc sign*(
 proc mine*(
     send: Send,
     networkDifficulty: Hash[384]
-) {.forceCheck: [
-    ArgonError
-].} =
+) {.forceCheck: [].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: uint32 = 0
-        hash: ArgonHash
-    try:
+        hash: ArgonHash = Argon(send.hash.toString(), proof.toBinary().pad(8), true)
+    while hash <= networkDifficulty:
+        inc(proof)
         hash = Argon(send.hash.toString(), proof.toBinary().pad(8), true)
-        while hash <= networkDifficulty:
-            inc(proof)
-            hash = Argon(send.hash.toString(), proof.toBinary().pad(8), true)
-    except ArgonError as e:
-        fcRaise e
 
     try:
         send.proof = proof

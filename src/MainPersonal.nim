@@ -115,10 +115,7 @@ proc mainPersonal() {.forceCheck: [].} =
             child.sign(send)
 
             #Mine the Send.
-            try:
-                send.mine(transactions.difficulties.send)
-            except ArgonError as e:
-                doAssert(false, "Couldn't mine a Send: " & e.msg)
+            send.mine(transactions.difficulties.send)
 
             #Add the Send.
             try:
@@ -166,10 +163,7 @@ proc mainPersonal() {.forceCheck: [].} =
         child.sign(data)
 
         #Mine the Data.
-        try:
-            data.mine(transactions.difficulties.data)
-        except ArgonError as e:
-            doAssert(false, "Couldn't mine a Data: " & e.msg)
+        data.mine(transactions.difficulties.data)
 
         #Add the Data.
         try:

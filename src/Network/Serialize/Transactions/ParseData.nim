@@ -20,8 +20,7 @@ import ../SerializeCommon
 proc parseData*(
     dataStr: string
 ): Data {.forceCheck: [
-    ValueError,
-    ArgonError
+    ValueError
 ].} =
     #Verify the input length.
     if dataStr.len < HASH_LEN + BYTE_LEN:
@@ -58,9 +57,6 @@ proc parseData*(
             fcRaise e
 
         result.proof = uint32(dataSeq[4].fromBinary())
-        try:
-            result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
-        except ArgonError as e:
-            fcRaise e
+        result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)

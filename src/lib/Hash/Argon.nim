@@ -15,9 +15,7 @@ proc Argon*(
     data: string,
     salt: string,
     reduced: bool = false
-): ArgonHash {.forceCheck: [
-    ArgonError
-].} =
+): ArgonHash {.forceCheck: [].} =
     #The iteration quantity and memory usage values are for testing only.
     #They are not final and will be changed.
     var
@@ -37,7 +35,7 @@ proc Argon*(
             1
         ).data
     except Exception:
-        raise newException(ArgonError, "Argon2d raised an error.")
+        doAssert(false, "Argon2d raised an error.")
 
 #String to ArgonHash.
 func toArgonHash*(

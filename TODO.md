@@ -163,7 +163,7 @@ Network:
 
 ### Improvements:
 
-- Remove Natural/ArgonError/EdPublicKeyError.
+- Remove Natural/EdPublicKeyError.
 
 - Swap Chia for Milagro.
 

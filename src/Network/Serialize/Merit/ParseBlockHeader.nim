@@ -22,7 +22,6 @@ proc parseBlockHeader*(
     headerStr: string
 ): BlockHeader {.forceCheck: [
     ValueError,
-    ArgonError,
     BLSError
 ].} =
     if headerStr.len != BLOCK_HEADER_LEN:
@@ -50,8 +49,6 @@ proc parseBlockHeader*(
         )
         result.hash = Argon(headerStr.substr(0, headerStr.len - 5), headerSeq[5].pad(8))
     except ValueError as e:
-        fcRaise e
-    except ArgonError as e:
         fcRaise e
     except BLSError as e:
         fcRaise e

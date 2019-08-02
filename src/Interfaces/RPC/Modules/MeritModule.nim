@@ -230,8 +230,6 @@ proc module*(
                     }
                 except IndexError as e:
                     doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
-                except ArgonError:
-                    raise newJSONRPCError(-99, "Argon failed")
 
             "publishBlock" = proc (
                 res: JSONNode,
@@ -252,8 +250,6 @@ proc module*(
                     newBlock = parseBlock(parseHexStr(params[0].getStr()))
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
-                except ArgonError:
-                    raise newJSONRPCError(-99, "Argon failed")
                 except BLSError:
                     raise newJSONRPCError(-4, "Invalid BLS data")
 

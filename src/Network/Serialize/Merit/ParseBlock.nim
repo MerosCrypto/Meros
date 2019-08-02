@@ -25,7 +25,6 @@ proc parseBlock*(
     blockStr: string
 ): Block {.forceCheck: [
     ValueError,
-    ArgonError,
     BLSError
 ].} =
     #Header | Body
@@ -36,8 +35,6 @@ proc parseBlock*(
         header = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
         body = blockStr.substr(BLOCK_HEADER_LEN).parseBlockBody()
     except ValueError as e:
-        fcRaise e
-    except ArgonError as e:
         fcRaise e
     except BLSError as e:
         fcRaise e

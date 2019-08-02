@@ -35,16 +35,11 @@ import tables
 #Increase the proof.
 func inc*(
     blockArg: var Block
-) {.forceCheck: [
-    ArgonError
-].} =
+) {.forceCheck: [].} =
     #Increase the proof.
     inc(blockArg.header.proof)
     #Recalculate the hash.
-    try:
-        blockArg.header.hash = Argon(blockArg.header.serializeHash(), blockArg.header.proof.toBinary().pad(8))
-    except ArgonError as e:
-        fcRaise e
+    blockArg.header.hash = Argon(blockArg.header.serializeHash(), blockArg.header.proof.toBinary().pad(8))
 
 #Verify the aggregate signature for a table of Key -> seq[Hash].
 proc verify*(

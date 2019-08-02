@@ -21,7 +21,6 @@ proc parseSend*(
     sendStr: string
 ): Send {.forceCheck: [
     ValueError,
-    ArgonError,
     EdPublicKeyError
 ].} =
     #Verify the input length.
@@ -77,9 +76,6 @@ proc parseSend*(
             fcRaise e
 
         result.proof = uint32(sendSeq[5].fromBinary())
-        try:
-            result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
-        except ArgonError as e:
-            fcRaise e
+        result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)

@@ -91,8 +91,6 @@ proc newBlockchainObj*(
             )
         except ValueError as e:
             doAssert(false, "Couldn't create the Genesis Block due to a ValueError: " & e.msg)
-        except ArgonError as e:
-            doAssert(false, "Couldn't create the Genesis Block due to an ArgonError: " & e.msg)
         #Grab the tip.
         tip = genesisBlock.hash
 

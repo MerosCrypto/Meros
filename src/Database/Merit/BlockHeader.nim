@@ -25,9 +25,7 @@ func newBlockHeader*(
     miners: Blake384Hash,
     time: uint32,
     proof: uint32
-): BlockHeader {.forceCheck: [
-    ArgonError
-].} =
+): BlockHeader {.forceCheck: [].} =
     result = newBlockHeaderObj(
         nonce,
         last,
@@ -36,7 +34,4 @@ func newBlockHeader*(
         time,
         proof
     )
-    try:
-        result.hash = Argon(result.serializeHash(), result.proof.toBinary().pad(8))
-    except ArgonError as e:
-        fcRaise e
+    result.hash = Argon(result.serializeHash(), result.proof.toBinary().pad(8))

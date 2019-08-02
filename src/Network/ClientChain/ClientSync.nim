@@ -111,8 +111,6 @@ proc syncTransaction*(
                 raise newException(InvalidMessageError, "Client didn't respond properly to our TransactionRequest.")
     except ValueError as e:
         raise newException(InvalidMessageError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
-    except ArgonError as e:
-        raise newException(InvalidMessageError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ArgonError: " & e.msg)
     except BLSError as e:
         raise newException(InvalidMessageError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a BLSError: " & e.msg)
     except EdPublicKeyError as e:
@@ -317,8 +315,6 @@ proc syncBlock*(
                 header = msg.message.parseBlockHeader()
             except ValueError as e:
                 raise newException(InvalidMessageError, "Client didn't respond with a valid BlockHeader to our `BlockHeaderRequest`, as pointed out by a ValueError: " & e.msg)
-            except ArgonError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid BlockHeader to our `BlockHeaderRequest`, as pointed out by a ArgonError: " & e.msg)
             except BLSError as e:
                 raise newException(InvalidMessageError, "Client didn't respond with a valid BlockHeader to our `BlockHeaderRequest`, as pointed out by a BLSError: " & e.msg)
 

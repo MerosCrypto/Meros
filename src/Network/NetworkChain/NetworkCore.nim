@@ -365,8 +365,6 @@ proc newNetwork*(
                     send = msg.message.parseSend()
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Send contained an invalid Signature: " & e.msg)
-                except ArgonError as e:
-                    raise newException(InvalidMessageError, "Parsing the Send caused an ArgonError: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Send contained an invalid ED25519 Public Key: " & e.msg)
 
@@ -383,8 +381,6 @@ proc newNetwork*(
                     data = msg.message.parseData()
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Parsing the Data failed due to a ValueError: " & e.msg)
-                except ArgonError as e:
-                    raise newException(InvalidMessageError, "Parsing the Data failed due to an ArgonError: " & e.msg)
 
                 try:
                     mainFunctions.transactions.addData(data)
@@ -428,8 +424,6 @@ proc newNetwork*(
                     header = msg.message.parseBlockHeader()
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Block didn't contain a valid hash: " & e.msg)
-                except ArgonError as e:
-                    raise newException(InvalidMessageError, "Parsing the Block caused an ArgonError: " & e.msg)
                 except BLSError as e:
                     raise newException(InvalidMessageError, "Block contained an invalid BLS Public Key: " & e.msg)
 

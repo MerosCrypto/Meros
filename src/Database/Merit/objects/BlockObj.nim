@@ -72,22 +72,16 @@ func newBlockObj*(
     miners: Miners,
     time: uint32 = getTime(),
     proof: uint32 = 0
-): Block {.forceCheck: [
-    ArgonError
-].} =
+): Block {.forceCheck: [].} =
     #Create the Block Header.
-    var header: BlockHeader
-    try:
-        header = newBlockHeader(
-            nonce,
-            last,
-            aggregate,
-            miners.merkle.hash,
-            time,
-            proof
-        )
-    except ArgonError as e:
-        fcRaise e
+    var header: BlockHeader = newBlockHeader(
+        nonce,
+        last,
+        aggregate,
+        miners.merkle.hash,
+        time,
+        proof
+    )
 
     #Create the Block.
     result = Block(

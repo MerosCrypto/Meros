@@ -15,7 +15,6 @@ proc parseTransaction*(
     tx: string
 ): Transaction {.forceCheck: [
     ValueError,
-    ArgonError,
     EdPublicKeyError,
     BLSError
 ].} =
@@ -41,8 +40,6 @@ proc parseTransaction*(
                 result = tx.substr(1).parseSend()
             except ValueError as e:
                 fcRaise e
-            except ArgonError as e:
-                fcRaise e
             except EdPublicKeyError as e:
                 fcRaise e
 
@@ -50,8 +47,6 @@ proc parseTransaction*(
             try:
                 result = tx.substr(1).parseData()
             except ValueError as e:
-                fcRaise e
-            except ArgonError as e:
                 fcRaise e
 
         else:
