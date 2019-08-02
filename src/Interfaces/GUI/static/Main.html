@@ -6,18 +6,18 @@
         <button onclick="GUI.quit()">Quit</button>
         <hr>
 
-        If you don't have a seed, leave the field blank to create one.
+        If you don't have a Mnemonic, leave the field blank to create one.
         <br>
-        Secret: <input type="text" id="seedInput"></input> <button onclick="
-            Personal.setSeed(document.getElementById('seedInput').value);
-            Personal.getWallet();
-        ">Set Seed</button>
+        Mnemonic: <input type="text" id="mnemonicInput"></input> <button onclick="
+            Personal.setMnemonic(document.getElementById('mnemonicInput').value);
+            Personal.getMnemonic();
+        ">Set Mnemonic</button>
 
         <br>
         <hr>
         <br>
 
-        <div id="seed"></div>
+        <div id="mnemonic"></div>
         <div id="address"></div>
     </body>
 </html>
