@@ -6,7 +6,6 @@ import objectsTests
 import libTests
 import WalletTests
 import DatabaseTests
-import InterfacesTests
 import NetworkTests
 
 #Locks standard lib.
@@ -25,7 +24,6 @@ objectsTests.addTests(tests)
 libTests.addTests(tests)
 WalletTests.addTests(tests)
 DatabaseTests.addTests(tests)
-InterfacesTests.addTests(tests)
 NetworkTests.addTests(tests)
 
 proc grabTest(): int =
