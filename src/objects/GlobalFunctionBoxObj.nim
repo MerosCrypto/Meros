@@ -140,6 +140,14 @@ type
             IndexError
         ].}
 
+        getTotalMerit*: proc (): int {.inline, raises: [].}
+
+        getLiveMerit*: proc (): int {.inline, raises: [].}
+
+        getMerit*: proc (
+            key: BLSPublicKey
+        ): int {.inline, raises: [].}
+
         addBlock*: proc (
             newBlock: Block,
             syncing: bool = false
@@ -152,8 +160,8 @@ type
     PersonalFunctionBox* = ref object
         getWallet*: proc (): Wallet {.inline, raises: [].}
 
-        setSeed*: proc (
-            seed: string,
+        setMnemonic*: proc (
+            mnemonic: string,
             paassword: string
         ) {.raises: [
             ValueError
@@ -165,8 +173,7 @@ type
         ): Hash[384] {.raises: [
             ValueError,
             AddressError,
-            NotEnoughMeros,
-            DataExists
+            NotEnoughMeros
         ].}
 
         data*: proc (

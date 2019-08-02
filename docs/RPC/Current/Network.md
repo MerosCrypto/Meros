@@ -2,9 +2,8 @@
 
 ### `connect`
 
-`connect` will attempt to connect to another Meros node. It takes in two arguments, with one optional:
+`connect` attempts to connect to another Meros node. It takes in two arguments:
 - IP/Domain (string)
-- Port      (int; optional)
+- Port      (int): Optional; defaults to 5132 if omitted.
 
-It returns:
-- `success` (bool)
+The result is a bool of true.

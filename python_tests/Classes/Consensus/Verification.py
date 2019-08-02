@@ -38,7 +38,7 @@ class Verification(Element):
         self
     ) -> Dict[str, Any]:
         return {
-            "descendant": "verification",
+            "descendant": "Verification",
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
 

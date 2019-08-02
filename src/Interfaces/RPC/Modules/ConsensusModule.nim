@@ -13,113 +13,73 @@ import ../../../Database/common/objects/MeritHolderRecordObj
 #Consensus lib.
 import ../../../Database/Consensus/Consensus
 
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #RPC object.
 import ../objects/RPCObj
 
-#Async standard lib.
-import asyncdispatch
-
-#JSON standard lib.
-import json
-
-#Get a Verification.
-proc getElement(
-    rpc: RPC,
-    key: BLSPublicKey,
-    nonce: int
-): JSONnode {.forceCheck: [].} =
-    var elem:  Element
-    try:
-        elem = rpc.functions.consensus.getElement(key, nonce)
-    except IndexError as e:
-        returnError()
-
+#Element -> JSON.
+proc `%`(
+    elem: Element
+): JSONNode {.forceCheck: [].} =
     result = %* {
         "holder": $elem.holder,
         "nonce": elem.nonce
     }
+
     case elem:
         of Verification as verif:
-            result["descendant"] = %"verification"
-            result["hash"] = %($verif.hash)
-        else:
-            doAssert(false, "Element should be a Verification.")
+            result["descendant"] = % "Verification"
+            result["hash"] = % $verif.hash
+        of MeritRemoval as mr:
+            result["descendant"] = % "MeritRemoval"
+            result["elements"] = %* [
+                %mr.element1,
+                %mr.element2
+            ]
 
-#Get unarchived Merit Holder Records.
-proc getUnarchivedRecords(
-    rpc: RPC
-): JSONNode {.forceCheck: [].} =
-    #Get the records.
-    var records: tuple[
-        records: seq[MeritHolderRecord],
-        aggregate: BLSSignature
-    ] = rpc.functions.consensus.getUnarchivedRecords()
-
-    #Create the JSON.
-    result = %* {
-        "records": [],
-        "aggregate": $records.aggregate
-    }
-
-    #Add each record.
-    for i in 0 ..< records.records.len:
-        try:
-            result["records"].add(%* {
-                "holder":    $records.records[i].key,
-                "nonce":     records.records[i].nonce,
-                "merkle":    $records.records[i].merkle
-            })
-        except KeyError as e:
-            doAssert(false, "Couldn't access the records value of a JSON object we just created with said field: " & e.msg)
-
-#Handler.
-proc consensus*(
-    rpc: RPC,
-    json: JSONNode,
-    reply: proc (
-        json: JSONNode
-    ) {.raises: [].}
-) {.forceCheck: [], async.} =
-    #Declare a var for the response.
-    var res: JSONNode
-
-    #Switch based off the method.
-    var methodStr: string
+#Create the Consensus module.
+proc module*(
+    functions: GlobalFunctionBox
+): RPCFunctions {.forceCheck: [].} =
     try:
-        methodStr = json["method"].getStr()
-    except KeyError:
-        reply(%* {
-            "error": "No method specified."
-        })
-        return
+        newRPCFunctions:
+            #Get Element by key/nonce.
+            "getElement" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Verify the parameters.
+                if (
+                    (params.len != 2) or
+                    (params[0].kind != JString) or
+                    (params[1].kind != JInt)
+                ):
+                    raise newException(ParamError, "")
 
-    try:
-        case methodStr:
-            of "getElement":
-                if json["args"].len < 2:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    res = rpc.getElement(
-                        newBLSPublicKey(json["args"][0].getStr()),
-                        json["args"][1].getInt()
-                    )
+                #Extract the parameters.
+                var
+                    key: BLSPublicKey
+                    nonce: int = params[1].getInt()
 
-            of "getUnarchivedRecords":
-                res = rpc.getUnarchivedRecords()
+                try:
+                    key = newBLSPublicKey(params[0].getStr())
+                except BLSError:
+                    raise newException(ParamError, "")
 
-            else:
-                res = %* {
-                    "error": "Invalid method."
-                }
-    except KeyError:
-        res = %* {
-            "error": "Missing `args`."
-        }
-    except BLSError:
-        res = %* {
-            "error": "Invalid BLS Public Key."
-        }
+                if nonce < 0:
+                    raise newException(ParamError, "")
 
-    reply(res)
+                #Get the Element.
+                try:
+                    res["result"] = % functions.consensus.getElement(key, nonce)
+                except IndexError:
+                    raise newJSONRPCError(-2, "Element not found", %* {
+                        "height": functions.consensus.getHeight(key)
+                    })
+    except Exception as e:
+        doAssert(false, "Couldn't create the Consensus Module: " & e.msg)

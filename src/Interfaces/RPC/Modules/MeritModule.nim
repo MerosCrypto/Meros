@@ -10,14 +10,19 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Consensus lib.
-import ../../../Database/Consensus/Consensus
+#MeritHolderRecord object.
+import ../../../Database/common/objects/MeritHolderRecordObj
 
 #Merit lib.
 import ../../../Database/Merit/Merit
 
-#Parse Block lib.
+#Block Serialization libs.
+import ../../../Network/Serialize/Merit/SerializeBlockHeader
+import ../../../Network/Serialize/Merit/SerializeBlockBody
 import ../../../Network/Serialize/Merit/ParseBlock
+
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
 
 #RPC object.
 import ../objects/RPCObj
@@ -25,63 +30,33 @@ import ../objects/RPCObj
 #StInt lib.
 import StInt
 
-#Async standard lib.
-import asyncdispatch
+#String utils standard lib.
+import strutils
 
-#JSON standard lib.
-import json
-
-proc getHeight(
-    rpc: RPC
+#Block -> JSON.
+proc `%`(
+    blockArg: Block
 ): JSONNode {.forceCheck: [].} =
-    result = %* {
-        "height": rpc.functions.merit.getHeight()
-    }
-
-proc getDifficulty(
-    rpc: RPC
-): JSONnode {.forceCheck: [].} =
-    var
-        bytes: array[64, byte] = rpc.functions.merit.getDifficulty().difficulty.toByteArrayBE()
-        difficulty: string = newString(48)
-    for i in 16 ..< 64:
-        difficulty[i - 16] = char(bytes[i])
-
-    result = %* {
-        "difficulty": difficulty.toHex()
-    }
-
-proc getBlock(
-    rpc: RPC,
-    nonce: int
-): JSONNode {.forceCheck: [].} =
-    #Get the Block.
-    var gotBlock: Block
-    try:
-        gotBlock = rpc.functions.merit.getBlockByNonce(nonce)
-    except IndexError as e:
-        returnError()
-
-    #Create the Block.
+    #Convert the header.
     result = %* {
         "header": {
-            "hash":      $gotBlock.header.hash,
+            "hash":      $blockArg.header.hash,
 
-            "nonce":     gotBlock.header.nonce,
-            "last":      $gotBlock.header.last,
+            "nonce":     blockArg.header.nonce,
+            "last":      $blockArg.header.last,
 
-            "aggregate": $gotBlock.header.aggregate,
-            "miners":    $gotBlock.header.miners,
+            "aggregate": $blockArg.header.aggregate,
+            "miners":    $blockArg.header.miners,
 
-            "time":      gotBlock.header.time,
-            "proof":     gotBlock.header.proof
+            "time":      blockArg.header.time,
+            "proof":     blockArg.header.proof
         }
     }
 
     #Add the Records.
     try:
         result["records"] = %* []
-        for index in gotBlock.records:
+        for index in blockArg.records:
             result["records"].add(%* {
                 "holder": $index.key,
                 "nonce":  index.nonce,
@@ -93,7 +68,7 @@ proc getBlock(
     #Add the Miners.
     try:
         result["miners"] = %* []
-        for miner in gotBlock.miners.miners:
+        for miner in blockArg.miners.miners:
             result["miners"].add(%* {
                 "miner":  $miner.miner,
                 "amount": miner.amount
@@ -101,122 +76,198 @@ proc getBlock(
     except KeyError as e:
         doAssert(false, "Couldn't add a Miner to a Block's JSON representation despite declaring an array for the Miners: " & e.msg)
 
-#Publish a Block.
-#This proc doesn't use returnError as the async macro occurs before the returnError macro.
-#The async macro is also the reason for `res`.
-proc publishBlock(
-    rpc: RPC,
-    data: string
-): Future[JSONNode] {.forceCheck: [], async.} =
-    var newBlock: Block
-
+#Create the Merit module.
+proc module*(
+    functions: GlobalFunctionBox
+): RPCFunctions {.forceCheck: [].} =
     try:
-        newBlock = data.parseBlock()
-    except ValueError as e:
-        return %* {
-            "error": e.msg
-        }
-    except ArgonError as e:
-        return %* {
-            "error": e.msg
-        }
-    except BLSError as e:
-        return %* {
-            "error": e.msg
-        }
+        newRPCFunctions:
+            #Get Height.
+            "getHeight" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                res["result"] = % functions.merit.getHeight()
 
-    try:
-        await rpc.functions.merit.addBlock(newBlock)
-    except ValueError as e:
-        echo "Failed to add the Block due to a ValueError: " & e.msg
-        return %* {
-            "error": e.msg
-        }
-    except IndexError as e:
-        echo "Failed to add the Block due to a IndexError: " & e.msg
-        return %* {
-            "error": e.msg
-        }
-    except GapError as e:
-        echo "Failed to add the Block due to a GapError: " & e.msg
-        return %* {
-            "error": e.msg
-        }
-    except DataExists as e:
-        echo "Failed to add the Block due to DataExists: " & e.msg
-        return %* {
-            "error": e.msg
-        }
-    except Exception as e:
-        doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
+            #Get Difficulty.
+            "getDifficulty" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                try:
+                    var
+                        diffA: array[64, uint8] = functions.merit.getDifficulty().difficulty.toByteArrayBE()
+                        diffStr: string = newString(48)
+                    copyMem(addr diffStr[0], addr diffA[16], 48)
+                    res["result"] = % diffStr.toHex()
+                except DivByZeroError as e:
+                    doAssert(false, "Serializing the difficulty threw an error: " & e.msg)
 
-#Handler.
-proc merit*(
-    rpc: RPC,
-    json: JSONNode,
-    reply: proc (
-        json: JSONNode
-    ) {.raises: [].}
-) {.forceCheck: [], async.} =
-    #Declare a var for the response.
-    var res: JSONNode
+            #Get Block by nonce or hash.
+            "getBlock" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Verify the parameters length.
+                if params.len != 1:
+                    raise newException(ParamError, "")
 
-    #Switch based off the method.
-    var methodStr: string
-    try:
-        methodStr = json["method"].getStr()
-    except KeyError:
-        reply(%* {
-            "error": "No method specified."
-        })
-        return
-
-    try:
-        case methodStr:
-            of "getHeight":
-                res = rpc.getHeight()
-
-            of "getDifficulty":
-                res = rpc.getDifficulty()
-
-            of "getBlock":
-                if json["args"].len < 1:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    res = rpc.getBlock(
-                        json["args"][0].getInt()
-                    )
-
-            of "publishBlock":
-                if json["args"].len < 1:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
+                #Get the Block.
+                if params[0].kind == JInt:
                     try:
-                        res = await rpc.publishBlock(
-                            json["args"][0].getStr().parseHexStr()
-                        )
+                        res["result"] = % functions.merit.getBlockByNonce(params[0].getInt())
+                    except IndexError:
+                        raise newJSONRPCError(-2, "Block not found", %* {
+                            "height": functions.merit.getHeight()
+                        })
+                elif params[0].kind == JString:
+                    try:
+                        res["result"] = % functions.merit.getBlockByHash(params[0].getStr().toHash(384))
+                    except IndexError:
+                        raise newJSONRPCError(-2, "Block not found")
                     except ValueError:
-                        res = %* {
-                            "error": "Invalid hex string paased."
-                        }
-                    except Exception as e:
-                        doAssert(false, "publishBlock threw an Exception despite not naturally throwing anything: " & e.msg)
+                        raise newJSONRPCError(-3, "Invalid hash")
+                else:
+                    raise newException(ParamError, "")
 
-            else:
-                res = %* {
-                    "error": "Invalid method."
-                }
-    except KeyError:
-        res = %* {
-            "error": "Missing `args`."
-        }
-    except ValueError:
-        res = %* {
-            "error": "Invalid hex string passed."
-        }
+            #Get Total Merit.
+            "getTotalMerit" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                res["result"] = % functions.merit.getTotalMerit()
 
-    reply(res)
+            #Get Live Merit.
+            "getLiveMerit" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                res["result"] = % functions.merit.getLiveMerit()
+
+            #Get a MeritHolder's Merit.
+            "getMerit" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError
+            ].} =
+                #Verify the parameters length.
+                if (
+                    (params.len != 1) or
+                    (params[0].kind != JString)
+                ):
+                    raise newException(ParamError, "")
+
+                #Extract the parameters.
+                var key: BLSPublicKey
+                try:
+                    key = newBLSPublicKey(params[0].getStr())
+                except BLSError:
+                    raise newException(ParamError, "")
+
+                res["result"] = % functions.merit.getMerit(key)
+
+            "getBlockTemplate" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Verify and extract the parameters.
+                if params.len == 0:
+                    raise newException(ParamError, "")
+
+                var
+                    minersSeq: seq[Miner] = newSeq[Miner](params.len)
+                    miners: Miners
+                for p in 0 ..< params.len:
+                    try:
+                        if (
+                            (params[p].kind != JObject) or
+                            (not params[p].hasKey("miner")) or
+                            (params[p]["miner"].kind != JString) or
+                            (not params[p].hasKey("amount")) or
+                            (params[p]["amount"].kind != JInt)
+                        ):
+                            raise newException(ParamError, "")
+
+                        minersSeq[p] = newMinerObj(
+                            newBLSPublicKey(params[p]["miner"].getStr()),
+                            params[p]["amount"].getInt()
+                        )
+                    except BLSError:
+                        raise newJSONRPCError(-4, "Invalid miner")
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a Miner's miner/amount despite verifying their existence: " & e.msg)
+                miners = newMinersObj(minersSeq)
+
+                #Get the records.
+                var records: tuple[
+                    records: seq[MeritHolderRecord],
+                    aggregate: BLSSignature
+                ] = functions.consensus.getUnarchivedRecords()
+
+                #Create the Header.
+                try:
+                    res["result"] = %* {
+                        "header": newBlockHeader(
+                            functions.merit.getHeight(),
+                            functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
+                            records.aggregate,
+                            miners.merkle.hash,
+                            getTime(),
+                            0
+                        ).serializeHash().toHex(),
+
+                        "body": newBlockBodyObj(
+                            records.records,
+                            miners
+                        ).serialize().toHex()
+                    }
+                except IndexError as e:
+                    doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
+                except ArgonError:
+                    raise newJSONRPCError(-99, "Argon failed")
+
+            "publishBlock" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ): Future[void] {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ], async.} =
+                #Verify the parameters.
+                if (
+                    (params.len != 1) or
+                    (params[0].kind != JString)
+                ):
+                    raise newException(ParamError, "")
+
+                var newBlock: Block
+                try:
+                    newBlock = parseBlock(parseHexStr(params[0].getStr()))
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid Block")
+                except ArgonError:
+                    raise newJSONRPCError(-99, "Argon failed")
+                except BLSError:
+                    raise newJSONRPCError(-4, "Invalid BLS data")
+
+                try:
+                    await functions.merit.addBlock(newBlock)
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid Block")
+                except IndexError:
+                    raise newJSONRPCError(-2, "Invalid/missing Records")
+                except GapError:
+                    raise newJSONRPCError(-1, "Missing previous Block")
+                except DataExists:
+                    raise newJSONRPCError(0, "Block already exists")
+                except Exception as e:
+                    doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't create the Merit Module: " & e.msg)

@@ -1,11 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Global Function Box object.
-import ../../../objects/GlobalFunctionBoxObj
-#Export it so all modules can access it.
-export GlobalFunctionBox
-
 #Finals lib.
 import finals
 
@@ -14,71 +9,111 @@ import macros
 
 #Async standard lib.
 import asyncdispatch
+export asyncdispatch
 
 #Networking standard lib.
 import asyncnet
 
+#Tables standard lib.
+import tables
+export tables
+
 #JSON standard lib.
 import json
+export json
 
 #RPC object.
 finalsd:
     type
-        RPCSocketClient* = ref object
-            id* {.final.}: int
-            socket* {.final.}: AsyncSocket
+        RPCFunction = proc (
+            res: JSONNode,
+            params: JSONNode
+        ): Future[void]
+
+        RPCFunctions* = Table[string, RPCFunction]
 
         RPC* = ref object
-            functions* {.final.}: GlobalFunctionBox
+            alive*: bool
+
+            functions*: RPCFunctions
+            quit*: proc () {.raises: [].}
+
             toRPC* {.final.}: ptr Channel[JSONNode]
             toGUI* {.final.}: ptr Channel[JSONNode]
+
             server* {.final.}: AsyncSocket
-            clients*: seq[RPCSocketClient]
-            listening*: bool
+            clients*: seq[AsyncSocket]
 
-#Constructors.
-proc newRPCSocketClient*(
-    id: int,
-    socket: AsyncSocket
-): RPCSocketClient {.forceCheck: [].} =
-    result = RPCSocketClient(
-        id: id,
-        socket: socket
+#RPCFunctions constructor.
+macro newRPCFunctions*(
+    routes: untyped
+): untyped =
+    #Create a toTable call.
+    result = newNimNode(nnkAsgn).add(
+        ident("result"),
+        newCall(
+            ident("toTable")
+        ).add(
+            newNimNode(nnkTableConstr)
+        )
     )
-    result.ffinalizeID()
-    result.ffinalizeSocket()
 
+    #Add each route.
+    for route in routes:
+        #Make sure they're closures.
+        route[1].addPragma(ident("closure"))
+
+        #Make sure they're async.
+        var async: bool = false
+        for pragma in route[1][4]:
+            if (pragma.kind == nnkIdent) and (pragma.strVal == "async"):
+                async = true
+        if not async:
+            route[1].addPragma(ident("async"))
+            route[1][3][0] = newNimNode(nnkBracketExpr).add(
+                ident("Future"),
+                ident("void")
+            )
+
+        result[1][1].add(
+            newNimNode(nnkExprColonExpr).add(
+                route[0],
+                route[1]
+            )
+        )
+
+#Combine multiple RPCFunctions together.
+proc merge*(
+    rpcs: varargs[
+        tuple[prefix: string, rpc: RPCFunctions]
+    ]
+): RPCFunctions {.raises: [].} =
+    result = initTable[string, RPCFunction]()
+
+    for rpc in rpcs:
+        for key in rpc.rpc.keys():
+            try:
+                result[rpc.prefix & key] = rpc.rpc[key]
+            except KeyError as e:
+                doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+            except Exception as e:
+                doAssert(false, "Couldn't set a value in a table: " & e.msg)
+
+#RPC Object Constructor.
 proc newRPCObj*(
-    functions: GlobalFunctionBox,
+    functions: RPCFunctions,
+    quit: proc () {.raises: [].},
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
 ): RPC {.forceCheck: [].} =
     result = RPC(
+        alive: true,
+
         functions: functions,
+        quit: quit,
+
         toRPC: toRPC,
-        toGUI: toGUI,
-        clients: @[],
-        listening: true
+        toGUI: toGUI
     )
-    result.ffinalizeFunctions()
     result.ffinalizeToRPC()
     result.ffinalizeToGUI()
-
-#Macro to shorten returning errors when one occurs.
-macro returnError*(): untyped =
-    newStmtList(
-        newNimNode(nnkReturnStmt).add(
-            newNimNode(nnkPrefix).add(
-                newIdentNode("%*"),
-                newNimNode(nnkTableConstr).add(
-                    newNimNode(nnkExprColonExpr).add(
-                        newStrLitNode("error"),
-                        newNimNode(nnkDotExpr).add(
-                            newIdentNode("e"),
-                            newIdentNode("msg")
-                        )
-                    )
-                )
-            )
-        )
-    )

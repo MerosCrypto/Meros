@@ -2,7 +2,7 @@
 
 ### `setMnemonic`
 
-`setMnemonic` creates a new Wallet using the passed in Mnemonic and password, and set the Node's Wallet to it. It takes in two arguments.
+`setMnemonic` creates a new Wallet using the passed in Mnemonic and password, and set the Node's Wallet to it. It takes in two arguments:
 - Mnemonic (string): Optional; creates a new Mnemonic if omitted.
 - Password (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
 
@@ -14,9 +14,19 @@ The result is a bool of true.
 
 ### `getParentPublicKey`
 
-`getParentPublicKey` replies with the Parent Public Key for the Node's HD Wallet, after applying BIP 44 derivation. It takes in zero arguments and the result is a string of the Parent Public Key.
+`getParentPublicKey` replies with the Parent Public Key for the Node's HD Wallet, after applying BIP 44 purpose/coin type/account derivation. It takes in one argument:
+- Account (int): Optional; defaults to 0.
 
-The result is a bool of true.
+The result is a string of the Parent Public Key.
+
+### `getAddress`
+
+`getAddress` replies with an address. It takes in three arguments:
+- Account (int):  Optional; defaults to 0; used in hardened derivation.
+- Change  (bool): Optional; defaults to false.
+- Index   (int):  Optional; defaults to the next underived index. If an index above the hardened threshold is specified, hardened derivation is used. If the next unused index is used, and it's above the hardened threshold, this will error.
+
+The result is a string of the Wallet's address.
 
 ### `getWatchedAddresses`
 

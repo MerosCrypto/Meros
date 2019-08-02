@@ -27,46 +27,47 @@ class RPC:
         module: str,
         method: str,
         args: List[Any] = []
-    ) -> Dict[str, Any]:
+    ) -> Any:
         #Send the call.
         self.socket.send(
             bytes(
                 json.dumps(
                     {
-                        "module": module,
-                        "method": method,
-                        "args": args
+                        "jsonrpc": "2.0",
+                        "method": module + "_" + method,
+                        "params": args
                     }
-                ) + "\r\n",
+                ),
                 "utf-8"
             )
         )
 
         #Get the result.
-        response: bytes = self.socket.recv(2)
-        while response[-2:] != bytes("\r\n","utf-8"):
+        response: bytes = bytes()
+        counter: int = 0
+        while True:
             response += self.socket.recv(1)
+
+            if response[-1] == response[0]:
+                counter += 1
+            elif (chr(response[-1]) == ']') and (chr(response[0]) == '['):
+                counter -= 1
+            elif (chr(response[-1]) == '}') and (chr(response[0]) == '{'):
+                counter -= 1
+            if counter == 0:
+                break
 
         #Raise an exception on error.
         result: Dict[str, Any] = json.loads(response)
         if "error" in result:
-            raise Exception(result["error"])
-        return result
+            raise Exception(result["error"]["message"])
+        return result["result"]
 
     #Quit Meros.
     def quit(
         self
     ) -> None:
-        self.socket.send(
-            bytes(
-                json.dumps(
-                    {
-                        "module": "system",
-                        "method": "quit",
-                        "args": []
-                    }
-                ) + "\r\n",
-                "utf-8"
-            )
+        self.call(
+            "system",
+            "quit"
         )
-        self.meros.quit()

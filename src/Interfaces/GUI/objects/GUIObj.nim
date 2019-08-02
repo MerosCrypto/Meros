@@ -53,9 +53,9 @@ proc call*(
     #Send the call.
     try:
         gui.toRPC[].send(%* {
-            "module": module,
-            "method": methodStr,
-            "args": args
+            "jsonrpc": "2.0",
+            "method": module & "_" & methodStr,
+            "params": args
         })
     except DeadThreadError as e:
         doAssert(false, "Couldn't send data to the RPC due to a DeadThreadError: " & e.msg)
@@ -63,7 +63,7 @@ proc call*(
         doAssert(false, "Couldn't send data to the RPC due to an Exception: " & e.msg)
 
     #If this is quit, don't bother trying to receive the result.
-    #It should send an empty object, but we don't need it and recv is blocking.
+    #It should send a proper response, but we don't need it and recv is blocking.
     if (module == "system") and (methodStr == "quit"):
         return
 
@@ -74,9 +74,16 @@ proc call*(
         doAssert(false, "Couldn't receive data from the RPC due to an ValueError: " & e.msg)
     except Exception as e:
         doAssert(false, "Couldn't receive data from the RPC due to an Exception: " & e.msg)
+
     #If it has an error, throw it.
     if result.hasKey("error"):
         try:
-            raise newException(RPCError, result["error"].getStr())
+            raise newException(RPCError, result["error"]["message"].getStr() & " (" & $result["error"]["code"] & ")" & ".")
         except KeyError as e:
             doAssert(false, "Couldn't get a JSON field despite confirming it exists: " & e.msg)
+
+    #Return the result.
+    try:
+        result = result["result"]
+    except KeyError as e:
+        doAssert(false, "RPC didn't error yet didn't reply with a result either: " & e.msg)

@@ -209,7 +209,7 @@ proc test*() =
     for _ in 0 ..< 20:
         #Create a random amount of Wallets.
         for _ in 0 ..<  rand(2) + 1:
-            wallets.add(newWallet())
+            wallets.add(newWallet(""))
             utxos[wallets[^1].publicKey.toString()] = @[]
 
         #Create Transactions and verify them.

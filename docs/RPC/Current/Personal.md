@@ -1,33 +1,43 @@
 # Personal Module
 
-### `setSeed`
+### `setMnemonic`
 
-`setSeed` will create a new HD Wallet using the passed in Mnemonic and password, and set the Node's HD Wallet to it. It takes in two arguments, with one optional.
-- Mnemonic (string)
-- Password (string; optional)
+`setMnemonic` creates a new Wallet using the passed in Mnemonic and password, and set the Node's Wallet to it. It takes in two arguments:
+- Mnemonic (string): Optional; creates a new Mnemonic if omitted.
+- Password (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
 
-It returns:
-- `success` (bool)
+The result is a bool of true.
 
-### `getWallet`
+### `getMnemonic`
 
-`getWallet` will fetch and return the HD Wallet on the Node, as if it was a regular Wallet. It takes in zero arguments and returns:
-- `seed`    (string)
-- `address` (string)
+`getMnemonic` replies with the Node's Wallet's Mnemonic, without the password. It takes in zero arguments and the result is a string of the mnemonic.
+
+### `getAddress`
+
+`getAddress` replies with an address. It takes in two arguments:
+- Account (int):  Optional; defaults to 0; used in hardened derivation.
+- Change  (bool): Optional; defaults to false.
+
+The result is a string of the Wallet's address.
 
 ### `send`
 
-`send` will create and publish a Send using the Wallet on the Node. It takes in two arguments:
+`send` creates and publishes a Send using the Wallet on the Node. It takes in an array, with a variable length, of objects, each as follows:
 - Destination Address (string)
-- Amount (string)
+- Amount              (string)
 
-It returns:
-- `hash` (string)
+The result is a string of the hash.
 
 ### `data`
 
-`data` will create and publish a Data using the Wallet on the Node. It takes in one argument:
+`data` creates and publishes a Data using the Wallet on the Node. It takes in one argument:
 - Data (string)
 
-It returns:
-- `hash` (string)
+The result is a string of the hash.
+
+### `toAddress`
+
+`toAddress` replies with the address for an Ed25519 Public Key. It takes in one argument:
+- Public Key (string)
+
+The result is a string of the address.

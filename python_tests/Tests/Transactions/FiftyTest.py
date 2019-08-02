@@ -122,11 +122,11 @@ def FiftyTest(
             raise Exception("Unexpected message sent: " + msgs[-1].hex().upper())
 
     #Verify the height.
-    if rpc.call("merit", "getHeight")["height"] != len(merit.blockchain.blocks):
+    if rpc.call("merit", "getHeight") != len(merit.blockchain.blocks):
         raise Exception("Height doesn't match.")
 
     #Verify the difficulty.
-    if merit.blockchain.difficulty != int(rpc.call("merit", "getDifficulty", [0])["difficulty"], 16):
+    if merit.blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
         raise Exception("Difficulty doesn't match.")
 
     #Verify the blocks.
@@ -145,3 +145,5 @@ def FiftyTest(
         if len(ress[m]) != 0:
             if ress[m] != rpc.meros.recv():
                 raise Exception("Invalid sync response.")
+
+    print("Finished the Transactions/Fifty Test.")

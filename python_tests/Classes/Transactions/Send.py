@@ -86,7 +86,7 @@ class Send(Transaction):
         self
     ) -> Dict[str, Any]:
         result: Dict[str, Any] = {
-            "descendant": "send",
+            "descendant": "Send",
             "inputs": [],
             "outputs": [],
             "hash": self.hash.hex().upper(),

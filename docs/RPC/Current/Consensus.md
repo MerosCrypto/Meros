@@ -2,23 +2,17 @@
 
 ### `getElement`
 
-`getElement` will fetch and return the hash of a specified verification. It takes in two arguments:
-- Verifier (string)
-- Nonce    (int)
+`getElement` replies with the specified Element. It takes in two arguments:
+- Merit Holder (string)
+- Nonce        (int)
 
-It returns:
+The result is an object, as follows:
 - `descendant` (string)
 - `holder`     (string)
 - `nonce`      (int)
 
-    When `descendant` == "verification":
+    When `descendant` == "Verification":
     - `hash` (string)
 
-### `getUnarchivedRecords`
-
-`getUnarchivedMeritHolderRecords` will fetch and return all MeritHolderRecords for all MeritHolders with unarchived Elements (plus an aggregate signature). It takes in zero arguments and returns:
-- `records` (array of objects, each as follows)
-    - `holder`    (string)
-    - `nonce`     (int)
-    - `merkle`    (string)
-- `aggregate` (string)
+    When `descendant` == "MeritRemoval":
+    - `elements` (array of objects): The two Elements which caused this MeritRemoval.

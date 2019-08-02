@@ -41,6 +41,17 @@ proc mainMerit() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
+        functions.merit.getTotalMerit = proc (): int {.inline, forceCheck: [].} =
+            merit.state.live
+
+        functions.merit.getLiveMerit = proc (): int {.inline, forceCheck: [].} =
+            merit.state.live
+
+        functions.merit.getMerit = proc (
+            key: BLSPublicKey
+        ): int {.inline, forceCheck: [].} =
+            merit.state[key]
+
         #Handle full blocks.
         functions.merit.addBlock = proc (
             newBlock: Block,

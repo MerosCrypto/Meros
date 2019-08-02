@@ -67,7 +67,7 @@ class Data(Transaction):
         self
     ) -> Dict[str, Any]:
         return {
-            "descendant": "data",
+            "descendant": "Data",
             "inputs": [
                 {
                     "hash": self.input.hex().upper()

@@ -6,23 +6,19 @@ proc mainPersonal() {.forceCheck: [].} =
         functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
             wallet
 
-        #Set the Wallet's secret.
-        functions.personal.setSeed = proc (
-            seed: string,
+        #Set the Wallet's Mnemonic.
+        functions.personal.setMnemonic = proc (
+            mnemonic: string,
             password: string
         ) {.forceCheck: [
             ValueError
         ].} =
-            if seed.len == 0:
-                try:
-                    wallet = newWallet()
-                except ValueError as e:
-                    fcRaise e
+            if mnemonic.len == 0:
+                wallet = newWallet(password)
             else:
                 try:
-                    wallet = newWallet(seed, password)
+                    wallet = newWallet(mnemonic, password)
                 except ValueError as e:
-                    echo e.msg
                     fcRaise e
 
         #Create a Send Transaction.
@@ -32,18 +28,24 @@ proc mainPersonal() {.forceCheck: [].} =
         ): Hash[384] {.forceCheck: [
             ValueError,
             AddressError,
-            NotEnoughMeros,
-            DataExists
+            NotEnoughMeros
         ].} =
             var
+                #Wallet we're using.
+                child: HDWallet
                 #Spendable UTXOs.
-                utxos: seq[SendInput] = transactions.getUTXOs(wallet.publicKey)
+                utxos: seq[SendInput]
                 #Amount in.
                 amountIn: uint64
                 #Amount out.
                 amountOut: uint64
                 #Send we'll end up creating.
                 send: Send
+            try:
+                child = wallet.external.next()
+            except ValueError as e:
+                doAssert(false, "Wallet has no usable keys: " & e.msg)
+            utxos = transactions.getUTXOs(child.publicKey)
             try:
                 amountOut = parseUInt(amountStr)
             except ValueError as e:
@@ -95,7 +97,7 @@ proc mainPersonal() {.forceCheck: [].} =
             if amountIn != amountOut:
                 outputs.add(
                     newSendOutput(
-                        wallet.publicKey,
+                        child.publicKey,
                         amountIn - amountOut
                     )
                 )
@@ -110,7 +112,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 raise newException(ValueError, e.msg)
 
             #Sign the Send.
-            wallet.sign(send)
+            child.sign(send)
 
             #Mine the Send.
             try:
@@ -124,7 +126,7 @@ proc mainPersonal() {.forceCheck: [].} =
             except ValueError as e:
                 doAssert(false, "Created a Send which was invalid: " & e.msg)
             except DataExists as e:
-                fcRaise e
+                doAssert(false, "Created a Send which already existed: " & e.msg)
 
             #Retun the hash.
             result = send.hash
@@ -136,24 +138,32 @@ proc mainPersonal() {.forceCheck: [].} =
         ValueError,
         DataExists
     ].} =
-        #Create the Data.
-        var data: Data
+        var
+            #Wallet we're using.
+            child: HDWallet
+            #Data.
+            data: Data
+        try:
+            child = wallet.external.next()
+        except ValueError as e:
+            doAssert(false, "Wallet has no usable keys: " & e.msg)
+
         try:
             try:
                 data = newData(
-                    transactions.loadData(wallet.publicKey),
+                    transactions.loadData(child.publicKey),
                     dataStr
                 )
             except DBReadError:
                 data = newData(
-                    wallet.publicKey,
+                    child.publicKey,
                     dataStr
                 )
         except ValueError as e:
             fcRaise e
 
         #Sign the Data.
-        wallet.sign(data)
+        child.sign(data)
 
         #Mine the Data.
         try:

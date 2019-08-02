@@ -64,7 +64,7 @@ proc test*() =
 
     #Generate 10 wallets.
     for _ in 0 ..< 10:
-        wallets.add(newWallet())
+        wallets.add(newWallet(""))
 
     #Test 100 'Transaction's.
     for _ in 0 .. 100:

@@ -139,7 +139,7 @@ proc add*(
             false,
             proc (
                 fd: AsyncFD
-            ): bool =
+            ): bool {.forceCheck: [].} =
                 if client.last + 60 <= getTime():
                     client.close()
                 elif client.last + 40 <= getTime():

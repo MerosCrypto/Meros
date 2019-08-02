@@ -26,7 +26,7 @@ proc parseBlockHeader*(
     BLSError
 ].} =
     if headerStr.len != BLOCK_HEADER_LEN:
-        raise newException(ValueError, "parseBlockHeader handed too much data.")
+        raise newException(ValueError, "parseBlockHeader handed the wrong amount of data.")
 
     #Nonce | Last Hash | Elements Aggregate Signature | Miners Merkle | Time | Proof
     var headerSeq: seq[string] = headerStr.deserialize(

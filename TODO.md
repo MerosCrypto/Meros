@@ -9,7 +9,8 @@ Database:
 Merit:
 
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
-- Make RandomX the mining algorithm (node should use the 256 MB mode).
+- Make RandomX the mining algorithm (node should use the light mode).
+- Decide if Block aggreate should be aggregate(MeritHolderAggregates) or aggregate(signatures).
 
 Wallet:
 
@@ -17,6 +18,9 @@ Wallet:
 
 UI:
 
+- Clear dead RPC clients from the RPC clients seq.
+- Add missing methods detailed under the Eventual docs.
+- Correct `personal_getAddress` which is different from its "Eventual" definition.
 - Passworded RPC.
 - Usable GUI.
 
@@ -143,16 +147,6 @@ Network:
 
 - Tests.
 
-UI/RPC:
-
-- UI/RPC/RPC Test.
-- UI/RPC/Modules/SystemModule Test.
-- UI/RPC/Modules/ConsensusModule Test.
-- UI/RPC/Modules/MeritModule Test.
-- UI/RPC/Modules/TransactionsModule Test.
-- UI/RPC/Modules/PersonalModule Test.
-- UI/RPC/Modules/NetworkModule Test.
-
 ### Python Tests
 - https://github.com/MerosCrypto/Meros/issues/50 Test.
 - Merit Removal Tests.
@@ -165,13 +159,11 @@ UI/RPC:
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
 
-- Have the RPC match the JSON-RPC 2.0 spec.
-- `network.rebroadcast(hash or (verifier, nonce))` RPC method.
-- Expose more of the Consensus RPC.
-
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
 ### Improvements:
+
+- Remove Natural/ArgonError/EdPublicKeyError.
 
 - Swap Chia for Milagro.
 

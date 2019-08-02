@@ -41,7 +41,7 @@ class MeritRemoval(Element):
         self
     ) -> Dict[str, Any]:
         return {
-            "descendant": "meritremoval",
+            "descendant": "MeritRemoval",
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
             "elements": [

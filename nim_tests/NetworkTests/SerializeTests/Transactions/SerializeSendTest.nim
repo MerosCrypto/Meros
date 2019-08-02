@@ -38,7 +38,7 @@ proc test*() =
         #Reloaded Send.
         reloaded: Send
         #Wallet.
-        wallet: Wallet = newWallet()
+        wallet: Wallet = newWallet("")
 
     #Test 255 serializations.
     for s in 0 .. 255:

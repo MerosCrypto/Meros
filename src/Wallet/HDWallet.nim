@@ -24,6 +24,9 @@ import finals
 #Math standard lib.
 import math
 
+#BIP 44 Coin Type.
+const COIN_TYPE {.intdefine.}: uint32 = 0
+
 #Ed25519's l value.
 var l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
 
@@ -149,10 +152,7 @@ proc derive*(
         zR[31 - i] = Z.data[i + 32]
 
     #Calculate the Private Key.
-    try:
-        kL = (readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)
-    except OverflowError:
-        raise newException(ValueError, "Deriving this child key caused an overflow when calculating kL.")
+    kL = (readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)
     try:
         if kL mod l == 0:
             raise newException(ValueError, "Deriving this child key produced an unusable PrivateKey.")
@@ -203,6 +203,26 @@ proc derive*(
         result = wallet.derive(path[0])
         for i in path[1 ..< path.len]:
                 result = result.derive(i)
+    except ValueError as e:
+        fcRaise e
+
+#Get a specific BIP 44 child.
+proc `[]`*(
+    wallet: HDWallet,
+    account: uint32
+): HDWallet {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result = wallet.derive(@[
+            uint32(44) + (uint32(2) ^ 31),
+            COIN_TYPE + (uint32(2) ^ 31),
+            account + (uint32(2) ^ 31)
+        ])
+
+        #Guarantee the external and internal chains are usable.
+        discard result.derive(0)
+        discard result.derive(1)
     except ValueError as e:
         fcRaise e
 

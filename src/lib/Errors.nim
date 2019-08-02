@@ -11,9 +11,12 @@ export FinalAttributeError
 #DB lib, imported so we can export a masked LMDBerror.
 import mc_lmdb
 
-#Selectors standard lib, imported for an Error type asyncnet can raise but doesn't export.
+#Selectors standard lib. Imported for an Error type asyncnet can raise but doesn't export.
 import selectors
 export IOSelectorsException
+
+#JSON standard lib.
+import json
 
 type
     #lib Errors.
@@ -54,9 +57,24 @@ type
     DataMissing*         = object of Exception #Used when a Client is missing requested data.
     ValidityConcern*     = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
 
+    #Interfaces/RPC Errors.
+    ParamError*   = object of Exception #Used when an invalid parameter is passed.
+    JSONRPCError* = object of Exception #Used when the RPC call errors.
+        code*: int
+        data*: JSONNode
+
     #Interfaces/GUI Errors.
     WebViewError* = object of Exception #Used when WebView fails.
     RPCError*     = object of Exception #Used when the GUI makes an invalid RPC call.
 
     #Interfaces Statuses.
     NotEnoughMeros* = object of Exception #Used when the RPC is instructed to create a Send for more Meros than it can.
+
+proc newJSONRPCError*(
+    code: int,
+    msg: string,
+    data: JSONNode = nil
+): ref JSONRPCError =
+    result = newException(JSONRPCError, msg)
+    result.code = code
+    result.data = data

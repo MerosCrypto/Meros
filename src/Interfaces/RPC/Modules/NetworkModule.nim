@@ -1,75 +1,51 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #RPC object.
 import ../objects/RPCObj
 
 #Async standard lib.
 import asyncdispatch
 
-#JSON standard lib.
-import json
-
 #Default network port.
 const DEFAULT_PORT {.intdefine.}: int = 5132
 
-#Connect to a new node.
-proc connect*(
-    rpc: RPC,
-    ip: string,
-    port: int
-): Future[JSONNode] {.forceCheck: [], async.} =
+#Create the Network module.
+proc module*(
+    functions: GlobalFunctionBox
+): RPCFunctions {.forceCheck: [].} =
     try:
-        await rpc.functions.network.connect(ip, port)
-    except ClientError as e:
-        return %* {
-            "error": e.msg
-        }
+        newRPCFunctions:
+            #Connect to a new node.
+            "connect" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ): Future[void] {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ], async.} =
+                #Verify the parameters length.
+                if (params.len != 1) and (params.len != 2):
+                    raise newException(ParamError, "")
+
+                #Verify the paramters types.
+                if params[0].kind != JString:
+                    raise newException(ParamError, "")
+
+                #Supply the optional port argument if needed.
+                if params.len == 1:
+                    params.add(% DEFAULT_PORT)
+                if params[1].kind != JInt:
+                    raise newException(ParamError, "")
+
+                try:
+                    await functions.network.connect(params[0].getStr(), params[1].getInt())
+                except ClientError:
+                    raise newJSONRPCError(-6, "Couldn't connect")
+                except Exception as e:
+                    doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
     except Exception as e:
-        doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
-
-#Handler.
-proc network*(
-    rpc: RPC,
-    json: JSONNode,
-    reply: proc (json: JSONNode)
-) {.forceCheck: [], async.} =
-    #Declare a var for the response.
-    var res: JSONNode
-
-    #Switch based off the method.
-    var methodStr: string
-    try:
-        methodStr = json["method"].getStr()
-    except KeyError:
-        reply(%* {
-            "error": "No method specified."
-        })
-        return
-
-    try:
-        case methodStr:
-            of "connect":
-                if json["args"].len < 1:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    try:
-                        res = await rpc.connect(
-                            json["args"][0].getStr(),
-                            if json["args"].len == 2: json["args"][1].getInt() else: DEFAULT_PORT
-                        )
-                    except Exception as e:
-                        doAssert(false, "NetworkModule's connect threw an Exception despite not naturally throwing anything: " & e.msg)
-
-            else:
-                res = %* {
-                    "error": "Invalid method."
-                }
-    except KeyError:
-        res = %* {
-            "error": "Missing `args`."
-        }
-
-    reply(res)
+        doAssert(false, "Couldn't create the Network Module: " & e.msg)

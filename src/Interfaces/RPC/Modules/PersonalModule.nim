@@ -13,134 +13,160 @@ import ../../../Wallet/Wallet
 #Transactions lib.
 import ../../../Database/Transactions/Transactions
 
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #RPC object.
 import ../objects/RPCObj
 
-#Async standard lib.
-import asyncdispatch
-
-#JSON standard lib.
-import json
-
-#Set the Wallet's seed.
-proc setSeed(
-    rpc: RPC,
-    seed: string
-): JSONNode {.forceCheck: [].} =
+#Create the Personal module.
+proc module*(
+    functions: GlobalFunctionBox
+): RPCFunctions {.forceCheck: [].} =
     try:
-        rpc.functions.personal.setSeed(seed, "")
-    except ValueError as e:
-        returnError()
+        newRPCFunctions:
+            #Set the Node's Wallet's Mnemonic.
+            "setMnemonic" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Verify the params len.
+                if params.len > 2:
+                    raise newException(ParamError, "")
+                #Verify the params' types.
+                for param in params:
+                    if param.kind != JString:
+                        raise newException(ParamError, "")
 
-#Get the Wallet info.
-proc getWallet(
-    rpc: RPC
-): JSONNode {.forceCheck: [].} =
-    var wallet: Wallet = rpc.functions.personal.getWallet()
-    if wallet.isNil:
-        return %* {
-            "error": "Personal does not have a Wallet."
-        }
+                #Fill in optional params.
+                while params.len < 2:
+                    params.add(% "")
 
-    result = %* {
-        "seed": wallet.mnemonic.sentence,
-        "address": wallet.address
-    }
+                #Create the Wallet.
+                try:
+                    functions.personal.setMnemonic(params[0].getStr(), params[1].getStr())
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid Mnemonic")
 
-#Create a Send Transaction.
-proc send(
-    rpc: RPC,
-    destination: string,
-    amount: string
-): JSONNode {.forceCheck: [].} =
-    try:
-        result = %* {
-            "hash": $rpc.functions.personal.send(destination, amount)
-        }
-    except ValueError as e:
-        returnError()
-    except AddressError as e:
-        returnError()
-    except NotEnoughMeros as e:
-        returnError()
-    except DataExists as e:
-        returnError()
+            #Get the Node's Wallet's Mnemonic.
+            "getMnemonic" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                res["result"] = % functions.personal.getWallet().mnemonic.sentence
 
-#Create a Data Transaction.
-proc data(
-    rpc: RPC,
-    data: string
-): JSONNode {.forceCheck: [].} =
-    try:
-        result = %* {
-            "hash": $rpc.functions.personal.data(data)
-        }
-    except ValueError as e:
-        returnError()
-    except DataExists as e:
-        returnError()
+            #Get an address from the Wallet.
+            "getAddress" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Supply optional parameters.
+                if params.len == 0:
+                    params.add(% 0)
+                if params.len == 1:
+                    params.add(% false)
 
-#Handler.
-proc personal*(
-    rpc: RPC,
-    json: JSONNode,
-    reply: proc (
-        json: JSONNode
-    ) {.raises: [].}
-) {.forceCheck: [], async.} =
-    #Declare a var for the response.
-    var res: JSONNode
+                #Verify the params.
+                if (
+                    (params.len != 2) or
+                    (params[0].kind != JInt) or
+                    (params[1].kind != JBool)
+                ):
+                    raise newException(ParamError, "")
 
-    #Switch based off the method.
-    var methodStr: string
-    try:
-        methodStr = json["method"].getStr()
-    except KeyError:
-        reply(%* {
-            "error": "No method specified."
-        })
-        return
+                #Get the account in question.
+                var wallet: HDWallet = functions.personal.getWallet()
+                try:
+                    wallet = wallet[uint32(params[0].getInt())]
+                except ValueError:
+                    raise newJSONRPCError(-3, "Unusable account")
 
-    try:
-        case methodStr:
-            of "setSeed":
-                if json["args"].len < 1:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    res = rpc.setSeed(json["args"][0].getStr())
+                #Get the tree in question.
+                try:
+                    if params[1].getBool():
+                        wallet = wallet.derive(1)
+                    else:
+                        wallet = wallet.derive(0)
+                except ValueError as e:
+                    doAssert(false, "Unusable external/internal trees despite checking for their validity: " & e.msg)
 
-            of "getWallet":
-                res = rpc.getWallet()
+                #Get the child.
+                try:
+                    res["result"] = % wallet.next().address
+                except ValueError:
+                    raise newJSONRPCError(-3, "Tree has no valid children")
 
-            of "send":
-                if json["args"].len < 2:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    res = rpc.send(json["args"][0].getStr(), json["args"][1].getStr())
+            #Create and publish a Send.
+            "send" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Verify the params.
+                if (
+                    (params.len != 2) or
+                    (params[0].kind != JString) or
+                    (params[1].kind != JString)
+                ):
+                    raise newException(ParamError, "")
 
-            of "data":
-                if json["args"].len < 1:
-                    res = %* {
-                        "error": "Not enough args were passed."
-                    }
-                else:
-                    res = rpc.data(json["args"][0].getStr().parseHexStr())
+                try:
+                    res["result"] = % $functions.personal.send(params[0].getStr(), params[1].getStr())
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid amount")
+                except AddressError:
+                    raise newJSONRPCError(-5, "Invalid address")
+                except NotEnoughMeros:
+                    raise newJSONRPCError(1, "Not enough Meros")
 
-            else:
-                res = %* {
-                    "error": "Invalid method."
-                }
-    except KeyError:
-        res = %* {
-            "error": "Missing `args`."
-        }
-    except ValueError:
-        res = %* {
-            "error": "Invalid hex string passed."
-        }
+            #Create and publish a Data.
+            "data" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Verify the params.
+                if (
+                    (params.len != 1) or
+                    (params[0].kind != JString)
+                ):
+                    raise newException(ParamError, "")
 
-    reply(res)
+                try:
+                    res["result"] = % $functions.personal.data(params[0].getStr())
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid data length")
+                except DataExists:
+                    raise newJSONRPCError(0, "Data exists")
+
+            #Convert a Public Key to an address.
+            "toAddress" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError,
+                JSONRPCError
+            ].} =
+                #Verify the params.
+                if (
+                    (params.len != 1) or
+                    (params[0].kind != JString)
+                ):
+                    raise newException(ParamError, "")
+
+                try:
+                    res["result"] = % newAddress(params[0].getStr())
+                except EdPublicKeyError:
+                    raise newJSONRPCError(-3, "Invalid Public Key")
+    except Exception as e:
+        doAssert(false, "Couldn't create the Consensus Module: " & e.msg)

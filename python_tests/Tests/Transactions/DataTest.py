@@ -43,3 +43,5 @@ def DataTest(
         data.hash.hex()
     ]):
         raise Exception("Data doesn't match.")
+
+    print("Finished the Transactions/Data Test.")
