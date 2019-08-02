@@ -191,7 +191,7 @@ proc module*(
                             (not params[p].hasKey("miner")) or
                             (params[p]["miner"].kind != JString) or
                             (not params[p].hasKey("amount")) or
-                            (params[p]["amount"].kind != JString)
+                            (params[p]["amount"].kind != JInt)
                         ):
                             raise newException(ParamError, "")
 
@@ -221,12 +221,12 @@ proc module*(
                             miners.merkle.hash,
                             getTime(),
                             0
-                        ).serializeHash(),
+                        ).serializeHash().toHex(),
 
                         "body": newBlockBodyObj(
                             records.records,
                             miners
-                        ).serialize()
+                        ).serialize().toHex()
                     }
                 except IndexError as e:
                     doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
