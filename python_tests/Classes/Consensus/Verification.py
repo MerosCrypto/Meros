@@ -132,3 +132,9 @@ class SignedVerification(Verification):
             json["nonce"],
             bytes.fromhex(json["signature"])
         )
+
+    #SignedVerification -> SignedElement.
+    def toSignedElement(
+        self
+    ) -> Any:
+        return self

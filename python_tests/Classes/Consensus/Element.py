@@ -25,6 +25,11 @@ class Element:
 class SignedElement(Element):
     blsSignature: blspy.Signature
 
+    def serialize(
+        self
+    ) -> bytes:
+        raise Exception("Base SignedElement serialize called.")
+
     @staticmethod
     def fromElement(
         elem: Element

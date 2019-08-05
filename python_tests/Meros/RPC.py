@@ -34,6 +34,7 @@ class RPC:
                 json.dumps(
                     {
                         "jsonrpc": "2.0",
+                        "id": 0,
                         "method": module + "_" + method,
                         "params": args
                     }

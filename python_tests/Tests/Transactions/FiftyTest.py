@@ -10,7 +10,6 @@ from python_tests.Classes.Merit.Merit import Merit
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
-from python_tests.Classes.Consensus.Verification import Verification
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Meros classes.
@@ -95,14 +94,12 @@ def FiftyTest(
                     raise Exception("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msgs[-1][0]) == MessageType.ElementRequest:
-            ress.append(rpc.meros.verification(
-                Verification.fromElement(
-                    consensus.holders[
-                        msgs[-1][1 : 49]
-                    ][
-                        int.from_bytes(msgs[-1][49 : 53], byteorder = "big")
-                    ]
-                )
+            ress.append(rpc.meros.element(
+                consensus.holders[
+                    msgs[-1][1 : 49]
+                ][
+                    int.from_bytes(msgs[-1][49 : 53], byteorder = "big")
+                ]
             ))
 
         elif MessageType(msgs[-1][0]) == MessageType.TransactionRequest:

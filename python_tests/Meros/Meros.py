@@ -9,7 +9,9 @@ from python_tests.Classes.Transactions.Send import Send
 from python_tests.Classes.Transactions.Data import Data
 
 #Consensus classes.
-from python_tests.Classes.Consensus.Verification import Verification
+from python_tests.Classes.Consensus.Element import Element
+from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
+from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, SignedMeritRemoval
 
 #Enum class.
 from enum import Enum
@@ -258,6 +260,48 @@ class Meros:
         self.send(res)
         return res
 
+    #Send a Data Missing.
+    def dataMissing(
+        self
+    ) -> bytes:
+        res: bytes = MessageType.DataMissing.toByte()
+        self.send(res)
+        return res
+
+    #Send a Transaction.
+    def transaction(
+        self,
+        tx: Transaction
+    ) -> bytes:
+        res: bytes = bytes()
+        if isinstance(tx, Claim):
+            res = MessageType.Claim.toByte()
+        elif isinstance(tx, Send):
+            res = MessageType.Send.toByte()
+        elif isinstance(tx, Data):
+            res = MessageType.Data.toByte()
+        res += tx.serialize()
+
+        self.send(res)
+        return res
+
+    #Send a Signed Element.
+    def signedElement(
+        self,
+        elem: Element
+    ) -> bytes:
+        res: bytes = bytes()
+        if isinstance(elem, SignedVerification):
+            res = MessageType.SignedVerification.toByte()
+        elif isinstance(elem, SignedMeritRemoval):
+            res = MessageType.SignedMeritRemoval.toByte()
+        else:
+            raise Exception("Unsigned Element passed to Meros.signedElement.")
+        res += elem.serialize()
+
+        self.send(res)
+        return res
+
     #Send a Block Header.
     def blockHeader(
         self,
@@ -282,31 +326,19 @@ class Meros:
         self.send(res)
         return res
 
-    #Send a Verification.
-    def verification(
+    #Send an Element.
+    def element(
         self,
-        verif: Verification
-    ) -> bytes:
-        res: bytes = (
-            MessageType.Verification.toByte() +
-            verif.serialize()
-        )
-        self.send(res)
-        return res
-
-    #Send a Transaction.
-    def transaction(
-        self,
-        tx: Transaction
+        elem: Element
     ) -> bytes:
         res: bytes = bytes()
-        if isinstance(tx, Claim):
-            res = MessageType.Claim.toByte()
-        elif isinstance(tx, Send):
-            res = MessageType.Send.toByte()
-        elif isinstance(tx, Data):
-            res = MessageType.Data.toByte()
-        res += tx.serialize()
+        if isinstance(elem, Verification):
+            res = MessageType.Verification.toByte()
+        elif isinstance(elem, MeritRemoval):
+            res = MessageType.MeritRemoval.toByte()
+        else:
+            raise Exception("Unsigned Element passed to Meros.element.")
+        res += elem.serialize()
 
         self.send(res)
         return res
