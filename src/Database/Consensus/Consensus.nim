@@ -44,6 +44,15 @@ proc newConsensus*(
 ): Consensus {.forceCheck: [].} =
     newConsensusObj(db)
 
+#Flag a MeritHolder as malicious.
+proc flag*(
+    consensus: Consensus,
+    removal: SignedMeritRemoval
+) {.forceCheck: [].} =
+    if consensus.malicious.hasKey(removal.holder.toString()):
+        return
+    consensus.malicious[removal.holder.toString()] = removal
+
 #Handle unknown Verifications.
 proc handleUnknown*(
     consensus: Consensus,

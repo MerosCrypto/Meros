@@ -84,6 +84,7 @@ TODO:
 - Apply the pending actions if the next Block doesn't contain the MeritRemoval.
 - When a Block comes with that MeritRemoval, remove the malicious Merit from the live Merit.
 - Save all of this to the database.
+- We don't handle multiple possible MeritRemovals.
 
 ### Nim Tests:
 

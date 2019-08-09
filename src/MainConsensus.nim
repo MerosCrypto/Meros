@@ -174,7 +174,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
-                consensus.malicious[verif.holder.toString()] = cast[SignedMeritRemoval](e.removal)
+                consensus.flag(cast[SignedMeritRemoval](e.removal))
                 functions.network.broadcast(
                     MessageType.SignedMeritRemoval,
                     cast[SignedMeritRemoval](e.removal).signedSerialize()

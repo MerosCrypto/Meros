@@ -90,11 +90,11 @@ proc processBlock*(
     except DataExists as e:
         fcRaise e
 
-    #Have the state process the block.
-    merit.state.processBlock(merit.blockchain, newBlock)
-
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
         consensus,
         newBlock.records
     )
+
+    #Have the state process the block.
+    merit.state.processBlock(merit.blockchain, newBlock)

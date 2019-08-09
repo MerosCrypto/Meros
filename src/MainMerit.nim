@@ -104,8 +104,15 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Couldn't sync this Block: " & e.msg)
 
-            #Verify Record validity (nonce and Merkle), as well as whether or not the verified Transactions are out of Epochs yet.
+            #Verify Record validity (nonce and Merkle).
+            var removed: seq[BLSPublicKey] = @[]
             for record in newBlock.records:
+                #Check if this holder lost their Merit.
+                if consensus.malicious.hasKey(record.key.toString()):
+                    if consensus.malicious[record.key.toString()].merkle == record.merkle:
+                        removed.add(record.key)
+                        continue
+
                 #Grab the MeritHolder.
                 var holder: MeritHolder = consensus[record.key]
 
@@ -122,14 +129,6 @@ proc mainMerit() {.forceCheck: [].} =
                 if merkle != record.merkle:
                     raise newException(ValueError, "Block has a MeritHolderRecord with a competing Merkle.")
 
-                #Seq of the relevant Elements for this MeritHolder.
-                var elems: seq[Element]
-                #Grab the consensus.
-                try:
-                    elems = holder[holder.archived + 1 .. record.nonce]
-                except IndexError as e:
-                    fcRaise e
-
             #Add the Block to the Merit.
             var epoch: Epoch
             try:
@@ -140,6 +139,12 @@ proc mainMerit() {.forceCheck: [].} =
                 fcRaise e
             except DataExists as e:
                 fcRaise e
+
+            #Save every archived MeritRemoval and delete the relevant Merit.
+            for removee in removed:
+                consensus.archive(consensus.malicious[removee.toString()])
+                consensus.malicious.del(removee.toString())
+                merit.state[removee] = 0
 
             #Archive the Elements mentioned in the Block.
             consensus.archive(newBlock.records)

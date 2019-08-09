@@ -88,6 +88,7 @@ proc revert*(
 
     state.oldData = false
 
+#Catch up with a Blockchain.
 proc catchup*(
     state: var State,
     blockchain: Blockchain
