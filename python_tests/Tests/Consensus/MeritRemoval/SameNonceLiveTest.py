@@ -133,6 +133,47 @@ def SameNonceLiveTest(
 
     #Send the final Block.
     rpc.meros.blockHeader(merit.blockchain.blocks[-1].header)
+    while True:
+        msg: bytes = rpc.meros.recv()
+
+        if MessageType(msg[0]) == MessageType.Syncing:
+            rpc.meros.acknowledgeSyncing()
+
+        elif MessageType(msg[0]) == MessageType.GetBlockHash:
+            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+            if height == 0:
+                rpc.meros.blockHash(merit.blockchain.last())
+            else:
+                if height >= len(merit.blockchain.blocks):
+                    raise Exception("Meros asked for a Block Hash we do not have.")
+
+                rpc.meros.blockHash(merit.blockchain.blocks[height].header.hash)
+
+        elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
+            hash = msg[1 : 49]
+            for block in merit.blockchain.blocks:
+                if block.header.hash == hash:
+                    rpc.meros.blockHeader(block.header)
+                    break
+
+                if block.header.hash == merit.blockchain.last():
+                    raise Exception("Meros asked for a Block Header we do not have.")
+
+        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+            hash = msg[1 : 49]
+            for block in merit.blockchain.blocks:
+                if block.header.hash == hash:
+                    rpc.meros.blockBody(block.body)
+                    break
+
+                if block.header.hash == merit.blockchain.last():
+                    raise Exception("Meros asked for a Block Body we do not have.")
+
+        elif MessageType(msg[0]) == MessageType.SyncingOver:
+            break
+
+        else:
+            raise Exception("Unexpected message sent: " + msg.hex().upper())
 
     #Verify the height.
     if rpc.call("merit", "getHeight") != len(merit.blockchain.blocks):
