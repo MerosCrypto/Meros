@@ -3,14 +3,14 @@
 #Types.
 from typing import Dict, List, IO, Any
 
-#Merit classes.
-from python_tests.Classes.Merit.Merit import Merit
-
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
 from python_tests.Classes.Consensus.Consensus import Consensus
+
+#Merit classes.
+from python_tests.Classes.Merit.Merit import Merit
 
 #Meros classes.
 from python_tests.Meros.Meros import MessageType

@@ -1,7 +1,3 @@
-#Merit classes.
-from python_tests.Classes.Merit.BlockHeader import BlockHeader
-from python_tests.Classes.Merit.BlockBody import BlockBody
-
 #Transactions classes.
 from python_tests.Classes.Transactions.Transaction import Transaction
 from python_tests.Classes.Transactions.Claim import Claim
@@ -12,6 +8,10 @@ from python_tests.Classes.Transactions.Data import Data
 from python_tests.Classes.Consensus.Element import Element
 from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
 from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, SignedMeritRemoval
+
+#Merit classes.
+from python_tests.Classes.Merit.BlockHeader import BlockHeader
+from python_tests.Classes.Merit.BlockBody import BlockBody
 
 #Enum class.
 from enum import Enum

@@ -1,19 +1,18 @@
-#https://github.com/MerosCrypto/Meros/issues/50
+#Tests proper creation and handling of a MeritRemoval when Meros receives different Elements sharing a nonce.
+#The Elements are already in a MeritRemoval archived in a Block, which is synced.
 
 #Types.
-from typing import Dict, List, IO, Any
-
-#Merit classes.
-from python_tests.Classes.Merit.Block import Block
-from python_tests.Classes.Merit.Merit import Merit
+from typing import Dict, IO, Any
 
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
-from python_tests.Classes.Consensus.Verification import SignedVerification
 from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
+
+#Merit class.
+from python_tests.Classes.Merit.Merit import Merit
 
 #Meros classes.
 from python_tests.Meros.Meros import MessageType
@@ -25,69 +24,32 @@ import blspy
 #JSON standard lib.
 import json
 
-def signedVerification(
-    rpc: RPC,
-    sv: SignedVerification
-) -> None:
-    rpc.meros.signedElement(sv)
-    while True:
-        msg: bytes = rpc.meros.recv()
-
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
-
-        elif MessageType(msg[0]) == MessageType.ElementRequest:
-            rpc.meros.dataMissing()
-
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
-            break
-
-        else:
-            raise Exception("Unexpected message sent: " + msg.hex().upper())
-
-def SameNonceTest(
+def SameNonceSyncTest(
     rpc: RPC
 ) -> None:
-    #Transactions.
-    transactions: Transactions = Transactions()
+    snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
+    snVectors: Dict[str, Any] = json.loads(snFile.read())
     #Consensus.
     consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromJSON(snVectors["removal"])
+    consensus.add(removal)
     #Merit.
-    merit: Merit = Merit(
+    merit: Merit = Merit.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100
-    )
-
-    #Add a single Block to create Merit.
-    bbFile: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
-    blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
-    merit.add(
-        transactions,
+        100,
+        Transactions(),
         consensus,
-        Block.fromJSON(blocks[0])
+        snVectors["blockchain"]
     )
-    bbFile.close()
+    snFile.close()
 
-    #BLS Keys.
-    privKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
-    pubKey: blspy.PublicKey = privKey.get_public_key()
-
-    #Create two Verifications with the same nonce yet for different hashes.
-    h1: bytes = b'\0' * 48
-    sv1: SignedVerification = SignedVerification(h1)
-    sv1.sign(privKey, 0)
-
-    h2: bytes = b'\1' * 48
-    sv2: SignedVerification = SignedVerification(h2)
-    sv2.sign(privKey, 0)
-
-    #Create the MeritRemoval.
-    mr: SignedMeritRemoval = SignedMeritRemoval(0, sv1.toSignedElement(), sv2.toSignedElement())
+    #BLS Public Key.
+    pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
 
     #Handshake with the node.
     rpc.meros.connect(
@@ -96,6 +58,7 @@ def SameNonceTest(
         len(merit.blockchain.blocks)
     )
 
+    sentLast: bool = False
     hash: bytes = bytes()
     while True:
         msg: bytes = rpc.meros.recv()
@@ -133,18 +96,19 @@ def SameNonceTest(
                 if block.header.hash == merit.blockchain.last():
                     raise Exception("Meros asked for a Block Body we do not have.")
 
+        elif MessageType(msg[0]) == MessageType.ElementRequest:
+            sentLast = True
+            rpc.meros.element(removal)
+
+        elif MessageType(msg[0]) == MessageType.TransactionRequest:
+            rpc.meros.dataMissing()
+
         elif MessageType(msg[0]) == MessageType.SyncingOver:
-            break
+            if sentLast:
+                break
 
         else:
             raise Exception("Unexpected message sent: " + msg.hex().upper())
-
-    signedVerification(rpc, sv1)
-    signedVerification(rpc, sv2)
-
-    mrFromMeros: bytes = rpc.meros.recv()
-    if mrFromMeros != (MessageType.MeritRemoval.toByte() + mr.serialize()):
-        raise Exception("Meros didn't send us a Merit Removal.")
 
     #Verify the height.
     if rpc.call("merit", "getHeight") != len(merit.blockchain.blocks):
@@ -167,12 +131,12 @@ def SameNonceTest(
     if rpc.call("consensus", "getElement", [
         pubKey.serialize().hex(),
         0
-    ]) != mr.toJSON():
+    ]) != removal.toJSON():
         raise Exception("Merit Removal doesn't match.")
 
-    #Verify the amount of Merit.
-    if rpc.call("merit", "getTotalMerit", [pubKey.serialize().hex()]) != 0:
-        raise Exception("Total Merit doesn't match.")
+    #Verify the Live Merit.
+    if rpc.call("merit", "getLiveMerit", [pubKey.serialize().hex()]) != 0:
+        raise Exception("Live Merit doesn't match.")
 
     #Verify the Total Merit.
     if rpc.call("merit", "getTotalMerit") != 0:
@@ -182,4 +146,4 @@ def SameNonceTest(
     if rpc.call("merit", "getMerit", [pubKey.serialize().hex()]) != 0:
         raise Exception("Merit Holder's Merit doesn't match.")
 
-    print("Finished the Consensus/MeritRemoval/SameNonce Test.")
+    print("Finished the Consensus/MeritRemoval/SameNonceSync Test.")

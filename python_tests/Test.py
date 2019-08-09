@@ -12,7 +12,8 @@ from python_tests.Tests.Merit.SyncTest import SyncTest
 from python_tests.Tests.Transactions.DataTest import DataTest
 from python_tests.Tests.Transactions.FiftyTest import FiftyTest
 
-from python_tests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
+from python_tests.Tests.Consensus.MeritRemoval.SameNonceLiveTest import SameNonceLiveTest
+from python_tests.Tests.Consensus.MeritRemoval.SameNonceSyncTest import SameNonceSyncTest
 
 #Time standard lib.
 import time
@@ -26,9 +27,12 @@ tests: List[
 ] = [
     ChainAdvancementTest,
     SyncTest,
+
     DataTest,
     FiftyTest,
-    SameNonceTest
+
+    SameNonceLiveTest,
+    SameNonceSyncTest
 ]
 
 #Delete the python_tests data directory.
