@@ -92,7 +92,7 @@ class SignedMeritRemoval(MeritRemoval):
             self.se1.blsSignature,
             self.se2.blsSignature
         ])
-        self.signature = self.blsSignature.serialize()
+        self.signature: bytes = self.blsSignature.serialize()
 
     #Serialize.
     def serialize(
@@ -136,3 +136,9 @@ class SignedMeritRemoval(MeritRemoval):
             e1,
             e2
         )
+
+    #SignedMeritRemoval -> SignedElement.
+    def toSignedElement(
+        self
+    ) -> Any:
+        return self

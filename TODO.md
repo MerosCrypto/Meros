@@ -10,7 +10,7 @@ Merit:
 
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the light mode).
-- Decide if Block aggreate should be aggregate(MeritHolderAggregates) or aggregate(signatures).
+- Decide if Block aggregate should be aggregate(MeritHolderAggregates) or aggregate(signatures).
 
 Wallet:
 
@@ -18,11 +18,11 @@ Wallet:
 
 UI:
 
-- Clear dead RPC clients from the RPC clients seq.
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
 - Passworded RPC.
-- Usable GUI.
+
+- Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
 Network:
 
@@ -148,8 +148,8 @@ Network:
 - Tests.
 
 ### Python Tests
-- https://github.com/MerosCrypto/Meros/issues/50 Test.
 - Merit Removal Tests.
+- RPC tests.
 
 ### Features:
 
@@ -158,8 +158,6 @@ Network:
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
-
-- Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
 ### Improvements:
 
