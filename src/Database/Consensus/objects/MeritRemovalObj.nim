@@ -1,15 +1,19 @@
-#Errors lib.
-import ../../../lib/Errors
-
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
 #Element lib.
 import ElementObj
 export ElementObj
 
+#ForceCheck libs.
+#We generally get this from Errors yet can't as Errors imports this.
+import ForceCheck
+
 #Finals lib.
 import finals
+
+#BLS Nimble package.
+#It's atrocious to directly import this.
+#We should import MinerWallet, or at least BLS.
+#That said, both use Errors which imports this.
+import mc_bls
 
 #MeritRemoval objects.
 finalsd:
@@ -19,7 +23,7 @@ finalsd:
             element2* {.final.}: Element
 
         SignedMeritRemoval* = ref object of MeritRemoval
-            signature* {.final.}: BLSSignature
+            signature* {.final.}: Signature
 
 #Constructors.
 func newMeritRemovalObj*(
@@ -44,7 +48,7 @@ func newSignedMeritRemovalObj*(
     nonce: int,
     element1: Element,
     element2: Element,
-    signature: BLSSignature
+    signature: Signature
 ): SignedMeritRemoval {.forceCheck: [].} =
     result = SignedMeritRemoval(
         element1: element1,

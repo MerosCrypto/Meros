@@ -1,5 +1,8 @@
 #Errors lib, providing easy access to ForceCheck and defining all our custom errors.
 
+#MeritRemoval object.
+import ../Database/Consensus/objects/MeritRemovalObj
+
 #ForceCheck lib.
 import ForceCheck
 export ForceCheck
@@ -40,7 +43,7 @@ type
     #Database/Consensus Statuses.
     MaliciousMeritHolder* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
         #MeritRemoval.
-        removal*: pointer
+        removal*: MeritRemoval
 
     #Database/Merit Statuses.
     UncleBlock*  = object of Exception #Used when we test a BlockHeader and it's on an alternative chain.
@@ -68,6 +71,14 @@ type
 
     #Interfaces Statuses.
     NotEnoughMeros* = object of Exception #Used when the RPC is instructed to create a Send for more Meros than it can.
+
+#Constructors.
+proc newMaliciousMeritHolder*(
+    msg: string,
+    removal: MeritRemoval
+): ref MaliciousMeritHolder {.forceCheck: [].} =
+    result = newException(MaliciousMeritHolder, msg)
+    result.removal = removal
 
 proc newJSONRPCError*(
     code: int,

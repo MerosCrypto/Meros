@@ -167,10 +167,7 @@ proc add*(
         if not malicious:
             raise newException(DataExists, "Element has already been added.")
         else:
-            var
-                status: ref MaliciousMeritHolder = newException(MaliciousMeritHolder, "MeritHolder submitted two Elements with the same nonce.")
-                signature: BLSSignature
-
+            var signature: BLSSignature
             if existing.nonce <= holder.archived:
                 signature = element.signature
             else:
@@ -184,7 +181,8 @@ proc add*(
                 except BLSError as e:
                     doAssert(false, "Failed to aggregate BLS Signatures: " & e.msg)
 
-            status.removal = cast[pointer](
+            raise newMaliciousMeritHolder(
+                "MeritHolder submitted two Elements with the same nonce.",
                 newSignedMeritRemoval(
                     holder.archived + 1,
                     existing,
@@ -192,7 +190,6 @@ proc add*(
                     signature
                 )
             )
-            raise status
 
     #Add the Element.
     try:

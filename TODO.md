@@ -76,7 +76,7 @@ Done:
 - Serialize/Parse.
 - Check if MeritHolders create conflicting Elements.
 - Don't count malicious MeritHolders' verifications.
-- Create/broadcast a MeritRemoval for malicious MeritHolders. This MeritRemoval only works where at least one Element's signature is in RAM. If only one signature is in RAM, the other Element must be archived on the current chain.
+- Create/broadcast a MeritRemoval for malicious MeritHolders.
 
 TODO:
 - Check if MeritHolders verify conflicting Transactions.
