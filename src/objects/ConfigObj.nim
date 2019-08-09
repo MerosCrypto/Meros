@@ -25,13 +25,13 @@ import strutils
 import json
 
 type Config* = object
-    #Network we're connecting to.
-    network*: string
-
     #Data Directory.
     dataDir*: string
     #DB Path.
     db*: string
+
+    #Network we're connecting to.
+    network*: string
 
     #Listening for Meros connections or not.
     server*: bool
@@ -39,6 +39,9 @@ type Config* = object
     tcpPort*: int
     #Port for the RPC to listen on.
     rpcPort*: int
+
+    #Spawn a GUI or not.
+    gui*: bool
 
     #MinerWallet to verify transactions with.
     miner*: MinerWallet
@@ -65,12 +68,13 @@ func get(
 proc newConfig*(): Config {.forceCheck: [].} =
     #Create the config with the default options.
     result = Config(
-        network: "testnet",
         dataDir: "./data",
         db: "db",
+        network: "testnet",
         server: true,
         tcpPort: 5132,
-        rpcPort: 5133
+        rpcPort: 5133,
+        gui: true
     )
 
     #Check if the data directory was overriden via the CLI.
@@ -141,6 +145,13 @@ proc newConfig*(): Config {.forceCheck: [].} =
             discard
 
         try:
+            result.gui = json.get("gui", JBool).getBool()
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
+
+        try:
             result.miner = newMinerWallet(
                 json.get("miner", JString).getStr()
             )
@@ -158,11 +169,11 @@ proc newConfig*(): Config {.forceCheck: [].} =
             for i in countup(1, paramCount(), 2):
                 #Switch based off the param.
                 case paramStr(i):
-                    of "--network":
-                        result.network = paramStr(i + 1)
-
                     of "--db":
                         result.db = paramStr(i + 1)
+
+                    of "--network":
+                        result.network = paramStr(i + 1)
 
                     of "--server":
                         result.server = (paramStr(i + 1) == "true")
@@ -172,6 +183,9 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
                     of "--rpcPort":
                         result.rpcPort = parseInt(paramStr(i + 1))
+
+                    of "--gui":
+                        result.gui = parseBool(paramStr(i + 1))
 
                     of "--miner":
                         try:

@@ -1,5 +1,5 @@
 discard """
-The Main files are an "incude chain". They include each other sequentially, in the following orders:
+The Main files are an "include chain". They include each other sequentially, in the following orders:
     MainImports
     MainChainParams
     MainGlobals
@@ -31,19 +31,24 @@ proc main() {.thread.} =
 
         runForever()
 
-#If there's no GUI...
+#If we weren't compiled with a GUI...
 when defined(nogui):
     #Run main.
     main()
-#If there is one...
+#If we were...
 else:
-    #Spawn main on a thread.
-    spawn main()
-    #Run the GUI on the main thread,
-    mainGUI()
-    #If WebView exits, perform a safe shutdown.
-    toRPC.send(%* {
-        "module": "system",
-        "method": "quit",
-        "args": []
-    })
+    #If it's disabled...
+    if not config.gui:
+        main()
+    #If it's enabled...
+    else:
+        #Spawn main on a thread.
+        spawn main()
+        #Run the GUI on the main thread,
+        mainGUI()
+        #If WebView exits, perform a safe shutdown.
+        toRPC.send(%* {
+            "module": "system",
+            "method": "quit",
+            "args": []
+        })

@@ -71,7 +71,7 @@ class Meros:
         self.rpc: int = rpc
 
         #Create the instance.
-        self.process: Popen = Popen(["./build/Meros", "--dataDir", "./data/python_tests", "--network", "devnet", "--db", db, "--tcpPort", str(tcp), "--rpcPort", str(rpc)])
+        self.process: Popen = Popen(["./build/Meros", "--gui", "false", "--dataDir", "./data/python_tests", "--network", "devnet", "--db", db, "--tcpPort", str(tcp), "--rpcPort", str(rpc)])
 
     #Send a message.
     def send(
