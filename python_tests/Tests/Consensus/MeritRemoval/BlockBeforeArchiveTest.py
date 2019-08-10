@@ -2,13 +2,12 @@
 #The first Element is in Block 1. The MeritRemoval is in Block 2.
 
 #Types.
-from typing import Dict, IO, Any
+from typing import Dict, List, IO, Any
 
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
-from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
+#Consensus class.
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Merit class.

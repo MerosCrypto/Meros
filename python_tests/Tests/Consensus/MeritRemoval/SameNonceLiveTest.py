@@ -80,14 +80,16 @@ def SameNonceLiveTest(
     )
 
     hash: bytes = bytes()
+    msg: bytes = bytes()
+    height: int = 0
     while True:
-        msg: bytes = rpc.meros.recv()
+        msg = rpc.meros.recv()
 
         if MessageType(msg[0]) == MessageType.Syncing:
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height = int.from_bytes(msg[1 : 5], byteorder = "big")
             if height == 0:
                 rpc.meros.blockHash(merit.blockchain.last())
             else:
@@ -134,13 +136,13 @@ def SameNonceLiveTest(
     #Send the final Block.
     rpc.meros.blockHeader(merit.blockchain.blocks[-1].header)
     while True:
-        msg: bytes = rpc.meros.recv()
+        msg = rpc.meros.recv()
 
         if MessageType(msg[0]) == MessageType.Syncing:
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height = int.from_bytes(msg[1 : 5], byteorder = "big")
             if height == 0:
                 rpc.meros.blockHash(merit.blockchain.last())
             else:

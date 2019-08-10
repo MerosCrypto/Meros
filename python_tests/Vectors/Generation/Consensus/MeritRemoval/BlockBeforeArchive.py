@@ -1,12 +1,10 @@
 #Types.
-from typing import IO, Dict, List, Any
+from typing import IO, Dict, Any
 
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
-from python_tests.Classes.Consensus.Element import SignedElement
-from python_tests.Classes.Consensus.Verification import SignedVerification
 from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
@@ -39,6 +37,9 @@ merit: Merit = Merit(
     int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
     100
 )
+
+#BLS Public Key.
+pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
 
 #Add a single Block to create Merit and load a MeritRemoval.
 snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
@@ -91,6 +92,6 @@ result: Dict[str, Any] = {
     "blockchain": merit.blockchain.toJSON(),
     "consensus":  consensus.toJSON()
 }
-vectors: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "w")
-vectors.write(json.dumps(result))
-vectors.close()
+bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/BlockBeforeArchive.json", "w")
+bbaFile.write(json.dumps(result))
+bbaFile.close()
