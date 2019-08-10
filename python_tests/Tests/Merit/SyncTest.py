@@ -94,7 +94,7 @@ def SyncTest(
         if rpc.call("merit", "getBlock", [block.header.nonce]) != block.toJSON():
             raise Exception("Block doesn't match.")
 
-    #Replay their messages and verify they sent what we sent.
+    #Replay their messages and verify they send what we sent.
     for m in range(0, len(msgs)):
         rpc.meros.send(msgs[m])
         if len(ress[m]) != 0:

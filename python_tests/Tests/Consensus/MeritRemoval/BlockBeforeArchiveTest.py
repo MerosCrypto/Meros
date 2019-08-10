@@ -1,38 +1,39 @@
-#https://github.com/MerosCrypto/Meros/issues/50
+#Tests proper creation and handling of a MeritRemoval when Meros receives different Elements sharing a nonce.
+#The first Element is in Block 1. The MeritRemoval is in Block 2.
 
 #Types.
-from typing import Dict, List, IO, Any
+from typing import Dict, IO, Any
 
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
+from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
-#Merit classes.
+#Merit class.
 from python_tests.Classes.Merit.Merit import Merit
 
 #Meros classes.
 from python_tests.Meros.Meros import MessageType
 from python_tests.Meros.RPC import RPC
 
+#BLS lib.
+import blspy
+
 #JSON standard lib.
 import json
 
-def FiftyTest(
+def BlockBeforeArchiveTest(
     rpc: RPC
 ) -> None:
-    cmFile: IO[Any] = open("python_tests/Vectors/Transactions/Fifty.json", "r")
-    cmVectors: Dict[str, Any] = json.loads(cmFile.read())
-    #Transactions.
-    transactions: Transactions = Transactions.fromJSON(
-        cmVectors["transactions"]
-    )
+    bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/BlockBeforeArchive.json", "r")
+    bbaVectors: Dict[str, Any] = json.loads(bbaFile.read())
     #Consensus.
     consensus: Consensus = Consensus.fromJSON(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-        cmVectors["consensus"]
+        bbaVectors["consensus"]
     )
     #Merit.
     merit: Merit = Merit.fromJSON(
@@ -40,11 +41,14 @@ def FiftyTest(
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         100,
-        transactions,
+        Transactions(),
         consensus,
-        cmVectors["blockchain"]
+        bbaVectors["blockchain"]
     )
-    cmFile.close()
+    bbaFile.close()
+
+    #BLS Public Key.
+    pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
 
     #Handshake with the node.
     rpc.meros.connect(
@@ -55,7 +59,7 @@ def FiftyTest(
 
     msgs: List[bytes] = []
     ress: List[bytes] = []
-    sentLast: int = 14
+    sentLast: int = 2
     hash: bytes = bytes()
     while True:
         msgs.append(rpc.meros.recv())
@@ -94,6 +98,7 @@ def FiftyTest(
                     raise Exception("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msgs[-1][0]) == MessageType.ElementRequest:
+            sentLast -= 1
             ress.append(rpc.meros.element(
                 consensus.holders[
                     msgs[-1][1 : 49]
@@ -103,12 +108,7 @@ def FiftyTest(
             ))
 
         elif MessageType(msgs[-1][0]) == MessageType.TransactionRequest:
-            sentLast -= 1
-            ress.append(
-                rpc.meros.transaction(transactions.txs[
-                    msgs[-1][1 : 49]
-                ])
-            )
+            ress.append(rpc.meros.dataMissing())
 
         elif MessageType(msgs[-1][0]) == MessageType.SyncingOver:
             ress.append(bytes())
@@ -131,10 +131,29 @@ def FiftyTest(
         if rpc.call("merit", "getBlock", [block.header.nonce]) != block.toJSON():
             raise Exception("Block doesn't match.")
 
-    #Verify the Transactions.
-    for tx in transactions.txs:
-        if rpc.call("transactions", "getTransaction", [tx.hex()]) != transactions.txs[tx].toJSON():
-            raise Exception("Transaction doesn't match.")
+    #Verify the Merit Holder height.
+    if rpc.call("consensus", "getHeight", [pubKey.serialize().hex()]) != 1:
+        raise Exception("Merit Holder height doesn't matchh.")
+
+    #Verify the Consensus
+    for e in range(0, len(consensus.holders[pubKey.serialize()])):
+        if rpc.call("consensus", "getElement", [
+            pubKey.serialize().hex(),
+            e
+        ]) != consensus.holders[pubKey.serialize()][e].toJSON():
+            raise Exception("Element doesn't match.")
+
+    #Verify the Live Merit.
+    if rpc.call("merit", "getLiveMerit", [pubKey.serialize().hex()]) != 0:
+        raise Exception("Live Merit doesn't match.")
+
+    #Verify the Total Merit.
+    if rpc.call("merit", "getTotalMerit") != 0:
+        raise Exception("Total Merit doesn't match.")
+
+    #Verify the Merit Holder's Merit.
+    if rpc.call("merit", "getMerit", [pubKey.serialize().hex()]) != 0:
+        raise Exception("Merit Holder's Merit doesn't match.")
 
     #Replay their messages and verify they send what we sent.
     for m in range(0, len(msgs)):
@@ -143,4 +162,4 @@ def FiftyTest(
             if ress[m] != rpc.meros.recv():
                 raise Exception("Invalid sync response.")
 
-    print("Finished the Transactions/Fifty Test.")
+    print("Finished the Consensus/MeritRemoval/BlockBeforeArchive Test.")

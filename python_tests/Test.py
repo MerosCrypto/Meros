@@ -14,6 +14,7 @@ from python_tests.Tests.Transactions.FiftyTest import FiftyTest
 
 from python_tests.Tests.Consensus.MeritRemoval.SameNonceLiveTest import SameNonceLiveTest
 from python_tests.Tests.Consensus.MeritRemoval.SameNonceSyncTest import SameNonceSyncTest
+from python_tests.Tests.Consensus.MeritRemoval.BlockBeforeArchiveTest import BlockBeforeArchiveTest
 
 #Time standard lib.
 import time
@@ -32,7 +33,8 @@ tests: List[
     FiftyTest,
 
     SameNonceLiveTest,
-    SameNonceSyncTest
+    SameNonceSyncTest,
+    BlockBeforeArchiveTest
 ]
 
 #Delete the python_tests data directory.
