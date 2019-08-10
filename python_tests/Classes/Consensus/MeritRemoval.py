@@ -63,11 +63,11 @@ class MeritRemoval(Element):
         json: Dict[str, Any]
     ) -> Any:
         e1: Element = Element()
-        if json["elements"][0]["descendant"] == "verification":
+        if json["elements"][0]["descendant"] == "Verification":
             e1 = Verification.fromJSON(json["elements"][0])
 
         e2: Element = Element()
-        if json["elements"][1]["descendant"] == "verification":
+        if json["elements"][1]["descendant"] == "Verification":
             e2 = Verification.fromJSON(json["elements"][1])
 
         return MeritRemoval(
@@ -108,7 +108,7 @@ class SignedMeritRemoval(MeritRemoval):
         self
     ) -> Dict[str, Any]:
         return {
-            "descendant": "meritremoval",
+            "descendant": "MeritRemoval",
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
             "elements": [
@@ -124,11 +124,11 @@ class SignedMeritRemoval(MeritRemoval):
         json: Dict[str, Any]
     ) -> Any:
         e1: SignedElement = SignedElement()
-        if json["elements"][0]["descendant"] == "verification":
+        if json["elements"][0]["descendant"] == "Verification":
             e1 = SignedVerification.fromJSON(json["elements"][0])
 
         e2: SignedElement = SignedElement()
-        if json["elements"][1]["descendant"] == "verification":
+        if json["elements"][1]["descendant"] == "Verification":
             e2 = SignedVerification.fromJSON(json["elements"][1])
 
         return SignedMeritRemoval(

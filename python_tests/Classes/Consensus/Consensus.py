@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple, Any
 #Element classes.
 from python_tests.Classes.Consensus.Element import Element, SignedElement
 from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
+from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, SignedMeritRemoval
 from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 
 #BLS lib.
@@ -121,9 +122,17 @@ class Consensus:
         for mh in json:
             for elem in json[mh]:
                 if "signed" in elem:
-                    if elem["descendant"] == "verification":
+                    if elem["descendant"] == "Verification":
                         result.add(SignedVerification.fromJSON(elem))
+                    elif elem["descendant"] == "MeritRemoval":
+                        result.add(SignedMeritRemoval.fromJSON(elem))
+                    else:
+                        raise Exception("JSON has an unsupported Element type: " + elem["descendant"])
                 else:
-                    if elem["descendant"] == "verification":
+                    if elem["descendant"] == "Verification":
                         result.add(Verification.fromJSON(elem))
+                    elif elem["descendant"] == "MeritRemoval":
+                        result.add(MeritRemoval.fromJSON(elem))
+                    else:
+                        raise Exception("JSON has an unsupported Element type: " + elem["descendant"])
         return result

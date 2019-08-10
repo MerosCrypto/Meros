@@ -86,7 +86,7 @@ for i in range(0, 2):
 
     #Add it.
     merit.add(transactions, consensus, block)
-    print("Generated Same Nonce Block " + str(block.header.nonce) + ".")
+    print("Generated Block Before Archive Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": merit.blockchain.toJSON(),

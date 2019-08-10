@@ -38,10 +38,12 @@ class Transactions:
     ) -> Any:
         result = Transactions()
         for tx in json:
-            if json[tx]["descendant"] == "claim":
+            if json[tx]["descendant"] == "Claim":
                 result.add(Claim.fromJSON(json[tx]))
-            elif json[tx]["descendant"] == "send":
+            elif json[tx]["descendant"] == "Send":
                 result.add(Send.fromJSON(json[tx]))
-            elif json[tx]["descendant"] == "data":
+            elif json[tx]["descendant"] == "Data":
                 result.add(Data.fromJSON(json[tx]))
+            else:
+                raise Exception("JSON has an unsupported Transaction type: " + json[tx]["descendant"])
         return result
