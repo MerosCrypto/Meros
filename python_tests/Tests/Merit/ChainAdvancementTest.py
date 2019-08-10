@@ -5,6 +5,9 @@ from typing import Dict, List, IO, Any
 from python_tests.Classes.Merit.Block import Block
 from python_tests.Classes.Merit.Blockchain import Blockchain
 
+#TestError Exception.
+from python_tests.Tests.TestError import TestError
+
 #RPC class.
 from python_tests.Meros.RPC import RPC
 
@@ -38,14 +41,12 @@ def ChainAdvancementTest(
 
         #Verify the difficulty.
         if blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
-            raise Exception("Difficulty doesn't match.")
+            raise TestError("Difficulty doesn't match.")
 
         #Verify the Block.
         if rpc.call("merit", "getBlock", [block.header.nonce]) != jsonBlock:
-            raise Exception("Block doesn't match.")
+            raise TestError("Block doesn't match.")
 
     #Verify the height.
     if rpc.call("merit", "getHeight") != len(blocks) + 1:
-        raise Exception("Height doesn't match.")
-
-    print("Finished the Merit/ChainAdvancement Test.")
+        raise TestError("Height doesn't match.")

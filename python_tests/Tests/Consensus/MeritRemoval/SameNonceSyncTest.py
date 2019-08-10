@@ -14,6 +14,9 @@ from python_tests.Classes.Consensus.Consensus import Consensus
 #Merit class.
 from python_tests.Classes.Merit.Merit import Merit
 
+#TestError Exception.
+from python_tests.Tests.TestError import TestError
+
 #Meros classes.
 from python_tests.Meros.Meros import MessageType
 from python_tests.Meros.RPC import RPC
@@ -72,7 +75,7 @@ def SameNonceSyncTest(
                 rpc.meros.blockHash(merit.blockchain.last())
             else:
                 if height >= len(merit.blockchain.blocks):
-                    raise Exception("Meros asked for a Block Hash we do not have.")
+                    raise TestError("Meros asked for a Block Hash we do not have.")
 
                 rpc.meros.blockHash(merit.blockchain.blocks[height].header.hash)
 
@@ -84,7 +87,7 @@ def SameNonceSyncTest(
                     break
 
                 if block.header.hash == merit.blockchain.last():
-                    raise Exception("Meros asked for a Block Header we do not have.")
+                    raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
             hash = msg[1 : 49]
@@ -94,7 +97,7 @@ def SameNonceSyncTest(
                     break
 
                 if block.header.hash == merit.blockchain.last():
-                    raise Exception("Meros asked for a Block Body we do not have.")
+                    raise TestError("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msg[0]) == MessageType.ElementRequest:
             sentLast = True
@@ -108,42 +111,40 @@ def SameNonceSyncTest(
                 break
 
         else:
-            raise Exception("Unexpected message sent: " + msg.hex().upper())
+            raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Verify the height.
     if rpc.call("merit", "getHeight") != len(merit.blockchain.blocks):
-        raise Exception("Height doesn't match.")
+        raise TestError("Height doesn't match.")
 
     #Verify the difficulty.
     if merit.blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
-        raise Exception("Difficulty doesn't match.")
+        raise TestError("Difficulty doesn't match.")
 
     #Verify the blocks.
     for block in merit.blockchain.blocks:
         if rpc.call("merit", "getBlock", [block.header.nonce]) != block.toJSON():
-            raise Exception("Block doesn't match.")
+            raise TestError("Block doesn't match.")
 
     #Verify the Merit Holder height.
     if rpc.call("consensus", "getHeight", [pubKey.serialize().hex()]) != 1:
-        raise Exception("Merit Holder height doesn't matchh.")
+        raise TestError("Merit Holder height doesn't matchh.")
 
     #Verify the Merit Removal.
     if rpc.call("consensus", "getElement", [
         pubKey.serialize().hex(),
         0
     ]) != removal.toJSON():
-        raise Exception("Merit Removal doesn't match.")
+        raise TestError("Merit Removal doesn't match.")
 
     #Verify the Live Merit.
     if rpc.call("merit", "getLiveMerit", [pubKey.serialize().hex()]) != 0:
-        raise Exception("Live Merit doesn't match.")
+        raise TestError("Live Merit doesn't match.")
 
     #Verify the Total Merit.
     if rpc.call("merit", "getTotalMerit") != 0:
-        raise Exception("Total Merit doesn't match.")
+        raise TestError("Total Merit doesn't match.")
 
     #Verify the Merit Holder's Merit.
     if rpc.call("merit", "getMerit", [pubKey.serialize().hex()]) != 0:
-        raise Exception("Merit Holder's Merit doesn't match.")
-
-    print("Finished the Consensus/MeritRemoval/SameNonceSync Test.")
+        raise TestError("Merit Holder's Merit doesn't match.")

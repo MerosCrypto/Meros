@@ -97,7 +97,7 @@ class SignedVerification(Verification):
         self.signature = self.blsSignature.serialize()
 
     #Serialize.
-    def serialize(
+    def signedSerialize(
         self
     ) -> bytes:
         return (

@@ -95,7 +95,7 @@ class SignedMeritRemoval(MeritRemoval):
         self.signature: bytes = self.blsSignature.serialize()
 
     #Serialize.
-    def serialize(
+    def signedSerialize(
         self
     ) -> bytes:
         return (

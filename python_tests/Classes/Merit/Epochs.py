@@ -114,7 +114,7 @@ class Epochs:
         for final in tupleScores:
             if final[1] == 0:
                 continue
-            
+
             result.append(Mint(
                 self.mint,
                 (

@@ -13,6 +13,9 @@ from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, SignedMeri
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 
+#TestError Exception.
+from python_tests.Tests.TestError import TestError
+
 #Enum class.
 from enum import Enum
 
@@ -85,7 +88,12 @@ class Meros:
         self
     ) -> bytes:
         #Receive the header.
-        result: bytes = self.connection.recv(1)
+        try:
+            result: bytes = self.connection.recv(1)
+        except:
+            raise TestError("Node disconnected us as a peer.")
+        if len(result) == 0:
+            raise TestError("Node disconnected us as a peer.")
 
         #Determine the Message Size.
         size: int = 0
@@ -297,7 +305,7 @@ class Meros:
             res = MessageType.SignedMeritRemoval.toByte()
         else:
             raise Exception("Unsigned Element passed to Meros.signedElement.")
-        res += elem.serialize()
+        res += elem.signedSerialize()
 
         self.send(res)
         return res
