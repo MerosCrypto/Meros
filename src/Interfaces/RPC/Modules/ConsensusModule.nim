@@ -81,5 +81,29 @@ proc module*(
                     raise newJSONRPCError(-2, "Element not found", %* {
                         "height": functions.consensus.getHeight(key)
                     })
+
+            #Get Merit Holder's height.
+            "getHeight" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError
+            ].} =
+                #Verify the parameters.
+                if (
+                    (params.len != 1) or
+                    (params[0].kind != JString)
+                ):
+                    raise newException(ParamError, "")
+
+                #Extract the parameter.
+                var key: BLSPublicKey
+                try:
+                    key = newBLSPublicKey(params[0].getStr())
+                except BLSError:
+                    raise newException(ParamError, "")
+
+                #Get the height.
+                res["result"] = % functions.consensus.getHeight(key)
     except Exception as e:
         doAssert(false, "Couldn't create the Consensus Module: " & e.msg)
