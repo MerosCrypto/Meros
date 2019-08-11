@@ -5,7 +5,7 @@ from python_tests.Classes.Transactions.Send import Send
 from python_tests.Classes.Transactions.Data import Data
 
 #Consensus classes.
-from python_tests.Classes.Consensus.Element import Element
+from python_tests.Classes.Consensus.Element import Element, SignedElement
 from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
 from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, SignedMeritRemoval
 
@@ -81,19 +81,30 @@ class Meros:
         self,
         msg: bytes
     ) -> None:
-        self.connection.send(msg)
+        try:
+            self.connection.send(msg)
+        except:
+            raise TestError("Node disconnected us as a peer.")
+
+    #Receive X bytes from the socket.
+    def socketRecv(
+        self,
+        quantity: int
+    ) -> bytes:
+        try:
+            result: bytes = self.connection.recv(quantity)
+            if len(result) == 0:
+                raise Exception("")
+            return result
+        except:
+            raise TestError("Node disconnected us as a peer.")
 
     #Receive a message.
     def recv(
         self
     ) -> bytes:
         #Receive the header.
-        try:
-            result: bytes = self.connection.recv(1)
-        except:
-            raise TestError("Node disconnected us as a peer.")
-        if len(result) == 0:
-            raise TestError("Node disconnected us as a peer.")
+        result: bytes = self.socketRecv(1)
 
         #Determine the Message Size.
         size: int = 0
@@ -146,42 +157,42 @@ class Meros:
 
         #Now that we know how long the message is, get it (as long as there is one).
         if size > 0:
-            result += self.connection.recv(size)
+            result += self.socketRecv(size)
 
         #If this is a MessageType with more data...
         if MessageType(result[0]) == MessageType.Claim:
-            result += self.connection.recv((result[1] * 48) + 128)
+            result += self.socketRecv((result[1] * 48) + 128)
 
         elif MessageType(result[0]) == MessageType.Send:
-            result += self.connection.recv((result[1] * 49) + 1)
-            result += self.connection.recv((result[-1] * 40) + 68)
+            result += self.socketRecv((result[1] * 49) + 1)
+            result += self.socketRecv((result[-1] * 40) + 68)
 
         elif MessageType(result[0]) == MessageType.Data:
-            result += self.connection.recv(result[-1] + 68)
+            result += self.socketRecv(result[-1] + 68)
 
         elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
             if result[-1] == 0:
-                result += self.connection.recv(69)
+                result += self.socketRecv(69)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 
             if result[-1] == 0:
-                result += self.connection.recv(132)
+                result += self.socketRecv(132)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 
         elif MessageType(result[0]) == MessageType.BlockBody:
-            result += self.connection.recv((int.from_bytes(result[1 : 5], byteorder = "big") * 100) + 1)
-            result += self.connection.recv(result[-1] + 49)
+            result += self.socketRecv((int.from_bytes(result[1 : 5], byteorder = "big") * 100) + 1)
+            result += self.socketRecv(result[-1] + 49)
 
         elif MessageType(result[0]) == MessageType.MeritRemoval:
             if result[-1] == 0:
-                result += self.connection.recv(69)
+                result += self.socketRecv(69)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 
             if result[-1] == 0:
-                result += self.connection.recv(68)
+                result += self.socketRecv(68)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 
@@ -304,8 +315,8 @@ class Meros:
         elif isinstance(elem, SignedMeritRemoval):
             res = MessageType.SignedMeritRemoval.toByte()
         else:
-            raise Exception("Unsigned Element passed to Meros.signedElement.")
-        res += elem.signedSerialize()
+            raise Exception("Unsupported Element passed to Meros.signedElement.")
+        res += SignedElement.fromElement(elem).signedSerialize()
 
         self.send(res)
         return res
