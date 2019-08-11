@@ -135,7 +135,7 @@ def BlockBeforeArchiveTest(
 
     #Verify the Merit Holder height.
     if rpc.call("consensus", "getHeight", [pubKey.serialize().hex()]) != 1:
-        raise TestError("Merit Holder height doesn't matchh.")
+        raise TestError("Merit Holder height doesn't match.")
 
     #Verify the Consensus
     for e in range(0, len(consensus.holders[pubKey.serialize()])):

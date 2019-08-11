@@ -21,9 +21,6 @@ from python_tests.Tests.TestError import TestError
 from python_tests.Meros.Meros import MessageType
 from python_tests.Meros.RPC import RPC
 
-#BLS lib.
-import blspy
-
 #JSON standard lib.
 import json
 
@@ -50,9 +47,6 @@ def SameNonceSyncTest(
         snVectors["blockchain"]
     )
     snFile.close()
-
-    #BLS Public Key.
-    pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
 
     #Handshake with the node.
     rpc.meros.connect(
@@ -127,18 +121,18 @@ def SameNonceSyncTest(
             raise TestError("Block doesn't match.")
 
     #Verify the Merit Holder height.
-    if rpc.call("consensus", "getHeight", [pubKey.serialize().hex()]) != 1:
-        raise TestError("Merit Holder height doesn't matchh.")
+    if rpc.call("consensus", "getHeight", [removal.holder.hex()]) != 1:
+        raise TestError("Merit Holder height doesn't match.")
 
     #Verify the Merit Removal.
     if rpc.call("consensus", "getElement", [
-        pubKey.serialize().hex(),
+        removal.holder.hex(),
         0
     ]) != removal.toJSON():
         raise TestError("Merit Removal doesn't match.")
 
     #Verify the Live Merit.
-    if rpc.call("merit", "getLiveMerit", [pubKey.serialize().hex()]) != 0:
+    if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 0:
         raise TestError("Live Merit doesn't match.")
 
     #Verify the Total Merit.
@@ -146,5 +140,5 @@ def SameNonceSyncTest(
         raise TestError("Total Merit doesn't match.")
 
     #Verify the Merit Holder's Merit.
-    if rpc.call("merit", "getMerit", [pubKey.serialize().hex()]) != 0:
+    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != 0:
         raise TestError("Merit Holder's Merit doesn't match.")
