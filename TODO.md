@@ -71,20 +71,14 @@ has several notes in `discard """ """` about syncing transactions which should b
 
 ### Merit Removals.
 
-Done:
-- Object/Lib files.
-- Serialize/Parse.
-- Check if MeritHolders create conflicting Elements.
-- Don't count malicious MeritHolders' verifications.
-- Create/broadcast a MeritRemoval for malicious MeritHolders.
-
-TODO:
 - Check if MeritHolders verify conflicting Transactions.
-- Reverse the MeritHolder's pending actions.
-- Apply the pending actions if the next Block doesn't contain the MeritRemoval.
-- When a Block comes with that MeritRemoval, remove the malicious Merit from the live Merit.
-- Save all of this to the database.
-- We don't handle multiple possible MeritRemovals.
+- Reverse MeritHolders' pending actions.
+
+- Handle live MeritRemovals.
+- Handle multiple possible MeritRemovals.
+
+- Apply pending actions if the next Block doesn't contain the MeritRemoval.
+- Update pending MeritRemovals' nonces.
 
 ### Nim Tests:
 
@@ -110,8 +104,9 @@ Wallet:
 
 - Expand the Ed25519 Test.
 
-Datbase/Filesystem/DB/Serialize:
+Database/Filesystem/DB/Serialize:
 
+- Consensus/DBSerializeElement Test.
 - Transactions/SerializeTransaction Test.
 
 Datbase/Filesystem/DB:

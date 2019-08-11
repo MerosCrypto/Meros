@@ -128,6 +128,7 @@ proc sync*(
     consensus: Consensus,
     newBlock: Block
 ) {.forceCheck: [
+    ValueError,
     DataMissing,
     ValidityConcern
 ], async.} =
@@ -238,7 +239,10 @@ proc sync*(
                     continue
 
             of MeritRemoval as mr:
-                network.mainFunctions.consensus.addMeritRemoval(mr)
+                try:
+                    network.mainFunctions.consensus.addMeritRemoval(mr)
+                except ValueError as e:
+                    fcRaise e
 
     #Sync the missing Transactions.
     if txHashes.len != 0:

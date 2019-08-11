@@ -96,6 +96,17 @@ proc `[]`*(
         doAssert(false, "Couldn't load a Element we were asked for from the Database: " & e.msg)
     return
 
+#Add an Element to the Merkle.
+proc addToMerkle*(
+    holder: var MeritHolder,
+    element: Element
+) {.forceCheck: [].} =
+    case element:
+        of Verification as verif:
+            holder.merkle.add(Blake384(verif.serializeSign()))
+        else:
+            doAssert(false, "Element should be a Verification.")
+
 #Add an Element to a MeritHolder.
 proc add*(
     holder: var MeritHolder,
@@ -114,11 +125,7 @@ proc add*(
     holder.height = holder.height + 1
 
     #Add the Element to the Merkle.
-    case element:
-        of Verification as verif:
-            holder.merkle.add(Blake384(verif.serializeSign()))
-        else:
-            doAssert(false, "Element should be a Verification.")
+    holder.addToMerkle(element)
 
     #Add the Element to the Database.
     holder.db.save(element)

@@ -117,7 +117,9 @@ type
 
         addMeritRemoval*: proc (
             mr: MeritRemoval
-        ) {.raises: [].}
+        ) {.raises: [
+            ValueError
+        ].}
 
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval

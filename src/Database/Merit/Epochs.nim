@@ -46,6 +46,7 @@ import tables
 proc shift*(
     epochs: var Epochs,
     consensus: Consensus,
+    removals: seq[BLSPublicKey],
     records: seq[MeritHolderRecord],
     tips: TableRef[string, int] = nil
 ): Epoch {.forceCheck: [].} =
@@ -57,8 +58,12 @@ proc shift*(
         #Verifications we're handling.
         elements: seq[Element]
 
-    #Loop over each Verification.
+    #Loop over each record.
     for record in records:
+        #If this person just lost their Merit, they have no elements.
+        if removals.contains(record.key):
+            continue
+
         #If we were passed tips, use those for the starting point.
         if not tips.isNil:
             try:
@@ -131,7 +136,7 @@ proc newEpochs*(
             tips[holder] = 0
 
     #Shift the last 10 blocks. Why?
-    #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late consensus aren't labelled as first appearances.
+    #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late elements aren't labelled as first appearances.
     var start: int = 10
     #If the blockchain is smaller than 10, load every block.
     if blockchain.height < 10:
@@ -139,8 +144,19 @@ proc newEpochs*(
 
     try:
         for i in countdown(start, 1):
+            #See if any MeritHolders lost Merit.
+            var removals: seq[BLSPublicKey] = @[]
+            for record in blockchain[blockchain.height - i].records:
+                try:
+                    if tips[record.key.toString()] == record.nonce - 1:
+                        if consensus[record.key][record.nonce] of MeritRemoval:
+                            removals.add(record.key)
+                except KeyError as e:
+                    doAssert(false, "Couldn't load an Element archived in a Block saved to the disk: " & e.msg)
+            
             discard result.shift(
                 consensus,
+                removals,
                 blockchain[blockchain.height - i].records,
                 tips
             )

@@ -7,6 +7,9 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
+
 #Consensus lib.
 import ../Consensus/Consensus
 
@@ -74,6 +77,7 @@ proc newMerit*(
 proc processBlock*(
     merit: Merit,
     consensus: Consensus,
+    removals: seq[BLSPublicKey],
     newBlock: Block
 ): Epoch {.forceCheck: [
     ValueError,
@@ -93,6 +97,7 @@ proc processBlock*(
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
         consensus,
+        removals,
         newBlock.records
     )
 

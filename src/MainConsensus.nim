@@ -198,8 +198,19 @@ proc mainConsensus() {.forceCheck: [].} =
 
         functions.consensus.addMeritRemoval = proc (
             mr: MeritRemoval
-        ) {.forceCheck: [].} =
-            discard
+        ) {.forceCheck: [
+            ValueError
+        ].} =
+            #Print that we're adding the MeritRemoval.
+            echo "Adding a new Merit Removal from a Block."
+
+            #Add the MeritRemoval.
+            try:
+                consensus.add(mr)
+            except ValueError as e:
+                fcRaise e
+
+            echo "Successfully added a new MeritRemoval."
 
         functions.consensus.addSignedMeritRemoval = proc (
             mr: SignedMeritRemoval

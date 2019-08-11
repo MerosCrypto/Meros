@@ -47,7 +47,7 @@ proc newConsensus*(
 #Flag a MeritHolder as malicious.
 proc flag*(
     consensus: Consensus,
-    removal: SignedMeritRemoval
+    removal: MeritRemoval
 ) {.forceCheck: [].} =
     if consensus.malicious.hasKey(removal.holder.toString()):
         return
@@ -112,6 +112,50 @@ proc add*(
 
     consensus.handleUnknown(verif, txExists)
 
+#Add a MeritRemoval.
+proc add*(
+    consensus: Consensus,
+    mr: MeritRemoval
+) {.forceCheck: [
+    ValueError
+].} =
+    #Same nonce.
+    var valid: bool = false
+    if mr.element1.nonce == mr.element2.nonce:
+        valid = true
+    #Verified competing elements.
+    else:
+        discard
+
+    if not valid:
+        raise newException(ValueError, "Unwarranted MeritRemoval.")
+
+    consensus.flag(mr)
+
+#Archive a MeritRemoval. This:
+#- Sets the MeritHolder's height to 1 above the archived height.
+#- Saves the element to its position.
+proc archive*(
+    consensus: Consensus,
+    mr: MeritRemoval
+) {.forceCheck: [].} =
+    #Grab the MeritHolder.
+    var mh: MeritHolder
+    try:
+        mh = consensus[mr.holder]
+    except KeyError as e:
+        doAssert(false, "Couldn't get the MeritHolder who caused a valid MeritRemoval: " & e.msg)
+
+    #Delete reverted elements (except the first which we overwrite).
+    for e in mh.archived + 2 ..< mh.height:
+        consensus.db.del(mr.holder, e)
+
+    #Correct the height.
+    mh.height = mh.archived + 2
+
+    #Save the element.
+    consensus.db.save(mr)
+
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.
 proc archive*(
     consensus: Consensus,
@@ -136,15 +180,9 @@ proc archive*(
         consensus[record.key].merkle = newMerkle()
         for e in record.nonce + 1 ..< consensus[record.key].height:
             try:
-                elem = consensus[record.key][e]
+                consensus[record.key].addToMerkle(consensus[record.key][e])
             except IndexError as e:
                 doAssert(false, "Couldn't get an element we know we have: " & e.msg)
-
-            case elem:
-                of Verification as verif:
-                    consensus[record.key].merkle.add(verif.hash)
-                else:
-                    doAssert(false, "Element should be a Verification.")
 
         #Update the archived field.
         consensus[record.key].archived = record.nonce

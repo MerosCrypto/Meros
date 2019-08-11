@@ -97,6 +97,8 @@ proc mainMerit() {.forceCheck: [].} =
             #Sync this Block.
             try:
                 await network.sync(consensus, newBlock)
+            except ValueError as e:
+                fcRaise e
             except DataMissing as e:
                 raise newException(GapError, e.msg)
             except ValidityConcern as e:
@@ -109,9 +111,12 @@ proc mainMerit() {.forceCheck: [].} =
             for record in newBlock.records:
                 #Check if this holder lost their Merit.
                 if consensus.malicious.hasKey(record.key.toString()):
-                    if consensus.malicious[record.key.toString()].merkle == record.merkle:
-                        removed.add(record.key)
-                        continue
+                    try:
+                        if consensus.malicious[record.key.toString()].merkle == record.merkle:
+                            removed.add(record.key)
+                            continue
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a MeritRemoval we know exists: " & e.msg)
 
                 #Grab the MeritHolder.
                 var holder: MeritHolder = consensus[record.key]
@@ -132,7 +137,7 @@ proc mainMerit() {.forceCheck: [].} =
             #Add the Block to the Merit.
             var epoch: Epoch
             try:
-                epoch = merit.processBlock(consensus, newBlock)
+                epoch = merit.processBlock(consensus, removed, newBlock)
             except ValueError as e:
                 fcRaise e
             except GapError as e:
@@ -142,7 +147,10 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Save every archived MeritRemoval and delete the relevant Merit.
             for removee in removed:
-                consensus.archive(consensus.malicious[removee.toString()])
+                try:
+                    consensus.archive(consensus.malicious[removee.toString()])
+                except KeyError as e:
+                    doAssert(false, "Couldn't get the MeritRemoval of someone who has one: " & e.msg)
                 consensus.malicious.del(removee.toString())
                 merit.state[removee] = 0
 
@@ -248,7 +256,6 @@ proc mainMerit() {.forceCheck: [].} =
                 raise newException(ValueError, e.msg)
             except DataExists as e:
                 fcRaise e
-
 
             var body: BlockBody
             try:
