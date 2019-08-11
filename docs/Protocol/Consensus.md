@@ -33,7 +33,7 @@ They have the following fields:
 
 - hash: Hash of the Transaction verified.
 
-Verifications can be of any hash. If the node locates the specified Transaction, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Transaction. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Transaction. This enables pruning of unverified competing Transactions. Verifications for Mints are considered Verifications for unknown hashes.
+Verifications can only be of parsable Transactions with a valid signature. Verifications can not be of unknown hashes.
 
 `Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
 
@@ -79,7 +79,7 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Transactions, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Verifications are struck null and void, with all votes (SendDifficulty, DataDifficulty, and GasPrice) being completely removed from consideration. Pending Elements can be safely pruned once the MeritRemoval is included in a Block. It should be noted if a MeritHolder verifies competing Transactions, those competing Transactions can no longer be pruned.
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Transactions, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Verifications are struck null and void, with all votes (SendDifficulty, DataDifficulty, and GasPrice) being completely removed from consideration. Pending Elements can be safely pruned once the MeritRemoval is included in a Block.
 
 The creation of a MeritRemoval causes the MeritHolder's Merit to no longer be usable. Once the MeritRemoval is in a Block, the Merit no longer contributes to the amount of 'live' Merit, in order to not raise the percentage of Merit needed to verify a transaction. This is further described in the Merit documentation. Merit Holders are ineligible for rewards using removed Merit. Merit Holders may regain Merit, yet if the Block which archives their Merit Removal gives them Merit, it is also removed.
 
@@ -96,7 +96,7 @@ MeritRemovals have the following fields:
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
-- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2. If one Element has already been archived in a Block, it is the signature of the other Element.
+- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2. If one Element has already been archived in a Block, the second Element is the one which has yet to be archived. The MeritRemoval's signature is the second Element's signature.
 
 Their message lengths are their non-"Signed" message length plus 96 bytes; the 96-byte signature which is appended to the end of the serialized non-"Signed" version.
 
@@ -104,7 +104,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 - Meros counts Verifications which were never archived for a Transaction's weight.
 - Meros doesn't support defaulting.
-- Meros doesn't check if Verifications for an unknown hash reaches majority Merit.
+- Meros supports Verifications with unknown hashes.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
