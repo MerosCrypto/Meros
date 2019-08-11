@@ -15,6 +15,7 @@ type
 
     ConsensusDB* = ref object
         cache*: Table[string, string]
+        deleted*: seq[string]
         holders*: Table[string, bool]
         holdersStr*: string
         unknown*: seq[string]
@@ -39,6 +40,7 @@ proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
 proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
     ConsensusDB(
         cache: initTable[string, string](),
+        deleted: @[],
         holders: initTable[string, bool](),
         unknown: newSeq[string](6)
     )

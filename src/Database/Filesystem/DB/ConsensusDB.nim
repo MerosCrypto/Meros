@@ -14,6 +14,9 @@ import ../../../Wallet/MinerWallet
 import ../../Consensus/Element
 
 #Serialize/parse libs.
+import Serialize/Consensus/DBSerializeElement
+import Serialize/Consensus/DBParseElement
+
 import Serialize/Consensus/SerializeUnknown
 import Serialize/Consensus/ParseUnknown
 
@@ -24,7 +27,7 @@ export DBObj
 #Tables standard lib.
 import tables
 
-#Put/Get/Commit for the Consensus DB.
+#Put/Get/Delete/Commit for the Consensus DB.
 proc put(
     db: DB,
     key: string,
@@ -49,9 +52,24 @@ proc get(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
+proc delete(
+    db: DB,
+    key: string
+) {.forceCheck: [].} =
+    db.consensus.cache.del(key)
+    db.consensus.deleted.add(key)
+
 proc commit*(
     db: DB
 ) {.forceCheck: [].} =
+    for key in db.consensus.deleted:
+        try:
+            db.lmdb.delete("consensus", key)
+        except Exception:
+            #If we delete something before it's committed, it'll throw.
+            discard
+    db.consensus.deleted = @[]
+
     for u in 0 ..< 5:
         db.consensus.cache["u" & char(u)] = db.consensus.unknown[u]
 
@@ -92,15 +110,10 @@ proc save*(
     db: DB,
     elem: Element
 ) {.forceCheck: [].} =
-    case elem:
-        of Verification as verif:
-            db.put(
-                verif.holder.toString() & verif.nonce.toBinary().pad(1),
-                verif.hash.toString()
-            )
-
-        else:
-            doAssert(false, "Element should be Verification.")
+    db.put(
+        elem.holder.toString() & elem.nonce.toBinary().pad(1),
+        elem.serialize()
+    )
 
 proc saveUnknown*(
     db: DB,
@@ -145,15 +158,11 @@ proc load*(
     db: DB,
     holder: BLSPublicKey,
     nonce: int
-): Verification {.forceCheck: [
+): Element {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = newVerificationObj(
-            db.get(holder.toString() & nonce.toBinary().pad(1)).toHash(384)
-        )
-        result.holder = holder
-        result.nonce = nonce
+        result = db.get(holder.toString() & nonce.toBinary().pad(1)).parseElement(holder, nonce)
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -178,3 +187,11 @@ proc loadUnknown*(
                 result[u].add(unknowns[i ..< i + UNKNOWN_LEN].parseUnknown())
             except Exception as e:
                 raise newException(DBReadError, e.msg)
+
+#Delete an element.
+proc del*(
+    db: DB,
+    key: BLSPublicKey,
+    nonce: int
+) {.forceCheck: [].} =
+    db.delete(key.toString() & nonce.toBinary().pad(1))
