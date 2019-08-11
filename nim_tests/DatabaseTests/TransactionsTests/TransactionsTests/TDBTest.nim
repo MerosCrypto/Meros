@@ -160,7 +160,7 @@ proc test*() =
             inc(newBlock)
 
         #Add it,
-        var epoch: Epoch = merit.processBlock(consensus, newBlock)
+        var epoch: Epoch = merit.processBlock(consensus, @[], newBlock)
 
         #Manually clear the difficulty.
         merit.blockchain.difficulty = newDifficultyObj(

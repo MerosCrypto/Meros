@@ -205,7 +205,7 @@ proc test*() =
         state.processBlock(blockchain, mining)
 
         #Shift the records onto the Epochs.
-        discard epochs.shift(consensus, records)
+        discard epochs.shift(consensus, @[], records)
 
         #Mark the records as archived.
         consensus.archive(records)

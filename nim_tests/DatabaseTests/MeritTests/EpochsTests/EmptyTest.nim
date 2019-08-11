@@ -31,6 +31,7 @@ proc test*() =
         #Rewards.
         rewards: seq[Reward] = epochs.shift(
             nil,
+            @[],
             @[]
         ).calculate(state)
 

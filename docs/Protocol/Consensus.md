@@ -90,7 +90,7 @@ MeritRemovals have the following fields:
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48-byte holder, the 4-byte nonce, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder.
+`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48-byte holder, the 4-byte nonce, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder. Even though MeritRemovals are not signed, they use a prefix of "\4" for merkle creation.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 

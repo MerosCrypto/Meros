@@ -34,6 +34,13 @@ class Data(Transaction):
         self.argon: bytes = SpamFilter.run(self.hash, self.proof)
         self.verified: bool = False
 
+    #Transaction -> Data. Satisifes static typing requirements.
+    @staticmethod
+    def fromTransaction(
+        tx: Transaction
+    ) -> Any:
+        return tx
+
     #Sign.
     def sign(
         self,
@@ -83,13 +90,6 @@ class Data(Transaction):
 
             "verified": self.verified
         }
-
-    #Transaction -> Data. Satisifes static typing requirements.
-    @staticmethod
-    def fromTransaction(
-        tx: Transaction
-    ) -> Any:
-        return tx
 
     #JSON -> Data.
     @staticmethod
