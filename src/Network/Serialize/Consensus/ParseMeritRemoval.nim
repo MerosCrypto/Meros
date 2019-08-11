@@ -61,7 +61,7 @@ proc parseMeritRemoval*(
                 fcRaise e
 
         else:
-            raise newException(ValueError, "parseMeritRemoval tried to parse an invalid Element type")
+            raise newException(ValueError, "parseMeritRemoval tried to parse an invalid Element type.")
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(
