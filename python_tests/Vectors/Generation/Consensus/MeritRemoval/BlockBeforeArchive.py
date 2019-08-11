@@ -5,7 +5,8 @@ from typing import IO, Dict, Any
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
-from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
+from python_tests.Classes.Consensus.Verification import SignedVerification
+from python_tests.Classes.Consensus.MeritRemoval import PartiallySignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Merit classes.
@@ -49,9 +50,9 @@ merit.add(
     consensus,
     Block.fromJSON(vectors["blockchain"][0])
 )
-removal = SignedMeritRemoval.fromJSON(vectors["removal"])
+consensus.add(SignedVerification.fromJSON(vectors["removal"]["elements"][0]))
+removal: PartiallySignedMeritRemoval = PartiallySignedMeritRemoval.fromJSON(vectors["removal"])
 removal.nonce = 1
-consensus.add(removal.e1)
 consensus.add(removal)
 snFile.close()
 
@@ -72,6 +73,7 @@ for i in range(0, 2):
                 i,
                 consensus.getMerkle(
                     pubKey,
+                    i,
                     i
                 )
             )

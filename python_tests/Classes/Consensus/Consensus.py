@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple, Any
 #Element classes.
 from python_tests.Classes.Consensus.Element import Element, SignedElement
 from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
-from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, SignedMeritRemoval
+from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, PartiallySignedMeritRemoval, SignedMeritRemoval
 from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 
 #BLS lib.
@@ -59,23 +59,39 @@ class Consensus:
         self,
         holderArg: blspy.PublicKey,
         start: int,
-        end: int = 0
+        end: int = -1
     ) -> bytes:
         holder: bytes = holderArg.serialize()
         merkle: List[bytes] = []
 
         end += 1
-        if end == 1:
+        if end == 0:
             end = len(self.holders[holder])
 
         for e in range(start, end):
-            if isinstance(self.holders[holder][e], Verification):
+            elem: Element = self.holders[holder][e]
+            if isinstance(elem, Verification):
                 merkle.append(
                     blake2b(
-                        self.holders[holder][e].prefix + Verification.serialize(Verification.fromElement(self.holders[holder][e])),
+                        elem.prefix + Verification.serialize(Verification.fromElement(elem)),
                         digest_size = 48
                     ).digest()
-            )
+                )
+            elif isinstance(elem, MeritRemoval):
+                if len(merkle) != 0:
+                    raise Exception("Creating a merkle with a MeritRemoval despite the merkle already having elements.")
+
+                merkle.append(
+                    blake2b(
+                        elem.prefix + MeritRemoval.serialize(MeritRemoval.fromElement(elem)),
+                        digest_size = 48
+                    ).digest()
+                )
+
+                if e != end - 1:
+                    raise Exception("Creating a merkle with a MeritRemoval despite the merkle having more elements after this.")
+            else:
+                raise Exception("MeritHolder has an unsupported Element type: " + type(elem).__name__)
 
         if len(merkle) == 0:
             return b'\0' * 48
@@ -125,7 +141,10 @@ class Consensus:
                     if elem["descendant"] == "Verification":
                         result.add(SignedVerification.fromJSON(elem))
                     elif elem["descendant"] == "MeritRemoval":
-                        result.add(SignedMeritRemoval.fromJSON(elem))
+                        if elem["partial"]:
+                            result.add(PartiallySignedMeritRemoval.fromJSON(elem))
+                        else:
+                            result.add(SignedMeritRemoval.fromJSON(elem))
                     else:
                         raise Exception("JSON has an unsupported Element type: " + elem["descendant"])
                 else:
