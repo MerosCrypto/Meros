@@ -144,7 +144,7 @@ class Meros:
         elif MessageType(result[0]) == MessageType.SignedVerification:
             size = 196
         elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
-            size = 53
+            size = 54
 
         elif MessageType(result[0]) == MessageType.BlockHeader:
             size = 204
@@ -153,7 +153,7 @@ class Meros:
         elif MessageType(result[0]) == MessageType.Verification:
             size = 100
         elif MessageType(result[0]) == MessageType.MeritRemoval:
-            size = 53
+            size = 54
 
         #Now that we know how long the message is, get it (as long as there is one).
         if size > 0:
@@ -187,12 +187,12 @@ class Meros:
 
         elif MessageType(result[0]) == MessageType.MeritRemoval:
             if result[-1] == 0:
-                result += self.socketRecv(69)
+                result += self.socketRecv(53)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 
             if result[-1] == 0:
-                result += self.socketRecv(68)
+                result += self.socketRecv(52)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 

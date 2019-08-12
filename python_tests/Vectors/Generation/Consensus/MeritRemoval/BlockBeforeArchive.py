@@ -64,7 +64,7 @@ for i in range(0, 2):
             merit.blockchain.last(),
             int(time()),
             consensus.getAggregate(
-                [(pubKey, i)]
+                [(pubKey, i, i)]
             )
         ),
         BlockBody([

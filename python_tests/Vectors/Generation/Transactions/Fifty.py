@@ -116,7 +116,7 @@ block: Block = Block(
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate(
-            [(blsPubKey1, 2)]
+            [(blsPubKey1, 2, -1)]
         )
     ),
     BlockBody([
@@ -153,7 +153,7 @@ block = Block(
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate(
-            [(blsPubKey1, 4)]
+            [(blsPubKey1, 4, -1)]
         )
     ),
     BlockBody(
@@ -210,8 +210,8 @@ block = Block(
         int(time()),
         consensus.getAggregate(
             [
-                (blsPubKey2, 0),
-                (blsPubKey1, 6)
+                (blsPubKey2, 0, -1),
+                (blsPubKey1, 6, -1)
             ]
         )
     ),

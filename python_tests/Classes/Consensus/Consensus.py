@@ -38,7 +38,7 @@ class Consensus:
     def getAggregate(
         self,
         records: List[
-            Tuple[blspy.PublicKey, int]
+            Tuple[blspy.PublicKey, int, int]
         ]
     ) -> bytes:
         signatures: List[blspy.Signature] = []
@@ -46,7 +46,11 @@ class Consensus:
         for record in records:
             holder: bytes = record[0].serialize()
             start: int = record[1]
-            end: int = len(self.holders[holder])
+            end: int = record[2]
+            if end == -1:
+                end = len(self.holders[holder])
+            else:
+                end += 1
 
             for e in range(start, end):
                 signatures.append(SignedElement.fromElement(self.holders[holder][e]).blsSignature)
