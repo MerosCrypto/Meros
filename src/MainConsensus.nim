@@ -7,8 +7,10 @@ proc mainConsensus() {.forceCheck: [].} =
         #Provide access to the holder's height.
         functions.consensus.getHeight = proc (
             key: BLSPublicKey
-        ): int {.inline, forceCheck: [].} =
-            consensus[key].height
+        ): int {.forceCheck: [].} =
+            if consensus.malicious.hasKey(key.toString()):
+                return consensus[key].archived + 2
+            result = consensus[key].height
 
         #Provide access to consensus.
         functions.consensus.getElement = proc (
@@ -17,6 +19,17 @@ proc mainConsensus() {.forceCheck: [].} =
         ): Element {.forceCheck: [
             IndexError
         ].} =
+            if consensus.malicious.hasKey(key.toString()):
+                if nonce == consensus[key].archived + 1:
+                    try:
+                        return consensus.malicious[key.toString()]
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a MeritRemoval despite confirming it exists: " & e.msg)
+                elif nonce <= consensus[key].archived:
+                    discard
+                else:
+                    raise newException(IndexError, "Element requested has been reverted.")
+
             try:
                 result = consensus[key][nonce]
             except IndexError as e:
@@ -141,10 +154,6 @@ proc mainConsensus() {.forceCheck: [].} =
         ].} =
             #Print that we're adding the SignedVerification.
             echo "Adding a new SignedVerification."
-
-            #Verify the MeritHolder has Merit.
-            if merit.state[verif.holder] == 0:
-                raise newException(ValueError, "MeritHolder doesn't hold any Merit.")
 
             #See if the Transaction exists.
             var txExists: bool

@@ -1,5 +1,4 @@
 #Tests proper creation and handling of a MeritRemoval when Meros receives different Elements sharing a nonce.
-#The Elements are already in a MeritRemoval archived in a Block, which is synced.
 
 #Types.
 from typing import Dict, IO, Any
@@ -25,27 +24,6 @@ from python_tests.Meros.RPC import RPC
 #JSON standard lib.
 import json
 
-#Send a SignedVerification as if its live and handle the resulting network activity.
-def signedVerification(
-    rpc: RPC,
-    sv: SignedElement
-) -> None:
-    rpc.meros.signedElement(sv)
-    while True:
-        msg: bytes = rpc.meros.recv()
-
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
-
-        elif MessageType(msg[0]) == MessageType.ElementRequest:
-            rpc.meros.dataMissing()
-
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
-            break
-
-        else:
-            raise TestError("Unexpected message sent: " + msg.hex().upper())
-
 #Verify a MeritRemoval over the RPC.
 def verifyMeritRemoval(
     rpc: RPC,
@@ -55,26 +33,13 @@ def verifyMeritRemoval(
     if rpc.call("consensus", "getHeight", [removal.holder.hex()]) != 1:
         raise TestError("Merit Holder height doesn't match.")
 
-    #Verify the Merit Removal.
     if rpc.call("consensus", "getElement", [
         removal.holder.hex(),
         0
     ]) != removal.toJSON():
         raise TestError("Merit Removal doesn't match.")
 
-    #Verify the Live Merit.
-    if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 0:
-        raise TestError("Live Merit doesn't match.")
-
-    #Verify the Total Merit.
-    if rpc.call("merit", "getTotalMerit") != 0:
-        raise TestError("Total Merit doesn't match.")
-
-    #Verify the Merit Holder's Merit.
-    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != 0:
-        raise TestError("Merit Holder's Merit doesn't match.")
-
-def SameNonceLiveTest(
+def SameNonceCauseTest(
     rpc: RPC
 ) -> None:
     snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
@@ -117,7 +82,7 @@ def SameNonceLiveTest(
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
             height = int.from_bytes(msg[1 : 5], byteorder = "big")
             if height == 0:
-                rpc.meros.blockHash(merit.blockchain.last())
+                rpc.meros.blockHash(merit.blockchain.blocks[1].header.hash)
             else:
                 if height >= len(merit.blockchain.blocks):
                     raise TestError("Meros asked for a Block Hash we do not have.")
@@ -150,14 +115,18 @@ def SameNonceLiveTest(
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-    #Send SignedVerifications.
-    signedVerification(rpc, removal.se1)
-    signedVerification(rpc, removal.se2)
+    #Send the SignedVerifications.
+    rpc.meros.signedElement(removal.se1)
+    msg = rpc.meros.recv()
+    if MessageType(msg[0]) != MessageType.SignedVerification:
+        raise TestError("Unexpected message sent: " + msg.hex().upper())
+
+    rpc.meros.signedElement(removal.se2)
 
     #Verify the MeritRemoval.
-    mrFromMeros: bytes = rpc.meros.recv()
-    if mrFromMeros != (MessageType.MeritRemoval.toByte() + removal.serialize()):
-        raise TestError("Meros didn't send us a Merit Removal.")
+    msg = rpc.meros.recv()
+    if msg != (MessageType.SignedMeritRemoval.toByte() + removal.signedSerialize()):
+        raise TestError("Meros didn't send us the Merit Removal.")
 
     verifyMeritRemoval(rpc, removal)
 
@@ -220,3 +189,15 @@ def SameNonceLiveTest(
 
     #Verify the MeritRemoval again.
     verifyMeritRemoval(rpc, removal)
+
+    #Verify the Live Merit.
+    if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 0:
+        raise TestError("Live Merit doesn't match.")
+
+    #Verify the Total Merit.
+    if rpc.call("merit", "getTotalMerit") != 0:
+        raise TestError("Total Merit doesn't match.")
+
+    #Verify the Merit Holder's Merit.
+    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != 0:
+        raise TestError("Merit Holder's Merit doesn't match.")

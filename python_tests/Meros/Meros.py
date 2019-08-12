@@ -172,14 +172,18 @@ class Meros:
 
         elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
             if result[-1] == 0:
-                result += self.socketRecv(69)
+                result += self.socketRecv(52)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 
+            result += self.socketRecv(1)
+
             if result[-1] == 0:
-                result += self.socketRecv(132)
+                result += self.socketRecv(52)
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
+
+            result += self.socketRecv(96)
 
         elif MessageType(result[0]) == MessageType.BlockBody:
             result += self.socketRecv((int.from_bytes(result[1 : 5], byteorder = "big") * 100) + 1)

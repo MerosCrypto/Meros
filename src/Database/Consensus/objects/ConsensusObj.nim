@@ -48,6 +48,7 @@ proc newConsensusObj*(
     result = Consensus(
         db: db,
         holders: initTable[string, MeritHolder](),
+        malicious: initTable[string, MeritRemoval](),
         unknowns: initTable[string, seq[seq[BLSPublicKey]]]()
     )
 

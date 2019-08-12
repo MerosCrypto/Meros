@@ -80,7 +80,7 @@ type
     ConsensusFunctionBox* = ref object
         getHeight*: proc (
             key: BLSPublicKey
-        ): int {.inline, raises: [].}
+        ): int {.raises: [].}
 
         getElement*: proc (
             key: BLSPublicKey,

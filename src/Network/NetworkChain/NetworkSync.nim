@@ -159,10 +159,21 @@ proc sync*(
             ))
 
         #Grab their pending elements and place it in elements.
-        elements[record.key.toString()] = newSeq[Element](holder.height - holder.archived - 1)
+        elements[holder.keyStr] = newSeq[Element](holder.height - holder.archived - 1)
+        try:
+            if (
+                (consensus.malicious.hasKey(holder.keyStr)) and
+                (record.nonce == holder.archived + 1) and
+                (record.merkle == consensus.malicious[holder.keyStr].merkle)
+            ):
+                elements[holder.keyStr][0] = consensus.malicious[holder.keyStr]
+                continue
+        except KeyError as e:
+            doAssert(false, "Couldn't get MeritRemoval for someone who has one: " & e.msg)
+
         for e in holder.archived + 1 ..< holder.height:
             try:
-                elements[record.key.toString()][e - (holder.archived + 1)] = holder[e]
+                elements[holder.keyStr][e - (holder.archived + 1)] = holder[e]
             except KeyError as e:
                 doAssert(false, "Couldn't access a seq in a table we just created: " & e.msg)
             except IndexError as e:

@@ -108,7 +108,10 @@ proc add*(
     except DataExists as e:
         fcRaise e
     except MaliciousMeritHolder as e:
-        fcRaise e
+        raise newMaliciousMeritHolder(
+            e.msg,
+            e.removal
+        )
 
     consensus.handleUnknown(verif, txExists)
 

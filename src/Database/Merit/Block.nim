@@ -48,7 +48,7 @@ proc verify*(
 ): bool {.forceCheck: [].} =
     result = true
 
-    #Make sure there's the same amount of MeritHolder as there are records.
+    #Make sure there's the same amount of MeritHolders as there are records.
     if elems.len != blockArg.records.len:
         return false
 
@@ -79,7 +79,7 @@ proc verify*(
         #The presented Table has a different set of MeritHolders than the records.
         except KeyError:
             return false
-        #Couldn't create an AggregateInfo out of a BLSPublicKey and a hash.
+        #Couldn't create an AggregationInfo out of a BLSPublicKey and a hash.
         except BLSError:
             return false
 

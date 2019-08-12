@@ -4,4 +4,4 @@
 
 # BlockHeight
 
-`BlockHeight` is the expected response to a `Handshake` sent after clients have already performed their initial connection. It has a message length of 4 bytes; the 4-byte sender's Blockchain's height.
+`BlockHeight` is the expected response to a `Handshake` sent after clients have already performed their initial connection. It has a message length of 4 bytes; the 4-byte sender's Blockchain's height (including the Genesis block).
