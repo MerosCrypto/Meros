@@ -119,16 +119,24 @@ proc add*(
 ) {.forceCheck: [
     ValueError
 ].} =
+    #If this is a partial MeritRemoval, make sure the first Element is already archived on this Consensus DAG.
+    if mr.partial:
+        if mr.element1.nonce < consensus[mr.holder].archived:
+            raise newException(ValueError, "Partial MeritRemoval references unarchived Element.")
+
+        try:
+            if mr.element1 != consensus[mr.holder][mr.element1.nonce]:
+                raise newException(ValueError, "Partial MeritRemoval references Element not on this chain.")
+        except IndexError as e:
+            doAssert(false, "Failed to load an archived Element: " & e.msg)
+
     #Same nonce.
-    var valid: bool = false
     if mr.element1.nonce == mr.element2.nonce:
-        valid = true
+        if mr.element1 == mr.element2:
+            raise newException(ValueError, "Same Nonce MeritRemoval uses the same Elements.")
     #Verified competing elements.
     else:
-        discard
-
-    if not valid:
-        raise newException(ValueError, "Unwarranted MeritRemoval.")
+        doAssert(false, "Verified competing MeritRemovals aren't supported.")
 
     consensus.flag(mr)
 

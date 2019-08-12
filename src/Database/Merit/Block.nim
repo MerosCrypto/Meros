@@ -41,7 +41,7 @@ func inc*(
     #Recalculate the hash.
     blockArg.header.hash = Argon(blockArg.header.serializeHash(), blockArg.header.proof.toBinary().pad(8))
 
-#Verify the aggregate signature for a table of Key -> seq[Hash].
+#Verify the aggregate signature for a table of Key -> seq[Element].
 proc verify*(
     blockArg: Block,
     elems: Table[string, seq[Element]]
@@ -65,12 +65,15 @@ proc verify*(
                 #Create AggregationInfos
                 case elem:
                     of MeritRemoval as mr:
-                        agInfos.add(
-                            @[
-                                newBLSAggregationInfo(record.key, mr.element1.serializeSign()),
-                                newBLSAggregationInfo(record.key, mr.element2.serializeSign()),
-                            ].aggregate()
-                        )
+                        if mr.partial:
+                            agInfos.add(newBLSAggregationInfo(record.key, mr.element2.serializeSign()))
+                        else:
+                            agInfos.add(
+                                @[
+                                    newBLSAggregationInfo(record.key, mr.element1.serializeSign()),
+                                    newBLSAggregationInfo(record.key, mr.element2.serializeSign()),
+                                ].aggregate()
+                            )
                     else:
                         agInfos.add(newBLSAggregationInfo(record.key, elem.serializeSign()))
         #The presented Table has a different set of MeritHolders than the records.

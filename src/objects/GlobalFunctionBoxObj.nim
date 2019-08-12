@@ -103,9 +103,7 @@ type
 
         addVerification*: proc (
             verif: Verification
-        ) {.raises: [
-            ValueError
-        ].}
+        ) {.raises: [].}
 
         addSignedVerification*: proc (
             verif: SignedVerification

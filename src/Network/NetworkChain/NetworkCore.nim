@@ -201,11 +201,28 @@ proc newNetwork*(
                         doAssert(false, "Sending `DataMissing` in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 try:
+                    var
+                        elem: Element = mainFunctions.consensus.getElement(key, nonce)
+                        header: MessageType
+                    case elem:
+                        of Verification as _:
+                            header = MessageType.Verification
+                        #of SendDifficulty as _:
+                        #    header = MessageType.SendDifficulty
+                        #of DataDifficulty as _:
+                        #    header = MessageType.DataDifficulty
+                        #of GasPrice as _:
+                        #    header = MessageType.GasPrice
+                        of MeritRemoval as _:
+                            header = MessageType.MeritRemoval
+                        else:
+                            doAssert(false, "Sending an unsupported Element in response to an ElementRequest.")
+
                     await network.clients.reply(
                         msg,
                         newMessage(
-                            MessageType.Verification,
-                            mainFunctions.consensus.getElement(key, nonce).serialize()
+                            header,
+                            elem.serialize()
                         )
                     )
                 except IndexError as e:

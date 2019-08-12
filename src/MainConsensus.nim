@@ -102,15 +102,9 @@ proc mainConsensus() {.forceCheck: [].} =
         #Handle Elements.
         functions.consensus.addVerification = proc (
             verif: Verification
-        ) {.forceCheck: [
-            ValueError
-        ].} =
+        ) {.forceCheck: [].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
-
-            #Verify the MeritHolder has Merit.
-            if merit.state[verif.holder] == 0:
-                raise newException(ValueError, "MeritHolder doesn't hold any Merit.")
 
             #See if the Transaction exists.
             var txExists: bool

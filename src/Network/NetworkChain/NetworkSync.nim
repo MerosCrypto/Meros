@@ -231,18 +231,16 @@ proc sync*(
     for elem in missingElems:
         case elem:
             of Verification as verif:
-                try:
-                    network.mainFunctions.consensus.addVerification(verif)
-                except ValueError as e:
-                    doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
-                except DataExists:
-                    continue
+                network.mainFunctions.consensus.addVerification(verif)
 
             of MeritRemoval as mr:
                 try:
                     network.mainFunctions.consensus.addMeritRemoval(mr)
                 except ValueError as e:
                     fcRaise e
+
+            else:
+                doAssert(false, "Adding unsupported Element from inside a Block.")
 
     #Sync the missing Transactions.
     if txHashes.len != 0:
