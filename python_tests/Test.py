@@ -16,8 +16,16 @@ from python_tests.Tests.Transactions.DataTest import DataTest
 from python_tests.Tests.Transactions.FiftyTest import FiftyTest
 
 from python_tests.Tests.Consensus.MeritRemoval.SameNonceCauseTest import SameNonceCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.SameNonceLiveTest import SameNonceLiveTest
 from python_tests.Tests.Consensus.MeritRemoval.SameNonceSyncTest import SameNonceSyncTest
+
+from python_tests.Tests.Consensus.MeritRemoval.VerifyCompetingCauseTest import VerifyCompetingCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.VerifyCompetingLiveTest import VerifyCompetingLiveTest
+from python_tests.Tests.Consensus.MeritRemoval.VerifyCompetingSyncTest import VerifyCompetingSyncTest
+
 from python_tests.Tests.Consensus.MeritRemoval.BlockBeforeArchiveTest import BlockBeforeArchiveTest
+from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovalsTest import MultipleRemovalsTest
+from python_tests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
 
 #Format Exception standard function.
 from traceback import format_exc
@@ -39,8 +47,16 @@ tests: List[
     FiftyTest,
 
     SameNonceCauseTest,
+    SameNonceLiveTest,
     SameNonceSyncTest,
-    BlockBeforeArchiveTest
+
+    VerifyCompetingCauseTest,
+    VerifyCompetingLiveTest,
+    VerifyCompetingSyncTest,
+
+    BlockBeforeArchiveTest,
+    MultipleRemovalsTest,
+    PendingActionsTest
 ]
 
 #Delete the python_tests data directory.
@@ -52,11 +68,8 @@ except FileNotFoundError:
 #Run every test.
 ress: List[str] = []
 for test in tests:
-    name: str = test.__name__
-    name.replace(" ", "")
-
     meros: Meros = Meros(
-        name,
+        test.__name__,
         port,
         port + 1
     )

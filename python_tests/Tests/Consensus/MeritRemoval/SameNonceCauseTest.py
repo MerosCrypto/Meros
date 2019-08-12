@@ -7,7 +7,6 @@ from typing import Dict, IO, Any
 from python_tests.Classes.Transactions.Transactions import Transactions
 
 #Consensus class.
-from python_tests.Classes.Consensus.Element import SignedElement
 from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 

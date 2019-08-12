@@ -34,7 +34,7 @@ proc sync*(
     newBlock: Block
 )
 ```
-has several notes in `discard """ """` about syncing transactions which should be resolved.
+has several notes in `discard """ """` about syncing transactions which need to be resolved.
 
 - Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
 
@@ -69,6 +69,10 @@ has several notes in `discard """ """` about syncing transactions which should b
 - Multi-client syncing.
 - Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
 
+- Handle ValidityConcerns.
+- Don't rebroadcast data to who sent it.
+- Don't rebroadcast Elements below a Merit threshold.
+
 ### Merit Removals.
 
 - Check if MeritHolders verify conflicting Transactions.
@@ -79,6 +83,16 @@ has several notes in `discard """ """` about syncing transactions which should b
 
 - Apply pending actions if the next Block doesn't contain the MeritRemoval.
 - Update pending MeritRemovals' nonces.
+
+- Don't support unknown Verifications.
+
+- SameNonceLive test.
+- VerifyCompetingSync test.
+- VerifyCompetingLive test.
+- VerifyCompetingCause test.
+- MultipleRemovals test.
+- PendingActions test.
+- State/Epochs reloading with MeritRemovals tests.
 
 ### Nim Tests:
 
