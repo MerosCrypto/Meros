@@ -17,23 +17,27 @@ import ../../Network/Serialize/Consensus/SerializeMeritRemoval
 
 func newMeritRemoval*(
     nonce: int,
+    partial: bool,
     element1: Element,
     element2: Element
 ): MeritRemoval {.inline, forceCheck: [].} =
     newMeritRemovalObj(
         nonce,
+        partial,
         element1,
         element2
     )
 
 func newSignedMeritRemoval*(
     nonce: int,
+    partial: bool,
     element1: Element,
     element2: Element,
     signature: BLSSignature
 ): SignedMeritRemoval {.inline, forceCheck: [].} =
     newSignedMeritRemovalObj(
         nonce,
+        partial,
         element1,
         element2,
         signature

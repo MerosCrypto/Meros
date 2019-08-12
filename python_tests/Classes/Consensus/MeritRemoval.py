@@ -14,10 +14,12 @@ class MeritRemoval(Element):
     def __init__(
         self,
         nonce: int,
+        partial: bool,
         e1: Element,
         e2: Element
     ) -> None:
         self.prefix: bytes = b'\4'
+        self.partial: bool = partial
 
         self.holder: bytes = e1.holder
         self.nonce: int = nonce
@@ -36,14 +38,23 @@ class MeritRemoval(Element):
     def serialize(
         self
     ) -> bytes:
-        return (
+        result: bytes = (
             self.holder +
-            self.nonce.to_bytes(4, byteorder = "big") +
+            self.nonce.to_bytes(4, byteorder = "big")
+        )
+
+        if self.partial:
+            result += b'\1'
+        else:
+            result += b'\0'
+
+        result += (
             self.e1.prefix +
             self.e1.serialize()[48:] +
             self.e2.prefix +
             self.e2.serialize()[48:]
         )
+        return result
 
     #MeritRemoval -> JSON.
     def toJSON(
@@ -53,6 +64,7 @@ class MeritRemoval(Element):
             "descendant": "MeritRemoval",
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
+            "partial": self.partial,
             "elements": [
                 self.e1.toJSON(),
                 self.e2.toJSON()
@@ -74,6 +86,7 @@ class MeritRemoval(Element):
 
         return MeritRemoval(
             json["nonce"],
+            json["partial"],
             e1,
             e2
         )
@@ -86,7 +99,7 @@ class PartiallySignedMeritRemoval(MeritRemoval):
         e1: Element,
         se2: SignedElement
     ) -> None:
-        MeritRemoval.__init__(self, nonce, e1, se2)
+        MeritRemoval.__init__(self, nonce, True, e1, se2)
 
         self.se2: SignedElement = se2
         self.blsSignature: blspy.Signature = blspy.Signature.aggregate([self.se2.blsSignature])
@@ -158,7 +171,7 @@ class SignedMeritRemoval(PartiallySignedMeritRemoval):
         se1: SignedElement,
         se2: SignedElement
     ) -> None:
-        MeritRemoval.__init__(self, nonce, se1, se2)
+        MeritRemoval.__init__(self, nonce, False, se1, se2)
 
         self.se1: SignedElement = se1
         self.se2: SignedElement = se2

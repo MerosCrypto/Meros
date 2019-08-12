@@ -154,35 +154,38 @@ proc add*(
 
     #Verify they didn't submit two Elements with the same nonce.
     if element.nonce < holder.height:
-        var
-            existing: Element
-            malicious: bool = false
-
+        var existing: Element
         try:
             existing = holder[element.nonce]
         except IndexError as e:
             doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
 
-        #This doesn't use a case statement because of https://github.com/nim-lang/Nim/issues/11711.
-        if element of Verification:
-            if (not (existing of Verification)) or (cast[Verification](element).hash != cast[Verification](existing).hash):
-                malicious = true
-        else:
-            doAssert(false, "Element should be a Verification.")
-
-        #If the MeritHolder isn't malicious, we already added this Element.
-        if not malicious:
+        #If this Element was already added, raise DataExists.
+        if existing == element:
             raise newException(DataExists, "Element has already been added.")
+        #Else, this is a malicious act.
         else:
-            var signature: BLSSignature
+            var removal: SignedMeritRemoval
             if existing.nonce <= holder.archived:
-                signature = element.signature
+                removal = newSignedMeritRemoval(
+                    holder.archived + 1,
+                    true,
+                    existing,
+                    element,
+                    element.signature
+                )
             else:
                 try:
-                    signature = @[
-                        holder.signatures[existing.nonce],
-                        element.signature
-                    ].aggregate()
+                    removal = newSignedMeritRemoval(
+                        holder.archived + 1,
+                        false,
+                        existing,
+                        element,
+                        signature = @[
+                            holder.signatures[existing.nonce],
+                            element.signature
+                        ].aggregate()
+                    )
                 except KeyError as e:
                     doAssert(false, "Couldn't get the signature for an Element we know we have the signature for: " & e.msg)
                 except BLSError as e:
@@ -190,12 +193,7 @@ proc add*(
 
             raise newMaliciousMeritHolder(
                 "MeritHolder submitted two Elements with the same nonce.",
-                newSignedMeritRemoval(
-                    holder.archived + 1,
-                    existing,
-                    element,
-                    signature
-                )
+                removal
             )
 
     #Add the Element.

@@ -34,9 +34,10 @@ proc `%`(
             result["hash"] = % $verif.hash
         of MeritRemoval as mr:
             result["descendant"] = % "MeritRemoval"
+            result["partial"] = % mr.partial
             result["elements"] = %* [
-                %mr.element1,
-                %mr.element2
+                % mr.element1,
+                % mr.element2
             ]
 
 #Create the Consensus module.

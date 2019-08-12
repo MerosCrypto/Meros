@@ -26,7 +26,7 @@ const
     SIGNED_VERIFICATION_LEN*: int = BLS_PUBLIC_KEY_LEN + INT_LEN + HASH_LEN + ED_SIGNATURE_LEN
 
     MERIT_REMOVAL_LENS*: seq[int] = @[
-        BLS_PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN,
+        BLS_PUBLIC_KEY_LEN + INT_LEN + BYTE_LEN + BYTE_LEN,
         0,
         BYTE_LEN,
         0,

@@ -26,7 +26,14 @@ method serialize*(
 ): string {.forceCheck: [].} =
     result =
         mr.holder.toString() &
-        mr.nonce.toBinary().pad(INT_LEN) &
+        mr.nonce.toBinary().pad(INT_LEN)
+    
+    if mr.partial:
+        result &= "\1"
+    else:
+        result &= "\0"
+
+    result &=
         mr.element1.serializeRemoval() &
         mr.element2.serializeRemoval()
 

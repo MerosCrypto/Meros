@@ -34,6 +34,8 @@ proc test*() =
         miner: MinerWallet
         #Hash.
         hash: Hash[384]
+        #Partial.
+        partial: bool
         #Malicious Elements.
         e1: Element
         e2: Element
@@ -49,6 +51,8 @@ proc test*() =
     #Test 256 serializations.
     for _ in 0 .. 255:
         miner = newMinerWallet()
+
+        partial = if rand(2) >= 1: true else: false
 
         for i in 0 ..< 48:
             hash.data[i] = uint8(rand(255))
@@ -66,6 +70,7 @@ proc test*() =
         #Create the SignedMeritRemoval.
         mr = newSignedMeritRemoval(
             rand(high(int32)),
+            partial,
             e1,
             e2,
             signatures.aggregate()
