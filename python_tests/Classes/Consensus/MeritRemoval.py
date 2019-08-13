@@ -13,7 +13,6 @@ class MeritRemoval(Element):
     #Constructor.
     def __init__(
         self,
-        nonce: int,
         partial: bool,
         e1: Element,
         e2: Element
@@ -22,7 +21,7 @@ class MeritRemoval(Element):
         self.partial: bool = partial
 
         self.holder: bytes = e1.holder
-        self.nonce: int = nonce
+        self.nonce: int = 0
 
         self.e1: Element = e1
         self.e2: Element = e2
@@ -38,10 +37,7 @@ class MeritRemoval(Element):
     def serialize(
         self
     ) -> bytes:
-        result: bytes = (
-            self.holder +
-            self.nonce.to_bytes(4, byteorder = "big")
-        )
+        result: bytes = self.holder
 
         if self.partial:
             result += b'\1'
@@ -62,8 +58,10 @@ class MeritRemoval(Element):
     ) -> Dict[str, Any]:
         return {
             "descendant": "MeritRemoval",
+
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
+
             "partial": self.partial,
             "elements": [
                 self.e1.toJSON(),
@@ -84,22 +82,22 @@ class MeritRemoval(Element):
         if json["elements"][1]["descendant"] == "Verification":
             e2 = Verification.fromJSON(json["elements"][1])
 
-        return MeritRemoval(
-            json["nonce"],
+        result: MeritRemoval = MeritRemoval(
             json["partial"],
             e1,
             e2
         )
+        result.nonce = json["nonce"]
+        return result
 
 class PartiallySignedMeritRemoval(MeritRemoval):
     #Constructor.
     def __init__(
         self,
-        nonce: int,
         e1: Element,
         se2: SignedElement
     ) -> None:
-        MeritRemoval.__init__(self, nonce, True, e1, se2)
+        MeritRemoval.__init__(self, True, e1, se2)
 
         self.se2: SignedElement = se2
         self.blsSignature: blspy.Signature = blspy.Signature.aggregate([self.se2.blsSignature])
@@ -157,21 +155,21 @@ class PartiallySignedMeritRemoval(MeritRemoval):
         else:
             raise Exception("MeritRemoval constructed from an unsupported type of Element: " + json["elements"][1]["descendant"])
 
-        return PartiallySignedMeritRemoval(
-            json["nonce"],
+        result: PartiallySignedMeritRemoval = PartiallySignedMeritRemoval(
             e1,
             se2
         )
+        result.nonce = json["nonce"]
+        return result
 
 class SignedMeritRemoval(PartiallySignedMeritRemoval):
     #Constructor.
     def __init__(
         self,
-        nonce: int,
         se1: SignedElement,
         se2: SignedElement
     ) -> None:
-        MeritRemoval.__init__(self, nonce, False, se1, se2)
+        MeritRemoval.__init__(self, False, se1, se2)
 
         self.se1: SignedElement = se1
         self.se2: SignedElement = se2
@@ -218,8 +216,9 @@ class SignedMeritRemoval(PartiallySignedMeritRemoval):
         else:
             raise Exception("MeritRemoval constructed from an unsupported type of Element: " + json["elements"][1]["descendant"])
 
-        return SignedMeritRemoval(
-            json["nonce"],
+        result: SignedMeritRemoval = SignedMeritRemoval(
             se1,
             se2
         )
+        result.nonce = json["nonce"]
+        return result

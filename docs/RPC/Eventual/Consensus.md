@@ -4,7 +4,7 @@
 
 `getElement` replies with the specified Element. It takes in two arguments:
 - Merit Holder (string)
-- Nonce        (int)
+- Nonce        (int):    If the Element is an unarchived MeritRemoval, this will be 0.
 
 The result is an object, as follows:
 - `descendant` (string)

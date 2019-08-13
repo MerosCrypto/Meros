@@ -185,7 +185,10 @@ proc syncElement*(
         else:
             raise newException(InvalidMessageError, "Client didn't respond properly to our `ElementRequest`.")
 
-    if (result.holder != holder) or (result.nonce != nonce):
+    if (result.holder != holder) or (
+        (not (result of MeritRemoval)) and
+        (result.nonce != nonce)
+    ):
         raise newException(InvalidMessageError, "Synced a Element that we didn't request.")
 
 #Sync a Block Body.

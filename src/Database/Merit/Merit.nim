@@ -77,7 +77,7 @@ proc newMerit*(
 proc processBlock*(
     merit: Merit,
     consensus: Consensus,
-    removals: seq[BLSPublicKey],
+    removals: seq[MeritHolderRecord],
     newBlock: Block
 ): Epoch {.forceCheck: [
     ValueError,

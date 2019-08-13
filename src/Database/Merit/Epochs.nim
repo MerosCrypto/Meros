@@ -46,7 +46,7 @@ import tables
 proc shift*(
     epochs: var Epochs,
     consensus: Consensus,
-    removals: seq[BLSPublicKey],
+    removals: seq[MeritHolderRecord],
     records: seq[MeritHolderRecord],
     tips: TableRef[string, int] = nil
 ): Epoch {.forceCheck: [].} =
@@ -61,7 +61,12 @@ proc shift*(
     #Loop over each record.
     for record in records:
         #If this person just lost their Merit, they have no elements.
-        if removals.contains(record.key):
+        var contains: bool = false
+        for removal in removals:
+            if removal.key == record.key:
+                contains = true
+                break
+        if contains:
             continue
 
         #If we were passed tips, use those for the starting point.
@@ -145,15 +150,15 @@ proc newEpochs*(
     try:
         for i in countdown(start, 1):
             #See if any MeritHolders lost Merit.
-            var removals: seq[BLSPublicKey] = @[]
+            var removals: seq[MeritHolderRecord] = @[]
             for record in blockchain[blockchain.height - i].records:
                 try:
                     if tips[record.key.toString()] == record.nonce - 1:
                         if consensus[record.key][record.nonce] of MeritRemoval:
-                            removals.add(record.key)
+                            removals.add(record)
                 except KeyError as e:
                     doAssert(false, "Couldn't load an Element archived in a Block saved to the disk: " & e.msg)
-            
+
             discard result.shift(
                 consensus,
                 removals,

@@ -64,7 +64,6 @@ sv2: SignedVerification = SignedVerification(h2)
 sv2.sign(privKey, 0)
 
 removal: SignedMeritRemoval = SignedMeritRemoval(
-    0,
     SignedElement.fromElement(sv1),
     SignedElement.fromElement(sv2)
 )

@@ -28,7 +28,6 @@ finalsd:
 
 #Constructors.
 func newMeritRemovalObj*(
-    nonce: int,
     partial: bool,
     element1: Element,
     element2: Element
@@ -44,12 +43,10 @@ func newMeritRemovalObj*(
 
     try:
         result.holder = element1.holder
-        result.nonce = nonce
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a MeritRemoval: " & e.msg)
 
 func newSignedMeritRemovalObj*(
-    nonce: int,
     partial: bool,
     element1: Element,
     element2: Element,
@@ -68,6 +65,5 @@ func newSignedMeritRemovalObj*(
 
     try:
         result.holder = element1.holder
-        result.nonce = nonce
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a SignedMeritRemoval: " & e.msg)

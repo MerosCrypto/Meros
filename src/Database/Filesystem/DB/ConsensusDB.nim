@@ -166,6 +166,12 @@ proc load*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
+    if result of MeritRemoval:
+        try:
+            result.nonce = nonce
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when loading a MeritRemoval: " & e.msg)
+
 proc loadUnknown*(
     db: DB
 ): seq[seq[Verification]] {.forceCheck: [

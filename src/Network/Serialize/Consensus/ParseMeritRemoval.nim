@@ -23,11 +23,10 @@ proc parseMeritRemoval*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Nonce | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
+    #BLS Public Key | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
             BLS_PUBLIC_KEY_LEN,
-            INT_LEN,
             BYTE_LEN,
             BYTE_LEN
         )
@@ -36,7 +35,7 @@ proc parseMeritRemoval*(
         element1: Element
         element2: Element
 
-    case int(mrSeq[2][0]):
+    case int(mrSeq[1][0]):
         of 0:
             partial = false
         of 1:
@@ -44,7 +43,7 @@ proc parseMeritRemoval*(
         else:
             raise newException(ValueError, "MeritRemoval has an invalid partial field.")
 
-    case int(mrSeq[3][0]):
+    case int(mrSeq[2][0]):
         of VERIFICATION_PREFIX:
             e1Len = VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
             if mrStr.len < MERIT_REMOVAL_LENS[0] + e1Len + 1:
@@ -75,7 +74,6 @@ proc parseMeritRemoval*(
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(
-        mrSeq[1].fromBinary(),
         partial,
         element1,
         element2
@@ -88,11 +86,10 @@ proc parseSignedMeritRemoval*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Nonce | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
+    #BLS Public Key | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
             BLS_PUBLIC_KEY_LEN,
-            INT_LEN,
             BYTE_LEN,
             BYTE_LEN
         )
@@ -101,7 +98,7 @@ proc parseSignedMeritRemoval*(
         element1: Element
         element2: Element
 
-    case int(mrSeq[2][0]):
+    case int(mrSeq[1][0]):
         of 0:
             partial = false
         of 1:
@@ -109,7 +106,7 @@ proc parseSignedMeritRemoval*(
         else:
             raise newException(ValueError, "MeritRemoval has an invalid partial field.")
 
-    case int(mrSeq[3][0]):
+    case int(mrSeq[2][0]):
         of VERIFICATION_PREFIX:
             e1Len = VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
             if mrStr.len < MERIT_REMOVAL_LENS[0] + e1Len + 1:
@@ -141,7 +138,6 @@ proc parseSignedMeritRemoval*(
     #Create the MeritRemoval.
     try:
         result = newSignedMeritRemovalObj(
-            mrSeq[1].fromBinary(),
             partial,
             element1,
             element2,

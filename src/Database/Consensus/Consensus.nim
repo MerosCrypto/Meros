@@ -108,6 +108,7 @@ proc add*(
     except DataExists as e:
         fcRaise e
     except MaliciousMeritHolder as e:
+        #Manually recreate the Exception since fcRaise wouldn't include the MeritRemoval.
         raise newMaliciousMeritHolder(
             e.msg,
             e.removal
@@ -148,8 +149,15 @@ proc add*(
 #- Saves the element to its position.
 proc archive*(
     consensus: Consensus,
-    mr: MeritRemoval
+    mr: MeritRemoval,
+    nonce: int
 ) {.forceCheck: [].} =
+    #Set the MeritRemoval's nonce.
+    try:
+        mr.nonce = nonce
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when archicing a MeritRemoval: " & e.msg)
+
     #Grab the MeritHolder.
     var mh: MeritHolder
     try:

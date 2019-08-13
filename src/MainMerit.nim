@@ -112,13 +112,13 @@ proc mainMerit() {.forceCheck: [].} =
                 doAssert(false, "Couldn't sync this Block: " & e.msg)
 
             #Verify Record validity (nonce and Merkle).
-            var removed: seq[BLSPublicKey] = @[]
+            var removed: seq[MeritHolderRecord] = @[]
             for record in newBlock.records:
                 #Check if this holder lost their Merit.
                 if consensus.malicious.hasKey(record.key.toString()):
                     try:
                         if consensus.malicious[record.key.toString()].merkle == record.merkle:
-                            removed.add(record.key)
+                            removed.add(record)
                             continue
                     except KeyError as e:
                         doAssert(false, "Couldn't get a MeritRemoval we know exists: " & e.msg)
@@ -153,11 +153,11 @@ proc mainMerit() {.forceCheck: [].} =
             #Save every archived MeritRemoval and delete the relevant Merit.
             for removee in removed:
                 try:
-                    consensus.archive(consensus.malicious[removee.toString()])
+                    consensus.archive(consensus.malicious[removee.key.toString()], removee.nonce)
                 except KeyError as e:
                     doAssert(false, "Couldn't get the MeritRemoval of someone who has one: " & e.msg)
-                consensus.malicious.del(removee.toString())
-                merit.state[removee] = 0
+                consensus.malicious.del(removee.key.toString())
+                merit.state[removee.key] = 0
 
             #Archive the Elements mentioned in the Block.
             consensus.archive(newBlock.records)

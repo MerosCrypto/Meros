@@ -69,16 +69,18 @@ proc test*() =
 
         #Create the SignedMeritRemoval.
         mr = newSignedMeritRemoval(
-            rand(high(int32)),
             partial,
             e1,
             e2,
             signatures.aggregate()
         )
+        mr.nonce = 0
 
         #Serialize it and parse it back.
         reloadedMR = mr.serialize().parseMeritRemoval()
+        reloadedMR.nonce = 0
         reloadedSMR = mr.signedSerialize().parseSignedMeritRemoval()
+        reloadedSMR.nonce = 0
 
         #Compare the Elements.
         compare(mr, reloadedSMR)

@@ -168,7 +168,6 @@ proc add*(
             var removal: SignedMeritRemoval
             if existing.nonce <= holder.archived:
                 removal = newSignedMeritRemoval(
-                    holder.archived + 1,
                     true,
                     existing,
                     element,
@@ -177,7 +176,6 @@ proc add*(
             else:
                 try:
                     removal = newSignedMeritRemoval(
-                        holder.archived + 1,
                         false,
                         existing,
                         element,
