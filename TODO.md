@@ -86,12 +86,21 @@ has several notes in `discard """ """` about syncing transactions which need to 
 
 - Don't support unknown Verifications.
 
-- SameNonceLive test.
-- VerifyCompetingSync test.
-- VerifyCompetingLive test.
-- VerifyCompetingCause test.
-- MultipleRemovals test.
-- PendingActions test.
+- SameNonce Live test.
+
+- VerifyCompeting Sync test.
+- VerifyCompeting Live test.
+- VerifyCompeting Cause test.
+
+- Partial Cause test.
+- Partial Live test.
+
+- PendingActions Cause test.
+- PendingActions Live test.
+
+- MultipleRemovals Cause test.
+- MultipleRemovals Live test.
+
 - State/Epochs reloading with MeritRemovals tests.
 
 ### Nim Tests:

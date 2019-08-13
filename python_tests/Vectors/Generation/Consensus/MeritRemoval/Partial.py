@@ -94,6 +94,6 @@ result: Dict[str, Any] = {
     "blockchain": merit.blockchain.toJSON(),
     "consensus":  consensus.toJSON()
 }
-bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/BlockBeforeArchive.json", "w")
+bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "w")
 bbaFile.write(json.dumps(result))
 bbaFile.close()

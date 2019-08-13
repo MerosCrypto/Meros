@@ -1,4 +1,4 @@
-#Tests proper creation and handling of a MeritRemoval when Meros receives different Elements sharing a nonce.
+#Tests proper handling of a MeritRemoval when Meros receives a SignedMeritRemoval of Elements sharing a nonce.
 
 #Types.
 from typing import Dict, IO, Any
@@ -38,7 +38,7 @@ def verifyMeritRemoval(
     ]) != removal.toJSON():
         raise TestError("Merit Removal doesn't match.")
 
-def SameNonceCauseTest(
+def MRSNLiveTest(
     rpc: RPC
 ) -> None:
     snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
@@ -114,13 +114,8 @@ def SameNonceCauseTest(
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-    #Send the SignedVerifications.
-    rpc.meros.signedElement(removal.se1)
-    msg = rpc.meros.recv()
-    if MessageType(msg[0]) != MessageType.SignedVerification:
-        raise TestError("Unexpected message sent: " + msg.hex().upper())
-
-    rpc.meros.signedElement(removal.se2)
+    #Send the MeritRemoval.
+    rpc.meros.signedElement(removal)
 
     #Verify the MeritRemoval.
     msg = rpc.meros.recv()

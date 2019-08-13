@@ -1,5 +1,4 @@
-#Tests proper creation and handling of a MeritRemoval when Meros receives different Elements sharing a nonce.
-#The first Element is in Block 1. The MeritRemoval is in Block 2.
+#Tests proper handling of a MeritRemoval when Meros syncs a partial MeritRemoval.
 
 #Types.
 from typing import Dict, List, IO, Any
@@ -26,10 +25,10 @@ import blspy
 #JSON standard lib.
 import json
 
-def BlockBeforeArchiveTest(
+def MRPSyncTest(
     rpc: RPC
 ) -> None:
-    bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/BlockBeforeArchive.json", "r")
+    bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
     bbaVectors: Dict[str, Any] = json.loads(bbaFile.read())
     #Consensus.
     consensus: Consensus = Consensus.fromJSON(

@@ -15,17 +15,23 @@ from python_tests.Tests.Merit.SyncTest import SyncTest
 from python_tests.Tests.Transactions.DataTest import DataTest
 from python_tests.Tests.Transactions.FiftyTest import FiftyTest
 
-from python_tests.Tests.Consensus.MeritRemoval.SameNonceCauseTest import SameNonceCauseTest
-from python_tests.Tests.Consensus.MeritRemoval.SameNonceLiveTest import SameNonceLiveTest
-from python_tests.Tests.Consensus.MeritRemoval.SameNonceSyncTest import SameNonceSyncTest
+from python_tests.Tests.Consensus.MeritRemoval.SameNonce.CauseTest import MRSNCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.SameNonce.LiveTest import MRSNLiveTest
+from python_tests.Tests.Consensus.MeritRemoval.SameNonce.SyncTest import MRSNSyncTest
 
-from python_tests.Tests.Consensus.MeritRemoval.VerifyCompetingCauseTest import VerifyCompetingCauseTest
-from python_tests.Tests.Consensus.MeritRemoval.VerifyCompetingLiveTest import VerifyCompetingLiveTest
-from python_tests.Tests.Consensus.MeritRemoval.VerifyCompetingSyncTest import VerifyCompetingSyncTest
+from python_tests.Tests.Consensus.MeritRemoval.VerifyCompeting.CauseTest import MRVCCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.VerifyCompeting.LiveTest import MRVCLiveTest
+from python_tests.Tests.Consensus.MeritRemoval.VerifyCompeting.SyncTest import MRVCSyncTest
 
-from python_tests.Tests.Consensus.MeritRemoval.BlockBeforeArchiveTest import BlockBeforeArchiveTest
-from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovalsTest import MultipleRemovalsTest
-from python_tests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
+from python_tests.Tests.Consensus.MeritRemoval.Partial.CauseTest import MRPCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.Partial.LiveTest import MRPLiveTest
+from python_tests.Tests.Consensus.MeritRemoval.Partial.SyncTest import MRPSyncTest
+
+from python_tests.Tests.Consensus.MeritRemoval.PendingActions.CauseTest import MRPACauseTest
+from python_tests.Tests.Consensus.MeritRemoval.PendingActions.LiveTest import MRPALiveTest
+
+from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovals.CauseTest import MRMRCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovals.LiveTest import MRMRLiveTest
 
 #Format Exception standard function.
 from traceback import format_exc
@@ -46,17 +52,23 @@ tests: List[
     DataTest,
     FiftyTest,
 
-    SameNonceCauseTest,
-    SameNonceLiveTest,
-    SameNonceSyncTest,
+    MRSNCauseTest,
+    MRSNLiveTest,
+    MRSNSyncTest,
 
-    VerifyCompetingCauseTest,
-    VerifyCompetingLiveTest,
-    VerifyCompetingSyncTest,
+    MRVCCauseTest,
+    MRVCLiveTest,
+    MRVCSyncTest,
 
-    BlockBeforeArchiveTest,
-    MultipleRemovalsTest,
-    PendingActionsTest
+    MRPCauseTest,
+    MRPLiveTest,
+    MRPSyncTest,
+
+    MRPACauseTest,
+    MRPALiveTest,
+
+    MRMRCauseTest,
+    MRMRLiveTest,
 ]
 
 #Delete the python_tests data directory.

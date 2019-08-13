@@ -7,4 +7,4 @@ import python_tests.Vectors.Generation.Transactions.Fifty
 
 #Consensus.
 import python_tests.Vectors.Generation.Consensus.MeritRemoval.SameNonce
-import python_tests.Vectors.Generation.Consensus.MeritRemoval.BlockBeforeArchive
+import python_tests.Vectors.Generation.Consensus.MeritRemoval.Partial
