@@ -52,6 +52,11 @@ proc mainMerit() {.forceCheck: [].} =
         ): int {.inline, forceCheck: [].} =
             merit.state[key]
 
+        functions.merit.isLive = proc (
+            key: BLSPublicKey
+        ): bool {.inline, forceCheck: [].} =
+            true
+
         #Handle full blocks.
         functions.merit.addBlock = proc (
             newBlock: Block,

@@ -78,6 +78,10 @@ type
         ].}
 
     ConsensusFunctionBox* = ref object
+        isMalicious*: proc (
+            key: BLSPublicKey,
+        ): bool {.inline, raises: [].}
+
         getHeight*: proc (
             key: BLSPublicKey
         ): int {.raises: [].}
@@ -93,13 +97,6 @@ type
             records: seq[MeritHolderRecord],
             aggregate: BLSSignature
         ] {.raises: [].}
-
-        getPendingHashes*: proc (
-            key: BLSPublicKey,
-            nonce: int
-        ): seq[Hash[384]] {.raises: [
-            IndexError
-        ].}
 
         addVerification*: proc (
             verif: Verification
@@ -147,6 +144,10 @@ type
         getMerit*: proc (
             key: BLSPublicKey
         ): int {.inline, raises: [].}
+
+        isLive*: proc (
+            key: BLSPublicKey,
+        ): bool {.inline, raises: [].}
 
         addBlock*: proc (
             newBlock: Block,

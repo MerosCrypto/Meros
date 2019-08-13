@@ -46,11 +46,11 @@ port: int = 5132
 tests: List[
     Callable[[RPC], None]
 ] = [
-    ChainAdvancementTest,
-    SyncTest,
+    #ChainAdvancementTest,
+    #SyncTest,
 
-    DataTest,
-    FiftyTest,
+    #DataTest,
+    #FiftyTest,
 
     MRSNCauseTest,
     MRSNLiveTest,
@@ -64,11 +64,11 @@ tests: List[
     MRPLiveTest,
     MRPSyncTest,
 
-    MRPACauseTest,
-    MRPALiveTest,
+    #MRPACauseTest,
+    #MRPALiveTest,
 
-    MRMRCauseTest,
-    MRMRLiveTest,
+    #MRMRCauseTest,
+    #MRMRLiveTest,
 ]
 
 #Delete the python_tests data directory.

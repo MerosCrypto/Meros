@@ -26,17 +26,27 @@ import json
 #Verify a MeritRemoval over the RPC.
 def verifyMeritRemoval(
     rpc: RPC,
-    removal: SignedMeritRemoval
+    removal: SignedMeritRemoval,
+    malicious: bool
 ) -> None:
     #Verify the Merit Holder height.
     if rpc.call("consensus", "getHeight", [removal.holder.hex()]) != 1:
         raise TestError("Merit Holder height doesn't match.")
 
+    #Verify the MeritRemoval.
     if rpc.call("consensus", "getElement", [
         removal.holder.hex(),
         0
     ]) != removal.toJSON():
         raise TestError("Merit Removal doesn't match.")
+
+    #Verify the Merit Holder's Merit.
+    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != {
+        "live": True,
+        "malicious": malicious,
+        "merit": 100 if malicious else 0
+    }:
+        raise TestError("Merit Holder's Merit doesn't match.")
 
 def MRSNCauseTest(
     rpc: RPC
@@ -126,8 +136,7 @@ def MRSNCauseTest(
     msg = rpc.meros.recv()
     if msg != (MessageType.SignedMeritRemoval.toByte() + removal.signedSerialize()):
         raise TestError("Meros didn't send us the Merit Removal.")
-
-    verifyMeritRemoval(rpc, removal)
+    verifyMeritRemoval(rpc, removal, True)
 
     #Send the final Block.
     rpc.meros.blockHeader(merit.blockchain.blocks[-1].header)
@@ -187,7 +196,7 @@ def MRSNCauseTest(
             raise TestError("Block doesn't match.")
 
     #Verify the MeritRemoval again.
-    verifyMeritRemoval(rpc, removal)
+    verifyMeritRemoval(rpc, removal, False)
 
     #Verify the Live Merit.
     if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 0:
@@ -198,5 +207,9 @@ def MRSNCauseTest(
         raise TestError("Total Merit doesn't match.")
 
     #Verify the Merit Holder's Merit.
-    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != 0:
+    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != {
+        "live": True,
+        "malicious": False,
+        "merit": 0
+    }:
         raise TestError("Merit Holder's Merit doesn't match.")

@@ -44,8 +44,9 @@ The result is an object, as follows:
 - Merit Holder (string)
 
 The result is an object, as follows:
-- `live`  (bool)
-- `merit` (int)
+- `live`      (bool)
+- `malicious` (bool)
+- `merit`     (int)
 
 ### `getBlockTemplate`
 

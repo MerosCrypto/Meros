@@ -4,6 +4,12 @@ proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         consensus = newConsensus(database)
 
+        #Provide access to if a holder is malicious.
+        functions.consensus.isMalicious = proc (
+            key: BLSPublicKey
+        ): bool {.inline, forceCheck: [].} =
+            consensus.malicious.hasKey(key.toString())
+
         #Provide access to the holder's height.
         functions.consensus.getHeight = proc (
             key: BLSPublicKey
@@ -78,39 +84,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 result.aggregate = signatures.aggregate()
             except BLSError as e:
                 doAssert(false, "Failed to aggregate the signatures: " & e.msg)
-
-        #Used to calculate the aggregate with Elements we just downloaded.
-        functions.consensus.getPendingHashes = proc (
-            key: BLSPublicKey,
-            nonce: int
-        ): seq[Hash[384]] {.forceCheck: [
-            IndexError
-        ].} =
-            result = @[]
-
-            var
-                #Grab the MeritHolder.
-                holder: MeritHolder = consensus[key]
-                #Start of the unarchived Elements.
-                start: int
-
-            #Make sure there are consensus.
-            if consensus[key].height == 0:
-                return
-
-            #If this MeritHolder has pending Elements...
-            if holder.archived != holder.height - 1:
-                start = holder.archived + 1
-            else:
-                return @[]
-
-            #Add the hashes.
-            try:
-                for elem in consensus[key][start .. nonce]:
-                    if elem of Verification:
-                        result.add(cast[Verification](elem).hash)
-            except IndexError as e:
-                fcRaise e
 
         #Handle Elements.
         functions.consensus.addVerification = proc (

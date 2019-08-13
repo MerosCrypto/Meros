@@ -139,5 +139,9 @@ def MRSNSyncTest(
         raise TestError("Total Merit doesn't match.")
 
     #Verify the Merit Holder's Merit.
-    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != 0:
+    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != {
+        "live": True,
+        "malicious": False,
+        "merit": 0
+    }:
         raise TestError("Merit Holder's Merit doesn't match.")

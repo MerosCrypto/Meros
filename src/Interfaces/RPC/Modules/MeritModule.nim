@@ -168,7 +168,11 @@ proc module*(
                 except BLSError:
                     raise newException(ParamError, "")
 
-                res["result"] = % functions.merit.getMerit(key)
+                res["result"] = %* {
+                    "live": functions.merit.isLive(key),
+                    "malicious": functions.consensus.isMalicious(key),
+                    "merit": functions.merit.getMerit(key)
+                }
 
             "getBlockTemplate" = proc (
                 res: JSONNode,

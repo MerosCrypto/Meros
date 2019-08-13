@@ -114,5 +114,5 @@ proc `==`*(
 proc `!=`*(
     e1: Element,
     e2: Element
-): bool {.forceCheck: [], inline.} =
+): bool {.inline, forceCheck: [].} =
     not (e1 == e2)
