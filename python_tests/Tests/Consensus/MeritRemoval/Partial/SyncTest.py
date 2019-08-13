@@ -153,7 +153,11 @@ def MRPSyncTest(
         raise TestError("Total Merit doesn't match.")
 
     #Verify the Merit Holder's Merit.
-    if rpc.call("merit", "getMerit", [pubKey.serialize().hex()]) != 0:
+    if rpc.call("merit", "getMerit", [pubKey.serialize().hex()]) != {
+        "live": True,
+        "malicious": False,
+        "merit": 0
+    }:
         raise TestError("Merit Holder's Merit doesn't match.")
 
     #Replay their messages and verify they send what we sent.
