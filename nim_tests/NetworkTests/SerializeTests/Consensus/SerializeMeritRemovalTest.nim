@@ -57,13 +57,12 @@ proc test*() =
         for i in 0 ..< 48:
             hash.data[i] = uint8(rand(255))
         e1 = newSignedVerificationObj(hash)
+        miner.sign(cast[SignedVerification](e1), rand(high(int32)))
+        signatures.add(cast[SignedVerification](e1).signature)
 
         for i in 0 ..< 48:
             hash.data[i] = uint8(rand(255))
         e2 = newSignedVerificationObj(hash)
-
-        miner.sign(cast[SignedVerification](e1), rand(high(int32)))
-        signatures.add(cast[SignedVerification](e1).signature)
         miner.sign(cast[SignedVerification](e2), rand(high(int32)))
         signatures.add(cast[SignedVerification](e2).signature)
 
