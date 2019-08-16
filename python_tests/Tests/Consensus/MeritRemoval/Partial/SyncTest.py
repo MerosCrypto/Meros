@@ -3,15 +3,12 @@
 #Types.
 from typing import Dict, IO, Any
 
-#Transactions class.
-from python_tests.Classes.Transactions.Transactions import Transactions
-
 #Consensus classes.
 from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
-#Merit class.
-from python_tests.Classes.Merit.Merit import Merit
+#Blockchain class.
+from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #TestError Exception.
 from python_tests.Tests.TestError import TestError
@@ -41,14 +38,11 @@ def MRPSyncTest(
     removal: MeritRemoval = MeritRemoval.fromJSON(partialVectors["removal"])
     consensus.add(removal.e1)
     consensus.add(removal)
-    #Merit.
-    merit: Merit = Merit.fromJSON(
+    #Blockchain.
+    blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100,
-        Transactions(),
-        consensus,
         partialVectors["blockchain"]
     )
     partialFile.close()
@@ -57,7 +51,7 @@ def MRPSyncTest(
     rpc.meros.connect(
         254,
         254,
-        len(merit.blockchain.blocks)
+        len(blockchain.blocks)
     )
 
     sentLast: int = 2
@@ -71,31 +65,31 @@ def MRPSyncTest(
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
             height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
             if height == 0:
-                rpc.meros.blockHash(merit.blockchain.last())
+                rpc.meros.blockHash(blockchain.last())
             else:
-                if height >= len(merit.blockchain.blocks):
+                if height >= len(blockchain.blocks):
                     raise TestError("Meros asked for a Block Hash we do not have.")
 
-                rpc.meros.blockHash(merit.blockchain.blocks[height].header.hash)
+                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
             hash = msg[1 : 49]
-            for block in merit.blockchain.blocks:
+            for block in blockchain.blocks:
                 if block.header.hash == hash:
                     rpc.meros.blockHeader(block.header)
                     break
 
-                if block.header.hash == merit.blockchain.last():
+                if block.header.hash == blockchain.last():
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
             hash = msg[1 : 49]
-            for block in merit.blockchain.blocks:
+            for block in blockchain.blocks:
                 if block.header.hash == hash:
                     rpc.meros.blockBody(block.body)
                     break
 
-                if block.header.hash == merit.blockchain.last():
+                if block.header.hash == blockchain.last():
                     raise TestError("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msg[0]) == MessageType.ElementRequest:
@@ -119,7 +113,7 @@ def MRPSyncTest(
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Verify the Blockchain.
-    verifyBlockchain(rpc, merit.blockchain)
+    verifyBlockchain(rpc, blockchain)
 
     #Verify the MeritRemoval again.
     verifyMeritRemoval(rpc, 2, 200, removal, False)

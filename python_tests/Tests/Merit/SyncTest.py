@@ -17,7 +17,7 @@ from python_tests.Tests.Merit.Verify import verifyBlockchain
 #JSON standard lib.
 import json
 
-def SyncTest(
+def MeritSyncTest(
     rpc: RPC
 ) -> None:
     #Blockchain.

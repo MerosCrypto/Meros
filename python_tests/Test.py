@@ -10,7 +10,7 @@ from python_tests.Meros.RPC import RPC
 
 #Tests.
 from python_tests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
-from python_tests.Tests.Merit.SyncTest import SyncTest
+from python_tests.Tests.Merit.SyncTest import MeritSyncTest
 
 from python_tests.Tests.Transactions.DataTest import DataTest
 from python_tests.Tests.Transactions.FiftyTest import FiftyTest
@@ -56,7 +56,7 @@ tests: List[
     Callable[[RPC], None]
 ] = [
     ChainAdvancementTest,
-    SyncTest,
+    MeritSyncTest,
 
     DataTest,
     FiftyTest,
