@@ -6,7 +6,8 @@ from typing import Dict, List, IO, Any
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
-#Consensus class.
+#Consensus classes.
+from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Merit class.
@@ -28,14 +29,17 @@ import json
 def MRPSyncTest(
     rpc: RPC
 ) -> None:
-    bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
-    bbaVectors: Dict[str, Any] = json.loads(bbaFile.read())
+    partialFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
+    partialVectors: Dict[str, Any] = json.loads(partialFile.read())
     #Consensus.
-    consensus: Consensus = Consensus.fromJSON(
+    consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-        bbaVectors["consensus"]
+        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
+    #MeritRemoval.
+    removal: MeritRemoval = MeritRemoval.fromJSON(partialVectors["removal"])
+    consensus.add(removal.e1)
+    consensus.add(removal)
     #Merit.
     merit: Merit = Merit.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
@@ -44,9 +48,9 @@ def MRPSyncTest(
         100,
         Transactions(),
         consensus,
-        bbaVectors["blockchain"]
+        partialVectors["blockchain"]
     )
-    bbaFile.close()
+    partialFile.close()
 
     #BLS Public Key.
     pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()

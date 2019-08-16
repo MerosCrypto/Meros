@@ -40,6 +40,10 @@ def verifyMeritRemoval(
     ]) != removal.toJSON():
         raise TestError("Merit Removal doesn't match.")
 
+    #Verify the Total Merit.
+    if rpc.call("merit", "getTotalMerit") != 100 if malicious else 0:
+        raise TestError("Total Merit doesn't match.")
+
     #Verify the Live Merit.
     if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 100 if malicious else 0:
         raise TestError("Live Merit doesn't match.")
@@ -201,15 +205,3 @@ def MRSNCauseTest(
 
     #Verify the MeritRemoval again.
     verifyMeritRemoval(rpc, removal, False)
-
-    #Verify the Total Merit.
-    if rpc.call("merit", "getTotalMerit") != 0:
-        raise TestError("Total Merit doesn't match.")
-
-    #Verify the Merit Holder's Merit.
-    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != {
-        "live": True,
-        "malicious": False,
-        "merit": 0
-    }:
-        raise TestError("Merit Holder's Merit doesn't match.")

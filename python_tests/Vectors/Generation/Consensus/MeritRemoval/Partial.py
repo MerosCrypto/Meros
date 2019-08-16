@@ -88,12 +88,12 @@ for i in range(0, 2):
 
     #Add it.
     merit.add(transactions, consensus, block)
-    print("Generated Block Before Archive Block " + str(block.header.nonce) + ".")
+    print("Generated Partial Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": merit.blockchain.toJSON(),
-    "consensus":  consensus.toJSON()
+    "removal":  removal.toSignedJSON()
 }
-bbaFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "w")
-bbaFile.write(json.dumps(result))
-bbaFile.close()
+partialFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "w")
+partialFile.write(json.dumps(result))
+partialFile.close()

@@ -100,7 +100,7 @@ class PartiallySignedMeritRemoval(MeritRemoval):
         MeritRemoval.__init__(self, True, e1, se2)
 
         self.se2: SignedElement = se2
-        self.blsSignature: blspy.Signature = blspy.Signature.aggregate([self.se2.blsSignature])
+        self.blsSignature: blspy.Signature = self.se2.blsSignature
         self.signature: bytes = self.blsSignature.serialize()
 
     #PartiallySignedMeritRemoval -> SignedElement.

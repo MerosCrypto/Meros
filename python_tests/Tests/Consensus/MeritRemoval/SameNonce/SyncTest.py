@@ -1,7 +1,7 @@
 #Tests proper handling of a MeritRemoval when Meros syncs a MeritRemoval of Elements sharing a nonce.
 
 #Types.
-from typing import Dict, IO, Any
+from typing import Dict, List, IO, Any
 
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
@@ -56,55 +56,55 @@ def MRSNSyncTest(
 
     sentLast: bool = False
     hash: bytes = bytes()
+    msgs: List[bytes] = []
+    ress: List[bytes] = []
     while True:
-        msg: bytes = rpc.meros.recv()
+        msgs.append(rpc.meros.recv())
 
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
+        if MessageType(msgs[-1][0]) == MessageType.Syncing:
+            ress.append(rpc.meros.acknowledgeSyncing())
 
-        elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+        elif MessageType(msgs[-1][0]) == MessageType.GetBlockHash:
+            height: int = int.from_bytes(msgs[-1][1 : 5], byteorder = "big")
             if height == 0:
-                rpc.meros.blockHash(merit.blockchain.last())
+                ress.append(rpc.meros.blockHash(merit.blockchain.last()))
             else:
                 if height >= len(merit.blockchain.blocks):
                     raise TestError("Meros asked for a Block Hash we do not have.")
 
-                rpc.meros.blockHash(merit.blockchain.blocks[height].header.hash)
+                ress.append(rpc.meros.blockHash(merit.blockchain.blocks[height].header.hash))
 
-        elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
+        elif MessageType(msgs[-1][0]) == MessageType.BlockHeaderRequest:
+            hash = msgs[-1][1 : 49]
             for block in merit.blockchain.blocks:
                 if block.header.hash == hash:
-                    rpc.meros.blockHeader(block.header)
+                    ress.append(rpc.meros.blockHeader(block.header))
                     break
 
                 if block.header.hash == merit.blockchain.last():
                     raise TestError("Meros asked for a Block Header we do not have.")
 
-        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
+        elif MessageType(msgs[-1][0]) == MessageType.BlockBodyRequest:
+            hash = msgs[-1][1 : 49]
             for block in merit.blockchain.blocks:
                 if block.header.hash == hash:
-                    rpc.meros.blockBody(block.body)
+                    ress.append(rpc.meros.blockBody(block.body))
                     break
 
                 if block.header.hash == merit.blockchain.last():
                     raise TestError("Meros asked for a Block Body we do not have.")
 
-        elif MessageType(msg[0]) == MessageType.ElementRequest:
+        elif MessageType(msgs[-1][0]) == MessageType.ElementRequest:
             sentLast = True
-            rpc.meros.element(removal)
+            ress.append(rpc.meros.element(removal))
 
-        elif MessageType(msg[0]) == MessageType.TransactionRequest:
-            rpc.meros.dataMissing()
-
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
+        elif MessageType(msgs[-1][0]) == MessageType.SyncingOver:
+            ress.append(bytes())
             if sentLast:
                 break
 
         else:
-            raise TestError("Unexpected message sent: " + msg.hex().upper())
+            raise TestError("Unexpected message sent: " + msgs[-1].hex().upper())
 
     #Verify the height.
     if rpc.call("merit", "getHeight") != len(merit.blockchain.blocks):
@@ -145,3 +145,10 @@ def MRSNSyncTest(
         "merit": 0
     }:
         raise TestError("Merit Holder's Merit doesn't match.")
+
+    #Replay their messages and verify they send what we sent.
+    for m in range(0, len(msgs)):
+        rpc.meros.send(msgs[m])
+        if len(ress[m]) != 0:
+            if ress[m] != rpc.meros.recv():
+                raise TestError("Invalid sync response.")
