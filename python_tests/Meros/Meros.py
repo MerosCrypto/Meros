@@ -10,7 +10,7 @@ from python_tests.Classes.Transactions.Data import Data
 #Consensus classes.
 from python_tests.Classes.Consensus.Element import Element, SignedElement
 from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
-from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, SignedMeritRemoval
+from python_tests.Classes.Consensus.MeritRemoval import MeritRemoval, PartiallySignedMeritRemoval
 
 #Merit classes.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
@@ -330,7 +330,7 @@ class Meros:
         res: bytes = bytes()
         if isinstance(elem, SignedVerification):
             res = MessageType.SignedVerification.toByte()
-        elif isinstance(elem, SignedMeritRemoval):
+        elif isinstance(elem, PartiallySignedMeritRemoval):
             res = MessageType.SignedMeritRemoval.toByte()
         else:
             raise Exception("Unsupported Element passed to Meros.signedElement.")
