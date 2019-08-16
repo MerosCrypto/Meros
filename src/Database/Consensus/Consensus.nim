@@ -32,6 +32,9 @@ export MeritHolder
 import objects/ConsensusObj
 export ConsensusObj
 
+#Serialize Verification lib.
+import ../../Network/Serialize/Consensus/SerializeVerification
+
 #Seq utils standard lib.
 import sequtils
 
@@ -144,6 +147,27 @@ proc add*(
 
     consensus.flag(mr)
 
+#Add a SignedMeritRemoval.
+proc add*(
+    consensus: Consensus,
+    mr: SignedMeritRemoval
+) {.forceCheck: [
+    ValueError
+].} =
+    #Verify the MeritRemoval's signature.
+    try:
+        mr.signature.setAggregationInfo(mr.agInfo)
+        if not mr.signature.verify():
+            raise newException(ValueError, "Invalid MeritRemoval signature.")
+    except BLSError as e:
+        doAssert(false, "Failed to verify the MeritRemoval's signature: " & e.msg)
+
+    #Add the MeritRemoval.
+    try:
+        consensus.add(cast[MeritRemoval](mr))
+    except ValueError as e:
+        fcRaise e
+
 #Archive a MeritRemoval. This:
 #- Sets the MeritHolder's height to 1 above the archived height.
 #- Saves the element to its position.
@@ -195,7 +219,6 @@ proc archive*(
             consensus[record.key].signatures.del(e)
 
         #Reset the Merkle.
-        var elem: Element
         consensus[record.key].merkle = newMerkle()
         for e in record.nonce + 1 ..< consensus[record.key].height:
             try:

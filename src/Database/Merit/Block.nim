@@ -26,7 +26,7 @@ export BlockObj
 #Serialize BlockHeader lib (for inc).
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
-#Serialize Verification lib (for verify).
+#Serialize Verification lib.
 import ../../Network/Serialize/Consensus/SerializeVerification
 
 #Tables standard lib.
@@ -65,15 +65,7 @@ proc verify*(
                 #Create AggregationInfos
                 case elem:
                     of MeritRemoval as mr:
-                        if mr.partial:
-                            agInfos.add(newBLSAggregationInfo(record.key, mr.element2.serializeSign()))
-                        else:
-                            agInfos.add(
-                                @[
-                                    newBLSAggregationInfo(record.key, mr.element1.serializeSign()),
-                                    newBLSAggregationInfo(record.key, mr.element2.serializeSign()),
-                                ].aggregate()
-                            )
+                        agInfos.add(mr.agInfo)
                     else:
                         agInfos.add(newBLSAggregationInfo(record.key, elem.serializeSign()))
         #The presented Table has a different set of MeritHolders than the records.
@@ -98,7 +90,6 @@ proc verify*(
     if not agInfo.isNil:
         try:
             blockArg.header.aggregate.setAggregationInfo(agInfo)
-
             if not blockArg.header.aggregate.verify():
                 return false
         except BLSError:

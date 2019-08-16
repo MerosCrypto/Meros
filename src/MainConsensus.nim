@@ -126,7 +126,7 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ].} =
             #Print that we're adding the SignedVerification.
-            echo "Adding a new SignedVerification."
+            echo "Adding a new Signed Verification."
 
             #See if the Transaction exists.
             var txExists: bool
@@ -157,7 +157,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 )
                 return
 
-            echo "Successfully added a new SignedVerification."
+            echo "Successfully added a new Signed Verification."
 
             if txExists and (not consensus.malicious.hasKey(verif.holder.toString())):
                 #Add the Verification to the Transactions.
@@ -186,9 +186,27 @@ proc mainConsensus() {.forceCheck: [].} =
             except ValueError as e:
                 fcRaise e
 
-            echo "Successfully added a new MeritRemoval."
+            echo "Successfully added a new Merit Removal."
 
         functions.consensus.addSignedMeritRemoval = proc (
             mr: SignedMeritRemoval
-        ) {.forceCheck: [].} =
-            discard
+        ) {.forceCheck: [
+            ValueError
+        ].} =
+            #Print that we're adding the MeritRemoval.
+            echo "Adding a new Merit Removal."
+
+            #Add the MeritRemoval.
+            try:
+                consensus.add(mr)
+            except ValueError as e:
+                echo e.msg
+                fcRaise e
+
+            echo "Successfully added a new Signed Merit Removal."
+
+            #Broadcast the SignedMeritRemoval.
+            functions.network.broadcast(
+                MessageType.SignedMeritRemoval,
+                mr.signedSerialize()
+            )

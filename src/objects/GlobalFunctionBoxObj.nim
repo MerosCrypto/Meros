@@ -118,7 +118,9 @@ type
 
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
-        ) {.raises: [].}
+        ) {.raises: [
+            ValueError
+        ].}
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}

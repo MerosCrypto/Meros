@@ -164,7 +164,7 @@ proc recv*(
             len = MERIT_REMOVAL_LENS[4]
             case int(msg[^1]):
                 of VERIFICATION_PREFIX:
-                    len = VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
+                    len += VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
                 of SEND_DIFFICULTY_PREFIX:
                     doAssert(false, "Client sent an unsupport element type.")
                 of DATA_DIFFICULTY_PREFIX:

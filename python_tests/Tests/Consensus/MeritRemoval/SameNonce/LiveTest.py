@@ -40,6 +40,10 @@ def verifyMeritRemoval(
     ]) != removal.toJSON():
         raise TestError("Merit Removal doesn't match.")
 
+    #Verify the Live Merit.
+    if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 100 if malicious else 0:
+        raise TestError("Live Merit doesn't match.")
+
     #Verify the Merit Holder's Merit.
     if rpc.call("merit", "getMerit", [removal.holder.hex()]) != {
         "live": True,
@@ -132,10 +136,6 @@ def MRSNLiveTest(
     if msg != (MessageType.SignedMeritRemoval.toByte() + removal.signedSerialize()):
         raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, removal, True)
-
-    #Verify the Live Merit.
-    if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 0:
-        raise TestError("Live Merit doesn't match.")
 
     #Send the final Block.
     rpc.meros.blockHeader(merit.blockchain.blocks[-1].header)

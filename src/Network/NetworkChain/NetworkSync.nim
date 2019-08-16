@@ -1,8 +1,11 @@
 #Include the Second file in the chain, NetworkCore.
 include NetworkCore
 
-#Tuple to define missing data.
-type Gap = tuple[key: BLSPublicKey, start: int, last: int]
+#Objects to define missing data.
+type Gap = object
+    key: BLSPublicKey
+    start: int
+    last: int
 
 #Sync missing Elements from a specific Client.
 proc syncElements(
@@ -149,28 +152,20 @@ proc sync*(
         #Get the MeritHolder.
         var holder: MeritHolder = consensus[record.key]
 
-        #If we're missing Elements...
-        if holder.height <= record.nonce:
-            #Add the gap.
-            gaps.add((
-                record.key,
-                holder.height,
-                record.nonce
-            ))
+        #Grab the holder's pending elements and place them in elements.
+        #OVerride for MeritRemovals.
+        if consensus.malicious.hasKey(holder.keyStr):
+            var mr: MeritRemoval
+            try:
+                mr = consensus.malicious[holder.keyStr]
+            except KeyError as e:
+                doAssert(false, "Couldn't get MeritRemoval for someone who has one: " & e.msg)
 
-        #Grab their pending elements and place it in elements.
-        elements[holder.keyStr] = newSeq[Element](holder.height - holder.archived - 1)
-        try:
-            if (
-                (consensus.malicious.hasKey(holder.keyStr)) and
-                (record.nonce == holder.archived + 1) and
-                (record.merkle == consensus.malicious[holder.keyStr].merkle)
-            ):
-                elements[holder.keyStr][0] = consensus.malicious[holder.keyStr]
+            if record.merkle == mr.merkle:
+                elements[holder.keyStr] = @[cast[Element](mr)]
                 continue
-        except KeyError as e:
-            doAssert(false, "Couldn't get MeritRemoval for someone who has one: " & e.msg)
 
+        elements[holder.keyStr] = newSeq[Element](holder.height - holder.archived - 1)
         for e in holder.archived + 1 ..< holder.height:
             try:
                 elements[holder.keyStr][e - (holder.archived + 1)] = holder[e]
@@ -178,6 +173,15 @@ proc sync*(
                 doAssert(false, "Couldn't access a seq in a table we just created: " & e.msg)
             except IndexError as e:
                 doAssert(false, "Couldn't get an Element by it's index despite looping up to the Merit Holder's height: " & e.msg)
+
+        #If we're missing Elements...
+        if holder.height <= record.nonce:
+            #Add the gap.
+            gaps.add(Gap(
+                key: record.key,
+                start: holder.height,
+                last: record.nonce
+            ))
 
     #Sync the missing Elements.
     if gaps.len != 0:
