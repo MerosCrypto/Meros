@@ -33,8 +33,8 @@ from python_tests.Tests.Consensus.MeritRemoval.PendingActions.LiveTest import MR
 from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovals.CauseTest import MRMRCauseTest
 from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovals.LiveTest import MRMRLiveTest
 
-#Format Exception standard function.
-from traceback import format_exc
+#Arguments.
+from sys import argv
 
 #Sleep standard function.
 from time import sleep
@@ -42,7 +42,16 @@ from time import sleep
 #SHUtil standard lib.
 import shutil
 
+#Format Exception standard function.
+from traceback import format_exc
+
+#Initial port.
 port: int = 5132
+
+#Results.
+ress: List[str] = []
+
+#Tests.
 tests: List[
     Callable[[RPC], None]
 ] = [
@@ -68,8 +77,28 @@ tests: List[
     MRPALiveTest,
 
     MRMRCauseTest,
-    MRMRLiveTest,
+    MRMRLiveTest
 ]
+
+#Tests to run.
+#If any were specified over the CLI, only run those.
+testsToRun: List[str] = argv[1:]
+#Else, run all.
+if len(testsToRun) == 0:
+    for test in tests:
+        testsToRun.append(test.__name__)
+
+#Remove invalid tests.
+for testName in testsToRun:
+    found: bool = False
+    for test in tests:
+        if test.__name__ == testName:
+            found = True
+            break
+
+    if not found:
+        ress.append("\033[0;31mCouldn't find " + testName + ".")
+        testsToRun.remove(testName)
 
 #Delete the python_tests data directory.
 try:
@@ -78,8 +107,15 @@ except FileNotFoundError:
     pass
 
 #Run every test.
-ress: List[str] = []
 for test in tests:
+    if len(testsToRun) == 0:
+        break
+    if test.__name__ not in testsToRun:
+        continue
+    testsToRun.remove(test.__name__)
+
+    print("Running " + test.__name__ + ".")
+
     meros: Meros = Meros(
         test.__name__,
         port,

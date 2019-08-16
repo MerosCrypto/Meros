@@ -11,6 +11,9 @@ from python_tests.Tests.TestError import TestError
 #RPC class.
 from python_tests.Meros.RPC import RPC
 
+#Merit verifier.
+from python_tests.Tests.Merit.Verify import verifyBlockchain
+
 #JSON standard lib.
 import json
 
@@ -43,10 +46,5 @@ def ChainAdvancementTest(
         if blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
             raise TestError("Difficulty doesn't match.")
 
-        #Verify the Block.
-        if rpc.call("merit", "getBlock", [block.header.nonce]) != jsonBlock:
-            raise TestError("Block doesn't match.")
-
-    #Verify the height.
-    if rpc.call("merit", "getHeight") != len(blocks) + 1:
-        raise TestError("Height doesn't match.")
+    #Verify the Blockchain.
+    verifyBlockchain(rpc, blockchain)

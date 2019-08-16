@@ -20,41 +20,12 @@ from python_tests.Tests.TestError import TestError
 from python_tests.Meros.Meros import MessageType
 from python_tests.Meros.RPC import RPC
 
+#Merit and Consensus verifiers.
+from python_tests.Tests.Merit.Verify import verifyBlockchain
+from python_tests.Tests.Consensus.Verify import verifyMeritRemoval
+
 #JSON standard lib.
 import json
-
-#Verify a MeritRemoval over the RPC.
-def verifyMeritRemoval(
-    rpc: RPC,
-    removal: SignedMeritRemoval,
-    malicious: bool
-) -> None:
-    #Verify the Merit Holder height.
-    if rpc.call("consensus", "getHeight", [removal.holder.hex()]) != 1:
-        raise TestError("Merit Holder height doesn't match.")
-
-    #Verify the MeritRemoval.
-    if rpc.call("consensus", "getElement", [
-        removal.holder.hex(),
-        0
-    ]) != removal.toJSON():
-        raise TestError("Merit Removal doesn't match.")
-
-    #Verify the Total Merit.
-    if rpc.call("merit", "getTotalMerit") != 100 if malicious else 0:
-        raise TestError("Total Merit doesn't match.")
-
-    #Verify the Live Merit.
-    if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != 100 if malicious else 0:
-        raise TestError("Live Merit doesn't match.")
-
-    #Verify the Merit Holder's Merit.
-    if rpc.call("merit", "getMerit", [removal.holder.hex()]) != {
-        "live": True,
-        "malicious": malicious,
-        "merit": 100 if malicious else 0
-    }:
-        raise TestError("Merit Holder's Merit doesn't match.")
 
 def MRSNCauseTest(
     rpc: RPC
@@ -144,7 +115,7 @@ def MRSNCauseTest(
     msg = rpc.meros.recv()
     if msg != (MessageType.SignedMeritRemoval.toByte() + removal.signedSerialize()):
         raise TestError("Meros didn't send us the Merit Removal.")
-    verifyMeritRemoval(rpc, removal, True)
+    verifyMeritRemoval(rpc, 1, 100, removal, True)
 
     #Send the final Block.
     rpc.meros.blockHeader(merit.blockchain.blocks[-1].header)
@@ -190,18 +161,8 @@ def MRSNCauseTest(
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-    #Verify the height.
-    if rpc.call("merit", "getHeight") != len(merit.blockchain.blocks):
-        raise TestError("Height doesn't match.")
-
-    #Verify the difficulty.
-    if merit.blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
-        raise TestError("Difficulty doesn't match.")
-
-    #Verify the blocks.
-    for block in merit.blockchain.blocks:
-        if rpc.call("merit", "getBlock", [block.header.nonce]) != block.toJSON():
-            raise TestError("Block doesn't match.")
+    #Verify the Blockchain.
+    verifyBlockchain(rpc, merit.blockchain)
 
     #Verify the MeritRemoval again.
-    verifyMeritRemoval(rpc, removal, False)
+    verifyMeritRemoval(rpc, 1, 100, removal, False)

@@ -1,3 +1,6 @@
+#Types.
+from typing import List
+
 #Transactions classes.
 from python_tests.Classes.Transactions.Transaction import Transaction
 from python_tests.Classes.Transactions.Claim import Claim
@@ -76,13 +79,20 @@ class Meros:
         #Create the instance.
         self.process: Popen = Popen(["./build/Meros", "--gui", "false", "--dataDir", "./data/python_tests", "--network", "devnet", "--db", db, "--tcpPort", str(tcp), "--rpcPort", str(rpc)])
 
+        #Create message/response lists.
+        self.msgs: List[bytes] = []
+        self.ress: List[bytes] = []
+
     #Send a message.
     def send(
         self,
-        msg: bytes
+        msg: bytes,
+        save: bool = True
     ) -> None:
         try:
             self.connection.send(msg)
+            if save:
+                self.msgs.append(msg)
         except:
             raise TestError("Node disconnected us as a peer.")
 
@@ -133,6 +143,7 @@ class Meros:
             size = 0
         elif MessageType(result[0]) == MessageType.SyncingOver:
             size = 0
+            self.msgs.append(bytes())
 
         elif MessageType(result[0]) == MessageType.Claim:
             size = 1
@@ -200,6 +211,8 @@ class Meros:
             else:
                 raise Exception("Meros sent an Element we don't recognize.")
 
+        if MessageType(result[0]) != MessageType.Handshake:
+            self.ress.append(result)
         return result
 
     #Connect to Meros and handshake with it.
@@ -223,7 +236,8 @@ class Meros:
             network.to_bytes(1, byteorder = "big") +
             protocol.to_bytes(1, byteorder = "big") +
             b'\0' +
-            height.to_bytes(4, byteorder = "big")
+            height.to_bytes(4, byteorder = "big"),
+            False
         )
 
         #Receive their handshake.
@@ -365,6 +379,16 @@ class Meros:
 
         self.send(res)
         return res
+
+    #Playback all received messages and test the responses.
+    def playback(
+        self
+    ) -> None:
+        for i in range(0, len(self.ress)):
+            self.send(self.ress[i])
+            if len(self.msgs[i]) != 0:
+                if self.msgs[i] != self.recv():
+                    raise TestError("Invalid playback response.")
 
     #Check the return code.
     def quit(
