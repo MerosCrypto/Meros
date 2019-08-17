@@ -7,6 +7,7 @@ import python_tests.Vectors.Generation.Transactions.Fifty
 
 #Consensus.
 import python_tests.Vectors.Generation.Consensus.Verification.Parsable
+import python_tests.Vectors.Generation.Consensus.Verification.Competing
 
 import python_tests.Vectors.Generation.Consensus.MeritRemoval.SameNonce
 import python_tests.Vectors.Generation.Consensus.MeritRemoval.Partial

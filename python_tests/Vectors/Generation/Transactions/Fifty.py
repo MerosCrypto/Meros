@@ -6,7 +6,7 @@ from python_tests.Classes.Transactions.Send import Send
 from python_tests.Classes.Transactions.Claim import Claim
 from python_tests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
+#Consensus class.
 from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
 from python_tests.Classes.Consensus.Consensus import Consensus
 

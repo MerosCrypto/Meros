@@ -82,8 +82,6 @@ Network:
 - MultipleRemovals Cause test.
 - MultipleRemovals Live test.
 
-- Competing Verifications test.
-
 - State/Epochs reloading with MeritRemovals tests.
 
 ### Nim Tests:
@@ -150,7 +148,6 @@ Network:
 - Tests.
 
 ### Python Tests
-- Merit Removal Tests.
 - RPC tests.
 
 ### Features:

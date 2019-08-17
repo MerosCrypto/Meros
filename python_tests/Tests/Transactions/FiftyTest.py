@@ -30,17 +30,17 @@ import json
 def FiftyTest(
     rpc: RPC
 ) -> None:
-    cmFile: IO[Any] = open("python_tests/Vectors/Transactions/Fifty.json", "r")
-    cmVectors: Dict[str, Any] = json.loads(cmFile.read())
+    fFile: IO[Any] = open("python_tests/Vectors/Transactions/Fifty.json", "r")
+    fVectors: Dict[str, Any] = json.loads(fFile.read())
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(
-        cmVectors["transactions"]
+        fVectors["transactions"]
     )
     #Consensus.
     consensus: Consensus = Consensus.fromJSON(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-        cmVectors["consensus"]
+        fVectors["consensus"]
     )
     #Merit.
     merit: Merit = Merit.fromJSON(
@@ -50,9 +50,9 @@ def FiftyTest(
         100,
         transactions,
         consensus,
-        cmVectors["blockchain"]
+        fVectors["blockchain"]
     )
-    cmFile.close()
+    fFile.close()
 
     #Handshake with the node.
     rpc.meros.connect(
