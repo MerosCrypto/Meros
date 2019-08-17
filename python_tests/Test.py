@@ -15,6 +15,10 @@ from python_tests.Tests.Merit.SyncTest import MeritSyncTest
 from python_tests.Tests.Transactions.DataTest import DataTest
 from python_tests.Tests.Transactions.FiftyTest import FiftyTest
 
+from python_tests.Tests.Consensus.Verification.Unknown import VUnknown
+from python_tests.Tests.Consensus.Verification.Parsable import VParsable
+from python_tests.Tests.Consensus.Verification.Competing import VCompeting
+
 from python_tests.Tests.Consensus.MeritRemoval.SameNonce.CauseTest import MRSNCauseTest
 from python_tests.Tests.Consensus.MeritRemoval.SameNonce.LiveTest import MRSNLiveTest
 from python_tests.Tests.Consensus.MeritRemoval.SameNonce.SyncTest import MRSNSyncTest
@@ -60,6 +64,10 @@ tests: List[
 
     DataTest,
     FiftyTest,
+
+    VUnknown,
+    VParsable,
+    VCompeting,
 
     MRSNCauseTest,
     MRSNLiveTest,

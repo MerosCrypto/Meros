@@ -82,8 +82,6 @@ Network:
 - MultipleRemovals Cause test.
 - MultipleRemovals Live test.
 
-- Unknown Verifications test.
-- Parsable Verifications test.
 - Competing Verifications test.
 
 - State/Epochs reloading with MeritRemovals tests.

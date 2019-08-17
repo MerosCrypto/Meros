@@ -5,9 +5,7 @@ from typing import IO, Dict, List, Any
 from python_tests.Classes.Transactions.Data import Data
 
 #Consensus classes.
-from python_tests.Classes.Consensus.Element import SignedElement
 from python_tests.Classes.Consensus.Verification import SignedVerification
-from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Blockchain classes.
@@ -54,26 +52,18 @@ blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
 blockchain.add(Block.fromJSON(blocks[0]))
 bbFile.close()
 
-#Create a Data to verify.
+#Create a Data with an invalid signature.
 data: Data = Data(
     edPubKey.to_bytes().rjust(48, b'\0'),
     bytes()
 )
-data.sign(edPrivKey)
+data.signature = edPrivKey.sign(b"INVALID")
 data.beat(consensus.dataFilter)
 
-#Create two Verifications with the same nonce, yet for the different Datas.
-sv1: SignedVerification = SignedVerification(data.hash)
-sv1.sign(privKey, 0)
-
-sv2: SignedVerification = SignedVerification(b'\0' * 48)
-sv2.sign(privKey, 0)
-
-removal: SignedMeritRemoval = SignedMeritRemoval(
-    SignedElement.fromElement(sv1),
-    SignedElement.fromElement(sv2)
-)
-consensus.add(removal)
+#Create a Verification.
+sv: SignedVerification = SignedVerification(data.hash)
+sv.sign(privKey, 0)
+consensus.add(sv)
 
 #Generate another Block.
 block: Block = Block(
@@ -104,13 +94,13 @@ while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
 
 #Add it.
 blockchain.add(block)
-print("Generated Same Nonce Block " + str(block.header.nonce) + ".")
+print("Generated Parsable Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "data":       data.toJSON(),
-    "removal":    removal.toSignedJSON()
+    "blockchain":   blockchain.toJSON(),
+    "data":         data.toJSON(),
+    "verification": sv.toSignedJSON()
 }
-vectors: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "w")
+vectors: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Parsable.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()
