@@ -183,3 +183,10 @@ proc mainTransactions() {.forceCheck: [].} =
                     asyncCheck verify(data)
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+
+        #Save a Transaction to the database.
+        #This for 'invalid' Transactions we aren't able to prune.
+        functions.transactions.save = proc (
+            tx: Transaction
+        ) {.inline, forceCheck: [].} =
+            transactions.save(tx)

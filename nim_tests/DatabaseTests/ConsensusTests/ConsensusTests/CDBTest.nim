@@ -71,19 +71,12 @@ proc test*() =
             #Sign it.
             holder.sign(verif, consensus[holder.publicKey].height)
 
-            #Add it is an unknown TX or not.
-            var unknownTX: bool
-            if rand(4) == 0:
-                unknownTX = true
-            else:
-                unknownTX = false
-
             #Add it as a SignedVerification.
             if rand(1) == 0:
-                consensus.add(verif, unknownTX)
+                consensus.add(verif, true)
             #Add it as a Verification.
             else:
-                consensus.add(cast[Verification](verif), unknownTX)
+                consensus.add(cast[Verification](verif), true)
 
         #Clear archiving and recalculate it.
         archiving = @[]

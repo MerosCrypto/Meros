@@ -56,58 +56,15 @@ proc flag*(
         return
     consensus.malicious[removal.holder.toString()] = removal
 
-#Handle unknown Verifications.
-proc handleUnknown*(
+proc checkMalicious*(
     consensus: Consensus,
-    verif: Verification,
-    txExists: bool
-) {.forceCheck: [].} =
-    if txExists:
-        return
-
-    var hash: string = verif.hash.toString()
-    if not consensus.unknowns.hasKey(hash):
-        consensus.unknowns[hash] = newSeq[seq[BLSPublicKey]](6)
-
-    try:
-        consensus.unknowns[hash][5].add(verif.holder)
-    except KeyError as e:
-        doAssert(false, "Couldn't add a Merit Holder to a seq we've confirmed to exist: " & e.msg)
-
-    consensus.db.saveUnknown(verif)
-
-#Add a Verification.
-proc add*(
-    consensus: Consensus,
-    verif: Verification,
-    txExists: bool
+    verif: SignedVerification
 ) {.forceCheck: [
-    GapError
-].} =
-    try:
-        consensus[verif.holder].add(verif)
-    except GapError as e:
-        fcRaise e
-
-    consensus.handleUnknown(verif, txExists)
-
-#Add a SignedVerification.
-proc add*(
-    consensus: Consensus,
-    verif: SignedVerification,
-    txExists: bool
-) {.forceCheck: [
-    ValueError,
-    GapError,
     DataExists,
     MaliciousMeritHolder
 ].} =
     try:
-        consensus[verif.holder].add(verif)
-    except ValueError as e:
-        fcRaise e
-    except GapError as e:
-        fcRaise e
+        consensus[verif.holder].checkMalicious(verif)
     except DataExists as e:
         fcRaise e
     except MaliciousMeritHolder as e:
@@ -117,7 +74,63 @@ proc add*(
             e.removal
         )
 
+#Handle unknown Verifications.
+proc handleUnknown(
+    consensus: Consensus,
+    verif: Verification,
+    txExists: bool
+) {.forceCheck: [].} =
+    if txExists:
+        return
+
+    var hash: string = verif.hash.toString()
+    if not consensus.unknowns.hasKey(hash):
+        consensus.unknowns[hash] = newSeq[BLSPublicKey]()
+
+    try:
+        consensus.unknowns[hash].add(verif.holder)
+    except KeyError as e:
+        doAssert(false, "Couldn't add a Merit Holder to a seq we've confirmed to exist: " & e.msg)
+
+#Add a Verification.
+proc add*(
+    consensus: Consensus,
+    verif: Verification,
+    txExists: bool
+) {.forceCheck: [
+    ValueError,
+    GapError,
+    DataExists
+].} =
+    try:
+        consensus[verif.holder].add(verif)
+    except GapError as e:
+        fcRaise e
+    except DataExists as e:
+        fcRaise e
+    except MaliciousMeritHolder as e:
+        raise newException(ValueError, "Tried to add an Element from a Block which would cause a MeritRemoval: " & e.msg)
+
     consensus.handleUnknown(verif, txExists)
+
+#Add a SignedVerification.
+proc add*(
+    consensus: Consensus,
+    verif: SignedVerification
+) {.forceCheck: [
+    ValueError,
+    GapError
+].} =
+    try:
+        consensus[verif.holder].add(verif)
+    except ValueError as e:
+        fcRaise e
+    except GapError as e:
+        fcRaise e
+    except DataExists as e:
+        doAssert(false, "Tried to add a SignedVerification which caused was already added. This should've been checked via checkMalicious before hand: " & e.msg)
+    except MaliciousMeritHolder as e:
+        doAssert(false, "Tried to add a SignedVerification which caused a MeritRemoval. This should've been checked via checkMalicious before hand: " & e.msg)
 
 #Add a MeritRemoval.
 proc add*(
@@ -231,23 +244,3 @@ proc archive*(
 
         #Update the DB.
         consensus.db.save(record.key, record.nonce)
-
-    #Shift over the Verifications for unknown hashes.
-    var toDelete: seq[string] = @[]
-    for key in consensus.unknowns.keys():
-        try:
-            consensus.unknowns[key].add(@[])
-            consensus.unknowns[key].delete(0)
-
-            for i in 0 ..< 5:
-                if consensus.unknowns[key][i].len != 0:
-                    break
-
-                if i == 4:
-                    toDelete.add(key)
-        except KeyError as e:
-            doAssert(false, "Couldn't access a value with an a key we got with .keys(): " & e.msg)
-    for key in toDelete:
-        consensus.unknowns.del(key)
-
-    consensus.db.advanceUnknown()

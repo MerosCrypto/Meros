@@ -312,40 +312,38 @@ proc loadUnknown*(
     transactions: var Transactions,
     consensus: Consensus,
     blockchain: Blockchain,
-    stateArg: State,
+    state: var State,
     tx: Transaction
 ) {.forceCheck: [].} =
-    #If this transaction doesn't have previously unknown verifications, return.
+    #If this transaction doesn't have previously unknown Verifications, return.
     if not consensus.unknowns.hasKey(tx.hash.toString()):
         return
 
-    var
-        #States.
-        state: State = stateArg
-        #Verification
-        verif: Verification
-    for u in countdown(5, max(5 - blockchain.height, 0), 1):
-        try:
-            for holder in consensus.unknowns[tx.hash.toString()][u]:
-                #Recreate the Verification.
-                verif = newVerificationObj(tx.hash)
-                try:
-                    verif.holder = holder
-                except FinalAttributeError as e:
-                    doAssert(false, "Set a final attribute twice when recreating a Verification: " & e.msg)
+    #Verification.
+    var verif: Verification
+    try:
+        for holder in consensus.unknowns[tx.hash.toString()]:
+            #Recreate the Verification.
+            verif = newVerificationObj(tx.hash)
+            try:
+                verif.holder = holder
+            except FinalAttributeError as e:
+                doAssert(false, "Set a final attribute twice when recreating a Verification: " & e.msg)
 
-                #Add the Verification.
-                try:
-                    transactions.verify(
-                        verif,
-                        state[holder],
-                        state.live
-                    )
-                except ValueError as e:
-                    doAssert(false, "Couldn't add a Verification for a Transaction we just added: " & e.msg)
-        except KeyError as e:
-            doAssert(false, "Couldn't get a value despite confirming we have the key: " & e.msg)
-        state.revert(blockchain, state.processedBlocks - 1)
+            #Add the Verification.
+            try:
+                transactions.verify(
+                    verif,
+                    state[holder],
+                    state.live
+                )
+            except ValueError as e:
+                doAssert(false, "Couldn't add a Verification for a Transaction we just added: " & e.msg)
+    except KeyError as e:
+        doAssert(false, "Couldn't get a value despite confirming we have the key: " & e.msg)
+
+    #Delete the Transaction from unknowns.
+    consensus.unknowns.del(tx.hash.toString())
 
 #Add a Claim.
 proc add*(
@@ -521,6 +519,13 @@ proc add*(
 
     #Add the Data.
     transactions.add(cast[Transaction](data))
+
+#Save a Transaction. Do not apply any other checks.
+proc save*(
+    transactions: Transactions,
+    tx: Transaction
+) {.inline, forceCheck: [].} =
+    transactions.saveTransaction(tx)
 
 #Mint Meros to the specified key.
 proc mint*(

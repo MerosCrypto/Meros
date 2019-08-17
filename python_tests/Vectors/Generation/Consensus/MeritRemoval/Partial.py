@@ -1,19 +1,16 @@
 #Types.
 from typing import IO, Dict, Any
 
-#Transactions class.
-from python_tests.Classes.Transactions.Transactions import Transactions
-
 #Consensus classes.
 from python_tests.Classes.Consensus.Verification import SignedVerification
 from python_tests.Classes.Consensus.MeritRemoval import PartiallySignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
-#Merit classes.
+#Blockchain classes.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 from python_tests.Classes.Merit.Block import Block
-from python_tests.Classes.Merit.Merit import Merit
+from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #BLS lib.
 import blspy
@@ -24,44 +21,40 @@ from time import time
 #JSON standard lib.
 import json
 
-#Transactionss.
-transactions: Transactions = Transactions()
 #Consensus.
 consensus: Consensus = Consensus(
     bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
     bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
 )
-#Merit.
-merit: Merit = Merit(
+#Blockchain.
+blockchain: Blockchain = Blockchain(
     b"MEROS_DEVELOPER_NETWORK",
     60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    100
+    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
 )
-
-#BLS Public Key.
-pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
 
 #Add a single Block to create Merit and load a MeritRemoval.
 snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
 vectors: Dict[str, Any] = json.loads(snFile.read())
-merit.add(
-    transactions,
-    consensus,
-    Block.fromJSON(vectors["blockchain"][0])
-)
+
+blockchain.add(Block.fromJSON(vectors["blockchain"][0]))
+
 consensus.add(SignedVerification.fromJSON(vectors["removal"]["elements"][0]))
 removal: PartiallySignedMeritRemoval = PartiallySignedMeritRemoval.fromJSON(vectors["removal"])
 removal.nonce = 1
 consensus.add(removal)
+
 snFile.close()
+
+#BLS Public Key.
+pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
 
 #Generate a Block with a verif and a Block with the removal.
 for i in range(0, 2):
     block: Block = Block(
         BlockHeader(
             i + 2,
-            merit.blockchain.last(),
+            blockchain.last(),
             int(time()),
             consensus.getAggregate(
                 [(pubKey, i, i)]
@@ -82,17 +75,18 @@ for i in range(0, 2):
 
     #Mine it.
     block.header.rehash()
-    while int.from_bytes(block.header.hash, "big") < merit.blockchain.difficulty:
+    while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
         block.header.proof += 1
         block.header.rehash()
 
     #Add it.
-    merit.add(transactions, consensus, block)
+    blockchain.add(block)
     print("Generated Partial Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": merit.blockchain.toJSON(),
-    "removal":  removal.toSignedJSON()
+    "blockchain": blockchain.toJSON(),
+    "data":       vectors["data"],
+    "removal":    removal.toSignedJSON()
 }
 partialFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "w")
 partialFile.write(json.dumps(result))

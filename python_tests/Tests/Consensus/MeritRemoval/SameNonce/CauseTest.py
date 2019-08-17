@@ -3,7 +3,10 @@
 #Types.
 from typing import Dict, IO, Any
 
-#Consensus class.
+#Data class.
+from python_tests.Classes.Transactions.Data import Data
+
+#Consensus classes.
 from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
 
@@ -29,6 +32,8 @@ def MRSNCauseTest(
 ) -> None:
     snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
     snVectors: Dict[str, Any] = json.loads(snFile.read())
+    #Data.
+    data: Data = Data.fromJSON(snVectors["data"])
     #Consensus.
     consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
@@ -97,7 +102,12 @@ def MRSNCauseTest(
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-    #Send the SignedVerifications.
+    #Send the Data/SignedVerifications.
+    rpc.meros.transaction(data)
+    msg = rpc.meros.recv()
+    if MessageType(msg[0]) != MessageType.Data:
+        raise TestError("Unexpected message sent: " + msg.hex().upper())
+
     rpc.meros.signedElement(removal.se1)
     msg = rpc.meros.recv()
     if MessageType(msg[0]) != MessageType.SignedVerification:
@@ -106,8 +116,7 @@ def MRSNCauseTest(
     rpc.meros.signedElement(removal.se2)
 
     #Verify the MeritRemoval.
-    msg = rpc.meros.recv()
-    if msg != (MessageType.SignedMeritRemoval.toByte() + removal.signedSerialize()):
+    if rpc.meros.recv() != (MessageType.SignedMeritRemoval.toByte() + removal.signedSerialize()):
         raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 1, 100, removal, True)
 

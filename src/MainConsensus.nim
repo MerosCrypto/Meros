@@ -88,7 +88,9 @@ proc mainConsensus() {.forceCheck: [].} =
         #Handle Elements.
         functions.consensus.addVerification = proc (
             verif: Verification
-        ) {.forceCheck: [].} =
+        ) {.forceCheck: [
+            ValueError
+        ].} =
             #Print that we're adding the Verification.
             echo "Adding a new Verification from a Block."
 
@@ -103,10 +105,13 @@ proc mainConsensus() {.forceCheck: [].} =
             #Add the Verification to the Elements DAG.
             try:
                 consensus.add(verif, txExists)
-            #Missing Elements before this Verification.
+            except ValueError as e:
+                fcRaise e
             #Since we got this from a Block, we should've already synced all previous Elements.
             except GapError:
                 doAssert(false, "Adding a Verification from a Block which we verified, despite not having all mentioned Elements.")
+            except DataExists as e:
+                doAssert(false, "Tried to add an unsigned Element we already have: " & e.msg)
 
             echo "Successfully added a new Verification."
 
@@ -128,24 +133,21 @@ proc mainConsensus() {.forceCheck: [].} =
             #Print that we're adding the SignedVerification.
             echo "Adding a new Signed Verification."
 
-            #See if the Transaction exists.
-            var txExists: bool
+            #Since we call checkMalicious before we verify the signature, set the aggregation info now.
             try:
-                discard transactions[verif.hash]
-                txExists = true
-            except IndexError:
-                txExists = false
+                verif.signature.setAggregationInfo(
+                    newBLSAggregationInfo(
+                        verif.holder,
+                        verif.serializeSign()
+                    )
+                )
+            except BLSError as e:
+                doAssert(false, "Failed to create a BLS Aggregation Info: " & e.msg)
 
-            #Add the SignedVerification to the Elements DAG.
+            #Check if this is cause for a MaliciousMeritRemoval.
             try:
-                consensus.add(verif, txExists)
-            #Invalid signature.
-            except ValueError as e:
-                fcRaise e
-            #Missing Elements before this Verification.
-            except GapError as e:
-                fcRaise e
-            #Memory Verification was already added.
+                consensus.checkMalicious(verif)
+            #Already added.
             except DataExists as e:
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
@@ -157,9 +159,25 @@ proc mainConsensus() {.forceCheck: [].} =
                 )
                 return
 
+            #See if the Transaction exists.
+            try:
+                discard transactions[verif.hash]
+            except IndexError:
+                raise newException(ValueError, "Unknown Verification.")
+
+            #Add the SignedVerification to the Elements DAG.
+            try:
+                consensus.add(verif)
+            #Invalid signature.
+            except ValueError as e:
+                fcRaise e
+            #Missing Elements before this Verification.
+            except GapError as e:
+                fcRaise e
+
             echo "Successfully added a new Signed Verification."
 
-            if txExists and (not consensus.malicious.hasKey(verif.holder.toString())):
+            if not consensus.malicious.hasKey(verif.holder.toString()):
                 #Add the Verification to the Transactions.
                 try:
                     transactions.verify(verif, merit.state[verif.holder], merit.state.live)
@@ -200,7 +218,6 @@ proc mainConsensus() {.forceCheck: [].} =
             try:
                 consensus.add(mr)
             except ValueError as e:
-                echo e.msg
                 fcRaise e
 
             echo "Successfully added a new Signed Merit Removal."

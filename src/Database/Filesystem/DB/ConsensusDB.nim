@@ -17,9 +17,6 @@ import ../../Consensus/Element
 import Serialize/Consensus/DBSerializeElement
 import Serialize/Consensus/DBParseElement
 
-import Serialize/Consensus/SerializeUnknown
-import Serialize/Consensus/ParseUnknown
-
 #DB object.
 import objects/DBObj
 export DBObj
@@ -70,9 +67,6 @@ proc commit*(
             discard
     db.consensus.deleted = @[]
 
-    for u in 0 ..< 5:
-        db.consensus.cache["u" & char(u)] = db.consensus.unknown[u]
-
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.consensus.cache.len)
     try:
         var i: int = 0
@@ -114,19 +108,6 @@ proc save*(
         elem.holder.toString() & elem.nonce.toBinary().pad(1),
         elem.serialize()
     )
-
-proc saveUnknown*(
-    db: DB,
-    verif: Verification
-) {.forceCheck: [].} =
-    db.consensus.unknown[5] &= verif.serializeUnknown()
-
-proc advanceUnknown*(
-    db: DB
-) {.forceCheck: [].} =
-    for i in 0 ..< 5:
-        db.consensus.unknown[i] = db.consensus.unknown[i + 1]
-    db.consensus.unknown[5] = ""
 
 proc loadHolders*(
     db: DB
@@ -171,28 +152,6 @@ proc load*(
             result.nonce = nonce
         except FinalAttributeError as e:
             doAssert(false, "Set a final attribute twice when loading a MeritRemoval: " & e.msg)
-
-proc loadUnknown*(
-    db: DB
-): seq[seq[Verification]] {.forceCheck: [
-    DBReadError
-].} =
-    var unknowns: string
-    result = newSeq[seq[Verification]](5)
-    for u in 0 ..< 5:
-        try:
-            unknowns = db.get("u" & char(u))
-        except DBReadError as e:
-            if u == 0:
-                return
-            else:
-                fcRaise e
-
-        for i in countup(0, unknowns.len - 1, UNKNOWN_LEN):
-            try:
-                result[u].add(unknowns[i ..< i + UNKNOWN_LEN].parseUnknown())
-            except Exception as e:
-                raise newException(DBReadError, e.msg)
 
 #Delete an element.
 proc del*(

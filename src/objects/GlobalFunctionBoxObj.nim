@@ -77,6 +77,10 @@ type
             DataExists
         ].}
 
+        save*: proc (
+            tx: Transaction
+        ) {.inline, raises: [].}
+
     ConsensusFunctionBox* = ref object
         isMalicious*: proc (
             key: BLSPublicKey,
@@ -100,7 +104,9 @@ type
 
         addVerification*: proc (
             verif: Verification
-        ) {.raises: [].}
+        ) {.raises: [
+            ValueError
+        ].}
 
         addSignedVerification*: proc (
             verif: SignedVerification

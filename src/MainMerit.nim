@@ -78,8 +78,10 @@ proc mainMerit() {.forceCheck: [].} =
                     var missingBlock: Block
                     try:
                         missingBlock = await network.requestBlock(consensus, nonce)
-                    #Redefine as a GapError since a failure to sync produces a gap.
+                    except ValueError as e:
+                        fcRaise e
                     except DataMissing as e:
+                        #Redefine as a GapError since a failure to sync produces a gap.
                         raise newException(GapError, e.msg)
                     except ValidityConcern as e:
                         raise newException(ValueError, e.msg)

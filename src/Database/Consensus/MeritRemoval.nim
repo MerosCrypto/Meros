@@ -47,7 +47,7 @@ proc merkle*(
     Blake384(char(MERIT_REMOVAL_PREFIX) & mr.serialize())
 
 #Calculate the MeritRemoval's aggregation info.
-method agInfo*(
+proc agInfo*(
     mr: MeritRemoval
 ): BLSAggregationInfo {.forceCheck: [].} =
     try:

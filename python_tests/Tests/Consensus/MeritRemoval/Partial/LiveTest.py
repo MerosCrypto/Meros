@@ -3,6 +3,9 @@
 #Types.
 from typing import Dict, IO, Any
 
+#Data class.
+from python_tests.Classes.Transactions.Data import Data
+
 #Consensus class.
 from python_tests.Classes.Consensus.MeritRemoval import PartiallySignedMeritRemoval
 from python_tests.Classes.Consensus.Consensus import Consensus
@@ -29,6 +32,8 @@ def MRPLiveTest(
 ) -> None:
     partialFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
     partialVectors: Dict[str, Any] = json.loads(partialFile.read())
+    #Data.
+    data: Data = Data.fromJSON(partialVectors["data"])
     #Consensus.
     consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
@@ -103,7 +108,9 @@ def MRPLiveTest(
 
         elif MessageType(msg[0]) == MessageType.TransactionRequest:
             sentLast = True
-            rpc.meros.dataMissing()
+            if msg[1 : 49] != data.hash:
+                raise TestError("Meros asked for a Transaction not mentioned.")
+            rpc.meros.transaction(data)
 
         elif MessageType(msg[0]) == MessageType.SyncingOver:
             if sentLast == True:

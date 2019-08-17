@@ -33,7 +33,7 @@ They have the following fields:
 
 - hash: Hash of the Transaction verified.
 
-Verifications can only be of parsable Transactions with a valid signature. Verifications can not be of unknown hashes.
+Verifications can only be of parsable Transactions, even ones with an invalid signature. Verifications with unknown hashes are invalid, yet still usable as causes for a MeritRemoval.
 
 `Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
 

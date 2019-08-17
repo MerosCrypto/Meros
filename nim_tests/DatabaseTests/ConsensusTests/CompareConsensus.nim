@@ -48,12 +48,6 @@ proc compare*(
         assert(c2Holders.contains(holder))
         compare(c1[holder], c2[holder])
 
-    #Compare the Unknowns.
-    assert(c1.unknowns.len == c2.unknowns.len)
-    for hash in c1.unknowns.keys():
-        assert(c1.unknowns[hash].len == 6)
-        assert(c2.unknowns[hash].len == 6)
-        for u in 0 ..< 6:
-            assert(c1.unknowns[hash][u].len == c2.unknowns[hash][u].len)
-            for v in 0 ..< c1.unknowns[hash][u].len:
-                assert(c1.unknowns[hash][u][v] == c2.unknowns[hash][u][v])
+    #Verify the Unknowns.
+    assert(c1.unknowns.len == 0)
+    assert(c2.unknowns.len == 0)

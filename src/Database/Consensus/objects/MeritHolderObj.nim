@@ -107,19 +107,97 @@ proc addToMerkle*(
         else:
             doAssert(false, "Element should be a Verification.")
 
+#Check if an Element is malicious.
+#Also checks if the Element already exists.
+proc checkMalicious(
+    holder: var MeritHolder,
+    elem: Element
+) {.forceCheck: [
+    DataExists,
+    MaliciousMeritHolder
+].} =
+    #Verify they didn't submit two Elements with the same nonce.
+    if elem.nonce < holder.height:
+        var existing: Element
+        try:
+            existing = holder[elem.nonce]
+        except IndexError as e:
+            doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
+
+        #If this Element was already added, raise DataExists.
+        if existing == elem:
+            raise newException(DataExists, "Element has already been added.")
+        #Else, this is a malicious act.
+        else:
+            #If this Element is unsigned, this is from a Block. Said Block is invalid.
+            #We candnot create a valid MeritRemoval, yet we can include the other Element.
+            raise newMaliciousMeritHolder(
+                "Block archives an Element which has the same nonce as a different Element.",
+                existing
+            )
+
+proc checkMalicious*(
+    holder: var MeritHolder,
+    elem: SignedElement
+) {.forceCheck: [
+    DataExists,
+    MaliciousMeritHolder
+].} =
+    try:
+        holder.checkMalicious(cast[Element](elem))
+    except DataExists as e:
+        fcRaise e
+    except MaliciousMeritHolder as e:
+        #Create a Signed Merit Removal.
+        var removal: SignedMeritRemoval
+        if e.element.nonce <= holder.archived:
+            removal = newSignedMeritRemoval(
+                true,
+                e.element,
+                elem,
+                elem.signature
+            )
+        else:
+            try:
+                removal = newSignedMeritRemoval(
+                    false,
+                    e.element,
+                    elem,
+                    signature = @[
+                        holder.signatures[e.element.nonce],
+                        elem.signature
+                    ].aggregate()
+                )
+            except KeyError as e:
+                doAssert(false, "Couldn't get the signature for an Element we know we have the signature for: " & e.msg)
+            except BLSError as e:
+                doAssert(false, "Failed to aggregate BLS Signatures: " & e.msg)
+
+        raise newMaliciousMeritHolder(
+            "MeritHolder submitted two Elements with the same nonce.",
+            removal
+        )
+
 #Add an Element to a MeritHolder.
 proc add*(
     holder: var MeritHolder,
     element: Element
 ) {.forceCheck: [
-    GapError
+    GapError,
+    DataExists,
+    MaliciousMeritHolder
 ].} =
     #Verify we're not missing Elements.
     if element.nonce > holder.height:
         raise newException(GapError, "Missing Elements before this Element.")
-    #Verify the Element's Nonce.
-    elif element.nonce < holder.height:
-        doAssert(false, "We are trying to add a Block with invalid records OR MeritHolder.add(SignedElement) did not implement this check.")
+
+    #Check if this Element is malicious.
+    try:
+        holder.checkMalicious(element)
+    except DataExists as e:
+        fcRaise e
+    except MaliciousMeritHolder as e:
+        fcRaise e
 
     #Increase the height.
     holder.height = holder.height + 1
@@ -142,9 +220,11 @@ proc add*(
 ].} =
     #Verify the signature.
     try:
-        element.signature.setAggregationInfo(
-            newBLSAggregationInfo(element.holder, element.serializeSign())
-        )
+        #Don't set the aggregation info for Verifications since we do that before calling checkMalicious.
+        if not (element of Verification):
+            element.signature.setAggregationInfo(
+                newBLSAggregationInfo(element.holder, element.serializeSign())
+            )
         if not element.signature.verify():
             raise newException(ValueError, "Failed to verify the Element's signature.")
     except ValueError as e:
@@ -152,53 +232,19 @@ proc add*(
     except BLSError as e:
         doAssert(false, "Failed to create a BLS Aggregation Info: " & e.msg)
 
-    #Verify they didn't submit two Elements with the same nonce.
-    if element.nonce < holder.height:
-        var existing: Element
-        try:
-            existing = holder[element.nonce]
-        except IndexError as e:
-            doAssert(false, "Couldn't grab an Element we're supposed to have: " & e.msg)
-
-        #If this Element was already added, raise DataExists.
-        if existing == element:
-            raise newException(DataExists, "Element has already been added.")
-        #Else, this is a malicious act.
-        else:
-            var removal: SignedMeritRemoval
-            if existing.nonce <= holder.archived:
-                removal = newSignedMeritRemoval(
-                    true,
-                    existing,
-                    element,
-                    element.signature
-                )
-            else:
-                try:
-                    removal = newSignedMeritRemoval(
-                        false,
-                        existing,
-                        element,
-                        signature = @[
-                            holder.signatures[existing.nonce],
-                            element.signature
-                        ].aggregate()
-                    )
-                except KeyError as e:
-                    doAssert(false, "Couldn't get the signature for an Element we know we have the signature for: " & e.msg)
-                except BLSError as e:
-                    doAssert(false, "Failed to aggregate BLS Signatures: " & e.msg)
-
-            raise newMaliciousMeritHolder(
-                "MeritHolder submitted two Elements with the same nonce.",
-                removal
-            )
-
     #Add the Element.
     try:
         holder.add(cast[Element](element))
     except GapError as e:
         fcRaise e
+    except DataExists as e:
+        fcRaise e
+    except MaliciousMeritHolder as e:
+        #Manually recreate the Exception since fcRaise wouldn't include the MeritRemoval.
+        raise newMaliciousMeritHolder(
+            e.msg,
+            e.removal
+        )
 
     #Cache the signature.
     holder.signatures[element.nonce] = element.signature

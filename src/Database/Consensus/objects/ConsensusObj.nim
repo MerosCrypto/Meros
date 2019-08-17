@@ -38,7 +38,7 @@ type Consensus* = ref object
     malicious*: Table[string, MeritRemoval]
 
     #Verifications of unknown transactions.
-    unknowns*: Table[string, seq[seq[BLSPublicKey]]]
+    unknowns*: Table[string, seq[BLSPublicKey]]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -49,7 +49,7 @@ proc newConsensusObj*(
         db: db,
         holders: initTable[string, MeritHolder](),
         malicious: initTable[string, MeritRemoval](),
-        unknowns: initTable[string, seq[seq[BLSPublicKey]]]()
+        unknowns: initTable[string, seq[BLSPublicKey]]()
     )
 
     #Grab the MeritHolders, if any exist.
@@ -66,26 +66,6 @@ proc newConsensusObj*(
             result.holders[holder] = newMeritHolderObj(result.db, newBLSPublicKey(holder))
         except BLSError as e:
             doAssert(false, "Couldn't create a BLS Public Key for a known MeritHolder: " & e.msg)
-
-    #Load the Verifications of unknown Transactions.
-    var
-        unknown: seq[seq[Verification]]
-        hash: string
-    try:
-         unknown = db.loadUnknown()
-    except DBReadError as e:
-        doAssert(false, "Couldn't load Verifications with unknown hashes: " & e.msg)
-
-    for u in 0 ..< unknown.len:
-        for verif in unknown[u]:
-            hash = verif.hash.toString()
-            if not result.unknowns.hasKey(hash):
-                result.unknowns[hash] = newSeq[seq[BLSPublicKey]](6)
-
-            try:
-                result.unknowns[hash][u].add(verif.holder)
-            except KeyError as e:
-                doAssert(false, "Couldn't access a seq in a table despite just creating the seq: " & e.msg)
 
 #Creates a new MeritHolder on the Consensus.
 proc add(
