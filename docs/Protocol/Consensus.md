@@ -105,7 +105,6 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 - Meros counts Verifications which were never archived for a Transaction's weight.
 - Meros doesn't support defaulting.
-- Meros supports Verifications with unknown hashes.
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.

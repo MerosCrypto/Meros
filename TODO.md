@@ -26,16 +26,6 @@ UI:
 
 Network:
 
--
-```
-proc sync*(
-    network: Network,
-    consensus: Consensus,
-    newBlock: Block
-)
-```
-has several notes in `discard """ """` about syncing transactions which need to be resolved.
-
 - Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
 
 - Syncing currently works by:
@@ -61,7 +51,7 @@ has several notes in `discard """ """` about syncing transactions which need to 
 
 	Will reduce network traffic and increase security.
 
-- Check requested data is requested data.
+- Check requested data is requested data. We don't do this for Block Bodies, and perform a very weak check for Elements (supplement with a signature/record merkle check).
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
@@ -78,28 +68,23 @@ has several notes in `discard """ """` about syncing transactions which need to 
 - Check if MeritHolders verify conflicting Transactions.
 - Reverse MeritHolders' pending actions.
 
-- Handle live MeritRemovals.
 - Handle multiple possible MeritRemovals.
 
 - Apply pending actions if the next Block doesn't contain the MeritRemoval.
-- Update pending MeritRemovals' nonces.
-
-- Don't support unknown Verifications.
-
-- SameNonce Live test.
 
 - VerifyCompeting Sync test.
 - VerifyCompeting Live test.
 - VerifyCompeting Cause test.
-
-- Partial Cause test.
-- Partial Live test.
 
 - PendingActions Cause test.
 - PendingActions Live test.
 
 - MultipleRemovals Cause test.
 - MultipleRemovals Live test.
+
+- Unknown Verifications test.
+- Parsable Verifications test.
+- Competing Verifications test.
 
 - State/Epochs reloading with MeritRemovals tests.
 
