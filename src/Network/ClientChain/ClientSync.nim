@@ -120,6 +120,10 @@ proc syncTransaction*(
     except DataMissing as e:
         fcRaise e
 
+    #Verify the received data is what was requested.
+    if result.hash != hash:
+        raise newException(ClientError, "Client sent us the wrong Transaction.")
+
 #Sync an Element.
 proc syncElement*(
     client: Client,
@@ -185,11 +189,12 @@ proc syncElement*(
         else:
             raise newException(InvalidMessageError, "Client didn't respond properly to our `ElementRequest`.")
 
+    #Verify the received data is what was requested.
     if (result.holder != holder) or (
         (not (result of MeritRemoval)) and
         (result.nonce != nonce)
     ):
-        raise newException(InvalidMessageError, "Synced a Element that we didn't request.")
+        raise newException(ClientError, "Client sent us the wrong Element.")
 
 #Sync a Block Body.
 proc syncBlockBody*(
@@ -326,6 +331,10 @@ proc syncBlock*(
 
         else:
             raise newException(InvalidMessageError, "Client didn't respond properly to our `BlockHeaderRequest`.")
+
+    #Verify the received data is what was requested.
+    if header.hash.toString() != hash:
+        raise newException(ClientError, "Client sent us the wrong BlockHeader.")
 
     #Get the BlockBody.
     var body: BlockBody
