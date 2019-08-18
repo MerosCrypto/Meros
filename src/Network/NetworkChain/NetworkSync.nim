@@ -168,14 +168,14 @@ proc sync*(
             except KeyError as e:
                 doAssert(false, "Couldn't get the MeritRemovals of someone who has some: " & e.msg)
 
-        elements[holder.keyStr] = newSeq[Element](holder.height - holder.archived - 1)
-        for e in holder.archived + 1 ..< holder.height:
+        elements[holder.keyStr] = newSeq[Element](min(holder.height - 1, record.nonce) - holder.archived)
+        for e in holder.archived + 1 .. min(holder.height - 1, record.nonce):
             try:
                 elements[holder.keyStr][e - (holder.archived + 1)] = holder[e]
             except KeyError as e:
                 doAssert(false, "Couldn't access a seq in a table we just created: " & e.msg)
             except IndexError as e:
-                doAssert(false, "Couldn't get an Element by it's index despite looping up to the Merit Holder's height: " & e.msg)
+                doAssert(false, "Couldn't get an Element by it's index despite looping up to the end: " & e.msg)
 
         #If we're missing Elements...
         if holder.height <= record.nonce:
