@@ -135,6 +135,8 @@ proc checkMalicious(
                 "Block archives an Element which has the same nonce as a different Element.",
                 existing
             )
+    elif elem.nonce == holder.height:
+        discard
     else:
         doAssert(false, "Check Malicious has a gap. This should've been checked for elsewhere.")
 

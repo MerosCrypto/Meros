@@ -155,15 +155,18 @@ proc sync*(
         #Grab the holder's pending elements and place them in elements.
         #OVerride for MeritRemovals.
         if consensus.malicious.hasKey(holder.keyStr):
-            var mr: MeritRemoval
             try:
-                mr = consensus.malicious[holder.keyStr]
-            except KeyError as e:
-                doAssert(false, "Couldn't get MeritRemoval for someone who has one: " & e.msg)
+                var mrArchived: bool = false
+                for mr in consensus.malicious[holder.keyStr]:
+                    if record.merkle == mr.merkle:
+                        mrArchived = true
+                        elements[holder.keyStr] = @[cast[Element](mr)]
+                        break
 
-            if record.merkle == mr.merkle:
-                elements[holder.keyStr] = @[cast[Element](mr)]
-                continue
+                if mrArchived:
+                    continue
+            except KeyError as e:
+                doAssert(false, "Couldn't get the MeritRemovals of someone who has some: " & e.msg)
 
         elements[holder.keyStr] = newSeq[Element](holder.height - holder.archived - 1)
         for e in holder.archived + 1 ..< holder.height:

@@ -52,9 +52,13 @@ proc flag*(
     consensus: Consensus,
     removal: MeritRemoval
 ) {.forceCheck: [].} =
-    if consensus.malicious.hasKey(removal.holder.toString()):
-        return
-    consensus.malicious[removal.holder.toString()] = removal
+    if not consensus.malicious.hasKey(removal.holder.toString()):
+        consensus.malicious[removal.holder.toString()] = @[]
+
+    try:
+        consensus.malicious[removal.holder.toString()].add(removal)
+    except KeyError as e:
+        doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
 
 proc checkMalicious*(
     consensus: Consensus,

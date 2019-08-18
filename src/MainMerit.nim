@@ -114,13 +114,22 @@ proc mainMerit() {.forceCheck: [].} =
                 doAssert(false, "Couldn't sync this Block: " & e.msg)
 
             #Verify Record validity (nonce and Merkle).
-            var removed: seq[MeritHolderRecord] = @[]
+            var
+                removed: seq[MeritHolderRecord] = @[]
+                removedIndexes: Table[string, int] = initTable[string, int]()
             for record in newBlock.records:
                 #Check if this holder lost their Merit.
                 if consensus.malicious.hasKey(record.key.toString()):
                     try:
-                        if consensus.malicious[record.key.toString()].merkle == record.merkle:
-                            removed.add(record)
+                        var mrArchived: bool = false
+                        for i in 0 ..< consensus.malicious[record.key.toString()].len:
+                            if consensus.malicious[record.key.toString()][i].merkle == record.merkle:
+                                mrArchived = true
+                                removed.add(record)
+                                removedIndexes[record.key.toString()] = i
+                                break
+
+                        if mrArchived:
                             continue
                     except KeyError as e:
                         doAssert(false, "Couldn't get a MeritRemoval we know exists: " & e.msg)
@@ -155,7 +164,13 @@ proc mainMerit() {.forceCheck: [].} =
             #Save every archived MeritRemoval and delete the relevant Merit.
             for removee in removed:
                 try:
-                    consensus.archive(consensus.malicious[removee.key.toString()], removee.nonce)
+                    consensus.archive(
+                        consensus.malicious[
+                            removee.key.toString()
+                        ][
+                            removedIndexes[removee.key.toString()]
+                        ], removee.nonce
+                    )
                 except KeyError as e:
                     doAssert(false, "Couldn't get the MeritRemoval of someone who has one: " & e.msg)
                 consensus.malicious.del(removee.key.toString())

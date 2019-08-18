@@ -28,7 +28,7 @@ proc mainConsensus() {.forceCheck: [].} =
             if consensus.malicious.hasKey(key.toString()):
                 if nonce == consensus[key].archived + 1:
                     try:
-                        return consensus.malicious[key.toString()]
+                        return consensus.malicious[key.toString()][0]
                     except KeyError as e:
                         doAssert(false, "Couldn't get a MeritRemoval despite confirming it exists: " & e.msg)
                 elif nonce <= consensus[key].archived:
@@ -144,10 +144,14 @@ proc mainConsensus() {.forceCheck: [].} =
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
                 consensus.flag(cast[SignedMeritRemoval](e.removal))
-                functions.network.broadcast(
-                    MessageType.SignedMeritRemoval,
-                    cast[SignedMeritRemoval](e.removal).signedSerialize()
-                )
+                #Broadcast the first MeritRemoval.~
+                try:
+                    functions.network.broadcast(
+                        MessageType.SignedMeritRemoval,
+                        cast[SignedMeritRemoval](consensus.malicious[verif.holder.toString()][0]).signedSerialize()
+                    )
+                except KeyError as e:
+                    doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
                 return
 
             #See if the Transaction exists.

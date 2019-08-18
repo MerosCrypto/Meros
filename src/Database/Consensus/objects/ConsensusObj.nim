@@ -35,7 +35,7 @@ type Consensus* = ref object
     #BLS Public Key -> MeritHolder.
     holders: Table[string, MeritHolder]
     #BLS Public Key -> MeritRemoval.
-    malicious*: Table[string, MeritRemoval]
+    malicious*: Table[string, seq[MeritRemoval]]
 
     #Verifications of unknown transactions.
     unknowns*: Table[string, seq[BLSPublicKey]]
@@ -48,7 +48,7 @@ proc newConsensusObj*(
     result = Consensus(
         db: db,
         holders: initTable[string, MeritHolder](),
-        malicious: initTable[string, MeritRemoval](),
+        malicious: initTable[string, seq[MeritRemoval]](),
         unknowns: initTable[string, seq[BLSPublicKey]]()
     )
 
