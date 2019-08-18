@@ -3,9 +3,8 @@
 #Types.
 from typing import Dict, IO, Any
 
-#Consensus class.
+#SignedMeritRemoval class.
 from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
-from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Blockchain class.
 from python_tests.Classes.Merit.Blockchain import Blockchain
@@ -29,14 +28,9 @@ def MRMLiveTest(
 ) -> None:
     file: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Multiple.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
-    #Consensus.
-    consensus: Consensus = Consensus(
-        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-    )
+    #MeritRemovals.
     removal1: SignedMeritRemoval = SignedMeritRemoval.fromJSON(vectors["removal1"])
     removal2: SignedMeritRemoval = SignedMeritRemoval.fromJSON(vectors["removal2"])
-    consensus.add(removal2)
     #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",

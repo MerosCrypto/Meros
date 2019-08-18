@@ -6,9 +6,8 @@ from typing import Dict, IO, Any
 #Data class.
 from python_tests.Classes.Transactions.Data import Data
 
-#Consensus classes.
+#SignedMeritRemoval class.
 from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
-from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Blockchain class.
 from python_tests.Classes.Merit.Blockchain import Blockchain
@@ -34,13 +33,8 @@ def MRSNCauseTest(
     snVectors: Dict[str, Any] = json.loads(snFile.read())
     #Data.
     data: Data = Data.fromJSON(snVectors["data"])
-    #Consensus.
-    consensus: Consensus = Consensus(
-        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-    )
+    #MeritRemoval.
     removal: SignedMeritRemoval = SignedMeritRemoval.fromJSON(snVectors["removal"])
-    consensus.add(removal)
     #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
