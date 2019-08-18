@@ -1,8 +1,5 @@
 #Types.
-from typing import IO, Dict, List, Any
-
-#Data class.
-from python_tests.Classes.Transactions.Data import Data
+from typing import IO, Dict, Any
 
 #Consensus classes.
 from python_tests.Classes.Consensus.Element import SignedElement
@@ -18,9 +15,6 @@ from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #BLS lib.
 import blspy
-
-#Ed25519 lib.
-import ed25519
 
 #Time standard function.
 from time import time
@@ -44,38 +38,28 @@ blockchain: Blockchain = Blockchain(
 privKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
 pubKey: blspy.PublicKey = privKey.get_public_key()
 
-#Ed25519 keys.
-edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
+#Load a Multiple Block and load their MeritRemoval.
+snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
+snVectors: Dict[str, Any] = json.loads(snFile.read())
 
-#Add a single Block to create Merit.
-bbFile: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
-blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
-blockchain.add(Block.fromJSON(blocks[0]))
-bbFile.close()
+blockchain.add(Block.fromJSON(snVectors["blockchain"][0]))
 
-#Create a Data to verify.
-data: Data = Data(
-    edPubKey.to_bytes().rjust(48, b'\0'),
-    bytes()
+mr1: SignedMeritRemoval = SignedMeritRemoval.fromJSON(snVectors["removal"])
+
+snFile.close()
+
+#Create a second MeritRemoval.
+sv: SignedVerification = SignedVerification(b'\1' * 48)
+sv.sign(privKey, 0)
+mr2: SignedMeritRemoval = SignedMeritRemoval(
+    mr1.se1,
+    SignedElement.fromElement(sv)
 )
-data.sign(edPrivKey)
-data.beat(consensus.dataFilter)
 
-#Create two Verifications with the same nonce, yet for the different Datas.
-sv1: SignedVerification = SignedVerification(data.hash)
-sv1.sign(privKey, 0)
+#Add the second MeritRemoval to Consensus.
+consensus.add(mr1)
 
-sv2: SignedVerification = SignedVerification(b'\0' * 48)
-sv2.sign(privKey, 0)
-
-removal: SignedMeritRemoval = SignedMeritRemoval(
-    SignedElement.fromElement(sv1),
-    SignedElement.fromElement(sv2)
-)
-consensus.add(removal)
-
-#Generate another Block.
+#Generate a Block with the second MeritRemoval.
 block: Block = Block(
     BlockHeader(
         2,
@@ -104,13 +88,14 @@ while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
 
 #Add it.
 blockchain.add(block)
-print("Generated Same Nonce Block " + str(block.header.nonce) + ".")
+print("Generated Multiple Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON(),
-    "data":       data.toJSON(),
-    "removal":    removal.toSignedJSON()
+    "data":       snVectors["data"],
+    "removal1":   mr1.toSignedJSON(),
+    "removal2":   mr2.toSignedJSON()
 }
-vectors: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "w")
+vectors: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Multiple.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()

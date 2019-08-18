@@ -34,8 +34,8 @@ from python_tests.Tests.Consensus.MeritRemoval.Partial.SyncTest import MRPSyncTe
 from python_tests.Tests.Consensus.MeritRemoval.PendingActions.CauseTest import MRPACauseTest
 from python_tests.Tests.Consensus.MeritRemoval.PendingActions.LiveTest import MRPALiveTest
 
-from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovals.CauseTest import MRMRCauseTest
-from python_tests.Tests.Consensus.MeritRemoval.MultipleRemovals.LiveTest import MRMRLiveTest
+from python_tests.Tests.Consensus.MeritRemoval.Multiple.CauseTest import MRMCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.Multiple.LiveTest import MRMLiveTest
 
 #Arguments.
 from sys import argv
@@ -84,8 +84,8 @@ tests: List[
     MRPACauseTest,
     MRPALiveTest,
 
-    MRMRCauseTest,
-    MRMRLiveTest
+    MRMCauseTest,
+    MRMLiveTest
 ]
 
 #Tests to run.

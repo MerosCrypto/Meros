@@ -1,4 +1,4 @@
-#Tests proper creation and handling of multiple MeritRemovals when Meros receives multiple causes for a MeritRemoval.
+#Tests proper handling of multiple MeritRemovals when Meros receives multiple SignedMeritRemovals.
 
 #TestError Exception.
 from python_tests.Tests.TestError import TestError
@@ -6,7 +6,7 @@ from python_tests.Tests.TestError import TestError
 #RPC class.
 from python_tests.Meros.RPC import RPC
 
-def MRMRCauseTest(
+def MRMLiveTest(
     rpc: RPC
 ) -> None:
     raise TestError("Test is empty.")

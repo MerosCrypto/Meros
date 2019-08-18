@@ -33,6 +33,9 @@ blockchain: Blockchain = Blockchain(
     int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
 )
 
+#BLS Public Key.
+pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
+
 #Add a single Block to create Merit and load a MeritRemoval.
 snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
 vectors: Dict[str, Any] = json.loads(snFile.read())
@@ -45,9 +48,6 @@ removal.nonce = 1
 consensus.add(removal)
 
 snFile.close()
-
-#BLS Public Key.
-pubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\0').get_public_key()
 
 #Generate a Block with a verif and a Block with the removal.
 for i in range(0, 2):

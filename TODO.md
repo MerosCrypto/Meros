@@ -68,8 +68,6 @@ Network:
 - Check if MeritHolders verify conflicting Transactions.
 - Reverse MeritHolders' pending actions.
 
-- Handle multiple possible MeritRemovals.
-
 - Apply pending actions if the next Block doesn't contain the MeritRemoval.
 
 - VerifyCompeting Sync test.
@@ -79,7 +77,6 @@ Network:
 - PendingActions Cause test.
 - PendingActions Live test.
 
-- MultipleRemovals Cause test.
 - MultipleRemovals Live test.
 
 - State/Epochs reloading with MeritRemovals tests.
