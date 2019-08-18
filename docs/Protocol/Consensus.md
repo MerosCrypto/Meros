@@ -25,7 +25,7 @@ The Merkle tree each MeritHolder has uses Blake2b-384 as a hash algorithm and co
 
 ### Verification
 
-A Verification is a MeritHolder staking their Merit behind a Transaction and approving it. The used Merit amount is the amount of the Merit Holder when the Verification is archived. Once a Transaction has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for a Transaction can be archived. If a Verification isn't archived by the end of these 6 Blocks, it should not be counted towards the Transaction's Merit. a Transaction can also be verified through a process known as "defaulting". Once an input is used in a Transaction mentioned in a Block, if five more Blocks pass without a Transaction using that input obtaining the needed Merit, the Transaction with the most Merit which uses that input, which is also mentioned in a Block, or if there's a tie, the Transaction with the higher hash, becomes verified after the next Checkpoint.
+A Verification is a MeritHolder staking their Merit behind a Transaction and approving it. If a Transaction has `LIVE_MERIT / 2 + 1` Merit staked behind it at the end of its Epoch, it is verified. Live Merit is described in the Merit documentation, and the Live Merit value used is what it will be at the end of the Transaction's Epoch. It should be noted Meros considers a Transaction verified as soon as it crosses its threshold, which uses a different formula than the protocol. If a Verification isn't archived by the end of these 6 Blocks, it should not be counted towards the Transaction's final Merit. Transactions can also be verified through a process known as "defaulting". Once an input is used in a Transaction mentioned in a Block, if five more Blocks pass without a Transaction using that input obtaining the needed Merit, the Transaction with the most Merit which uses that input, which is also mentioned in a Block, or if there's a tie, the Transaction with the higher hash, becomes verified after the next Checkpoint.
 
 It is possible for a MeritHolder who votes on competing Transactions using the same input to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting a Transaction's verification. There are multiple ways to prevent this and handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Transactions sharing an input, it will wait for a Transaction to default, not allowing for verification via Verifications alone.
 
@@ -103,9 +103,11 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 ### Violations in Meros
 
-- Meros counts Verifications which were never archived for a Transaction's weight.
+- Meros calculates thresholds as `LIVE_MERIT / 2 + 1201`. This drifts to cause higher thresholds as the Transaction's lifespan progresses. It should be `LIVE_MERIT_AT_END_OF_EPOCH /2 + 601`.
+- Meros doesn't produce a final Merit tally of Transaction weights. This can lead to false positives on what's verified, causing forks via child Transactions and reward calculations.
 - Meros doesn't support defaulting.
+- Meros doesn't track if two Transactions spend the same input (which should disable instant verification).
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
-- `SignedMeritRemoval` or `MeritRemoval` are a work in progress.
+- Meros doesn't support MeritRemovals caused by verifying competing Transactions.

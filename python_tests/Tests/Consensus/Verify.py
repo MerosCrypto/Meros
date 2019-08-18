@@ -37,9 +37,6 @@ def verifyMeritRemoval(
 
     #Verify the MeritRemoval.
     if mrJSON != removal.toJSON():
-        print(str(mrJSON))
-        print(str(removal.toJSON()))
-        print("-")
         raise TestError("Merit Removal doesn't match.")
 
     #Verify the Total Merit.

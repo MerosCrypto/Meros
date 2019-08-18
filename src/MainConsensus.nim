@@ -1,5 +1,68 @@
 include MainDatabase
 
+#Revert a MeritHolder's pending actions.
+proc revertPending(
+    removal: MeritRemoval,
+    consensus: Consensus,
+    transactions: var Transactions,
+    state: var State
+) {.forceCheck: [].} =
+    #Only revert pending actions if this was the first MeritRemoval.
+    try:
+        if consensus.malicious[removal.holder.toString()].len != 1:
+            return
+    except KeyError as e:
+        doAssert(false, "Couldn't get the MeritRemovals of someone who we're trying to revert the pending actions of: " & e.msg)
+
+    #Revert pending actions.
+    var holder: MeritHolder = consensus[removal.holder]
+    for e in holder.archived + 1 ..< holder.height:
+        var elem: Element
+        try:
+            elem = holder[e]
+        except IndexError as e:
+            doAssert(false, "Couldn't get a known pending Element: " & e.msg)
+
+        case elem:
+            of Verification as verif:
+                #This has the risk to subtract less/more from the weight than was added.
+                #There is no underflow risk, and if the MeritHolder's weight went up, this has positive effects.
+                #If their weight went down, this has negative effects.
+                #The threshold used to be +601 to cover State changes. It is now +1201.
+                try:
+                    transactions.unverify(verif, state[verif.holder], state.live)
+                except ValueError:
+                    #If it's out of Epochs, move on.
+                    discard
+            else:
+                doAssert(false, "Unsupported Element type.")
+
+#Reapply reverted pending actions.
+proc reapplyPending(
+    record: MeritHolderRecord,
+    consensus: Consensus,
+    transactions: var Transactions,
+    state: var State
+) {.forceCheck: [].} =
+    var holder: MeritHolder = consensus[record.key]
+    for e in holder.archived + 1 .. record.nonce:
+        var elem: Element
+        try:
+            elem = holder[e]
+        except IndexError as e:
+            doAssert(false, "Couldn't get a known pending Element: " & e.msg)
+
+        case elem:
+            of Verification as verif:
+                #This reapplies the Verification as if we received it before the Block that triggered this.
+                try:
+                    transactions.verify(verif, state[verif.holder], state.live)
+                except ValueError:
+                    #If it's out of Epochs, move on.
+                    discard
+            else:
+                doAssert(false, "Unsupported Element type.")
+
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         consensus = newConsensus(database)
@@ -143,9 +206,13 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
+                #Flag the MeritRemoval.
                 consensus.flag(cast[SignedMeritRemoval](e.removal))
-                #Broadcast the first MeritRemoval.
+                #Revert pending actions.
+                e.removal.revertPending(consensus, transactions, merit.state)
+
                 try:
+                    #Broadcast the first MeritRemoval.
                     functions.network.broadcast(
                         MessageType.SignedMeritRemoval,
                         cast[SignedMeritRemoval](consensus.malicious[verif.holder.toString()][0]).signedSerialize()
@@ -214,6 +281,9 @@ proc mainConsensus() {.forceCheck: [].} =
                 consensus.add(mr)
             except ValueError as e:
                 fcRaise e
+
+            #Revert pending actions.
+            mr.revertPending(consensus, transactions, merit.state)
 
             echo "Successfully added a new Signed Merit Removal."
 

@@ -155,7 +155,7 @@ class Meros:
         elif MessageType(result[0]) == MessageType.SignedVerification:
             size = 196
         elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
-            size = 54
+            size = 50
 
         elif MessageType(result[0]) == MessageType.BlockHeader:
             size = 204
@@ -164,7 +164,7 @@ class Meros:
         elif MessageType(result[0]) == MessageType.Verification:
             size = 100
         elif MessageType(result[0]) == MessageType.MeritRemoval:
-            size = 54
+            size = 50
 
         #Now that we know how long the message is, get it (as long as there is one).
         if size > 0:

@@ -64,21 +64,17 @@ Network:
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
 
-### Merit Removals.
+### Merit Removals:
 
+Required:
+- Correctly "unverify" Transactions. We do not mark Transactions as no longer eligible for defaulting (if that's the case), re-enable spent UTXOs, or unverify child Transactions.
+- State/Epochs reloading with MeritRemovals Nim tests.
+
+Can be done on a separate branch in the future:
 - Check if MeritHolders verify conflicting Transactions.
-- Reverse MeritHolders' pending actions.
-
-- Apply pending actions if the next Block doesn't contain the MeritRemoval.
-
 - VerifyCompeting Sync test.
 - VerifyCompeting Live test.
 - VerifyCompeting Cause test.
-
-- PendingActions Cause test.
-- PendingActions Live test.
-
-- State/Epochs reloading with MeritRemovals tests.
 
 ### Nim Tests:
 

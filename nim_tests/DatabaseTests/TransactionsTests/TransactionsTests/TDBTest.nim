@@ -160,7 +160,8 @@ proc test*() =
             inc(newBlock)
 
         #Add it,
-        var epoch: Epoch = merit.processBlock(consensus, @[], newBlock)
+        merit.processBlock(newBlock)
+        var epoch: Epoch = merit.postProcessBlock(consensus, @[], newBlock)
 
         #Manually clear the difficulty.
         merit.blockchain.difficulty = newDifficultyObj(
@@ -235,7 +236,7 @@ proc test*() =
                     #Create the Mint.
                     var
                         mintee: MinerWallet = newMinerWallet()
-                        mintHash: Hash[384] = transactions.mint(mintee.publicKey, amount - balance + uint64(rand(5000)))
+                        mintHash: Hash[384] = transactions.mint(mintee.publicKey, amount - balance + uint64(rand(5000) + 1))
 
                     #Create the Claim.
                     var claim: Claim = newClaim(
@@ -265,7 +266,8 @@ proc test*() =
                             wallet.publicKey,
                             balance - amount
                         )
-                    ])
+                    ]
+                )
                 wallet.sign(send)
                 send.mine(transactions.difficulties.send)
                 transactions.add(send)

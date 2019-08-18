@@ -117,6 +117,7 @@ proc mainMerit() {.forceCheck: [].} =
             var
                 removed: seq[MeritHolderRecord] = @[]
                 removedIndexes: Table[string, int] = initTable[string, int]()
+                notRemoved: seq[MeritHolderRecord] = @[]
             for record in newBlock.records:
                 #Check if this holder lost their Merit.
                 if consensus.malicious.hasKey(record.key.toString()):
@@ -131,6 +132,8 @@ proc mainMerit() {.forceCheck: [].} =
 
                         if mrArchived:
                             continue
+                        else:
+                            notRemoved.add(record)
                     except KeyError as e:
                         doAssert(false, "Couldn't get a MeritRemoval we know exists: " & e.msg)
 
@@ -150,16 +153,22 @@ proc mainMerit() {.forceCheck: [].} =
                 if merkle != record.merkle:
                     raise newException(ValueError, "Block has a MeritHolderRecord with a competing Merkle.")
 
-            #Add the Block to the Merit.
-            var epoch: Epoch
+            #Add the Block to the Blockchain.
             try:
-                epoch = merit.processBlock(consensus, removed, newBlock)
+                merit.processBlock(newBlock)
             except ValueError as e:
                 fcRaise e
             except GapError as e:
                 fcRaise e
             except DataExists as e:
                 fcRaise e
+
+            #Apply reverted actions for everyone who did not have their MeritRemovals archived.
+            for notRemovee in notRemoved:
+                notRemovee.reapplyPending(consensus, transactions, merit.state)
+
+            #Add the Block to the Epochs and State.
+            var epoch: Epoch = merit.postProcessBlock(consensus, removed, newBlock)
 
             #Save every archived MeritRemoval and delete the relevant Merit.
             for removee in removed:

@@ -105,8 +105,10 @@ proc verify*(
 
             transactions.spent[inputStr] = tx.hash
 
-    #If the Transaction has at least 50.1% of the weight (+ 600 for the Meros minted while a Transaction can be verified)...
-    if weight > (liveMerit div 2) + 601:
+    #If the Transaction has at least 50.1% of the weight...
+    #(+600 for the Meros minted while a Transaction can be verified)
+    #(+600 for potential MeritRemoval imperfect reversions/reapplications)
+    if weight > (liveMerit div 2) + 1200:
         #If the Transaction was already verified, return.
         if tx.verified:
             return
@@ -181,6 +183,42 @@ proc verify*(
                     except ValueError as e:
                         doAssert(false, "Couldn't get the sender of an added Data: " & e.msg)
                     transactions.saveData(sender, data.hash)
+
+#Remove a Verification.
+proc unverify*(
+    transactions: var Transactions,
+    verif: Verification,
+    merit: int,
+    liveMerit: int
+) {.forceCheck: [
+    ValueError
+].} =
+    #Turn the hash into a string.
+    var hash: string = verif.hash.toString()
+
+    #Verify the Transaction exists.
+    if not transactions.transactions.hasKey(hash):
+        raise newException(ValueError, "Transaction either doesn't exist or is already out of the Epochs.")
+
+    #Remove the Verification from the weight.
+    var weight: int
+    try:
+        transactions.weights[hash] -= merit
+        #Save the weight so we can use it in the future without a potential KeyError.
+        weight = transactions.weights[hash]
+    except KeyError as e:
+        doAssert(false, "Couldn't get a Transaction's weight despite guaranteeing it had a weight: " & e.msg)
+
+    #Grab the Transaction.
+    var tx: Transaction
+    try:
+        tx = transactions.transactions[hash]
+    except KeyError:
+        doAssert(false, "Couldn't get a Transaction despite confirming it's in the cache.")
+
+    if (tx.verified) and (weight <= (liveMerit div 2) + 1200):
+        tx.verified = false
+        echo tx.hash, " WAS REVERTED!"
 
 #Constructor.
 proc newTransactions*(

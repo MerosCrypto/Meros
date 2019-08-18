@@ -73,18 +73,15 @@ proc newMerit*(
     result.state = newState(db, live, result.blockchain.height)
     result.epochs = newEpochs(db, consensus, result.blockchain)
 
-#Add a block.
+#Add a Block to the Blockchain.
 proc processBlock*(
     merit: Merit,
-    consensus: Consensus,
-    removals: seq[MeritHolderRecord],
     newBlock: Block
-): Epoch {.forceCheck: [
+) {.forceCheck: [
     ValueError,
     GapError,
     DataExists
 ].} =
-    #Add the block to the Blockchain.
     try:
         merit.blockchain.processBlock(newBlock)
     except ValueError as e:
@@ -94,6 +91,13 @@ proc processBlock*(
     except DataExists as e:
         fcRaise e
 
+#Process a Block already addded to the Blockchain.
+proc postProcessBlock*(
+    merit: Merit,
+    consensus: Consensus,
+    removals: seq[MeritHolderRecord],
+    newBlock: Block
+): Epoch {.forceCheck: [].} =
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
         consensus,
