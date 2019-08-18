@@ -135,14 +135,21 @@ proc checkMalicious(
                 "Block archives an Element which has the same nonce as a different Element.",
                 existing
             )
+    else:
+        doAssert(false, "Check Malicious has a gap. This should've been checked for elsewhere.")
 
 proc checkMalicious*(
     holder: var MeritHolder,
     elem: SignedElement
 ) {.forceCheck: [
+    GapError,
     DataExists,
     MaliciousMeritHolder
 ].} =
+    #Make sure there's not a gap.
+    if elem.nonce > holder.height:
+        raise newException(GapError, "Missing Elements before this SignedElement which was passed to checkMalicious.")
+
     try:
         holder.checkMalicious(cast[Element](elem))
     except DataExists as e:

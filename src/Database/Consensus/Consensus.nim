@@ -60,11 +60,27 @@ proc checkMalicious*(
     consensus: Consensus,
     verif: SignedVerification
 ) {.forceCheck: [
+    GapError,
     DataExists,
     MaliciousMeritHolder
 ].} =
+    #This method is called before the Element is added.
+    #Only when we add the Element, do we verify its signature.
+    #This method will fail to aggregate unless we set its AggregationInfo now.
+    try:
+        verif.signature.setAggregationInfo(
+            newBLSAggregationInfo(
+                verif.holder,
+                verif.serializeSign()
+            )
+        )
+    except BLSError as e:
+        doAssert(false, "Failed to create a BLS Aggregation Info: " & e.msg)
+
     try:
         consensus[verif.holder].checkMalicious(verif)
+    except GapError as e:
+        fcRaise e
     except DataExists as e:
         fcRaise e
     except MaliciousMeritHolder as e:

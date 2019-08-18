@@ -133,20 +133,11 @@ proc mainConsensus() {.forceCheck: [].} =
             #Print that we're adding the SignedVerification.
             echo "Adding a new Signed Verification."
 
-            #Since we call checkMalicious before we verify the signature, set the aggregation info now.
-            try:
-                verif.signature.setAggregationInfo(
-                    newBLSAggregationInfo(
-                        verif.holder,
-                        verif.serializeSign()
-                    )
-                )
-            except BLSError as e:
-                doAssert(false, "Failed to create a BLS Aggregation Info: " & e.msg)
-
             #Check if this is cause for a MaliciousMeritRemoval.
             try:
                 consensus.checkMalicious(verif)
+            except GapError as e:
+                fcRaise e
             #Already added.
             except DataExists as e:
                 fcRaise e
