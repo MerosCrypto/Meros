@@ -144,7 +144,7 @@ proc mainConsensus() {.forceCheck: [].} =
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
                 consensus.flag(cast[SignedMeritRemoval](e.removal))
-                #Broadcast the first MeritRemoval.~
+                #Broadcast the first MeritRemoval.
                 try:
                     functions.network.broadcast(
                         MessageType.SignedMeritRemoval,
@@ -217,8 +217,11 @@ proc mainConsensus() {.forceCheck: [].} =
 
             echo "Successfully added a new Signed Merit Removal."
 
-            #Broadcast the SignedMeritRemoval.
-            functions.network.broadcast(
-                MessageType.SignedMeritRemoval,
-                mr.signedSerialize()
-            )
+            #Broadcast the first MeritRemoval.
+            try:
+                functions.network.broadcast(
+                    MessageType.SignedMeritRemoval,
+                    cast[SignedMeritRemoval](consensus.malicious[mr.holder.toString()][0]).signedSerialize()
+                )
+            except KeyError as e:
+                doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
