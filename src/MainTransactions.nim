@@ -67,6 +67,17 @@ proc mainTransactions() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
+        #Get a Transaction's weight.
+        functions.transactions.getMerit = proc (
+            hash: Hash[384]
+        ): int {.forceCheck: [
+            IndexError
+        ].} =
+            try:
+                result = transactions.weights[hash.toString()]
+            except KeyError:
+                raise newException(IndexError, "Transaction out of Epochs.")
+
         #Handle Claims.
         functions.transactions.addClaim = proc (
             claim: Claim,

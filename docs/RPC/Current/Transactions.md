@@ -42,3 +42,11 @@ The result is an object, as follows:
     - `signature` (string)
     - `proof`     (int)
     - `argon`     (string)
+
+### `getMerit`
+
+`getMerit` replies with how much Merit is behind the specified Transaction, as long as it is still in Epochs. It takes in one argument:
+- Hash (string)
+
+The result is an object, as follows:
+- `merit`     (int)

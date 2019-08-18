@@ -20,6 +20,7 @@ UI:
 
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
+- Correct `transactions_getMerit` which is different from its "Eventual" definition.
 - Passworded RPC.
 
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
@@ -76,8 +77,6 @@ Network:
 
 - PendingActions Cause test.
 - PendingActions Live test.
-
-- MultipleRemovals Live test.
 
 - State/Epochs reloading with MeritRemovals tests.
 
