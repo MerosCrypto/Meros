@@ -101,7 +101,7 @@ proc shift*(
             tips[record.key.toString()] = record.nonce
 
     #Return the popped Epoch.
-    result = epochs.shift(newEpoch, tips.isNil)
+    result = epochs.shift(newEpoch, not tips.isNil)
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
@@ -119,6 +119,7 @@ proc newEpochs*(
         #Table of every archived tip before the current Epochs.
         tips: TableRef[string, int] = newTable[string, int]()
 
+    #Use the Holders string from the State.
     try:
         holders = db.loadHolders()
     except DBReadError:
@@ -131,9 +132,8 @@ proc newEpochs*(
     if holders.len == 0:
         return
 
-    #Use the Holders string from the State.
+    #Load each's tip.
     for holder in holders:
-        #Load their tip.
         try:
             tips[holder] = db.loadHolderEpoch(holder)
         except DBReadError:
@@ -142,27 +142,22 @@ proc newEpochs*(
 
     #Shift the last 10 blocks. Why?
     #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late elements aren't labelled as first appearances.
-    var start: int = 10
-    #If the blockchain is smaller than 10, load every block.
-    if blockchain.height < 10:
-        start = blockchain.height
-
     try:
-        for i in countdown(start, 1):
+        for b in max(blockchain.height - 10, 0) ..< blockchain.height:
             #See if any MeritHolders lost Merit.
             var removals: seq[MeritHolderRecord] = @[]
-            for record in blockchain[blockchain.height - i].records:
+            for record in blockchain[b].records:
                 try:
                     if tips[record.key.toString()] == record.nonce - 1:
                         if consensus[record.key][record.nonce] of MeritRemoval:
                             removals.add(record)
                 except KeyError as e:
-                    doAssert(false, "Couldn't load an Element archived in a Block saved to the disk: " & e.msg)
+                    doAssert(false, "Either a MeritHolder with no Merit had an Element archived or we couldn't load an Element archived in a Block saved to the disk: " & e.msg)
 
             discard result.shift(
                 consensus,
                 removals,
-                blockchain[blockchain.height - i].records,
+                blockchain[b].records,
                 tips
             )
     except IndexError as e:
