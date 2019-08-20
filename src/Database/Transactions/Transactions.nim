@@ -107,8 +107,7 @@ proc verify*(
 
     #If the Transaction has at least 50.1% of the weight...
     #(+600 for the Meros minted while a Transaction can be verified)
-    #(+600 for potential MeritRemoval imperfect reversions/reapplications)
-    if weight > (liveMerit div 2) + 1200:
+    if weight > (liveMerit div 2) + 600:
         #If the Transaction was already verified, return.
         if tx.verified:
             return
@@ -216,9 +215,9 @@ proc unverify*(
     except KeyError:
         doAssert(false, "Couldn't get a Transaction despite confirming it's in the cache.")
 
-    if (tx.verified) and (weight <= (liveMerit div 2) + 1200):
+    if (tx.verified) and (weight <= (liveMerit div 2) + 600):
         tx.verified = false
-        echo tx.hash, " WAS REVERTED!"
+        doAssert(false, $tx.hash & " WAS REVERTED!")
 
 #Constructor.
 proc newTransactions*(

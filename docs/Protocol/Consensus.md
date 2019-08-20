@@ -103,7 +103,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 ### Violations in Meros
 
-- Meros calculates thresholds as `LIVE_MERIT / 2 + 1201`. This drifts to cause higher thresholds as the Transaction's lifespan progresses. It should be `LIVE_MERIT_AT_END_OF_EPOCH /2 + 601`.
+- Meros calculates thresholds as `LIVE_MERIT / 2 + 601`. This drifts to cause higher thresholds as the Transaction's lifespan progresses. It should be `LIVE_MERIT_AT_END_OF_EPOCH / 2 + 601`.
 - Meros doesn't produce a final Merit tally of Transaction weights. This can lead to false positives on what's verified, causing forks via child Transactions and reward calculations.
 - Meros doesn't support defaulting.
 - Meros doesn't track if two Transactions spend the same input (which should disable instant verification).
