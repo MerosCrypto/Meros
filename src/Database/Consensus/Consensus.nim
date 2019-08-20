@@ -208,21 +208,20 @@ proc add*(
 #- Saves the element to its position.
 proc archive*(
     consensus: Consensus,
-    mr: MeritRemoval,
-    nonce: int
+    mr: MeritRemoval
 ) {.forceCheck: [].} =
-    #Set the MeritRemoval's nonce.
-    try:
-        mr.nonce = nonce
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when archicing a MeritRemoval: " & e.msg)
-
     #Grab the MeritHolder.
     var mh: MeritHolder
     try:
         mh = consensus[mr.holder]
     except KeyError as e:
         doAssert(false, "Couldn't get the MeritHolder who caused a valid MeritRemoval: " & e.msg)
+
+    #Set the MeritRemoval's nonce.
+    try:
+        mr.nonce = mh.archived + 1
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when archicing a MeritRemoval: " & e.msg)
 
     #Delete reverted elements (except the first which we overwrite).
     for e in mh.archived + 2 ..< mh.height:
@@ -233,6 +232,9 @@ proc archive*(
 
     #Save the element.
     consensus.db.save(mr)
+
+    #Delete the MeritRemovals from the malicious table.
+    consensus.malicious.del(mr.holder.toString())
 
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.
 proc archive*(

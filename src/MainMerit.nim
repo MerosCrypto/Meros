@@ -119,6 +119,10 @@ proc mainMerit() {.forceCheck: [].} =
                 removedIndexes: Table[string, int] = initTable[string, int]()
                 notRemoved: seq[MeritHolderRecord] = @[]
             for record in newBlock.records:
+                #Make sure every MeritHolder has Merit.
+                if merit.state[record.key] == 0:
+                    raise newException(ValueError, "Block archives Elements of a merit-less MeritHolder.")
+
                 #Check if this holder lost their Merit.
                 if consensus.malicious.hasKey(record.key.toString()):
                     try:
@@ -167,10 +171,7 @@ proc mainMerit() {.forceCheck: [].} =
             for notRemovee in notRemoved:
                 notRemovee.reapplyPending(consensus, transactions, merit.state)
 
-            #Add the Block to the Epochs and State.
-            var epoch: Epoch = merit.postProcessBlock(consensus, removed, newBlock)
-
-            #Save every archived MeritRemoval and delete the relevant Merit.
+            #Save every archived MeritRemoval.
             for removee in removed:
                 try:
                     consensus.archive(
@@ -178,11 +179,16 @@ proc mainMerit() {.forceCheck: [].} =
                             removee.key.toString()
                         ][
                             removedIndexes[removee.key.toString()]
-                        ], removee.nonce
+                        ]
                     )
                 except KeyError as e:
                     doAssert(false, "Couldn't get the MeritRemoval of someone who has one: " & e.msg)
-                consensus.malicious.del(removee.key.toString())
+
+            #Add the Block to the Epochs and State.
+            var epoch: Epoch = merit.postProcessBlock(consensus, removed, newBlock)
+
+            #Delete the Merit of every Malicious MeritHolder.
+            for removee in removed:
                 merit.state[removee.key] = 0
 
             #Archive the Elements mentioned in the Block.
