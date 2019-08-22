@@ -2,6 +2,10 @@
 
 ### Core:
 
+Wallet:
+
+- OpenCAP support.
+
 Database:
 
 - Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
@@ -12,9 +16,18 @@ Merit:
 - Make RandomX the mining algorithm (node should use the light mode).
 - Decide if Block aggregate should be aggregate(MeritHolderAggregates) or aggregate(signatures).
 
-Wallet:
+Consensus:
 
-- OpenCAP support.
+- Check if MeritHolders verify conflicting Transactions.
+- SendDifficulty.
+- DataDifficulty.
+
+Transactions:
+
+- Resolve https://github.com/MerosCrypto/Meros/issues/84.
+- Correctly "unverify" Transactions. We do not mark Transactions as no longer eligible for defaulting (if that's the case), re-enable spent UTXOs, or unverify child Transactions.
+- Raise the Verification threshold.
+- Reload Verifications with their MeritHolder's current Merit. The only reason we don't do this now is our low threshold/it breaks consistency on reload.
 
 UI:
 
@@ -63,18 +76,6 @@ Network:
 - Handle ValidityConcerns.
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
-
-### Merit Removals:
-
-Required:
-- Correctly "unverify" Transactions. We do not mark Transactions as no longer eligible for defaulting (if that's the case), re-enable spent UTXOs, or unverify child Transactions.
-- State/Epochs reloading with MeritRemovals Nim tests.
-
-Can be done on a separate branch in the future:
-- Check if MeritHolders verify conflicting Transactions.
-- VerifyCompeting Sync test.
-- VerifyCompeting Live test.
-- VerifyCompeting Cause test.
 
 ### Nim Tests:
 
@@ -140,7 +141,12 @@ Network:
 - Tests.
 
 ### Python Tests
+
 - RPC tests.
+
+- VerifyCompeting Sync test.
+- VerifyCompeting Live test.
+- VerifyCompeting Cause test.
 
 ### Features:
 
