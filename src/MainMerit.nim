@@ -189,7 +189,7 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Delete the Merit of every Malicious MeritHolder.
             for removee in removed:
-                merit.state[removee.key] = 0
+                merit.state.remove(removee.key, newBlock)
 
             #Archive the Elements mentioned in the Block.
             consensus.archive(newBlock.records)
@@ -231,7 +231,7 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 
             #Commit the DBs.
-            database.commit()
+            database.commit(newBlock.nonce)
 
             echo "Successfully added the Block."
 

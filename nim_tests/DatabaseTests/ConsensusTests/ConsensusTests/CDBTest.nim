@@ -52,7 +52,7 @@ proc test*() =
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
         #Create a random amount of MeritHolders.
-        for _ in 0 ..<  rand(2) + 1:
+        for _ in 0 ..< rand(2) + 1:
             holders.add(newMinerWallet())
 
         #Create Elements.
@@ -95,7 +95,7 @@ proc test*() =
         consensus.archive(archiving)
 
         #Commit the DB.
-        db.commit()
+        db.commit(0)
 
         #Compare the Consensus DAGs.
         compare()

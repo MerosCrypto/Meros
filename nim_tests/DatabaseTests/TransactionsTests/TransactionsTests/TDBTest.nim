@@ -209,7 +209,7 @@ proc test*() =
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
         #Create a random amount of Wallets.
-        for _ in 0 ..<  rand(2) + 1:
+        for _ in 0 ..< rand(2) + 1:
             wallets.add(newWallet(""))
             utxos[wallets[^1].publicKey.toString()] = @[]
 
@@ -325,7 +325,7 @@ proc test*() =
         addBlock()
 
         #Commit the DB.
-        commit()
+        commit(merit.blockchain.tip.nonce)
 
         #Compare the Transactions DAGs.
         compare()

@@ -10,6 +10,10 @@ import ../../../Wallet/MinerWallet
 #Merit DB lib.
 import ../../Filesystem/DB/MeritDB
 
+#Miners and Block objects.
+import MinersObj
+import BlockObj
+
 #Finals lib.
 import finals
 
@@ -35,6 +39,9 @@ finalsd:
         #BLSPublicKey -> Merit
         holders: Table[string, int]
 
+        #Removed MeritHolders.
+        removed: Table[string, int]
+
 #Constructor.
 proc newStateObj*(
     db: DB,
@@ -49,7 +56,9 @@ proc newStateObj*(
         live: 0,
 
         processedBlocks: blockchainHeight,
-        holders: initTable[string, int]()
+        holders: initTable[string, int](),
+
+        removed: initTable[string, int]()
     )
     result.ffinalizeDeadBlocks()
 
@@ -113,6 +122,42 @@ func live*(
 ): int {.inline, forceCheck: [].} =
     state.live
 
+#Get the removals from a Block.
+proc loadRemovals*(
+    state: State,
+    blockNum: int
+): seq[tuple[key: BLSPublicKey, merit: int]] {.forceCheck: [].} =
+    var removals: string
+    try:
+        removals = state.db.loadRemovals(blockNum)
+    except DBReadError:
+        return
+
+    for i in countup(0, removals.len - 1, 52):
+        try:
+            result.add(
+                (
+                    key: newBLSPublicKey(removals[i * 52 ..< (i * 52) + 48]),
+                    merit: removals[(i * 52) + 48 ..< (i * 52) + 52].fromBinary()
+                )
+            )
+        except BLSError as e:
+            doAssert(false, "Saved an invalid BLS key to the Database: " & e.msg)
+
+#Get the removals for a holder.
+proc loadRemovals*(
+    state: State,
+    holder: BLSPublicKey
+): seq[int] {.forceCheck: [].} =
+    var removals: string
+    try:
+        removals = state.db.loadRemovals(holder)
+    except DBReadError:
+        return
+
+    for i in countup(0, removals.len - 1, 4):
+        result.add(removals[i ..< i + 4].fromBinary())
+
 #Setters.
 proc `[]=`*(
     state: var State,
@@ -140,6 +185,15 @@ proc `[]=`*(
     value: int
 ) {.inline, forceCheck: [].} =
     state[key.toString()] = value
+
+#Remove a MeritHolder's Merit.
+proc removeInternal*(
+    state: var State,
+    key: BLSPublicKey,
+    archiving: Block
+) {.forceCheck: [].} =
+    state.db.remove(key.toString(), state[key], archiving.nonce)
+    state[key] = 0
 
 #Iterator for every holder.
 iterator holders*(

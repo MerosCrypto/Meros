@@ -257,14 +257,14 @@ proc test*() =
 
         #Delete the Merit of every Malicious MeritHolder.
         for mr in pending:
-            state[mr.holder] = 0
+            state.remove(mr.holder, mining)
         pending = @[]
 
         #Mark the records as archived.
         consensus.archive(records)
 
         #Commit the DB.
-        db.commit()
+        db.commit(mining.nonce)
 
         #Compare the Epochs.
         compare()

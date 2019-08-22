@@ -24,9 +24,6 @@ import ../TestMerit
 #Compare Merit lib.
 import ../CompareMerit
 
-#Tables standard lib.
-import tables
-
 #Random standard lib.
 import random
 
@@ -45,62 +42,211 @@ proc test*() =
             "".pad(48).toHash(384)
         )
         #State.
-        state: State = newState(db, 5, blockchain.height)
-        #Table of wo has how much Merit.
-        balances: OrderedTable[string, int] = initOrderedTable[string, int]()
+        state: State = newState(
+            db,
+            5,
+            blockchain.height
+        )
         #List of MeritHolders.
-        holders: seq[MinerWallet] = @[]
-        #List of MeritHolders used to grab a miner from.
-        potentials: seq[MinerWallet]
+        holders: seq[MinerWallet] = @[
+            newMinerWallet(char(0).pad(48)),
+            newMinerWallet(char(1).pad(48)),
+            newMinerWallet(char(2).pad(48)),
+            newMinerWallet(char(3).pad(48))
+        ]
         #Miners we're mining to.
-        miners: seq[Miner]
-        #Remaining amount of Merit.
-        remaining: int
-        #Amount to pay the miner.
-        amount: int
-        #Index of the miner we're choosing.
-        miner: int
+        miners: seq[seq[Miner]] = @[
+            @[
+                newMinerObj(
+                    holders[0].publicKey,
+                    100
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[0].publicKey,
+                    30
+                ),
+                newMinerObj(
+                    holders[1].publicKey,
+                    70
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[0].publicKey,
+                    50
+                ),
+                newMinerObj(
+                    holders[1].publicKey,
+                    40
+                ),
+                newMinerObj(
+                    holders[2].publicKey,
+                    10
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[0].publicKey,
+                    20
+                ),
+                newMinerObj(
+                    holders[1].publicKey,
+                    30
+                ),
+                newMinerObj(
+                    holders[2].publicKey,
+                    40
+                ),
+                newMinerObj(
+                    holders[3].publicKey,
+                    10
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[1].publicKey,
+                    50
+                ),
+                newMinerObj(
+                    holders[2].publicKey,
+                    50
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[1].publicKey,
+                    100
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[2].publicKey,
+                    100
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[1].publicKey,
+                    25
+                ),
+                newMinerObj(
+                    holders[2].publicKey,
+                    25
+                ),
+                newMinerObj(
+                    holders[3].publicKey,
+                    50
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[1].publicKey,
+                    40
+                ),
+                newMinerObj(
+                    holders[2].publicKey,
+                    10
+                ),
+                newMinerObj(
+                    holders[3].publicKey,
+                    50
+                )
+            ],
+            @[
+                newMinerObj(
+                    holders[0].publicKey,
+                    100
+                )
+            ],
+        ]
+        #Miner to remove the Merit of.
+        toRemove: seq[int] = @[
+            0,
+            0,
+            1,
+            3,
+            -1,
+            -1,
+            -1,
+            1,
+            2,
+            -1
+        ]
+        #State Values.
+        values: seq[seq[int]] = @[
+            @[
+                0,
+                0,
+                0,
+                0
+            ],
+            @[
+                0,
+                70,
+                0,
+                0
+            ],
+            @[
+                50,
+                0,
+                10,
+                0
+            ],
+            @[
+                70,
+                30,
+                50,
+                0
+            ],
+            @[
+                70,
+                80,
+                100,
+                0
+            ],
+            @[
+                70,
+                180,
+                100,
+                0
+            ],
+            @[
+                70,
+                180,
+                200,
+                0
+            ],
+            @[
+                20,
+                0,
+                215,
+                50
+            ],
+            @[
+                0,
+                40,
+                0,
+                100
+            ],
+            @[
+                100,
+                40,
+                0,
+                100
+            ]
+        ]
         #Block we're mining.
         mining: Block
-        #Key of the miner we're updating the balance of.
-        key: string
 
-    #Iterate over 20 'rounds'.
-    for i in 1 .. 20:
-        #Create a random amount of Merit Holders.
-        for _ in 0 ..<  rand(5) + 2:
-            holders.add(newMinerWallet())
-
-        #Randomize the miners.
-        potentials = holders
-        miners = newSeq[Miner](rand(holders.len - 2) + 1)
-        remaining = 100
-        for m in 0 ..< miners.len:
-            #Set the amount to pay the miner.
-            amount = rand(remaining - 1) + 1
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (miners.len - m):
-                amount = 1
-            #But if this is the last account...
-            if m == miners.len - 1:
-                amount = remaining
-
-            #Subtract the amount from remaining.
-            remaining -= amount
-
-            #Set the Miner.
-            miner = rand(potentials.len - 1)
-            miners[m] = newMinerObj(
-                potentials[miner].publicKey,
-                amount
-            )
-            potentials.del(miner)
-
+    #Iterate over 10 'rounds'.
+    for i in 0 ..< 10:
         #Create the Block.
         mining = newBlankBlock(
-            nonce = i,
+            nonce = blockchain.height,
             last = blockchain.tip.header.hash,
-            miners = newMinersObj(miners)
+            miners = newMinersObj(miners[i])
         )
         #Mine it.
         while not blockchain.difficulty.verify(mining.header.hash):
@@ -112,22 +258,15 @@ proc test*() =
         #Add it to the State.
         state.processBlock(blockchain, mining)
 
-        #Update the Merit balances of everyone on our end.
-        for minedMiner in blockchain.tip.miners.miners:
-            key = minedMiner.miner.toString()
-            if not balances.hasKey(key):
-                balances[key] = 0
-            #Add the new Merit.
-            balances[key] += minedMiner.amount
+        #Remove Merit from the specified MeritHolder.
+        if toRemove[i] != -1:
+            state.remove(holders[toRemove[i]].publicKey, mining)
 
-        if blockchain.height > 5:
-            for minedMiner in blockchain[blockchain.tip.nonce - 5].miners.miners:
-                key = minedMiner.miner.toString()
-                #Subtract the old Merit.
-                balances[key] -= minedMiner.amount
+        #Commit the DB.
+        db.commit(mining.nonce)
 
-        #Check the balances.
-        for k in balances.keys():
-            assert(state[k] == balances[k])
+        #Verify the State
+        for v in 0 ..< 4:
+            assert(state[holders[v].publicKey] == values[i][v])
 
     echo "Finished the Database/Merit/State/Value Test."

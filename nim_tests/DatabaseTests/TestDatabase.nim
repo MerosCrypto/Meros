@@ -27,5 +27,7 @@ proc newTestDatabase*(): DB =
     result = db
 
 #Commit the Database.
-proc commit*() =
-    db.commit()
+proc commit*(
+    blockNum: int
+) =
+    db.commit(blockNum)

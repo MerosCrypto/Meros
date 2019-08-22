@@ -16,6 +16,8 @@ import ../../Merit/objects/BlockHeaderObj
 import ../../Merit/objects/BlockObj
 
 #Serialization libs.
+import ../../../Network/Serialize/SerializeCommon
+
 import Serialize/Merit/SerializeDifficulty
 import Serialize/Merit/DBSerializeBlock
 
@@ -56,7 +58,8 @@ proc get(
         raise newException(DBReadError, e.msg)
 
 proc commit*(
-    db: DB
+    db: DB,
+    blockNum: int
 ) {.forceCheck: [].} =
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.merit.cache.len)
     try:
@@ -66,6 +69,16 @@ proc commit*(
             inc(i)
     except KeyError as e:
         doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+
+    var removals: string = ""
+    try:
+        for key in db.merit.removals.keys():
+            removals &= key & db.merit.removals[key].toBinary().pad(INT_LEN)
+    except KeyError as e:
+        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+    if removals != "":
+        items.add((key: "removals" & blockNum.toBinary(), value: removals))
+        db.merit.removals = initTable[string, int]()
 
     try:
         db.lmdb.put("merit", items)
@@ -110,6 +123,23 @@ proc save*(
         db.put("holders", db.merit.holdersStr)
 
     db.put(holder, merit.toBinary())
+
+proc remove*(
+    db: DB,
+    holder: string,
+    merit: int,
+    blockNum: int
+) {.forceCheck: [].} =
+    db.merit.removals[holder] = merit
+
+    #The following (individual holder's removals) hould be loaded on boot and then kept in RAM, for every holder.
+    var holderRemovals: string
+    try:
+        holderRemovals = db.get(holder & "removals")
+    except DBReadError:
+        holderRemovals = ""
+
+    db.put(holder & "removals", holderRemovals & blockNum.toBinary().pad(4))
 
 proc saveHolderEpoch*(
     db: DB,
@@ -194,6 +224,28 @@ proc loadMerit*(
 ].} =
     try:
         result = db.get(holder).fromBinary()
+    except DBReadError as e:
+        fcRaise e
+
+proc loadRemovals*(
+    db: DB,
+    blockNum: int
+): string {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get("removals" & blockNum.toBinary())
+    except DBReadError as e:
+        fcRaise e
+
+proc loadRemovals*(
+    db: DB,
+    holder: BLSPublicKey
+): string {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get(holder.toString() & "removals")
     except DBReadError as e:
         fcRaise e
 
