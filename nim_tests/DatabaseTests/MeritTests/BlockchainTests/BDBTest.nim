@@ -135,7 +135,7 @@ proc test*() =
         blockchain.processBlock(mining)
 
         #Commit the DB.
-        db.commit()
+        db.commit(mining.nonce)
 
         #Compare the Blockchains.
         compare()

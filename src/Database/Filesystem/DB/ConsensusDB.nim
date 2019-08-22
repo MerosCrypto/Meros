@@ -14,8 +14,8 @@ import ../../../Wallet/MinerWallet
 import ../../Consensus/Element
 
 #Serialize/parse libs.
-import Serialize/Consensus/SerializeUnknown
-import Serialize/Consensus/ParseUnknown
+import Serialize/Consensus/DBSerializeElement
+import Serialize/Consensus/DBParseElement
 
 #DB object.
 import objects/DBObj
@@ -24,7 +24,7 @@ export DBObj
 #Tables standard lib.
 import tables
 
-#Put/Get/Commit for the Consensus DB.
+#Put/Get/Delete/Commit for the Consensus DB.
 proc put(
     db: DB,
     key: string,
@@ -49,11 +49,23 @@ proc get(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
+proc delete(
+    db: DB,
+    key: string
+) {.forceCheck: [].} =
+    db.consensus.cache.del(key)
+    db.consensus.deleted.add(key)
+
 proc commit*(
     db: DB
 ) {.forceCheck: [].} =
-    for u in 0 ..< 5:
-        db.consensus.cache["u" & char(u)] = db.consensus.unknown[u]
+    for key in db.consensus.deleted:
+        try:
+            db.lmdb.delete("consensus", key)
+        except Exception:
+            #If we delete something before it's committed, it'll throw.
+            discard
+    db.consensus.deleted = @[]
 
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.consensus.cache.len)
     try:
@@ -92,28 +104,10 @@ proc save*(
     db: DB,
     elem: Element
 ) {.forceCheck: [].} =
-    case elem:
-        of Verification as verif:
-            db.put(
-                verif.holder.toString() & verif.nonce.toBinary().pad(1),
-                verif.hash.toString()
-            )
-
-        else:
-            doAssert(false, "Element should be Verification.")
-
-proc saveUnknown*(
-    db: DB,
-    verif: Verification
-) {.forceCheck: [].} =
-    db.consensus.unknown[5] &= verif.serializeUnknown()
-
-proc advanceUnknown*(
-    db: DB
-) {.forceCheck: [].} =
-    for i in 0 ..< 5:
-        db.consensus.unknown[i] = db.consensus.unknown[i + 1]
-    db.consensus.unknown[5] = ""
+    db.put(
+        elem.holder.toString() & elem.nonce.toBinary().pad(1),
+        elem.serialize()
+    )
 
 proc loadHolders*(
     db: DB
@@ -145,36 +139,24 @@ proc load*(
     db: DB,
     holder: BLSPublicKey,
     nonce: int
-): Verification {.forceCheck: [
+): Element {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = newVerificationObj(
-            db.get(holder.toString() & nonce.toBinary().pad(1)).toHash(384)
-        )
-        result.holder = holder
-        result.nonce = nonce
+        result = db.get(holder.toString() & nonce.toBinary().pad(1)).parseElement(holder, nonce)
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc loadUnknown*(
-    db: DB
-): seq[seq[Verification]] {.forceCheck: [
-    DBReadError
-].} =
-    var unknowns: string
-    result = newSeq[seq[Verification]](5)
-    for u in 0 ..< 5:
+    if result of MeritRemoval:
         try:
-            unknowns = db.get("u" & char(u))
-        except DBReadError as e:
-            if u == 0:
-                return
-            else:
-                fcRaise e
+            result.nonce = nonce
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when loading a MeritRemoval: " & e.msg)
 
-        for i in countup(0, unknowns.len - 1, UNKNOWN_LEN):
-            try:
-                result[u].add(unknowns[i ..< i + UNKNOWN_LEN].parseUnknown())
-            except Exception as e:
-                raise newException(DBReadError, e.msg)
+#Delete an element.
+proc del*(
+    db: DB,
+    key: BLSPublicKey,
+    nonce: int
+) {.forceCheck: [].} =
+    db.delete(key.toString() & nonce.toBinary().pad(1))

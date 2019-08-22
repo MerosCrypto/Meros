@@ -53,6 +53,12 @@ type
             IndexError
         ].}
 
+        getMerit*: proc (
+            hash: Hash[384]
+        ): int {.raises: [
+            IndexError
+        ].}
+
         addClaim*: proc (
             claim: Claim,
             syncing: bool = false
@@ -77,10 +83,18 @@ type
             DataExists
         ].}
 
+        save*: proc (
+            tx: Transaction
+        ) {.inline, raises: [].}
+
     ConsensusFunctionBox* = ref object
+        isMalicious*: proc (
+            key: BLSPublicKey,
+        ): bool {.inline, raises: [].}
+
         getHeight*: proc (
             key: BLSPublicKey
-        ): int {.inline, raises: [].}
+        ): int {.raises: [].}
 
         getElement*: proc (
             key: BLSPublicKey,
@@ -93,13 +107,6 @@ type
             records: seq[MeritHolderRecord],
             aggregate: BLSSignature
         ] {.raises: [].}
-
-        getPendingHashes*: proc (
-            key: BLSPublicKey,
-            nonce: int
-        ): seq[Hash[384]] {.raises: [
-            IndexError
-        ].}
 
         addVerification*: proc (
             verif: Verification
@@ -117,11 +124,15 @@ type
 
         addMeritRemoval*: proc (
             mr: MeritRemoval
-        ) {.raises: [].}
+        ) {.raises: [
+            ValueError
+        ].}
 
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
-        ) {.raises: [].}
+        ) {.raises: [
+            ValueError
+        ].}
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}
@@ -147,6 +158,10 @@ type
         getMerit*: proc (
             key: BLSPublicKey
         ): int {.inline, raises: [].}
+
+        isLive*: proc (
+            key: BLSPublicKey,
+        ): bool {.inline, raises: [].}
 
         addBlock*: proc (
             newBlock: Block,

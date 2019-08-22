@@ -143,8 +143,8 @@ proc compare*(
                 compare(e1.records[r1][r2], e2.records[r1][r2])
 
         #Shift on an Epoch.
-        p1 = e1.shift(nil, @[])
-        p2 = e2.shift(nil, @[])
+        p1 = e1.shift(nil, @[], @[])
+        p2 = e2.shift(nil, @[], @[])
 
         #Make sure the Epochs are equivalent.
         assert(p1.hashes.len == p2.hashes.len)

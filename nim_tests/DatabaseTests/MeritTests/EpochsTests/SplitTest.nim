@@ -74,6 +74,7 @@ proc test*() =
         #Shift on the record.
         rewards = epochs.shift(
             consensus,
+            @[],
             @[
                 newMeritHolderRecord(
                     miner.publicKey,
@@ -86,11 +87,11 @@ proc test*() =
 
     #Shift 3 over.
     for _ in 0 ..< 3:
-        rewards = epochs.shift(consensus, @[]).calculate(state)
+        rewards = epochs.shift(consensus, @[], @[]).calculate(state)
         assert(rewards.len == 0)
 
     #Next shift should result in a Rewards of key 0, 500 and key 1, 500.
-    rewards = epochs.shift(consensus, @[]).calculate(state)
+    rewards = epochs.shift(consensus, @[], @[]).calculate(state)
 
     #Veirfy the length.
     assert(rewards.len == 2)

@@ -32,6 +32,13 @@ class Send(Transaction):
         self.argon: bytes = SpamFilter.run(self.hash, self.proof)
         self.verified: bool = False
 
+    #Transaction -> Send. Satisifes static typing requirements.
+    @staticmethod
+    def fromTransaction(
+        tx: Transaction
+    ) -> Any:
+        return tx
+
     #Sign.
     def sign(
         self,
@@ -108,13 +115,6 @@ class Send(Transaction):
                 "amount": str(output[1])
             })
         return result
-
-    #Transaction -> Send. Satisifes static typing requirements.
-    @staticmethod
-    def fromTransaction(
-        tx: Transaction
-    ) -> Any:
-        return tx
 
     #JSON -> Send.
     @staticmethod

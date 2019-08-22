@@ -12,21 +12,7 @@ proc compare*(
     e1: Element,
     e2: Element
 ) =
-    #Test the Element fields.
-    assert(e1.holder == e2.holder)
-    assert(e1.nonce == e2.nonce)
-
-    #Test the descendant fields.
-    case e1:
-        of Verification as v1:
-            assert(e2 of Verification)
-            assert(v1.hash == cast[Verification](e2).hash)
-        of MeritRemoval as mr1:
-            assert(e2 of MeritRemoval)
-            compare(mr1.element1, cast[MeritRemoval](e2).element1)
-            compare(mr1.element2, cast[MeritRemoval](e2).element2)
-        else:
-            assert(false)
+    assert(e1 == e2)
 
 #Compare two MeritHolders to make sure they have the same value.
 proc compare*(
@@ -62,12 +48,6 @@ proc compare*(
         assert(c2Holders.contains(holder))
         compare(c1[holder], c2[holder])
 
-    #Compare the Unknowns.
-    assert(c1.unknowns.len == c2.unknowns.len)
-    for hash in c1.unknowns.keys():
-        assert(c1.unknowns[hash].len == 6)
-        assert(c2.unknowns[hash].len == 6)
-        for u in 0 ..< 6:
-            assert(c1.unknowns[hash][u].len == c2.unknowns[hash][u].len)
-            for v in 0 ..< c1.unknowns[hash][u].len:
-                assert(c1.unknowns[hash][u][v] == c2.unknowns[hash][u][v])
+    #Verify the Unknowns.
+    assert(c1.unknowns.len == 0)
+    assert(c2.unknowns.len == 0)

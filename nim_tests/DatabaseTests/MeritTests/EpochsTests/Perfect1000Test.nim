@@ -76,16 +76,16 @@ proc test*() =
         ))
 
     #Shift on the records.
-    rewards = epochs.shift(consensus, records).calculate(state)
+    rewards = epochs.shift(consensus, @[], records).calculate(state)
     assert(rewards.len == 0)
 
     #Shift 4 over.
     for _ in 0 ..< 4:
-        rewards = epochs.shift(consensus, @[]).calculate(state)
+        rewards = epochs.shift(consensus, @[], @[]).calculate(state)
         assert(rewards.len == 0)
 
     #Next shift should result in a Rewards of key 0: 334, key 1: 333, and key 2: 333.
-    rewards = epochs.shift(consensus, @[]).calculate(state)
+    rewards = epochs.shift(consensus, @[], @[]).calculate(state)
 
     #Veirfy the length.
     assert(rewards.len == 3)

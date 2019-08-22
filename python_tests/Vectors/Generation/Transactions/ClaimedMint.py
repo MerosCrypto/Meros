@@ -1,12 +1,6 @@
 #Types.
 from typing import IO, Dict, List, Any
 
-#Merit classes.
-from python_tests.Classes.Merit.BlockHeader import BlockHeader
-from python_tests.Classes.Merit.BlockBody import BlockBody
-from python_tests.Classes.Merit.Block import Block
-from python_tests.Classes.Merit.Merit import Merit
-
 #Transactions classes.
 from python_tests.Classes.Transactions.Claim import Claim
 from python_tests.Classes.Transactions.Data import Data
@@ -15,6 +9,12 @@ from python_tests.Classes.Transactions.Transactions import Transactions
 #Consensus classes.
 from python_tests.Classes.Consensus.Verification import SignedVerification
 from python_tests.Classes.Consensus.Consensus import Consensus
+
+#Merit classes.
+from python_tests.Classes.Merit.BlockHeader import BlockHeader
+from python_tests.Classes.Merit.BlockBody import BlockBody
+from python_tests.Classes.Merit.Block import Block
+from python_tests.Classes.Merit.Merit import Merit
 
 #Ed25519 lib.
 import ed25519
@@ -83,7 +83,7 @@ block: Block = Block(
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate(
-            [(blsPubKey, 0)]
+            [(blsPubKey, 0, -1)]
         )
     ),
     BlockBody([
@@ -140,7 +140,7 @@ block = Block(
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate(
-            [(blsPubKey, 1)]
+            [(blsPubKey, 1, -1)]
         )
     ),
     BlockBody([

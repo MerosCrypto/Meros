@@ -220,7 +220,7 @@ proc add*(
     #Handle it.
     try:
         await client.handle(networkFunctions)
-    #If an IndexError happened, we couldn't get the Client to reply to them
+    #If an IndexError happened, we couldn't get the Client to reply to them.
     #This means something else disconnected and removed them.
     except IndexError:
         #Disconnect them again to be safe.

@@ -25,7 +25,7 @@ The Merkle tree each MeritHolder has uses Blake2b-384 as a hash algorithm and co
 
 ### Verification
 
-A Verification is a MeritHolder staking their Merit behind a Transaction and approving it. The used Merit amount is the amount of the Merit Holder when the Verification is archived. Once a Transaction has `LIVE_MERIT / 2 + 601` Merit staked behind it, it is verified. Live Merit is a value described in the Merit documentation. `LIVE_MERIT / 2 + 1` is majority, yet the added 600 covers state changes over the 6 Blocks for which Verifications for a Transaction can be archived. If a Verification isn't archived by the end of these 6 Blocks, it should not be counted towards the Transaction's Merit. a Transaction can also be verified through a process known as "defaulting". Once an input is used in a Transaction mentioned in a Block, if five more Blocks pass without a Transaction using that input obtaining the needed Merit, the Transaction with the most Merit which uses that input, which is also mentioned in a Block, or if there's a tie, the Transaction with the higher hash, becomes verified after the next Checkpoint.
+A Verification is a MeritHolder staking their Merit behind a Transaction and approving it. If a Transaction has `LIVE_MERIT / 2 + 1` Merit staked behind it at the end of its Epoch, it is verified. Live Merit is described in the Merit documentation, and the Live Merit value used is what it will be at the end of the Transaction's Epoch. It should be noted Meros considers a Transaction verified as soon as it crosses its threshold, which uses a different formula than the protocol. If a Verification isn't archived by the end of these 6 Blocks, it should not be counted towards the Transaction's final Merit. Transactions can also be verified through a process known as "defaulting". Once an input is used in a Transaction mentioned in a Block, if five more Blocks pass without a Transaction using that input obtaining the needed Merit, the Transaction with the most Merit which uses that input, which is also mentioned in a Block, or if there's a tie, the Transaction with the higher hash, becomes verified after the next Checkpoint.
 
 It is possible for a MeritHolder who votes on competing Transactions using the same input to cause both to become verified. This is eventually resolved, as described below in the MeritRemoval section, yet raises the risk of reverting a Transaction's verification. There are multiple ways to prevent this and handle it in the moment, yet the Meros protocol is indifferent, as long as all nodes resolve it and maintain consensus. If Meros detects multiple Transactions sharing an input, it will wait for a Transaction to default, not allowing for verification via Verifications alone.
 
@@ -33,7 +33,7 @@ They have the following fields:
 
 - hash: Hash of the Transaction verified.
 
-Verifications can be of any hash. If the node locates the specified Transaction, at the time it receives the Verification or within the next six blocks, the Verification is then used to verify the Transaction. That said, Verifications with unknown hashes are addable, as long as the unknown hash doesn't get enough Merit to make it a verified Transaction. This enables pruning of unverified competing Transactions. Verifications for Mints are considered Verifications for unknown hashes.
+Verifications can only be of parsable Transactions, even ones with an invalid signature. Verifications with unknown hashes are invalid, yet still usable as causes for a MeritRemoval.
 
 `Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
 
@@ -79,33 +79,35 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Transactions, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Verifications are struck null and void, with all votes (SendDifficulty, DataDifficulty, and GasPrice) being completely removed from consideration. Pending Elements can be safely pruned once the MeritRemoval is included in a Block. It should be noted if a MeritHolder verifies competing Transactions, those competing Transactions can no longer be pruned.
+MeritRemovals aren't created on their own. When a MeritHolder creates two Elements with the same nonce, or two Verifications at different nonces which verify competing Transactions, nodes add a MeritRemoval to the MeritHolder. This MeritRemoval is added right after the archived Elements. All unarchived Verifications are struck null and void, with all votes (SendDifficulty, DataDifficulty, and GasPrice) being completely removed from consideration. Pending Elements can be safely pruned once the MeritRemoval is included in a Block.
 
-The creation of a MeritRemoval causes the MeritHolder's Merit to no longer be usable. Once the MeritRemoval is in a Block, the Merit no longer counts as 'live' in order to not raise the percentage of Merit needed to verify a transaction. This is further described in the Merit documentation.
+The creation of a MeritRemoval causes the MeritHolder's Merit to no longer be usable. Once the MeritRemoval is in a Block, the Merit no longer contributes to the amount of 'live' Merit, in order to not raise the percentage of Merit needed to verify a transaction. This is further described in the Merit documentation. Merit Holders are ineligible for rewards using removed Merit. Merit Holders may regain Merit, yet if the Block which archives their Merit Removal gives them Merit, it is also removed.
 
 If multiple MeritRemovals are triggered, the first one will have already reverted unarchived actions and stripped the MeritHolder of their Merit. The remaining work becomes achieving consensus on what Elements to name as the MeritRemoval's cause. This is achieved when the next Block is mined, and the next Block's miner decides what Elements are the MeritRemoval's cause for the entire network.
 
 MeritRemovals have the following fields:
 
+- partial:  Whether or not the first Element is already archived on the Blockchain.
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48-byte holder, the 4-byte nonce, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder.
+`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 48-byte holder, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder. The nonce is not serialized as its nonce is dependent on when it's archived. Even though MeritRemovals are not signed, they use a prefix of "\4" for merkle creation.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
-- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2. If one Element has already been archived in a Block, it is the signature of the other Element.
+- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2. If one Element has already been archived in a Block, the signature is the second Element's signature.
 
 Their message lengths are their non-"Signed" message length plus 96 bytes; the 96-byte signature which is appended to the end of the serialized non-"Signed" version.
 
 ### Violations in Meros
 
-- Meros counts Verifications which were never archived for a Transaction's weight.
+- Meros calculates thresholds as `LIVE_MERIT / 2 + 601`. This drifts to cause higher thresholds as the Transaction's lifespan progresses. It should be `LIVE_MERIT_AT_END_OF_EPOCH / 2 + 601`.
+- Meros doesn't produce a final Merit tally of Transaction weights. This can lead to false positives on what's verified, causing forks via child Transactions and reward calculations.
 - Meros doesn't support defaulting.
-- Meros doesn't check if Verifications for an unknown hash reaches majority Merit.
+- Meros doesn't track if two Transactions spend the same input (which should disable instant verification).
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.
-- `SignedMeritRemoval` or `MeritRemoval` are a work in progress.
+- Meros doesn't support MeritRemovals caused by verifying competing Transactions.

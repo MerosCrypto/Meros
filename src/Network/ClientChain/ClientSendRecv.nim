@@ -143,14 +143,36 @@ proc recv*(
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
         of MessageType.SignedMeritRemoval:
-            var len: int = int(msg[^1]) + MERIT_REMOVAL_LENS[2]
+            var len: int = MERIT_REMOVAL_LENS[2]
+            case int(msg[^1]):
+                of VERIFICATION_PREFIX:
+                    len += VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
+                of SEND_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of DATA_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of GAS_PRICE_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                else:
+                    raise newException(ClientError, "Client sent an invalid element type for their MeritRemoval.")
             size += len
             try:
                 msg &= await client.socket.recv(len)
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
-            len = int(msg[^1]) + MERIT_REMOVAL_LENS[4]
+            len = MERIT_REMOVAL_LENS[4]
+            case int(msg[^1]):
+                of VERIFICATION_PREFIX:
+                    len += VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
+                of SEND_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of DATA_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of GAS_PRICE_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                else:
+                    raise newException(ClientError, "Client sent an invalid element type for their MeritRemoval.")
             size += len
             try:
                 msg &= await client.socket.recv(len)
@@ -173,14 +195,35 @@ proc recv*(
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
         of MessageType.MeritRemoval:
-            var len: int = int(msg[^1]) + MERIT_REMOVAL_LENS[2]
+            var len: int = MERIT_REMOVAL_LENS[2]
+            case int(msg[^1]):
+                of VERIFICATION_PREFIX:
+                    len += VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
+                of SEND_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of DATA_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of GAS_PRICE_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                else:
+                    raise newException(ClientError, "Client sent an invalid element type for their MeritRemoval.")
             size += len
             try:
                 msg &= await client.socket.recv(len)
             except Exception as e:
                 raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
-            len = int(msg[^1])
+            case int(msg[^1]):
+                of VERIFICATION_PREFIX:
+                    len = VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
+                of SEND_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of DATA_DIFFICULTY_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                of GAS_PRICE_PREFIX:
+                    doAssert(false, "Client sent an unsupport element type.")
+                else:
+                    raise newException(ClientError, "Client sent an invalid element type for their MeritRemoval.")
             size += len
             try:
                 msg &= await client.socket.recv(len)

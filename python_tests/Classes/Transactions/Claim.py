@@ -28,6 +28,13 @@ class Claim(Transaction):
 
         self.verified: bool = False
 
+    #Transaction -> Claim. Satisifes static typing requirements.
+    @staticmethod
+    def fromTransaction(
+        tx: Transaction
+    ) -> Any:
+        return tx
+
     #Sign.
     def sign(
         self,
@@ -81,13 +88,6 @@ class Claim(Transaction):
                 "hash": input.hex().upper()
             })
         return result
-
-    #Transaction -> Claim. Satisifes static typing requirements.
-    @staticmethod
-    def fromTransaction(
-        tx: Transaction
-    ) -> Any:
-        return tx
 
     #JSON -> Claim.
     @staticmethod

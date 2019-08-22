@@ -47,9 +47,11 @@ proc test*() =
         #List of MeritHolders.
         holders: seq[MinerWallet] = @[]
         #List of MeritHolders used to grab a miner from.
-        potentials: seq[MinerWallet]
+        potentials: seq[MinerWallet] = @[]
+        #List of MeritHolders with Merit.
+        merited: seq[BLSPublicKey] = @[]
         #Miners we're mining to.
-        miners: seq[Miner]
+        miners: seq[Miner] = @[]
         #Remaining amount of Merit.
         remaining: int
         #Amount to pay the miner.
@@ -70,7 +72,7 @@ proc test*() =
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
         #Create a random amount of Merit Holders.
-        for _ in 0 ..<  rand(5) + 2:
+        for _ in 0 ..< rand(5) + 2:
             holders.add(newMinerWallet())
 
         #Randomize the miners.
@@ -96,6 +98,7 @@ proc test*() =
                 potentials[miner].publicKey,
                 amount
             )
+            merited.add(potentials[miner].publicKey)
             potentials.del(miner)
 
         #Create the Block.
@@ -114,8 +117,11 @@ proc test*() =
         #Add it to the State.
         state.processBlock(blockchain, mining)
 
+        #Remove Merit from a random MeritHolder who has Merit.
+        state.remove(merited[rand(merited.len)], mining)
+
         #Commit the DB.
-        db.commit()
+        db.commit(mining.nonce)
 
         #Compare the States.
         compare()

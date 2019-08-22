@@ -43,12 +43,14 @@ The result is an object, as follows:
     - `proof`     (int)
     - `argon`     (string)
 
-### `getWeight`
+### `getMerit`
 
-`getWeight` replies with the Merit behind a Transaction still in Epochs. It takes in one argument:
+`getMerit` replies with how much Merit is behind the Transaction, along with the threshold it needs (or needed) to cross. It takes in one argument:
 - Hash (string)
 
-The result is an int of the weight.
+The result is an object, as follows:
+- `merit`     (int)
+- `threshold` (int)
 
 ### `getVerifiers`
 

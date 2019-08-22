@@ -2,6 +2,10 @@
 
 ### Core:
 
+Wallet:
+
+- OpenCAP support.
+
 Database:
 
 - Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
@@ -12,29 +16,29 @@ Merit:
 - Make RandomX the mining algorithm (node should use the light mode).
 - Decide if Block aggregate should be aggregate(MeritHolderAggregates) or aggregate(signatures).
 
-Wallet:
+Consensus:
 
-- OpenCAP support.
+- Check if MeritHolders verify conflicting Transactions.
+- SendDifficulty.
+- DataDifficulty.
+
+Transactions:
+
+- Resolve https://github.com/MerosCrypto/Meros/issues/84.
+- Correctly "unverify" Transactions. We do not mark Transactions as no longer eligible for defaulting (if that's the case), re-enable spent UTXOs, or unverify child Transactions.
+- Raise the Verification threshold.
+- Reload Verifications with their MeritHolder's current Merit. The only reason we don't do this now is our low threshold/it breaks consistency on reload.
 
 UI:
 
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
+- Correct `transactions_getMerit` which is different from its "Eventual" definition.
 - Passworded RPC.
 
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
 Network:
-
--
-```
-proc sync*(
-    network: Network,
-    consensus: Consensus,
-    newBlock: Block
-)
-```
-has several notes in `discard """ """` about syncing transactions which should be resolved.
 
 - Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
 
@@ -61,7 +65,7 @@ has several notes in `discard """ """` about syncing transactions which should b
 
 	Will reduce network traffic and increase security.
 
-- Check requested data is requested data.
+- Check requested data is requested data. We don't do this for Block Bodies, and perform a very weak check for Elements (supplement with a signature/record merkle check).
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
@@ -69,21 +73,9 @@ has several notes in `discard """ """` about syncing transactions which should b
 - Multi-client syncing.
 - Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
 
-### Merit Removals.
-
-Done:
-- Object/Lib files.
-- Serialize/Parse.
-- Check if MeritHolders create conflicting Elements.
-- Don't count malicious MeritHolders' verifications.
-- Create/broadcast a MeritRemoval for malicious MeritHolders.
-
-TODO:
-- Check if MeritHolders verify conflicting Transactions.
-- Reverse the MeritHolder's pending actions.
-- Apply the pending actions if the next Block doesn't contain the MeritRemoval.
-- When a Block comes with that MeritRemoval, remove the malicious Merit from the live Merit.
-- Save all of this to the database.
+- Handle ValidityConcerns.
+- Don't rebroadcast data to who sent it.
+- Don't rebroadcast Elements below a Merit threshold.
 
 ### Nim Tests:
 
@@ -109,8 +101,9 @@ Wallet:
 
 - Expand the Ed25519 Test.
 
-Datbase/Filesystem/DB/Serialize:
+Database/Filesystem/DB/Serialize:
 
+- Consensus/DBSerializeElement Test.
 - Transactions/SerializeTransaction Test.
 
 Datbase/Filesystem/DB:
@@ -148,8 +141,12 @@ Network:
 - Tests.
 
 ### Python Tests
-- Merit Removal Tests.
+
 - RPC tests.
+
+- VerifyCompeting Sync test.
+- VerifyCompeting Live test.
+- VerifyCompeting Cause test.
 
 ### Features:
 

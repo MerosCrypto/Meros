@@ -42,6 +42,7 @@ import random
 proc test*() =
     #Seed random.
     randomize(int64(getTime()))
+
     var
         #Database.
         db: DB = newTestDatabase()
@@ -68,20 +69,27 @@ proc test*() =
         #Hash we're randomizing.
         hash: Hash[384]
         #Table of a Merit Holder to every hash they signed.
-        signed: Table[string, seq[Hash[384]]]
+        signed: Table[string, seq[Hash[384]]] = initTable[string, seq[Hash[384]]]()
         #Verification we're creating.
         verif: SignedVerification
+        #Verifications used in a MeritRemoval.
+        verif1: SignedVerification
+        verif2: SignedVerification
         #MeritHolderRecords.
-        records: seq[MeritHolderRecord]
+        records: seq[MeritHolderRecord] = @[]
+        #List of pending removals.
+        pending: seq[SignedMeritRemoval] = @[]
+        #Table of Malicious MeritHolders.
+        malicious: Table[string, bool] = initTable[string, bool]()
 
         #List of MeritHolders.
         holders: seq[MinerWallet] = @[]
         #List of new MeritHolders.
-        newHolders: seq[MinerWallet]
+        newHolders: seq[MinerWallet] = @[]
         #List of MeritHolders used to grab a miner from.
-        potentials: seq[MinerWallet]
+        potentials: seq[MinerWallet] = @[]
         #Miners we're mining to.
-        miners: seq[Miner]
+        miners: seq[Miner] = @[]
         #Remaining amount of Merit.
         remaining: int
         #Amount to pay the miner.
@@ -116,25 +124,60 @@ proc test*() =
 
                 hashes[^1].add(hash)
 
-            #For every holder, verify a random amount of Verifications from each section.
+            #For every viable holder, verify a random amount of hashes from each section.
             for holder in holders:
-                for s in countdown(min(hashes.len - 1, 5), 1):
-                    for _ in 0 ..< 3:
-                        #Grab a Hash.
-                        hash = hashes[^s][rand(max(hashes[^s].len - 1, 0))]
+                if malicious.hasKey(holder.publicKey.toString()):
+                    continue
+                if rand(10) == 0:
+                    malicious[holder.publicKey.toString()] = true
 
-                        #Make sure we didn't already sign it.
-                        if signed[holder.publicKey.toString()].contains(hash):
-                            continue
+                if not malicious.hasKey(holder.publicKey.toString()):
+                    for s in countdown(min(hashes.len - 1, 5), 1):
+                        for _ in 0 ..< 3:
+                            #Grab a Hash.
+                            hash = hashes[^s][rand(max(hashes[^s].len - 1, 0))]
 
-                        #Create the Signed Verification.
-                        verif = newSignedVerificationObj(hash)
-                        holder.sign(verif, consensus[holder.publicKey].height)
-                        signed[holder.publicKey.toString()].add(hash)
+                            #Make sure we didn't already sign it.
+                            if signed[holder.publicKey.toString()].contains(hash):
+                                continue
+
+                            #Create the Signed Verification.
+                            verif = newSignedVerificationObj(hash)
+                            holder.sign(verif, consensus[holder.publicKey].height)
+                            signed[holder.publicKey.toString()].add(hash)
+
+                            #Add it to the Consensus DAG.
+                            consensus.add(verif)
+                #Create a MeritRemoval.
+                else:
+                    verif1 = newSignedVerificationObj(hash)
+                    holder.sign(verif1, consensus[holder.publicKey].height)
+                    verif2 = newSignedVerificationObj(hash)
+                    holder.sign(verif2, consensus[holder.publicKey].height)
+                    pending.add(
+                        newSignedMeritRemoval(
+                            false,
+                            verif1,
+                            verif2,
+                            @[
+                                verif1.signature,
+                                verif2.signature
+                            ].aggregate()
+                        )
+                    )
+                    consensus.flag(pending[^1])
 
         #Create the new records.
         records = @[]
         for holder in holders:
+            if consensus.malicious.hasKey(holder.publicKey.toString()):
+                records.add(newMeritHolderRecord(
+                    holder.publicKey,
+                    consensus[holder.publicKey].archived + 1,
+                    consensus.malicious[holder.publicKey.toString()][0].merkle
+                ))
+                continue
+
             #Skip over MeritHolders with no Verifications.
             if consensus[holder.publicKey].height == 0:
                 continue
@@ -153,13 +196,13 @@ proc test*() =
         #Create a random amount of Merit Holders.
         potentials = holders
         newHolders = @[]
-        for _ in 0 ..<  rand(5) + 2:
+        for _ in 0 ..< rand(5) + 2:
             holders.add(newMinerWallet())
             newHolders.add(holders[^1])
             signed[holders[^1].publicKey.toString()] = @[]
 
         #Randomize the miners
-        miners = newSeq[Miner](rand(holders.len - newHolders.len) + newHolders.len - 1)
+        miners = newSeq[Miner](rand(holders.len - newHolders.len) + newHolders.len)
         remaining = 100
         for m in 0 ..< miners.len:
             #Set the amount to pay the miner.
@@ -198,20 +241,30 @@ proc test*() =
         #Mine it.
         while not blockchain.difficulty.verify(mining.header.hash):
             inc(mining)
+
         #Add it to the Blockchain.
         blockchain.processBlock(mining)
+
+        #Mark the MeritRemovals as archived.
+        for mr in pending:
+            consensus.archive(mr)
 
         #Add it to the State.
         state.processBlock(blockchain, mining)
 
         #Shift the records onto the Epochs.
-        discard epochs.shift(consensus, records)
+        discard epochs.shift(consensus, @[], records)
+
+        #Delete the Merit of every Malicious MeritHolder.
+        for mr in pending:
+            state.remove(mr.holder, mining)
+        pending = @[]
 
         #Mark the records as archived.
         consensus.archive(records)
 
         #Commit the DB.
-        db.commit()
+        db.commit(mining.nonce)
 
         #Compare the Epochs.
         compare()

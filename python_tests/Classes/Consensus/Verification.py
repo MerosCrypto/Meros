@@ -23,6 +23,13 @@ class Verification(Element):
 
         self.hash: bytes = hash
 
+    #Element -> Verification. Satisifes static typing requirements.
+    @staticmethod
+    def fromElement(
+        elem: Element
+    ) -> Any:
+        return elem
+
     #Serialize.
     def serialize(
         self
@@ -44,13 +51,6 @@ class Verification(Element):
 
             "hash": self.hash.hex().upper()
         }
-
-    #Element -> Verification. Satisifes static typing requirements.
-    @staticmethod
-    def fromElement(
-        elem: Element
-    ) -> Any:
-        return elem
 
     #JSON -> Verification.
     @staticmethod
@@ -97,7 +97,7 @@ class SignedVerification(Verification):
         self.signature = self.blsSignature.serialize()
 
     #Serialize.
-    def serialize(
+    def signedSerialize(
         self
     ) -> bytes:
         return (
@@ -105,12 +105,18 @@ class SignedVerification(Verification):
             self.signature
         )
 
+    #SignedVerification -> SignedElement.
+    def toSignedElement(
+        self
+    ) -> Any:
+        return self
+
     #SignedVerification -> JSON.
     def toSignedJSON(
         self
     ) -> Dict[str, Any]:
         return {
-            "descendant": "verification",
+            "descendant": "Verification",
 
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
@@ -132,9 +138,3 @@ class SignedVerification(Verification):
             json["nonce"],
             bytes.fromhex(json["signature"])
         )
-
-    #SignedVerification -> SignedElement.
-    def toSignedElement(
-        self
-    ) -> Any:
-        return self

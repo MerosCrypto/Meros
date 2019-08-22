@@ -1,8 +1,11 @@
 #Include the Second file in the chain, NetworkCore.
 include NetworkCore
 
-#Tuple to define missing data.
-type Gap = tuple[key: BLSPublicKey, start: int, last: int]
+#Objects to define missing data.
+type Gap = object
+    key: BLSPublicKey
+    start: int
+    last: int
 
 #Sync missing Elements from a specific Client.
 proc syncElements(
@@ -128,6 +131,7 @@ proc sync*(
     consensus: Consensus,
     newBlock: Block
 ) {.forceCheck: [
+    ValueError,
     DataMissing,
     ValidityConcern
 ], async.} =
@@ -148,24 +152,39 @@ proc sync*(
         #Get the MeritHolder.
         var holder: MeritHolder = consensus[record.key]
 
-        #If we're missing Elements...
-        if holder.height <= record.nonce:
-            #Add the gap.
-            gaps.add((
-                record.key,
-                holder.height,
-                record.nonce
-            ))
-
-        #Grab their pending elements and place it in elements.
-        elements[record.key.toString()] = newSeq[Element](holder.height - holder.archived - 1)
-        for e in holder.archived + 1 ..< holder.height:
+        #Grab the holder's pending elements and place them in elements.
+        #OVerride for MeritRemovals.
+        if consensus.malicious.hasKey(holder.keyStr):
             try:
-                elements[record.key.toString()][e - (holder.archived + 1)] = holder[e]
+                var mrArchived: bool = false
+                for mr in consensus.malicious[holder.keyStr]:
+                    if record.merkle == mr.merkle:
+                        mrArchived = true
+                        elements[holder.keyStr] = @[cast[Element](mr)]
+                        break
+
+                if mrArchived:
+                    continue
+            except KeyError as e:
+                doAssert(false, "Couldn't get the MeritRemovals of someone who has some: " & e.msg)
+
+        elements[holder.keyStr] = newSeq[Element](min(holder.height - 1, record.nonce) - holder.archived)
+        for e in holder.archived + 1 .. min(holder.height - 1, record.nonce):
+            try:
+                elements[holder.keyStr][e - (holder.archived + 1)] = holder[e]
             except KeyError as e:
                 doAssert(false, "Couldn't access a seq in a table we just created: " & e.msg)
             except IndexError as e:
-                doAssert(false, "Couldn't get an Element by it's index despite looping up to the Merit Holder's height: " & e.msg)
+                doAssert(false, "Couldn't get an Element by it's index despite looping up to the end: " & e.msg)
+
+        #If we're missing Elements...
+        if holder.height <= record.nonce:
+            #Add the gap.
+            gaps.add(Gap(
+                key: record.key,
+                start: holder.height,
+                last: record.nonce
+            ))
 
     #Sync the missing Elements.
     if gaps.len != 0:
@@ -197,7 +216,7 @@ proc sync*(
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
             except Exception as e:
-                doAssert(false, "Syncing a Block's Elements and Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Syncing a Block's Elements threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             #If we made it through that without raising or continuing, set synced to true.
             synced = true
@@ -221,24 +240,6 @@ proc sync*(
         #If this is a Verification, add the Transaction hash it verifies to txHashes.
         if elem of Verification:
             txHashes.add(cast[Verification](elem).hash)
-
-    #Check the Block's aggregate.
-    if not newBlock.verify(elements):
-        raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
-
-    #Add the Elements since we know they're valid.
-    for elem in missingElems:
-        case elem:
-            of Verification as verif:
-                try:
-                    network.mainFunctions.consensus.addVerification(verif)
-                except ValueError as e:
-                    doAssert(false, "Couldn't add a synced Verification from a Block, after confirming it's validity, due to a ValueError: " & e.msg)
-                except DataExists:
-                    continue
-
-            of MeritRemoval as mr:
-                network.mainFunctions.consensus.addMeritRemoval(mr)
 
     #Sync the missing Transactions.
     if txHashes.len != 0:
@@ -272,112 +273,117 @@ proc sync*(
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
             except Exception as e:
-                doAssert(false, "Syncing a Block's Elements and Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Syncing a Block's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         #Disconnect every Client marked for disconnection.
         for id in toDisconnect:
             network.clients.disconnect(id)
 
-        discard """
-        We are not confirmed to have every Transaction in this Block.
-        If the middle TX hash is invalid, every Client will fail in the middle.
-        The neccessary thing to do is use gap-syncing to get the needed Transactions we didn't sync.
-        That said, we can make this better by having syncTransactions try to get every Transaction from the Client, returning whatever it successfully grabbed.
-        """
+        #Check if we got every Transaction.
+        if transactions.len != txHashes.len:
+            #Since we did not, this Block is trying to archive unknown Verification OR we just don't have a proper client set.
+            raise newException(ValueError, "Block tries to archive unknown Verifications/we couldn't get every Transaction.")
 
-        #List of Transactions we have yet to process.
-        var todo: seq[Transaction] = newSeq[Transaction](1)
-        #While we still have transactions to do...
-        while todo.len > 0:
-            #Clear todo.
-            todo = @[]
-            #Iterate over every transaction.
-            for tx in transactions:
-                block thisTX:
-                    #Handle initial datas.
-                    var first: bool = true
-                    if tx of Data:
-                        for i in 0 ..< 16:
-                            if tx.inputs[0].hash.data[i] != 0:
-                                first = false
-                                break
+    #Check the Block's aggregate.
+    if not newBlock.verify(elements):
+        raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
+
+    #Add the Elements since we know they're valid.
+    for elem in missingElems:
+        case elem:
+            of Verification as verif:
+                try:
+                    network.mainFunctions.consensus.addVerification(verif)
+                except ValueError as e:
+                    fcRaise e
+
+            of MeritRemoval as mr:
+                try:
+                    network.mainFunctions.consensus.addMeritRemoval(mr)
+                except ValueError as e:
+                    fcRaise e
+
+            else:
+                doAssert(false, "Adding unsupported Element from inside a Block.")
+
+    #List of Transactions we have yet to process.
+    var todo: seq[Transaction] = newSeq[Transaction](1)
+    #While we still have transactions to do...
+    while todo.len > 0:
+        #Clear todo.
+        todo = @[]
+        #Iterate over every transaction.
+        for tx in transactions:
+            block thisTX:
+                #Handle initial datas.
+                var first: bool = true
+                if tx of Data:
+                    for i in 0 ..< 16:
+                        if tx.inputs[0].hash.data[i] != 0:
+                            first = false
+                            break
+                else:
+                    first = false
+
+                #Make sure we have already added every input.
+                if not first:
+                    for input in tx.inputs:
+                        try:
+                            #If the TX doesn't exist, this will throw. If it does exist but isn't verified, throw a different error.
+                            if not network.mainFunctions.transactions.getTransaction(input.hash).verified:
+                                raise newException(ValueError, "")
+                        #This TX is missing an input.
+                        except IndexError:
+                            #Look for the input in the pending transactions.
+                            var found: bool = false
+                            for todoTX in transactions:
+                                if todoTX.hash == input.hash:
+                                    found = true
+                            #If it's found, add it.
+                            if found:
+                                todo.add(tx)
+
+                            break thisTX
+                        #This TX spends an unconfirmed input.
+                        except ValueError:
+                            break thisTX
+
+                #Handle the tx.
+                case tx:
+                    of Claim as claim:
+                        try:
+                            network.mainFunctions.transactions.addClaim(claim, true)
+                        except ValueError:
+                            discard """
+                            Transactions can fail to add if they were a competing transaction and their competitor was verified.
+                            The Transaction is still theoretically valid and needed in the Database.
+                            """
+                            network.mainFunctions.transactions.save(claim)
+                        except DataExists:
+                            continue
+
+                    of Send as send:
+                        try:
+                            network.mainFunctions.transactions.addSend(send, true)
+                        except ValueError:
+                            discard "See Claim's ValueError note."
+                            network.mainFunctions.transactions.save(send)
+                        except DataExists:
+                            continue
+
+                    of Data as data:
+                        try:
+                            network.mainFunctions.transactions.addData(data, true)
+                        except ValueError:
+                            discard "See Claim's ValueError note."
+                            network.mainFunctions.transactions.save(data)
+                        except DataExists:
+                            continue
+
                     else:
-                        first = false
-
-                    #Make sure we have already added every input.
-                    if not first:
-                        for input in tx.inputs:
-                            try:
-                                #If the TX doesn't exist, this will throw. If it does exist but isn't verified, throw a different error.
-                                if not network.mainFunctions.transactions.getTransaction(input.hash).verified:
-                                    raise newException(ValueError, "")
-                            #This TX is missing an input.
-                            except IndexError:
-                                #Look for the input in the pending transactions.
-                                var found: bool = false
-                                for todoTX in transactions:
-                                    if todoTX.hash == input.hash:
-                                        found = true
-                                #If it's found, add it.
-                                if found:
-                                    todo.add(tx)
-
-                                break thisTX
-                            #This TX spends an unconfirmed input.
-                            except ValueError:
-                                break thisTX
-
-                    #Handle the tx.
-                    case tx:
-                        of Claim as claim:
-                            try:
-                                network.mainFunctions.transactions.addClaim(claim, true)
-                            except ValueError:
-                                discard """
-                                    Whoever sent us this Transaction should be penalized.
-                                    We should try again from a different client.
-                                    This is coded like this because:
-                                        - The Verification mentioning this hash may be 'unknown'.
-                                        - A malicious node may have sent this an invalid TX with that hash to mess with us.
-                                        - Even if the verified TX is invalid, the Block as a whole is valid.
-                                """
-                            except DataExists:
-                                continue
-
-                        of Send as send:
-                            try:
-                                network.mainFunctions.transactions.addSend(send, true)
-                            except ValueError:
-                                discard """
-                                    Whoever sent us this Transaction should be penalized.
-                                    We should try again from a different client.
-                                    This is coded like this because:
-                                        - The Verification mentioning this hash may be 'unknown'.
-                                        - A malicious node may have sent this an invalid TX with that hash to mess with us.
-                                        - Even if the verified TX is invalid, the Block as a whole is valid.
-                                """
-                            except DataExists:
-                                continue
-
-                        of Data as data:
-                            try:
-                                network.mainFunctions.transactions.addData(data, true)
-                            except ValueError:
-                                discard """
-                                    Whoever sent us this Transaction should be penalized.
-                                    We should try again from a different client.
-                                    This is coded like this because:
-                                        - The Verification mentioning this hash may be 'unknown'.
-                                        - A malicious node may have sent this an invalid TX with that hash to mess with us.
-                                        - Even if the verified TX is invalid, the Block as a whole is valid.
-                                """
-                            except DataExists:
-                                continue
-
-                        else:
-                            doAssert(false, "Synced an Transaction of an unsyncable type.")
-            #Set transactions to todo.
-            transactions = todo
+                        doAssert(false, "Synced an Transaction of an unsyncable type.")
+        #Set transactions to todo.
+        transactions = todo
 
 #Sync a Block's Body.
 proc sync*(
@@ -450,6 +456,7 @@ proc requestBlock*(
     consensus: Consensus,
     nonce: int
 ): Future[Block] {.forceCheck: [
+    ValueError,
     DataMissing,
     ValidityConcern
 ], async.} =
@@ -515,6 +522,8 @@ proc requestBlock*(
     #Sync the Block's contents.
     try:
         await network.sync(consensus, result)
+    except ValueError as e:
+        fcRaise e
     except DataMissing as e:
         fcRaise e
     except ValidityConcern as e:

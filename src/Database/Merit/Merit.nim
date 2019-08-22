@@ -7,6 +7,9 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
+
 #Consensus lib.
 import ../Consensus/Consensus
 
@@ -70,17 +73,15 @@ proc newMerit*(
     result.state = newState(db, live, result.blockchain.height)
     result.epochs = newEpochs(db, consensus, result.blockchain)
 
-#Add a block.
+#Add a Block to the Blockchain.
 proc processBlock*(
     merit: Merit,
-    consensus: Consensus,
     newBlock: Block
-): Epoch {.forceCheck: [
+) {.forceCheck: [
     ValueError,
     GapError,
     DataExists
 ].} =
-    #Add the block to the Blockchain.
     try:
         merit.blockchain.processBlock(newBlock)
     except ValueError as e:
@@ -90,11 +91,19 @@ proc processBlock*(
     except DataExists as e:
         fcRaise e
 
-    #Have the state process the block.
-    merit.state.processBlock(merit.blockchain, newBlock)
-
+#Process a Block already addded to the Blockchain.
+proc postProcessBlock*(
+    merit: Merit,
+    consensus: Consensus,
+    removals: seq[MeritHolderRecord],
+    newBlock: Block
+): Epoch {.forceCheck: [].} =
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
         consensus,
+        removals,
         newBlock.records
     )
+
+    #Have the state process the block.
+    merit.state.processBlock(merit.blockchain, newBlock)

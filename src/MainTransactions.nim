@@ -67,6 +67,17 @@ proc mainTransactions() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
+        #Get a Transaction's weight.
+        functions.transactions.getMerit = proc (
+            hash: Hash[384]
+        ): int {.forceCheck: [
+            IndexError
+        ].} =
+            try:
+                result = transactions.weights[hash.toString()]
+            except KeyError:
+                raise newException(IndexError, "Transaction out of Epochs.")
+
         #Handle Claims.
         functions.transactions.addClaim = proc (
             claim: Claim,
@@ -183,3 +194,10 @@ proc mainTransactions() {.forceCheck: [].} =
                     asyncCheck verify(data)
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+
+        #Save a Transaction to the database.
+        #This for 'invalid' Transactions we aren't able to prune.
+        functions.transactions.save = proc (
+            tx: Transaction
+        ) {.inline, forceCheck: [].} =
+            transactions.save(tx)

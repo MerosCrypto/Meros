@@ -86,18 +86,19 @@ proc test*() =
         #Shift on the records.
         rewards = epochs.shift(
             consensus,
+            @[],
             records
         ).calculate(state)
         assert(rewards.len == 0)
 
     #Shift 3 over.
     for _ in 0 ..< 3:
-        rewards = epochs.shift(consensus, @[]).calculate(state)
+        rewards = epochs.shift(consensus, @[], @[]).calculate(state)
         assert(rewards.len == 0)
 
     #Next two shifts should be the same; the higher key is first, and both keys have an amount of 500.
     for _ in 1 .. 2:
-        rewards = epochs.shift(consensus, @[]).calculate(state)
+        rewards = epochs.shift(consensus, @[], @[]).calculate(state)
 
         #Veirfy the length.
         assert(rewards.len == 2)

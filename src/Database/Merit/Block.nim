@@ -26,7 +26,7 @@ export BlockObj
 #Serialize BlockHeader lib (for inc).
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
-#Serialize Verification lib (for verify).
+#Serialize Verification lib.
 import ../../Network/Serialize/Consensus/SerializeVerification
 
 #Tables standard lib.
@@ -41,14 +41,14 @@ func inc*(
     #Recalculate the hash.
     blockArg.header.hash = Argon(blockArg.header.serializeHash(), blockArg.header.proof.toBinary().pad(8))
 
-#Verify the aggregate signature for a table of Key -> seq[Hash].
+#Verify the aggregate signature for a table of Key -> seq[Element].
 proc verify*(
     blockArg: Block,
     elems: Table[string, seq[Element]]
 ): bool {.forceCheck: [].} =
     result = true
 
-    #Make sure there's the same amount of MeritHolder as there are records.
+    #Make sure there's the same amount of MeritHolders as there are records.
     if elems.len != blockArg.records.len:
         return false
 
@@ -65,18 +65,13 @@ proc verify*(
                 #Create AggregationInfos
                 case elem:
                     of MeritRemoval as mr:
-                        agInfos.add(
-                            @[
-                                newBLSAggregationInfo(record.key, mr.element1.serializeSign()),
-                                newBLSAggregationInfo(record.key, mr.element2.serializeSign()),
-                            ].aggregate()
-                        )
+                        agInfos.add(mr.agInfo)
                     else:
                         agInfos.add(newBLSAggregationInfo(record.key, elem.serializeSign()))
         #The presented Table has a different set of MeritHolders than the records.
         except KeyError:
             return false
-        #Couldn't create an AggregateInfo out of a BLSPublicKey and a hash.
+        #Couldn't create an AggregationInfo out of a BLSPublicKey and a hash.
         except BLSError:
             return false
 
@@ -95,7 +90,6 @@ proc verify*(
     if not agInfo.isNil:
         try:
             blockArg.header.aggregate.setAggregationInfo(agInfo)
-
             if not blockArg.header.aggregate.verify():
                 return false
         except BLSError:

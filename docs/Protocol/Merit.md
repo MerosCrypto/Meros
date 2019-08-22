@@ -92,9 +92,11 @@ for r in records:
 BLSSignature aggregate = signatures.aggregate()
 ```
 
-- records doesn’t contain multiple records for a single key.
-- records doesn’t have a record with a nonce lower than the previous record for the same key.
-- Every record in records has a Merkle tree hash equivalent to the Merkle tree hash for the mentioned key at the mentioned nonce (as described in the Consensus documentation).
+- Every record has an unique key.
+- Every record has a nonce higher than the previous record for the same key.
+- Every record has a Merkle tree hash equivalent to the Merkle tree hash for the mentioned key at the mentioned nonce (as described in the Consensus documentation).
+- No record archives Verifications which would cause a MeritRemoval.
+- If the record archives a MeritRemoval, it only archives the MeritRemoval.
 - Every Transaction verified in Verifications archived in this Block has all inputs mentioned in a past Block or in this Block.
 - Every miner has an unique and valid key.
 - Every miner has at least 1 Merit.

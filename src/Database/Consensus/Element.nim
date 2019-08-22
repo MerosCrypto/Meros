@@ -1,8 +1,17 @@
+#Errors.
+import ../../lib/Errors
+
+#Hash lib.
+import ../../lib/Hash
+
+#MinerWallet lib.
+import ../../Wallet/MinerWallet
+
 #Element sub-type libs.
-import Verification
-import MeritRemoval
-export Verification
-export MeritRemoval
+import Verification as VerificationFile
+import MeritRemoval as MeritRemovalFile
+export VerificationFile
+export MeritRemovalFile
 
 #Signed Element object.
 import objects/SignedElementObj
@@ -66,3 +75,44 @@ macro match*(
 
             else:
                 raise newException(Exception, "Invalid case statement syntax.")
+
+#Element equality operators.
+proc `==`*(
+    e1: Element,
+    e2: Element
+): bool {.forceCheck: [].} =
+    result = true
+
+    #Test the Element fields.
+    if (
+        (e1.holder != e2.holder) or
+        (e1.nonce != e2.nonce)
+    ):
+        return false
+
+    #Test the descendant fields.
+    case e1:
+        of Verification as v1:
+            if (
+                (not (e2 of Verification)) or
+                (v1.hash != cast[Verification](e2).hash)
+            ):
+                return false
+
+        of MeritRemoval as mr1:
+            if (
+                (not (e2 of MeritRemoval)) or
+                (mr1.partial != cast[MeritRemoval](e2).partial) or
+                (not (mr1.element1 == cast[MeritRemoval](e2).element1)) or
+                (not (mr1.element2 == cast[MeritRemoval](e2).element2))
+            ):
+                return false
+
+        else:
+            doAssert(false, "Unsupported Element type used in equality check.")
+
+proc `!=`*(
+    e1: Element,
+    e2: Element
+): bool {.inline, forceCheck: [].} =
+    not (e1 == e2)

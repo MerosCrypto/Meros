@@ -11,8 +11,9 @@ import ConsensusDB
 import MeritDB
 
 proc commit*(
-    db: DB
+    db: DB,
+    blockNum: int
 ) {.forceCheck: [].} =
     TransactionsDB.commit(db)
     ConsensusDB.commit(db)
-    MeritDB.commit(db)
+    MeritDB.commit(db, blockNum)

@@ -44,8 +44,9 @@ The result is an object, as follows:
 - Merit Holder (string)
 
 The result is an object, as follows:
-- `live`  (bool)
-- `merit` (int)
+- `live`      (bool): Whether or not the MeritHolder's Merit is live.
+- `malicious` (bool): Whether or not the MeritHolder has an unarchived MeritRemoval.
+- `merit`     (int):  Amount of Merit the MeritHolder has.
 
 ### `getBlockTemplate`
 

@@ -34,6 +34,8 @@ proc test*() =
         miner: MinerWallet
         #Hash.
         hash: Hash[384]
+        #Partial.
+        partial: bool
         #Malicious Elements.
         e1: Element
         e2: Element
@@ -50,30 +52,34 @@ proc test*() =
     for _ in 0 .. 255:
         miner = newMinerWallet()
 
+        partial = if rand(2) >= 1: true else: false
+
         for i in 0 ..< 48:
             hash.data[i] = uint8(rand(255))
         e1 = newSignedVerificationObj(hash)
+        miner.sign(cast[SignedVerification](e1), rand(high(int32)))
+        signatures.add(cast[SignedVerification](e1).signature)
 
         for i in 0 ..< 48:
             hash.data[i] = uint8(rand(255))
         e2 = newSignedVerificationObj(hash)
-
-        miner.sign(cast[SignedVerification](e1), rand(high(int32)))
-        signatures.add(cast[SignedVerification](e1).signature)
         miner.sign(cast[SignedVerification](e2), rand(high(int32)))
         signatures.add(cast[SignedVerification](e2).signature)
 
         #Create the SignedMeritRemoval.
         mr = newSignedMeritRemoval(
-            rand(high(int32)),
+            partial,
             e1,
             e2,
             signatures.aggregate()
         )
+        mr.nonce = 0
 
         #Serialize it and parse it back.
         reloadedMR = mr.serialize().parseMeritRemoval()
+        reloadedMR.nonce = 0
         reloadedSMR = mr.signedSerialize().parseSignedMeritRemoval()
+        reloadedSMR.nonce = 0
 
         #Compare the Elements.
         compare(mr, reloadedSMR)

@@ -26,7 +26,7 @@ finalsd:
             key* {.final.}: string
             score*: uint64
 
-        #The tests reyly on Epoch and Epochs not being refs.
+        #The tests rely on Epoch and Epochs not being refs.
         #Epoch object. Transaction Hash -> BLS Public Keys of verifiers.
         Epoch* = object
             hashes*: Table[string, seq[BLSPublicKey]]
@@ -148,7 +148,7 @@ proc shift*(
         2) When it adds the Verifications, it'd assume every appearance is the first appearance.
         This is because it doesn't have the 5 Epochs before it so when it checks the Epochs, it's iterating over blanks.
 
-        Therefore, we need to save the nonce that's at least 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
+        Therefore, we need to save the nonce that's 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
         """
 
         for record in records:

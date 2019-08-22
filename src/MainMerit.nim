@@ -52,6 +52,11 @@ proc mainMerit() {.forceCheck: [].} =
         ): int {.inline, forceCheck: [].} =
             merit.state[key]
 
+        functions.merit.isLive = proc (
+            key: BLSPublicKey
+        ): bool {.inline, forceCheck: [].} =
+            true
+
         #Handle full blocks.
         functions.merit.addBlock = proc (
             newBlock: Block,
@@ -73,8 +78,10 @@ proc mainMerit() {.forceCheck: [].} =
                     var missingBlock: Block
                     try:
                         missingBlock = await network.requestBlock(consensus, nonce)
-                    #Redefine as a GapError since a failure to sync produces a gap.
+                    except ValueError as e:
+                        fcRaise e
                     except DataMissing as e:
+                        #Redefine as a GapError since a failure to sync produces a gap.
                         raise newException(GapError, e.msg)
                     except ValidityConcern as e:
                         raise newException(ValueError, e.msg)
@@ -97,6 +104,8 @@ proc mainMerit() {.forceCheck: [].} =
             #Sync this Block.
             try:
                 await network.sync(consensus, newBlock)
+            except ValueError as e:
+                fcRaise e
             except DataMissing as e:
                 raise newException(GapError, e.msg)
             except ValidityConcern as e:
@@ -104,8 +113,34 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Couldn't sync this Block: " & e.msg)
 
-            #Verify Record validity (nonce and Merkle), as well as whether or not the verified Transactions are out of Epochs yet.
+            #Verify Record validity (nonce and Merkle).
+            var
+                removed: seq[MeritHolderRecord] = @[]
+                removedIndexes: Table[string, int] = initTable[string, int]()
+                notRemoved: seq[MeritHolderRecord] = @[]
             for record in newBlock.records:
+                #Make sure every MeritHolder has Merit.
+                if merit.state[record.key] == 0:
+                    raise newException(ValueError, "Block archives Elements of a merit-less MeritHolder.")
+
+                #Check if this holder lost their Merit.
+                if consensus.malicious.hasKey(record.key.toString()):
+                    try:
+                        var mrArchived: bool = false
+                        for i in 0 ..< consensus.malicious[record.key.toString()].len:
+                            if consensus.malicious[record.key.toString()][i].merkle == record.merkle:
+                                mrArchived = true
+                                removed.add(record)
+                                removedIndexes[record.key.toString()] = i
+                                break
+
+                        if mrArchived:
+                            continue
+                        else:
+                            notRemoved.add(record)
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a MeritRemoval we know exists: " & e.msg)
+
                 #Grab the MeritHolder.
                 var holder: MeritHolder = consensus[record.key]
 
@@ -122,24 +157,39 @@ proc mainMerit() {.forceCheck: [].} =
                 if merkle != record.merkle:
                     raise newException(ValueError, "Block has a MeritHolderRecord with a competing Merkle.")
 
-                #Seq of the relevant Elements for this MeritHolder.
-                var elems: seq[Element]
-                #Grab the consensus.
-                try:
-                    elems = holder[holder.archived + 1 .. record.nonce]
-                except IndexError as e:
-                    fcRaise e
-
-            #Add the Block to the Merit.
-            var epoch: Epoch
+            #Add the Block to the Blockchain.
             try:
-                epoch = merit.processBlock(consensus, newBlock)
+                merit.processBlock(newBlock)
             except ValueError as e:
                 fcRaise e
             except GapError as e:
                 fcRaise e
             except DataExists as e:
                 fcRaise e
+
+            #Apply reverted actions for everyone who did not have their MeritRemovals archived.
+            for notRemovee in notRemoved:
+                notRemovee.reapplyPending(consensus, transactions, merit.state)
+
+            #Save every archived MeritRemoval.
+            for removee in removed:
+                try:
+                    consensus.archive(
+                        consensus.malicious[
+                            removee.key.toString()
+                        ][
+                            removedIndexes[removee.key.toString()]
+                        ]
+                    )
+                except KeyError as e:
+                    doAssert(false, "Couldn't get the MeritRemoval of someone who has one: " & e.msg)
+
+            #Add the Block to the Epochs and State.
+            var epoch: Epoch = merit.postProcessBlock(consensus, removed, newBlock)
+
+            #Delete the Merit of every Malicious MeritHolder.
+            for removee in removed:
+                merit.state.remove(removee.key, newBlock)
 
             #Archive the Elements mentioned in the Block.
             consensus.archive(newBlock.records)
@@ -181,7 +231,7 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 
             #Commit the DBs.
-            database.commit()
+            database.commit(newBlock.nonce)
 
             echo "Successfully added the Block."
 
@@ -243,7 +293,6 @@ proc mainMerit() {.forceCheck: [].} =
                 raise newException(ValueError, e.msg)
             except DataExists as e:
                 fcRaise e
-
 
             var body: BlockBody
             try:

@@ -24,9 +24,14 @@ import SerializeVerification
 method serialize*(
     mr: MeritRemoval
 ): string {.forceCheck: [].} =
-    result =
-        mr.holder.toString() &
-        mr.nonce.toBinary().pad(INT_LEN) &
+    result = mr.holder.toString()
+
+    if mr.partial:
+        result &= "\1"
+    else:
+        result &= "\0"
+
+    result &=
         mr.element1.serializeRemoval() &
         mr.element2.serializeRemoval()
 

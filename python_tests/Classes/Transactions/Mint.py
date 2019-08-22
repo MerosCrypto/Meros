@@ -23,6 +23,13 @@ class Mint(Transaction):
         self.hash = blake2b(b'\0' + self.nonce.to_bytes(4, byteorder = "big") + self.output[0].serialize() + self.output[1].to_bytes(8, byteorder = "big"), digest_size = 48).digest()
         self.verified: bool = True
 
+    #Transaction -> Mint. Satisifes static typing requirements.
+    @staticmethod
+    def fromTransaction(
+        tx: Transaction
+    ) -> Any:
+        return tx
+
     #Mint -> JSON.
     def toJSON(
         self
@@ -41,13 +48,6 @@ class Mint(Transaction):
             "verified": self.verified
         }
         return result
-
-    #Transaction -> Mint. Satisifes static typing requirements.
-    @staticmethod
-    def fromTransaction(
-        tx: Transaction
-    ) -> Any:
-        return tx
 
     #JSON -> Mint.
     @staticmethod

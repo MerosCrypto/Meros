@@ -1,8 +1,8 @@
 #DB Serialize Consensus Tests.
 
-import Consensus/SerializeUnknownTest
+import Consensus/DBSerializeElementTest
 
 proc addTests*(
     tests: var seq[proc ()]
 ) =
-    tests.add(SerializeUnknownTest.test)
+    tests.add(DBSerializeElementTest.test)

@@ -225,6 +225,13 @@ proc getUTXOs*(
     except DBReadError:
         result = @[]
 
+#Save a Transaction. Do not apply any other checks.
+proc saveTransaction*(
+    transactions: Transactions,
+    tx: Transaction
+) {.inline, forceCheck: [].} =
+    transactions.db.save(tx)
+
 #Save a mint nonce.
 proc saveMintNonce*(
     transactions: Transactions

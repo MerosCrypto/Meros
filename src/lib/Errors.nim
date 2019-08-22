@@ -42,8 +42,8 @@ type
 
     #Database/Consensus Statuses.
     MaliciousMeritHolder* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
-        #MeritRemoval.
-        removal*: MeritRemoval
+        #MeritRemoval or pair Element.
+        element*: Element
 
     #Database/Merit Statuses.
     UncleBlock*  = object of Exception #Used when we test a BlockHeader and it's on an alternative chain.
@@ -75,10 +75,10 @@ type
 #Constructors.
 proc newMaliciousMeritHolder*(
     msg: string,
-    removal: MeritRemoval
+    elem: Element
 ): ref MaliciousMeritHolder {.forceCheck: [].} =
     result = newException(MaliciousMeritHolder, msg)
-    result.removal = removal
+    result.element = elem
 
 proc newJSONRPCError*(
     code: int,
@@ -88,3 +88,9 @@ proc newJSONRPCError*(
     result = newException(JSONRPCError, msg)
     result.code = code
     result.data = data
+
+#Getter for the MaliciousMeritHolder's removal as a MeritRemoval.
+proc removal*(
+    mmh: ref MaliciousMeritHolder
+): MeritRemoval {.inline, forceCheck: [].} =
+    cast[MeritRemoval](mmh.element)

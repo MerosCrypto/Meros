@@ -42,13 +42,15 @@ proc test*() =
             "".pad(48).toHash(384)
         )
         #States.
-        states: seq[State]
+        states: seq[State] = @[]
         #List of MeritHolders.
         holders: seq[MinerWallet] = @[]
         #List of MeritHolders used to grab a miner from.
-        potentials: seq[MinerWallet]
+        potentials: seq[MinerWallet] = @[]
+        #List of MeritHolders with Merit.
+        merited: seq[string] = @[]
         #Miners we're mining to.
-        miners: seq[Miner]
+        miners: seq[Miner] = @[]
         #Remaining amount of Merit.
         remaining: int
         #Amount to pay the miner.
@@ -70,7 +72,7 @@ proc test*() =
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
         #Create a random amount of Merit Holders.
-        for _ in 0 ..<  rand(5) + 2:
+        for _ in 0 ..< rand(5) + 2:
             holders.add(newMinerWallet())
 
         #Randomize the miners.
@@ -96,6 +98,7 @@ proc test*() =
                 potentials[miner].publicKey,
                 amount
             )
+            merited.add(potentials[miner].publicKey.toString())
             potentials.del(miner)
 
         #Create the Block.
@@ -113,6 +116,14 @@ proc test*() =
 
         #Add it to the State.
         states[^1].processBlock(blockchain, mining)
+
+        #Remove Merit from a random MeritHolder who has Merit.
+        var toRemove: int = rand(merited.len)
+        states[^1].remove(newBLSPublicKey(merited[toRemove]), mining)
+        merited.del(toRemove)
+
+        #Commit the DB.
+        db.commit(mining.nonce)
 
         #Copy the State.
         states.add(states[^1])
@@ -141,14 +152,6 @@ proc test*() =
         revertedAtOnce = states[^1]
         revertedAtOnce.revert(blockchain, copy.processedBlocks)
         compare(copy, revertedAtOnce)
-
-        reloaded = newState(db, 5, blockchain.height)
-        compare(states[^1], reloaded)
-
-    #Test catch ups.
-    for s in 0 ..< states.len - 1:
-        states[s].catchup(blockchain)
-        compare(states[s], states[^1])
 
         reloaded = newState(db, 5, blockchain.height)
         compare(states[^1], reloaded)
