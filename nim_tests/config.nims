@@ -33,7 +33,7 @@ switch("hints", "on")
 switch("parallelBuild", "0")
 
 #Specify where to output built objects.
-switch("nimcache", thisDir() & "/../build/nimcache")
+switch("nimcache", thisDir() & "/../build/nimcache/tests")
 switch("out", thisDir() & "/../build/Test")
 
 when defined(merosRelease):
