@@ -10,7 +10,7 @@ from python_tests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #TestError Exception.
-from python_tests.Tests.TestError import TestError
+from python_tests.Tests.Errors import TestError
 
 #Meros classes.
 from python_tests.Meros.Meros import MessageType

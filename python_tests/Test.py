@@ -1,8 +1,8 @@
 #Types.
 from typing import Callable, List
 
-#TestError Exception.
-from python_tests.Tests.TestError import TestError
+#Exceptions.
+from python_tests.Tests.Errors import EmptyError, NodeError, TestError
 
 #Meros classes.
 from python_tests.Meros.Meros import Meros
@@ -135,16 +135,22 @@ for test in tests:
     try:
         test(rpc)
         ress.append("\033[0;32m" + test.__name__ + " succeeded.")
+    except EmptyError as e:
+        ress.append("\033[0;33m" + test.__name__ + " is empty.")
+        continue
+    except NodeError as e:
+        ress.append("\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m")
     except TestError as e:
         ress.append("\033[0;31m" + test.__name__ + " failed: " + str(e))
         continue
     except Exception as e:
-        print("\033[0;31m" + test.__name__ + " is invalid.")
-        raise e
+        ress.append("\r\n")
+        ress.append("\033[0;31m" + test.__name__ + " is invalid.")
+        ress.append(format_exc())
     finally:
         try:
             rpc.quit()
-        except Exception:
+        except NodeError:
             ress.append("\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m")
 
         print("-" * shutil.get_terminal_size().columns)

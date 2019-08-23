@@ -10,7 +10,7 @@ from python_tests.Classes.Transactions.Transactions import Transactions
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #TestError Exception.
-from python_tests.Tests.TestError import TestError
+from python_tests.Tests.Errors import TestError
 
 #Merit classes.
 from python_tests.Classes.Merit.Merit import Merit

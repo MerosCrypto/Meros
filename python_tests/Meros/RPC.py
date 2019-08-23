@@ -4,6 +4,9 @@ from typing import Dict, List, Any
 #Meros class.
 from python_tests.Meros.Meros import Meros
 
+#NodeError Exception.
+from python_tests.Tests.Errors import NodeError
+
 #JSON standard lib.
 import json
 
@@ -45,9 +48,16 @@ class RPC:
 
         #Get the result.
         response: bytes = bytes()
+        next: bytes = bytes()
         counter: int = 0
         while True:
-            response += self.socket.recv(1)
+            try:
+                next = self.socket.recv(1)
+            except Exception:
+                raise NodeError()
+            if len(next) == 0:
+                raise NodeError()
+            response += next
 
             if response[-1] == response[0]:
                 counter += 1

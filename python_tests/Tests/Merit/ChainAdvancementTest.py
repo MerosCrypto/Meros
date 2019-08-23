@@ -6,7 +6,7 @@ from python_tests.Classes.Merit.Block import Block
 from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #TestError Exception.
-from python_tests.Tests.TestError import TestError
+from python_tests.Tests.Errors import TestError
 
 #RPC class.
 from python_tests.Meros.RPC import RPC

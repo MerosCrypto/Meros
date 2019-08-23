@@ -1,7 +1,7 @@
 #Tests proper creation and handling of a MeritRemoval when Meros receives SignedElements verifying competing transactions.
 
-#TestError Exception.
-from python_tests.Tests.TestError import TestError
+#EmptyError Exception.
+from python_tests.Tests.Errors import EmptyError
 
 #RPC class.
 from python_tests.Meros.RPC import RPC
@@ -9,4 +9,4 @@ from python_tests.Meros.RPC import RPC
 def MRVCCauseTest(
     rpc: RPC
 ) -> None:
-    raise TestError("Test is empty.")
+    raise EmptyError()

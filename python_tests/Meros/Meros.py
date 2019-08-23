@@ -17,7 +17,7 @@ from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 
 #TestError Exception.
-from python_tests.Tests.TestError import TestError
+from python_tests.Tests.Errors import TestError
 
 #Enum class.
 from enum import Enum
