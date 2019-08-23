@@ -48,7 +48,9 @@ proc test*() =
         #List of MeritHolders used to grab a miner from.
         potentials: seq[MinerWallet] = @[]
         #List of MeritHolders with Merit.
-        merited: seq[string] = @[]
+        merited: seq[BLSPublicKey] = @[]
+        #MeritHolder to remove Merit from.
+        toRemove: int
         #Miners we're mining to.
         miners: seq[Miner] = @[]
         #Remaining amount of Merit.
@@ -98,7 +100,7 @@ proc test*() =
                 potentials[miner].publicKey,
                 amount
             )
-            merited.add(potentials[miner].publicKey.toString())
+            merited.add(potentials[miner].publicKey)
             potentials.del(miner)
 
         #Create the Block.
@@ -118,8 +120,8 @@ proc test*() =
         states[^1].processBlock(blockchain, mining)
 
         #Remove Merit from a random MeritHolder who has Merit.
-        var toRemove: int = rand(merited.len)
-        states[^1].remove(newBLSPublicKey(merited[toRemove]), mining)
+        toRemove = rand(merited.len - 1)
+        states[^1].remove(merited[toRemove], mining)
         merited.del(toRemove)
 
         #Commit the DB.
