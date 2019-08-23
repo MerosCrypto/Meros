@@ -59,7 +59,7 @@ class Epochs:
         #Move TXs belonging to an old Epoch to said Epoch.
         txs: List[bytes] = list(epoch.keys())
         for tx in txs:
-            for e in range(0, 5):
+            for e in range(5):
                 if tx in self.epochs[e]:
                     self.epochs[e][tx] += epoch[tx]
                     del epoch[tx]
@@ -100,7 +100,7 @@ class Epochs:
             del tupleScores[i]
 
         #Normalize each score to 1000.
-        for i in range(0, len(tupleScores)):
+        for i in range(len(tupleScores)):
             tupleScores[i] = (tupleScores[i][0], tupleScores[i][1] * 1000 // total)
 
         #If we don't have a perfect 1000, fix that.

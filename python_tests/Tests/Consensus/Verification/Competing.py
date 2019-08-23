@@ -6,8 +6,7 @@ from typing import Dict, IO, Any
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
-from python_tests.Classes.Consensus.Verification import Verification
+#Consensus class.
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #TestError Exception.
@@ -25,26 +24,23 @@ from python_tests.Tests.Merit.Verify import verifyBlockchain
 from python_tests.Tests.Consensus.Verify import verifyConsensus
 from python_tests.Tests.Transactions.Verify import verifyTransactions
 
-#BLS lib.
-import blspy
-
 #JSON standard lib.
 import json
 
 def VCompeting(
     rpc: RPC
 ) -> None:
-    cFile: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Competing.json", "r")
-    cVectors: Dict[str, Any] = json.loads(cFile.read())
+    file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Competing.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(
-        cVectors["transactions"]
+        vectors["transactions"]
     )
     #Consensus.
     consensus: Consensus = Consensus.fromJSON(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-        cVectors["consensus"]
+        vectors["consensus"]
     )
     #Merit.
     merit: Merit = Merit.fromJSON(
@@ -54,14 +50,9 @@ def VCompeting(
         100,
         transactions,
         consensus,
-        cVectors["blockchain"]
+        vectors["blockchain"]
     )
-    cFile.close()
-
-    #Key which signed the failed Transaction.
-    blsPubKey: blspy.PublicKey = blspy.PrivateKey.from_seed(b'\1').get_public_key()
-    #Failed Transaction.
-    failedTX: bytes = Verification.fromElement(consensus.holders[blsPubKey.serialize()][0]).hash
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(
@@ -130,10 +121,6 @@ def VCompeting(
 
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
-
-    #Verify the beat Transaction was saved over the RPC.
-    if rpc.call("transactions", "getTransaction", [failedTX.hex()]) != transactions.txs[failedTX].toJSON():
-        raise TestError("Meros didn't save the failed competing Transaction.")
 
     #Verify the Blockchain.
     verifyBlockchain(rpc, merit.blockchain)

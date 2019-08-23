@@ -30,17 +30,17 @@ import json
 def MRPCauseTest(
     rpc: RPC
 ) -> None:
-    partialFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
-    partialVectors: Dict[str, Any] = json.loads(partialFile.read())
+    file: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     #Data.
-    data: Data = Data.fromJSON(partialVectors["data"])
+    data: Data = Data.fromJSON(vectors["data"])
     #Consensus.
     consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
     #MeritRemoval.
-    removal: PartiallySignedMeritRemoval = PartiallySignedMeritRemoval.fromJSON(partialVectors["removal"])
+    removal: PartiallySignedMeritRemoval = PartiallySignedMeritRemoval.fromJSON(vectors["removal"])
     consensus.add(removal.e1)
     consensus.add(removal)
     #Blockchain.
@@ -48,9 +48,9 @@ def MRPCauseTest(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        partialVectors["blockchain"]
+        vectors["blockchain"]
     )
-    partialFile.close()
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(

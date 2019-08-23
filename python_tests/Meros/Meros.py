@@ -384,7 +384,7 @@ class Meros:
     def playback(
         self
     ) -> None:
-        for i in range(0, len(self.ress)):
+        for i in range(len(self.ress)):
             self.send(self.ress[i])
             if len(self.msgs[i]) != 0:
                 if self.msgs[i] != self.recv():

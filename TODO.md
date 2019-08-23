@@ -87,7 +87,6 @@ lib:
 
 - Hash/Blake2 Test.
 - Hash/Argon Test.
-- Hash/RandomX Test.
 
 - Hash/SHA2 (384) Test.
 - Hash/Keccak (384) Test.

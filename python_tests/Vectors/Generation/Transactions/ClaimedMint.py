@@ -57,7 +57,7 @@ blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
 blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
 
 #Add 13 Blank Blocks.
-for i in range(0, 13):
+for i in range(13):
     merit.add(transactions, consensus, Block.fromJSON(blankBlocks[i]))
 
 #Create the Data.
@@ -99,10 +99,7 @@ block: Block = Block(
 )
 for i in range(15, 21):
     #Mine it.
-    block.header.rehash()
-    while int.from_bytes(block.header.hash, "big") < merit.blockchain.difficulty:
-        block.header.proof += 1
-        block.header.rehash()
+    block.mine(merit.blockchain.difficulty)
 
     #Add it.
     merit.add(transactions, consensus, block)
@@ -154,10 +151,7 @@ block = Block(
         )
     ])
 )
-block.header.rehash()
-while int.from_bytes(block.header.hash, "big") < merit.blockchain.difficulty:
-    block.header.proof += 1
-    block.header.rehash()
+block.mine(merit.blockchain.difficulty)
 merit.add(transactions, consensus, block)
 print("Generated Claimed Mint Block " + str(block.header.nonce) + ".")
 

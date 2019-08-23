@@ -121,7 +121,7 @@ def MRPACauseTest(
     #Send the Verifications.
     for verif in verifs:
         if rpc.meros.signedElement(verif) != rpc.meros.recv():
-            raise TestError("Unexpected message sent: " + msg.hex().upper())
+            raise TestError("Unexpected message sent.")
 
     #Verify every Data has 100 Merit.
     for data in datas:
@@ -194,7 +194,7 @@ def MRPACauseTest(
     removal.nonce = 3
 
     #Verify the Datas have the Merit they should.
-    for d in range(0, len(datas)):
+    for d in range(len(datas)):
         if rpc.call("transactions", "getMerit", [datas[d].hash.hex()]) != {
             "merit": 100 if d < 3 else 0
         }:

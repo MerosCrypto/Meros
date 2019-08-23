@@ -29,20 +29,20 @@ import json
 def MRSNCauseTest(
     rpc: RPC
 ) -> None:
-    snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
-    snVectors: Dict[str, Any] = json.loads(snFile.read())
+    file: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     #Data.
-    data: Data = Data.fromJSON(snVectors["data"])
+    data: Data = Data.fromJSON(vectors["data"])
     #MeritRemoval.
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromJSON(snVectors["removal"])
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromJSON(vectors["removal"])
     #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        snVectors["blockchain"]
+        vectors["blockchain"]
     )
-    snFile.close()
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(
@@ -97,16 +97,11 @@ def MRSNCauseTest(
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Send the Data/SignedVerifications.
-    rpc.meros.transaction(data)
-    msg = rpc.meros.recv()
-    if MessageType(msg[0]) != MessageType.Data:
-        raise TestError("Unexpected message sent: " + msg.hex().upper())
+    if rpc.meros.transaction(data) != rpc.meros.recv():
+        raise TestError("Unexpected message sent.")
 
-    rpc.meros.signedElement(removal.se1)
-    msg = rpc.meros.recv()
-    if MessageType(msg[0]) != MessageType.SignedVerification:
-        raise TestError("Unexpected message sent: " + msg.hex().upper())
-
+    if rpc.meros.signedElement(removal.se1) != rpc.meros.recv():
+        raise TestError("Unexpected message sent.")
     rpc.meros.signedElement(removal.se2)
 
     #Verify the MeritRemoval.

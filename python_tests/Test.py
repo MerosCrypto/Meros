@@ -10,7 +10,7 @@ from python_tests.Meros.RPC import RPC
 
 #Tests.
 from python_tests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
-from python_tests.Tests.Merit.SyncTest import MeritSyncTest
+from python_tests.Tests.Merit.SyncTest import MSyncTest
 
 from python_tests.Tests.Transactions.DataTest import DataTest
 from python_tests.Tests.Transactions.FiftyTest import FiftyTest
@@ -27,15 +27,15 @@ from python_tests.Tests.Consensus.MeritRemoval.VerifyCompeting.CauseTest import 
 from python_tests.Tests.Consensus.MeritRemoval.VerifyCompeting.LiveTest import MRVCLiveTest
 from python_tests.Tests.Consensus.MeritRemoval.VerifyCompeting.SyncTest import MRVCSyncTest
 
+from python_tests.Tests.Consensus.MeritRemoval.Multiple.CauseTest import MRMCauseTest
+from python_tests.Tests.Consensus.MeritRemoval.Multiple.LiveTest import MRMLiveTest
+
 from python_tests.Tests.Consensus.MeritRemoval.Partial.CauseTest import MRPCauseTest
 from python_tests.Tests.Consensus.MeritRemoval.Partial.LiveTest import MRPLiveTest
 from python_tests.Tests.Consensus.MeritRemoval.Partial.SyncTest import MRPSyncTest
 
 from python_tests.Tests.Consensus.MeritRemoval.PendingActions.CauseTest import MRPACauseTest
 from python_tests.Tests.Consensus.MeritRemoval.PendingActions.LiveTest import MRPALiveTest
-
-from python_tests.Tests.Consensus.MeritRemoval.Multiple.CauseTest import MRMCauseTest
-from python_tests.Tests.Consensus.MeritRemoval.Multiple.LiveTest import MRMLiveTest
 
 #Arguments.
 from sys import argv
@@ -60,7 +60,7 @@ tests: List[
     Callable[[RPC], None]
 ] = [
     ChainAdvancementTest,
-    MeritSyncTest,
+    MSyncTest,
 
     DataTest,
     FiftyTest,

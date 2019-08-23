@@ -30,8 +30,8 @@ import json
 def VParsable(
     rpc: RPC
 ) -> None:
-    parsableFile: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Parsable.json", "r")
-    vectors: Dict[str, Any] = json.loads(parsableFile.read())
+    file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Parsable.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     #Data.
     data: Data = Data.fromJSON(vectors["data"])
     #Consensus.
@@ -48,7 +48,7 @@ def VParsable(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
-    parsableFile.close()
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(

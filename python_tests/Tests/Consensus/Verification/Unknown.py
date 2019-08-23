@@ -22,8 +22,8 @@ import json
 def VUnknown(
     rpc: RPC
 ) -> None:
-    parsableFile: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Parsable.json", "r")
-    vectors: Dict[str, Any] = json.loads(parsableFile.read())
+    file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Parsable.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     #SignedVerification.
     sv: SignedVerification = SignedVerification.fromJSON(vectors["verification"])
     #Blockchain.
@@ -33,7 +33,7 @@ def VUnknown(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
-    parsableFile.close()
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(

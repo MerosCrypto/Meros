@@ -17,18 +17,18 @@ from python_tests.Tests.Merit.Verify import verifyBlockchain
 #JSON standard lib.
 import json
 
-def MeritSyncTest(
+def MSyncTest(
     rpc: RPC
 ) -> None:
     #Blockchain.
-    bbFile: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
+    file: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        json.loads(bbFile.read())
+        json.loads(file.read())
     )
-    bbFile.close()
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(

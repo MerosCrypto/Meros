@@ -46,7 +46,7 @@ pubKey: blspy.PublicKey = privKey.get_public_key()
 
 #Ed25519 keys.
 edKeys: List[ed25519.SigningKey] = []
-for i in range(0, 6):
+for i in range(6):
     edKeys.append(ed25519.SigningKey(i.to_bytes(1, byteorder = "big") * 32))
 
 #Add a single Block to create Merit.
@@ -67,7 +67,7 @@ for edPrivKey in edKeys:
 
 #Create 1 Verification per Data.
 verifs: List[SignedVerification] = []
-for d in range(0, len(datas)):
+for d in range(len(datas)):
     verifs.append(SignedVerification(datas[d].hash))
     verifs[-1].sign(privKey, d)
     if d < 3:
@@ -105,10 +105,8 @@ block: Block = Block(
     ])
 )
 #Mine it.
-block.header.rehash()
-while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
-    block.header.proof += 1
-    block.header.rehash()
+block.mine(blockchain.difficulty)
+
 #Add it.
 blockchain.add(block)
 print("Generated Pending Actions Block " + str(block.header.nonce) + ".")
@@ -135,10 +133,8 @@ block = Block(
     ])
 )
 #Mine it.
-block.header.rehash()
-while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
-    block.header.proof += 1
-    block.header.rehash()
+block.mine(blockchain.difficulty)
+
 #Add it.
 blockchain.add(block)
 print("Generated Pending Actions Block " + str(block.header.nonce) + ".")

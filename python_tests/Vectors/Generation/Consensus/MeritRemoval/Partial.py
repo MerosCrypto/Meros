@@ -50,7 +50,7 @@ consensus.add(removal)
 snFile.close()
 
 #Generate a Block with a verif and a Block with the removal.
-for i in range(0, 2):
+for i in range(2):
     block: Block = Block(
         BlockHeader(
             i + 2,
@@ -74,10 +74,7 @@ for i in range(0, 2):
     )
 
     #Mine it.
-    block.header.rehash()
-    while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
-        block.header.proof += 1
-        block.header.rehash()
+    block.mine(blockchain.difficulty)
 
     #Add it.
     blockchain.add(block)

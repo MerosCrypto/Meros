@@ -27,9 +27,9 @@ def ChainAdvancementTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
     )
     #Blocks.
-    bbFile: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
-    blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
-    bbFile.close()
+    file: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
+    blocks: List[Dict[str, Any]] = json.loads(file.read())
+    file.close()
 
     #Publish Blocks.
     for jsonBlock in blocks:
@@ -43,7 +43,7 @@ def ChainAdvancementTest(
         rpc.call("merit", "publishBlock", [block.serialize().hex()])
 
         #Verify the difficulty.
-        if blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
+        if int(rpc.call("merit", "getDifficulty"), 16) != blockchain.difficulty:
             raise TestError("Difficulty doesn't match.")
 
     #Verify the Blockchain.

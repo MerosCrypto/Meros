@@ -26,18 +26,18 @@ import json
 def MRSNLiveTest(
     rpc: RPC
 ) -> None:
-    snFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
-    snVectors: Dict[str, Any] = json.loads(snFile.read())
+    file: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     #MeritRemoval..
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromJSON(snVectors["removal"])
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromJSON(vectors["removal"])
     #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        snVectors["blockchain"]
+        vectors["blockchain"]
     )
-    snFile.close()
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(

@@ -26,6 +26,16 @@ class Block:
                 ).digest()
             )
 
+    #Mine.
+    def mine(
+        self,
+        difficulty: int
+    ) -> None:
+        self.header.rehash()
+        while int.from_bytes(self.header.hash, "big") < difficulty:
+            self.header.proof += 1
+            self.header.rehash()
+
     #Serialize.
     def serialize(
         self

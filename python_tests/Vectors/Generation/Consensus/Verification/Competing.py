@@ -10,11 +10,11 @@ from python_tests.Classes.Transactions.Transactions import Transactions
 from python_tests.Classes.Consensus.Verification import Verification, SignedVerification
 from python_tests.Classes.Consensus.Consensus import Consensus
 
-#Merit classes.
+#Blockchain classes.
 from python_tests.Classes.Merit.BlockHeader import BlockHeader
 from python_tests.Classes.Merit.BlockBody import BlockBody
 from python_tests.Classes.Merit.Block import Block
-from python_tests.Classes.Merit.Merit import Merit
+from python_tests.Classes.Merit.Merit import Blockchain
 
 #Ed25519 lib.
 import ed25519
@@ -40,14 +40,11 @@ consensus: Consensus = Consensus.fromJSON(
     bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
     cmVectors["consensus"]
 )
-#Merit.
-merit: Merit = Merit.fromJSON(
+#Blockchain.
+blockchain: Blockchain = Blockchain.fromJSON(
     b"MEROS_DEVELOPER_NETWORK",
     60,
     int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    100,
-    transactions,
-    consensus,
     cmVectors["blockchain"]
 )
 cmFile.close()
@@ -100,7 +97,7 @@ transactions.add(send2)
 block: Block = Block(
     BlockHeader(
         21,
-        merit.blockchain.last(),
+        blockchain.last(),
         int(time())
     ),
     BlockBody(
@@ -108,11 +105,8 @@ block: Block = Block(
         [(blsPubKey2, 100)]
     )
 )
-block.header.rehash()
-while int.from_bytes(block.header.hash, "big") < merit.blockchain.difficulty:
-    block.header.proof += 1
-    block.header.rehash()
-merit.add(transactions, consensus, block)
+block.mine(blockchain.difficulty)
+blockchain.add(block)
 print("Generated Competing Block " + str(block.header.nonce) + ".")
 
 #Verify the 1st Send with the 1st key.
@@ -129,7 +123,7 @@ consensus.add(verif)
 block = Block(
     BlockHeader(
         22,
-        merit.blockchain.last(),
+        blockchain.last(),
         int(time()),
         consensus.getAggregate(
             [
@@ -151,16 +145,13 @@ block = Block(
         )
     ])
 )
-block.header.rehash()
-while int.from_bytes(block.header.hash, "big") < merit.blockchain.difficulty:
-    block.header.proof += 1
-    block.header.rehash()
-merit.add(transactions, consensus, block)
+block.mine(blockchain.difficulty)
+blockchain.add(block)
 print("Generated Competing Block " + str(block.header.nonce) + ".")
 
 #Save the appended data (3 Blocks and 12 Sends).
 result: Dict[str, Any] = {
-    "blockchain": merit.blockchain.toJSON(),
+    "blockchain": blockchain.toJSON(),
     "transactions": transactions.toJSON(),
     "consensus":  consensus.toJSON()
 }

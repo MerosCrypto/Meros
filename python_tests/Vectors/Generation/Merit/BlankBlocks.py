@@ -31,12 +31,7 @@ for i in range(1, 26):
         ),
         BlockBody()
     )
-
-    #Mine it.
-    block.header.rehash()
-    while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
-        block.header.proof += 1
-        block.header.rehash()
+    block.mine(blockchain.difficulty)
 
     #Add it locally.
     blockchain.add(block)

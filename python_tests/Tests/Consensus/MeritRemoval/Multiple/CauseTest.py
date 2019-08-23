@@ -29,8 +29,8 @@ import json
 def MRMCauseTest(
     rpc: RPC
 ) -> None:
-    mFile: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Multiple.json", "r")
-    vectors: Dict[str, Any] = json.loads(mFile.read())
+    file: IO[Any] = open("python_tests/Vectors/Consensus/MeritRemoval/Multiple.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     #Data.
     data: Data = Data.fromJSON(vectors["data"])
     #MeritRemovals.
@@ -43,7 +43,7 @@ def MRMCauseTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
-    mFile.close()
+    file.close()
 
     #Handshake with the node.
     rpc.meros.connect(
@@ -98,17 +98,13 @@ def MRMCauseTest(
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Send the Data.
-    rpc.meros.transaction(data)
-    msg = rpc.meros.recv()
-    if MessageType(msg[0]) != MessageType.Data:
-        raise TestError("Unexpected message sent: " + msg.hex().upper())
+    if rpc.meros.transaction(data) != rpc.meros.recv():
+        raise TestError("Unexpected message sent.")
 
-    #Send the first SignedElements.
-    rpc.meros.signedElement(mr1.se1)
-    msg = rpc.meros.recv()
-    if MessageType(msg[0]) != MessageType.SignedVerification:
-        raise TestError("Unexpected message sent: " + msg.hex().upper())
-
+    #Send the first SignedElement.
+    if rpc.meros.signedElement(mr1.se1) != rpc.meros.recv():
+        raise TestError("Unexpected message sent.")
+    #Send the second.
     rpc.meros.signedElement(mr1.se2)
 
     #Verify the first MeritRemoval.
@@ -119,7 +115,7 @@ def MRMCauseTest(
     #Send the third SignedElement.
     rpc.meros.signedElement(mr2.se2)
 
-    #Meros should treat the first created MeritRemoval as the default.
+    #Meros should treat the first created MeritRemoval as the default MeritRemoval.
     if rpc.meros.recv() != (MessageType.SignedMeritRemoval.toByte() + mr1.signedSerialize()):
         raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 1, 100, mr1, True)

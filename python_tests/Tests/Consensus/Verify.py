@@ -61,7 +61,7 @@ def verifyConsensus(
     consensus: Consensus
 ) -> None:
     for pubKey in consensus.holders:
-        for e in range(0, len(consensus.holders[pubKey])):
+        for e in range(len(consensus.holders[pubKey])):
             if rpc.call("consensus", "getElement", [
                 pubKey.hex(),
                 e

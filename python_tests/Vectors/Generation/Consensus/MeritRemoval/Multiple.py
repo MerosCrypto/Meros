@@ -57,7 +57,7 @@ mr2: SignedMeritRemoval = SignedMeritRemoval(
 )
 
 #Add the second MeritRemoval to Consensus.
-consensus.add(mr1)
+consensus.add(mr2)
 
 #Generate a Block with the second MeritRemoval.
 block: Block = Block(
@@ -81,10 +81,7 @@ block: Block = Block(
     ])
 )
 #Mine it.
-block.header.rehash()
-while int.from_bytes(block.header.hash, "big") < blockchain.difficulty:
-    block.header.proof += 1
-    block.header.rehash()
+block.mine(blockchain.difficulty)
 
 #Add it.
 blockchain.add(block)

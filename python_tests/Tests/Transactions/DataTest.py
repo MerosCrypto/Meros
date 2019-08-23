@@ -2,11 +2,11 @@
 from python_tests.Classes.Consensus.SpamFilter import SpamFilter
 from python_tests.Classes.Transactions.Data import Data
 
-#TestError Exception.
-from python_tests.Tests.TestError import TestError
-
 #RPC class.
 from python_tests.Meros.RPC import RPC
+
+#Transactions verifier.
+from python_tests.Tests.Transactions.Verify import verifyTransaction
 
 #Ed25519 lib.
 import ed25519
@@ -42,7 +42,4 @@ def DataTest(
     rpc.meros.transaction(data)
 
     #Verify the Data.
-    if data.toJSON() != rpc.call("transactions", "getTransaction", [
-        data.hash.hex()
-    ]):
-        raise TestError("Data doesn't match.")
+    verifyTransaction(rpc, data)

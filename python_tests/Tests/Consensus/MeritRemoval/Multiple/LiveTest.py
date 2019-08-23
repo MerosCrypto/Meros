@@ -93,15 +93,15 @@ def MRMLiveTest(
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Send and verify the first MeritRemoval.
-    msg1: bytes = rpc.meros.signedElement(removal1)
-    if msg1 != rpc.meros.recv():
+    msg = rpc.meros.signedElement(removal1)
+    if msg != rpc.meros.recv():
         raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 1, 100, removal1, True)
 
     #Send the second MeritRemoval.
     rpc.meros.signedElement(removal2)
     #Meros should treat the first created MeritRemoval as the default.
-    if msg1 != rpc.meros.recv():
+    if msg != rpc.meros.recv():
         raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 1, 100, removal1, True)
 
