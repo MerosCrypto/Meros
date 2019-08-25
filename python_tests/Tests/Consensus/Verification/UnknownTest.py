@@ -1,14 +1,10 @@
-#Tests proper handling of Verifications with unsynced Transactions which are parsable yet have invalid signatures.
+#Tests proper handling of Verifications with Transactions which don't exist.
 
 #Types.
 from typing import Dict, IO, Any
 
-#Data class.
-from python_tests.Classes.Transactions.Data import Data
-
-#Consensus classes.
+#SignedVerification class.
 from python_tests.Classes.Consensus.Verification import SignedVerification
-from python_tests.Classes.Consensus.Consensus import Consensus
 
 #Blockchain class.
 from python_tests.Classes.Merit.Blockchain import Blockchain
@@ -20,27 +16,16 @@ from python_tests.Tests.Errors import TestError
 from python_tests.Meros.Meros import MessageType
 from python_tests.Meros.RPC import RPC
 
-#Merit and Consensus verifiers.
-from python_tests.Tests.Merit.Verify import verifyBlockchain
-from python_tests.Tests.Consensus.Verify import verifyConsensus
-
 #JSON standard lib.
 import json
 
-def VParsable(
+def VUnknownTest(
     rpc: RPC
 ) -> None:
     file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Parsable.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
-    #Data.
-    data: Data = Data.fromJSON(vectors["data"])
-    #Consensus.
-    consensus: Consensus = Consensus(
-        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-    )
+    #SignedVerification.
     sv: SignedVerification = SignedVerification.fromJSON(vectors["verification"])
-    consensus.add(sv)
     #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
@@ -58,7 +43,7 @@ def VParsable(
     )
 
     sentLast: bool = False
-    hash: bytes = bytes()
+    reqHash: bytes = bytes()
     while True:
         msg: bytes = rpc.meros.recv()
 
@@ -66,7 +51,7 @@ def VParsable(
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height: int = int.from_bytes(msg[1 : 5], "big")
             if height == 0:
                 rpc.meros.blockHash(blockchain.last())
             else:
@@ -76,9 +61,9 @@ def VParsable(
                 rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
@@ -86,9 +71,9 @@ def VParsable(
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block.body)
                     break
 
@@ -100,7 +85,7 @@ def VParsable(
 
         elif MessageType(msg[0]) == MessageType.TransactionRequest:
             sentLast = True
-            rpc.meros.transaction(data)
+            rpc.meros.dataMissing()
 
         elif MessageType(msg[0]) == MessageType.SyncingOver:
             if sentLast:
@@ -109,11 +94,9 @@ def VParsable(
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-    #Verify the Blockchain.
-    verifyBlockchain(rpc, blockchain)
+    #Verify the Verification and Block were not added.
+    if rpc.call("consensus", "getHeight", [sv.holder.hex()]) != 0:
+        raise TestError("Meros added an unknown Verification.")
 
-    #Verify the Consensus.
-    verifyConsensus(rpc, consensus)
-
-    #Playback their messages.
-    rpc.meros.playback()
+    if rpc.call("merit", "getHeight") != 2:
+        raise TestError("Meros added a block with an unknown Verification.")

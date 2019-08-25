@@ -30,7 +30,7 @@ class Blockchain:
                     0
                 ),
                 BlockBody(
-                    miners = []
+                    miners=[]
                 )
             )
         ]

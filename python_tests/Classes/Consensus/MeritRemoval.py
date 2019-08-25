@@ -169,6 +169,7 @@ class SignedMeritRemoval(PartiallySignedMeritRemoval):
         se1: SignedElement,
         se2: SignedElement
     ) -> None:
+        #pylint: disable=non-parent-init-called,super-init-not-called
         MeritRemoval.__init__(self, False, se1, se2)
 
         self.se1: SignedElement = se1

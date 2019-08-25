@@ -60,7 +60,7 @@ def MRPCauseTest(
     )
 
     sentLast: bool = False
-    hash: bytes = bytes()
+    reqHash: bytes = bytes()
     msg: bytes = bytes()
     while True:
         msg = rpc.meros.recv()
@@ -69,7 +69,7 @@ def MRPCauseTest(
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height: int = int.from_bytes(msg[1 : 5], "big")
             if height == 0:
                 rpc.meros.blockHash(blockchain.blocks[2].header.hash)
             else:
@@ -79,9 +79,9 @@ def MRPCauseTest(
                 rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
@@ -89,9 +89,9 @@ def MRPCauseTest(
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block.body)
                     break
 
@@ -101,7 +101,7 @@ def MRPCauseTest(
         elif MessageType(msg[0]) == MessageType.ElementRequest:
             if msg[1 : 49] != removal.holder:
                 raise TestError("Meros asked for an Element from an unknown MeritHolder.")
-            if int.from_bytes(msg[49 : 53], byteorder = "big") != 0:
+            if int.from_bytes(msg[49 : 53], "big") != 0:
                 raise TestError("Meros asked for an Element not mentioned in a record.")
 
             rpc.meros.element(removal.e1)
@@ -113,7 +113,7 @@ def MRPCauseTest(
             rpc.meros.transaction(data)
 
         elif MessageType(msg[0]) == MessageType.SyncingOver:
-            if sentLast == True:
+            if sentLast:
                 break
 
         else:
@@ -137,7 +137,7 @@ def MRPCauseTest(
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height = int.from_bytes(msg[1 : 5], "big")
             if height == 0:
                 rpc.meros.blockHash(blockchain.last())
             else:
@@ -147,9 +147,9 @@ def MRPCauseTest(
                 rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
@@ -157,9 +157,9 @@ def MRPCauseTest(
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block.body)
                     break
 

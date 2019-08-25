@@ -47,7 +47,7 @@ def MRSNSyncTest(
     )
 
     sentLast: bool = False
-    hash: bytes = bytes()
+    reqHash: bytes = bytes()
     while True:
         msg: bytes = rpc.meros.recv()
 
@@ -55,7 +55,7 @@ def MRSNSyncTest(
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height: int = int.from_bytes(msg[1 : 5], "big")
             if height == 0:
                 rpc.meros.blockHash(blockchain.last())
             else:
@@ -65,9 +65,9 @@ def MRSNSyncTest(
                 rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
@@ -75,9 +75,9 @@ def MRSNSyncTest(
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block.body)
                     break
 

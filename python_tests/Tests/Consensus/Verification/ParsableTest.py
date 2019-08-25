@@ -1,55 +1,51 @@
-#Tests proper handling of Verifications with unsynced Transactions which are beaten by other Transactions.
+#Tests proper handling of Verifications with unsynced Transactions which are parsable yet have invalid signatures.
 
 #Types.
 from typing import Dict, IO, Any
 
-#Transactions class.
-from python_tests.Classes.Transactions.Transactions import Transactions
+#Data class.
+from python_tests.Classes.Transactions.Data import Data
 
-#Consensus class.
+#Consensus classes.
+from python_tests.Classes.Consensus.Verification import SignedVerification
 from python_tests.Classes.Consensus.Consensus import Consensus
+
+#Blockchain class.
+from python_tests.Classes.Merit.Blockchain import Blockchain
 
 #TestError Exception.
 from python_tests.Tests.Errors import TestError
-
-#Merit classes.
-from python_tests.Classes.Merit.Merit import Merit
 
 #Meros classes.
 from python_tests.Meros.Meros import MessageType
 from python_tests.Meros.RPC import RPC
 
-#Merit, Consensus, and Transactions verifiers.
+#Merit and Consensus verifiers.
 from python_tests.Tests.Merit.Verify import verifyBlockchain
 from python_tests.Tests.Consensus.Verify import verifyConsensus
-from python_tests.Tests.Transactions.Verify import verifyTransactions
 
 #JSON standard lib.
 import json
 
-def VCompeting(
+def VParsableTest(
     rpc: RPC
 ) -> None:
-    file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Competing.json", "r")
+    file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Parsable.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
-    #Transactions.
-    transactions: Transactions = Transactions.fromJSON(
-        vectors["transactions"]
-    )
+    #Data.
+    data: Data = Data.fromJSON(vectors["data"])
     #Consensus.
-    consensus: Consensus = Consensus.fromJSON(
+    consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-        vectors["consensus"]
     )
-    #Merit.
-    merit: Merit = Merit.fromJSON(
+    sv: SignedVerification = SignedVerification.fromJSON(vectors["verification"])
+    consensus.add(sv)
+    #Blockchain.
+    blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100,
-        transactions,
-        consensus,
         vectors["blockchain"]
     )
     file.close()
@@ -58,11 +54,11 @@ def VCompeting(
     rpc.meros.connect(
         254,
         254,
-        len(merit.blockchain.blocks)
+        len(blockchain.blocks)
     )
 
-    sentLast: int = 4
-    hash: bytes = bytes()
+    sentLast: bool = False
+    reqHash: bytes = bytes()
     while True:
         msg: bytes = rpc.meros.recv()
 
@@ -70,63 +66,51 @@ def VCompeting(
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height: int = int.from_bytes(msg[1 : 5], "big")
             if height == 0:
-                rpc.meros.blockHash(merit.blockchain.last())
+                rpc.meros.blockHash(blockchain.last())
             else:
-                if height >= len(merit.blockchain.blocks):
+                if height >= len(blockchain.blocks):
                     raise TestError("Meros asked for a Block Hash we do not have.")
 
-                rpc.meros.blockHash(merit.blockchain.blocks[height].header.hash)
+                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
-            for block in merit.blockchain.blocks:
-                if block.header.hash == hash:
+            reqHash = msg[1 : 49]
+            for block in blockchain.blocks:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
-                if block.header.hash == merit.blockchain.last():
+                if block.header.hash == blockchain.last():
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
-            for block in merit.blockchain.blocks:
-                if block.header.hash == hash:
+            reqHash = msg[1 : 49]
+            for block in blockchain.blocks:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block.body)
                     break
 
-                if block.header.hash == merit.blockchain.last():
+                if block.header.hash == blockchain.last():
                     raise TestError("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msg[0]) == MessageType.ElementRequest:
-            rpc.meros.element(
-                consensus.holders[
-                    msg[1 : 49]
-                ][
-                    int.from_bytes(msg[49 : 53], byteorder = "big")
-                ]
-            )
+            rpc.meros.element(sv)
 
         elif MessageType(msg[0]) == MessageType.TransactionRequest:
-            sentLast -= 1
-            rpc.meros.transaction(transactions.txs[
-                msg[1 : 49]
-            ])
-
+            sentLast = True
+            rpc.meros.transaction(data)
 
         elif MessageType(msg[0]) == MessageType.SyncingOver:
-            if sentLast == 0:
+            if sentLast:
                 break
 
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Verify the Blockchain.
-    verifyBlockchain(rpc, merit.blockchain)
-
-    #Verify the Transactions.
-    verifyTransactions(rpc, transactions)
+    verifyBlockchain(rpc, blockchain)
 
     #Verify the Consensus.
     verifyConsensus(rpc, consensus)

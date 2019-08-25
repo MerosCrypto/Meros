@@ -24,7 +24,7 @@ class Claim(Transaction):
         self.amount: int = 0
 
         self.signature: bytes = signature
-        self.hash = blake2b(b'\1' + self.signature, digest_size = 48).digest()
+        self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
 
         self.verified: bool = False
 
@@ -48,15 +48,15 @@ class Claim(Transaction):
             signatures.append(privKeys[i].sign(b'\1' + self.inputs[i] + self.output))
 
         self.signature = blspy.Signature.aggregate(signatures).serialize()
-        self.hash = blake2b(b'\1' + self.signature, digest_size = 48).digest()
+        self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
 
     #Serialize.
     def serialize(
         self
     ) -> bytes:
-        result: bytes = len(self.inputs).to_bytes(1, byteorder = "big")
-        for input in self.inputs:
-            result += input
+        result: bytes = len(self.inputs).to_bytes(1, "big")
+        for txInput in self.inputs:
+            result += txInput
         result += (
             self.output +
             self.signature
@@ -83,9 +83,9 @@ class Claim(Transaction):
 
             "verified": self.verified
         }
-        for input in self.inputs:
+        for txInput in self.inputs:
             result["inputs"].append({
-                "hash": input.hex().upper()
+                "hash": txInput.hex().upper()
             })
         return result
 
@@ -95,8 +95,8 @@ class Claim(Transaction):
         json: Dict[str, Any]
     ) -> Any:
         inputs: List[bytes] = []
-        for input in json["inputs"]:
-            inputs.append(bytes.fromhex(input["hash"]))
+        for txInput in json["inputs"]:
+            inputs.append(bytes.fromhex(txInput["hash"]))
 
         result: Claim = Claim(
             inputs,

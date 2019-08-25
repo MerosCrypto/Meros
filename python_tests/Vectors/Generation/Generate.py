@@ -1,3 +1,5 @@
+#pylint: disable=unused-import
+
 #Merit.
 import python_tests.Vectors.Generation.Merit.BlankBlocks
 

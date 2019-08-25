@@ -47,7 +47,7 @@ def MRMLiveTest(
         len(blockchain.blocks) - 1
     )
 
-    hash: bytes = bytes()
+    reqHash: bytes = bytes()
     msg: bytes = bytes()
     height: int = 0
     while True:
@@ -57,7 +57,7 @@ def MRMLiveTest(
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height = int.from_bytes(msg[1 : 5], "big")
             if height == 0:
                 rpc.meros.blockHash(blockchain.blocks[1].header.hash)
             else:
@@ -67,9 +67,9 @@ def MRMLiveTest(
                 rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
@@ -77,9 +77,9 @@ def MRMLiveTest(
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block.body)
                     break
 
@@ -114,7 +114,7 @@ def MRMLiveTest(
             rpc.meros.acknowledgeSyncing()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height = int.from_bytes(msg[1 : 5], byteorder = "big")
+            height = int.from_bytes(msg[1 : 5], "big")
             if height == 0:
                 rpc.meros.blockHash(blockchain.last())
             else:
@@ -124,9 +124,9 @@ def MRMLiveTest(
                 rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
@@ -134,9 +134,9 @@ def MRMLiveTest(
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            hash = msg[1 : 49]
+            reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == hash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block.body)
                     break
 

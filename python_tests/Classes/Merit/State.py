@@ -9,6 +9,7 @@ from python_tests.Classes.Merit.Blockchain import Blockchain
 alwaysLive: bool = True
 
 #State class.
+#pylint: disable=too-few-public-methods
 class State:
     #Constructor.
     def __init__(

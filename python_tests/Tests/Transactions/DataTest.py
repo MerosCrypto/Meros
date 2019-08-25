@@ -19,7 +19,7 @@ def DataTest(
     rpc: RPC
 ) -> None:
     #Create the Spam Filter.
-    filter: SpamFilter = SpamFilter(
+    spamFilter: SpamFilter = SpamFilter(
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
 
@@ -29,7 +29,7 @@ def DataTest(
         b"Hello There! General Kenobi."
     )
     data.sign(privKey)
-    data.beat(filter)
+    data.beat(spamFilter)
 
     #Handshake with the node.
     rpc.meros.connect(

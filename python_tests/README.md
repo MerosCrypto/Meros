@@ -12,6 +12,10 @@ These tests require Python 3.6+ and pip. To install the needed modules:
 
 Meros supports static typing via both Pyright (`pyright -p python_tests`) and MyPy (`mypy --config-file python_tests/mypy.ini --namespace-packages python_tests`).
 
+### Linting
+
+Meros supports linting via Pylint (`pylint --rcfile=python_tests/pylintrc python_tests`).
+
 ### Running
 
 `python3.6 -m python_tests.Test`

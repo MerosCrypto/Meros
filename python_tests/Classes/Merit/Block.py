@@ -22,7 +22,7 @@ class Block:
             self.header.setMiners(
                 blake2b(
                     self.body.getSerializedMiners()[0],
-                    digest_size = 48
+                    digest_size=48
                 ).digest()
             )
 

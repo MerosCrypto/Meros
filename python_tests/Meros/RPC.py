@@ -48,16 +48,16 @@ class RPC:
 
         #Get the result.
         response: bytes = bytes()
-        next: bytes = bytes()
+        nextChar: bytes = bytes()
         counter: int = 0
         while True:
             try:
-                next = self.socket.recv(1)
+                nextChar = self.socket.recv(1)
             except Exception:
                 raise NodeError()
-            if len(next) == 0:
+            if not nextChar:
                 raise NodeError()
-            response += next
+            response += nextChar
 
             if response[-1] == response[0]:
                 counter += 1

@@ -1,4 +1,4 @@
-#https://github.com/MerosCrypto/Meros/issues/50
+#Tests proper handling of Verifications with unsynced Transactions which are beaten by other Transactions.
 
 #Types.
 from typing import Dict, IO, Any
@@ -6,7 +6,7 @@ from typing import Dict, IO, Any
 #Transactions class.
 from python_tests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
+#Consensus class.
 from python_tests.Classes.Consensus.Consensus import Consensus
 
 #TestError Exception.
@@ -27,10 +27,10 @@ from python_tests.Tests.Transactions.Verify import verifyTransactions
 #JSON standard lib.
 import json
 
-def FiftyTest(
+def VCompetingTest(
     rpc: RPC
 ) -> None:
-    file: IO[Any] = open("python_tests/Vectors/Transactions/Fifty.json", "r")
+    file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Competing.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(
@@ -61,7 +61,7 @@ def FiftyTest(
         len(merit.blockchain.blocks)
     )
 
-    sentLast: int = 14
+    sentLast: int = 4
     reqHash: bytes = bytes()
     while True:
         msg: bytes = rpc.meros.recv()

@@ -18,7 +18,7 @@ class SpamFilter:
     ) -> bytes:
         result: bytes = argon2.low_level.hash_secret_raw(
             data,
-            nonce.to_bytes(8, byteorder = "big"),
+            nonce.to_bytes(8, "big"),
             1,
             8,
             1,
@@ -29,11 +29,11 @@ class SpamFilter:
 
     def beat(
         self,
-        hash: bytes
+        txHash: bytes
     ) -> Tuple[bytes, int]:
         result: int = -1
         argon: bytes = b""
-        while int.from_bytes(argon, byteorder = "big") < int.from_bytes(self.difficulty, byteorder = "big"):
+        while int.from_bytes(argon, "big") < int.from_bytes(self.difficulty, "big"):
             result += 1
-            argon = self.run(hash, result)
+            argon = self.run(txHash, result)
         return (argon, result)

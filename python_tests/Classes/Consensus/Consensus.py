@@ -78,17 +78,17 @@ class Consensus:
                 merkle.append(
                     blake2b(
                         elem.prefix + Verification.serialize(Verification.fromElement(elem)),
-                        digest_size = 48
+                        digest_size=48
                     ).digest()
                 )
             elif isinstance(elem, MeritRemoval):
-                if len(merkle) != 0:
+                if merkle:
                     raise Exception("Creating a merkle with a MeritRemoval despite the merkle already having elements.")
 
                 merkle.append(
                     blake2b(
                         elem.prefix + MeritRemoval.serialize(MeritRemoval.fromElement(elem)),
-                        digest_size = 48
+                        digest_size=48
                     ).digest()
                 )
 
@@ -97,7 +97,7 @@ class Consensus:
             else:
                 raise Exception("MeritHolder has an unsupported Element type: " + type(elem).__name__)
 
-        if len(merkle) == 0:
+        if not merkle:
             return b'\0' * 48
 
         while len(merkle) != 1:
@@ -107,7 +107,7 @@ class Consensus:
             for m in range(0, len(merkle), 2):
                 merkle[m // 2] = blake2b(
                     merkle[m] + merkle[m + 1],
-                    digest_size = 48
+                    digest_size=48
                 ).digest()
 
             merkle = merkle[: len(merkle) // 2]

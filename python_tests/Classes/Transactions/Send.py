@@ -24,7 +24,7 @@ class Send(Transaction):
     ) -> None:
         self.inputs: List[Tuple[bytes, int]] = inputs
         self.outputs: List[Tuple[bytes, int]] = outputs
-        self.hash = blake2b(b"\2" + self.serializeInputs() + self.serializeOutputs(), digest_size = 48).digest()
+        self.hash = blake2b(b"\2" + self.serializeInputs() + self.serializeOutputs(), digest_size=48).digest()
 
         self.signature: bytes = signature
 
@@ -49,9 +49,9 @@ class Send(Transaction):
     #Mine.
     def beat(
         self,
-        filter: SpamFilter
+        spamFilter: SpamFilter
     ) -> None:
-        result: Tuple[bytes, int] = filter.beat(self.hash)
+        result: Tuple[bytes, int] = spamFilter.beat(self.hash)
         self.argon = result[0]
         self.proof = result[1]
 
@@ -61,8 +61,8 @@ class Send(Transaction):
         self
     ) -> bytes:
         result: bytes = bytes()
-        for input in self.inputs:
-            result += input[0] + input[1].to_bytes(1, byteorder = "big")
+        for txInput in self.inputs:
+            result += txInput[0] + txInput[1].to_bytes(1, "big")
         return result
 
     #Serialize Outputs.
@@ -72,7 +72,7 @@ class Send(Transaction):
     ) -> bytes:
         result: bytes = bytes()
         for output in self.outputs:
-            result += output[0] + output[1].to_bytes(8, byteorder = "big")
+            result += output[0] + output[1].to_bytes(8, "big")
         return result
 
     #Serialize.
@@ -80,12 +80,12 @@ class Send(Transaction):
         self
     ) -> bytes:
         return (
-            len(self.inputs).to_bytes(1, byteorder = "big") +
+            len(self.inputs).to_bytes(1, "big") +
             self.serializeInputs() +
-            len(self.outputs).to_bytes(1, byteorder = "big") +
+            len(self.outputs).to_bytes(1, "big") +
             self.serializeOutputs() +
             self.signature +
-            self.proof.to_bytes(4, byteorder = "big")
+            self.proof.to_bytes(4, "big")
         )
 
     #Send -> JSON.
@@ -104,10 +104,10 @@ class Send(Transaction):
 
             "verified": self.verified
         }
-        for input in self.inputs:
+        for txInput in self.inputs:
             result["inputs"].append({
-                "hash": input[0].hex().upper(),
-                "nonce": input[1]
+                "hash": txInput[0].hex().upper(),
+                "nonce": txInput[1]
             })
         for output in self.outputs:
             result["outputs"].append({
@@ -123,10 +123,10 @@ class Send(Transaction):
     ) -> Any:
         inputs: List[Tuple[bytes, int]] = []
         outputs: List[Tuple[bytes, int]] = []
-        for input in json["inputs"]:
+        for txInput in json["inputs"]:
             inputs.append((
-                bytes.fromhex(input["hash"]),
-                input["nonce"]
+                bytes.fromhex(txInput["hash"]),
+                txInput["nonce"]
             ))
         for output in json["outputs"]:
             outputs.append((

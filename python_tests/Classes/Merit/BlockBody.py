@@ -23,23 +23,23 @@ class BlockBody:
     ) -> List[bytes]:
         result: List[bytes] = []
         for miner in self.miners:
-            result.append(miner[0].serialize() + miner[1].to_bytes(1, byteorder = "big"))
+            result.append(miner[0].serialize() + miner[1].to_bytes(1, "big"))
         return result
 
     #Serialize.
     def serialize(
         self
     ) -> bytes:
-        result: bytes = len(self.records).to_bytes(4, byteorder = "big")
+        result: bytes = len(self.records).to_bytes(4, "big")
         for record in self.records:
             result += (
                 record[0].serialize() +
-                record[1].to_bytes(4, byteorder = "big") +
+                record[1].to_bytes(4, "big") +
                 record[2]
             )
 
         result += (
-            len(self.miners).to_bytes(1, byteorder = "big") +
+            len(self.miners).to_bytes(1, "big") +
             bytes().join(self.getSerializedMiners())
         )
 

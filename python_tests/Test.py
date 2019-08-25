@@ -15,9 +15,9 @@ from python_tests.Tests.Merit.SyncTest import MSyncTest
 from python_tests.Tests.Transactions.DataTest import DataTest
 from python_tests.Tests.Transactions.FiftyTest import FiftyTest
 
-from python_tests.Tests.Consensus.Verification.Unknown import VUnknown
-from python_tests.Tests.Consensus.Verification.Parsable import VParsable
-from python_tests.Tests.Consensus.Verification.Competing import VCompeting
+from python_tests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
+from python_tests.Tests.Consensus.Verification.ParsableTest import VParsableTest
+from python_tests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 
 from python_tests.Tests.Consensus.MeritRemoval.SameNonce.CauseTest import MRSNCauseTest
 from python_tests.Tests.Consensus.MeritRemoval.SameNonce.LiveTest import MRSNLiveTest
@@ -65,9 +65,9 @@ tests: List[
     DataTest,
     FiftyTest,
 
-    VUnknown,
-    VParsable,
-    VCompeting,
+    VUnknownTest,
+    VParsableTest,
+    VCompetingTest,
 
     MRSNCauseTest,
     MRSNLiveTest,
@@ -92,7 +92,7 @@ tests: List[
 #If any were specified over the CLI, only run those.
 testsToRun: List[str] = argv[1:]
 #Else, run all.
-if len(testsToRun) == 0:
+if not testsToRun:
     for test in tests:
         testsToRun.append(test.__name__)
 
@@ -116,7 +116,7 @@ except FileNotFoundError:
 
 #Run every test.
 for test in tests:
-    if len(testsToRun) == 0:
+    if not testsToRun:
         break
     if test.__name__ not in testsToRun:
         continue

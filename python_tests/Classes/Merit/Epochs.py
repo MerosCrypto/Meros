@@ -17,6 +17,7 @@ from python_tests.Classes.Merit.State import State
 import blspy
 
 #Epochs class.
+#pylint: disable=too-few-public-methods
 class Epochs:
     #Constructor.
     def __init__(
@@ -75,7 +76,7 @@ class Epochs:
             if transactions.txs[tx].verified:
                 verified.append(tx)
 
-        if len(verified) == 0:
+        if not verified:
             return []
 
         #Assign each Merit Holder 1 point per verified transaction.
@@ -95,7 +96,7 @@ class Epochs:
             tupleScores.append((holder, score))
 
         #Sort the scores and remove trailing scores.
-        tupleScores.sort(key = lambda tup: (tup[1], int.from_bytes(tup[0], byteorder = "big")), reverse=True)
+        tupleScores.sort(key=lambda tup: (tup[1], int.from_bytes(tup[0], "big")), reverse=True)
         for i in range(100, len(tupleScores)):
             del tupleScores[i]
 

@@ -16,16 +16,16 @@ class Data(Transaction):
     #Constructor.
     def __init__(
         self,
-        input: bytes,
+        txInput: bytes,
         data: bytes,
         signature: bytes = bytes(64),
         proof: int = 0
     ) -> None:
-        self.input: bytes = input
+        self.txInput: bytes = txInput
         self.data: bytes = data
         self.hash: bytes = blake2b(
-            b"\3" + input + data,
-            digest_size = 48
+            b"\3" + txInput + data,
+            digest_size=48
         ).digest()
 
         self.signature: bytes = signature
@@ -51,9 +51,9 @@ class Data(Transaction):
     #Mine.
     def beat(
         self,
-        filter: SpamFilter
+        spamFilter: SpamFilter
     ) -> None:
-        result: Tuple[bytes, int] = filter.beat(self.hash)
+        result: Tuple[bytes, int] = spamFilter.beat(self.hash)
         self.argon = result[0]
         self.proof = result[1]
 
@@ -62,11 +62,11 @@ class Data(Transaction):
         self
     ) -> bytes:
         return (
-            self.input +
-            len(self.data).to_bytes(1, byteorder = "big") +
+            self.txInput +
+            len(self.data).to_bytes(1, "big") +
             self.data +
             self.signature +
-            self.proof.to_bytes(4, byteorder = "big")
+            self.proof.to_bytes(4, "big")
         )
 
     #Data -> JSON.
@@ -77,7 +77,7 @@ class Data(Transaction):
             "descendant": "Data",
             "inputs": [
                 {
-                    "hash": self.input.hex().upper()
+                    "hash": self.txInput.hex().upper()
                 }
             ],
             "outputs": [],

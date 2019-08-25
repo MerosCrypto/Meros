@@ -60,7 +60,7 @@ class MessageType(Enum):
     def toByte(
         self
     ) -> bytes:
-        result: bytes = self.value.to_bytes(1, byteorder = "big")
+        result: bytes = self.value.to_bytes(1, "big")
         return result
 
 class Meros:
@@ -103,7 +103,7 @@ class Meros:
     ) -> bytes:
         try:
             result: bytes = self.connection.recv(quantity)
-            if len(result) == 0:
+            if not result:
                 raise Exception("")
             return result
         except:
@@ -197,7 +197,7 @@ class Meros:
             result += self.socketRecv(96)
 
         elif MessageType(result[0]) == MessageType.BlockBody:
-            result += self.socketRecv((int.from_bytes(result[1 : 5], byteorder = "big") * 100) + 1)
+            result += self.socketRecv((int.from_bytes(result[1 : 5], "big") * 100) + 1)
             result += self.socketRecv(result[-1] + 49)
 
         elif MessageType(result[0]) == MessageType.MeritRemoval:
@@ -233,10 +233,10 @@ class Meros:
         #Send our handshake.
         self.send(
             MessageType.Handshake.toByte() +
-            network.to_bytes(1, byteorder = "big") +
-            protocol.to_bytes(1, byteorder = "big") +
+            network.to_bytes(1, "big") +
+            protocol.to_bytes(1, "big") +
             b'\0' +
-            height.to_bytes(4, byteorder = "big"),
+            height.to_bytes(4, "big"),
             False
         )
 
@@ -252,7 +252,7 @@ class Meros:
             raise Exception("Connected to a node using a diffirent protocol.")
 
         #Return their height.
-        return int.from_bytes(response[3 : 7], byteorder = "big")
+        return int.from_bytes(response[3 : 7], "big")
 
     #Handshake.
     def handshake(
@@ -261,10 +261,10 @@ class Meros:
     ) -> bytes:
         res: bytes = (
             MessageType.Handshake.toByte() +
-            self.network.to_bytes(1, byteorder = "big") +
-            self.protocol.to_bytes(1, byteorder = "big") +
+            self.network.to_bytes(1, "big") +
+            self.protocol.to_bytes(1, "big") +
             b'\0' +
-            height.to_bytes(4, byteorder = "big")
+            height.to_bytes(4, "big")
         )
         self.send(res)
         return res

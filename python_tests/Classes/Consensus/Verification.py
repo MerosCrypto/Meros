@@ -14,14 +14,14 @@ class Verification(Element):
         self,
         holder: bytes,
         nonce: int,
-        hash: bytes
+        txHash: bytes
     ) -> None:
         self.prefix: bytes = b'\0'
 
         self.holder: bytes = holder
         self.nonce: int = nonce
 
-        self.hash: bytes = hash
+        self.hash: bytes = txHash
 
     #Element -> Verification. Satisifes static typing requirements.
     @staticmethod
@@ -36,7 +36,7 @@ class Verification(Element):
     ) -> bytes:
         return (
             self.holder +
-            self.nonce.to_bytes(4, byteorder = "big") +
+            self.nonce.to_bytes(4, "big") +
             self.hash
         )
 
@@ -67,12 +67,12 @@ class SignedVerification(Verification):
     #Constructor.
     def __init__(
         self,
-        hash: bytes,
+        txHash: bytes,
         holder: bytes = bytes(48),
         nonce: int = 0,
         signature: bytes = bytes(96)
     ) -> None:
-        Verification.__init__(self, holder, nonce, hash)
+        Verification.__init__(self, holder, nonce, txHash)
 
         self.signature: bytes = signature
         if signature != bytes(96):

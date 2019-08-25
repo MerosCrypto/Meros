@@ -47,7 +47,7 @@ pubKey: blspy.PublicKey = privKey.get_public_key()
 #Ed25519 keys.
 edKeys: List[ed25519.SigningKey] = []
 for i in range(6):
-    edKeys.append(ed25519.SigningKey(i.to_bytes(1, byteorder = "big") * 32))
+    edKeys.append(ed25519.SigningKey(i.to_bytes(1, "big") * 32))
 
 #Add a single Block to create Merit.
 bbFile: IO[Any] = open("python_tests/Vectors/Merit/BlankBlocks.json", "r")
