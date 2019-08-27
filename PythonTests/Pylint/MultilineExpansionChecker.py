@@ -18,7 +18,16 @@ endChars: Set[str] = {')', ']', '}'}
 #Conjunctions used to combine values.
 #If a line ends in these, it's an infix multiline expression.
 #We don't check for those.
-conjunctions: Set[str] = {'+', '-', '*', '/'}
+conjunctions: Set[str] = {'+', '-', '*', '/', "and", "or"}
+
+#Checks if a line ends in a conjunction.
+def endsInConjunction(
+    line: str
+) -> bool:
+    for conjunction in conjunctions:
+        if line[-len(conjunction):] == conjunction:
+            return True
+    return False
 
 #Checks if an object ends on the same line.
 def endsOnLine(
@@ -149,7 +158,7 @@ def checkMultilineExpansion(
                     count -= 1
 
             #Handle expanded child arguments/conjunctions.
-            if ((count > 0) or (line[curr] in conjunctions)) and (curr + 1 == len(line)):
+            if ((count > 0) or endsInConjunction(line)) and (curr + 1 == len(line)):
                 used += 1
                 while lines[used][1] == "":
                     used += 1
