@@ -135,7 +135,7 @@ proc newEpochs*(
     #Load each's tip.
     for holder in holders:
         try:
-            tips[holder] = db.loadHolderEpoch(holder)
+            tips[holder] = db.loadHolderEpoch(holder) + 1
         except DBReadError:
             #If this failed, it's because they have Merit but don't have Elements older than 5 blocks.
             tips[holder] = 0

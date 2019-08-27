@@ -252,7 +252,7 @@ proc archive*(
             doAssert(false, "Tried to archive more Elements than this MeritHolder has pending.")
 
         #Delete the old signatures.
-        for e in consensus[record.key].archived + 1 ..< consensus[record.key].height:
+        for e in consensus[record.key].archived + 1 .. record.nonce:
             consensus[record.key].signatures.del(e)
 
         #Reset the Merkle.
