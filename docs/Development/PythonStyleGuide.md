@@ -10,7 +10,8 @@
 
 7. Try to always write pure code.
 8. Every function definition should place each argument on their own line.
-9. When splitting data over multiple lines (function call, tuple, array...), place each value on their own line
-10. Comment your code as needed. It is better to comment too much than too little.
+9. When splitting data over multiple lines (function call, tuple, array...), place each value on their own line.
+10. Don't split data over multiple lines unless the line goes over 80 characters.
+11. Comment your code as needed. It is better to comment too much than too little.
 
-11. Pass PyLint.
+12. Pass PyLint.
