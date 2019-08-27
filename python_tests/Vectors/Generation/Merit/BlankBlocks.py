@@ -24,11 +24,7 @@ blockchain: Blockchain = Blockchain(
 for i in range(1, 26):
     #Create the Block.
     block: Block = Block(
-        BlockHeader(
-            i,
-            blockchain.last(),
-            int(time())
-        ),
+        BlockHeader(i, blockchain.last(), int(time())),
         BlockBody()
     )
     block.mine(blockchain.difficulty)

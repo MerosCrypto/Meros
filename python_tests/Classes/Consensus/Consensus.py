@@ -37,9 +37,7 @@ class Consensus:
     #Calculate a Block's aggregate
     def getAggregate(
         self,
-        records: List[
-            Tuple[blspy.PublicKey, int, int]
-        ]
+        records: List[Tuple[blspy.PublicKey, int, int]]
     ) -> bytes:
         signatures: List[blspy.Signature] = []
 
@@ -135,10 +133,7 @@ class Consensus:
         dataDiff: bytes,
         json: Dict[str, List[Dict[str, Any]]]
     ) -> Any:
-        result = Consensus(
-            sendDiff,
-            dataDiff
-        )
+        result = Consensus(sendDiff, dataDiff)
         for mh in json:
             for elem in json[mh]:
                 if "signed" in elem:

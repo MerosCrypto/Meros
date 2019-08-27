@@ -124,10 +124,7 @@ class Send(Transaction):
         inputs: List[Tuple[bytes, int]] = []
         outputs: List[Tuple[bytes, int]] = []
         for txInput in json["inputs"]:
-            inputs.append((
-                bytes.fromhex(txInput["hash"]),
-                txInput["nonce"]
-            ))
+            inputs.append((bytes.fromhex(txInput["hash"]), txInput["nonce"]))
         for output in json["outputs"]:
             outputs.append((
                 bytes.fromhex(output["key"]),

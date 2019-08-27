@@ -53,11 +53,7 @@ def MRPSyncTest(
     file.close()
 
     #Handshake with the node.
-    rpc.meros.connect(
-        254,
-        254,
-        len(blockchain.blocks)
-    )
+    rpc.meros.connect(254, 254, len(blockchain.blocks))
 
     sentLast: int = 2
     reqHash: bytes = bytes()
@@ -100,9 +96,7 @@ def MRPSyncTest(
         elif MessageType(msg[0]) == MessageType.ElementRequest:
             sentLast -= 1
             rpc.meros.element(
-                consensus.holders[
-                    msg[1 : 49]
-                ][
+                consensus.holders[msg[1 : 49]][
                     int.from_bytes(msg[49 : 53], "big")
                 ]
             )

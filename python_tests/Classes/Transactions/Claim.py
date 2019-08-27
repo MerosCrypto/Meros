@@ -57,10 +57,7 @@ class Claim(Transaction):
         result: bytes = len(self.inputs).to_bytes(1, "big")
         for txInput in self.inputs:
             result += txInput
-        result += (
-            self.output +
-            self.signature
-        )
+        result += self.output + self.signature
         return result
 
     #Claim -> JSON.

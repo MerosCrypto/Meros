@@ -32,11 +32,7 @@ def DataTest(
     data.beat(spamFilter)
 
     #Handshake with the node.
-    rpc.meros.connect(
-        254,
-        254,
-        0
-    )
+    rpc.meros.connect(254, 254, 0)
 
     #Send the Data.
     rpc.meros.transaction(data)

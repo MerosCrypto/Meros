@@ -14,7 +14,7 @@ Meros supports static typing via both Pyright (`pyright -p python_tests`) and My
 
 ### Linting
 
-Meros supports linting via Pylint (`pylint --rcfile=python_tests/pylintrc python_tests`).
+Meros supports linting via Pylint (`pylint --rcfile=python_tests/Pylint/pylintrc python_tests`).
 
 ### Running
 

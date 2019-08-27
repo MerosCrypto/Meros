@@ -24,10 +24,11 @@ def verifyMeritRemoval(
         raise TestError("Merit Holder height doesn't match.")
 
     #Get the MeritRemoval.
-    mrJSON: Dict[str, Any] = rpc.call("consensus", "getElement", [
-        removal.holder.hex(),
-        removal.nonce
-    ])
+    mrJSON: Dict[str, Any] = rpc.call(
+        "consensus",
+        "getElement",
+        [removal.holder.hex(), removal.nonce]
+    )
 
     #Verify the nonce.
     if pending:
@@ -62,8 +63,5 @@ def verifyConsensus(
 ) -> None:
     for pubKey in consensus.holders:
         for e in range(len(consensus.holders[pubKey])):
-            if rpc.call("consensus", "getElement", [
-                pubKey.hex(),
-                e
-            ]) != consensus.holders[pubKey][e].toJSON():
+            if rpc.call("consensus", "getElement", [pubKey.hex(), e]) != consensus.holders[pubKey][e].toJSON():
                 raise TestError("Element doesn't match.")

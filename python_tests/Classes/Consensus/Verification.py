@@ -34,11 +34,7 @@ class Verification(Element):
     def serialize(
         self
     ) -> bytes:
-        return (
-            self.holder +
-            self.nonce.to_bytes(4, "big") +
-            self.hash
-        )
+        return self.holder + self.nonce.to_bytes(4, "big") + self.hash
 
     #Verification -> JSON.
     def toJSON(
@@ -100,10 +96,7 @@ class SignedVerification(Verification):
     def signedSerialize(
         self
     ) -> bytes:
-        return (
-            Verification.serialize(self) +
-            self.signature
-        )
+        return Verification.serialize(self) + self.signature
 
     #SignedVerification -> SignedElement.
     def toSignedElement(

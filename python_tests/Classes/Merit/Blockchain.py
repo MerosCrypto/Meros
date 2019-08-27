@@ -24,14 +24,8 @@ class Blockchain:
 
         self.blocks: List[Block] = [
             Block(
-                BlockHeader(
-                    0,
-                    genesis.rjust(48, b'\0'),
-                    0
-                ),
-                BlockBody(
-                    miners=[]
-                )
+                BlockHeader(0, genesis.rjust(48, b'\0'), 0),
+                BlockBody(miners=[])
             )
         ]
 
@@ -141,11 +135,7 @@ class Blockchain:
         startDifficulty: int,
         blocks: List[Dict[str, Any]]
     ) -> Any:
-        result = Blockchain(
-            genesis,
-            blockTime,
-            startDifficulty
-        )
+        result = Blockchain(genesis, blockTime, startDifficulty)
         for block in blocks:
             result.add(Block.fromJSON(block))
         return result

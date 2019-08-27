@@ -40,10 +40,7 @@ class Block:
     def serialize(
         self
     ) -> bytes:
-        return (
-            self.header.serialize() +
-            self.body.serialize()
-        )
+        return self.header.serialize() + self.body.serialize()
 
     #Block -> JSON.
     def toJSON(

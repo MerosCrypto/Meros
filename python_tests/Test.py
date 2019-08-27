@@ -56,9 +56,7 @@ port: int = 5132
 ress: List[str] = []
 
 #Tests.
-tests: List[
-    Callable[[RPC], None]
-] = [
+tests: List[Callable[[RPC], None]] = [
     ChainAdvancementTest,
     MSyncTest,
 
@@ -124,11 +122,7 @@ for test in tests:
 
     print("Running " + test.__name__ + ".")
 
-    meros: Meros = Meros(
-        test.__name__,
-        port,
-        port + 1
-    )
+    meros: Meros = Meros(test.__name__, port, port + 1)
     sleep(2)
 
     rpc: RPC = RPC(meros)

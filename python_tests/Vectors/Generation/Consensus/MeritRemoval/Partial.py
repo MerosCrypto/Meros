@@ -56,21 +56,9 @@ for i in range(2):
             i + 2,
             blockchain.last(),
             int(time()),
-            consensus.getAggregate(
-                [(pubKey, i, i)]
-            )
+            consensus.getAggregate([(pubKey, i, i)])
         ),
-        BlockBody([
-            (
-                pubKey,
-                i,
-                consensus.getMerkle(
-                    pubKey,
-                    i,
-                    i
-                )
-            )
-        ])
+        BlockBody([(pubKey, i, consensus.getMerkle(pubKey, i, i))])
     )
 
     #Mine it.

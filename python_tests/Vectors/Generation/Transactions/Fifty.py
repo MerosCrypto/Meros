@@ -31,9 +31,7 @@ import json
 cmFile: IO[Any] = open("python_tests/Vectors/Transactions/ClaimedMint.json", "r")
 cmVectors: Dict[str, Any] = json.loads(cmFile.read())
 #Transactions.
-transactions: Transactions = Transactions.fromJSON(
-    cmVectors["transactions"]
-)
+transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
 #Consensus.
 consensus: Consensus = Consensus.fromJSON(
     bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
@@ -67,10 +65,7 @@ claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()
 sends: List[Send] = []
 sends.append(
     Send(
-        [(
-            claim,
-            0
-        )],
+        [(claim, 0)],
         [(
             edPubKey.to_bytes(),
             Claim.fromTransaction(transactions.txs[claim]).amount
@@ -85,22 +80,13 @@ for _ in range(12):
 
     sends.append(
         Send(
-            [(
-                sends[-1].hash,
-                0
-            )],
-            [(
-                edPubKey.to_bytes(),
-                sends[-1].outputs[0][1]
-            )]
+            [(sends[-1].hash, 0)],
+            [(edPubKey.to_bytes(), sends[-1].outputs[0][1])]
         )
     )
 
 #Verify 0 and 1 in order.
-order: List[int] = [
-    0,
-    1
-]
+order: List[int] = [0, 1]
 verif: SignedVerification
 for s in order:
     verif = SignedVerification(sends[s].hash)
@@ -112,30 +98,16 @@ block: Block = Block(
         21,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [(blsPubKey1, 2, -1)]
-        )
+        consensus.getAggregate([(blsPubKey1, 2, -1)])
     ),
-    BlockBody([
-        (
-            blsPubKey1,
-            3,
-            consensus.getMerkle(
-                blsPubKey1,
-                2
-            )
-        )
-    ])
+    BlockBody([(blsPubKey1, 3, consensus.getMerkle(blsPubKey1, 2))])
 )
 block.mine(blockchain.difficulty)
 blockchain.add(block)
 print("Generated Fifty Block " + str(block.header.nonce) + ".")
 
 #Verify 3, and then 2, while giving Merit to a second Merit Holder.
-order = [
-    3,
-    2
-]
+order = [3, 2]
 for s in order:
     verif = SignedVerification(sends[s].hash)
     verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
@@ -146,19 +118,10 @@ block = Block(
         22,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [(blsPubKey1, 4, -1)]
-        )
+        consensus.getAggregate([(blsPubKey1, 4, -1)])
     ),
     BlockBody(
-        [(
-            blsPubKey1,
-            5,
-            consensus.getMerkle(
-                blsPubKey1,
-                4
-            )
-        )],
+        [(blsPubKey1, 5, consensus.getMerkle(blsPubKey1, 4))],
         [(blspy.PrivateKey.from_seed(b'\1').get_public_key(), 100)]
     )
 )
@@ -167,28 +130,14 @@ blockchain.add(block)
 print("Generated Fifty Block " + str(block.header.nonce) + ".")
 
 #2nd Merit Holder:
-order = [
-    5,
-    6,
-    9,
-    11
-]
+order = [5, 6, 9, 11]
 for i in range(len(order)):
     verif = SignedVerification(sends[order[i]].hash)
     verif.sign(blsPrivKey2, i)
     consensus.add(verif)
 
 #1st Merit Holder:
-order = [
-    4,
-    5,
-    8,
-    7,
-    11,
-    6,
-    10,
-    9
-]
+order = [4, 5, 8, 7, 11, 6, 10, 9]
 for s in order:
     verif = SignedVerification(sends[s].hash)
     verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
@@ -199,31 +148,12 @@ block = Block(
         23,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [
-                (blsPubKey2, 0, -1),
-                (blsPubKey1, 6, -1)
-            ]
-        )
+        consensus.getAggregate([(blsPubKey2, 0, -1), (blsPubKey1, 6, -1)])
     ),
     BlockBody(
         [
-            (
-                blsPubKey2,
-                3,
-                consensus.getMerkle(
-                    blsPubKey2,
-                    0
-                )
-            ),
-            (
-                blsPubKey1,
-                13,
-                consensus.getMerkle(
-                    blsPubKey1,
-                    6
-                )
-            )
+            (blsPubKey2, 3, consensus.getMerkle(blsPubKey2, 0)),
+            (blsPubKey1, 13, consensus.getMerkle(blsPubKey1, 6))
         ]
     )
 )

@@ -85,7 +85,4 @@ class BlockBody:
                 miner["amount"]
             ))
 
-        return BlockBody(
-            records,
-            miners
-        )
+        return BlockBody(records, miners)

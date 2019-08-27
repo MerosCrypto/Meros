@@ -61,10 +61,7 @@ for i in range(13):
     merit.add(transactions, consensus, Block.fromJSON(blankBlocks[i]))
 
 #Create the Data.
-data: Data = Data(
-    edPubKey.to_bytes().rjust(48, b'\0'),
-    bytes()
-)
+data: Data = Data(edPubKey.to_bytes().rjust(48, b'\0'), bytes())
 data.sign(edPrivKey)
 data.beat(consensus.dataFilter)
 data.verified = True
@@ -82,20 +79,9 @@ block: Block = Block(
         14,
         merit.blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [(blsPubKey, 0, -1)]
-        )
+        consensus.getAggregate([(blsPubKey, 0, -1)])
     ),
-    BlockBody([
-        (
-            blsPubKey,
-            0,
-            consensus.getMerkle(
-                blsPubKey,
-                0
-            )
-        )
-    ])
+    BlockBody([(blsPubKey, 0, consensus.getMerkle(blsPubKey, 0))])
 )
 for i in range(15, 21):
     #Mine it.
@@ -107,19 +93,12 @@ for i in range(15, 21):
 
     #Create the next Block.
     block = Block(
-        BlockHeader(
-            i,
-            merit.blockchain.last(),
-            int(time())
-        ),
+        BlockHeader(i, merit.blockchain.last(), int(time())),
         BlockBody()
     )
 
 #Claim the new Mint.
-claim: Claim = Claim(
-    [merit.mints[0].hash],
-    edPubKey.to_bytes()
-)
+claim: Claim = Claim([merit.mints[0].hash], edPubKey.to_bytes())
 claim.amount = merit.mints[0].output[1]
 claim.sign([blsPrivKey])
 claim.verified = True
@@ -136,20 +115,9 @@ block = Block(
         20,
         merit.blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [(blsPubKey, 1, -1)]
-        )
+        consensus.getAggregate([(blsPubKey, 1, -1)])
     ),
-    BlockBody([
-        (
-            blsPubKey,
-            1,
-            consensus.getMerkle(
-                blsPubKey,
-                1
-            )
-        )
-    ])
+    BlockBody([(blsPubKey, 1, consensus.getMerkle(blsPubKey, 1))])
 )
 block.mine(merit.blockchain.difficulty)
 merit.add(transactions, consensus, block)

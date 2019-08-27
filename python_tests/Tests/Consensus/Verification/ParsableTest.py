@@ -51,11 +51,7 @@ def VParsableTest(
     file.close()
 
     #Handshake with the node.
-    rpc.meros.connect(
-        254,
-        254,
-        len(blockchain.blocks)
-    )
+    rpc.meros.connect(254, 254, len(blockchain.blocks))
 
     sentLast: bool = False
     reqHash: bytes = bytes()

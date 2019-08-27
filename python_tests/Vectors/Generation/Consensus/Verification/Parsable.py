@@ -53,10 +53,7 @@ blockchain.add(Block.fromJSON(blocks[0]))
 bbFile.close()
 
 #Create a Data with an invalid signature.
-data: Data = Data(
-    edPubKey.to_bytes().rjust(48, b'\0'),
-    bytes()
-)
+data: Data = Data(edPubKey.to_bytes().rjust(48, b'\0'), bytes())
 data.signature = edPrivKey.sign(b"INVALID")
 data.beat(consensus.dataFilter)
 
@@ -71,20 +68,9 @@ block: Block = Block(
         2,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [(pubKey, 0, -1)]
-        )
+        consensus.getAggregate([(pubKey, 0, -1)])
     ),
-    BlockBody([
-        (
-            pubKey,
-            0,
-            consensus.getMerkle(
-                pubKey,
-                0
-            )
-        )
-    ])
+    BlockBody([(pubKey, 0, consensus.getMerkle(pubKey, 0))])
 )
 #Mine it.
 block.mine(blockchain.difficulty)

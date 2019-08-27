@@ -40,11 +40,7 @@ def MRSNLiveTest(
     file.close()
 
     #Handshake with the node.
-    rpc.meros.connect(
-        254,
-        254,
-        len(blockchain.blocks) - 1
-    )
+    rpc.meros.connect(254, 254, len(blockchain.blocks) - 1)
 
     reqHash: bytes = bytes()
     msg: bytes = bytes()

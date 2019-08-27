@@ -53,11 +53,7 @@ def MRPLiveTest(
     file.close()
 
     #Handshake with the node.
-    rpc.meros.connect(
-        254,
-        254,
-        len(blockchain.blocks) - 1
-    )
+    rpc.meros.connect(254, 254, len(blockchain.blocks) - 1)
 
     sentLast: bool = False
     reqHash: bytes = bytes()

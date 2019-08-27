@@ -29,9 +29,7 @@ class Merit:
             blockTime,
             startDifficulty
         )
-        self.state: State = State(
-            lifetime
-        )
+        self.state: State = State(lifetime)
         self.epochs = Epochs()
         self.mints: List[Mint] = []
 
@@ -72,12 +70,7 @@ class Merit:
         consensus: Consensus,
         json: List[Dict[str, Any]]
     ) -> Any:
-        result: Merit = Merit(
-            bytes(),
-            0,
-            0,
-            0
-        )
+        result: Merit = Merit(bytes(), 0, 0, 0)
 
         result.blockchain = Blockchain.fromJSON(
             genesis,
@@ -85,9 +78,7 @@ class Merit:
             startDifficulty,
             json
         )
-        result.state = State(
-            lifetime
-        )
+        result.state = State(lifetime)
         result.epochs = Epochs()
 
         for b in range(1, len(result.blockchain.blocks)):
@@ -99,8 +90,5 @@ class Merit:
             )
             result.mints += mints
 
-            result.state.add(
-                result.blockchain,
-                result.blockchain.blocks[b]
-            )
+            result.state.add(result.blockchain, result.blockchain.blocks[b])
         return result

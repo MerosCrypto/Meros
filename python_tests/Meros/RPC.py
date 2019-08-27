@@ -78,7 +78,4 @@ class RPC:
     def quit(
         self
     ) -> None:
-        self.call(
-            "system",
-            "quit"
-        )
+        self.call("system", "quit")

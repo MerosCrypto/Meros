@@ -31,9 +31,7 @@ import json
 cmFile: IO[Any] = open("python_tests/Vectors/Transactions/ClaimedMint.json", "r")
 cmVectors: Dict[str, Any] = json.loads(cmFile.read())
 #Transactions.
-transactions: Transactions = Transactions.fromJSON(
-    cmVectors["transactions"]
-)
+transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
 #Consensus.
 consensus: Consensus = Consensus.fromJSON(
     bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
@@ -65,10 +63,7 @@ claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()
 
 #Create two competing Sends.
 send1: Send = Send(
-    [(
-        claim,
-        0
-    )],
+    [(claim, 0)],
     [(
         edPubKey1.to_bytes(),
         Claim.fromTransaction(transactions.txs[claim]).amount
@@ -80,10 +75,7 @@ send1.verified = True
 transactions.add(send1)
 
 send2: Send = Send(
-    [(
-        claim,
-        0
-    )],
+    [(claim, 0)],
     [(
         edPubKey2.to_bytes(),
         Claim.fromTransaction(transactions.txs[claim]).amount
@@ -95,15 +87,8 @@ transactions.add(send2)
 
 #Give the second key pair Merit.
 block: Block = Block(
-    BlockHeader(
-        21,
-        blockchain.last(),
-        int(time())
-    ),
-    BlockBody(
-        [],
-        [(blsPubKey2, 100)]
-    )
+    BlockHeader(21, blockchain.last(), int(time())),
+    BlockBody([], [(blsPubKey2, 100)])
 )
 block.mine(blockchain.difficulty)
 blockchain.add(block)
@@ -125,24 +110,11 @@ block = Block(
         22,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [
-                (blsPubKey1, 2, -1),
-                (blsPubKey2, 0, -1)
-            ]
-        )
+        consensus.getAggregate([(blsPubKey1, 2, -1), (blsPubKey2, 0, -1)])
     ),
     BlockBody([
-        (
-            blsPubKey1,
-            2,
-            consensus.getMerkle(blsPubKey1, 2)
-        ),
-        (
-            blsPubKey2,
-            0,
-            consensus.getMerkle(blsPubKey2, 0)
-        )
+        (blsPubKey1, 2, consensus.getMerkle(blsPubKey1, 2)),
+        (blsPubKey2, 0, consensus.getMerkle(blsPubKey2, 0))
     ])
 )
 block.mine(blockchain.difficulty)

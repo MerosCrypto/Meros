@@ -88,21 +88,9 @@ block: Block = Block(
         2,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [(pubKey, 0, 2)]
-        )
+        consensus.getAggregate([(pubKey, 0, 2)])
     ),
-    BlockBody([
-        (
-            pubKey,
-            2,
-            consensus.getMerkle(
-                pubKey,
-                0,
-                2
-            )
-        )
-    ])
+    BlockBody([(pubKey, 2, consensus.getMerkle(pubKey, 0, 2))])
 )
 #Mine it.
 block.mine(blockchain.difficulty)
@@ -117,20 +105,9 @@ block = Block(
         3,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate(
-            [(pubKey, 3, -1)]
-        )
+        consensus.getAggregate([(pubKey, 3, -1)])
     ),
-    BlockBody([
-        (
-            pubKey,
-            3,
-            consensus.getMerkle(
-                pubKey,
-                3
-            )
-        )
-    ])
+    BlockBody([(pubKey, 3, consensus.getMerkle(pubKey, 3))])
 )
 #Mine it.
 block.mine(blockchain.difficulty)

@@ -33,9 +33,7 @@ def VCompetingTest(
     file: IO[Any] = open("python_tests/Vectors/Consensus/Verification/Competing.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
     #Transactions.
-    transactions: Transactions = Transactions.fromJSON(
-        vectors["transactions"]
-    )
+    transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
     #Consensus.
     consensus: Consensus = Consensus.fromJSON(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
@@ -55,11 +53,7 @@ def VCompetingTest(
     file.close()
 
     #Handshake with the node.
-    rpc.meros.connect(
-        254,
-        254,
-        len(merit.blockchain.blocks)
-    )
+    rpc.meros.connect(254, 254, len(merit.blockchain.blocks))
 
     sentLast: int = 4
     reqHash: bytes = bytes()
@@ -101,18 +95,14 @@ def VCompetingTest(
 
         elif MessageType(msg[0]) == MessageType.ElementRequest:
             rpc.meros.element(
-                consensus.holders[
-                    msg[1 : 49]
-                ][
+                consensus.holders[msg[1 : 49]][
                     int.from_bytes(msg[49 : 53], "big")
                 ]
             )
 
         elif MessageType(msg[0]) == MessageType.TransactionRequest:
             sentLast -= 1
-            rpc.meros.transaction(transactions.txs[
-                msg[1 : 49]
-            ])
+            rpc.meros.transaction(transactions.txs[msg[1 : 49]])
 
 
         elif MessageType(msg[0]) == MessageType.SyncingOver:

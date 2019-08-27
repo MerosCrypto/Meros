@@ -24,13 +24,7 @@ class Epochs:
         self
     ) -> None:
         self.tips: Dict[bytes, int] = {}
-        self.epochs: List[Dict[bytes, List[bytes]]] = [
-            {},
-            {},
-            {},
-            {},
-            {}
-        ]
+        self.epochs: List[Dict[bytes, List[bytes]]] = [{}, {}, {}, {}, {}]
         self.mint: int = 0
 
     #Add block.
@@ -118,9 +112,6 @@ class Epochs:
 
             result.append(Mint(
                 self.mint,
-                (
-                    blspy.PublicKey.from_bytes(final[0]),
-                    final[1] * 50
-                )
+                (blspy.PublicKey.from_bytes(final[0]), final[1] * 50)
             ))
         return result

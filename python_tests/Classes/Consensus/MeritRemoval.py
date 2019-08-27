@@ -63,10 +63,7 @@ class MeritRemoval(Element):
             "nonce": self.nonce,
 
             "partial": self.partial,
-            "elements": [
-                self.e1.toJSON(),
-                self.e2.toJSON()
-            ]
+            "elements": [self.e1.toJSON(), self.e2.toJSON()]
         }
 
     #JSON -> MeritRemoval.
@@ -82,11 +79,7 @@ class MeritRemoval(Element):
         if json["elements"][1]["descendant"] == "Verification":
             e2 = Verification.fromJSON(json["elements"][1])
 
-        result: MeritRemoval = MeritRemoval(
-            json["partial"],
-            e1,
-            e2
-        )
+        result: MeritRemoval = MeritRemoval(json["partial"], e1, e2)
         result.nonce = json["nonce"]
         return result
 
@@ -113,10 +106,7 @@ class PartiallySignedMeritRemoval(MeritRemoval):
     def signedSerialize(
         self
     ) -> bytes:
-        return (
-            MeritRemoval.serialize(self) +
-            self.signature
-        )
+        return MeritRemoval.serialize(self) + self.signature
 
     #PartiallySignedMeritRemoval -> JSON.
     def toSignedJSON(
@@ -128,10 +118,7 @@ class PartiallySignedMeritRemoval(MeritRemoval):
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
 
-            "elements": [
-                self.e1.toJSON(),
-                self.se2.toSignedJSON()
-            ],
+            "elements": [self.e1.toJSON(), self.se2.toSignedJSON()],
 
             "signed": True,
             "partial": True,
@@ -190,10 +177,7 @@ class SignedMeritRemoval(PartiallySignedMeritRemoval):
             "holder": self.holder.hex().upper(),
             "nonce": self.nonce,
 
-            "elements": [
-                self.se1.toSignedJSON(),
-                self.se2.toSignedJSON()
-            ],
+            "elements": [self.se1.toSignedJSON(), self.se2.toSignedJSON()],
 
             "signed": True,
             "partial": False,
@@ -217,9 +201,6 @@ class SignedMeritRemoval(PartiallySignedMeritRemoval):
         else:
             raise Exception("MeritRemoval constructed from an unsupported type of Element: " + json["elements"][1]["descendant"])
 
-        result: SignedMeritRemoval = SignedMeritRemoval(
-            se1,
-            se2
-        )
+        result: SignedMeritRemoval = SignedMeritRemoval(se1, se2)
         result.nonce = json["nonce"]
         return result

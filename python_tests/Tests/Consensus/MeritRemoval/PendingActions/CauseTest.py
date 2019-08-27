@@ -62,11 +62,7 @@ def MRPACauseTest(
     file.close()
 
     #Handshake with the node.
-    rpc.meros.connect(
-        254,
-        254,
-        len(blockchain.blocks) - 2
-    )
+    rpc.meros.connect(254, 254, len(blockchain.blocks) - 2)
 
     reqHash: bytes = bytes()
     msg: bytes = bytes()
