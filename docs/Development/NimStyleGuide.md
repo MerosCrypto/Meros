@@ -1,4 +1,4 @@
-# Meros Style Guide
+# Nim Style Guide
 
 1. Be concise, but never implicit.
 2. Use a 4-space ident.
