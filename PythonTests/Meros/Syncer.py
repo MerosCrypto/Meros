@@ -143,7 +143,7 @@ class Syncer():
                 self.rpc.meros.acknowledgeSyncing()
 
             elif MessageType(msg[0]) == MessageType.GetBlockHash:
-                height: int = int.from_bytes(msg[1 : 5], byteorder="big")
+                height: int = int.from_bytes(msg[1 : 5], "big")
 
                 if height == 0:
                     self.rpc.meros.blockHash(self.blockchain.blocks[self.settings["height"]].header.hash)
@@ -207,7 +207,7 @@ class Syncer():
                     self.consensus.holders[holder][int.from_bytes(msg[49 : 53], "big")]
                 )
 
-                if int.from_bytes(msg[49 : 53], byteorder="big") == self.tips[holder]:
+                if int.from_bytes(msg[49 : 53], "big") == self.tips[holder]:
                     del self.tips[holder]
 
                 #If this is the Block before the tail, and tips is empty, correct the tips/TXs.

@@ -14,8 +14,9 @@ class BlockBody:
             (blspy.PrivateKey.from_seed(b'\0').get_public_key(), 100)
         ]
     ) -> None:
-        self.records: List[Tuple[blspy.PublicKey, int, bytes]] = records
-        self.miners: List[Tuple[blspy.PublicKey, int]] = miners
+        #Since Tuples are immutable, shallow copies are fine.
+        self.records: List[Tuple[blspy.PublicKey, int, bytes]] = list(records)
+        self.miners: List[Tuple[blspy.PublicKey, int]] = list(miners)
 
     #Get the serialized miners.
     def getSerializedMiners(
