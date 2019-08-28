@@ -3,8 +3,9 @@
 #Types.
 from typing import Dict, IO, Any
 
-#Data class.
+#Transaction classes.
 from PythonTests.Classes.Transactions.Data import Data
+from PythonTests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
 from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
@@ -13,16 +14,12 @@ from PythonTests.Classes.Consensus.Consensus import Consensus
 #Blockchain class.
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#TestError Exception.
-from PythonTests.Tests.Errors import TestError
-
 #Meros classes.
-from PythonTests.Meros.Meros import MessageType
 from PythonTests.Meros.RPC import RPC
+from PythonTests.Meros.Syncer import Syncer
 
-#Merit and Consensus verifiers.
-from PythonTests.Tests.Merit.Verify import verifyBlockchain
-from PythonTests.Tests.Consensus.Verify import verifyMeritRemoval, verifyConsensus
+#MeritRemoval verifier.
+from PythonTests.Tests.Consensus.Verify import verifyMeritRemoval
 
 #JSON standard lib.
 import json
@@ -32,95 +29,33 @@ def MRPSyncTest(
 ) -> None:
     file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
-    #Data.
-    data: Data = Data.fromJSON(vectors["data"])
+    file.close()
+
+    #MeritRemoval.
+    removal: MeritRemoval = MeritRemoval.fromJSON(vectors["removal"])
     #Consensus.
     consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
-    #MeritRemoval.
-    removal: MeritRemoval = MeritRemoval.fromJSON(vectors["removal"])
     consensus.add(removal.e1)
     consensus.add(removal)
-    #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        vectors["blockchain"]
-    )
-    file.close()
+    #Transactions.
+    transactions: Transactions = Transactions()
+    transactions.add(Data.fromJSON(vectors["data"]))
 
-    #Handshake with the node.
-    rpc.meros.connect(254, 254, len(blockchain.blocks))
+    #Create and execute a Syncer.
+    Syncer(
+        rpc,
+        Blockchain.fromJSON(
+            b"MEROS_DEVELOPER_NETWORK",
+            60,
+            int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+            vectors["blockchain"]
+        ),
+        consensus,
+        transactions
+    ).sync()
 
-    sentLast: int = 2
-    reqHash: bytes = bytes()
-    while True:
-        msg: bytes = rpc.meros.recv()
-
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
-
-        elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height: int = int.from_bytes(msg[1 : 5], "big")
-            if height == 0:
-                rpc.meros.blockHash(blockchain.last())
-            else:
-                if height >= len(blockchain.blocks):
-                    raise TestError("Meros asked for a Block Hash we do not have.")
-
-                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
-
-        elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockHeader(block.header)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Header we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockBody(block.body)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Body we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.ElementRequest:
-            sentLast -= 1
-            rpc.meros.element(
-                consensus.holders[msg[1 : 49]][
-                    int.from_bytes(msg[49 : 53], "big")
-                ]
-            )
-
-        elif MessageType(msg[0]) == MessageType.TransactionRequest:
-            if msg[1 : 49] != data.hash:
-                raise TestError("Meros asked for a Transaction not mentioned.")
-            rpc.meros.transaction(data)
-
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
-            if sentLast == 0:
-                break
-
-        else:
-            raise TestError("Unexpected message sent: " + msg.hex().upper())
-
-    #Verify the Blockchain.
-    verifyBlockchain(rpc, blockchain)
-
-    #Verify the MeritRemoval again.
+    #Verify the MeritRemoval.
     verifyMeritRemoval(rpc, 2, 200, removal, False)
-
-    #Verify the Consensus.
-    verifyConsensus(rpc, consensus)
-
-    #Playback their messages.
-    rpc.meros.playback()
