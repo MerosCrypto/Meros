@@ -10,11 +10,15 @@ import ../../../../../Wallet/Wallet
 #SendOutput object.
 import ../../../..//Transactions/objects/TransactionObj
 
+#SerializeOutput method.
+import SerializeOutput
+export SerializeOutput
+
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
 #Serialization function.
-proc serialize*(
+method serialize*(
     output: SendOutput
 ): string {.inline, forceCheck: [].} =
     result =

@@ -22,13 +22,6 @@ Consensus:
 - SendDifficulty.
 - DataDifficulty.
 
-Transactions:
-
-- Resolve https://github.com/MerosCrypto/Meros/issues/84.
-- Correctly "unverify" Transactions. We do not mark Transactions as no longer eligible for defaulting (if that's the case), re-enable spent UTXOs, or unverify child Transactions.
-- Raise the Verification threshold.
-- Reload Verifications with their MeritHolder's current Merit. The only reason we don't do this now is our low threshold/it breaks consistency on reload.
-
 UI:
 
 - Add missing methods detailed under the Eventual docs.
@@ -76,6 +69,18 @@ Network:
 - Handle ValidityConcerns.
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
+
+Transactions Branch:
+
+- Track input spends.
+- Restore Data functionality by saving their senders/tracking tips.
+
+- Move Transaction Difficulties to the Consensus DAG and check the proof when we parse the Transactions.
+- Move transaction weights and verified/not verified to the Consensus DAG.
+
+- Correctly "unverify" Transactions.
+- Correct the Verification threshold.
+- Reload Verifications with their MeritHolder's current Merit.
 
 ### Nim Tests:
 
@@ -161,7 +166,7 @@ Network:
 
 - Swap Chia for Milagro.
 
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Transaction (stop DoS attacks).
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block (stop DoS attacks).
 
 ### Documentation:
 

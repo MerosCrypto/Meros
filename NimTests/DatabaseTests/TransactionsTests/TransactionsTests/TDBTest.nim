@@ -57,20 +57,16 @@ proc test*() =
         transactions: Transactions = newTransactions(
             db,
             consensus,
-            merit,
-            "".pad(96, "11"),
-            "".pad(96, "33")
+            merit
         )
 
-        #MeritHolders.
-        holders: seq[MinerWallet] = @[]
-        #Accounts.
+        #MeritHolder.
+        holder: MinerWallet = newMinerWallet()
+        #Wallets.
         wallets: seq[Wallet] = @[]
 
-        #UTXOs.
-        utxos: Table[string, seq[SendInput]] = initTable[string, seq[SendInput]]()
-        #Data tips.
-        datas: Table[string, Hash[384]] = initTable[string, Hash[384]]()
+        #Spent UTXOs.
+        spent: Table[string, bool] = initTable[string, bool]()
 
     #Compare the Transactions against the reloaded Transactions.
     proc compare() =
@@ -78,9 +74,7 @@ proc test*() =
         var reloaded: Transactions = newTransactions(
             db,
             consensus,
-            merit,
-            $transactions.difficulties.send,
-            $transactions.difficulties.data
+            merit
         )
 
         #Compare the Transactionss.
@@ -88,69 +82,21 @@ proc test*() =
 
     #Adds a Block, containing the passed records.
     proc addBlock() =
-        var
-            #Records.
-            records: seq[MeritHolderRecord] = @[]
-            #Holders we're assigning new Merit.
-            paying: seq[BLSPublicKey]
-            #Create the Miners objects.
-            miners: seq[Miner] = @[]
-            #Remaining amount of Merit.
-            remaining: int = 100
-
-        #Create the Records for every MeritHolder.
-        for holder in holders:
-            if consensus[holder.publicKey].archived + 1 < consensus[holder.publicKey].height:
-                records.add(
-                    newMeritHolderRecord(
-                        holder.publicKey,
-                        consensus[holder.publicKey].height - 1,
-                        "".pad(48).toHash(384)
-                    )
-                )
-
-        #Grab holders to pay.
-        for holder in holders:
-            #Select any holders with 0 Merit.
-            if merit.state[holder.publicKey] == 0:
-                paying.add(holder.publicKey)
-            #Else, give them a 50% chance.
-            else:
-                if rand(100) > 50:
-                    paying.add(holder.publicKey)
-        #If we didn't add any holders, pick one at random.
-        if paying.len == 0:
-            paying.add(holders[rand(holders.len - 1)].publicKey)
-
-        for i in 0 ..< paying.len:
-            #Set the amount to pay the miner.
-            var amount: int = rand(remaining - 1) + 1
-
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (paying.len - i):
-                amount = 1
-
-            #But if this is the last account...
-            if i == paying.len - 1:
-                amount = remaining
-
-            #Add the miner.
-            miners.add(
-                newMinerObj(
-                    paying[i],
-                    amount
-                )
-            )
-
-            remaining -= amount
-
         #Create the new Block.
         var newBlock: Block = newBlockObj(
             merit.blockchain.height,
             merit.blockchain.tip.header.hash,
             nil,
-            records,
-            newMinersObj(miners),
+            @[
+                newMeritHolderRecord(
+                    holder.publicKey,
+                    consensus[holder.publicKey].height - 1,
+                    "".pad(48).toHash(384)
+                )
+            ],
+            newMinersObj(@[
+                newMinerObj(holder.publicKey, 100)
+            ]),
             getTime(),
             0
         )
@@ -176,67 +122,54 @@ proc test*() =
 
     #Add Verifications for an Transaction.
     proc verify(
-        hash: Hash[384],
-        mustVerify: bool = false
+        hash: Hash[384]
     ) =
-        #List of MeritHolders being used to verify this hash.
-        var verifiers: seq[MinerWallet]
-        if mustVerify:
-            verifiers = holders
-        else:
-            #Grab holders to verify wuth.
-            for holder in holders:
-                if rand(100) > 30:
-                    verifiers.add(holder)
-            #If we didn't add any holders, pick one at random.
-            if verifiers.len == 0:
-                verifiers.add(holders[rand(holders.len - 1)])
-
-        #Verify with each Verifier.
-        for verifier in verifiers:
-            var verif: SignedVerification = newSignedVerificationObj(hash)
-            verifier.sign(verif, consensus[verifier.publicKey].height)
-            consensus.add(verif, true)
-            transactions.verify(verif, merit.state[verifier.publicKey], merit.state.live)
-
-    #Create a random amount of MeritHolders.
-    for _ in 0 ..< rand(25) + 1:
-        holders.add(newMinerWallet())
-    #Assign them enough Meit to verify things.
-    for _ in 0 ..< 13:
-        addBlock()
+        var verif: SignedVerification = newSignedVerificationObj(hash)
+        holder.sign(verif, consensus[holder.publicKey].height)
+        consensus.add(verif)
 
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
         #Create a random amount of Wallets.
         for _ in 0 ..< rand(2) + 1:
             wallets.add(newWallet(""))
-            utxos[wallets[^1].publicKey.toString()] = @[]
 
         #Create Transactions and verify them.
-        for e in 0 ..< rand(10):
+        for e in 0 ..< rand(9) + 1:
             #Grab a random Wallet.
             var
                 sender: int = rand(wallets.len - 1)
                 wallet: Wallet = wallets[sender]
 
             #Create a Send.
-            if rand(1) == 0:
+            if 0 == 0:
                 var
                     #Decide how much to Send.
                     amount: uint64 = uint64(rand(10000) + 1)
                     #Current balance.
                     balance: uint64 = 0
-                #Calculate the balance.
-                for input in utxos[wallet.publicKey.toString()]:
-                    balance += transactions[input.hash].outputs[input.nonce].amount
+                    #Spenable UTXOs.
+                    spendable: seq[SendInput] = @[]
+                #Calculate the balance/spendable UTXOs.
+                for input in transactions.getUTXOs(wallet.publicKey):
+                    if not spent.hasKey(input.hash.toString() & char(input.nonce)):
+                        spendable.add(input)
+                        if transactions[input.hash].outputs[input.nonce].amount == 0:
+                            echo input.hash
+                            echo input.nonce
+                            if transactions[input.hash] of Claim:
+                                echo "Claim"
+                            echo "Amount is 0."
+                        balance += transactions[input.hash].outputs[input.nonce].amount
+                        spent[input.hash.toString() & char(input.nonce)] = true
 
                 #Fund them if they need funding.
                 if balance <= amount:
                     #Create the Mint.
                     var
                         mintee: MinerWallet = newMinerWallet()
-                        mintHash: Hash[384] = transactions.mint(mintee.publicKey, amount - balance + uint64(rand(5000) + 1))
+                        mintAmount: uint64 = amount - balance + uint64(rand(5000) + 1)
+                        mintHash: Hash[384] = transactions.mint(mintee.publicKey, mintAmount)
 
                     #Create the Claim.
                     var claim: Claim = newClaim(
@@ -245,21 +178,19 @@ proc test*() =
                     )
                     mintee.sign(claim)
                     transactions.add(claim)
-                    verify(claim.hash, true)
+                    verify(claim.hash)
 
-                    #Update balance.
+                    #Update the UTXOs/balance.
+                    spendable.add(newSendInput(claim.hash, 0))
                     balance += transactions[mintHash].outputs[0].amount
-
-                    #Add the UTXO.
-                    utxos[wallet.publicKey.toString()].add(newSendInput(claim.hash, 0))
 
                 #Create the Send.
                 var send: Send = newSend(
-                    utxos[wallet.publicKey.toString()],
+                    spendable,
                     @[
                         newSendOutput(
                             #Use a limited subset to increase the odds a Mint isn't needed.
-                            wallets[min(rand(5 - 1), wallets.len - 1)].publicKey,
+                            wallets[rand(wallets.high)].publicKey,
                             amount
                         ),
                         newSendOutput(
@@ -269,24 +200,13 @@ proc test*() =
                     ]
                 )
                 wallet.sign(send)
-                send.mine(transactions.difficulties.send)
+                send.mine(Hash[384]())
                 transactions.add(send)
                 verify(send.hash)
 
-                #Update the existing UTXOs.
-                utxos[wallet.publicKey.toString()] = @[]
-
-                #If the Send was verified, add its change UTXO.
-                if transactions[send.hash].verified:
-                    utxos[wallet.publicKey.toString()].add(
-                        newSendInput(
-                            send.hash,
-                            1
-                        )
-                    )
-
             #Create a Data.
             else:
+                discard """
                 if not datas.hasKey(wallet.publicKey.toString()):
                     var dataStr: string = newString(rand(254) + 1)
                     for c in 0 ..< dataStr.len:
@@ -297,9 +217,9 @@ proc test*() =
                         dataStr
                     )
                     wallet.sign(data)
-                    data.mine(transactions.difficulties.data)
+                    data.mine(Hash[384]())
                     transactions.add(data)
-                    verify(data.hash, true)
+                    verify(data.hash)
                     datas[wallet.publicKey.toString()] = data.hash
 
                 var dataStr: string = newString(rand(254) + 1)
@@ -311,15 +231,12 @@ proc test*() =
                     dataStr
                 )
                 wallet.sign(data)
-                data.mine(transactions.difficulties.data)
+                data.mine(Hash[384]())
                 transactions.add(data)
                 verify(data.hash)
                 if transactions[data.hash].verified:
                     datas[wallet.publicKey.toString()] = data.hash
-
-        #Create a random amount of MeritHolders.
-        for i in 0 ..< rand(3):
-            holders.add(newMinerWallet())
+                """
 
         #Mine a Block.
         addBlock()

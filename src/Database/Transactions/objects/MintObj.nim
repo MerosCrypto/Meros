@@ -34,9 +34,3 @@ func newMintObj*(
         )
     )
     result.ffinalizeNonce()
-
-    #Set the Transaction fields.
-    try:
-        result.verified = true
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Mint: " & e.msg)
