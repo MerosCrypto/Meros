@@ -36,25 +36,6 @@ import sequtils
 #Tables standard lib.
 import tables
 
-discard """
-#Helper function to check if a Data's inputs are valid, and if so, return the sender.
-proc getSender*(
-    transactions: Transactions,
-    data: Data
-): EdPublicKey {.forceCheck: [
-    ValueError
-].} =
-    try:
-        result = transactions.loadSender(data.inputs[0].hash)
-    except DBReadError:
-        for b in 0 ..< 16:
-            if data.inputs[0].hash.data[b] != 0:
-                raise newException(ValueError, "Data's input is a Data we don't have or already used as an input.")
-
-        for b in 16 ..< 48:
-            result.data[b - 16] = cuchar(data.inputs[0].hash.data[b])
-"""
-
 #Constructor.
 proc newTransactions*(
     db: DB,
@@ -189,7 +170,6 @@ proc add*(
     #Add the Send.
     transactions.add(cast[Transaction](send))
 
-discard """
 #Add a Data.
 proc add*(
     transactions: var Transactions,
@@ -209,14 +189,12 @@ proc add*(
     if data.inputs.len == 0:
         raise newException(ValueError, "Data has no inputs.")
 
-    #Sender.
+    #Load the sender (which also verifies the input exists, if it's not the sender's key).
     var sender: EdPublicKey
-
-    #Load the sender (which also verifies the input, if it's not the sender's key).
     try:
         sender = transactions.getSender(data)
-    except ValueError as e:
-        fcRaise e
+    except DataMissing as e:
+        raise newException(ValueError, e.msg)
 
     #Verify the signature.
     if not sender.verify(data.hash.toString(), data.signature):
@@ -224,14 +202,13 @@ proc add*(
 
     #Add the Data.
     transactions.add(cast[Transaction](data))
-"""
 
 #Save a Transaction. Do not apply any other checks.
 proc save*(
-    transactions: Transactions,
+    transactions: var Transactions,
     tx: Transaction
 ) {.inline, forceCheck: [].} =
-    transactions.saveTransaction(tx)
+    transactions.save(tx)
 
 #Mint Meros to the specified key.
 proc mint*(

@@ -67,6 +67,8 @@ proc test*() =
 
         #Spent UTXOs.
         spent: Table[string, bool] = initTable[string, bool]()
+        #Data tips.
+        datas: Table[string, Hash[384]] = initTable[string, Hash[384]]()
 
     #Compare the Transactions against the reloaded Transactions.
     proc compare() =
@@ -142,7 +144,7 @@ proc test*() =
                 wallet: Wallet = wallets[sender]
 
             #Create a Send.
-            if 0 == 0:
+            if rand(1) == 0:
                 var
                     #Decide how much to Send.
                     amount: uint64 = uint64(rand(10000) + 1)
@@ -206,37 +208,22 @@ proc test*() =
 
             #Create a Data.
             else:
-                discard """
-                if not datas.hasKey(wallet.publicKey.toString()):
-                    var dataStr: string = newString(rand(254) + 1)
-                    for c in 0 ..< dataStr.len:
-                        dataStr[c] = char(rand(255))
-
-                    var data: Data = newData(
-                        wallet.publicKey,
-                        dataStr
-                    )
-                    wallet.sign(data)
-                    data.mine(Hash[384]())
-                    transactions.add(data)
-                    verify(data.hash)
-                    datas[wallet.publicKey.toString()] = data.hash
-
-                var dataStr: string = newString(rand(254) + 1)
+                var
+                    dataStr: string = newString(rand(254) + 1)
+                    data: Data
                 for c in 0 ..< dataStr.len:
                     dataStr[c] = char(rand(255))
 
-                var data: Data = newData(
-                    datas[wallet.publicKey.toString()],
-                    dataStr
-                )
+                if not datas.hasKey(wallet.publicKey.toString()):
+                    data = newData(wallet.publicKey, dataStr)
+                else:
+                    data = newData(datas[wallet.publicKey.toString()], dataStr)
+
                 wallet.sign(data)
                 data.mine(Hash[384]())
                 transactions.add(data)
                 verify(data.hash)
-                if transactions[data.hash].verified:
-                    datas[wallet.publicKey.toString()] = data.hash
-                """
+                datas[wallet.publicKey.toString()] = data.hash
 
         #Mine a Block.
         addBlock()
@@ -248,3 +235,5 @@ proc test*() =
         compare()
 
     echo "Finished the Database/Transactions/Transactions/DB Test."
+
+test()

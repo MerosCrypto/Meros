@@ -73,7 +73,7 @@ Network:
 Transactions Branch:
 
 - Track input spends.
-- Restore Data functionality by saving their senders/tracking tips.
+- Utilize saveDataTip() and spend() (different from tracking spends).
 
 - Move Transaction Difficulties to the Consensus DAG and check the proof when we parse the Transactions.
 - Move transaction weights and verified/not verified to the Consensus DAG.

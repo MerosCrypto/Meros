@@ -37,7 +37,7 @@ type
         spent*: Table[string, seq[Hash[384]]]
 
 #Helper functions to convert an input to a string.
-proc toString*(
+func toString*(
     input: Input,
     inputTX: Transaction
 ): string {.forceCheck: [].} =
@@ -50,6 +50,25 @@ proc toString*(
             result = input.hash.toString() & char(cast[SendInput](input).nonce)
         of Data as _:
             result = input.hash.toString()
+
+#Get a Data's sender.
+proc getSender*(
+    transactions: var Transactions,
+    data: Data
+): EdPublicKey {.forceCheck: [
+    DataMissing
+].} =
+    for b in 0 ..< 16:
+        if data.inputs[0].hash.data[b] != 0:
+            try:
+                return transactions.db.loadDataSender(data.inputs[0].hash)
+            except DBReadError:
+                raise newException(DataMissing, "Couldn't find the Data's input which was not its sender.")
+
+    try:
+        return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 48]))
+    except EdPublicKeyError as e:
+        doAssert(false, "Couldn't grab an EdPublicKey from a Data's input: " & e.msg)
 
 #Add a Transaction to the DAG.
 proc add*(
@@ -64,6 +83,15 @@ proc add*(
     if save:
         #Save the TX.
         transactions.db.save(tx)
+
+        #If this is a Data, save the sender.
+        if tx of Data:
+            var data: Data = cast[Data](tx)
+            try:
+                transactions.db.saveDataSender(data, transactions.getSender(data))
+            except DataMissing as e:
+                doAssert(false, "Added a Data we don't know the sender of: " & e.msg)
+
 
 #Get a Transaction by its hash.
 proc `[]`*(
@@ -173,10 +201,10 @@ proc getUTXOs*(
         result = @[]
 
 #Save a Transaction. Do not apply any other checks.
-proc saveTransaction*(
-    transactions: Transactions,
+proc save*(
+    transactions: var Transactions,
     tx: Transaction
-) {.inline, forceCheck: [].} =
+) {.forceCheck: [].} =
     transactions.db.save(tx)
 
 #Save a MeritHolder's out-of-Epoch tip.
@@ -239,17 +267,5 @@ proc loadUTXO*(
 ].} =
     try:
         result = transactions.db.loadSendUTXO(input.hash, input.nonce)
-    except DBReadError as e:
-        fcRaise e
-
-#Load the sender of a tip Data.
-proc loadSender*(
-    transactions: Transactions,
-    data: Hash[384]
-): EdPublicKey {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = transactions.db.loadDataSender(data)
     except DBReadError as e:
         fcRaise e

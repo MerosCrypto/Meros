@@ -100,7 +100,7 @@ proc save*(
 
             db.put(key, spendable & hash & char(o))
 
-proc saveSender*(
+proc saveDataSender*(
     db: DB,
     data: Data,
     sender: EdPublicKey
