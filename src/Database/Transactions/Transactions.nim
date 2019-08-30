@@ -218,13 +218,6 @@ proc add*(
     #Add the Data.
     transactions.add(cast[Transaction](data))
 
-#Save a Transaction. Do not apply any other checks.
-proc save*(
-    transactions: var Transactions,
-    tx: Transaction
-) {.inline, forceCheck: [].} =
-    transactions.save(tx)
-
 #Mint Meros to the specified key.
 proc mint*(
     transactions: var Transactions,
