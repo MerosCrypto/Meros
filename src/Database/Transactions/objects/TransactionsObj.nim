@@ -36,14 +36,6 @@ type
         #Table of inputs to whoever spent them.
         spent*: Table[string, seq[Hash[384]]]
 
-#Helper functions to convert an input to a string.
-func toString*(
-    input: Input
-): string {.forceCheck: [].} =
-    result = input.hash.toString()
-    if input of SendInput:
-        result &= char(cast[SendInput](input).nonce)
-
 #Get a Data's sender.
 proc getSender*(
     transactions: var Transactions,
@@ -76,7 +68,10 @@ proc add*(
         for input in tx.inputs:
             var inputStr: string = input.toString()
             if not transactions.spent.hasKey(inputStr):
-                transactions.spent[inputStr] = transactions.db.loadSpenders(input)
+                if save:
+                    transactions.spent[inputStr] = @[tx.hash]
+                else:
+                    transactions.spent[inputStr] = transactions.db.loadSpenders(input)
 
     if save:
         #Save the TX.
@@ -282,7 +277,7 @@ proc loadUTXO*(
     DBReadError
 ].} =
     try:
-        result = transactions.db.loadSendUTXO(input.hash, input.nonce)
+        result = transactions.db.loadSendUTXO(input)
     except DBReadError as e:
         fcRaise e
 

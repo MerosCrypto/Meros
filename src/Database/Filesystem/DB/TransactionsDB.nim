@@ -74,6 +74,16 @@ proc commit*(
 
     db.transactions.cache = initTable[string, string]()
 
+#Helper functions to convert an input to a string.
+func toString*(
+    input: Input
+): string {.forceCheck: [].} =
+    result = input.hash.toString()
+    if input of SendInput:
+        result &= char(cast[SendInput](input).nonce)
+    else:
+        result &= char(0)
+
 #Save functions.
 proc save*(
     db: DB,
@@ -86,14 +96,10 @@ proc save*(
         db.put("mint", (cast[Mint](tx).nonce + 1).toBinary())
     else:
         for input in tx.inputs:
-            var nonce: int = 0
-            if input of SendInput:
-                nonce = cast[SendInput](input).nonce
-
             try:
-                db.put(hash & char(nonce) & "s", db.get(hash & char(nonce) & "s") & tx.hash.toString())
+                db.put(input.toString() & "s", db.get(input.toString() & "s") & hash)
             except DBReadError:
-                db.put(hash & char(nonce) & "s", tx.hash.toString())
+                db.put(input.toString() & "s", hash)
 
     for o in 0 ..< tx.outputs.len:
         db.put(hash & char(o), tx.outputs[o].serialize())
@@ -138,9 +144,7 @@ proc spend*(
 ) {.forceCheck: [].} =
     for input in tx.inputs:
         var
-            hash: Hash[384] = input.hash
-            nonce: int = cast[SendInput](input).nonce
-            output: string = hash.toString() & char(nonce)
+            output: string = input.toString()
             key: string
             spendable: string
             found: bool = false
@@ -186,7 +190,7 @@ proc load*(
             amount: uint64 = 0
         for input in claim.inputs:
             try:
-                amount += db.get(input.hash.toString() & char(0)).parseMintOutput().amount
+                amount += db.get(input.toString()).parseMintOutput().amount
             except Exception as e:
                 doAssert(false, "Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
 
@@ -199,13 +203,9 @@ proc loadSpenders*(
     db: DB,
     input: Input
 ): seq[Hash[384]] {.forceCheck: [].} =
-    var
-        nonce: int = 0
-        spenders: string = ""
-    if input of SendInput:
-        nonce = cast[SendInput](input).nonce
+    var spenders: string = ""
     try:
-        spenders = db.get(input.hash.toString() & char(nonce) & "s")
+        spenders = db.get(input.toString() & "s")
     except DBReadError:
         return
 
@@ -260,13 +260,12 @@ proc loadMintUTXO*(
 
 proc loadSendUTXO*(
     db: DB,
-    hash: Hash[384],
-    nonce: int
+    input: SendInput
 ): SendOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(hash.toString() & char(nonce)).parseSendOutput()
+        result = db.get(input.toString()).parseSendOutput()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 

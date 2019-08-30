@@ -129,7 +129,7 @@ proc test*() =
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
         #Create a random amount of Wallets.
-        for _ in 0 ..< rand(2) + 1:
+        for _ in 0 ..< rand(2) + 2:
             wallets.add(newWallet(""))
 
         #Create Transactions and verify them.
@@ -174,13 +174,17 @@ proc test*() =
                     spendable.add(newSendInput(claim.hash, 0))
                     balance += transactions[mintHash].outputs[0].amount
 
+                #Select a recepient.
+                var recepient: EdPublicKey = wallets[rand(wallets.high)].publicKey
+                while recepient == wallet.publicKey:
+                    recepient = wallets[rand(wallets.high)].publicKey
+
                 #Create the Send.
                 var send: Send = newSend(
                     spendable,
                     @[
                         newSendOutput(
-                            #Use a limited subset to increase the odds a Mint isn't needed.
-                            wallets[rand(wallets.high)].publicKey,
+                            recepient,
                             amount
                         ),
                         newSendOutput(
@@ -193,6 +197,11 @@ proc test*() =
                 send.mine(Hash[384]())
                 transactions.add(send)
                 verify(send.hash)
+
+                #Make sure spendable was properly set.
+                doAssert(transactions.getUTXOs(wallet.publicKey).len == 1)
+                doAssert(transactions.getUTXOs(wallet.publicKey)[0].hash == send.hash)
+                doAssert(transactions.getUTXOs(wallet.publicKey)[0].nonce == 1)
 
             #Create a Data.
             else:
