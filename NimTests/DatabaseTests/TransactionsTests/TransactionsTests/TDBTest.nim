@@ -227,5 +227,3 @@ proc test*() =
         compare()
 
     echo "Finished the Database/Transactions/Transactions/DB Test."
-
-test()

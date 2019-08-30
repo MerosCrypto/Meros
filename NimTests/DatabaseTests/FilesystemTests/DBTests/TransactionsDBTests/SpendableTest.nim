@@ -16,6 +16,9 @@ import ../../../../../src/Database/Filesystem/DB/TransactionsDB
 #Input/Output objects.
 import ../../../../../src/Database/Transactions/objects/TransactionObj
 
+#Send lib.
+import ../../../../../src/Database/Transactions/Send
+
 #Test Database lib.
 import ../../../TestDatabase
 
@@ -35,81 +38,69 @@ proc test*() =
     var
         #DB.
         db = newTestDatabase()
-        #Hash.
-        hash: Hash[384]
-        #UTXOs.
-        utxos: seq[SendOutput]
         #Wallets.
         wallets: seq[Wallet] = @[]
-        #Public Key -> Spendable Outputs.
-        spendable: Table[string, seq[SendInput]]
-        #Loaded Spendable UTXOs.
-        loaded: seq[SendInput]
 
-    proc sortInputs(
-        x: SendInput,
-        y: SendInput
-    ): int =
-        if x.hash > y.hash:
-            result = 1
-        elif x.hash == y.hash:
-            if x.nonce > y.nonce:
-                result = 1
-            elif x.nonce == y.nonce:
-                result = 0
-            else:
-                result = -1
-        else:
-            result = -1
+        #Outputs.
+        outputs: seq[SendOutput]
+        #Send.
+        send: Send
+
+        #Public Key -> Spendable Outputs.
+        spendable: OrderedTable[string, seq[SendInput]]
+        #Inputs.
+        inputs: seq[SendInput]
+        #Loaded Spendable.
+        loaded: seq[SendInput]
 
     #Generate 10 wallets.
     for _ in 0 ..< 10:
         wallets.add(newWallet(""))
 
-    #Test 100 'Transaction's.
+    #Test 100 Transactions.
     for _ in 0 .. 100:
-        #Generate outputs.
-        for i in 0 ..< hash.data.len:
-            hash.data[i] = uint8(rand(255))
-
-        utxos = newSeq[SendOutput](rand(254) + 1)
-        for i in 0 ..< utxos.len:
-            utxos[i] = newSendOutput(
+        outputs = newSeq[SendOutput](rand(254) + 1)
+        for i in 0 ..< outputs.len:
+            outputs[i] = newSendOutput(
                 wallets[rand(10 - 1)].publicKey,
                 0
             )
 
-            if not spendable.hasKey(utxos[i].key.toString()):
-                spendable[utxos[i].key.toString()] = @[]
+            if not spendable.hasKey(outputs[i].key.toString()):
+                spendable[outputs[i].key.toString()] = @[]
 
-            spendable[utxos[i].key.toString()].add(
-                newSendInput(hash, i)
+        send = newSend(@[newSendInput(Hash[384](), 0)], outputs)
+        db.save(send)
+
+        for o in 0 ..< outputs.len:
+            spendable[outputs[o].key.toString()].add(
+                newSendInput(send.hash, o)
             )
-
-        db.save(hash, utxos)
 
         #Spend outputs.
         for key in spendable.keys():
             if spendable[key].len == 0:
                 continue
 
+            inputs = @[]
             var i: int = 0
             while true:
                 if rand(1) == 0:
-                    db.deleteUTXO(spendable[key][i].hash, spendable[key][i].nonce)
-                    spendable[key].del(i)
+                    inputs.add(spendable[key][i])
+                    spendable[key].delete(i)
                 else:
                     inc(i)
 
                 if i == spendable[key].len:
                     break
 
-        #Test outputs.
-        for key in spendable.keys():
-            spendable[key].sort(sortInputs, SortOrder.Descending)
+            if inputs.len != 0:
+                send = newSend(inputs, newSendOutput(newEdPublicKey("".pad(32)), 0))
+                db.spend(send)
 
+        #Test each spendable.
+        for key in spendable.keys():
             loaded = db.loadSpendable(newEdPublicKey(key))
-            loaded.sort(sortInputs, SortOrder.Descending)
 
             assert(spendable[key].len == loaded.len)
             for i in 0 ..< spendable[key].len:
