@@ -88,7 +88,8 @@ proc compare*(
         compare(txs1.transactions[hash], txs2.transactions[hash])
 
     #Test the spent tables.
+    assert(txs1.spent.len == txs2.spent.len)
     for input in txs1.spent.keys():
-        assert(txs1.spent.len == txs2.spent.len)
+        assert(txs1.spent[input].len == txs2.spent[input].len)
         for s in 0 ..< txs1.spent[input].len:
             assert(txs1.spent[input][s] == txs2.spent[input][s])

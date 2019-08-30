@@ -84,6 +84,16 @@ proc save*(
 
     if tx of Mint:
         db.put("mint", (cast[Mint](tx).nonce + 1).toBinary())
+    else:
+        for input in tx.inputs:
+            var nonce: int = 0
+            if input of SendInput:
+                nonce = cast[SendInput](input).nonce
+
+            try:
+                db.put(hash & char(nonce) & "s", db.get(hash & char(nonce) & "s") & tx.hash.toString())
+            except DBReadError:
+                db.put(hash & char(nonce) & "s", tx.hash.toString())
 
     for o in 0 ..< tx.outputs.len:
         db.put(hash & char(o), tx.outputs[o].serialize())
@@ -121,42 +131,41 @@ proc saveDataTip*(
 ) {.forceCheck: [].} =
     db.put(key.toString() & "d", hash.toString())
 
-#Spend an output.
-#This is called when the spending Transaction is verified.
+#Remove the outputs a TX spends from spendable.
 proc spend*(
     db: DB,
-    input: Input
+    tx: Transaction
 ) {.forceCheck: [].} =
-    var
-        hash: Hash[384] = input.hash
-        nonce: int = 0
-        output: string
-        key: string
-        spendable: string
+    for input in tx.inputs:
+        var
+            hash: Hash[384] = input.hash
+            nonce: int = cast[SendInput](input).nonce
+            output: string = hash.toString() & char(nonce)
+            key: string
+            spendable: string
+            found: bool = false
 
-    if input of SendInput:
-        nonce = cast[SendInput](input).nonce
-    output = hash.toString() & char(nonce)
+        #Get the key.
+        try:
+            key = db.get(output).parseSendOutput().key.toString()
+        except Exception:
+            doAssert(false, "Trying to spend a non-existent output.")
 
-    #Get the key.
-    try:
-        key = db.get(output).parseSendOutput().key.toString()
-    except Exception:
-        doAssert(false, "Trying to spend a non-existent output.")
+        #Load the output.
+        try:
+            spendable = db.get(key)
+        except DBReadError:
+            doAssert(false, "Trying to spend from someone without anything spendable.")
 
-    #Load the output.
-    try:
-        spendable = db.get(key)
-    except Exception:
-        doAssert(false, "Trying to spend from someone without anything spendable.")
+        #Remove the specified output.
+        for o in countup(0, spendable.len, 49):
+            if spendable[o ..< o + 49] == output:
+                found = true
+                db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
+                break
 
-    #Remove the specified output.
-    for o in countup(0, spendable.len, 49):
-        if spendable[o ..< o + 49] == output:
-            db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
-            return
-
-    doAssert(false, "Spending an output not in spendable.")
+        if not found:
+            doAssert(false, "Spending an output not in spendable.")
 
 #Load functions.
 proc load*(
@@ -185,6 +194,26 @@ proc load*(
             claim.outputs[0].amount = amount
         except FinalAttributeError as e:
             doAssert(false, "Set a final attribute twice when reloading a Claim: " & e.msg)
+
+proc loadSpenders*(
+    db: DB,
+    input: Input
+): seq[Hash[384]] {.forceCheck: [].} =
+    var
+        nonce: int = 0
+        spenders: string = ""
+    if input of SendInput:
+        nonce = cast[SendInput](input).nonce
+    try:
+        spenders = db.get(input.hash.toString() & char(nonce) & "s")
+    except DBReadError:
+        return
+
+    for h in countup(0, spenders.len - 1, 48):
+        try:
+            result.add(spenders[h ..< h + 48].toHash(384))
+        except ValueError as e:
+            doAssert(false, "Couldn't load a spending hash from the DB: " & e.msg)
 
 proc loadDataSender*(
     db: DB,

@@ -27,7 +27,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export getUTXOs, toString
+export markVerified, getUTXOs, toString
 #export loadData
 
 #Seq utils standard lib.
@@ -262,13 +262,3 @@ proc archive*(
 
         #Save the popped height so we can reload Elements.
         transactions.save(record.key, record.nonce)
-
-#Checks if an Transaction was the first to spend all of its inputs.
-proc isFirst*(
-    transactions: Transactions,
-    tx: Transaction
-): bool {.forceCheck: [].} =
-    for input in tx.inputs:
-        if transactions.spent.hasKey(input.toString(tx)):
-            return false
-    result = true

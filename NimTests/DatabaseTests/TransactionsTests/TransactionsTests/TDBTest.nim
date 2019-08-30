@@ -65,8 +65,6 @@ proc test*() =
         #Wallets.
         wallets: seq[Wallet] = @[]
 
-        #Spent UTXOs.
-        spent: Table[string, bool] = initTable[string, bool]()
         #Data tips.
         datas: Table[string, Hash[384]] = initTable[string, Hash[384]]()
 
@@ -129,6 +127,7 @@ proc test*() =
         var verif: SignedVerification = newSignedVerificationObj(hash)
         holder.sign(verif, consensus[holder.publicKey].height)
         consensus.add(verif)
+        transactions.markVerified(verif.hash)
 
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
@@ -154,16 +153,8 @@ proc test*() =
                     spendable: seq[SendInput] = @[]
                 #Calculate the balance/spendable UTXOs.
                 for input in transactions.getUTXOs(wallet.publicKey):
-                    if not spent.hasKey(input.hash.toString() & char(input.nonce)):
-                        spendable.add(input)
-                        if transactions[input.hash].outputs[input.nonce].amount == 0:
-                            echo input.hash
-                            echo input.nonce
-                            if transactions[input.hash] of Claim:
-                                echo "Claim"
-                            echo "Amount is 0."
-                        balance += transactions[input.hash].outputs[input.nonce].amount
-                        spent[input.hash.toString() & char(input.nonce)] = true
+                    spendable.add(input)
+                    balance += transactions[input.hash].outputs[input.nonce].amount
 
                 #Fund them if they need funding.
                 if balance <= amount:

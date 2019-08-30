@@ -38,18 +38,11 @@ type
 
 #Helper functions to convert an input to a string.
 func toString*(
-    input: Input,
-    inputTX: Transaction
+    input: Input
 ): string {.forceCheck: [].} =
-    case inputTX:
-        of Mint as _:
-            discard
-        of Claim as _:
-            result = input.hash.toString()
-        of Send as _:
-            result = input.hash.toString() & char(cast[SendInput](input).nonce)
-        of Data as _:
-            result = input.hash.toString()
+    result = input.hash.toString()
+    if input of SendInput:
+        result &= char(cast[SendInput](input).nonce)
 
 #Get a Data's sender.
 proc getSender*(
@@ -80,6 +73,12 @@ proc add*(
         #Add the Transaction to the cache.
         transactions.transactions[tx.hash.toString()] = tx
 
+        #Track the spent outputs.
+        for input in tx.inputs:
+            var inputStr: string = input.toString()
+            if not transactions.spent.hasKey(inputStr):
+                transactions.spent[inputStr] = transactions.db.loadSpenders(input)
+
     if save:
         #Save the TX.
         transactions.db.save(tx)
@@ -91,7 +90,6 @@ proc add*(
                 transactions.db.saveDataSender(data, transactions.getSender(data))
             except DataMissing as e:
                 doAssert(false, "Added a Data we don't know the sender of: " & e.msg)
-
 
 #Get a Transaction by its hash.
 proc `[]`*(
@@ -215,6 +213,20 @@ proc save*(
 ) {.forceCheck: [].} =
     transactions.db.save(key, nonce)
 
+#Mark a Transaction as verified, removing the outputs it spends from spendable.
+proc markVerified*(
+    transactions: Transactions,
+    hash: Hash[384]
+) {.forceCheck: [].} =
+    var tx: Transaction
+    try:
+        tx = transactions[hash]
+    except IndexError as e:
+        doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
+
+    if tx of Send:
+        transactions.db.spend(cast[Send](tx))
+
 #Delete a hash from the cache.
 func del*(
     transactions: var Transactions,
@@ -232,7 +244,7 @@ func del*(
 
     #Clear the spent inputs.
     for input in tx.inputs:
-        transactions.spent.del(input.toString(tx))
+        transactions.spent.del(input.toString())
 
 #Load a MeritHolder's out-of-Epoch tip.
 proc load*(
