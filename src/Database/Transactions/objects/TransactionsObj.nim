@@ -44,15 +44,46 @@ func toString*(
     if input of SendInput:
         result &= char(cast[SendInput](input).nonce)
 
+#Get a Transaction by its hash.
+proc `[]`*(
+    transactions: Transactions,
+    hash: Hash[384]
+): Transaction {.forceCheck: [
+    IndexError
+].} =
+    #Extract the hash.
+    var hashStr: string = hash.toString()
+
+    #Check if the Transaction is in the cache.
+    if transactions.transactions.hasKey(hashStr):
+        #If it is, return it from the cache.
+        try:
+            return transactions.transactions[hashStr]
+        except KeyError as e:
+            doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
+
+    #Load the hash from the DB.
+    try:
+        result = transactions.db.load(hash)
+    except DBReadError:
+        raise newException(IndexError, "Hash doesn't map to any Transaction.")
+
 #Get a Data's sender.
 proc getSender*(
     transactions: var Transactions,
     data: Data
 ): EdPublicKey {.forceCheck: [
+    ValueError,
     DataMissing
 ].} =
     for b in 0 ..< 16:
         if data.inputs[0].hash.data[b] != 0:
+            try:
+                if not (transactions[data.inputs[0].hash] of Data):
+                    raise newException(ValueError, "Data doesn't spend a Data.")
+            except IndexError:
+                raise newException(DataMissing, "Couldn't find the Data's input transaction.")
+
             try:
                 return transactions.db.loadDataSender(data.inputs[0].hash)
             except DBReadError:
@@ -88,32 +119,10 @@ proc add*(
             var data: Data = cast[Data](tx)
             try:
                 transactions.db.saveDataSender(data, transactions.getSender(data))
+            except ValueError as e:
+                doAssert(false, "Added a Data which spent a non-Data: " & e.msg)
             except DataMissing as e:
                 doAssert(false, "Added a Data we don't know the sender of: " & e.msg)
-
-#Get a Transaction by its hash.
-proc `[]`*(
-    transactions: Transactions,
-    hash: Hash[384]
-): Transaction {.forceCheck: [
-    IndexError
-].} =
-    #Extract the hash.
-    var hashStr: string = hash.toString()
-
-    #Check if the Transaction is in the cache.
-    if transactions.transactions.hasKey(hashStr):
-        #If it is, return it from the cache.
-        try:
-            return transactions.transactions[hashStr]
-        except KeyError as e:
-            doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
-
-    #Load the hash from the DB.
-    try:
-        result = transactions.db.load(hash)
-    except DBReadError:
-        raise newException(IndexError, "Hash doesn't map to any Transaction.")
 
 #Transactions constructor.
 proc newTransactionsObj*(

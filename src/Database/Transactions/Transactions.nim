@@ -76,14 +76,20 @@ proc add*(
     try:
          claimers[0] = transactions.loadUTXO(claim.inputs[0].hash).key
     except DBReadError:
-        raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
+        raise newException(ValueError, "Claim spends a non-existant Mint.")
 
     #Add the amount the inputs provide.
     for input in claim.inputs:
         try:
+            if not (transactions[input.hash] of Mint):
+                raise newException(ValueError, "Claim doesn't spend a Mint.")
+        except IndexError:
+            raise newException(ValueError, "Claim spends a non-existant Mint.")
+
+        try:
             output = transactions.loadUTXO(input.hash)
-        except DBreadError:
-            raise newException(ValueError, "Claim spends a non-existant or spent Mint.")
+        except DBReadError:
+            raise newException(ValueError, "Claim spends a non-existant Mint.")
 
         if not claimers.contains(output.key):
             claimers.add(output.key)
@@ -136,14 +142,23 @@ proc add*(
     #Grab the first sender.
     try:
         senders[0] = transactions.loadUTXO(cast[SendInput](send.inputs[0])).key
-    except DBreadError:
-        raise newException(ValueError, "Send spends a non-existant or spent output.")
+    except DBReadError:
+        raise newException(ValueError, "Send spends a non-existant output.")
 
     #Add the amount the inputs provide.
     for input in send.inputs:
         try:
+            if (
+                (not (transactions[input.hash] of Claim)) and
+                (not (transactions[input.hash] of Send))
+            ):
+                raise newException(ValueError, "Send doesn't spend a Claim or Send.")
+        except IndexError:
+            raise newException(ValueError, "Claim spends a non-existant Mint.")
+
+        try:
             spent = transactions.loadUTXO(cast[SendInput](input))
-        except DBreadError:
+        except DBReadError:
             raise newException(ValueError, "Send spends a non-existant or spent output.")
 
         if not senders.contains(spent.key):
@@ -193,6 +208,8 @@ proc add*(
     var sender: EdPublicKey
     try:
         sender = transactions.getSender(data)
+    except ValueError as e:
+        fcRaise e
     except DataMissing as e:
         raise newException(ValueError, e.msg)
 
