@@ -40,24 +40,6 @@ proc newData*(
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)
 
-proc newData*(
-    sender: EdPublicKey,
-    data: string
-): Data {.forceCheck: [
-    ValueError
-].} =
-    var input: Hash[384]
-    for b in 0 ..< 32:
-        input.data[b + 16] = uint8(sender.data[b])
-
-    try:
-        result = newData(
-            input,
-            data
-        )
-    except ValueError as e:
-        fcRaise e
-
 #Sign a Data.
 proc sign*(
     wallet: HDWallet,

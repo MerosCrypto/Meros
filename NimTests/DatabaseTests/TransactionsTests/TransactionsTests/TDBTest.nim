@@ -65,9 +65,6 @@ proc test*() =
         #Wallets.
         wallets: seq[Wallet] = @[]
 
-        #Data tips.
-        datas: Table[string, Hash[384]] = initTable[string, Hash[384]]()
-
     #Compare the Transactions against the reloaded Transactions.
     proc compare() =
         #Reload the Transactions.
@@ -205,16 +202,11 @@ proc test*() =
                 for c in 0 ..< dataStr.len:
                     dataStr[c] = char(rand(255))
 
-                if not datas.hasKey(wallet.publicKey.toString()):
-                    data = newData(wallet.publicKey, dataStr)
-                else:
-                    data = newData(datas[wallet.publicKey.toString()], dataStr)
-
+                data = newData(transactions.loadDataTip(wallet.publicKey), dataStr)
                 wallet.sign(data)
                 data.mine(Hash[384]())
                 transactions.add(data)
                 verify(data.hash)
-                datas[wallet.publicKey.toString()] = data.hash
 
         #Mine a Block.
         addBlock()

@@ -27,7 +27,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export markVerified, getUTXOs, toString
+export getUTXOs, loadDataTip, markVerified
 #export loadData
 
 #Seq utils standard lib.
@@ -208,10 +208,8 @@ proc add*(
     var sender: EdPublicKey
     try:
         sender = transactions.getSender(data)
-    except ValueError as e:
-        fcRaise e
     except DataMissing as e:
-        raise newException(ValueError, e.msg)
+        raise newException(ValueError, "Data's input is either missing or not a Data: " & e.msg)
 
     #Verify the signature.
     if not sender.verify(data.hash.toString(), data.signature):

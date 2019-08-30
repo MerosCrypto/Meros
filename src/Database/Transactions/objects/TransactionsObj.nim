@@ -44,55 +44,23 @@ func toString*(
     if input of SendInput:
         result &= char(cast[SendInput](input).nonce)
 
-#Get a Transaction by its hash.
-proc `[]`*(
-    transactions: Transactions,
-    hash: Hash[384]
-): Transaction {.forceCheck: [
-    IndexError
-].} =
-    #Extract the hash.
-    var hashStr: string = hash.toString()
-
-    #Check if the Transaction is in the cache.
-    if transactions.transactions.hasKey(hashStr):
-        #If it is, return it from the cache.
-        try:
-            return transactions.transactions[hashStr]
-        except KeyError as e:
-            doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
-
-    #Load the hash from the DB.
-    try:
-        result = transactions.db.load(hash)
-    except DBReadError:
-        raise newException(IndexError, "Hash doesn't map to any Transaction.")
-
 #Get a Data's sender.
 proc getSender*(
     transactions: var Transactions,
     data: Data
 ): EdPublicKey {.forceCheck: [
-    ValueError,
     DataMissing
 ].} =
-    for b in 0 ..< 16:
-        if data.inputs[0].hash.data[b] != 0:
-            try:
-                if not (transactions[data.inputs[0].hash] of Data):
-                    raise newException(ValueError, "Data doesn't spend a Data.")
-            except IndexError:
-                raise newException(DataMissing, "Couldn't find the Data's input transaction.")
-
-            try:
-                return transactions.db.loadDataSender(data.inputs[0].hash)
-            except DBReadError:
-                raise newException(DataMissing, "Couldn't find the Data's input which was not its sender.")
-
-    try:
-        return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 48]))
-    except EdPublicKeyError as e:
-        doAssert(false, "Couldn't grab an EdPublicKey from a Data's input: " & e.msg)
+    if data.isFirstData:
+        try:
+            return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 48]))
+        except EdPublicKeyError as e:
+            doAssert(false, "Couldn't grab an EdPublicKey from a Data's input: " & e.msg)
+    else:
+        try:
+            return transactions.db.loadDataSender(data.inputs[0].hash)
+        except DBReadError:
+            raise newException(DataMissing, "Couldn't find the Data's input which was not its sender.")
 
 #Add a Transaction to the DAG.
 proc add*(
@@ -119,10 +87,32 @@ proc add*(
             var data: Data = cast[Data](tx)
             try:
                 transactions.db.saveDataSender(data, transactions.getSender(data))
-            except ValueError as e:
-                doAssert(false, "Added a Data which spent a non-Data: " & e.msg)
             except DataMissing as e:
                 doAssert(false, "Added a Data we don't know the sender of: " & e.msg)
+
+#Get a Transaction by its hash.
+proc `[]`*(
+    transactions: Transactions,
+    hash: Hash[384]
+): Transaction {.forceCheck: [
+    IndexError
+].} =
+    #Extract the hash.
+    var hashStr: string = hash.toString()
+
+    #Check if the Transaction is in the cache.
+    if transactions.transactions.hasKey(hashStr):
+        #If it is, return it from the cache.
+        try:
+            return transactions.transactions[hashStr]
+        except KeyError as e:
+            doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
+
+    #Load the hash from the DB.
+    try:
+        result = transactions.db.load(hash)
+    except DBReadError:
+        raise newException(IndexError, "Hash doesn't map to any Transaction.")
 
 #Transactions constructor.
 proc newTransactionsObj*(
@@ -224,7 +214,7 @@ proc save*(
 
 #Mark a Transaction as verified, removing the outputs it spends from spendable.
 proc markVerified*(
-    transactions: Transactions,
+    transactions: var Transactions,
     hash: Hash[384]
 ) {.forceCheck: [].} =
     var tx: Transaction
@@ -233,6 +223,11 @@ proc markVerified*(
     except IndexError as e:
         doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
 
+    if tx of Data:
+        try:
+            transactions.db.saveDataTip(transactions.getSender(cast[Data](tx)), tx.hash)
+        except DataMissing as e:
+            doAssert(false, "Added and verified a Data which has a missing input: " & e.msg)
     if tx of Send:
         transactions.db.spend(cast[Send](tx))
 
@@ -290,3 +285,15 @@ proc loadUTXO*(
         result = transactions.db.loadSendUTXO(input.hash, input.nonce)
     except DBReadError as e:
         fcRaise e
+
+#Load a Data Tip.
+proc loadDataTip*(
+    transactions: Transactions,
+    key: EdPublicKey
+): Hash[384] {.forceCheck: [].} =
+    try:
+        result = transactions.db.loadDataTip(key)
+    except DBReadError:
+        result = Hash[384]()
+        for b in 16 ..< 48:
+            result.data[b] = uint8(key.data[b - 16])
