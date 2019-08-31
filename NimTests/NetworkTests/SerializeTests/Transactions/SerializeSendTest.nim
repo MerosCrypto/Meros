@@ -69,7 +69,7 @@ proc test*() =
         send.mine("".pad(96, "aa").toHash(384))
 
         #Serialize it and parse it back.
-        reloaded = send.serialize().parseSend()
+        reloaded = send.serialize().parseSend(Hash[384]())
 
         #Compare the Sends.
         compare(send, reloaded)

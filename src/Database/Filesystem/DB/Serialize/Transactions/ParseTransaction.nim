@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../../../lib/Errors
 
+#Hash lib.
+import ../../../../../lib/Hash
+
 #Transaction objects.
 import ../../../..//Transactions/Transaction
 
@@ -37,17 +40,21 @@ proc parseTransaction*(
 
         of '\2':
             try:
-                result = tx.substr(1).parseSend()
+                result = tx.substr(1).parseSend(Hash[384]())
             except ValueError as e:
                 fcRaise e
             except EdPublicKeyError as e:
                 fcRaise e
+            except Spam:
+                doAssert(false, "parseSend believes a Hash is less than 0.")
 
         of '\3':
             try:
-                result = tx.substr(1).parseData()
+                result = tx.substr(1).parseData(Hash[384]())
             except ValueError as e:
                 fcRaise e
+            except Spam:
+                doAssert(false, "parseData believes a Hash is less than 0.")
 
         else:
             doAssert(false, "Invalid Transaction Type loaded from the Database: " & $int(tx[0]))

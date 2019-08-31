@@ -25,15 +25,14 @@ proc revertPending(
 
         case elem:
             of Verification as verif:
-                #This has the risk to subtract less/more from the weight than was added.
-                #There is no underflow risk, and if the MeritHolder's weight went up, this has positive effects.
-                #If their weight went down, this has negative effects.
-                #The threshold used to be +601 to cover State changes. It is now +1201.
+                discard verif
+                discard """
                 try:
                     transactions.unverify(verif, state[verif.holder], state.live)
                 except ValueError:
                     #If it's out of Epochs, move on.
                     discard
+                """
             else:
                 doAssert(false, "Unsupported Element type.")
 
@@ -55,17 +54,34 @@ proc reapplyPending(
         case elem:
             of Verification as verif:
                 #This reapplies the Verification as if we received it before the Block that triggered this.
+                discard verif
+                discard """
                 try:
                     transactions.verify(verif, state[verif.holder], state.live)
                 except ValueError:
                     #If it's out of Epochs, move on.
                     discard
+                """
             else:
                 doAssert(false, "Unsupported Element type.")
 
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
-        consensus = newConsensus(database)
+        try:
+            consensus = newConsensus(
+                database,
+                params.SEND_DIFFICULTY.toHash(384),
+                params.DATA_DIFFICULTY.toHash(384)
+            )
+        except ValueError:
+            doAssert(false, "Invalid initial Send/Data difficulty.")
+
+        functions.consensus.getSendDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+            consensus.filters.send.difficulty
+        functions.consensus.getDataMinimumDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+            minimumDataDifficulty
+        functions.consensus.getDataDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+            consensus.filters.data.difficulty
 
         #Provide access to if a holder is malicious.
         functions.consensus.isMalicious = proc (
@@ -180,10 +196,12 @@ proc mainConsensus() {.forceCheck: [].} =
 
             if txExists and (not consensus.malicious.hasKey(verif.holder.toString())):
                 #Add the Verification to the Transactions.
+                discard """
                 try:
                     transactions.verify(verif, merit.state[verif.holder], merit.state.live)
                 except ValueError:
                     return
+                """
 
         #Handle SignedElements.
         functions.consensus.addSignedVerification = proc (
@@ -241,10 +259,12 @@ proc mainConsensus() {.forceCheck: [].} =
 
             if not consensus.malicious.hasKey(verif.holder.toString()):
                 #Add the Verification to the Transactions.
+                discard """
                 try:
                     transactions.verify(verif, merit.state[verif.holder], merit.state.live)
                 except ValueError:
                     return
+                """
 
             #Broadcast the SignedVerification.
             functions.network.broadcast(

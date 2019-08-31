@@ -29,8 +29,7 @@ proc `%`(
     result = %* {
         "inputs": [],
         "outputs": [],
-        "hash": $tx.hash,
-        "verified": tx.verified
+        "hash": $tx.hash
     }
 
     try:

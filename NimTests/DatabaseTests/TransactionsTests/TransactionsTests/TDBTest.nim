@@ -43,7 +43,7 @@ proc test*() =
         db: DB = newTestDatabase()
 
         #Consensus.
-        consensus: Consensus = newConsensus(db)
+        consensus: Consensus = newConsensus(db, Hash[384](), Hash[384]())
         #Merit.
         merit: Merit = newMerit(
             db,

@@ -56,8 +56,13 @@ type
     SyncConfigError*     = object of Exception #Used when a Socket which isn't set for syncing is used to sync.
 
     #Network Statuses.
-    DataMissing*         = object of Exception #Used when a Client is missing requested data.
-    ValidityConcern*     = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
+    DataMissing*     = object of Exception #Used when a Client is missing requested data.
+    Spam*            = object of Exception #Used when a Send/Data doesn't beat the difficulty.
+        #Hash of the Transaction.
+        hash*: string
+        #Argon hash.
+        argon*: string
+    ValidityConcern* = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
 
     #Interfaces/RPC Errors.
     ParamError*   = object of Exception #Used when an invalid parameter is passed.
@@ -79,6 +84,15 @@ proc newMaliciousMeritHolder*(
 ): ref MaliciousMeritHolder {.forceCheck: [].} =
     result = newException(MaliciousMeritHolder, msg)
     result.element = elem
+
+proc newSpam*(
+    msg: string,
+    hash: string,
+    argon: string
+): ref Spam {.forceCheck: [].} =
+    result = newException(Spam, msg)
+    result.hash = hash
+    result.argon = argon
 
 proc newJSONRPCError*(
     code: int,

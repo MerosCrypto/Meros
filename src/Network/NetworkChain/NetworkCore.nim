@@ -59,7 +59,8 @@ proc newNetwork*(
         IndexError,
         SocketError,
         ClientError,
-        InvalidMessageError
+        InvalidMessageError,
+        Spam
     ], async.} =
         try:
             if network.clients[msg.client].ourState == ClientState.Syncing:
@@ -379,11 +380,13 @@ proc newNetwork*(
             of MessageType.Send:
                 var send: Send
                 try:
-                    send = msg.message.parseSend()
+                    send = msg.message.parseSend(network.mainFunctions.consensus.getSendDifficulty())
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Send contained an invalid Signature: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(InvalidMessageError, "Send contained an invalid ED25519 Public Key: " & e.msg)
+                except Spam as e:
+                    fcRaise e
 
                 try:
                     mainFunctions.transactions.addSend(send)
@@ -395,9 +398,11 @@ proc newNetwork*(
             of MessageType.Data:
                 var data: Data
                 try:
-                    data = msg.message.parseData()
+                    data = msg.message.parseData(network.mainFunctions.consensus.getDataDifficulty())
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Parsing the Data failed due to a ValueError: " & e.msg)
+                except Spam as e:
+                    fcRaise e
 
                 try:
                     mainFunctions.transactions.addData(data)
@@ -450,13 +455,10 @@ proc newNetwork*(
                 try:
                     await mainFunctions.merit.addBlockByHeader(header)
                 except ValueError as e:
-                    echo "Failed to add the Block due to a ValueError: " & e.msg
                     raise newException(InvalidMessageError, "Adding the Block failed due to a ValueError: " & e.msg)
                 except IndexError as e:
-                    echo "Failed to add the Block due to a IndexError: " & e.msg
                     raise newException(InvalidMessageError, "Adding the Block failed due to a IndexError: " & e.msg)
-                except GapError as e:
-                    echo "Failed to add the Block due to a GapError: " & e.msg
+                except GapError:
                     return
                 except DataExists:
                     return

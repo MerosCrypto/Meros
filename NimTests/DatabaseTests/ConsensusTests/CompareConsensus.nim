@@ -33,6 +33,10 @@ proc compare*(
     c1: Consensus,
     c2: Consensus
 ) =
+    #Compare the SpamFilters.
+    assert(c1.filters.send.difficulty == c2.filters.send.difficulty)
+    assert(c1.filters.data.difficulty == c2.filters.data.difficulty)
+
     #Get the holders.
     var
         c1Holders: seq[BLSPublicKey] = @[]

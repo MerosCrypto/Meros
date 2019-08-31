@@ -55,7 +55,7 @@ They have the following fields:
 
 ### DataDifficulty
 
-A DataDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound.
+A DataDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound. Datas with an argon hash below this lower bound are invalid.
 
 In the case no DataDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "CC" bytes.
 

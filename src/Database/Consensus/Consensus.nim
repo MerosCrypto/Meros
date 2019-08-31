@@ -18,6 +18,10 @@ import ../common/objects/ConsensusIndexObj
 import ../common/objects/MeritHolderRecordObj
 export ConsensusIndex
 
+#SpamFilter object.
+import objects/SpamFilterObj
+export SpamFilterObj
+
 #Signed Element object.
 import objects/SignedElementObj
 export SignedElementObj
@@ -43,9 +47,11 @@ import tables
 
 #Constructor wrapper.
 proc newConsensus*(
-    db: DB
+    db: DB,
+    sendDiff: Hash[384],
+    dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
-    newConsensusObj(db)
+    newConsensusObj(db, sendDiff, dataDiff)
 
 #Flag a MeritHolder as malicious.
 proc flag*(

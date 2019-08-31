@@ -72,7 +72,6 @@ Network:
 
 Transactions Branch:
 
-- Move Transaction Difficulties to the Consensus DAG and check the proof when we parse the Transactions.
 - Move transaction weights and verified/not verified to the Consensus DAG.
 
 - Correctly "unverify" Transactions.

@@ -15,10 +15,7 @@ proc verify(
                 doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
 
         #Make sure we didn't already verify a Transaction which spends the same inputs.
-        #This must absolutely be single-threaded/non-async.
-        #We only mark a TX as spent when the spoending TX has one Verification.
-        #If we check, then let other code run, then verify...
-        if not transactions.isFirst(transaction):
+        if not transactions.isNewTXFirst(transaction):
             return
 
         #Verify the Transaction.
@@ -47,14 +44,8 @@ proc mainTransactions() {.forceCheck: [].} =
         transactions = newTransactions(
             database,
             consensus,
-            merit,
-            params.SEND_DIFFICULTY,
-            params.DATA_DIFFICULTY
+            merit
         )
-
-        #Handle requests for the Difficulties.
-        functions.transactions.getDifficulties = proc (): Difficulties {.forceCheck: [].} =
-            transactions.difficulties
 
         #Handle requests for an Transaction.
         functions.transactions.getTransaction = proc (
@@ -74,7 +65,7 @@ proc mainTransactions() {.forceCheck: [].} =
             IndexError
         ].} =
             try:
-                result = transactions.weights[hash.toString()]
+                result = 0
             except KeyError:
                 raise newException(IndexError, "Transaction out of Epochs.")
 
@@ -98,9 +89,6 @@ proc mainTransactions() {.forceCheck: [].} =
             #Data already exisrs.
             except DataExists as e:
                 fcRaise e
-
-            #Load previously unknown Verifications.
-            transactions.loadUnknown(consensus, merit.blockchain, merit.state, claim)
 
             echo "Successfully added the Claim."
 
@@ -138,9 +126,6 @@ proc mainTransactions() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
-            #Load previously unknown Verifications.
-            transactions.loadUnknown(consensus, merit.blockchain, merit.state, send)
-
             echo "Successfully added the Send."
 
             if not syncing:
@@ -176,9 +161,6 @@ proc mainTransactions() {.forceCheck: [].} =
             #Data already exisrs.
             except DataExists as e:
                 fcRaise e
-
-            #Load previously unknown Verifications.
-            transactions.loadUnknown(consensus, merit.blockchain, merit.state, data)
 
             echo "Successfully added the Data."
 

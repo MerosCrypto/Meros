@@ -63,13 +63,16 @@ proc startSyncing*(
 #Sync an Transaction.
 proc syncTransaction*(
     client: Client,
-    hash: Hash[384]
+    hash: Hash[384],
+    sendDiff: Hash[384],
+    dataDiff: Hash[384]
 ): Future[Transaction] {.forceCheck: [
     SocketError,
     ClientError,
     SyncConfigError,
     InvalidMessageError,
-    DataMissing
+    DataMissing,
+    Spam
 ], async.} =
     #If we're not syncing, raise an error.
     if client.ourState != ClientState.Syncing:
@@ -102,9 +105,9 @@ proc syncTransaction*(
             of MessageType.Claim:
                 result = msg.message.parseClaim()
             of MessageType.Send:
-                result = msg.message.parseSend()
+                result = msg.message.parseSend(sendDiff)
             of MessageType.Data:
-                result = msg.message.parseData()
+                result = msg.message.parseData(dataDiff)
             of MessageType.DataMissing:
                 raise newException(DataMissing, "Client didn't have the requested Transaction.")
             else:
@@ -118,6 +121,13 @@ proc syncTransaction*(
     except InvalidMessageError as e:
         fcRaise e
     except DataMissing as e:
+        fcRaise e
+    except Spam as e:
+        try:
+            if e.hash.toHash(384) != hash:
+                raise newException(ClientError, "Client sent us the wrong Transaction.")
+        except ValueError:
+            doAssert(false, "Spam status wasn't constructed with a valid hash.")
         fcRaise e
 
     #Verify the received data is what was requested.

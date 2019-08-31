@@ -32,7 +32,7 @@ proc test*() =
         #Database.
         db: DB = newTestDatabase()
         #Consensus.
-        consensus: Consensus = newConsensus(db)
+        consensus: Consensus = newConsensus(db, Hash[384](), Hash[384]())
 
         #MeritHolders.
         holders: seq[MinerWallet]
@@ -44,7 +44,7 @@ proc test*() =
     #Compare the Consensus against the reloaded Consensus.
     proc compare() =
         #Reload the Consensus.
-        var reloaded: Consensus = newConsensus(db)
+        var reloaded: Consensus = newConsensus(db, Hash[384](), Hash[384]())
 
         #Compare the Consensus DAGs.
         compare(consensus, reloaded)

@@ -27,7 +27,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export getUTXOs, loadDataTip, markVerified
+export toString, getUTXOs, loadDataTip, markVerified
 #export loadData
 
 #Seq utils standard lib.
@@ -270,3 +270,19 @@ proc archive*(
 
         #Save the popped height so we can reload Elements.
         transactions.save(record.key, record.nonce)
+
+#Check if a new Transaction is the first to spend all its inputs.
+proc isNewTXFirst*(
+    transactions: Transactions,
+    tx: Transaction
+): bool {.forceCheck: [].} =
+    for input in tx.inputs:
+        try:
+            if transactions.spent[input.toString()][0] != tx.hash:
+                return false
+        #Input is out of Epochs.
+        except KeyError:
+            return false
+        except IndexError:
+            doAssert(false, "Input was added to spent yet has no spenders.")
+    return true

@@ -27,8 +27,7 @@ import ../Database/Merit/objects/DifficultyObj
 import ../Database/Merit/objects/BlockHeaderObj
 import ../Database/Merit/objects/BlockObj
 
-#Difficulties and Transaction objects.
-import ../Database/Transactions/objects/DifficultiesObj
+#Transaction objects.
 import ../Database/Transactions/objects/TransactionObj
 import ../Database/Transactions/objects/ClaimObj
 import ../Database/Transactions/objects/SendObj
@@ -45,8 +44,6 @@ type
         quit*: proc () {.raises: [].}
 
     TransactionsFunctionBox* = ref object
-        getDifficulties*: proc (): Difficulties {.raises: [].}
-
         getTransaction*: proc (
             hash: Hash[384]
         ): Transaction {.raises: [
@@ -83,11 +80,11 @@ type
             DataExists
         ].}
 
-        save*: proc (
-            tx: Transaction
-        ) {.inline, raises: [].}
-
     ConsensusFunctionBox* = ref object
+        getSendDifficulty*: proc (): Hash[384] {.inline, raises: [].}
+        getDataMinimumDifficulty*: proc (): Hash[384] {.inline, raises: [].}
+        getDataDifficulty*: proc (): Hash[384] {.inline, raises: [].}
+
         isMalicious*: proc (
             key: BLSPublicKey,
         ): bool {.inline, raises: [].}

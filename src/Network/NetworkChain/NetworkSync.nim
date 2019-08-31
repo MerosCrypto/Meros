@@ -71,12 +71,15 @@ proc syncElements(
 proc syncTransactions(
     network: Network,
     id: int,
-    transactions: seq[Hash[384]]
+    transactions: seq[Hash[384]],
+    sendDiff: Hash[384],
+    dataDiff: Hash[384]
 ): Future[seq[Transaction]] {.forceCheck: [
     SocketError,
     ClientError,
     InvalidMessageError,
-    DataMissing
+    DataMissing,
+    Spam
 ], async.} =
     result = @[]
 
@@ -101,7 +104,13 @@ proc syncTransactions(
     for tx in transactions:
         #Sync the Transaction.
         try:
-            result.add(await client.syncTransaction(tx))
+            result.add(
+                await client.syncTransaction(
+                    tx,
+                    sendDiff,
+                    dataDiff
+                )
+            )
         except SocketError as e:
             fcRaise e
         except ClientError as e:
@@ -111,6 +120,8 @@ proc syncTransactions(
         except InvalidMessageError as e:
             fcRaise e
         except DataMissing as e:
+            fcRaise e
+        except Spam as e:
             fcRaise e
         except Exception as e:
             doAssert(false, "Syncing an Transaction in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -256,7 +267,12 @@ proc sync*(
                 continue
 
             try:
-                transactions = await network.syncTransactions(client.id, txHashes)
+                transactions = await network.syncTransactions(
+                    client.id,
+                    txHashes,
+                    Hash[384](),
+                    network.mainFunctions.consensus.getDataMinimumDifficulty()
+                )
             #If the Client had problems, disconnect them.
             except SocketError, ClientError:
                 toDisconnect.add(client.id)
@@ -272,6 +288,8 @@ proc sync*(
                 except Exception as e:
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
+            except Spam:
+                raise newException(ValueError, "Block includes a Data below the minimum difficulty.")
             except Exception as e:
                 doAssert(false, "Syncing a Block's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 

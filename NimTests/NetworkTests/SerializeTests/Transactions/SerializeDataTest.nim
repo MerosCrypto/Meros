@@ -62,7 +62,7 @@ proc test*() =
         data.mine("".pad(96, "cc").toHash(384))
 
         #Serialize it and parse it back.
-        reloaded = data.serialize().parseData()
+        reloaded = data.serialize().parseData(Hash[384]())
 
         #Compare the Datas.
         compare(data, reloaded)

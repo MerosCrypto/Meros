@@ -69,6 +69,8 @@ proc add*(
             var inputStr: string = input.toString()
             if not transactions.spent.hasKey(inputStr):
                 if save:
+                    if transactions.db.loadSpenders(input).len != 0:
+                        continue
                     transactions.spent[inputStr] = @[tx.hash]
                 else:
                     transactions.spent[inputStr] = transactions.db.loadSpenders(input)
@@ -192,13 +194,6 @@ proc getUTXOs*(
     except DBReadError:
         result = @[]
 
-#Save a Transaction. Do not apply any other checks.
-proc save*(
-    transactions: var Transactions,
-    tx: Transaction
-) {.forceCheck: [].} =
-    transactions.db.save(tx)
-
 #Save a MeritHolder's out-of-Epoch tip.
 proc save*(
     transactions: Transactions,
@@ -218,13 +213,16 @@ proc markVerified*(
     except IndexError as e:
         doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
 
-    if tx of Data:
-        try:
-            transactions.db.saveDataTip(transactions.getSender(cast[Data](tx)), tx.hash)
-        except DataMissing as e:
-            doAssert(false, "Added and verified a Data which has a missing input: " & e.msg)
-    if tx of Send:
-        transactions.db.spend(cast[Send](tx))
+    case tx:
+        of Send as send:
+            transactions.db.spend(send)
+        of Data as data:
+            try:
+                transactions.db.saveDataTip(transactions.getSender(data), data.hash)
+            except DataMissing as e:
+                doAssert(false, "Added and verified a Data which has a missing input: " & e.msg)
+        else:
+            discard
 
 #Delete a hash from the cache.
 func del*(

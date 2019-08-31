@@ -18,6 +18,9 @@ import ElementObj
 import VerificationObj
 import MeritRemovalObj
 
+#SpamFilter object.
+import SpamFilterObj
+
 #MeritHolder object.
 import MeritHolderObj
 
@@ -32,6 +35,9 @@ type Consensus* = ref object
     #DB.
     db*: DB
 
+    #Filters.
+    filters*: tuple[send: SpamFilter, data: SpamFilter]
+
     #BLS Public Key -> MeritHolder.
     holders: Table[string, MeritHolder]
     #BLS Public Key -> MeritRemoval.
@@ -42,11 +48,17 @@ type Consensus* = ref object
 
 #Consensus constructor.
 proc newConsensusObj*(
-    db: DB
+    db: DB,
+    sendDiff: Hash[384],
+    dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(
         db: db,
+        filters: (
+            send: newSpamFilterObj(sendDiff),
+            data: newSpamFilterObj(dataDiff)
+        ),
         holders: initTable[string, MeritHolder](),
         malicious: initTable[string, seq[MeritRemoval]](),
         unknowns: initTable[string, seq[BLSPublicKey]]()

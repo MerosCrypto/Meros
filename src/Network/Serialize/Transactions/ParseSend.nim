@@ -18,10 +18,12 @@ import ../SerializeCommon
 
 #Parse function.
 proc parseSend*(
-    sendStr: string
+    sendStr: string,
+    diff: Hash[384]
 ): Send {.forceCheck: [
     ValueError,
-    EdPublicKeyError
+    EdPublicKeyError,
+    Spam
 ].} =
     #Verify the input length.
     if sendStr.len < BYTE_LEN:
@@ -39,6 +41,12 @@ proc parseSend*(
         ED_SIGNATURE_LEN,
         INT_LEN
     )
+
+    var
+        hash: Hash[384] = Blake384("\2" & sendSeq[1] & sendSeq[3])
+        argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8), true)
+    if argon < diff:
+        raise newSpam("Send didn't beat the difficulty.", hash.toString(), argon.toString())
 
     #Convert the inputs.
     var inputs: seq[SendInput] = newSeq[SendInput](sendSeq[0].fromBinary())
@@ -68,7 +76,7 @@ proc parseSend*(
 
     #Hash it and set its signature/proof/argon.
     try:
-        result.hash = Blake384("\2" & sendSeq[1] & sendSeq[3])
+        result.hash = hash
 
         try:
             result.signature = newEdSignature(sendSeq[4])
@@ -76,6 +84,6 @@ proc parseSend*(
             fcRaise e
 
         result.proof = uint32(sendSeq[5].fromBinary())
-        result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
+        result.argon = argon
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)
