@@ -8,11 +8,19 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 import ../../../Wallet/Wallet
 
-#Consensus lib.
-import ../../Consensus/Consensus
+#MeritHolderRecord object.
+import ../../common/objects/MeritHolderRecordObj
 
-#Merit lib.
-import ../../Merit/Merit
+#Element and MeritHolder libs.
+import ../../Consensus/Element
+import ../../Consensus/MeritHolder
+
+#Consensus object.
+import ../../Consensus/objects/ConsensusObj
+
+#Block and Blockchain libs.
+import ../../Merit/Block
+import ../../Merit/Blockchain
 
 #Transactions DB lib.
 import ../../Filesystem/DB/TransactionsDB
@@ -102,7 +110,7 @@ proc `[]`*(
 proc newTransactionsObj*(
     db: DB,
     consensus: Consensus,
-    merit: Merit
+    blockchain: Blockchain
 ): Transactions {.forceCheck: [].} =
     #Create the object.
     result = Transactions(
@@ -123,8 +131,8 @@ proc newTransactionsObj*(
     #Find every Verifier with a Verification still in Epochs.
     var mentioned: Table[string, BLSPublicKey] = initTable[string, BLSPublicKey]()
     try:
-        for nonce in max(0, merit.blockchain.height - 5) ..< merit.blockchain.height:
-            for record in merit.blockchain[nonce].records:
+        for nonce in max(0, blockchain.height - 5) ..< blockchain.height:
+            for record in blockchain[nonce].records:
                 mentioned[record.key.toString()] = record.key
     except IndexError as e:
         doAssert(false, "Couldn't load records from the Blockchain while reloading Transactions: " & e.msg)

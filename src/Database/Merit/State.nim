@@ -63,6 +63,13 @@ proc processBlock*(
     #Increment the amount of processed Blocks.
     inc(state.processedBlocks)
 
+#Calculate the threshold for an Epoch that ends on the specified Block.
+proc calculateThreshold*(
+    state: State,
+    blockNum: int
+): int {.inline, forceCheck: [].} =
+    min((state.live div 100) + 6, state.deadBlocks) * 80
+
 #Remove a MeritHolder's Merit.
 proc remove*(
     state: var State,

@@ -12,6 +12,9 @@ import ../../../../src/Wallet/MinerWallet
 #MeritHolderRecord object.
 import ../../../../src/Database/common/objects/MeritHolderRecordObj
 
+#Transactions lib.
+import ../../../../src/Database/Transactions/Transactions
+
 #Consensus lib.
 import ../../../../src/Database/Consensus/Consensus
 
@@ -33,6 +36,12 @@ proc test*() =
         state: State = newState(functions, 100, blockchain.height)
         #Epochs.
         epochs: Epochs = newEpochs(functions, consensus, blockchain)
+        #Transactions.
+        transactions: Transactions = newTransactions(
+            functions,
+            consensus,
+            blockchain
+        )
 
         #Hash.
         hash: Hash[384]
@@ -69,10 +78,17 @@ proc test*() =
         #Clear the records.
         records = @[]
         for miner in miners:
-            #Create and add the Verification.
+            #Create the Verification.
             verif = newSignedVerificationObj(hash)
             miner.sign(verif, consensus[miner.publicKey].height)
-            consensus.add(verif, true)
+
+            #Register the Transaction.
+            var tx: Transaction = Transaction()
+            tx.hash = hash
+            consensus.register(transactions, state, tx, 0)
+
+            #Add the Verification.
+            consensus.add(state, verif, true)
 
             #Add the record.
             records.add(

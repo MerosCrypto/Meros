@@ -11,8 +11,9 @@ import ../../Wallet/MinerWallet
 #Consensus lib.
 import ../Consensus/Consensus
 
-#Merit lib.
-import ../Merit/Merit
+#Blockchain and Epochs libs.
+import ../Merit/Blockchain
+import ../Merit/Epochs
 
 #Transactions DB lib.
 import ../Filesystem/DB/TransactionsDB
@@ -27,8 +28,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export toString, getUTXOs, loadDataTip, markVerified
-#export loadData
+export toString, getUTXOs, loadSpenders, loadDataTip, markVerified
 
 #Seq utils standard lib.
 import sequtils
@@ -40,12 +40,12 @@ import tables
 proc newTransactions*(
     db: DB,
     consensus: Consensus,
-    merit: Merit
+    blockchain: Blockchain
 ): Transactions {.inline, forceCheck: [].} =
     newTransactionsObj(
         db,
         consensus,
-        merit
+        blockchain
     )
 
 #Add a Claim.

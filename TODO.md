@@ -72,11 +72,19 @@ Network:
 
 Transactions Branch:
 
-- Move transaction weights and verified/not verified to the Consensus DAG.
+- Correct Epochs code to use Transaction Statuses.
+- Move `revertPending` inside of Consensus.
+- Calculate and save a final tally of each Transaction's Merit (which will replace reapplyPending).
 
-- Correctly "unverify" Transactions.
-- Correct the Verification threshold.
-- Reload Verifications with their MeritHolder's current Merit.
+- Only add verified Transactions to spendable.
+- Only verify Transactions which have a chance at becoming verified.
+- Only mark Transactions as verified once every parent is verified.
+- Use `markVerified`.
+
+- Support Verifications of Transactions already outside of Epochs.
+- Support Verifications of Transactions competing with Transactions already outside of Epochs.
+- Update TransactionStatus.epoch as needed.
+- Properly save/reload Transaction Statuses.
 
 ### Nim Tests:
 

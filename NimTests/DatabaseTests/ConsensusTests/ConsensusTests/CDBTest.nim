@@ -12,6 +12,12 @@ import ../../../../src/Wallet/MinerWallet
 #MeritHolderRecord object.
 import ../../../../src/Database/common/objects/MeritHolderRecordObj
 
+#Merit lib.
+import ../../../../src/Database/Merit/Merit
+
+#Transactions lib.
+import ../../../../src/Database/Transactions/Transactions
+
 #Consensus lib.
 import ../../../../src/Database/Consensus/Consensus
 
@@ -31,13 +37,23 @@ proc test*() =
     var
         #Database.
         db: DB = newTestDatabase()
+        #State.
+        state: State = newState(db, 1, 0)
         #Consensus.
         consensus: Consensus = newConsensus(db, Hash[384](), Hash[384]())
+        #Transactions.
+        transactions: Transactions = newTransactions(
+            db,
+            consensus,
+            newBlockchain(db, "", 0, Hash[384]())
+        )
 
         #MeritHolders.
         holders: seq[MinerWallet]
         #SignedVerification we just created.
         verif: SignedVerification
+        #Transaction used to register the hash.
+        tx: Transaction
         #Tips we're archiving.
         archiving: seq[MeritHolderRecord]
 
@@ -71,12 +87,17 @@ proc test*() =
             #Sign it.
             holder.sign(verif, consensus[holder.publicKey].height)
 
+            #Register the Transaction.
+            tx = Transaction()
+            tx.hash = hash
+            consensus.register(transactions, state, tx, 0)
+
             #Add it as a SignedVerification.
             if rand(1) == 0:
-                consensus.add(verif, true)
+                consensus.add(state, verif, true)
             #Add it as a Verification.
             else:
-                consensus.add(cast[Verification](verif), true)
+                consensus.add(state, cast[Verification](verif), true)
 
         #Clear archiving and recalculate it.
         archiving = @[]

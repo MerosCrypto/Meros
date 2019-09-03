@@ -112,7 +112,7 @@ proc mainConsensus() {.forceCheck: [].} =
                         doAssert(false, "Couldn't get a MeritRemoval despite confirming it exists: " & e.msg)
                 elif nonce <= consensus[key].archived:
                     discard
-                else:
+                elif nonce < consensus[key].height:
                     raise newException(IndexError, "Element requested has been reverted.")
 
             try:
@@ -183,7 +183,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the Verification to the Elements DAG.
             try:
-                consensus.add(verif, txExists)
+                consensus.add(merit.state, verif, txExists)
             except ValueError as e:
                 fcRaise e
             #Since we got this from a Block, we should've already synced all previous Elements.
@@ -193,15 +193,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 doAssert(false, "Tried to add an unsigned Element we already have: " & e.msg)
 
             echo "Successfully added a new Verification."
-
-            if txExists and (not consensus.malicious.hasKey(verif.holder.toString())):
-                #Add the Verification to the Transactions.
-                discard """
-                try:
-                    transactions.verify(verif, merit.state[verif.holder], merit.state.live)
-                except ValueError:
-                    return
-                """
 
         #Handle SignedElements.
         functions.consensus.addSignedVerification = proc (
@@ -247,7 +238,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the SignedVerification to the Elements DAG.
             try:
-                consensus.add(verif)
+                consensus.add(merit.state, verif)
             #Invalid signature.
             except ValueError as e:
                 fcRaise e
@@ -256,15 +247,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
 
             echo "Successfully added a new Signed Verification."
-
-            if not consensus.malicious.hasKey(verif.holder.toString()):
-                #Add the Verification to the Transactions.
-                discard """
-                try:
-                    transactions.verify(verif, merit.state[verif.holder], merit.state.live)
-                except ValueError:
-                    return
-                """
 
             #Broadcast the SignedVerification.
             functions.network.broadcast(

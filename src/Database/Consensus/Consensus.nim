@@ -18,6 +18,13 @@ import ../common/objects/ConsensusIndexObj
 import ../common/objects/MeritHolderRecordObj
 export ConsensusIndex
 
+#Transaction lib and Transactions object.
+import ../Transactions/Transaction
+import ../Transactions/objects/TransactionsObj
+
+#State lib.
+import ../Merit/State
+
 #SpamFilter object.
 import objects/SpamFilterObj
 export SpamFilterObj
@@ -102,15 +109,54 @@ proc checkMalicious*(
             e.removal
         )
 
+#Register a Transaction.
+proc register*(
+    consensus: Consensus,
+    transactions: Transactions,
+    state: var State,
+    tx: Transaction,
+    blockNum: int
+) {.forceCheck: [].} =
+    #Create the status.
+    var status: TransactionStatus = newTransactionStatusObj(blockNum + 6)
+
+    #Check for competing Transactions.
+    for input in tx.inputs:
+        var spenders: seq[Hash[384]] = transactions.loadSpenders(input)
+        if spenders.len != 1:
+            status.defaulting = true
+
+            #If there's a competing Transaction, mark competitors as needing to default.
+            #This will run for every input with multiple spenders.
+            if status.defaulting:
+                for spender in spenders:
+                    try:
+                        consensus.statuses[spender.toString()].defaulting = true
+                    except KeyError:
+                        doAssert(false, "Competing Transaction is out of Epochs.")
+
+    #If there were previously unknown Verifications, apply them.
+    if consensus.unknowns.hasKey(tx.hash.toString()):
+        try:
+            for verifier in consensus.unknowns[tx.hash.toString()]:
+                status.verifiers.add(verifier)
+
+            #Delete from the unknowns table.
+            consensus.unknowns.del(tx.hash.toString())
+
+            #Since we added Verifiers, calculate the Merit.
+            consensus.calculateMerit(state, status)
+        except KeyError as e:
+            doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
+
+    #Set the status.
+    consensus.statuses[tx.hash.toString()] = status
+
 #Handle unknown Verifications.
 proc handleUnknown(
     consensus: Consensus,
-    verif: Verification,
-    txExists: bool
+    verif: Verification
 ) {.forceCheck: [].} =
-    if txExists:
-        return
-
     var hash: string = verif.hash.toString()
     if not consensus.unknowns.hasKey(hash):
         consensus.unknowns[hash] = newSeq[BLSPublicKey]()
@@ -123,6 +169,7 @@ proc handleUnknown(
 #Add a Verification.
 proc add*(
     consensus: Consensus,
+    state: var State,
     verif: Verification,
     txExists: bool
 ) {.forceCheck: [
@@ -139,11 +186,15 @@ proc add*(
     except MaliciousMeritHolder as e:
         raise newException(ValueError, "Tried to add an Element from a Block which would cause a MeritRemoval: " & e.msg)
 
-    consensus.handleUnknown(verif, txExists)
+    if not txExists:
+        consensus.handleUnknown(verif)
+    else:
+        consensus.update(state, verif.hash, verif.holder)
 
 #Add a SignedVerification.
 proc add*(
     consensus: Consensus,
+    state: var State,
     verif: SignedVerification
 ) {.forceCheck: [
     ValueError,
@@ -159,6 +210,8 @@ proc add*(
         doAssert(false, "Tried to add a SignedVerification which caused was already added. This should've been checked via checkMalicious before hand: " & e.msg)
     except MaliciousMeritHolder as e:
         doAssert(false, "Tried to add a SignedVerification which caused a MeritRemoval. This should've been checked via checkMalicious before hand: " & e.msg)
+
+    consensus.update(state, verif.hash, verif.holder)
 
 #Add a MeritRemoval.
 proc add*(

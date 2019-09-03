@@ -44,7 +44,7 @@ proc mainTransactions() {.forceCheck: [].} =
         transactions = newTransactions(
             database,
             consensus,
-            merit
+            merit.blockchain
         )
 
         #Handle requests for an Transaction.
@@ -78,6 +78,9 @@ proc mainTransactions() {.forceCheck: [].} =
             #Data already exisrs.
             except DataExists as e:
                 fcRaise e
+
+            #Register the Claim with Consensus.
+            consensus.register(transactions, merit.state, claim, merit.blockchain.height)
 
             echo "Successfully added the Claim."
 
@@ -115,6 +118,9 @@ proc mainTransactions() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
+            #Register the Send with Consensus.
+            consensus.register(transactions, merit.state, send, merit.blockchain.height)
+
             echo "Successfully added the Send."
 
             if not syncing:
@@ -150,6 +156,9 @@ proc mainTransactions() {.forceCheck: [].} =
             #Data already exisrs.
             except DataExists as e:
                 fcRaise e
+
+            #Register the Data with Consensus.
+            consensus.register(transactions, merit.state, data, merit.blockchain.height)
 
             echo "Successfully added the Data."
 

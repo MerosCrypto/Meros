@@ -57,7 +57,7 @@ proc test*() =
         transactions: Transactions = newTransactions(
             db,
             consensus,
-            merit
+            merit.blockchain
         )
 
         #MeritHolder.
@@ -71,7 +71,7 @@ proc test*() =
         var reloaded: Transactions = newTransactions(
             db,
             consensus,
-            merit
+            merit.blockchain
         )
 
         #Compare the Transactionss.
@@ -121,9 +121,17 @@ proc test*() =
     proc verify(
         hash: Hash[384]
     ) =
+        #Create the Verification.
         var verif: SignedVerification = newSignedVerificationObj(hash)
         holder.sign(verif, consensus[holder.publicKey].height)
-        consensus.add(verif)
+
+        #Register the Transaction.
+        var tx: Transaction = Transaction()
+        tx.hash = hash
+        consensus.register(transactions, merit.state, tx, 0)
+
+        #Add the Verification.
+        consensus.add(merit.state, verif)
         transactions.markVerified(verif.hash)
 
     #Iterate over 20 'rounds'.

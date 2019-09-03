@@ -9,6 +9,9 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
+#Transactions lib.
+import ../../../../src/Database/Transactions/Transactions
+
 #Consensus lib.
 import ../../../../src/Database/Consensus/Consensus
 
@@ -54,6 +57,12 @@ proc test*() =
             "EPOCHS_TEST_DB",
             30,
             "".pad(48).toHash(384)
+        )
+        #Transactions.
+        transactions: Transactions = newTransactions(
+            db,
+            consensus,
+            blockchain
         )
         #State.
         state: State = newState(db, 5, blockchain.height)
@@ -146,8 +155,13 @@ proc test*() =
                             holder.sign(verif, consensus[holder.publicKey].height)
                             signed[holder.publicKey.toString()].add(hash)
 
+                            #Register the Transaction.
+                            var tx: Transaction = Transaction()
+                            tx.hash = hash
+                            consensus.register(transactions, state, tx, 0)
+
                             #Add it to the Consensus DAG.
-                            consensus.add(verif)
+                            consensus.add(state, verif)
                 #Create a MeritRemoval.
                 else:
                     verif1 = newSignedVerificationObj(hash)

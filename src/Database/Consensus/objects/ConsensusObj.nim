@@ -18,6 +18,13 @@ import ElementObj
 import VerificationObj
 import MeritRemovalObj
 
+#TransactionStatus object.
+import TransactionStatusObj
+export TransactionStatusObj
+
+#State lib.
+import ../../Merit/State
+
 #SpamFilter object.
 import SpamFilterObj
 
@@ -43,7 +50,9 @@ type Consensus* = ref object
     #BLS Public Key -> MeritRemoval.
     malicious*: Table[string, seq[MeritRemoval]]
 
-    #Verifications of unknown transactions.
+    #Statuses of Transactions not yet out of Epochs.
+    statuses*: Table[string, TransactionStatus]
+    #Verifications of unknown Transactions.
     unknowns*: Table[string, seq[BLSPublicKey]]
 
 #Consensus constructor.
@@ -55,12 +64,16 @@ proc newConsensusObj*(
     #Create the Consensus object.
     result = Consensus(
         db: db,
+
         filters: (
             send: newSpamFilterObj(sendDiff),
             data: newSpamFilterObj(dataDiff)
         ),
+
         holders: initTable[string, MeritHolder](),
         malicious: initTable[string, seq[MeritRemoval]](),
+
+        statuses: initTable[string, TransactionStatus](),
         unknowns: initTable[string, seq[BLSPublicKey]]()
     )
 
@@ -99,6 +112,42 @@ proc add(
         consensus.db.save(holder, consensus.holders[holderStr].archived)
     except KeyError as e:
         doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
+
+#Calculate a Transaction's Merit.
+proc calculateMerit*(
+    consensus: Consensus,
+    state: var State,
+    status: TransactionStatus
+) {.forceCheck: [].} =
+    var merit: int = 0
+    for verifier in status.verifiers:
+        #Skip malicious MeritHolders from Merit calculations.
+        if not consensus.malicious.hasKey(verifier.toString()):
+            merit += state[verifier]
+
+    #Check if the Transaction crossed its threshold, as long as it doesn't need to default.
+    if (not status.defaulting) and (merit >= state.calculateThreshold(status.epoch)):
+        status.verified = true
+
+#Update a Status with a new verifier.
+proc update*(
+    consensus: Consensus,
+    state: var State,
+    hash: Hash[384],
+    verifier: BLSPublicKey
+) {.forceCheck: [].} =
+    #Grab the status.
+    var status: TransactionStatus
+    try:
+        status = consensus.statuses[hash.toString()]
+    except KeyError:
+        doAssert(false, "Transaction was either not registered or is out of Epochs.")
+
+    #Add the Verifier.
+    status.verifiers.add(verifier)
+
+    #Calculate Merit.
+    consensus.calculateMerit(state, status)
 
 #Gets a MeritHolder by their key.
 proc `[]`*(
