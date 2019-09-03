@@ -50,12 +50,6 @@ type
             IndexError
         ].}
 
-        getMerit*: proc (
-            hash: Hash[384]
-        ): int {.raises: [
-            IndexError
-        ].}
-
         addClaim*: proc (
             claim: Claim,
             syncing: bool = false

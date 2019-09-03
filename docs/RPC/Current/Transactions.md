@@ -23,8 +23,7 @@ The result is an object, as follows:
         When `descendant` == "Claim" or `descendant` == "Send":
         - `key` (string): Ed25519 Public Key.
 
-- `hash`     (string)
-- `verified` (bool)
+- `hash` (string)
 
 	When `descendant` == "Mint":
     - `nonce` (int)
@@ -42,11 +41,3 @@ The result is an object, as follows:
     - `signature` (string)
     - `proof`     (int)
     - `argon`     (string)
-
-### `getMerit`
-
-`getMerit` replies with how much Merit is behind the specified Transaction, as long as it is still in Epochs. It takes in one argument:
-- Hash (string)
-
-The result is an object, as follows:
-- `merit`     (int)
