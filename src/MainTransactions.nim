@@ -15,7 +15,7 @@ proc verify(
                 doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
 
         #Make sure we didn't already verify a Transaction which spends the same inputs.
-        if not transactions.isNewTXFirst(transaction):
+        if not transactions.isFirst(transaction):
             return
 
         #Verify the Transaction.

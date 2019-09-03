@@ -33,8 +33,6 @@ type
 
         #Transactions which have yet to leave Epochs.
         transactions*: Table[string, Transaction]
-        #Table of inputs to whoever spent them.
-        spent*: Table[string, seq[Hash[384]]]
 
 #Get a Data's sender.
 proc getSender*(
@@ -63,17 +61,6 @@ proc add*(
     if not (tx of Mint):
         #Add the Transaction to the cache.
         transactions.transactions[tx.hash.toString()] = tx
-
-        #Track the spent outputs.
-        for input in tx.inputs:
-            var inputStr: string = input.toString()
-            if not transactions.spent.hasKey(inputStr):
-                if save:
-                    if transactions.db.loadSpenders(input).len != 0:
-                        continue
-                    transactions.spent[inputStr] = @[tx.hash]
-                else:
-                    transactions.spent[inputStr] = transactions.db.loadSpenders(input)
 
     if save:
         #Save the TX.
@@ -123,8 +110,7 @@ proc newTransactionsObj*(
 
         mintNonce: 0,
 
-        transactions: initTable[string, Transaction](),
-        spent: initTable[string, seq[Hash[384]]]()
+        transactions: initTable[string, Transaction]()
     )
 
     #Load the mint nonce.
@@ -239,10 +225,6 @@ func del*(
     #Delete the Transaction from the cache.
     transactions.transactions.del(hash)
 
-    #Clear the spent inputs.
-    for input in tx.inputs:
-        transactions.spent.del(input.toString())
-
 #Load a MeritHolder's out-of-Epoch tip.
 proc load*(
     transactions: Transactions,
@@ -278,6 +260,12 @@ proc loadUTXO*(
         result = transactions.db.loadSendUTXO(input)
     except DBReadError as e:
         fcRaise e
+
+proc loadSpenders*(
+    transactions: Transactions,
+    input: Input
+): seq[Hash[384]] {.inline, forceCheck: [].} =
+    transactions.db.loadSpenders(input)
 
 #Load a Data Tip.
 proc loadDataTip*(

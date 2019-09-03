@@ -271,18 +271,15 @@ proc archive*(
         #Save the popped height so we can reload Elements.
         transactions.save(record.key, record.nonce)
 
-#Check if a new Transaction is the first to spend all its inputs.
-proc isNewTXFirst*(
+#Check if a Transaction is the first to spend all its inputs.
+proc isFirst*(
     transactions: Transactions,
     tx: Transaction
 ): bool {.forceCheck: [].} =
     for input in tx.inputs:
         try:
-            if transactions.spent[input.toString()][0] != tx.hash:
+            if transactions.loadSpenders(input)[0] != tx.hash:
                 return false
-        #Input is out of Epochs.
-        except KeyError:
-            return false
         except IndexError:
-            doAssert(false, "Input was added to spent yet has no spenders.")
+            doAssert(false, "Transaction spends non-existent input.")
     return true

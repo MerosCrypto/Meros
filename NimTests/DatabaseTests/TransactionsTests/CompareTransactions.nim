@@ -82,14 +82,7 @@ proc compare*(
     #Test the mint nonce.
     assert(txs1.mintNonce == txs2.mintNonce)
 
-    #Test the transactions.
+    #Test the Transactions and get a list of spent outputs.
     assert(txs1.transactions.len == txs2.transactions.len)
     for hash in txs1.transactions.keys():
         compare(txs1.transactions[hash], txs2.transactions[hash])
-
-    #Test the spent tables.
-    assert(txs1.spent.len == txs2.spent.len)
-    for input in txs1.spent.keys():
-        assert(txs1.spent[input].len == txs2.spent[input].len)
-        for s in 0 ..< txs1.spent[input].len:
-            assert(txs1.spent[input][s] == txs2.spent[input][s])
