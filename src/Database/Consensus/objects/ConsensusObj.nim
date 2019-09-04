@@ -126,7 +126,7 @@ proc calculateMerit*(
             merit += state[verifier]
 
     #Check if the Transaction crossed its threshold, as long as it doesn't need to default.
-    if (not status.defaulting) and (merit >= state.calculateThreshold(status.epoch)):
+    if (not status.defaulting) and (merit >= state.nodeThresholdAt(status.epoch)):
         status.verified = true
 
 #Update a Status with a new verifier.

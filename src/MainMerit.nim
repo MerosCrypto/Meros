@@ -192,7 +192,7 @@ proc mainMerit() {.forceCheck: [].} =
                 merit.state.remove(removee.key, newBlock)
 
             #Archive the Elements mentioned in the Block.
-            consensus.archive(newBlock.records)
+            consensus.archive(newBlock.records, epoch.hashes)
 
             #Archive the hashes handled by the popped Epoch.
             transactions.archive(consensus, epoch)

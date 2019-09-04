@@ -30,6 +30,9 @@ import ../CompareConsensus
 #Random standard lib.
 import random
 
+#Tables lib.
+import tables
+
 proc test*() =
     #Seed random.
     randomize(int64(getTime()))
@@ -113,7 +116,7 @@ proc test*() =
                 )
             )
         #Archive the records.
-        consensus.archive(archiving)
+        consensus.archive(archiving, initTable[string, seq[BLSPublicKey]]())
 
         #Commit the DB.
         db.commit(0)

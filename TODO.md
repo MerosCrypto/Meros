@@ -72,7 +72,6 @@ Network:
 
 Transactions Branch:
 
-- Correct Epochs code to use Transaction Statuses.
 - Move `revertPending` inside of Consensus.
 - Calculate and save a final tally of each Transaction's Merit (which will replace reapplyPending).
 
@@ -82,7 +81,6 @@ Transactions Branch:
 - Use `markVerified`.
 
 - Support Verifications of Transactions already outside of Epochs.
-- Support Verifications of Transactions competing with Transactions already outside of Epochs.
 - Update TransactionStatus.epoch as needed.
 - Properly save/reload Transaction Statuses.
 

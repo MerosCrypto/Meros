@@ -108,6 +108,8 @@ proc test*() =
 
         #Block we're mining.
         mining: Block
+        #Shifted Epoch.
+        epoch: Epoch
 
     #Compare the Epochs against the reloaded Epochs.
     proc compare() =
@@ -267,7 +269,7 @@ proc test*() =
         state.processBlock(blockchain, mining)
 
         #Shift the records onto the Epochs.
-        discard epochs.shift(consensus, @[], records)
+        epoch = epochs.shift(consensus, @[], records)
 
         #Delete the Merit of every Malicious MeritHolder.
         for mr in pending:
@@ -275,7 +277,7 @@ proc test*() =
         pending = @[]
 
         #Mark the records as archived.
-        consensus.archive(records)
+        consensus.archive(records, epoch.hashes)
 
         #Commit the DB.
         db.commit(mining.nonce)

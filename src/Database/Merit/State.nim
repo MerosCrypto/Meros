@@ -63,12 +63,19 @@ proc processBlock*(
     #Increment the amount of processed Blocks.
     inc(state.processedBlocks)
 
-#Calculate the threshold for an Epoch that ends on the specified Block.
-proc calculateThreshold*(
+#Calculate the Verification threshold for an Epoch that ends on the specified Block.
+proc protocolThresholdAt*(
     state: State,
     blockNum: int
 ): int {.inline, forceCheck: [].} =
-    min((state.live div 100) + 6, state.deadBlocks) * 80
+    min(state.live + ((blockNum - state.processedBlocks) * 100), state.deadBlocks * 100) div 2 + 1
+
+#Calculate the threshold for an Epoch that ends on the specified Block.
+proc nodeThresholdAt*(
+    state: State,
+    blockNum: int
+): int {.inline, forceCheck: [].} =
+    min((state.live div 100) + (blockNum - state.processedBlocks), state.deadBlocks) * 80
 
 #Remove a MeritHolder's Merit.
 proc remove*(
