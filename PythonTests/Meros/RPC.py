@@ -4,8 +4,8 @@ from typing import Dict, List, Any
 #Meros class.
 from PythonTests.Meros.Meros import Meros
 
-#NodeError Exception.
-from PythonTests.Tests.Errors import NodeError
+#NodeError and TestError Exceptions.
+from PythonTests.Tests.Errors import NodeError, TestError
 
 #JSON standard lib.
 import json
@@ -74,7 +74,7 @@ class RPC:
         #Raise an exception on error.
         result: Dict[str, Any] = json.loads(response)
         if "error" in result:
-            raise TestError(result["error"]["message"] & ".")
+            raise TestError(result["error"]["message"] + ".")
         return result["result"]
 
     #Quit Meros.

@@ -51,7 +51,9 @@ type Consensus* = ref object
     malicious*: Table[string, seq[MeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
-    statuses*: Table[string, TransactionStatus]
+    statuses: Table[string, TransactionStatus]
+    #Statuses which have been updated.
+    updated: Table[string, bool]
     #Verifications of unknown Transactions.
     unknowns*: Table[string, seq[BLSPublicKey]]
 
@@ -74,6 +76,7 @@ proc newConsensusObj*(
         malicious: initTable[string, seq[MeritRemoval]](),
 
         statuses: initTable[string, TransactionStatus](),
+        updated: initTable[string, bool](),
         unknowns: initTable[string, seq[BLSPublicKey]]()
     )
 
@@ -113,6 +116,37 @@ proc add(
     except KeyError as e:
         doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
 
+#Set a Transaction's status.
+proc setStatus*(
+    consensus: Consensus,
+    hash: Hash[384],
+    status: TransactionStatus
+) {.forceCheck: [].} =
+    consensus.statuses[hash.toString()] = status
+    consensus.updated[hash.toString()] = true
+
+#Get a Transaction's statuses.
+proc getStatus*(
+    consensus: Consensus,
+    hash: Hash[384]
+): TransactionStatus {.forceCheck: [
+    IndexError
+].} =
+    if consensus.statuses.hasKey(hash.toString()):
+        try:
+            return consensus.statuses[hash.toString()]
+        except KeyError as e:
+            doAssert(false, "Couldn't get status from the cache when the cache has the key: " & e.msg)
+
+    if consensus.db.loadOutOfEpochs(hash.toString()):
+        raise newException(IndexError, "Transaction is out of Epochs.")
+
+    try:
+        result = consensus.db.load(hash)
+    except DBReadError:
+        raise newException(IndexError, "Transaction doesn't exist.")
+    consensus.statuses[hash.toString()] = result
+
 #Calculate a Transaction's Merit.
 proc calculateMerit*(
     consensus: Consensus,
@@ -139,15 +173,42 @@ proc update*(
     #Grab the status.
     var status: TransactionStatus
     try:
-        status = consensus.statuses[hash.toString()]
-    except KeyError:
+        status = consensus.getStatus(hash)
+    except IndexError:
         doAssert(false, "Transaction was either not registered or is out of Epochs.")
+
+    #Make sure this isn't a duplicate.
+    for existing in status.verifiers:
+        if existing == verifier:
+            return
 
     #Add the Verifier.
     status.verifiers.add(verifier)
 
     #Calculate Merit.
     consensus.calculateMerit(state, status)
+
+    #Mark the Status as updated.
+    consensus.updated[hash.toString()] = true
+
+#Finalize a TransactionStatus.
+proc finalize*(
+    consensus: Consensus,
+    hash: string
+) {.forceCheck: [].} =
+    consensus.statuses.del(hash)
+    consensus.db.saveOutOfEpochs(hash)
+
+#Save updated statuses.
+proc saveStatuses*(
+    consensus: Consensus
+) {.forceCheck: [].} =
+    try:
+        for hash in consensus.updated.keys():
+            consensus.db.save(hash, consensus.statuses[hash])
+    except KeyError as e:
+        doAssert(false, "Couldn't get a TransactionStatus by a key from .keys(): " & e.msg)
+    consensus.updated = initTable[string, bool]()
 
 #Gets a MeritHolder by their key.
 proc `[]`*(
@@ -182,9 +243,16 @@ proc `[]`*(
 #Iterate over every MeritHolder.
 iterator holders*(
     consensus: Consensus
-): BLSPublicKey {.raises: [].} =
+): BLSPublicKey {.forceCheck: [].} =
     for holder in consensus.holders.keys():
         try:
             yield consensus.holders[holder].key
         except KeyError as e:
             doAssert(false, "Couldn't grab a MeritHolder despite only asking for it because of the keys iterator: " & e.msg)
+
+#Iterate over every status.
+iterator statuses*(
+    consensus: Consensus
+): string {.forceCheck: [].} =
+    for status in consensus.statuses.keys():
+        yield status

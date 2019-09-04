@@ -134,8 +134,8 @@ proc register*(
                         continue
 
                     try:
-                        consensus.statuses[spender.toString()].defaulting = true
-                    except KeyError:
+                        consensus.getStatus(spender).defaulting = true
+                    except IndexError:
                         if not consensus.db.loadOutOfEpochs(spender.toString()):
                             doAssert(false, "Competing Transaction doesn't have a status despite still being in Epochs.")
 
@@ -154,7 +154,7 @@ proc register*(
             doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
 
     #Set the status.
-    consensus.statuses[tx.hash.toString()] = status
+    consensus.setStatus(tx.hash, status)
 
 #Handle unknown Verifications.
 proc handleUnknown(
@@ -335,5 +335,6 @@ proc archive*(
 
     #Mark every hash in this Epoch as out of Epochs.
     for hash in hashes.keys():
-        consensus.statuses.del(hash)
-        consensus.db.saveOutOfEpochs(hash)
+        consensus.finalize(hash)
+
+    consensus.saveStatuses()

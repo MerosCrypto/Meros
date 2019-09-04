@@ -17,11 +17,11 @@ type TransactionStatus* = ref object
     #This is not technically defaulting, as the Transaction may have more than the threshold of Merit, yet it looks similar.
     #It's used when the Transaction has a competitor.
     defaulting*: bool
-    #List of Verifiers.
-    verifiers*: seq[BLSPublicKey]
     #If the Transaction was verified.
     #If the Transaction was already verified, and then a competing Transaction is found, both defaulting and verified will be true.
     verified*: bool
+    #List of Verifiers.
+    verifiers*: seq[BLSPublicKey]
 
 #Constructor.
 proc newTransactionStatusObj*(
@@ -30,6 +30,6 @@ proc newTransactionStatusObj*(
     TransactionStatus(
         epoch: epoch,
         defaulting: false,
-        verifiers: @[],
-        verified: false
+        verified: false,
+        verifiers: @[]
     )

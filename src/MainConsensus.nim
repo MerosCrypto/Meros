@@ -170,7 +170,7 @@ proc mainConsensus() {.forceCheck: [].} =
             IndexError
         ].} =
             try:
-                result = consensus.statuses[hash.toString()]
+                result = consensus.getStatus(hash)
             except KeyError:
                 raise newException(IndexError, "Couldn't find a Status for that hash.")
 

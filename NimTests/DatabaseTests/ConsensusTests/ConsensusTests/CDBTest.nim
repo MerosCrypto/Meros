@@ -53,12 +53,14 @@ proc test*() =
 
         #MeritHolders.
         holders: seq[MinerWallet]
+        #Hashes used in Verifications.
+        hashes: seq[Hash[384]] = @[]
         #SignedVerification we just created.
         verif: SignedVerification
         #Transaction used to register the hash.
         tx: Transaction
         #Tips we're archiving.
-        archiving: seq[MeritHolderRecord]
+        archiving: seq[MeritHolderRecord] = @[]
 
     #Compare the Consensus against the reloaded Consensus.
     proc compare() =
@@ -74,6 +76,13 @@ proc test*() =
         for _ in 0 ..< rand(2) + 1:
             holders.add(newMinerWallet())
 
+        #Create a random amount of Hashes.
+        for _ in 0 ..< rand(2) + 1:
+            hashes.add(Hash[384]())
+            #Randomize the hash.
+            for b in 0 ..< hashes[^1].data.len:
+                hashes[^1].data[b] = uint8(rand(255))
+
         #Create Elements.
         for e in 0 ..< rand(10):
             var
@@ -81,10 +90,7 @@ proc test*() =
                 i: int = rand(holders.len - 1)
                 holder: MinerWallet = holders[i]
                 #Hash used in a SignedVerification.
-                hash: Hash[384]
-            #Randomize the hash.
-            for b in 0 ..< hash.data.len:
-                hash.data[b] = uint8(rand(255))
+                hash: Hash[384] = hashes[rand(hashes.high)]
             #Create the Verification.
             verif = newSignedVerificationObj(hash)
             #Sign it.

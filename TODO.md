@@ -18,6 +18,7 @@ Merit:
 
 Consensus:
 
+- Save/reload unarchived MeritRemovals.
 - Check if MeritHolders verify conflicting Transactions.
 - SendDifficulty.
 - DataDifficulty.
@@ -73,7 +74,8 @@ Network:
 Transactions Branch:
 
 - Move `revertPending` inside of Consensus.
-- Calculate and save a final tally of each Transaction's Merit (which will replace reapplyPending).
+- Calculate and save a final tally of each Transaction's Merit (which will replace `reapplyPending`).
+- Enable running `consensus_getStatus` on Transactions out of Epochs.
 
 - Only add verified Transactions to spendable.
 - Only verify Transactions which have a chance at becoming verified.
@@ -82,9 +84,6 @@ Transactions Branch:
 
 - Support Verifications of Transactions already outside of Epochs.
 - Update TransactionStatus.epoch as needed.
-- Properly save/reload Transaction Statuses.
-
-- Enable running `consensus_getStatus` on Transactions out of Epochs.
 
 ### Nim Tests:
 
@@ -112,6 +111,7 @@ Wallet:
 Database/Filesystem/DB/Serialize:
 
 - Consensus/DBSerializeElement Test.
+- Consensus/SerializeTransactionStatus Test.
 - Transactions/SerializeTransaction Test.
 
 Datbase/Filesystem/DB:

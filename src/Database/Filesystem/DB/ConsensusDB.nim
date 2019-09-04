@@ -10,12 +10,15 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Element lib.
+#Element lib and TransactionStatus object.
 import ../../Consensus/Element
+import ../../Consensus/objects/TransactionStatusObj
 
 #Serialize/parse libs.
 import Serialize/Consensus/DBSerializeElement
+import Serialize/Consensus/SerializeTransactionStatus
 import Serialize/Consensus/DBParseElement
+import Serialize/Consensus/ParseTransactionStatus
 
 #DB object.
 import objects/DBObj
@@ -104,10 +107,14 @@ proc save*(
     db: DB,
     elem: Element
 ) {.forceCheck: [].} =
-    db.put(
-        elem.holder.toString() & elem.nonce.toBinary().pad(1),
-        elem.serialize()
-    )
+    db.put(elem.holder.toString() & elem.nonce.toBinary().pad(1), elem.serialize())
+
+proc save*(
+    db: DB,
+    hash: string,
+    status: TransactionStatus
+) {.forceCheck: [].} =
+    db.put(hash, status.serialize())
 
 proc saveOutOfEpochs*(
     db: DB,
@@ -158,6 +165,19 @@ proc load*(
             result.nonce = nonce
         except FinalAttributeError as e:
             doAssert(false, "Set a final attribute twice when loading a MeritRemoval: " & e.msg)
+
+proc load*(
+    db: DB,
+    hash: Hash[384]
+): TransactionStatus {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get(hash.toString()).parseTransactionStatus()
+    except DBReadError as e:
+        fcRaise e
+    except ValueError, BLSError:
+        doAssert(false, "Saved an invalid TransactionStatus to the DB.")
 
 proc loadOutOfEpochs*(
     db: DB,
