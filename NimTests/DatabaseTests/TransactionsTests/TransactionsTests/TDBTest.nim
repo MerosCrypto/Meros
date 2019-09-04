@@ -43,7 +43,16 @@ proc test*() =
         db: DB = newTestDatabase()
 
         #Consensus.
-        consensus: Consensus = newConsensus(db, Hash[384](), Hash[384]())
+        consensus: Consensus = newConsensus(
+            db,
+            proc (
+                hash: Hash[384]
+            ) {.raises: [].} =
+                discard
+            ,
+            Hash[384](),
+            Hash[384]()
+        )
         #Merit.
         merit: Merit = newMerit(
             db,
@@ -119,20 +128,19 @@ proc test*() =
 
     #Add Verifications for an Transaction.
     proc verify(
-        hash: Hash[384]
+        tx: Transaction
     ) =
         #Create the Verification.
-        var verif: SignedVerification = newSignedVerificationObj(hash)
+        var verif: SignedVerification = newSignedVerificationObj(tx.hash)
         holder.sign(verif, consensus[holder.publicKey].height)
 
         #Register the Transaction.
-        var tx: Transaction = Transaction()
-        tx.hash = hash
         consensus.register(transactions, merit.state, tx, 0)
 
         #Add the Verification.
         consensus.add(merit.state, verif)
-        transactions.markVerified(verif.hash)
+        if (tx of Claim) or (tx of Send):
+            transactions.verify(verif.hash)
 
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
@@ -176,7 +184,7 @@ proc test*() =
                     )
                     mintee.sign(claim)
                     transactions.add(claim)
-                    verify(claim.hash)
+                    verify(claim)
 
                     #Update the UTXOs/balance.
                     spendable.add(newSendInput(claim.hash, 0))
@@ -204,7 +212,7 @@ proc test*() =
                 wallet.sign(send)
                 send.mine(Hash[384]())
                 transactions.add(send)
-                verify(send.hash)
+                verify(send)
 
                 #Make sure spendable was properly set.
                 doAssert(transactions.getUTXOs(wallet.publicKey).len == 1)
@@ -223,7 +231,7 @@ proc test*() =
                 wallet.sign(data)
                 data.mine(Hash[384]())
                 transactions.add(data)
-                verify(data.hash)
+                verify(data)
 
         #Mine a Block.
         addBlock()

@@ -73,14 +73,12 @@ Network:
 
 Transactions Branch:
 
-- Move `revertPending` inside of Consensus.
-- Calculate and save a final tally of each Transaction's Merit (which will replace `reapplyPending`).
-- Enable running `consensus_getStatus` on Transactions out of Epochs.
-
-- Only add verified Transactions to spendable.
+- Support running `consensus_getStatus` on Transactions out of Epochs.
 - Only verify Transactions which have a chance at becoming verified.
 - Only mark Transactions as verified once every parent is verified.
-- Use `markVerified`.
+
+- Check if a verified Transaction goes below the protocol threshold and is then replaced. Going below the threshold is fine as long as the Transaction will default.
+- Calculate and save a final tally of each Transaction's Merit.
 
 - Support Verifications of Transactions already outside of Epochs.
 - Update TransactionStatus.epoch as needed.

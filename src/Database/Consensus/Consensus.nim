@@ -55,10 +55,13 @@ import tables
 #Constructor wrapper.
 proc newConsensus*(
     db: DB,
+    notifyVerified: proc (
+        hash: Hash[384]
+    ) {.raises: [].},
     sendDiff: Hash[384],
     dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
-    newConsensusObj(db, sendDiff, dataDiff)
+    newConsensusObj(db, notifyVerified, sendDiff, dataDiff)
 
 #Flag a MeritHolder as malicious.
 proc flag*(
@@ -149,7 +152,7 @@ proc register*(
             consensus.unknowns.del(tx.hash.toString())
 
             #Since we added Verifiers, calculate the Merit.
-            consensus.calculateMerit(state, status)
+            consensus.calculateMerit(state, tx.hash, status)
         except KeyError as e:
             doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
 

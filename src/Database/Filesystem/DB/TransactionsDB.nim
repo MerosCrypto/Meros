@@ -104,18 +104,6 @@ proc save*(
     for o in 0 ..< tx.outputs.len:
         db.put(hash & char(o), tx.outputs[o].serialize())
 
-        if tx.outputs[o] of SendOutput:
-            var
-                key: string = cast[SendOutput](tx.outputs[o]).key.toString()
-                spendable: string = ""
-
-            try:
-                spendable = db.get(key)
-            except DBReadError:
-                discard
-
-            db.put(key, spendable & hash & char(o))
-
 proc saveDataSender*(
     db: DB,
     data: Data,
@@ -137,39 +125,52 @@ proc saveDataTip*(
 ) {.forceCheck: [].} =
     db.put(key.toString() & "d", hash.toString())
 
-#Remove the outputs a TX spends from spendable.
-proc spend*(
+#Add a Send's outputs to spendable while removing its inputs.
+proc verify*(
     db: DB,
-    tx: Transaction
+    tx: Claim or Send
 ) {.forceCheck: [].} =
-    for input in tx.inputs:
+    #Add spendable outputs.
+    for o in 0 ..< tx.outputs.len:
         var
-            output: string = input.toString()
-            key: string
-            spendable: string
-            found: bool = false
+            output: string = tx.hash.toString() & char(o)
+            key: string = cast[SendOutput](tx.outputs[o]).key.toString()
 
-        #Get the key.
         try:
-            key = db.get(output).parseSendOutput().key.toString()
-        except Exception:
-            doAssert(false, "Trying to spend a non-existent output.")
-
-        #Load the output.
-        try:
-            spendable = db.get(key)
+            db.put(key, db.get(key) & output)
         except DBReadError:
-            doAssert(false, "Trying to spend from someone without anything spendable.")
+            db.put(key, "" & output)
 
-        #Remove the specified output.
-        for o in countup(0, spendable.len, 49):
-            if spendable[o ..< o + 49] == output:
-                found = true
-                db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
-                break
+    if tx of Send:
+        #Remove spent inputs.
+        for input in tx.inputs:
+            var
+                output: string = input.toString()
+                key: string
+                spendable: string
+                found: bool = false
 
-        if not found:
-            doAssert(false, "Spending an output not in spendable.")
+            #Get the key.
+            try:
+                key = db.get(output).parseSendOutput().key.toString()
+            except Exception:
+                doAssert(false, "Trying to spend a non-existent output.")
+
+            #Load the output.
+            try:
+                spendable = db.get(key)
+            except DBReadError:
+                doAssert(false, "Trying to spend from someone without anything spendable.")
+
+            #Remove the specified output.
+            for o in countup(0, spendable.len, 49):
+                if spendable[o ..< o + 49] == output:
+                    found = true
+                    db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
+                    break
+
+            if not found:
+                doAssert(false, "Spending an output not in spendable.")
 
 #Load functions.
 proc load*(

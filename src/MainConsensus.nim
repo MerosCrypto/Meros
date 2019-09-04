@@ -1,75 +1,11 @@
 include MainDatabase
 
-#Revert a MeritHolder's pending actions.
-proc revertPending(
-    removal: MeritRemoval,
-    consensus: Consensus,
-    transactions: var Transactions,
-    state: var State
-) {.forceCheck: [].} =
-    #Only revert pending actions if this was the first MeritRemoval.
-    try:
-        if consensus.malicious[removal.holder.toString()].len != 1:
-            return
-    except KeyError as e:
-        doAssert(false, "Couldn't get the MeritRemovals of someone who we're trying to revert the pending actions of: " & e.msg)
-
-    #Revert pending actions.
-    var holder: MeritHolder = consensus[removal.holder]
-    for e in holder.archived + 1 ..< holder.height:
-        var elem: Element
-        try:
-            elem = holder[e]
-        except IndexError as e:
-            doAssert(false, "Couldn't get a known pending Element: " & e.msg)
-
-        case elem:
-            of Verification as verif:
-                discard verif
-                discard """
-                try:
-                    transactions.unverify(verif, state[verif.holder], state.live)
-                except ValueError:
-                    #If it's out of Epochs, move on.
-                    discard
-                """
-            else:
-                doAssert(false, "Unsupported Element type.")
-
-#Reapply reverted pending actions.
-proc reapplyPending(
-    record: MeritHolderRecord,
-    consensus: Consensus,
-    transactions: var Transactions,
-    state: var State
-) {.forceCheck: [].} =
-    var holder: MeritHolder = consensus[record.key]
-    for e in holder.archived + 1 .. record.nonce:
-        var elem: Element
-        try:
-            elem = holder[e]
-        except IndexError as e:
-            doAssert(false, "Couldn't get a known pending Element: " & e.msg)
-
-        case elem:
-            of Verification as verif:
-                #This reapplies the Verification as if we received it before the Block that triggered this.
-                discard verif
-                discard """
-                try:
-                    transactions.verify(verif, state[verif.holder], state.live)
-                except ValueError:
-                    #If it's out of Epochs, move on.
-                    discard
-                """
-            else:
-                doAssert(false, "Unsupported Element type.")
-
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         try:
             consensus = newConsensus(
                 database,
+                functions.transactions.verify,
                 params.SEND_DIFFICULTY.toHash(384),
                 params.DATA_DIFFICULTY.toHash(384)
             )
@@ -232,8 +168,6 @@ proc mainConsensus() {.forceCheck: [].} =
             except MaliciousMeritHolder as e:
                 #Flag the MeritRemoval.
                 consensus.flag(cast[SignedMeritRemoval](e.removal))
-                #Revert pending actions.
-                e.removal.revertPending(consensus, transactions, merit.state)
 
                 try:
                     #Broadcast the first MeritRemoval.
@@ -298,9 +232,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 consensus.add(mr)
             except ValueError as e:
                 fcRaise e
-
-            #Revert pending actions.
-            mr.revertPending(consensus, transactions, merit.state)
 
             echo "Successfully added a new Signed Merit Removal."
 

@@ -166,11 +166,7 @@ proc mainMerit() {.forceCheck: [].} =
                 fcRaise e
             except DataExists as e:
                 fcRaise e
-
-            #Apply reverted actions for everyone who did not have their MeritRemovals archived.
-            for notRemovee in notRemoved:
-                notRemovee.reapplyPending(consensus, transactions, merit.state)
-
+            
             #Save every archived MeritRemoval.
             for removee in removed:
                 try:

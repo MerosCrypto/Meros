@@ -41,6 +41,10 @@ import finals
 type Consensus* = ref object
     #DB.
     db*: DB
+    #Notify another part of the codebase a TX was verified..
+    notifyVerified: proc (
+        hash: Hash[384]
+    ) {.raises: [].}
 
     #Filters.
     filters*: tuple[send: SpamFilter, data: SpamFilter]
@@ -60,11 +64,15 @@ type Consensus* = ref object
 #Consensus constructor.
 proc newConsensusObj*(
     db: DB,
+    notifyVerified: proc (
+        hash: Hash[384]
+    ) {.raises: [].},
     sendDiff: Hash[384],
     dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(
+        notifyVerified: notifyVerified,
         db: db,
 
         filters: (
@@ -151,6 +159,7 @@ proc getStatus*(
 proc calculateMerit*(
     consensus: Consensus,
     state: var State,
+    hash: Hash[384],
     status: TransactionStatus
 ) {.forceCheck: [].} =
     var merit: int = 0
@@ -162,6 +171,7 @@ proc calculateMerit*(
     #Check if the Transaction crossed its threshold, as long as it doesn't need to default.
     if (not status.defaulting) and (merit >= state.nodeThresholdAt(status.epoch)):
         status.verified = true
+        consensus.notifyVerified(hash)
 
 #Update a Status with a new verifier.
 proc update*(
@@ -186,7 +196,7 @@ proc update*(
     status.verifiers.add(verifier)
 
     #Calculate Merit.
-    consensus.calculateMerit(state, status)
+    consensus.calculateMerit(state, hash, status)
 
     #Mark the Status as updated.
     consensus.updated[hash.toString()] = true

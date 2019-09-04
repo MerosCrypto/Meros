@@ -50,7 +50,16 @@ proc test*() =
         #Database.
         db: DB = newTestDatabase()
         #Consensus.
-        consensus: Consensus = newConsensus(db, Hash[384](), Hash[384]())
+        consensus: Consensus = newConsensus(
+            db,
+            proc (
+                hash: Hash[384]
+            ) {.raises: [].} =
+                discard
+            ,
+            Hash[384](),
+            Hash[384]()
+        )
         #Blockchain.
         blockchain: Blockchain = newBlockchain(
             db,

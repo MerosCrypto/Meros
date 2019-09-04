@@ -174,3 +174,9 @@ proc mainTransactions() {.forceCheck: [].} =
                     asyncCheck verify(data)
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+
+        #Mark a Transaction as verified.
+        functions.transactions.verify = proc (
+            hash: Hash[384]
+        ) {.forceCheck: [].} =
+            transactions.verify(hash)

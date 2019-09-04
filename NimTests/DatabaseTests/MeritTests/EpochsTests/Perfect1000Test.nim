@@ -29,7 +29,16 @@ proc test*() =
         #Database Function Box.
         functions: DB = newTestDatabase()
         #Consensus.
-        consensus: Consensus = newConsensus(functions, Hash[384](), Hash[384]())
+        consensus: Consensus = newConsensus(
+            functions,
+            proc (
+                hash: Hash[384]
+            ) {.raises: [].} =
+                discard
+            ,
+            Hash[384](),
+            Hash[384]()
+        )
         #Blockchain.
         blockchain: Blockchain = newBlockchain(functions, "EPOCH_PERFECT_1000_TEST", 1, "".pad(48).toHash(384))
         #State.

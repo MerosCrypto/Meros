@@ -53,6 +53,16 @@ proc test*() =
         #Loaded Spendable.
         loaded: seq[SendInput]
 
+    proc compare() =
+        #Test each spendable.
+        for key in spendable.keys():
+            loaded = db.loadSpendable(newEdPublicKey(key))
+
+            assert(spendable[key].len == loaded.len)
+            for i in 0 ..< spendable[key].len:
+                assert(spendable[key][i].hash == loaded[i].hash)
+                assert(spendable[key][i].nonce == loaded[i].nonce)
+
     #Generate 10 wallets.
     for _ in 0 ..< 10:
         wallets.add(newWallet(""))
@@ -60,22 +70,25 @@ proc test*() =
     #Test 100 Transactions.
     for _ in 0 .. 100:
         outputs = newSeq[SendOutput](rand(254) + 1)
-        for i in 0 ..< outputs.len:
-            outputs[i] = newSendOutput(
+        for o in 0 ..< outputs.len:
+            outputs[o] = newSendOutput(
                 wallets[rand(10 - 1)].publicKey,
                 0
             )
 
-            if not spendable.hasKey(outputs[i].key.toString()):
-                spendable[outputs[i].key.toString()] = @[]
-
-        send = newSend(@[newSendInput(Hash[384](), 0)], outputs)
+        send = newSend(@[], outputs)
         db.save(send)
 
-        for o in 0 ..< outputs.len:
-            spendable[outputs[o].key.toString()].add(
-                newSendInput(send.hash, o)
-            )
+        if rand(2) != 0:
+            db.verify(send)
+            for o in 0 ..< outputs.len:
+                if not spendable.hasKey(outputs[o].key.toString()):
+                    spendable[outputs[o].key.toString()] = @[]
+                spendable[outputs[o].key.toString()].add(
+                    newSendInput(send.hash, o)
+                )
+
+        compare()
 
         #Spend outputs.
         for key in spendable.keys():
@@ -95,16 +108,15 @@ proc test*() =
                     break
 
             if inputs.len != 0:
-                send = newSend(inputs, newSendOutput(newEdPublicKey("".pad(32)), 0))
-                db.spend(send)
+                var outputKey: EdPublicKey = wallets[rand(10 - 1)].publicKey
+                send = newSend(inputs, newSendOutput(outputKey, 0))
+                db.save(send)
+                db.verify(send)
 
-        #Test each spendable.
-        for key in spendable.keys():
-            loaded = db.loadSpendable(newEdPublicKey(key))
+                if not spendable.hasKey(outputKey.toString()):
+                    spendable[outputKey.toString()] = @[]
+                spendable[outputKey.toString()].add(newSendInput(send.hash, 0))
 
-            assert(spendable[key].len == loaded.len)
-            for i in 0 ..< spendable[key].len:
-                assert(spendable[key][i].hash == loaded[i].hash)
-                assert(spendable[key][i].nonce == loaded[i].nonce)
+        compare()
 
     echo "Finished the Database/Filesystem/DB/TransactionsDB/Spendable Test."

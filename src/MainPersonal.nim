@@ -101,13 +101,10 @@ proc mainPersonal() {.forceCheck: [].} =
                 )
 
             #Create the Send.
-            try:
-                send = newSend(
-                    utxos,
-                    outputs
-                )
-            except ValueError as e:
-                raise newException(ValueError, e.msg)
+            send = newSend(
+                utxos,
+                outputs
+            )
 
             #Sign the Send.
             child.sign(send)

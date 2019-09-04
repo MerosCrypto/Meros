@@ -28,7 +28,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export toString, getUTXOs, loadSpenders, loadDataTip, markVerified
+export toString, getUTXOs, loadSpenders, loadDataTip, verify
 
 #Seq utils standard lib.
 import sequtils
@@ -127,8 +127,11 @@ proc add*(
         discard
 
     #Verify the inputs length.
-    if send.inputs.len == 0:
-        raise newException(ValueError, "Send has no inputs.")
+    if send.inputs.len < 1 or 255 < send.inputs.len:
+        raise newException(ValueError, "Send has too little or too many inputs.")
+    #Verify the outputs length.
+    if send.outputs.len < 1 or 255 < send.outputs.len:
+        raise newException(ValueError, "Send has too little or too many outputs.")
 
     var
         #Sender.
@@ -154,12 +157,12 @@ proc add*(
             ):
                 raise newException(ValueError, "Send doesn't spend a Claim or Send.")
         except IndexError:
-            raise newException(ValueError, "Claim spends a non-existant Mint.")
+            raise newException(ValueError, "Send spends a non-existant Claim or Send.")
 
         try:
             spent = transactions.loadUTXO(cast[SendInput](input))
         except DBReadError:
-            raise newException(ValueError, "Send spends a non-existant or spent output.")
+            raise newException(ValueError, "Send spends a non-existant output.")
 
         if not senders.contains(spent.key):
             senders.add(spent.key)

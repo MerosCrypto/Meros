@@ -197,7 +197,7 @@ proc save*(
     transactions.db.save(key, nonce)
 
 #Mark a Transaction as verified, removing the outputs it spends from spendable.
-proc markVerified*(
+proc verify*(
     transactions: var Transactions,
     hash: Hash[384]
 ) {.forceCheck: [].} =
@@ -208,8 +208,10 @@ proc markVerified*(
         doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
 
     case tx:
+        of Claim as claim:
+            transactions.db.verify(claim)
         of Send as send:
-            transactions.db.spend(send)
+            transactions.db.verify(send)
         of Data as data:
             try:
                 transactions.db.saveDataTip(transactions.getSender(data), data.hash)

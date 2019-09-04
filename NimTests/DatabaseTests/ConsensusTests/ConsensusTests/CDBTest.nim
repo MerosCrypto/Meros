@@ -43,7 +43,16 @@ proc test*() =
         #State.
         state: State = newState(db, 1, 0)
         #Consensus.
-        consensus: Consensus = newConsensus(db, Hash[384](), Hash[384]())
+        consensus: Consensus = newConsensus(
+            db,
+            proc (
+                hash: Hash[384]
+            ) {.raises: [].} =
+                discard
+            ,
+            Hash[384](),
+            Hash[384]()
+        )
         #Transactions.
         transactions: Transactions = newTransactions(
             db,
@@ -65,7 +74,16 @@ proc test*() =
     #Compare the Consensus against the reloaded Consensus.
     proc compare() =
         #Reload the Consensus.
-        var reloaded: Consensus = newConsensus(db, Hash[384](), Hash[384]())
+        var reloaded: Consensus = newConsensus(
+            db,
+            proc (
+                hash: Hash[384]
+            ) {.raises: [].} =
+                discard
+            ,
+            Hash[384](),
+            Hash[384]()
+        )
 
         #Compare the Consensus DAGs.
         compare(consensus, reloaded)

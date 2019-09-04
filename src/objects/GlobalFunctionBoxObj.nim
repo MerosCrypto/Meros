@@ -74,6 +74,10 @@ type
             DataExists
         ].}
 
+        verify*: proc (
+            hash: Hash[384]
+        ) {.raises: [].}
+
     ConsensusFunctionBox* = ref object
         getSendDifficulty*: proc (): Hash[384] {.inline, raises: [].}
         getDataMinimumDifficulty*: proc (): Hash[384] {.inline, raises: [].}
