@@ -121,9 +121,7 @@ def MRPALiveTest(
 
     #Verify every Data has 100 Merit.
     for data in datas:
-        if rpc.call("transactions", "getMerit", [data.hash.hex()]) != {
-            "merit": 100
-        }:
+        if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 100:
             raise TestError("Meros didn't verify Transactions with received Verifications.")
 
     #Send and verify the MeritRemoval.
@@ -133,9 +131,7 @@ def MRPALiveTest(
 
     #Verify every Data has 100 Merit.
     for data in datas:
-        if rpc.call("transactions", "getMerit", [data.hash.hex()]) != {
-            "merit": 0
-        }:
+        if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 0:
             raise TestError("Meros didn't revert pending actions of a malicious MeritHolder.")
 
     #Send the next Block.
@@ -190,9 +186,7 @@ def MRPALiveTest(
 
     #Verify the Datas have the Merit they should.
     for d in range(len(datas)):
-        if rpc.call("transactions", "getMerit", [datas[d].hash.hex()]) != {
-            "merit": 100 if d < 3 else 0
-        }:
+        if rpc.call("consensus", "getStatus", [datas[d].hash.hex()]) != 100 if d < 3 else 0:
             raise TestError("Meros didn't apply reverted pending actions of a malicious MeritHolder.")
 
     #Verify the MeritRemoval is now accessible with a nonce of 3.

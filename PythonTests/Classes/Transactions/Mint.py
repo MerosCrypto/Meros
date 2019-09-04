@@ -43,9 +43,7 @@ class Mint(Transaction):
             }],
             "hash": self.hash.hex().upper(),
 
-            "nonce": self.nonce,
-
-            "verified": self.verified
+            "nonce": self.nonce
         }
         return result
 

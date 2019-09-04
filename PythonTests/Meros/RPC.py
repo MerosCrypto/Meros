@@ -32,19 +32,22 @@ class RPC:
         args: List[Any] = []
     ) -> Any:
         #Send the call.
-        self.socket.send(
-            bytes(
-                json.dumps(
-                    {
-                        "jsonrpc": "2.0",
-                        "id": 0,
-                        "method": module + "_" + method,
-                        "params": args
-                    }
-                ),
-                "utf-8"
+        try:
+            self.socket.send(
+                bytes(
+                    json.dumps(
+                        {
+                            "jsonrpc": "2.0",
+                            "id": 0,
+                            "method": module + "_" + method,
+                            "params": args
+                        }
+                    ),
+                    "utf-8"
+                )
             )
-        )
+        except BrokenPipeError:
+            raise NodeError()
 
         #Get the result.
         response: bytes = bytes()
@@ -71,7 +74,7 @@ class RPC:
         #Raise an exception on error.
         result: Dict[str, Any] = json.loads(response)
         if "error" in result:
-            raise Exception(result["error"]["message"])
+            raise TestError(result["error"]["message"] & ".")
         return result["result"]
 
     #Quit Meros.

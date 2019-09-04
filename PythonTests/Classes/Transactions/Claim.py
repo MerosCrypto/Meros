@@ -76,9 +76,7 @@ class Claim(Transaction):
             }],
 
             "signature": self.signature.hex().upper(),
-            "hash": self.hash.hex().upper(),
-
-            "verified": self.verified
+            "hash": self.hash.hex().upper()
         }
         for txInput in self.inputs:
             result["inputs"].append({
