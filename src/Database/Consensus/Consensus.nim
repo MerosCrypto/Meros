@@ -335,4 +335,5 @@ proc archive*(
 
     #Mark every hash in this Epoch as out of Epochs.
     for hash in hashes.keys():
+        consensus.statuses.del(hash)
         consensus.db.saveOutOfEpochs(hash)

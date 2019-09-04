@@ -18,9 +18,9 @@ import ../Wallet/Wallet
 #MeritHolderRecord object.
 import ../Database/common/objects/MeritHolderRecordObj
 
-#Element objects.
-import ../Database/Consensus/objects/VerificationObj
-import ../Database/Consensus/objects/MeritRemovalObj
+#Element lib and TransactionStatus object.
+import ../Database/Consensus/objects/TransactionStatusObj
+import ../Database/Consensus/Element
 
 #Difficulty, BlockHeader, and Block objects.
 import ../Database/Merit/objects/DifficultyObj
@@ -98,6 +98,16 @@ type
             records: seq[MeritHolderRecord],
             aggregate: BLSSignature
         ] {.raises: [].}
+
+        getStatus*: proc (
+            hash: Hash[384]
+        ): TransactionStatus {.raises: [
+            IndexError
+        ].}
+
+        getThreshold*: proc (
+            epoch: int
+        ): int {.inline, raises: [].}
 
         addVerification*: proc (
             verif: Verification

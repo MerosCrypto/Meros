@@ -1,5 +1,20 @@
 # Consensus Module
 
+### `getSendDifficulty`
+
+`getSendDifficulty` replies with the current Send difficulty. It takes in zero arguments and the result of a string of the difficulty.
+
+### `getDataDifficulty`
+
+`getDataDifficulty` replies with the current Data difficulty. It takes in zero arguments and the result of a string of the difficulty.
+
+### `getHeight`
+
+`getHeight` replies with the specified Merit Holder's height. It takes in one argument:
+- Merit Holder (string)
+
+The result is an int of the height.
+
 ### `getElement`
 
 `getElement` replies with the specified Element. It takes in two arguments:
@@ -26,14 +41,6 @@ The result is an object, as follows:
     When `descendant` == "MeritRemoval":
     - `partial`  (string):           Whether or not the first Element is already archived on the Blockchain.
     - `elements` (array of objects): The two Elements which caused this MeritRemoval.
-
-### `getSendDifficulty`
-
-`getSendDifficulty` replies with the current Send difficulty. It takes in zero arguments and the result of a string of the difficulty.
-
-### `getDataDifficulty`
-
-`getDataDifficulty` replies with the current Data difficulty. It takes in zero arguments and the result of a string of the difficulty.
 
 ### `getStatus`
 

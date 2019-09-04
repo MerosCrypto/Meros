@@ -164,6 +164,21 @@ proc mainConsensus() {.forceCheck: [].} =
             except BLSError as e:
                 doAssert(false, "Failed to aggregate the signatures: " & e.msg)
 
+        functions.consensus.getStatus = proc (
+            hash: Hash[384]
+        ): TransactionStatus {.raises: [
+            IndexError
+        ].} =
+            try:
+                result = consensus.statuses[hash.toString()]
+            except KeyError:
+                raise newException(IndexError, "Couldn't find a Status for that hash.")
+
+        functions.consensus.getThreshold = proc (
+            epoch: int
+        ): int {.inline, raises: [].} =
+            merit.state.nodeThresholdAt(epoch)
+
         #Handle Elements.
         functions.consensus.addVerification = proc (
             verif: Verification

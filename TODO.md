@@ -84,6 +84,8 @@ Transactions Branch:
 - Update TransactionStatus.epoch as needed.
 - Properly save/reload Transaction Statuses.
 
+- Enable running `consensus_getStatus` on Transactions out of Epochs.
+
 ### Nim Tests:
 
 objects:
