@@ -20,7 +20,7 @@ proc parseTransactionStatus*(
     ValueError,
     BLSError
 ].} =
-    #Epoch | Defaulting | Verified | Verifiers
+    #Epoch | Defaulting | Verified | Verifiers | Merit (if finalized)
     var statusSeq: seq[string] = statusStr.deserialize(
         INT_LEN,
         BYTE_LEN,

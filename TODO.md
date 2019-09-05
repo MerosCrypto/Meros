@@ -73,13 +73,20 @@ Network:
 
 Transactions Branch:
 
-- Keep a Table for each MeritHolder of their pending Verifications.
+- Optimizations:
+    - Keep a Table for each MeritHolder of their pending Verifications.
 
-- Only verify Transactions which have a chance at becoming verified.
-- Update TransactionStatus.epoch as needed.
+- Bugs:
+    - Meros isn't loading the finalized Merit, and is therefore updating finalized Transactions.
+    - Meros doesn't save historical Epoch thresholds. The existing formula does a naive rewind, instead of a revert, leading to invalid data. Saving it is optimal.
+    - Children Transactions can be finalized before their parents.
 
-- When a MeritRemoval happens, recalculate Merit of every affected Transaction. If one goes below the protocol, doAssert(false).
-- Check if a verified Transaction goes below the protocol threshold and is then replaced. Going below the threshold is fine as long as the Transaction will default.
+- Practical Bugs:
+    - Only verify Transactions which have a chance at becoming verified.
+    - Update TransactionStatus.epoch as needed.
+
+- Work In Progress:
+    - When a MeritRemoval happens, recalculate Merit of every affected Transaction. If one goes below the protocol, and is replaced, unverify the tree.
 
 ### Nim Tests:
 
