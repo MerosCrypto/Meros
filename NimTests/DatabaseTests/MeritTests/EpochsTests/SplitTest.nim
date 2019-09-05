@@ -30,6 +30,9 @@ import ../../../../src/Database/Merit/Merit
 #Merit Testing functions.
 import ../TestMerit
 
+#Tables standard lib.
+import tables
+
 proc test*() =
     var
         #Functions.
@@ -92,6 +95,7 @@ proc test*() =
         #Register the Transaction.
         var tx: Transaction = Transaction()
         tx.hash = hash
+        transactions.transactions[tx.hash.toString()] = tx
         consensus.register(transactions, state, tx, 0)
 
         #Add the Verification.

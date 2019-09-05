@@ -24,3 +24,6 @@ proc serialize*(
 
     for verifier in status.verifiers:
         result &= verifier.toString()
+
+    if status.merit != -1:
+        result &= status.merit.toBinary().pad(INT_LEN)

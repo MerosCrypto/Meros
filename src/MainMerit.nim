@@ -166,7 +166,7 @@ proc mainMerit() {.forceCheck: [].} =
                 fcRaise e
             except DataExists as e:
                 fcRaise e
-            
+
             #Save every archived MeritRemoval.
             for removee in removed:
                 try:
@@ -188,7 +188,7 @@ proc mainMerit() {.forceCheck: [].} =
                 merit.state.remove(removee.key, newBlock)
 
             #Archive the Elements mentioned in the Block.
-            consensus.archive(newBlock.records, epoch.hashes)
+            consensus.archive(merit.state, newBlock.records, epoch.hashes)
 
             #Archive the hashes handled by the popped Epoch.
             transactions.archive(consensus, epoch)

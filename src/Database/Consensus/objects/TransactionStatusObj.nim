@@ -22,6 +22,8 @@ type TransactionStatus* = ref object
     verified*: bool
     #List of Verifiers.
     verifiers*: seq[BLSPublicKey]
+    #The final Merit tally.
+    merit*: int
 
 #Constructor.
 proc newTransactionStatusObj*(
@@ -31,5 +33,6 @@ proc newTransactionStatusObj*(
         epoch: epoch,
         defaulting: false,
         verified: false,
-        verifiers: @[]
+        verifiers: @[],
+        merit: -1
     )

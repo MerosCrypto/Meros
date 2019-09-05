@@ -73,16 +73,13 @@ Network:
 
 Transactions Branch:
 
-- Calculate and save a final tally of each Transaction's Merit.
-- Support running `consensus_getStatus` on Transactions out of Epochs.
+- Keep a Table for each MeritHolder of their pending Verifications.
 
 - Only verify Transactions which have a chance at becoming verified.
-
-- Support Verifications of Transactions already outside of Epochs.
 - Update TransactionStatus.epoch as needed.
-- Check if a verified Transaction goes below the protocol threshold and is then replaced. Going below the threshold is fine as long as the Transaction will default.
 
-- `consensus.getStatus` run on Transactions out of Epochs are a memory leak.
+- When a MeritRemoval happens, recalculate Merit of every affected Transaction. If one goes below the protocol, doAssert(false).
+- Check if a verified Transaction goes below the protocol threshold and is then replaced. Going below the threshold is fine as long as the Transaction will default.
 
 ### Nim Tests:
 

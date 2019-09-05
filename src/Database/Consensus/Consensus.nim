@@ -140,8 +140,7 @@ proc register*(
                     try:
                         consensus.getStatus(spender).defaulting = true
                     except IndexError:
-                        if not consensus.db.loadOutOfEpochs(spender.toString()):
-                            doAssert(false, "Competing Transaction doesn't have a status despite still being in Epochs.")
+                        doAssert(false, "Competing Transaction doesn't have a status despite being marked as a spender.")
 
     #If there were previously unknown Verifications, apply them.
     if consensus.unknowns.hasKey(tx.hash.toString()):
@@ -306,6 +305,7 @@ proc archive*(
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.
 proc archive*(
     consensus: Consensus,
+    state: var State,
     records: seq[MeritHolderRecord],
     hashes: Table[string, seq[BLSPublicKey]]
 ) {.forceCheck: [].} =
@@ -338,7 +338,10 @@ proc archive*(
         consensus.db.save(record.key, record.nonce)
 
     #Mark every hash in this Epoch as out of Epochs.
-    for hash in hashes.keys():
-        consensus.finalize(hash)
+    try:
+        for hash in hashes.keys():
+            consensus.finalize(state, hash.toHash(384))
+    except ValueError as e:
+        doAssert(false, "Couldn't convert hash from Epochs to Hash: " & e.msg)
 
     consensus.saveStatuses()

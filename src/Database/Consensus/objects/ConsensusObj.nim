@@ -126,6 +126,20 @@ proc add(
     except KeyError as e:
         doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
 
+#Gets a MeritHolder by their key.
+proc `[]`*(
+    consensus: Consensus,
+    holder: BLSPublicKey
+): var MeritHolder {.forceCheck: [].} =
+    #Call add, which will only create a new MeritHolder if one doesn't exist.
+    consensus.add(holder)
+
+    #Return the holder.
+    try:
+        result = consensus.holders[holder.toString()]
+    except KeyError as e:
+        doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
+
 #Set a Transaction's status.
 proc setStatus*(
     consensus: Consensus,
@@ -146,16 +160,16 @@ proc getStatus*(
         try:
             return consensus.statuses[hash.toString()]
         except KeyError as e:
-            doAssert(false, "Couldn't get status from the cache when the cache has the key: " & e.msg)
-
-    if consensus.db.loadOutOfEpochs(hash.toString()):
-        raise newException(IndexError, "Transaction is out of Epochs.")
+            doAssert(false, "Couldn't get a Status from the cache when the cache has the key: " & e.msg)
 
     try:
         result = consensus.db.load(hash)
     except DBReadError:
-        raise newException(IndexError, "Transaction doesn't exist.")
-    consensus.statuses[hash.toString()] = result
+        raise newException(IndexError, "Transaction doesn't have a status.")
+
+    #Add the Transaction to the cache if it's not yet out of Epochs.
+    if result.merit == -1:
+        consensus.statuses[hash.toString()] = result
 
 #Calculate a Transaction's Merit.
 proc calculateMeritSingle(
@@ -200,21 +214,23 @@ proc calculateMerit*(
     consensus: Consensus,
     state: var State,
     hash: Hash[384],
-    status: TransactionStatus
+    statusArg: TransactionStatus
 ) {.forceCheck: [].} =
     var
         children: seq[Hash[384]] = @[hash]
         child: Hash[384]
         tx: Transaction
-        status: TransactionStatus
+        status: TransactionStatus = statusArg
         wasVerified: bool
 
     while children.len != 0:
         child = children.pop()
         try:
             tx = consensus.functions.transactions.getTransaction(child)
-            status = consensus.getStatus(child)
-        except IndexError:
+            if child != hash:
+                status = consensus.getStatus(child)
+        except IndexError as e:
+            echo e.msg
             doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
         wasVerified = status.verified
 
@@ -245,7 +261,11 @@ proc update*(
     try:
         status = consensus.getStatus(hash)
     except IndexError:
-        doAssert(false, "Transaction was either not registered or is out of Epochs.")
+        doAssert(false, "Transaction was either not registered.")
+
+    #Don't change the status of finalized Transactions.
+    if status.merit != -1:
+        return
 
     #Make sure this isn't a duplicate.
     for existing in status.verifiers:
@@ -264,10 +284,47 @@ proc update*(
 #Finalize a TransactionStatus.
 proc finalize*(
     consensus: Consensus,
-    hash: string
+    state: var State,
+    hash: Hash[384]
 ) {.forceCheck: [].} =
-    consensus.statuses.del(hash)
-    consensus.db.saveOutOfEpochs(hash)
+    #Get the Status.
+    var status: TransactionStatus
+    try:
+        status = consensus.getStatus(hash)
+    except IndexError as e:
+        doAssert(false, "Couldn't get the Status of a Transaction we're finalizing: " & e.msg)
+
+    #Calculate the final Merit tally.
+    var merit: int = 0
+    for verifier in status.verifiers:
+        #Ignore Verifiers who didn't get their Verifications archived.
+        var skip: bool = false
+        try:
+            for e in consensus[verifier].archived + 1 ..< consensus[verifier].height:
+                if consensus[verifier][e] of Verification:
+                    if cast[Verification](consensus[verifier][e]).hash == hash:
+                        skip = true
+                        break
+        except IndexError as e:
+            doAssert(false, "Couldn't get an Element despite iterating from .archived + 1 ..< .height: " & e.msg)
+        if skip:
+            continue
+
+        #Add the Merit.
+        merit += state[verifier]
+
+    #Make sure the Merit is above the node protocol threshold.
+    if (status.verified) and (merit < state.protocolThresholdAt(state.processedBlocks)):
+        doAssert(false, "Verified Transaction was finalized as unverified.")
+    elif (not status.verified) and (merit >= state.protocolThresholdAt(state.processedBlocks)):
+        status.verified = true
+
+    #Save the Status.
+    consensus.db.save(hash.toString(), status)
+
+    #Remove it from the cache.
+    consensus.statuses.del(hash.toString())
+    consensus.updated.del(hash.toString())
 
 #Save updated statuses.
 proc saveStatuses*(
@@ -280,25 +337,13 @@ proc saveStatuses*(
         doAssert(false, "Couldn't get a TransactionStatus by a key from .keys(): " & e.msg)
     consensus.updated = initTable[string, bool]()
 
-#Gets a MeritHolder by their key.
-proc `[]`*(
-    consensus: Consensus,
-    holder: BLSPublicKey
-): var MeritHolder {.forceCheck: [].} =
-    #Call add, which will only create a new MeritHolder if one doesn't exist.
-    consensus.add(holder)
-
-    #Return the holder.
-    try:
-        result = consensus.holders[holder.toString()]
-    except KeyError as e:
-        doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
-
 #Gets a Element by its Index.
 proc `[]`*(
     consensus: Consensus,
     index: ConsensusIndex
-): Element {.forceCheck: [IndexError].} =
+): Element {.forceCheck: [
+    IndexError
+].} =
     #Check the nonce isn't out of bounds.
     if consensus[index.key].height <= index.nonce:
         raise newException(IndexError, "MeritHolder doesn't have an Element for that nonce.")

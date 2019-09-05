@@ -116,12 +116,6 @@ proc save*(
 ) {.forceCheck: [].} =
     db.put(hash, status.serialize())
 
-proc saveOutOfEpochs*(
-    db: DB,
-    hash: string
-) {.forceCheck: [].} =
-    db.put(hash & "e", "")
-
 proc loadHolders*(
     db: DB
 ): seq[string] {.forceCheck: [
@@ -178,16 +172,6 @@ proc load*(
         fcRaise e
     except ValueError, BLSError:
         doAssert(false, "Saved an invalid TransactionStatus to the DB.")
-
-proc loadOutOfEpochs*(
-    db: DB,
-    hash: string
-): bool {.forceCheck: [].} =
-    try:
-        discard db.get(hash & "e")
-        return true
-    except DBReadError:
-        result = false
 
 #Delete an element.
 proc del*(

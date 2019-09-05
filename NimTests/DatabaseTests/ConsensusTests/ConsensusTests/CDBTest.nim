@@ -114,6 +114,7 @@ proc test*() =
             #Register the Transaction.
             tx = Transaction()
             tx.hash = hash
+            transactions.transactions[tx.hash.toString()] = tx
             consensus.register(transactions, state, tx, 0)
 
             #Add it as a SignedVerification.
@@ -137,7 +138,7 @@ proc test*() =
                 )
             )
         #Archive the records.
-        consensus.archive(archiving, initTable[string, seq[BLSPublicKey]]())
+        consensus.archive(state, archiving, initTable[string, seq[BLSPublicKey]]())
 
         #Commit the DB.
         db.commit(0)

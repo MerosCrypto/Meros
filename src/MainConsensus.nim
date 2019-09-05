@@ -107,7 +107,7 @@ proc mainConsensus() {.forceCheck: [].} =
         ].} =
             try:
                 result = consensus.getStatus(hash)
-            except KeyError:
+            except IndexError:
                 raise newException(IndexError, "Couldn't find a Status for that hash.")
 
         functions.consensus.getThreshold = proc (

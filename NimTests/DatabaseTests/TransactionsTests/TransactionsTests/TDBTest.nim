@@ -124,7 +124,7 @@ proc test*() =
         )
 
         #Archive the Records.
-        consensus.archive(newBlock.records, epoch.hashes)
+        consensus.archive(merit.state, newBlock.records, epoch.hashes)
         transactions.archive(consensus, epoch)
 
     #Add Verifications for an Transaction.

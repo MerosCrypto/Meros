@@ -170,6 +170,7 @@ proc test*() =
                             #Register the Transaction.
                             var tx: Transaction = Transaction()
                             tx.hash = hash
+                            transactions.transactions[tx.hash.toString()] = tx
                             consensus.register(transactions, state, tx, 0)
 
                             #Add it to the Consensus DAG.
@@ -287,7 +288,7 @@ proc test*() =
         pending = @[]
 
         #Mark the records as archived.
-        consensus.archive(records, epoch.hashes)
+        consensus.archive(state, records, epoch.hashes)
 
         #Commit the DB.
         db.commit(mining.nonce)

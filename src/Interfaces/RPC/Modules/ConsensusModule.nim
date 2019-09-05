@@ -132,10 +132,12 @@ proc module*(
                 try:
                     var
                         status: TransactionStatus = functions.consensus.getStatus(hash)
-                        merit: int = 0
-                    for verifier in status.verifiers:
-                        if not functions.consensus.isMalicious(verifier):
-                            merit += functions.merit.getMerit(verifier)
+                        merit: int = status.merit
+                    if merit == -1:
+                        merit = 0
+                        for verifier in status.verifiers:
+                            if not functions.consensus.isMalicious(verifier):
+                                merit += functions.merit.getMerit(verifier)
 
                     res["result"] = %* {
                         "merit":      merit,
