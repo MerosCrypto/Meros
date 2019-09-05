@@ -50,6 +50,10 @@ type
             IndexError
         ].}
 
+        getSpenders*: proc (
+            input: Input
+        ): seq[Hash[384]] {.inline, raises: [].}
+
         addClaim*: proc (
             claim: Claim,
             syncing: bool = false

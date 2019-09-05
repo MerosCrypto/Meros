@@ -47,16 +47,14 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
+        #Functions.
+        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database.
         db: DB = newTestDatabase()
         #Consensus.
         consensus: Consensus = newConsensus(
+            functions,
             db,
-            proc (
-                hash: Hash[384]
-            ) {.raises: [].} =
-                discard
-            ,
             Hash[384](),
             Hash[384]()
         )
@@ -119,6 +117,9 @@ proc test*() =
         mining: Block
         #Shifted Epoch.
         epoch: Epoch
+
+    #Init the Function Box.
+    functions.init(addr transactions)
 
     #Compare the Epochs against the reloaded Epochs.
     proc compare() =

@@ -4,8 +4,8 @@ proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         try:
             consensus = newConsensus(
+                functions,
                 database,
-                functions.transactions.verify,
                 params.SEND_DIFFICULTY.toHash(384),
                 params.DATA_DIFFICULTY.toHash(384)
             )

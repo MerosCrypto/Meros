@@ -73,15 +73,16 @@ Network:
 
 Transactions Branch:
 
-- Support running `consensus_getStatus` on Transactions out of Epochs.
-- Only verify Transactions which have a chance at becoming verified.
-- Only mark Transactions as verified once every parent is verified.
-
-- Check if a verified Transaction goes below the protocol threshold and is then replaced. Going below the threshold is fine as long as the Transaction will default.
 - Calculate and save a final tally of each Transaction's Merit.
+- Support running `consensus_getStatus` on Transactions out of Epochs.
+
+- Only verify Transactions which have a chance at becoming verified.
 
 - Support Verifications of Transactions already outside of Epochs.
 - Update TransactionStatus.epoch as needed.
+- Check if a verified Transaction goes below the protocol threshold and is then replaced. Going below the threshold is fine as long as the Transaction will default.
+
+- `consensus.getStatus` run on Transactions out of Epochs are a memory leak.
 
 ### Nim Tests:
 

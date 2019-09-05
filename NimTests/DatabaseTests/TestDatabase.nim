@@ -3,14 +3,24 @@
 #Errors lib.
 import ../../src/lib/Errors
 
+#Hash lib.
+import ../../src/lib/Hash
+
 #DB lib.
 import ../../src/Database/Filesystem/DB/DB
 export DB
 
+#Transactions lib.
+import ../../src/Database/Transactions/Transactions
+
+#GlobalFunctionBox.
+import ../../src/objects/GlobalFunctionBoxObj
+export GlobalFunctionBoxObj
+
 #OS standard lib.
 import os
 
-#Creates a database.
+#Create a Database.
 var db {.threadvar.}: DB
 discard existsOrCreateDir("./data")
 discard existsOrCreateDir("./data/NimTests")
@@ -31,3 +41,28 @@ proc commit*(
     blockNum: int
 ) =
     db.commit(blockNum)
+
+#Create a GlobalFunctionBox with the needed Transactions functions for Consensus.
+var transactions {.threadvar.}: ptr Transactions
+proc init*(
+    functions: var GlobalFunctionBox,
+    transactionsArg: ptr Transactions
+) =
+    #Save Transactions locally.
+    transactions = transactionsArg
+
+    #Create the functions.
+    functions.transactions.getTransaction = proc (
+        hash: Hash[384]
+    ): Transaction =
+        transactions[][hash]
+
+    functions.transactions.getSpenders = proc (
+        input: Input
+    ): seq[Hash[384]] {.inline.} =
+        transactions[].loadSpenders(input)
+
+    functions.transactions.verify = proc (
+        hash: Hash[384]
+    ) =
+        discard

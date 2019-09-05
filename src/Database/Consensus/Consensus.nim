@@ -7,6 +7,9 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
+#GlobalFunctionBox object.
+import ../../objects/GlobalFunctionBoxObj
+
 #Consensus DB lib.
 import ../Filesystem/DB/ConsensusDB
 
@@ -54,14 +57,12 @@ import tables
 
 #Constructor wrapper.
 proc newConsensus*(
+    functions: GlobalFunctionBox,
     db: DB,
-    notifyVerified: proc (
-        hash: Hash[384]
-    ) {.raises: [].},
     sendDiff: Hash[384],
     dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
-    newConsensusObj(db, notifyVerified, sendDiff, dataDiff)
+    newConsensusObj(functions, db, sendDiff, dataDiff)
 
 #Flag a MeritHolder as malicious.
 proc flag*(

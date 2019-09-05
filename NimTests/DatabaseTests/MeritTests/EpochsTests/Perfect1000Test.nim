@@ -26,28 +26,26 @@ import ../TestMerit
 
 proc test*() =
     var
+        #Functions.
+        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database Function Box.
-        functions: DB = newTestDatabase()
+        db: DB = newTestDatabase()
         #Consensus.
         consensus: Consensus = newConsensus(
             functions,
-            proc (
-                hash: Hash[384]
-            ) {.raises: [].} =
-                discard
-            ,
+            db,
             Hash[384](),
             Hash[384]()
         )
         #Blockchain.
-        blockchain: Blockchain = newBlockchain(functions, "EPOCH_PERFECT_1000_TEST", 1, "".pad(48).toHash(384))
+        blockchain: Blockchain = newBlockchain(db, "EPOCH_PERFECT_1000_TEST", 1, "".pad(48).toHash(384))
         #State.
-        state: State = newState(functions, 100, blockchain.height)
+        state: State = newState(db, 100, blockchain.height)
         #Epochs.
-        epochs: Epochs = newEpochs(functions, consensus, blockchain)
+        epochs: Epochs = newEpochs(db, consensus, blockchain)
         #Transactions.
         transactions: Transactions = newTransactions(
-            functions,
+            db,
             consensus,
             blockchain
         )
@@ -66,6 +64,9 @@ proc test*() =
         records: seq[MeritHolderRecord] = @[]
         #Rewards.
         rewards: seq[Reward]
+
+    #Init the Function Box.
+    functions.init(addr transactions)
 
     for miner in miners:
         #Give the miner Merit.
@@ -91,7 +92,7 @@ proc test*() =
         consensus.register(transactions, state, tx, 0)
 
         #Add the Verification.
-        consensus.add(state, verif, true)
+        consensus.add(state, verif)
 
         #Add a MeritHolderRecord.
         records.add(newMeritHolderRecord(

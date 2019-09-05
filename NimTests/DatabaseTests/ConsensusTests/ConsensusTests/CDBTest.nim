@@ -38,18 +38,16 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
+        #Functions.
+        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database.
         db: DB = newTestDatabase()
         #State.
         state: State = newState(db, 1, 0)
         #Consensus.
         consensus: Consensus = newConsensus(
+            functions,
             db,
-            proc (
-                hash: Hash[384]
-            ) {.raises: [].} =
-                discard
-            ,
             Hash[384](),
             Hash[384]()
         )
@@ -71,16 +69,15 @@ proc test*() =
         #Tips we're archiving.
         archiving: seq[MeritHolderRecord] = @[]
 
+    #Init the Function Box.
+    functions.init(addr transactions)
+
     #Compare the Consensus against the reloaded Consensus.
     proc compare() =
         #Reload the Consensus.
         var reloaded: Consensus = newConsensus(
+            functions,
             db,
-            proc (
-                hash: Hash[384]
-            ) {.raises: [].} =
-                discard
-            ,
             Hash[384](),
             Hash[384]()
         )
@@ -121,7 +118,7 @@ proc test*() =
 
             #Add it as a SignedVerification.
             if rand(1) == 0:
-                consensus.add(state, verif, true)
+                consensus.add(state, verif)
             #Add it as a Verification.
             else:
                 consensus.add(state, cast[Verification](verif), true)

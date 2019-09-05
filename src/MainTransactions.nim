@@ -58,6 +58,12 @@ proc mainTransactions() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
+        #Get a Transaction's spenders.
+        functions.transactions.getSpenders = proc (
+            input: Input
+        ): seq[Hash[384]] {.inline, forceCheck: [].} =
+            transactions.loadSpenders(input)
+
         #Handle Claims.
         functions.transactions.addClaim = proc (
             claim: Claim,

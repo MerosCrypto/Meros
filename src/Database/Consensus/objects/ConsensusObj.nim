@@ -7,11 +7,17 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#GlobalFunctionBox object.
+import ../../../objects/GlobalFunctionBoxObj
+
 #Consensus DB lib.
 import ../../Filesystem/DB/ConsensusDB
 
 #ConsensusIndex object.
 import ../../common/objects/ConsensusIndexObj
+
+#Transaction object.
+import ../../Transactions/Transaction
 
 #Element objects.
 import ElementObj
@@ -39,12 +45,10 @@ import finals
 
 #Consensus object.
 type Consensus* = ref object
+    #Global Functions.
+    functions: GlobalFunctionBox
     #DB.
     db*: DB
-    #Notify another part of the codebase a TX was verified..
-    notifyVerified: proc (
-        hash: Hash[384]
-    ) {.raises: [].}
 
     #Filters.
     filters*: tuple[send: SpamFilter, data: SpamFilter]
@@ -63,16 +67,14 @@ type Consensus* = ref object
 
 #Consensus constructor.
 proc newConsensusObj*(
+    functions: GlobalFunctionBox,
     db: DB,
-    notifyVerified: proc (
-        hash: Hash[384]
-    ) {.raises: [].},
     sendDiff: Hash[384],
     dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(
-        notifyVerified: notifyVerified,
+        functions: functions,
         db: db,
 
         filters: (
@@ -156,22 +158,80 @@ proc getStatus*(
     consensus.statuses[hash.toString()] = result
 
 #Calculate a Transaction's Merit.
-proc calculateMerit*(
+proc calculateMeritSingle(
     consensus: Consensus,
     state: var State,
-    hash: Hash[384],
+    tx: Transaction,
     status: TransactionStatus
 ) {.forceCheck: [].} =
+    #If the Transaction is already verified, or it needs to default, return.
+    if status.verified or status.defaulting:
+        return
+
+    #Calculate Merit.
     var merit: int = 0
     for verifier in status.verifiers:
         #Skip malicious MeritHolders from Merit calculations.
         if not consensus.malicious.hasKey(verifier.toString()):
             merit += state[verifier]
 
-    #Check if the Transaction crossed its threshold, as long as it doesn't need to default.
-    if (not status.defaulting) and (merit >= state.nodeThresholdAt(status.epoch)):
+    #Check if the Transaction crossed its threshold.
+    if merit >= state.nodeThresholdAt(status.epoch):
+        #Make sure all parents are verified.
+        try:
+            for input in tx.inputs:
+                if (tx of Data) and (cast[Data](tx).isFirstData):
+                    break
+
+                if (
+                    (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
+                    (not consensus.getStatus(input.hash).verified)
+                ):
+                    return
+        except IndexError as e:
+            doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
+
+        #Mark the Transaction as verified.
         status.verified = true
-        consensus.notifyVerified(hash)
+        consensus.functions.transactions.verify(tx.hash)
+
+#Calculate a Transaction's Merit. If it's verified, also check every descendant
+proc calculateMerit*(
+    consensus: Consensus,
+    state: var State,
+    hash: Hash[384],
+    status: TransactionStatus
+) {.forceCheck: [].} =
+    var
+        children: seq[Hash[384]] = @[hash]
+        child: Hash[384]
+        tx: Transaction
+        status: TransactionStatus
+        wasVerified: bool
+
+    while children.len != 0:
+        child = children.pop()
+        try:
+            tx = consensus.functions.transactions.getTransaction(child)
+            status = consensus.getStatus(child)
+        except IndexError:
+            doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
+        wasVerified = status.verified
+
+        consensus.calculateMeritSingle(
+            state,
+            tx,
+            status
+        )
+
+        if (not wasVerified) and (status.verified):
+            try:
+                for o in 0 ..< tx.outputs.len:
+                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newSendInput(child, o))
+                    for spender in spenders:
+                        children.add(spender)
+            except IndexError as e:
+                doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
 #Update a Status with a new verifier.
 proc update*(
