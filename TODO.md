@@ -78,7 +78,6 @@ Transactions Branch:
 
 - Bugs:
     - Meros doesn't save historical Epoch thresholds. The existing formula does a naive rewind, instead of a revert, leading to invalid data. Saving it is optimal.
-    - Children Transactions can be finalized before their parents.
 
 - Practical Bugs:
     - Only verify Transactions which have a chance at becoming verified.

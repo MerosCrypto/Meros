@@ -157,7 +157,7 @@ proc register*(
             doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
 
     #Set the status.
-    consensus.setStatus(tx.hash, status)
+    consensus.setStatus(tx.hash.toString(), status)
 
 #Handle unknown Verifications.
 proc handleUnknown(
@@ -412,4 +412,32 @@ proc archive*(
                 parents.add(parent)
                 parents &= newParents
 
-    consensus.saveStatuses()
+    #Reclaulcate every close Status.
+    var toDelete: seq[string] = @[]
+    for hashStr in consensus.close.keys():
+        var
+            hash: Hash[384]
+            status: TransactionStatus
+        try:
+            hash = hashStr.toHash(384)
+            status = consensus.getStatus(hash)
+        except ValueError as e:
+            doAssert(false, "Couldn't create a Hash from a key in Consensus.close: " & e.msg)
+        except IndexError:
+            doAssert(false, "Couldn't get the status of a Transaction that's close to being verified: " & $hash)
+
+        #Remove finalized Transactions.
+        if status.merit != -1:
+            toDelete.add(hashStr)
+            continue
+
+        #Recalculate Merit.
+        consensus.calculateMerit(state, hash, status)
+        #Remove verified Transactions.
+        if status.verified:
+            toDelete.add(hashStr)
+            continue
+
+    #Delete all close hashes marked for deletion.
+    for hash in toDelete:
+        consensus.close.del(hash)

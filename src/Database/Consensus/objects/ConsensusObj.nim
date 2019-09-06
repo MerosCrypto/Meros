@@ -62,8 +62,9 @@ type Consensus* = ref object
     statuses: Table[string, TransactionStatus]
     #Statuses which haven't been mentioned in Epochs.
     unmentioned*: Table[string, bool]
-    #Statuses which have been updated.
-    updated: Table[string, bool]
+    #Statuses which are close to becoming verified.
+    close*: Table[string, bool]
+
     #Verifications of unknown Transactions.
     unknowns*: Table[string, seq[BLSPublicKey]]
 
@@ -89,7 +90,8 @@ proc newConsensusObj*(
 
         statuses: initTable[string, TransactionStatus](),
         unmentioned: initTable[string, bool](),
-        updated: initTable[string, bool](),
+        close: initTable[string, bool](),
+
         unknowns: initTable[string, seq[BLSPublicKey]]()
     )
 
@@ -151,12 +153,12 @@ proc `[]`*(
 #Set a Transaction's status.
 proc setStatus*(
     consensus: Consensus,
-    hash: Hash[384],
+    hash: string,
     status: TransactionStatus
 ) {.forceCheck: [].} =
-    consensus.statuses[hash.toString()] = status
-    consensus.unmentioned[hash.toString()] = true
-    consensus.updated[hash.toString()] = true
+    consensus.statuses[hash] = status
+    consensus.unmentioned[hash] = true
+    consensus.db.save(hash, status)
 
 #Get a Transaction's statuses.
 proc getStatus*(
@@ -185,13 +187,15 @@ proc incEpoch*(
     consensus: Consensus,
     hash: string
 ) {.forceCheck: [].} =
+    var status: TransactionStatus
     try:
-        inc(consensus.getStatus(hash.toHash(384)).epoch)
+        status = consensus.getStatus(hash.toHash(384))
+        inc(status.epoch)
     except ValueError:
         doAssert(false, "Couldn't increment the Epoch of a Status with an invalid hash.")
     except IndexError:
         doAssert(false, "Couldn't get the Status we're incrementing the Epoch of.")
-    consensus.updated[hash] = true
+    consensus.db.save(hash, status)
 
 #Calculate a Transaction's Merit.
 proc calculateMeritSingle(
@@ -231,7 +235,10 @@ proc calculateMeritSingle(
 
         #Mark the Transaction as verified.
         status.verified = true
+        consensus.db.save(tx.hash.toString(), status)
         consensus.functions.transactions.verify(tx.hash)
+    elif merit >= state.nodeThresholdAt(status.epoch) - 600:
+        consensus.close[tx.hash.toString()] = true
 
 #Calculate a Transaction's Merit. If it's verified, also check every descendant
 proc calculateMerit*(
@@ -301,8 +308,8 @@ proc update*(
     #Calculate Merit.
     consensus.calculateMerit(state, hash, status)
 
-    #Mark the Status as updated.
-    consensus.updated[hash.toString()] = true
+    #Save the status.
+    consensus.db.save(hash.toString(), status)
 
 #Finalize a TransactionStatus.
 proc finalize*(
@@ -361,7 +368,6 @@ proc finalize*(
                 childStatus.verified = false
                 consensus.db.save(child.toString(), childStatus)
                 consensus.statuses.del(child.toString())
-                consensus.updated.del(child.toString())
 
                 try:
                     for o in 0 ..< tx.outputs.len:
@@ -401,18 +407,6 @@ proc finalize*(
     #This will cause a double save for the finalized TX in the unverified case.
     consensus.db.save(hash.toString(), status)
     consensus.statuses.del(hash.toString())
-    consensus.updated.del(hash.toString())
-
-#Save updated statuses.
-proc saveStatuses*(
-    consensus: Consensus
-) {.forceCheck: [].} =
-    try:
-        for hash in consensus.updated.keys():
-            consensus.db.save(hash, consensus.statuses[hash])
-    except KeyError as e:
-        doAssert(false, "Couldn't get a TransactionStatus by a key from .keys(): " & e.msg)
-    consensus.updated = initTable[string, bool]()
 
 #Gets a Element by its Index.
 proc `[]`*(
