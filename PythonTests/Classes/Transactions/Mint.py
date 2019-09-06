@@ -47,6 +47,12 @@ class Mint(Transaction):
         }
         return result
 
+    #Mint -> JSON. toJSON alias.
+    def toVector(
+        self,
+    ) -> Dict[str, Any]:
+        return self.toJSON()
+
     #JSON -> Mint.
     @staticmethod
     def fromJSON(

@@ -114,6 +114,14 @@ class Send(Transaction):
             })
         return result
 
+    #Send -> JSON with verified field.
+    def toVector(
+        self,
+    ) -> Dict[str, Any]:
+        result = self.toJSON()
+        result["verified"] = self.verified
+        return result
+
     #JSON -> Send.
     @staticmethod
     def fromJSON(

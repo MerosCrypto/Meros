@@ -81,7 +81,7 @@ print("Generated Parsable Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
     "blockchain":   blockchain.toJSON(),
-    "data":         data.toJSON(),
+    "data":         data.toVector(),
     "verification": sv.toSignedJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/Parsable.json", "w")

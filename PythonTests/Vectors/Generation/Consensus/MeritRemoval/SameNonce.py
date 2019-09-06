@@ -91,7 +91,7 @@ print("Generated Same Nonce Block " + str(block.header.nonce) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON(),
-    "data":       data.toJSON(),
+    "data":       data.toVector(),
     "removal":    removal.toSignedJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/SameNonce.json", "w")

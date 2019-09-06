@@ -84,6 +84,14 @@ class Claim(Transaction):
             })
         return result
 
+    #Claim -> JSON with verified field.
+    def toVector(
+        self,
+    ) -> Dict[str, Any]:
+        result = self.toJSON()
+        result["verified"] = self.verified
+        return result
+
     #JSON -> Claim.
     @staticmethod
     def fromJSON(
