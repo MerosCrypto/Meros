@@ -116,6 +116,12 @@ proc save*(
 ) {.forceCheck: [].} =
     db.put(hash, status.serialize())
 
+proc saveUnmentioned*(
+    db: DB,
+    unmentioned: string
+) {.forceCheck: [].} =
+    db.put("unmentioned", unmentioned)
+
 proc loadHolders*(
     db: DB
 ): seq[string] {.forceCheck: [
@@ -172,6 +178,19 @@ proc load*(
         fcRaise e
     except ValueError, BLSError:
         doAssert(false, "Saved an invalid TransactionStatus to the DB.")
+
+proc loadUnmentioned*(
+    db: DB
+): seq[string] {.forceCheck: [].} =
+    var unmentioned: string
+    try:
+        unmentioned = db.get("unmentioned")
+    except DBReadError:
+        return @[]
+
+    result = newSeq[string](unmentioned.len div 48)
+    for i in countup(0, unmentioned.len - 1, 48):
+        result[i div 48] = unmentioned[i ..< i + 48]
 
 #Delete an element.
 proc del*(

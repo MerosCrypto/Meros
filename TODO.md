@@ -77,13 +77,12 @@ Transactions Branch:
     - Keep a Table for each MeritHolder of their pending Verifications.
 
 - Bugs:
-    - Meros isn't loading the finalized Merit, and is therefore updating finalized Transactions.
     - Meros doesn't save historical Epoch thresholds. The existing formula does a naive rewind, instead of a revert, leading to invalid data. Saving it is optimal.
     - Children Transactions can be finalized before their parents.
 
 - Practical Bugs:
     - Only verify Transactions which have a chance at becoming verified.
-    - Update TransactionStatus.epoch as needed.
+    - Unverifications don't affect spendable.
 
 - Work In Progress:
     - When a MeritRemoval happens, recalculate Merit of every affected Transaction. If one goes below the protocol, and is replaced, unverify the tree.

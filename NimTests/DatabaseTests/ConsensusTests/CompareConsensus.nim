@@ -72,6 +72,11 @@ proc compare*(
     for status in c1.statuses:
         compare(c1.getStatus(status.toHash(384)), c2.getStatus(status.toHash(384)))
 
+    #Compare the unmentioned.
+    assert(c1.unmentioned.len == c2.unmentioned.len)
+    for hash in c1.unmentioned.keys():
+        assert(c2.unmentioned.hasKey(hash))
+
     #Verify the Unknowns.
     assert(c1.unknowns.len == 0)
     assert(c2.unknowns.len == 0)

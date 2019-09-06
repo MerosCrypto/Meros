@@ -60,6 +60,8 @@ type Consensus* = ref object
 
     #Statuses of Transactions not yet out of Epochs.
     statuses: Table[string, TransactionStatus]
+    #Statuses which haven't been mentioned in Epochs.
+    unmentioned*: Table[string, bool]
     #Statuses which have been updated.
     updated: Table[string, bool]
     #Verifications of unknown Transactions.
@@ -86,6 +88,7 @@ proc newConsensusObj*(
         malicious: initTable[string, seq[MeritRemoval]](),
 
         statuses: initTable[string, TransactionStatus](),
+        unmentioned: initTable[string, bool](),
         updated: initTable[string, bool](),
         unknowns: initTable[string, seq[BLSPublicKey]]()
     )
@@ -104,6 +107,11 @@ proc newConsensusObj*(
             result.holders[holder] = newMeritHolderObj(result.db, newBLSPublicKey(holder))
         except BLSError as e:
             doAssert(false, "Couldn't create a BLS Public Key for a known MeritHolder: " & e.msg)
+
+    #Load unmentioned statuses.
+    var unmentioned: seq[string] = result.db.loadUnmentioned()
+    for hash in unmentioned:
+        result.unmentioned[hash] = true
 
 #Creates a new MeritHolder on the Consensus.
 proc add(
@@ -147,6 +155,7 @@ proc setStatus*(
     status: TransactionStatus
 ) {.forceCheck: [].} =
     consensus.statuses[hash.toString()] = status
+    consensus.unmentioned[hash.toString()] = true
     consensus.updated[hash.toString()] = true
 
 #Get a Transaction's statuses.
@@ -171,6 +180,19 @@ proc getStatus*(
     if result.merit == -1:
         consensus.statuses[hash.toString()] = result
 
+#Increment a Status's Epoch.
+proc incEpoch*(
+    consensus: Consensus,
+    hash: string
+) {.forceCheck: [].} =
+    try:
+        inc(consensus.getStatus(hash.toHash(384)).epoch)
+    except ValueError:
+        doAssert(false, "Couldn't increment the Epoch of a Status with an invalid hash.")
+    except IndexError:
+        doAssert(false, "Couldn't get the Status we're incrementing the Epoch of.")
+    consensus.updated[hash] = true
+
 #Calculate a Transaction's Merit.
 proc calculateMeritSingle(
     consensus: Consensus,
@@ -191,6 +213,8 @@ proc calculateMeritSingle(
 
     #Check if the Transaction crossed its threshold.
     if merit >= state.nodeThresholdAt(status.epoch):
+        if state.nodeThresholdAt(status.epoch) < 0:
+            doAssert(false, $tx.hash & " " & $status.epoch & " " & $state.processedBlocks)
         #Make sure all parents are verified.
         try:
             for input in tx.inputs:
@@ -260,7 +284,7 @@ proc update*(
     try:
         status = consensus.getStatus(hash)
     except IndexError:
-        doAssert(false, "Transaction was either not registered.")
+        doAssert(false, "Transaction was not registered.")
 
     #Don't change the status of finalized Transactions.
     if status.merit != -1:
@@ -348,7 +372,30 @@ proc finalize*(
                     doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
     #If it wasn't verified, check if it actually was.
     elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
+        #Grab the Transaction.
+        var tx: Transaction
+        try:
+            tx = consensus.functions.transactions.getTransaction(hash)
+        except IndexError:
+            doAssert(false, "Couldn't get the Transaction we're finalizing.")
+
+        #Make sure all parents are verified.
+        try:
+            for input in tx.inputs:
+                if (tx of Data) and (cast[Data](tx).isFirstData):
+                    break
+
+                if (
+                    (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
+                    (not consensus.getStatus(input.hash).verified)
+                ):
+                    return
+        except IndexError as e:
+            doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
+
+        #Mark the Transaction as verified.
         status.verified = true
+        consensus.functions.transactions.verify(tx.hash)
 
     #Save the status.
     #This will cause a double save for the finalized TX in the unverified case.

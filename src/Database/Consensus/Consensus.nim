@@ -307,7 +307,8 @@ proc archive*(
     consensus: Consensus,
     state: var State,
     records: seq[MeritHolderRecord],
-    hashes: Table[string, seq[BLSPublicKey]]
+    inEpochs: Table[string, seq[BLSPublicKey]],
+    outOfEpochs: Table[string, seq[BLSPublicKey]]
 ) {.forceCheck: [].} =
     #Iterate over every Record.
     for record in records:
@@ -337,9 +338,19 @@ proc archive*(
         #Update the DB.
         consensus.db.save(record.key, record.nonce)
 
+    #Delete every new Hash in Epoch from unmentioned.
+    for hash in inEpochs.keys():
+        consensus.unmentioned.del(hash)
+    #Update the Epoch for every unmentioned Epoch.
+    var unmentioned: string = ""
+    for hash in consensus.unmentioned.keys():
+        unmentioned &= hash
+        consensus.incEpoch(hash)
+    consensus.db.saveUnmentioned(unmentioned)
+
     #Mark every hash in this Epoch as out of Epochs.
     try:
-        for hash in hashes.keys():
+        for hash in outOfEpochs.keys():
             consensus.finalize(state, hash.toHash(384))
     except ValueError as e:
         doAssert(false, "Couldn't convert hash from Epochs to Hash: " & e.msg)

@@ -86,7 +86,7 @@ proc test*() =
         compare(consensus, reloaded)
 
     #Iterate over 20 'rounds'.
-    for _ in 0 ..< 20:
+    for r in 1 .. 20:
         #Create a random amount of MeritHolders.
         for _ in 0 ..< rand(2) + 1:
             holders.add(newMinerWallet())
@@ -97,6 +97,12 @@ proc test*() =
             #Randomize the hash.
             for b in 0 ..< hashes[^1].data.len:
                 hashes[^1].data[b] = uint8(rand(255))
+
+            #Register the Transaction.
+            tx = Transaction()
+            tx.hash = hashes[^1]
+            transactions.transactions[tx.hash.toString()] = tx
+            consensus.register(transactions, state, tx, r)
 
         #Create Elements.
         for e in 0 ..< rand(10):
@@ -110,12 +116,6 @@ proc test*() =
             verif = newSignedVerificationObj(hash)
             #Sign it.
             holder.sign(verif, consensus[holder.publicKey].height)
-
-            #Register the Transaction.
-            tx = Transaction()
-            tx.hash = hash
-            transactions.transactions[tx.hash.toString()] = tx
-            consensus.register(transactions, state, tx, 0)
 
             #Add it as a SignedVerification.
             if rand(1) == 0:
@@ -138,7 +138,7 @@ proc test*() =
                 )
             )
         #Archive the records.
-        consensus.archive(state, archiving, initTable[string, seq[BLSPublicKey]]())
+        consensus.archive(state, archiving, initTable[string, seq[BLSPublicKey]](), initTable[string, seq[BLSPublicKey]]())
 
         #Commit the DB.
         db.commit(0)

@@ -74,6 +74,12 @@ proc test*() =
     #Init the Function Box.
     functions.init(addr transactions)
 
+    #Register the Transaction.
+    var tx: Transaction = Transaction()
+    tx.hash = hash
+    transactions.transactions[tx.hash.toString()] = tx
+    consensus.register(transactions, state, tx, 0)
+
     for miner in miners:
         #Give the miner Merit.
         state.processBlock(
@@ -91,12 +97,6 @@ proc test*() =
         #Create the Verification.
         verif = newSignedVerificationObj(hash)
         miner.sign(verif, 0)
-
-        #Register the Transaction.
-        var tx: Transaction = Transaction()
-        tx.hash = hash
-        transactions.transactions[tx.hash.toString()] = tx
-        consensus.register(transactions, state, tx, 0)
 
         #Add the Verification.
         consensus.add(state, verif)

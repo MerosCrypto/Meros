@@ -88,18 +88,18 @@ proc test*() =
         #Generate the hash.
         hash = "".pad(48, char(h)).toHash(384)
 
+        #Register the Transaction.
+        var tx: Transaction = Transaction()
+        tx.hash = hash
+        transactions.transactions[tx.hash.toString()] = tx
+        consensus.register(transactions, state, tx, 0)
+
         #Clear the records.
         records = @[]
         for miner in miners:
             #Create the Verification.
             verif = newSignedVerificationObj(hash)
             miner.sign(verif, consensus[miner.publicKey].height)
-
-            #Register the Transaction.
-            var tx: Transaction = Transaction()
-            tx.hash = hash
-            transactions.transactions[tx.hash.toString()] = tx
-            consensus.register(transactions, state, tx, 0)
 
             #Add the Verification.
             consensus.add(state, verif)

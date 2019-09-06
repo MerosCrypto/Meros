@@ -153,3 +153,9 @@ proc shift*(
 
         for record in records:
             epochs.db.saveHolderEpoch(record.key, record.nonce)
+
+#Get the latest Epoch.
+func latest*(
+    epochs: Epochs
+): Epoch {.forceCheck: [].} =
+    epochs.epochs[4]

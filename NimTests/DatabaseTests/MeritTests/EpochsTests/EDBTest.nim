@@ -145,6 +145,12 @@ proc test*() =
 
                 hashes[^1].add(hash)
 
+                #Register the Transaction.
+                var tx: Transaction = Transaction()
+                tx.hash = hash
+                transactions.transactions[tx.hash.toString()] = tx
+                consensus.register(transactions, state, tx, i)
+
             #For every viable holder, verify a random amount of hashes from each section.
             for holder in holders:
                 if malicious.hasKey(holder.publicKey.toString()):
@@ -166,12 +172,6 @@ proc test*() =
                             verif = newSignedVerificationObj(hash)
                             holder.sign(verif, consensus[holder.publicKey].height)
                             signed[holder.publicKey.toString()].add(hash)
-
-                            #Register the Transaction.
-                            var tx: Transaction = Transaction()
-                            tx.hash = hash
-                            transactions.transactions[tx.hash.toString()] = tx
-                            consensus.register(transactions, state, tx, 0)
 
                             #Add it to the Consensus DAG.
                             consensus.add(state, verif)
@@ -288,7 +288,7 @@ proc test*() =
         pending = @[]
 
         #Mark the records as archived.
-        consensus.archive(state, records, epoch.hashes)
+        consensus.archive(state, records, epochs.latest.hashes, epoch.hashes)
 
         #Commit the DB.
         db.commit(mining.nonce)

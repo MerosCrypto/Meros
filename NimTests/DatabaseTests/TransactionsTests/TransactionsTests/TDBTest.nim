@@ -124,7 +124,7 @@ proc test*() =
         )
 
         #Archive the Records.
-        consensus.archive(merit.state, newBlock.records, epoch.hashes)
+        consensus.archive(merit.state, newBlock.records, merit.epochs.latest.hashes, epoch.hashes)
         transactions.archive(consensus, epoch)
 
     #Add Verifications for an Transaction.
@@ -136,7 +136,7 @@ proc test*() =
         holder.sign(verif, consensus[holder.publicKey].height)
 
         #Register the Transaction.
-        consensus.register(transactions, merit.state, tx, 0)
+        consensus.register(transactions, merit.state, tx, merit.blockchain.height)
 
         #Add the Verification.
         consensus.add(merit.state, verif)
