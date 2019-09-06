@@ -56,8 +56,8 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
 blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
 
-#Add 13 Blank Blocks.
-for i in range(13):
+#Add 5 Blank Blocks.
+for i in range(5):
     merit.add(transactions, consensus, Block.fromJSON(blankBlocks[i]))
 
 #Create the Data.
@@ -76,14 +76,14 @@ consensus.add(verif)
 #Next block should have a record.
 block: Block = Block(
     BlockHeader(
-        14,
+        6,
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate([(blsPubKey, 0, -1)])
     ),
     BlockBody([(blsPubKey, 0, consensus.getMerkle(blsPubKey, 0))])
 )
-for i in range(15, 21):
+for i in range(7, 13):
     #Mine it.
     block.mine(merit.blockchain.difficulty)
 
@@ -112,7 +112,7 @@ consensus.add(verif)
 #Mine one more Block.
 block = Block(
     BlockHeader(
-        20,
+        12,
         merit.blockchain.last(),
         int(time()),
         consensus.getAggregate([(blsPubKey, 1, -1)])
