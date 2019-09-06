@@ -302,6 +302,27 @@ proc archive*(
     #Delete the MeritRemovals from the malicious table.
     consensus.malicious.del(mr.holder.toString())
 
+#Get a Transaction's unfinalized parents.
+proc getUnfinalizedParents(
+    consensus: Consensus,
+    tx: Transaction
+): seq[Hash[384]] {.forceCheck: [].} =
+    #If this Transaction doesn't have inputs with statuses, don't do anything.
+    if not (
+        (tx of Claim) or
+        (
+            (tx of Data) and
+            (cast[Data](tx).isFirstData)
+        )
+    ):
+        #Make sure every input was already finalized.
+        for input in tx.inputs:
+            try:
+                if consensus.getStatus(input.hash).merit == -1:
+                    result.add(input.hash)
+            except IndexError as e:
+                doAssert(false, "Couldn't get the Status of a Transaction used as an input to one out of Epochs: " & e.msg)
+
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.
 proc archive*(
     consensus: Consensus,
@@ -348,11 +369,47 @@ proc archive*(
         consensus.incEpoch(hash)
     consensus.db.saveUnmentioned(unmentioned)
 
+    #Transactions finalized out of order.
+    var outOfOrder: Table[string, bool] = initTable[string, bool]()
     #Mark every hash in this Epoch as out of Epochs.
-    try:
-        for hash in outOfEpochs.keys():
-            consensus.finalize(state, hash.toHash(384))
-    except ValueError as e:
-        doAssert(false, "Couldn't convert hash from Epochs to Hash: " & e.msg)
+    for hashStr in outOfEpochs.keys():
+        #Skip Transaction we verified out of order.
+        if outOfOrder.hasKey(hashStr):
+            continue
+
+        #Get the hash as a Hash.
+        var hash: Hash[384]
+        try:
+            hash = hashStr.toHash(384)
+        except ValueError as e:
+            doAssert(false, "Couldn't convert a hash from an Epoch into a hash: " & e.msg)
+
+        var parents: seq[Hash[384]] = @[hash]
+        while parents.len != 0:
+            #Grab the last parent.
+            var parent: Hash[384] = parents.pop()
+
+            #Skip this Transaction if we already verified it.
+            if outOfOrder.hasKey(parent.toString()):
+                continue
+
+            #Grab the Transaction.
+            var tx: Transaction
+            try:
+                tx = consensus.functions.transactions.getTransaction(parent)
+            except IndexError as e:
+                doAssert(false, "Couldn't get a Transaction that's out of Epochs: " & e.msg)
+
+            #Grab this Transaction's unfinalized parents.
+            var newParents: seq[Hash[384]] = consensus.getUnfinalizedParents(tx)
+
+            #If all the parents are finalized, finalize this Transaction.
+            if newParents.len == 0:
+                consensus.finalize(state, parent)
+                outOfOrder[parent.toString()] = true
+            else:
+                #Else, add back this Transaction, and then add the new parents.
+                parents.add(parent)
+                parents &= newParents
 
     consensus.saveStatuses()

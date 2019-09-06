@@ -46,7 +46,7 @@ import finals
 #Consensus object.
 type Consensus* = ref object
     #Global Functions.
-    functions: GlobalFunctionBox
+    functions*: GlobalFunctionBox
     #DB.
     db*: DB
 
