@@ -73,9 +73,6 @@ Network:
 
 Transactions Branch:
 
-- Optimizations:
-    - Keep a Table for each MeritHolder of their pending Verifications.
-
 - Bugs:
     - Meros doesn't save historical Epoch thresholds. The existing formula does a naive rewind, instead of a revert, leading to invalid data. Saving it is optimal.
 
@@ -85,6 +82,14 @@ Transactions Branch:
 
 - Work In Progress:
     - When a MeritRemoval happens, recalculate Merit of every affected Transaction. If one goes below the protocol, and is replaced, unverify the tree.
+
+- Tests:
+    - PendingActionsTest should not have all reverted actions reapplied.
+    - Test historical and live threshold calculation.
+    - Test `TransactionStatus.epoch` is updated as needed.
+    - Test Meros only verifies Transactions which have a chance.
+    - Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
+    - Test children Transactions are properly unverified.
 
 ### Nim Tests:
 

@@ -46,11 +46,14 @@ def MRPALiveTest(
     #Consensus.
     consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
     consensus.add(verifs[0])
     consensus.add(verifs[1])
     consensus.add(verifs[2])
+    consensus.add(verifs[3])
+    consensus.add(verifs[4])
+    consensus.add(verifs[5])
     consensus.add(removal)
     #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
@@ -62,7 +65,7 @@ def MRPALiveTest(
     file.close()
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, len(blockchain.blocks) - 2)
+    rpc.meros.connect(254, 254, 3)
 
     reqHash: bytes = bytes()
     msg: bytes = bytes()
@@ -129,118 +132,63 @@ def MRPALiveTest(
         raise TestError("Meros didn't send us the Merit Removal.")
     verifyMeritRemoval(rpc, 1, 100, removal, True)
 
-    #Verify every Data has 100 Merit.
+    #Verify every Data has 0 Merit.
     for data in datas:
         if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 0:
             raise TestError("Meros didn't revert pending actions of a malicious MeritHolder.")
 
-    #Send the next Block.
-    rpc.meros.blockHeader(blockchain.blocks[-2].header)
-    while True:
-        msg = rpc.meros.recv()
+    #Send the next Blocks to trigger the Epoch. The last Block also archives the MeritRemoval.
+    for i in range(2, 8):
+        rpc.meros.blockHeader(blockchain.blocks[i].header)
+        while True:
+            msg = rpc.meros.recv()
 
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
+            if MessageType(msg[0]) == MessageType.Syncing:
+                rpc.meros.acknowledgeSyncing()
 
-        elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height = int.from_bytes(msg[1 : 5], "big")
-            if height == 0:
-                rpc.meros.blockHash(blockchain.last())
+            elif MessageType(msg[0]) == MessageType.GetBlockHash:
+                height = int.from_bytes(msg[1 : 5], "big")
+                if height == 0:
+                    rpc.meros.blockHash(blockchain.last())
+                else:
+                    if height >= len(blockchain.blocks):
+                        raise TestError("Meros asked for a Block Hash we do not have.")
+
+                    rpc.meros.blockHash(blockchain.blocks[height].header.hash)
+
+            elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+                reqHash = msg[1 : 49]
+                for block in blockchain.blocks:
+                    if block.header.hash == reqHash:
+                        rpc.meros.blockBody(block.body)
+                        break
+
+                    if block.header.hash == blockchain.last():
+                        raise TestError("Meros asked for a Block Body we do not have.")
+
+            elif MessageType(msg[0]) == MessageType.SyncingOver:
+                if i == 7:
+                    break
+
+            elif MessageType(msg[0]) == MessageType.BlockHeader:
+                break
+
             else:
-                if height >= len(blockchain.blocks):
-                    raise TestError("Meros asked for a Block Hash we do not have.")
-
-                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
-
-        elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockHeader(block.header)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Header we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockBody(block.body)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Body we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
-            pass
-
-        elif MessageType(msg[0]) == MessageType.BlockHeader:
-            break
-
-        else:
-            raise TestError("Unexpected message sent: " + msg.hex().upper())
-
-    #Update the MeritRemoval's nonce.
-    removal.nonce = 3
+                raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Verify the Datas have the Merit they should.
-    for d in range(len(datas)):
-        if rpc.call("consensus", "getStatus", [datas[d].hash.hex()]) != 100 if d < 3 else 0:
-            raise TestError("Meros didn't apply reverted pending actions of a malicious MeritHolder.")
+    for data in datas:
+        if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 0:
+            raise TestError("Meros didn't finalize with the reverted pending actions of a malicious MeritHolder.")
 
-    #Verify the MeritRemoval is now accessible with a nonce of 3.
-    verifyMeritRemoval(rpc, 4, 200, removal, True)
+    #Update the MeritRemoval's nonce.
+    removal.nonce = 6
 
-    #Archive the MeritRemoval.
-    rpc.meros.blockHeader(blockchain.blocks[-1].header)
-    while True:
-        msg = rpc.meros.recv()
-
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
-
-        elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height = int.from_bytes(msg[1 : 5], "big")
-            if height == 0:
-                rpc.meros.blockHash(blockchain.last())
-            else:
-                if height >= len(blockchain.blocks):
-                    raise TestError("Meros asked for a Block Hash we do not have.")
-
-                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
-
-        elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockHeader(block.header)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Header we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockBody(block.body)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Body we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
-            break
-
-        else:
-            raise TestError("Unexpected message sent: " + msg.hex().upper())
+    #Verify the MeritRemoval is now accessible with a nonce of 6.
+    verifyMeritRemoval(rpc, 7, 0, removal, False)
 
     #Verify the Blockchain.
     verifyBlockchain(rpc, blockchain)
 
     #Verify the Consensus.
     verifyConsensus(rpc, consensus)
-
-    #Verify the MeritRemoval again.
-    verifyMeritRemoval(rpc, 4, 200, removal, False)

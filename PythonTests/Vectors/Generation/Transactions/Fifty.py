@@ -164,10 +164,7 @@ print("Generated Fifty Block " + str(block.header.nonce) + ".")
 #Generate another 5 Blocks.
 for i in range(16, 21):
     #Create the next Block.
-    block = Block(
-        BlockHeader(i, blockchain.last(), int(time())),
-        BlockBody()
-    )
+    block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
 
     #Mine it.
     block.mine(blockchain.difficulty)

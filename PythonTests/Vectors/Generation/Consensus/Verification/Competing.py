@@ -58,6 +58,15 @@ blsPubKey1: blspy.PublicKey = blsPrivKey1.get_public_key()
 blsPrivKey2: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\1')
 blsPubKey2: blspy.PublicKey = blsPrivKey2.get_public_key()
 
+#Give the second key pair Merit.
+block: Block = Block(
+    BlockHeader(13, blockchain.last(), int(time())),
+    BlockBody([], [(blsPubKey2, 100)])
+)
+block.mine(blockchain.difficulty)
+blockchain.add(block)
+print("Generated Competing Block " + str(block.header.nonce) + ".")
+
 #Grab the claim hash.
 claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()][1]).hash
 
@@ -85,15 +94,6 @@ send2.sign(edPrivKey1)
 send2.beat(consensus.sendFilter)
 transactions.add(send2)
 
-#Give the second key pair Merit.
-block: Block = Block(
-    BlockHeader(21, blockchain.last(), int(time())),
-    BlockBody([], [(blsPubKey2, 100)])
-)
-block.mine(blockchain.difficulty)
-blockchain.add(block)
-print("Generated Competing Block " + str(block.header.nonce) + ".")
-
 #Verify the 1st Send with the 1st key.
 verif = SignedVerification(send1.hash)
 verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
@@ -104,10 +104,10 @@ verif = SignedVerification(send2.hash)
 verif.sign(blsPrivKey2, 0)
 consensus.add(verif)
 
-#Archive the Elements.
+#Archive the Elements and close the Epoch.
 block = Block(
     BlockHeader(
-        22,
+        14,
         blockchain.last(),
         int(time()),
         consensus.getAggregate([(blsPubKey1, 2, -1), (blsPubKey2, 0, -1)])
@@ -117,9 +117,16 @@ block = Block(
         (blsPubKey2, 0, consensus.getMerkle(blsPubKey2, 0))
     ])
 )
-block.mine(blockchain.difficulty)
-blockchain.add(block)
-print("Generated Competing Block " + str(block.header.nonce) + ".")
+for i in range(15, 21):
+    #Mine it.
+    block.mine(blockchain.difficulty)
+
+    #Add it.
+    blockchain.add(block)
+    print("Generated Competing Block " + str(block.header.nonce) + ".")
+
+    #Create the next Block.
+    block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
 
 #Save the appended data (3 Blocks and 12 Sends).
 result: Dict[str, Any] = {
