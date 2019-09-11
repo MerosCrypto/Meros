@@ -125,53 +125,6 @@ proc saveDataTip*(
 ) {.forceCheck: [].} =
     db.put(key.toString() & "d", hash.toString())
 
-#Add a Send's outputs to spendable while removing its inputs.
-proc verify*(
-    db: DB,
-    tx: Claim or Send
-) {.forceCheck: [].} =
-    #Add spendable outputs.
-    for o in 0 ..< tx.outputs.len:
-        var
-            output: string = tx.hash.toString() & char(o)
-            key: string = cast[SendOutput](tx.outputs[o]).key.toString()
-
-        try:
-            db.put(key, db.get(key) & output)
-        except DBReadError:
-            db.put(key, "" & output)
-
-    if tx of Send:
-        #Remove spent inputs.
-        for input in tx.inputs:
-            var
-                output: string = input.toString()
-                key: string
-                spendable: string
-                found: bool = false
-
-            #Get the key.
-            try:
-                key = db.get(output).parseSendOutput().key.toString()
-            except Exception:
-                doAssert(false, "Trying to spend a non-existent output.")
-
-            #Load the output.
-            try:
-                spendable = db.get(key)
-            except DBReadError:
-                doAssert(false, "Trying to spend from someone without anything spendable.")
-
-            #Remove the specified output.
-            for o in countup(0, spendable.len, 49):
-                if spendable[o ..< o + 49] == output:
-                    found = true
-                    db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
-                    break
-
-            if not found:
-                doAssert(false, "Spending an output not in spendable.")
-
 #Load functions.
 proc load*(
     db: DB,
@@ -248,7 +201,7 @@ proc loadMintNonce*(
     except DBReadError as e:
         fcRaise e
 
-proc loadMintUTXO*(
+proc loadMintOutput*(
     db: DB,
     hash: Hash[384]
 ): MintOutput {.forceCheck: [
@@ -259,7 +212,7 @@ proc loadMintUTXO*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc loadSendUTXO*(
+proc loadSendOutput*(
     db: DB,
     input: SendInput
 ): SendOutput {.forceCheck: [
@@ -305,3 +258,92 @@ proc loadSpendable*(
             )
         except ValueError as e:
             raise newException(DBReadError, e.msg)
+
+proc addToSpendable(
+    db: DB,
+    key: string,
+    hash: Hash[384],
+    nonce: int
+) {.forceCheck: [].} =
+    try:
+        db.put(key, db.get(key) & hash.toString() & char(nonce))
+    except DBReadError:
+        db.put(key, "" & hash.toString() & char(nonce))
+
+proc removeFromSpendable(
+    db: DB,
+    key: string,
+    hash: Hash[384],
+    nonce: int
+) {.forceCheck: [].} =
+    var
+        output: string = hash.toString() & char(nonce)
+        spendable: string
+
+    #Load the output.
+    try:
+        spendable = db.get(key)
+    except DBReadError:
+        doAssert(false, "Trying to spend from someone without anything spendable.")
+
+    #Remove the specified output.
+    for o in countup(0, spendable.len, 49):
+        if spendable[o ..< o + 49] == output:
+            db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
+            break
+
+#Add a Claim/Send's outputs to spendable while removing a Send's inputs.
+proc verify*(
+    db: DB,
+    tx: Claim or Send
+) {.forceCheck: [].} =
+    #Add spendable outputs.
+    for o in 0 ..< tx.outputs.len:
+        db.addToSpendable(
+            cast[SendOutput](tx.outputs[o]).key.toString(),
+            tx.hash,
+            o
+        )
+
+    if tx of Send:
+        #Remove spent inputs.
+        for input in tx.inputs:
+            var key: string
+            try:
+                key = db.loadSendOutput(cast[SendInput](input)).key.toString()
+            except DBReadError:
+                doAssert(false, "Removing a non-existent output.")
+
+            db.removeFromSpendable(
+                key,
+                input.hash,
+                cast[SendInput](input).nonce
+            )
+
+#Add a Send's inputs back to spendable while removing the Claim/Send's outputs.
+proc unverify*(
+    db: DB,
+    tx: Claim or Send
+) {.forceCheck: [].} =
+    #Restore inputs.
+    if tx of Send:
+        for input in tx.inputs:
+            var key: string
+            try:
+                key = db.loadSendOutput(cast[SendInput](input)).key.toString()
+            except DBReadError:
+                doAssert(false, "Restoring a non-existent output.")
+
+            db.addToSpendable(
+                key,
+                input.hash,
+                cast[SendInput](input).nonce
+            )
+
+    #Remove outputs.
+    for o in 0 ..< tx.outputs.len:
+        db.removeFromSpendable(
+            cast[SendOutput](tx.outputs[o]).key.toString(),
+            tx.hash,
+            o
+        )

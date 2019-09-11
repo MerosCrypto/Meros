@@ -220,6 +220,30 @@ proc verify*(
         else:
             discard
 
+#Mark a Transaction as unverified, removing its outputs from spendable.
+proc unverify*(
+    transactions: var Transactions,
+    hash: Hash[384]
+) {.forceCheck: [].} =
+    var tx: Transaction
+    try:
+        tx = transactions[hash]
+    except IndexError as e:
+        doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
+
+    case tx:
+        of Claim as claim:
+            transactions.db.unverify(claim)
+        of Send as send:
+            transactions.db.unverify(send)
+        of Data as data:
+            try:
+                transactions.db.saveDataTip(transactions.getSender(data), data.inputs[0].hash)
+            except DataMissing as e:
+                doAssert(false, "Added, verified, and unverified a Data which has a missing input: " & e.msg)
+        else:
+            discard
+
 #Delete a hash from the cache.
 func del*(
     transactions: var Transactions,
@@ -247,27 +271,27 @@ proc load*(
     except DBReadError as e:
         fcRaise e
 
-#Load a Mint UTXO.
-proc loadUTXO*(
+#Load a Mint Output.
+proc loadOutput*(
     transactions: Transactions,
     tx: Hash[384]
 ): MintOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = transactions.db.loadMintUTXO(tx)
+        result = transactions.db.loadMintOutput(tx)
     except DBReadError as e:
         fcRaise e
 
-#Load a Send UTXO.
-proc loadUTXO*(
+#Load a Send Output.
+proc loadOutput*(
     transactions: Transactions,
     input: SendInput
 ): SendOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = transactions.db.loadSendUTXO(input)
+        result = transactions.db.loadSendOutput(input)
     except DBReadError as e:
         fcRaise e
 

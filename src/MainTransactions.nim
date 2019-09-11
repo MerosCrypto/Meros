@@ -186,3 +186,9 @@ proc mainTransactions() {.forceCheck: [].} =
             hash: Hash[384]
         ) {.forceCheck: [].} =
             transactions.verify(hash)
+
+        #Mark a Transaction as unverified.
+        functions.transactions.unverify = proc (
+            hash: Hash[384]
+        ) {.forceCheck: [].} =
+            transactions.unverify(hash)

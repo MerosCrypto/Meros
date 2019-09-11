@@ -349,6 +349,9 @@ proc unverify*(
             except IndexError as e:
                 doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
+            #Notify the Transactions DAG about the unverification.
+            consensus.functions.transactions.unverify(child)
+
 #Finalize a TransactionStatus.
 proc finalize*(
     consensus: Consensus,

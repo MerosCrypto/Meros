@@ -28,7 +28,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export toString, getUTXOs, loadSpenders, loadDataTip, verify
+export toString, getUTXOs, loadSpenders, loadDataTip, verify, unverify
 
 #Seq utils standard lib.
 import sequtils
@@ -74,7 +74,7 @@ proc add*(
 
     #Grab the first claimer.
     try:
-         claimers[0] = transactions.loadUTXO(claim.inputs[0].hash).key
+         claimers[0] = transactions.loadOutput(claim.inputs[0].hash).key
     except DBReadError:
         raise newException(ValueError, "Claim spends a non-existant Mint.")
 
@@ -87,7 +87,7 @@ proc add*(
             raise newException(ValueError, "Claim spends a non-existant Mint.")
 
         try:
-            output = transactions.loadUTXO(input.hash)
+            output = transactions.loadOutput(input.hash)
         except DBReadError:
             raise newException(ValueError, "Claim spends a non-existant Mint.")
 
@@ -144,7 +144,7 @@ proc add*(
 
     #Grab the first sender.
     try:
-        senders[0] = transactions.loadUTXO(cast[SendInput](send.inputs[0])).key
+        senders[0] = transactions.loadOutput(cast[SendInput](send.inputs[0])).key
     except DBReadError:
         raise newException(ValueError, "Send spends a non-existant output.")
 
@@ -160,7 +160,7 @@ proc add*(
             raise newException(ValueError, "Send spends a non-existant Claim or Send.")
 
         try:
-            spent = transactions.loadUTXO(cast[SendInput](input))
+            spent = transactions.loadOutput(cast[SendInput](input))
         except DBReadError:
             raise newException(ValueError, "Send spends a non-existant output.")
 

@@ -75,7 +75,6 @@ Transactions Branch:
 
 - Practical Bugs:
     - Only verify Transactions which have a chance at becoming verified.
-    - Unverifications don't affect spendable.
 
 - Tests:
     - PendingActionsTest should not have all reverted actions reapplied.

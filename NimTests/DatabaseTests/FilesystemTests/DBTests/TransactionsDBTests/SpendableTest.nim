@@ -42,21 +42,44 @@ proc test*() =
         wallets: seq[Wallet] = @[]
 
         #Outputs.
-        outputs: seq[SendOutput]
+        outputs: seq[SendOutput] = @[]
         #Send.
         send: Send
 
         #Public Key -> Spendable Outputs.
-        spendable: OrderedTable[string, seq[SendInput]]
+        spendable: Table[string, seq[SendInput]] = initTable[string, seq[SendInput]]()
         #Inputs.
-        inputs: seq[SendInput]
+        inputs: seq[SendInput] = @[]
         #Loaded Spendable.
-        loaded: seq[SendInput]
+        loaded: seq[SendInput] = @[]
+        #Sends.
+        sends: seq[Send] = @[]
+        #Who can spend a SendInput.
+        spenders: Table[string, string] = initTable[string, string]()
+
+    proc inputSort(
+        x: SendInput,
+        y: SendInput
+    ): int =
+        if x.hash < y.hash:
+            result = -1
+        elif x.hash > y.hash:
+            result = 1
+        else:
+            if x.nonce < y.nonce:
+                result = -1
+            elif x.nonce > y.nonce:
+                result = 1
+            else:
+                result = 0
 
     proc compare() =
         #Test each spendable.
         for key in spendable.keys():
             loaded = db.loadSpendable(newEdPublicKey(key))
+
+            spendable[key].sort(inputSort)
+            loaded.sort(inputSort)
 
             assert(spendable[key].len == loaded.len)
             for i in 0 ..< spendable[key].len:
@@ -87,6 +110,7 @@ proc test*() =
                 spendable[outputs[o].key.toString()].add(
                     newSendInput(send.hash, o)
                 )
+                spenders[send.hash.toString() & char(o)] = outputs[o].key.toString()
 
         compare()
 
@@ -112,10 +136,33 @@ proc test*() =
                 send = newSend(inputs, newSendOutput(outputKey, 0))
                 db.save(send)
                 db.verify(send)
+                sends.add(send)
 
                 if not spendable.hasKey(outputKey.toString()):
                     spendable[outputKey.toString()] = @[]
                 spendable[outputKey.toString()].add(newSendInput(send.hash, 0))
+                spenders[send.hash.toString() & char(0)] = outputKey.toString()
+
+        compare()
+
+        #Unverify a Send.
+        if sends.len != 0:
+            var s: int = rand(sends.high)
+            db.unverify(sends[s])
+            for input in sends[s].inputs:
+                spendable[
+                    spenders[input.hash.toString() & char(cast[SendInput](input).nonce)]
+                ].add(cast[SendInput](input))
+
+            for o1 in 0 ..< sends[s].outputs.len:
+                var output: SendOutput = cast[SendOutput](sends[s].outputs[o1])
+                for o2 in 0 ..< spendable[output.key.toString()].len:
+                    if (
+                        (spendable[output.key.toString()][o2].hash == sends[s].hash) and
+                        (spendable[output.key.toString()][o2].nonce == o1)
+                    ):
+                        spendable[output.key.toString()].delete(o2)
+                        break
 
         compare()
 
