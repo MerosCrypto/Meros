@@ -138,7 +138,7 @@ proc test*() =
                 )
             )
         #Archive the records.
-        consensus.archive(state, archiving, initTable[string, seq[BLSPublicKey]](), initTable[string, seq[BLSPublicKey]]())
+        consensus.archive(state, newEpoch(archiving), newEpoch(@[]))
 
         #Commit the DB.
         db.commit(0)

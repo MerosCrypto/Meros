@@ -77,9 +77,6 @@ Transactions Branch:
     - Only verify Transactions which have a chance at becoming verified.
     - Unverifications don't affect spendable.
 
-- Work In Progress:
-    - When a MeritRemoval happens, recalculate Merit of every affected Transaction. If one goes below the protocol, and is replaced, unverify the tree.
-
 - Tests:
     - PendingActionsTest should not have all reverted actions reapplied.
     - Test historical and live threshold calculation.

@@ -25,7 +25,8 @@ export ConsensusIndex
 import ../Transactions/Transaction
 import ../Transactions/objects/TransactionsObj
 
-#State lib.
+#Epoch object and State lib.
+import ../Merit/objects/EpochsObj
 import ../Merit/State
 
 #SpamFilter object.
@@ -67,6 +68,7 @@ proc newConsensus*(
 #Flag a MeritHolder as malicious.
 proc flag*(
     consensus: Consensus,
+    state: var State,
     removal: MeritRemoval
 ) {.forceCheck: [].} =
     #Make sure there's a seq.
@@ -78,6 +80,31 @@ proc flag*(
         consensus.malicious[removal.holder.toString()].add(removal)
     except KeyError as e:
         doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
+
+    #Reclaulcate the affected verified Transactions.
+    var
+        elem: Element
+        verif: Verification
+        status: TransactionStatus
+    
+    for e in consensus.db.loadOutOfEpochs(removal.holder) + 1 ..< consensus[removal.holder].height:
+        try:
+            elem = consensus[removal.holder][e]
+            if not (elem of Verification):
+                continue
+            verif = cast[Verification](elem)
+            status = consensus.getStatus(verif.hash)
+        except IndexError as e:
+            doAssert(false, "Either couldn't get an Element in Epochs or the Status for the Transaction it verifies: " & e.msg)
+
+        if status.verified:
+            var merit: int = 0
+            for verifier in status.verifiers:
+                if not consensus.malicious.hasKey(verifier.toString()):
+                    merit += state[verifier]
+
+            if merit < state.protocolThresholdAt(status.epoch):
+                consensus.unverify(state, verif.hash, status)
 
 proc checkMalicious*(
     consensus: Consensus,
@@ -223,6 +250,7 @@ proc add*(
 #Add a MeritRemoval.
 proc add*(
     consensus: Consensus,
+    state: var State,
     mr: MeritRemoval
 ) {.forceCheck: [
     ValueError
@@ -246,11 +274,12 @@ proc add*(
     else:
         doAssert(false, "Verified competing MeritRemovals aren't supported.")
 
-    consensus.flag(mr)
+    consensus.flag(state, mr)
 
 #Add a SignedMeritRemoval.
 proc add*(
     consensus: Consensus,
+    state: var State,
     mr: SignedMeritRemoval
 ) {.forceCheck: [
     ValueError
@@ -265,7 +294,7 @@ proc add*(
 
     #Add the MeritRemoval.
     try:
-        consensus.add(cast[MeritRemoval](mr))
+        consensus.add(state, cast[MeritRemoval](mr))
     except ValueError as e:
         fcRaise e
 
@@ -327,12 +356,11 @@ proc getUnfinalizedParents(
 proc archive*(
     consensus: Consensus,
     state: var State,
-    records: seq[MeritHolderRecord],
-    inEpochs: Table[string, seq[BLSPublicKey]],
-    outOfEpochs: Table[string, seq[BLSPublicKey]]
+    shifted: Epoch,
+    popped: Epoch
 ) {.forceCheck: [].} =
     #Iterate over every Record.
-    for record in records:
+    for record in shifted.records:
         #Make sure this MeritHolder has Elements to archive.
         if consensus[record.key].archived == consensus[record.key].height - 1:
             doAssert(false, "Tried to archive Elements from a MeritHolder without any pending Elements.")
@@ -360,7 +388,7 @@ proc archive*(
         consensus.db.save(record.key, record.nonce)
 
     #Delete every new Hash in Epoch from unmentioned.
-    for hash in inEpochs.keys():
+    for hash in shifted.hashes.keys():
         consensus.unmentioned.del(hash)
     #Update the Epoch for every unmentioned Epoch.
     var unmentioned: string = ""
@@ -369,10 +397,14 @@ proc archive*(
         consensus.incEpoch(hash)
     consensus.db.saveUnmentioned(unmentioned)
 
+    #Save every popped record nonce.
+    for record in popped.records:
+        consensus.db.saveOutOfEpochs(record.key, record.nonce)
+
     #Transactions finalized out of order.
     var outOfOrder: Table[string, bool] = initTable[string, bool]()
     #Mark every hash in this Epoch as out of Epochs.
-    for hashStr in outOfEpochs.keys():
+    for hashStr in popped.hashes.keys():
         #Skip Transaction we verified out of order.
         if outOfOrder.hasKey(hashStr):
             continue

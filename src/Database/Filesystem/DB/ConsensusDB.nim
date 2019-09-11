@@ -90,7 +90,7 @@ proc commit*(
 proc save*(
     db: DB,
     holder: BLSPublicKey,
-    epoch: int
+    archived: int
 ) {.forceCheck: [].} =
     var holderStr: string = holder.toString()
 
@@ -101,7 +101,14 @@ proc save*(
         db.consensus.holdersStr &= holderStr
         db.put("holders", db.consensus.holdersStr)
 
-    db.put(holderStr, $epoch)
+    db.put(holderStr, $archived)
+
+proc saveOutOfEpochs*(
+    db: DB,
+    holder: BLSPublicKey,
+    epoch: int
+) {.forceCheck: [].} =
+    db.put(holder.toString() & "epoch", epoch.toBinary())
 
 proc save*(
     db: DB,
@@ -147,6 +154,15 @@ proc load*(
         result = parseInt(db.get(holder.toString()))
     except Exception as e:
         raise newException(DBReadError, e.msg)
+
+proc loadOutOfEpochs*(
+    db: DB,
+    holder: BLSPublicKey
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(holder.toString() & "epoch").fromBinary()
+    except Exception:
+        return -1
 
 proc load*(
     db: DB,

@@ -167,7 +167,7 @@ proc mainConsensus() {.forceCheck: [].} =
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
                 #Flag the MeritRemoval.
-                consensus.flag(cast[SignedMeritRemoval](e.removal))
+                consensus.flag(merit.state, cast[SignedMeritRemoval](e.removal))
 
                 try:
                     #Broadcast the first MeritRemoval.
@@ -213,7 +213,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the MeritRemoval.
             try:
-                consensus.add(mr)
+                consensus.add(merit.state, mr)
             except ValueError as e:
                 fcRaise e
 
@@ -229,7 +229,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the MeritRemoval.
             try:
-                consensus.add(mr)
+                consensus.add(merit.state, mr)
             except ValueError as e:
                 fcRaise e
 

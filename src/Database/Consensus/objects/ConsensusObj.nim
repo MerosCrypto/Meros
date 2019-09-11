@@ -311,6 +311,44 @@ proc update*(
     #Save the status.
     consensus.db.save(hash.toString(), status)
 
+#Unverify a Transaction.
+proc unverify*(
+    consensus: Consensus,
+    state: var State,
+    hash: Hash[384],
+    status: TransactionStatus
+) {.forceCheck: [].} =
+    var
+        children: seq[Hash[384]] = @[hash]
+        child: Hash[384]
+        tx: Transaction
+        childStatus: TransactionStatus = status
+
+    while children.len != 0:
+        child = children.pop()
+        try:
+            tx = consensus.functions.transactions.getTransaction(child)
+            if child != hash:
+                childStatus = consensus.getStatus(child)
+        except IndexError:
+            doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
+
+        #If this child was verified, unverify it and grab children.
+        #Children of Transactions which aren't verified cann't be verified and therefore can be skipped.
+        if childStatus.verified:
+            echo "Verified Transaction was unverified: ", child
+            childStatus.verified = false
+            consensus.db.save(child.toString(), childStatus)
+            consensus.statuses.del(child.toString())
+
+            try:
+                for o in 0 ..< tx.outputs.len:
+                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newSendInput(child, o))
+                    for spender in spenders:
+                        children.add(spender)
+            except IndexError as e:
+                doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
+
 #Finalize a TransactionStatus.
 proc finalize*(
     consensus: Consensus,
@@ -346,36 +384,7 @@ proc finalize*(
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
         #If it's now unverified, unverify the tree.
-        var
-            children: seq[Hash[384]] = @[hash]
-            child: Hash[384]
-            tx: Transaction
-            childStatus: TransactionStatus = status
-
-        while children.len != 0:
-            child = children.pop()
-            try:
-                tx = consensus.functions.transactions.getTransaction(child)
-                if child != hash:
-                    childStatus = consensus.getStatus(child)
-            except IndexError:
-                doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
-
-            #If this child was verified, unverify it and grab children.
-            #Children of Transactions which aren't verified cann't be verified and therefore can be skipped.
-            if childStatus.verified:
-                echo "Verified Transaction was unverified when finalized: ", child
-                childStatus.verified = false
-                consensus.db.save(child.toString(), childStatus)
-                consensus.statuses.del(child.toString())
-
-                try:
-                    for o in 0 ..< tx.outputs.len:
-                        var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newSendInput(child, o))
-                        for spender in spenders:
-                            children.add(spender)
-                except IndexError as e:
-                    doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
+        consensus.unverify(state, hash, status)
     #If it wasn't verified, check if it actually was.
     elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
         #Grab the Transaction.

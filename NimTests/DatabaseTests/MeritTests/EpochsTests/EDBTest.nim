@@ -192,7 +192,7 @@ proc test*() =
                             ].aggregate()
                         )
                     )
-                    consensus.flag(pending[^1])
+                    consensus.flag(state, pending[^1])
 
         #Create the new records.
         records = @[]
@@ -288,7 +288,7 @@ proc test*() =
         pending = @[]
 
         #Mark the records as archived.
-        consensus.archive(state, records, epochs.latest.hashes, epoch.hashes)
+        consensus.archive(state, epochs.latest, epoch)
 
         #Commit the DB.
         db.commit(mining.nonce)
