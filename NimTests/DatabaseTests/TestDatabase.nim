@@ -66,3 +66,8 @@ proc init*(
         hash: Hash[384]
     ) =
         discard
+
+    functions.transactions.unverify = proc (
+        hash: Hash[384]
+    ) =
+        discard
