@@ -71,16 +71,6 @@ Network:
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
 
-Transactions Branch:
-
-- Tests:
-    - PendingActionsTest should not have all reverted actions reapplied.
-    - Test historical and live threshold calculation.
-    - Test `TransactionStatus.epoch` is updated as needed.
-    - Test Meros only verifies Transactions which have a chance.
-    - Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
-    - Test children Transactions are properly unverified.
-    - Test only Transactions which can be verified are verified.
 
 ### Nim Tests:
 
@@ -152,6 +142,14 @@ Network:
 - VerifyCompeting Sync test.
 - VerifyCompeting Live test.
 - VerifyCompeting Cause test.
+
+- PendingActionsTest should not have all reverted actions reapplied.
+
+- Test historical and live threshold calculation.
+- Test `TransactionStatus.epoch` is updated as needed.
+- Test Meros only verifies Transactions which have a chance.
+- Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
+- Test children Transactions are properly unverified.
 
 ### Features:
 
