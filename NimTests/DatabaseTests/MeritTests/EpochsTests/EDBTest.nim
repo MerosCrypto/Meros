@@ -9,6 +9,9 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
+#Transactions lib.
+import ../../../../src/Database/Transactions/Transactions
+
 #Consensus lib.
 import ../../../../src/Database/Consensus/Consensus
 
@@ -44,16 +47,29 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
+        #Functions.
+        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database.
         db: DB = newTestDatabase()
         #Consensus.
-        consensus: Consensus = newConsensus(db)
+        consensus: Consensus = newConsensus(
+            functions,
+            db,
+            Hash[384](),
+            Hash[384]()
+        )
         #Blockchain.
         blockchain: Blockchain = newBlockchain(
             db,
             "EPOCHS_TEST_DB",
             30,
             "".pad(48).toHash(384)
+        )
+        #Transactions.
+        transactions: Transactions = newTransactions(
+            db,
+            consensus,
+            blockchain
         )
         #State.
         state: State = newState(db, 5, blockchain.height)
@@ -99,6 +115,11 @@ proc test*() =
 
         #Block we're mining.
         mining: Block
+        #Shifted Epoch.
+        epoch: Epoch
+
+    #Init the Function Box.
+    functions.init(addr transactions)
 
     #Compare the Epochs against the reloaded Epochs.
     proc compare() =
@@ -124,6 +145,12 @@ proc test*() =
 
                 hashes[^1].add(hash)
 
+                #Register the Transaction.
+                var tx: Transaction = Transaction()
+                tx.hash = hash
+                transactions.transactions[tx.hash.toString()] = tx
+                consensus.register(transactions, state, tx, i)
+
             #For every viable holder, verify a random amount of hashes from each section.
             for holder in holders:
                 if malicious.hasKey(holder.publicKey.toString()):
@@ -147,7 +174,7 @@ proc test*() =
                             signed[holder.publicKey.toString()].add(hash)
 
                             #Add it to the Consensus DAG.
-                            consensus.add(verif)
+                            consensus.add(state, verif)
                 #Create a MeritRemoval.
                 else:
                     verif1 = newSignedVerificationObj(hash)
@@ -165,7 +192,7 @@ proc test*() =
                             ].aggregate()
                         )
                     )
-                    consensus.flag(pending[^1])
+                    consensus.flag(state, pending[^1])
 
         #Create the new records.
         records = @[]
@@ -253,7 +280,7 @@ proc test*() =
         state.processBlock(blockchain, mining)
 
         #Shift the records onto the Epochs.
-        discard epochs.shift(consensus, @[], records)
+        epoch = epochs.shift(consensus, @[], records)
 
         #Delete the Merit of every Malicious MeritHolder.
         for mr in pending:
@@ -261,7 +288,7 @@ proc test*() =
         pending = @[]
 
         #Mark the records as archived.
-        consensus.archive(records)
+        consensus.archive(state, epochs.latest, epoch)
 
         #Commit the DB.
         db.commit(mining.nonce)

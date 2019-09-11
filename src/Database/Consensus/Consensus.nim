@@ -7,6 +7,9 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
+#GlobalFunctionBox object.
+import ../../objects/GlobalFunctionBoxObj
+
 #Consensus DB lib.
 import ../Filesystem/DB/ConsensusDB
 
@@ -17,6 +20,18 @@ import ../common/Merkle
 import ../common/objects/ConsensusIndexObj
 import ../common/objects/MeritHolderRecordObj
 export ConsensusIndex
+
+#Transaction lib and Transactions object.
+import ../Transactions/Transaction
+import ../Transactions/objects/TransactionsObj
+
+#Epoch object and State lib.
+import ../Merit/objects/EpochsObj
+import ../Merit/State
+
+#SpamFilter object.
+import objects/SpamFilterObj
+export SpamFilterObj
 
 #Signed Element object.
 import objects/SignedElementObj
@@ -43,13 +58,17 @@ import tables
 
 #Constructor wrapper.
 proc newConsensus*(
-    db: DB
+    functions: GlobalFunctionBox,
+    db: DB,
+    sendDiff: Hash[384],
+    dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
-    newConsensusObj(db)
+    newConsensusObj(functions, db, sendDiff, dataDiff)
 
 #Flag a MeritHolder as malicious.
 proc flag*(
     consensus: Consensus,
+    state: var State,
     removal: MeritRemoval
 ) {.forceCheck: [].} =
     #Make sure there's a seq.
@@ -61,6 +80,31 @@ proc flag*(
         consensus.malicious[removal.holder.toString()].add(removal)
     except KeyError as e:
         doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
+
+    #Reclaulcate the affected verified Transactions.
+    var
+        elem: Element
+        verif: Verification
+        status: TransactionStatus
+
+    for e in consensus.db.loadOutOfEpochs(removal.holder) + 1 ..< consensus[removal.holder].height:
+        try:
+            elem = consensus[removal.holder][e]
+            if not (elem of Verification):
+                continue
+            verif = cast[Verification](elem)
+            status = consensus.getStatus(verif.hash)
+        except IndexError as e:
+            doAssert(false, "Either couldn't get an Element in Epochs or the Status for the Transaction it verifies: " & e.msg)
+
+        if status.verified:
+            var merit: int = 0
+            for verifier in status.verifiers:
+                if not consensus.malicious.hasKey(verifier.toString()):
+                    merit += state[verifier]
+
+            if merit < state.protocolThresholdAt(status.epoch):
+                consensus.unverify(state, verif.hash, status)
 
 proc checkMalicious*(
     consensus: Consensus,
@@ -96,15 +140,69 @@ proc checkMalicious*(
             e.removal
         )
 
+#Register a Transaction.
+proc register*(
+    consensus: Consensus,
+    transactions: Transactions,
+    state: var State,
+    tx: Transaction,
+    blockNum: int
+) {.forceCheck: [].} =
+    #Create the status.
+    var status: TransactionStatus = newTransactionStatusObj(blockNum + 6)
+
+    for input in tx.inputs:
+        #Check if this Transaction's parent was beatem.
+        try:
+            if (
+                (not status.beaten) and
+                (not (tx of Claim)) and
+                (not ((tx of Data) and cast[Data](tx).isFirstData)) and
+                (consensus.getStatus(input.hash).beaten)
+            ):
+                status.beaten = true
+        except IndexError:
+            doAssert(false, "Parent Transaction doesn't have a status.")
+
+        #Check for competing Transactions.
+        var spenders: seq[Hash[384]] = transactions.loadSpenders(input)
+        if spenders.len != 1:
+            status.defaulting = true
+
+            #If there's a competing Transaction, mark competitors as needing to default.
+            #This will run for every input with multiple spenders.
+            if status.defaulting:
+                for spender in spenders:
+                    if spender == tx.hash:
+                        continue
+
+                    try:
+                        consensus.getStatus(spender).defaulting = true
+                    except IndexError:
+                        doAssert(false, "Competing Transaction doesn't have a status despite being marked as a spender.")
+
+    #If there were previously unknown Verifications, apply them.
+    if consensus.unknowns.hasKey(tx.hash.toString()):
+        try:
+            for verifier in consensus.unknowns[tx.hash.toString()]:
+                status.verifiers.add(verifier)
+
+            #Delete from the unknowns table.
+            consensus.unknowns.del(tx.hash.toString())
+
+            #Since we added Verifiers, calculate the Merit.
+            consensus.calculateMerit(state, tx.hash, status)
+        except KeyError as e:
+            doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
+
+    #Set the status.
+    consensus.setStatus(tx.hash.toString(), status)
+
 #Handle unknown Verifications.
 proc handleUnknown(
     consensus: Consensus,
-    verif: Verification,
-    txExists: bool
+    verif: Verification
 ) {.forceCheck: [].} =
-    if txExists:
-        return
-
     var hash: string = verif.hash.toString()
     if not consensus.unknowns.hasKey(hash):
         consensus.unknowns[hash] = newSeq[BLSPublicKey]()
@@ -117,6 +215,7 @@ proc handleUnknown(
 #Add a Verification.
 proc add*(
     consensus: Consensus,
+    state: var State,
     verif: Verification,
     txExists: bool
 ) {.forceCheck: [
@@ -133,11 +232,15 @@ proc add*(
     except MaliciousMeritHolder as e:
         raise newException(ValueError, "Tried to add an Element from a Block which would cause a MeritRemoval: " & e.msg)
 
-    consensus.handleUnknown(verif, txExists)
+    if not txExists:
+        consensus.handleUnknown(verif)
+    else:
+        consensus.update(state, verif.hash, verif.holder)
 
 #Add a SignedVerification.
 proc add*(
     consensus: Consensus,
+    state: var State,
     verif: SignedVerification
 ) {.forceCheck: [
     ValueError,
@@ -154,9 +257,12 @@ proc add*(
     except MaliciousMeritHolder as e:
         doAssert(false, "Tried to add a SignedVerification which caused a MeritRemoval. This should've been checked via checkMalicious before hand: " & e.msg)
 
+    consensus.update(state, verif.hash, verif.holder)
+
 #Add a MeritRemoval.
 proc add*(
     consensus: Consensus,
+    state: var State,
     mr: MeritRemoval
 ) {.forceCheck: [
     ValueError
@@ -180,11 +286,12 @@ proc add*(
     else:
         doAssert(false, "Verified competing MeritRemovals aren't supported.")
 
-    consensus.flag(mr)
+    consensus.flag(state, mr)
 
 #Add a SignedMeritRemoval.
 proc add*(
     consensus: Consensus,
+    state: var State,
     mr: SignedMeritRemoval
 ) {.forceCheck: [
     ValueError
@@ -199,7 +306,7 @@ proc add*(
 
     #Add the MeritRemoval.
     try:
-        consensus.add(cast[MeritRemoval](mr))
+        consensus.add(state, cast[MeritRemoval](mr))
     except ValueError as e:
         fcRaise e
 
@@ -236,13 +343,36 @@ proc archive*(
     #Delete the MeritRemovals from the malicious table.
     consensus.malicious.del(mr.holder.toString())
 
+#Get a Transaction's unfinalized parents.
+proc getUnfinalizedParents(
+    consensus: Consensus,
+    tx: Transaction
+): seq[Hash[384]] {.forceCheck: [].} =
+    #If this Transaction doesn't have inputs with statuses, don't do anything.
+    if not (
+        (tx of Claim) or
+        (
+            (tx of Data) and
+            (cast[Data](tx).isFirstData)
+        )
+    ):
+        #Make sure every input was already finalized.
+        for input in tx.inputs:
+            try:
+                if consensus.getStatus(input.hash).merit == -1:
+                    result.add(input.hash)
+            except IndexError as e:
+                doAssert(false, "Couldn't get the Status of a Transaction used as an input to one out of Epochs: " & e.msg)
+
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.
 proc archive*(
     consensus: Consensus,
-    records: seq[MeritHolderRecord]
+    state: var State,
+    shifted: Epoch,
+    popped: Epoch
 ) {.forceCheck: [].} =
     #Iterate over every Record.
-    for record in records:
+    for record in shifted.records:
         #Make sure this MeritHolder has Elements to archive.
         if consensus[record.key].archived == consensus[record.key].height - 1:
             doAssert(false, "Tried to archive Elements from a MeritHolder without any pending Elements.")
@@ -268,3 +398,90 @@ proc archive*(
 
         #Update the DB.
         consensus.db.save(record.key, record.nonce)
+
+    #Delete every new Hash in Epoch from unmentioned.
+    for hash in shifted.hashes.keys():
+        consensus.unmentioned.del(hash)
+    #Update the Epoch for every unmentioned Epoch.
+    var unmentioned: string = ""
+    for hash in consensus.unmentioned.keys():
+        unmentioned &= hash
+        consensus.incEpoch(hash)
+    consensus.db.saveUnmentioned(unmentioned)
+
+    #Save every popped record nonce.
+    for record in popped.records:
+        consensus.db.saveOutOfEpochs(record.key, record.nonce)
+
+    #Transactions finalized out of order.
+    var outOfOrder: Table[string, bool] = initTable[string, bool]()
+    #Mark every hash in this Epoch as out of Epochs.
+    for hashStr in popped.hashes.keys():
+        #Skip Transaction we verified out of order.
+        if outOfOrder.hasKey(hashStr):
+            continue
+
+        #Get the hash as a Hash.
+        var hash: Hash[384]
+        try:
+            hash = hashStr.toHash(384)
+        except ValueError as e:
+            doAssert(false, "Couldn't convert a hash from an Epoch into a hash: " & e.msg)
+
+        var parents: seq[Hash[384]] = @[hash]
+        while parents.len != 0:
+            #Grab the last parent.
+            var parent: Hash[384] = parents.pop()
+
+            #Skip this Transaction if we already verified it.
+            if outOfOrder.hasKey(parent.toString()):
+                continue
+
+            #Grab the Transaction.
+            var tx: Transaction
+            try:
+                tx = consensus.functions.transactions.getTransaction(parent)
+            except IndexError as e:
+                doAssert(false, "Couldn't get a Transaction that's out of Epochs: " & e.msg)
+
+            #Grab this Transaction's unfinalized parents.
+            var newParents: seq[Hash[384]] = consensus.getUnfinalizedParents(tx)
+
+            #If all the parents are finalized, finalize this Transaction.
+            if newParents.len == 0:
+                consensus.finalize(state, parent)
+                outOfOrder[parent.toString()] = true
+            else:
+                #Else, add back this Transaction, and then add the new parents.
+                parents.add(parent)
+                parents &= newParents
+
+    #Reclaulcate every close Status.
+    var toDelete: seq[string] = @[]
+    for hashStr in consensus.close.keys():
+        var
+            hash: Hash[384]
+            status: TransactionStatus
+        try:
+            hash = hashStr.toHash(384)
+            status = consensus.getStatus(hash)
+        except ValueError as e:
+            doAssert(false, "Couldn't create a Hash from a key in Consensus.close: " & e.msg)
+        except IndexError:
+            doAssert(false, "Couldn't get the status of a Transaction that's close to being verified: " & $hash)
+
+        #Remove finalized Transactions.
+        if status.merit != -1:
+            toDelete.add(hashStr)
+            continue
+
+        #Recalculate Merit.
+        consensus.calculateMerit(state, hash, status)
+        #Remove verified Transactions.
+        if status.verified:
+            toDelete.add(hashStr)
+            continue
+
+    #Delete all close hashes marked for deletion.
+    for hash in toDelete:
+        consensus.close.del(hash)

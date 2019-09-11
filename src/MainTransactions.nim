@@ -14,12 +14,12 @@ proc verify(
             except Exception as e:
                 doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
 
-        #Make sure we didn't already verify a Transaction which spends the same inputs.
-        #This must absolutely be single-threaded/non-async.
-        #We only mark a TX as spent when the spoending TX has one Verification.
-        #If we check, then let other code run, then verify...
-        if not transactions.isFirst(transaction):
-            return
+        #Make sure we didn't already verify a competing Transaction/make sure this Transaction can be verified.
+        try:
+            if (not transactions.isFirst(transaction)) or consensus.getStatus(transaction.hash).beaten:
+                return
+        except IndexError as e:
+            doAssert(false, "Asked to verify a Transaction without a Status: " & e.msg)
 
         #Verify the Transaction.
         var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
@@ -47,14 +47,8 @@ proc mainTransactions() {.forceCheck: [].} =
         transactions = newTransactions(
             database,
             consensus,
-            merit,
-            params.SEND_DIFFICULTY,
-            params.DATA_DIFFICULTY
+            merit.blockchain
         )
-
-        #Handle requests for the Difficulties.
-        functions.transactions.getDifficulties = proc (): Difficulties {.forceCheck: [].} =
-            transactions.difficulties
 
         #Handle requests for an Transaction.
         functions.transactions.getTransaction = proc (
@@ -67,16 +61,11 @@ proc mainTransactions() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
-        #Get a Transaction's weight.
-        functions.transactions.getMerit = proc (
-            hash: Hash[384]
-        ): int {.forceCheck: [
-            IndexError
-        ].} =
-            try:
-                result = transactions.weights[hash.toString()]
-            except KeyError:
-                raise newException(IndexError, "Transaction out of Epochs.")
+        #Get a Transaction's spenders.
+        functions.transactions.getSpenders = proc (
+            input: Input
+        ): seq[Hash[384]] {.inline, forceCheck: [].} =
+            transactions.loadSpenders(input)
 
         #Handle Claims.
         functions.transactions.addClaim = proc (
@@ -99,8 +88,8 @@ proc mainTransactions() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
-            #Load previously unknown Verifications.
-            transactions.loadUnknown(consensus, merit.blockchain, merit.state, claim)
+            #Register the Claim with Consensus.
+            consensus.register(transactions, merit.state, claim, merit.blockchain.height)
 
             echo "Successfully added the Claim."
 
@@ -138,8 +127,8 @@ proc mainTransactions() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
-            #Load previously unknown Verifications.
-            transactions.loadUnknown(consensus, merit.blockchain, merit.state, send)
+            #Register the Send with Consensus.
+            consensus.register(transactions, merit.state, send, merit.blockchain.height)
 
             echo "Successfully added the Send."
 
@@ -177,8 +166,8 @@ proc mainTransactions() {.forceCheck: [].} =
             except DataExists as e:
                 fcRaise e
 
-            #Load previously unknown Verifications.
-            transactions.loadUnknown(consensus, merit.blockchain, merit.state, data)
+            #Register the Data with Consensus.
+            consensus.register(transactions, merit.state, data, merit.blockchain.height)
 
             echo "Successfully added the Data."
 
@@ -195,9 +184,14 @@ proc mainTransactions() {.forceCheck: [].} =
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
-        #Save a Transaction to the database.
-        #This for 'invalid' Transactions we aren't able to prune.
-        functions.transactions.save = proc (
-            tx: Transaction
-        ) {.inline, forceCheck: [].} =
-            transactions.save(tx)
+        #Mark a Transaction as verified.
+        functions.transactions.verify = proc (
+            hash: Hash[384]
+        ) {.forceCheck: [].} =
+            transactions.verify(hash)
+
+        #Mark a Transaction as unverified.
+        functions.transactions.unverify = proc (
+            hash: Hash[384]
+        ) {.forceCheck: [].} =
+            transactions.unverify(hash)

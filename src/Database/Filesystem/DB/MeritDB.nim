@@ -106,11 +106,12 @@ proc saveTip*(
 ) {.forceCheck: [].} =
     db.put("tip", hash.toString())
 
-proc saveLiveMerit*(
+proc saveLive*(
     db: DB,
+    blockNum: int,
     merit: int
 ) {.forceCheck: [].} =
-    db.put("merit", merit.toBinary())
+    db.put("merit" & blockNum.toBinary(), merit.toBinary())
 
 proc save*(
     db: DB,
@@ -191,13 +192,14 @@ proc loadTip*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc loadLiveMerit*(
-    db: DB
+proc loadLive*(
+    db: DB,
+    blockNum: int
 ): int {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get("merit").fromBinary()
+        result = db.get("merit" & blockNum.toBinary()).fromBinary()
     except DBReadError as e:
         fcRaise e
 

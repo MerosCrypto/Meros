@@ -43,11 +43,15 @@ class Mint(Transaction):
             }],
             "hash": self.hash.hex().upper(),
 
-            "nonce": self.nonce,
-
-            "verified": self.verified
+            "nonce": self.nonce
         }
         return result
+
+    #Mint -> JSON. toJSON alias.
+    def toVector(
+        self,
+    ) -> Dict[str, Any]:
+        return self.toJSON()
 
     #JSON -> Mint.
     @staticmethod

@@ -55,9 +55,7 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 var i: int = 0
                 while i < utxos.len:
-                    #Skip UTXOs that are spent but only spent in pending TXs.
-                    #Pending is defined as TXs with one verification; not anything created and broadcasted.
-                    if transactions.spent.hasKey(utxos[i].toString(send)):
+                    if transactions.loadSpenders(utxos[i]).len != 0:
                         utxos.delete(i)
                         continue
 
@@ -103,19 +101,16 @@ proc mainPersonal() {.forceCheck: [].} =
                 )
 
             #Create the Send.
-            try:
-                send = newSend(
-                    utxos,
-                    outputs
-                )
-            except ValueError as e:
-                raise newException(ValueError, e.msg)
+            send = newSend(
+                utxos,
+                outputs
+            )
 
             #Sign the Send.
             child.sign(send)
 
             #Mine the Send.
-            send.mine(transactions.difficulties.send)
+            send.mine(functions.consensus.getSendDifficulty())
 
             #Add the Send.
             try:
@@ -146,16 +141,10 @@ proc mainPersonal() {.forceCheck: [].} =
             doAssert(false, "Wallet has no usable keys: " & e.msg)
 
         try:
-            try:
-                data = newData(
-                    transactions.loadData(child.publicKey),
-                    dataStr
-                )
-            except DBReadError:
-                data = newData(
-                    child.publicKey,
-                    dataStr
-                )
+            data = newData(
+                transactions.loadDataTip(child.publicKey),
+                dataStr
+            )
         except ValueError as e:
             fcRaise e
 
@@ -163,7 +152,7 @@ proc mainPersonal() {.forceCheck: [].} =
         child.sign(data)
 
         #Mine the Data.
-        data.mine(transactions.difficulties.data)
+        data.mine(functions.consensus.getDataDifficulty())
 
         #Add the Data.
         try:

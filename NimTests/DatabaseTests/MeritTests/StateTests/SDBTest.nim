@@ -42,8 +42,10 @@ proc test*() =
             "".pad(48).toHash(384)
         )
         #State.
-        state: State = newState(db, 5, blockchain.height)
+        state: State = newState(db, 30, blockchain.height)
 
+        #Thresholds.
+        thresholds: seq[int] = @[]
         #List of MeritHolders.
         holders: seq[MinerWallet] = @[]
         #List of MeritHolders used to grab a miner from.
@@ -66,13 +68,16 @@ proc test*() =
     #Compare the State against the reloaded State.
     proc compare() =
         #Reload the State.
-        var reloaded: State = newState(db, 5, blockchain.height)
+        var reloaded: State = newState(db, 30, blockchain.height)
 
         #Compare the States.
         compare(state, reloaded)
 
     #Iterate over 20 'rounds'.
-    for _ in 1 .. 20:
+    for r in 1 .. 20:
+        #Add the current Node Threshold to thresholds.
+        thresholds.add(state.protocolThresholdAt(r))
+
         #Create a random amount of Merit Holders.
         for _ in 0 ..< rand(5) + 2:
             holders.add(newMinerWallet())
@@ -129,5 +134,21 @@ proc test*() =
 
         #Compare the States.
         compare()
+
+    #Check that the State hsaved it had 0 Merit at the start.
+    assert(state.loadLive(0) == 0)
+    #Check the threshold is just plus one.
+    assert(state.protocolThresholdAt(0) == 1)
+
+    #Check every existing threshold.
+    for t in 0 ..< len(thresholds):
+        assert(state.protocolThresholdAt(t) == thresholds[t])
+
+    #Checking loading the Merit for the latest Block returns the State's Merit.
+    assert(state.loadLive(21) == state.live)
+
+    #Check future thresholds.
+    for t in len(thresholds) + 2 ..< len(thresholds) + 22:
+        assert(state.protocolThresholdAt(t) == min(state.live + ((t - 21) * 100), state.deadBlocks * 100) div 2 + 1)
 
     echo "Finished the Database/Merit/State/DB Test."

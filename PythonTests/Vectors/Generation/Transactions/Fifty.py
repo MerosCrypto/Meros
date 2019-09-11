@@ -95,7 +95,7 @@ for s in order:
 
 block: Block = Block(
     BlockHeader(
-        21,
+        13,
         blockchain.last(),
         int(time()),
         consensus.getAggregate([(blsPubKey1, 2, -1)])
@@ -115,14 +115,14 @@ for s in order:
 
 block = Block(
     BlockHeader(
-        22,
+        14,
         blockchain.last(),
         int(time()),
         consensus.getAggregate([(blsPubKey1, 4, -1)])
     ),
     BlockBody(
         [(blsPubKey1, 5, consensus.getMerkle(blsPubKey1, 4))],
-        [(blspy.PrivateKey.from_seed(b'\1').get_public_key(), 100)]
+        [(blsPubKey2, 100)]
     )
 )
 block.mine(blockchain.difficulty)
@@ -145,7 +145,7 @@ for s in order:
 
 block = Block(
     BlockHeader(
-        23,
+        15,
         blockchain.last(),
         int(time()),
         consensus.getAggregate([(blsPubKey2, 0, -1), (blsPubKey1, 6, -1)])
@@ -160,6 +160,18 @@ block = Block(
 block.mine(blockchain.difficulty)
 blockchain.add(block)
 print("Generated Fifty Block " + str(block.header.nonce) + ".")
+
+#Generate another 5 Blocks.
+for i in range(16, 21):
+    #Create the next Block.
+    block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
+
+    #Mine it.
+    block.mine(blockchain.difficulty)
+
+    #Add it.
+    blockchain.add(block)
+    print("Generated Fifty Block " + str(block.header.nonce) + ".")
 
 #Save the appended data (3 Blocks and 12 Sends).
 result: Dict[str, Any] = {

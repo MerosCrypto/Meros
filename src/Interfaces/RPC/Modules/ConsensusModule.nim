@@ -46,6 +46,30 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
     try:
         newRPCFunctions:
+            #Get Merit Holder's height.
+            "getHeight" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError
+            ].} =
+                #Verify the parameters.
+                if (
+                    (params.len != 1) or
+                    (params[0].kind != JString)
+                ):
+                    raise newException(ParamError, "")
+
+                #Extract the parameter.
+                var key: BLSPublicKey
+                try:
+                    key = newBLSPublicKey(params[0].getStr())
+                except BLSError:
+                    raise newException(ParamError, "")
+
+                #Get the height.
+                res["result"] = % functions.consensus.getHeight(key)
+
             #Get Element by key/nonce.
             "getElement" = proc (
                 res: JSONNode,
@@ -83,12 +107,12 @@ proc module*(
                         "height": functions.consensus.getHeight(key)
                     })
 
-            #Get Merit Holder's height.
-            "getHeight" = proc (
+            "getStatus" = proc (
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [
-                ParamError
+                ParamError,
+                JSONRPCError
             ].} =
                 #Verify the parameters.
                 if (
@@ -98,13 +122,30 @@ proc module*(
                     raise newException(ParamError, "")
 
                 #Extract the parameter.
-                var key: BLSPublicKey
+                var hash: Hash[384]
                 try:
-                    key = newBLSPublicKey(params[0].getStr())
-                except BLSError:
+                    hash = params[0].getStr().toHash(384)
+                except ValueError:
                     raise newException(ParamError, "")
 
-                #Get the height.
-                res["result"] = % functions.consensus.getHeight(key)
+                #Get the Status, Merit, and create the result.
+                try:
+                    var
+                        status: TransactionStatus = functions.consensus.getStatus(hash)
+                        merit: int = status.merit
+                    if merit == -1:
+                        merit = 0
+                        for verifier in status.verifiers:
+                            if not functions.consensus.isMalicious(verifier):
+                                merit += functions.merit.getMerit(verifier)
+
+                    res["result"] = %* {
+                        "merit":      merit,
+                        "threshold":  functions.consensus.getThreshold(status.epoch),
+                        "verified":   status.verified,
+                        "defaulting": status.defaulting,
+                    }
+                except IndexError:
+                    raise newJSONRPCError(-2, "Transaction Status not found")
     except Exception as e:
         doAssert(false, "Couldn't create the Consensus Module: " & e.msg)

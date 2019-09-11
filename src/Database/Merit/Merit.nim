@@ -43,7 +43,7 @@ export Epochs
 type Merit* = ref object
     blockchain*: Blockchain
     state*: State
-    epochs: Epochs
+    epochs*: Epochs
 
 #Constructor.
 proc newMerit*(

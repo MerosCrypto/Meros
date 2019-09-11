@@ -18,17 +18,16 @@ import ../Wallet/Wallet
 #MeritHolderRecord object.
 import ../Database/common/objects/MeritHolderRecordObj
 
-#Element objects.
-import ../Database/Consensus/objects/VerificationObj
-import ../Database/Consensus/objects/MeritRemovalObj
+#Element lib and TransactionStatus object.
+import ../Database/Consensus/objects/TransactionStatusObj
+import ../Database/Consensus/Element
 
 #Difficulty, BlockHeader, and Block objects.
 import ../Database/Merit/objects/DifficultyObj
 import ../Database/Merit/objects/BlockHeaderObj
 import ../Database/Merit/objects/BlockObj
 
-#Difficulties and Transaction objects.
-import ../Database/Transactions/objects/DifficultiesObj
+#Transaction objects.
 import ../Database/Transactions/objects/TransactionObj
 import ../Database/Transactions/objects/ClaimObj
 import ../Database/Transactions/objects/SendObj
@@ -45,19 +44,15 @@ type
         quit*: proc () {.raises: [].}
 
     TransactionsFunctionBox* = ref object
-        getDifficulties*: proc (): Difficulties {.raises: [].}
-
         getTransaction*: proc (
             hash: Hash[384]
         ): Transaction {.raises: [
             IndexError
         ].}
 
-        getMerit*: proc (
-            hash: Hash[384]
-        ): int {.raises: [
-            IndexError
-        ].}
+        getSpenders*: proc (
+            input: Input
+        ): seq[Hash[384]] {.inline, raises: [].}
 
         addClaim*: proc (
             claim: Claim,
@@ -83,11 +78,19 @@ type
             DataExists
         ].}
 
-        save*: proc (
-            tx: Transaction
-        ) {.inline, raises: [].}
+        verify*: proc (
+            hash: Hash[384]
+        ) {.raises: [].}
+
+        unverify*: proc (
+            hash: Hash[384]
+        ) {.raises: [].}
 
     ConsensusFunctionBox* = ref object
+        getSendDifficulty*: proc (): Hash[384] {.inline, raises: [].}
+        getDataMinimumDifficulty*: proc (): Hash[384] {.inline, raises: [].}
+        getDataDifficulty*: proc (): Hash[384] {.inline, raises: [].}
+
         isMalicious*: proc (
             key: BLSPublicKey,
         ): bool {.inline, raises: [].}
@@ -107,6 +110,16 @@ type
             records: seq[MeritHolderRecord],
             aggregate: BLSSignature
         ] {.raises: [].}
+
+        getStatus*: proc (
+            hash: Hash[384]
+        ): TransactionStatus {.raises: [
+            IndexError
+        ].}
+
+        getThreshold*: proc (
+            epoch: int
+        ): int {.inline, raises: [].}
 
         addVerification*: proc (
             verif: Verification

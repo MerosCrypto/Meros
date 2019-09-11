@@ -18,9 +18,11 @@ import ../SerializeCommon
 
 #Parse function.
 proc parseData*(
-    dataStr: string
+    dataStr: string,
+    diff: Hash[384]
 ): Data {.forceCheck: [
-    ValueError
+    ValueError,
+    Spam
 ].} =
     #Verify the input length.
     if dataStr.len < HASH_LEN + BYTE_LEN:
@@ -38,6 +40,12 @@ proc parseData*(
         INT_LEN
     )
 
+    var
+        hash: Hash[384] = Blake384("\3" & dataSeq[0] & dataSeq[2])
+        argon: ArgonHash = Argon(hash.toString(), dataSeq[4].pad(8), true)
+    if argon < diff:
+        raise newSpam("Data didn't beat the difficulty.", hash.toString(), argon.toString())
+
     #Create the Data.
     try:
         result = newDataObj(
@@ -49,7 +57,7 @@ proc parseData*(
 
     #Hash it and set its signature/proof/argon.
     try:
-        result.hash = Blake384("\3" & dataSeq[0] & dataSeq[2])
+        result.hash = hash
 
         try:
             result.signature = newEdSignature(dataSeq[3])
@@ -57,6 +65,6 @@ proc parseData*(
             fcRaise e
 
         result.proof = uint32(dataSeq[4].fromBinary())
-        result.argon = Argon(result.hash.toString(), result.proof.toBinary().pad(8), true)
+        result.argon = argon
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)

@@ -70,8 +70,7 @@ verifs: List[SignedVerification] = []
 for d in range(len(datas)):
     verifs.append(SignedVerification(datas[d].hash))
     verifs[-1].sign(privKey, d)
-    if d < 3:
-        consensus.add(verifs[-1])
+    consensus.add(verifs[-1])
 
 #Create a MeritRemoval off the last one.
 sv: SignedVerification = SignedVerification(b'\0' * 48)
@@ -82,15 +81,15 @@ removal: SignedMeritRemoval = SignedMeritRemoval(
 )
 consensus.add(removal)
 
-#Generate a Block with the first 3 Elements.
+#Generate a Block with the Verifications.
 block: Block = Block(
     BlockHeader(
         2,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate([(pubKey, 0, 2)])
+        consensus.getAggregate([(pubKey, 0, 5)])
     ),
-    BlockBody([(pubKey, 2, consensus.getMerkle(pubKey, 0, 2))])
+    BlockBody([(pubKey, 5, consensus.getMerkle(pubKey, 0, 5))])
 )
 #Mine it.
 block.mine(blockchain.difficulty)
@@ -99,15 +98,25 @@ block.mine(blockchain.difficulty)
 blockchain.add(block)
 print("Generated Pending Actions Block " + str(block.header.nonce) + ".")
 
+#Generate 4 more Blocks.
+for i in range(3, 7):
+    block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
+    #Mine it.
+    block.mine(blockchain.difficulty)
+
+    #Add it.
+    blockchain.add(block)
+    print("Generated Pending Actions Block " + str(block.header.nonce) + ".")
+
 #Generate a Block with the MeritRemoval.
 block = Block(
     BlockHeader(
-        3,
+        7,
         blockchain.last(),
         int(time()),
-        consensus.getAggregate([(pubKey, 3, -1)])
+        consensus.getAggregate([(pubKey, 6, -1)])
     ),
-    BlockBody([(pubKey, 3, consensus.getMerkle(pubKey, 3))])
+    BlockBody([(pubKey, 6, consensus.getMerkle(pubKey, 6))])
 )
 #Mine it.
 block.mine(blockchain.difficulty)
@@ -123,7 +132,7 @@ result: Dict[str, Any] = {
     "removal":       removal.toSignedJSON()
 }
 for data in datas:
-    result["datas"].append(data.toJSON())
+    result["datas"].append(data.toVector())
 for verif in verifs:
     result["verifications"].append(verif.toSignedJSON())
 

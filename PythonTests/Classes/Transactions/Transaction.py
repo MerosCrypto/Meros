@@ -17,3 +17,8 @@ class Transaction:
         self
     ) -> Dict[str, Any]:
         raise Exception("Base Transaction toJSON called.")
+
+    def toVector(
+        self
+    ) -> Dict[str, Any]:
+        raise Exception("Base Transaction toVector called.")

@@ -29,8 +29,7 @@ proc `%`(
     result = %* {
         "inputs": [],
         "outputs": [],
-        "hash": $tx.hash,
-        "verified": tx.verified
+        "hash": $tx.hash
     }
 
     try:
@@ -117,31 +116,6 @@ proc module*(
                 #Get the Transaction.
                 try:
                     res["result"] = % functions.transactions.getTransaction(params[0].getStr().toHash(384))
-                except IndexError:
-                    raise newJSONRPCError(-2, "Transaction not found")
-                except ValueError:
-                    raise newJSONRPCError(-3, "Invalid hash")
-
-            #Get Transaction's Merit by hash.
-            "getMerit" = proc (
-                res: JSONNode,
-                params: JSONNode
-            ) {.forceCheck: [
-                ParamError,
-                JSONRPCError
-            ].} =
-                #Verify the parameters.
-                if (
-                    (params.len != 1) or
-                    (params[0].kind != JString)
-                ):
-                    raise newException(ParamError, "")
-
-                #Get the Transaction.
-                try:
-                    res["result"] = %* {
-                        "merit": functions.transactions.getMerit(params[0].getStr().toHash(384))
-                    }
                 except IndexError:
                     raise newJSONRPCError(-2, "Transaction not found")
                 except ValueError:

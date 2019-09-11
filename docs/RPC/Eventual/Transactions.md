@@ -24,7 +24,6 @@ The result is an object, as follows:
         - `key` (string): Ed25519 Public Key.
 
 - `hash`     (string)
-- `verified` (bool)
 
 	When `descendant` == "Mint":
     - `nonce` (int)
@@ -42,22 +41,6 @@ The result is an object, as follows:
     - `signature` (string)
     - `proof`     (int)
     - `argon`     (string)
-
-### `getMerit`
-
-`getMerit` replies with how much Merit is behind the Transaction, along with the threshold it needs (or needed) to cross. It takes in one argument:
-- Hash (string)
-
-The result is an object, as follows:
-- `merit`     (int)
-- `threshold` (int)
-
-### `getVerifiers`
-
-`getVerifiers` replies with the Merit Holders who verified a Transaction still in Epochs. It takes in one argument:
-- Hash (string)
-
-The result is an array of strings, each a Merit Holder's BLS Public Key.
 
 ### `getUTXOs`
 

@@ -33,7 +33,7 @@ They have the following fields:
 
 - hash: Hash of the Transaction verified.
 
-Verifications can only be of parsable Transactions, even ones with an invalid signature. Verifications with unknown hashes are invalid, yet still usable as causes for a MeritRemoval.
+Verifications can only be of valid Transactions, meaning they can be parse and added to the Transactions DAG using inputs in previous Blocks or in the same Block. The checks applied to the relevant Transaction type must also pass. The Transaction does NOT have to beat any spam filter OR be a child of a verified Transaction. Verifications with unknown hashes are invalid, yet still usable as causes for a MeritRemoval.
 
 `Verification` has a message length of 100 bytes; the 48-byte holder, the 4-byte nonce, and the 48-byte hash. The signature is produced with a prefix of "\0".
 
@@ -55,7 +55,7 @@ They have the following fields:
 
 ### DataDifficulty
 
-A DataDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound.
+A DataDifficulty is a MeritHolder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound. Datas with an argon hash below this lower bound are invalid.
 
 In the case no DataDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "CC" bytes.
 
@@ -103,10 +103,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 ### Violations in Meros
 
-- Meros calculates thresholds as `LIVE_MERIT / 2 + 601`. This drifts to cause higher thresholds as the Transaction's lifespan progresses. It should be `LIVE_MERIT_AT_END_OF_EPOCH / 2 + 601`.
-- Meros doesn't produce a final Merit tally of Transaction weights. This can lead to false positives on what's verified, causing forks via child Transactions and reward calculations.
 - Meros doesn't support defaulting.
-- Meros doesn't track if two Transactions spend the same input (which should disable instant verification).
 - Meros doesn't support `SignedSendDifficulty` or `SendDifficulty`.
 - Meros doesn't support `SignedDataDifficulty` or `DataDifficulty`.
 - Meros doesn't support `SignedGasPrice` or `GasPrice`.

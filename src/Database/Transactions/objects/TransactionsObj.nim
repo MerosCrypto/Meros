@@ -8,17 +8,22 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 import ../../../Wallet/Wallet
 
-#Consensus lib.
-import ../../Consensus/Consensus
+#MeritHolderRecord object.
+import ../../common/objects/MeritHolderRecordObj
 
-#Merit lib.
-import ../../Merit/Merit
+#Element and MeritHolder libs.
+import ../../Consensus/Element
+import ../../Consensus/MeritHolder
+
+#Consensus object.
+import ../../Consensus/objects/ConsensusObj
+
+#Block and Blockchain libs.
+import ../../Merit/Block
+import ../../Merit/Blockchain
 
 #Transactions DB lib.
 import ../../Filesystem/DB/TransactionsDB
-
-#Difficulties object.
-import DifficultiesObj
 
 #Transaction lib.
 import ../Transaction as TransactionFile
@@ -31,42 +36,29 @@ type
         #DB Function Box.
         db: DB
 
-        #Send/Data difficulties.
-        difficulties*: Difficulties
         #Mint Nonce.
         mintNonce*: uint32
 
         #Transactions which have yet to leave Epochs.
-        transactions*: Table[
-            string,
-            Transaction
-        ]
-        #Hash -> Amount of Merit behind it.
-        weights*: Table[
-            string,
-            int
-        ]
+        transactions*: Table[string, Transaction]
 
-        #Table of inputs to whoever first spent them.
-        spent*: Table[
-            string,
-            Hash[384]
-        ]
-
-#Helper functions to convert an input to a string.
-proc toString*(
-    input: Input,
-    inputTX: Transaction
-): string {.forceCheck: [].} =
-    case inputTX:
-        of Mint as _:
-            discard
-        of Claim as _:
-            result = input.hash.toString()
-        of Send as _:
-            result = input.hash.toString() & char(cast[SendInput](input).nonce)
-        of Data as _:
-            result = input.hash.toString()
+#Get a Data's sender.
+proc getSender*(
+    transactions: var Transactions,
+    data: Data
+): EdPublicKey {.forceCheck: [
+    DataMissing
+].} =
+    if data.isFirstData:
+        try:
+            return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 48]))
+        except EdPublicKeyError as e:
+            doAssert(false, "Couldn't grab an EdPublicKey from a Data's input: " & e.msg)
+    else:
+        try:
+            return transactions.db.loadDataSender(data.inputs[0].hash)
+        except DBReadError:
+            raise newException(DataMissing, "Couldn't find the Data's input which was not its sender.")
 
 #Add a Transaction to the DAG.
 proc add*(
@@ -75,17 +67,20 @@ proc add*(
     save: bool = true
 ) {.forceCheck: [].} =
     if not (tx of Mint):
-        #Extract the hash.
-        var hash: string = tx.hash.toString()
-
         #Add the Transaction to the cache.
-        transactions.transactions[hash] = tx
-        #Set its weight to 0.
-        transactions.weights[hash] = 0
+        transactions.transactions[tx.hash.toString()] = tx
 
     if save:
         #Save the TX.
         transactions.db.save(tx)
+
+        #If this is a Data, save the sender.
+        if tx of Data:
+            var data: Data = cast[Data](tx)
+            try:
+                transactions.db.saveDataSender(data, transactions.getSender(data))
+            except DataMissing as e:
+                doAssert(false, "Added a Data we don't know the sender of: " & e.msg)
 
 #Get a Transaction by its hash.
 proc `[]`*(
@@ -111,23 +106,19 @@ proc `[]`*(
     except DBReadError:
         raise newException(IndexError, "Hash doesn't map to any Transaction.")
 
-#Transactions constructor
+#Transactions constructor.
 proc newTransactionsObj*(
     db: DB,
     consensus: Consensus,
-    merit: Merit,
-    sendDiff: string,
-    dataDiff: string
+    blockchain: Blockchain
 ): Transactions {.forceCheck: [].} =
     #Create the object.
     result = Transactions(
         db: db,
 
-        difficulties: newDifficultiesObj(sendDiff, dataDiff),
         mintNonce: 0,
 
-        transactions: initTable[string, Transaction](),
-        weights: initTable[string, int]()
+        transactions: initTable[string, Transaction]()
     )
 
     #Load the mint nonce.
@@ -140,8 +131,8 @@ proc newTransactionsObj*(
     #Find every Verifier with a Verification still in Epochs.
     var mentioned: Table[string, BLSPublicKey] = initTable[string, BLSPublicKey]()
     try:
-        for nonce in max(0, merit.blockchain.height - 5) ..< merit.blockchain.height:
-            for record in merit.blockchain[nonce].records:
+        for nonce in max(0, blockchain.height - 5) ..< blockchain.height:
+            for record in blockchain[nonce].records:
                 mentioned[record.key.toString()] = record.key
     except IndexError as e:
         doAssert(false, "Couldn't load records from the Blockchain while reloading Transactions: " & e.msg)
@@ -177,8 +168,7 @@ proc newTransactionsObj*(
             if element of Verification:
                 hashes[cast[Verification](element).hash.toString()] = cast[Verification](element).hash
 
-    #Load each transaction.
-    var claims: seq[string] = @[]
+    #Load every Transaction.
     for hash in hashes.keys():
         if not result.transactions.hasKey(hash):
             try:
@@ -187,33 +177,6 @@ proc newTransactionsObj*(
                 doAssert(false, "Couldn't get a value by a key produced from .keys().")
             except DBReadError as e:
                 doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
-
-            try:
-                if result.transactions[hash] of Claim:
-                    claims.add(hash)
-            except KeyError as e:
-                doAssert(false, "Couldn't get a value we just added: " & e.msg)
-
-    #Recalculate the output amount for every Claim.
-    var
-        claim: Claim
-        amount: uint64 = 0
-    for claimHash in claims:
-        try:
-            claim = cast[Claim](result.transactions[claimHash])
-        except KeyError as e:
-            doAssert(false, "Couldn't get a Claim we just reloaded: " & e.msg)
-
-        amount = 0
-        for input in claim.inputs:
-            try:
-                amount += result[input.hash].outputs[0].amount
-            except IndexError as e:
-                doAssert(false, "Saved Claim couldn't be loaded from the cache or the DB: " & e.msg)
-        try:
-            claim.outputs[0].amount = amount
-        except FinalAttributeError as e:
-            doAssert(false, "Set a final attribute twice when reloading a Claim: " & e.msg)
 
 #Load a Public Key's UTXOs.
 proc getUTXOs*(
@@ -225,26 +188,6 @@ proc getUTXOs*(
     except DBReadError:
         result = @[]
 
-#Save a Transaction. Do not apply any other checks.
-proc saveTransaction*(
-    transactions: Transactions,
-    tx: Transaction
-) {.inline, forceCheck: [].} =
-    transactions.db.save(tx)
-
-#Save a mint nonce.
-proc saveMintNonce*(
-    transactions: Transactions
-) {.forceCheck: [].} =
-    transactions.db.saveMintNonce(transactions.mintNonce)
-
-#Mark a Transaction as verified.
-proc verify*(
-    transaction: Transactions,
-    hash: Hash[384]
-) {.forceCheck: [].} =
-    transaction.db.saveVerified(hash)
-
 #Save a MeritHolder's out-of-Epoch tip.
 proc save*(
     transactions: Transactions,
@@ -253,49 +196,53 @@ proc save*(
 ) {.forceCheck: [].} =
     transactions.db.save(key, nonce)
 
-#Save a Mint UTXO.
-proc saveUTXO*(
-    transactions: Transactions,
-    hash: Hash[384],
-    utxo: MintOutput
-) {.forceCheck: [].} =
-    transactions.db.save(hash, utxo)
-
-#Save Send UTXOs.
-proc saveUTXOs*(
-    transactions: Transactions,
-    hash: Hash[384],
-    utxos: seq[SendOutput]
-) {.forceCheck: [].} =
-    transactions.db.save(hash, utxos)
-
-#Save a sender's last Data.
-proc saveData*(
-    transactions: Transactions,
-    sender: EdPublicKey,
+#Mark a Transaction as verified, removing the outputs it spends from spendable.
+proc verify*(
+    transactions: var Transactions,
     hash: Hash[384]
 ) {.forceCheck: [].} =
+    var tx: Transaction
     try:
-        transactions.db.saveData(sender, hash)
-    except DBReadError as e:
-        doAssert(false, "Couldn't parse the sender's previous Data from the Database: " & e.msg)
+        tx = transactions[hash]
+    except IndexError as e:
+        doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
 
-#Spend a Mint UTXO.
-proc spend*(
-    transactions: Transactions,
+    case tx:
+        of Claim as claim:
+            transactions.db.verify(claim)
+        of Send as send:
+            transactions.db.verify(send)
+        of Data as data:
+            try:
+                transactions.db.saveDataTip(transactions.getSender(data), data.hash)
+            except DataMissing as e:
+                doAssert(false, "Added and verified a Data which has a missing input: " & e.msg)
+        else:
+            discard
+
+#Mark a Transaction as unverified, removing its outputs from spendable.
+proc unverify*(
+    transactions: var Transactions,
     hash: Hash[384]
 ) {.forceCheck: [].} =
-    transactions.db.deleteUTXO(hash)
-
-#Spend a Send UTXO.
-proc spend*(
-    transactions: Transactions,
-    input: SendInput
-) {.forceCheck: [].} =
+    var tx: Transaction
     try:
-        transactions.db.deleteUTXO(input.hash, input.nonce)
-    except DBReadError as e:
-        doAssert(false, "Trying to delete a deleted UTXO: " & e.msg)
+        tx = transactions[hash]
+    except IndexError as e:
+        doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
+
+    case tx:
+        of Claim as claim:
+            transactions.db.unverify(claim)
+        of Send as send:
+            transactions.db.unverify(send)
+        of Data as data:
+            try:
+                transactions.db.saveDataTip(transactions.getSender(data), data.inputs[0].hash)
+            except DataMissing as e:
+                doAssert(false, "Added, verified, and unverified a Data which has a missing input: " & e.msg)
+        else:
+            discard
 
 #Delete a hash from the cache.
 func del*(
@@ -311,12 +258,6 @@ func del*(
 
     #Delete the Transaction from the cache.
     transactions.transactions.del(hash)
-    #Delete its weight.
-    transactions.weights.del(hash)
-
-    #Clear the spent inputs.
-    for input in tx.inputs:
-        transactions.spent.del(input.toString(tx))
 
 #Load a MeritHolder's out-of-Epoch tip.
 proc load*(
@@ -330,50 +271,44 @@ proc load*(
     except DBReadError as e:
         fcRaise e
 
-#Load a Mint UTXO.
-proc loadUTXO*(
+#Load a Mint Output.
+proc loadOutput*(
     transactions: Transactions,
     tx: Hash[384]
 ): MintOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = transactions.db.loadMintUTXO(tx)
+        result = transactions.db.loadMintOutput(tx)
     except DBReadError as e:
         fcRaise e
 
-#Load a Send UTXO.
-proc loadUTXO*(
+#Load a Send Output.
+proc loadOutput*(
     transactions: Transactions,
     input: SendInput
 ): SendOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = transactions.db.loadSendUTXO(input.hash, input.nonce)
+        result = transactions.db.loadSendOutput(input)
     except DBReadError as e:
         fcRaise e
 
-#Check if a sender has a Data.
-proc loadData*(
+proc loadSpenders*(
     transactions: Transactions,
-    sender: EdPublicKey
-): Hash[384] {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = transactions.db.loadData(sender)
-    except DBReadError as e:
-        fcRaise e
+    input: Input
+): seq[Hash[384]] {.inline, forceCheck: [].} =
+    transactions.db.loadSpenders(input)
 
-#Load the sender of a tip Data.
-proc loadSender*(
+#Load a Data Tip.
+proc loadDataTip*(
     transactions: Transactions,
-    data: Hash[384]
-): EdPublicKey {.forceCheck: [
-    DBReadError
-].} =
+    key: EdPublicKey
+): Hash[384] {.forceCheck: [].} =
     try:
-        result = transactions.db.loadSender(data)
-    except DBReadError as e:
-        fcRaise e
+        result = transactions.db.loadDataTip(key)
+    except DBReadError:
+        result = Hash[384]()
+        for b in 16 ..< 48:
+            result.data[b] = uint8(key.data[b - 16])

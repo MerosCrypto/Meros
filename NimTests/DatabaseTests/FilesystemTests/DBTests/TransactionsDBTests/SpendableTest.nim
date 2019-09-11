@@ -16,6 +16,9 @@ import ../../../../../src/Database/Filesystem/DB/TransactionsDB
 #Input/Output objects.
 import ../../../../../src/Database/Transactions/objects/TransactionObj
 
+#Send lib.
+import ../../../../../src/Database/Transactions/Send
+
 #Test Database lib.
 import ../../../TestDatabase
 
@@ -35,85 +38,132 @@ proc test*() =
     var
         #DB.
         db = newTestDatabase()
-        #Hash.
-        hash: Hash[384]
-        #UTXOs.
-        utxos: seq[SendOutput]
         #Wallets.
         wallets: seq[Wallet] = @[]
-        #Public Key -> Spendable Outputs.
-        spendable: Table[string, seq[SendInput]]
-        #Loaded Spendable UTXOs.
-        loaded: seq[SendInput]
 
-    proc sortInputs(
+        #Outputs.
+        outputs: seq[SendOutput] = @[]
+        #Send.
+        send: Send
+
+        #Public Key -> Spendable Outputs.
+        spendable: Table[string, seq[SendInput]] = initTable[string, seq[SendInput]]()
+        #Inputs.
+        inputs: seq[SendInput] = @[]
+        #Loaded Spendable.
+        loaded: seq[SendInput] = @[]
+        #Sends.
+        sends: seq[Send] = @[]
+        #Who can spend a SendInput.
+        spenders: Table[string, string] = initTable[string, string]()
+
+    proc inputSort(
         x: SendInput,
         y: SendInput
     ): int =
-        if x.hash > y.hash:
-            result = 1
-        elif x.hash == y.hash:
-            if x.nonce > y.nonce:
-                result = 1
-            elif x.nonce == y.nonce:
-                result = 0
-            else:
-                result = -1
-        else:
+        if x.hash < y.hash:
             result = -1
+        elif x.hash > y.hash:
+            result = 1
+        else:
+            if x.nonce < y.nonce:
+                result = -1
+            elif x.nonce > y.nonce:
+                result = 1
+            else:
+                result = 0
+
+    proc compare() =
+        #Test each spendable.
+        for key in spendable.keys():
+            loaded = db.loadSpendable(newEdPublicKey(key))
+
+            spendable[key].sort(inputSort)
+            loaded.sort(inputSort)
+
+            assert(spendable[key].len == loaded.len)
+            for i in 0 ..< spendable[key].len:
+                assert(spendable[key][i].hash == loaded[i].hash)
+                assert(spendable[key][i].nonce == loaded[i].nonce)
 
     #Generate 10 wallets.
     for _ in 0 ..< 10:
         wallets.add(newWallet(""))
 
-    #Test 100 'Transaction's.
+    #Test 100 Transactions.
     for _ in 0 .. 100:
-        #Generate outputs.
-        for i in 0 ..< hash.data.len:
-            hash.data[i] = uint8(rand(255))
-
-        utxos = newSeq[SendOutput](rand(254) + 1)
-        for i in 0 ..< utxos.len:
-            utxos[i] = newSendOutput(
+        outputs = newSeq[SendOutput](rand(254) + 1)
+        for o in 0 ..< outputs.len:
+            outputs[o] = newSendOutput(
                 wallets[rand(10 - 1)].publicKey,
                 0
             )
 
-            if not spendable.hasKey(utxos[i].key.toString()):
-                spendable[utxos[i].key.toString()] = @[]
+        send = newSend(@[], outputs)
+        db.save(send)
 
-            spendable[utxos[i].key.toString()].add(
-                newSendInput(hash, i)
-            )
+        if rand(2) != 0:
+            db.verify(send)
+            for o in 0 ..< outputs.len:
+                if not spendable.hasKey(outputs[o].key.toString()):
+                    spendable[outputs[o].key.toString()] = @[]
+                spendable[outputs[o].key.toString()].add(
+                    newSendInput(send.hash, o)
+                )
+                spenders[send.hash.toString() & char(o)] = outputs[o].key.toString()
 
-        db.save(hash, utxos)
+        compare()
 
         #Spend outputs.
         for key in spendable.keys():
             if spendable[key].len == 0:
                 continue
 
+            inputs = @[]
             var i: int = 0
             while true:
                 if rand(1) == 0:
-                    db.deleteUTXO(spendable[key][i].hash, spendable[key][i].nonce)
-                    spendable[key].del(i)
+                    inputs.add(spendable[key][i])
+                    spendable[key].delete(i)
                 else:
                     inc(i)
 
                 if i == spendable[key].len:
                     break
 
-        #Test outputs.
-        for key in spendable.keys():
-            spendable[key].sort(sortInputs, SortOrder.Descending)
+            if inputs.len != 0:
+                var outputKey: EdPublicKey = wallets[rand(10 - 1)].publicKey
+                send = newSend(inputs, newSendOutput(outputKey, 0))
+                db.save(send)
+                db.verify(send)
+                sends.add(send)
 
-            loaded = db.loadSpendable(newEdPublicKey(key))
-            loaded.sort(sortInputs, SortOrder.Descending)
+                if not spendable.hasKey(outputKey.toString()):
+                    spendable[outputKey.toString()] = @[]
+                spendable[outputKey.toString()].add(newSendInput(send.hash, 0))
+                spenders[send.hash.toString() & char(0)] = outputKey.toString()
 
-            assert(spendable[key].len == loaded.len)
-            for i in 0 ..< spendable[key].len:
-                assert(spendable[key][i].hash == loaded[i].hash)
-                assert(spendable[key][i].nonce == loaded[i].nonce)
+        compare()
+
+        #Unverify a Send.
+        if sends.len != 0:
+            var s: int = rand(sends.high)
+            db.unverify(sends[s])
+            for input in sends[s].inputs:
+                spendable[
+                    spenders[input.hash.toString() & char(cast[SendInput](input).nonce)]
+                ].add(cast[SendInput](input))
+
+            for o1 in 0 ..< sends[s].outputs.len:
+                var output: SendOutput = cast[SendOutput](sends[s].outputs[o1])
+                for o2 in 0 ..< spendable[output.key.toString()].len:
+                    if (
+                        (spendable[output.key.toString()][o2].hash == sends[s].hash) and
+                        (spendable[output.key.toString()][o2].nonce == o1)
+                    ):
+                        spendable[output.key.toString()].delete(o2)
+                        break
+
+        compare()
 
     echo "Finished the Database/Filesystem/DB/TransactionsDB/Spendable Test."

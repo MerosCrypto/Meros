@@ -21,16 +21,7 @@ import ../../Network/Serialize/Transactions/SerializeSend
 proc newSend*(
     inputs: varargs[SendInput],
     outputs: varargs[SendOutput]
-): Send {.forceCheck: [
-    ValueError
-].} =
-    #Verify the inputs length.
-    if inputs.len < 1 or 255 < inputs.len:
-        raise newException(ValueError, "Send has too little or too many inputs.")
-    #Verify the outputs length.
-    if outputs.len < 1 or 255 < outputs.len:
-        raise newException(ValueError, "Send has too little or too many outputs.")
-
+): Send {.forceCheck: [].} =
     #Create the Send.
     result = newSendObj(
         inputs,

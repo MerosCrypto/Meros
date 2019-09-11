@@ -145,7 +145,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros allows archived Verifications to skip over Transactions.
+- Meros allows archived Verifications to skip over Transactions. Unmentioned Transactions can be used by Transactions in archived Verifications if the unmentioned Transactions are already in the DB.
 - Meros mints Merit before minting Meros.
 - Meros doesn't check for 0-scores before minting Meros.
 - Meros doesn't support dead Merit.

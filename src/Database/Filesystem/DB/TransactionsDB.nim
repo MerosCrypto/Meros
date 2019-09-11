@@ -11,9 +11,8 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 import ../../../Wallet/Wallet
 
-#Transaction and Mint object.
-import ../../Transactions/objects/TransactionObj
-import ../../Transactions/objects/MintObj
+#Transaction lib.
+import ../../Transactions/Transaction
 
 #Serialization libs.
 import Serialize/Transactions/SerializeMintOutput
@@ -56,24 +55,9 @@ proc get(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc delete(
-    db: DB,
-    key: string
-) {.forceCheck: [].} =
-    db.transactions.cache.del(key)
-    db.transactions.deleted.add(key)
-
 proc commit*(
     db: DB
 ) {.forceCheck: [].} =
-    for key in db.transactions.deleted:
-        try:
-            db.lmdb.delete("transactions", key)
-        except Exception:
-            #If we delete something before it's committed, it'll throw.
-            discard
-    db.transactions.deleted = @[]
-
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.transactions.cache.len)
     try:
         var i: int = 0
@@ -90,18 +74,42 @@ proc commit*(
 
     db.transactions.cache = initTable[string, string]()
 
+#Helper functions to convert an input to a string.
+func toString*(
+    input: Input
+): string {.forceCheck: [].} =
+    result = input.hash.toString()
+    if input of SendInput:
+        result &= char(cast[SendInput](input).nonce)
+    else:
+        result &= char(0)
+
 #Save functions.
 proc save*(
     db: DB,
     tx: Transaction
 ) {.forceCheck: [].} =
-    db.put(tx.hash.toString(), tx.serialize())
+    var hash: string = tx.hash.toString()
+    db.put(hash, tx.serialize())
 
-proc saveVerified*(
+    if tx of Mint:
+        db.put("mint", (cast[Mint](tx).nonce + 1).toBinary())
+    else:
+        for input in tx.inputs:
+            try:
+                db.put(input.toString() & "s", db.get(input.toString() & "s") & hash)
+            except DBReadError:
+                db.put(input.toString() & "s", hash)
+
+    for o in 0 ..< tx.outputs.len:
+        db.put(hash & char(o), tx.outputs[o].serialize())
+
+proc saveDataSender*(
     db: DB,
-    hash: Hash[384]
+    data: Data,
+    sender: EdPublicKey
 ) {.forceCheck: [].} =
-    db.put(hash.toString() & "vrf", "")
+    db.put(data.hash.toString() & "s", sender.toString())
 
 proc save*(
     db: DB,
@@ -110,111 +118,65 @@ proc save*(
 ) {.forceCheck: [].} =
     db.put(key.toString() & "mh", height.toBinary())
 
-proc saveMintNonce*(
+proc saveDataTip*(
     db: DB,
-    nonce: uint32
-) {.forceCheck: [].} =
-    db.put("mint", nonce.toBinary())
-
-proc save*(
-    db: DB,
-    hash: Hash[384],
-    utxo: MintOutput
-) {.forceCheck: [].} =
-    db.put(hash.toString() & char(0), utxo.serialize())
-
-proc save*(
-    db: DB,
-    hashArg: Hash[384],
-    utxos: seq[SendOutput]
-) {.forceCheck: [].} =
-    var
-        hash: string = hashArg.toString()
-        spendable: string
-    for i in 0 ..< utxos.len:
-        db.put(hash & char(i), utxos[i].serialize())
-        try:
-            spendable = db.get(utxos[i].key.toString())
-        except DBReadError:
-            spendable = ""
-
-        db.put(utxos[i].key.toString(), spendable & hash & char(i))
-
-proc saveData*(
-    db: DB,
-    sender: EdPublicKey,
-    hash: Hash[384]
-) {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        var hash: Hash[384] = db.get(sender.toString() & "d").toHash(384)
-        db.delete(hash.toString() & "s")
-    except DBReadError:
-        discard
-    except ValueError as e:
-        raise newException(DBReadError, e.msg)
-
-    db.put(sender.toString() & "d", hash.toString())
-    db.put(hash.toString() & "s", sender.toString())
-
-#Delete functions.
-proc deleteUTXO*(
-    db: DB,
+    key: EdPublicKey,
     hash: Hash[384]
 ) {.forceCheck: [].} =
-    db.delete(hash.toString() & char(0))
-
-proc deleteUTXO*(
-    db: DB,
-    hash: Hash[384],
-    nonce: int
-) {.forceCheck: [
-    DBReadError
-].} =
-    var
-        utxoLoc: string = hash.toString() & char(nonce)
-        utxoStr: string
-    try:
-        utxoStr = db.get(utxoLoc)
-    except DBReadError as e:
-        fcRaise e
-    db.delete(utxoLoc)
-
-    var
-        utxo: SendOutput
-        spendable: string
-    try:
-        utxo = utxoStr.parseSendOutput()
-        spendable = db.get(utxo.key.toString())
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
-
-    for i in countup(0, spendable.len - 1, 49):
-        if spendable[i ..< i + 49] == utxoLoc:
-            spendable = spendable.substr(0, i - 1) & spendable.substr(i + 49)
-            break
-
-    db.put(utxo.key.toString(), spendable)
+    db.put(key.toString() & "d", hash.toString())
 
 #Load functions.
 proc load*(
     db: DB,
-    hashArg: Hash[384]
+    hash: Hash[384]
 ): Transaction {.forceCheck: [
     DBReadError
 ].} =
-    var hash: string = hashArg.toString()
     try:
-        result = db.get(hash).parseTransaction()
+        result = db.get(hash.toString()).parseTransaction()
+    except Exception as e:
+        raise newException(DBReadError, e.msg)
 
-        if not (result of Mint):
-            result.verified = true
+    #Recalculate the output amount if this is a Claim.
+    if result of Claim:
+        var
+            claim: Claim = cast[Claim](result)
+            amount: uint64 = 0
+        for input in claim.inputs:
             try:
-                discard db.get(hash & "vrf")
-            except DBReadError:
-                result.verified = false
+                amount += db.get(input.toString()).parseMintOutput().amount
+            except Exception as e:
+                doAssert(false, "Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
 
+        try:
+            claim.outputs[0].amount = amount
+        except FinalAttributeError as e:
+            doAssert(false, "Set a final attribute twice when reloading a Claim: " & e.msg)
+
+proc loadSpenders*(
+    db: DB,
+    input: Input
+): seq[Hash[384]] {.forceCheck: [].} =
+    var spenders: string = ""
+    try:
+        spenders = db.get(input.toString() & "s")
+    except DBReadError:
+        return
+
+    for h in countup(0, spenders.len - 1, 48):
+        try:
+            result.add(spenders[h ..< h + 48].toHash(384))
+        except ValueError as e:
+            doAssert(false, "Couldn't load a spending hash from the DB: " & e.msg)
+
+proc loadDataSender*(
+    db: DB,
+    hash: Hash[384]
+): EdPublicKey {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = newEdPublicKey(db.get(hash.toString() & "s"))
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -239,7 +201,7 @@ proc loadMintNonce*(
     except DBReadError as e:
         fcRaise e
 
-proc loadMintUTXO*(
+proc loadMintOutput*(
     db: DB,
     hash: Hash[384]
 ): MintOutput {.forceCheck: [
@@ -250,30 +212,18 @@ proc loadMintUTXO*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc loadSendUTXO*(
+proc loadSendOutput*(
     db: DB,
-    hash: Hash[384],
-    nonce: int
+    input: SendInput
 ): SendOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(hash.toString() & char(nonce)).parseSendOutput()
+        result = db.get(input.toString()).parseSendOutput()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc loadSender*(
-    db: DB,
-    hash: Hash[384]
-): EdPublicKey {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = newEdPublicKey(db.get(hash.toString() & "s"))
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
-
-proc loadData*(
+proc loadDataTip*(
     db: DB,
     key: EdPublicKey
 ): Hash[384] {.forceCheck: [
@@ -308,3 +258,92 @@ proc loadSpendable*(
             )
         except ValueError as e:
             raise newException(DBReadError, e.msg)
+
+proc addToSpendable(
+    db: DB,
+    key: string,
+    hash: Hash[384],
+    nonce: int
+) {.forceCheck: [].} =
+    try:
+        db.put(key, db.get(key) & hash.toString() & char(nonce))
+    except DBReadError:
+        db.put(key, "" & hash.toString() & char(nonce))
+
+proc removeFromSpendable(
+    db: DB,
+    key: string,
+    hash: Hash[384],
+    nonce: int
+) {.forceCheck: [].} =
+    var
+        output: string = hash.toString() & char(nonce)
+        spendable: string
+
+    #Load the output.
+    try:
+        spendable = db.get(key)
+    except DBReadError:
+        doAssert(false, "Trying to spend from someone without anything spendable.")
+
+    #Remove the specified output.
+    for o in countup(0, spendable.len, 49):
+        if spendable[o ..< o + 49] == output:
+            db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
+            break
+
+#Add a Claim/Send's outputs to spendable while removing a Send's inputs.
+proc verify*(
+    db: DB,
+    tx: Claim or Send
+) {.forceCheck: [].} =
+    #Add spendable outputs.
+    for o in 0 ..< tx.outputs.len:
+        db.addToSpendable(
+            cast[SendOutput](tx.outputs[o]).key.toString(),
+            tx.hash,
+            o
+        )
+
+    if tx of Send:
+        #Remove spent inputs.
+        for input in tx.inputs:
+            var key: string
+            try:
+                key = db.loadSendOutput(cast[SendInput](input)).key.toString()
+            except DBReadError:
+                doAssert(false, "Removing a non-existent output.")
+
+            db.removeFromSpendable(
+                key,
+                input.hash,
+                cast[SendInput](input).nonce
+            )
+
+#Add a Send's inputs back to spendable while removing the Claim/Send's outputs.
+proc unverify*(
+    db: DB,
+    tx: Claim or Send
+) {.forceCheck: [].} =
+    #Restore inputs.
+    if tx of Send:
+        for input in tx.inputs:
+            var key: string
+            try:
+                key = db.loadSendOutput(cast[SendInput](input)).key.toString()
+            except DBReadError:
+                doAssert(false, "Restoring a non-existent output.")
+
+            db.addToSpendable(
+                key,
+                input.hash,
+                cast[SendInput](input).nonce
+            )
+
+    #Remove outputs.
+    for o in 0 ..< tx.outputs.len:
+        db.removeFromSpendable(
+            cast[SendOutput](tx.outputs[o]).key.toString(),
+            tx.hash,
+            o
+        )

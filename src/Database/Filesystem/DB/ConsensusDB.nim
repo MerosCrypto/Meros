@@ -10,12 +10,15 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Element lib.
+#Element lib and TransactionStatus object.
 import ../../Consensus/Element
+import ../../Consensus/objects/TransactionStatusObj
 
 #Serialize/parse libs.
 import Serialize/Consensus/DBSerializeElement
+import Serialize/Consensus/SerializeTransactionStatus
 import Serialize/Consensus/DBParseElement
+import Serialize/Consensus/ParseTransactionStatus
 
 #DB object.
 import objects/DBObj
@@ -87,7 +90,7 @@ proc commit*(
 proc save*(
     db: DB,
     holder: BLSPublicKey,
-    epoch: int
+    archived: int
 ) {.forceCheck: [].} =
     var holderStr: string = holder.toString()
 
@@ -98,16 +101,33 @@ proc save*(
         db.consensus.holdersStr &= holderStr
         db.put("holders", db.consensus.holdersStr)
 
-    db.put(holderStr, $epoch)
+    db.put(holderStr, $archived)
+
+proc saveOutOfEpochs*(
+    db: DB,
+    holder: BLSPublicKey,
+    epoch: int
+) {.forceCheck: [].} =
+    db.put(holder.toString() & "epoch", epoch.toBinary())
 
 proc save*(
     db: DB,
     elem: Element
 ) {.forceCheck: [].} =
-    db.put(
-        elem.holder.toString() & elem.nonce.toBinary().pad(1),
-        elem.serialize()
-    )
+    db.put(elem.holder.toString() & elem.nonce.toBinary().pad(1), elem.serialize())
+
+proc save*(
+    db: DB,
+    hash: string,
+    status: TransactionStatus
+) {.forceCheck: [].} =
+    db.put(hash, status.serialize())
+
+proc saveUnmentioned*(
+    db: DB,
+    unmentioned: string
+) {.forceCheck: [].} =
+    db.put("unmentioned", unmentioned)
 
 proc loadHolders*(
     db: DB
@@ -135,6 +155,15 @@ proc load*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
+proc loadOutOfEpochs*(
+    db: DB,
+    holder: BLSPublicKey
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(holder.toString() & "epoch").fromBinary()
+    except Exception:
+        return -1
+
 proc load*(
     db: DB,
     holder: BLSPublicKey,
@@ -152,6 +181,32 @@ proc load*(
             result.nonce = nonce
         except FinalAttributeError as e:
             doAssert(false, "Set a final attribute twice when loading a MeritRemoval: " & e.msg)
+
+proc load*(
+    db: DB,
+    hash: Hash[384]
+): TransactionStatus {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get(hash.toString()).parseTransactionStatus()
+    except DBReadError as e:
+        fcRaise e
+    except ValueError, BLSError:
+        doAssert(false, "Saved an invalid TransactionStatus to the DB.")
+
+proc loadUnmentioned*(
+    db: DB
+): seq[string] {.forceCheck: [].} =
+    var unmentioned: string
+    try:
+        unmentioned = db.get("unmentioned")
+    except DBReadError:
+        return @[]
+
+    result = newSeq[string](unmentioned.len div 48)
+    for i in countup(0, unmentioned.len - 1, 48):
+        result[i div 48] = unmentioned[i ..< i + 48]
 
 #Delete an element.
 proc del*(

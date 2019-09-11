@@ -122,6 +122,10 @@ for test in tests:
 
     print("Running " + test.__name__ + ".")
 
+    #Message to display on a Node crash.
+    crash: str = "\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m"
+
+    #Meros instance.
     meros: Meros = Meros(test.__name__, port, port + 1)
     sleep(2)
 
@@ -133,7 +137,7 @@ for test in tests:
         ress.append("\033[0;33m" + test.__name__ + " is empty.")
         continue
     except NodeError as e:
-        ress.append("\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m")
+        ress.append(crash)
     except TestError as e:
         ress.append("\033[0;31m" + test.__name__ + " failed: " + str(e))
         continue
@@ -145,7 +149,8 @@ for test in tests:
         try:
             rpc.quit()
         except NodeError:
-            ress.append("\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m")
+            if ress[-1] != crash:
+                ress.append(crash)
 
         print("-" * shutil.get_terminal_size().columns)
 

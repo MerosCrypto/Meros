@@ -18,16 +18,10 @@ Merit:
 
 Consensus:
 
+- Save/reload unarchived MeritRemovals.
 - Check if MeritHolders verify conflicting Transactions.
 - SendDifficulty.
 - DataDifficulty.
-
-Transactions:
-
-- Resolve https://github.com/MerosCrypto/Meros/issues/84.
-- Correctly "unverify" Transactions. We do not mark Transactions as no longer eligible for defaulting (if that's the case), re-enable spent UTXOs, or unverify child Transactions.
-- Raise the Verification threshold.
-- Reload Verifications with their MeritHolder's current Merit. The only reason we don't do this now is our low threshold/it breaks consistency on reload.
 
 UI:
 
@@ -77,6 +71,7 @@ Network:
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
 
+
 ### Nim Tests:
 
 objects:
@@ -103,6 +98,7 @@ Wallet:
 Database/Filesystem/DB/Serialize:
 
 - Consensus/DBSerializeElement Test.
+- Consensus/SerializeTransactionStatus Test.
 - Transactions/SerializeTransaction Test.
 
 Datbase/Filesystem/DB:
@@ -147,6 +143,14 @@ Network:
 - VerifyCompeting Live test.
 - VerifyCompeting Cause test.
 
+- PendingActionsTest should not have all reverted actions reapplied.
+
+- Test historical and live threshold calculation.
+- Test `TransactionStatus.epoch` is updated as needed.
+- Test Meros only verifies Transactions which have a chance.
+- Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
+- Test children Transactions are properly unverified.
+
 ### Features:
 
 - Add Mints to DBDumpSample.
@@ -161,7 +165,7 @@ Network:
 
 - Swap Chia for Milagro.
 
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block/Transaction (stop DoS attacks).
+- Pass difficulties to the parsing functions to immediately check if work was put into a Block (stop DoS attacks).
 
 ### Documentation:
 

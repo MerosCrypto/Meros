@@ -84,10 +84,16 @@ class Data(Transaction):
             "data": self.data.hex().upper(),
             "signature": self.signature.hex().upper(),
             "proof": self.proof,
-            "argon": self.argon.hex().upper(),
-
-            "verified": self.verified
+            "argon": self.argon.hex().upper()
         }
+
+    #Data -> JSON with verified field.
+    def toVector(
+        self,
+    ) -> Dict[str, Any]:
+        result = self.toJSON()
+        result["verified"] = self.verified
+        return result
 
     #JSON -> Data.
     @staticmethod

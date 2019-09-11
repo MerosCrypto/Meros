@@ -38,7 +38,6 @@ proc compare*(
         assert(tx1.inputs[i].hash == tx2.inputs[i].hash)
     assert(tx1.outputs.len == tx2.outputs.len)
     assert(tx1.hash == tx2.hash)
-    assert(tx1.verified == tx2.verified)
 
     #Test the sub-type fields.
     case tx1:
@@ -80,38 +79,10 @@ proc compare*(
     txs1: Transactions,
     txs2: Transactions
 ) =
-    #Test the difficulties.
-    assert(txs1.difficulties.send == txs2.difficulties.send)
-    assert(txs1.difficulties.data == txs2.difficulties.data)
-
     #Test the mint nonce.
     assert(txs1.mintNonce == txs2.mintNonce)
 
-    #Test the transactions.
+    #Test the Transactions and get a list of spent outputs.
     assert(txs1.transactions.len == txs2.transactions.len)
     for hash in txs1.transactions.keys():
         compare(txs1.transactions[hash], txs2.transactions[hash])
-
-    #Test the weights.
-    assert(txs1.weights.len == txs2.weights.len)
-    for hash in txs1.weights.keys():
-        assert(txs1.weights[hash] == txs2.weights[hash])
-
-    #Test the spent tables.
-    for input in txs1.spent.keys():
-        #We only create 1 potential Send.
-        #As Datas are sequential, we do create multiple potential Datas.
-        #Without a sorting algorithm when reloading, we can't guarantee consistency.
-        #As long as the Data is marked as spent by SOMETHING, we don't risk creating new Verifications.
-        if not (txs1[input.substr(0, 47).toHash(384)] of Data):
-            assert(txs1.spent[input] == txs2.spent[input])
-
-    #Beyond that, if a Data doesn't get verified, and a later Data is added:
-    #TXS1 will think only the original Data was there.
-    #TXS2 will only reload the newer Data.
-    #TXS2 will therefore have a spent entry TXS1 doesn't have, and the lengths will be different.
-    #We need to replicate the above loop in reverse still ignoring Datas.
-    #This will not be a problem in mainnet Meros thanks to defaulting.
-    for input in txs2.spent.keys():
-        if not (txs2[input.substr(0, 47).toHash(384)] of Data):
-            assert(txs1.spent[input] == txs2.spent[input])

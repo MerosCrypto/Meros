@@ -86,6 +86,8 @@ proc handle(
             fcRaise e
         except InvalidMessageError:
             continue
+        except Spam:
+            continue
         except Exception as e:
             doAssert(false, "Handling a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 

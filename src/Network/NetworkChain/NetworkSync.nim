@@ -71,12 +71,15 @@ proc syncElements(
 proc syncTransactions(
     network: Network,
     id: int,
-    transactions: seq[Hash[384]]
+    transactions: seq[Hash[384]],
+    sendDiff: Hash[384],
+    dataDiff: Hash[384]
 ): Future[seq[Transaction]] {.forceCheck: [
     SocketError,
     ClientError,
     InvalidMessageError,
-    DataMissing
+    DataMissing,
+    Spam
 ], async.} =
     result = @[]
 
@@ -101,7 +104,13 @@ proc syncTransactions(
     for tx in transactions:
         #Sync the Transaction.
         try:
-            result.add(await client.syncTransaction(tx))
+            result.add(
+                await client.syncTransaction(
+                    tx,
+                    sendDiff,
+                    dataDiff
+                )
+            )
         except SocketError as e:
             fcRaise e
         except ClientError as e:
@@ -111,6 +120,8 @@ proc syncTransactions(
         except InvalidMessageError as e:
             fcRaise e
         except DataMissing as e:
+            fcRaise e
+        except Spam as e:
             fcRaise e
         except Exception as e:
             doAssert(false, "Syncing an Transaction in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -256,7 +267,12 @@ proc sync*(
                 continue
 
             try:
-                transactions = await network.syncTransactions(client.id, txHashes)
+                transactions = await network.syncTransactions(
+                    client.id,
+                    txHashes,
+                    Hash[384](),
+                    network.mainFunctions.consensus.getDataMinimumDifficulty()
+                )
             #If the Client had problems, disconnect them.
             except SocketError, ClientError:
                 toDisconnect.add(client.id)
@@ -272,6 +288,8 @@ proc sync*(
                 except Exception as e:
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
                 continue
+            except Spam:
+                raise newException(ValueError, "Block includes a Data below the minimum difficulty.")
             except Exception as e:
                 doAssert(false, "Syncing a Block's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -329,9 +347,7 @@ proc sync*(
                 if not first:
                     for input in tx.inputs:
                         try:
-                            #If the TX doesn't exist, this will throw. If it does exist but isn't verified, throw a different error.
-                            if not network.mainFunctions.transactions.getTransaction(input.hash).verified:
-                                raise newException(ValueError, "")
+                            discard network.mainFunctions.transactions.getTransaction(input.hash)
                         #This TX is missing an input.
                         except IndexError:
                             #Look for the input in the pending transactions.
@@ -342,11 +358,9 @@ proc sync*(
                             #If it's found, add it.
                             if found:
                                 todo.add(tx)
-
-                            break thisTX
-                        #This TX spends an unconfirmed input.
-                        except ValueError:
-                            break thisTX
+                                break thisTX
+                            else:
+                                raise newException(ValueError, "Block includes Verifications of a Transaction which has not had all its inputs mentioned in previous blocks/this block.")
 
                 #Handle the tx.
                 case tx:
@@ -354,11 +368,7 @@ proc sync*(
                         try:
                             network.mainFunctions.transactions.addClaim(claim, true)
                         except ValueError:
-                            discard """
-                            Transactions can fail to add if they were a competing transaction and their competitor was verified.
-                            The Transaction is still theoretically valid and needed in the Database.
-                            """
-                            network.mainFunctions.transactions.save(claim)
+                            raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
                             continue
 
@@ -366,8 +376,7 @@ proc sync*(
                         try:
                             network.mainFunctions.transactions.addSend(send, true)
                         except ValueError:
-                            discard "See Claim's ValueError note."
-                            network.mainFunctions.transactions.save(send)
+                            raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
                             continue
 
@@ -375,8 +384,7 @@ proc sync*(
                         try:
                             network.mainFunctions.transactions.addData(data, true)
                         except ValueError:
-                            discard "See Claim's ValueError note."
-                            network.mainFunctions.transactions.save(data)
+                            raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
                             continue
 

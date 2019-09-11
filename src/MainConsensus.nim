@@ -1,71 +1,23 @@
 include MainDatabase
 
-#Revert a MeritHolder's pending actions.
-proc revertPending(
-    removal: MeritRemoval,
-    consensus: Consensus,
-    transactions: var Transactions,
-    state: var State
-) {.forceCheck: [].} =
-    #Only revert pending actions if this was the first MeritRemoval.
-    try:
-        if consensus.malicious[removal.holder.toString()].len != 1:
-            return
-    except KeyError as e:
-        doAssert(false, "Couldn't get the MeritRemovals of someone who we're trying to revert the pending actions of: " & e.msg)
-
-    #Revert pending actions.
-    var holder: MeritHolder = consensus[removal.holder]
-    for e in holder.archived + 1 ..< holder.height:
-        var elem: Element
-        try:
-            elem = holder[e]
-        except IndexError as e:
-            doAssert(false, "Couldn't get a known pending Element: " & e.msg)
-
-        case elem:
-            of Verification as verif:
-                #This has the risk to subtract less/more from the weight than was added.
-                #There is no underflow risk, and if the MeritHolder's weight went up, this has positive effects.
-                #If their weight went down, this has negative effects.
-                #The threshold used to be +601 to cover State changes. It is now +1201.
-                try:
-                    transactions.unverify(verif, state[verif.holder], state.live)
-                except ValueError:
-                    #If it's out of Epochs, move on.
-                    discard
-            else:
-                doAssert(false, "Unsupported Element type.")
-
-#Reapply reverted pending actions.
-proc reapplyPending(
-    record: MeritHolderRecord,
-    consensus: Consensus,
-    transactions: var Transactions,
-    state: var State
-) {.forceCheck: [].} =
-    var holder: MeritHolder = consensus[record.key]
-    for e in holder.archived + 1 .. record.nonce:
-        var elem: Element
-        try:
-            elem = holder[e]
-        except IndexError as e:
-            doAssert(false, "Couldn't get a known pending Element: " & e.msg)
-
-        case elem:
-            of Verification as verif:
-                #This reapplies the Verification as if we received it before the Block that triggered this.
-                try:
-                    transactions.verify(verif, state[verif.holder], state.live)
-                except ValueError:
-                    #If it's out of Epochs, move on.
-                    discard
-            else:
-                doAssert(false, "Unsupported Element type.")
-
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
-        consensus = newConsensus(database)
+        try:
+            consensus = newConsensus(
+                functions,
+                database,
+                params.SEND_DIFFICULTY.toHash(384),
+                params.DATA_DIFFICULTY.toHash(384)
+            )
+        except ValueError:
+            doAssert(false, "Invalid initial Send/Data difficulty.")
+
+        functions.consensus.getSendDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+            consensus.filters.send.difficulty
+        functions.consensus.getDataMinimumDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+            minimumDataDifficulty
+        functions.consensus.getDataDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+            consensus.filters.data.difficulty
 
         #Provide access to if a holder is malicious.
         functions.consensus.isMalicious = proc (
@@ -96,7 +48,7 @@ proc mainConsensus() {.forceCheck: [].} =
                         doAssert(false, "Couldn't get a MeritRemoval despite confirming it exists: " & e.msg)
                 elif nonce <= consensus[key].archived:
                     discard
-                else:
+                elif nonce < consensus[key].height:
                     raise newException(IndexError, "Element requested has been reverted.")
 
             try:
@@ -148,6 +100,21 @@ proc mainConsensus() {.forceCheck: [].} =
             except BLSError as e:
                 doAssert(false, "Failed to aggregate the signatures: " & e.msg)
 
+        functions.consensus.getStatus = proc (
+            hash: Hash[384]
+        ): TransactionStatus {.raises: [
+            IndexError
+        ].} =
+            try:
+                result = consensus.getStatus(hash)
+            except IndexError:
+                raise newException(IndexError, "Couldn't find a Status for that hash.")
+
+        functions.consensus.getThreshold = proc (
+            epoch: int
+        ): int {.inline, raises: [].} =
+            merit.state.nodeThresholdAt(epoch)
+
         #Handle Elements.
         functions.consensus.addVerification = proc (
             verif: Verification
@@ -167,7 +134,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the Verification to the Elements DAG.
             try:
-                consensus.add(verif, txExists)
+                consensus.add(merit.state, verif, txExists)
             except ValueError as e:
                 fcRaise e
             #Since we got this from a Block, we should've already synced all previous Elements.
@@ -177,13 +144,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 doAssert(false, "Tried to add an unsigned Element we already have: " & e.msg)
 
             echo "Successfully added a new Verification."
-
-            if txExists and (not consensus.malicious.hasKey(verif.holder.toString())):
-                #Add the Verification to the Transactions.
-                try:
-                    transactions.verify(verif, merit.state[verif.holder], merit.state.live)
-                except ValueError:
-                    return
 
         #Handle SignedElements.
         functions.consensus.addSignedVerification = proc (
@@ -207,9 +167,7 @@ proc mainConsensus() {.forceCheck: [].} =
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
                 #Flag the MeritRemoval.
-                consensus.flag(cast[SignedMeritRemoval](e.removal))
-                #Revert pending actions.
-                e.removal.revertPending(consensus, transactions, merit.state)
+                consensus.flag(merit.state, cast[SignedMeritRemoval](e.removal))
 
                 try:
                     #Broadcast the first MeritRemoval.
@@ -229,7 +187,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the SignedVerification to the Elements DAG.
             try:
-                consensus.add(verif)
+                consensus.add(merit.state, verif)
             #Invalid signature.
             except ValueError as e:
                 fcRaise e
@@ -238,13 +196,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 fcRaise e
 
             echo "Successfully added a new Signed Verification."
-
-            if not consensus.malicious.hasKey(verif.holder.toString()):
-                #Add the Verification to the Transactions.
-                try:
-                    transactions.verify(verif, merit.state[verif.holder], merit.state.live)
-                except ValueError:
-                    return
 
             #Broadcast the SignedVerification.
             functions.network.broadcast(
@@ -262,7 +213,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the MeritRemoval.
             try:
-                consensus.add(mr)
+                consensus.add(merit.state, mr)
             except ValueError as e:
                 fcRaise e
 
@@ -278,12 +229,9 @@ proc mainConsensus() {.forceCheck: [].} =
 
             #Add the MeritRemoval.
             try:
-                consensus.add(mr)
+                consensus.add(merit.state, mr)
             except ValueError as e:
                 fcRaise e
-
-            #Revert pending actions.
-            mr.revertPending(consensus, transactions, merit.state)
 
             echo "Successfully added a new Signed Merit Removal."
 

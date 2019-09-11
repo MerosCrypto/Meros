@@ -38,8 +38,6 @@ finalsd:
             outputs*: seq[Output]
             #Hash.
             hash* {.final.}: Hash[384]
-            #Verified.
-            verified*: bool
 
 #Input/Output constructors.
 func newInput*(

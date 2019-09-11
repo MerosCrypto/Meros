@@ -65,7 +65,7 @@ proc newStateObj*(
     #Load the live Merit and the holders from the DB.
     var holders: seq[string]
     try:
-        result.live = result.db.loadLiveMerit()
+        result.live = result.db.loadLive(result.processedBlocks)
         holders = result.db.loadHolders()
     #If these don't exist, confirm we didn't load one but not the other.
     except DBReadError:
@@ -79,6 +79,12 @@ proc newStateObj*(
             result.holders[holder] = result.db.loadMerit(holder)
         except DBReadError as e:
             doAssert(false, "Couldn't load a holder's Merit: " & e.msg)
+
+#Save the live Merit.
+proc saveLive*(
+    state: State
+) {.inline, forceCheck: [].} =
+    state.db.saveLive(state.processedBlocks - 1, state.live)
 
 #Add a Holder to the State.
 proc add(
@@ -97,6 +103,28 @@ proc add(
         state.db.save(key, 0)
 
 #Getters.
+#Return the amount of live Merit.
+func live*(
+    state: State
+): int {.inline, forceCheck: [].} =
+    state.live
+
+proc loadLive*(
+    state: State,
+    blockNum: int
+): int {.forceCheck: [].} =
+    if blockNum >= state.processedBlocks:
+        result = min(
+            ((blockNum - state.processedBlocks) * 100) + state.live,
+            state.deadBlocks * 100
+        )
+    else:
+        try:
+            result = state.db.loadLive(blockNum)
+        except DBReadError:
+            doAssert(false, "Couldn't load the live Merit for a Block below the `processedBlocks`.")
+
+#Get an Merit Holder's Merit.
 proc `[]`*(
     state: var State,
     key: string
@@ -115,12 +143,6 @@ proc `[]`*(
     key: BLSPublicKey
 ): int {.inline, forceCheck: [].} =
     state[key.toString()]
-
-#Return the amount of live Merit.
-func live*(
-    state: State
-): int {.inline, forceCheck: [].} =
-    state.live
 
 #Get the removals from a Block.
 proc loadRemovals*(
@@ -177,7 +199,6 @@ proc `[]=`*(
     #Save the updated values.
     if not state.oldData:
         state.db.save(key, value)
-        state.db.saveLiveMerit(state.live)
 
 proc `[]=`*(
     state: var State,
@@ -194,6 +215,7 @@ proc removeInternal*(
 ) {.forceCheck: [].} =
     state.db.remove(key.toString(), state[key], archiving.nonce)
     state[key] = 0
+    state.db.saveLive(state.processedBlocks, state.live)
 
 #Iterator for every holder.
 iterator holders*(

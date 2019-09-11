@@ -13,8 +13,8 @@ import ../../Wallet/MinerWallet
 #MeritHolderRecord object.
 import ../common/objects/MeritHolderRecordObj
 
-#Consensus lib.
-import ../Consensus/Consensus
+#Element lib.
+import ../Consensus/Element
 
 #BlockHeader lib.
 import BlockHeader
