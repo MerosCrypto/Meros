@@ -20,7 +20,8 @@ proc serialize*(
     result =
         status.epoch.toBinary().pad(INT_LEN) &
         (if status.defaulting: char(1) else: char(0)) &
-        (if status.verified: char(1) else: char(0))
+        (if status.verified: char(1) else: char(0)) &
+        (if status.beaten: char(1) else: char(0))
 
     for verifier in status.verifiers:
         result &= verifier.toString()

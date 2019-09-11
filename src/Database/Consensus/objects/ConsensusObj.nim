@@ -358,12 +358,15 @@ proc finalize*(
     state: var State,
     hash: Hash[384]
 ) {.forceCheck: [].} =
-    #Get the Status.
-    var status: TransactionStatus
+    #Get the Transaction/Status.
+    var
+        tx: Transaction
+        status: TransactionStatus
     try:
+        tx = consensus.functions.transactions.getTransaction(hash)
         status = consensus.getStatus(hash)
     except IndexError as e:
-        doAssert(false, "Couldn't get the Status of a Transaction we're finalizing: " & e.msg)
+        doAssert(false, "Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
 
     #Calculate the final Merit tally.
     status.merit = 0
@@ -390,13 +393,6 @@ proc finalize*(
         consensus.unverify(state, hash, status)
     #If it wasn't verified, check if it actually was.
     elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
-        #Grab the Transaction.
-        var tx: Transaction
-        try:
-            tx = consensus.functions.transactions.getTransaction(hash)
-        except IndexError:
-            doAssert(false, "Couldn't get the Transaction we're finalizing.")
-
         #Make sure all parents are verified.
         try:
             for input in tx.inputs:
@@ -407,6 +403,7 @@ proc finalize*(
                     (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
                     (not consensus.getStatus(input.hash).verified)
                 ):
+                    consensus.statuses.del(hash.toString())
                     return
         except IndexError as e:
             doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
@@ -414,6 +411,17 @@ proc finalize*(
         #Mark the Transaction as verified.
         status.verified = true
         consensus.functions.transactions.verify(tx.hash)
+
+    #Check if the Transaction was beaten, if it's not already marked as beaten.
+    if (not status.beaten) and (not status.verified):
+        for input in tx.inputs:
+            var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
+            for spender in spenders:
+                try:
+                    if consensus.getStatus(spender).verified:
+                        status.beaten = true
+                except IndexError as e:
+                    doAssert(false, "Couldn't get the Status of a competing Transaction: " & e.msg)
 
     #Save the status.
     #This will cause a double save for the finalized TX in the unverified case.

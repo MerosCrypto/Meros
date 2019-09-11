@@ -20,6 +20,9 @@ type TransactionStatus* = ref object
     #If the Transaction was verified.
     #If the Transaction was already verified, and then a competing Transaction is found, both defaulting and verified will be true.
     verified*: bool
+    #If the Transaction was beaten when finalized.
+    #If the Transaction's parent was beaten, this Transaction is automatically beaten.
+    beaten*: bool
     #List of Verifiers.
     verifiers*: seq[BLSPublicKey]
     #The final Merit tally.

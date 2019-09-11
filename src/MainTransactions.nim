@@ -14,9 +14,12 @@ proc verify(
             except Exception as e:
                 doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
 
-        #Make sure we didn't already verify a Transaction which spends the same inputs.
-        if not transactions.isFirst(transaction):
-            return
+        #Make sure we didn't already verify a competing Transaction/make sure this Transaction can be verified.
+        try:
+            if (not transactions.isFirst(transaction)) or consensus.getStatus(transaction.hash).beaten:
+                return
+        except IndexError as e:
+            doAssert(false, "Asked to verify a Transaction without a Status: " & e.msg)
 
         #Verify the Transaction.
         var verif: SignedVerification = newSignedVerificationObj(transaction.hash)

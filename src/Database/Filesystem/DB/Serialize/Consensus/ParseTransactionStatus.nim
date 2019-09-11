@@ -25,20 +25,22 @@ proc parseTransactionStatus*(
         INT_LEN,
         BYTE_LEN,
         BYTE_LEN,
-        statusStr.len - (INT_LEN + BYTE_LEN + BYTE_LEN)
+        BYTE_LEN,
+        statusStr.len - (INT_LEN + BYTE_LEN + BYTE_LEN + BYTE_LEN)
     )
 
     result = newTransactionStatusObj(statusSeq[0].fromBinary())
     result.defaulting = statusSeq[1] == "\1"
     result.verified = statusSeq[2] == "\1"
+    result.beaten = statusSeq[3] == "\1"
 
-    var remainder: int = statusSeq[3].len mod 48
+    var remainder: int = statusSeq[4].len mod 48
     if not (remainder in {0, 4}):
         raise newException(ValueError, "TransactionStatus wasn't saved with a proper list of verifiers.")
 
-    for v in countup(0, statusSeq[3].len - (1 + remainder), 48):
+    for v in countup(0, statusSeq[4].len - (1 + remainder), 48):
         try:
-            result.verifiers.add(newBLSPublicKey(statusSeq[3][v ..< v + 48]))
+            result.verifiers.add(newBLSPublicKey(statusSeq[4][v ..< v + 48]))
         except BLSError as e:
             fcRaise e
 

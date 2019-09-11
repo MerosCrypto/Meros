@@ -86,7 +86,7 @@ proc flag*(
         elem: Element
         verif: Verification
         status: TransactionStatus
-    
+
     for e in consensus.db.loadOutOfEpochs(removal.holder) + 1 ..< consensus[removal.holder].height:
         try:
             elem = consensus[removal.holder][e]
@@ -151,8 +151,20 @@ proc register*(
     #Create the status.
     var status: TransactionStatus = newTransactionStatusObj(blockNum + 6)
 
-    #Check for competing Transactions.
     for input in tx.inputs:
+        #Check if this Transaction's parent was beatem.
+        try:
+            if (
+                (not status.beaten) and
+                (not (tx of Claim)) and
+                (not ((tx of Data) and cast[Data](tx).isFirstData)) and
+                (consensus.getStatus(input.hash).beaten)
+            ):
+                status.beaten = true
+        except IndexError:
+            doAssert(false, "Parent Transaction doesn't have a status.")
+
+        #Check for competing Transactions.
         var spenders: seq[Hash[384]] = transactions.loadSpenders(input)
         if spenders.len != 1:
             status.defaulting = true

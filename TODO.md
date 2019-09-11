@@ -73,9 +73,6 @@ Network:
 
 Transactions Branch:
 
-- Practical Bugs:
-    - Only verify Transactions which have a chance at becoming verified.
-
 - Tests:
     - PendingActionsTest should not have all reverted actions reapplied.
     - Test historical and live threshold calculation.
@@ -83,6 +80,7 @@ Transactions Branch:
     - Test Meros only verifies Transactions which have a chance.
     - Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
     - Test children Transactions are properly unverified.
+    - Test only Transactions which can be verified are verified.
 
 ### Nim Tests:
 
