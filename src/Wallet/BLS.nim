@@ -4,6 +4,9 @@ import ../lib/Errors
 #BLS Nimble package.
 import mc_bls
 
+#Hashes standard lib.
+import hashes
+
 #Type aliases.
 type
     BLSPrivateKey* = PrivateKey
@@ -169,3 +172,8 @@ proc aggregate*(
             BLSError,
             "Couldn't aggregate the BLS Signatures: " & getCurrentExceptionMsg()
         )
+
+proc hash*(
+    key: BLSPublicKey
+): Hash {.inline, forceCheck: [].} =
+    hash(key.toString())

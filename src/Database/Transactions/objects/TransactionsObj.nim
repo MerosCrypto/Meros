@@ -40,7 +40,7 @@ type
         mintNonce*: uint32
 
         #Transactions which have yet to leave Epochs.
-        transactions*: Table[string, Transaction]
+        transactions*: Table[Hash[384], Transaction]
 
 #Get a Data's sender.
 proc getSender*(
@@ -68,7 +68,7 @@ proc add*(
 ) {.forceCheck: [].} =
     if not (tx of Mint):
         #Add the Transaction to the cache.
-        transactions.transactions[tx.hash.toString()] = tx
+        transactions.transactions[tx.hash] = tx
 
     if save:
         #Save the TX.
@@ -89,14 +89,11 @@ proc `[]`*(
 ): Transaction {.forceCheck: [
     IndexError
 ].} =
-    #Extract the hash.
-    var hashStr: string = hash.toString()
-
     #Check if the Transaction is in the cache.
-    if transactions.transactions.hasKey(hashStr):
+    if transactions.transactions.hasKey(hash):
         #If it is, return it from the cache.
         try:
-            return transactions.transactions[hashStr]
+            return transactions.transactions[hash]
         except KeyError as e:
             doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
 
@@ -118,7 +115,7 @@ proc newTransactionsObj*(
 
         mintNonce: 0,
 
-        transactions: initTable[string, Transaction]()
+        transactions: initTable[Hash[384], Transaction]()
     )
 
     #Load the mint nonce.
@@ -129,30 +126,24 @@ proc newTransactionsObj*(
 
     #Load the transactions from the DB.
     #Find every Verifier with a Verification still in Epochs.
-    var mentioned: Table[string, BLSPublicKey] = initTable[string, BLSPublicKey]()
+    var mentioned: Table[BLSPublicKey, bool] = initTable[BLSPublicKey, bool]()
     try:
         for nonce in max(0, blockchain.height - 5) ..< blockchain.height:
             for record in blockchain[nonce].records:
-                mentioned[record.key.toString()] = record.key
+                mentioned[record.key] = true
     except IndexError as e:
         doAssert(false, "Couldn't load records from the Blockchain while reloading Transactions: " & e.msg)
 
     #Go through each Verifier.
     var
         #Properties of each Verifier.
-        key: BLSPublicKey
         outOfEpochs: int
         height: int
         elements: seq[Element]
 
         #Hashes of the TXs to reload.
-        hashes: Table[string, Hash[384]]
-    for keyStr in mentioned.keys():
-        try:
-            key = mentioned[keyStr]
-        except KeyError:
-            doAssert(false, "Couldn't get a value by a key produced from .keys().")
-
+        hashes: Table[Hash[384], bool]
+    for key in mentioned.keys():
         #Find out what slice we're working with.
         try:
             outOfEpochs = db.load(key)
@@ -166,13 +157,13 @@ proc newTransactionsObj*(
             doAssert(false, "Couldn't load elements from a MeritHolder while reloading Transactions: " & e.msg)
         for element in elements:
             if element of Verification:
-                hashes[cast[Verification](element).hash.toString()] = cast[Verification](element).hash
+                hashes[cast[Verification](element).hash] = true
 
     #Load every Transaction.
     for hash in hashes.keys():
         if not result.transactions.hasKey(hash):
             try:
-                result.add(db.load(hashes[hash]), false)
+                result.add(db.load(hash), false)
             except KeyError:
                 doAssert(false, "Couldn't get a value by a key produced from .keys().")
             except DBReadError as e:
@@ -247,7 +238,7 @@ proc unverify*(
 #Delete a hash from the cache.
 func del*(
     transactions: var Transactions,
-    hash: string
+    hash: Hash[384]
 ) {.forceCheck: [].} =
     #Grab the transaction.
     var tx: Transaction

@@ -4,6 +4,9 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
+#Hash lib.
+import ../../../lib/Hash
+
 #MinerWallet lib (for BLSPublicKey).
 import ../../../Wallet/MinerWallet
 
@@ -21,15 +24,15 @@ import finals
 
 finalsd:
     type
-        #Reward object. Declares a BLS Public Key (as a string) and a number which adds up to 1000.
+        #Reward object. Declares a BLS Public Key and a number which adds up to 1000.
         Reward* = object
-            key* {.final.}: string
+            key* {.final.}: BLSPublicKey
             score*: uint64
 
         #The tests rely on Epoch and Epochs not being refs.
         #Epoch object. Transaction Hash -> BLS Public Keys of verifiers.
         Epoch* = object
-            hashes*: Table[string, seq[BLSPublicKey]]
+            hashes*: Table[Hash[384], seq[BLSPublicKey]]
             records*: seq[MeritHolderRecord]
 
         #Epochs object.
@@ -44,7 +47,7 @@ finalsd:
 
 #Constructors.
 func newReward*(
-    key: string,
+    key: BLSPublicKey,
     score: uint64
 ): Reward {.forceCheck: [].} =
     result = Reward(
@@ -57,7 +60,7 @@ func newEpoch*(
     records: seq[MeritHolderRecord]
 ): Epoch {.inline, forceCheck: [].} =
     Epoch(
-        hashes: initTable[string, seq[BLSPublicKey]](),
+        hashes: initTable[Hash[384], seq[BLSPublicKey]](),
         records: records
     )
 
@@ -82,7 +85,7 @@ func newEpochsObj*(
 #Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
 func add*(
     epochs: var Epochs,
-    hash: string,
+    hash: Hash[384],
     holder: BLSPublicKey
 ) {.forceCheck: [
     NotInEpochs
@@ -104,7 +107,7 @@ func add*(
 #Add a hash to an Epoch.
 func add*(
     epoch: var Epoch,
-    hash: string,
+    hash: Hash[384],
     holder: BLSPublicKey
 ) {.forceCheck: [].} =
     #Create the seq, if one doesn't already exist.

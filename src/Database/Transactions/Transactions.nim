@@ -269,7 +269,7 @@ proc archive*(
 
         #Iterate over every archived Element,
         for elem in elems:
-            transactions.del(cast[Verification](elem).hash.toString())
+            transactions.del(cast[Verification](elem).hash)
 
         #Save the popped height so we can reload Elements.
         transactions.save(record.key, record.nonce)

@@ -48,7 +48,7 @@ proc shift*(
     consensus: Consensus,
     removals: seq[MeritHolderRecord],
     records: seq[MeritHolderRecord],
-    tips: TableRef[string, int] = nil
+    tips: TableRef[BLSPublicKey, int] = nil
 ): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Transactions that aren't in an older Epoch.
@@ -72,7 +72,7 @@ proc shift*(
         #If we were passed tips, use those for the starting point.
         if not tips.isNil:
             try:
-                start = tips[record.key.toString()]
+                start = tips[record.key]
             except KeyError as e:
                 doAssert(false, "Reloading Epochs from the DB using invalid tips: " & e.msg)
         #Else, use the holder's archived.
@@ -91,14 +91,14 @@ proc shift*(
             if element of Verification:
                 #Try adding this hash to an existing Epoch.
                 try:
-                    epochs.add(cast[Verification](element).hash.toString(), element.holder)
+                    epochs.add(cast[Verification](element).hash, element.holder)
                 #If it wasn't in any existing Epoch, add it to the new one.
                 except NotInEpochs:
-                    newEpoch.add(cast[Verification](element).hash.toString(), element.holder)
+                    newEpoch.add(cast[Verification](element).hash, element.holder)
 
         #If we were passed a set of tips, update them.
         if not tips.isNil:
-            tips[record.key.toString()] = record.nonce
+            tips[record.key] = record.nonce
 
     #Return the popped Epoch.
     result = epochs.shift(newEpoch, not tips.isNil)
@@ -114,17 +114,10 @@ proc newEpochs*(
 
     #Regenerate the Epochs.
     var
-        #Seq of every holder.
-        holders: seq[string]
+        #Use the Holders from the State.
+        holders: seq[BLSPublicKey] = db.loadHolders()
         #Table of every archived tip before the current Epochs.
-        tips: TableRef[string, int] = newTable[string, int]()
-
-    #Use the Holders string from the State.
-    try:
-        holders = db.loadHolders()
-    except DBReadError:
-        #If there are no holders, there's no mined Blocks and therefore no Epochs to regenerate.
-        holders = @[]
+        tips: TableRef[BLSPublicKey, int] = newTable[BLSPublicKey, int]()
 
     #We don't just return in the above except in case an empty holders is saved to the DB.
     #That should be impossible, as the State, as of right now, only saves the holders once it has some.
@@ -148,7 +141,7 @@ proc newEpochs*(
             var removals: seq[MeritHolderRecord] = @[]
             for record in blockchain[b].records:
                 try:
-                    if tips[record.key.toString()] == record.nonce - 1:
+                    if tips[record.key] == record.nonce - 1:
                         if consensus[record.key][record.nonce] of MeritRemoval:
                             removals.add(record)
                 except KeyError as e:
@@ -176,7 +169,7 @@ proc calculate*(
         #Total Merit behind an Transaction.
         weight: int
         #Score of a holder.
-        scores: Table[string, uint64] = initTable[string, uint64]()
+        scores: Table[BLSPublicKey, uint64] = initTable[BLSPublicKey, uint64]()
         #Total score.
         total: uint64
         #Total normalized score.
@@ -200,10 +193,8 @@ proc calculate*(
             continue
 
         #If it was, increment every verifier's score.
-        var holder: string
         try:
-            for holderLoop in epoch.hashes[tx]:
-                holder = holderLoop.toString()
+            for holder in epoch.hashes[tx]:
                 if not scores.hasKey(holder):
                     scores[holder] = 0
                 scores[holder] += 1
@@ -237,14 +228,19 @@ proc calculate*(
         func (
             x: Reward,
             y: Reward
-        ): int =
+        ): int {.forceCheck: [].} =
+            #Extract the keys.
+            var
+                xKey: string = x.key.toString()
+                yKey: string = y.key.toString()
+
             if x.score > y.score:
                 result = 1
             elif x.score == y.score:
-                for b in 0 ..< x.key.len:
-                    if x.key[b] > y.key[b]:
+                for b in 0 ..< xKey.len:
+                    if xKey[b] > yKey[b]:
                         return 1
-                    elif x.key[b] == y.key[b]:
+                    elif xKey[b] == yKey[b]:
                         continue
                     else:
                         return -1

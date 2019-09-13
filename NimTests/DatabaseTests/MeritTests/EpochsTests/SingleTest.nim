@@ -68,7 +68,7 @@ proc test*() =
     #Register the Transaction.
     var tx: Transaction = Transaction()
     tx.hash = hash
-    transactions.transactions[tx.hash.toString()] = tx
+    transactions.transactions[tx.hash] = tx
     consensus.register(transactions, state, tx, 0)
 
     #Give the miner Merit.
@@ -113,7 +113,7 @@ proc test*() =
     #Next shift should result in a Rewards of key 0, 1000.
     rewards = epochs.shift(consensus, @[], @[]).calculate(state)
     assert(rewards.len == 1)
-    assert(rewards[0].key == miner.publicKey.toString())
+    assert(rewards[0].key == miner.publicKey)
     assert(rewards[0].score == 1000)
 
     echo "Finished the Database/Merit/Epochs Single Test."

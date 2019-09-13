@@ -36,7 +36,6 @@ finalsd:
 
         #Chain owner.
         key* {.final.}: BLSPublicKey
-        keyStr* {.final.}: string
 
         #MeritHolder height.
         height*: int
@@ -57,8 +56,6 @@ proc newMeritHolderObj*(
         db: db,
 
         key: key,
-        keyStr: key.toString(),
-
         archived: -1,
 
         signatures: initTable[int, BLSSignature](),

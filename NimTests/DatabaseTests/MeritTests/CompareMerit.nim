@@ -105,8 +105,8 @@ proc compare*(
     assert(s1.processedBlocks == s2.processedBlocks)
 
     var
-        s1Holders: seq[string] = @[]
-        s2Holders: seq[string] = @[]
+        s1Holders: seq[BLSPublicKey] = @[]
+        s2Holders: seq[BLSPublicKey] = @[]
     for k in s1.holders():
         if s1[k] == 0:
             continue

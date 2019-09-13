@@ -77,7 +77,7 @@ proc test*() =
     #Register the Transaction.
     var tx: Transaction = Transaction()
     tx.hash = hash
-    transactions.transactions[tx.hash.toString()] = tx
+    transactions.transactions[tx.hash] = tx
     consensus.register(transactions, state, tx, 0)
 
     for miner in miners:
@@ -134,7 +134,7 @@ proc test*() =
             assert(rewards[r1].key != rewards[r2].key)
 
         for m in 0 ..< miners.len:
-            if rewards[r1].key == miners[m].publicKey.toString():
+            if rewards[r1].key == miners[m].publicKey:
                 break
 
             if m == miners.len - 1:

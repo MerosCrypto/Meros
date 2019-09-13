@@ -10,6 +10,9 @@ import ../lib/Hash
 #Ed25519 lib.
 import mc_ed25519
 
+#Hashes standard lib.
+import hashes
+
 #SIGN_PREFIX applied to every message, stopping cross-network replays.
 const SIGN_PREFIX {.strdefine.}: string = "MEROS"
 
@@ -184,3 +187,10 @@ proc aggregate*(
             p1p1ToP3(addr res, addr tempRes)
 
     serialize(addr result.data[0], addr res)
+
+proc hash*(
+    key: EdPublicKey
+): hashes.Hash {.inline, forceCheck: [].} =
+    for b in key.data:
+        result = result !& int(b)
+    result = !$ result

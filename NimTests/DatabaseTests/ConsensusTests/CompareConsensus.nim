@@ -70,7 +70,7 @@ proc compare*(
 
     #Compare the statuses.
     for status in c1.statuses:
-        compare(c1.getStatus(status.toHash(384)), c2.getStatus(status.toHash(384)))
+        compare(c1.getStatus(status), c2.getStatus(status))
 
     #Compare the unmentioned.
     assert(c1.unmentioned.len == c2.unmentioned.len)

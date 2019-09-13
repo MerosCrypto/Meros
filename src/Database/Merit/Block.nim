@@ -44,7 +44,7 @@ func inc*(
 #Verify the aggregate signature for a table of Key -> seq[Element].
 proc verify*(
     blockArg: Block,
-    elems: Table[string, seq[Element]]
+    elems: Table[BLSPublicKey, seq[Element]]
 ): bool {.forceCheck: [].} =
     result = true
 
@@ -56,12 +56,9 @@ proc verify*(
     var agInfos: seq[BLSAggregationInfo] = @[]
     #Iterate over every Record.
     for r, record in blockArg.records:
-        #Key in the record.
-        var key: string = record.key.toString()
-
         try:
             #Iterate over this holder's elements.
-            for elem in elems[key]:
+            for elem in elems[record.key]:
                 #Create AggregationInfos
                 case elem:
                     of MeritRemoval as mr:

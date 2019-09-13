@@ -26,6 +26,9 @@ export Keccak
 import Hash/SHA3
 export SHA3
 
+#Hashes standard lib.
+import hashes
+
 #Define Blake_2 as Blake.
 type
     Blake384Hash* = Blake2_384Hash
@@ -37,3 +40,10 @@ var
     toBlake384Hash*: proc (
         input: string
     ): Blake384Hash {.noSideEffect, raises: [ValueError].} = toBlake2_384Hash
+
+proc hash*[L](
+    hash: HashCommon.Hash[L]
+): hashes.Hash {.raises: [].} =
+    for b in hash.data:
+        result = result !& int(b)
+    result = !$ result

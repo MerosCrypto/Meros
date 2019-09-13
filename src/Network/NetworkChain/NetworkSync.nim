@@ -150,7 +150,7 @@ proc sync*(
         #Variable for gaps.
         gaps: seq[Gap] = @[]
         #Every Element archived in this block.
-        elements: Table[string, seq[Element]] = initTable[string, seq[Element]]()
+        elements: Table[BLSPublicKey, seq[Element]] = initTable[BLSPublicKey, seq[Element]]()
         #Seq of missing Elements.
         missingElems: seq[Element] = @[]
         #Hashes of the Transactions mentioned in missing Elements.
@@ -165,13 +165,13 @@ proc sync*(
 
         #Grab the holder's pending elements and place them in elements.
         #OVerride for MeritRemovals.
-        if consensus.malicious.hasKey(holder.keyStr):
+        if consensus.malicious.hasKey(holder.key):
             try:
                 var mrArchived: bool = false
-                for mr in consensus.malicious[holder.keyStr]:
+                for mr in consensus.malicious[holder.key]:
                     if record.merkle == mr.merkle:
                         mrArchived = true
-                        elements[holder.keyStr] = @[cast[Element](mr)]
+                        elements[holder.key] = @[cast[Element](mr)]
                         break
 
                 if mrArchived:
@@ -179,10 +179,10 @@ proc sync*(
             except KeyError as e:
                 doAssert(false, "Couldn't get the MeritRemovals of someone who has some: " & e.msg)
 
-        elements[holder.keyStr] = newSeq[Element](min(holder.height - 1, record.nonce) - holder.archived)
+        elements[holder.key] = newSeq[Element](min(holder.height - 1, record.nonce) - holder.archived)
         for e in holder.archived + 1 .. min(holder.height - 1, record.nonce):
             try:
-                elements[holder.keyStr][e - (holder.archived + 1)] = holder[e]
+                elements[holder.key][e - (holder.archived + 1)] = holder[e]
             except KeyError as e:
                 doAssert(false, "Couldn't access a seq in a table we just created: " & e.msg)
             except IndexError as e:
@@ -244,7 +244,7 @@ proc sync*(
     for elem in missingElems:
         #Add its hash to the list of elements for this holder.
         try:
-            elements[elem.holder.toString()].add(elem)
+            elements[elem.holder].add(elem)
         except KeyError as e:
             doAssert(false, "Couldn't add a hash to a seq in a table we recently created: " & e.msg)
 

@@ -95,17 +95,11 @@ proc processBlock*(
         raise newException(ValueError, "Invalid Miners' merkle.")
 
     #Verify no MeritHolder has multiple Records.
-    var
-        holders: Table[string, bool] = initTable[string, bool]()
-        holder: string
+    var holders: Table[BLSPublicKey, bool] = initTable[BLSPublicKey, bool]()
     for record in newBlock.records:
-        holder = record.key.toString()
-        try:
-            if holders[holder]:
-                raise newException(ValueError, "One MeritHolder has two Records.")
-        except KeyError:
-            discard
-        holders[holder] = true
+        if holders.hasKey(record.key):
+            raise newException(ValueError, "One MeritHolder has two Records.")
+        holders[record.key] = true
 
     #Verify the miners.
     if (newBlock.miners.miners.len < 1) or (100 < newBlock.miners.miners.len):

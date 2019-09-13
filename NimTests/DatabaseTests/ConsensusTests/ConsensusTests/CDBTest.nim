@@ -101,7 +101,7 @@ proc test*() =
             #Register the Transaction.
             tx = Transaction()
             tx.hash = hashes[^1]
-            transactions.transactions[tx.hash.toString()] = tx
+            transactions.transactions[tx.hash] = tx
             consensus.register(transactions, state, tx, r)
 
         #Create Elements.

@@ -23,13 +23,13 @@ proc mainConsensus() {.forceCheck: [].} =
         functions.consensus.isMalicious = proc (
             key: BLSPublicKey
         ): bool {.inline, forceCheck: [].} =
-            consensus.malicious.hasKey(key.toString())
+            consensus.malicious.hasKey(key)
 
         #Provide access to the holder's height.
         functions.consensus.getHeight = proc (
             key: BLSPublicKey
         ): int {.forceCheck: [].} =
-            if consensus.malicious.hasKey(key.toString()):
+            if consensus.malicious.hasKey(key):
                 return consensus[key].archived + 2
             result = consensus[key].height
 
@@ -40,10 +40,10 @@ proc mainConsensus() {.forceCheck: [].} =
         ): Element {.forceCheck: [
             IndexError
         ].} =
-            if consensus.malicious.hasKey(key.toString()):
+            if consensus.malicious.hasKey(key):
                 if nonce == consensus[key].archived + 1:
                     try:
-                        return consensus.malicious[key.toString()][0]
+                        return consensus.malicious[key][0]
                     except KeyError as e:
                         doAssert(false, "Couldn't get a MeritRemoval despite confirming it exists: " & e.msg)
                 elif nonce <= consensus[key].archived:
@@ -173,7 +173,7 @@ proc mainConsensus() {.forceCheck: [].} =
                     #Broadcast the first MeritRemoval.
                     functions.network.broadcast(
                         MessageType.SignedMeritRemoval,
-                        cast[SignedMeritRemoval](consensus.malicious[verif.holder.toString()][0]).signedSerialize()
+                        cast[SignedMeritRemoval](consensus.malicious[verif.holder][0]).signedSerialize()
                     )
                 except KeyError as e:
                     doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
@@ -239,7 +239,7 @@ proc mainConsensus() {.forceCheck: [].} =
             try:
                 functions.network.broadcast(
                     MessageType.SignedMeritRemoval,
-                    cast[SignedMeritRemoval](consensus.malicious[mr.holder.toString()][0]).signedSerialize()
+                    cast[SignedMeritRemoval](consensus.malicious[mr.holder][0]).signedSerialize()
                 )
             except KeyError as e:
                 doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)

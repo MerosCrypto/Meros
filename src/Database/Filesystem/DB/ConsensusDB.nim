@@ -70,7 +70,7 @@ proc commit*(
             discard
     db.consensus.deleted = @[]
 
-    var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.consensus.cache.len)
+    var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.consensus.cache.len + 1)
     try:
         var i: int = 0
         for key in db.consensus.cache.keys():
@@ -78,6 +78,10 @@ proc commit*(
             inc(i)
     except KeyError as e:
         doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+
+    #Save the unmentioned hashes.
+    items[^1] = (key: "unmentioned", value: db.consensus.unmentioned)
+    db.consensus.unmentioned = ""
 
     try:
         db.lmdb.put("consensus", items)
@@ -118,30 +122,31 @@ proc save*(
 
 proc save*(
     db: DB,
-    hash: string,
+    hash: Hash[384],
     status: TransactionStatus
 ) {.forceCheck: [].} =
-    db.put(hash, status.serialize())
+    db.put(hash.toString(), status.serialize())
 
-proc saveUnmentioned*(
+proc addUnmentioned*(
     db: DB,
-    unmentioned: string
+    unmentioned: Hash[384]
 ) {.forceCheck: [].} =
-    db.put("unmentioned", unmentioned)
+    db.consensus.unmentioned &= unmentioned.toString()
 
 proc loadHolders*(
     db: DB
-): seq[string] {.forceCheck: [
-    DBReadError
-].} =
+): seq[BLSPublicKey] {.forceCheck: [].} =
     try:
         db.consensus.holdersStr = db.get("holders")
-    except DBReadError as e:
-        fcRaise e
+    except DBReadError:
+        return @[]
 
-    result = newSeq[string](db.consensus.holdersStr.len div 48)
+    result = newSeq[BLSPublicKey](db.consensus.holdersStr.len div 48)
     for i in countup(0, db.consensus.holdersStr.len - 1, 48):
-        result[i div 48] = db.consensus.holdersStr[i ..< i + 48]
+        try:
+            result[i div 48] = newBLSPublicKey(db.consensus.holdersStr[i ..< i + 48])
+        except BLSError as e:
+            doAssert(false, "Couldn't load a holder's BLS Public Key: " & e.msg)
         db.consensus.holders[db.consensus.holdersStr[i ..< i + 48]] = true
 
 proc load*(
@@ -197,16 +202,19 @@ proc load*(
 
 proc loadUnmentioned*(
     db: DB
-): seq[string] {.forceCheck: [].} =
+): seq[Hash[384]] {.forceCheck: [].} =
     var unmentioned: string
     try:
         unmentioned = db.get("unmentioned")
     except DBReadError:
         return @[]
 
-    result = newSeq[string](unmentioned.len div 48)
+    result = newSeq[Hash[384]](unmentioned.len div 48)
     for i in countup(0, unmentioned.len - 1, 48):
-        result[i div 48] = unmentioned[i ..< i + 48]
+        try:
+            result[i div 48] = unmentioned[i ..< i + 48].toHash(384)
+        except ValueError as e:
+            doAssert(false, "Couldn't parse an unmentioned hash: " & e.msg)
 
 #Delete an element.
 proc del*(

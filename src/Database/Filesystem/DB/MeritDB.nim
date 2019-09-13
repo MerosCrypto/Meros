@@ -115,9 +115,10 @@ proc saveLive*(
 
 proc save*(
     db: DB,
-    holder: string,
+    holderKey: BLSPublicKey,
     merit: int
 ) {.forceCheck: [].} =
+    var holder: string = holderKey.toString()
     if not db.merit.holders.hasKey(holder):
         db.merit.holders[holder] = true
         db.merit.holdersStr &= holder
@@ -127,10 +128,11 @@ proc save*(
 
 proc remove*(
     db: DB,
-    holder: string,
+    holderKey: BLSPublicKey,
     merit: int,
     blockNum: int
 ) {.forceCheck: [].} =
+    var holder: string = holderKey.toString()
     db.merit.removals[holder] = merit
 
     #The following (individual holder's removals) hould be loaded on boot and then kept in RAM, for every holder.
@@ -205,59 +207,72 @@ proc loadLive*(
 
 proc loadHolders*(
     db: DB
-): seq[string] {.forceCheck: [
-    DBReadError
-].} =
+): seq[BLSPublicKey] {.forceCheck: [].} =
     try:
         db.merit.holdersStr = db.get("holders")
-    except DBReadError as e:
-        fcRaise e
+    except DBReadError:
+        return @[]
 
-    result = newSeq[string](db.merit.holdersStr.len div 48)
+    result = newSeq[BLSPublicKey](db.merit.holdersStr.len div 48)
     for i in countup(0, db.merit.holdersStr.len - 1, 48):
-        result[i div 48] = db.merit.holdersStr[i ..< i + 48]
+        try:
+            result[i div 48] = newBLSPublicKey(db.merit.holdersStr[i ..< i + 48])
+        except BLSError as e:
+            doAssert(false, "Couldn't load a holder's BLS Public Key: " & e.msg)
         db.merit.holders[db.merit.holdersStr[i ..< i + 48]] = true
 
 proc loadMerit*(
     db: DB,
-    holder: string
+    holder: BLSPublicKey
 ): int {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(holder).fromBinary()
+        result = db.get(holder.toString()).fromBinary()
     except DBReadError as e:
         fcRaise e
 
 proc loadRemovals*(
     db: DB,
     blockNum: int
-): string {.forceCheck: [
-    DBReadError
-].} =
+): seq[tuple[key: BLSPublicKey, merit: int]] {.forceCheck: [].} =
+    var removals: string
     try:
-        result = db.get("removals" & blockNum.toBinary())
-    except DBReadError as e:
-        fcRaise e
+        removals = db.get("removals" & blockNum.toBinary())
+    except DBReadError:
+        return @[]
+
+    for i in countup(0, removals.len - 1, 52):
+        try:
+            result.add(
+                (
+                    key: newBLSPublicKey(removals[i * 52 ..< (i * 52) + 48]),
+                    merit: removals[(i * 52) + 48 ..< (i * 52) + 52].fromBinary()
+                )
+            )
+        except BLSError as e:
+            doAssert(false, "Saved an invalid BLS key to the Database: " & e.msg)
 
 proc loadRemovals*(
     db: DB,
     holder: BLSPublicKey
-): string {.forceCheck: [
-    DBReadError
-].} =
+): seq[int] {.forceCheck: [].} =
+    var removals: string
     try:
-        result = db.get(holder.toString() & "removals")
-    except DBReadError as e:
-        fcRaise e
+        removals = db.get(holder.toString() & "removals")
+    except DBReadError:
+        return @[]
+
+    for i in countup(0, removals.len - 1, 4):
+        result.add(removals[i ..< i + 4].fromBinary())
 
 proc loadHolderEpoch*(
     db: DB,
-    holder: string
+    holder: BLSPublicKey
 ): int {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(holder & "epoch").fromBinary()
+        result = db.get(holder.toString() & "epoch").fromBinary()
     except DBReadError as e:
         fcRaise e

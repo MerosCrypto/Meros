@@ -72,12 +72,12 @@ proc flag*(
     removal: MeritRemoval
 ) {.forceCheck: [].} =
     #Make sure there's a seq.
-    if not consensus.malicious.hasKey(removal.holder.toString()):
-        consensus.malicious[removal.holder.toString()] = @[]
+    if not consensus.malicious.hasKey(removal.holder):
+        consensus.malicious[removal.holder] = @[]
 
     #Add the MeritRemoval.
     try:
-        consensus.malicious[removal.holder.toString()].add(removal)
+        consensus.malicious[removal.holder].add(removal)
     except KeyError as e:
         doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
 
@@ -100,7 +100,7 @@ proc flag*(
         if status.verified:
             var merit: int = 0
             for verifier in status.verifiers:
-                if not consensus.malicious.hasKey(verifier.toString()):
+                if not consensus.malicious.hasKey(verifier):
                     merit += state[verifier]
 
             if merit < state.protocolThresholdAt(status.epoch):
@@ -182,13 +182,13 @@ proc register*(
                         doAssert(false, "Competing Transaction doesn't have a status despite being marked as a spender.")
 
     #If there were previously unknown Verifications, apply them.
-    if consensus.unknowns.hasKey(tx.hash.toString()):
+    if consensus.unknowns.hasKey(tx.hash):
         try:
-            for verifier in consensus.unknowns[tx.hash.toString()]:
+            for verifier in consensus.unknowns[tx.hash]:
                 status.verifiers.add(verifier)
 
             #Delete from the unknowns table.
-            consensus.unknowns.del(tx.hash.toString())
+            consensus.unknowns.del(tx.hash)
 
             #Since we added Verifiers, calculate the Merit.
             consensus.calculateMerit(state, tx.hash, status)
@@ -196,19 +196,18 @@ proc register*(
             doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
 
     #Set the status.
-    consensus.setStatus(tx.hash.toString(), status)
+    consensus.setStatus(tx.hash, status)
 
 #Handle unknown Verifications.
 proc handleUnknown(
     consensus: Consensus,
     verif: Verification
 ) {.forceCheck: [].} =
-    var hash: string = verif.hash.toString()
-    if not consensus.unknowns.hasKey(hash):
-        consensus.unknowns[hash] = newSeq[BLSPublicKey]()
+    if not consensus.unknowns.hasKey(verif.hash):
+        consensus.unknowns[verif.hash] = newSeq[BLSPublicKey]()
 
     try:
-        consensus.unknowns[hash].add(verif.holder)
+        consensus.unknowns[verif.hash].add(verif.holder)
     except KeyError as e:
         doAssert(false, "Couldn't add a Merit Holder to a seq we've confirmed to exist: " & e.msg)
 
@@ -341,7 +340,7 @@ proc archive*(
     consensus.db.save(mr)
 
     #Delete the MeritRemovals from the malicious table.
-    consensus.malicious.del(mr.holder.toString())
+    consensus.malicious.del(mr.holder)
 
 #Get a Transaction's unfinalized parents.
 proc getUnfinalizedParents(
@@ -403,30 +402,21 @@ proc archive*(
     for hash in shifted.hashes.keys():
         consensus.unmentioned.del(hash)
     #Update the Epoch for every unmentioned Epoch.
-    var unmentioned: string = ""
     for hash in consensus.unmentioned.keys():
-        unmentioned &= hash
         consensus.incEpoch(hash)
-    consensus.db.saveUnmentioned(unmentioned)
+        consensus.db.addUnmentioned(hash)
 
     #Save every popped record nonce.
     for record in popped.records:
         consensus.db.saveOutOfEpochs(record.key, record.nonce)
 
     #Transactions finalized out of order.
-    var outOfOrder: Table[string, bool] = initTable[string, bool]()
+    var outOfOrder: Table[Hash[384], bool] = initTable[Hash[384], bool]()
     #Mark every hash in this Epoch as out of Epochs.
-    for hashStr in popped.hashes.keys():
+    for hash in popped.hashes.keys():
         #Skip Transaction we verified out of order.
-        if outOfOrder.hasKey(hashStr):
+        if outOfOrder.hasKey(hash):
             continue
-
-        #Get the hash as a Hash.
-        var hash: Hash[384]
-        try:
-            hash = hashStr.toHash(384)
-        except ValueError as e:
-            doAssert(false, "Couldn't convert a hash from an Epoch into a hash: " & e.msg)
 
         var parents: seq[Hash[384]] = @[hash]
         while parents.len != 0:
@@ -434,7 +424,7 @@ proc archive*(
             var parent: Hash[384] = parents.pop()
 
             #Skip this Transaction if we already verified it.
-            if outOfOrder.hasKey(parent.toString()):
+            if outOfOrder.hasKey(parent):
                 continue
 
             #Grab the Transaction.
@@ -450,36 +440,31 @@ proc archive*(
             #If all the parents are finalized, finalize this Transaction.
             if newParents.len == 0:
                 consensus.finalize(state, parent)
-                outOfOrder[parent.toString()] = true
+                outOfOrder[parent] = true
             else:
                 #Else, add back this Transaction, and then add the new parents.
                 parents.add(parent)
                 parents &= newParents
 
     #Reclaulcate every close Status.
-    var toDelete: seq[string] = @[]
-    for hashStr in consensus.close.keys():
-        var
-            hash: Hash[384]
-            status: TransactionStatus
+    var toDelete: seq[Hash[384]] = @[]
+    for hash in consensus.close.keys():
+        var status: TransactionStatus
         try:
-            hash = hashStr.toHash(384)
             status = consensus.getStatus(hash)
-        except ValueError as e:
-            doAssert(false, "Couldn't create a Hash from a key in Consensus.close: " & e.msg)
         except IndexError:
             doAssert(false, "Couldn't get the status of a Transaction that's close to being verified: " & $hash)
 
         #Remove finalized Transactions.
         if status.merit != -1:
-            toDelete.add(hashStr)
+            toDelete.add(hash)
             continue
 
         #Recalculate Merit.
         consensus.calculateMerit(state, hash, status)
         #Remove verified Transactions.
         if status.verified:
-            toDelete.add(hashStr)
+            toDelete.add(hash)
             continue
 
     #Delete all close hashes marked for deletion.

@@ -37,10 +37,10 @@ finalsd:
         #Amount of Blocks processed.
         processedBlocks*: int
         #BLSPublicKey -> Merit
-        holders: Table[string, int]
+        holders: Table[BLSPublicKey, int]
 
         #Removed MeritHolders.
-        removed: Table[string, int]
+        removed: Table[BLSPublicKey, int]
 
 #Constructor.
 proc newStateObj*(
@@ -56,21 +56,18 @@ proc newStateObj*(
         live: 0,
 
         processedBlocks: blockchainHeight,
-        holders: initTable[string, int](),
+        holders: initTable[BLSPublicKey, int](),
 
-        removed: initTable[string, int]()
+        removed: initTable[BLSPublicKey, int]()
     )
     result.ffinalizeDeadBlocks()
 
-    #Load the live Merit and the holders from the DB.
-    var holders: seq[string]
+    #Load the holders and live Merit from the DB.
+    var holders: seq[BLSPublicKey] = result.db.loadHolders()
     try:
         result.live = result.db.loadLive(result.processedBlocks)
-        holders = result.db.loadHolders()
-    #If these don't exist, confirm we didn't load one but not the other.
     except DBReadError:
-        if result.live != 0:
-            doAssert(false, "Loaded the amount of live Merit but not the amount of processed blocks or any holders from the database.")
+        discard
 
     #Handle each holder.
     for holder in holders:
@@ -89,7 +86,7 @@ proc saveLive*(
 #Add a Holder to the State.
 proc add(
     state: var State,
-    key: string
+    key: BLSPublicKey
 ) {.forceCheck: [].} =
     #Return if they are already in the state.
     if state.holders.hasKey(key):
@@ -127,8 +124,8 @@ proc loadLive*(
 #Get an Merit Holder's Merit.
 proc `[]`*(
     state: var State,
-    key: string
-): int {.forceCheck: [].} =
+    key: BLSPublicKey
+): int {.inline, forceCheck: [].} =
     #Add this holder to the State if they don't exist already.
     state.add(key)
 
@@ -138,54 +135,26 @@ proc `[]`*(
     except KeyError as e:
         doAssert(false, "State threw a KeyError when getting a value, despite calling add before attempting." & e.msg)
 
-proc `[]`*(
-    state: var State,
-    key: BLSPublicKey
-): int {.inline, forceCheck: [].} =
-    state[key.toString()]
-
 #Get the removals from a Block.
 proc loadRemovals*(
     state: State,
     blockNum: int
-): seq[tuple[key: BLSPublicKey, merit: int]] {.forceCheck: [].} =
-    var removals: string
-    try:
-        removals = state.db.loadRemovals(blockNum)
-    except DBReadError:
-        return
-
-    for i in countup(0, removals.len - 1, 52):
-        try:
-            result.add(
-                (
-                    key: newBLSPublicKey(removals[i * 52 ..< (i * 52) + 48]),
-                    merit: removals[(i * 52) + 48 ..< (i * 52) + 52].fromBinary()
-                )
-            )
-        except BLSError as e:
-            doAssert(false, "Saved an invalid BLS key to the Database: " & e.msg)
+): seq[tuple[key: BLSPublicKey, merit: int]] {.inline, forceCheck: [].} =
+    state.db.loadRemovals(blockNum)
 
 #Get the removals for a holder.
 proc loadRemovals*(
     state: State,
     holder: BLSPublicKey
-): seq[int] {.forceCheck: [].} =
-    var removals: string
-    try:
-        removals = state.db.loadRemovals(holder)
-    except DBReadError:
-        return
-
-    for i in countup(0, removals.len - 1, 4):
-        result.add(removals[i ..< i + 4].fromBinary())
+): seq[int] {.inline, forceCheck: [].} =
+    state.db.loadRemovals(holder)
 
 #Setters.
 proc `[]=`*(
     state: var State,
-    key: string,
+    key: BLSPublicKey,
     value: int
-) {.forceCheck: [].} =
+) {.inline, forceCheck: [].} =
     #Get the previous value (uses the State `[]` so `add` is called).
     var previous: int = state[key]
     #Set their new value.
@@ -200,26 +169,19 @@ proc `[]=`*(
     if not state.oldData:
         state.db.save(key, value)
 
-proc `[]=`*(
-    state: var State,
-    key: BLSPublicKey,
-    value: int
-) {.inline, forceCheck: [].} =
-    state[key.toString()] = value
-
 #Remove a MeritHolder's Merit.
 proc removeInternal*(
     state: var State,
     key: BLSPublicKey,
     archiving: Block
 ) {.forceCheck: [].} =
-    state.db.remove(key.toString(), state[key], archiving.nonce)
+    state.db.remove(key, state[key], archiving.nonce)
     state[key] = 0
     state.db.saveLive(state.processedBlocks, state.live)
 
 #Iterator for every holder.
 iterator holders*(
     state: State
-): string {.forceCheck: [].} =
+): BLSPublicKey {.forceCheck: [].} =
     for holder in state.holders.keys():
         yield holder

@@ -47,7 +47,7 @@ proc test*() =
         send: Send
 
         #Public Key -> Spendable Outputs.
-        spendable: Table[string, seq[SendInput]] = initTable[string, seq[SendInput]]()
+        spendable: Table[EdPublicKey, seq[SendInput]] = initTable[EdPublicKey, seq[SendInput]]()
         #Inputs.
         inputs: seq[SendInput] = @[]
         #Loaded Spendable.
@@ -55,7 +55,7 @@ proc test*() =
         #Sends.
         sends: seq[Send] = @[]
         #Who can spend a SendInput.
-        spenders: Table[string, string] = initTable[string, string]()
+        spenders: Table[string, EdPublicKey] = initTable[string, EdPublicKey]()
 
     proc inputSort(
         x: SendInput,
@@ -76,7 +76,7 @@ proc test*() =
     proc compare() =
         #Test each spendable.
         for key in spendable.keys():
-            loaded = db.loadSpendable(newEdPublicKey(key))
+            loaded = db.loadSpendable(key)
 
             spendable[key].sort(inputSort)
             loaded.sort(inputSort)
@@ -105,12 +105,10 @@ proc test*() =
         if rand(2) != 0:
             db.verify(send)
             for o in 0 ..< outputs.len:
-                if not spendable.hasKey(outputs[o].key.toString()):
-                    spendable[outputs[o].key.toString()] = @[]
-                spendable[outputs[o].key.toString()].add(
-                    newSendInput(send.hash, o)
-                )
-                spenders[send.hash.toString() & char(o)] = outputs[o].key.toString()
+                if not spendable.hasKey(outputs[o].key):
+                    spendable[outputs[o].key] = @[]
+                spendable[outputs[o].key].add(newSendInput(send.hash, o))
+                spenders[send.hash.toString() & char(o)] = outputs[o].key
 
         compare()
 
@@ -138,10 +136,10 @@ proc test*() =
                 db.verify(send)
                 sends.add(send)
 
-                if not spendable.hasKey(outputKey.toString()):
-                    spendable[outputKey.toString()] = @[]
-                spendable[outputKey.toString()].add(newSendInput(send.hash, 0))
-                spenders[send.hash.toString() & char(0)] = outputKey.toString()
+                if not spendable.hasKey(outputKey):
+                    spendable[outputKey] = @[]
+                spendable[outputKey].add(newSendInput(send.hash, 0))
+                spenders[send.hash.toString() & char(0)] = outputKey
 
         compare()
 
@@ -156,12 +154,12 @@ proc test*() =
 
             for o1 in 0 ..< sends[s].outputs.len:
                 var output: SendOutput = cast[SendOutput](sends[s].outputs[o1])
-                for o2 in 0 ..< spendable[output.key.toString()].len:
+                for o2 in 0 ..< spendable[output.key].len:
                     if (
-                        (spendable[output.key.toString()][o2].hash == sends[s].hash) and
-                        (spendable[output.key.toString()][o2].nonce == o1)
+                        (spendable[output.key][o2].hash == sends[s].hash) and
+                        (spendable[output.key][o2].nonce == o1)
                     ):
-                        spendable[output.key.toString()].delete(o2)
+                        spendable[output.key].delete(o2)
                         break
 
         compare()

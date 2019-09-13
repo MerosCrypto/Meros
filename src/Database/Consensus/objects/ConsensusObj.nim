@@ -54,19 +54,19 @@ type Consensus* = ref object
     filters*: tuple[send: SpamFilter, data: SpamFilter]
 
     #BLS Public Key -> MeritHolder.
-    holders: Table[string, MeritHolder]
+    holders: Table[BLSPublicKey, MeritHolder]
     #BLS Public Key -> MeritRemoval.
-    malicious*: Table[string, seq[MeritRemoval]]
+    malicious*: Table[BLSPublicKey, seq[MeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
-    statuses: Table[string, TransactionStatus]
+    statuses: Table[Hash[384], TransactionStatus]
     #Statuses which haven't been mentioned in Epochs.
-    unmentioned*: Table[string, bool]
+    unmentioned*: Table[Hash[384], bool]
     #Statuses which are close to becoming verified.
-    close*: Table[string, bool]
+    close*: Table[Hash[384], bool]
 
     #Verifications of unknown Transactions.
-    unknowns*: Table[string, seq[BLSPublicKey]]
+    unknowns*: Table[Hash[384], seq[BLSPublicKey]]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -85,33 +85,26 @@ proc newConsensusObj*(
             data: newSpamFilterObj(dataDiff)
         ),
 
-        holders: initTable[string, MeritHolder](),
-        malicious: initTable[string, seq[MeritRemoval]](),
+        holders: initTable[BLSPublicKey, MeritHolder](),
+        malicious: initTable[BLSPublicKey, seq[MeritRemoval]](),
 
-        statuses: initTable[string, TransactionStatus](),
-        unmentioned: initTable[string, bool](),
-        close: initTable[string, bool](),
+        statuses: initTable[Hash[384], TransactionStatus](),
+        unmentioned: initTable[Hash[384], bool](),
+        close: initTable[Hash[384], bool](),
 
-        unknowns: initTable[string, seq[BLSPublicKey]]()
+        unknowns: initTable[Hash[384], seq[BLSPublicKey]]()
     )
 
-    #Grab the MeritHolders, if any exist.
-    var holders: seq[string]
-    try:
-        holders = result.db.loadHolders()
-    #If none exist, return.
-    except DBReadError:
-        return
-
     #Load each MeritHolder.
+    var holders: seq[BLSPublicKey] = result.db.loadHolders()
     for holder in holders:
         try:
-            result.holders[holder] = newMeritHolderObj(result.db, newBLSPublicKey(holder))
+            result.holders[holder] = newMeritHolderObj(result.db, holder)
         except BLSError as e:
             doAssert(false, "Couldn't create a BLS Public Key for a known MeritHolder: " & e.msg)
 
     #Load unmentioned statuses.
-    var unmentioned: seq[string] = result.db.loadUnmentioned()
+    var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()
     for hash in unmentioned:
         result.unmentioned[hash] = true
 
@@ -120,19 +113,16 @@ proc add(
     consensus: Consensus,
     holder: BLSPublicKey
 ) {.forceCheck: [].} =
-    #Create a string of the holder.
-    var holderStr: string = holder.toString()
-
     #Make sure the holder doesn't already exist.
-    if consensus.holders.hasKey(holderStr):
+    if consensus.holders.hasKey(holder):
         return
 
     #Create a new MeritHolder.
-    consensus.holders[holderStr] = newMeritHolderObj(consensus.db, holder)
+    consensus.holders[holder] = newMeritHolderObj(consensus.db, holder)
 
     #Add the MeritHolder to the DB.
     try:
-        consensus.db.save(holder, consensus.holders[holderStr].archived)
+        consensus.db.save(holder, consensus.holders[holder].archived)
     except KeyError as e:
         doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
 
@@ -146,14 +136,14 @@ proc `[]`*(
 
     #Return the holder.
     try:
-        result = consensus.holders[holder.toString()]
+        result = consensus.holders[holder]
     except KeyError as e:
         doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
 
 #Set a Transaction's status.
 proc setStatus*(
     consensus: Consensus,
-    hash: string,
+    hash: Hash[384],
     status: TransactionStatus
 ) {.forceCheck: [].} =
     consensus.statuses[hash] = status
@@ -167,9 +157,9 @@ proc getStatus*(
 ): TransactionStatus {.forceCheck: [
     IndexError
 ].} =
-    if consensus.statuses.hasKey(hash.toString()):
+    if consensus.statuses.hasKey(hash):
         try:
-            return consensus.statuses[hash.toString()]
+            return consensus.statuses[hash]
         except KeyError as e:
             doAssert(false, "Couldn't get a Status from the cache when the cache has the key: " & e.msg)
 
@@ -180,16 +170,16 @@ proc getStatus*(
 
     #Add the Transaction to the cache if it's not yet out of Epochs.
     if result.merit == -1:
-        consensus.statuses[hash.toString()] = result
+        consensus.statuses[hash] = result
 
 #Increment a Status's Epoch.
 proc incEpoch*(
     consensus: Consensus,
-    hash: string
+    hash: Hash[384]
 ) {.forceCheck: [].} =
     var status: TransactionStatus
     try:
-        status = consensus.getStatus(hash.toHash(384))
+        status = consensus.getStatus(hash)
         inc(status.epoch)
     except ValueError:
         doAssert(false, "Couldn't increment the Epoch of a Status with an invalid hash.")
@@ -212,7 +202,7 @@ proc calculateMeritSingle(
     var merit: int = 0
     for verifier in status.verifiers:
         #Skip malicious MeritHolders from Merit calculations.
-        if not consensus.malicious.hasKey(verifier.toString()):
+        if not consensus.malicious.hasKey(verifier):
             merit += state[verifier]
 
     #Check if the Transaction crossed its threshold.
@@ -235,10 +225,10 @@ proc calculateMeritSingle(
 
         #Mark the Transaction as verified.
         status.verified = true
-        consensus.db.save(tx.hash.toString(), status)
+        consensus.db.save(tx.hash, status)
         consensus.functions.transactions.verify(tx.hash)
     elif merit >= state.nodeThresholdAt(status.epoch) - 600:
-        consensus.close[tx.hash.toString()] = true
+        consensus.close[tx.hash] = true
 
 #Calculate a Transaction's Merit. If it's verified, also check every descendant
 proc calculateMerit*(
@@ -309,7 +299,7 @@ proc update*(
     consensus.calculateMerit(state, hash, status)
 
     #Save the status.
-    consensus.db.save(hash.toString(), status)
+    consensus.db.save(hash, status)
 
 #Unverify a Transaction.
 proc unverify*(
@@ -338,8 +328,8 @@ proc unverify*(
         if childStatus.verified:
             echo "Verified Transaction was unverified: ", child
             childStatus.verified = false
-            consensus.db.save(child.toString(), childStatus)
-            consensus.statuses.del(child.toString())
+            consensus.db.save(child, childStatus)
+            consensus.statuses.del(child)
 
             try:
                 for o in 0 ..< tx.outputs.len:
@@ -403,7 +393,7 @@ proc finalize*(
                     (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
                     (not consensus.getStatus(input.hash).verified)
                 ):
-                    consensus.statuses.del(hash.toString())
+                    consensus.statuses.del(hash)
                     return
         except IndexError as e:
             doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
@@ -425,8 +415,8 @@ proc finalize*(
 
     #Save the status.
     #This will cause a double save for the finalized TX in the unverified case.
-    consensus.db.save(hash.toString(), status)
-    consensus.statuses.del(hash.toString())
+    consensus.db.save(hash, status)
+    consensus.statuses.del(hash)
 
 #Gets a Element by its Index.
 proc `[]`*(
@@ -440,7 +430,7 @@ proc `[]`*(
         raise newException(IndexError, "MeritHolder doesn't have an Element for that nonce.")
 
     try:
-        result = consensus.holders[index.key.toString()][index.nonce]
+        result = consensus.holders[index.key][index.nonce]
     except KeyError as e:
         doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
     except IndexError as e:
@@ -459,6 +449,6 @@ iterator holders*(
 #Iterate over every status.
 iterator statuses*(
     consensus: Consensus
-): string {.forceCheck: [].} =
+): Hash[384] {.forceCheck: [].} =
     for status in consensus.statuses.keys():
         yield status

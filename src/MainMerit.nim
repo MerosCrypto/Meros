@@ -116,7 +116,7 @@ proc mainMerit() {.forceCheck: [].} =
             #Verify Record validity (nonce and Merkle).
             var
                 removed: seq[MeritHolderRecord] = @[]
-                removedIndexes: Table[string, int] = initTable[string, int]()
+                removedIndexes: Table[BLSPublicKey, int] = initTable[BLSPublicKey, int]()
                 notRemoved: seq[MeritHolderRecord] = @[]
             for record in newBlock.records:
                 #Make sure every MeritHolder has Merit.
@@ -124,14 +124,14 @@ proc mainMerit() {.forceCheck: [].} =
                     raise newException(ValueError, "Block archives Elements of a merit-less MeritHolder.")
 
                 #Check if this holder lost their Merit.
-                if consensus.malicious.hasKey(record.key.toString()):
+                if consensus.malicious.hasKey(record.key):
                     try:
                         var mrArchived: bool = false
-                        for i in 0 ..< consensus.malicious[record.key.toString()].len:
-                            if consensus.malicious[record.key.toString()][i].merkle == record.merkle:
+                        for i in 0 ..< consensus.malicious[record.key].len:
+                            if consensus.malicious[record.key][i].merkle == record.merkle:
                                 mrArchived = true
                                 removed.add(record)
-                                removedIndexes[record.key.toString()] = i
+                                removedIndexes[record.key] = i
                                 break
 
                         if mrArchived:
@@ -172,9 +172,9 @@ proc mainMerit() {.forceCheck: [].} =
                 try:
                     consensus.archive(
                         consensus.malicious[
-                            removee.key.toString()
+                            removee.key
                         ][
-                            removedIndexes[removee.key.toString()]
+                            removedIndexes[removee.key]
                         ]
                     )
                 except KeyError as e:
@@ -199,20 +199,14 @@ proc mainMerit() {.forceCheck: [].} =
             #Create the Mints (which ends up minting a total of 50000 Meri).
             var ourMint: ref Hash[384]
             for reward in rewards:
-                var key: BLSPublicKey
-                try:
-                    key = newBLSPublicKey(reward.key)
-                except BLSError as e:
-                    doAssert(false, "Couldn't extract a key from a Reward: " & e.msg)
-
                 try:
                     var mintHash: Hash[384] = transactions.mint(
-                        key,
+                        reward.key,
                         reward.score * uint64(50)
                     )
 
                     #If we have a miner wallet, check if the mint was to us.
-                    if (config.miner.initiated) and (config.miner.publicKey.toString() == reward.key):
+                    if (config.miner.initiated) and (config.miner.publicKey == reward.key):
                         ourMint = new(Hash[384])
                         ourMint[] = mintHash
                 except ValueError as e:
