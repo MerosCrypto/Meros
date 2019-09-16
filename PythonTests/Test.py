@@ -95,16 +95,20 @@ if not testsToRun:
         testsToRun.append(test.__name__)
 
 #Remove invalid tests.
-for testName in testsToRun:
+for t in range(len(testsToRun)):
     found: bool = False
     for test in tests:
-        if test.__name__ == testName:
+        #Enable specifying tests over the CLI without the "Test" suffix.
+        if (test.__name__ == testsToRun[t]) or (test.__name__ == testsToRun[t] + "Test"):
+            if testsToRun[t][-4:] != "Test":
+                testsToRun[t] += "Test"
+
             found = True
             break
 
     if not found:
-        ress.append("\033[0;31mCouldn't find " + testName + ".")
-        testsToRun.remove(testName)
+        ress.append("\033[0;31mCouldn't find " + testsToRun[t] + ".")
+        testsToRun.remove(testsToRun[t])
 
 #Delete the PythonTests data directory.
 try:
