@@ -1,5 +1,5 @@
 #Types.
-from typing import List
+from typing import Dict, List
 
 #Transactions classes.
 from PythonTests.Classes.Transactions.Transaction import Transaction
@@ -60,8 +60,43 @@ class MessageType(Enum):
     def toByte(
         self
     ) -> bytes:
+        #This is totally redundant. It shouldn't exist.
+        #That said, it isn't redundant, as Mypy errors without it.
         result: bytes = self.value.to_bytes(1, "big")
         return result
+
+#Lengths of messages.
+#An empty array means the message was just the header.
+#A positive number means read X bytes.
+#A negative number means read the last byte * X bytes,
+#A zero means custom logic should be used.
+lengths: Dict[MessageType, List[int]] = {
+    MessageType.Handshake: [7],
+    MessageType.BlockHeight: [4],
+
+    MessageType.Syncing: [],
+    MessageType.SyncingAcknowledged: [],
+    MessageType.BlockHeaderRequest: [48],
+    MessageType.BlockBodyRequest: [48],
+    MessageType.ElementRequest: [52],
+    MessageType.TransactionRequest: [48],
+    MessageType.GetBlockHash: [4],
+    MessageType.BlockHash: [48],
+    MessageType.DataMissing: [],
+    MessageType.SyncingOver: [],
+
+    MessageType.Claim: [1, -48, 128],
+    MessageType.Send: [1, -49, 1, -40, 68],
+    MessageType.Data: [49, -1, 68],
+
+    MessageType.SignedVerification: [196],
+    MessageType.SignedMeritRemoval: [50, 0],
+
+    MessageType.BlockHeader: [204],
+    MessageType.BlockBody: [4, 0],
+    MessageType.Verification: [100],
+    MessageType.MeritRemoval: [50, 0]
+}
 
 class Meros:
     #Constructor.
@@ -99,11 +134,11 @@ class Meros:
     #Receive X bytes from the socket.
     def socketRecv(
         self,
-        quantity: int
+        length: int
     ) -> bytes:
         try:
-            result: bytes = self.connection.recv(quantity)
-            if not result:
+            result: bytes = self.connection.recv(length)
+            if len(result) != length:
                 raise Exception("")
             return result
         except:
@@ -115,103 +150,51 @@ class Meros:
     ) -> bytes:
         #Receive the header.
         result: bytes = self.socketRecv(1)
+        header: MessageType = MessageType(result[0])
 
-        #Determine the Message Size.
-        size: int = 0
-        if MessageType(result[0]) == MessageType.Handshake:
-            size = 7
-        elif MessageType(result[0]) == MessageType.BlockHeight:
-            size = 4
-
-        elif MessageType(result[0]) == MessageType.Syncing:
-            size = 0
-        elif MessageType(result[0]) == MessageType.SyncingAcknowledged:
-            size = 0
-        elif MessageType(result[0]) == MessageType.BlockHeaderRequest:
-            size = 48
-        elif MessageType(result[0]) == MessageType.BlockBodyRequest:
-            size = 48
-        elif MessageType(result[0]) == MessageType.ElementRequest:
-            size = 52
-        elif MessageType(result[0]) == MessageType.TransactionRequest:
-            size = 48
-        elif MessageType(result[0]) == MessageType.GetBlockHash:
-            size = 4
-        elif MessageType(result[0]) == MessageType.BlockHash:
-            size = 52
-        elif MessageType(result[0]) == MessageType.DataMissing:
-            size = 0
-        elif MessageType(result[0]) == MessageType.SyncingOver:
-            size = 0
+        #If this was SyncingOver, add an empty bytesself.
+        #This is so playback works.
+        if header == MessageType.SyncingOver:
             self.msgs.append(bytes())
 
-        elif MessageType(result[0]) == MessageType.Claim:
-            size = 1
-        elif MessageType(result[0]) == MessageType.Send:
-            size = 1
-        elif MessageType(result[0]) == MessageType.Data:
-            size = 49
-
-        elif MessageType(result[0]) == MessageType.SignedVerification:
-            size = 196
-        elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
-            size = 50
-
-        elif MessageType(result[0]) == MessageType.BlockHeader:
-            size = 204
-        elif MessageType(result[0]) == MessageType.BlockBody:
-            size = 4
-        elif MessageType(result[0]) == MessageType.Verification:
-            size = 100
-        elif MessageType(result[0]) == MessageType.MeritRemoval:
-            size = 50
-
-        #Now that we know how long the message is, get it (as long as there is one).
-        if size > 0:
-            result += self.socketRecv(size)
-
-        #If this is a MessageType with more data...
-        if MessageType(result[0]) == MessageType.Claim:
-            result += self.socketRecv((result[1] * 48) + 128)
-
-        elif MessageType(result[0]) == MessageType.Send:
-            result += self.socketRecv((result[1] * 49) + 1)
-            result += self.socketRecv((result[-1] * 40) + 68)
-
-        elif MessageType(result[0]) == MessageType.Data:
-            result += self.socketRecv(result[-1] + 68)
-
-        elif MessageType(result[0]) == MessageType.SignedMeritRemoval:
-            if result[-1] == 0:
-                result += self.socketRecv(52)
+        #Get the rest of the message.
+        for length in lengths[header]:
+            if length > 0:
+                result += self.socketRecv(length)
+            elif length < 0:
+                result += self.socketRecv(result[-1] * abs(length))
             else:
-                raise Exception("Meros sent an Element we don't recognize.")
+                if header == MessageType.SignedMeritRemoval:
+                    if result[-1] == 0:
+                        result += self.socketRecv(52)
+                    else:
+                        raise Exception("Meros sent an Element we don't recognize.")
 
-            result += self.socketRecv(1)
+                    result += self.socketRecv(1)
 
-            if result[-1] == 0:
-                result += self.socketRecv(52)
-            else:
-                raise Exception("Meros sent an Element we don't recognize.")
+                    if result[-1] == 0:
+                        result += self.socketRecv(52)
+                    else:
+                        raise Exception("Meros sent an Element we don't recognize.")
 
-            result += self.socketRecv(96)
+                    result += self.socketRecv(96)
+                elif header == MessageType.BlockBody:
+                    result += self.socketRecv((int.from_bytes(result[1 : 5], "big") * 100) + 1)
+                    result += self.socketRecv(result[-1] * 49)
+                elif header == MessageType.MeritRemoval:
+                    if result[-1] == 0:
+                        result += self.socketRecv(53)
+                    else:
+                        raise Exception("Meros sent an Element we don't recognize.")
 
-        elif MessageType(result[0]) == MessageType.BlockBody:
-            result += self.socketRecv((int.from_bytes(result[1 : 5], "big") * 100) + 1)
-            result += self.socketRecv(result[-1] + 49)
+                    if result[-1] == 0:
+                        result += self.socketRecv(52)
+                    else:
+                        raise Exception("Meros sent an Element we don't recognize.")
+                else:
+                    raise Exception("recv was told to use custom logic where no custom logic was implement.")
 
-        elif MessageType(result[0]) == MessageType.MeritRemoval:
-            if result[-1] == 0:
-                result += self.socketRecv(53)
-            else:
-                raise Exception("Meros sent an Element we don't recognize.")
-
-            if result[-1] == 0:
-                result += self.socketRecv(52)
-            else:
-                raise Exception("Meros sent an Element we don't recognize.")
-
-        if MessageType(result[0]) != MessageType.Handshake:
+        if header != MessageType.Handshake:
             self.ress.append(result)
         return result
 
