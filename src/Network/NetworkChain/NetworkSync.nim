@@ -206,7 +206,7 @@ proc sync*(
         var synced: bool = false
         for client in network.clients:
             #Only sync from Clients which aren't syncing from us.
-            if client.theirState == Syncing:
+            if client.remoteSync == true:
                 continue
 
             try:
@@ -263,7 +263,7 @@ proc sync*(
         #Try syncing with every client.
         for client in network.clients:
             #Only sync from Clients which aren't syncing from us.
-            if client.theirState == Syncing:
+            if client.remoteSync == true:
                 continue
 
             try:
@@ -405,7 +405,7 @@ proc sync*(
         synced: bool
     for client in network.clients:
         #Only sync from Clients which aren't syncing from us.
-        if client.theirState == Syncing:
+        if client.remoteSync == true:
             continue
 
         #Start syncing.
@@ -473,7 +473,7 @@ proc requestBlock*(
         synced: bool
     for client in network.clients:
         #Only sync from Clients which aren't syncing from us.
-        if client.theirState == Syncing:
+        if client.remoteSync == true:
             continue
 
         #Start syncing.

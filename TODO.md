@@ -4,6 +4,7 @@
 
 Wallet:
 
+- BIP 173-compliant Bech32.
 - OpenCAP support.
 
 Database:
@@ -34,6 +35,7 @@ UI:
 
 Network:
 
+- Sync missing Blocks when we receive a `Block` with a nonce higher than our block height.
 - Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
 
 - Syncing currently works by:
@@ -70,7 +72,6 @@ Network:
 - Handle ValidityConcerns.
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
-
 
 ### Nim Tests:
 
@@ -165,7 +166,7 @@ Network:
 
 - Swap Chia for Milagro.
 
-- Pass difficulties to the parsing functions to immediately check if work was put into a Block (stop DoS attacks).
+- Pass the Blockchain Difficulty to the Block parser to immediately check if work was put into it.
 
 ### Documentation:
 

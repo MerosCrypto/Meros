@@ -63,7 +63,7 @@ proc newNetwork*(
         Spam
     ], async.} =
         try:
-            if network.clients[msg.client].ourState == ClientState.Syncing:
+            if network.clients[msg.client].syncLevels != 0:
                 doAssert(false, "We are attempting to handle a message yet we're Syncing, which shouldn't cause this code to be called.")
         except IndexError as e:
             fcRaise e
@@ -104,7 +104,7 @@ proc newNetwork*(
 
             of MessageType.BlockHeight:
                 try:
-                    if network.clients[msg.client].theirState == ClientState.Syncing:
+                    if network.clients[msg.client].remoteSync == true:
                         raise newException(InvalidMessageError, "Client sent us a BlockHeight when they are syncing.")
                 except IndexError:
                     raise newException(ClientError, "Couldn't grab a Client who sent us a `BlockHeight`.")

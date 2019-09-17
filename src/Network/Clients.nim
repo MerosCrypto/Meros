@@ -58,7 +58,7 @@ proc handle(
 
         #If this was a message changing the sync state, update it and continue.
         if msg.content == MessageType.Syncing:
-            client.theirState = ClientState.Syncing
+            client.remoteSync = true
 
             #Send SyncingAcknowledged.
             try:
@@ -72,7 +72,7 @@ proc handle(
             continue
 
         if msg.content == MessageType.SyncingOver:
-            client.theirState = ClientState.Ready
+            client.remoteSync = false
             continue
 
         #Handle our new message.
@@ -152,7 +152,7 @@ proc add*(
                     try:
                         asyncCheck (
                             proc (): Future[void] {.forceCheck: [], async.} =
-                                if client.theirState == ClientState.Syncing:
+                                if client.remoteSync == true:
                                     return
 
                                 try:
@@ -279,7 +279,7 @@ proc broadcast*(
             continue
 
         #Skip Clients who are syncing.
-        if client.theirState == ClientState.Syncing:
+        if client.remoteSync == true:
             continue
 
         #Try to send the message.

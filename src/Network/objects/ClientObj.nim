@@ -17,10 +17,6 @@ finalsd:
             MissingBlocks = 0,
             Complete = 1
 
-        ClientState* = enum
-            Syncing = 0,
-            Ready = 1
-
         Client* = ref object
             #IP.
             ip* {.final.}: string
@@ -28,14 +24,16 @@ finalsd:
             port* {.final.}: int
             #Server who can accept connections.
             server* {.final.}: bool
+
             #ID.
             id* {.final.}: int
-            #Our state.
-            ourState*: ClientState
-            #Their state.
-            theirState*: ClientState
+            #Are we syncing? Every sync process adds one, removing one as it terminates.
+            syncLevels*: int
+            #Whether or not the client is syncing.
+            remoteSync*: bool
             #Time of their last message.
             last*: uint32
+
             #Socket.
             socket* {.final.}: AsyncSocket
 
@@ -50,11 +48,13 @@ func newClient*(
         ip: ip,
         port: port,
         server: false,
+
         id: id,
-        ourState: ClientState.Ready,
-        theirState: ClientState.Ready,
-        socket: socket,
-        last: 0
+        syncLevels: 0,
+        remoteSync: false,
+        last: 0,
+
+        socket: socket
     )
     result.ffinalizeIP()
     result.ffinalizePort()

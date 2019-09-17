@@ -7,8 +7,9 @@ proc startSyncing*(
     SocketError,
     ClientError
 ], async.} =
-    #If we're already syncing, do nothing.
-    if client.ourState == ClientState.Syncing:
+    #If we're already syncing, increment syncLevels and return.
+    if client.syncLevels != 0:
+        inc(client.syncLevels)
         return
 
     #Send that we're syncing.
@@ -57,8 +58,8 @@ proc startSyncing*(
     if not shouldWait:
         raise newException(ClientError, "Client never responded to the fact we were syncing.")
 
-    #Update our state.
-    client.ourState = ClientState.Syncing
+    #Update the sync levels.
+    inc(client.syncLevels)
 
 #Sync an Transaction.
 proc syncTransaction*(
@@ -75,7 +76,7 @@ proc syncTransaction*(
     Spam
 ], async.} =
     #If we're not syncing, raise an error.
-    if client.ourState != ClientState.Syncing:
+    if client.syncLevels == 0:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
@@ -147,7 +148,7 @@ proc syncElement*(
     DataMissing
 ], async.} =
     #If we're not syncin/g, raise an error.
-    if client.ourState != ClientState.Syncing:
+    if client.syncLevels == 0:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Send the request.
@@ -218,7 +219,7 @@ proc syncBlockBody*(
     DataMissing
 ], async.} =
     #If we're not syncing, raise an error.
-    if client.ourState != ClientState.Syncing:
+    if client.syncLevels == 0:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     try:
@@ -269,7 +270,7 @@ proc syncBlock*(
     DataMissing
 ], async.} =
     #If we're not syncing, raise an error.
-    if client.ourState != ClientState.Syncing:
+    if client.syncLevels == 0:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
     #Get the Block hash.
@@ -375,8 +376,9 @@ proc stopSyncing*(
     SocketError,
     ClientError
 ], async.} =
-    #If we're already not syncing, do nothing.
-    if client.ourState != ClientState.Syncing:
+    #If this isn't the last sync level, decrement and return.
+    if client.syncLevels != 1:
+        dec(client.syncLevels)
         return
 
     #Send that we're done syncing.
@@ -389,5 +391,5 @@ proc stopSyncing*(
     except Exception as e:
         doAssert(false, "Sending a `SyncingOver` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Update our state.
-    client.ourState = ClientState.Ready
+    #Update the sync levels.
+    client.syncLevels = 0
