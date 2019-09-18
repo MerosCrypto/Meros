@@ -7,6 +7,12 @@ from PythonTests.Meros.Meros import Meros
 #NodeError and TestError Exceptions.
 from PythonTests.Tests.Errors import NodeError, TestError
 
+#Remove standard function.
+from os import remove
+
+#Sleep standard function.
+from time import sleep
+
 #JSON standard lib.
 import json
 
@@ -82,3 +88,23 @@ class RPC:
         self
     ) -> None:
         self.call("system", "quit")
+
+    #Reset the Meros node.
+    def reset(
+        self
+    ) -> None:
+        #Quit Meros.
+        self.quit()
+        sleep(2)
+
+        #Remove the existing DB files.
+        remove("./data/PythonTests/devnet-" + self.meros.db)
+        remove("./data/PythonTests/devnet-" + self.meros.db + "-lock")
+
+        #Launch Meros.
+        self.meros = Meros(self.meros.db, self.meros.tcp, self.meros.rpc)
+        sleep(3)
+
+        #Reconnect.
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect(("127.0.0.1", self.meros.rpc))

@@ -63,7 +63,7 @@ block: Block = Block(
     BlockHeader(13, blockchain.last(), int(time())),
     BlockBody([], [(blsPubKey2, 100)])
 )
-block.mine(blockchain.difficulty)
+block.mine(blockchain.difficulty())
 blockchain.add(block)
 print("Generated Competing Block " + str(block.header.nonce) + ".")
 
@@ -119,7 +119,7 @@ block = Block(
 )
 for i in range(15, 21):
     #Mine it.
-    block.mine(blockchain.difficulty)
+    block.mine(blockchain.difficulty())
 
     #Add it.
     blockchain.add(block)

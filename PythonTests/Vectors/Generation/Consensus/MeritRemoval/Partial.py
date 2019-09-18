@@ -62,7 +62,7 @@ for i in range(2):
     )
 
     #Mine it.
-    block.mine(blockchain.difficulty)
+    block.mine(blockchain.difficulty())
 
     #Add it.
     blockchain.add(block)

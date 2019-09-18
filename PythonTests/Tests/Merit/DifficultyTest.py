@@ -4,21 +4,25 @@ from typing import Dict, List, IO, Any
 #Blockchain class.
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
+#TestError Exception.
+from PythonTests.Tests.Errors import TestError
+
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Liver import Liver
-from PythonTests.Meros.Syncer import Syncer
 
 #JSON standard lib.
 import json
 
-def ChainAdvancementTest(
+def DifficultyTest(
     rpc: RPC
 ) -> None:
+    #Blocks.
     file: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
     blocks: List[Dict[str, Any]] = json.loads(file.read())
     file.close()
 
+    #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
@@ -26,7 +30,10 @@ def ChainAdvancementTest(
         blocks
     )
 
-    #Create and execute a Liver/Syncer.
-    Liver(rpc, blockchain).live()
-    rpc.reset()
-    Syncer(rpc, blockchain).sync()
+    def checkDifficulty(
+        block: int
+    ) -> None:
+        if int(rpc.call("merit", "getDifficulty"), 16) != blockchain.difficulties[block][0]:
+            raise TestError("Difficulty doesn't match.")
+
+    Liver(rpc, blockchain, everyBlock=checkDifficulty).live()

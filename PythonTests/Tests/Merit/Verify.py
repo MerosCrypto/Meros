@@ -17,7 +17,7 @@ def verifyBlockchain(
         raise TestError("Height doesn't match.")
 
     #Verify the difficulty.
-    if blockchain.difficulty != int(rpc.call("merit", "getDifficulty"), 16):
+    if blockchain.difficulty() != int(rpc.call("merit", "getDifficulty"), 16):
         raise TestError("Difficulty doesn't match.")
 
     #Verify the blocks.

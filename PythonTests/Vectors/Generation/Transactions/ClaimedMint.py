@@ -85,7 +85,7 @@ block: Block = Block(
 )
 for i in range(7, 13):
     #Mine it.
-    block.mine(merit.blockchain.difficulty)
+    block.mine(merit.blockchain.difficulty())
 
     #Add it.
     merit.add(transactions, consensus, block)
@@ -119,7 +119,7 @@ block = Block(
     ),
     BlockBody([(blsPubKey, 1, consensus.getMerkle(blsPubKey, 1))])
 )
-block.mine(merit.blockchain.difficulty)
+block.mine(merit.blockchain.difficulty())
 merit.add(transactions, consensus, block)
 print("Generated Claimed Mint Block " + str(block.header.nonce) + ".")
 

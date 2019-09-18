@@ -102,7 +102,7 @@ block: Block = Block(
     ),
     BlockBody([(blsPubKey1, 3, consensus.getMerkle(blsPubKey1, 2))])
 )
-block.mine(blockchain.difficulty)
+block.mine(blockchain.difficulty())
 blockchain.add(block)
 print("Generated Fifty Block " + str(block.header.nonce) + ".")
 
@@ -125,7 +125,7 @@ block = Block(
         [(blsPubKey2, 100)]
     )
 )
-block.mine(blockchain.difficulty)
+block.mine(blockchain.difficulty())
 blockchain.add(block)
 print("Generated Fifty Block " + str(block.header.nonce) + ".")
 
@@ -157,7 +157,7 @@ block = Block(
         ]
     )
 )
-block.mine(blockchain.difficulty)
+block.mine(blockchain.difficulty())
 blockchain.add(block)
 print("Generated Fifty Block " + str(block.header.nonce) + ".")
 
@@ -167,7 +167,7 @@ for i in range(16, 21):
     block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
 
     #Mine it.
-    block.mine(blockchain.difficulty)
+    block.mine(blockchain.difficulty())
 
     #Add it.
     blockchain.add(block)

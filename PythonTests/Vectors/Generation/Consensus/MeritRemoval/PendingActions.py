@@ -92,7 +92,7 @@ block: Block = Block(
     BlockBody([(pubKey, 5, consensus.getMerkle(pubKey, 0, 5))])
 )
 #Mine it.
-block.mine(blockchain.difficulty)
+block.mine(blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
@@ -102,7 +102,7 @@ print("Generated Pending Actions Block " + str(block.header.nonce) + ".")
 for i in range(3, 7):
     block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
     #Mine it.
-    block.mine(blockchain.difficulty)
+    block.mine(blockchain.difficulty())
 
     #Add it.
     blockchain.add(block)
@@ -119,7 +119,7 @@ block = Block(
     BlockBody([(pubKey, 6, consensus.getMerkle(pubKey, 6))])
 )
 #Mine it.
-block.mine(blockchain.difficulty)
+block.mine(blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)

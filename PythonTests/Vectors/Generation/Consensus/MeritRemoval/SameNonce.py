@@ -83,7 +83,7 @@ block: Block = Block(
     BlockBody([(pubKey, 0, consensus.getMerkle(pubKey, 0))])
 )
 #Mine it.
-block.mine(blockchain.difficulty)
+block.mine(blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)

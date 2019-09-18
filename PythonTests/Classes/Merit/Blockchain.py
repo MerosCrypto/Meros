@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple, Any
 
 #BlockHeader, BlockBody, and Block classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -19,8 +19,7 @@ class Blockchain:
 
         self.startDifficulty: int = startDifficulty
         self.maxDifficulty: int = (2 ** 384) - 1
-        self.difficulty: int = startDifficulty
-        self.difficultyUntil: int = 1
+        self.difficulties: List[Tuple[int, int]] = [(startDifficulty, 1)]
 
         self.blocks: List[Block] = [
             Block(
@@ -36,7 +35,7 @@ class Blockchain:
     ) -> None:
         self.blocks.append(block)
 
-        if block.header.nonce == self.difficultyUntil:
+        if block.header.nonce == self.difficulties[-1][1]:
             #Blocks per months.
             blocksPerMonth: int = 2592000 // self.blockTime
             #Blocks per difficulty period.
@@ -56,17 +55,16 @@ class Blockchain:
             #Else, if it's over an year, the period length is a day.
             else:
                 blocksPerPeriod = 144
-            self.difficultyUntil += blocksPerPeriod
 
             #Last difficulty.
-            last: int = self.difficulty
+            last: int = self.difficulties[-1][0]
             #Target time.
             targetTime: int = self.blockTime * blocksPerPeriod
             #Period time.
             periodTime: int = block.header.time - self.blocks[block.header.nonce - blocksPerPeriod].header.time
 
             #Possible values.
-            possible: int = self.maxDifficulty - self.difficulty
+            possible: int = self.maxDifficulty - self.difficulties[-1][0]
             #Change.
             change: int = 0
             #New difficulty.
@@ -93,8 +91,8 @@ class Blockchain:
                 #Set the change to be:
                     #The invalid values
                     #Multipled by the targetTime (smaller)
-                    #Divided by the periodTime (bigger)
-                #Since we need the difficulty to decrease.
+                    #Divided by the difficulty (bigger)
+                #Since we need the difficulties to decrease.
                 change = last * (targetTime // periodTime)
 
                 #If we're decreasing the difficulty by more than 10% of the possible values...
@@ -109,14 +107,20 @@ class Blockchain:
             if difficulty < self.startDifficulty:
                 difficulty = self.startDifficulty
 
-            #Set the new difficulty.
-            self.difficulty = difficulty
+            #Add the new difficulty.
+            self.difficulties.append((difficulty, self.difficulties[-1][1] + blocksPerPeriod))
 
     #Last hash.
     def last(
         self
     ) -> bytes:
         return self.blocks[len(self.blocks) - 1].header.hash
+
+    #Current difficulty.
+    def difficulty(
+        self
+    ) -> int:
+        return self.difficulties[-1][0]
 
     #Blockchain -> JSON.
     def toJSON(

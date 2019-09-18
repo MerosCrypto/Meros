@@ -27,7 +27,7 @@ for i in range(1, 26):
         BlockHeader(i, blockchain.last(), int(time())),
         BlockBody()
     )
-    block.mine(blockchain.difficulty)
+    block.mine(blockchain.difficulty())
 
     #Add it locally.
     blockchain.add(block)
