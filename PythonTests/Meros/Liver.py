@@ -5,9 +5,7 @@ from typing import Callable, Dict, Union
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#Consensus classes.
-from PythonTests.Classes.Consensus.Element import Element
-from PythonTests.Classes.Consensus.Verification import Verification
+#Consensus class.
 from PythonTests.Classes.Consensus.Consensus import Consensus
 
 #Transactions class.
@@ -25,7 +23,7 @@ from PythonTests.Tests.Merit.Verify import verifyBlockchain
 from PythonTests.Tests.Consensus.Verify import verifyConsensus
 from PythonTests.Tests.Transactions.Verify import verifyTransactions
 
-#pylint: disable=too-few-public-methods,too-many-instance-attributes
+#pylint: disable=too-few-public-methods
 class Liver():
     def __init__(
         self,
@@ -49,11 +47,6 @@ class Liver():
         self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)
         self.everyBlock: Union[Callable[[int], None], None] = everyBlock
 
-        #Complete set of newest tips.
-        self.allTips: Dict[bytes, int] = {}
-        #Synced Transactionss.
-        self.syncedTXs: Dict[bytes, bool] = {}
-
     #Sned the DB and verify it.
     def live(
         self
@@ -65,21 +58,6 @@ class Liver():
         for b in range(1, len(self.blockchain.blocks)):
             #Grab the Block.
             block: Block = self.blockchain.blocks[b]
-            #Grab the tips.
-            tips: Dict[bytes, int] = {}
-            for tip in block.body.records:
-                tips[tip[0].serialize()] = tip[1]
-            #See what TXs were mentiooed.
-            txs: Dict[bytes, bool] = {}
-            for tipHolder in tips:
-                for e in range(
-                    self.allTips[tipHolder] + 1 if tipHolder in self.allTips else 0,
-                    tips[tipHolder] + 1
-                ):
-                    elem: Element = self.consensus.holders[tipHolder][e]
-                    if isinstance(elem, Verification):
-                        if Verification.fromElement(elem).hash not in self.syncedTXs:
-                            txs[Verification.fromElement(elem).hash] = True
 
             #Send the Block.
             self.rpc.meros.blockHeader(block.header)
@@ -113,12 +91,6 @@ class Liver():
                     if nonce >= len(self.consensus.holders[holder]):
                         raise TestError("Meros asked for an Element we don't have.")
 
-                    if holder not in tips:
-                        raise TestError("Meros asked for an Element from a holder who hasn't had their record updated.")
-
-                    if tips[holder] == nonce:
-                        del tips[holder]
-
                     self.rpc.meros.element(self.consensus.holders[holder][nonce])
 
                 elif MessageType(msg[0]) == MessageType.TransactionRequest:
@@ -130,23 +102,13 @@ class Liver():
                     if reqHash not in self.transactions.txs:
                         raise TestError("Meros asked for a Transaction we don't have.")
 
-                    if reqHash not in txs:
-                        raise TestError("Meros asked for Transaction which hasn't been mentioned/was already synced.")
-                    del txs[reqHash]
-
                     self.rpc.meros.transaction(self.transactions.txs[reqHash])
 
                 elif MessageType(msg[0]) == MessageType.SyncingOver:
-                    #Break out of the foor loop if the sync finished.
-                    #This means we sent every Element and every Transaction.
-                    if (tips == {}) and (txs == {}):
-                        #Update self.allTips with this Block's tips.
-                        for tip in block.body.records:
-                            self.allTips[tip[0].serialize()] = tip[1]
-                        break
+                    pass
 
                 elif MessageType(msg[0]) == MessageType.BlockHeader:
-                    pass
+                    break
 
                 else:
                     raise TestError("Unexpected message sent: " + msg.hex().upper())
