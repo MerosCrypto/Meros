@@ -70,6 +70,9 @@ disable=wrong-import-order,
         #We don't use docstrings. Anyone is welcome to make a PR for this.
         missing-docstring,
 
+        #Triggered on imports.
+        duplicate-code,
+
         #Too many false positives.
         dangerous-default-value,
 

@@ -193,6 +193,7 @@ class Syncer():
 
             elif MessageType(msg[0]) == MessageType.ElementRequest:
                 holder: bytes = msg[1 : 49]
+                nonce: int = int.from_bytes(msg[49 : 53], "big")
 
                 if self.consensus is None:
                     raise TestError("Meros asked for an Element when we have none.")
@@ -200,14 +201,15 @@ class Syncer():
                 if holder not in self.consensus.holders:
                     raise TestError("Meros asked for an Element from a holder we don't have.")
 
+                if nonce >= len(self.consensus.holders[holder]):
+                    raise TestError("Meros asked for an Element we don't have.")
+
                 if holder not in self.tips:
                     raise TestError("Meros asked for an Element from a holder we haven't mentioned/they already fully synced.")
 
-                self.rpc.meros.element(
-                    self.consensus.holders[holder][int.from_bytes(msg[49 : 53], "big")]
-                )
+                self.rpc.meros.element(self.consensus.holders[holder][nonce])
 
-                if int.from_bytes(msg[49 : 53], "big") == self.tips[holder]:
+                if nonce == self.tips[holder]:
                     del self.tips[holder]
 
                 #If this is the Block before the tail, and tips is empty, correct the tips/TXs.
@@ -235,7 +237,7 @@ class Syncer():
 
             elif MessageType(msg[0]) == MessageType.SyncingOver:
                 #Break out of the foor loop if the sync finished.
-                #This means we sent every Block, every Element, every TX...
+                #This means we sent every Block, every Element, every Transaction...
                 if (
                     (lastBlock == self.settings["height"]) and
                     (self.tips == {}) and
