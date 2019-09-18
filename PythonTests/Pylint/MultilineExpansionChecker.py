@@ -108,6 +108,39 @@ def nested(
     #If we made it through that, return true.
     return 1
 
+#Check if an expression contains a curly bracket expression with a multiline expansion.
+def containsExpandedCurlies(
+    lines: List[Tuple[int, str]],
+    numArg: int,
+    currArg: int
+) -> bool:
+    num: int = numArg
+    curr: int = currArg + 1
+    levels: int = 1
+    #Run until the object is closed.
+    while levels != 0:
+        if curr == len(lines[num][1]):
+            curr = 0
+            num += 1
+            while lines[num][1] == "":
+                num += 1
+
+        #Track levels.
+        if lines[num][1][curr] in startChars:
+            levels += 1
+        elif lines[num][1][curr] in endChars:
+            levels -= 1
+
+        #If this is an opening curly bracket, and this is at the end of a line, it's a multiline curly bracket expansion.
+        if (lines[num][1][curr] == '{') and (curr + 1 == len(lines[num][1])):
+            return True
+
+        #Update curr.
+        curr += 1
+
+    #If we completed the expression without returning true, return false.
+    return False
+
 #Check a multiline object was expanded properly.
 def checkMultilineExpansion(
     lines: List[Tuple[int, str]],
@@ -342,7 +375,8 @@ class MultilineExpansionChecker(BaseChecker): #type: ignore
                     return
 
                 #Make sure it should've been expanded.
-                if line[curr] != '{':
+                #Allow curly brackets to always be expanded and objects to be expanded if they contain expanded curly brackets.
+                if (line[curr] != '{') and (not containsExpandedCurlies(lines, num, curr)):
                     if lines[num][0] + curr + getMultilineExpansionlength(lines, num) < 80:
                         self.add_message("unneeded-multiline-expansion", line=num+1)
                         return
