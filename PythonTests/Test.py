@@ -19,9 +19,7 @@ from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 
-from PythonTests.Tests.Consensus.MeritRemoval.SameNonce.CauseTest import MRSNCauseTest
-from PythonTests.Tests.Consensus.MeritRemoval.SameNonce.LiveTest import MRSNLiveTest
-from PythonTests.Tests.Consensus.MeritRemoval.SameNonce.SyncTest import MRSNSyncTest
+from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import MRSameNonceTest
 
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompeting.CauseTest import MRVCCauseTest
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompeting.LiveTest import MRVCLiveTest
@@ -67,9 +65,7 @@ tests: List[Callable[[RPC], None]] = [
     VParsableTest,
     VCompetingTest,
 
-    MRSNCauseTest,
-    MRSNLiveTest,
-    MRSNSyncTest,
+    MRSameNonceTest,
 
     MRVCCauseTest,
     MRVCLiveTest,
