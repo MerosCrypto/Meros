@@ -15,6 +15,7 @@ from PythonTests.Classes.Merit.Blockchain import Blockchain
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Syncer import Syncer
+from PythonTests.Meros.Liver import Liver
 
 #JSON standard lib.
 import json
@@ -26,19 +27,20 @@ def FiftyTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    #Create and execute a Syncer.
-    Syncer(
-        rpc,
-        Blockchain.fromJSON(
-            b"MEROS_DEVELOPER_NETWORK",
-            60,
-            int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-            vectors["blockchain"]
-        ),
-        Consensus.fromJSON(
-            bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-            bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-            vectors["consensus"]
-        ),
-        Transactions.fromJSON(vectors["transactions"])
-    ).sync()
+    blockchain: Blockchain = Blockchain.fromJSON(
+        b"MEROS_DEVELOPER_NETWORK",
+        60,
+        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        vectors["blockchain"]
+    )
+    consensus: Consensus = Consensus.fromJSON(
+        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+        vectors["consensus"]
+    )
+    transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
+
+    #Create and execute a Syncer/Liver.
+    Syncer(rpc, blockchain, consensus, transactions).sync()
+    rpc.reset()
+    Liver(rpc, blockchain, consensus, transactions).live()

@@ -72,7 +72,10 @@ class Liver():
             #See what TXs were mentiooed.
             txs: Dict[bytes, bool] = {}
             for tipHolder in tips:
-                for e in range(self.allTips[tipHolder] + 1, tips[tipHolder] + 1):
+                for e in range(
+                    self.allTips[tipHolder] + 1 if tipHolder in self.allTips else 0,
+                    tips[tipHolder] + 1
+                ):
                     elem: Element = self.consensus.holders[tipHolder][e]
                     if isinstance(elem, Verification):
                         if Verification.fromElement(elem).hash not in self.syncedTXs:
