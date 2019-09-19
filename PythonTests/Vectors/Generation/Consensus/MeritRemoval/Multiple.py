@@ -44,20 +44,20 @@ snVectors: Dict[str, Any] = json.loads(snFile.read())
 
 blockchain.add(Block.fromJSON(snVectors["blockchain"][0]))
 
-mr1: SignedMeritRemoval = SignedMeritRemoval.fromJSON(snVectors["removal"])
+removal1: SignedMeritRemoval = SignedMeritRemoval.fromJSON(snVectors["removal"])
 
 snFile.close()
 
 #Create a second MeritRemoval.
 sv: SignedVerification = SignedVerification(b'\1' * 48)
 sv.sign(privKey, 0)
-mr2: SignedMeritRemoval = SignedMeritRemoval(
-    mr1.se1,
+removal2: SignedMeritRemoval = SignedMeritRemoval(
+    removal1.se1,
     SignedElement.fromElement(sv)
 )
 
 #Add the second MeritRemoval to Consensus.
-consensus.add(mr2)
+consensus.add(removal2)
 
 #Generate a Block with the second MeritRemoval.
 block: Block = Block(
@@ -79,8 +79,8 @@ print("Generated Multiple Block " + str(block.header.nonce) + ".")
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON(),
     "data":       snVectors["data"],
-    "removal1":   mr1.toSignedJSON(),
-    "removal2":   mr2.toSignedJSON()
+    "removal1":   removal1.toSignedJSON(),
+    "removal2":   removal2.toSignedJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Multiple.json", "w")
 vectors.write(json.dumps(result))
