@@ -28,5 +28,4 @@ def ChainAdvancementTest(
 
     #Create and execute a Liver/Syncer.
     Liver(rpc, blockchain).live()
-    rpc.reset()
     Syncer(rpc, blockchain).sync()

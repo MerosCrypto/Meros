@@ -19,21 +19,13 @@ from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 
-from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import MRSameNonceTest
+from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
+from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyCompetingTest
 
-from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompeting.CauseTest import MRVCCauseTest
-from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompeting.LiveTest import MRVCLiveTest
-from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompeting.SyncTest import MRVCSyncTest
+from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
 
-from PythonTests.Tests.Consensus.MeritRemoval.Multiple.CauseTest import MRMCauseTest
-from PythonTests.Tests.Consensus.MeritRemoval.Multiple.LiveTest import MRMLiveTest
-
-from PythonTests.Tests.Consensus.MeritRemoval.Partial.CauseTest import MRPCauseTest
-from PythonTests.Tests.Consensus.MeritRemoval.Partial.LiveTest import MRPLiveTest
-from PythonTests.Tests.Consensus.MeritRemoval.Partial.SyncTest import MRPSyncTest
-
-from PythonTests.Tests.Consensus.MeritRemoval.PendingActions.CauseTest import MRPACauseTest
-from PythonTests.Tests.Consensus.MeritRemoval.PendingActions.LiveTest import MRPALiveTest
+from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
+from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
 
 #Arguments.
 from sys import argv
@@ -65,21 +57,11 @@ tests: List[Callable[[RPC], None]] = [
     VParsableTest,
     VCompetingTest,
 
-    MRSameNonceTest,
-
-    MRVCCauseTest,
-    MRVCLiveTest,
-    MRVCSyncTest,
-
-    MRPCauseTest,
-    MRPLiveTest,
-    MRPSyncTest,
-
-    MRPACauseTest,
-    MRPALiveTest,
-
-    MRMCauseTest,
-    MRMLiveTest
+    SameNonceTest,
+    VerifyCompetingTest,
+    MultipleTest,
+    PartialTest,
+    PendingActionsTest
 ]
 
 #Tests to run.
@@ -104,7 +86,6 @@ for t in range(len(testsToRun)):
 
     if not found:
         ress.append("\033[0;31mCouldn't find " + testsToRun[t] + ".")
-        testsToRun.remove(testsToRun[t])
 
 #Delete the PythonTests data directory.
 try:

@@ -1,13 +1,14 @@
-#Tests proper handling of a MeritRemoval created from Elements sharing a nonce.
+#Tests proper handling of a MeritRemoval where one Element is already archived.
 
 #Types.
 from typing import Dict, IO, Any
 
-#Data class.
+#Transaction classes.
 from PythonTests.Classes.Transactions.Data import Data
+from PythonTests.Classes.Transactions.Transactions import Transactions
 
 #Consensus classes.
-from PythonTests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
+from PythonTests.Classes.Consensus.MeritRemoval import PartiallySignedMeritRemoval
 from PythonTests.Classes.Consensus.Consensus import Consensus
 
 #Blockchain class.
@@ -28,10 +29,10 @@ from PythonTests.Tests.Consensus.Verify import verifyMeritRemoval
 #JSON standard lib.
 import json
 
-def SameNonceTest(
+def PartialTest(
     rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/SameNonce.json", "r")
+    file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Partial.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
@@ -44,59 +45,58 @@ def SameNonceTest(
     )
 
     #MeritRemoval.
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromJSON(vectors["removal"])
+    removal: PartiallySignedMeritRemoval = PartiallySignedMeritRemoval.fromJSON(vectors["removal"])
     #Consensus.
     consensus: Consensus = Consensus(
         bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
         bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
+    consensus.add(removal.e1)
     consensus.add(removal)
 
-    #Data.
-    data: Data = Data.fromJSON(vectors["data"])
+    #Transactions.
+    transactions: Transactions = Transactions()
+    transactions.add(Data.fromJSON(vectors["data"]))
 
-    #Create and execute a Liver to cause a SameNonce MeritRemoval.
-    def sendElements() -> None:
-        #Send the Data/SignedVerifications.
-        if rpc.meros.transaction(data) != rpc.meros.recv():
-            raise TestError("Unexpected message sent.")
-
-        if rpc.meros.signedElement(removal.se1) != rpc.meros.recv():
-            raise TestError("Unexpected message sent.")
+    #Create and execute a Liver to cause a Partial MeritRemoval.
+    def sendElement() -> None:
+        #Send the second Element.
         rpc.meros.signedElement(removal.se2)
 
         #Verify the MeritRemoval.
         if rpc.meros.recv() != (MessageType.SignedMeritRemoval.toByte() + removal.signedSerialize()):
             raise TestError("Meros didn't send us the Merit Removal.")
-        verifyMeritRemoval(rpc, 1, 100, removal, True)
+        verifyMeritRemoval(rpc, 2, 200, removal, True)
 
     Liver(
         rpc,
         blockchain,
         consensus,
+        transactions,
         callbacks={
-            1: sendElements,
-            2: lambda: verifyMeritRemoval(rpc, 1, 100, removal, False)
+            2: sendElement,
+            3: lambda: verifyMeritRemoval(rpc, 2, 200, removal, False)
         }
     ).live()
 
-    #Create and execute a Liver to handle a SameNonce MeritRemoval.
+    #Create and execute a Liver to handle a Partial MeritRemoval.
     def sendMeritRemoval() -> None:
         #Send and verify the MeritRemoval.
         if rpc.meros.signedElement(removal) != rpc.meros.recv():
             raise TestError("Meros didn't send us the Merit Removal.")
-        verifyMeritRemoval(rpc, 1, 100, removal, True)
+        verifyMeritRemoval(rpc, 2, 200, removal, True)
 
     Liver(
         rpc,
         blockchain,
         consensus,
+        transactions,
         callbacks={
-            1: sendMeritRemoval,
-            2: lambda: verifyMeritRemoval(rpc, 1, 100, removal, False)
+            2: sendMeritRemoval,
+            3: lambda: verifyMeritRemoval(rpc, 2, 200, removal, False)
         }
     ).live()
 
-    #Create and execute a Syncer to handle a SameNonce MeritRemoval.
-    Syncer(rpc, blockchain, consensus).sync()
-    verifyMeritRemoval(rpc, 1, 100, removal, False)
+    #Create and execute a Syncer to handle a Partial MeritRemoval.
+    Syncer(rpc, blockchain, consensus, transactions).sync()
+    verifyMeritRemoval(rpc, 2, 200, removal, False)

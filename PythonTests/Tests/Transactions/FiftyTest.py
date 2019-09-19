@@ -14,8 +14,8 @@ from PythonTests.Classes.Merit.Blockchain import Blockchain
 
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
-from PythonTests.Meros.Syncer import Syncer
 from PythonTests.Meros.Liver import Liver
+from PythonTests.Meros.Syncer import Syncer
 
 #JSON standard lib.
 import json
@@ -40,7 +40,6 @@ def FiftyTest(
     )
     transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
-    #Create and execute a Syncer/Liver.
-    Syncer(rpc, blockchain, consensus, transactions).sync()
-    rpc.reset()
+    #Create and execute a Liver/Syncer.
     Liver(rpc, blockchain, consensus, transactions).live()
+    Syncer(rpc, blockchain, consensus, transactions).sync()

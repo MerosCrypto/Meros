@@ -39,10 +39,8 @@ class Liver():
 
         #Arguments.
         self.blockchain: Blockchain = blockchain
-        if consensus is not None:
-            self.consensus: Consensus = consensus
-        if transactions is not None:
-            self.transactions: Transactions = transactions
+        self.consensus: Union[Consensus, None] = consensus
+        self.transactions: Union[Transactions, None] = transactions
 
         self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)
         self.everyBlock: Union[Callable[[int], None], None] = everyBlock
@@ -125,13 +123,12 @@ class Liver():
         verifyBlockchain(self.rpc, self.blockchain)
 
         #Verify the Consensus.
-        try:
+        if self.consensus is not None:
             verifyConsensus(self.rpc, self.consensus)
-        except AttributeError:
-            pass
 
         #Verify the Transactions.
-        try:
+        if self.transactions is not None:
             verifyTransactions(self.rpc, self.transactions)
-        except AttributeError:
-            pass
+
+        #Reset the RPC.
+        self.rpc.reset()
