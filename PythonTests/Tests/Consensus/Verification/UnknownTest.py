@@ -95,4 +95,4 @@ def VUnknownTest(
         raise TestError("Meros added an unknown Verification.")
 
     if rpc.call("merit", "getHeight") != 2:
-        raise TestError("Meros added a block with an unknown Verification.")
+        raise TestError("Meros added a Block with an unknown Verification.")

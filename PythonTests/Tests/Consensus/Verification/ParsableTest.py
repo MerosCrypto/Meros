@@ -33,15 +33,6 @@ def VParsableTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    #Transactions.
-    transactions: Transactions = Transactions()
-    transactions.add(Data.fromJSON(vectors["data"]))
-    #Consensus.
-    consensus: Consensus = Consensus(
-        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-    )
-    consensus.add(SignedVerification.fromJSON(vectors["verification"]))
     #Blockchain.
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
@@ -49,6 +40,15 @@ def VParsableTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
+    #Consensus.
+    consensus: Consensus = Consensus(
+        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+    )
+    consensus.add(SignedVerification.fromJSON(vectors["verification"]))
+    #Transactions.
+    transactions: Transactions = Transactions()
+    transactions.add(Data.fromJSON(vectors["data"]))
 
     #Handshake with the node.
     rpc.meros.connect(254, 254, 3)
