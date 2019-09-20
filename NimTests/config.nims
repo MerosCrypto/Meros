@@ -5,7 +5,7 @@ setCommand("cpp")
 switch("threads", "on")
 switch("experimental", "caseStmtMacros")
 switch("define", "SIGN_PREFIX=MEROS")
-switch("define", "ADDRESS_HRP=Mr")
+switch("define", "ADDRESS_HRP=bc")
 switch("define", "COIN_TYPE=5132")
 switch("define", "DEFAULT_PORT=5132")
 

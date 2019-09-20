@@ -3,11 +3,8 @@
 #Lib.
 import ../src/lib/Errors
 import ../src/lib/Util
-import ../src/lib/Logger
-
-import ../src/lib/Base32
-
 import ../src/lib/Hash
+import ../src/lib/Logger
 
 #Wallet.
 import ../src/Wallet/Wallet

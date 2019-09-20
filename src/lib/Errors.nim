@@ -28,7 +28,6 @@ type
     #Wallet Errors.
     BLSError*         = object of Exception #Used when the BLS lib fails.
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
-    AddressError*     = object of Exception #Used when passed an invalid Address.
 
     #Database/common Errors.
     GapError*   = object of Exception #Used when trying to add an item, yet missing items before said item.

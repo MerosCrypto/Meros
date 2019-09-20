@@ -200,7 +200,6 @@ type
             amount: string
         ): Hash[384] {.raises: [
             ValueError,
-            AddressError,
             NotEnoughMeros
         ].}
 

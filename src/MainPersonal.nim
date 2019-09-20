@@ -27,7 +27,6 @@ proc mainPersonal() {.forceCheck: [].} =
             amountStr: string
         ): Hash[384] {.forceCheck: [
             ValueError,
-            AddressError,
             NotEnoughMeros
         ].} =
             var
@@ -82,13 +81,13 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 outputs = @[
                     newSendOutput(
-                        newEdPublicKey(destination.toPublicKey()),
+                        newEdPublicKey(cast[string](destination.getEncodedData())),
                         amountOut
                     )
                 ]
             except EdPublicKeyError as e:
-                raise newException(AddressError, e.msg)
-            except AddressError as e:
+                raise newException(ValueError, e.msg)
+            except ValueError as e:
                 fcRaise e
 
             #Add a change output.

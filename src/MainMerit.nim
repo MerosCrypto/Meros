@@ -215,8 +215,6 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Minting a Block Reward failed due to a IndexError: " & e.msg)
                 except GapError as e:
                     doAssert(false, "Minting a Block Reward failed due to a GapError: " & e.msg)
-                except AddressError as e:
-                    doAssert(false, "Minting a Block Reward failed due to a AddressError: " & e.msg)
                 except EdPublicKeyError as e:
                     doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
 

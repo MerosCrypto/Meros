@@ -122,8 +122,6 @@ proc module*(
                     res["result"] = % $functions.personal.send(params[0].getStr(), params[1].getStr())
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid amount")
-                except AddressError:
-                    raise newJSONRPCError(-5, "Invalid address")
                 except NotEnoughMeros:
                     raise newJSONRPCError(1, "Not enough Meros")
 
