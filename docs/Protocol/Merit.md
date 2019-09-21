@@ -2,9 +2,9 @@
 
 Merit is a blockchain used to:
 
-- Archive Consensus, providing a complete overview, which then provides nodes with a complete overview of the Transactions.
-- Distribute Merit.
-- Mint new Meros.
+- Archive Transactions and their Verifications, providing a complete overview of the network's contents.
+- Coordinate the Difficulties and Gas Price.
+- Mint Merit and Meros.
 
 ### BlockHeader Data Type
 
@@ -12,46 +12,64 @@ BlockHeaders exist in order to prove Block validity without syncing and verifyin
 
 BlockHeaders have the following fields:
 
-- nonce: Nonce of the Block.
+- version: Block version.
 - last: Last Block Hash.
-- aggregate: Aggregated BLS Signature of every Element this Block archives.
-- miners: Merkle tree hash of the Miners who earned this Block's Merit.
+- contents: Merkle of included Transactions, as well as the included updates to the Difficulties/GasPrice.
+- verifiers: Merkle of who verified each Transaction mentioned in this Block.
+- miner: BLS Public Key, or miner nickname, to mint Merit to.
 - time: Time this Block was mined at.
 - proof: Arbitrary data used to beat the difficulty.
+
+Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
+
+The "contents" has leaves for both Transactions and the Elements included in a Block. Each leaf representing a Transaction is simply defined as the Transaction hash. Each leaf representing an Element is defined as `Blake2b-384(prefix + element.serializeWithoutSignature())`, where the prefix is the same one used to create the Element's signature.
+
+The "verifiers" has one leaf per Transaction, where each leaf is `Blake2b(verifierNickName1 + verifierNickName2 + ... + verifierNickNameN)`.
 
 A BlockHeader's hash is defined as follows:
 
 ```
-Argon2d(
+h1 = Argon2d(
     iterations = 1,
-    memory = 131072,
+    memory = 65536,
     parallelism = 1
-    data = serialized BlockHeader without proof,
+    data = header.serializeWithoutProof(),
     salt = proof left padded to be 8 bytes long
+)
+
+hash = Argon2d(
+    iterations = 1,
+    memory = 65536,
+    parallelism = 1
+    data = h1,
+    salt = miner.sign(h1)
 )
 ```
 
 ### Block Data Type
 
-Blocks are the backbone of every blockchain. In Meros, they reference the latest Element on a MeritHolder, with a verifiable proof of every Element the MeritHolder has created, thereby archiving the Consensus DAG, and specify who to reward with the newly-mined Merit.
+Blocks mention Transactions which have had Verification Packets created.
 
 Blocks have the following fields:
 
 - header: Block Header.
-- records: List of Merit Holders (BLS Public Keys), Nonces, and Merkle tree hashes.
-- miners: List of Miners (BLS Public Keys) and Merit amounts to payout.
+- transactions: List of Transactions, where the first is the left-most leaf in the BlockHeader's contents merkle tree.
+- elements: Difficulty updates and gas price sets from Merit Holders.
+- aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives, as well as the miner's signature of the Block.
 
-A Block's hash is defined as its BlockHeader's hash.
+A Block's hash is defined as the hash of its header.
 
 The genesis Block on the Meros mainnet Blockchain has a:
-- nonce of 0.
-- last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 48 bytes.
-- Zeroed out aggregate signature.
-- Zeroed out miners merkle hash.
-- time of 0.
-- proof of 0.
-- Empty list of records.
-- Empty list of miners.
+- Header version of 0,
+- Header last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 48 bytes.
+- Zeroed out contents in the header.
+- Zeroed out verifiers in the header.
+- Zeroed out miner key in the header.
+- Header time of 0.
+- Header proof of 0.
+- Empty transactions.
+- Empty elements.
+- aggregate is zeroed out.
 
 ### Checkpoint Data Type
 
@@ -66,47 +84,55 @@ Checkpoints have the following fields:
 
 When a new BlockHeader is received, it's tested for validity. The BlockHeader is valid if:
 
-- nonce must be equivalent to the current Blockchain height.
+- version is 0.
 - last must be equivalent to the hash of the current tail Block.
+- miner is a valid BLS Public Key.
 - time must be greater than the current Block’s time.
-- time must be less than 20 minutes into the future.
+- time must be less than 2 minutes into the future.
 - hash must beat the current difficulty.
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of 204 bytes; the 4-byte nonce, 48-byte last hash, 96-byte aggregate signature, 48-byte miners Merkle tree hash, 4-byte time, and 4-byte proof.
+`BlockHeader` has a message length of either 161 or 205 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 48-byte verifiers hash, 1 byte of if the miner is new, 4-byte miner nickname if the last byte is 0 or 48-byte miner BLS Public Key if the last byte is 1, 4-byte time, and 4-byte proof.
 
 ### BlockBody
 
 When a new BlockBody is received, a full Block can be formed using the BlockHeader. The Block is valid if:
 
-- If the Block has no records, the BlockHeader has a zeroed aggregate signaure.
-- If the Block has records, the BlockHeader has an aggregate signature created by the following algorithm:
+- The header is valid.
+- contents is the result of a properly constructed Merkle tree according to the data in the Block.
+- verifiers is the result of a properly constructed Merkle tree according to the data in the Block.
+- Every Transaction is unique.
+- Every Transaction has all inputs mentioned in a previous Block or the same Block.
+- Every Transaction has a Verification Packet.
+- Every Element is valid and doesn't cause a MeritRemoval.
+- Only new Elements are archived.
+- If a Merit Holder has a Merit Removal archived, that is their only Element archived in the Block.
+- The aggregate signature is formed with the following algorithm:
 
 ```
 List[BLSSignature] signatures
-for r in records:
-	for n in previousRecordNonce[r.key] + 1 .. r.nonce:
-        signatures.add(consenus[r.key][n].signature)
-    previousRecordNonce[r.key] = r.nonce
+for tx in transactions:
+    signatures.add(packets[tx])
+for elem in elements:
+    signatures.add(element.signature)
+signatures.add(
+    miner.sign(
+        Argon2d(
+            iterations = 1,
+            memory = 65536,
+            parallelism = 1
+            data = header.serializeWithoutProof(),
+            salt = proof left padded to be 8 bytes long
+        )
+    )
+)
 BLSSignature aggregate = signatures.aggregate()
 ```
 
-- Every record has an unique key.
-- Every record has a nonce higher than the previous record for the same key.
-- Every record has a Merkle tree hash equivalent to the Merkle tree hash for the mentioned key at the mentioned nonce (as described in the Consensus documentation).
-- No record archives Verifications which would cause a MeritRemoval.
-- If the record archives a MeritRemoval, it only archives the MeritRemoval.
-- Every Transaction verified in Verifications archived in this Block has all inputs mentioned in a past Block or in this Block.
-- Every miner has an unique and valid key.
-- Every miner has at least 1 Merit.
-- The total of every miner’s amount equals 100.
-- If there is only one miner, the BlockHeader’s miners is equivalent to the Blake2b-384 hash of the serialized miner (48-byte BLS Public Key and 1-byte amount).
-- If there are multiple miners, the BlockHeader’s miners is equivalent to the Merkle tree hash of a Blake2b-384 Merkle tree where each leaf is the Blake2b-384 hash of a serialized miner.
-
 If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
 
-On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch, along with the list of Merit Holders who verified it. If the Transaction wasn’t first verified in that Block, it’s added to the Epoch of the Block in which it was verified, as long as it has not yet been finalized. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
+On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch as long as it doesn't compete with another Transaction in Epochs. If it does, it's added to the same Epoch as the Transaction it competes with. Every Transaction in Epochs is updated with the list of Merit Holders who verified it. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
 
 In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
 
@@ -131,7 +157,11 @@ If any scores happen to be 0, they are removed. If the sum of every score is les
 
 After Mints are decided, every miner in the Block's miners get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is no longer live. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
 
-`BlockBody` has a variable message length; the 4-byte amount of records, the records (each with a 48-byte BLS Public Key, 4-byte nonce, and 48-byte Merkle tree hash), 1-byte amount of miners, and the miners (each with a 48-byte BLS Public Key and 1-byte amount).
+- header: Block Header.
+- transactions: List of Transactions, where the first is the left-most leaf in the BlockHeader's contents merkle tree.
+- elements: Difficulty updates and gas price sets from Merit Holders.
+- aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives, as well as the miner's signature of the Block.
+`BlockBody` has a variable message length; the 4-byte amount of Transactions, the Transaction hashes (each 48 bytes), the 4-byte amount of Elements, the Elements (each a fixed length depending on its type), and the 96-byte signature.
 
 ### Checkpoint
 
@@ -145,6 +175,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
+- Meros uses a completely different Blockchain format.
 - Meros allows archived Verifications to skip over Transactions. Unmentioned Transactions can be used by Transactions in archived Verifications if the unmentioned Transactions are already in the DB.
 - Meros mints Merit before minting Meros.
 - Meros doesn't check for 0-scores before minting Meros.

@@ -12,32 +12,24 @@ During syncing, the syncer can only send:
 - `BlockHeaderRequest`
 - `BlockBodyRequest`
 
-- `ElementRequest`
+- `VerificationPacketRequest`
 
 - `TransactionRequest`
 
 - `GetBlockHash`
 - `GetVerifierHeight`
 
-- `SignedElementRequest`
+- `SignedVerificationPacketRequest`
 
 - `SyncingOver`
 
 The syncee can only send:
 
 - `BlockHeight`
-
 - `Peers`
 
-- `Checkpoint`
-- `BlockHeader`
-- `BlockBody`
-
-- `Verification`
-- `SendDifficulty`
-- `DataDifficulty`
-- `GasPrice`
-- `MeritRemoval`
+- `BlockHash`
+- `VerifierHeight`
 
 - `Claim`
 - `Send`
@@ -45,15 +37,21 @@ The syncee can only send:
 - `Lock`
 - `Unlock`
 
-- `BlockHash`
-- `VerifierHeight`
-
 - `SignedVerification`
+- `SignedVerificationPacket`
 - `SignedSendDifficulty`
 - `SignedDataDifficulty`
 - `SignedGasPrice`
 - `SignedMeritRemoval`
 
+- `Checkpoint`
+- `BlockHeader`
+- `BlockBody`
+- `VerificationPacket`
+- `SendDifficulty`
+- `DataDifficulty`
+- `GasPrice`
+- `MeritRemoval`
 - `DataMissing`
 
 The syncee only sends messages in direct response to a request from the syncer.
@@ -74,9 +72,9 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 `BlockHeaderRequest` and `BlockBodyRequest` both have a message length of 48 bytes; the Block's 48-byte hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` with the requested BlockHeader. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested Block's body. If a zeroed out hash is provided in a `BlockHeaderRequest`, the syncee responds with a `BlockHeader` containing the syncee's tail BlockHeader.
 
-### ElementRequest
+### VerificationPacketRequest
 
-`ElementRequest` has a message length of 52 bytes; the Verifier's 48-byte BLS Public Key and the Element's 4-byte nonce. The expected response is a `Verification`, `SendDifficulty`, `DataDifficulty`, `GasPrice`, or `MeritRemoval`, containing the Element, without its BLS Signature.
+`VerificationPacketRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `VerificationPacket` for the specified Transaction.
 
 ### TransactionRequest
 
@@ -86,13 +84,9 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 `GetBlockHash` has a message length of 4 bytes; the nonce of the Block. The expected response is a `BlockHash` containing the Block at the specified nonce's hash. `BlockHash` has a message length of 48 bytes; the 48-byte hash. If a zeroed out nonce was sent, the syncee responds with a `BlockHash` containing the syncee's tail Block's hash.
 
-### GetVerifierHeight and VerifierHeight
+### SignedVerificationPacketRequest
 
-`GetVerifierHeight` has a message length of 48 bytes; the Verifier's 48-byte BLS Public Key. The expected response is a `VerifierHeight`, containing the height of the specified Verifier. `VerifierHeight` has a message length of 52 bytes; the Verifier's 48-byte BLSPublicKey and the Verifier's 4-byte height.
-
-### SignedElementRequest
-
-`SignedElementRequest` has a message length of 52 bytes; the Verifier's 48-byte BLS Public Key and the Element's 4-byte nonce. The expected response is a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, `SignedGasPrice`, or `SignedMeritRemoval`, containing the Element at the requested location, including its BLS Signature. If the request Element has already had its signature aggregated in a Block, the syncer sends `DataMissing`.
+`SignedVerificationPacketRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `SignedVerificationPacket` for the specified Transaction. If the requested VerificationPacket has already had its signature aggregated in a Block, the syncer sends `DataMissing`.
 
 ### DataMissing
 
@@ -106,6 +100,4 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 - Meros doesn't support the `PeerRequest` and `Peers` message types.
 - Meros doesn't support the `CheckpointRequest` message type.
-- Meros doesn't support the `GetVerifierHeight` and `VerifierHeight` message types.
-- Meros's Consensus DAG only supports Verification and SignedVerifications. Therefore, it will only answer an `ElementRequest` with one of the two.
-- Meros doesn't support the `SignedElementRequest` message type.
+- Meros doesn't support the `VerificationPacketRequest` and `SignedVerificationPacketRequest` message types.
