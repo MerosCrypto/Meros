@@ -19,6 +19,7 @@ BlockHeaders have the following fields:
 - miner: BLS Public Key, or miner nickname, to mint Merit to.
 - time: Time this Block was mined at.
 - proof: Arbitrary data used to beat the difficulty.
+- signature: Miner's signature of the Block.
 
 Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
 
@@ -26,23 +27,24 @@ The "contents" has leaves for both Transactions and the Elements included in a B
 
 The "verifiers" has one leaf per Transaction, where each leaf is `Blake2b(verifierNickName1 + verifierNickName2 + ... + verifierNickNameN)`.
 
-A BlockHeader's hash is defined as follows:
+A BlockHeader's signature and hash are defined as follows:
 
 ```
 h1 = Argon2d(
     iterations = 1,
     memory = 65536,
     parallelism = 1
-    data = header.serializeWithoutProof(),
+    data = header.serializeWithoutProofOrSignature(),
     salt = proof left padded to be 8 bytes long
 )
 
+signature = miner.sign(h1)
 hash = Argon2d(
     iterations = 1,
     memory = 65536,
     parallelism = 1
     data = h1,
-    salt = miner.sign(h1)
+    salt = signature
 )
 ```
 
@@ -55,7 +57,7 @@ Blocks have the following fields:
 - header: Block Header.
 - transactions: List of Transactions, where the first is the left-most leaf in the BlockHeader's contents merkle tree.
 - elements: Difficulty updates and gas price sets from Merit Holders.
-- aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives, as well as the miner's signature of the Block.
+- aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives.
 
 A Block's hash is defined as the hash of its header.
 
@@ -67,6 +69,7 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - Zeroed out miner key in the header.
 - Header time of 0.
 - Header proof of 0.
+- Zeroed out signature in the header.
 - Empty transactions.
 - Empty elements.
 - aggregate is zeroed out.
@@ -93,7 +96,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 161 or 205 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 48-byte verifiers hash, 1 byte of if the miner is new, 4-byte miner nickname if the last byte is 0 or 48-byte miner BLS Public Key if the last byte is 1, 4-byte time, and 4-byte proof.
+`BlockHeader` has a message length of either 257 or 301 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 48-byte verifiers hash, 1 byte of if the miner is new, 4-byte miner nickname if the last byte is 0 or 48-byte miner BLS Public Key if the last byte is 1, 4-byte time, 4-byte proof, and 96-byte signature.
 
 ### BlockBody
 

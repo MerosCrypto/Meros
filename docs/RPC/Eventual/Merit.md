@@ -23,6 +23,7 @@ The result is an object, as follows:
     - `miner`     (string)
     - `time`      (int)
     - `proof`     (int)
+    - `signature` (string)
 - `transactions` (array of strings, each a Transaction hash)
 - `elements`     (array of objects, each as follows)
     - `descendant` (string)
@@ -40,6 +41,7 @@ The result is an object, as follows:
         When `descendant` == "MeritRemoval":
         - `partial`  (string):           Whether or not the first Element is already archived on the Blockchain.
         - `elements` (array of objects): The two Elements which caused this MeritRemoval.
+- `aggregate` (string)
 
 ### `getTotalMerit`
 
@@ -71,7 +73,7 @@ The result is an object, as follows:
 - `header` (string)
 - `body`   (string)
 
-Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, appending the body to the completed header, and then calling `merit_publishBlock` (see below).
+Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` (see below).
 
 ### `publishBlock`
 

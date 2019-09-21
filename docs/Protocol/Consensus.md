@@ -65,7 +65,7 @@ They have the following fields:
 
 ### MeritRemoval
 
-MeritRemovals aren't created on their own. When a Merit Holder creates two Verifications which verify competing Transactions or creates two different Difficulty/Gas Price updates with the same nonce. Once archived in a Block, Merit Removals remove all Merit from a Merit Holder. Until the Merit Removal is archived, node behavior should not update the amount of 'live' Merit for security reasons. This is further described in the Merit documentation. Merit Holders are ineligible for rewards using removed Merit. Merit Holders may regain Merit, yet if the Block which archives their Merit Removal gives them Merit, it is also removed.
+MeritRemovals aren't created by Merit Holders; they are the sum of two Elements which together define a malicious action. This malicious action is either the verification of competing Transactions or two different Difficulty/Gas Price updates which share the same nonce. Once archived in a Block, Merit Removals remove all Merit from a Merit Holder. Until the Merit Removal is archived, node behavior should not update the amount of 'live' Merit for security reasons. This is further described in the Merit documentation. Merit Holders are ineligible for rewards using removed Merit. Merit Holders may regain Merit, yet if the Block which archives their Merit Removal gives them Merit, it is also removed.
 
 If multiple MeritRemovals are triggered, the first one should have already reverted actions not yet finalized and stripped the Merit Holder of their Merit (according to node behavior). The remaining work becomes achieving consensus on which MeritRemoval is the singular MeritRemoval. This is achieved when the next Block is mined as the next Block's miner decides.
 
