@@ -18,28 +18,33 @@ finalsd:
             SyncingAcknowledged = 3,
             BlockHeaderRequest = 7,
             BlockBodyRequest = 8,
-            ElementRequest = 9,
+            VerificationPacketRequest = 9,
             TransactionRequest = 10,
             GetBlockHash = 11,
             BlockHash = 12,
-            DataMissing = 16,
-            SyncingOver = 17,
+            SignedVerificationPacketRequest = 13,
+            SyncingOver = 14,
 
-            Claim = 18,
-            Send = 19,
-            Data = 20,
+            Claim = 15,
+            Send = 16,
+            Data = 17,
 
-            SignedVerification = 23,
-            SignedMeritRemoval = 27,
+            SignedVerification = 20,
+            SignedVerificationPacket = 21,
+            SignedSendDifficulty = 22,
+            SignedDataDifficulty = 23,
+            SignedGasPrice = 24,
+            SignedMeritRemoval = 25,
 
-            BlockHeader = 29,
-            BlockBody = 30,
-            Verification = 31,
-            MeritRemoval = 35,
+            BlockHeader = 27,
+            BlockBody = 28,
+            VerificationPacket = 29,
 
+            DataMissing = 30,
+            
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 36
+            End = 31
 
         #Message object.
         Message* = object

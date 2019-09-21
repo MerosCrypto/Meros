@@ -39,10 +39,6 @@ The message types are as follows (with their list number being their byte header
 <li><code>BlockHeader</code></li>
 <li><code>BlockBody</code></li>
 <li><code>VerificationPacket</code></li>
-<li><code>SendDifficulty</code></li>
-<li><code>DataDifficulty</code></li>
-<li><code>GasPrice</code></li>
-<li><code>MeritRemoval</code></li>
 <br>
 <li><code>DataMissing</code></li>
 </ol>
@@ -52,8 +48,3 @@ The message types are as follows (with their list number being their byte header
 Even if the state is syncing, the node which didn't start syncing can send `BlockHeight`, along with every message between `Claim` (inclusive) and `Checkpoint` (inclusive).
 
 When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive), nor `BlockBody`, can be sent.
-
-### Violations in Meros
-
-- Some messages are offset due to the non-inclusion of SignedVerificationPacket, different placement of DataMissing, and inclusion of GetVerifierHeight/VerifierHeight.
-- Meros has Verification instead of VerificationPacket.

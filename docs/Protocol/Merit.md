@@ -161,7 +161,7 @@ After Mints are decided, every miner in the Block's miners get their specified a
 - transactions: List of Transactions, where the first is the left-most leaf in the BlockHeader's contents merkle tree.
 - elements: Difficulty updates and gas price sets from Merit Holders.
 - aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives, as well as the miner's signature of the Block.
-`BlockBody` has a variable message length; the 4-byte amount of Transactions, the Transaction hashes (each 48 bytes), the 4-byte amount of Elements, the Elements (each a fixed length depending on its type), and the 96-byte signature.
+`BlockBody` has a variable message length; the 4-byte amount of Transactions, the Transaction hashes (each 48 bytes), the 4-byte amount of Elements, the Elements (each a different length depending on its type), and the 96-byte signature.
 
 ### Checkpoint
 
@@ -176,7 +176,8 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 ### Violations in Meros
 
 - Meros uses a completely different Blockchain format.
-- Meros allows archived Verifications to skip over Transactions. Unmentioned Transactions can be used by Transactions in archived Verifications if the unmentioned Transactions are already in the DB.
+- Meros doesn't support nicknames.
+- Meros allows archiving Transactions who don't have their inputs archived either in a previous Block or the same Block. Unmentioned Transactions can be used by Transactions archived in a Block if the unmentioned Transactions are already in the DB.
 - Meros mints Merit before minting Meros.
 - Meros doesn't check for 0-scores before minting Meros.
 - Meros doesn't support dead Merit.

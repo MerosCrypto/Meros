@@ -48,10 +48,7 @@ The syncee can only send:
 - `BlockHeader`
 - `BlockBody`
 - `VerificationPacket`
-- `SendDifficulty`
-- `DataDifficulty`
-- `GasPrice`
-- `MeritRemoval`
+
 - `DataMissing`
 
 The syncee only sends messages in direct response to a request from the syncer.

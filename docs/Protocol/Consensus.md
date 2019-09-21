@@ -35,7 +35,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
 
-`SendDifficulty` has a message length of 52 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\1".
+`SendDifficulty` has a message length of 52 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\1". That said, `SendDifficulty` is not a standalone message type. This describes how SendDifficulty objects are serialized as part of a `BlockBody` message.
 
 ### DataDifficulty
 
@@ -48,7 +48,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
-`DataDifficulty` has a message length of 100 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\2".
+`DataDifficulty` has a message length of 100 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\2". That said, `DataDifficulty` is not a standalone message type. This describes how DataDifficulty objects are serialized as part of a `BlockBody` message.
 
 ### GasPrice
 
@@ -61,7 +61,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - price: Price in Meri a unit of gas should cost.
 
-`GasPrice` has a message length of 56 bytes; the 4-byte creator's nickname, and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\3".
+`GasPrice` has a message length of 8 bytes; the 4-byte creator's nickname and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\3". That said, `GasPrice` is not a standalone message type. This describes how GasPrice objects are serialized as part of a `BlockBody` message.
 
 ### MeritRemoval
 
@@ -75,7 +75,7 @@ MeritRemovals have the following fields:
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` isn't needed per se. Instead, nodes could just broadcast both causes. The unified message ensures nodes get both causes and trigger a MeritRemoval on their end. It has a variable message length; the 4-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. Even though MeritRemovals are not directly signed, they use a prefix of "\4" for merkle creation.
+`MeritRemoval` has a variable message length; the 4-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. Even though MeritRemovals are not directly signed, they use a prefix of "\4" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
 
 ### SignedVerification, SignedVerificationPacket, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 
