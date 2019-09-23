@@ -108,6 +108,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Transaction is unique.
 - Every Transaction has all inputs mentioned in a previous Block or the same Block.
 - Every Transaction has a Verification Packet.
+- Every Transaction doesn't compete with, or have parents which compete with, Transactions archived 5 Blocks before the last Checkpoint.
 - Every Element is valid and doesn't cause a MeritRemoval.
 - Only new Elements are archived.
 - If a Merit Holder has a Merit Removal archived, that is their only Element archived in the Block.
@@ -124,7 +125,7 @@ BLSSignature aggregate = signatures.aggregate()
 
 If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
 
-On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch as long as it doesn't compete with another Transaction in Epochs. If it does, it's added to the same Epoch as the Transaction it competes with. Every Transaction in Epochs is updated with the list of Merit Holders who verified it. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
+On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch. If a new Transaction competes with an existing Transaction, all competitors (and competitors of competitors) are brought up into the new Epoch. Every Transaction in Epochs is updated with the list of Merit Holders who verified it. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
 
 In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
 
@@ -166,6 +167,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros uses a completely different Blockchain format.
 - Meros doesn't support nicknames.
 - Meros allows archiving Transactions who don't have their inputs archived either in a previous Block or the same Block. Unmentioned Transactions can be used by Transactions archived in a Block if the unmentioned Transactions are already in the DB.
+- Meros allows archiving Transactions which compete with old Transactions.
 - Meros mints Merit before minting Meros.
 - Meros doesn't check for 0-scores before minting Meros.
 - Meros doesn't support dead Merit.
