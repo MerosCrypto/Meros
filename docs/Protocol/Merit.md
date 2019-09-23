@@ -23,7 +23,7 @@ BlockHeaders have the following fields:
 
 Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
 
-The "contents" has leaves for both Transactions and the Elements included in a Block. Each leaf representing a Transaction is simply defined as the Transaction hash. Each leaf representing an Element is defined as `Blake2b-384(prefix + element.serializeWithoutSignature())`, where the prefix is the same one used to create the Element's signature.
+The "contents" has leaves for both Transactions and the Elements included in a Block. Each leaf representing a Transaction is simply defined as the Transaction hash. Each leaf representing an Element is defined as `Blake2b-384(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature.
 
 The "verifiers" has one leaf per Transaction, where each leaf is `Blake2b(verifierNickName1 + verifierNickName2 + ... + verifierNickNameN)`.
 
@@ -96,7 +96,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 257 or 301 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 48-byte verifiers hash, 1 byte of if the miner is new, 4-byte miner nickname if the last byte is 0 or 48-byte miner BLS Public Key if the last byte is 1, 4-byte time, 4-byte proof, and 96-byte signature.
+`BlockHeader` has a message length of either 257 or 301 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 48-byte verifiers hash, 1-byte of "\1" if the miner is new or "\0" if not, 4-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
 
 ### BlockBody
 
@@ -119,17 +119,6 @@ for tx in transactions:
     signatures.add(packets[tx])
 for elem in elements:
     signatures.add(element.signature)
-signatures.add(
-    miner.sign(
-        Argon2d(
-            iterations = 1,
-            memory = 65536,
-            parallelism = 1
-            data = header.serializeWithoutProof(),
-            salt = proof left padded to be 8 bytes long
-        )
-    )
-)
 BLSSignature aggregate = signatures.aggregate()
 ```
 
@@ -158,12 +147,8 @@ for holder in scores:
 
 If any scores happen to be 0, they are removed. If the sum of every score is less than 1000, the Merit Holder with the top score receives the difference between 1000 and the sum of the scores. A negative sigmoid which uses the Block’s difficulty for its x value produces a multiplier. Mints are then queued for each Merit Holder, in order, with an amount of `score * multiplier`. After 10 more Blocks, the mints are added to the Transactions.
 
-After Mints are decided, every miner in the Block's miners get their specified amount of Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is no longer live. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 5256000 Merit.
+After Mints are decided, the Block's miner gets 1 Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is no longer live. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 52560 Merit.
 
-- header: Block Header.
-- transactions: List of Transactions, where the first is the left-most leaf in the BlockHeader's contents merkle tree.
-- elements: Difficulty updates and gas price sets from Merit Holders.
-- aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives, as well as the miner's signature of the Block.
 `BlockBody` has a variable message length; the 4-byte amount of Transactions, the Transaction hashes (each 48 bytes), the 4-byte amount of Elements, the Elements (each a different length depending on its type), and the 96-byte signature.
 
 ### Checkpoint

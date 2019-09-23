@@ -24,7 +24,7 @@ A Verification packet is a group of Verifications belonging to a single Transact
 
 ### SendDifficulty
 
-A SendDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Sends. Every Merit Holder gets one vote per 50 Merit. Every Merit Holder can specify a singular difficulty which is voted on by all their votes. The difficulty that is the median of all votes is chosen. The 50 Merit limit creates a maximum of 1051 votes. The multiple votes per Merit Holder stops sybil attacks, correctly weighing against the Merit Holder's power. The choice of median over mean stops Merit Holders from being incentivized to vote far from their target in order to have more power.
+A SendDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Sends. Every Merit Holder gets one vote per 50 Merit. Every Merit Holder can specify a singular difficulty which is voted on by all their votes. The difficulty that is the median of all votes is chosen. The 50 Merit per vote creates a maximum of 1051 votes. The multiple votes per Merit Holder stops sybil attacks, correctly weighing against the Merit Holder's power. The choice of median over mean stops Merit Holders from being incentivized to vote far from their target in order to have more power.
 
 When the difficulty is lowered, there's a chance Transactions based on the new difficulty may be rejected by nodes still using the old difficulty. When the difficulty is raised, there's a chance Transactions based on the old difficulty may still be accepted by nodes who have yet to update. The first scenario adds a delay to the system, and adding a Block will catch all the nodes up. The second scenario risks rewinding Transactions. Therefore, if a Transaction doesn't beat the spam filter, but does still get the needed Verifications to become verified, it's still valid. This makes the difficulty a coordinated guideline, not a rule.
 
@@ -35,7 +35,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
 
-`SendDifficulty` has a message length of 52 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\1". That said, `SendDifficulty` is not a standalone message type. This describes how SendDifficulty objects are serialized as part of a `BlockBody` message.
+`SendDifficulty` has a message length of 52 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type. This describes how SendDifficulty objects are serialized as part of a `BlockBody` message.
 
 ### DataDifficulty
 
@@ -48,7 +48,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
-`DataDifficulty` has a message length of 100 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\2". That said, `DataDifficulty` is not a standalone message type. This describes how DataDifficulty objects are serialized as part of a `BlockBody` message.
+`DataDifficulty` has a message length of 100 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type. This describes how DataDifficulty objects are serialized as part of a `BlockBody` message.
 
 ### GasPrice
 
@@ -61,7 +61,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - price: Price in Meri a unit of gas should cost.
 
-`GasPrice` has a message length of 8 bytes; the 4-byte creator's nickname and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\3". That said, `GasPrice` is not a standalone message type. This describes how GasPrice objects are serialized as part of a `BlockBody` message.
+`GasPrice` has a message length of 8 bytes; the 4-byte creator's nickname and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\4". That said, `GasPrice` is not a standalone message type. This describes how GasPrice objects are serialized as part of a `BlockBody` message.
 
 ### MeritRemoval
 
@@ -75,7 +75,7 @@ MeritRemovals have the following fields:
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` has a variable message length; the 4-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. Even though MeritRemovals are not directly signed, they use a prefix of "\4" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
+`MeritRemoval` has a variable message length; the 4-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized as it would be for transmission, yet uses full BLS Public Keys instead of nicknames. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
 
 ### SignedVerification, SignedVerificationPacket, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 
@@ -88,6 +88,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 ### Violations in Meros
 
 - Meros uses a Block Lattice instead of referencing VerificationPackets in Blocks and directly placing non-Verification Elements in Blocks.
+- Meros uses different prefixes for each Element due to Verification Packet shifting everything over one.
 - Meros doesn't support defaulting.
 - Meros doesn't support `VerificationPacket`.
 - Meros doesn't support `SendDifficulty` or `SignedSendDifficulty`.
