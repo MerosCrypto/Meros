@@ -88,7 +88,6 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 ### Violations in Meros
 
 - Meros uses a Block Lattice instead of referencing VerificationPackets in Blocks and directly placing non-Verification Elements in Blocks.
-- Meros uses different prefixes for each Element due to Verification Packet shifting everything over one.
 - Meros doesn't support defaulting.
 - Meros doesn't support `VerificationPacket`.
 - Meros doesn't support `SendDifficulty` or `SignedSendDifficulty`.
