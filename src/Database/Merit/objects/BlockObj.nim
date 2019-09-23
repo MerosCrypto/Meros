@@ -1,25 +1,19 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib (for BLSSignature).
+#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
 #Block Header lib.
 import ../BlockHeader
+export BlockHeader
 
 #Block Body object.
 import BlockBodyObj
 export BlockBodyObj
-
-#MeritHolderRecord and Miners objects.
-import ../../common/objects/MeritHolderRecordObj
-import MinersObj
 
 #Finals lib.
 import finals
@@ -31,64 +25,35 @@ type Block* = object
     #Block Body.
     body*: BlockBody
 
-#Nonce getter.
-proc nonce*(
-    blockArg: Block
-): int {.inline, forceCheck: [].} =
-    blockArg.header.nonce
-
-#Hash getter.
-proc hash*(
-    blockArg: Block
-): Hash[384] {.inline, forceCheck: [].} =
-    blockArg.header.hash
-
-#Records getter.
-proc records*(
-    blockArg: Block
-): seq[MeritHolderRecord] {.inline, forceCheck: [].} =
-    blockArg.body.records
-
-#Miners getter.
-proc miners*(
-    blockArg: Block
-): Miners {.inline, forceCheck: [].} =
-    blockArg.body.miners
-
-#Miners setter.
-proc `miners=`*(
-    blockArg: var Block,
-    miners: Miners
-) {.forceCheck: [].} =
-    blockArg.miners = miners
-    blockArg.header.miners = miners.merkle.hash
-
 #Constructor.
 func newBlockObj*(
-    nonce: int,
+    version: int,
     last: ArgonHash,
+    contents: Hash[384],
+    verifiers: Hash[384],
+    miner: BLSPublicKey,
+    transactions: seq[Hash[384]],
+    elements: seq[Element],
     aggregate: BLSSignature,
-    records: seq[MeritHolderRecord],
-    miners: Miners,
     time: uint32 = getTime(),
-    proof: uint32 = 0
-): Block {.forceCheck: [].} =
-    #Create the Block Header.
-    var header: BlockHeader = newBlockHeader(
-        nonce,
-        last,
-        aggregate,
-        miners.merkle.hash,
-        time,
-        proof
-    )
-
-    #Create the Block.
-    result = Block(
-        header: header,
+    proof: uint32 = 0,
+    signature: BLSSignature = nil
+): Block {.inline, forceCheck: [].} =
+    Block(
+        header: newBlockHeader(
+            version,
+            last,
+            contents,
+            verifiers,
+            miner,
+            time,
+            proof,
+            signature
+        ),
         body: newBlockBodyObj(
-            records,
-            miners
+            transactions,
+            elements,
+            aggregate
         )
     )
 
@@ -100,3 +65,14 @@ func newBlockObj*(
         header: header,
         body: body
     )
+
+#Converters to either the header or body.
+converter toHeader*(
+    blockArg: Block
+): BlockHeader {.inline, forceCheck: [].} =
+    blockArg.header
+
+converter toBody*(
+    blockArg: Block
+): BlockBody {.inline, forceCheck: [].} =
+    blockArg.body

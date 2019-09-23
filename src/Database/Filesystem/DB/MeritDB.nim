@@ -144,13 +144,6 @@ proc remove*(
 
     db.put(holder & "removals", holderRemovals & blockNum.toBinary().pad(4))
 
-proc saveHolderEpoch*(
-    db: DB,
-    holder: BLSPublicKey,
-    epoch: int
-) {.forceCheck: [].} =
-    db.put(holder.toString() & "epoch", epoch.toBinary())
-
 #Load functions.
 proc loadDifficulty*(
     db: DB
@@ -265,14 +258,3 @@ proc loadRemovals*(
 
     for i in countup(0, removals.len - 1, 4):
         result.add(removals[i ..< i + 4].fromBinary())
-
-proc loadHolderEpoch*(
-    db: DB,
-    holder: BLSPublicKey
-): int {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = db.get(holder.toString() & "epoch").fromBinary()
-    except DBReadError as e:
-        fcRaise e

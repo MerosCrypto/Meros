@@ -4,14 +4,13 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#MinerWallet lib (for BLSPublicKey).
+#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
 #Merit DB lib.
 import ../../Filesystem/DB/MeritDB
 
-#Miners and Block objects.
-import MinersObj
+#Block object.
 import BlockObj
 
 #Finals lib.

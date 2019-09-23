@@ -10,9 +10,6 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../common/objects/MeritHolderRecordObj
-
 #Element lib.
 import ../Consensus/Element
 
@@ -32,50 +29,34 @@ import ../../Network/Serialize/Consensus/SerializeVerification
 #Tables standard lib.
 import tables
 
-#Increase the proof.
-func inc*(
-    blockArg: var Block
-) {.forceCheck: [].} =
-    #Increase the proof.
-    inc(blockArg.header.proof)
-    #Recalculate the hash.
-    blockArg.header.hash = Argon(blockArg.header.serializeHash(), blockArg.header.proof.toBinary().pad(8))
-
-#Verify the aggregate signature for a table of Key -> seq[Element].
+#Verify a Block's aggregate signature via the State and a Table of Hash -> VerificationPacket.
 proc verify*(
     blockArg: Block,
-    elems: Table[BLSPublicKey, seq[Element]]
+    state: State,
+    packets: Table[Hash[384], VerificationPacket]
 ): bool {.forceCheck: [].} =
     result = true
 
-    #Make sure there's the same amount of MeritHolders as there are records.
-    if elems.len != blockArg.records.len:
-        return false
-
-    #Aggregate Infos for each MeritHolder.
-    var agInfos: seq[BLSAggregationInfo] = @[]
-    #Iterate over every Record.
-    for r, record in blockArg.records:
-        try:
-            #Iterate over this holder's elements.
-            for elem in elems[record.key]:
-                #Create AggregationInfos
-                case elem:
-                    of MeritRemoval as mr:
-                        agInfos.add(mr.agInfo)
-                    else:
-                        agInfos.add(newBLSAggregationInfo(record.key, elem.serializeSign()))
-        #The presented Table has a different set of MeritHolders than the records.
-        except KeyError:
-            return false
-        #Couldn't create an AggregationInfo out of a BLSPublicKey and a hash.
-        except BLSError:
-            return false
-
-    #Calculate the fianl aggregation info.
-    var agInfo: BLSAggregationInfo
+    #Aggregation Infos.
+    var
+        agInfos: seq[BLSAggregationInfo] = @[]
+        agInfo: AggregationInfo = nil
     try:
+        #Iterate over every Transaction.
+        for tx in blockArg.transactions:
+            for verifier in packets[tx]:
+                agInfos.add(newBLSAggregationInfo(state.lookup(verifier), tx.toString()))
+
+        #Iterate over every Element.
+        for elem in blockArg.elements:
+            agInfos.add(newBLSAggregationInfo(state.lookup(elem.holder), elem.serializeSign()))
+
+        #Aggregate the infos.
         agInfo = agInfos.aggregate()
+    #The presented Table is missing VerificationPackets.
+    except KeyError:
+        doAssert(false, "Called Block.verify() without the needed data.")
+    #Couldn't create an AggregationInfo out of a BLSPublicKey and a hash.
     except BLSError:
         return false
 

@@ -19,19 +19,19 @@ finalsd:
         #Start of the period.
         start* {.final.}: int
         #End of the period.
-        endBlock* {.final.}: int
+        endHeight* {.final.}: int
         #Difficulty to beat.
         difficulty* {.final.}: StUint[512]
 
 #Constructors.
 func newDifficultyObj*(
     start: int,
-    endBlock: int,
+    endHeight: int,
     difficulty: StUint[512]
 ): Difficulty {.forceCheck: [].} =
     result = Difficulty(
         start: start,
-        endBlock: endBlock,
+        endHeight: endHeight,
         difficulty: difficulty
     )
     result.ffinalizeStart()
@@ -40,7 +40,7 @@ func newDifficultyObj*(
 
 func newDifficultyObj*(
     start: int,
-    endBlock: int,
+    endHeight: int,
     difficulty: Hash[384]
 ): Difficulty {.forceCheck: [
     ValueError
@@ -48,7 +48,7 @@ func newDifficultyObj*(
     try:
         result = newDifficultyObj(
             start,
-            endBlock,
+            endHeight,
             ($difficulty).parse(StUint[512], 16)
         )
     except ValueError as e:

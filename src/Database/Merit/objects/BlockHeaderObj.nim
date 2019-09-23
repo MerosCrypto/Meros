@@ -1,59 +1,59 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib (for BLSSignature).
+#MinerWallet lib.
 import ../../../Wallet/MinerWallet
-
-#Miners object.
-import MinersObj
 
 #Finals lib.
 import finals
 
 finalsd:
-    #Define the BlockHeader object.
     type BlockHeader* = object
-        #Block hash.
-        hash*: ArgonHash
-
-        #Nonce.
-        nonce* {.final.}: int
-        #Argon hash of the last block.
+        #Version.
+        version {.final.}: int
+        #Hash of the last block.
         last* {.final.}: ArgonHash
 
-        #Aggregate Signatue of the Elements.
-        aggregate*: BLSSignature
-        #Merkle tree hash of the Miners.
-        miners*: Blake384Hash
+        #Merkle of the contents.
+        contents: Hash[384]
+        #Merkle of who verified each Transaction.
+        verifiers: Hash[384]
 
+        #Miner.
+        miner {.final.}: BLSPublicKey
         #Timestamp.
         time*: uint32
         #Proof.
         proof*: uint32
+        #Signature.
+        signature: BLSSignature
+
+        #Block hash.
+        hash*: ArgonHash
 
 #Constructor.
 func newBlockHeaderObj*(
-    nonce: int,
+    version: int,
     last: ArgonHash,
-    aggregate: BLSSignature,
-    miners: Blake384Hash,
+    contents: Hash[384],
+    verifiers: Hash[384],
+    miner: BLSPublicKey,
     time: uint32,
-    proof: uint32
+    proof: uint32,
+    signature: BLSSignature
 ): BlockHeader {.forceCheck: [].} =
     result = BlockHeader(
-        nonce: nonce,
+        version: version,
         last: last,
         aggregate: aggregate,
         miners: miners,
         time: time,
-        proof: proof
+        proof: proof,
+        signature: signature
     )
-
-    result.ffinalizeNonce()
+    result.ffinalizeVersion()
     result.ffinalizeLast()
+    result.ffinalizeMiner()

@@ -162,9 +162,9 @@ proc mainMerit() {.forceCheck: [].} =
                 merit.processBlock(newBlock)
             except ValueError as e:
                 fcRaise e
-            except GapError as e:
-                fcRaise e
             except DataExists as e:
+                fcRaise e
+            except NotConnected as e:
                 fcRaise e
 
             #Save every archived MeritRemoval.

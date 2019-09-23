@@ -40,9 +40,7 @@ proc verify*(
 proc calculateNextDifficulty*(
     blockchain: Blockchain,
     blocksPerPeriod: int
-): Difficulty {.forceCheck: [
-    IndexError
-].} =
+): Difficulty {.forceCheck: [].} =
     var
         #Last difficulty.
         last: Difficulty = blockchain.difficulty
@@ -63,9 +61,9 @@ proc calculateNextDifficulty*(
 
     #Grab the start time.
     try:
-        start = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
+        start = blockchain[blockchain.height - (blocksPerPeriod + 1)].time
     except IndexError as e:
-        fcRaise e
+        doAssert(false, "Couldn't grab the Block which started this period.")
 
     #Calculate the actual time.
     actualTime = endTime - start
@@ -111,14 +109,8 @@ proc calculateNextDifficulty*(
         difficulty = blockchain.startDifficulty.difficulty
 
     #Create the new difficulty.
-    try:
-        result = newDifficultyObj(
-            last.endBlock + 1,
-            last.endBlock + blocksPerPeriod,
-            difficulty
-        )
-    except ValueError:
-        #This is a doAssert false as this problem is due to our half-move off of BNs.
-        #This problem (likely) won't exist once we fully move off.
-        #That said, this except shouldn't trigger anyways.
-        doAssert(false, "Couldn't convert the Difficulty to a Hash.")
+    result = newDifficultyObj(
+        last.endHeight,
+        last.endHeight + blocksPerPeriod,
+        difficulty
+    )

@@ -196,6 +196,7 @@ proc newMerkleAux(
             newMerkleAux(hashes[0 ..< halfWidth], targetDepth - 1),
             newMerkleAux(hashes[halfWidth ..< len(hashes)], targetDepth - 1)
         )
+
 #Merkle constructor based on a seq or array of hashes (as strings).
 proc newMerkle*(
     hashes: varargs[Hash[384]]

@@ -73,6 +73,15 @@ Network:
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
 
+
+### No Consensus DAG:
+
+- Verify the `contents` merkle when syncing the Block Body (currently done in Merit.processBlock).
+- Verify the `verifiers` merkle when we verify the Block's aggregate signature.
+- Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
+- Correct Epochs.
+- Remove the Consensus DAG.
+
 ### Nim Tests:
 
 objects:
