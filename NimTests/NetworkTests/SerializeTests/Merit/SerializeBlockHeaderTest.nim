@@ -27,31 +27,40 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Last Block's Hash.
-        last: ArgonHash
-        #Miners Hash.
-        miners: Blake384Hash
         #Block Header.
         header: BlockHeader
         #Reloaded Block Header.
         reloaded: BlockHeader
+        #Last Block's Hash.
+        last: ArgonHash
+        #Contents Hash.
+        contents: Hash[384]
+        #Contents Hash.
+        verifiers: Hash[384]
+        #Miner.
+        miner: MinerWallet
 
     #Test 255 serializations.
     for _ in 0 .. 255:
         #Randomize the hashes.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
-            miners.data[b] = uint8(rand(255))
+            contents.data[b] = uint8(rand(255))
+            verifiers.data[b] = uint8(rand(255))
+
+        #Get a new miner.
+        miner = newMinerWallet()
 
         #Create the BlockHeaader.
         header = newBlockHeader(
-            rand(high(int32)),
-            last,
-            newMinerWallet().sign(rand(high(int32)).toBinary()),
-            miners,
             uint32(rand(high(int32))),
+            last,
+            contents,
+            verifiers,
+            miner.publicKey,
             uint32(rand(high(int32)))
         )
+        miner.hash(header, uint32(rand(high(int32))))
 
         #Serialize it and parse it back.
         reloaded = header.serialize().parseBlockHeader()

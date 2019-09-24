@@ -4,8 +4,13 @@ import ../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#Merit lib.
-import ../../../src/Database/Merit/Merit
+#Merit libs.
+import ../../../src/Database/Merit/Block
+import ../../../src/Database/Merit/Difficulty
+import ../../../src/Database/Merit/Blockchain
+import ../../../src/Database/Merit/State
+#import ../../../src/Database/Merit/Epochs
+#import ../../../src/Database/Merit/Merit
 
 #StInt lib.
 import StInt
@@ -18,50 +23,34 @@ proc compare*(
     bh1: BlockHeader,
     bh2: BlockHeader
 ) =
-    assert(bh1.hash == bh2.hash)
-    assert(bh1.nonce == bh2.nonce)
+    assert(bh1.version == bh2.version)
     assert(bh1.last == bh2.last)
-    assert(bh1.aggregate == bh2.aggregate)
-    assert(bh1.miners == bh2.miners)
+    assert(bh1.contents == bh2.contents)
+    assert(bh1.verifiers == bh2.verifiers)
+    assert(bh1.newMiner == bh2.newMiner)
+    if bh1.newMiner:
+        assert(bh1.minerKey == bh2.minerKey)
+    else:
+        assert(bh1.minerNick == bh2.minerNick)
     assert(bh1.time == bh2.time)
     assert(bh1.proof == bh2.proof)
-
-#Compare two MeritHolderRecords to make sure they have the same value.
-proc compare*(
-    mhr1: MeritHolderRecord,
-    mhr2: MeritHolderRecord
-) =
-    assert(mhr1.key == mhr2.key)
-    assert(mhr1.nonce == mhr2.nonce)
-    assert(mhr1.merkle == mhr2.merkle)
-
-#Compare two sets of MeritHolderRecords to make sure they have the same value.
-proc compare*(
-    mhr1: seq[MeritHolderRecord],
-    mhr2: seq[MeritHolderRecord]
-) =
-    assert(mhr1.len == mhr2.len)
-    for i in 0 ..< mhr1.len:
-        compare(mhr1[i], mhr2[i])
-
-#Compare two Miners to make sure they have the same value.
-proc compare*(
-    m1: Miners,
-    m2: Miners
-) =
-    assert(m1.merkle.hash == m2.merkle.hash)
-    assert(m1.miners.len == m2.miners.len)
-    for i in 0 ..< m1.miners.len:
-        assert(m1.miners[i].miner == m2.miners[i].miner)
-        assert(m1.miners[i].amount == m2.miners[i].amount)
+    assert(bh1.signature == bh2.signature)
+    assert(bh1.hash == bh2.hash)
 
 #Compare two BlockBodies to make sure they have the same value.
 proc compare*(
     bb1: BlockBody,
     bb2: BlockBody
 ) =
-    compare(bb1.records, bb2.records)
-    compare(bb1.miners, bb2.miners)
+    assert(bb1.transactions.len == bb2.transactions.len)
+    for t in 0 ..< bb1.transactions.len:
+        assert(bb1.transactions[t] == bb2.transactions[t])
+
+    assert(bb1.elements.len == bb2.elements.len)
+    for e in 0 ..< bb1.elements.len:
+        assert(bb1.elements[e] == bb2.elements[e])
+
+    assert(bb1.aggregate == bb2.aggregate)
 
 #Compare two Blocks to make sure they have the same value.
 proc compare*(
@@ -77,7 +66,7 @@ proc compare*(
     d2: Difficulty
 ) =
     assert(d1.start == d2.start)
-    assert(d1.endBlock == d2.endBlock)
+    assert(d1.endHeight == d2.endHeight)
     assert(d1.difficulty == d2.difficulty)
 
 #Compare two Blockchains to make sure they have the same value.
@@ -89,9 +78,9 @@ proc compare*(
     compare(bc1.startDifficulty, bc2.startDifficulty)
 
     assert(bc1.height == bc2.height)
-    for i in 0 ..< bc1.height:
-        compare(bc1.headers[i], bc2.headers[i])
-        compare(bc1[i], bc2[i])
+    for b in 0 ..< bc1.height:
+        compare(bc1[b], bc2[b])
+        assert(bc1[b].header.last == bc2[b - 1].header.hash)
 
     compare(bc1.difficulty, bc2.difficulty)
 
@@ -104,24 +93,14 @@ proc compare*(
     assert(s1.live == s2.live)
     assert(s1.processedBlocks == s2.processedBlocks)
 
-    var
-        s1Holders: seq[BLSPublicKey] = @[]
-        s2Holders: seq[BLSPublicKey] = @[]
-    for k in s1.holders():
-        if s1[k] == 0:
-            continue
-        s1Holders.add(k)
-    for k in s2.holders():
-        if s2[k] == 0:
-            continue
-        s2Holders.add(k)
-
-    assert(s1Holders.len == s2Holders.len)
-    for k in s1Holders:
-        assert(s2Holders.contains(k))
-        assert(s1[k] == s2[k])
+    assert(s1.holders.len == s2.holders.len)
+    for h in 0 ..< s1.holders.len:
+        assert(s1.holders[h] == s2.holders[h])
+        assert(h == s1.reverseLookup(s1.holders[h]))
+        assert(s1[h] == s2[h])
 
 #Compare two Epochs to make sure they have the same value.
+discard """
 proc compare*(
     e1Arg: Epochs,
     e2Arg: Epochs
@@ -155,3 +134,4 @@ proc compare*(
 
         assert(p1.records.len == p2.records.len)
         compare(p1.records, p2.records)
+"""
