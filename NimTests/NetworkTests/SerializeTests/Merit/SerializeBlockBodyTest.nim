@@ -9,11 +9,10 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
+#Element lib.
+import ../../../../src/Database/Consensus/Element
 
-#Miners and BlockBody objects.
-import ../../../../src/Database/Merit/objects/MinersObj
+#BlockBody object.
 import ../../../../src/Database/Merit/objects/BlockBodyObj
 
 #Serialize libs.
@@ -33,14 +32,10 @@ proc test*() =
     var
         #Hash.
         hash: Hash[384]
-        #Records.
-        records: seq[MeritHolderRecord]
-        #Miners.
-        miners: seq[Miner]
-        #Remaining amount of Merit.
-        remaining: int = 100
-        #Amount to pay this miner.
-        amount: int
+        #Transactions.
+        transactions: seq[Hash[384]] = @[]
+        #Elements.
+        elements: seq[Element] = @[]
         #Block Body.
         body: BlockBody
         #Reloaded Block Body.
@@ -48,46 +43,19 @@ proc test*() =
 
     #Test 255 serializations.
     for s in 0 .. 255:
-        #Randomize the records.
-        records = @[]
-        for _ in 0 ..< s:
+        #Randomize the transactions.
+        for _ in 0 ..< rand(300):
             for b in 0 ..< 48:
                 hash.data[b] = uint8(rand(255))
+            transactions.add(hash)
 
-            records.add(
-                newMeritHolderRecord(
-                    newMinerWallet().publicKey,
-                    rand(high(int32)),
-                    hash
-                )
-            )
+        #Randomize the elements.
 
-        #Randomize the miners.
-        miners = newSeq[Miner](rand(99) + 1)
-        remaining = 100
-        for m in 0 ..< miners.len:
-            #Set the amount to pay the miner.
-            amount = rand(remaining - 1) + 1
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (miners.len - m):
-                amount = 1
-            #But if this is the last account...
-            if m == miners.len - 1:
-                amount = remaining
-
-            #Set the Miner.
-            miners[m] = newMinerObj(
-                newMinerWallet().publicKey,
-                amount
-            )
-
-            #Subtract the amount from remaining.
-            remaining -= amount
-
-        #Create the BlockBody.
+        #Create the BlockBody with a randomized aggregate signature.
         body = newBlockBodyObj(
-            records,
-            newMinersObj(miners)
+            transactions,
+            elements,
+            newMinerWallet().sign($rand(4096))
         )
 
         #Serialize it and parse it back.

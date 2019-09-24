@@ -92,7 +92,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 - miner is a valid BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
 - time must be greater than the current Block’s time.
 - time must be less than 2 minutes into the future.
-- hash must beat the current difficulty.
+- hash must not be less than the current difficulty.
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 

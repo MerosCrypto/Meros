@@ -27,10 +27,6 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Block Header.
-        header: BlockHeader
-        #Reloaded Block Header.
-        reloaded: BlockHeader
         #Last Block's Hash.
         last: ArgonHash
         #Contents Hash.
@@ -39,6 +35,10 @@ proc test*() =
         verifiers: Hash[384]
         #Miner.
         miner: MinerWallet
+        #Block Header.
+        header: BlockHeader
+        #Reloaded Block Header.
+        reloaded: BlockHeader
 
     #Test 255 serializations.
     for r in 0 .. 255:

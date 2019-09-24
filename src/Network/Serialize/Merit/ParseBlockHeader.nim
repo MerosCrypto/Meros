@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -71,4 +68,12 @@ proc parseBlockHeader*(
         fcRaise e
     except BLSError as e:
         fcRaise e
-    hash(result, headerStr.substr(0, headerStr.len - (INT_LEN + BLS_SIGNATURE_LEN + 1)))
+    hash(
+        result,
+        headerStr[0 ..< (
+                BLOCK_HEADER_LENS[0] +
+                (if headerSeq[4] == "\0": INT_LEN else: BLS_PUBLIC_KEY_LEN) +
+                INT_LEN
+            )
+        ]
+    )

@@ -1,131 +1,96 @@
 #Serialize Block Test.
 
+#Serialize BlockHeader Test.
+
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
+#Hash and Merkle libs.
 import ../../../../src/lib/Hash
+import ../../../../src/lib/Merkle
 
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
+#Element lib.
+import ../../../../src/Database/Consensus/Element
 
-#Miner object.
-import ../../../../src/Database/Merit/objects/MinersObj
-
-#BlockHeader and Block libs.
-import ../../../../src/Database/Merit/BlockHeader
+#Block lib.
 import ../../../../src/Database/Merit/Block
 
 #Serialize lib.
 import ../../../../src/Network/Serialize/Merit/SerializeBlock
 import ../../../../src/Network/Serialize/Merit/ParseBlock
 
-#Compare Merit lib.
+#Test and Compare Merit libs.
+import ../../../DatabaseTests/MeritTests/TestMerit
 import ../../../DatabaseTests/MeritTests/CompareMerit
 
 #Random standard lib.
 import random
 
 proc test*() =
-    #Seed random.
+    #Seed Random via the time.
     randomize(int64(getTime()))
 
     var
-        #Last Block's Hash.
-        last: ArgonHash
-        #Miners Hash.
-        minersHash: Blake384Hash
-        #Block Header.
-        header: BlockHeader
         #Hash.
         hash: Hash[384]
-        #Records.
-        records: seq[MeritHolderRecord]
-        #Miners.
-        miners: seq[Miner]
-        #Remaining amount of Merit.
-        remaining: int = 100
-        #Amount to pay this miner.
-        amount: int
-        #Block Body.
-        body: BlockBody
+        #Last hash.
+        last: ArgonHash
+        #Verifiers hash.
+        verifiers: Hash[384]
+        #Transactions.
+        transactions: seq[Hash[384]] = @[]
+        #Elements.
+        elements: seq[Element] = @[]
+        #Contents Merkle tree.
+        contents: Merkle
         #Block.
-        testBlock: Block
+        newBlock: Block
         #Reloaded Block.
         reloaded: Block
 
     #Test 255 serializations.
     for s in 0 .. 255:
-        #Randomize the hashes.
+        #Randomize the last hash and the verifiers hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
-            minersHash.data[b] = uint8(rand(255))
+            verifiers.data[b] = uint8(rand(255))
 
-        #Create the BlockHeaader.
-        header = newBlockHeader(
-            rand(high(int32)),
-            last,
-            newMinerWallet().sign(rand(high(int32)).toBinary()),
-            minersHash,
-            uint32(rand(high(int32))),
-            uint32(rand(high(int32)))
-        )
-
-        #Randomize the records.
-        records = @[]
-        for _ in 0 ..< s:
+        #Randomize the transactions.
+        for _ in 0 ..< rand(300):
             for b in 0 ..< 48:
                 hash.data[b] = uint8(rand(255))
+            transactions.add(hash)
 
-            records.add(
-                newMeritHolderRecord(
-                    newMinerWallet().publicKey,
-                    rand(high(int32)),
-                    hash
-                )
-            )
+        #Randomize the elements.
 
-        #Randomize the miners.
-        miners = newSeq[Miner](rand(99) + 1)
-        remaining = 100
-        for m in 0 ..< miners.len:
-            #Set the amount to pay the miner.
-            amount = rand(remaining - 1) + 1
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (miners.len - m):
-                amount = 1
-            #But if this is the last account...
-            if m == miners.len - 1:
-                amount = remaining
+        #Create the contents merkle.
+        contents = newMerkle(transactions)
+        for elem in elements:
+            discard
 
-            #Set the Miner.
-            miners[m] = newMinerObj(
-                newMinerWallet().publicKey,
-                amount
-            )
-
-            #Subtract the amount from remaining.
-            remaining -= amount
-
-        #Create the BlockBody.
-        body = newBlockBodyObj(
-            records,
-            newMinersObj(miners)
+        newBlock = newBlankBlock(
+            uint32(rand(4096)),
+            last,
+            contents.hash,
+            verifiers,
+            newMinerWallet(),
+            transactions,
+            elements,
+            newMinerWallet().sign($rand(4096)),
+            uint32(rand(high(int32))),
+            uint32(rand(high(int(32))))
         )
 
-        #Create the Block.
-        testBlock = newBlockObj(header, body)
-
         #Serialize it and parse it back.
-        reloaded = testBlock.serialize().parseBlock()
+        reloaded = newBlock.serialize().parseBlock()
 
         #Test the serialized versions.
-        assert(testBlock.serialize() == reloaded.serialize())
+        assert(newBlock.serialize() == reloaded.serialize())
 
-        #Compare the Blocks.
-        compare(testBlock, reloaded)
+        #Compare the BlockBodies.
+        compare(newBlock, reloaded)
 
     echo "Finished the Network/Serialize/Merit/Block Test."

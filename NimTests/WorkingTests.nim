@@ -4,7 +4,7 @@ import objectsTests
 import libTests
 import WalletTests
 
-import NetworkTests/SerializeTests/Merit/SerializeBlockHeaderTest
+import NetworkTests/SerializeTests/SerializeMeritTests
 
 #Locks standard lib.
 import locks
@@ -22,7 +22,7 @@ objectsTests.addTests(tests)
 libTests.addTests(tests)
 WalletTests.addTests(tests)
 
-tests.add(SerializeBlockHeaderTest.test)
+SerializeMeritTests.addTests(tests)
 
 proc grabTest(): int =
     {.gcsafe.}:

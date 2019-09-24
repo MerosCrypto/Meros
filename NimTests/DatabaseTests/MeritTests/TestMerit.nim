@@ -6,14 +6,14 @@ import ../../../src/lib/Util
 #Hash lib.
 import ../../../src/lib/Hash
 
-#MinerWallet lib (for BLSSignature).
+#MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../src/Database/common/objects/MeritHolderRecordObj
+#Element lib.
+import ../../../src/Database/Consensus/Element
 
-#Merit lib.
-import ../../../src/Database/Merit/Merit
+#Block lib.
+import ../../../src/Database/Merit/Block
 
 #Test Database lib.
 import ../TestDatabase
@@ -21,25 +21,26 @@ export TestDatabase
 
 #Create a Block, with every setting optional.
 proc newBlankBlock*(
-    nonce: Natural = 0,
-    last: ArgonHash = "".pad(48).toArgonHash(),
+    version: uint32 = 0,
+    last: ArgonHash = ArgonHash(),
+    contents: Hash[384] = Hash[384](),
+    verifiers: Hash[384] = Hash[384](),
+    miner: MinerWallet = newMinerWallet(),
+    transactions: seq[Hash[384]] = @[],
+    elements: seq[Element] = @[],
     aggregate: BLSSignature = nil,
-    records: seq[MeritHolderRecord] = @[],
-    miners: Miners = newMinersObj(@[
-        newMinerObj(
-            newBLSPrivateKeyFromSeed("TEST").getPublicKey(),
-            100
-        )
-    ]),
     time: uint32 = getTime(),
     proof: uint32 = 0
 ): Block =
-    newBlockObj(
-        nonce,
+    result = newBlockObj(
+        version,
         last,
+        contents,
+        verifiers,
+        miner.publicKey,
+        transactions,
+        elements,
         aggregate,
-        records,
-        miners,
-        time,
-        proof
+        time
     )
+    miner.hash(result.header, proof)

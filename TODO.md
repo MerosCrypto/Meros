@@ -82,6 +82,8 @@ Network:
 - Correct Epochs.
 - Remove the Consensus DAG.
 
+- Test with Elements in SerializeBlockBodyTest/SerializeBlockTest.
+
 ### Nim Tests:
 
 objects:

@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #BlockBody object.
 import ../../../Database/Merit/objects/BlockBodyObj
 
@@ -27,6 +24,7 @@ proc parseBlock*(
     var
         header: BlockHeader
         body: BlockBody
+
     try:
         header = blockStr.parseBlockHeader()
         body = blockStr.substr(

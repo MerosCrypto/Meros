@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -35,13 +32,6 @@ func serializeHash*(
 func serialize*(
     header: BlockHeader
 ): string {.forceCheck: [].} =
-    header.version.toBinary().pad(INT_LEN) &
-    header.last.toString() &
-    header.contents.toString() &
-    header.verifiers.toString() &
-    (
-        if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary().pad(INT_LEN)
-    ) &
-    header.time.toBinary().pad(INT_LEN) &
+    header.serializeHash() &
     header.proof.toBinary().pad(INT_LEN) &
     header.signature.toString()

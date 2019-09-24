@@ -3,6 +3,7 @@ import ../../lib/Errors
 
 #Util lib.
 import ../../lib/Util
+export Util
 
 #Lengths of various data types and messages.
 const

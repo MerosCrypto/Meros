@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
