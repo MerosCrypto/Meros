@@ -1,6 +1,8 @@
 # Consensus
 
-This document defines and describes Consensus Elements, which come in the forms of Verifications, Merit Removals, Difficulty Updates, and Gas Price sets. Every Element has a creator, which is the 4-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message (or a group of Verifications via a `SignedVerificationPacket`), node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasPrice` exists only to give miners other than the sender the ability to archive the Element as well.
+This document defines and describes Consensus Elements, which come in the forms of Verifications, Merit Removals, Difficulty Updates, and Gas Price sets. Every Element has a creator, which is the 4-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message (or a group of Verifications via a `SignedVerificationPacket`), node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasPrice` exists solely to give miners other than the sender the ability to archive the Element as well
+
+Elements do not have hashes, so their signatures are produced by signing their serialization, without the holder, and with a prefix unique to each type of Element.
 
 ### Verification
 
@@ -88,6 +90,7 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 ### Violations in Meros
 
 - Meros uses a Block Lattice instead of referencing VerificationPackets in Blocks and directly placing non-Verification Elements in Blocks.
+- Meros produces Element signatures with serializations that include the holder.
 - Meros doesn't support defaulting.
 - Meros doesn't support `VerificationPacket`.
 - Meros doesn't support `SendDifficulty` or `SignedSendDifficulty`.
