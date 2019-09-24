@@ -1,11 +1,11 @@
 #Errors lib.
-import ../../lib/Errors
+import Errors
 
 #Util lib.
-import ../../lib/Util
+import Util
 
 #Hash lib.
-import ../../lib/Hash
+import Hash
 
 #Math lib
 import math

@@ -7,6 +7,10 @@ import ../../../../../lib/Hash
 #MinerWallet lib.
 import ../../../../../Wallet/MinerWallet
 
+#Verification and MeritRemovals objects.
+import ../../../../Consensus/objects/VerificationObj
+import ../../../../Consensus/objects/MeritRemovalObj
+
 #Element lib.
 import ../../../../Consensus/Element
 

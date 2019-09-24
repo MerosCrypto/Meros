@@ -72,13 +72,13 @@ proc commit*(
 
     var removals: string = ""
     try:
-        for key in db.merit.removals.keys():
-            removals &= key & db.merit.removals[key].toBinary().pad(INT_LEN)
+        for nick in db.merit.removals.keys():
+            removals &= nick.toBinary().pad(INT_LEN) & db.merit.removals[nick].toBinary().pad(INT_LEN)
     except KeyError as e:
         doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
     if removals != "":
         items.add((key: "removals" & blockNum.toBinary(), value: removals))
-        db.merit.removals = initTable[string, int]()
+        db.merit.removals = initTable[int, int]()
 
     try:
         db.lmdb.put("merit", items)
@@ -88,23 +88,31 @@ proc commit*(
     db.merit.cache = initTable[string, string]()
 
 #Save functions.
-proc save*(
+proc saveHeight*(
     db: DB,
-    difficulty: Difficulty
+    height: int
 ) {.forceCheck: [].} =
-    db.put("difficulty", difficulty.serialize())
-
-proc save*(
-    db: DB,
-    blockArg: Block
-) {.forceCheck: [].} =
-    db.put(blockArg.hash.toString(), blockArg.serialize())
+    db.put("height", height.toBinary())
 
 proc saveTip*(
     db: DB,
     hash: Hash[384]
 ) {.forceCheck: [].} =
     db.put("tip", hash.toString())
+
+proc save*(
+    db: DB,
+    nonce: int,
+    blockArg: Block
+) {.forceCheck: [].} =
+    db.put(blockArg.hash.toString(), blockArg.serialize())
+    db.put("n" & nonce.toBinary(), blockArg.serialize())
+
+proc save*(
+    db: DB,
+    difficulty: Difficulty
+) {.forceCheck: [].} =
+    db.put("difficulty", difficulty.serialize())
 
 proc saveLive*(
     db: DB,
@@ -113,45 +121,57 @@ proc saveLive*(
 ) {.forceCheck: [].} =
     db.put("merit" & blockNum.toBinary(), merit.toBinary())
 
-proc save*(
+proc saveHolder*(
     db: DB,
-    holderKey: BLSPublicKey,
+    key: BLSPublicKey
+) {.forceCheck: [].} =
+    db.put(key.toString() & "nick", (db.merit.holders.len div 48).toBinary())
+    db.merit.holders = db.merit.holders & key.toString()
+    db.put("holders", db.merit.holders)
+
+proc saveMerit*(
+    db: DB,
+    nick: int,
     merit: int
 ) {.forceCheck: [].} =
-    var holder: string = holderKey.toString()
-    if not db.merit.holders.hasKey(holder):
-        db.merit.holders[holder] = true
-        db.merit.holdersStr &= holder
-        db.put("holders", db.merit.holdersStr)
-
-    db.put(holder, merit.toBinary())
+    db.put("h" & nick.toBinary(), merit.toBinary())
 
 proc remove*(
     db: DB,
-    holderKey: BLSPublicKey,
+    nick: int,
     merit: int,
     blockNum: int
 ) {.forceCheck: [].} =
-    var holder: string = holderKey.toString()
-    db.merit.removals[holder] = merit
+    db.merit.removals[nick] = merit
 
-    #The following (individual holder's removals) hould be loaded on boot and then kept in RAM, for every holder.
-    var holderRemovals: string
+    var
+        nickStr: string = nick.toBinary().pad(1)
+        removals: string
     try:
-        holderRemovals = db.get(holder & "removals")
+        removals = db.get(nickStr & "removals")
     except DBReadError:
-        holderRemovals = ""
+        removals = ""
 
-    db.put(holder & "removals", holderRemovals & blockNum.toBinary().pad(4))
+    db.put(nickStr & "removals", removals & blockNum.toBinary().pad(4))
 
 #Load functions.
-proc loadDifficulty*(
+proc loadHeight*(
     db: DB
-): Difficulty {.forceCheck: [
+): int {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get("difficulty").parseDifficulty()
+        result = db.get("height").fromBinary()
+    except Exception as e:
+        raise newException(DBReadError, e.msg)
+
+proc loadTip*(
+    db: DB
+): Hash[384] {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get("tip").toHash(384)
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -162,7 +182,7 @@ proc loadBlockHeader*(
     DBReadError
 ].} =
     try:
-        result = db.get(hash.toString()).substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
+        result = db.get(hash.toString()).parseBlockHeader()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -177,13 +197,24 @@ proc loadBlock*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc loadTip*(
-    db: DB
-): Hash[384] {.forceCheck: [
+proc loadBlock*(
+    db: DB,
+    nonce: int
+): Block {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get("tip").toHash(384)
+        result = db.get(db.get("n" & nonce.toBinary())).parseBlock()
+    except Exception as e:
+        raise newException(DBReadError, e.msg)
+
+proc loadDifficulty*(
+    db: DB
+): Difficulty {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get("difficulty").parseDifficulty()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -202,59 +233,80 @@ proc loadHolders*(
     db: DB
 ): seq[BLSPublicKey] {.forceCheck: [].} =
     try:
-        db.merit.holdersStr = db.get("holders")
+        db.merit.holders = db.get("holders")
     except DBReadError:
         return @[]
 
-    result = newSeq[BLSPublicKey](db.merit.holdersStr.len div 48)
-    for i in countup(0, db.merit.holdersStr.len - 1, 48):
+    result = newSeq[BLSPublicKey](db.merit.holders.len div 48)
+    for i in countup(0, db.merit.holders.len - 1, 48):
         try:
-            result[i div 48] = newBLSPublicKey(db.merit.holdersStr[i ..< i + 48])
+            result[i div 48] = newBLSPublicKey(db.merit.holders[i ..< i + 48])
         except BLSError as e:
             doAssert(false, "Couldn't load a holder's BLS Public Key: " & e.msg)
-        db.merit.holders[db.merit.holdersStr[i ..< i + 48]] = true
 
 proc loadMerit*(
     db: DB,
-    holder: BLSPublicKey
+    nick: int
 ): int {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(holder.toString()).fromBinary()
+        result = db.get("h" & nick.toBinary()).fromBinary()
     except DBReadError as e:
         fcRaise e
 
-proc loadRemovals*(
+proc loadBlockRemovals*(
     db: DB,
     blockNum: int
-): seq[tuple[key: BLSPublicKey, merit: int]] {.forceCheck: [].} =
+): seq[tuple[nick: int, merit: int]] {.forceCheck: [].} =
     var removals: string
     try:
-        removals = db.get("removals" & blockNum.toBinary())
+        removals = db.get("removals" & blockNum.toBinary().pad(1))
     except DBReadError:
         return @[]
 
-    for i in countup(0, removals.len - 1, 52):
+    for i in countup(0, removals.len - 1, 8):
         try:
             result.add(
                 (
-                    key: newBLSPublicKey(removals[i * 52 ..< (i * 52) + 48]),
-                    merit: removals[(i * 52) + 48 ..< (i * 52) + 52].fromBinary()
+                    nick: removals[i * 8 ..< (i * 8) + 4].fromBinary(),
+                    merit: removals[(i * 8) + 4 ..< (i * 8) + 8].fromBinary()
                 )
             )
         except BLSError as e:
             doAssert(false, "Saved an invalid BLS key to the Database: " & e.msg)
 
-proc loadRemovals*(
+proc loadHolderRemovals*(
     db: DB,
-    holder: BLSPublicKey
+    nick: int
 ): seq[int] {.forceCheck: [].} =
     var removals: string
     try:
-        removals = db.get(holder.toString() & "removals")
+        removals = db.get(nick.toBinary().pad(1) & "removals")
     except DBReadError:
         return @[]
 
     for i in countup(0, removals.len - 1, 4):
         result.add(removals[i ..< i + 4].fromBinary())
+
+proc loadNickname*(
+    db: DB,
+    key: BLSPublicKey
+): int {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get(key.toString() & "nick").fromBinary()
+    except DBReadError as e:
+        fcRaise e
+
+#Check if a Block exists.
+proc hasBlock*(
+    db: DB,
+    hash: Hash[384]
+): bool {.forceCheck: [].} =
+    try:
+        discard db.get(hash.toString())
+        return true
+    except DBReadError:
+        return false

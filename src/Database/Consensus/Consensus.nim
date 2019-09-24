@@ -14,7 +14,7 @@ import ../../objects/GlobalFunctionBoxObj
 import ../Filesystem/DB/ConsensusDB
 
 #Merkle lib.
-import ../common/Merkle
+import ../../lib/Merkle
 
 #ConsensusIndex and MeritHolderRecord objects.
 import ../common/objects/ConsensusIndexObj

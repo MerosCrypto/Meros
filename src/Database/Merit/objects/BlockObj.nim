@@ -1,11 +1,17 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Util lib.
+import ../../../lib/Util
+
 #Hash lib.
 import ../../../lib/Hash
 
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
+
+#Element lib.
+import ../../Consensus/Element
 
 #Block Header lib.
 import ../BlockHeader
@@ -27,11 +33,42 @@ type Block* = object
 
 #Constructor.
 func newBlockObj*(
-    version: int,
+    version: uint32,
     last: ArgonHash,
     contents: Hash[384],
     verifiers: Hash[384],
     miner: BLSPublicKey,
+    transactions: seq[Hash[384]],
+    elements: seq[Element],
+    aggregate: BLSSignature,
+    time: uint32 = getTime(),
+    proof: uint32 = 0,
+    signature: BLSSignature = nil
+): Block {.inline, forceCheck: [].} =
+    Block(
+        header: newBlockHeader(
+            version,
+            last,
+            contents,
+            verifiers,
+            miner,
+            time,
+            proof,
+            signature
+        ),
+        body: newBlockBodyObj(
+            transactions,
+            elements,
+            aggregate
+        )
+    )
+
+func newBlockObj*(
+    version: uint32,
+    last: ArgonHash,
+    contents: Hash[384],
+    verifiers: Hash[384],
+    miner: int,
     transactions: seq[Hash[384]],
     elements: seq[Element],
     aggregate: BLSSignature,
@@ -66,13 +103,8 @@ func newBlockObj*(
         body: body
     )
 
-#Converters to either the header or body.
-converter toHeader*(
+#Hash getter.
+proc hash*(
     blockArg: Block
-): BlockHeader {.inline, forceCheck: [].} =
-    blockArg.header
-
-converter toBody*(
-    blockArg: Block
-): BlockBody {.inline, forceCheck: [].} =
-    blockArg.body
+): Hash[384] {.inline, forceCheck: [].} =
+    blockArg.header.hash

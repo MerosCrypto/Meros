@@ -25,7 +25,7 @@ method serialize*(
     verif: Verification
 ): string {.forceCheck: [].} =
     result =
-        verif.holder.toString() &
+        verif.holder.toBinary() &
         verif.nonce.toBinary().pad(INT_LEN) &
         verif.hash.toString()
 

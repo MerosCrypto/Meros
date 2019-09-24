@@ -8,7 +8,7 @@ import ../../lib/Hash
 import ../../Wallet/MinerWallet
 
 #Merkle lib.
-import ../common/Merkle
+import ../../lib.Merkle
 
 #Element libs.
 import Verification

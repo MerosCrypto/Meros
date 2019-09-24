@@ -10,11 +10,16 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Element lib and TransactionStatus object.
+#Element lib.
 import ../../Consensus/Element
+
+#MeritRemoval and TransactionStatus objects.
+import ../../Consensus/objects/MeritRemovalObj
 import ../../Consensus/objects/TransactionStatusObj
 
-#Serialize/parse libs.
+#Serialization libs.
+import ../../../Network/Serialize/SerializeCommon
+
 import Serialize/Consensus/DBSerializeElement
 import Serialize/Consensus/SerializeTransactionStatus
 import Serialize/Consensus/DBParseElement
@@ -118,7 +123,7 @@ proc save*(
     db: DB,
     elem: Element
 ) {.forceCheck: [].} =
-    db.put(elem.holder.toString() & elem.nonce.toBinary().pad(1), elem.serialize())
+    db.put(elem.holder.toBinary().pad(INT_LEN) & elem.nonce.toBinary().pad(1), elem.serialize())
 
 proc save*(
     db: DB,
@@ -171,13 +176,13 @@ proc loadOutOfEpochs*(
 
 proc load*(
     db: DB,
-    holder: BLSPublicKey,
+    nick: int,
     nonce: int
 ): Element {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(holder.toString() & nonce.toBinary().pad(1)).parseElement(holder, nonce)
+        result = db.get(nick.toBinary().pad(4) & nonce.toBinary().pad(1)).parseElement(nick, nonce)
     except Exception as e:
         raise newException(DBReadError, e.msg)
 

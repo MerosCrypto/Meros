@@ -26,7 +26,7 @@ const
     VERIFICATION_LEN*:        int = BLS_PUBLIC_KEY_LEN + INT_LEN + HASH_LEN
     SIGNED_VERIFICATION_LEN*: int = BLS_PUBLIC_KEY_LEN + INT_LEN + HASH_LEN + BLS_SIGNATURE_LEN
 
-    MERIT_REMOVAL_LENS*: seq[int] = @[
+    MERIT_REMOVAL_LENS*: array[5, int] = [
         BLS_PUBLIC_KEY_LEN + BYTE_LEN + BYTE_LEN,
         0,
         BYTE_LEN,
@@ -37,15 +37,19 @@ const
     DIFFICULTY_LEN*:          int = INT_LEN + INT_LEN + HASH_LEN
     MINER_LEN*:               int = BLS_PUBLIC_KEY_LEN + BYTE_LEN
     MERIT_HOLDER_RECORD_LEN*: int = BLS_PUBLIC_KEY_LEN + INT_LEN + HASH_LEN
-    BLOCK_HEADER_LEN*:        int = INT_LEN + HASH_LEN + BLS_SIGNATURE_LEN + HASH_LEN + INT_LEN + INT_LEN
+    BLOCK_HEADER_LENS*:        array[3, int] = [
+        INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN,
+        0,
+        INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
+    ]
 
-    CLAIM_LENS*: seq[int] = @[
+    CLAIM_LENS*: array[3, int] = [
         BYTE_LEN,
         HASH_LEN,
         ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN
     ]
 
-    SEND_LENS*: seq[int] = @[
+    SEND_LENS*: array[5, int] = [
         BYTE_LEN,
         HASH_LEN + BYTE_LEN,
         BYTE_LEN,
@@ -53,8 +57,11 @@ const
         ED_SIGNATURE_LEN + INT_LEN
     ]
 
-    DATA_PREFIX_LEN*: int = HASH_LEN + BYTE_LEN
-    DATA_SUFFIX_LEN*: int = ED_SIGNATURE_LEN + INT_LEN
+    DATA_LENS*: array[3, int] = [
+        HASH_LEN + BYTE_LEN,
+        0,
+        ED_SIGNATURE_LEN + INT_LEN
+    ]
 
 #Deseralizes a string by getting the length of the next set of bytes, slicing that out, and moving on.
 func deserialize*(

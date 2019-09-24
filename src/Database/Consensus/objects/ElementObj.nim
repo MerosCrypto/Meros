@@ -11,7 +11,7 @@ import mc_bls
 finalsd:
     type
         Element* = ref object of RootObj
-            #Public key of owner
-            holder* {.final.}: PublicKey
-            #Nonce
+            #Owner's nickname.
+            holder* {.final.}: int
+            #Nonce.
             nonce* {.final.}: int

@@ -8,7 +8,7 @@ import ../../../lib/Util
 import ../../../lib/Hash
 
 #Merkle lib.
-import ../../../Database/common/Merkle
+import ../../../lib/Merkle
 
 #MinerWallet lib (for BLSSignature's toString).
 import ../../../Wallet/MinerWallet
@@ -23,20 +23,25 @@ import ../SerializeCommon
 func serializeHash*(
     header: BlockHeader
 ): string {.forceCheck: [].} =
-    result =
-        header.nonce.toBinary().pad(INT_LEN) &
-        header.last.toString() &
-        header.aggregate.toString() &
-        header.miners.toString() &
-        header.time.toBinary().pad(INT_LEN)
+    header.version.toBinary().pad(INT_LEN) &
+    header.last.toString() &
+    header.contents.toString() &
+    header.verifiers.toString() &
+    (
+        if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary().pad(INT_LEN)
+    ) &
+    header.time.toBinary().pad(INT_LEN)
 
 func serialize*(
     header: BlockHeader
 ): string {.forceCheck: [].} =
-    result =
-        header.nonce.toBinary().pad(INT_LEN) &
-        header.last.toString() &
-        header.aggregate.toString() &
-        header.miners.toString() &
-        header.time.toBinary().pad(INT_LEN) &
-        header.proof.toBinary().pad(INT_LEN)
+    header.version.toBinary().pad(INT_LEN) &
+    header.last.toString() &
+    header.contents.toString() &
+    header.verifiers.toString() &
+    (
+        if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary().pad(INT_LEN)
+    ) &
+    header.time.toBinary().pad(INT_LEN) &
+    header.proof.toBinary().pad(INT_LEN) &
+    header.signature.toString()

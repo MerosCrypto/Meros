@@ -7,8 +7,8 @@ import ../../../../../lib/Hash
 #MinerWallet lib.
 import ../../../../../Wallet/MinerWallet
 
-#Element lib.
-import ../../../../Consensus/Element
+#Verification object.
+import ../../../../Consensus/objects/VerificationObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
@@ -18,7 +18,7 @@ import ../../../../../Network/Serialize/Consensus/ParseMeritRemoval
 
 proc parseElement*(
     elem: string,
-    key: BLSPublicKey,
+    nick: int,
     nonce: int
 ): Element {.forceCheck: [
     ValueError,
@@ -30,7 +30,7 @@ proc parseElement*(
                 result = newVerificationObj(
                     elem[1 ..< elem.len].toHash(384)
                 )
-                result.holder = key
+                result.holder = nick
                 result.nonce = nonce
 
             of MERIT_REMOVAL_PREFIX:

@@ -4,11 +4,7 @@ import ../../../lib/Errors
 #Util lib.
 import ../../../lib/Util
 
-#MeritHolderRecord object.
-import ../../../Database/common/objects/MeritHolderRecordObj
-
-#Miners and BlockBody objects.
-import ../../../Database/Merit/objects/MinersObj
+#BlockBody object.
 import ../../../Database/Merit/objects/BlockBodyObj
 
 #BlockHeader and Block libs.
@@ -32,8 +28,10 @@ proc parseBlock*(
         header: BlockHeader
         body: BlockBody
     try:
-        header = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
-        body = blockStr.substr(BLOCK_HEADER_LEN).parseBlockBody()
+        header = blockStr.parseBlockHeader()
+        body = blockStr.substr(
+            BLOCK_HEADER_LENS[0] + BLOCK_HEADER_LENS[2] + (if header.newMiner: BLS_PUBLIC_KEY_LEN else: INT_LEN)
+        ).parseBlockBody()
     except ValueError as e:
         fcRaise e
     except BLSError as e:

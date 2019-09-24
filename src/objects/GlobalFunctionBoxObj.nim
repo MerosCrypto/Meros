@@ -15,9 +15,6 @@ import ../lib/Hash
 import ../Wallet/MinerWallet
 import ../Wallet/Wallet
 
-#MeritHolderRecord object.
-import ../Database/common/objects/MeritHolderRecordObj
-
 #Element lib and TransactionStatus object.
 import ../Database/Consensus/objects/TransactionStatusObj
 import ../Database/Consensus/Element
@@ -106,11 +103,6 @@ type
             IndexError
         ].}
 
-        getUnarchivedRecords*: proc (): tuple[
-            records: seq[MeritHolderRecord],
-            aggregate: BLSSignature
-        ] {.raises: [].}
-
         getStatus*: proc (
             hash: Hash[384]
         ): TransactionStatus {.raises: [
@@ -121,20 +113,7 @@ type
             epoch: int
         ): int {.inline, raises: [].}
 
-        addVerification*: proc (
-            verif: Verification
-        ) {.raises: [
-            ValueError
-        ].}
-
-        addSignedVerification*: proc (
-            verif: SignedVerification
-        ) {.raises: [
-            ValueError,
-            GapError,
-            DataExists
-        ].}
-
+        #[
         addMeritRemoval*: proc (
             mr: MeritRemoval
         ) {.raises: [
@@ -146,6 +125,7 @@ type
         ) {.raises: [
             ValueError
         ].}
+        ]#
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}

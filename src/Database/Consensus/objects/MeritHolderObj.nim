@@ -14,7 +14,7 @@ import ../../../Wallet/MinerWallet
 import ../../Filesystem/DB/ConsensusDB
 
 #Merkle lib.
-import ../../common/Merkle
+import ../../../lib.Merkle
 
 #Element lin.
 import ../Element as ElementFile

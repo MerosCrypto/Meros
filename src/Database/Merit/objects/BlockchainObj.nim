@@ -73,7 +73,11 @@ proc newBlockchainObj*(
     result.ffinalizeStartDifficulty()
 
     #Craft the genesis.
-    var genesis: ArgonHash = genesis.pad(48).toArgonHash()
+    var genesis: ArgonHash
+    try:
+        genesis = genesisArg.pad(48).toArgonHash()
+    except ValueError as e:
+        doAssert(false, "Couldn't convert the genesis toa hash, despite being padded to 48 bytes: " & e.msg)
 
     #Grab the height and tip from the DB.
     var tip: Hash[384]
@@ -91,6 +95,7 @@ proc newBlockchainObj*(
         var genesisBlock: Block
         try:
             genesisBlock = newBlockObj(
+                0,
                 genesis,
                 Hash[384](),
                 Hash[384](),
@@ -110,20 +115,21 @@ proc newBlockchainObj*(
         #Save the height, tip, the Genesis Block, and the starting Difficulty.
         result.db.saveHeight(result.height)
         result.db.saveTip(tip)
-        result.db.save(genesisBlock)
+        result.db.save(0, genesisBlock)
         result.db.save(result.difficulty)
 
     #Load the last 10 Blocks.
-    var last: BlockHeader
+    var last: Block
     for i in 0 ..< 10:
         try:
-            last = result.db.loadBlockHeader(tip)
+            last = result.db.loadBlock(tip)
+            result.blocks.prepend(last)
         except DBReadError as e:
-            doAssert(false, "Couldn't load a Block Header from the Database: " & e.msg)
-        blockchain.blocks.prepend(result.db.loadBlock(last))
+            doAssert(false, "Couldn't load a Block from the Database: " & e.msg)
 
-        if last.last == genesis:
+        if last.header.last == genesis:
             break
+        tip = last.hash
 
     #Load the Difficulty.
     try:
@@ -137,9 +143,9 @@ proc add*(
     newBlock: Block
 ) {.forceCheck: [].} =
     #Add the Block to the cache.
-    blockchain.blocks.add(newBlock)
+    blockchain.blocks.append(newBlock)
     #Delete the Block we're no longer caching.
-    if blockchain.blocks.len > 10:
+    if blockchain.height > 10:
         blockchain.blocks.remove(blockchain.blocks.head)
 
     #Save the Block to the database.
@@ -148,7 +154,14 @@ proc add*(
 
     #Update the height.
     inc(blockchain.height)
-    result.db.saveHeight(blockchain.height)
+    blockchain.db.saveHeight(blockchain.height)
+
+#Check if a Block exists.
+proc hasBlock*(
+    blockchain: Blockchain,
+    hash: Hash[384]
+): bool {.forceCheck: [].} =
+    blockchain.db.hasBlock(hash)
 
 #Block getters.
 proc `[]`*(
@@ -160,14 +173,14 @@ proc `[]`*(
     if nonce >= blockchain.height:
         raise newException(IndexError, "Specified nonce is greater than the Blockchain height.")
     elif nonce >= blockchain.height - 10:
-        var res: DoublyLinkedListNode = blockchain.blocks.head
+        var res: DoublyLinkedNode[Block] = blockchain.blocks.head
         for _ in 0 ..< nonce - (blockchain.height - 10):
             res = res.next
         result = res.value
     else:
         try:
             result = blockchain.db.loadBlock(nonce)
-        except DBReadError as e:
+        except DBReadError:
             raise newException(IndexError, "Specified hash doesn't match any Block.")
 
 proc `[]`*(
@@ -185,4 +198,4 @@ proc `[]`*(
 func tip*(
     blockchain: Blockchain
 ): Block {.inline, forceCheck: [].} =
-    blockchain.blocks.tail
+    blockchain.blocks.tail.value

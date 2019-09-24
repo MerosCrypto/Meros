@@ -30,7 +30,7 @@ proc parseElement(
 ].} =
     case int(elem[i]):
         of VERIFICATION_PREFIX:
-            result.len = VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
+            result.len = VERIFICATION_LEN - INT_LEN
             if elem.len < result.len + i:
                 raise newException(ValueError, "ParseMeritRemoval's parseElement not handed enough data to get an Element.")
 
@@ -52,15 +52,15 @@ proc parseMeritRemoval*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
+    #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
-            BLS_PUBLIC_KEY_LEN,
+            INT_LEN,
             BYTE_LEN
         )
         partial: bool
 
-        i: int = BLS_PUBLIC_KEY_LEN + BYTE_LEN
+        i: int = INT_LEN + BYTE_LEN
         peResult: tuple[
             element: Element,
             len: int
@@ -110,15 +110,15 @@ proc parseSignedMeritRemoval*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
+    #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
-            BLS_PUBLIC_KEY_LEN,
+            INT_LEN,
             BYTE_LEN
         )
         partial: bool
 
-        i: int = BLS_PUBLIC_KEY_LEN + BYTE_LEN
+        i: int = INT_LEN + BYTE_LEN
         peResult: tuple[
             element: Element,
             len: int

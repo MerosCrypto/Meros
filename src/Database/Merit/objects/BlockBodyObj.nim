@@ -1,6 +1,15 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
+
+#Element lib.
+import ../../Consensus/Element
+
 #BlockBody object.
 type BlockBody* = object
     #List of Transactions which have new/updated Verification Packets.
@@ -8,7 +17,7 @@ type BlockBody* = object
     #Elements included in this Block.
     elements*: seq[Element]
     #Aggregate signature.
-    aggregate: BLSSignature
+    aggregate*: BLSSignature
 
 #Constructor.
 func newBlockBodyObj*(

@@ -18,49 +18,73 @@ export BlockHeaderObj
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
 #Sign and hash the header.
-func hash*(
+proc hash*(
     miner: MinerWallet,
     header: var BlockHeader,
-    proof: int
-) {.forceCheck: [].} =
+    proof: uint32
+) {.forceCheck: [
+    BLSError
+].} =
     header.proof = proof
-    header.hash = Argon(
-        header.serializeHash(),
-        header.proof.toBinary().pad(8)
-    )
-    header.signature = miner.sign(header.hash.toString())
-    header.hash = Argon(header.hash, header.signature.toString())
+    try:
+        miner.hash(header, header.serializeHash(), proof)
+    except BLSError as e:
+        fcRaise e
 
 #Hash the header.
 func hash*(
     header: var BlockHeader
 ) {.forceCheck: [].} =
-    header.hash = Argon(
-        Argon(
-            header.serializeHash(),
-            header.proof.toBinary().pad(8)
-        ),
-        header.signature.toString()
+    #header.hash would be preferred yet it failed to compile. Likely due to the hash field.
+    hash(
+        header,
+        header.serializeHash()
     )
 
 #Constructor.
 func newBlockHeader*(
-    version: int,
+    version: uint32,
     last: ArgonHash,
     contents: Hash[384],
     verifiers: Hash[384],
     miner: BLSPublicKey,
     time: uint32,
-    proof: uint32,
-    signature: BLSSignature
+    proof: uint32 = 0,
+    signature: BLSSignature = nil
 ): BlockHeader {.forceCheck: [].} =
     result = newBlockHeaderObj(
         version,
         last,
-        aggregate,
-        miners,
+        contents,
+        verifiers,
+        miner,
         time,
         proof,
         signature
     )
-    result.hash()
+    if signature != nil:
+        hash(result)
+
+func newBlockHeader*(
+    version: uint32,
+    last: ArgonHash,
+    contents: Hash[384],
+    verifiers: Hash[384],
+    miner: int,
+    time: uint32,
+    proof: uint32 = 0,
+    signature: BLSSignature = nil
+): BlockHeader {.forceCheck: [].} =
+    result = newBlockHeaderObj(
+        version,
+        last,
+        contents,
+        verifiers,
+        miner,
+        time,
+        proof,
+        signature
+    )
+    hash(result)
+    if signature != nil:
+        hash(result)

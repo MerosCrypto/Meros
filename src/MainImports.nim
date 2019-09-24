@@ -8,7 +8,7 @@ import lib/Util
 import lib/Hash
 
 #Merkle lib.
-import Database/common/Merkle
+import lib/common/Merkle
 
 #Wallet libs.
 import Wallet/MinerWallet

@@ -21,13 +21,13 @@ finalsd:
         #End of the period.
         endHeight* {.final.}: int
         #Difficulty to beat.
-        difficulty* {.final.}: StUint[512]
+        difficulty* {.final.}: Hash[384]
 
-#Constructors.
+#Constructor.
 func newDifficultyObj*(
     start: int,
     endHeight: int,
-    difficulty: StUint[512]
+    difficulty: Hash[384]
 ): Difficulty {.forceCheck: [].} =
     result = Difficulty(
         start: start,
@@ -35,21 +35,5 @@ func newDifficultyObj*(
         difficulty: difficulty
     )
     result.ffinalizeStart()
-    result.ffinalizeEndBlock()
+    result.ffinalizeEndHeight()
     result.ffinalizeDifficulty()
-
-func newDifficultyObj*(
-    start: int,
-    endHeight: int,
-    difficulty: Hash[384]
-): Difficulty {.forceCheck: [
-    ValueError
-].} =
-    try:
-        result = newDifficultyObj(
-            start,
-            endHeight,
-            ($difficulty).parse(StUint[512], 16)
-        )
-    except ValueError as e:
-        fcRaise e

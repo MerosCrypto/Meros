@@ -1,20 +1,26 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Util lib.
+import ../../lib/Util
+
 #Hash lib.
 import ../../lib/Hash
+
+#Merkle lib.
+import ../../lib/Merkle
 
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
+#MeritRemoval object.
+import ../Consensus/objects/MeritRemovalObj
+
+#Serialize Element lib.
+import ../../Network/Serialize/Consensus/SerializeElement
+
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
-
-#MeritHolderRecord object.
-import ../common/objects/MeritHolderRecordObj
-
-#Miners object.
-import objects/MinersObj
 
 #Difficulty, Block Header, and Block libs.
 import Difficulty
@@ -92,26 +98,29 @@ proc processBlock*(
 
     #Verify the contents merkle and if there's a MeritRemoval, it's the only Element for that verifier.
     var
-        contents: Merkle = newMerkle(blockArg.transactions)
-        hasMeritRemoval: Table[int, int] = initTable[int, int]()
-    for elem in blockArg.elements:
-        var first: bool = hasMeritRemoval.hasKey(elem.holder)
-        if elem of MeritRemoval:
-            if not first:
+        contents: Merkle = newMerkle(newBlock.body.transactions)
+        hasMeritRemoval: Table[int, bool] = initTable[int, bool]()
+    try:
+        for elem in newBlock.body.elements:
+            var first: bool = hasMeritRemoval.hasKey(elem.holder)
+            if elem of MeritRemoval:
+                if not first:
+                    raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
+                hasMeritRemoval[elem.holder] = true
+            elif (not first) and hasMeritRemoval[elem.holder]:
                 raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
-            hasMeritRemoval[elem.holder] = true
-        elif (not first) and hasMeritRemoval[elem.holder]:
-            raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
-        elif first:
-            hasMeritRemoval[elem.holder] = false
+            elif first:
+                hasMeritRemoval[elem.holder] = false
 
-        contents.add(Blake2b(elem.serializeSign())
-    if contents.hash != blockArg.contents:
+            contents.add(Blake384(elem.serializeSign()))
+    except KeyError as e:
+        doAssert(false, "Couldn't get a key we're guaranteed to have if we access it: " & e.msg)
+    if contents.hash != newBlock.header.contents:
         raise newException(ValueError, "Invalid contents merkle.")
 
     #Make sure every Transaction is unique.
-    var transactions: Table[Hash[384], bool] = initTable[Hash[384]]()
-    for tx in blockArg.transactions:
+    var transactions: Table[Hash[384], bool] = initTable[Hash[384], bool]()
+    for tx in newBlock.body.transactions:
         if transactions.hasKey(tx):
             raise newException(ValueError, "Block has the same Transaction multiple times.")
         transactions[tx] = true

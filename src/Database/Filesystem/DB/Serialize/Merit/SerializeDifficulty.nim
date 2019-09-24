@@ -22,8 +22,5 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     result =
         difficulty.start.toBinary().pad(INT_LEN) &
-        difficulty.endBlock.toBinary().pad(INT_LEN)
-
-    var bytes: array[64, byte] = difficulty.difficulty.toByteArrayBE()
-    for i in 16 ..< bytes.len:
-        result &= char(bytes[i])
+        difficulty.endHeight.toBinary().pad(INT_LEN) &
+        difficulty.difficulty.toString()

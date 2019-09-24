@@ -35,11 +35,13 @@ finalsd:
 
         #Amount of Blocks processed.
         processedBlocks*: int
-        #BLSPublicKey -> Merit
-        holders: Table[BLSPublicKey, int]
 
+        #List of holders. Position on the list is their nickname.
+        holders: seq[BLSPublicKey]
+        #Nickname -> Merit
+        merit: Table[int, int]
         #Removed MeritHolders.
-        removed: Table[BLSPublicKey, int]
+        removed: Table[int, int]
 
 #Constructor.
 proc newStateObj*(
@@ -55,24 +57,24 @@ proc newStateObj*(
         live: 0,
 
         processedBlocks: blockchainHeight,
-        holders: initTable[BLSPublicKey, int](),
 
-        removed: initTable[BLSPublicKey, int]()
+        holders: @[],
+        merit: initTable[int, int](),
+        removed: initTable[int, int]()
     )
     result.ffinalizeDeadBlocks()
 
-    #Load the holders and live Merit from the DB.
-    var holders: seq[BLSPublicKey] = result.db.loadHolders()
+    #Load the amount of Live Merit.
     try:
         result.live = result.db.loadLive(result.processedBlocks)
     except DBReadError:
         discard
 
-    #Handle each holder.
-    for holder in holders:
-        #Load their balance.
+    #Load the holders.
+    result.holders = result.db.loadHolders()
+    for h in 0 ..< result.holders.len:
         try:
-            result.holders[holder] = result.db.loadMerit(holder)
+            result.merit[h] = result.db.loadMerit(h)
         except DBReadError as e:
             doAssert(false, "Couldn't load a holder's Merit: " & e.msg)
 
@@ -81,22 +83,6 @@ proc saveLive*(
     state: State
 ) {.inline, forceCheck: [].} =
     state.db.saveLive(state.processedBlocks - 1, state.live)
-
-#Add a Holder to the State.
-proc add(
-    state: var State,
-    key: BLSPublicKey
-) {.forceCheck: [].} =
-    #Return if they are already in the state.
-    if state.holders.hasKey(key):
-        return
-
-    #Add them to the table.
-    state.holders[key] = 0
-
-    #Only save them if this is new data.
-    if not state.oldData:
-        state.db.save(key, 0)
 
 #Getters.
 #Return the amount of live Merit.
@@ -109,78 +95,100 @@ proc loadLive*(
     state: State,
     blockNum: int
 ): int {.forceCheck: [].} =
+    #If the Block is in the future, return the amount it will be (without Merit Removals).
     if blockNum >= state.processedBlocks:
         result = min(
             ((blockNum - state.processedBlocks) * 100) + state.live,
             state.deadBlocks * 100
         )
+    #Load the amount of live Merit at the specified Block.
     else:
         try:
             result = state.db.loadLive(blockNum)
         except DBReadError:
             doAssert(false, "Couldn't load the live Merit for a Block below the `processedBlocks`.")
 
-#Get an Merit Holder's Merit.
+#Register a new Merit Holder.
+proc newHolder*(
+    state: var State,
+    holder: BLSPublicKey
+): int {.forceCheck: [].} =
+    result = state.holders.len
+    state.holders.add(holder)
+    state.db.saveHolder(holder)
+
+#Get a Merit Holder's Merit.
 proc `[]`*(
     state: var State,
-    key: BLSPublicKey
-): int {.inline, forceCheck: [].} =
-    #Add this holder to the State if they don't exist already.
-    state.add(key)
-
+    nick: int
+): int {.forceCheck: [].} =
     #Return their value.
+    if nick >= state.holders.len:
+        return 0
+
     try:
-        result = state.holders[key]
+        result = state.merit[nick]
     except KeyError as e:
-        doAssert(false, "State threw a KeyError when getting a value, despite calling add before attempting." & e.msg)
+        doAssert(false, "State threw a KeyError when getting a value, despite checking the nick was in bounds: " & e.msg)
 
 #Get the removals from a Block.
-proc loadRemovals*(
+proc loadBlockRemovals*(
     state: State,
     blockNum: int
-): seq[tuple[key: BLSPublicKey, merit: int]] {.inline, forceCheck: [].} =
-    state.db.loadRemovals(blockNum)
+): seq[tuple[nick: int, merit: int]] {.inline, forceCheck: [].} =
+    state.db.loadBlockRemovals(blockNum)
 
 #Get the removals for a holder.
-proc loadRemovals*(
+proc loadHolderRemovals*(
     state: State,
-    holder: BLSPublicKey
+    nick: int
 ): seq[int] {.inline, forceCheck: [].} =
-    state.db.loadRemovals(holder)
+    state.db.loadHolderRemovals(nick)
 
 #Setters.
 proc `[]=`*(
     state: var State,
-    key: BLSPublicKey,
+    nick: int,
     value: int
 ) {.inline, forceCheck: [].} =
-    #Get the previous value (uses the State `[]` so `add` is called).
-    var previous: int = state[key]
+    #Get the current value.
+    var current: int = state[nick]
     #Set their new value.
-    state.holders[key] = value
+    state.merit[nick] = value
     #Update live accrodingly.
-    if value > previous:
-        state.live += value - previous
+    if value > current:
+        state.live += value - current
     else:
-        state.live -= previous - value
+        state.live -= current - value
 
     #Save the updated values.
     if not state.oldData:
-        state.db.save(key, value)
+        state.db.saveMerit(nick, value)
 
 #Remove a MeritHolder's Merit.
 proc removeInternal*(
     state: var State,
-    key: BLSPublicKey,
-    archiving: Block
+    nick: int,
+    nonce: int
 ) {.forceCheck: [].} =
-    state.db.remove(key, state[key], archiving.nonce)
-    state[key] = 0
+    state.db.remove(nick, state[nick], nonce)
+    state[nick] = 0
     state.db.saveLive(state.processedBlocks, state.live)
 
-#Iterator for every holder.
-iterator holders*(
+#Reverse lookup for a key to nickname.
+proc reverseLookup*(
+    state: State,
+    key: BLSPublicKey
+): int {.forceCheck: [
+    IndexError
+].} =
+    try:
+        result = state.db.loadNickname(key)
+    except DBReadError:
+        raise newException(IndexError, $key & " does not have a nickname.")
+
+#Access the holders.
+proc holders*(
     state: State
-): BLSPublicKey {.forceCheck: [].} =
-    for holder in state.holders.keys():
-        yield holder
+): seq[BLSPublicKey] {.forceCheck: [].} =
+    state.holders

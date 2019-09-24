@@ -23,9 +23,9 @@ proc parseVerification*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Nonce | Transaction Hash
+    #Holder's Nickname | Nonce | Transaction Hash
     var verifSeq: seq[string] = verifStr.deserialize(
-        BLS_PUBLIC_KEY_LEN,
+        INT_LEN,
         INT_LEN,
         HASH_LEN
     )
@@ -35,7 +35,7 @@ proc parseVerification*(
         result = newVerificationObj(
             verifSeq[2].toHash(384)
         )
-        result.holder = newBLSPublicKey(verifSeq[0])
+        result.holder = verifSeq[0].fromBinary()
         result.nonce = verifSeq[1].fromBinary()
     except ValueError as e:
         fcRaise e
@@ -51,9 +51,9 @@ proc parseSignedVerification*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Nonce | Transaction Hash | BLS Signature
+    #Holder's Nickname | Nonce | Transaction Hash | BLS Signature
     var verifSeq: seq[string] = verifStr.deserialize(
-        BLS_PUBLIC_KEY_LEN,
+        INT_LEN,
         INT_LEN,
         HASH_LEN,
         BLS_SIGNATURE_LEN
@@ -64,7 +64,7 @@ proc parseSignedVerification*(
         result = newSignedVerificationObj(
             verifSeq[2].toHash(384)
         )
-        result.holder = newBLSPublicKey(verifSeq[0])
+        result.holder = verifSeq[0].fromBinary()
         result.nonce = verifSeq[1].fromBinary()
         result.signature = newBLSSignature(verifSeq[3])
     except ValueError as e:

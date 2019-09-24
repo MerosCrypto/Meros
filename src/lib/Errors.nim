@@ -45,8 +45,8 @@ type
         element*: Element
 
     #Database/Merit Statuses.
-    UncleBlock*  = object of Exception #Used when we test a BlockHeader and it's on an alternative chain.
-    NotInEpochs* = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
+    NotConnected* = object of Exception #Used when we test a BlockHeader we don't already have and it has a last which doesn't match our tip.
+    NotInEpochs*  = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Network Errors.
     SocketError*         = object of Exception #Used when a Socket fails.
