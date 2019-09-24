@@ -56,7 +56,11 @@ proc testBlockHeader*(
     ValueError,
     DataExists,
     NotConnected
-]} =
+].} =
+    #Check the difficulty.
+    if header.hash < blockchain.difficulty.difficulty:
+        raise newException(ValueError, "Block doesn't beat the difficulty.")
+
     #Check if we already added it.
     if blockchain.hasBlock(header.hash):
         raise newException(DataExists, "BlockHeader was already added.")
@@ -69,13 +73,13 @@ proc testBlockHeader*(
     if header.last != blockchain.tip.hash:
         raise newException(NotConnected, "Last hash isn't our tip.")
 
+    #Check a miner with a nickname isn't being marked as new.
+    if header.newMiner and blockchain.miners.hasKey(header.minerKey):
+        raise newException(ValueError, "Header marks a miner with a nickname as new.")
+
     #Check the time.
     if (header.time < blockchain.tip.header.time) or (header.time < getTime() + 120):
         raise newException(ValueError, "Block has an invalid time.")
-
-    #Check the difficulty.
-    if header.hash < blockchain.difficulty.difficulty:
-        raise newException(ValueError, "Block doesn't beat the difficulty.")
 
 #Adds a block to the blockchain.
 proc processBlock*(

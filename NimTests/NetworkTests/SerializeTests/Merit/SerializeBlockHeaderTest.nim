@@ -41,25 +41,35 @@ proc test*() =
         miner: MinerWallet
 
     #Test 255 serializations.
-    for _ in 0 .. 255:
+    for r in 0 .. 255:
         #Randomize the hashes.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
             contents.data[b] = uint8(rand(255))
             verifiers.data[b] = uint8(rand(255))
 
-        #Get a new miner.
-        miner = newMinerWallet()
-
         #Create the BlockHeaader.
-        header = newBlockHeader(
-            uint32(rand(high(int32))),
-            last,
-            contents,
-            verifiers,
-            miner.publicKey,
-            uint32(rand(high(int32)))
-        )
+        if r < 128:
+            #Get a new miner.
+            miner = newMinerWallet()
+
+            header = newBlockHeader(
+                uint32(rand(high(int32))),
+                last,
+                contents,
+                verifiers,
+                miner.publicKey,
+                uint32(rand(high(int32)))
+            )
+        else:
+            header = newBlockHeader(
+                uint32(rand(high(int32))),
+                last,
+                contents,
+                verifiers,
+                uint32(rand(high(int32))),
+                uint32(rand(high(int32)))
+            )
         miner.hash(header, uint32(rand(high(int32))))
 
         #Serialize it and parse it back.

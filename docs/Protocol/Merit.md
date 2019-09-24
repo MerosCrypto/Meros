@@ -89,7 +89,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 - version is 0.
 - last must be equivalent to the hash of the current tail Block.
-- miner is a valid BLS Public Key.
+- miner is a valid BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
 - time must be greater than the current Block’s time.
 - time must be less than 2 minutes into the future.
 - hash must beat the current difficulty.
@@ -164,8 +164,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros uses a completely different Blockchain format.
-- Meros doesn't support nicknames.
 - Meros allows archiving Transactions who don't have their inputs archived either in a previous Block or the same Block. Unmentioned Transactions can be used by Transactions archived in a Block if the unmentioned Transactions are already in the DB.
 - Meros allows archiving Transactions which compete with old Transactions.
 - Meros mints Merit before minting Meros.

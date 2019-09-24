@@ -27,7 +27,7 @@ import ../../Network/Serialize/Consensus/SerializeElement
 #Tables standard lib.
 import tables
 
-#Verify a Block's aggregate signature via the State and a Table of Hash -> VerificationPacket.
+#Verify a Block's aggregate signature via a nickname lookup function and a Table of Hash -> VerificationPacket.
 proc verify*(
     blockArg: Block,
     lookup: proc (

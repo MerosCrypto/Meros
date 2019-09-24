@@ -35,7 +35,7 @@ proc getNickname(
         except IndexError:
             doAssert(false, $blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
     else:
-        result = blockArg.header.minerNick
+        result = int(blockArg.header.minerNick)
 
 #Process a block.
 proc processBlock*(

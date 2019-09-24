@@ -70,7 +70,7 @@ func newBlockHeader*(
     last: ArgonHash,
     contents: Hash[384],
     verifiers: Hash[384],
-    miner: int,
+    miner: uint32,
     time: uint32,
     proof: uint32 = 0,
     signature: BLSSignature = nil

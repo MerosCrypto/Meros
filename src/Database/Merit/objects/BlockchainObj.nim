@@ -7,6 +7,9 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
+
 #Merit DB lib.
 import ../../Filesystem/DB/MeritDB
 
@@ -19,6 +22,9 @@ import finals
 
 #Lists standard lib.
 import lists
+
+#Tables standard lib.
+import tables
 
 #Blockchain object.
 finalsd:
@@ -35,9 +41,11 @@ finalsd:
         height*: int
         #Linked List of the last 10 Blocks.
         blocks: DoublyLinkedList[Block]
-
         #Current Difficulty.
         difficulty*: Difficulty
+
+        #Miners from past blocks..
+        miners*: Table[BLSPublicKey, bool]
 
 #Create a Blockchain object.
 proc newBlockchainObj*(
@@ -66,8 +74,9 @@ proc newBlockchainObj*(
 
         height: 0,
         blocks: initDoublyLinkedList[Block](),
+        difficulty: startDifficulty,
 
-        difficulty: startDifficulty
+        miners: initTable[BLSPublicKey, bool]()
     )
     result.ffinalizeBlockTime()
     result.ffinalizeStartDifficulty()
@@ -136,6 +145,10 @@ proc newBlockchainObj*(
         result.difficulty = result.db.loadDifficulty()
     except DBReadError as e:
         doAssert(false, "Couldn't load the Difficulty from the Database: " & e.msg)
+
+    #Load the existing miners.
+    for miner in result.db.loadHolders():
+        result.miners[miner] = true
 
 #Adds a Block.
 proc add*(
