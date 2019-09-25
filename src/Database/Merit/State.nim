@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
+#Hash lib. Used for printing hashes in error messages.
+import ../../lib/Hash
+
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
@@ -26,13 +29,16 @@ proc newState*(
 
 #Get the nickname of the miner in a Block.
 proc getNickname(
-    state: State,
-    blockArg: Block
+    state: var State,
+    blockArg: Block,
+    newBlock: bool = false
 ): int {.forceCheck: [].} =
     if blockArg.header.newMiner:
         try:
             result = state.reverseLookup(blockArg.header.minerKey)
         except IndexError:
+            if newBlock:
+                return state.newHolder(blockArg.header.minerKey)
             doAssert(false, $blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
     else:
         result = int(blockArg.header.minerNick)
@@ -47,11 +53,11 @@ proc processBlock*(
     state.saveLive()
 
     #Add the miner's Merit to the State.
-    var nick: int = state.getNickname(newBlock)
+    var nick: int = state.getNickname(newBlock, true)
     state[nick] = state[nick] + 1
 
     #If the Blockchain's height is over the dead blocks quantity, meaning there is a block to remove from the state...
-    if blockchain.height > state.deadBlocks:
+    if blockchain.height > state.deadBlocks + 1:
         #Remove the miner's Merit from the State.
         try:
             nick = state.getNickname(blockchain[blockchain.height - 1 - state.deadBlocks])
@@ -70,6 +76,10 @@ proc processBlock*(
         #If they didn't have their Merit removed, remove their old Merit.
         if not removed:
             state[nick] = state[nick] - 1
+
+    #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.
+    for elem in newBlock.body.elements:
+        discard
 
     #Increment the amount of processed Blocks.
     inc(state.processedBlocks)
@@ -92,14 +102,6 @@ proc nodeThresholdAt*(
 ): int {.inline, forceCheck: [].} =
     state.loadLive(blockNum) div 100 * 80
 
-#Remove a MeritHolder's Merit.
-proc remove*(
-    state: var State,
-    nick: int,
-    nonce: int
-) {.forceCheck: [].} =
-    state.removeInternal(nick, nonce)
-
 #Revert to a certain block height.
 proc revert*(
     state: var State,
@@ -110,22 +112,32 @@ proc revert*(
     state.oldData = true
 
     for i in countdown(state.processedBlocks - 1, height):
-        #Nickname of the miner we're handling.
-        var nick: int
+        var
+            #Nickname of the miner we're handling.
+            nick: int
+            #Block we're reverting past.
+            revertingPast: Block
+        try:
+            revertingPast = blockchain[i]
+        except IndexError as e:
+            doAssert(false, "Couldn't get the Block to revert past: " & e.msg)
 
         #Restore removed Merit.
         for removal in state.loadBlockRemovals(i):
             state[removal.nick] = removal.merit
 
+        #Grab the miner's nickname.
+        nick = state.getNickname(revertingPast)
+
         #Remove the Merit rewarded by the Block we just reverted past.
-        try:
-            nick = state.getNickname(blockchain[i])
-        except IndexError as e:
-            doAssert(false, "Couldn't get the Block to revert past: " & e.msg)
         state[nick] = state[nick] - 1
 
+        #If the miner was new to this Block, remove their nickname.
+        if revertingPast.header.newMiner:
+            state.deleteLastNickname()
+
         #If i is over the dead blocks quantity, meaning there is a historical Block to add back to the State...
-        if i > state.deadBlocks:
+        if i > state.deadBlocks + 1:
             #Get the miner for said historical Block.
             try:
                 nick = state.getNickname(blockchain[i - state.deadBlocks])

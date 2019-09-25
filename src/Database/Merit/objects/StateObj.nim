@@ -66,7 +66,7 @@ proc newStateObj*(
 
     #Load the amount of Live Merit.
     try:
-        result.live = result.db.loadLive(result.processedBlocks)
+        result.live = result.db.loadLive(result.processedBlocks - 1)
     except DBReadError:
         discard
 
@@ -114,18 +114,24 @@ proc newHolder*(
     holder: BLSPublicKey
 ): int {.forceCheck: [].} =
     result = state.holders.len
+    state.merit[result] = 0
     state.holders.add(holder)
     state.db.saveHolder(holder)
 
 #Get a Merit Holder's Merit.
 proc `[]`*(
-    state: var State,
+    state: State,
     nick: int
 ): int {.forceCheck: [].} =
-    #Return their value.
+    #Throw a fatal error if the nickname is invalid.
+    if nick < 0:
+        doAssert(false, "Asking for the Merit of an invalid nickname.")
+
+    #If the nick is out of bounds, yet still positive, return 0.
     if nick >= state.holders.len:
         return 0
 
+    #Return the Merit.
     try:
         result = state.merit[nick]
     except KeyError as e:
@@ -166,6 +172,7 @@ proc `[]=`*(
         state.db.saveMerit(nick, value)
 
 #Remove a MeritHolder's Merit.
+#[
 proc removeInternal*(
     state: var State,
     nick: int,
@@ -174,6 +181,13 @@ proc removeInternal*(
     state.db.remove(nick, state[nick], nonce)
     state[nick] = 0
     state.db.saveLive(state.processedBlocks, state.live)
+]#
+
+#Delete the last nickname from RAM.
+proc deleteLastNickname*(
+    state: var State
+) {.forceCheck: [].} =
+    state.holders.del(high(state.holders))
 
 #Reverse lookup for a key to nickname.
 proc reverseLookup*(

@@ -81,8 +81,11 @@ Network:
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
 - Correct Epochs.
 - Remove the Consensus DAG.
+- Have State call removeInternal from processBlock (as MeritRemovals are now in Blocks).
 
-- Test with Elements in SerializeBlockBodyTest/SerializeBlockTest.
+- Add Elements to BDBTest/SerializeBlockBodyTest/SerializeBlockTest.
+- Add MeritRemovals to StateTests' ValueTest and RevertTest.
+- Re-enable StateTests/ValueTest.
 
 ### Nim Tests:
 

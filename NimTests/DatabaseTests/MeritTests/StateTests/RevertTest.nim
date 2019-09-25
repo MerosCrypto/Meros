@@ -9,9 +9,6 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Miners object.
-import ../../../../src/Database/Merit/objects/MinersObj
-
 #Difficulty, Block, Blockchain, and State libs.
 import ../../../../src/Database/Merit/Difficulty
 import ../../../../src/Database/Merit/Block
@@ -41,23 +38,12 @@ proc test*() =
             30,
             "".pad(48).toHash(384)
         )
-        #States.
+        #State.
         states: seq[State] = @[]
-        #List of MeritHolders.
-        holders: seq[MinerWallet] = @[]
-        #List of MeritHolders used to grab a miner from.
-        potentials: seq[MinerWallet] = @[]
-        #List of MeritHolders with Merit.
-        merited: seq[BLSPublicKey] = @[]
-        #MeritHolder to remove Merit from.
-        toRemove: int
-        #Miners we're mining to.
-        miners: seq[Miner] = @[]
-        #Remaining amount of Merit.
-        remaining: int
-        #Amount to pay the miner.
-        amount: int
-        #Index of the miner we're choosing.
+
+        #Miners.
+        miners: seq[MinerWallet]
+        #Selected miner for the next Block.
         miner: int
         #Block we're mining.
         mining: Block
@@ -73,59 +59,38 @@ proc test*() =
 
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
-        #Create a random amount of Merit Holders.
-        for _ in 0 ..< rand(5) + 2:
-            holders.add(newMinerWallet())
+        #Decide if this is a nickname or new miner Block.
+        if (miners.len == 0) or (rand(2) == 0):
+            #New miner.
+            miner = miners.len
+            miners.add(newMinerWallet())
 
-        #Randomize the miners.
-        potentials = holders
-        miners = newSeq[Miner](rand(holders.len - 2) + 1)
-        remaining = 100
-        for m in 0 ..< miners.len:
-            #Set the amount to pay the miner.
-            amount = rand(remaining - 1) + 1
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (miners.len - m):
-                amount = 1
-            #But if this is the last account...
-            if m == miners.len - 1:
-                amount = remaining
-
-            #Subtract the amount from remaining.
-            remaining -= amount
-
-            #Set the Miner.
-            miner = rand(potentials.len - 1)
-            miners[m] = newMinerObj(
-                potentials[miner].publicKey,
-                amount
+            #Create the Block with the new miner.
+            mining = newBlankBlock(
+                last = blockchain.tip.header.hash,
+                miner = miners[miner]
             )
-            merited.add(potentials[miner].publicKey)
-            potentials.del(miner)
+        else:
+            #Grab a random miner.
+            miner = rand(high(miners))
 
-        #Create the Block.
-        mining = newBlankBlock(
-            nonce = blockchain.height,
-            last = blockchain.tip.header.hash,
-            miners = newMinersObj(miners)
-        )
+            #Create the Block with the existing miner.
+            mining = newBlankBlock(
+                last = blockchain.tip.header.hash,
+                nick = uint32(miner),
+                miner = miners[miner]
+            )
+
         #Mine it.
-        while not blockchain.difficulty.verify(mining.header.hash):
-            inc(mining)
+        while blockchain.difficulty.difficulty > mining.header.hash:
+            miners[miner].hash(mining.header, mining.header.proof + 1)
 
-        #Add it to the Blockchain.
+        #Add it to the Blockchain and latest State.
         blockchain.processBlock(mining)
-
-        #Add it to the State.
         states[^1].processBlock(blockchain, mining)
 
-        #Remove Merit from a random MeritHolder who has Merit.
-        toRemove = rand(merited.len - 1)
-        states[^1].remove(merited[toRemove], mining)
-        merited.del(toRemove)
-
         #Commit the DB.
-        db.commit(mining.nonce)
+        db.commit(blockchain.height)
 
         #Copy the State.
         states.add(states[^1])

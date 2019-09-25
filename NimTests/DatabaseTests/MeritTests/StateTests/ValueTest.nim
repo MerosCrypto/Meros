@@ -9,9 +9,6 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Miners object.
-import ../../../../src/Database/Merit/objects/MinersObj
-
 #Difficulty, Block, Blockchain, and State libs.
 import ../../../../src/Database/Merit/Difficulty
 import ../../../../src/Database/Merit/Block
