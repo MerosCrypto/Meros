@@ -12,9 +12,6 @@ import ../../../src/Database/Merit/State
 #import ../../../src/Database/Merit/Epochs
 #import ../../../src/Database/Merit/Merit
 
-#StInt lib.
-import StInt
-
 #Tables standard lib.
 import tables
 
@@ -80,14 +77,16 @@ proc compare*(
     assert(bc1.height == bc2.height)
     for b in 0 ..< bc1.height:
         compare(bc1[b], bc2[b])
-        assert(bc1[b].header.last == bc2[b - 1].header.hash)
-
     compare(bc1.difficulty, bc2.difficulty)
+
+    assert(bc1.miners.len == bc2.miners.len)
+    for key in bc1.miners.keys():
+        assert(bc1.miners[key] == bc2.miners[key])
 
 #Compare two States to make sure they have the same value.
 proc compare*(
-    s1: var State,
-    s2: var State
+    s1: State,
+    s2: State
 ) =
     assert(s1.deadBlocks == s2.deadBlocks)
     assert(s1.live == s2.live)

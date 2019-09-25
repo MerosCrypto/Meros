@@ -3,31 +3,27 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
+#Hash and Merkle libs.
 import ../../../../src/lib/Hash
+import ../../../../src/lib/Merkle
 
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
+#Element lib.
+import ../../../../src/Database/Consensus/Element
 
-#Miners object.
-import ../../../../src/Database/Merit/objects/MinersObj
-
-#Difficulty, Block, and Blockchain libs.
+#Difficulty, Block, Blockchain, and State libs.
 import ../../../../src/Database/Merit/Difficulty
 import ../../../../src/Database/Merit/Block
 import ../../../../src/Database/Merit/Blockchain
+import ../../../../src/Database/Merit/State
 
 #Merit Testing lib.
 import ../TestMerit
 
 #Compare Merit lib.
 import ../CompareMerit
-
-#StInt lib..
-import StInt
 
 #Random standard lib.
 import random
@@ -48,21 +44,28 @@ proc test*() =
             30,
             startDifficulty
         )
+        #State. This is needed for the Blockchain's nickname table.
+        state: State = newState(
+            db,
+            10,
+            1
+        )
 
-        #Records.
-        records: seq[MeritHolderRecord]
-        #Hash for the Record's 'merkle'.
+        #Transaction hash.
         hash: Hash[384]
-
-        #Amount of records/amount to pay a miner.
-        amount: int
-
+        #Transactions.
+        transactions: seq[Hash[384]]
+        #Elements.
+        elements: seq[Element]
+        #Contents merkle.
+        contents: Merkle
+        #Verifiers hash.
+        verifiers: Hash[384]
         #Miners.
-        miners: seq[Miner]
-        #Remaining amount of Merit.
-        remaining: int
-
-        #Block we're mining.
+        miners: seq[MinerWallet]
+        #Selected miner for the next Block.
+        miner: int
+        #Block.
         mining: Block
 
     #Compare the Blockchain against the reloaded Blockchain.
@@ -80,62 +83,66 @@ proc test*() =
 
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
-        #Randomize the records.
-        records = @[]
-        amount = rand(300)
-        for _ in 0 ..< amount:
+        #Randomize the Transactions.
+        transactions = @[]
+        for _ in 0 ..< rand(300):
             for b in 0 ..< 48:
                 hash.data[b] = uint8(rand(255))
+            transactions.add(hash)
 
-            #Add the record.
-            records.add(
-                newMeritHolderRecord(
-                    newMinerWallet().publicKey,
-                    rand(high(int32)),
-                    hash
-                )
+        #Randomize the Elements.
+
+        #Create the contents merkle.
+        contents = newMerkle(transactions)
+        for elem in elements:
+            discard
+
+        #Create a random verifiers hash.
+        for b in 0 ..< 48:
+            verifiers.data[b] = uint8(rand(255))
+
+        #Decide if this is a nickname or new miner Block.
+        if (miners.len == 0) or (rand(2) == 0):
+            #New miner.
+            miner = miners.len
+            miners.add(newMinerWallet())
+
+            #Create the Block with the new miner.
+            mining = newBlankBlock(
+                uint32(0),
+                blockchain.tip.header.hash,
+                contents.hash,
+                verifiers,
+                miners[miner],
+                transactions,
+                elements
             )
+        else:
+            #Grab a random miner.
+            miner = rand(high(miners))
 
-        #Randomize the miners.
-        miners = newSeq[Miner](rand(99) + 1)
-        remaining = 100
-        for m in 0 ..< miners.len:
-            #Set the amount to pay the miner.
-            amount = rand(remaining - 1) + 1
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (miners.len - m):
-                amount = 1
-            #But if this is the last account...
-            if m == miners.len - 1:
-                amount = remaining
-
-            #Set the Miner.
-            miners[m] = newMinerObj(
-                newMinerWallet().publicKey,
-                amount
+            #Create the Block with the existing miner.
+            mining = newBlankBlock(
+                uint32(0),
+                blockchain.tip.header.hash,
+                contents.hash,
+                verifiers,
+                uint32(miner),
+                miners[miner],
+                transactions,
+                elements
             )
-
-            #Subtract the amount from remaining.
-            remaining -= amount
-
-        #Create the Block.
-        mining = newBlankBlock(
-            blockchain.height,
-            blockchain.tip.header.hash,
-            newMinerWallet().sign(rand(high(int32)).toBinary()),
-            records,
-            newMinersObj(miners)
-        )
 
         #Mine it.
-        while not blockchain.difficulty.verify(mining.header.hash):
-            inc(mining)
+        while blockchain.difficulty.difficulty > mining.header.hash:
+            miners[miner].hash(mining.header, mining.header.proof + 1)
 
-        #Add it.
+        #Add it to the Blockchain and State.
         blockchain.processBlock(mining)
+        state.processBlock(blockchain, mining)
 
         #Commit the DB.
-        db.commit(mining.nonce)
+        db.commit(blockchain.height - 1)
 
         #Compare the Blockchains.
         compare()

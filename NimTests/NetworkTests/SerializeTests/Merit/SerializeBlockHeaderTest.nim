@@ -41,7 +41,7 @@ proc test*() =
         reloaded: BlockHeader
 
     #Test 255 serializations.
-    for r in 0 .. 255:
+    for s in 0 .. 255:
         #Randomize the hashes.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
@@ -49,7 +49,7 @@ proc test*() =
             verifiers.data[b] = uint8(rand(255))
 
         #Create the BlockHeaader.
-        if r < 128:
+        if s < 128:
             #Get a new miner.
             miner = newMinerWallet()
 

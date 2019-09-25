@@ -116,6 +116,7 @@ proc newBlockchainObj*(
                 0,
                 nil
             )
+            hash(genesisBlock.header)
         except ValueError as e:
             doAssert(false, "Couldn't create the Genesis Block due to a ValueError: " & e.msg)
         #Grab the tip.
@@ -138,7 +139,7 @@ proc newBlockchainObj*(
 
         if last.header.last == genesis:
             break
-        tip = last.hash
+        tip = last.header.last
 
     #Load the Difficulty.
     try:
@@ -158,7 +159,7 @@ proc add*(
     #Add the Block to the cache.
     blockchain.blocks.append(newBlock)
     #Delete the Block we're no longer caching.
-    if blockchain.height > 10:
+    if blockchain.height >= 10:
         blockchain.blocks.remove(blockchain.blocks.head)
 
     #Save the Block to the database.
@@ -168,6 +169,10 @@ proc add*(
     #Update the height.
     inc(blockchain.height)
     blockchain.db.saveHeight(blockchain.height)
+
+    #Update miners, if necessary
+    if newBlock.header.newMiner:
+        blockchain.miners[newBlock.header.minerKey] = true
 
 #Check if a Block exists.
 proc hasBlock*(
@@ -183,18 +188,21 @@ proc `[]`*(
 ): Block {.forceCheck: [
     IndexError
 ].} =
+    if nonce < 0:
+        raise newException(IndexError, "Attempted to get a Block with a negative nonce.")
+
     if nonce >= blockchain.height:
         raise newException(IndexError, "Specified nonce is greater than the Blockchain height.")
     elif nonce >= blockchain.height - 10:
         var res: DoublyLinkedNode[Block] = blockchain.blocks.head
-        for _ in 0 ..< nonce - (blockchain.height - 10):
+        for _ in 0 ..< nonce - max((blockchain.height - 10), 0):
             res = res.next
         result = res.value
     else:
         try:
             result = blockchain.db.loadBlock(nonce)
         except DBReadError:
-            raise newException(IndexError, "Specified hash doesn't match any Block.")
+            raise newException(IndexError, "Specified nonce doesn't match any Block.")
 
 proc `[]`*(
     blockchain: Blockchain,

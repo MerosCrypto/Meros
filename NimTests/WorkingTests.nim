@@ -1,8 +1,11 @@
-#Run every working Test...
+#Run every working Test.
 
 import objectsTests
 import libTests
 import WalletTests
+
+import DatabaseTests/MeritTests/BlockchainTests
+import DatabaseTests/MeritTests/StateTests
 
 import NetworkTests/SerializeTests/SerializeMeritTests
 
@@ -21,6 +24,9 @@ initLock(testLock)
 objectsTests.addTests(tests)
 libTests.addTests(tests)
 WalletTests.addTests(tests)
+
+#BlockchainTests.addTests(tests)
+StateTests.addTests(tests)
 
 SerializeMeritTests.addTests(tests)
 

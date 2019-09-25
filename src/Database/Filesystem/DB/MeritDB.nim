@@ -106,7 +106,7 @@ proc save*(
     blockArg: Block
 ) {.forceCheck: [].} =
     db.put(blockArg.hash.toString(), blockArg.serialize())
-    db.put("n" & nonce.toBinary(), blockArg.serialize())
+    db.put("n" & nonce.toBinary(), blockArg.header.hash.toString())
 
 proc save*(
     db: DB,

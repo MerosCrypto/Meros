@@ -78,7 +78,7 @@ proc testBlockHeader*(
         raise newException(ValueError, "Header marks a miner with a nickname as new.")
 
     #Check the time.
-    if (header.time < blockchain.tip.header.time) or (header.time < getTime() + 120):
+    if (header.time < blockchain.tip.header.time) or (header.time > getTime() + 120):
         raise newException(ValueError, "Block has an invalid time.")
 
 #Adds a block to the blockchain.

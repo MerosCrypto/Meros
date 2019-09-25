@@ -44,3 +44,30 @@ proc newBlankBlock*(
         time
     )
     miner.hash(result.header, proof)
+
+#Create a Block with a nicname.
+proc newBlankBlock*(
+    version: uint32 = 0,
+    last: ArgonHash = ArgonHash(),
+    contents: Hash[384] = Hash[384](),
+    verifiers: Hash[384] = Hash[384](),
+    nick: uint32,
+    miner: MinerWallet = newMinerWallet(),
+    transactions: seq[Hash[384]] = @[],
+    elements: seq[Element] = @[],
+    aggregate: BLSSignature = nil,
+    time: uint32 = getTime(),
+    proof: uint32 = 0
+): Block =
+    result = newBlockObj(
+        version,
+        last,
+        contents,
+        verifiers,
+        nick,
+        transactions,
+        elements,
+        aggregate,
+        time
+    )
+    miner.hash(result.header, proof)

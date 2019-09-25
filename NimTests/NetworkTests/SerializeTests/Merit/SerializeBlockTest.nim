@@ -71,18 +71,33 @@ proc test*() =
         for elem in elements:
             discard
 
-        newBlock = newBlankBlock(
-            uint32(rand(4096)),
-            last,
-            contents.hash,
-            verifiers,
-            newMinerWallet(),
-            transactions,
-            elements,
-            newMinerWallet().sign($rand(4096)),
-            uint32(rand(high(int32))),
-            uint32(rand(high(int(32))))
-        )
+        if s < 128:
+            newBlock = newBlankBlock(
+                uint32(rand(4096)),
+                last,
+                contents.hash,
+                verifiers,
+                newMinerWallet(),
+                transactions,
+                elements,
+                newMinerWallet().sign($rand(4096)),
+                uint32(rand(high(int32))),
+                uint32(rand(high(int32)))
+            )
+        else:
+            newBlock = newBlankBlock(
+                uint32(rand(4096)),
+                last,
+                contents.hash,
+                verifiers,
+                uint32(rand(high(int32))),
+                newMinerWallet(),
+                transactions,
+                elements,
+                newMinerWallet().sign($rand(4096)),
+                uint32(rand(high(int32))),
+                uint32(rand(high(int32)))
+            )
 
         #Serialize it and parse it back.
         reloaded = newBlock.serialize().parseBlock()
