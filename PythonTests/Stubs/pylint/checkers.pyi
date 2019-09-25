@@ -12,7 +12,7 @@ class BaseChecker():
     def add_message(
         self,
         msgid: str,
-        line: int = None,
+        line: int = 0,
         node: Any = None,
         args: Any = None,
         confidence: Any = None,
