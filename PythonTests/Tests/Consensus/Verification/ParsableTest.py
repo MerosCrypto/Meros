@@ -26,6 +26,8 @@ from PythonTests.Meros.Meros import MessageType
 #JSON standard lib.
 import json
 
+#The following PyLint error is due to our custom message rules.
+#pylint: disable=too-many-statements
 def VParsableTest(
     rpc: RPC
 ) -> None:

@@ -126,6 +126,8 @@ class Syncer():
         self.tips = self.tailTips
 
     #Sync the DB and verify it.
+    #The following PyLint error is due to handling all the various message types.
+    #pylint: disable=too-many-statements
     def sync(
         self
     ) -> None:
