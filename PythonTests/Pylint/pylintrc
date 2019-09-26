@@ -87,8 +87,9 @@ disable=wrong-import-order,
         #There's no value in calling a bunch of different functions to handle a subset of messages (at least, for now).
         too-many-branches,
 
-        #Same reason as above. As we modularize out message processing, it may be possible to remove these two.
-        too-many-statements,
+        #Just because an else isn't needed, doesn't mean it shouldn't be used if logical.
+        no-else-break,
+        no-else-continue,
 
         #We only care about 4 Errors:
         #- EmptyError (test is empty)
