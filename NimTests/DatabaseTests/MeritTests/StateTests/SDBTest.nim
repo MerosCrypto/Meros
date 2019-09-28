@@ -86,7 +86,7 @@ proc test*() =
         state.processBlock(blockchain, mining)
 
         #Commit the DB.
-        db.commit(blockchain.height - 1)
+        db.commit(blockchain.height)
 
         #Reload and compare the States.
         compare(state, newState(db, 30, blockchain.height))

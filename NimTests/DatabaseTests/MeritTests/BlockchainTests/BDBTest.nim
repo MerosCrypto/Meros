@@ -142,7 +142,7 @@ proc test*() =
         state.processBlock(blockchain, mining)
 
         #Commit the DB.
-        db.commit(blockchain.height - 1)
+        db.commit(blockchain.height)
 
         #Compare the Blockchains.
         compare()

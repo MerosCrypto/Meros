@@ -59,7 +59,7 @@ proc get(
 
 proc commit*(
     db: DB,
-    blockNum: int
+    height: int
 ) {.forceCheck: [].} =
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.merit.cache.len)
     try:
@@ -77,7 +77,7 @@ proc commit*(
     except KeyError as e:
         doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
     if removals != "":
-        items.add((key: "removals" & blockNum.toBinary(), value: removals))
+        items.add((key: "removals" & (height - 1).toBinary(), value: removals))
         db.merit.removals = initTable[int, int]()
 
     try:
