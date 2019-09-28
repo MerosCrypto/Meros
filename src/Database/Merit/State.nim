@@ -137,7 +137,7 @@ proc revert*(
             state.deleteLastNickname()
 
         #If i is over the dead blocks quantity, meaning there is a historical Block to add back to the State...
-        if i > state.deadBlocks + 1:
+        if i > state.deadBlocks:
             #Get the miner for said historical Block.
             try:
                 nick = state.getNickname(blockchain[i - state.deadBlocks])
