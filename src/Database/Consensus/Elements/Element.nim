@@ -1,25 +1,23 @@
 #Errors.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
 
 #MinerWallet lib.
-import ../../Wallet/MinerWallet
+import ../../../Wallet/MinerWallet
+
+#Element and Signed Element objects.
+import objects/ElementObj
+import objects/SignedElementObj
+export ElementObj
+export SignedElementObj
 
 #Element sub-type libs.
-discard """
 import Verification as VerificationFile
 import MeritRemoval as MeritRemovalFile
 export VerificationFile
 export MeritRemovalFile
-"""
-import objects/ElementObj
-export ElementObj
-
-#Signed Element object.
-import objects/SignedElementObj
-export SignedElementObj
 
 #Macros standard lib.
 import macros
@@ -81,7 +79,6 @@ macro match*(
                 raise newException(Exception, "Invalid case statement syntax.")
 
 #Element equality operators.
-discard """
 proc `==`*(
     e1: Element,
     e2: Element
@@ -121,4 +118,3 @@ proc `!=`*(
     e2: Element
 ): bool {.inline, forceCheck: [].} =
     not (e1 == e2)
-"""

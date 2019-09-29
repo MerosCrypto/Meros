@@ -1,11 +1,11 @@
 #Errors lib.
-import ../../../lib/Errors
+import ../../../../lib/Errors
 
 #Hash lib/
-import ../../../lib/Hash
+import ../../../../lib/Hash
 
 #MinerWallet lib.
-import ../../../Wallet/MinerWallet
+import ../../../../Wallet/MinerWallet
 
 #Element object.
 import ElementObj

@@ -1,8 +1,8 @@
 #Errors lib.
-import ../../../lib/Errors
+import ../../../../lib/Errors
 
 #MinerWallet lib.
-import ../../../Wallet/MinerWallet
+import ../../../../Wallet/MinerWallet
 
 #Element object.
 import ElementObj

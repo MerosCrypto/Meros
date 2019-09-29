@@ -1,32 +1,26 @@
 #Errors lib.
-import ../../lib/Errors
-
-#Hash lib.
-import ../../lib/Hash
+import ../../../lib/Errors
 
 #MinerWallet lib.
-import ../../Wallet/MinerWallet
+import ../../../Wallet/MinerWallet
 
 #Verification object.
 import objects/VerificationObj
 export VerificationObj
 
 #Serialize lib.
-import ../../Network/Serialize/Consensus/SerializeVerification
+import ../../../Network/Serialize/Consensus/SerializeVerification
 
 #Sign a Verification.
 proc sign*(
     miner: MinerWallet,
-    verif: SignedVerification,
-    nonce: int
+    verif: SignedVerification
 ) {.forceCheck: [
     BLSError
 ].} =
     try:
         #Set the holder.
-        verif.holder = miner.publicKey
-        #Set the nonce.
-        verif.nonce = nonce
+        verif.holder = miner.nick
         #Sign the hash of the Verification.
         try:
             verif.signature = miner.sign(verif.serializeSign())

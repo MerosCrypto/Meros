@@ -80,12 +80,16 @@ Network:
 - Verify the `verifiers` merkle when we verify the Block's aggregate signature.
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
 - Correct Epochs.
-- Remove the Consensus DAG.
 - Have State call removeInternal from processBlock (as MeritRemovals are now in Blocks).
 
 - Add Elements to BDBTest/SerializeBlockBodyTest/SerializeBlockTest.
 - Add MeritRemovals to StateTests' ValueTest and RevertTest.
 - Re-enable StateTests/ValueTest.
+
+- Load statuses still in Epochs.
+- Load close Transactions.
+
+- Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
 
 ### Nim Tests:
 

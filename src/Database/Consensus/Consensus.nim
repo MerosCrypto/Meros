@@ -1,8 +1,9 @@
 #Errors.
 import ../../lib/Errors
 
-#Hash lib.
-import ../../lib/Hash
+#Hash and Merkle libs.
+import ../../lib/Hash.
+import ../../lib/Merkle
 
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
@@ -12,14 +13,6 @@ import ../../objects/GlobalFunctionBoxObj
 
 #Consensus DB lib.
 import ../Filesystem/DB/ConsensusDB
-
-#Merkle lib.
-import ../../lib/Merkle
-
-#ConsensusIndex and MeritHolderRecord objects.
-import ../common/objects/ConsensusIndexObj
-import ../common/objects/MeritHolderRecordObj
-export ConsensusIndex
 
 #Transaction lib and Transactions object.
 import ../Transactions/Transaction
@@ -37,11 +30,9 @@ export SpamFilterObj
 import objects/SignedElementObj
 export SignedElementObj
 
-#Element and MeritHolder libs.
+#Element lib.
 import Element
-import MeritHolder
 export Element
-export MeritHolder
 
 #Consensus object.
 import objects/ConsensusObj
@@ -167,17 +158,17 @@ proc register*(
         #Check for competing Transactions.
         var spenders: seq[Hash[384]] = transactions.loadSpenders(input)
         if spenders.len != 1:
-            status.defaulting = true
+            status.competing = true
 
             #If there's a competing Transaction, mark competitors as needing to default.
             #This will run for every input with multiple spenders.
-            if status.defaulting:
+            if status.competing:
                 for spender in spenders:
                     if spender == tx.hash:
                         continue
 
                     try:
-                        consensus.getStatus(spender).defaulting = true
+                        consensus.getStatus(spender).competing = true
                     except IndexError:
                         doAssert(false, "Competing Transaction doesn't have a status despite being marked as a spender.")
 

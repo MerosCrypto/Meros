@@ -1,7 +1,10 @@
 #Errors lib, providing easy access to ForceCheck and defining all our custom errors.
 
-#MeritRemoval object.
-import ../Database/Consensus/objects/MeritRemovalObj
+#Hash object.
+import ../Hash/objects/HashObj
+
+#Element object.
+import ../../Database/Consensus/objects/ElementObj
 
 #ForceCheck lib.
 import ForceCheck
@@ -30,7 +33,7 @@ type
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
 
     #Database/common Errors.
-    GapError*   = object of Exception #Used when trying to add an item, yet missing items before said item.
+    GapError* = object of Exception #Used when trying to add an item, yet missing items before said item.
 
     #Database/common Statuses.
     DataExists* = object of Exception #Used when trying to add data which was already added.
@@ -41,7 +44,7 @@ type
 
     #Database/Consensus Statuses.
     MaliciousMeritHolder* = object of Exception #Used when a MeritHolder commits a malicious act against the network.
-        #MeritRemoval or pair Element.
+        #MeritRemoval or pair Element, depending on where it's used in the codebase.
         element*: Element
 
     #Database/Merit Statuses.
@@ -55,12 +58,12 @@ type
     SyncConfigError*     = object of Exception #Used when a Socket which isn't set for syncing is used to sync.
 
     #Network Statuses.
-    DataMissing*     = object of Exception #Used when a Client is missing requested data.
-    Spam*            = object of Exception #Used when a Send/Data doesn't beat the difficulty.
+    DataMissing* = object of Exception #Used when a Client is missing requested data.
+    Spam*        = object of Exception #Used when a Send/Data doesn't beat the difficulty.
         #Hash of the Transaction.
-        hash*: string
+        hash*: Hash[384]
         #Argon hash.
-        argon*: string
+        argon*: Hash[384]
     ValidityConcern* = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
 
     #Interfaces/RPC Errors.
@@ -86,8 +89,8 @@ proc newMaliciousMeritHolder*(
 
 proc newSpam*(
     msg: string,
-    hash: string,
-    argon: string
+    hash: Hash[384],
+    argon: Hash[384]
 ): ref Spam {.forceCheck: [].} =
     result = newException(Spam, msg)
     result.hash = hash

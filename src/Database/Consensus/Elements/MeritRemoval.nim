@@ -1,19 +1,19 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #Hash lib.
-import ../../lib/Hash
+import ../../../lib/Hash
 
 #MinerWallet lib.
-import ../../Wallet/MinerWallet
+import ../../../Wallet/MinerWallet
 
 #MeritRemoval object.
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
 #MeritRemoval serialize libs.
-import ../../Network/Serialize/SerializeCommon
-import ../../Network/Serialize/Consensus/SerializeMeritRemoval
+import ../../../Network/Serialize/SerializeCommon
+import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 
 #Constructor wrappers.
 func newMeritRemoval*(
@@ -40,7 +40,7 @@ func newSignedMeritRemoval*(
         signature
     )
 
-#Calculate the MeritRemoval's merkle.
+#Calculate the MeritRemoval's merkle leaf hash.
 proc merkle*(
     mr: MeritRemoval
 ): Hash[384] {.forceCheck: [].} =

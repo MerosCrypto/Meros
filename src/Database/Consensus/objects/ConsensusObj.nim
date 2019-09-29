@@ -13,9 +13,6 @@ import ../../../objects/GlobalFunctionBoxObj
 #Consensus DB lib.
 import ../../Filesystem/DB/ConsensusDB
 
-#ConsensusIndex object.
-import ../../common/objects/ConsensusIndexObj
-
 #Transaction object.
 import ../../Transactions/Transaction
 
@@ -52,21 +49,20 @@ type Consensus* = ref object
 
     #Filters.
     filters*: tuple[send: SpamFilter, data: SpamFilter]
-
-    #BLS Public Key -> MeritHolder.
-    holders: Table[BLSPublicKey, MeritHolder]
-    #BLS Public Key -> MeritRemoval.
-    malicious*: Table[BLSPublicKey, seq[MeritRemoval]]
+    #Nickname -> MeritRemoval(s).
+    malicious*: Table[int, seq[MeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
     statuses: Table[Hash[384], TransactionStatus]
-    #Statuses which haven't been mentioned in Epochs.
-    unmentioned*: Table[Hash[384], bool]
     #Statuses which are close to becoming verified.
+    #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
     close*: Table[Hash[384], bool]
 
+    #Transactions which haven't been mentioned in Epochs.
+    unmentioned*: Table[Hash[384], bool]
     #Verifications of unknown Transactions.
-    unknowns*: Table[Hash[384], seq[BLSPublicKey]]
+    #This is used when Blocks are added since we add Verifications before Transactions.
+    unknowns*: Table[Hash[384], seq[int]]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -84,61 +80,22 @@ proc newConsensusObj*(
             send: newSpamFilterObj(sendDiff),
             data: newSpamFilterObj(dataDiff)
         ),
-
-        holders: initTable[BLSPublicKey, MeritHolder](),
-        malicious: initTable[BLSPublicKey, seq[MeritRemoval]](),
+        malicious: initTable[int, seq[MeritRemoval]](),
 
         statuses: initTable[Hash[384], TransactionStatus](),
-        unmentioned: initTable[Hash[384], bool](),
         close: initTable[Hash[384], bool](),
 
-        unknowns: initTable[Hash[384], seq[BLSPublicKey]]()
+        unmentioned: initTable[Hash[384], bool]
+        unknowns: initTable[Hash[384], seq[int]]()
     )
 
-    #Load each MeritHolder.
-    var holders: seq[BLSPublicKey] = result.db.loadHolders()
-    for holder in holders:
-        try:
-            result.holders[holder] = newMeritHolderObj(result.db, holder)
-        except BLSError as e:
-            doAssert(false, "Couldn't create a BLS Public Key for a known MeritHolder: " & e.msg)
+    #Load statuses still in Epochs.
+    #Load close Transactions.
 
-    #Load unmentioned statuses.
+    #Load unmentioned Transactions.
     var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()
     for hash in unmentioned:
         result.unmentioned[hash] = true
-
-#Creates a new MeritHolder on the Consensus.
-proc add(
-    consensus: Consensus,
-    holder: BLSPublicKey
-) {.forceCheck: [].} =
-    #Make sure the holder doesn't already exist.
-    if consensus.holders.hasKey(holder):
-        return
-
-    #Create a new MeritHolder.
-    consensus.holders[holder] = newMeritHolderObj(consensus.db, holder)
-
-    #Add the MeritHolder to the DB.
-    try:
-        consensus.db.save(holder, consensus.holders[holder].archived)
-    except KeyError as e:
-        doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
-
-#Gets a MeritHolder by their key.
-proc `[]`*(
-    consensus: Consensus,
-    holder: BLSPublicKey
-): var MeritHolder {.forceCheck: [].} =
-    #Call add, which will only create a new MeritHolder if one doesn't exist.
-    consensus.add(holder)
-
-    #Return the holder.
-    try:
-        result = consensus.holders[holder]
-    except KeyError as e:
-        doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
 
 #Set a Transaction's status.
 proc setStatus*(
@@ -195,7 +152,7 @@ proc calculateMeritSingle(
     status: TransactionStatus
 ) {.forceCheck: [].} =
     #If the Transaction is already verified, or it needs to default, return.
-    if status.verified or status.defaulting:
+    if status.verified or status.competing:
         return
 
     #Calculate Merit.
@@ -417,34 +374,6 @@ proc finalize*(
     #This will cause a double save for the finalized TX in the unverified case.
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
-
-#Gets a Element by its Index.
-proc `[]`*(
-    consensus: Consensus,
-    index: ConsensusIndex
-): Element {.forceCheck: [
-    IndexError
-].} =
-    #Check the nonce isn't out of bounds.
-    if consensus[index.key].height <= index.nonce:
-        raise newException(IndexError, "MeritHolder doesn't have an Element for that nonce.")
-
-    try:
-        result = consensus.holders[index.key][index.nonce]
-    except KeyError as e:
-        doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
-    except IndexError as e:
-        fcRaise e
-
-#Iterate over every MeritHolder.
-iterator holders*(
-    consensus: Consensus
-): BLSPublicKey {.forceCheck: [].} =
-    for holder in consensus.holders.keys():
-        try:
-            yield consensus.holders[holder].key
-        except KeyError as e:
-            doAssert(false, "Couldn't grab a MeritHolder despite only asking for it because of the keys iterator: " & e.msg)
 
 #Iterate over every status.
 iterator statuses*(

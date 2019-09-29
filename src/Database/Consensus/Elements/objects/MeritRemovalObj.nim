@@ -1,19 +1,12 @@
+#Errors lib.
+import ../../../../lib/Errors
+
 #Element lib.
 import ElementObj
 export ElementObj
 
-#ForceCheck libs.
-#We generally get this from Errors yet can't as Errors imports this.
-import ForceCheck
-
 #Finals lib.
 import finals
-
-#BLS Nimble package.
-#It's atrocious to directly import this.
-#We should import MinerWallet, or at least BLS.
-#That said, both use Errors which imports this.
-import mc_bls
 
 #MeritRemoval objects.
 finalsd:
