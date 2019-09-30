@@ -8,7 +8,7 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Verification object.
-import ../../../Database/Consensus/objects/VerificationObj
+import ../../../Database/Consensus/Elements/objects/VerificationObj
 
 #Common serialization functions.
 import ../SerializeCommon
@@ -22,17 +22,16 @@ method serialize*(
     verif: Verification
 ): string {.forceCheck: [].} =
     result =
-        verif.holder.toBinary() &
-        verif.nonce.toBinary().pad(INT_LEN) &
+        verif.holder.toBinary().pad(INT_LEN) &
         verif.hash.toString()
 
-#Serialize a Verification for signing.
-method serializeSign*(
+#Serialize a Verification for signing or a MeritRemoval.
+method serializeWithoutHolder*(
     verif: Verification
 ): string {.forceCheck: [].} =
     result =
         char(VERIFICATION_PREFIX) &
-        verif.serialize()
+        verif.hash.toString()
 
 #Serialize a Signed Verification.
 method signedSerialize*(
@@ -41,12 +40,3 @@ method signedSerialize*(
     result =
         verif.serialize() &
         verif.signature.toString()
-
-#Serialize a Verification for a MeritRemoval.
-method serializeRemoval*(
-    verif: Verification
-): string {.forceCheck: [].} =
-    result =
-        char(VERIFICATION_PREFIX) &
-        verif.nonce.toBinary().pad(INT_LEN) &
-        verif.hash.toString()

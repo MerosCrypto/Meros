@@ -10,10 +10,10 @@ import ../../../../src/lib/Hash
 import ../../../../src/Wallet/MinerWallet
 
 #Element libs.
-import ../../../../src/Database/Consensus/Verification
+import ../../../../src/Database/Consensus/Elements/Verification
 
 #MeritRemoval lib.
-import ../../../../src/Database/Consensus/MeritRemoval
+import ../../../../src/Database/Consensus/Elements/MeritRemoval
 
 #Serialization libs.
 import ../../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
@@ -51,19 +51,20 @@ proc test*() =
     #Test 256 serializations.
     for _ in 0 .. 255:
         miner = newMinerWallet()
+        miner.nick = uint32(rand(high(int32)))
 
         partial = if rand(2) >= 1: true else: false
 
         for i in 0 ..< 48:
             hash.data[i] = uint8(rand(255))
         e1 = newSignedVerificationObj(hash)
-        miner.sign(cast[SignedVerification](e1), rand(high(int32)))
+        miner.sign(cast[SignedVerification](e1))
         signatures.add(cast[SignedVerification](e1).signature)
 
         for i in 0 ..< 48:
             hash.data[i] = uint8(rand(255))
         e2 = newSignedVerificationObj(hash)
-        miner.sign(cast[SignedVerification](e2), rand(high(int32)))
+        miner.sign(cast[SignedVerification](e2))
         signatures.add(cast[SignedVerification](e2).signature)
 
         #Create the SignedMeritRemoval.
@@ -73,13 +74,10 @@ proc test*() =
             e2,
             signatures.aggregate()
         )
-        mr.nonce = 0
 
         #Serialize it and parse it back.
         reloadedMR = mr.serialize().parseMeritRemoval()
-        reloadedMR.nonce = 0
         reloadedSMR = mr.signedSerialize().parseSignedMeritRemoval()
-        reloadedSMR.nonce = 0
 
         #Compare the Elements.
         compare(mr, reloadedSMR)

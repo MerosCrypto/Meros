@@ -1,13 +1,15 @@
 #Run every working Test.
 
+#import SyntaxTest
+
 import objectsTests
 import libTests
 import WalletTests
+#import DatabaseTests
+import NetworkTests
 
 import DatabaseTests/MeritTests/BlockchainTests
 import DatabaseTests/MeritTests/StateTests
-
-import NetworkTests/SerializeTests/SerializeMeritTests
 
 #Locks standard lib.
 import locks
@@ -24,11 +26,11 @@ initLock(testLock)
 objectsTests.addTests(tests)
 libTests.addTests(tests)
 WalletTests.addTests(tests)
+#DatabaseTests.addTests(tests)
+NetworkTests.addTests(tests)
 
-#BlockchainTests.addTests(tests)
+BlockchainTests.addTests(tests)
 StateTests.addTests(tests)
-
-SerializeMeritTests.addTests(tests)
 
 proc grabTest(): int =
     {.gcsafe.}:

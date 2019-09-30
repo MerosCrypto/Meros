@@ -11,7 +11,7 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Element lib.
-import ../../Consensus/Element
+import ../../Consensus/Elements/Element
 
 #Block Header lib.
 import ../BlockHeader

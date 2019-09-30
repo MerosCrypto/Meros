@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
@@ -30,7 +33,7 @@ type TransactionStatus* = ref object
     beaten*: bool
 
     #List of VerificationPackets.
-    packets*: seq[VerificationPackets]
+    packets*: seq[VerificationPacket]
     #Packet for the next Block.
     pending*: SignedVerificationPacket
 
@@ -47,6 +50,6 @@ proc newTransactionStatusObj*(
         competing: false,
         verified: false,
         packets: @[],
-        pending: newSignedVerificationPacket(hash),
+        pending: newSignedVerificationPacketObj(hash),
         merit: -1
     )

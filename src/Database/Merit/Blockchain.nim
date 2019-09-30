@@ -14,7 +14,7 @@ import ../../lib/Merkle
 import ../../Wallet/MinerWallet
 
 #MeritRemoval object.
-import ../Consensus/objects/MeritRemovalObj
+import ../Consensus/Elements/objects/MeritRemovalObj
 
 #Serialize Element lib.
 import ../../Network/Serialize/Consensus/SerializeElement
@@ -103,7 +103,7 @@ proc processBlock*(
     #Verify the contents merkle and if there's a MeritRemoval, it's the only Element for that verifier.
     var
         contents: Merkle = newMerkle(newBlock.body.transactions)
-        hasMeritRemoval: Table[int, bool] = initTable[int, bool]()
+        hasMeritRemoval: Table[uint32, bool] = initTable[uint32, bool]()
     try:
         for elem in newBlock.body.elements:
             var first: bool = hasMeritRemoval.hasKey(elem.holder)
@@ -116,7 +116,7 @@ proc processBlock*(
             elif first:
                 hasMeritRemoval[elem.holder] = false
 
-            contents.add(Blake384(elem.serializeSign()))
+            contents.add(Blake384(elem.serializeWithoutHolder()))
     except KeyError as e:
         doAssert(false, "Couldn't get a key we're guaranteed to have if we access it: " & e.msg)
     if contents.hash != newBlock.header.contents:

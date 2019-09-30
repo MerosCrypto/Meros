@@ -43,7 +43,7 @@ proc parseSend*(
         hash: Hash[384] = Blake384("\2" & sendSeq[1] & sendSeq[3])
         argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8), true)
     if argon < diff:
-        raise newSpam("Send didn't beat the difficulty.", hash.toString(), argon.toString())
+        raise newSpam("Send didn't beat the difficulty.", hash, argon)
 
     #Convert the inputs.
     var inputs: seq[SendInput] = newSeq[SendInput](sendSeq[0].fromBinary())

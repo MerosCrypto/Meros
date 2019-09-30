@@ -23,7 +23,7 @@ proc sign*(
         verif.holder = miner.nick
         #Sign the hash of the Verification.
         try:
-            verif.signature = miner.sign(verif.serializeSign())
+            verif.signature = miner.sign(verif.serializeWithoutHolder())
         except BLSError as e:
             fcRaise e
     except FinalAttributeError as e:

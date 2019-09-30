@@ -8,7 +8,7 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Verification object.
-import ../../../Database/Consensus/objects/VerificationObj
+import ../../../Database/Consensus/Elements/objects/VerificationObj
 
 #Serialize/Deserialize functions.
 import ../SerializeCommon
@@ -17,12 +17,10 @@ import ../SerializeCommon
 proc parseVerification*(
     verifStr: string
 ): Verification {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
-    #Holder's Nickname | Nonce | Transaction Hash
+    #Holder's Nickname | Transaction Hash
     var verifSeq: seq[string] = verifStr.deserialize(
-        INT_LEN,
         INT_LEN,
         HASH_LEN
     )
@@ -30,13 +28,10 @@ proc parseVerification*(
     #Create the Verification.
     try:
         result = newVerificationObj(
-            verifSeq[2].toHash(384)
+            verifSeq[1].toHash(384)
         )
-        result.holder = verifSeq[0].fromBinary()
-        result.nonce = verifSeq[1].fromBinary()
+        result.holder = uint32(verifSeq[0].fromBinary())
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Verification: " & e.msg)
@@ -48,9 +43,8 @@ proc parseSignedVerification*(
     ValueError,
     BLSError
 ].} =
-    #Holder's Nickname | Nonce | Transaction Hash | BLS Signature
+    #Holder's Nickname | Transaction Hash | BLS Signature
     var verifSeq: seq[string] = verifStr.deserialize(
-        INT_LEN,
         INT_LEN,
         HASH_LEN,
         BLS_SIGNATURE_LEN
@@ -59,11 +53,10 @@ proc parseSignedVerification*(
     #Create the Verification.
     try:
         result = newSignedVerificationObj(
-            verifSeq[2].toHash(384)
+            verifSeq[1].toHash(384)
         )
-        result.holder = verifSeq[0].fromBinary()
-        result.nonce = verifSeq[1].fromBinary()
-        result.signature = newBLSSignature(verifSeq[3])
+        result.holder = uint32(verifSeq[0].fromBinary())
+        result.signature = newBLSSignature(verifSeq[2])
     except ValueError as e:
         fcRaise e
     except BLSError as e:

@@ -13,13 +13,13 @@ import finals
 #VerificationPacket objects.
 finalsd:
     type
-        VerificationPacket* = ref object
-            holders* {.final.}: seq[int]
+        VerificationPacket* = ref object of RootObj
+            holders*: seq[uint32]
             hash* {.final.}: Hash[384]
 
         SignedVerificationPacket* = ref object of VerificationPacket
-            signatures* {.final.}: seq[BLSSignature]
-            signature* {.final.}: BLSSignature
+            signatures*: seq[BLSSignature]
+            signature*: BLSSignature
 
 #Constructors.
 func newVerificationPacketObj*(

@@ -47,18 +47,20 @@ proc merkle*(
     Blake384(char(MERIT_REMOVAL_PREFIX) & mr.serialize())
 
 #Calculate the MeritRemoval's aggregation info.
+#[
 proc agInfo*(
     mr: MeritRemoval
 ): BLSAggregationInfo {.forceCheck: [].} =
     try:
         #If this is a partial MeritRemoval, the signature is the second Element's.
         if mr.partial:
-            result = newBLSAggregationInfo(mr.holder, mr.element2.serializeSign())
+            result = newBLSAggregationInfo(mr.holder, mr.element2.serializeWithoutHolder())
         #Else, it's both Elements' signatures aggregated.
         else:
             result = @[
-                newBLSAggregationInfo(mr.holder, mr.element1.serializeSign()),
-                newBLSAggregationInfo(mr.holder, mr.element2.serializeSign())
+                newBLSAggregationInfo(mr.holder, mr.element1.serializeWithoutHolder()),
+                newBLSAggregationInfo(mr.holder, mr.element2.serializeWithoutHolder())
             ].aggregate()
     except BLSError as e:
         doAssert(false, "Failed to create the MeritRemoval's AggregationInfo: " & e.msg)
+]#

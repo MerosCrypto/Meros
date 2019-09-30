@@ -11,10 +11,9 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Element lib.
-import ../../Consensus/Element
+import ../../Consensus/Elements/Element
 
-#MeritRemoval and TransactionStatus objects.
-import ../../Consensus/objects/MeritRemovalObj
+#TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
 
 #Serialization libs.
@@ -123,7 +122,7 @@ proc save*(
     db: DB,
     elem: Element
 ) {.forceCheck: [].} =
-    db.put(elem.holder.toBinary().pad(INT_LEN) & elem.nonce.toBinary().pad(1), elem.serialize())
+    db.put(elem.holder.toBinary().pad(INT_LEN), elem.serialize())
 
 proc save*(
     db: DB,
@@ -176,21 +175,15 @@ proc loadOutOfEpochs*(
 
 proc load*(
     db: DB,
-    nick: int,
+    nick: uint32,
     nonce: int
 ): Element {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(nick.toBinary().pad(4) & nonce.toBinary().pad(1)).parseElement(nick, nonce)
+        result = db.get(nick.toBinary().pad(4) & nonce.toBinary().pad(1)).parseElement(nick)
     except Exception as e:
         raise newException(DBReadError, e.msg)
-
-    if result of MeritRemoval:
-        try:
-            result.nonce = nonce
-        except FinalAttributeError as e:
-            doAssert(false, "Set a final attribute twice when loading a MeritRemoval: " & e.msg)
 
 proc load*(
     db: DB,

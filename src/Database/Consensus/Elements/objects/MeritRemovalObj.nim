@@ -1,5 +1,8 @@
 #Errors lib.
-import ../../../../lib/Errors
+import ../../../../lib/objects/ErrorsObjs
+
+#MinerWallet lib.
+import ../../../../Wallet/MinerWallet
 
 #Element lib.
 import ElementObj
@@ -17,7 +20,7 @@ finalsd:
             element2* {.final.}: Element
 
         SignedMeritRemoval* = ref object of MeritRemoval
-            signature* {.final.}: Signature
+            signature* {.final.}: BLSSignature
 
 #Constructors.
 func newMeritRemovalObj*(
@@ -43,7 +46,7 @@ func newSignedMeritRemovalObj*(
     partial: bool,
     element1: Element,
     element2: Element,
-    signature: Signature
+    signature: BLSSignature
 ): SignedMeritRemoval {.forceCheck: [].} =
     result = SignedMeritRemoval(
         partial: partial,

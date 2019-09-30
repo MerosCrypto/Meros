@@ -5,7 +5,7 @@ import ../../../lib/Errors
 import ../../../Wallet/MinerWallet
 
 #MeritRemoval object.
-import ../../../Database/Consensus/objects/MeritRemovalObj
+import ../../../Database/Consensus/Elements/objects/MeritRemovalObj
 
 #Common serialization functions.
 import ../SerializeCommon
@@ -21,7 +21,7 @@ import SerializeVerification
 method serialize*(
     mr: MeritRemoval
 ): string {.forceCheck: [].} =
-    result = mr.holder.toBinary()
+    result = mr.holder.toBinary().pad(INT_LEN)
 
     if mr.partial:
         result &= "\1"
@@ -29,8 +29,8 @@ method serialize*(
         result &= "\0"
 
     result &=
-        mr.element1.serializeRemoval() &
-        mr.element2.serializeRemoval()
+        mr.element1.serializeWithoutHolder() &
+        mr.element2.serializeWithoutHolder()
 
 #Serialize a Signed MeritRemoval.
 method signedSerialize*(

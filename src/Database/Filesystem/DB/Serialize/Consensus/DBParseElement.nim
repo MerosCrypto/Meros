@@ -8,7 +8,7 @@ import ../../../../../lib/Hash
 import ../../../../../Wallet/MinerWallet
 
 #Verification object.
-import ../../../../Consensus/objects/VerificationObj
+import ../../../../Consensus/Elements/objects/VerificationObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
@@ -18,29 +18,22 @@ import ../../../../../Network/Serialize/Consensus/ParseMeritRemoval
 
 proc parseElement*(
     elem: string,
-    nick: int,
-    nonce: int
+    nick: uint32
 ): Element {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     try:
         case int(elem[0]):
             of VERIFICATION_PREFIX:
-                result = newVerificationObj(
-                    elem[1 ..< elem.len].toHash(384)
-                )
-                result.holder = nick
-                result.nonce = nonce
+                discard
 
             of MERIT_REMOVAL_PREFIX:
-                result = elem[1 ..< elem.len].parseMeritRemoval()
+                discard
 
             else:
                 doAssert(false, "Failed to parse an unsupported Element.")
+        result.holder = nick
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when loading an Element: " & e.msg)

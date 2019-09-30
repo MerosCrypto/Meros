@@ -5,7 +5,7 @@ import ../../../lib/Errors
 import ../../../Wallet/MinerWallet
 
 #MeritRemoval object.
-import ../../../Database/Consensus/objects/MeritRemovalObj
+import ../../../Database/Consensus/Elements/objects/MeritRemovalObj
 
 #Serialize/Deserialize functions.
 import ../SerializeCommon
@@ -22,8 +22,7 @@ proc parseElement(
     element: Element,
     len: int
 ] {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     case int(elem[i]):
         of VERIFICATION_PREFIX:
@@ -35,8 +34,6 @@ proc parseElement(
                 result.element = parseVerification(holder & elem[i + 1 ..< i + 1 + result.len])
                 inc(result.len)
             except ValueError as e:
-                fcRaise e
-            except BLSError as e:
                 fcRaise e
 
         else:

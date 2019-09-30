@@ -6,4 +6,4 @@ finalsd:
     type
         Element* = ref object of RootObj
             #Owner's nickname.
-            holder* {.final.}: int
+            holder* {.final.}: uint32

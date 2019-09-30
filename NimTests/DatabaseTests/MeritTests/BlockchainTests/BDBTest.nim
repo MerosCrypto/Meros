@@ -11,7 +11,7 @@ import ../../../../src/lib/Merkle
 import ../../../../src/Wallet/MinerWallet
 
 #Element lib.
-import ../../../../src/Database/Consensus/Element
+import ../../../../src/Database/Consensus/Elements/Element
 
 #Difficulty, Block, Blockchain, and State libs.
 import ../../../../src/Database/Merit/Difficulty

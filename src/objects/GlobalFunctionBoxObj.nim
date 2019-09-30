@@ -17,7 +17,7 @@ import ../Wallet/Wallet
 
 #Element lib and TransactionStatus object.
 import ../Database/Consensus/objects/TransactionStatusObj
-import ../Database/Consensus/Element
+import ../Database/Consensus/Elements/Element
 
 #Difficulty, BlockHeader, and Block objects.
 import ../Database/Merit/objects/DifficultyObj

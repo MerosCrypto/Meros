@@ -10,7 +10,7 @@ import ../../../../src/lib/Hash
 import ../../../../src/Wallet/MinerWallet
 
 #Verification lib.
-import ../../../../src/Database/Consensus/Verification
+import ../../../../src/Database/Consensus/Elements/Verification
 
 #Serialization libs.
 import ../../../../src/Network/Serialize/Consensus/SerializeVerification
@@ -31,6 +31,8 @@ proc test*() =
         hash: Hash[384]
         #SignedVerification Element.
         verif: SignedVerification
+        #Miner.
+        miner: MinerWallet
         #Reloaded Verification Element.
         reloadedV: Verification
         #Reloaded SignedVerification Element.
@@ -44,7 +46,9 @@ proc test*() =
         #Create the SignedVerification.
         verif = newSignedVerificationObj(hash)
         #Sign it.
-        newMinerWallet().sign(verif, rand(high(int32)))
+        miner = newMinerWallet()
+        miner.nick = uint32(rand(high(int32)))
+        miner.sign(verif)
 
         #Serialize it and parse it back.
         reloadedV = verif.serialize().parseVerification()

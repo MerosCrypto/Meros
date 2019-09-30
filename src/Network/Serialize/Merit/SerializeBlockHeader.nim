@@ -7,7 +7,7 @@ import ../../../lib/Hash
 #Merkle lib.
 import ../../../lib/Merkle
 
-#MinerWallet lib (for BLSSignature's toString).
+#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
 #BlockHeader object.

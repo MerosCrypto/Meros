@@ -85,11 +85,8 @@ proc `==`*(
 ): bool {.forceCheck: [].} =
     result = true
 
-    #Test the Element fields.
-    if (
-        (e1.holder != e2.holder) or
-        (e1.nonce != e2.nonce)
-    ):
+    #Test the holder.
+    if e1.holder != e2.holder:
         return false
 
     #Test the descendant fields.

@@ -1,22 +1,24 @@
 #Errors lib.
-import ../../../lib/Errors
+import ../../lib/Errors
 
 #MinerWallet lib.
-import ../../../Wallet/MinerWallet
+import ../../Wallet/MinerWallet
 
-#Verification Packet object.
-import VerificationPacketObj
+#Verificstion and Verification Packet lib.
+import Elements/Verification
+import VerificationPacket
 
 #Finals lib.
 import finals
 
-import objects/TransactionStatus
-import VerificationPacket
+#Transaction Status object.
+import objects/TransactionStatusObj
+export TransactionStatusObj
 
 #Add a Verification.
 proc add*(
     status: TransactionStatus,
-    verif: Verification
+    verif: SignedVerification
 ) {.forceCheck: [].} =
     status.pending.add(verif)
 
@@ -27,7 +29,7 @@ proc add*(
     packet: VerificationPacket
 ) {.forceCheck: [].} =
     #Add the new packet to the list of packets.
-    status,packets.add(packet)
+    status.packets.add(packet)
 
     var
         #Grab the pending packet.
@@ -35,10 +37,10 @@ proc add*(
         #List of signatures to aggregate for the new pending.
         signatures: seq[BLSSignature] = @[]
         #Holder we're currently working with.
-        holder: int
+        holder: uint32
 
     #Clear pending.
-    status.pending = newSignedVerificationPacket()
+    status.pending = newSignedVerificationPacketObj(status.pending.hash)
     #Find holders the new packet is missing.
     for h in 0 ..< pending.holders.len:
         holder = pending.holders[h]

@@ -8,7 +8,7 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Element lib.
-import ../../../Database/Consensus/Element
+import ../../../Database/Consensus/Elements/Element
 
 #BlockBody object.
 import ../../../Database/Merit/objects/BlockBodyObj

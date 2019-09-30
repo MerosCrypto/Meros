@@ -11,7 +11,7 @@ import ../../lib/Hash
 import ../../Wallet/MinerWallet
 
 #Element lib and VerificationPacket object.
-import ../Consensus/Element
+import ../Consensus/Elements/Element
 import ../Consensus/objects/VerificationPacketObj
 
 #BlockHeader lib.
@@ -31,7 +31,7 @@ import tables
 proc verify*(
     blockArg: Block,
     lookup: proc (
-        holder: int
+        holder: uint32
     ): BLSPublicKey {.raises: [
         IndexError
     ].},
@@ -46,12 +46,12 @@ proc verify*(
     try:
         #Iterate over every Transaction.
         for tx in blockArg.body.transactions:
-            for verifier in packets[tx].verifiers:
+            for verifier in packets[tx].holders:
                 agInfos.add(newBLSAggregationInfo(lookup(verifier), tx.toString()))
 
         #Iterate over every Element.
         for elem in blockArg.body.elements:
-            agInfos.add(newBLSAggregationInfo(lookup(elem.holder), elem.serializeSign()))
+            agInfos.add(newBLSAggregationInfo(lookup(elem.holder), elem.serializeWithoutHolder()))
 
         #Aggregate the infos.
         agInfo = agInfos.aggregate()

@@ -5,7 +5,9 @@ import ../../../src/lib/Hash
 import ../../../src/Wallet/MinerWallet
 
 #Consensus lib.
-import ../../../src/Database/Consensus/Consensus
+#import ../../../src/Database/Consensus/Consensus
+import ../../../src/Database/Consensus/Elements/Element
+import ../../../src/Database/Consensus/TransactionStatus
 
 #Tables standard lib.
 import tables
@@ -17,20 +19,7 @@ proc compare*(
 ) =
     assert(e1 == e2)
 
-#Compare two MeritHolders to make sure they have the same value.
-proc compare*(
-    mh1: MeritHolder,
-    mh2: MeritHolder
-) =
-    #Test both have the same fields.
-    assert(mh1.key == mh2.key)
-    assert(mh1.archived == mh2.archived)
-    assert(mh1.merkle.hash == mh2.merkle.hash)
-
-    #Test the Elements.
-    for i in 0 .. mh1.archived:
-        compare(mh1[i], mh2[i])
-
+#[
 #Compare two Transaction Statuses to make sure they have the samew value.
 proc compare*(
     ts1: TransactionStatus,
@@ -80,3 +69,4 @@ proc compare*(
     #Verify the Unknowns.
     assert(c1.unknowns.len == 0)
     assert(c2.unknowns.len == 0)
+]#
