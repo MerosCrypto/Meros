@@ -1,5 +1,5 @@
-#Errors lib.
-import ../lib/Errors
+#Errors objects.
+import ../lib/objects/ErrorsObjs
 
 #BLS Nimble package.
 import mc_bls

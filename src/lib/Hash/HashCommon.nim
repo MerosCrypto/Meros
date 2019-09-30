@@ -5,7 +5,8 @@ import ../Errors
 import ../Util
 
 #Hash type.
-import onjects/HashObj
+import objects/HashObj
+export HashObj
 
 #Empty uint8 'array'.
 var EmptyHash*: ptr uint8
