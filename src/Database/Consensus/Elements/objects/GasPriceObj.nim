@@ -14,7 +14,7 @@ import finals
 #GasPrice objects.
 finalsd:
     type
-        GasPrice* = ref object of Element
+        GasPrice* = ref object of BlockElement
             price* {.final.}: uint32
 
         SignedGasPrice* = ref object of GasPrice

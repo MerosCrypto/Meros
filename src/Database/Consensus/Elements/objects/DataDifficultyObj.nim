@@ -17,7 +17,7 @@ import finals
 #DataDifficulty objects.
 finalsd:
     type
-        DataDifficulty* = ref object of Element
+        DataDifficulty* = ref object of BlockElement
             difficulty* {.final.}: Hash[384]
 
         SignedDataDifficulty* = ref object of DataDifficulty

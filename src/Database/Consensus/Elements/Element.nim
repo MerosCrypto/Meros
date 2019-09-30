@@ -15,9 +15,14 @@ export SignedElementObj
 
 #Element sub-type libs.
 import Verification as VerificationFile
+import VerificationPacket as VerificationPacketFile
 import MeritRemoval as MeritRemovalFile
 export VerificationFile
+export VerificationPacketFile
 export MeritRemovalFile
+
+#Algorithm standard lib.
+import algorithm
 
 #Macros standard lib.
 import macros
@@ -85,8 +90,17 @@ proc `==`*(
 ): bool {.forceCheck: [].} =
     result = true
 
-    #Test the holder.
-    if e1.holder != e2.holder:
+    #If this a BlockElement, test the other is as well and holder.
+    if (
+        (e1 of BlockElement) and (
+            (not (e2 of BlockElement)) or
+            (cast[BlockElement](e1).holder != cast[BlockElement](e2).holder)
+        )
+    ):
+        return false
+
+    #Make sure e1 isn't a BlockElement when e2 is.
+    if (not (e1 of BlockElement)) and (e2 of BlockElement):
         return false
 
     #Test the descendant fields.
@@ -94,7 +108,16 @@ proc `==`*(
         of Verification as v1:
             if (
                 (not (e2 of Verification)) or
+                (v1.holder != cast[Verification](e2).holder) or
                 (v1.hash != cast[Verification](e2).hash)
+            ):
+                return false
+
+        of VerificationPacket as vp1:
+            if (
+                (not (e2 of VerificationPacket)) or
+                (vp1.holders.sorted() != cast[VerificationPacket](e2).holders.sorted()) or
+                (vp1.hash != cast[VerificationPacket](e2).hash)
             ):
                 return false
 

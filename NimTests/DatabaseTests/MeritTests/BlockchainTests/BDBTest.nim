@@ -56,7 +56,7 @@ proc test*() =
         #Transactions.
         transactions: seq[Hash[384]]
         #Elements.
-        elements: seq[Element]
+        elements: seq[BlockElement]
         #Contents merkle.
         contents: Merkle
         #Verifiers hash.

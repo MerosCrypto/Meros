@@ -122,7 +122,7 @@ proc save*(
     db: DB,
     elem: Element
 ) {.forceCheck: [].} =
-    db.put(elem.holder.toBinary().pad(INT_LEN), elem.serialize())
+    db.put("", elem.serialize())
 
 proc save*(
     db: DB,

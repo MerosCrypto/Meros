@@ -43,7 +43,7 @@ proc test*() =
         #Transactions.
         transactions: seq[Hash[384]] = @[]
         #Elements.
-        elements: seq[Element] = @[]
+        elements: seq[BlockElement] = @[]
         #Contents Merkle tree.
         contents: Merkle
         #Block.

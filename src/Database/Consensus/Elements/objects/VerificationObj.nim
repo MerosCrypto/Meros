@@ -18,6 +18,7 @@ import finals
 finalsd:
     type
         Verification* = ref object of Element
+            holder*: uint32
             hash* {.final.}: Hash[384]
 
         SignedVerification* = ref object of Verification

@@ -47,7 +47,7 @@ proc parseBlockBody*(
     var
         txs: seq[Hash[384]] = newSeq[Hash[384]](txLen)
         elementsStr: string = bodyStr[elemLenPos + INT_LEN ..< bodyStr.len - BLS_SIGNATURE_LEN]
-        elements: seq[Element] = @[]
+        elements: seq[BlockElement] = @[]
         aggregate: BLSSignature
     try:
         aggregate = newBLSSignature(bodyStr[bodyStr.len - BLS_SIGNATURE_LEN ..< bodyStr.len])

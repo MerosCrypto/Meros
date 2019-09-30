@@ -1,11 +1,14 @@
 #Errors lib.
-import ../../../lib/Errors
+import ../../../../lib/Errors
 
 #Hash lib.
-import ../../../lib/Hash
+import ../../../../lib/Hash
 
 #MinerWallet lib.
-import ../../../Wallet/MinerWallet
+import ../../../../Wallet/MinerWallet
+
+#Element object.
+import ElementObj
 
 #Finals lib.
 import finals
@@ -13,7 +16,7 @@ import finals
 #VerificationPacket objects.
 finalsd:
     type
-        VerificationPacket* = ref object of RootObj
+        VerificationPacket* = ref object of Element
             holders*: seq[uint32]
             hash* {.final.}: Hash[384]
 

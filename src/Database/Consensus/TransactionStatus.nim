@@ -6,7 +6,7 @@ import ../../Wallet/MinerWallet
 
 #Verificstion and Verification Packet lib.
 import Elements/Verification
-import VerificationPacket
+import Elements/VerificationPacket
 
 #Finals lib.
 import finals

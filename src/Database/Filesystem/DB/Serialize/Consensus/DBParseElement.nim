@@ -32,7 +32,6 @@ proc parseElement*(
 
             else:
                 doAssert(false, "Failed to parse an unsupported Element.")
-        result.holder = nick
     except ValueError as e:
         fcRaise e
     except FinalAttributeError as e:

@@ -27,7 +27,7 @@ proc newBlankBlock*(
     verifiers: Hash[384] = Hash[384](),
     miner: MinerWallet = newMinerWallet(),
     transactions: seq[Hash[384]] = @[],
-    elements: seq[Element] = @[],
+    elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = nil,
     time: uint32 = getTime(),
     proof: uint32 = 0
@@ -54,7 +54,7 @@ proc newBlankBlock*(
     nick: uint32,
     miner: MinerWallet = newMinerWallet(),
     transactions: seq[Hash[384]] = @[],
-    elements: seq[Element] = @[],
+    elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = nil,
     time: uint32 = getTime(),
     proof: uint32 = 0

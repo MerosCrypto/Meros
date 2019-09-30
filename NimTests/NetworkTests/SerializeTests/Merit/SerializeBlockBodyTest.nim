@@ -35,7 +35,7 @@ proc test*() =
         #Transactions.
         transactions: seq[Hash[384]] = @[]
         #Elements.
-        elements: seq[Element] = @[]
+        elements: seq[BlockElement] = @[]
         #Block Body.
         body: BlockBody
         #Reloaded Block Body.

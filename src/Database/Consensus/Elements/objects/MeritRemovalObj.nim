@@ -14,7 +14,7 @@ import finals
 #MeritRemoval objects.
 finalsd:
     type
-        MeritRemoval* = ref object of Element
+        MeritRemoval* = ref object of BlockElement
             partial* {.final.}: bool
             element1* {.final.}: Element
             element2* {.final.}: Element
@@ -24,6 +24,7 @@ finalsd:
 
 #Constructors.
 func newMeritRemovalObj*(
+    nick: uint32,
     partial: bool,
     element1: Element,
     element2: Element
@@ -38,11 +39,12 @@ func newMeritRemovalObj*(
     result.ffinalizeElement2()
 
     try:
-        result.holder = element1.holder
+        result.holder = nick
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a MeritRemoval: " & e.msg)
 
 func newSignedMeritRemovalObj*(
+    nick: uint32,
     partial: bool,
     element1: Element,
     element2: Element,
@@ -60,6 +62,6 @@ func newSignedMeritRemovalObj*(
     result.ffinalizeSignature()
 
     try:
-        result.holder = element1.holder
+        result.holder = nick
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a SignedMeritRemoval: " & e.msg)

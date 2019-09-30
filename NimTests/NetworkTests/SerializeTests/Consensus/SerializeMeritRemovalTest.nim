@@ -69,6 +69,7 @@ proc test*() =
 
         #Create the SignedMeritRemoval.
         mr = newSignedMeritRemoval(
+            miner.nick,
             partial,
             e1,
             e2,

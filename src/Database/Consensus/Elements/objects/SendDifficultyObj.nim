@@ -17,7 +17,7 @@ import finals
 #SendDifficulty objects.
 finalsd:
     type
-        SendDifficulty* = ref object of Element
+        SendDifficulty* = ref object of BlockElement
             difficulty* {.final.}: Hash[384]
 
         SignedSendDifficulty* = ref object of SendDifficulty

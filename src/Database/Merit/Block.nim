@@ -12,7 +12,7 @@ import ../../Wallet/MinerWallet
 
 #Element lib and VerificationPacket object.
 import ../Consensus/Elements/Element
-import ../Consensus/objects/VerificationPacketObj
+import ../Consensus/Elements/objects/VerificationPacketObj
 
 #BlockHeader lib.
 import BlockHeader

@@ -92,6 +92,7 @@ proc parseMeritRemoval*(
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(
+        uint32(mrSeq[0].fromBinary()),
         partial,
         element1,
         element2
@@ -151,6 +152,7 @@ proc parseSignedMeritRemoval*(
     #Create the SignedMeritRemoval.
     try:
         result = newSignedMeritRemovalObj(
+            uint32(mrSeq[0].fromBinary()),
             partial,
             element1,
             element2,

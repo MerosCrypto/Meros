@@ -8,7 +8,7 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Verification Packet object.
-import VerificationPacketObj
+import ../Elements/objects/VerificationPacketObj
 
 #Finals lib.
 import finals

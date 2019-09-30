@@ -1,11 +1,11 @@
 #Errors lib.
-import ../../lib/Errors
+import ../../../lib/Errors
 
 #MinerWallet lib.
-import ../../Wallet/MinerWallet
+import ../../../Wallet/MinerWallet
 
 #Verification lib.
-import Elements/Verification
+import Verification
 
 #VerificationPacket object.
 import objects/VerificationPacketObj

@@ -15,14 +15,14 @@ type BlockBody* = object
     #List of Transactions which have new/updated Verification Packets.
     transactions*: seq[Hash[384]]
     #Elements included in this Block.
-    elements*: seq[Element]
+    elements*: seq[BlockElement]
     #Aggregate signature.
     aggregate*: BLSSignature
 
 #Constructor.
 func newBlockBodyObj*(
     transactions: seq[Hash[384]],
-    elements: seq[Element],
+    elements: seq[BlockElement],
     aggregate: BLSSignature
 ): BlockBody {.inline, forceCheck: [].} =
     BlockBody(
