@@ -73,7 +73,6 @@ Network:
 - Don't rebroadcast data to who sent it.
 - Don't rebroadcast Elements below a Merit threshold.
 
-
 ### No Consensus DAG:
 
 - Verify the `contents` merkle when syncing the Block Body (currently done in Merit.processBlock).
@@ -134,14 +133,18 @@ Database/Transactions:
 
 Database/Consensus:
 
+- TransactionStatus Test.
+- Expand the Consensus DB Test to work with more Elements.
+
+Database/Consensus/Elements:
+
 - Element Test.
 - Verification Test.
+- VerificationPacket Test.
 - SendDifficulty Test.
 - DataDifficulty Test.
 - GasPrice Test.
 - MeritRemoval Test.
-- MeritHolder Test.
-- Expand the Consensus DB Test to work with other Elements.
 
 Database/Merit:
 
