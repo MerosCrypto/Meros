@@ -9,8 +9,8 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Element lib.
-import ../../../../src/Database/Consensus/Elements/Element
+#Elements Testing lib.
+import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 
 #BlockBody object.
 import ../../../../src/Database/Merit/objects/BlockBodyObj
@@ -50,6 +50,8 @@ proc test*() =
             transactions.add(hash)
 
         #Randomize the elements.
+        #for _ in 0 ..< rand(300):
+        #    elements.add(newRandomBlockElement())
 
         #Create the BlockBody with a randomized aggregate signature.
         body = newBlockBodyObj(

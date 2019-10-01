@@ -12,8 +12,8 @@ import ../../../../src/lib/Merkle
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Element lib.
-import ../../../../src/Database/Consensus/Elements/Element
+#Elements Testing lib.
+import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 
 #Block lib.
 import ../../../../src/Database/Merit/Block
@@ -65,6 +65,8 @@ proc test*() =
             transactions.add(hash)
 
         #Randomize the elements.
+        #for _ in 0 ..< rand(300):
+        #    elements.add(newRandomBlockElement())
 
         #Create the contents merkle.
         contents = newMerkle(transactions)
@@ -90,7 +92,7 @@ proc test*() =
                 last,
                 contents.hash,
                 verifiers,
-                uint32(rand(high(int32))),
+                uint16(rand(high(int16))),
                 newMinerWallet(),
                 transactions,
                 elements,
