@@ -175,7 +175,7 @@ proc loadOutOfEpochs*(
 
 proc load*(
     db: DB,
-    nick: uint32,
+    nick: uint16,
     nonce: int
 ): Element {.forceCheck: [
     DBReadError

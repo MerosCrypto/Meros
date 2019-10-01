@@ -67,10 +67,10 @@ proc test*() =
                 last,
                 contents,
                 verifiers,
-                uint32(rand(high(int32))),
+                uint16(rand(high(int16))),
                 uint32(rand(high(int32)))
             )
-        miner.hash(header, uint32(rand(high(int32))))
+        miner.hash(header, uint16(rand(high(int16))))
 
         #Serialize it and parse it back.
         reloaded = header.serialize().parseBlockHeader()

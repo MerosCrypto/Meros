@@ -37,7 +37,7 @@ proc add*(
         #List of signatures to aggregate for the new pending.
         signatures: seq[BLSSignature] = @[]
         #Holder we're currently working with.
-        holder: uint32
+        holder: uint16
 
     #Clear pending.
     status.pending = newSignedVerificationPacketObj(status.pending.hash)

@@ -21,7 +21,7 @@ proc parseVerification*(
 ].} =
     #Holder's Nickname | Transaction Hash
     var verifSeq: seq[string] = verifStr.deserialize(
-        INT_LEN,
+        NICKNAME_LEN,
         HASH_LEN
     )
 
@@ -30,7 +30,7 @@ proc parseVerification*(
         result = newVerificationObj(
             verifSeq[1].toHash(384)
         )
-        result.holder = uint32(verifSeq[0].fromBinary())
+        result.holder = uint16(verifSeq[0].fromBinary())
     except ValueError as e:
         fcRaise e
     except FinalAttributeError as e:
@@ -45,7 +45,7 @@ proc parseSignedVerification*(
 ].} =
     #Holder's Nickname | Transaction Hash | BLS Signature
     var verifSeq: seq[string] = verifStr.deserialize(
-        INT_LEN,
+        NICKNAME_LEN,
         HASH_LEN,
         BLS_SIGNATURE_LEN
     )
@@ -55,7 +55,7 @@ proc parseSignedVerification*(
         result = newSignedVerificationObj(
             verifSeq[1].toHash(384)
         )
-        result.holder = uint32(verifSeq[0].fromBinary())
+        result.holder = uint16(verifSeq[0].fromBinary())
         result.signature = newBLSSignature(verifSeq[2])
     except ValueError as e:
         fcRaise e

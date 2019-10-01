@@ -31,7 +31,7 @@ import tables
 proc verify*(
     blockArg: Block,
     lookup: proc (
-        holder: uint32
+        holder: uint16
     ): BLSPublicKey {.raises: [
         IndexError
     ].},

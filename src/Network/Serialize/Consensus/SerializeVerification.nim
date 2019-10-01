@@ -22,7 +22,7 @@ method serialize*(
     verif: Verification
 ): string {.forceCheck: [].} =
     result =
-        verif.holder.toBinary().pad(INT_LEN) &
+        verif.holder.toBinary().pad(NICKNAME_LEN) &
         verif.hash.toString()
 
 #Serialize a Verification for signing or a MeritRemoval.

@@ -127,7 +127,7 @@ proc test*() =
                 blockchain.tip.header.hash,
                 contents.hash,
                 verifiers,
-                uint32(miner),
+                uint16(miner),
                 miners[miner],
                 transactions,
                 elements

@@ -103,7 +103,7 @@ proc processBlock*(
     #Verify the contents merkle and if there's a MeritRemoval, it's the only Element for that verifier.
     var
         contents: Merkle = newMerkle(newBlock.body.transactions)
-        hasMeritRemoval: Table[uint32, bool] = initTable[uint32, bool]()
+        hasMeritRemoval: Table[uint16, bool] = initTable[uint16, bool]()
     try:
         for elem in newBlock.body.elements:
             var first: bool = hasMeritRemoval.hasKey(elem.holder)

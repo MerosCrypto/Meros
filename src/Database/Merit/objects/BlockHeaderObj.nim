@@ -30,7 +30,7 @@ finalsd:
             of true:
                 minerKey* {.final.}: BLSPublicKey
             of false:
-                minerNick* {.final.}: uint32
+                minerNick* {.final.}: uint16
         #Timestamp.
         time*: uint32
         #Proof.
@@ -72,7 +72,7 @@ func newBlockHeaderObj*(
     last: ArgonHash,
     contents: Hash[384],
     verifiers: Hash[384],
-    miner: uint32,
+    miner: uint16,
     time: uint32,
     proof: uint32,
     signature: BLSSignature

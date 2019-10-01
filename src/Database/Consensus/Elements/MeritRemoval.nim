@@ -17,7 +17,7 @@ import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 
 #Constructor wrappers.
 func newMeritRemoval*(
-    nick: uint32,
+    nick: uint16,
     partial: bool,
     element1: Element,
     element2: Element
@@ -30,7 +30,7 @@ func newMeritRemoval*(
     )
 
 func newSignedMeritRemoval*(
-    nick: uint32,
+    nick: uint16,
     partial: bool,
     element1: Element,
     element2: Element,

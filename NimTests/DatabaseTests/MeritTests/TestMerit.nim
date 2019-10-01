@@ -51,7 +51,7 @@ proc newBlankBlock*(
     last: ArgonHash = ArgonHash(),
     contents: Hash[384] = Hash[384](),
     verifiers: Hash[384] = Hash[384](),
-    nick: uint32,
+    nick: uint16,
     miner: MinerWallet = newMinerWallet(),
     transactions: seq[Hash[384]] = @[],
     elements: seq[BlockElement] = @[],

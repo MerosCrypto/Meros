@@ -17,7 +17,7 @@ import finals
 finalsd:
     type
         VerificationPacket* = ref object of Element
-            holders*: seq[uint32]
+            holders*: seq[uint16]
             hash* {.final.}: Hash[384]
 
         SignedVerificationPacket* = ref object of VerificationPacket

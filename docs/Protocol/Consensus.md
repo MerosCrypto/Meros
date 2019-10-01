@@ -1,6 +1,6 @@
 # Consensus
 
-This document defines and describes Consensus Elements, which come in the forms of Verifications, Merit Removals, Difficulty Updates, and Gas Price sets. Every Element has a creator, which is the 4-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message (or a group of Verifications via a `SignedVerificationPacket`), node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasPrice` exists solely to give miners other than the sender the ability to archive the Element as well
+This document defines and describes Consensus Elements, which come in the forms of Verifications, Merit Removals, Difficulty Updates, and Gas Price sets. Every Element has a creator, which is the 2-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message (or a group of Verifications via a `SignedVerificationPacket`), node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasPrice` exists solely to give miners other than the sender the ability to archive the Element as well
 
 Elements do not have hashes, so their signatures are produced by signing their serialization, without the holder, and with a prefix unique to each type of Element.
 
@@ -16,13 +16,13 @@ They have the following fields:
 
 Verifications can only be of valid Transactions, meaning they can be parse and added to the Transactions DAG using inputs in previous Blocks or in the same Block. The checks applied to the relevant Transaction type must also pass. The Transaction does NOT have to beat any spam filter OR be a child of a verified Transaction. Verifications with unknown hashes are invalid, yet still usable as causes for a MeritRemoval.
 
-`Verification` has a message length of 52 bytes; the 4-byte creator's nickname, and the 48-byte hash. The signature is produced with a prefix of "\0".
+`Verification` has a message length of 50 bytes; the 2-byte creator's nickname, and the 48-byte hash. The signature is produced with a prefix of "\0".
 
 ### VerificationPacket
 
 A Verification packet is a group of Verifications belonging to a single Transaction. They use less bandwidth than individual Verifications and are faster to handle in the moment as their signed version uses a single signature for every message.
 
-`VerificationPacket` has a variable message length; the 48-byte hash, the 2-byte amount of Verifications, and the verifiers (each represented by their 4-byte nickname).
+`VerificationPacket` has a variable message length; the 2-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname), and the 48-byte hash.
 
 ### SendDifficulty
 
@@ -37,7 +37,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
 
-`SendDifficulty` has a message length of 52 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type. This describes how SendDifficulty objects are serialized as part of a `BlockBody` message.
+`SendDifficulty` has a message length of 50 bytes; the 2-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type. This describes how SendDifficulty objects are serialized as part of a `BlockBody` message.
 
 ### DataDifficulty
 
@@ -50,7 +50,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
-`DataDifficulty` has a message length of 100 bytes; the 4-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type. This describes how DataDifficulty objects are serialized as part of a `BlockBody` message.
+`DataDifficulty` has a message length of 50 bytes; the 2-byte creator's nickname, and the 48-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type. This describes how DataDifficulty objects are serialized as part of a `BlockBody` message.
 
 ### GasPrice
 
@@ -63,7 +63,7 @@ They have the following fields:
 - nonce: An incrementing number based on the creator used to stop replay attacks.
 - price: Price in Meri a unit of gas should cost.
 
-`GasPrice` has a message length of 8 bytes; the 4-byte creator's nickname and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\4". That said, `GasPrice` is not a standalone message type. This describes how GasPrice objects are serialized as part of a `BlockBody` message.
+`GasPrice` has a message length of 6 bytes; the 2-byte creator's nickname and the 4-byte price (setting a max price of 4.29 Meros per unit of gas). The signature is produced with a prefix of "\4". That said, `GasPrice` is not a standalone message type. This describes how GasPrice objects are serialized as part of a `BlockBody` message.
 
 ### MeritRemoval
 
@@ -77,7 +77,7 @@ MeritRemovals have the following fields:
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` has a variable message length; the 4-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized as it would be for transmission, yet uses full BLS Public Keys instead of nicknames. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
+`MeritRemoval` has a variable message length; the 2-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized as it would be for transmission, yet includes every holder that participated in the packet. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
 
 ### SignedVerification, SignedVerificationPacket, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 

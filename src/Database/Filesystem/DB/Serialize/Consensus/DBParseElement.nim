@@ -18,7 +18,7 @@ import ../../../../../Network/Serialize/Consensus/ParseMeritRemoval
 
 proc parseElement*(
     elem: string,
-    nick: uint32
+    nick: uint16
 ): Element {.forceCheck: [
     ValueError
 ].} =

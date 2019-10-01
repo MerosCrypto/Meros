@@ -23,7 +23,7 @@ finalsd:
         #Public Key.
         publicKey* {.final.}: BLSPublicKey
         #Nickname.
-        nick* {.final.}: uint32
+        nick* {.final.}: uint16
 
 #Constructors.
 proc newMinerWallet*(

@@ -24,7 +24,7 @@ finalsd:
 
 #Constructors.
 func newMeritRemovalObj*(
-    nick: uint32,
+    nick: uint16,
     partial: bool,
     element1: Element,
     element2: Element
@@ -44,7 +44,7 @@ func newMeritRemovalObj*(
         doAssert(false, "Set a final attribute twice when creating a MeritRemoval: " & e.msg)
 
 func newSignedMeritRemovalObj*(
-    nick: uint32,
+    nick: uint16,
     partial: bool,
     element1: Element,
     element2: Element,

@@ -96,7 +96,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 257 or 301 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 48-byte verifiers hash, 1-byte of "\1" if the miner is new or "\0" if not, 4-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
+`BlockHeader` has a message length of either 255 or 301 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 48-byte verifiers hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
 
 ### BlockBody
 

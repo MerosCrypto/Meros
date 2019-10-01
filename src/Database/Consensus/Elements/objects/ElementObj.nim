@@ -23,4 +23,4 @@ finalsd:
         #The holder field is defined here, not in Element, as VerificationPackets have multiple holders.
         BlockElement* = ref object of Element
             #Creator's nickname.
-            holder* {.final.}: uint32
+            holder* {.final.}: uint16

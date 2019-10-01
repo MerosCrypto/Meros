@@ -68,7 +68,7 @@ func newBlockObj*(
     last: ArgonHash,
     contents: Hash[384],
     verifiers: Hash[384],
-    miner: uint32,
+    miner: uint16,
     transactions: seq[Hash[384]],
     elements: seq[BlockElement],
     aggregate: BLSSignature,
