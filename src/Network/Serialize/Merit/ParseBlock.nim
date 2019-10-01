@@ -28,7 +28,7 @@ proc parseBlock*(
     try:
         header = blockStr.parseBlockHeader()
         body = blockStr.substr(
-            BLOCK_HEADER_LENS[0] + BLOCK_HEADER_LENS[2] + (if header.newMiner: BLS_PUBLIC_KEY_LEN else: INT_LEN)
+            BLOCK_HEADER_LENS[0] + BLOCK_HEADER_LENS[1] + (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN)
         ).parseBlockBody()
     except ValueError as e:
         fcRaise e
