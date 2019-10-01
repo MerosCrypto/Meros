@@ -12,10 +12,11 @@ import ../SerializeCommon
 
 #Parse ELement libs.
 import ParseVerification
+import ParseVerificationPacket
 
 #Parse an Element.
 proc parseElement(
-    elem: string,
+    mr: string,
     holder: string,
     i: int
 ): tuple[
@@ -24,15 +25,31 @@ proc parseElement(
 ] {.forceCheck: [
     ValueError
 ].} =
-    case int(elem[i]):
+    case int(mr[i]):
         of VERIFICATION_PREFIX:
-            result.len = VERIFICATION_LEN - INT_LEN
-            if elem.len < result.len + i:
-                raise newException(ValueError, "ParseMeritRemoval's parseElement not handed enough data to get an Element.")
+            result.len = VERIFICATION_LEN - NICKNAME_LEN
+            if mr.len < result.len + i:
+                raise newException(ValueError, "ParseMeritRemoval's parseElement not handed enough data to get a Verification.")
 
             try:
-                result.element = parseVerification(holder & elem[i + 1 ..< i + 1 + result.len])
                 inc(result.len)
+                result.element = parseVerification(holder & mr[i + 1 ..< i + result.len])
+            except ValueError as e:
+                fcRaise e
+
+        of VERIFICATION_PACKET_PREFIX:
+            result.len = VERIFICATION_PACKET_LENS[0]
+            if mr.len < result.len + i:
+                raise newException(ValueError, "ParseMeritRemoval's parseElement not handed enough data to get a Verification Packet's verifiers length.")
+
+            var verifiers: int = mr[i + 1 ..< i + 1 + result.len].fromBinary()
+            result.len += (VERIFICATION_PACKET_LENS[1] * verifiers) + VERIFICATION_PACKET_LENS[2]
+            if mr.len < result.len + i:
+                raise newException(ValueError, "ParseMeritRemoval's parseElement not handed enough data to get a Verification Packet's verifiers/hash.")
+
+            try:
+                inc(result.len)
+                result.element = parseVerificationPacket(mr[i + 1 ..< i + result.len])
             except ValueError as e:
                 fcRaise e
 
@@ -49,12 +66,12 @@ proc parseMeritRemoval*(
     #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
-            INT_LEN,
+            NICKNAME_LEN,
             BYTE_LEN
         )
         partial: bool
 
-        i: int = INT_LEN + BYTE_LEN
+        i: int = NICKNAME_LEN + BYTE_LEN
         peResult: tuple[
             element: Element,
             len: int
@@ -92,7 +109,7 @@ proc parseMeritRemoval*(
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(
-        uint32(mrSeq[0].fromBinary()),
+        uint16(mrSeq[0].fromBinary()),
         partial,
         element1,
         element2
@@ -108,12 +125,12 @@ proc parseSignedMeritRemoval*(
     #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
-            INT_LEN,
+            NICKNAME_LEN,
             BYTE_LEN
         )
         partial: bool
 
-        i: int = INT_LEN + BYTE_LEN
+        i: int = NICKNAME_LEN + BYTE_LEN
         peResult: tuple[
             element: Element,
             len: int
@@ -152,7 +169,7 @@ proc parseSignedMeritRemoval*(
     #Create the SignedMeritRemoval.
     try:
         result = newSignedMeritRemovalObj(
-            uint32(mrSeq[0].fromBinary()),
+            uint16(mrSeq[0].fromBinary()),
             partial,
             element1,
             element2,

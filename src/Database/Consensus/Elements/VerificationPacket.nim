@@ -25,13 +25,16 @@ proc add*(
 ) {.forceCheck: [].} =
     packet.holders.add(verif.holder)
     packet.signatures.add(verif.signature)
-    try:
-        packet.signature = @[
-            packet.signature,
-            verif.signature
-        ].aggregate()
-    except BLSError as e:
-        doAssert(false, "Couldn't add a new SignedVerification to an existing packet: " & e.msg)
+    if packet.signatures.len == 1:
+        packet.signature = packet.signatures[0]
+    else:
+        try:
+            packet.signature = @[
+                packet.signature,
+                verif.signature
+            ].aggregate()
+        except BLSError as e:
+            doAssert(false, "Couldn't add a new SignedVerification to an existing packet: " & e.msg)
 
 #Error if the add function is called when one arg is signed but the other is not.
 proc add*(
