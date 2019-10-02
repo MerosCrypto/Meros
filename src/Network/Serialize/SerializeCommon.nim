@@ -41,7 +41,7 @@ const
     ]
 
     MERIT_REMOVAL_LENS*: array[2, int] = [
-        BLS_PUBLIC_KEY_LEN + BYTE_LEN + BYTE_LEN,
+        NICKNAME_LEN + BYTE_LEN + BYTE_LEN,
         BYTE_LEN
     ]
 
@@ -59,9 +59,8 @@ const
         ED_SIGNATURE_LEN + INT_LEN
     ]
 
-    DATA_LENS*: array[3, int] = [
+    DATA_LENS*: array[2, int] = [
         HASH_LEN + BYTE_LEN,
-        0,
         ED_SIGNATURE_LEN + INT_LEN
     ]
 

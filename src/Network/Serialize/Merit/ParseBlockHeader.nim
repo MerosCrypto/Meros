@@ -34,7 +34,7 @@ proc parseBlockHeader*(
     headerSeq = headerSeq & headerStr[
         BLOCK_HEADER_LENS[0] ..< headerStr.len
     ].deserialize(
-        if headerSeq[4] == "\0": INT_LEN else: BLS_PUBLIC_KEY_LEN,
+        if headerSeq[4] == "\0": NICKNAME_LEN else: BLS_PUBLIC_KEY_LEN,
         INT_LEN,
         INT_LEN,
         BLS_SIGNATURE_LEN
@@ -72,7 +72,7 @@ proc parseBlockHeader*(
         result,
         headerStr[0 ..< (
                 BLOCK_HEADER_LENS[0] +
-                (if headerSeq[4] == "\0": INT_LEN else: BLS_PUBLIC_KEY_LEN) +
+                (if headerSeq[4] == "\0": NICKNAME_LEN else: BLS_PUBLIC_KEY_LEN) +
                 INT_LEN
             )
         ]

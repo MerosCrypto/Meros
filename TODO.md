@@ -4,25 +4,24 @@
 
 Wallet:
 
-- BIP 173-compliant Bech32.
 - OpenCAP support.
 
 Database:
 
-- Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
+- Assign a local nickname to every hash.
 
 Merit:
 
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the light mode).
-- Decide if Block aggregate should be aggregate(MeritHolderAggregates) or aggregate(signatures).
 
 Consensus:
 
 - Save/reload unarchived MeritRemovals.
-- Check if MeritHolders verify conflicting Transactions.
+- Check if Merit Holders verify conflicting Transactions.
 - SendDifficulty.
 - DataDifficulty.
+- GasPrice.
 
 UI:
 
@@ -75,20 +74,26 @@ Network:
 
 ### No Consensus DAG:
 
-- Verify the `contents` merkle when syncing the Block Body (currently done in Merit.processBlock).
+- Change VerificationPackets to a single byte for the verifier length.
+- Use Public Keys, not nicknames, in Verification Packets which are causes for Merit Removals.
+- When creating a MeritRemoval where the cause is VerificationPacket, convert the nicknames to keys in case the nicknames change due to a reorg.
+
+- Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
 - Verify the `verifiers` merkle when we verify the Block's aggregate signature.
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
 - Correct Epochs.
-- Have State call removeInternal from processBlock (as MeritRemovals are now in Blocks).
 
 - Add Elements to BDBTest/SerializeBlockBodyTest/SerializeBlockTest.
-- Add MeritRemovals to StateTests' ValueTest and RevertTest.
+- Add MeritRemovals to StateTests' SDBTest and RevertTest.
 - Re-enable StateTests/ValueTest.
 
 - Load statuses still in Epochs.
 - Load close Transactions.
 
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
+- Test the full nickname space is usable both internally and in parsing/serializations.
+
+- Remove no longer needed BLSError checks.
 
 ### Nim Tests:
 
