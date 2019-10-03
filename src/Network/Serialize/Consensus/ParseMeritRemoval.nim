@@ -24,7 +24,8 @@ proc parseMeritRemovalElement(
     element: Element,
     len: int
 ] {.forceCheck: [
-    ValueError
+    ValueError,
+    BLSError
 ].} =
     try:
         result.len = data.getLength(
@@ -43,17 +44,20 @@ proc parseMeritRemovalElement(
             of VERIFICATION_PREFIX:
                 result.element = parseVerification(holder & data[i + 1 ..< i + result.len])
             of VERIFICATION_PACKET_PREFIX:
-                result.element = parseVerificationPacket(data[i + 1 ..< i + result.len])
+                result.element = parseMeritRemovalVerificationPacket(data[i + 1 ..< i + result.len])
             else:
                 raise newException(ValueError, "parseMeritRemovalElement tried to parse an invalid/unsupported Element type.")
     except ValueError as e:
+        fcRaise e
+    except BLSError as e:
         fcRaise e
 
 #Parse a MeritRemoval.
 proc parseMeritRemoval*(
     mrStr: string
 ): MeritRemoval {.forceCheck: [
-    ValueError
+    ValueError,
+    BLSError
 ].} =
     #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
@@ -88,11 +92,15 @@ proc parseMeritRemoval*(
         element1 = pmreResult.element
     except ValueError as e:
         fcRaise e
+    except BLSError as e:
+        fcRaise e
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
         element2 = pmreResult.element
     except ValueError as e:
+        fcRaise e
+    except BLSError as e:
         fcRaise e
 
     #Create the MeritRemoval.
@@ -143,11 +151,15 @@ proc parseSignedMeritRemoval*(
         element1 = pmreResult.element
     except ValueError as e:
         fcRaise e
+    except BLSError as e:
+        fcRaise e
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
         element2 = pmreResult.element
     except ValueError as e:
+        fcRaise e
+    except BLSError as e:
         fcRaise e
 
     #Create the SignedMeritRemoval.

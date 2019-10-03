@@ -7,6 +7,9 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#VerificationPacket lib.
+import VerificationPacket as VerificationPacketFile
+
 #MeritRemoval object.
 import objects/MeritRemovalObj
 export MeritRemovalObj
@@ -19,28 +22,46 @@ import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 func newMeritRemoval*(
     nick: uint16,
     partial: bool,
-    element1: Element,
-    element2: Element
-): MeritRemoval {.inline, forceCheck: [].} =
-    newMeritRemovalObj(
+    e1Arg: Element,
+    e2Arg: Element,
+    lookup: seq[BLSPublicKey]
+): MeritRemoval {.forceCheck: [].} =
+    var
+        e1: Element = e1Arg
+        e2: Element = e2Arg
+    if e1 of VerificationPacket:
+        e1 = cast[VerificationPacket](e1).toMeritRemovalVerificationPacket(lookup)
+    if e2 of VerificationPacket:
+        e2 = cast[VerificationPacket](e2).toMeritRemovalVerificationPacket(lookup)
+
+    result = newMeritRemovalObj(
         nick,
         partial,
-        element1,
-        element2
+        e1,
+        e2
     )
 
 func newSignedMeritRemoval*(
     nick: uint16,
     partial: bool,
-    element1: Element,
-    element2: Element,
-    signature: BLSSignature
+    e1Arg: Element,
+    e2Arg: Element,
+    signature: BLSSignature,
+    lookup: seq[BLSPublicKey]
 ): SignedMeritRemoval {.inline, forceCheck: [].} =
+    var
+        e1: Element = e1Arg
+        e2: Element = e2Arg
+    if e1 of VerificationPacket:
+        e1 = cast[VerificationPacket](e1).toMeritRemovalVerificationPacket(lookup)
+    if e2 of VerificationPacket:
+        e2 = cast[VerificationPacket](e2).toMeritRemovalVerificationPacket(lookup)
+
     newSignedMeritRemovalObj(
         nick,
         partial,
-        element1,
-        element2,
+        e1,
+        e2,
         signature
     )
 

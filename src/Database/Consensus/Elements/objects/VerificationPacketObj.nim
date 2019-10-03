@@ -20,8 +20,11 @@ finalsd:
             holders*: seq[uint16]
             hash* {.final.}: Hash[384]
 
+        MeritRemovalVerificationPacket* = ref object of Element
+            holders*: seq[BLSPublicKey]
+            hash* {.final.}: Hash[384]
+
         SignedVerificationPacket* = ref object of VerificationPacket
-            signatures*: seq[BLSSignature]
             signature*: BLSSignature
 
 #Constructors.
@@ -29,6 +32,14 @@ func newVerificationPacketObj*(
     hash: Hash[384]
 ): VerificationPacket {.forceCheck: [].} =
     result = VerificationPacket(
+        hash: hash
+    )
+    result.ffinalizeHash()
+
+func newMeritRemovalVerificationPacketObj*(
+    hash: Hash[384]
+): MeritRemovalVerificationPacket {.forceCheck: [].} =
+    result = MeritRemovalVerificationPacket(
         hash: hash
     )
     result.ffinalizeHash()

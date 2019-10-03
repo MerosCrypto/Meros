@@ -23,7 +23,8 @@ import ../Consensus/ParseBlockElement
 proc parseBlockBody*(
     bodyStr: string
 ): BlockBody {.forceCheck: [
-    ValueError
+    ValueError,
+    BLSError
 ].} =
     #Verify the data length.
     var
@@ -67,13 +68,15 @@ proc parseBlockBody*(
             pbeResult = bodyStr.parseBlockElement(i)
         except ValueError as e:
             fcRaise e
+        except BLSError as e:
+            fcRaise e
         i += pbeResult.len
         elements.add(pbeResult.element)
 
     try:
         aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
     except BLSError as e:
-        doAssert(false, "Couldn't create a BLS Signature: " & e.msg)
+        fcRaise e
 
     result = newBlockBodyObj(
         txs,

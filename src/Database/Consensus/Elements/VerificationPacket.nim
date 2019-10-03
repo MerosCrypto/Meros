@@ -11,6 +11,15 @@ import Verification
 import objects/VerificationPacketObj
 export VerificationPacketObj
 
+#Convert a VerificationPacket to a MeritRemovalVerificationPacket.
+proc toMeritRemovalVerificationPacket*(
+    packet: VerificationPacket,
+    lookup: seq[BLSPublicKey]
+): MeritRemovalVerificationPacket {.forceCheck: [].} =
+    result = newMeritRemovalVerificationPacketObj(packet.hash)
+    for holder in packet.holders:
+        result.holders.add(lookup[holder])
+
 #Add a Verification to a VerificationPacket.
 proc add*(
     packet: VerificationPacket,
@@ -24,9 +33,8 @@ proc add*(
     verif: SignedVerification
 ) {.forceCheck: [].} =
     packet.holders.add(verif.holder)
-    packet.signatures.add(verif.signature)
-    if packet.signatures.len == 1:
-        packet.signature = packet.signatures[0]
+    if packet.signature == nil:
+        packet.signature = verif.signature
     else:
         try:
             packet.signature = @[

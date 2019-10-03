@@ -13,6 +13,9 @@ import ../Elements/objects/VerificationPacketObj
 #Finals lib.
 import finals
 
+#Tables standard lib.
+import tables
+
 #Transaction Status.
 type TransactionStatus* = ref object
     #Block number that the Transaction's Epoch ends in.
@@ -36,6 +39,8 @@ type TransactionStatus* = ref object
     packets*: seq[VerificationPacket]
     #Packet for the next Block.
     pending*: SignedVerificationPacket
+    #Table of holder to their signature.
+    signatures*: Table[uint16, BLSSignature]
 
     #The final Merit tally. -1 if the Transaction is still in Epochs.
     merit*: int
@@ -49,7 +54,9 @@ proc newTransactionStatusObj*(
         epoch: epoch,
         competing: false,
         verified: false,
+        beaten: false,
         packets: @[],
         pending: newSignedVerificationPacketObj(hash),
+        signatures: initTable[uint16, BLSSignature](),
         merit: -1
     )

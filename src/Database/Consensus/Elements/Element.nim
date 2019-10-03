@@ -113,6 +113,18 @@ proc `==`*(
             ):
                 return false
 
+        of MeritRemovalVerificationPacket as mrvp1:
+            if (
+                (not (e2 of MeritRemovalVerificationPacket)) or
+                (mrvp1.holders.len != cast[MeritRemovalVerificationPacket](e2).holders.len) or
+                (mrvp1.hash != cast[MeritRemovalVerificationPacket](e2).hash)
+            ):
+                return false
+
+            for h in 0 ..< mrvp1.holders.len:
+                if mrvp1.holders[h] != cast[MeritRemovalVerificationPacket](e2).holders[h]:
+                    return false
+
         of VerificationPacket as vp1:
             if (
                 (not (e2 of VerificationPacket)) or

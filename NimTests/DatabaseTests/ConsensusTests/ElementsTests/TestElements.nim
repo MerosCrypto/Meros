@@ -126,6 +126,14 @@ proc newRandomMeritRemoval*(
             removal = false
         )
         signatures: seq[BLSSignature] = @[]
+        lookup: seq[BLSPublicKey] = newSeq[BLSPublicKey](65536)
+
+    if e1 of VerificationPacket:
+        for holder in cast[VerificationPacket](e1).holders:
+            lookup[int(holder)] = newMinerWallet().publicKey
+    if e2 of VerificationPacket:
+        for holder in cast[VerificationPacket](e2).holders:
+            lookup[int(holder)] = newMinerWallet().publicKey
 
     if not partial:
         case e1:
@@ -165,7 +173,8 @@ proc newRandomMeritRemoval*(
         partial,
         e1,
         e2,
-        signatures.aggregate()
+        signatures.aggregate(),
+        lookup
     )
 
 proc newRandomBlockElement*(

@@ -35,8 +35,14 @@ const
     VERIFICATION_LEN*: int = NICKNAME_LEN + HASH_LEN
 
     VERIFICATION_PACKET_LENS*: array[3, int] = [
+        BYTE_LEN,
         NICKNAME_LEN,
-        NICKNAME_LEN,
+        HASH_LEN
+    ]
+
+    MERIT_REMOVAL_VERIFICATION_PACKET_LENS*: array[3, int] = [
+        BYTE_LEN,
+        BLS_PUBLIC_KEY_LEN,
         HASH_LEN
     ]
 

@@ -22,7 +22,7 @@ Verifications can only be of valid Transactions, meaning they can be parse and a
 
 A Verification packet is a group of Verifications belonging to a single Transaction. They use less bandwidth than individual Verifications and are faster to handle in the moment as their signed version uses a single signature for every message.
 
-`VerificationPacket` has a variable message length; the 2-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname), and the 48-byte hash.
+`VerificationPacket` has a variable message length; the 1-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname), and the 48-byte hash.
 
 ### SendDifficulty
 
@@ -77,7 +77,7 @@ MeritRemovals have the following fields:
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` has a variable message length; the 2-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized as it would be for transmission, yet includes every holder that participated in the packet. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
+`MeritRemoval` has a variable message length; the 2-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized including every holder with their BLS Public Key in place of their nickname. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
 
 ### SignedVerification, SignedVerificationPacket, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 

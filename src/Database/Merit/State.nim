@@ -10,8 +10,8 @@ import ../../Wallet/MinerWallet
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#Element lib.
-import ../Consensus/Elements/Element
+#MeritRemoval object.
+import ../Consensus/Elements/objects/MeritRemovalObj
 
 #BlockHeader, Block, and Blockchain libs.
 import BlockHeader

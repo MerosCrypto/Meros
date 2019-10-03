@@ -21,20 +21,23 @@ export SerializeElement
 method serialize*(
     packet: VerificationPacket
 ): string {.forceCheck: [].} =
-    result = packet.holders.len.toBinary().pad(NICKNAME_LEN)
+    result = packet.holders.len.toBinary().pad(BYTE_LEN)
     for holder in packet.holders:
         result &= holder.toBinary().pad(NICKNAME_LEN)
     result &= packet.hash.toString()
 
-#Serialize a VerificationPacket for a MeritRemoval.
+#Serialize a VerificationPacket (as a MeritRemovalVerificationPacket) for a MeritRemoval.
 #The holders are included, as neccessary, to handle the signature, which makes this a misnomer.
 #That said, this isn't a misnomer for every other Element, and this method must exist for every Element (by name).
 method serializeWithoutHolder*(
-    packet: VerificationPacket
+    packet: MeritRemovalVerificationPacket
 ): string {.forceCheck: [].} =
     result =
         char(VERIFICATION_PACKET_PREFIX) &
-        packet.serialize()
+        packet.holders.len.toBinary().pad(BYTE_LEN)
+    for holder in packet.holders:
+        result &= holder.toString()
+    result &= packet.hash.toString()
 
 #Serialize a VerificationPacket for inclusion in a BlockHeader's contents merkle.
 #This should never happen.

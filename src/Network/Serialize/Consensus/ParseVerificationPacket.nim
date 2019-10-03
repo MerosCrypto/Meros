@@ -23,10 +23,10 @@ proc parseVerificationPacket*(
 
     #Verify the data length.
     var verifiers: int
-    if packet.len < NICKNAME_LEN:
+    if packet.len < BYTE_LEN:
         raise newException(ValueError, "parseVerificationPacket not handed enough data to get the amount of verifiers.")
-    verifiers = packet[0 ..< NICKNAME_LEN].fromBinary()
-    if packet.len != ((verifiers + 1) * NICKNAME_LEN) + HASH_LEN:
+    verifiers = packet[0 ..< BYTE_LEN].fromBinary()
+    if packet.len != BYTE_LEN + (verifiers * NICKNAME_LEN) + HASH_LEN:
         raise newException(ValueError, "parseVerificationPacket not handed enough data to get the verifiers and hash.")
 
     #Create the VerificationPacket.
@@ -36,9 +36,42 @@ proc parseVerificationPacket*(
         )
         for v in 0 ..< verifiers:
             result.holders.add(
-                uint16(packet[NICKNAME_LEN * (v + 1) ..< NICKNAME_LEN * (v + 2)].fromBinary())
+                uint16(packet[BYTE_LEN + (NICKNAME_LEN * v) ..< BYTE_LEN + (NICKNAME_LEN * (v + 1))].fromBinary())
             )
     except ValueError as e:
+        fcRaise e
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when parsing a VerificationPacket: " & e.msg)
+
+#Parse a MeritRemovalVerificationPacket.
+proc parseMeritRemovalVerificationPacket*(
+    packet: string
+): MeritRemovalVerificationPacket {.forceCheck: [
+    ValueError,
+    BLSError
+].} =
+    #Amount of Verifiers | Verifiers | Transaction Hash
+
+    #Verify the data length.
+    var verifiers: int
+    if packet.len < BYTE_LEN:
+        raise newException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the amount of verifiers.")
+    verifiers = packet[0].fromBinary()
+    if packet.len != BYTE_LEN + (verifiers * BLS_PUBLIC_KEY_LEN) + HASH_LEN:
+        raise newException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the verifiers and hash.")
+
+    #Create the MeritRemovalVerificationPacket.
+    try:
+        result = newMeritRemovalVerificationPacketObj(
+            packet[packet.len - HASH_LEN ..< packet.len].toHash(384)
+        )
+        for v in 0 ..< verifiers:
+            result.holders.add(
+                newBLSPublicKey(packet[BYTE_LEN + (BLS_PUBLIC_KEY_LEN * v) ..< BYTE_LEN + (BLS_PUBLIC_KEY_LEN * (v + 1))])
+            )
+    except ValueError as e:
+        fcRaise e
+    except BLSError as e:
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a VerificationPacket: " & e.msg)
@@ -54,10 +87,10 @@ proc parseSignedVerificationPacket*(
 
     #Verify the data length.
     var verifiers: int
-    if packet.len < NICKNAME_LEN:
+    if packet.len < BYTE_LEN:
         raise newException(ValueError, "parseVerificationPacket not handed enough data to get the amount of verifiers.")
-    verifiers = packet[0 ..< NICKNAME_LEN].fromBinary()
-    if packet.len != ((verifiers + 1) * NICKNAME_LEN) + HASH_LEN + BLS_SIGNATURE_LEN:
+    verifiers = packet[0].fromBinary()
+    if packet.len != BYTE_LEN + (verifiers * NICKNAME_LEN) + HASH_LEN + BLS_SIGNATURE_LEN:
         raise newException(ValueError, "parseVerificationPacket not handed enough data to get the verifiers, hash, and signature.")
 
     #Create the VerificationPacket.
@@ -67,7 +100,7 @@ proc parseSignedVerificationPacket*(
         )
         for v in 0 ..< verifiers:
             result.holders.add(
-                uint16(packet[NICKNAME_LEN * (v + 1) ..< NICKNAME_LEN * (v + 2)].fromBinary())
+                uint16(packet[BYTE_LEN + (NICKNAME_LEN * v) ..< BYTE_LEN + (NICKNAME_LEN * (v + 1))].fromBinary())
             )
         result.signature = newBLSSignature(packet[packet.len - BLS_SIGNATURE_LEN ..< packet.len])
     except ValueError as e:

@@ -74,8 +74,6 @@ Network:
 
 ### No Consensus DAG:
 
-- Change VerificationPackets to a single byte for the verifier length.
-- Use Public Keys, not nicknames, in Verification Packets which are causes for Merit Removals.
 - When creating a MeritRemoval where the cause is VerificationPacket, convert the nicknames to keys in case the nicknames change due to a reorg.
 
 - Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
