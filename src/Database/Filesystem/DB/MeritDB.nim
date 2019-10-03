@@ -32,6 +32,8 @@ export DBObj
 #Tables standard lib.
 import tables
 
+const BLOCK_REMOVAL_LEN: int = NICKNAME_LEN + INT_LEN
+
 #Put/Get/Commit for the Merit DB.
 proc put(
     db: DB,
@@ -73,12 +75,12 @@ proc commit*(
     var removals: string = ""
     try:
         for nick in db.merit.removals.keys():
-            removals &= nick.toBinary().pad(INT_LEN) & db.merit.removals[nick].toBinary().pad(INT_LEN)
+            removals &= nick.toBinary().pad(NICKNAME_LEN) & db.merit.removals[nick].toBinary().pad(INT_LEN)
     except KeyError as e:
         doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
     if removals != "":
         items.add((key: "removals" & (height - 1).toBinary(), value: removals))
-        db.merit.removals = initTable[int, int]()
+        db.merit.removals = initTable[uint16, int]()
 
     try:
         db.lmdb.put("merit", items)
@@ -131,14 +133,14 @@ proc saveHolder*(
 
 proc saveMerit*(
     db: DB,
-    nick: int,
+    nick: uint16,
     merit: int
 ) {.forceCheck: [].} =
     db.put("h" & nick.toBinary(), merit.toBinary())
 
 proc remove*(
     db: DB,
-    nick: int,
+    nick: uint16,
     merit: int,
     blockNum: int
 ) {.forceCheck: [].} =
@@ -246,7 +248,7 @@ proc loadHolders*(
 
 proc loadMerit*(
     db: DB,
-    nick: int
+    nick: uint16
 ): int {.forceCheck: [
     DBReadError
 ].} =
@@ -258,19 +260,19 @@ proc loadMerit*(
 proc loadBlockRemovals*(
     db: DB,
     blockNum: int
-): seq[tuple[nick: int, merit: int]] {.forceCheck: [].} =
+): seq[tuple[nick: uint16, merit: int]] {.forceCheck: [].} =
     var removals: string
     try:
         removals = db.get("removals" & blockNum.toBinary().pad(1))
     except DBReadError:
         return @[]
 
-    for i in countup(0, removals.len - 1, 8):
+    for i in countup(0, removals.len - 1, NICKNAME_LEN + INT_LEN):
         try:
             result.add(
                 (
-                    nick: removals[i * 8 ..< (i * 8) + 4].fromBinary(),
-                    merit: removals[(i * 8) + 4 ..< (i * 8) + 8].fromBinary()
+                    nick: uint16(removals[i ..< i + NICKNAME_LEN].fromBinary()),
+                    merit: removals[i + NICKNAME_LEN ..< i + BLOCK_REMOVAL_LEN].fromBinary()
                 )
             )
         except BLSError as e:
@@ -278,7 +280,7 @@ proc loadBlockRemovals*(
 
 proc loadHolderRemovals*(
     db: DB,
-    nick: int
+    nick: uint16
 ): seq[int] {.forceCheck: [].} =
     var removals: string
     try:
@@ -292,11 +294,11 @@ proc loadHolderRemovals*(
 proc loadNickname*(
     db: DB,
     key: BLSPublicKey
-): int {.forceCheck: [
+): uint16 {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(key.toString() & "nick").fromBinary()
+        result = uint16(db.get(key.toString() & "nick").fromBinary())
     except DBReadError as e:
         fcRaise e
 

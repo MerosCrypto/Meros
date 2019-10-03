@@ -9,11 +9,17 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
+#Element lib.
+import ../../../../src/Database/Consensus/Elements/Element
+
 #Difficulty, Block, Blockchain, and State libs.
 import ../../../../src/Database/Merit/Difficulty
 import ../../../../src/Database/Merit/Block
 import ../../../../src/Database/Merit/Blockchain
 import ../../../../src/Database/Merit/State
+
+#Elements Testing lib.
+import ../../ConsensusTests/ElementsTests/TestElements
 
 #Merit Testing lib.
 import ../TestMerit
@@ -42,9 +48,14 @@ proc test*() =
         states: seq[State] = @[]
 
         #Miners.
-        miners: seq[MinerWallet]
-        #Selected miner for the next Block.
+        miners: seq[MinerWallet] = @[]
+        #Miners we can remove Merit from.
+        removable: seq[MinerWallet]
+        #Selected miner to remove Merit from/for the next Block.
         miner: int
+
+        #Elements we're adding to the Block.
+        elements: seq[BlockElement]
         #Block we're mining.
         mining: Block
 
@@ -59,6 +70,18 @@ proc test*() =
 
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
+        #Remove Merit from a random amount of Merit Holders every few Blocks.
+        if rand(3) == 0:
+            removable = miners
+            for _ in 0 .. min(rand(2), high(miners)):
+                miner = rand(high(removable))
+                elements.add(
+                    newRandomMeritRemoval(
+                        states[^1].reverseLookup(removable[miner].publicKey)
+                    )
+                )
+                removable.del(miner)
+
         #Decide if this is a nickname or new miner Block.
         if (miners.len == 0) or (rand(2) == 0):
             #New miner.
@@ -68,7 +91,8 @@ proc test*() =
             #Create the Block with the new miner.
             mining = newBlankBlock(
                 last = blockchain.tip.header.hash,
-                miner = miners[miner]
+                miner = miners[miner],
+                elements = elements
             )
         else:
             #Grab a random miner.
@@ -78,7 +102,8 @@ proc test*() =
             mining = newBlankBlock(
                 last = blockchain.tip.header.hash,
                 nick = uint16(miner),
-                miner = miners[miner]
+                miner = miners[miner],
+                elements = elements
             )
 
         #Mine it.
@@ -91,6 +116,9 @@ proc test*() =
 
         #Commit the DB.
         db.commit(blockchain.height)
+
+        #Clear the Elements.
+        elements = @[]
 
         #Copy the State.
         states.add(states[^1])

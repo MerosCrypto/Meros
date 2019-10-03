@@ -12,6 +12,9 @@ import ../../../src/Database/Merit/State
 #import ../../../src/Database/Merit/Epochs
 #import ../../../src/Database/Merit/Merit
 
+#Compare Consensus lib.
+import ../ConsensusTests/CompareConsensus
+
 #Tables standard lib.
 import tables
 
@@ -45,7 +48,7 @@ proc compare*(
 
     assert(bb1.elements.len == bb2.elements.len)
     for e in 0 ..< bb1.elements.len:
-        assert(bb1.elements[e] == bb2.elements[e])
+        compare(bb1.elements[e], bb2.elements[e])
 
     assert(bb1.aggregate == bb2.aggregate)
 
@@ -95,8 +98,8 @@ proc compare*(
     assert(s1.holders.len == s2.holders.len)
     for h in 0 ..< s1.holders.len:
         assert(s1.holders[h] == s2.holders[h])
-        assert(h == s1.reverseLookup(s1.holders[h]))
-        assert(s1[h] == s2[h])
+        assert(uint16(h) == s1.reverseLookup(s1.holders[h]))
+        assert(s1[uint16(h)] == s2[uint16(h)])
 
 #Compare two Epochs to make sure they have the same value.
 discard """

@@ -57,8 +57,6 @@ proc test*() =
         transactions: seq[Hash[384]]
         #Elements.
         elements: seq[BlockElement]
-        #Contents merkle.
-        contents: Merkle
         #Verifiers hash.
         verifiers: Hash[384]
         #Miners.
@@ -92,11 +90,6 @@ proc test*() =
 
         #Randomize the Elements.
 
-        #Create the contents merkle.
-        contents = newMerkle(transactions)
-        for elem in elements:
-            discard
-
         #Create a random verifiers hash.
         for b in 0 ..< 48:
             verifiers.data[b] = uint8(rand(255))
@@ -111,7 +104,6 @@ proc test*() =
             mining = newBlankBlock(
                 uint32(0),
                 blockchain.tip.header.hash,
-                contents.hash,
                 verifiers,
                 miners[miner],
                 transactions,
@@ -125,7 +117,6 @@ proc test*() =
             mining = newBlankBlock(
                 uint32(0),
                 blockchain.tip.header.hash,
-                contents.hash,
                 verifiers,
                 uint16(miner),
                 miners[miner],

@@ -10,6 +10,9 @@ import ../../Wallet/MinerWallet
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
+#Element lib.
+import ../Consensus/Elements/Element
+
 #BlockHeader, Block, and Blockchain libs.
 import BlockHeader
 import Block
@@ -32,7 +35,7 @@ proc getNickname(
     state: var State,
     blockArg: Block,
     newBlock: bool = false
-): int {.forceCheck: [].} =
+): uint16 {.forceCheck: [].} =
     if blockArg.header.newMiner:
         try:
             result = state.reverseLookup(blockArg.header.minerKey)
@@ -41,7 +44,7 @@ proc getNickname(
                 return state.newHolder(blockArg.header.minerKey)
             doAssert(false, $blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
     else:
-        result = int(blockArg.header.minerNick)
+        result = blockArg.header.minerNick
 
 #Process a block.
 proc processBlock*(
@@ -53,7 +56,7 @@ proc processBlock*(
     state.saveLive()
 
     #Add the miner's Merit to the State.
-    var nick: int = state.getNickname(newBlock, true)
+    var nick: uint16 = state.getNickname(newBlock, true)
     state[nick] = state[nick] + 1
 
     #If the Blockchain's height is over the dead blocks quantity, meaning there is a block to remove from the state...
@@ -79,7 +82,8 @@ proc processBlock*(
 
     #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.
     for elem in newBlock.body.elements:
-        discard
+        if elem of MeritRemoval:
+            state.remove(elem.holder, blockchain.height - 1)
 
     #Increment the amount of processed Blocks.
     inc(state.processedBlocks)
@@ -114,7 +118,7 @@ proc revert*(
     for i in countdown(state.processedBlocks - 1, height):
         var
             #Nickname of the miner we're handling.
-            nick: int
+            nick: uint16
             #Block we're reverting past.
             revertingPast: Block
         try:

@@ -83,8 +83,7 @@ Network:
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
 - Correct Epochs.
 
-- Add Elements to BDBTest/SerializeBlockBodyTest/SerializeBlockTest.
-- Add MeritRemovals to StateTests' SDBTest and RevertTest.
+- Add Elements to BDBTest.
 - Re-enable StateTests/ValueTest.
 
 - Load statuses still in Epochs.

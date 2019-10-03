@@ -103,22 +103,29 @@ proc processBlock*(
     #Verify the contents merkle and if there's a MeritRemoval, it's the only Element for that verifier.
     var
         contents: Merkle = newMerkle(newBlock.body.transactions)
-        hasMeritRemoval: Table[uint16, bool] = initTable[uint16, bool]()
-    try:
-        for elem in newBlock.body.elements:
-            var first: bool = hasMeritRemoval.hasKey(elem.holder)
-            if elem of MeritRemoval:
-                if not first:
-                    raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
-                hasMeritRemoval[elem.holder] = true
-            elif (not first) and hasMeritRemoval[elem.holder]:
-                raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
-            elif first:
-                hasMeritRemoval[elem.holder] = false
 
-            contents.add(Blake384(elem.serializeWithoutHolder()))
-    except KeyError as e:
-        doAssert(false, "Couldn't get a key we're guaranteed to have if we access it: " & e.msg)
+        #They don't have a key if they don't have an Element.
+        #The value is 0 if they do.
+        #The value is 1 if they had a MeritRemoval.
+        statuses: Table[uint16, int] = initTable[uint16, int]()
+        status: int
+
+    for elem in newBlock.body.elements:
+        try:
+            status = statuses[elem.holder]
+        except KeyError:
+            status = -1
+            statuses[elem.holder] = 0
+
+        if elem of MeritRemoval:
+            if status != -1:
+                raise newException(ValueError, "Block archives a Merit Removal for a Merit Holder who also has Elements archived.")
+            statuses[elem.holder] = 1
+        elif (not (elem of MeritRemoval)) and (status == 1):
+            raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
+
+        contents.add(Blake384(elem.serializeContents()))
+
     if contents.hash != newBlock.header.contents:
         raise newException(ValueError, "Invalid contents merkle.")
 

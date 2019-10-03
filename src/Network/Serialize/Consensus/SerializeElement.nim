@@ -15,6 +15,11 @@ method serializeWithoutHolder*(
 ): string {.base, forceCheck: [].} =
     doAssert(false, "Element serializeWithoutHolder method called.")
 
+method serializeContents*(
+    element: Element
+): string {.base, forceCheck: [].} =
+    doAssert(false, "Element serializeContents method called.")
+
 method signedSerialize*(
     element: Element
 ): string {.base, forceCheck:[].} =

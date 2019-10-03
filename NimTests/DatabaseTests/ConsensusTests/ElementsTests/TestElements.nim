@@ -52,7 +52,7 @@ proc newRandomVerificationPacket*(
     result = newSignedVerificationPacketObj(hash)
 
     #Randomize the participating holders.
-    for h in 0 ..< rand(300) + 1:
+    for h in 0 ..< rand(50) + 1:
         if h == 0:
             result.holders.add(holder)
         else:
@@ -61,7 +61,9 @@ proc newRandomVerificationPacket*(
     #Set a random signature.
     result.signature = miner.sign("")
 
-proc newRandomMeritRemoval*(): SignedMeritRemoval
+proc newRandomMeritRemoval*(
+    holder: uint16 = uint16(rand(high(int16)))
+): SignedMeritRemoval
 
 proc newRandomElement*(
     holder: uint16 = uint16(rand(high(int16))),
@@ -110,9 +112,10 @@ proc newRandomElement*(
         else:
             assert(false, "TestElements generated a number in possibilities that is not a valid case.")
 
-proc newRandomMeritRemoval*(): SignedMeritRemoval =
+proc newRandomMeritRemoval*(
+    holder: uint16 = uint16(rand(high(int16)))
+): SignedMeritRemoval =
     var
-        holder: uint16 = uint16(rand(high(int16)))
         partial: bool = rand(1) == 1
         e1: Element = newRandomElement(
             holder = holder,

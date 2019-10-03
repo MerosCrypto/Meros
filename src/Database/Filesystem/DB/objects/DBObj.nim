@@ -22,7 +22,7 @@ type
 
     MeritDB* = ref object
         cache*: Table[string, string]
-        removals*: Table[int, int]
+        removals*: Table[uint16, int]
         holders*: string
 
     DB* = ref object
@@ -47,7 +47,7 @@ proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
 proc newMeritDB(): MeritDB {.inline, forceCheck: [].} =
     MeritDB(
         cache: initTable[string, string](),
-        removals: initTable[int, int](),
+        removals: initTable[uint16, int](),
         holders: ""
     )
 

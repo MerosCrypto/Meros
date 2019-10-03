@@ -3,14 +3,18 @@
 #Util lib.
 import ../../../src/lib/Util
 
-#Hash lib.
+#Hash and Merkle libs.
 import ../../../src/lib/Hash
+import ../../../src/lib/Merkle
 
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
 #Element lib.
 import ../../../src/Database/Consensus/Elements/Element
+
+#Element Serialization libs.
+import ../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
 
 #Block lib.
 import ../../../src/Database/Merit/Block
@@ -19,11 +23,20 @@ import ../../../src/Database/Merit/Block
 import ../TestDatabase
 export TestDatabase
 
+#Create a contents Merkle.
+proc newContents(
+    transactions: seq[Hash[384]] = @[],
+    elements: seq[BlockElement] = @[],
+): Hash[384] =
+    var contents: Merkle = newMerkle(transactions)
+    for elem in elements:
+        contents.add(Blake384(elem.serializeContents()))
+    result = contents.hash
+
 #Create a Block, with every setting optional.
 proc newBlankBlock*(
     version: uint32 = 0,
     last: ArgonHash = ArgonHash(),
-    contents: Hash[384] = Hash[384](),
     verifiers: Hash[384] = Hash[384](),
     miner: MinerWallet = newMinerWallet(),
     transactions: seq[Hash[384]] = @[],
@@ -35,7 +48,7 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        contents,
+        newContents(transactions, elements),
         verifiers,
         miner.publicKey,
         transactions,
@@ -49,7 +62,6 @@ proc newBlankBlock*(
 proc newBlankBlock*(
     version: uint32 = 0,
     last: ArgonHash = ArgonHash(),
-    contents: Hash[384] = Hash[384](),
     verifiers: Hash[384] = Hash[384](),
     nick: uint16,
     miner: MinerWallet = newMinerWallet(),
@@ -62,7 +74,7 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        contents,
+        newContents(transactions, elements),
         verifiers,
         nick,
         transactions,

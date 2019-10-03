@@ -39,9 +39,7 @@ finalsd:
         #List of holders. Position on the list is their nickname.
         holders: seq[BLSPublicKey]
         #Nickname -> Merit
-        merit: Table[int, int]
-        #Removed MeritHolders.
-        removed: Table[int, int]
+        merit: Table[uint16, int]
 
 #Constructor.
 proc newStateObj*(
@@ -59,8 +57,7 @@ proc newStateObj*(
         processedBlocks: blockchainHeight,
 
         holders: @[],
-        merit: initTable[int, int](),
-        removed: initTable[int, int]()
+        merit: initTable[uint16, int]()
     )
     result.ffinalizeDeadBlocks()
 
@@ -74,7 +71,7 @@ proc newStateObj*(
     result.holders = result.db.loadHolders()
     for h in 0 ..< result.holders.len:
         try:
-            result.merit[h] = result.db.loadMerit(h)
+            result.merit[uint16(h)] = result.db.loadMerit(uint16(h))
         except DBReadError as e:
             doAssert(false, "Couldn't load a holder's Merit: " & e.msg)
 
@@ -112,8 +109,8 @@ proc loadLive*(
 proc newHolder*(
     state: var State,
     holder: BLSPublicKey
-): int {.forceCheck: [].} =
-    result = state.holders.len
+): uint16 {.forceCheck: [].} =
+    result = uint16(state.holders.len)
     state.merit[result] = 0
     state.holders.add(holder)
     state.db.saveHolder(holder)
@@ -121,14 +118,14 @@ proc newHolder*(
 #Get a Merit Holder's Merit.
 proc `[]`*(
     state: State,
-    nick: int
+    nick: uint16
 ): int {.forceCheck: [].} =
     #Throw a fatal error if the nickname is invalid.
     if nick < 0:
         doAssert(false, "Asking for the Merit of an invalid nickname.")
 
     #If the nick is out of bounds, yet still positive, return 0.
-    if nick >= state.holders.len:
+    if nick >= uint16(state.holders.len):
         return 0
 
     #Return the Merit.
@@ -141,20 +138,20 @@ proc `[]`*(
 proc loadBlockRemovals*(
     state: State,
     blockNum: int
-): seq[tuple[nick: int, merit: int]] {.inline, forceCheck: [].} =
+): seq[tuple[nick: uint16, merit: int]] {.inline, forceCheck: [].} =
     state.db.loadBlockRemovals(blockNum)
 
 #Get the removals for a holder.
 proc loadHolderRemovals*(
     state: State,
-    nick: int
+    nick: uint16
 ): seq[int] {.inline, forceCheck: [].} =
     state.db.loadHolderRemovals(nick)
 
 #Setters.
 proc `[]=`*(
     state: var State,
-    nick: int,
+    nick: uint16,
     value: int
 ) {.inline, forceCheck: [].} =
     #Get the current value.
@@ -172,16 +169,14 @@ proc `[]=`*(
         state.db.saveMerit(nick, value)
 
 #Remove a MeritHolder's Merit.
-#[
-proc removeInternal*(
+proc remove*(
     state: var State,
-    nick: int,
+    nick: uint16,
     nonce: int
 ) {.forceCheck: [].} =
     state.db.remove(nick, state[nick], nonce)
     state[nick] = 0
     state.db.saveLive(state.processedBlocks, state.live)
-]#
 
 #Delete the last nickname from RAM.
 proc deleteLastNickname*(
@@ -193,7 +188,7 @@ proc deleteLastNickname*(
 proc reverseLookup*(
     state: State,
     key: BLSPublicKey
-): int {.forceCheck: [
+): uint16 {.forceCheck: [
     IndexError
 ].} =
     try:

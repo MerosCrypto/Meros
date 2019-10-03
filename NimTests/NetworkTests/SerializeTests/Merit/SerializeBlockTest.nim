@@ -44,15 +44,13 @@ proc test*() =
         transactions: seq[Hash[384]] = @[]
         #Elements.
         elements: seq[BlockElement] = @[]
-        #Contents Merkle tree.
-        contents: Merkle
         #Block.
         newBlock: Block
         #Reloaded Block.
         reloaded: Block
 
     #Test 255 serializations.
-    for s in 0 .. 255:
+    for s in 0 .. 127:
         #Randomize the last hash and the verifiers hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
@@ -65,19 +63,13 @@ proc test*() =
             transactions.add(hash)
 
         #Randomize the elements.
-        #for _ in 0 ..< rand(300):
-        #    elements.add(newRandomBlockElement())
+        for _ in 0 ..< rand(300):
+            elements.add(newRandomBlockElement())
 
-        #Create the contents merkle.
-        contents = newMerkle(transactions)
-        for elem in elements:
-            discard
-
-        if s < 128:
+        if s < 64:
             newBlock = newBlankBlock(
                 uint32(rand(4096)),
                 last,
-                contents.hash,
                 verifiers,
                 newMinerWallet(),
                 transactions,
@@ -90,7 +82,6 @@ proc test*() =
             newBlock = newBlankBlock(
                 uint32(rand(4096)),
                 last,
-                contents.hash,
                 verifiers,
                 uint16(rand(high(int16))),
                 newMinerWallet(),

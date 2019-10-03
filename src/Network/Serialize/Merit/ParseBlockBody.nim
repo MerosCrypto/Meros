@@ -16,6 +16,9 @@ import ../../../Database/Merit/objects/BlockBodyObj
 #Deserialize/parse functions.
 import ../SerializeCommon
 
+#Parse BlockElement lib.
+import ../Consensus/ParseBlockElement
+
 #Parse a BlockBody.
 proc parseBlockBody*(
     bodyStr: string
@@ -35,9 +38,6 @@ proc parseBlockBody*(
         raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Elements/the aggregate signature.")
     elemLen = bodyStr[elemLenPos ..< elemLenPos + INT_LEN].fromBinary()
 
-    if elemLen != 0:
-        doAssert(false, "parseBlockBody can't parse Blocks with Elements.")
-
     #Amount of Transactions | Transactions | Amount of Elements | Elements | Aggregate Signature
     var bodySeq: seq[string] = bodyStr.deserialize(
         INT_LEN,
@@ -46,13 +46,15 @@ proc parseBlockBody*(
     )
     var
         txs: seq[Hash[384]] = newSeq[Hash[384]](txLen)
-        elementsStr: string = bodyStr[elemLenPos + INT_LEN ..< bodyStr.len - BLS_SIGNATURE_LEN]
+
+        pbeResult: tuple[
+            element: BlockElement,
+            len: int
+        ]
+        i: int = elemLenPos + INT_LEN
         elements: seq[BlockElement] = @[]
+
         aggregate: BLSSignature
-    try:
-        aggregate = newBLSSignature(bodyStr[bodyStr.len - BLS_SIGNATURE_LEN ..< bodyStr.len])
-    except BLSError as e:
-        doAssert(false, "Couldn't create a BLS Signature: " & e.msg)
 
     for t in 0 ..< txLen:
         try:
@@ -61,7 +63,17 @@ proc parseBlockBody*(
             doAssert(false, "Couldn't create a 48-byte hash from a 48-byte string: " & e.msg)
 
     for e in 0 ..< elemLen:
-        discard elementsStr
+        try:
+            pbeResult = bodyStr.parseBlockElement(i)
+        except ValueError as e:
+            fcRaise e
+        i += pbeResult.len
+        elements.add(pbeResult.element)
+
+    try:
+        aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
+    except BLSError as e:
+        doAssert(false, "Couldn't create a BLS Signature: " & e.msg)
 
     result = newBlockBodyObj(
         txs,

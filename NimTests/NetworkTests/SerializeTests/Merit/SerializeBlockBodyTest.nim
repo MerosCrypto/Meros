@@ -50,8 +50,8 @@ proc test*() =
             transactions.add(hash)
 
         #Randomize the elements.
-        #for _ in 0 ..< rand(300):
-        #    elements.add(newRandomBlockElement())
+        for _ in 0 ..< rand(300):
+            elements.add(newRandomBlockElement())
 
         #Create the BlockBody with a randomized aggregate signature.
         body = newBlockBodyObj(
@@ -68,5 +68,8 @@ proc test*() =
 
         #Compare the BlockBodies.
         compare(body, reloaded)
+
+        #Clear the elements.
+        elements = @[]
 
     echo "Finished the Network/Serialize/Merit/BlockBody Test."

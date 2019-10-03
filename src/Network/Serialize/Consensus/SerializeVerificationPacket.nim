@@ -36,6 +36,13 @@ method serializeWithoutHolder*(
         char(VERIFICATION_PACKET_PREFIX) &
         packet.serialize()
 
+#Serialize a VerificationPacket for inclusion in a BlockHeader's contents merkle.
+#This should never happen.
+method serializeContents*(
+    packet: VerificationPacket
+): string {.forceCheck: [].} =
+    doAssert(false, "VerificationPacket was serialized for inclusion in a BlockHeader's contents merkle.")
+
 #Serialize a Signed VerificationPacket.
 method signedSerialize*(
     packet: SignedVerificationPacket
