@@ -19,8 +19,6 @@ During syncing, the syncer can only send:
 - `GetBlockHash`
 - `GetVerifierHeight`
 
-- `SignedVerificationPacketRequest`
-
 - `SyncingOver`
 
 The syncee can only send:
@@ -38,7 +36,6 @@ The syncee can only send:
 - `Unlock`
 
 - `SignedVerification`
-- `SignedVerificationPacket`
 - `SignedSendDifficulty`
 - `SignedDataDifficulty`
 - `SignedGasPrice`
@@ -83,7 +80,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### SignedVerificationPacketRequest
 
-`SignedVerificationPacketRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `SignedVerificationPacket` for the specified Transaction. If the requested VerificationPacket has already had its signature aggregated in a Block, the syncer sends `DataMissing`.
+`SignedVerificationPacketRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response would be a `SignedVerificationPacket` for the specified Transaction or `DataMissing` if the requested VerificationPacket has already had its signature aggregated in a Block. That said, the expected response is a disconnect because this message is disabled, just as `SignedVerificationPacket` is.
 
 ### DataMissing
 
@@ -97,4 +94,4 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 - Meros doesn't support the `PeerRequest` and `Peers` message types.
 - Meros doesn't support the `CheckpointRequest` message type.
-- Meros doesn't support the `VerificationPacketRequest` and `SignedVerificationPacketRequest` message types.
+- Meros doesn't support the `VerificationPacketRequest` message types.

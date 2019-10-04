@@ -16,9 +16,6 @@ import ../Consensus/Consensus
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#MeritHolderRecord object.
-import ../common/objects/MeritHolderRecordObj
-
 #Block, Blockcain, and State lib.
 import Block
 import Blockchain

@@ -47,9 +47,11 @@ method serializeContents*(
     doAssert(false, "VerificationPacket was serialized for inclusion in a BlockHeader's contents merkle.")
 
 #Serialize a Signed VerificationPacket.
+#[
 method signedSerialize*(
     packet: SignedVerificationPacket
 ): string {.forceCheck: [].} =
     result =
         packet.serialize() &
         packet.signature.toString()
+]#

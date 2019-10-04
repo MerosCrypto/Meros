@@ -19,7 +19,7 @@ The message types are as follows (with their list number being their byte header
 <li><code>TransactionRequest</code></li>
 <li><code>GetBlockHash</code></li>
 <li><code>BlockHash</code></li>
-<li><code>SignedElementRequest</code></li>
+<li><code>SignedVerificationPacketRequest</code> (disabled)</li>
 <li><code>SyncingOver</code></li>
 <br>
 <li><code>Claim</code></li>
@@ -29,7 +29,7 @@ The message types are as follows (with their list number being their byte header
 <li><code>Unlock</code></li>
 <br>
 <li><code>SignedVerification</code></li>
-<li><code>SignedVerificationPacket</code></li>
+<li><code>SignedVerificationPacket</code> (disabled)</li>
 <li><code>SignedSendDifficulty</code></li>
 <li><code>SignedDataDifficulty</code></li>
 <li><code>SignedGasPrice</code></li>

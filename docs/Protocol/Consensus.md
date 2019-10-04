@@ -79,20 +79,24 @@ MeritRemovals have the following fields:
 
 `MeritRemoval` has a variable message length; the 2-byte creator's nickname, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the creator's nickname, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the creator's nickname. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized including every holder with their BLS Public Key in place of their nickname. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type. This describes how MeritRemoval objects are serialized as part of a `BlockBody` message.
 
-### SignedVerification, SignedVerificationPacket, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
+### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:
 
-- signature: BLS Signature of the object. In the case of SignedVerificationPacket, this is the aggregate signature of every Verification in the packet. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2, unless element1 was already archived on the Blockchain, in which case it's the signature of element2.
+- signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2, unless element1 was already archived on the Blockchain, in which case it's the signature of element2.
 
 Their message lengths are their non-"Signed" message length plus 96 bytes; the 96-byte signature which is appended to the end of the serialized non-"Signed" version.
 
+### SignedVerificationPacket
+
+`SignedVerificationPacket` is the same as the other `Signed` messages, except for two differences. The first is the signature is the aggregate signature of every Verification in the packet. The second is this message is disabled.
+
+This message is meant for Merit Holders to be able to create already aggregated Verifications on a subnet before publishing to the rest of the network. As there's not yet a protocol to coordinate this, this message offers little benefit along with a high amount of codebase complexity. The header byte is effectively reserved until `SignedVerificationPacket` can be used as intended, at which point `SignedVerification` will be disabled.
+
 ### Violations in Meros
 
-- Meros uses a Block Lattice instead of referencing VerificationPackets in Blocks and directly placing non-Verification Elements in Blocks.
-- Meros produces Element signatures with serializations that include the holder.
 - Meros doesn't support defaulting.
-- Meros doesn't support `VerificationPacket`.
+- Meros doesn't handle `VerificationPacket` or `SignedVerificationPacket`.
 - Meros doesn't support `SendDifficulty` or `SignedSendDifficulty`.
 - Meros doesn't support `DataDifficulty` or `SignedDataDifficulty`.
 - Meros doesn't support `GasPrice` or `SignedGasPrice`.

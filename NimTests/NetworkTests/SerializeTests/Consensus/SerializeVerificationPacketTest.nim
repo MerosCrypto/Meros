@@ -29,7 +29,7 @@ proc test*() =
         #Reloaded VerificationPacket Element.
         reloadedVP: VerificationPacket
         #Reloaded SignedVerificationPacket Element.
-        reloadedSVP: SignedVerificationPacket
+        #reloadedSVP: SignedVerificationPacket
 
     #Test 256 serializations.
     for _ in 0 .. 255:
@@ -38,15 +38,15 @@ proc test*() =
 
         #Serialize it and parse it back.
         reloadedVP = packet.serialize().parseVerificationPacket()
-        reloadedSVP = packet.signedSerialize().parseSignedVerificationPacket()
+        #reloadedSVP = packet.signedSerialize().parseSignedVerificationPacket()
 
         #Compare the Elements.
-        compare(packet, reloadedSVP)
-        assert(packet.signature == reloadedSVP.signature)
+        #compare(packet, reloadedSVP)
+        #assert(packet.signature == reloadedSVP.signature)
         compare(packet, reloadedVP)
 
         #Test the serialized versions.
         assert(packet.serialize() == reloadedVP.serialize())
-        assert(packet.signedSerialize() == reloadedSVP.signedSerialize())
+        #assert(packet.signedSerialize() == reloadedSVP.signedSerialize())
 
     echo "Finished the Network/Serialize/Consensus/VerificationPacket Test."

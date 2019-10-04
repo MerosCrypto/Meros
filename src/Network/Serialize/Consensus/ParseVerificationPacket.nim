@@ -77,6 +77,7 @@ proc parseMeritRemovalVerificationPacket*(
         doAssert(false, "Set a final attribute twice when parsing a VerificationPacket: " & e.msg)
 
 #Parse a Signed VerificationPacket.
+#[
 proc parseSignedVerificationPacket*(
     packet: string
 ): SignedVerificationPacket {.forceCheck: [
@@ -109,3 +110,4 @@ proc parseSignedVerificationPacket*(
         fcRaise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a SignedVerificationPacket: " & e.msg)
+]#
