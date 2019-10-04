@@ -125,7 +125,7 @@ BLSSignature aggregate = signatures.aggregate()
 
 If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
 
-On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch. If a new Transaction competes with an existing Transaction, all competitors (and competitors of competitors) are brought up into the new Epoch. Every Transaction in Epochs is updated with the list of Merit Holders who verified it. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
+On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch. If a new Transaction competes with an existing Transaction, all competitors (and competitors of competitors) and children (and children of competitors) are brought up into the new Epoch. Every Transaction in Epochs is updated with the list of Merit Holders who verified it. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the live Merit removed, and is then used to calculate rewards.
 
 In the process of calculating rewards, first every Merit Holder is assigned a score via the following code:
 
@@ -166,6 +166,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 - Meros allows archiving Transactions who don't have their inputs archived either in a previous Block or the same Block. Unmentioned Transactions can be used by Transactions archived in a Block if the unmentioned Transactions are already in the DB.
 - Meros allows archiving Transactions which compete with old Transactions.
+- Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.
 - Meros mints Merit before minting Meros.
 - Meros doesn't check for 0-scores before minting Meros.
 - Meros doesn't support dead Merit.

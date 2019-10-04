@@ -13,9 +13,6 @@ import ../../../Wallet/MinerWallet
 #Merit DB lib.
 import ../../Filesystem/DB/MeritDB
 
-#MeritHolderRecord object.
-import ../../common/objects/MeritHolderRecordObj
-
 #Tables standard lib.
 import tables
 
@@ -29,21 +26,16 @@ finalsd:
             key* {.final.}: BLSPublicKey
             score*: uint64
 
-        #The tests rely on Epoch and Epochs not being refs.
         #Epoch object. Transaction Hash -> BLS Public Keys of verifiers.
         Epoch* = object
             hashes*: Table[Hash[384], seq[BLSPublicKey]]
-            records*: seq[MeritHolderRecord]
 
         #Epochs object.
         Epochs* = object
             #Database.
             db: DB
-
             #Seq of the current 5 Epochs.
             epochs: seq[Epoch]
-            #The last five MeritHolderRecords to have been shifted out of Epochs.
-            records*: seq[seq[MeritHolderRecord]]
 
 #Constructors.
 func newReward*(
@@ -56,12 +48,9 @@ func newReward*(
     )
     result.ffinalizeKey()
 
-func newEpoch*(
-    records: seq[MeritHolderRecord]
-): Epoch {.inline, forceCheck: [].} =
+func newEpoch*(): Epoch {.inline, forceCheck: [].} =
     Epoch(
-        hashes: initTable[Hash[384], seq[BLSPublicKey]](),
-        records: records
+        hashes: initTable[Hash[384], seq[BLSPublicKey]]()
     )
 
 func newEpochsObj*(
@@ -70,17 +59,12 @@ func newEpochsObj*(
     #Create the seq.
     result = Epochs(
         db: db,
-        epochs: newSeq[Epoch](5),
-        records: newSeq[seq[MeritHolderRecord]](5)
+        epochs: newSeq[Epoch](5)
     )
 
     #Place blank epochs in.
     for i in 0 ..< 5:
         result.epochs[i] = newEpoch(@[])
-
-    #Place blank records in.
-    for i in 0 ..< 5:
-        result.records[i] = @[]
 
 #Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
 func add*(
@@ -123,8 +107,7 @@ func add*(
 #Shift an Epoch.
 proc shift*(
     epochs: var Epochs,
-    epoch: Epoch,
-    save: bool
+    epoch: Epoch
 ): Epoch {.forceCheck: [].} =
     #Add the newest Epoch.
     epochs.epochs.add(epoch)
@@ -132,30 +115,6 @@ proc shift*(
     result = epochs.epochs[0]
     #Remove the oldest.
     epochs.epochs.delete(0)
-
-    #Add the newly shifted records.
-    epochs.records.add(result.records)
-    #Grab the oldest.
-    let records: seq[MeritHolderRecord] = epochs.records[0]
-    #Remove the oldest.
-    epochs.records.delete(0)
-
-    #If we should save this to the database...
-    if save:
-        discard """
-        When we regenerate the Epochs, we can't just shift the last 5 blocks, for two reasons.
-
-        1) When it adds the Verifications, it'd try loading everything from the archived to the specified record.
-        When we boot up, the archived is the very last archived, not the archived it was when we originally shifted the Block.
-
-        2) When it adds the Verifications, it'd assume every appearance is the first appearance.
-        This is because it doesn't have the 5 Epochs before it so when it checks the Epochs, it's iterating over blanks.
-
-        Therefore, we need to save the nonce that's 11 blocks old to merit_HOLDER_epoch (and then load the last 10 blocks).
-        """
-
-        for record in records:
-            epochs.db.saveHolderEpoch(record.key, record.nonce)
 
 #Get the latest Epoch.
 func latest*(

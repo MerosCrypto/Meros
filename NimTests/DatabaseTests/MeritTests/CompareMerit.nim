@@ -4,13 +4,8 @@ import ../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#Merit libs.
-import ../../../src/Database/Merit/Block
-import ../../../src/Database/Merit/Difficulty
-import ../../../src/Database/Merit/Blockchain
-import ../../../src/Database/Merit/State
-#import ../../../src/Database/Merit/Epochs
-#import ../../../src/Database/Merit/Merit
+#Merit lib.
+import ../../../src/Database/Merit/Merit
 
 #Compare Consensus lib.
 import ../ConsensusTests/CompareConsensus
@@ -102,7 +97,6 @@ proc compare*(
         assert(s1[uint16(h)] == s2[uint16(h)])
 
 #Compare two Epochs to make sure they have the same value.
-discard """
 proc compare*(
     e1Arg: Epochs,
     e2Arg: Epochs
@@ -116,13 +110,6 @@ proc compare*(
         p2: Epoch
 
     for _ in 0 ..< 6:
-        #Check the Epochs' records.
-        assert(e1.records.len == e2.records.len)
-        for r1 in 0 ..< e1.records.len:
-            assert(e1.records[r1].len == e2.records[r1].len)
-            for r2 in 0 ..< e1.records[r1].len:
-                compare(e1.records[r1][r2], e2.records[r1][r2])
-
         #Shift on an Epoch.
         p1 = e1.shift(nil, @[], @[])
         p2 = e2.shift(nil, @[], @[])
@@ -136,4 +123,3 @@ proc compare*(
 
         assert(p1.records.len == p2.records.len)
         compare(p1.records, p2.records)
-"""

@@ -37,22 +37,18 @@ import algorithm
 #Tables standard lib.
 import tables
 
-#This shift does four things:
+#This shift does three things:
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-# - Saves the MeritHolderRecords in the Epoch to-be-returned to the Database.
-#If tips is provided, which it is when loading from the DB, those are used instead of holder.archived.
 proc shift*(
     epochs: var Epochs,
     consensus: Consensus,
-    removals: seq[MeritHolderRecord],
-    records: seq[MeritHolderRecord],
-    tips: TableRef[BLSPublicKey, int] = nil
+    removals: seq[MeritHolderRecord]
 ): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Transactions that aren't in an older Epoch.
-        newEpoch: Epoch = newEpoch(records)
+        newEpoch: Epoch = newEpoch()
         #Loop variable of what Element to start with.
         start: int
         #Verifications we're handling.
@@ -118,20 +114,6 @@ proc newEpochs*(
         holders: seq[BLSPublicKey] = db.loadHolders()
         #Table of every archived tip before the current Epochs.
         tips: TableRef[BLSPublicKey, int] = newTable[BLSPublicKey, int]()
-
-    #We don't just return in the above except in case an empty holders is saved to the DB.
-    #That should be impossible, as the State, as of right now, only saves the holders once it has some.
-    #That said, if we change how the State operates the DB, it shouldn't break this.
-    if holders.len == 0:
-        return
-
-    #Load each's tip.
-    for holder in holders:
-        try:
-            tips[holder] = db.loadHolderEpoch(holder) + 1
-        except DBReadError:
-            #If this failed, it's because they have Merit but don't have Elements older than 5 blocks.
-            tips[holder] = 0
 
     #Shift the last 10 blocks. Why?
     #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late elements aren't labelled as first appearances.

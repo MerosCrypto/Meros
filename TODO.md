@@ -79,7 +79,9 @@ Network:
 - Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
 - Verify the `verifiers` merkle when we verify the Block's aggregate signature.
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
+
 - Correct Epochs.
+- See if Epoch can become a typedef instead of a single field object.
 
 - Add Elements to BDBTest.
 - Re-enable StateTests/ValueTest.
