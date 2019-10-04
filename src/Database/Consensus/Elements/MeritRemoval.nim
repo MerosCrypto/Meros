@@ -14,8 +14,10 @@ import VerificationPacket as VerificationPacketFile
 import objects/MeritRemovalObj
 export MeritRemovalObj
 
-#MeritRemoval serialize libs.
+#Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
+import ../../../Network/Serialize/Consensus/SerializeVerification
+import ../../../Network/Serialize/Consensus/SerializeVerificationPacket
 import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 
 #Constructor wrappers.
@@ -72,20 +74,19 @@ proc merkle*(
     Blake384(char(MERIT_REMOVAL_PREFIX) & mr.serialize())
 
 #Calculate the MeritRemoval's aggregation info.
-#[
 proc agInfo*(
-    mr: MeritRemoval
+    mr: MeritRemoval,
+    holder: BLSPublicKey
 ): BLSAggregationInfo {.forceCheck: [].} =
     try:
         #If this is a partial MeritRemoval, the signature is the second Element's.
         if mr.partial:
-            result = newBLSAggregationInfo(mr.holder, mr.element2.serializeWithoutHolder())
+            result = newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
         #Else, it's both Elements' signatures aggregated.
         else:
             result = @[
-                newBLSAggregationInfo(mr.holder, mr.element1.serializeWithoutHolder()),
-                newBLSAggregationInfo(mr.holder, mr.element2.serializeWithoutHolder())
+                newBLSAggregationInfo(holder, mr.element1.serializeWithoutHolder()),
+                newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
             ].aggregate()
     except BLSError as e:
         doAssert(false, "Failed to create the MeritRemoval's AggregationInfo: " & e.msg)
-]#

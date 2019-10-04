@@ -64,7 +64,7 @@ func newEpochsObj*(
 
     #Place blank epochs in.
     for i in 0 ..< 5:
-        result.epochs[i] = newEpoch(@[])
+        result.epochs[i] = newEpoch()
 
 #Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
 func add*(

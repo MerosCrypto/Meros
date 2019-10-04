@@ -39,6 +39,8 @@ type TransactionStatus* = ref object
     packets*: seq[VerificationPacket]
     #Packet for the next Block.
     pending*: SignedVerificationPacket
+    #Participating holders.
+    holders*: Table[uint16, bool]
     #Table of holder to their signature.
     signatures*: Table[uint16, BLSSignature]
 
@@ -55,8 +57,11 @@ proc newTransactionStatusObj*(
         competing: false,
         verified: false,
         beaten: false,
+
         packets: @[],
         pending: newSignedVerificationPacketObj(hash),
+        holders: initTable[uint16, bool](),
         signatures: initTable[uint16, BLSSignature](),
+
         merit: -1
     )

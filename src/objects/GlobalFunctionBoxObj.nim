@@ -89,19 +89,8 @@ type
         getDataDifficulty*: proc (): Hash[384] {.inline, raises: [].}
 
         isMalicious*: proc (
-            key: BLSPublicKey,
+            nick: uint16,
         ): bool {.inline, raises: [].}
-
-        getHeight*: proc (
-            key: BLSPublicKey
-        ): int {.raises: [].}
-
-        getElement*: proc (
-            key: BLSPublicKey,
-            nonce: int
-        ): Element {.raises: [
-            IndexError
-        ].}
 
         getStatus*: proc (
             hash: Hash[384]
@@ -113,19 +102,11 @@ type
             epoch: int
         ): int {.inline, raises: [].}
 
-        #[
-        addMeritRemoval*: proc (
-            mr: MeritRemoval
-        ) {.raises: [
-            ValueError
-        ].}
-
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
         ) {.raises: [
             ValueError
         ].}
-        ]#
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}

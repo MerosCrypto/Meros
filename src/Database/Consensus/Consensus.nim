@@ -1,9 +1,8 @@
 #Errors.
 import ../../lib/Errors
 
-#Hash and Merkle libs.
-import ../../lib/Hash.
-import ../../lib/Merkle
+#Hash lib.
+import ../../lib/Hash
 
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
@@ -14,25 +13,27 @@ import ../../objects/GlobalFunctionBoxObj
 #Consensus DB lib.
 import ../Filesystem/DB/ConsensusDB
 
-#Transaction lib and Transactions object.
+#Transaction lib.
 import ../Transactions/Transaction
-import ../Transactions/objects/TransactionsObj
 
-#Epoch object and State lib.
+#Block, Blockchain and Epoch objects.
+import ../Merit/objects/BlockObj
+import ../Merit/objects/BlockchainObj
 import ../Merit/objects/EpochsObj
+
+#State lib.
 import ../Merit/State
 
 #SpamFilter object.
 import objects/SpamFilterObj
 export SpamFilterObj
 
-#Signed Element object.
-import objects/SignedElementObj
-export SignedElementObj
-
 #Element lib.
-import Element
+import Elements/Element
 export Element
+
+#TransactionStatus lib.
+import TransactionStatus
 
 #Consensus object.
 import objects/ConsensusObj
@@ -40,9 +41,6 @@ export ConsensusObj
 
 #Serialize Verification lib.
 import ../../Network/Serialize/Consensus/SerializeVerification
-
-#Seq utils standard lib.
-import sequtils
 
 #Tables standard lib.
 import tables
@@ -59,7 +57,8 @@ proc newConsensus*(
 #Flag a MeritHolder as malicious.
 proc flag*(
     consensus: Consensus,
-    state: var State,
+    blockchain: Blockchain,
+    state: State,
     removal: MeritRemoval
 ) {.forceCheck: [].} =
     #Make sure there's a seq.
@@ -74,36 +73,36 @@ proc flag*(
 
     #Reclaulcate the affected verified Transactions.
     var
-        elem: Element
-        verif: Verification
         status: TransactionStatus
-
-    for e in consensus.db.loadOutOfEpochs(removal.holder) + 1 ..< consensus[removal.holder].height:
+        blockInEpochs: Block
+    for b in max(blockchain.height - 5, 0) ..< blockchain.height:
         try:
-            elem = consensus[removal.holder][e]
-            if not (elem of Verification):
-                continue
-            verif = cast[Verification](elem)
-            status = consensus.getStatus(verif.hash)
+            blockInEpochs = blockchain[b]
         except IndexError as e:
-            doAssert(false, "Either couldn't get an Element in Epochs or the Status for the Transaction it verifies: " & e.msg)
+            doAssert(false, "Couldn't get a Block from the Blockchain despite iterating up to the height: " & e.msg)
 
-        if status.verified:
-            var merit: int = 0
-            for verifier in status.verifiers:
-                if not consensus.malicious.hasKey(verifier):
-                    merit += state[verifier]
+        for hash in blockInEpochs.body.transactions:
+            try:
+                status = consensus.getStatus(hash)
+            except IndexError as e:
+                doAssert(false, "Couldn't get the status of a Transaction in Epochs: " & e.msg)
 
-            if merit < state.protocolThresholdAt(status.epoch):
-                consensus.unverify(state, verif.hash, status)
+            if status.verified and status.holders.hasKey(removal.holder):
+                var merit: int = 0
+                for holder in status.holders.keys():
+                    if not consensus.malicious.hasKey(holder):
+                        merit += state[holder]
+
+                if merit < state.protocolThresholdAt(status.epoch):
+                    consensus.unverify(state, hash, status)
 
 proc checkMalicious*(
     consensus: Consensus,
+    state: State,
     verif: SignedVerification
 ) {.forceCheck: [
-    GapError,
-    DataExists,
-    MaliciousMeritHolder
+    ValueError,
+    #MaliciousMeritHolder
 ].} =
     #This method is called before the Element is added.
     #Only when we add the Element, do we verify its signature.
@@ -111,39 +110,39 @@ proc checkMalicious*(
     try:
         verif.signature.setAggregationInfo(
             newBLSAggregationInfo(
-                verif.holder,
-                verif.serializeSign()
+                state.holders[verif.holder],
+                verif.serializeWithoutHolder()
             )
         )
+
+        #We deleted the rest of this function for the No Consensus DAG branch.
+        #This function called the function in MeritHolder which verified the signature.
+        #Since we deleted the code which does that, along with the call, verify it now.
+        if not verif.signature.verify():
+            raise newException(ValueError, "Invalid SignedVerification signature.")
     except BLSError as e:
         doAssert(false, "Failed to create a BLS Aggregation Info: " & e.msg)
 
-    try:
-        consensus[verif.holder].checkMalicious(verif)
-    except GapError as e:
-        fcRaise e
-    except DataExists as e:
-        fcRaise e
-    except MaliciousMeritHolder as e:
-        #Manually recreate the Exception since fcRaise wouldn't include the MeritRemoval.
-        raise newMaliciousMeritHolder(
-            e.msg,
-            e.removal
-        )
+proc checkMalicious*(
+    consensus: Consensus,
+    packet: VerificationPacket
+) {.forceCheck: [
+    #MaliciousMeritHolder
+].} =
+    discard
 
 #Register a Transaction.
 proc register*(
     consensus: Consensus,
-    transactions: Transactions,
-    state: var State,
+    state: State,
     tx: Transaction,
-    blockNum: int
+    height: int
 ) {.forceCheck: [].} =
     #Create the status.
-    var status: TransactionStatus = newTransactionStatusObj(blockNum + 6)
+    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 6)
 
     for input in tx.inputs:
-        #Check if this Transaction's parent was beatem.
+        #Check if this Transaction's parent was beaten.
         try:
             if (
                 (not status.beaten) and
@@ -156,7 +155,7 @@ proc register*(
             doAssert(false, "Parent Transaction doesn't have a status.")
 
         #Check for competing Transactions.
-        var spenders: seq[Hash[384]] = transactions.loadSpenders(input)
+        var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
         if spenders.len != 1:
             status.competing = true
 
@@ -170,18 +169,17 @@ proc register*(
                     try:
                         consensus.getStatus(spender).competing = true
                     except IndexError:
-                        doAssert(false, "Competing Transaction doesn't have a status despite being marked as a spender.")
+                        doAssert(false, "Competing Transaction doesn't have a Status despite being marked as a spender.")
 
-    #If there were previously unknown Verifications, apply them.
+    #If this Transaction is being added thanks to a handled VerificationPacket, apply it.
     if consensus.unknowns.hasKey(tx.hash):
         try:
-            for verifier in consensus.unknowns[tx.hash]:
-                status.verifiers.add(verifier)
+            status.add(consensus.unknowns[tx.hash])
 
             #Delete from the unknowns table.
             consensus.unknowns.del(tx.hash)
 
-            #Since we added Verifiers, calculate the Merit.
+            #Since we added a packet of verifiers, calculate the Merit.
             consensus.calculateMerit(state, tx.hash, status)
         except KeyError as e:
             doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
@@ -189,148 +187,95 @@ proc register*(
     #Set the status.
     consensus.setStatus(tx.hash, status)
 
-#Handle unknown Verifications.
-proc handleUnknown(
-    consensus: Consensus,
-    verif: Verification
-) {.forceCheck: [].} =
-    if not consensus.unknowns.hasKey(verif.hash):
-        consensus.unknowns[verif.hash] = newSeq[BLSPublicKey]()
+    #Mark the Transaction as unmentioned.
+    consensus.setUnmentioned(tx.hash)
 
-    try:
-        consensus.unknowns[verif.hash].add(verif.holder)
-    except KeyError as e:
-        doAssert(false, "Couldn't add a Merit Holder to a seq we've confirmed to exist: " & e.msg)
-
-#Add a Verification.
+#Add a VerificationPacket.
 proc add*(
     consensus: Consensus,
-    state: var State,
-    verif: Verification,
-    txExists: bool
-) {.forceCheck: [
-    ValueError,
-    GapError,
-    DataExists
-].} =
+    state: State,
+    packet: VerificationPacket
+) {.forceCheck: [].} =
+    var status: TransactionStatus
+    #Get the status.
     try:
-        consensus[verif.holder].add(verif)
-    except GapError as e:
-        fcRaise e
-    except DataExists as e:
-        fcRaise e
-    except MaliciousMeritHolder as e:
-        raise newException(ValueError, "Tried to add an Element from a Block which would cause a MeritRemoval: " & e.msg)
+        status = consensus.getStatus(packet.hash)
+    #If there's no TX status, the TX wasn't registered. Add it to unknowns.
+    except IndexError:
+        consensus.unknowns[packet.hash] = packet
+        return
 
-    if not txExists:
-        consensus.handleUnknown(verif)
-    else:
-        consensus.update(state, verif.hash, verif.holder)
+    #Add the packet.
+    status.add(packet)
+    #Calculate Merit.
+    consensus.calculateMerit(state, packet.hash, status)
+    #Set the status.
+    consensus.setStatus(packet.hash, status)
 
 #Add a SignedVerification.
 proc add*(
     consensus: Consensus,
-    state: var State,
+    state: State,
     verif: SignedVerification
 ) {.forceCheck: [
-    ValueError,
-    GapError
+    DataExists
 ].} =
+    #Get the status.
+    var status: TransactionStatus
     try:
-        consensus[verif.holder].add(verif)
-    except ValueError as e:
-        fcRaise e
-    except GapError as e:
-        fcRaise e
+        status = consensus.getStatus(verif.hash)
+    except IndexError:
+        doAssert(false, "SignedVerification added for a Transaction which was not registered.")
+
+    #Add the Verification.
+    try:
+        status.add(verif)
     except DataExists as e:
-        doAssert(false, "Tried to add a SignedVerification which caused was already added. This should've been checked via checkMalicious before hand: " & e.msg)
-    except MaliciousMeritHolder as e:
-        doAssert(false, "Tried to add a SignedVerification which caused a MeritRemoval. This should've been checked via checkMalicious before hand: " & e.msg)
+        fcRaise e
 
-    consensus.update(state, verif.hash, verif.holder)
-
-#Add a MeritRemoval.
-proc add*(
-    consensus: Consensus,
-    state: var State,
-    mr: MeritRemoval
-) {.forceCheck: [
-    ValueError
-].} =
-    #If this is a partial MeritRemoval, make sure the first Element is already archived on this Consensus DAG.
-    if mr.partial:
-        if mr.element1.nonce < consensus[mr.holder].archived:
-            raise newException(ValueError, "Partial MeritRemoval references unarchived Element.")
-
-        try:
-            if mr.element1 != consensus[mr.holder][mr.element1.nonce]:
-                raise newException(ValueError, "Partial MeritRemoval references Element not on this chain.")
-        except IndexError as e:
-            doAssert(false, "Failed to load an archived Element: " & e.msg)
-
-    #Same nonce.
-    if mr.element1.nonce == mr.element2.nonce:
-        if mr.element1 == mr.element2:
-            raise newException(ValueError, "Same Nonce MeritRemoval uses the same Elements.")
-    #Verified competing elements.
-    else:
-        doAssert(false, "Verified competing MeritRemovals aren't supported.")
-
-    consensus.flag(state, mr)
+    #Calculate Merit.
+    consensus.calculateMerit(state, verif.hash, status)
+    #Set the status.
+    consensus.setStatus(verif.hash, status)
 
 #Add a SignedMeritRemoval.
 proc add*(
     consensus: Consensus,
-    state: var State,
+    blockchain: Blockchain,
+    state: State,
     mr: SignedMeritRemoval
 ) {.forceCheck: [
     ValueError
 ].} =
     #Verify the MeritRemoval's signature.
     try:
-        mr.signature.setAggregationInfo(mr.agInfo)
+        mr.signature.setAggregationInfo(mr.agInfo(state.holders[mr.holder]))
         if not mr.signature.verify():
             raise newException(ValueError, "Invalid MeritRemoval signature.")
     except BLSError as e:
         doAssert(false, "Failed to verify the MeritRemoval's signature: " & e.msg)
 
-    #Add the MeritRemoval.
-    try:
-        consensus.add(state, cast[MeritRemoval](mr))
-    except ValueError as e:
-        fcRaise e
+    #If this is a partial MeritRemoval, make sure the first Element is already archived on the Blockchain.
+    if mr.partial:
+        doAssert(false, "Partial MeritRemovals aren't supported.")
 
-#Archive a MeritRemoval. This:
-#- Sets the MeritHolder's height to 1 above the archived height.
-#- Saves the element to its position.
+    #Same nonce.
+    #This is only used for SendDifficulty, DataDifficulty, and GasPrice elements.
+    #None of those are supported.
+    elif false:
+        discard
+
+    #Verified competing elements.
+    else:
+        doAssert(false, "Verified competing MeritRemovals aren't supported.")
+
+    consensus.flag(blockchain, state, mr)
+
+#Archive a MeritRemoval (clears the MeritRemovals for that holder).
 proc archive*(
     consensus: Consensus,
     mr: MeritRemoval
 ) {.forceCheck: [].} =
-    #Grab the MeritHolder.
-    var mh: MeritHolder
-    try:
-        mh = consensus[mr.holder]
-    except KeyError as e:
-        doAssert(false, "Couldn't get the MeritHolder who caused a valid MeritRemoval: " & e.msg)
-
-    #Set the MeritRemoval's nonce.
-    try:
-        mr.nonce = mh.archived + 1
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when archicing a MeritRemoval: " & e.msg)
-
-    #Delete reverted elements (except the first which we overwrite).
-    for e in mh.archived + 2 ..< mh.height:
-        consensus.db.del(mr.holder, e)
-
-    #Correct the height.
-    mh.height = mh.archived + 2
-
-    #Save the element.
-    consensus.db.save(mr)
-
-    #Delete the MeritRemovals from the malicious table.
     consensus.malicious.del(mr.holder)
 
 #Get a Transaction's unfinalized parents.
@@ -352,54 +297,22 @@ proc getUnfinalizedParents(
                 if consensus.getStatus(input.hash).merit == -1:
                     result.add(input.hash)
             except IndexError as e:
-                doAssert(false, "Couldn't get the Status of a Transaction used as an input to one out of Epochs: " & e.msg)
+                doAssert(false, "Couldn't get the Status of a Transaction used as an input in the specified Transaction: " & e.msg)
 
 #For each provided Record, archive all Elements from the account's last archived to the provided nonce.
 proc archive*(
     consensus: Consensus,
-    state: var State,
+    state: State,
     shifted: Epoch,
     popped: Epoch
 ) {.forceCheck: [].} =
-    #Iterate over every Record.
-    for record in shifted.records:
-        #Make sure this MeritHolder has Elements to archive.
-        if consensus[record.key].archived == consensus[record.key].height - 1:
-            doAssert(false, "Tried to archive Elements from a MeritHolder without any pending Elements.")
-
-        #Make sure this MeritHolder has enough Elements.
-        if record.nonce >= consensus[record.key].height:
-            doAssert(false, "Tried to archive more Elements than this MeritHolder has pending.")
-
-        #Delete the old signatures.
-        for e in consensus[record.key].archived + 1 .. record.nonce:
-            consensus[record.key].signatures.del(e)
-
-        #Reset the Merkle.
-        consensus[record.key].merkle = newMerkle()
-        for e in record.nonce + 1 ..< consensus[record.key].height:
-            try:
-                consensus[record.key].addToMerkle(consensus[record.key][e])
-            except IndexError as e:
-                doAssert(false, "Couldn't get an element we know we have: " & e.msg)
-
-        #Update the archived field.
-        consensus[record.key].archived = record.nonce
-
-        #Update the DB.
-        consensus.db.save(record.key, record.nonce)
-
     #Delete every new Hash in Epoch from unmentioned.
     for hash in shifted.hashes.keys():
         consensus.unmentioned.del(hash)
-    #Update the Epoch for every unmentioned Epoch.
+    #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned.keys():
         consensus.incEpoch(hash)
         consensus.db.addUnmentioned(hash)
-
-    #Save every popped record nonce.
-    for record in popped.records:
-        consensus.db.saveOutOfEpochs(record.key, record.nonce)
 
     #Transactions finalized out of order.
     var outOfOrder: Table[Hash[384], bool] = initTable[Hash[384], bool]()

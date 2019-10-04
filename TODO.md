@@ -74,8 +74,6 @@ Network:
 
 ### No Consensus DAG:
 
-- When creating a MeritRemoval where the cause is VerificationPacket, convert the nicknames to keys in case the nicknames change due to a reorg.
-
 - Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
 - Verify the `verifiers` merkle when we verify the Block's aggregate signature.
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
@@ -88,6 +86,7 @@ Network:
 
 - Load statuses still in Epochs.
 - Load close Transactions.
+- Functioning checkMalicious.
 
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
 - Test the full nickname space is usable both internally and in parsing/serializations.

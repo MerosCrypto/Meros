@@ -4,8 +4,13 @@ import ../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#Merit lib.
-import ../../../src/Database/Merit/Merit
+#Merit libs.
+import ../../../src/Database/Merit/Block
+import ../../../src/Database/Merit/Difficulty
+import ../../../src/Database/Merit/Blockchain
+import ../../../src/Database/Merit/State
+#import ../../../src/Database/Merit/Epochs
+#import ../../../src/Database/Merit/Merit
 
 #Compare Consensus lib.
 import ../ConsensusTests/CompareConsensus
@@ -97,6 +102,7 @@ proc compare*(
         assert(s1[uint16(h)] == s2[uint16(h)])
 
 #Compare two Epochs to make sure they have the same value.
+#[
 proc compare*(
     e1Arg: Epochs,
     e2Arg: Epochs
@@ -123,3 +129,4 @@ proc compare*(
 
         assert(p1.records.len == p2.records.len)
         compare(p1.records, p2.records)
+]#

@@ -22,8 +22,22 @@ import tables
 proc add*(
     status: TransactionStatus,
     verif: SignedVerification
-) {.forceCheck: [].} =
+) {.forceCheck: [
+    DataExists
+].} =
+    #Don't change the status of finalized Transactions.
+    if status.merit != -1:
+        return
+
+    #Raise DataExists if this verifier was already added.
+    if status.holders.hasKey(verif.holder):
+        raise newException(DataExists, "Verification was already added.")
+
+    #Add the Verification to the pending packet.
     status.pending.add(verif)
+    #Add the holder to holders.
+    status.holders[verif.holder] = true
+    #Cache the signature.
     status.signatures[verif.holder] = verif.signature
 
 #Add a VerificationPacket.
@@ -32,8 +46,15 @@ proc add*(
     status: TransactionStatus,
     packet: VerificationPacket
 ) {.forceCheck: [].} =
+    #Don't change the status of finalized Transactions.
+    if status.merit != -1:
+        return
+
     #Add the new packet to the list of packets.
     status.packets.add(packet)
+    #Mark the holders in the table.
+    for holder in packet.holders:
+        status.holders[holder] = true
 
     var
         #Grab the pending packet.

@@ -11,6 +11,9 @@ import NetworkTests
 import DatabaseTests/MeritTests/BlockchainTests
 import DatabaseTests/MeritTests/StateTests
 
+#Consensus DAG. Just testing it compiles.
+import ../src/Database/Consensus/Consensus
+
 #Locks standard lib.
 import locks
 

@@ -16,23 +16,18 @@ import ../../Filesystem/DB/ConsensusDB
 #Transaction object.
 import ../../Transactions/Transaction
 
-#Element objects.
-import ElementObj
-import VerificationObj
-import MeritRemovalObj
+#State lib.
+import ../../Merit/State
+
+#Element lib.
+import ../Elements/Element
 
 #TransactionStatus object.
 import TransactionStatusObj
 export TransactionStatusObj
 
-#State lib.
-import ../../Merit/State
-
 #SpamFilter object.
 import SpamFilterObj
-
-#MeritHolder object.
-import MeritHolderObj
 
 #Tables standard lib.
 import tables
@@ -50,7 +45,7 @@ type Consensus* = ref object
     #Filters.
     filters*: tuple[send: SpamFilter, data: SpamFilter]
     #Nickname -> MeritRemoval(s).
-    malicious*: Table[int, seq[MeritRemoval]]
+    malicious*: Table[uint16, seq[MeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
     statuses: Table[Hash[384], TransactionStatus]
@@ -62,7 +57,7 @@ type Consensus* = ref object
     unmentioned*: Table[Hash[384], bool]
     #Verifications of unknown Transactions.
     #This is used when Blocks are added since we add Verifications before Transactions.
-    unknowns*: Table[Hash[384], seq[int]]
+    unknowns*: Table[Hash[384], VerificationPacket]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -80,13 +75,13 @@ proc newConsensusObj*(
             send: newSpamFilterObj(sendDiff),
             data: newSpamFilterObj(dataDiff)
         ),
-        malicious: initTable[int, seq[MeritRemoval]](),
+        malicious: initTable[uint16, seq[MeritRemoval]](),
 
         statuses: initTable[Hash[384], TransactionStatus](),
         close: initTable[Hash[384], bool](),
 
-        unmentioned: initTable[Hash[384], bool]
-        unknowns: initTable[Hash[384], seq[int]]()
+        unmentioned: initTable[Hash[384], bool](),
+        unknowns: initTable[Hash[384], VerificationPacket]()
     )
 
     #Load statuses still in Epochs.
@@ -97,6 +92,13 @@ proc newConsensusObj*(
     for hash in unmentioned:
         result.unmentioned[hash] = true
 
+#Set a Transaction as unmentioned.
+proc setUnmentioned*(
+    consensus: Consensus,
+    hash: Hash[384]
+) {.forceCheck: [].} =
+    consensus.unmentioned[hash] = true
+
 #Set a Transaction's status.
 proc setStatus*(
     consensus: Consensus,
@@ -104,7 +106,6 @@ proc setStatus*(
     status: TransactionStatus
 ) {.forceCheck: [].} =
     consensus.statuses[hash] = status
-    consensus.unmentioned[hash] = true
     consensus.db.save(hash, status)
 
 #Get a Transaction's statuses.
@@ -147,7 +148,7 @@ proc incEpoch*(
 #Calculate a Transaction's Merit.
 proc calculateMeritSingle(
     consensus: Consensus,
-    state: var State,
+    state: State,
     tx: Transaction,
     status: TransactionStatus
 ) {.forceCheck: [].} =
@@ -157,10 +158,10 @@ proc calculateMeritSingle(
 
     #Calculate Merit.
     var merit: int = 0
-    for verifier in status.verifiers:
+    for holder in status.holders.keys():
         #Skip malicious MeritHolders from Merit calculations.
-        if not consensus.malicious.hasKey(verifier):
-            merit += state[verifier]
+        if not consensus.malicious.hasKey(holder):
+            merit += state[holder]
 
     #Check if the Transaction crossed its threshold.
     if merit >= state.nodeThresholdAt(status.epoch):
@@ -190,7 +191,7 @@ proc calculateMeritSingle(
 #Calculate a Transaction's Merit. If it's verified, also check every descendant
 proc calculateMerit*(
     consensus: Consensus,
-    state: var State,
+    state: State,
     hash: Hash[384],
     statusArg: TransactionStatus
 ) {.forceCheck: [].} =
@@ -226,42 +227,10 @@ proc calculateMerit*(
             except IndexError as e:
                 doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
-#Update a Status with a new verifier.
-proc update*(
-    consensus: Consensus,
-    state: var State,
-    hash: Hash[384],
-    verifier: BLSPublicKey
-) {.forceCheck: [].} =
-    #Grab the status.
-    var status: TransactionStatus
-    try:
-        status = consensus.getStatus(hash)
-    except IndexError:
-        doAssert(false, "Transaction was not registered.")
-
-    #Don't change the status of finalized Transactions.
-    if status.merit != -1:
-        return
-
-    #Make sure this isn't a duplicate.
-    for existing in status.verifiers:
-        if existing == verifier:
-            return
-
-    #Add the Verifier.
-    status.verifiers.add(verifier)
-
-    #Calculate Merit.
-    consensus.calculateMerit(state, hash, status)
-
-    #Save the status.
-    consensus.db.save(hash, status)
-
 #Unverify a Transaction.
 proc unverify*(
     consensus: Consensus,
-    state: var State,
+    state: State,
     hash: Hash[384],
     status: TransactionStatus
 ) {.forceCheck: [].} =
@@ -302,7 +271,7 @@ proc unverify*(
 #Finalize a TransactionStatus.
 proc finalize*(
     consensus: Consensus,
-    state: var State,
+    state: State,
     hash: Hash[384]
 ) {.forceCheck: [].} =
     #Get the Transaction/Status.
@@ -316,23 +285,18 @@ proc finalize*(
         doAssert(false, "Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
 
     #Calculate the final Merit tally.
+    var added: Table[uint16, bool] = initTable[uint16, bool]()
     status.merit = 0
-    for verifier in status.verifiers:
-        #Ignore Verifiers who didn't get their Verifications archived.
-        var skip: bool = false
-        try:
-            for e in consensus[verifier].archived + 1 ..< consensus[verifier].height:
-                if consensus[verifier][e] of Verification:
-                    if cast[Verification](consensus[verifier][e]).hash == hash:
-                        skip = true
-                        break
-        except IndexError as e:
-            doAssert(false, "Couldn't get an Element despite iterating from .archived + 1 ..< .height: " & e.msg)
-        if skip:
-            continue
+    for packet in status.packets:
+        for holder in packet.holders:
+            #Skip duplicate holders.
+            if added.hasKey(holder):
+                continue
 
-        #Add the Merit.
-        status.merit += state[verifier]
+            #Add the Merit.
+            status.merit += state[holder]
+            #Mark the holder as added.
+            added[holder] = true
 
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
