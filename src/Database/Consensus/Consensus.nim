@@ -307,7 +307,7 @@ proc archive*(
     popped: Epoch
 ) {.forceCheck: [].} =
     #Delete every new Hash in Epoch from unmentioned.
-    for hash in shifted.hashes.keys():
+    for hash in shifted.keys():
         consensus.unmentioned.del(hash)
     #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned.keys():
@@ -317,7 +317,7 @@ proc archive*(
     #Transactions finalized out of order.
     var outOfOrder: Table[Hash[384], bool] = initTable[Hash[384], bool]()
     #Mark every hash in this Epoch as out of Epochs.
-    for hash in popped.hashes.keys():
+    for hash in popped.keys():
         #Skip Transaction we verified out of order.
         if outOfOrder.hasKey(hash):
             continue

@@ -12,6 +12,7 @@ proc addTests*(
     tests: var seq[proc ()]
 ) =
     tests.add(EDBTest.test)
+    
     tests.add(EmptyTest.test)
     tests.add(SingleTest.test)
     tests.add(SplitTest.test)

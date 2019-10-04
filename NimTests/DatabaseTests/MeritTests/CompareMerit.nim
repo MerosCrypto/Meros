@@ -4,16 +4,17 @@ import ../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
+#VerificationPacket lib.
+import ../../../src/Database/Consensus/Elements/VerificationPacket as VerificationPacketFile
+
 #Merit libs.
-import ../../../src/Database/Merit/Block
-import ../../../src/Database/Merit/Difficulty
-import ../../../src/Database/Merit/Blockchain
-import ../../../src/Database/Merit/State
-#import ../../../src/Database/Merit/Epochs
-#import ../../../src/Database/Merit/Merit
+import ../../../src/Database/Merit/Merit
 
 #Compare Consensus lib.
 import ../ConsensusTests/CompareConsensus
+
+#Merit Testing Functions.
+import TestMerit
 
 #Tables standard lib.
 import tables
@@ -102,7 +103,6 @@ proc compare*(
         assert(s1[uint16(h)] == s2[uint16(h)])
 
 #Compare two Epochs to make sure they have the same value.
-#[
 proc compare*(
     e1Arg: Epochs,
     e2Arg: Epochs
@@ -117,16 +117,12 @@ proc compare*(
 
     for _ in 0 ..< 6:
         #Shift on an Epoch.
-        p1 = e1.shift(nil, @[], @[])
-        p2 = e2.shift(nil, @[], @[])
+        p1 = e1.shift(newBlankBlock(), initTable[Hash[384], VerificationPacket]())
+        p2 = e2.shift(newBlankBlock(), initTable[Hash[384], VerificationPacket]())
 
         #Make sure the Epochs are equivalent.
-        assert(p1.hashes.len == p2.hashes.len)
-        for h in p1.hashes.keys():
-            assert(p1.hashes[h].len == p2.hashes[h].len)
-            for k in 0 ..< p1.hashes[h].len:
-                assert(p1.hashes[h][k] == p2.hashes[h][k])
-
-        assert(p1.records.len == p2.records.len)
-        compare(p1.records, p2.records)
-]#
+        assert(p1.len == p2.len)
+        for h in p1.keys():
+            assert(p1[h].len == p2[h].len)
+            for k in 0 ..< p1[h].len:
+                assert(p1[h][k] == p2[h][k])

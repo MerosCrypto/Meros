@@ -16,15 +16,7 @@ import ../Consensus/Consensus
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#MeritHolderRecord object.
-import ../common/objects/MeritHolderRecordObj
-export MeritHolderRecordObj
-
-#Miners object.
-import objects/MinersObj
-export MinersObj
-
-#Every Merit lib.
+#Merit libs.
 import Difficulty
 import BlockHeader
 import Block
@@ -39,7 +31,10 @@ export Blockchain
 export State
 export Epochs
 
-#Merit master object for a blockchain and state.
+#Tables standard lib.
+import tables
+
+#Blockchain, State, and Epochs wrapper.
 type Merit* = ref object
     blockchain*: Blockchain
     state*: State
@@ -71,7 +66,7 @@ proc newMerit*(
         )
     )
     result.state = newState(db, live, result.blockchain.height)
-    result.epochs = newEpochs(db, consensus, result.blockchain)
+    result.epochs = newEpochs(consensus, result.blockchain)
 
 #Add a Block to the Blockchain.
 proc processBlock*(
@@ -94,16 +89,16 @@ proc processBlock*(
 #Process a Block already addded to the Blockchain.
 proc postProcessBlock*(
     merit: Merit,
-    consensus: Consensus,
-    removals: seq[MeritHolderRecord],
-    newBlock: Block
+    consensus: Consensus
 ): Epoch {.forceCheck: [].} =
+    #Calculate the packets in the tail Block.
+    var packets: Table[Hash[384], VerificationPacket] = merit.blockchain.getPackets(consensus, merit.blockchain.height - 1)
+
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
-        consensus,
-        removals,
-        newBlock.records
+        merit.blockchain.tip,
+        packets
     )
 
     #Have the state process the block.
-    merit.state.processBlock(merit.blockchain, newBlock)
+    merit.state.processBlock(merit.blockchain)

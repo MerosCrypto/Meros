@@ -253,7 +253,7 @@ proc test*() =
         blockchain.processBlock(mining)
 
         #Add it to the State.
-        state.processBlock(blockchain, mining)
+        state.processBlock(blockchain)
 
         #Remove Merit from the specified MeritHolder.
         if toRemove[i] != -1:

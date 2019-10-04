@@ -7,11 +7,14 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib (for BLSPublicKey).
-import ../../../Wallet/MinerWallet
-
 #Merit DB lib.
 import ../../Filesystem/DB/MeritDB
+
+#VerificationPacket object.
+import ../../Consensus/Elements/objects/VerificationPacketObj
+
+#Seq utils standard lib.
+import sequtils
 
 #Tables standard lib.
 import tables
@@ -21,88 +24,55 @@ import finals
 
 finalsd:
     type
-        #Reward object. Declares a BLS Public Key and a number which adds up to 1000.
+        #Reward object. Declares a nick and a number which adds up to 1000 when combined with the other rewards.
         Reward* = object
-            key* {.final.}: BLSPublicKey
+            nick* {.final.}: uint16
             score*: uint64
 
-        #Epoch object. Transaction Hash -> BLS Public Keys of verifiers.
-        Epoch* = object
-            hashes*: Table[Hash[384], seq[BLSPublicKey]]
+        #Epoch object. Transaction Hash -> Nicks of verifiers.
+        Epoch* = Table[Hash[384], seq[uint16]]
 
-        #Epochs object.
-        Epochs* = object
-            #Database.
-            db: DB
-            #Seq of the current 5 Epochs.
-            epochs: seq[Epoch]
+        #Epochs object. Seq of the current 5 Epochs.
+        Epochs* = seq[Epoch]
 
 #Constructors.
 func newReward*(
-    key: BLSPublicKey,
+    nick: uint16,
     score: uint64
 ): Reward {.forceCheck: [].} =
     result = Reward(
-        key: key,
+        nick: nick,
         score: score
     )
-    result.ffinalizeKey()
+    result.ffinalizeNick()
 
 func newEpoch*(): Epoch {.inline, forceCheck: [].} =
-    Epoch(
-        hashes: initTable[Hash[384], seq[BLSPublicKey]]()
-    )
+    initTable[Hash[384], seq[uint16]]()
 
-func newEpochsObj*(
-    db: DB
-): Epochs {.forceCheck: [].} =
+func newEpochsObj*(): Epochs {.forceCheck: [].} =
     #Create the seq.
-    result = Epochs(
-        db: db,
-        epochs: newSeq[Epoch](5)
-    )
+    result = newSeq[Epoch](5)
 
     #Place blank epochs in.
     for i in 0 ..< 5:
-        result.epochs[i] = newEpoch()
+        result[i] = newEpoch()
 
-#Adds a hash to Epochs. Throws NotInEpochs error if the hash isn't in the Epochs.
-func add*(
-    epochs: var Epochs,
-    hash: Hash[384],
-    holder: BLSPublicKey
-) {.forceCheck: [
-    NotInEpochs
-].} =
-    #Check every Epoch.
-    try:
-        for i in 0 ..< epochs.epochs.len:
-            #If we found the hash, add the holder and return true.
-            if epochs.epochs[i].hashes.hasKey(hash):
-                for key in epochs.epochs[i].hashes[hash]:
-                    if key == holder:
-                        return
-                epochs.epochs[i].hashes[hash].add(holder)
-                return
-    except KeyError as e:
-        doAssert(false, "Couldn't add a hash to an Epoch which already has said hash: " & e.msg)
-    raise newException(NotInEpochs, "")
+#Register a hash within an Epoch.
+func register*(
+    epoch: var Epoch,
+    hash: Hash[384]
+) {.inline, forceCheck: [].} =
+    epoch[hash] = @[]
 
-#Add a hash to an Epoch.
+#Add a VerificationPacket to an Epoch.
 func add*(
     epoch: var Epoch,
-    hash: Hash[384],
-    holder: BLSPublicKey
+    packet: VerificationPacket
 ) {.forceCheck: [].} =
-    #Create the seq, if one doesn't already exist.
-    if not epoch.hashes.hasKey(hash):
-        epoch.hashes[hash] = @[]
-
-    #Add the key.
     try:
-        epoch.hashes[hash].add(holder)
+        epoch[packet.hash] = epoch[packet.hash].concat(packet.holders)
     except KeyError as e:
-        doAssert(false, "Couldn't add a hash to a newly created seq in the Epoch: " & e.msg)
+        doAssert(false, "Adding a packet to an Epoch which doesn't have that hash registered: " & e.msg)
 
 #Shift an Epoch.
 proc shift*(
@@ -110,14 +80,14 @@ proc shift*(
     epoch: Epoch
 ): Epoch {.forceCheck: [].} =
     #Add the newest Epoch.
-    epochs.epochs.add(epoch)
+    epochs.add(epoch)
     #Set the result to the oldest.
-    result = epochs.epochs[0]
+    result = epochs[0]
     #Remove the oldest.
-    epochs.epochs.delete(0)
+    epochs.delete(0)
 
 #Get the latest Epoch.
 func latest*(
     epochs: Epochs
 ): Epoch {.forceCheck: [].} =
-    epochs.epochs[4]
+    epochs[4]

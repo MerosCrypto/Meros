@@ -130,7 +130,7 @@ proc test*() =
 
         #Add it to the Blockchain and State.
         blockchain.processBlock(mining)
-        state.processBlock(blockchain, mining)
+        state.processBlock(blockchain)
 
         #Commit the DB.
         db.commit(blockchain.height)

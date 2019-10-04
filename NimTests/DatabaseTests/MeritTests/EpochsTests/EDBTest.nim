@@ -277,7 +277,7 @@ proc test*() =
             consensus.archive(mr)
 
         #Add it to the State.
-        state.processBlock(blockchain, mining)
+        state.processBlock(blockchain)
 
         #Shift the records onto the Epochs.
         epoch = epochs.shift(consensus, @[], records)

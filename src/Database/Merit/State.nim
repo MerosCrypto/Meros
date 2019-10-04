@@ -26,7 +26,7 @@ export StateObj
 proc newState*(
     db: DB,
     deadBlocks: int,
-    blockchainHeight: int,
+    blockchainHeight: int
 ): State {.forceCheck: [].} =
     newStateObj(db, deadBlocks, blockchainHeight)
 
@@ -49,9 +49,11 @@ proc getNickname(
 #Process a block.
 proc processBlock*(
     state: var State,
-    blockchain: Blockchain,
-    newBlock: Block
+    blockchain: Blockchain
 ) {.forceCheck: [].} =
+    #Grab the new Block.
+    var newBlock: Block = blockchain.tip
+
     #Save the amount of live Merit.
     state.saveLive()
 

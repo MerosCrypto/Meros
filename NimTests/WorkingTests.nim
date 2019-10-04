@@ -11,6 +11,14 @@ import NetworkTests
 import DatabaseTests/MeritTests/BlockchainTests
 import DatabaseTests/MeritTests/StateTests
 
+import DatabaseTests/MeritTests/EpochsTests/EmptyTest
+#[
+import DatabaseTests/MeritTests/EpochsTests/SingleTest
+import DatabaseTests/MeritTests/EpochsTests/SplitTest
+import DatabaseTests/MeritTests/EpochsTests/TieBreakTest
+import DatabaseTests/MeritTests/EpochsTests/Perfect1000Test
+]#
+
 #Consensus DAG. Just testing it compiles.
 import ../src/Database/Consensus/Consensus
 
@@ -34,6 +42,13 @@ NetworkTests.addTests(tests)
 
 BlockchainTests.addTests(tests)
 StateTests.addTests(tests)
+tests.add(EmptyTest.test)
+#[
+tests.add(SingleTest.test)
+tests.add(SplitTest.test)
+tests.add(TieBreakTest.test)
+tests.add(Perfect1000Test.test)
+]#
 
 proc grabTest(): int =
     {.gcsafe.}:

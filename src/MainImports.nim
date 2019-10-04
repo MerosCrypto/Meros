@@ -7,9 +7,6 @@ import lib/Util
 #Hash lib.
 import lib/Hash
 
-#Merkle lib.
-import lib/common/Merkle
-
 #Wallet libs.
 import Wallet/MinerWallet
 import Wallet/Wallet
