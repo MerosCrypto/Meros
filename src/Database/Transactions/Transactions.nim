@@ -8,18 +8,12 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 import ../../Wallet/MinerWallet
 
-#Consensus lib.
-import ../Consensus/Consensus
-
 #Blockchain and Epochs libs.
 import ../Merit/Blockchain
 import ../Merit/Epochs
 
 #Transactions DB lib.
 import ../Filesystem/DB/TransactionsDB
-
-#MeritHolderRecord object.
-import ../common/objects/MeritHolderRecordObj
 
 #Transaction lib.
 import Transaction
@@ -39,14 +33,9 @@ import tables
 #Constructor.
 proc newTransactions*(
     db: DB,
-    consensus: Consensus,
     blockchain: Blockchain
 ): Transactions {.inline, forceCheck: [].} =
-    newTransactionsObj(
-        db,
-        consensus,
-        blockchain
-    )
+    newTransactionsObj(db, blockchain)
 
 #Add a Claim.
 proc add*(
@@ -246,33 +235,11 @@ proc mint*(
 #Remove every hash in this Epoch from the cache/RAM, updating archived and the amount of Elements to reload.
 proc archive*(
     transactions: var Transactions,
-    consensus: Consensus,
     epoch: Epoch
 ) {.forceCheck: [].} =
-    for record in epoch.records:
-        #Remove every hash from this Epoch.
-        #If we used the hashes in the Epoch, we'd only remove confirmed hashes.
-        #We need to iterate over every Element archived in this Epoch and remove every mentioned hash.
-        var
-            #Previously popped height.
-            prev: int
-            #Elements.
-            elems: seq[Element]
-        try:
-            prev = transactions.load(record.key)
-        except DBReadError:
-            prev = -1
-        try:
-            elems = consensus[record.key][prev + 1 .. record.nonce]
-        except IndexError as e:
-            doAssert(false, "Couldn't load Elements which were archived: " & e.msg)
-
-        #Iterate over every archived Element,
-        for elem in elems:
-            transactions.del(cast[Verification](elem).hash)
-
-        #Save the popped height so we can reload Elements.
-        transactions.save(record.key, record.nonce)
+    #Remove every hash from this Epoch.
+    for hash in epoch.keys():
+        transactions.del(hash)
 
 #Check if a Transaction is the first to spend all its inputs.
 proc isFirst*(
