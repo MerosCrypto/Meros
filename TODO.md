@@ -74,17 +74,33 @@ Network:
 
 ### No Consensus DAG:
 
+Wallet:
+
+- Load the nickname/automatically set the nickname for the miner wallet.
+
+Merit:
+
 - Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
 - Verify the `verifiers` merkle when we verify the Block's aggregate signature.
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
-
 - Epochs's getPackets.
+
+Consensus:
+
 - Load statuses still in Epochs.
 - Load close Transactions.
 - Functioning checkMalicious.
+- Handle VerificationPackets from Main.
+
+RPC:
 
 - Functioning getBlockTemplate. The existing one meets the RPC spec but includes no TXs or Elements.
-- Correct `personal_getAddress` which is different from its "Eventual" definition.
+
+Network:
+
+- Network.
+
+Tests:
 
 - Epochs Tests.
 - Add Elements to BDBTest.
@@ -92,6 +108,8 @@ Network:
 
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
 - Test the full nickname space is usable both internally and in parsing/serializations.
+
+Cleanup:
 
 - Check if any DB methods are unused.
 - Remove no longer needed Exception checks.

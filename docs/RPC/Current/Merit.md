@@ -20,7 +20,7 @@ The result is an object, as follows:
     - `last`      (string)
     - `contents`  (string)
     - `verifiers` (string)
-    - `miner`     (string)
+    - `miner`     (int/string): Either the miner's nick as an int or the key as a string if this is their first Block.
     - `time`      (int)
     - `proof`     (int)
     - `signature` (string)
@@ -61,7 +61,7 @@ The result is an object, as follows:
 ### `getMerit`
 
 `getMerit` replies with a Merit Holder's Merit. It takes in one argument.
-- Merit Holder (string)
+- Merit Holder Nickname (int)
 
 The result is an object, as follows:
 - `live`      (bool)

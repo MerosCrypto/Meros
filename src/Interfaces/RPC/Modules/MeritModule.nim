@@ -10,6 +10,9 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#Element lib.
+import ../../../Database/Consensus/Elements/Element
+
 #Merit lib.
 import ../../../Database/Merit/Merit
 
@@ -31,20 +34,20 @@ import strutils
 proc `%`(
     elem: Element
 ): JSONNode {.forceCheck: [].} =
-    result = %* {
-        "holder": elem.holder
-    }
+    result = %* {}
+    if elem of BlockElement:
+        result["holder"] = % cast[BlockElement](elem).holder
 
     case elem:
         of Verification as verif:
-            result["hash"] = $verif.hash
+            result["hash"] = % $verif.hash
 
         of MeritRemovalVerificationPacket as packet:
-            result["hash"] = $packet.hash
+            result["hash"] = % $packet.hash
             result["holders"] = % []
             for holder in packet.holders:
                 try:
-                    result["holders"].add($ holder)
+                    result["holders"].add(% $holder)
                 except KeyError as e:
                     doAssert(false, "Couldn't add a holder to a VerificationPacket's JSON representation despite declaring an array for the holders: " & e.msg)
 
@@ -73,13 +76,21 @@ proc `%`(
             "contents":  $blockArg.header.contents,
             "verifiers": $blockArg.header.verifiers,
 
-            "miner":     $blockArg.header.miner,
             "time":      blockArg.header.time,
             "proof":     blockArg.header.proof,
             "signature": $blockArg.header.signature
         },
         "aggregate": $blockArg.body.aggregate
     }
+
+    #Add the miner to the header.
+    try:
+        if blockArg.header.newMiner:
+            result["header"]["miner"] = % $blockArg.header.minerKey
+        else:
+            result["header"]["miner"] = % blockArg.header.minerNick
+    except KeyError as e:
+        doAssert(false, "Couldn't add a miner to a BlockHeader's JSON representation despite declaring an object for the header: " & e.msg)
 
     #Add the Transactions.
     result["transactions"] = % []
@@ -115,14 +126,7 @@ proc module*(
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                try:
-                    var
-                        diffA: array[64, uint8] = functions.merit.getDifficulty().difficulty.toByteArrayBE()
-                        diffStr: string = newString(48)
-                    copyMem(addr diffStr[0], addr diffA[16], 48)
-                    res["result"] = % diffStr.toHex()
-                except DivByZeroError as e:
-                    doAssert(false, "Serializing the difficulty threw an error: " & e.msg)
+                res["result"] = % $ functions.merit.getDifficulty().difficulty
 
             #Get Block by nonce or hash.
             "getBlock" = proc (
@@ -178,21 +182,19 @@ proc module*(
                 #Verify the parameters length.
                 if (
                     (params.len != 1) or
-                    (params[0].kind != JString)
+                    (params[0].kind != JInt) or
+                    (params[0].getInt() >= 65536)
                 ):
                     raise newException(ParamError, "")
 
-                #Extract the parameters.
-                var key: BLSPublicKey
-                try:
-                    key = newBLSPublicKey(params[0].getStr())
-                except BLSError:
-                    raise newException(ParamError, "")
+                #Extract the parameter.
+                var nick: uint16 = uint16(params[0].getInt())
 
+                #Create the result.
                 res["result"] = %* {
-                    "live": functions.merit.isLive(key),
-                    "malicious": functions.consensus.isMalicious(key),
-                    "merit": functions.merit.getMerit(key)
+                    "live": functions.merit.isLive(nick),
+                    "malicious": functions.consensus.isMalicious(nick),
+                    "merit": functions.merit.getMerit(nick)
                 }
 
             "getBlockTemplate" = proc (
@@ -213,13 +215,13 @@ proc module*(
                     raise newJSONRPCError(-4, "Invalid miner")
 
                 #Create the Header.
-                var header: JSONNode = nil
+                var header: JSONNode = newJNull()
                 try:
-                    var nick: int
+                    var nick: uint16
                     try:
                         nick = functions.merit.getNickname(miner)
-                    except IndexError as e:
-                        header == % newBlockHeader(
+                    except IndexError:
+                        header = % newBlockHeader(
                             0,
                             functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
                             Hash[384](),
@@ -228,8 +230,10 @@ proc module*(
                             getTime()
                         ).serializeHash().toHex()
 
-                    if header != nil:
-                        header == % newBlockHeader(
+
+                    if header.kind == JNull:
+                        discard
+                        header = % newBlockHeader(
                             0,
                             functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
                             Hash[384](),
@@ -243,7 +247,7 @@ proc module*(
                 #Create the result.
                 res["result"] = %* {
                     "header": header,
-                    "body": newBlockBodyObj(@[], @[]).serialize().toHex()
+                    "body": newBlockBodyObj(@[], @[], nil).serialize().toHex()
                 }
 
             "publishBlock" = proc (
@@ -274,7 +278,7 @@ proc module*(
                     raise newJSONRPCError(-3, "Invalid Block")
                 except IndexError:
                     raise newJSONRPCError(-2, "Invalid/missing Records")
-                except GapError:
+                except DataMissing:
                     raise newJSONRPCError(-1, "Missing previous Block")
                 except DataExists:
                     raise newJSONRPCError(0, "Block already exists")

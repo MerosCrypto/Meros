@@ -7,9 +7,6 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../Database/common/objects/MeritHolderRecordObj
-
 #Consensus lib.
 import ../../../Database/Consensus/Consensus
 
@@ -48,7 +45,7 @@ proc module*(
                     raise newException(ParamError, "")
 
                 #Get the Status.
-                var status: TrasactionStatus
+                var status: TransactionStatus
                 try:
                     status = functions.consensus.getStatus(hash)
                 except IndexError:
@@ -61,16 +58,16 @@ proc module*(
                 if merit == -1:
                     merit = 0
                     for holder in status.holders.keys():
-                        verifiers.add(newJInt(holder))
+                        verifiers.add(% holder)
                         if not functions.consensus.isMalicious(holder):
                             merit += functions.merit.getMerit(holder)
 
                 res["result"] = %* {
-                    "verifiers":  verfiers,
+                    "verifiers":  verifiers,
                     "merit":      merit,
                     "threshold":  functions.consensus.getThreshold(status.epoch),
                     "verified":   status.verified,
-                    "defaulting": status.defaulting,
+                    "competing": status.competing,
                 }
     except Exception as e:
         doAssert(false, "Couldn't create the Consensus Module: " & e.msg)

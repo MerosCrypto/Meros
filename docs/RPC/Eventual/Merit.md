@@ -20,7 +20,7 @@ The result is an object, as follows:
     - `last`      (string)
     - `contents`  (string)
     - `verifiers` (string)
-    - `miner`     (string)
+    - `miner`     (int/string): Either the miner's nick as an int or the key as a string if this is their first Block.
     - `time`      (int)
     - `proof`     (int)
     - `signature` (string)
@@ -49,6 +49,20 @@ The result is an object, as follows:
                 - `holders` (array of strings, each a BLS Public Key)
                 - `hash` (string)
 - `aggregate` (string)
+
+### `getNickname`
+
+`getNickname` replies with the Merit Holder's nickname. It takes in one argument.
+- Merit Holder (string)
+
+The result is an int of the nickname.
+
+### `getPublicKey`
+
+`getPublicKey` replies with the specified Merit Holder's BLS Public Key. It takes in one argument.
+- Nickname (int)
+
+The result is an string of the BLS Public Key.
 
 ### `getTotalMerit`
 

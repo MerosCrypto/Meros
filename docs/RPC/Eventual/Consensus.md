@@ -31,7 +31,7 @@ The result is an object, as follows:
 - `merit`      (int):              Merit of all the Merit Holders who verified this Transaction.
 - `threshold`  (int):              Merit needed to become verified.
 - `verified`   (bool):             Whether or not the Transaction is verified.
-- `defaulting` (bool):             Whether or not the Transaction is able to become verified by crossing its threshold or if it can only be verified at the end of its Epoch.
+- `competing` (bool):              Whether or not the Transaction has competitors. If it does, and isn't already verified, it can only be verified at the end of its Epoch.
 
 ### `publishSignedVerification`
 
