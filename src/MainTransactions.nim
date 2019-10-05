@@ -5,7 +5,7 @@ proc verify(
     transaction: Transaction
 ) {.forceCheck: [], async.} =
     #Make sure we're a Miner with Merit.
-    if config.miner.initiated and (merit.state[config.miner.publicKey] > 0):
+    if config.miner.initiated and (merit.state[config.miner.nick] > 0):
         #Acquire the verify lock.
         while not tryAcquire(verifyLock):
             #While we can't acquire it, allow other async processes to run.
@@ -24,7 +24,7 @@ proc verify(
         #Verify the Transaction.
         var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
         try:
-            config.miner.sign(verif, consensus[config.miner.publicKey].height)
+            config.miner.sign(verif)
         except BLSError as e:
             doAssert(false, "Couldn't create a SignedVerification due to a BLSError: " & e.msg)
 
@@ -33,8 +33,6 @@ proc verify(
             functions.consensus.addSignedVerification(verif)
         except ValueError as e:
             doAssert(false, "Created a Verification with an invalid signature: " & e.msg)
-        except GapError as e:
-            doAssert(false, "Created a Verification with an invalid nonce: " & e.msg)
         except DataExists as e:
             doAssert(false, "Created a Verification which already exists: " & e.msg)
 
@@ -44,11 +42,7 @@ proc verify(
 proc mainTransactions() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Transactions.
-        transactions = newTransactions(
-            database,
-            consensus,
-            merit.blockchain
-        )
+        transactions = newTransactions(database, merit.blockchain)
 
         #Handle requests for an Transaction.
         functions.transactions.getTransaction = proc (
@@ -89,7 +83,7 @@ proc mainTransactions() {.forceCheck: [].} =
                 fcRaise e
 
             #Register the Claim with Consensus.
-            consensus.register(transactions, merit.state, claim, merit.blockchain.height)
+            consensus.register(merit.state, claim, merit.blockchain.height)
 
             echo "Successfully added the Claim."
 
@@ -128,7 +122,7 @@ proc mainTransactions() {.forceCheck: [].} =
                 fcRaise e
 
             #Register the Send with Consensus.
-            consensus.register(transactions, merit.state, send, merit.blockchain.height)
+            consensus.register(merit.state, send, merit.blockchain.height)
 
             echo "Successfully added the Send."
 
@@ -167,7 +161,7 @@ proc mainTransactions() {.forceCheck: [].} =
                 fcRaise e
 
             #Register the Data with Consensus.
-            consensus.register(transactions, merit.state, data, merit.blockchain.height)
+            consensus.register(merit.state, data, merit.blockchain.height)
 
             echo "Successfully added the Data."
 

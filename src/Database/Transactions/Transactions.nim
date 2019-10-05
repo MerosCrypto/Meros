@@ -232,12 +232,11 @@ proc mint*(
     #Return the mint hash.
     result = mint.hash
 
-#Remove every hash in this Epoch from the cache/RAM, updating archived and the amount of Elements to reload.
+#Remove every hash in this Epoch from the cache/RAM.
 proc archive*(
     transactions: var Transactions,
     epoch: Epoch
 ) {.forceCheck: [].} =
-    #Remove every hash from this Epoch.
     for hash in epoch.keys():
         transactions.del(hash)
 

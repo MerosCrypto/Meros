@@ -44,8 +44,8 @@ finalsd:
         #Current Difficulty.
         difficulty*: Difficulty
 
-        #Miners from past blocks..
-        miners*: Table[BLSPublicKey, bool]
+        #Miners from past blocks. Serves as a reverse lookup.
+        miners*: Table[BLSPublicKey, uint16]
 
 #Create a Blockchain object.
 proc newBlockchainObj*(
@@ -76,7 +76,7 @@ proc newBlockchainObj*(
         blocks: initDoublyLinkedList[Block](),
         difficulty: startDifficulty,
 
-        miners: initTable[BLSPublicKey, bool]()
+        miners: initTable[BLSPublicKey, uint16]()
     )
     result.ffinalizeBlockTime()
     result.ffinalizeStartDifficulty()
@@ -148,8 +148,9 @@ proc newBlockchainObj*(
         doAssert(false, "Couldn't load the Difficulty from the Database: " & e.msg)
 
     #Load the existing miners.
-    for miner in result.db.loadHolders():
-        result.miners[miner] = true
+    var miners: seq[BLSPublicKey] = result.db.loadHolders()
+    for m in 0 ..< miners.len:
+        result.miners[miners[m]] = uint16(m)
 
 #Adds a Block.
 proc add*(
@@ -172,7 +173,7 @@ proc add*(
 
     #Update miners, if necessary
     if newBlock.header.newMiner:
-        blockchain.miners[newBlock.header.minerKey] = true
+        blockchain.miners[newBlock.header.minerKey] = uint16(blockchain.miners.len)
 
 #Check if a Block exists.
 proc hasBlock*(

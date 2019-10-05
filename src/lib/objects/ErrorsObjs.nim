@@ -32,10 +32,8 @@ type
     BLSError*         = object of Exception #Used when the BLS lib fails.
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
 
-    #Database/common Errors.
-    GapError* = object of Exception #Used when trying to add an item, yet missing items before said item.
-
     #Database/common Statuses.
+    DataMissing* = object of Exception #Used when data is missing. Also used by Network for the same reason.
     DataExists* = object of Exception #Used when trying to add data which was already added.
 
     #Database/Filesystem Errors.
@@ -48,7 +46,7 @@ type
         element*: Element
 
     #Database/Merit Statuses.
-    NotConnected* = object of Exception #Used when we test a BlockHeader we don't already have and it has a last which doesn't match our tip.
+    NotConnected* = object of Exception #Used when we test a BlockHeader and it has a last we don't recognize.
     NotInEpochs*  = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Network Errors.
@@ -58,13 +56,11 @@ type
     SyncConfigError*     = object of Exception #Used when a Socket which isn't set for syncing is used to sync.
 
     #Network Statuses.
-    DataMissing* = object of Exception #Used when a Client is missing requested data.
-    Spam*        = object of Exception #Used when a Send/Data doesn't beat the difficulty.
+    Spam* = object of Exception #Used when a Send/Data doesn't beat the difficulty.
         #Hash of the Transaction.
         hash*: Hash[384]
         #Argon hash.
         argon*: Hash[384]
-    ValidityConcern* = object of Exception #Used when the Network detects a potential Merit Removal or chain fork.
 
     #Interfaces/RPC Errors.
     ParamError*   = object of Exception #Used when an invalid parameter is passed.

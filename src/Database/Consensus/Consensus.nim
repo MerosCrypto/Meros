@@ -34,6 +34,7 @@ export Element
 
 #TransactionStatus lib.
 import TransactionStatus
+export TransactionStatus
 
 #Consensus object.
 import objects/ConsensusObj
@@ -271,12 +272,13 @@ proc add*(
 
     consensus.flag(blockchain, state, mr)
 
-#Archive a MeritRemoval (clears the MeritRemovals for that holder).
-proc archive*(
+#Remove a holder's Merit.
+#As Consensus doesn't track Merit, this just clears their pending MeritRemovals.
+proc remove*(
     consensus: Consensus,
-    mr: MeritRemoval
+    holder: uint16
 ) {.forceCheck: [].} =
-    consensus.malicious.del(mr.holder)
+    consensus.malicious.del(holder)
 
 #Get a Transaction's unfinalized parents.
 proc getUnfinalizedParents(

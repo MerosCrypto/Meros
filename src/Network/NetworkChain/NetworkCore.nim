@@ -424,8 +424,6 @@ proc newNetwork*(
                     mainFunctions.consensus.addSignedVerification(verif)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
-                except GapError:
-                    return
                 except DataExists:
                     return
 
@@ -456,11 +454,11 @@ proc newNetwork*(
                     await mainFunctions.merit.addBlockByHeader(header)
                 except ValueError as e:
                     raise newException(InvalidMessageError, "Adding the Block failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    raise newException(InvalidMessageError, "Adding the Block failed due to a IndexError: " & e.msg)
-                except GapError:
+                except DataMissing:
                     return
                 except DataExists:
+                    return
+                except NotConnected:
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)

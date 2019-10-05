@@ -210,11 +210,12 @@ proc add*(
         except ValueError:
             client.close()
             return
-        except IndexError:
-            client.close()
+        except DataMissing:
             return
-        except GapError:
-            client.close()
+        except DataExists:
+            doAssert(false, "Synced a missing Block we already have.")
+            return
+        except NotConnected:
             return
         except Exception as e:
             doAssert(false, "Handling the tail Block threw an Exception despite catching all thrown Exceptions: " & e.msg)

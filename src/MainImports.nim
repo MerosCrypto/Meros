@@ -24,7 +24,8 @@ import Database/Merit/Merit
 import Database/Filesystem/DB/DB
 
 #Network.
-import Network/Network
+import Network/objects/MessageObj
+#import Network/Network
 
 #Serialization libs.
 import Network/Serialize/Transactions/SerializeClaim
@@ -32,6 +33,7 @@ import Network/Serialize/Transactions/SerializeSend
 import Network/Serialize/Transactions/SerializeData
 
 import Network/Serialize/Consensus/SerializeVerification
+import Network/Serialize/Consensus/SerializeVerificationPacket
 
 import Network/Serialize/Merit/SerializeBlockHeader
 

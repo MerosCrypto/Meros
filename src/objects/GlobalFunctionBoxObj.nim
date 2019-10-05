@@ -102,6 +102,17 @@ type
             epoch: int
         ): int {.inline, raises: [].}
 
+        addVerificationPacket*: proc (
+            packet: VerificationPacket
+        ) {.raises: [].}
+
+        addSignedVerification*: proc (
+            verif: SignedVerification
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
+
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
         ) {.raises: [
@@ -125,16 +136,22 @@ type
             IndexError
         ].}
 
+        getNickname*: proc (
+            key: BLSPublicKey
+        ): uint16 {.raises: [
+            IndexError
+        ].}
+
         getTotalMerit*: proc (): int {.inline, raises: [].}
 
         getLiveMerit*: proc (): int {.inline, raises: [].}
 
         getMerit*: proc (
-            key: BLSPublicKey
+            nick: uint16
         ): int {.inline, raises: [].}
 
         isLive*: proc (
-            key: BLSPublicKey,
+            nick: uint16
         ): bool {.inline, raises: [].}
 
         addBlock*: proc (
