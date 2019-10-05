@@ -79,19 +79,21 @@ Network:
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
 
 - Epochs's getPackets.
-- Epochs Tests.
-
-- Add Elements to BDBTest.
-- Re-enable StateTests/ValueTest.
-
 - Load statuses still in Epochs.
 - Load close Transactions.
 - Functioning checkMalicious.
 
+- Functioning getBlockTemplate. The existing one meets the RPC spec but includes no TXs or Elements.
+- Correct `personal_getAddress` which is different from its "Eventual" definition.
+
+- Epochs Tests.
+- Add Elements to BDBTest.
+- Re-enable StateTests/ValueTest.
+
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
 - Test the full nickname space is usable both internally and in parsing/serializations.
 
-- Remove no longer needed BLSError checks.
+- Remove no longer needed Exception checks.
 
 ### Nim Tests:
 

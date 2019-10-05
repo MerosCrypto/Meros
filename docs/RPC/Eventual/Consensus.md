@@ -21,9 +21,9 @@ The result is a string of the difficulty if the Merit Holder is null, or if it i
 
 The result is int of the gas price if the Merit Holder is null, or if it isn't, what the specified Merit Holder voted.
 
-### `getVerifications`
+### `getStatus`
 
-`getVerifications` replies with the Verifications for the specified Transaction. It takes in one argument:
+`getStatus` replies with the Status for the specified Transaction. It takes in one argument:
 - hash (string)
 
 The result is an object, as follows:

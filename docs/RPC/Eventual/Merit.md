@@ -27,7 +27,7 @@ The result is an object, as follows:
 - `transactions` (array of strings, each a Transaction hash)
 - `elements`     (array of objects, each as follows)
     - `descendant` (string)
-    - `holder`     (string)
+    - `holder`     (int)
 
         When `descendant` == "SendDifficulty":
         - `difficulty` (string)
@@ -39,8 +39,15 @@ The result is an object, as follows:
         - `price` (int)
 
         When `descendant` == "MeritRemoval":
-        - `partial`  (string):           Whether or not the first Element is already archived on the Blockchain.
-        - `elements` (array of objects): The two Elements which caused this MeritRemoval.
+        - `partial`  (bool):             Whether or not the first Element is already archived on the Blockchain.
+        - `elements` (array of objects): The two Elements which caused this MeritRemoval. If they're an Element which goes in a Block, they're formatted as they would be in a Block. Else....
+
+            When `descendant` == "Verification":
+                - `hash` (string)
+
+            When `descendant` == "VerificationPacket":
+                - `holders` (array of strings, each a BLS Public Key)
+                - `hash` (string)
 - `aggregate` (string)
 
 ### `getTotalMerit`
@@ -63,11 +70,8 @@ The result is an object, as follows:
 
 ### `getBlockTemplate`
 
-`getBlockTemplate` replies with a template for mining a Block. It takes in an array, with a variable length, of objects, each as follows:
-- `miner`  (string): BLS Public Key of the Miner.
-- `amount` (int):    Amount of Merit to give this miner.
-
-The amount of Merit given to every miner must equal 100.
+`getBlockTemplate` replies with a template for mining a Block. It takes in one argument.
+- miner (string): BLS Public Key of the Miner.
 
 The result is an object, as follows:
 - `header` (string)

@@ -10,9 +10,6 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../Database/common/objects/MeritHolderRecordObj
-
 #Merit lib.
 import ../../../Database/Merit/Merit
 
@@ -27,54 +24,78 @@ import ../../../objects/GlobalFunctionBoxObj
 #RPC object.
 import ../objects/RPCObj
 
-#StInt lib.
-import StInt
-
 #String utils standard lib.
 import strutils
+
+#Element -> JSON.
+proc `%`(
+    elem: Element
+): JSONNode {.forceCheck: [].} =
+    result = %* {
+        "holder": elem.holder
+    }
+
+    case elem:
+        of Verification as verif:
+            result["hash"] = $verif.hash
+
+        of MeritRemovalVerificationPacket as packet:
+            result["hash"] = $packet.hash
+            result["holders"] = % []
+            for holder in packet.holders:
+                try:
+                    result["holders"].add($ holder)
+                except KeyError as e:
+                    doAssert(false, "Couldn't add a holder to a VerificationPacket's JSON representation despite declaring an array for the holders: " & e.msg)
+
+        of MeritRemoval as mr:
+            result["descendent"] = % "MeritRemoval"
+            result["partial"] = % mr.partial
+            result["elements"] = %* [
+                mr.element1,
+                mr.element2
+            ]
+
+        else:
+            doAssert(false, "MeritModule's `%`(Element) passed an unsupported Element type.")
 
 #Block -> JSON.
 proc `%`(
     blockArg: Block
 ): JSONNode {.forceCheck: [].} =
-    #Convert the header.
+    #Add the hash, header, and aggregate signature.
     result = %* {
+        "hash":   $blockArg.header.hash,
         "header": {
-            "hash":      $blockArg.header.hash,
-
-            "nonce":     blockArg.header.nonce,
+            "version":   blockArg.header.version,
             "last":      $blockArg.header.last,
 
-            "aggregate": $blockArg.header.aggregate,
-            "miners":    $blockArg.header.miners,
+            "contents":  $blockArg.header.contents,
+            "verifiers": $blockArg.header.verifiers,
 
+            "miner":     $blockArg.header.miner,
             "time":      blockArg.header.time,
-            "proof":     blockArg.header.proof
-        }
+            "proof":     blockArg.header.proof,
+            "signature": $blockArg.header.signature
+        },
+        "aggregate": $blockArg.body.aggregate
     }
 
-    #Add the Records.
+    #Add the Transactions.
+    result["transactions"] = % []
     try:
-        result["records"] = %* []
-        for index in blockArg.records:
-            result["records"].add(%* {
-                "holder": $index.key,
-                "nonce":  index.nonce,
-                "merkle": $index.merkle
-            })
+        for tx in blockArg.body.transactions:
+            result["transactions"].add(% $tx)
     except KeyError as e:
-        doAssert(false, "Couldn't add a Record to a Block's JSON representation despite declaring an array for the Records: " & e.msg)
+        doAssert(false, "Couldn't add a Transaction hash to a Block's JSON representation despite declaring an array for the hashes: " & e.msg)
 
-    #Add the Miners.
+    #Add the Elements.
+    result["elements"] = % []
     try:
-        result["miners"] = %* []
-        for miner in blockArg.miners.miners:
-            result["miners"].add(%* {
-                "miner":  $miner.miner,
-                "amount": miner.amount
-            })
+        for elem in blockArg.body.elements:
+            result["elements"].add(% elem)
     except KeyError as e:
-        doAssert(false, "Couldn't add a Miner to a Block's JSON representation despite declaring an array for the Miners: " & e.msg)
+        doAssert(false, "Couldn't add an Element to a Block's JSON representation despite declaring an array for the Elements: " & e.msg)
 
 #Create the Merit module.
 proc module*(
@@ -181,59 +202,49 @@ proc module*(
                 ParamError,
                 JSONRPCError
             ].} =
-                #Verify and extract the parameters.
-                if params.len == 0:
+                #Verify and extract the parameter.
+                if (params.len != 1) or (params[0].kind != JString):
                     raise newException(ParamError, "")
 
-                var
-                    minersSeq: seq[Miner] = newSeq[Miner](params.len)
-                    miners: Miners
-                for p in 0 ..< params.len:
-                    try:
-                        if (
-                            (params[p].kind != JObject) or
-                            (not params[p].hasKey("miner")) or
-                            (params[p]["miner"].kind != JString) or
-                            (not params[p].hasKey("amount")) or
-                            (params[p]["amount"].kind != JInt)
-                        ):
-                            raise newException(ParamError, "")
-
-                        minersSeq[p] = newMinerObj(
-                            newBLSPublicKey(params[p]["miner"].getStr()),
-                            params[p]["amount"].getInt()
-                        )
-                    except BLSError:
-                        raise newJSONRPCError(-4, "Invalid miner")
-                    except KeyError as e:
-                        doAssert(false, "Couldn't get a Miner's miner/amount despite verifying their existence: " & e.msg)
-                miners = newMinersObj(minersSeq)
-
-                #Get the records.
-                var records: tuple[
-                    records: seq[MeritHolderRecord],
-                    aggregate: BLSSignature
-                ] = functions.consensus.getUnarchivedRecords()
+                var miner: BLSPublicKey
+                try:
+                    miner = newBLSPublicKey(params[0].getStr())
+                except BLSError:
+                    raise newJSONRPCError(-4, "Invalid miner")
 
                 #Create the Header.
+                var header: JSONNode = nil
                 try:
-                    res["result"] = %* {
-                        "header": newBlockHeader(
-                            functions.merit.getHeight(),
+                    var nick: int
+                    try:
+                        nick = functions.merit.getNickname(miner)
+                    except IndexError as e:
+                        header == % newBlockHeader(
+                            0,
                             functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
-                            records.aggregate,
-                            miners.merkle.hash,
-                            getTime(),
-                            0
-                        ).serializeHash().toHex(),
+                            Hash[384](),
+                            Hash[384](),
+                            miner,
+                            getTime()
+                        ).serializeHash().toHex()
 
-                        "body": newBlockBodyObj(
-                            records.records,
-                            miners
-                        ).serialize().toHex()
-                    }
+                    if header != nil:
+                        header == % newBlockHeader(
+                            0,
+                            functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
+                            Hash[384](),
+                            Hash[384](),
+                            nick,
+                            getTime()
+                        ).serializeHash().toHex()
                 except IndexError as e:
                     doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
+
+                #Create the result.
+                res["result"] = %* {
+                    "header": header,
+                    "body": newBlockBodyObj(@[], @[]).serialize().toHex()
+                }
 
             "publishBlock" = proc (
                 res: JSONNode,
@@ -251,7 +262,7 @@ proc module*(
 
                 var newBlock: Block
                 try:
-                    newBlock = parseBlock(parseHexStr(params[0].getStr()))
+                    newBlock = params[0].getStr().parseHexStr().parseBlock()
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except BLSError:

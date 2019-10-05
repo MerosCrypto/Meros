@@ -14,21 +14,41 @@
 - ID (int/string): Either the nonce as an int or hash as a string.
 
 The result is an object, as follows:
-- `hash`          (string)
-- `header`        (object)
-    - `nonce`     (int)
+- `hash`   (string)
+- `header` (object)
+    - `version`   (int)
     - `last`      (string)
-    - `aggregate` (string)
-    - `miners`    (string)
+    - `contents`  (string)
+    - `verifiers` (string)
+    - `miner`     (string)
     - `time`      (int)
     - `proof`     (int)
-- `records` (array of objects, each as follows)
-    - `holder` (string)
-    - `nonce`  (int)
-    - `merkle` (string)
-- `miners` (array of objects, each as follows)
-    - `miner`  (string)
-    - `amount` (string)
+    - `signature` (string)
+- `transactions` (array of strings, each a Transaction hash)
+- `elements`     (array of objects, each as follows)
+    - `descendant` (string)
+    - `holder`     (int)
+
+        When `descendant` == "SendDifficulty":
+        - `difficulty` (string)
+
+        When `descendant` == "DataDifficulty":
+        - `difficulty` (string)
+
+        When `descendant` == "GasPrice":
+        - `price` (int)
+
+        When `descendant` == "MeritRemoval":
+        - `partial`  (bool):             Whether or not the first Element is already archived on the Blockchain.
+        - `elements` (array of objects): The two Elements which caused this MeritRemoval. If they're an Element which goes in a Block, they're formatted as they would be in a Block. Else....
+
+            When `descendant` == "Verification":
+                - `hash` (string)
+
+            When `descendant` == "VerificationPacket":
+                - `holders` (array of strings, each a BLS Public Key)
+                - `hash` (string)
+- `aggregate` (string)
 
 ### `getTotalMerit`
 
@@ -50,17 +70,14 @@ The result is an object, as follows:
 
 ### `getBlockTemplate`
 
-`getBlockTemplate` replies with a template for mining a Block. It takes in an array, with a variable length, of objects, each as follows:
-- `miner`  (string): BLS Public Key of the Miner.
-- `amount` (int):    Amount of Merit to give this miner.
-
-The amount of Merit given to every miner must equal 100.
+`getBlockTemplate` replies with a template for mining a Block. It takes in one argument.
+- miner (string): BLS Public Key of the Miner.
 
 The result is an object, as follows:
 - `header` (string)
 - `body`   (string)
 
-Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. Once mined, it can be published by appending the 4-byte proof to the header, appending the body to the completed header, and then calling `merit_publishBlock` (see below).
+Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` (see below).
 
 ### `publishBlock`
 
