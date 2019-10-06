@@ -9,8 +9,8 @@ from PythonTests.Classes.Transactions.Data import Data
 
 #Consensus classes.
 from PythonTests.Classes.Consensus.Element import Element, SignedElement
-from PythonTests.Classes.Consensus.Verification import Verification, SignedVerification
-from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval, PartiallySignedMeritRemoval
+from PythonTests.Classes.Consensus.Verification import SignedVerification
+#from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval, PartiallySignedMeritRemoval
 
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -41,7 +41,6 @@ class MessageType(Enum):
     TransactionRequest = 10
     GetBlockHash = 11
     BlockHash = 12
-    SignedVerificationPacketRequest = 13
     SyncingOver = 14
 
     Claim = 15
@@ -49,10 +48,6 @@ class MessageType(Enum):
     Data = 17
 
     SignedVerification = 20
-    SignedVerificationPacket = 21
-    SignedSendDifficulty = 22
-    SignedDataDifficulty = 23
-    SignedGasPrice = 24
     SignedMeritRemoval = 25
 
     BlockHeader = 27
@@ -60,7 +55,7 @@ class MessageType(Enum):
     VerificationPacket = 29
 
     DataMissing = 30
-    
+
     #MessageType -> byte.
     def toByte(
         self
@@ -83,7 +78,7 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.SyncingAcknowledged: [],
     MessageType.BlockHeaderRequest: [48],
     MessageType.BlockBodyRequest: [48],
-    MessageType.ElementRequest: [52],
+    MessageType.VerificationPacketRequest: [48],
     MessageType.TransactionRequest: [48],
     MessageType.GetBlockHash: [4],
     MessageType.BlockHash: [48],
@@ -94,13 +89,12 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.Send: [1, -49, 1, -40, 68],
     MessageType.Data: [49, -1, 68],
 
-    MessageType.SignedVerification: [196],
-    MessageType.SignedMeritRemoval: [50, 0],
+    MessageType.SignedVerification: [146],
+    MessageType.SignedMeritRemoval: [4, 0],
 
-    MessageType.BlockHeader: [204],
+    MessageType.BlockHeader: [149],
     MessageType.BlockBody: [4, 0],
-    MessageType.Verification: [100],
-    MessageType.MeritRemoval: [50, 0]
+    MessageType.VerificationPacket: [1, -2, 48]
 }
 
 class Meros:
@@ -171,33 +165,23 @@ class Meros:
             else:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:
-                        result += self.socketRecv(52)
+                        result += self.socketRecv(50)
                     else:
                         raise Exception("Meros sent an Element we don't recognize.")
 
                     result += self.socketRecv(1)
 
                     if result[-1] == 0:
-                        result += self.socketRecv(52)
+                        result += self.socketRecv(50)
                     else:
                         raise Exception("Meros sent an Element we don't recognize.")
 
                     result += self.socketRecv(96)
                 elif header == MessageType.BlockBody:
-                    result += self.socketRecv((int.from_bytes(result[1 : 5], "big") * 100) + 1)
-                    result += self.socketRecv(result[-1] * 49)
-                elif header == MessageType.MeritRemoval:
-                    if result[-1] == 0:
-                        result += self.socketRecv(53)
-                    else:
-                        raise Exception("Meros sent an Element we don't recognize.")
-
-                    if result[-1] == 0:
-                        result += self.socketRecv(52)
-                    else:
-                        raise Exception("Meros sent an Element we don't recognize.")
-                else:
-                    raise Exception("recv was told to use custom logic where no custom logic was implement.")
+                    result += self.socketRecv(int.from_bytes(result[1 : 5], "big") * 48)
+                    result += self.socketRecv(4)
+                    """
+                    """
 
         if header != MessageType.Handshake:
             self.ress.append(result)
@@ -318,8 +302,6 @@ class Meros:
         res: bytes = bytes()
         if isinstance(elem, SignedVerification):
             res = MessageType.SignedVerification.toByte()
-        elif isinstance(elem, PartiallySignedMeritRemoval):
-            res = MessageType.SignedMeritRemoval.toByte()
         else:
             raise Exception("Unsupported Element passed to Meros.signedElement.")
         res += SignedElement.fromElement(elem).signedSerialize()
@@ -351,22 +333,16 @@ class Meros:
         self.send(res)
         return res
 
-    #Send an Element.
-    def element(
+    #Send a VerificationPacket.
+    """
+    def packet(
         self,
-        elem: Element
+        packet: VerificationPacket
     ) -> bytes:
         res: bytes = bytes()
-        if isinstance(elem, Verification):
-            res = MessageType.Verification.toByte()
-        elif isinstance(elem, MeritRemoval):
-            res = MessageType.MeritRemoval.toByte()
-        else:
-            raise Exception("Unsigned Element passed to Meros.element.")
-        res += elem.serialize()
-
         self.send(res)
         return res
+    """
 
     #Playback all received messages and test the responses.
     def playback(

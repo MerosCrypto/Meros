@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import Dict, List, Tuple, Union, Any
 
@@ -280,3 +281,4 @@ class Syncer():
         if self.settings["playback"]:
             #Playback their messages.
             self.rpc.meros.playback()
+"""
