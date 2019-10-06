@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import Dict, List, Any
 
@@ -92,3 +93,4 @@ class Merit:
 
             result.state.add(result.blockchain, result.blockchain.blocks[b])
         return result
+"""

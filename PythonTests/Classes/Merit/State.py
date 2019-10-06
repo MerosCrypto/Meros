@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import Dict, List
 
@@ -72,3 +73,4 @@ class State:
                 del self.dead[miner]
                 self.merit += self.live[miner]
             self.pending = []
+"""

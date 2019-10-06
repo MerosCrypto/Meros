@@ -20,11 +20,17 @@ class Blockchain:
         self.startDifficulty: int = startDifficulty
         self.maxDifficulty: int = (2 ** 384) - 1
         self.difficulties: List[Tuple[int, int]] = [(startDifficulty, 1)]
-
         self.blocks: List[Block] = [
             Block(
-                BlockHeader(0, genesis.rjust(48, b'\0'), 0),
-                BlockBody(miners=[])
+                BlockHeader(
+                    0,
+                    genesis.rjust(48, b'\0'),
+                    bytes(48),
+                    bytes(48),
+                    bytes(96),
+                    0
+                ),
+                BlockBody()
             )
         ]
 
@@ -35,22 +41,22 @@ class Blockchain:
     ) -> None:
         self.blocks.append(block)
 
-        if block.header.nonce == self.difficulties[-1][1]:
+        if len(self.blocks) - 1 == self.difficulties[-1][1]:
             #Blocks per months.
             blocksPerMonth: int = 2592000 // self.blockTime
             #Blocks per difficulty period.
             blocksPerPeriod: int = 0
             #If we're in the first month, the period length is one block.
-            if block.header.nonce + 1 < blocksPerMonth:
+            if len(self.blocks) < blocksPerMonth:
                 blocksPerPeriod = 1
             #If we're in the first three months, the period length is one hour.
-            elif block.header.nonce + 1 < blocksPerMonth * 3:
+            elif len(self.blocks) < blocksPerMonth * 3:
                 blocksPerPeriod = 6
             #If we're in the first six months, the period length is six hours.
-            elif block.header.nonce + 1 < blocksPerMonth * 6:
+            elif len(self.blocks) < blocksPerMonth * 6:
                 blocksPerPeriod = 36
             #If we're in the first year, the period length is twelve hours.
-            elif block.header.nonce + 1 < blocksPerMonth * 12:
+            elif len(self.blocks) < blocksPerMonth * 12:
                 blocksPerPeriod = 72
             #Else, if it's over an year, the period length is a day.
             else:
@@ -61,7 +67,7 @@ class Blockchain:
             #Target time.
             targetTime: int = self.blockTime * blocksPerPeriod
             #Period time.
-            periodTime: int = block.header.time - self.blocks[block.header.nonce - blocksPerPeriod].header.time
+            periodTime: int = block.header.time - self.blocks[len(self.blocks) - 1 - blocksPerPeriod].header.time
 
             #Possible values.
             possible: int = self.maxDifficulty - self.difficulties[-1][0]

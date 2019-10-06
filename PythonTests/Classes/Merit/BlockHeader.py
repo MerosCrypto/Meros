@@ -1,22 +1,24 @@
 #Types.
-from typing import Dict, Any
+from typing import Dict, Union, Any
 
 #Argon2 lib.
 import argon2
 
 #BlockHeader class.
+#pylint: disable=too-many-instance-attributes
 class BlockHeader:
-    #Serialize.
-    def serialize(
+    #Serialize to be hashed.
+    def serializeHash(
         self
     ) -> bytes:
         return (
-            self.nonce.to_bytes(4, "big") +
+            self.version.to_bytes(4, "big") +
             self.last +
-            self.aggregate +
-            self.miners +
-            self.time.to_bytes(4, "big") +
-            self.proof.to_bytes(4, "big")
+            self.contents +
+            self.verifiers +
+            (1 if self.newMiner else 0).to_bytes(1, 'big') +
+            (self.minerKey if self.newMiner else self.minerNick.to_bytes(2, "big")) +
+            self.time.to_bytes(4, "big")
         )
 
     #Hash.
@@ -24,10 +26,20 @@ class BlockHeader:
         self
     ) -> None:
         self.hash: bytes = argon2.low_level.hash_secret_raw(
-            self.serialize()[0 : 200],
-            self.serialize()[200 : 204].rjust(8, b'\0'),
+            self.serializeHash(),
+            self.proof.to_bytes(8, "big"),
             1,
-            131072,
+            65536,
+            1,
+            48,
+            argon2.low_level.Type.D
+        )
+
+        self.hash = argon2.low_level.hash_secret_raw(
+            self.hash,
+            self.signature,
+            1,
+            65536,
             1,
             48,
             argon2.low_level.Type.D
@@ -36,48 +48,53 @@ class BlockHeader:
     #Constructor.
     def __init__(
         self,
-        nonce: int,
+        version: int,
         last: bytes,
+        contents: bytes,
+        verifiers: bytes,
+        miner: Union[int, bytes],
         time: int,
-        aggregate: bytes = bytes(96),
-        miners: bytes = bytes(48),
-        proof: int = 0
+        proof: int = 0,
+        signature: bytes = bytes(96)
     ) -> None:
-        self.nonce: int = nonce
+        self.version: int = version
         self.last: bytes = last
+        self.contents: bytes = contents
+        self.verifiers: bytes = verifiers
+        self.newMiner: bool = isinstance(miner, bytes)
+        if isinstance(miner, bytes):
+            self.minerKey: bytes = miner
+        else:
+            self.minerNick: int = miner
         self.time: int = time
-        self.aggregate: bytes = aggregate
-        self.miners: bytes = miners
         self.proof: int = proof
+        self.signature: bytes = signature
 
         self.rehash()
 
-    #Set aggregate.
-    def setAggregate(
-        self,
-        aggregate: bytes
-    ) -> None:
-        self.aggregate = aggregate
-
-    #Set miners.
-    def setMiners(
-        self,
-        miners: bytes
-     )-> None:
-        self.miners = miners
+    #Serialize.
+    def serialize(
+        self
+    ) -> bytes:
+        return (
+            self.serializeHash() +
+            self.proof.to_bytes(4, "big") +
+            self.signature
+        )
 
     #BlockHeader -> JSON.
     def toJSON(
         self
     ) -> Dict[str, Any]:
         return {
-            "nonce": self.nonce,
+            "version": self.version,
             "last": self.last.hex().upper(),
-            "aggregate": self.aggregate.hex().upper(),
-            "miners": self.miners.hex().upper(),
+            "contents": self.contents.hex().upper(),
+            "verfiers": self.verifiers.hex().upper(),
+            "miner": self.minerKey.hex().upper() if self.newMiner else self.minerNick,
             "time": self.time,
             "proof": self.proof,
-            "hash": self.hash.hex().upper()
+            "signature": self.signature.hex().upper()
         }
 
     #JSON -> BlockHeader.
@@ -86,10 +103,12 @@ class BlockHeader:
         json: Dict[str, Any]
     ) -> Any:
         return BlockHeader(
-            json["nonce"],
+            json["version"],
             bytes.fromhex(json["last"]),
+            bytes.fromhex(json["contents"]),
+            bytes.fromhex(json["verifiers"]),
+            bytes.fromhex(json["miner"]) if isinstance(json["miner"], str) else json["miner"],
             json["time"],
-            bytes.fromhex(json["aggregate"]),
-            bytes.fromhex(json["miners"]),
-            json["proof"]
+            json["proof"],
+            bytes.fromhex(json["signature"])
         )

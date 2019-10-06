@@ -5,8 +5,11 @@ from typing import Dict, Any
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.BlockBody import BlockBody
 
-#Blake2b standard function.
-from hashlib import blake2b
+#Argon2 lib.
+import argon2
+
+#BLS lib.
+import blspy
 
 #Block class.
 class Block:
@@ -18,23 +21,36 @@ class Block:
     ) -> None:
         self.header: BlockHeader = header
         self.body: BlockBody = body
-        if self.header.nonce != 0:
-            self.header.setMiners(
-                blake2b(
-                    self.body.getSerializedMiners()[0],
-                    digest_size=48
-                ).digest()
-            )
 
     #Mine.
     def mine(
         self,
+        privKey: blspy.PrivateKey,
         difficulty: int
     ) -> None:
-        self.header.rehash()
+        self.header.proof = -1
         while int.from_bytes(self.header.hash, "big") < difficulty:
             self.header.proof += 1
-            self.header.rehash()
+            self.header.hash = argon2.low_level.hash_secret_raw(
+                self.header.serializeHash(),
+                self.header.proof.to_bytes(8, "big"),
+                1,
+                65536,
+                1,
+                48,
+                argon2.low_level.Type.D
+            )
+            self.header.signature = privKey.sign(self.header.hash).serialize()
+
+            self.header.hash = argon2.low_level.hash_secret_raw(
+                self.header.hash,
+                self.header.signature,
+                1,
+                65536,
+                1,
+                48,
+                argon2.low_level.Type.D
+            )
 
     #Serialize.
     def serialize(
