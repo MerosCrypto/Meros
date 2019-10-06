@@ -1,3 +1,4 @@
+"""
 #Tests proper handling of a MeritRemoval where one Element is already archived.
 
 #Types.
@@ -100,3 +101,4 @@ def PartialTest(
     #Create and execute a Syncer to handle a Partial MeritRemoval.
     Syncer(rpc, blockchain, consensus, transactions).sync()
     verifyMeritRemoval(rpc, 2, 200, removal, False)
+"""

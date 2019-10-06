@@ -1,3 +1,4 @@
+"""
 #Tests proper handling of Verifications with Transactions which don't exist.
 
 #Types.
@@ -96,3 +97,4 @@ def VUnknownTest(
 
     if rpc.call("merit", "getHeight") != 2:
         raise TestError("Meros added a Block with an unknown Verification.")
+"""

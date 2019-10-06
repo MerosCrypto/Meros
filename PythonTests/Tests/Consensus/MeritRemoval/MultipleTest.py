@@ -1,3 +1,4 @@
+"""
 #Tests proper handling of multiple MeritRemovals.
 #Tests proper creation and handling of multiple MeritRemovals when Meros receives multiple causes for a MeritRemoval.
 
@@ -108,3 +109,4 @@ def MultipleTest(
     ).live()
 
     #Only a single MeritRemoval is archived.
+"""

@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import IO, Dict, List, Any
 
@@ -139,3 +140,4 @@ for verif in verifs:
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/PendingActions.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()
+"""

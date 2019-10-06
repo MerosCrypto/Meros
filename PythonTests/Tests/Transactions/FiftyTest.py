@@ -1,3 +1,4 @@
+"""
 #https://github.com/MerosCrypto/Meros/issues/50
 
 #Types.
@@ -43,3 +44,4 @@ def FiftyTest(
     #Create and execute a Liver/Syncer.
     Liver(rpc, blockchain, consensus, transactions).live()
     Syncer(rpc, blockchain, consensus, transactions).sync()
+"""

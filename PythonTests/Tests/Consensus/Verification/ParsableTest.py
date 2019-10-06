@@ -1,3 +1,4 @@
+"""
 #Tests proper handling of Verifications with unsynced Transactions which are parsable yet have invalid signatures.
 #Meros used to allow any Verifications of any Transaction, no matter its data or signature.
 #Meros no longer allows this. All Verifications must be of Transactions on the DAG.
@@ -116,3 +117,4 @@ def VParsableTest(
 
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
+"""

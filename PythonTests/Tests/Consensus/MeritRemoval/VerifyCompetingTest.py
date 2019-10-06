@@ -1,3 +1,4 @@
+"""
 #Tests proper handling of a MeritRemoval created from Elements verifying competing Transactions.
 
 #EmptyError Exception.
@@ -10,3 +11,4 @@ def VerifyCompetingTest(
     rpc: RPC
 ) -> None:
     raise EmptyError()
+"""

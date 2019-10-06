@@ -12,6 +12,7 @@ from PythonTests.Meros.RPC import RPC
 from PythonTests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
 
+"""
 from PythonTests.Tests.Transactions.DataTest import DataTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 
@@ -26,6 +27,7 @@ from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
 
 from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
 from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
+"""
 
 #Arguments.
 from sys import argv
@@ -49,20 +51,21 @@ ress: List[str] = []
 tests: List[Callable[[RPC], None]] = [
     ChainAdvancementTest,
     DifficultyTest,
-
-    DataTest,
-    FiftyTest,
-
-    VUnknownTest,
-    VParsableTest,
-    VCompetingTest,
-
-    SameNonceTest,
-    VerifyCompetingTest,
-    MultipleTest,
-    PartialTest,
-    PendingActionsTest
 ]
+"""
+DataTest,
+FiftyTest,
+
+VUnknownTest,
+VParsableTest,
+VCompetingTest,
+
+SameNonceTest,
+VerifyCompetingTest,
+MultipleTest,
+PartialTest,
+PendingActionsTest
+"""
 
 #Tests to run.
 #If any were specified over the CLI, only run those.

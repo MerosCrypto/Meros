@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import IO, Dict, Any
 
@@ -85,3 +86,4 @@ result: Dict[str, Any] = {
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Multiple.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()
+"""

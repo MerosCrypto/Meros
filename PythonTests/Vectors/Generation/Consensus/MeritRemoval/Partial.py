@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import IO, Dict, Any
 
@@ -76,3 +77,4 @@ result: Dict[str, Any] = {
 partialFile: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Partial.json", "w")
 partialFile.write(json.dumps(result))
 partialFile.close()
+"""

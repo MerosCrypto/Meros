@@ -1,3 +1,4 @@
+"""
 #Tests proper reversal of pending Elements when Meros handles a MeritRemoval.
 
 #Types.
@@ -139,3 +140,4 @@ def PendingActionsTest(
     ).live()
 
     #Synced records with MeritRemovals do not include pending actions to revert.
+"""

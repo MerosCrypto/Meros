@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import Dict, Any
 
@@ -65,3 +66,4 @@ def verifyConsensus(
         for e in range(len(consensus.holders[pubKey])):
             if rpc.call("consensus", "getElement", [pubKey.hex(), e]) != consensus.holders[pubKey][e].toJSON():
                 raise TestError("Element doesn't match.")
+"""

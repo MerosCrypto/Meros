@@ -7,6 +7,9 @@ from PythonTests.Classes.Merit.BlockBody import BlockBody
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
+#BLS lib.
+import blspy
+
 #Time standard function.
 from time import time
 
@@ -20,14 +23,24 @@ blockchain: Blockchain = Blockchain(
     int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
 )
 
+#Miner Private Key.
+privKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
+
 #Generate blocks.
 for i in range(1, 26):
     #Create the Block.
     block: Block = Block(
-        BlockHeader(i, blockchain.last(), int(time())),
+        BlockHeader(
+            0,
+            blockchain.last(),
+            bytes(48),
+            bytes(48),
+            privKey.get_public_key().serialize(),
+            int(time())
+        ),
         BlockBody()
     )
-    block.mine(blockchain.difficulty())
+    block.mine(privKey, blockchain.difficulty())
 
     #Add it locally.
     blockchain.add(block)

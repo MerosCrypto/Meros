@@ -1,3 +1,4 @@
+"""
 #Tests proper handling of a MeritRemoval created from Elements sharing a nonce.
 
 #Types.
@@ -100,3 +101,4 @@ def SameNonceTest(
     #Create and execute a Syncer to handle a SameNonce MeritRemoval.
     Syncer(rpc, blockchain, consensus).sync()
     verifyMeritRemoval(rpc, 1, 100, removal, False)
+"""
