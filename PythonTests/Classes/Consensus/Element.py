@@ -10,9 +10,6 @@ import blspy
 class Element:
     prefix: bytes
 
-    holder: bytes
-    nonce: int
-
     def serialize(
         self
     ) -> bytes:

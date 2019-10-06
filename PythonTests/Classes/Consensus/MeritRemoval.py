@@ -1,3 +1,4 @@
+"""
 #Types.
 from typing import Dict, Any
 
@@ -204,3 +205,4 @@ class SignedMeritRemoval(PartiallySignedMeritRemoval):
         result: SignedMeritRemoval = SignedMeritRemoval(se1, se2)
         result.nonce = json["nonce"]
         return result
+"""
