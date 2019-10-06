@@ -6,20 +6,22 @@ The message types are as follows (with their list number being their byte header
 
 <ol start="0">
 <li><code>Handshake</code></li>
-<li><code>BlockHeight</code></li>
+<li><code>BlockchainTail</code></li>
 <br>
 <li><code>Syncing</code></li>
 <li><code>SyncingAcknowledged</code></li>
-<li><code>PeerRequest</code></li>
+<li><code>PeersRequest</code></li>
 <li><code>Peers</code></li>
+<li><code>BlockListRequest</code></li>
+<li><code>BlockList</code></li>
+<br>
 <li><code>CheckpointRequest</code></li>
 <li><code>BlockHeaderRequest</code></li>
 <li><code>BlockBodyRequest</code></li>
 <li><code>VerificationPacketRequest</code></li>
 <li><code>TransactionRequest</code></li>
-<li><code>GetBlockHash</code></li>
-<li><code>BlockHash</code></li>
 <li><code>SignedVerificationPacketRequest</code> (disabled)</li>
+<li><code>DataMissing</code></li>
 <li><code>SyncingOver</code></li>
 <br>
 <li><code>Claim</code></li>
@@ -39,8 +41,6 @@ The message types are as follows (with their list number being their byte header
 <li><code>BlockHeader</code></li>
 <li><code>BlockBody</code></li>
 <li><code>VerificationPacket</code></li>
-<br>
-<li><code>DataMissing</code></li>
 </ol>
 
 `Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive) can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing documentation.

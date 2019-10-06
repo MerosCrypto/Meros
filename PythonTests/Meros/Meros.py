@@ -31,30 +31,31 @@ import socket
 #Message Types.
 class MessageType(Enum):
     Handshake = 0
-    BlockHeight = 1
+    BlockchainTail = 1
 
     Syncing = 2
     SyncingAcknowledged = 3
-    BlockHeaderRequest = 7
-    BlockBodyRequest = 8
-    VerificationPacketRequest = 9
-    TransactionRequest = 10
-    GetBlockHash = 11
-    BlockHash = 12
-    SyncingOver = 14
+    BlockListRequest = 6,
+    BlockList = 7,
 
-    Claim = 15
-    Send = 16
-    Data = 17
+    BlockHeaderRequest = 9
+    BlockBodyRequest = 10
+    VerificationPacketRequest = 11
+    TransactionRequest = 12
+    DataMissing = 14
+    SyncingOver = 15
 
-    SignedVerification = 20
-    SignedMeritRemoval = 25
+    Claim = 16
+    Send = 17
+    Data = 18
 
-    BlockHeader = 27
-    BlockBody = 28
-    VerificationPacket = 29
+    SignedVerification = 21
+    SignedVerificationPacket = 22,
+    SignedMeritRemoval = 26
 
-    DataMissing = 30
+    BlockHeader = 28
+    BlockBody = 29
+    VerificationPacket = 30
 
     #MessageType -> byte.
     def toByte(
@@ -71,8 +72,8 @@ class MessageType(Enum):
 #A negative number means read the last byte * X bytes,
 #A zero means custom logic should be used.
 lengths: Dict[MessageType, List[int]] = {
-    MessageType.Handshake: [7],
-    MessageType.BlockHeight: [4],
+    MessageType.Handshake: [51],
+    MessageType.BlockchainTail: [48],
 
     MessageType.Syncing: [],
     MessageType.SyncingAcknowledged: [],
@@ -80,8 +81,6 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.BlockBodyRequest: [48],
     MessageType.VerificationPacketRequest: [48],
     MessageType.TransactionRequest: [48],
-    MessageType.GetBlockHash: [4],
-    MessageType.BlockHash: [48],
     MessageType.DataMissing: [],
     MessageType.SyncingOver: [],
 
@@ -254,18 +253,6 @@ class Meros:
         self
     ) -> bytes:
         res: bytes = MessageType.SyncingAcknowledged.toByte()
-        self.send(res)
-        return res
-
-    #Send a Block Hash.
-    def blockHash(
-        self,
-        hash: bytes
-    ) -> bytes:
-        res: bytes = (
-            MessageType.BlockHash.toByte() +
-            hash
-        )
         self.send(res)
         return res
 

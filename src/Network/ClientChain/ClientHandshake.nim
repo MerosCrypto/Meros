@@ -19,7 +19,7 @@ proc handshake*(
                 MessageType.Handshake,
                 char(id) &
                 char(protocol) &
-                (if server: char(255) else: char(0)) &
+                (if server: char(1) else: char(0)) &
                 height.toBinary().pad(INT_LEN)
             )
         )
@@ -59,7 +59,7 @@ proc handshake*(
     if int(handshakeSeq[1][0]) != protocol:
         raise newException(InvalidMessageError, "Client responded to a Handshake with a different Protocol Version.")
 
-    if int(handshakeSeq[2][0]) == 255:
+    if int(handshakeSeq[2][0]) == 1:
         try:
             client.server = true
         except FinalAttributeError as e:

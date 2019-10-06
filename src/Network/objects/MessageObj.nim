@@ -12,36 +12,32 @@ finalsd:
         #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
         MessageType* {.pure.} = enum
             Handshake = 0,
-            BlockHeight = 1,
+            BlockchainTail = 1,
 
             Syncing = 2,
             SyncingAcknowledged = 3,
-            BlockHeaderRequest = 7,
-            BlockBodyRequest = 8,
-            VerificationPacketRequest = 9,
-            TransactionRequest = 10,
-            GetBlockHash = 11,
-            BlockHash = 12,
-            SignedVerificationPacketRequest = 13,
-            SyncingOver = 14,
-
-            Claim = 15,
-            Send = 16,
-            Data = 17,
-
-            SignedVerification = 20,
-            SignedVerificationPacket = 21,
-            SignedSendDifficulty = 22,
-            SignedDataDifficulty = 23,
-            SignedGasPrice = 24,
-            SignedMeritRemoval = 25,
-
-            BlockHeader = 27,
-            BlockBody = 28,
-            VerificationPacket = 29,
-
-            DataMissing = 30,
+            BlockListRequest = 6,
+            BlockList = 7,
             
+            BlockHeaderRequest = 9,
+            BlockBodyRequest = 10,
+            VerificationPacketRequest = 11,
+            TransactionRequest = 12,
+            DataMissing = 14,
+            SyncingOver = 15,
+
+            Claim = 16,
+            Send = 17,
+            Data = 18,
+
+            SignedVerification = 21,
+            SignedVerificationPacket = 22,
+            SignedMeritRemoval = 26,
+
+            BlockHeader = 28,
+            BlockBody = 29,
+            VerificationPacket = 30,
+
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
             End = 31

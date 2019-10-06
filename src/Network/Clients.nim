@@ -161,7 +161,7 @@ proc add*(
                                             MessageType.Handshake,
                                             char(networkFunctions.getNetworkID()) &
                                             char(networkFunctions.getProtocol()) &
-                                            (if server: char(255) else: char(0)) &
+                                            (if server: char(1) else: char(0)) &
                                             height.toBinary().pad(INT_LEN)
                                         )
                                     )
