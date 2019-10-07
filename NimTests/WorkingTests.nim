@@ -1,6 +1,6 @@
 #Run every working Test.
 
-#import SyntaxTest
+import SyntaxTest
 
 import objectsTests
 import libTests

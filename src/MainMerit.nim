@@ -12,15 +12,14 @@ proc mainMerit() {.forceCheck: [].} =
             params.LIVE_MERIT
         )
 
-        #Handle requests for the current height.
         functions.merit.getHeight = proc (): int {.inline, forceCheck: [].} =
             merit.blockchain.height
+        functions.merit.getTail = proc (): Hash[384] {.inline, forceCheck: [].} =
+            merit.blockchain.tail.header.hash
 
-        #Handle requests for the current Difficulty.
         functions.merit.getDifficulty = proc (): Difficulty {.inline, forceCheck: [].} =
             merit.blockchain.difficulty
 
-        #Handle requests for a Block.
         functions.merit.getBlockByNonce = proc (
             nonce: int
         ): Block {.forceCheck: [
@@ -41,6 +40,15 @@ proc mainMerit() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
+        functions.merit.getPublicKey = proc (
+            nick: uint16
+        ): BLSPublicKey {.forceCheck: [
+            IndexError
+        ].} =
+            if merit.state.holders.len <= int(nick):
+                raise newException(IndexError, "Nickname doesn't exist.")
+            result = merit.state.holders[nick]
+
         functions.merit.getNickname = proc (
             key: BLSPublicKey
         ): uint16 {.forceCheck: [
@@ -53,10 +61,8 @@ proc mainMerit() {.forceCheck: [].} =
 
         functions.merit.getTotalMerit = proc (): int {.inline, forceCheck: [].} =
             merit.state.live
-
         functions.merit.getLiveMerit = proc (): int {.inline, forceCheck: [].} =
             merit.state.live
-
         functions.merit.getMerit = proc (
             nick: uint16
         ): int {.inline, forceCheck: [].} =
@@ -73,7 +79,6 @@ proc mainMerit() {.forceCheck: [].} =
             syncing: bool = false
         ) {.forceCheck: [
             ValueError,
-            DataMissing,
             DataExists,
             NotConnected
         ], async.} =
@@ -82,11 +87,8 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Sync this Block.
             try:
-                discard
-                #await network.sync(consensus, newBlock)
+                await network.sync(newBlock)
             except ValueError as e:
-                fcRaise e
-            except DataMissing as e:
                 fcRaise e
             except Exception as e:
                 doAssert(false, "Couldn't sync this Block: " & e.msg)
@@ -199,8 +201,7 @@ proc mainMerit() {.forceCheck: [].} =
 
             var body: BlockBody
             try:
-                discard
-                #body = await network.sync(header)
+                body = await network.sync(header)
             except DataMissing as e:
                 raise newException(ValueError, e.msg)
             except Exception as e:

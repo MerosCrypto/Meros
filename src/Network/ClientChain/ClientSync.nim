@@ -7,9 +7,11 @@ proc startSyncing*(
     SocketError,
     ClientError
 ], async.} =
-    #If we're already syncing, increment syncLevels and return.
+    #Increment syncLevels.
+    inc(client.syncLevels)
+
+    #If we're already syncing, return.
     if client.syncLevels != 0:
-        inc(client.syncLevels)
         return
 
     #Send that we're syncing.
@@ -57,9 +59,6 @@ proc startSyncing*(
     #If we broke because shouldWait expired, raise a client error.
     if not shouldWait:
         raise newException(ClientError, "Client never responded to the fact we were syncing.")
-
-    #Update the sync levels.
-    inc(client.syncLevels)
 
 #Sync an Transaction.
 proc syncTransaction*(
@@ -125,7 +124,7 @@ proc syncTransaction*(
         fcRaise e
     except Spam as e:
         try:
-            if e.hash.toHash(384) != hash:
+            if e.hash != hash:
                 raise newException(ClientError, "Client sent us the wrong Transaction.")
         except ValueError:
             doAssert(false, "Spam status wasn't constructed with a valid hash.")
@@ -135,77 +134,12 @@ proc syncTransaction*(
     if result.hash != hash:
         raise newException(ClientError, "Client sent us the wrong Transaction.")
 
-#Sync an Element.
-proc syncElement*(
+#Sync a VerificationPacket.
+proc syncVerificationPacket*(
     client: Client,
-    holder: BLSPublicKey,
-    nonce: int
-): Future[Element] {.forceCheck: [
-    SocketError,
-    ClientError,
-    SyncConfigError,
-    InvalidMessageError,
-    DataMissing
-], async.} =
-    #If we're not syncin/g, raise an error.
-    if client.syncLevels == 0:
-        raise newException(SyncConfigError, "This Client isn't configured to sync data.")
-
-    #Send the request.
-    try:
-        await client.send(
-            newMessage(
-                MessageType.ElementRequest,
-                holder.toString() & nonce.toBinary().pad(INT_LEN)
-            )
-        )
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Sending an `ElementRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Get their response.
-    var msg: Message
-    try:
-        msg = await client.recv()
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Receiving the response to an `ElementRequest` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    case msg.content:
-        of MessageType.Verification:
-            try:
-                result = msg.message.parseVerification()
-            except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our `ElementRequest`, as pointed out by a ValueError: " & e.msg)
-            except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid Verification to our `ElementRequest`, as pointed out by a BLSError: " & e.msg)
-
-        of MessageType.MeritRemoval:
-            try:
-                result = msg.message.parseMeritRemoval()
-            except ValueError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid MeritRemoval to our `ElementRequest`, as pointed out by a ValueError: " & e.msg)
-            except BLSError as e:
-                raise newException(InvalidMessageError, "Client didn't respond with a valid MeritRemoval to our `ElementRequest`, as pointed out by a BLSError: " & e.msg)
-
-        of MessageType.DataMissing:
-            raise newException(DataMissing, "Client didn't have the requested Element.")
-
-        else:
-            raise newException(InvalidMessageError, "Client didn't respond properly to our `ElementRequest`.")
-
-    #Verify the received data is what was requested.
-    if (result.holder != holder) or (
-        (not (result of MeritRemoval)) and
-        (result.nonce != nonce)
-    ):
-        raise newException(ClientError, "Client sent us the wrong Element.")
+    hash: Hash[384]
+): Future[VerificationPacket] {.forceCheck: [], async.} =
+    doAssert(false, "Syncing a VerificationPacket is not supported.")
 
 #Sync a Block Body.
 proc syncBlockBody*(
@@ -261,7 +195,7 @@ proc syncBlockBody*(
 #Sync a Block.
 proc syncBlock*(
     client: Client,
-    nonce: int
+    hash: Hash[384]
 ): Future[Block] {.forceCheck: [
     SocketError,
     ClientError,
@@ -273,42 +207,9 @@ proc syncBlock*(
     if client.syncLevels == 0:
         raise newException(SyncConfigError, "This Client isn't configured to sync data.")
 
-    #Get the Block hash.
-    try:
-        await client.send(newMessage(MessageType.GetBlockHash, nonce.toBinary().pad(INT_LEN)))
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Sending an `GetBlockHash` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Get their response.
-    var msg: Message
-    try:
-        msg = await client.recv()
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Receiving the response to an `GetBlockHash` from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Grab the hash.
-    var hash: string
-    case msg.content:
-        of MessageType.BlockHash:
-            hash = msg.message
-
-        of MessageType.DataMissing:
-            raise newException(DataMissing, "Client didn't have the requested Block.")
-
-        else:
-            raise newException(InvalidMessageError, "Client didn't respond properly to our `GetBlockHash`.")
-
     #Get the BlockHeader.
     try:
-        await client.send(newMessage(MessageType.BlockHeaderRequest, hash))
+        await client.send(newMessage(MessageType.BlockHeaderRequest, hash.toString()))
     except SocketError as e:
         fcRaise e
     except ClientError as e:
@@ -317,6 +218,7 @@ proc syncBlock*(
         doAssert(false, "Sending an `BlockHeaderRequest` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Get their response.
+    var msg: Message
     try:
         msg = await client.recv()
     except SocketError as e:
@@ -344,7 +246,7 @@ proc syncBlock*(
             raise newException(InvalidMessageError, "Client didn't respond properly to our `BlockHeaderRequest`.")
 
     #Verify the received data is what was requested.
-    if header.hash.toString() != hash:
+    if header.hash != hash:
         raise newException(ClientError, "Client sent us the wrong BlockHeader.")
 
     #Get the BlockBody.
@@ -376,9 +278,11 @@ proc stopSyncing*(
     SocketError,
     ClientError
 ], async.} =
-    #If this isn't the last sync level, decrement and return.
+    #decrement syncLevels.
+    dec(client.syncLevels)
+
+    #If this isn't the last sync level, return.
     if client.syncLevels != 1:
-        dec(client.syncLevels)
         return
 
     #Send that we're done syncing.
@@ -390,6 +294,3 @@ proc stopSyncing*(
         fcRaise e
     except Exception as e:
         doAssert(false, "Sending a `SyncingOver` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Update the sync levels.
-    client.syncLevels = 0

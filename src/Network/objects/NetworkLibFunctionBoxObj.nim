@@ -5,6 +5,9 @@ This is named NetworkLibFunctionBox, not NetworkFunctionBox, `because GlobalFunc
 #Errors lib.
 import ../../lib/Errors
 
+#Hash lib.
+import ../../lib/Hash
+
 #Block lib.
 import ../../Database/Merit/Block
 
@@ -16,16 +19,14 @@ import asyncdispatch
 
 type NetworkLibFunctionBox* = ref object
     getNetworkID*: proc (): int {.noSideEffect, raises: [].}
-
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
-
-    getHeight*: proc (): int {.inline, raises: [].}
+    getTail*: proc (): Hash[384] {.inline, raises: [].}
 
     handle*: proc (
         msg: Message
     ): Future[void]
 
-    handleBlock*: proc (
+    addBlock*: proc (
         newBlock: Block,
         syncing: bool = false
     ): Future[void]

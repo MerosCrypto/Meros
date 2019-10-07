@@ -217,7 +217,7 @@ proc `[]`*(
         raise newException(IndexError, "Block not found.")
 
 #Gets the last Block.
-func tip*(
+func tail*(
     blockchain: Blockchain
 ): Block {.inline, forceCheck: [].} =
     blockchain.blocks.tail.value

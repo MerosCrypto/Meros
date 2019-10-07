@@ -51,13 +51,12 @@ proc newNetwork*(
     result.networkFunctions.getProtocol = func (): int {.forceCheck: [].} =
         protocol
 
-    result.networkFunctions.getHeight = mainFunctions.merit.getHeight
+    result.networkFunctions.getTail = mainFunctions.merit.getTail
 
     result.networkFunctions.handle = proc (
         msg: Message
     ) {.forceCheck: [
         IndexError,
-        SocketError,
         ClientError,
         InvalidMessageError,
         Spam
@@ -68,33 +67,26 @@ proc newNetwork*(
         except IndexError as e:
             fcRaise e
 
+        #Verify this isn't a message which can only be sent while syncing.
+        if (
+            (
+                (int(MessageType.Syncing) <= int(msg.content)) and
+                (int(msg.content) <= int(MessageType.SyncingOver))
+            ) or
+            (msg.content == MessageType.BlockBody) or
+            (msg.content == MessageType.VerificationPacket)
+        ):
+            raise newException(InvalidMessageError, "Client sent us a message which can only be sent while syncing when neither of us are syncing.")
+
         #Handle the message.
         case msg.content:
-            #These messages should never make it to handle.
-            of MessageType.Syncing:
-                raise newException(InvalidMessageError, "Client sent us a `Syncing` which made its way to handle.")
-            of MessageType.SyncingOver:
-                raise newException(InvalidMessageError, "Client sent us a `SyncingOver` which made its way to handle.")
-            of MessageType.SyncingAcknowledged:
-                raise newException(InvalidMessageError, "Client sent us a `SyncingAcknowledged` when we aren't syncing.")
-            of MessageType.DataMissing:
-                raise newException(InvalidMessageError, "Client sent us a `DataMissing` when we aren't syncing.")
-            of MessageType.BlockHash:
-                raise newException(InvalidMessageError, "Client sent us a `BlockHash` when we aren't syncing.")
-            of MessageType.BlockBody:
-                raise newException(InvalidMessageError, "Client sent us a `BlockBody` when we aren't syncing.")
-            of MessageType.Verification:
-                raise newException(InvalidMessageError, "Client sent us a `Verification` when we aren't syncing.")
-            of MessageType.MeritRemoval:
-                raise newException(InvalidMessageError, "Client sent us a `MeritRemoval` when we aren't syncing.")
-
             of MessageType.Handshake:
                 try:
                     await network.clients.reply(
                         msg,
                         newMessage(
-                            MessageType.BlockHeight,
-                            mainFunctions.merit.getHeight().toBinary().pad(INT_LEN)
+                            MessageType.BlockchainTail,
+                            mainFunctions.merit.getTail().toString()
                         )
                     )
                 except IndexError:
@@ -102,262 +94,8 @@ proc newNetwork*(
                 except Exception as e:
                     doAssert(false, "Replying `Handshake` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            of MessageType.BlockHeight:
-                try:
-                    if network.clients[msg.client].remoteSync == true:
-                        raise newException(InvalidMessageError, "Client sent us a BlockHeight when they are syncing.")
-                except IndexError:
-                    raise newException(ClientError, "Couldn't grab a Client who sent us a `BlockHeight`.")
-                discard
-
-            of MessageType.BlockHeaderRequest, MessageType.BlockBodyRequest:
-                #Grab our chain height and parse the requested hash.
-                var
-                    height: int = mainFunctions.merit.getHeight()
-                    req: Hash[384]
-                    res: Block
-                try:
-                    req = msg.message.toHash(384)
-                except ValueError as e:
-                    raise newException(ClientError, "`BlockHeaderRequest`/`BlockBodyRequest` contained an invalid hash: " & e.msg)
-
-                try:
-                    if req.empty and (msg.content == MessageType.BlockHeaderRequest):
-                        res = network.mainFunctions.merit.getBlockByNonce(height - 1)
-                    else:
-                        res = network.mainFunctions.merit.getBlockByHash(req)
-                #If we don't have that block, send them DataMissing.
-                except IndexError:
-                    try:
-                        await network.clients.reply(
-                            msg,
-                            newMessage(MessageType.DataMissing)
-                        )
-                        return
-                    except IndexError as e:
-                        fcRaise e
-                    except SocketError as e:
-                        fcRaise e
-                    except ClientError as e:
-                        fcRaise e
-                    except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `BlockHeaderRequest`/`BlockBodyRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                #Since we have the Block, serialize the requested part.
-                var serialized: string
-                if msg.content == MessageType.BlockHeaderRequest:
-                    serialized = res.header.serialize()
-                elif msg.content == MessageType.BlockBodyRequest:
-                    serialized = res.body.serialize()
-                else:
-                    doAssert(false, "Handling a message other than a `BlockHeaderRequest`/`BlockBodyRequest` in a branch for only those two messages.")
-
-                #Send it.
-                try:
-                    await network.clients.reply(
-                        msg,
-                        newMessage(
-                            if msg.content == MessageType.BlockHeaderRequest: MessageType.BlockHeader else: MessageType.BlockBody,
-                            serialized
-                        )
-                    )
-                except IndexError as e:
-                    fcRaise e
-                except SocketError as e:
-                    fcRaise e
-                except ClientError as e:
-                    fcRaise e
-                except Exception as e:
-                    doAssert(false, "Sending a BlockHeader/BlockBody in response to a `BlockHeaderRequest`/`BlockBodyRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            of MessageType.ElementRequest:
-                var
-                    req: seq[string] = msg.message.deserialize(
-                        BLS_PUBLIC_KEY_LEN,
-                        INT_LEN
-                    )
-                    key: BLSPublicKey
-                    nonce: int = req[1].fromBinary()
-                    height: int
-                try:
-                    key = newBLSPublicKey(req[0])
-                except BLSError as e:
-                    raise newException(InvalidMessageError, "`ElementRequest` contained an invalid BLS Public Key: " & e.msg)
-
-                height = mainFunctions.consensus.getHeight(key)
-                if height <= nonce:
-                    try:
-                        await network.clients.reply(
-                            msg,
-                            newMessage(MessageType.DataMissing)
-                        )
-                        return
-                    except IndexError as e:
-                        fcRaise e
-                    except SocketError as e:
-                        fcRaise e
-                    except ClientError as e:
-                        fcRaise e
-                    except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                try:
-                    var
-                        elem: Element = mainFunctions.consensus.getElement(key, nonce)
-                        header: MessageType
-                    case elem:
-                        of Verification as _:
-                            header = MessageType.Verification
-                        #of SendDifficulty as _:
-                        #    header = MessageType.SendDifficulty
-                        #of DataDifficulty as _:
-                        #    header = MessageType.DataDifficulty
-                        #of GasPrice as _:
-                        #    header = MessageType.GasPrice
-                        of MeritRemoval as _:
-                            header = MessageType.MeritRemoval
-                        else:
-                            doAssert(false, "Sending an unsupported Element in response to an ElementRequest.")
-
-                    await network.clients.reply(
-                        msg,
-                        newMessage(
-                            header,
-                            elem.serialize()
-                        )
-                    )
-                except IndexError as e:
-                    fcRaise e
-                except SocketError as e:
-                    fcRaise e
-                except ClientError as e:
-                    fcRaise e
-                except Exception as e:
-                    doAssert(false, "Sending a Verification in response to a `ElementRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            of MessageType.TransactionRequest:
-                #Declare the Transaction and a MessageType used to send it with.
-                var
-                    tx: Transaction
-                    msgType: MessageType
-
-                try:
-                    #Try to get the Transaction.
-                    tx = mainFunctions.transactions.getTransaction(msg.message.toHash(384))
-                except ValueError as e:
-                    raise newException(ClientError, "`TransactionRequest` contained an invalid hash: " & e.msg)
-                except IndexError:
-                    #If that failed, return DataMissing.
-                    try:
-                        await network.clients.reply(
-                            msg,
-                            newMessage(MessageType.DataMissing)
-                        )
-                        return
-                    except IndexError as e:
-                        fcRaise e
-                    except SocketError as e:
-                        fcRaise e
-                    except ClientError as e:
-                        fcRaise e
-                    except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                #Verify we didn't get a Mint, which should not be transmitted.
-                if tx of Mint:
-                    #Return DataMissing.
-                    try:
-                        await network.clients.reply(
-                            msg,
-                            newMessage(MessageType.DataMissing)
-                        )
-                        return
-                    except IndexError as e:
-                        fcRaise e
-                    except SocketError as e:
-                        fcRaise e
-                    except ClientError as e:
-                        fcRaise e
-                    except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                #Serialize the TX.
-                var serialized: string = tx.serialize()
-                #Set the message type.
-                case tx:
-                    of Mint as _:
-                        discard
-                    of Claim as _:
-                        msgType = MessageType.Claim
-                    of Send as _:
-                        msgType = MessageType.Send
-                    of Data as _:
-                        msgType = MessageType.Data
-
-                #Send the Transaction.
-                try:
-                    await network.clients.reply(
-                        msg,
-                        newMessage(
-                            msgType,
-                            serialized
-                        )
-                    )
-                except IndexError as e:
-                    fcRaise e
-                except SocketError as e:
-                    fcRaise e
-                except ClientError as e:
-                    fcRaise e
-                except Exception as e:
-                    doAssert(false, "Sending an Transaction in response to a `TransactionRequest` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            of MessageType.GetBlockHash:
-                #Grab our chain height and parse the requested nonce.
-                var
-                    height: int = mainFunctions.merit.getHeight()
-                    req: int = msg.message.fromBinary()
-                    res: Hash[384]
-
-                try:
-                    if req == 0:
-                        res = network.mainFunctions.merit.getBlockByNonce(height - 1).hash
-                    else:
-                        res = network.mainFunctions.merit.getBlockByNonce(req).hash
-                #If we don't have that block, send them DataMissing.
-                except IndexError:
-                    try:
-                        await network.clients.reply(
-                            msg,
-                            newMessage(MessageType.DataMissing)
-                        )
-                        return
-                    except IndexError as e:
-                        fcRaise e
-                    except SocketError as e:
-                        fcRaise e
-                    except ClientError as e:
-                        fcRaise e
-                    except Exception as e:
-                        doAssert(false, "Sending `DataMissing` in response to a `GetBlockHash` threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                #Send it.
-                try:
-                    await network.clients.reply(
-                        msg,
-                        newMessage(
-                            MessageType.BlockHash,
-                            res.toString()
-                        )
-                    )
-                except IndexError as e:
-                    fcRaise e
-                except SocketError as e:
-                    fcRaise e
-                except ClientError as e:
-                    fcRaise e
-                except Exception as e:
-                    doAssert(false, "Sending a `BlockHash` in response to a `GetBlockHash` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            of MessageType.BlockchainTail:
+                doAssert(false, "")
 
             of MessageType.Claim:
                 var claim: Claim
@@ -427,6 +165,9 @@ proc newNetwork*(
                 except DataExists:
                     return
 
+            of MessageType.SignedVerificationPacket:
+                raise newException(InvalidMessageError, "Client sent a SignedVerificationPacket (which is a disabled message).")
+
             of MessageType.SignedMeritRemoval:
                 var mr: SignedMeritRemoval
                 try:
@@ -466,7 +207,10 @@ proc newNetwork*(
             of MessageType.End:
                 doAssert(false, "Trying to handle a Message of Type End despite explicitly refusing to receive messages of Type End.")
 
-    result.networkFunctions.handleBlock = mainFunctions.merit.addBlock
+            else:
+                doAssert(false, "Unknown message type made it's way to the main message switch.")
+
+    result.networkFunctions.addBlock = mainFunctions.merit.addBlock
 
 #Listen on a port.
 proc listen*(

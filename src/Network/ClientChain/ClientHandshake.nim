@@ -6,8 +6,8 @@ proc handshake*(
     id: int,
     protocol: int,
     server: bool,
-    height: int
-): Future[HandshakeState] {.forceCheck: [
+    tail: Hash[384]
+) {.forceCheck: [
     SocketError,
     ClientError,
     InvalidMessageError
@@ -20,7 +20,7 @@ proc handshake*(
                 char(id) &
                 char(protocol) &
                 (if server: char(1) else: char(0)) &
-                height.toBinary().pad(INT_LEN)
+                tail.toString()
             )
         )
     except SocketError as e:
@@ -50,7 +50,7 @@ proc handshake*(
         BYTE_LEN,
         BYTE_LEN,
         BYTE_LEN,
-        INT_LEN
+        HASH_LEN
     )
     #Verify their Network ID.
     if int(handshakeSeq[0][0]) != id:
@@ -64,13 +64,3 @@ proc handshake*(
             client.server = true
         except FinalAttributeError as e:
             doAssert(false, "Set a final attribute twice when handshaking with a Client: " & e.msg)
-
-    #Get their Blockchain height.
-    var theirHeight: int = handshakeSeq[3].fromBinary()
-
-    #If they have more blocks than us, return that we're missing blocks.
-    if height < theirHeight:
-        return HandshakeState.MissingBlocks
-
-    #Else, return that the handshake is complete.
-    result = HandshakeState.Complete

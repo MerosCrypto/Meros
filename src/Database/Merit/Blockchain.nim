@@ -70,7 +70,7 @@ proc testBlockHeader*(
         raise newException(ValueError, "BlockHeader has an invalid version.")
 
     #Check the last hash.
-    if header.last != blockchain.tip.hash:
+    if header.last != blockchain.tail.hash:
         raise newException(NotConnected, "Last hash isn't our tip.")
 
     #Check a miner with a nickname isn't being marked as new.
@@ -78,7 +78,7 @@ proc testBlockHeader*(
         raise newException(ValueError, "Header marks a miner with a nickname as new.")
 
     #Check the time.
-    if (header.time < blockchain.tip.header.time) or (header.time > getTime() + 120):
+    if (header.time < blockchain.tail.header.time) or (header.time > getTime() + 120):
         raise newException(ValueError, "Block has an invalid time.")
 
 #Adds a block to the blockchain.
@@ -128,13 +128,6 @@ proc processBlock*(
 
     if contents.hash != newBlock.header.contents:
         raise newException(ValueError, "Invalid contents merkle.")
-
-    #Make sure every Transaction is unique.
-    var transactions: Table[Hash[384], bool] = initTable[Hash[384], bool]()
-    for tx in newBlock.body.transactions:
-        if transactions.hasKey(tx):
-            raise newException(ValueError, "Block has the same Transaction multiple times.")
-        transactions[tx] = true
 
     #Add the Block.
     blockchain.add(newBlock)

@@ -4,8 +4,14 @@ import ../../lib/Errors
 #Serialization common lib.
 import ../Serialize/SerializeCommon
 
-#finals lib.
+#Finals lib.
 import finals
+
+#Hashes standard lib.
+import hashes
+
+#Tables standard lib.
+import tables
 
 finalsd:
     type
@@ -18,7 +24,7 @@ finalsd:
             SyncingAcknowledged = 3,
             BlockListRequest = 6,
             BlockList = 7,
-            
+
             BlockHeaderRequest = 9,
             BlockBodyRequest = 10,
             VerificationPacketRequest = 11,
@@ -48,6 +54,46 @@ finalsd:
             content* {.final.}: MessageType
             len* {.final.}: int
             message* {.final.}: string
+
+#Hash a MessageType.
+proc hash*(
+    msgType: MessageType
+): Hash {.forceCheck: [].} =
+    hash(ord(msgType))
+
+#Lengths of messages.
+#An empty array means the message was just the header.
+#A positive number means read X bytes.
+#A negative number means read the last section * X bytes,
+#A zero means custom logic should be used.
+const MESSAGE_LENGTHS*: Table[MessageType, seq[int]] = {
+    MessageType.Handshake: @[BYTE_LEN + BYTE_LEN + BYTE_LEN + HASH_LEN],
+    MessageType.BlockchainTail: @[HASH_LEN],
+
+    MessageType.Syncing: @[],
+    MessageType.SyncingAcknowledged: @[],
+    MessageType.BlockListRequest: @[BYTE_LEN + BYTE_LEN + HASH_LEN],
+    MessageType.BlockList: @[BYTE_LEN, -HASH_LEN],
+
+    MessageType.BlockHeaderRequest: @[HASH_LEN],
+    MessageType.BlockBodyRequest: @[HASH_LEN],
+    MessageType.VerificationPacketRequest: @[HASH_LEN + HASH_LEN],
+    MessageType.TransactionRequest: @[HASH_LEN],
+    MessageType.DataMissing: @[],
+    MessageType.SyncingOver: @[],
+
+    MessageType.Claim: @[BYTE_LEN, -HASH_LEN, ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
+    MessageType.Send: @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), BYTE_LEN, -(ED_PUBLIC_KEY_LEN + MEROS_LEN), ED_SIGNATURE_LEN + INT_LEN],
+    MessageType.Data: @[HASH_LEN, BYTE_LEN, -BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
+
+    MessageType.SignedVerification: @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
+    MessageType.SignedVerificationPacket: @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN + BLS_SIGNATURE_LEN],
+    MessageType.SignedMeritRemoval: @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, BYTE_LEN, 0, BLS_SIGNATURE_LEN],
+
+    MessageType.BlockHeader: @[INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
+    MessageType.BlockBody: @[INT_LEN, -HASH_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
+    MessageType.VerificationPacket: @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN]
+}.toTable()
 
 #Finalize the Message.
 func finalize(

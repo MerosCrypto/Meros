@@ -121,6 +121,7 @@ type
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}
+        getTail*: proc (): Hash[384] {.inline, raises: [].}
 
         getDifficulty*: proc (): Difficulty {.inline, raises: [].}
 
@@ -136,6 +137,12 @@ type
             IndexError
         ].}
 
+        getPublicKey*: proc (
+            nick: uint16
+        ): BLSPublicKey {.raises: [
+            IndexError
+        ].}
+
         getNickname*: proc (
             key: BLSPublicKey
         ): uint16 {.raises: [
@@ -143,9 +150,7 @@ type
         ].}
 
         getTotalMerit*: proc (): int {.inline, raises: [].}
-
         getLiveMerit*: proc (): int {.inline, raises: [].}
-
         getMerit*: proc (
             nick: uint16
         ): int {.inline, raises: [].}

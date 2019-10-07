@@ -51,7 +51,7 @@ proc calculateNextDifficulty*(
         #Start time of this period.
         start: uint32
         #End time.
-        endTime: uint32 = blockchain.tip.header.time
+        endTime: uint32 = blockchain.tail.header.time
         #Period time.
         actualTime: uint32
         #Possible values.

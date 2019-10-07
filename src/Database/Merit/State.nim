@@ -52,7 +52,7 @@ proc processBlock*(
     blockchain: Blockchain
 ) {.forceCheck: [].} =
     #Grab the new Block.
-    var newBlock: Block = blockchain.tip
+    var newBlock: Block = blockchain.tail
 
     #Save the amount of live Merit.
     state.saveLive()

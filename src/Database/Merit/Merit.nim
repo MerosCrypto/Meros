@@ -96,7 +96,7 @@ proc postProcessBlock*(
 
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(
-        merit.blockchain.tip,
+        merit.blockchain.tail,
         packets
     )
 

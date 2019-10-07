@@ -1,71 +1,14 @@
 #Include the Second file in the chain, NetworkCore.
 include NetworkCore
 
-#Objects to define missing data.
-type Gap = object
-    key: BLSPublicKey
-    start: int
-    last: int
-
-#Sync missing Elements from a specific Client.
-proc syncElements(
+#Sync missing VerificationPackets from a specific Client.
+proc syncVerificationPackets(
     network: Network,
     id: int,
-    gaps: seq[Gap]
-): Future[seq[Element]] {.forceCheck: [
-    SocketError,
-    ClientError,
-    InvalidMessageError,
-    DataMissing
-], async.} =
-    result = @[]
-
-    #Grab the Client.
-    var client: Client
-    try:
-        client = network.clients[id]
-    except IndexError as e:
-        raise newException(ClientError, "Couldn't grab the client: " & e.msg)
-
-    #Send syncing.
-    try:
-        await client.startSyncing()
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Ask for missing Elements.
-    for gap in gaps:
-        #Send the Requests.
-        for nonce in gap.start .. gap.last:
-            #Sync the Element.
-            try:
-                result.add(await client.syncElement(gap.key, nonce))
-            except SocketError as e:
-                fcRaise e
-            except ClientError as e:
-                fcRaise e
-            except SyncConfigError as e:
-                doAssert(false, "Client we attempted to sync a Element from wasn't configured for syncing: " & e.msg)
-            except InvalidMessageError as e:
-                fcRaise e
-            except DataMissing as e:
-                fcRaise e
-            except Exception as e:
-                doAssert(false, "Syncing an Element in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Stop syncing.
-    try:
-        await client.stopSyncing()
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+    hash: Hash[384],
+    body: BlockBody
+): Future[seq[Element]] {.forceCheck: [], async.} =
+    doAssert(false, "Syncing VerificationPackets for a BlockBody is not supported.")
 
 #Sync a list of Transactions from a specific Client.
 proc syncTransactions(
@@ -136,127 +79,36 @@ proc syncTransactions(
     except Exception as e:
         doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Sync a Block's Elements/Transactions.
+#Sync a Block's VerificationPackets/Transactions.
 proc sync*(
     network: Network,
-    consensus: Consensus,
     newBlock: Block
 ) {.forceCheck: [
-    ValueError,
-    DataMissing,
-    ValidityConcern
+    ValueError
 ], async.} =
     var
-        #Variable for gaps.
-        gaps: seq[Gap] = @[]
-        #Every Element archived in this block.
-        elements: Table[BLSPublicKey, seq[Element]] = initTable[BLSPublicKey, seq[Element]]()
-        #Seq of missing Elements.
-        missingElems: seq[Element] = @[]
+        #Mentioned Transactions.
+        mentioned: Table[Hash[384], bool] = initTable[Hash[384], bool]()
         #Hashes of the Transactions mentioned in missing Elements.
         txHashes: seq[Hash[384]] = @[]
         #Transactions mentioned in missing Elements.
         transactions: seq[Transaction] = @[]
 
-    #Calculate the Elements gaps.
-    for record in newBlock.records:
-        #Get the MeritHolder.
-        var holder: MeritHolder = consensus[record.key]
+    #Sync the missing VerificationPackets.
 
-        #Grab the holder's pending elements and place them in elements.
-        #OVerride for MeritRemovals.
-        if consensus.malicious.hasKey(holder.key):
-            try:
-                var mrArchived: bool = false
-                for mr in consensus.malicious[holder.key]:
-                    if record.merkle == mr.merkle:
-                        mrArchived = true
-                        elements[holder.key] = @[cast[Element](mr)]
-                        break
+    #Find missing Transactions.
+    for tx in newBlock.body.transactions:
+        if mentioned.hasKey(tx):
+            raise newException(ValueError, "Block includes duplicate Transactions.")
+        mentioned[tx] = true
 
-                if mrArchived:
-                    continue
-            except KeyError as e:
-                doAssert(false, "Couldn't get the MeritRemovals of someone who has some: " & e.msg)
-
-        elements[holder.key] = newSeq[Element](min(holder.height - 1, record.nonce) - holder.archived)
-        for e in holder.archived + 1 .. min(holder.height - 1, record.nonce):
-            try:
-                elements[holder.key][e - (holder.archived + 1)] = holder[e]
-            except KeyError as e:
-                doAssert(false, "Couldn't access a seq in a table we just created: " & e.msg)
-            except IndexError as e:
-                doAssert(false, "Couldn't get an Element by it's index despite looping up to the end: " & e.msg)
-
-        #If we're missing Elements...
-        if holder.height <= record.nonce:
-            #Add the gap.
-            gaps.add(Gap(
-                key: record.key,
-                start: holder.height,
-                last: record.nonce
-            ))
-
-    #Sync the missing Elements.
-    if gaps.len != 0:
-        #List of Clients to disconnect.
-        var toDisconnect: seq[int] = @[]
-
-        #Try syncing with every client.
-        var synced: bool = false
-        for client in network.clients:
-            #Only sync from Clients which aren't syncing from us.
-            if client.remoteSync == true:
-                continue
-
-            try:
-                missingElems = await network.syncElements(client.id, gaps)
-            #If the Client had problems, disconnect them.
-            except SocketError, ClientError:
-                toDisconnect.add(client.id)
-                continue
-            #If we got an unexpected message, or this Client didn't have the needed info, try another client.
-            except InvalidMessageError, DataMissing:
-                #Stop syncing.
-                try:
-                    await client.stopSyncing()
-                #If that failed, disconnect the Client.
-                except SocketError, ClientError:
-                    toDisconnect.add(client.id)
-                except Exception as e:
-                    doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
-                continue
-            except Exception as e:
-                doAssert(false, "Syncing a Block's Elements threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            #If we made it through that without raising or continuing, set synced to true.
-            synced = true
-
-        #Disconnect every Client marked for disconnection.
-        for id in toDisconnect:
-            network.clients.disconnect(id)
-
-        #If we tried every client and didn't sync the needed data, raise a DataMissing.
-        if not synced:
-            raise newException(DataMissing, "Couldn't sync all the Elements in a Block.")
-
-    #Handle each Element.
-    for elem in missingElems:
-        #Add its hash to the list of elements for this holder.
         try:
-            elements[elem.holder].add(elem)
-        except KeyError as e:
-            doAssert(false, "Couldn't add a hash to a seq in a table we recently created: " & e.msg)
-
-        #If this is a Verification, add the Transaction hash it verifies to txHashes.
-        if elem of Verification:
-            txHashes.add(cast[Verification](elem).hash)
+            discard network.mainFunctions.transactions.getTransaction(tx)
+        except IndexError:
+            txHashes.add(tx)
 
     #Sync the missing Transactions.
     if txHashes.len != 0:
-        #Dedeuplicate the list of Transactions.
-        txHashes = txHashes.deduplicate()
-
         #List of Clients to disconnect.
         var toDisconnect: seq[int] = @[]
 
@@ -271,7 +123,7 @@ proc sync*(
                     client.id,
                     txHashes,
                     Hash[384](),
-                    network.mainFunctions.consensus.getDataMinimumDifficulty()
+                    network.mainFunctions.consensus.getDataMinimumDifficulty(),
                 )
             #If the Client had problems, disconnect them.
             except SocketError, ClientError:
@@ -300,29 +152,15 @@ proc sync*(
         #Check if we got every Transaction.
         if transactions.len != txHashes.len:
             #Since we did not, this Block is trying to archive unknown Verification OR we just don't have a proper client set.
+            #The first is assumed.
             raise newException(ValueError, "Block tries to archive unknown Verifications/we couldn't get every Transaction.")
 
     #Check the Block's aggregate.
-    if not newBlock.verify(elements):
-        raise newException(ValidityConcern, "Syncing a Block which has an invalid aggregate; this may be symptomatic of a MeritRemoval.")
-
-    #Add the Elements since we know they're valid.
-    for elem in missingElems:
-        case elem:
-            of Verification as verif:
-                try:
-                    network.mainFunctions.consensus.addVerification(verif)
-                except ValueError as e:
-                    fcRaise e
-
-            of MeritRemoval as mr:
-                try:
-                    network.mainFunctions.consensus.addMeritRemoval(mr)
-                except ValueError as e:
-                    fcRaise e
-
-            else:
-                doAssert(false, "Adding unsupported Element from inside a Block.")
+    try:
+        if not newBlock.verify(network.mainFunctions.merit.getPublicKey, initTable[Hash[384], VerificationPacket]()):
+            raise newException(ValueError, "Block which has an invalid aggregate.")
+    except IndexError as e:
+        doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
 
     #List of Transactions we have yet to process.
     var todo: seq[Transaction] = newSeq[Transaction](1)
@@ -461,12 +299,10 @@ proc sync*(
 #Request a Block.
 proc requestBlock*(
     network: Network,
-    consensus: Consensus,
-    nonce: int
+    hash: Hash[384]
 ): Future[Block] {.forceCheck: [
     ValueError,
-    DataMissing,
-    ValidityConcern
+    DataMissing
 ], async.} =
     var
         toDisconnect: seq[int] = @[]
@@ -487,7 +323,7 @@ proc requestBlock*(
 
         #Get the Block.
         try:
-            result = await client.syncBlock(nonce)
+            result = await client.syncBlock(hash)
         except SocketError, ClientError:
             toDisconnect.add(client.id)
             continue
@@ -529,12 +365,8 @@ proc requestBlock*(
 
     #Sync the Block's contents.
     try:
-        await network.sync(consensus, result)
+        await network.sync(result)
     except ValueError as e:
-        fcRaise e
-    except DataMissing as e:
-        fcRaise e
-    except ValidityConcern as e:
         fcRaise e
     except Exception as e:
         doAssert(false, "Syncing the data in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)

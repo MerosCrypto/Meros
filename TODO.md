@@ -34,9 +34,6 @@ UI:
 
 Network:
 
-- Sync missing Blocks when we receive a `Block` with a nonce higher than our block height.
-- Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
-
 - Syncing currently works by:
     - Get the hash of the next Block.
     - Get the BlockHeader.
@@ -60,17 +57,16 @@ Network:
 
 	Will reduce network traffic and increase security.
 
-- Check requested data is requested data. We don't do this for Block Bodies, and perform a very weak check for Elements (supplement with a signature/record merkle check).
+- Check requested data is requested data.
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
 
 - Multi-client syncing.
-- Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
+- Sync gaps (if we get data after X, but don't have X, sync X; applies to the Transactions DAG).
 
-- Handle ValidityConcerns.
 - Don't rebroadcast data to who sent it.
-- Don't rebroadcast Elements below a Merit threshold.
+- Don't handle Verifications below a Merit threshold.
 
 ### No Consensus DAG:
 
@@ -98,7 +94,9 @@ RPC:
 
 Network:
 
-- Network.
+- The old code handled the other client syncing in the main message switch, yet had dedicated code for when we synced something. Both cases should have dedicated code for easy detection of if the other party sent a syncing message when they shouldn't have. Since the updated message switch requires that, implement it.
+- Syncing.
+- Support BlockchainTail messages.
 
 Tests:
 

@@ -2,7 +2,6 @@ include MainPersonal
 
 proc mainNetwork() {.forceCheck: [].} =
     {.gcsafe.}:
-        discard """
         #Create the Network..
         network = newNetwork(
             params.NETWORK_ID,
@@ -46,19 +45,3 @@ proc mainNetwork() {.forceCheck: [].} =
                 )
             except Exception as e:
                 doAssert(false, "Network.broadcast threw an Exception despite not naturally throwing any: " & e.msg)
-        """
-
-        #Stub functions.
-        functions.network.connect = proc (
-            ip: string,
-            port: int
-        ) {.forceCheck: [
-            ClientError
-        ], async.} =
-            discard
-
-        functions.network.broadcast = proc (
-            msgType: MessageType,
-            msg: string
-        ) {.forceCheck: [].} =
-            discard

@@ -12,30 +12,25 @@ import asyncnet
 
 #Client object.
 finalsd:
-    type
-        HandshakeState* = enum
-            MissingBlocks = 0,
-            Complete = 1
+    type Client* = ref object
+        #IP.
+        ip* {.final.}: string
+        #Port.
+        port* {.final.}: int
+        #Server who can accept connections.
+        server* {.final.}: bool
 
-        Client* = ref object
-            #IP.
-            ip* {.final.}: string
-            #Port.
-            port* {.final.}: int
-            #Server who can accept connections.
-            server* {.final.}: bool
+        #ID.
+        id* {.final.}: int
+        #Are we syncing? Every sync process adds one, removing one as it terminates.
+        syncLevels*: int
+        #Whether or not the client is syncing.
+        remoteSync*: bool
+        #Time of their last message.
+        last*: uint32
 
-            #ID.
-            id* {.final.}: int
-            #Are we syncing? Every sync process adds one, removing one as it terminates.
-            syncLevels*: int
-            #Whether or not the client is syncing.
-            remoteSync*: bool
-            #Time of their last message.
-            last*: uint32
-
-            #Socket.
-            socket* {.final.}: AsyncSocket
+        #Socket.
+        socket* {.final.}: AsyncSocket
 
 #Constructor.
 func newClient*(

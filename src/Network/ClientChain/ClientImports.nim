@@ -10,7 +10,7 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#Transactions lib (for all Transaction types).
+#Transactions lib (for all of the Transaction types).
 import ../../Database/Transactions/Transactions
 
 #Consensus lib (for Verification/SignedVerification).
@@ -43,3 +43,6 @@ export ClientObj
 
 #Networking standard libs.
 import asyncdispatch, asyncnet
+
+#Tables lib.
+import tables

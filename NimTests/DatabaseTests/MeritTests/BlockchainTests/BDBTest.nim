@@ -103,7 +103,7 @@ proc test*() =
             #Create the Block with the new miner.
             mining = newBlankBlock(
                 uint32(0),
-                blockchain.tip.header.hash,
+                blockchain.tail.header.hash,
                 verifiers,
                 miners[miner],
                 transactions,
@@ -116,7 +116,7 @@ proc test*() =
             #Create the Block with the existing miner.
             mining = newBlankBlock(
                 uint32(0),
-                blockchain.tip.header.hash,
+                blockchain.tail.header.hash,
                 verifiers,
                 uint16(miner),
                 miners[miner],

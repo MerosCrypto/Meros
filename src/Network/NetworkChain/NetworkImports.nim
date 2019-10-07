@@ -10,9 +10,6 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../Database/common/objects/MeritHolderRecordObj
-
 #Transactions lib (for all Transaction types).
 import ../../Database/Transactions/Transactions
 

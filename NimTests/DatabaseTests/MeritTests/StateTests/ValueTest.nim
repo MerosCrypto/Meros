@@ -242,7 +242,7 @@ proc test*() =
         #Create the Block.
         mining = newBlankBlock(
             nonce = blockchain.height,
-            last = blockchain.tip.header.hash,
+            last = blockchain.tail.header.hash,
             miners = newMinersObj(miners[i])
         )
         #Mine it.

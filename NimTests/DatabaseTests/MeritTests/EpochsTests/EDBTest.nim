@@ -261,7 +261,7 @@ proc test*() =
         #Create the Block. We don't need to pass an aggregate signature because the blockchain doesn't test for that; MainMerit does.
         mining = newBlankBlock(
             nonce = i,
-            last = blockchain.tip.header.hash,
+            last = blockchain.tail.header.hash,
             records = records,
             miners = newMinersObj(miners)
         )

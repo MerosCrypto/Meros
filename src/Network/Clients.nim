@@ -4,11 +4,14 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
+#Hash lib.
+import ../lib/Hash
+
 #Transactions lib (for all Transaction types).
 import ../Database/Transactions/Transactions
 
-#Consensus lib (for Verification/SignedVerification).
-import ../Database/Consensus/Consensus
+#Element lib.
+import ../Database/Consensus/Elements/Element
 
 #Block lib.
 import ../Database/Merit/Block
@@ -19,9 +22,10 @@ import Serialize/SerializeCommon
 #Message object.
 import objects/MessageObj
 
-#Client library and Clients object.
+#Client lib and Clients object.
 import Client
 import objects/ClientsObj
+
 #Export Client/ClientsObj.
 export Client
 export ClientsObj
@@ -80,8 +84,6 @@ proc handle(
             await networkFunctions.handle(msg)
         except IndexError as e:
             fcRaise e
-        except SocketError as e:
-            fcRaise e
         except ClientError as e:
             fcRaise e
         except InvalidMessageError:
@@ -111,13 +113,12 @@ proc add*(
     inc(clients.count)
 
     #Handshake with the Client.
-    var state: HandshakeState
     try:
-        state = await client.handshake(
+        await client.handshake(
             networkFunctions.getNetworkID(),
             networkFunctions.getProtocol(),
             server,
-            networkFunctions.getHeight()
+            networkFunctions.getTail()
         )
     except SocketError:
         client.close()
@@ -145,15 +146,15 @@ proc add*(
                 if client.last + 60 <= getTime():
                     client.close()
                 elif client.last + 40 <= getTime():
-                    var height: int
-                    {.gcsafe.}:
-                        height = networkFunctions.getHeight()
-
                     try:
                         asyncCheck (
                             proc (): Future[void] {.forceCheck: [], async.} =
                                 if client.remoteSync == true:
                                     return
+
+                                var tail: Hash[384]
+                                {.gcsafe.}:
+                                    tail = networkFunctions.getTail()
 
                                 try:
                                     await client.send(
@@ -162,7 +163,7 @@ proc add*(
                                             char(networkFunctions.getNetworkID()) &
                                             char(networkFunctions.getProtocol()) &
                                             (if server: char(1) else: char(0)) &
-                                            height.toBinary().pad(INT_LEN)
+                                            tail.toString()
                                         )
                                     )
                                 except SocketError:
@@ -179,46 +180,6 @@ proc add*(
         doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
     except Exception as e:
         doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
-
-    #If we are missing Blocks, sync the last one, which will trigger syncing the others.
-    if state == HandshakeState.MissingBlocks:
-        var tail: Block
-        try:
-            await client.startSyncing()
-            tail = await client.syncBlock(0)
-            await client.stopSyncing()
-        except SocketError:
-            client.close()
-            return
-        except ClientError:
-            client.close()
-            return
-        except SyncConfigError:
-            client.close()
-            return
-        except InvalidMessageError:
-            client.close()
-            return
-        except DataMissing:
-            client.close()
-            return
-        except Exception as e:
-            doAssert(false, "Bootstraping the tail block threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-        try:
-            await networkFunctions.handleBlock(tail, true)
-        except ValueError:
-            client.close()
-            return
-        except DataMissing:
-            return
-        except DataExists:
-            doAssert(false, "Synced a missing Block we already have.")
-            return
-        except NotConnected:
-            return
-        except Exception as e:
-            doAssert(false, "Handling the tail Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Handle it.
     try:

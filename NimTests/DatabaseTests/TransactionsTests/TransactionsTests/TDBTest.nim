@@ -92,7 +92,7 @@ proc test*() =
         #Create the new Block.
         var newBlock: Block = newBlockObj(
             merit.blockchain.height,
-            merit.blockchain.tip.header.hash,
+            merit.blockchain.tail.header.hash,
             nil,
             @[
                 newMeritHolderRecord(
@@ -238,7 +238,7 @@ proc test*() =
         addBlock()
 
         #Commit the DB.
-        commit(merit.blockchain.tip.nonce)
+        commit(merit.blockchain.tail.nonce)
 
         #Compare the Transactions DAGs.
         compare()

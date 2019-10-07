@@ -2,7 +2,7 @@ discard """
 Include chain for higher-level Client functions:
     ClientImports
     ClientSendRecv
-    CloentHandshake
+    ClientHandshake
     ClientSync
 """
 
