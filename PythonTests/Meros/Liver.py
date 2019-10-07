@@ -52,7 +52,7 @@ class Liver():
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, 1)
+        self.rpc.meros.connect(254, 254, self.blockchain.blocks[0].header.hash)
 
         #Send each Block.
         for b in range(1, len(self.blockchain.blocks)):

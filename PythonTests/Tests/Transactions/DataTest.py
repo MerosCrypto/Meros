@@ -33,7 +33,7 @@ def DataTest(
     data.beat(spamFilter)
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, 0)
+    rpc.meros.connect(254, 254, self.blockchain.blocks[0].hash)
 
     #Send the Data.
     rpc.meros.transaction(data)

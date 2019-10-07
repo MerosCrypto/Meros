@@ -90,7 +90,7 @@ class BlockHeader:
             "version": self.version,
             "last": self.last.hex().upper(),
             "contents": self.contents.hex().upper(),
-            "verfiers": self.verifiers.hex().upper(),
+            "verifiers": self.verifiers.hex().upper(),
             "miner": self.minerKey.hex().upper() if self.newMiner else self.minerNick,
             "time": self.time,
             "proof": self.proof,

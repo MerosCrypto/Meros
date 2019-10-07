@@ -133,7 +133,7 @@ class Syncer():
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.settings["height"] + 1)
+        self.rpc.meros.connect(254, 254, self.blockchain.blocks[self.settings["height"]].hash))
 
         #Handle sync requests.
         reqHash: bytes = bytes()

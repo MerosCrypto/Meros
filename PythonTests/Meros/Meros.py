@@ -69,7 +69,7 @@ class MessageType(Enum):
 #Lengths of messages.
 #An empty array means the message was just the header.
 #A positive number means read X bytes.
-#A negative number means read the last byte * X bytes,
+#A negative number means read the last section * X bytes,
 #A zero means custom logic should be used.
 lengths: Dict[MessageType, List[int]] = {
     MessageType.Handshake: [51],
@@ -77,22 +77,26 @@ lengths: Dict[MessageType, List[int]] = {
 
     MessageType.Syncing: [],
     MessageType.SyncingAcknowledged: [],
+    MessageType.BlockListRequest: [50],
+    MessageType.BlockList: [1, -48],
+
     MessageType.BlockHeaderRequest: [48],
     MessageType.BlockBodyRequest: [48],
-    MessageType.VerificationPacketRequest: [48],
+    MessageType.VerificationPacketRequest: [96],
     MessageType.TransactionRequest: [48],
     MessageType.DataMissing: [],
     MessageType.SyncingOver: [],
 
     MessageType.Claim: [1, -48, 128],
     MessageType.Send: [1, -49, 1, -40, 68],
-    MessageType.Data: [49, -1, 68],
+    MessageType.Data: [48, 1, -1, 68],
 
     MessageType.SignedVerification: [146],
-    MessageType.SignedMeritRemoval: [4, 0],
+    MessageType.SignedVerificationPacket: [1, -2, 48 + 96],
+    MessageType.SignedMeritRemoval: [4, 0, 1, 0, 96],
 
-    MessageType.BlockHeader: [149],
-    MessageType.BlockBody: [4, 0],
+    MessageType.BlockHeader: [149, 104],
+    MessageType.BlockBody: [4, -48, 4, 0, 96],
     MessageType.VerificationPacket: [1, -2, 48]
 }
 
@@ -156,31 +160,31 @@ class Meros:
             self.msgs.append(bytes())
 
         #Get the rest of the message.
-        for length in lengths[header]:
-            if length > 0:
-                result += self.socketRecv(length)
-            elif length < 0:
-                result += self.socketRecv(result[-1] * abs(length))
+        for l in range(len(lengths[header])):
+            length: int = lengths[header][l]
+            if length < 0:
+                length = int.from_bytes(
+                    result[-lengths[header][l - 1]:],
+                    byteorder="big"
+                ) * abs(length)
             else:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:
-                        result += self.socketRecv(50)
+                        length = 50
                     else:
                         raise Exception("Meros sent an Element we don't recognize.")
 
-                    result += self.socketRecv(1)
-
-                    if result[-1] == 0:
-                        result += self.socketRecv(50)
+                elif header == MessageType.BlockHeader:
+                    if result[-1] == 1:
+                        length = 96
                     else:
-                        raise Exception("Meros sent an Element we don't recognize.")
+                        length = 2
 
-                    result += self.socketRecv(96)
                 elif header == MessageType.BlockBody:
-                    result += self.socketRecv(int.from_bytes(result[1 : 5], "big") * 48)
-                    result += self.socketRecv(4)
                     """
                     """
+
+            result += self.socketRecv(length)
 
         if header != MessageType.Handshake:
             self.ress.append(result)
@@ -191,7 +195,7 @@ class Meros:
         self,
         network: int,
         protocol: int,
-        height: int
+        tail: bytes
     ) -> int:
         #Save the network/protocol.
         self.network = network
@@ -207,7 +211,7 @@ class Meros:
             network.to_bytes(1, "big") +
             protocol.to_bytes(1, "big") +
             b'\0' +
-            height.to_bytes(4, "big"),
+            tail,
             False
         )
 
@@ -224,21 +228,6 @@ class Meros:
 
         #Return their height.
         return int.from_bytes(response[3 : 7], "big")
-
-    #Handshake.
-    def handshake(
-        self,
-        height: int
-    ) -> bytes:
-        res: bytes = (
-            MessageType.Handshake.toByte() +
-            self.network.to_bytes(1, "big") +
-            self.protocol.to_bytes(1, "big") +
-            b'\0' +
-            height.to_bytes(4, "big")
-        )
-        self.send(res)
-        return res
 
     #Start syncing.
     def syncing(

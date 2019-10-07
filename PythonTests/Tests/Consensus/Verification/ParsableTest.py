@@ -54,7 +54,7 @@ def VParsableTest(
     transactions.add(Data.fromJSON(vectors["data"]))
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, 3)
+    rpc.meros.connect(254, 254, self.blockchain.blocks[3].hash)
 
     sentLast: bool = False
     reqHash: bytes = bytes()
