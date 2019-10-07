@@ -26,17 +26,15 @@ class BlockHeader:
         self
     ) -> None:
         self.hash: bytes = argon2.low_level.hash_secret_raw(
-            self.serializeHash(),
-            self.proof.to_bytes(8, "big"),
-            1,
-            65536,
-            1,
-            48,
-            argon2.low_level.Type.D
-        )
-
-        self.hash = argon2.low_level.hash_secret_raw(
-            self.hash,
+            argon2.low_level.hash_secret_raw(
+                self.serializeHash(),
+                self.proof.to_bytes(8, "big"),
+                1,
+                65536,
+                1,
+                48,
+                argon2.low_level.Type.D
+            ),
             self.signature,
             1,
             65536,

@@ -24,7 +24,7 @@ proc Argon*(
         memory: uint32 = 8 #8 KB of memory.
     if not reduced:
         #Regular paramters.
-        memory = 131072 #128 MB of memory.
+        memory = 65536 #128 MB of memory.
 
     try:
         result.data = Argon2d(

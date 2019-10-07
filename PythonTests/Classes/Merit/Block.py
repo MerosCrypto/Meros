@@ -29,7 +29,10 @@ class Block:
         difficulty: int
     ) -> None:
         self.header.proof = -1
-        while int.from_bytes(self.header.hash, "big") < difficulty:
+        while (
+            (self.header.proof == -1) or
+            (int.from_bytes(self.header.hash, "big") < difficulty)
+        ):
             self.header.proof += 1
             self.header.hash = argon2.low_level.hash_secret_raw(
                 self.header.serializeHash(),
@@ -64,6 +67,7 @@ class Block:
     ) -> Dict[str, Any]:
         result: Dict[str, Any] = self.body.toJSON()
         result["header"] = self.header.toJSON()
+        result["hash"] = self.header.hash.hex().upper()
         return result
 
     #JSON -> Block.

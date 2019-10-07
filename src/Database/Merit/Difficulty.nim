@@ -84,7 +84,7 @@ proc calculateNextDifficulty*(
                 change = possible div TEN
 
             #Set the difficulty.
-            difficulty = difficulty + change
+            difficulty += change
         #If we went slower...
         elif actualTime > targetTime:
             #Set the change to be:
@@ -100,17 +100,17 @@ proc calculateNextDifficulty*(
                 change = possible div TEN
 
             #Set the difficulty.
-            difficulty = difficulty - change
+            difficulty -= change
     except DivByZeroError as e:
         doAssert(false, "Dividing by ten raised a DivByZeroError: " & e.msg)
 
     #Convert the difficulty to a hash.
     try:
-        difficultyHash = dumpHex(difficulty)[16 ..< 64].toHash(384)
+        difficultyHash = dumpHex(difficulty)[32 ..< 128].toHash(384)
     except ValueError as e:
         doAssert(false, "Couldn't convert a StUInt to a hash: " & e.msg)
 
-    #If the difficulty is lower than the starting difficulty, use that.diff
+    #If the difficulty is lower than the starting difficulty, use that.
     if difficultyHash < blockchain.startDifficulty.difficulty:
         difficultyHash = blockchain.startDifficulty.difficulty
 

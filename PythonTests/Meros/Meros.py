@@ -95,7 +95,7 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.SignedVerificationPacket: [1, -2, 48 + 96],
     MessageType.SignedMeritRemoval: [4, 0, 1, 0, 96],
 
-    MessageType.BlockHeader: [149, 104],
+    MessageType.BlockHeader: [149, 0, 104],
     MessageType.BlockBody: [4, -48, 4, 0, 96],
     MessageType.VerificationPacket: [1, -2, 48]
 }
@@ -167,7 +167,7 @@ class Meros:
                     result[-lengths[header][l - 1]:],
                     byteorder="big"
                 ) * abs(length)
-            else:
+            elif length == 0:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:
                         length = 50
@@ -176,7 +176,7 @@ class Meros:
 
                 elif header == MessageType.BlockHeader:
                     if result[-1] == 1:
-                        length = 96
+                        length = 48
                     else:
                         length = 2
 

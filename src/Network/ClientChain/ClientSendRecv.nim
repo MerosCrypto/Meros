@@ -42,15 +42,18 @@ proc recv*(
 
     #Make sure the content is valid.
     if not (int(msg[0]) < int(MessageType.End)):
-        raise newException(ClientError, "Client sent an invalid Message Type.")
+        raise newException(ClientError, "Client sent an invalid Message Type: " & $int(msg[0]))
 
     #Extract the content.
     content = MessageType(msg[0])
 
+    #Clear the message.
+    msg = ""
+
     #Get the rest of the message.
     var lens: seq[int]
     try:
-        lens = MESSAGE_LENGTHS[content]
+        lens = MESSAGE_LENS[content]
     except KeyError:
         doAssert(false, "Handling a message without lengths.")
 
@@ -68,20 +71,22 @@ proc recv*(
         elif length == 0:
             case content:
                 of MessageType.SignedMeritRemoval:
-                    case int(msg[-1]):
+                    case int(msg[^1]):
                         of VERIFICATION_PREFIX:
-                            length = VERIFICATION_LEN
+                            length = NICKNAME_LEN + HASH_LEN
                         else:
                             raise newException(ClientError, "Client sent a SignedMeritRemoval with an unknown prefix.")
 
                 of MessageType.BlockHeader:
-                    if int(msg[-1]) == 1:
+                    if int(msg[^1]) == 1:
                         length = BLS_PUBLIC_KEY_LEN
-                    else:
+                    elif int(msg[^1]) == 0:
                         length = NICKNAME_LEN
+                    else:
+                        raise newException(ClientError, "Client sent us a Blockheader with an invalid new miner.")
 
                 of MessageType.BlockBody:
-                    break
+                    discard
 
                 else:
                     doAssert(false, "Length of 0 was found for a message other than the ones we support.")
@@ -95,7 +100,7 @@ proc recv*(
         #Add the length to the size and verify the size.
         size += length
         if msg.len != size:
-            raise newException(ClientError, "Didn't get a full message.")
+            raise newException(ClientError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
     #Create a proper Message to be returned.
     result = newMessage(

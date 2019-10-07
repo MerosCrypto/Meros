@@ -34,7 +34,8 @@ class BlockBody:
     ) -> Dict[str, Any]:
         result: Dict[str, Any] = {
             "transactions": [],
-            "elements": []
+            "elements": [],
+            "aggregate": self.aggregate.hex().upper()
         }
 
         for tx in self.transactions:

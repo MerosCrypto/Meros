@@ -12,7 +12,6 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 
 #Common serialization functions.
 import ../SerializeCommon
-export BLOCK_HEADER_LENS
 
 #Parse function.
 proc parseBlockHeader*(
@@ -32,7 +31,7 @@ proc parseBlockHeader*(
 
     #Extract the rest of the header.
     headerSeq = headerSeq & headerStr[
-        BLOCK_HEADER_LENS[0] ..< headerStr.len
+        INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN ..< headerStr.len
     ].deserialize(
         if headerSeq[4] == "\0": NICKNAME_LEN else: BLS_PUBLIC_KEY_LEN,
         INT_LEN,
@@ -71,7 +70,7 @@ proc parseBlockHeader*(
     hash(
         result,
         headerStr[0 ..< (
-                BLOCK_HEADER_LENS[0] +
+                INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN +
                 (if headerSeq[4] == "\0": NICKNAME_LEN else: BLS_PUBLIC_KEY_LEN) +
                 INT_LEN
             )

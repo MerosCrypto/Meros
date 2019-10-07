@@ -18,7 +18,7 @@ proc getLength*(
 
     case int(data[i]):
         of VERIFICATION_PREFIX:
-            result = VERIFICATION_LEN
+            result = NICKNAME_LEN + HASH_LEN
             if holder != "":
                 result -= NICKNAME_LEN
 
@@ -27,19 +27,19 @@ proc getLength*(
             inc(result)
 
         of VERIFICATION_PACKET_PREFIX:
-            result = MERIT_REMOVAL_VERIFICATION_PACKET_LENS[0]
+            result = BYTE_LEN
             if data.len < result + i:
                 raise newException(ValueError, "parseElement not handed enough data to get a Verification Packet's verifiers length.")
 
             var verifiers: int = data[i + 1 ..< i + 1 + result].fromBinary()
-            result += (MERIT_REMOVAL_VERIFICATION_PACKET_LENS[1] * verifiers) + MERIT_REMOVAL_VERIFICATION_PACKET_LENS[2]
+            result += (BLS_PUBLIC_KEY_LEN * verifiers) + HASH_LEN
             if data.len < result + i:
                 raise newException(ValueError, "parseElement not handed enough data to get a Verification Packet's verifiers/hash.")
 
             inc(result)
 
         of MERIT_REMOVAL_PREFIX:
-            result = MERIT_REMOVAL_LENS[0]
+            result = NICKNAME_LEN + BYTE_LEN + BYTE_LEN
             if data.len < result + i:
                 raise newException(ValueError, "parseElement not handed enough data to get the type of the first Element in the MeritRemoval.")
 

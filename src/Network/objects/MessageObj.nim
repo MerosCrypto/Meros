@@ -66,7 +66,7 @@ proc hash*(
 #A positive number means read X bytes.
 #A negative number means read the last section * X bytes,
 #A zero means custom logic should be used.
-const MESSAGE_LENGTHS*: Table[MessageType, seq[int]] = {
+const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Handshake: @[BYTE_LEN + BYTE_LEN + BYTE_LEN + HASH_LEN],
     MessageType.BlockchainTail: @[HASH_LEN],
 

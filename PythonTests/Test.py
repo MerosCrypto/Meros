@@ -104,7 +104,7 @@ for test in tests:
         continue
     testsToRun.remove(test.__name__)
 
-    print("Running " + test.__name__ + ".")
+    print("\033[0;37mRunning " + test.__name__ + ".")
 
     #Message to display on a Node crash.
     crash: str = "\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m"
@@ -126,9 +126,8 @@ for test in tests:
         ress.append("\033[0;31m" + test.__name__ + " failed: " + str(e))
         continue
     except Exception as e:
-        ress.append("\r\n")
         ress.append("\033[0;31m" + test.__name__ + " is invalid.")
-        ress.append(format_exc())
+        ress.append(format_exc().rstrip())
     finally:
         try:
             rpc.quit()
@@ -136,7 +135,7 @@ for test in tests:
             if ress[-1] != crash:
                 ress.append(crash)
 
-        print("-" * shutil.get_terminal_size().columns)
-
+        print("\033[0;37m" + ("-" * shutil.get_terminal_size().columns))
 for res in ress:
     print(res)
+print("\033[0;37m", end="")
