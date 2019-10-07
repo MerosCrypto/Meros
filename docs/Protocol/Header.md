@@ -47,4 +47,4 @@ The message types are as follows (with their list number being their byte header
 
 Even if the state is syncing, the node which didn't start syncing can send `BlockHeight`, along with every message between `Claim` (inclusive) and `Checkpoint` (inclusive).
 
-When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive), nor `BlockBody`, can be sent.
+When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive), nor `BlockBody` and `VerificationPacket`, can be sent.

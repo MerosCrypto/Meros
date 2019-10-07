@@ -25,8 +25,9 @@ The syncee can only send:
 - `BlockchainTail`
 
 - `Peers`
-
 - `BlockList`
+
+- `DataMissing`
 
 - `Claim`
 - `Send`
@@ -41,8 +42,6 @@ The syncee can only send:
 - `BlockBody`
 - `VerificationPacket`
 
-- `DataMissing`
-
 The syncee only sends messages in direct response to a request from the syncer.
 
 ### Syncing and SyncingAcknowledged
@@ -55,7 +54,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### BlockListRequest and BlockList
 
-`BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity, and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block, where the first hash is the specified Block. `BlockList` has a variable message length; the 4-byte amount of hashes and each 48-byte hash.
+`BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity, and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block, where the first hash is the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte amount of hashes and each 48-byte hash.
 
 ### CheckpointRequest
 
@@ -67,7 +66,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### VerificationPacketRequest
 
-`VerificationPacketRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `VerificationPacket` for the specified Transaction.
+`VerificationPacketRequest` has a message length of 96 bytes; the hash of the Block the VerificationPacket is archived in, and the hash of the Transaction it includes Verifications for. The expected response is a `VerificationPacket` for the specified Transaction including the Verifications archived in the specified Block.
 
 ### TransactionRequest
 
