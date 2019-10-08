@@ -29,6 +29,7 @@ finalsd:
             BlockBodyRequest = 10,
             VerificationPacketRequest = 11,
             TransactionRequest = 12,
+            SignedVerificationPacketRequest = 13,
             DataMissing = 14,
             SyncingOver = 15,
 

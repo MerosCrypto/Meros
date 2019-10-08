@@ -11,6 +11,9 @@ import ../../lib/Hash
 #Block lib.
 import ../../Database/Merit/Block
 
+#Transaction lib.
+import ../../Database/Transactions/Transaction
+
 #Message object.
 import MessageObj
 
@@ -21,6 +24,18 @@ type NetworkLibFunctionBox* = ref object
     getNetworkID*: proc (): int {.noSideEffect, raises: [].}
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
     getTail*: proc (): Hash[384] {.inline, raises: [].}
+
+    getBlock*: proc (
+        hash: Hash[384]
+    ): Block {.raises: [
+        IndexError
+    ].}
+    
+    getTransaction*: proc (
+        hash: Hash[384]
+    ): Transaction {.raises: [
+        IndexError
+    ].}
 
     handle*: proc (
         msg: Message

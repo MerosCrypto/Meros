@@ -47,11 +47,12 @@ proc newNetwork*(
     #Provide functions for the Network Functions Box.
     result.networkFunctions.getNetworkID = func (): int {.forceCheck: [].} =
         id
-
     result.networkFunctions.getProtocol = func (): int {.forceCheck: [].} =
         protocol
-
     result.networkFunctions.getTail = mainFunctions.merit.getTail
+
+    result.networkFunctions.getBlock = mainFunctions.merit.getBlockByHash
+    result.networkFunctions.getTransaction = mainFunctions.transactions.getTransaction
 
     result.networkFunctions.handle = proc (
         msg: Message
@@ -166,7 +167,7 @@ proc newNetwork*(
                     return
 
             of MessageType.SignedVerificationPacket:
-                raise newException(InvalidMessageError, "Client sent a SignedVerificationPacket (which is a disabled message).")
+                raise newException(ClientError, "Client sent a SignedVerificationPacket (which is a disabled message).")
 
             of MessageType.SignedMeritRemoval:
                 var mr: SignedMeritRemoval
