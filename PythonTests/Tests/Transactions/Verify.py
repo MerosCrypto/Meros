@@ -1,4 +1,3 @@
-"""
 #Transactions classes.
 from PythonTests.Classes.Transactions.Transaction import Transaction
 from PythonTests.Classes.Transactions.Transactions import Transactions
@@ -27,4 +26,3 @@ def verifyTransactions(
 ) -> None:
     for tx in transactions.txs:
         verifyTransaction(rpc, transactions.txs[tx])
-"""

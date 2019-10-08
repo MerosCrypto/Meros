@@ -12,8 +12,8 @@ from PythonTests.Meros.RPC import RPC
 from PythonTests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
 
-"""
 from PythonTests.Tests.Transactions.DataTest import DataTest
+"""
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
@@ -51,9 +51,10 @@ ress: List[str] = []
 tests: List[Callable[[RPC], None]] = [
     ChainAdvancementTest,
     DifficultyTest,
+
+    DataTest
 ]
 """
-DataTest,
 FiftyTest,
 
 VUnknownTest,

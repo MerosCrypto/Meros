@@ -59,29 +59,29 @@ proc recv*(
 
     for l in 0 ..< lens.len:
         #Grab the next length.
-        var length: int = lens[l]
+        var len: int = lens[l]
         #If it's negative, multiply this length by the int recvd by the last section and recv that.
         #If the last section was 1, this multiplies it by the byte at that position.
         #If the last section was 4, this multiplies it by the int encoded at that position.
         #If...
-        if length < 0:
-            length = msg.substr(result.len - lens[l - 1]).fromBinary() * abs(length)
+        if len < 0:
+            len = msg.substr(msg.len - lens[l - 1]).fromBinary() * abs(len)
         #The length has multiple choices depending on the path.
         #Handle this with custom code.
-        elif length == 0:
+        elif len == 0:
             case content:
                 of MessageType.SignedMeritRemoval:
                     case int(msg[^1]):
                         of VERIFICATION_PREFIX:
-                            length = NICKNAME_LEN + HASH_LEN
+                            len = NICKNAME_LEN + HASH_LEN
                         else:
                             raise newException(ClientError, "Client sent a SignedMeritRemoval with an unknown prefix.")
 
                 of MessageType.BlockHeader:
                     if int(msg[^1]) == 1:
-                        length = BLS_PUBLIC_KEY_LEN
+                        len = BLS_PUBLIC_KEY_LEN
                     elif int(msg[^1]) == 0:
-                        length = NICKNAME_LEN
+                        len = NICKNAME_LEN
                     else:
                         raise newException(ClientError, "Client sent us a Blockheader with an invalid new miner.")
 
@@ -93,12 +93,12 @@ proc recv*(
 
         #Recv the data.
         try:
-            msg &= await client.socket.recv(length)
+            msg &= await client.socket.recv(len)
         except Exception as e:
             raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
         #Add the length to the size and verify the size.
-        size += length
+        size += len
         if msg.len != size:
             raise newException(ClientError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
