@@ -106,8 +106,9 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - contents is the result of a properly constructed Merkle tree according to the data in the Block.
 - verifiers is the result of a properly constructed Merkle tree according to the data in the Block.
 - Every Transaction is unique.
-- Every Transaction has all inputs mentioned in a previous Block or the same Block.
-- Every Transaction has a Verification Packet.
+- Every Transaction has a Verification Packet involving Merit Holders not previously archived on the Blockchain.
+- Every Transaction's predecessors have Verification Packets.
+- Every Transaction's predecessors, if they have yet to be mentioned on the Blockchain, are not mentioned in this BlockBody.
 - Every Transaction doesn't compete with, or have parents which compete with, Transactions archived 5 Blocks before the last Checkpoint.
 - Every Element is valid and doesn't cause a MeritRemoval.
 - Only new Elements are archived.
@@ -121,6 +122,22 @@ for tx in transactions:
 for elem in elements:
     signatures.add(element.signature)
 BLSSignature aggregate = signatures.aggregate()
+```
+
+When a Transaction is first mentioned on the Blockchain, it automatically includes all predecessors which have yet to be mentioned. The predecessors are locally inserted into the Transaction list after the mentioned Transaction, using the following algorithm for the ordering:
+
+```
+List[Hash] toAppend
+for input in tx:
+    if input.hash not in mentioned:
+        toAppend.add(input.hash)
+
+int i = 0
+while i < toAppend.length:
+    for input in transactions[toAppend[i]]:
+        if input.hash not in mentioned:
+            toAppend.add(input.hash)
+    i++
 ```
 
 If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
@@ -164,13 +181,18 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros allows archiving Transactions who don't have their inputs archived either in a previous Block or the same Block. Unmentioned Transactions can be used by Transactions archived in a Block if the unmentioned Transactions are already in the DB.
-- Meros allows archiving Transactions which compete with old Transactions.
-- Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.
+- Meros doesn't require archive Verification Packets involve unarchived Merit Holders.
+- Meros allows mentioning previously unmentioned predecessors with their successor.
+- Meros allows mentioning Transactions which compete with old Transactions.
+- Meros doesn't automatically include unmentioned predecessors after their successor in BlockBody's local Transactions list.
+
 - Meros mints Merit before minting Meros.
-- Meros doesn't check for 0-scores before minting Meros.
 - Meros doesn't support dead Merit.
-- Meros doesn't support chain reorganizations.
+
+- Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.
+- Meros doesn't check for 0-scores before minting Meros.
 - Meros doesn't rollover rewards or use a negative sigmoid.
 - Merps doesn't wait 10 Blocks to create Mints.
+
+- Meros doesn't support chain reorganizations.
 - Meros doesn't support the `Checkpoint` message type.

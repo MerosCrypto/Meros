@@ -96,8 +96,10 @@ This message is meant for Merit Holders to be able to create already aggregated 
 ### Violations in Meros
 
 - Meros doesn't support defaulting.
-- Meros doesn't handle `VerificationPacket` or `SignedVerificationPacket`.
-- Meros doesn't support `SendDifficulty` or `SignedSendDifficulty`.
-- Meros doesn't support `DataDifficulty` or `SignedDataDifficulty`.
-- Meros doesn't support `GasPrice` or `SignedGasPrice`.
-- Meros doesn't support MeritRemovals caused by verifying competing Transactions.
+
+- Meros doesn't handle `VerificationPacket`.
+- Meros doesn't support SendDifficulties or `SignedSendDifficulty`.
+- Meros doesn't support DataDifficulties or `SignedDataDifficulty`.
+- Meros doesn't support GasPrices or `SignedGasPrice`.
+
+- Meros doesn't support MeritRemovals, despite having the infrastructure.

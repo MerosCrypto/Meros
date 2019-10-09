@@ -87,5 +87,6 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 ### Violations in Meros
 
 - Meros doesn't support the `PeersRequest` and `Peers` message types.
+- Meros doesn't support the `BlockListRequest` and `BlockList` message types.
 - Meros doesn't support the `CheckpointRequest` message type.
 - Meros doesn't support the `VerificationPacketRequest` message types.
