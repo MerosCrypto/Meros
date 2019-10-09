@@ -110,7 +110,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Transaction's predecessors have Verification Packets.
 - Every Transaction's predecessors, if they have yet to be mentioned on the Blockchain, are not mentioned in this BlockBody.
 - Every Transaction doesn't compete with, or have parents which compete with, Transactions archived 5 Blocks before the last Checkpoint.
-- Every Element is valid and doesn't cause a MeritRemoval.
+- Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block.
 - Only new Elements are archived.
 - If a Merit Holder has a Merit Removal archived, that is their only Element archived in the Block.
 - The aggregate signature is formed with the following algorithm:
