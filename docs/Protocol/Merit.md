@@ -56,8 +56,9 @@ Blocks have the following fields:
 
 - header: Block Header.
 - significant: The threshold of what makes a Transaction significant. 10 means anything which has more than 10 (inclusive) new Merit to archive.
-- transactions: A PinSketch of the included Transactions, with a capacity of `transactions.length div 5 + 1`, where each transaction hash is transformed via `Blaske2b-384(hash + contents)` before being included in the sketch.
-- packets: A PinSketch of the included Verification Packets, with a capacity of `transactions.length div 5 + 1`, where each Verification Packet is included in the sketch as `Blake2b-384(n + verifier1 + verifier2 + .. + verifier3)`.
+- sketchSalt: The salt used when hashing elements for inclusion in sketches.
+- transactions: A PinSketch of the included Transactions, with a capacity of at least `transactions.length div 5 + 1` and at most `transactions.length div 5 + 11`, where each Transaction hash is included as `Blake2b-64(sketchSalt + hash)`. If a Transaction's 8-byte hash has a collision with another Transaction's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
+- packets: A PinSketch of the included Verification Packets, with a capacity matching transactions, where each Verification Packet is included as `Blake2b-64(sketchSalt + txN + verifier1 + verifier2 + .. + verifierN)`. If a Verification Packet's 8-byte hash has a collision with another Verification Packet's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
 - elements: Difficulty updates and gas price sets from Merit Holders.
 - aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives.
 
@@ -73,6 +74,7 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - Header proof of 0.
 - Zeroed out signature in the header.
 - significant of 0.
+- sketchSalt of 0.
 - Empty transactions.
 - Empty elements.
 - aggregate is zeroed out.
@@ -173,7 +175,7 @@ If any scores happen to be 0, they are removed. If the sum of every score is les
 
 After Mints are decided, the Block's miner gets 1 Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is no longer live. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 52560 Merit.
 
-`BlockBody` has a variable message length; the 4-byte significant, the 4-byte Transactions sketch capacity, the variable length Transactions sketch, the 4-byte Packets sketch capacity, the variable length Packets sketch, the 4-byte amount of Elements, the Elements (each a different length depending on its type), and the 96-byte signature.
+`BlockBody` has a variable message length; the 4-byte significant, 4-byte sketchSalt, 4-byte Transactions sketch capacity, variable length Transactions sketch, variable length Packets sketch, 4-byte amount of Elements, Elements (each a different length depending on its type), and the 96-byte signature.
 
 ### Checkpoint
 
@@ -187,7 +189,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros doesn't have significant, has a list of Transactions instead of a sketch, and doesn't have packets.
+- Meros doesn't have significant, sketchSalt, or packets. It does have a list of Transactions where it should have a sketch.
 - Meros doesn't check that newly archived Merit Holders' Merit is greater than significant
 - Meros allows mentioning previously unmentioned predecessors with their successor.
 - Meros allows mentioning Transactions which compete with old Transactions.

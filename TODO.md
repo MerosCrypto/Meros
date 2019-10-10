@@ -90,10 +90,13 @@ Consensus:
 
 RPC:
 
+- Updated RPC now that we have sketches in play.
 - Functioning getBlockTemplate. The existing one meets the RPC spec but includes no TXs or Elements.
 
 Network:
 
+- Networking message to turn a 8-byte hash (used in a transactions sketch) into a Transaction hash.
+- Networking message to get a Block's full Transaction list.
 - The old code handled the other client syncing in the main message switch, yet had dedicated code for when we synced something. Both cases should have dedicated code for easy detection of if the other party sent a syncing message when they shouldn't have. Since the updated message switch requires that, implement it.
 - Syncing.
 - Support BlockchainTail messages.
