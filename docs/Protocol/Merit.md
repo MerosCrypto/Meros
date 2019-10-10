@@ -25,7 +25,7 @@ Meros has an on-chain nickname system for Merit Holders, where each nickname is 
 
 The "contents" has leaves for both Transactions and the Elements included in a Block. Each leaf representing a Transaction is simply defined as the Transaction hash. Each leaf representing an Element is defined as `Blake2b-384(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature.
 
-The "verifiers" has one leaf per Transaction, where each leaf is `Blake2b(verifierNickName1 + verifierNickName2 + ... + verifierNickNameN)`.
+The "verifiers" has one leaf per Transaction, where the n-th leaf is of the Verification Packet for the n-th Transaction, defined as `Blake2b(packet.serialize())`.
 
 A BlockHeader's signature and hash are defined as follows:
 
@@ -55,7 +55,9 @@ Blocks mention Transactions which have had Verification Packets created.
 Blocks have the following fields:
 
 - header: Block Header.
-- transactions: List of Transactions, where the first is the left-most leaf in the BlockHeader's contents merkle tree.
+- significant: The threshold of what makes a Transaction significant. 10 means anything which has more than 10 (inclusive) new Merit to archive.
+- transactions: A PinSketch of the included Transactions, with a capacity of `transactions.length div 5 + 1`, where each transaction hash is transformed via `Blaske2b-384(hash + contents)` before being included in the sketch.
+- packets: A PinSketch of the included Verification Packets, with a capacity of `transactions.length div 5 + 1`, where each Verification Packet is included in the sketch as `Blake2b-384(n + verifier1 + verifier2 + .. + verifier3)`.
 - elements: Difficulty updates and gas price sets from Merit Holders.
 - aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives.
 
@@ -70,6 +72,7 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - Header time of 0.
 - Header proof of 0.
 - Zeroed out signature in the header.
+- significant of 0.
 - Empty transactions.
 - Empty elements.
 - aggregate is zeroed out.
@@ -103,16 +106,19 @@ If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockB
 When a new BlockBody is received, a full Block can be formed using the BlockHeader. The Block is valid if:
 
 - The header is valid.
-- contents is the result of a properly constructed Merkle tree according to the data in the Block.
-- verifiers is the result of a properly constructed Merkle tree according to the data in the Block.
+- contents is the result of a properly constructed Merkle tree. It should be noted the tree used to form contents must include automatically included predecessors.
+- verifiers is the result of a properly constructed Merkle tree.
+- significant is between 0 (exclusive) and 26280 (inclusive).
 - Every Transaction is unique.
 - Every Transaction has a Verification Packet involving Merit Holders not previously archived on the Blockchain.
+- Every Transaction's Verification Packet's newly archived Merit Holders' Merit sums to be greater than significant.
 - Every Transaction's predecessors have Verification Packets.
 - Every Transaction's predecessors, if they have yet to be mentioned on the Blockchain, are not mentioned in this BlockBody.
 - Every Transaction doesn't compete with, or have parents which compete with, Transactions archived 5 Blocks before the last Checkpoint.
-- Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block.
+- Each sketch is properly constructed from the data used to construct their respective Merkle.
 - Only new Elements are archived.
-- If a Merit Holder has a Merit Removal archived, that is their only Element archived in the Block.
+- No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder.
+- Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block.
 - The aggregate signature is formed with the following algorithm:
 
 ```
@@ -167,7 +173,7 @@ If any scores happen to be 0, they are removed. If the sum of every score is les
 
 After Mints are decided, the Block's miner gets 1 Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is no longer live. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 52560 Merit.
 
-`BlockBody` has a variable message length; the 4-byte amount of Transactions, the Transaction hashes (each 48 bytes), the 4-byte amount of Elements, the Elements (each a different length depending on its type), and the 96-byte signature.
+`BlockBody` has a variable message length; the 4-byte significant, the 4-byte Transactions sketch capacity, the variable length Transactions sketch, the 4-byte Packets sketch capacity, the variable length Packets sketch, the 4-byte amount of Elements, the Elements (each a different length depending on its type), and the 96-byte signature.
 
 ### Checkpoint
 
@@ -181,7 +187,8 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros doesn't require archive Verification Packets involve unarchived Merit Holders.
+- Meros doesn't have significant, has a list of Transactions instead of a sketch, and doesn't have packets.
+- Meros doesn't check that newly archived Merit Holders' Merit is greater than significant
 - Meros allows mentioning previously unmentioned predecessors with their successor.
 - Meros allows mentioning Transactions which compete with old Transactions.
 - Meros doesn't automatically include unmentioned predecessors after their successor in BlockBody's local Transactions list.

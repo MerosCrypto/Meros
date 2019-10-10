@@ -22,7 +22,7 @@ Verifications can only be of valid Transactions, meaning they can be parse and a
 
 A Verification packet is a group of Verifications belonging to a single Transaction. They use less bandwidth than individual Verifications and are faster to handle in the moment as their signed version uses a single signature for every message.
 
-`VerificationPacket` has a variable message length; the 1-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname), and the 48-byte hash.
+`VerificationPacket` has a variable message length; the 1-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname), and the 48-byte hash. Even though VerificationPackets are not directly signed, they use a prefix of "\1" inside a Block Header's content merkle.
 
 ### SendDifficulty
 
