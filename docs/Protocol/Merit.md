@@ -58,7 +58,7 @@ Blocks have the following fields:
 - significant: The threshold of what makes a Transaction significant. 10 means anything which has more than 10 (inclusive) new Merit to archive.
 - sketchSalt: The salt used when hashing elements for inclusion in sketches.
 - transactions: A PinSketch of the included Transactions, with a capacity of at least `transactions.length div 5 + 1` and at most `transactions.length div 5 + 11`, where each Transaction hash is included as `Blake2b-64(sketchSalt + hash)`. If a Transaction's 8-byte hash has a collision with another Transaction's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
-- packets: A PinSketch of the included Verification Packets, with a capacity matching transactions, where each Verification Packet is included as `Blake2b-64(sketchSalt + txN + verifier1 + verifier2 + .. + verifierN)`. If a Verification Packet's 8-byte hash has a collision with another Verification Packet's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
+- packets: A PinSketch of the included Verification Packets, with a capacity matching transactions, where each Verification Packet is included as `Blake2b-64(sketchSalt + packet.serialize())`. If a Verification Packet's 8-byte hash has a collision with another Verification Packet's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
 - elements: Difficulty updates and gas price sets from Merit Holders.
 - aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives.
 
@@ -116,7 +116,8 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Transaction's Verification Packet's newly archived Merit Holders' Merit sums to be greater than significant.
 - Every Transaction's predecessors have Verification Packets.
 - Every Transaction's predecessors, if they have yet to be mentioned on the Blockchain, are not mentioned in this BlockBody.
-- Every Transaction doesn't compete with, or have parents which compete with, Transactions archived 5 Blocks before the last Checkpoint.
+- Every Transaction either has yet to enter Epochs or is in Epochs.
+- Every Transaction doesn't compete with, or have parents which competed with and lost, Transactions archived 5 Blocks before the last Checkpoint.
 - Each sketch is properly constructed from the data used to construct their respective Merkle.
 - Only new Elements are archived.
 - No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder.
@@ -192,7 +193,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros doesn't have significant, sketchSalt, or packets. It does have a list of Transactions where it should have a sketch.
 - Meros doesn't check that newly archived Merit Holders' Merit is greater than significant
 - Meros allows mentioning previously unmentioned predecessors with their successor.
-- Meros allows mentioning Transactions which compete with old Transactions.
+- Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 - Meros doesn't automatically include unmentioned predecessors after their successor in BlockBody's local Transactions list.
 
 - Meros mints Merit before minting Meros.

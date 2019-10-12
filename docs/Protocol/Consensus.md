@@ -14,7 +14,7 @@ They have the following fields:
 
 - hash: Hash of the Transaction verified.
 
-Verifications can only be of valid Transactions, meaning they can be parse and added to the Transactions DAG using inputs in previous Blocks or in the same Block. The checks applied to the relevant Transaction type must also pass. The Transaction does NOT have to beat any spam filter OR be a child of a verified Transaction. Verifications with unknown hashes are invalid, yet still usable as causes for a MeritRemoval.
+Verifications can only be of valid Transactions, meaning Transactions which have been mentioned on the chain or still can be mentioned in a future Block. The Transaction does NOT have to beat any spam filter.
 
 `Verification` has a message length of 50 bytes; the 2-byte creator's nickname, and the 48-byte hash. The signature is produced with a prefix of "\0".
 
