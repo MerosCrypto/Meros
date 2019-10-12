@@ -1,13 +1,13 @@
 #Merkle Tree Test.
 
 #Util lib.
-import ../../../src/lib/Util
+import ../../src/lib/Util
 
 #Hash lib.
-import ../../../src/lib/Hash
+import ../../src/lib/Hash
 
 #Merkle lib.
-import ../../../src/Database/common/Merkle
+import ../../src/lib/Merkle
 
 #Random standard lib.
 import random
