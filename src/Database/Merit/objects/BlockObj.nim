@@ -38,7 +38,10 @@ func newBlockObj*(
     contents: Hash[384],
     verifiers: Hash[384],
     miner: BLSPublicKey,
+    significant: int,
+    sketchSalt: string,
     transactions: seq[Hash[384]],
+    packets: seq[VerificationPacket],
     elements: seq[BlockElement],
     aggregate: BLSSignature,
     time: uint32 = getTime(),
@@ -57,7 +60,10 @@ func newBlockObj*(
             signature
         ),
         body: newBlockBodyObj(
+            significant,
+            sketchSalt,
             transactions,
+            packets,
             elements,
             aggregate
         )
@@ -69,7 +75,10 @@ func newBlockObj*(
     contents: Hash[384],
     verifiers: Hash[384],
     miner: uint16,
+    significant: int,
+    sketchSalt: string,
     transactions: seq[Hash[384]],
+    packets: seq[VerificationPacket],
     elements: seq[BlockElement],
     aggregate: BLSSignature,
     time: uint32 = getTime(),
@@ -88,7 +97,10 @@ func newBlockObj*(
             signature
         ),
         body: newBlockBodyObj(
+            significant,
+            sketchSalt,
             transactions,
+            packets,
             elements,
             aggregate
         )
