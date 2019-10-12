@@ -8,7 +8,7 @@ import ../../../../../lib/Util
 import ../../../../../lib/Hash
 
 #Difficulty object.
-import ../../../..//Merit/objects/DifficultyObj
+import ../../../../Merit/objects/DifficultyObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon

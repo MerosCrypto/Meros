@@ -22,48 +22,45 @@ import ../Consensus/ParseBlockElement
 #Parse a BlockBody.
 proc parseBlockBody*(
     bodyStr: string
-): BlockBody {.forceCheck: [
+): tuple[
+    data: BlockBody,
+    capacity: int,
+    transactions: string,
+    packets: string
+] {.forceCheck: [
     ValueError,
     BLSError
 ].} =
-    #Verify the data length.
-    var
-        txLen: int
-        elemLenPos: int
-        elemLen: int
-    if bodyStr.len < INT_LEN:
-        raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Transactions.")
-    txLen = bodyStr[0 ..< INT_LEN].fromBinary()
-    elemLenPos = INT_LEN + (txLen * HASH_LEN)
-    if bodyStr.len < elemLenPos + INT_LEN + BLS_SIGNATURE_LEN:
-        raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Elements/the aggregate signature.")
-    elemLen = bodyStr[elemLenPos ..< elemLenPos + INT_LEN].fromBinary()
-
-    #Amount of Transactions | Transactions | Amount of Elements | Elements | Aggregate Signature
+    #Significant | Sketch Salt | Capacity | Transactions Sketch | Packets Sketch | Amount of Elements | Elements | Aggregate Signature
     var bodySeq: seq[string] = bodyStr.deserialize(
         INT_LEN,
-        txLen * HASH_LEN,
+        INT_LEN,
         INT_LEN
     )
+
+    result.capacity = bodySeq[2].fromBinary()
     var
-        txs: seq[Hash[384]] = newSeq[Hash[384]](txLen)
+        sketchLen: int = result.capacity * 8
+        transactionsStart: int = INT_LEN + INT_LEN + INT_LEN
+        packetsStart: int = transactionsStart + sketchLen
+        elementsStart: int = packetsStart + sketchLen
 
         pbeResult: tuple[
             element: BlockElement,
             len: int
         ]
-        i: int = elemLenPos + INT_LEN
+        i: int = elementsStart + INT_LEN
         elements: seq[BlockElement] = @[]
 
         aggregate: BLSSignature
 
-    for t in 0 ..< txLen:
-        try:
-            txs[t] = bodySeq[1][t * 48 ..< (t * 48) + 48].toHash(384)
-        except ValueError as e:
-            doAssert(false, "Couldn't create a 48-byte hash from a 48-byte string: " & e.msg)
+    if bodyStr.len < i:
+        raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Sketches/Elements.")
 
-    for e in 0 ..< elemLen:
+    result.transactions = bodyStr[transactionsStart ..< packetsStart]
+    result.packets = bodyStr[packetsStart ..< elementsStart]
+
+    for e in 0 ..< bodyStr[elementsStart ..< i].fromBinary():
         try:
             pbeResult = bodyStr.parseBlockElement(i)
         except ValueError as e:
@@ -73,13 +70,19 @@ proc parseBlockBody*(
         i += pbeResult.len
         elements.add(pbeResult.element)
 
+    if bodyStr.len < i + BLS_SIGNATURE_LEN:
+        raise newException(ValueError, "parseBlockBody not handed enough data to get the aggregate signature.")
+
     try:
         aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
     except BLSError as e:
         fcRaise e
 
-    result = newBlockBodyObj(
-        txs,
+    result.data = newBlockBodyObj(
+        bodySeq[0].fromBinary(),
+        bodySeq[1],
+        @[],
+        @[],
         elements,
         aggregate
     )

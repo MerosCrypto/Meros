@@ -74,9 +74,15 @@ Wallet:
 
 - Load the nickname/automatically set the nickname for the miner wallet.
 
+Filesystem:
+
+- No longer save Verifications/VerificationPackets, except pending ones, in the Consensus DB.
+
 Merit:
 
 - Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
+- If our sketch has a collision, check if the Block doesn't (as that would mean it's valid).
+- If we sync a Block with a working Transactions sketch yet invalid merkle, check if there was a collision between one of our elements and one we didn't have which was included in the sketch.
 - Verify the `verifiers` merkle when we verify the Block's aggregate signature.
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
 - Epochs's getPackets.
@@ -103,6 +109,7 @@ Network:
 
 Tests:
 
+- DBSerializeBlock Test.
 - Epochs Tests.
 - Add Elements to BDBTest.
 - Re-enable StateTests/ValueTest.

@@ -12,7 +12,12 @@ import SerializeBlockBody
 #Serialize a Block.
 proc serialize*(
     blockArg: Block
-): string {.forceCheck: [].} =
-    result =
-        blockArg.header.serialize() &
-        blockArg.body.serialize()
+): string {.forceCheck: [
+    ValueError
+].} =
+    try:
+        result =
+            blockArg.header.serialize() &
+            blockArg.body.serialize()
+    except ValueError as e:
+        fcRaise e

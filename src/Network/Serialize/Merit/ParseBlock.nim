@@ -16,7 +16,12 @@ import ParseBlockBody
 #Parse a Block.
 proc parseBlock*(
     blockStr: string
-): Block {.forceCheck: [
+): tuple[
+    data: Block,
+    capacity: int,
+    transactions: string,
+    packets: string
+] {.forceCheck: [
     ValueError,
     BLSError
 ].} =
@@ -27,7 +32,7 @@ proc parseBlock*(
 
     try:
         header = blockStr.parseBlockHeader()
-        body = blockStr.substr(
+        (body, result.capacity, result.transactions, result.packets) = blockStr.substr(
             INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN +
             INT_LEN + INT_LEN + BLS_SIGNATURE_LEN +
             (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN)
@@ -38,7 +43,7 @@ proc parseBlock*(
         fcRaise e
 
     #Create the Block Object.
-    result = newBlockObj(
+    result.data = newBlockObj(
         header,
         body
     )
