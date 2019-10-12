@@ -98,6 +98,7 @@ RPC:
 
 - Updated RPC now that we have sketches in play.
 - Functioning getBlockTemplate. The existing one meets the RPC spec but includes no TXs or Elements.
+- Functioning publishBlock. The existing one was disabled when we added sketches.
 
 Network:
 

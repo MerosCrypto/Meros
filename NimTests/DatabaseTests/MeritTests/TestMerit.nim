@@ -14,6 +14,8 @@ import ../../../src/Wallet/MinerWallet
 import ../../../src/Database/Consensus/Elements/Element
 
 #Element Serialization libs.
+import ../../../src/Network/Serialize/Consensus/SerializeVerification
+import ../../../src/Network/Serialize/Consensus/SerializeVerificationPacket
 import ../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
 
 #Block lib.
@@ -33,13 +35,24 @@ proc newContents(
         contents.add(Blake384(elem.serializeContents()))
     result = contents.hash
 
+#Create a verifiers Merkle.
+proc newVerifiers(
+    packets: seq[VerificationPacket]
+): Hash[384] =
+    var verifiers: Merkle = newMerkle()
+    for packet in packets:
+        verifiers.add(Blake384(packet.serialize()))
+    result = verifiers.hash
+
 #Create a Block, with every setting optional.
 proc newBlankBlock*(
     version: uint32 = 0,
     last: ArgonHash = ArgonHash(),
-    verifiers: Hash[384] = Hash[384](),
     miner: MinerWallet = newMinerWallet(),
+    significant: int = 0,
+    sketchSalt: string = "",
     transactions: seq[Hash[384]] = @[],
+    packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = nil,
     time: uint32 = getTime(),
@@ -49,9 +62,12 @@ proc newBlankBlock*(
         version,
         last,
         newContents(transactions, elements),
-        verifiers,
+        newVerifiers(packets),
         miner.publicKey,
+        significant,
+        sketchSalt,
         transactions,
+        packets,
         elements,
         aggregate,
         time
@@ -62,10 +78,12 @@ proc newBlankBlock*(
 proc newBlankBlock*(
     version: uint32 = 0,
     last: ArgonHash = ArgonHash(),
-    verifiers: Hash[384] = Hash[384](),
     nick: uint16,
     miner: MinerWallet = newMinerWallet(),
+    significant: int = 0,
+    sketchSalt: string = "",
     transactions: seq[Hash[384]] = @[],
+    packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = nil,
     time: uint32 = getTime(),
@@ -75,9 +93,12 @@ proc newBlankBlock*(
         version,
         last,
         newContents(transactions, elements),
-        verifiers,
+        newVerifiers(packets),
         nick,
+        significant,
+        sketchSalt,
         transactions,
+        packets,
         elements,
         aggregate,
         time

@@ -4,8 +4,8 @@ import ../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#VerificationPacket lib.
-import ../../../src/Database/Consensus/Elements/VerificationPacket as VerificationPacketFile
+#Element lib.
+import ../../../src/Database/Consensus/Elements/Element
 
 #Merit libs.
 import ../../../src/Database/Merit/Merit
@@ -43,9 +43,16 @@ proc compare*(
     bb1: BlockBody,
     bb2: BlockBody
 ) =
+    assert(bb1.significant == bb2.significant)
+    assert(bb1.sketchSalt == bb2.sketchSalt)
+
     assert(bb1.transactions.len == bb2.transactions.len)
     for t in 0 ..< bb1.transactions.len:
         assert(bb1.transactions[t] == bb2.transactions[t])
+
+    assert(bb1.packets.len == bb2.packets.len)
+    for p in 0 ..< bb1.packets.len:
+        assert(bb1.packets[p] == bb2.packets[p])
 
     assert(bb1.elements.len == bb2.elements.len)
     for e in 0 ..< bb1.elements.len:

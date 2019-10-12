@@ -232,7 +232,6 @@ proc module*(
 
 
                     if header.kind == JNull:
-                        discard
                         header = % newBlockHeader(
                             0,
                             functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
@@ -245,10 +244,13 @@ proc module*(
                     doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
 
                 #Create the result.
-                res["result"] = %* {
-                    "header": header,
-                    "body": newBlockBodyObj(@[], @[], nil).serialize().toHex()
-                }
+                try:
+                    res["result"] = %* {
+                        "header": header,
+                        "body": newBlockBodyObj(0, "", @[], @[], @[], nil).serialize().toHex()
+                    }
+                except ValueError as e:
+                    doAssert(false, "Empty Block Body had sketch collision: " & e.msg)
 
             "publishBlock" = proc (
                 res: JSONNode,
@@ -265,12 +267,14 @@ proc module*(
                     raise newException(ParamError, "")
 
                 var newBlock: Block
+                discard """
                 try:
                     newBlock = params[0].getStr().parseHexStr().parseBlock()
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except BLSError:
                     raise newJSONRPCError(-4, "Invalid BLS data")
+                """
 
                 try:
                     await functions.merit.addBlock(newBlock)

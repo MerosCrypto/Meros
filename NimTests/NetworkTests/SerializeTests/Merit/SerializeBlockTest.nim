@@ -1,13 +1,14 @@
 #Serialize Block Test.
 
-#Serialize BlockHeader Test.
-
 #Util lib.
 import ../../../../src/lib/Util
 
 #Hash and Merkle libs.
 import ../../../../src/lib/Hash
 import ../../../../src/lib/Merkle
+
+#Sketcher lib.
+import ../../../../src/lib/Sketcher
 
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
@@ -38,29 +39,40 @@ proc test*() =
         hash: Hash[384]
         #Last hash.
         last: ArgonHash
-        #Verifiers hash.
-        verifiers: Hash[384]
         #Transactions.
         transactions: seq[Hash[384]] = @[]
+        #Packets.
+        packets: seq[VerificationPacket] = @[]
         #Elements.
         elements: seq[BlockElement] = @[]
         #Block.
         newBlock: Block
         #Reloaded Block.
-        reloaded: Block
+        reloaded: tuple[
+            data: Block,
+            capacity: int,
+            transactions: string,
+            packets: string
+        ]
+        #Sketch Results.
+        txsResult: SketchResult[Hash[384]]
+        packetsResult: SketchResult[VerificationPacket]
 
-    #Test 255 serializations.
+    #Test 128 serializations.
     for s in 0 .. 127:
-        #Randomize the last hash and the verifiers hash.
+        #Randomize the last hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
-            verifiers.data[b] = uint8(rand(255))
 
         #Randomize the transactions.
         for _ in 0 ..< rand(300):
             for b in 0 ..< 48:
                 hash.data[b] = uint8(rand(255))
             transactions.add(hash)
+
+        #Randomize the packets.
+        for _ in 0 ..< transactions.len:
+            packets.add(newRandomVerificationPacket())
 
         #Randomize the elements.
         for _ in 0 ..< rand(300):
@@ -70,9 +82,11 @@ proc test*() =
             newBlock = newBlankBlock(
                 uint32(rand(4096)),
                 last,
-                verifiers,
                 newMinerWallet(),
+                rand(100000),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 transactions,
+                packets,
                 elements,
                 newMinerWallet().sign($rand(4096)),
                 uint32(rand(high(int32))),
@@ -82,10 +96,12 @@ proc test*() =
             newBlock = newBlankBlock(
                 uint32(rand(4096)),
                 last,
-                verifiers,
                 uint16(rand(high(int16))),
                 newMinerWallet(),
+                rand(100000),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 transactions,
+                packets,
                 elements,
                 newMinerWallet().sign($rand(4096)),
                 uint32(rand(high(int32))),
@@ -95,10 +111,34 @@ proc test*() =
         #Serialize it and parse it back.
         reloaded = newBlock.serialize().parseBlock()
 
+        #Create the Sketches and extract the elements in each.
+        txsResult = newSketcher(transactions).merge(
+            reloaded.transactions,
+            reloaded.capacity,
+            0,
+            reloaded.data.body.sketchSalt
+        )
+        doAssert(txsResult.missing.len == 0)
+        reloaded.data.body.transactions = txsResult.elements
+
+        packetsResult = newSketcher(packets).merge(
+            reloaded.packets,
+            reloaded.capacity,
+            0,
+            reloaded.data.body.sketchSalt
+        )
+        doAssert(packetsResult.missing.len == 0)
+        reloaded.data.body.packets = packetsResult.elements
+
         #Test the serialized versions.
-        assert(newBlock.serialize() == reloaded.serialize())
+        assert(newBlock.serialize() == reloaded.data.serialize())
 
         #Compare the BlockBodies.
-        compare(newBlock, reloaded)
+        compare(newBlock, reloaded.data)
+
+        #Clear the transactions, packets, and elements.
+        transactions = @[]
+        packets = @[]
+        elements = @[]
 
     echo "Finished the Network/Serialize/Merit/Block Test."
