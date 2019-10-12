@@ -25,17 +25,21 @@ proc compare*(
     bh2: BlockHeader
 ) =
     assert(bh1.version == bh2.version)
+
     assert(bh1.last == bh2.last)
     assert(bh1.contents == bh2.contents)
     assert(bh1.verifiers == bh2.verifiers)
+
     assert(bh1.newMiner == bh2.newMiner)
     if bh1.newMiner:
         assert(bh1.minerKey == bh2.minerKey)
     else:
         assert(bh1.minerNick == bh2.minerNick)
+
     assert(bh1.time == bh2.time)
     assert(bh1.proof == bh2.proof)
     assert(bh1.signature == bh2.signature)
+
     assert(bh1.hash == bh2.hash)
 
 #Compare two BlockBodies to make sure they have the same value.
@@ -52,7 +56,7 @@ proc compare*(
 
     assert(bb1.packets.len == bb2.packets.len)
     for p in 0 ..< bb1.packets.len:
-        assert(bb1.packets[p] == bb2.packets[p])
+        compare(bb1.packets[p], bb2.packets[p])
 
     assert(bb1.elements.len == bb2.elements.len)
     for e in 0 ..< bb1.elements.len:

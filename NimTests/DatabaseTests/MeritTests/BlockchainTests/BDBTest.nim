@@ -25,8 +25,37 @@ import ../TestMerit
 #Compare Merit lib.
 import ../CompareMerit
 
+#Tables lib.
+import tables
+
 #Random standard lib.
 import random
+
+#Create a valid VerificationPacket.
+proc newValidVerificationPacket(
+    blockchain: Blockchain,
+    hash: Hash[384],
+    holders: seq[BLSPublicKey]
+): VerificationPacket =
+    result = newVerificationPacketObj(hash)
+    for holder in holders:
+        if rand(1) == 0:
+            result.holders.add(
+                blockchain.miners[
+                    holders[rand(high(holders))]
+                ]
+            )
+
+    #Make sure there's at least one holder.
+    if result.holders.len == 0:
+        result.holders.add(
+            blockchain.miners[
+                holders[rand(high(holders))]
+            ]
+        )
+
+    if result.holders.len == 0:
+        doAssert(false)
 
 proc test*() =
     #Seed random.
@@ -55,6 +84,8 @@ proc test*() =
         hash: Hash[384]
         #Transactions.
         transactions: seq[Hash[384]]
+        #Packets.
+        packets: seq[VerificationPacket]
         #Elements.
         elements: seq[BlockElement]
         #Verifiers hash.
@@ -81,12 +112,18 @@ proc test*() =
 
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
-        #Randomize the Transactions.
-        transactions = @[]
-        for _ in 0 ..< rand(300):
-            for b in 0 ..< 48:
-                hash.data[b] = uint8(rand(255))
-            transactions.add(hash)
+        if state.holders.len != 0:
+            #Randomize the Transactions.
+            transactions = @[]
+            for _ in 0 ..< rand(300):
+                for b in 0 ..< 48:
+                    hash.data[b] = uint8(rand(255))
+                transactions.add(hash)
+
+            #Randomize the Packets.
+            packets = @[]
+            for tx in transactions:
+                packets.add(newValidVerificationPacket(blockchain, tx, state.holders))
 
         #Randomize the Elements.
 
@@ -104,9 +141,11 @@ proc test*() =
             mining = newBlankBlock(
                 uint32(0),
                 blockchain.tail.header.hash,
-                verifiers,
                 miners[miner],
+                rand(100000),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 transactions,
+                packets,
                 elements
             )
         else:
@@ -117,10 +156,12 @@ proc test*() =
             mining = newBlankBlock(
                 uint32(0),
                 blockchain.tail.header.hash,
-                verifiers,
                 uint16(miner),
                 miners[miner],
+                rand(100000),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 transactions,
+                packets,
                 elements
             )
 

@@ -8,6 +8,7 @@ import WalletTests
 #import DatabaseTests
 import NetworkTests
 
+import DatabaseTests/FilesystemTests
 import DatabaseTests/MeritTests/BlockchainTests
 import DatabaseTests/MeritTests/StateTests
 
@@ -18,9 +19,6 @@ import DatabaseTests/MeritTests/EpochsTests/SplitTest
 import DatabaseTests/MeritTests/EpochsTests/TieBreakTest
 import DatabaseTests/MeritTests/EpochsTests/Perfect1000Test
 ]#
-
-#Consensus DAG. Just testing it compiles.
-import ../src/Database/Consensus/Consensus
 
 #Locks standard lib.
 import locks
@@ -40,8 +38,10 @@ WalletTests.addTests(tests)
 #DatabaseTests.addTests(tests)
 NetworkTests.addTests(tests)
 
+FilesystemTests.addTests(tests)
 BlockchainTests.addTests(tests)
 StateTests.addTests(tests)
+
 tests.add(EmptyTest.test)
 #[
 tests.add(SingleTest.test)

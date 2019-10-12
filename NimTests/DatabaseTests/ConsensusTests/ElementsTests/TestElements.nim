@@ -38,18 +38,22 @@ proc newRandomVerification*(
     miner.sign(result)
 
 proc newRandomVerificationPacket*(
-    holder: uint16 = uint16(rand(high(int16)))
+    holder: uint16 = uint16(rand(high(int16))),
+    hash: Hash[384] = Hash[384]()
 ): SignedVerificationPacket =
     var
         #Hash.
-        hash: Hash[384]
+        hashVal: Hash[384]
         #Miner.
         miner: MinerWallet = newMinerWallet()
 
-    #Randomize the hash.
-    for b in 0 ..< 48:
-        hash.data[b] = uint8(rand(255))
-    result = newSignedVerificationPacketObj(hash)
+    if hash == Hash[384]():
+        #Randomize the hash.
+        for b in 0 ..< 48:
+            hashVal.data[b] = uint8(rand(255))
+    else:
+        hashVal = hash
+    result = newSignedVerificationPacketObj(hashVal)
 
     #Randomize the participating holders.
     for h in 0 ..< rand(50) + 1:

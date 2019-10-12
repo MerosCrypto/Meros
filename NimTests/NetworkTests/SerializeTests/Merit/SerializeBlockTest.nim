@@ -3,9 +3,8 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash and Merkle libs.
+#Hash lib.
 import ../../../../src/lib/Hash
-import ../../../../src/lib/Merkle
 
 #Sketcher lib.
 import ../../../../src/lib/Sketcher
@@ -13,15 +12,15 @@ import ../../../../src/lib/Sketcher
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Elements Testing lib.
-import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
-
 #Block lib.
 import ../../../../src/Database/Merit/Block
 
-#Serialize lib.
+#Serialize/parse lib.
 import ../../../../src/Network/Serialize/Merit/SerializeBlock
 import ../../../../src/Network/Serialize/Merit/ParseBlock
+
+#Elements Testing lib.
+import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 
 #Test and Compare Merit libs.
 import ../../../DatabaseTests/MeritTests/TestMerit
@@ -133,7 +132,7 @@ proc test*() =
         #Test the serialized versions.
         assert(newBlock.serialize() == reloaded.data.serialize())
 
-        #Compare the BlockBodies.
+        #Compare the Blocks.
         compare(newBlock, reloaded.data)
 
         #Clear the transactions, packets, and elements.

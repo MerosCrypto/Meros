@@ -46,7 +46,7 @@ proc parseBlock*(
         fcRaise e
 
     #Grab the body.
-    bodyStr = bodyStr.substr(
+    bodyStr = blockStr.substr(
         INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN +
         INT_LEN + INT_LEN + BLS_SIGNATURE_LEN +
         (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN)
@@ -78,7 +78,7 @@ proc parseBlock*(
         aggregate: BLSSignature
 
     if bodyStr.len < packetsStart:
-        raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Transactions.")
+        raise newException(ValueError, "DB parseBlock not handed enough data to get the amount of Transactions.")
 
     try:
         for t in countup(transactionsStart, packetsStart - 1, HASH_LEN):
@@ -88,18 +88,20 @@ proc parseBlock*(
 
     i = packetsStart
     if bodyStr.len < i + NICKNAME_LEN:
-        raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of holders in the next VerificationPacket.")
+        raise newException(ValueError, "DB parseBlock not handed enough data to get the amount of holders in the next VerificationPacket.")
 
+    packets = newSeq[VerificationPacket](transactionsLen)
     for p in 0 ..< transactionsLen:
         packets[p] = newVerificationPacketObj(transactions[p])
 
-        packets[p].holders = newSeq[uint16](bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
-        if bodyStr.len < i + ((packets[p].holders.len + 1) * NICKNAME_LEN) + INT_LEN:
-            raise newException(ValueError, "parseBlockBody not handed enough data to get the holders in this VerificationPacket/the amount of holders in the next VerificationPacket.")
+        packets[p].holders = newSeq[uint16](int(bodyStr[i]))
+        i += BYTE_LEN
+        if bodyStr.len < i + (packets[p].holders.len * NICKNAME_LEN) + INT_LEN:
+            raise newException(ValueError, "DB parseBlock not handed enough data to get the holders in this VerificationPacket/the amount of holders in the next VerificationPacket.")
 
         for h in 0 ..< packets[p].holders.len:
-            packets[p].holders[h] = uint16(bodyStr[i + ((h + 1) * NICKNAME_LEN) ..< i + ((h + 2) * NICKNAME_LEN)].fromBinary())
-        i += (packets[p].holders.len + 1) * NICKNAME_LEN
+            packets[p].holders[h] = uint16(bodyStr[i + (h * NICKNAME_LEN) ..< i + ((h + 1) * NICKNAME_LEN)].fromBinary())
+        i += packets[p].holders.len * NICKNAME_LEN
 
     elementsLen = bodyStr[i ..< i + 4].fromBinary()
     i += 4
@@ -114,7 +116,7 @@ proc parseBlock*(
         elements.add(pbeResult.element)
 
     if bodyStr.len < i + BLS_SIGNATURE_LEN:
-        raise newException(ValueError, "parseBlockBody not handed enough data to get the aggregate signature.")
+        raise newException(ValueError, "DB parseBlock not handed enough data to get the aggregate signature.")
 
     try:
         aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])

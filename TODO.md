@@ -110,7 +110,6 @@ Network:
 
 Tests:
 
-- DBSerializeBlock Test.
 - Epochs Tests.
 - Add Elements to BDBTest.
 - Re-enable StateTests/ValueTest.

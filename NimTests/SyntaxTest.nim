@@ -5,6 +5,7 @@ import ../src/lib/Errors
 import ../src/lib/Util
 import ../src/lib/Hash
 import ../src/lib/Merkle
+import ../src/lib/Sketcher
 import ../src/lib/Logger
 
 #Wallet.
@@ -51,7 +52,7 @@ import ../src/Network/Serialize/Transactions/ParseClaim
 import ../src/Network/Serialize/Transactions/ParseSend
 import ../src/Network/Serialize/Transactions/ParseData
 
-import ../src/Network/Network
+#import ../src/Network/Network
 
 #Interfaces.
 import ../src/Interfaces/Interfaces
