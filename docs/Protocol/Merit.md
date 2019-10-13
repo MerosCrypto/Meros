@@ -190,8 +190,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros doesn't have significant, sketchSalt, or packets. It does have a list of Transactions where it should have a sketch.
-- Meros doesn't check that newly archived Merit Holders' Merit is greater than significant
+- Meros doesn't check that newly archived Merit Holders' Merit is greater than significant for every Transaction.
 - Meros allows mentioning previously unmentioned predecessors with their successor.
 - Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 - Meros doesn't automatically include unmentioned predecessors after their successor in BlockBody's local Transactions list.

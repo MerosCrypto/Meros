@@ -35,27 +35,30 @@ class MessageType(Enum):
 
     Syncing = 2
     SyncingAcknowledged = 3
-    BlockListRequest = 6,
-    BlockList = 7,
+    BlockListRequest = 6
+    BlockList = 7
 
     BlockHeaderRequest = 9
     BlockBodyRequest = 10
-    VerificationPacketRequest = 11
-    TransactionRequest = 12
-    DataMissing = 14
-    SyncingOver = 15
+    BlockTransactionsRequest = 11
+    VerificationPacketRequest = 12
+    TransactionRequest = 13
+    SignedVerificationPacketRequest = 14
+    DataMissing = 15
+    SyncingOver = 16
 
-    Claim = 16
-    Send = 17
-    Data = 18
+    Claim = 17
+    Send = 18
+    Data = 19
 
-    SignedVerification = 21
-    SignedVerificationPacket = 22,
-    SignedMeritRemoval = 26
+    SignedVerification = 22
+    SignedVerificationPacket = 23
+    SignedMeritRemoval = 27
 
-    BlockHeader = 28
-    BlockBody = 29
-    VerificationPacket = 30
+    BlockHeader = 29
+    BlockBody = 30
+    BlockTransactions = 31
+    VerificationPacket = 32
 
     #MessageType -> byte.
     def toByte(

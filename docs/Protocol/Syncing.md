@@ -56,6 +56,10 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 `BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity, and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block, where the first hash is the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte amount of hashes and each 48-byte hash.
 
+### BlockTransactionsRequest and BlockTransactions
+
+`BlockTransactionsRequest` has a message length of 48 bytes; the Block's 48-byte hash. The expected response is a `BlockTransactions` containing the Transactions mentioned explicitly in the Block. `BlockTransactions` has a variable message length; the 4-byte amount of Transactions and each 48-byte hash.
+
 ### CheckpointRequest
 
 `CheckpointRequest` has a message length of 48 bytes; the Block's 48-byte hash. The expected response is a `Checkpoint` containing the Checkpoint for the specified Block.
@@ -88,5 +92,6 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 - Meros doesn't support the `PeersRequest` and `Peers` message types.
 - Meros doesn't support the `BlockListRequest` and `BlockList` message types.
+- Meros doesn't support the `BlockTransactionsRequest` and `BlockTransactions` message types.
 - Meros doesn't support the `CheckpointRequest` message type.
 - Meros doesn't support the `VerificationPacketRequest` message types.

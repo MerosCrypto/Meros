@@ -95,8 +95,11 @@ proc `%`(
     #Add the Transactions.
     result["transactions"] = % []
     try:
-        for tx in blockArg.body.transactions:
-            result["transactions"].add(% $tx)
+        for t in 0 ..< blockArg.body.transactions.len:
+            result["transactions"].add(%* {
+                "hash": $blockArg.body.transactions[t],
+                "holders": blockArg.body.packets[t].holders
+            })
     except KeyError as e:
         doAssert(false, "Couldn't add a Transaction hash to a Block's JSON representation despite declaring an array for the hashes: " & e.msg)
 
@@ -197,6 +200,7 @@ proc module*(
                     "merit": functions.merit.getMerit(nick)
                 }
 
+        discard """
             "getBlockTemplate" = proc (
                 res: JSONNode,
                 params: JSONNode
@@ -267,14 +271,12 @@ proc module*(
                     raise newException(ParamError, "")
 
                 var newBlock: Block
-                discard """
                 try:
                     newBlock = params[0].getStr().parseHexStr().parseBlock()
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except BLSError:
                     raise newJSONRPCError(-4, "Invalid BLS data")
-                """
 
                 try:
                     await functions.merit.addBlock(newBlock)
@@ -288,5 +290,6 @@ proc module*(
                     raise newJSONRPCError(0, "Block already exists")
                 except Exception as e:
                     doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
+        """
     except Exception as e:
         doAssert(false, "Couldn't create the Merit Module: " & e.msg)

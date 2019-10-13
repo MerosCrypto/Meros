@@ -24,7 +24,9 @@ The result is an object, as follows:
     - `time`      (int)
     - `proof`     (int)
     - `signature` (string)
-- `transactions` (array of strings, each a Transaction hash)
+- `transactions` (array of objects, each as follows)
+    - `hash`    (string)
+    - `holders` (array of ints)
 - `elements`     (array of objects, each as follows)
     - `descendant` (string)
     - `holder`     (int)
@@ -75,13 +77,15 @@ The result is an object, as follows:
 
 The result is an object, as follows:
 - `header` (string)
-- `body`   (string)
+- `id`     (int)
 
-Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` (see below).
+Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published via `publishBlock`.
 
 ### `publishBlock`
 
-`publishBlock` adds the Block to the local Blockchain, and if it's valid, publishes it. It takes in one argument.
-- Block (string)
+`publishBlock` is used to publish a Block locally mined thanks to a template from `getBlockTemplate`. It adds the Block to the local Blockchain, and if it's valid, publishes it. It takes in three arguments.
+- ID        (int):    The ID of a template from `getBlockTemplate` which was generated before a new Block was added.
+- Proof     (int):    Proof used to beat the difficulty.
+- Signature (string): Miner's signature.
 
 The result is a bool of true.

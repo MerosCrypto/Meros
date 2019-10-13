@@ -12,13 +12,16 @@ Meros requires:
 - Nimble
 
 - Chia's BLS library
+- Minisketch
 - LMDB
 
 For instructions on settting up Nim/Nimble, see https://github.com/dom96/choosenim.
 
-To install the Nimble packages: `nimble install 1ttps://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals stint nimcrypto normalize`
+To install the Nimble packages: `nimble install 1ttps://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_pinsketch https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals stint nimcrypto normalize`
 
 For instructions on setting up BLS, see https://github.com/MerosCrypto/mc_bls.
+
+For instructions on setting up Minisketch, see https://github.com/MerosCrypto/mc_pinsketch.
 
 For instructions on setting up LMDB, see https://github.com/MerosCrypto/mc_lmdb.
 
