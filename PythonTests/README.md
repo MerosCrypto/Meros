@@ -6,7 +6,9 @@ Integration tests written in Python to test Meros's networking code and the RPC.
 
 These tests require Python 3.6+ and pip. To install the needed modules:
 
-`pip3 install argon2-cffi ed25519 blspy`
+`pip3 install cython argon2-cffi ed25519 blspy`
+
+They also require the Minisketch dynamic library, which should've been built in the process of setting up the `mc_pinsketch` Nimble package. Place `libminisketch.so` or `minisketch.dll` under `PythonTests/Stubs`.
 
 ### Static Typing
 
