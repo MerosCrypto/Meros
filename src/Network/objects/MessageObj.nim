@@ -67,7 +67,7 @@ proc hash*(
 #Lengths of messages.
 #An empty array means the message was just the header.
 #A positive number means read X bytes.
-#A negative number means read the last section * X bytes,
+#A negative number means read the last positive section * X bytes,
 #A zero means custom logic should be used.
 const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Handshake: @[BYTE_LEN + BYTE_LEN + BYTE_LEN + HASH_LEN],
@@ -80,6 +80,7 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
 
     MessageType.BlockHeaderRequest: @[HASH_LEN],
     MessageType.BlockBodyRequest: @[HASH_LEN],
+    MessageType.BlockTransactionsRequest: @[HASH_LEN],
     MessageType.VerificationPacketRequest: @[HASH_LEN + HASH_LEN],
     MessageType.TransactionRequest: @[HASH_LEN],
     MessageType.DataMissing: @[],
@@ -94,7 +95,8 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.SignedMeritRemoval: @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, BYTE_LEN, 0, BLS_SIGNATURE_LEN],
 
     MessageType.BlockHeader: @[INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
-    MessageType.BlockBody: @[INT_LEN, -HASH_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
+    MessageType.BlockBody: @[INT_LEN, INT_LEN, INT_LEN, -SKETCH_ELEMENT_LEN, -SKETCH_ELEMENT_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
+    MessageType.BlockTransactions: @[INT_LEN, -HASH_LEN],
     MessageType.VerificationPacket: @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN]
 }.toTable()
 

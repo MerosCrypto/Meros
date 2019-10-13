@@ -14,8 +14,9 @@ import ../../Database/Merit/Block
 #Transaction lib.
 import ../../Database/Transactions/Transaction
 
-#Message object.
+#Message and SketchyBlock objects.
 import MessageObj
+import SketchyBlockObj
 
 #Async standard lib.
 import asyncdispatch
@@ -30,7 +31,7 @@ type NetworkLibFunctionBox* = ref object
     ): Block {.raises: [
         IndexError
     ].}
-    
+
     getTransaction*: proc (
         hash: Hash[384]
     ): Transaction {.raises: [
@@ -42,7 +43,7 @@ type NetworkLibFunctionBox* = ref object
     ): Future[void]
 
     addBlock*: proc (
-        newBlock: Block,
+        newBlock: SketchyBlock,
         syncing: bool = false
     ): Future[void]
 

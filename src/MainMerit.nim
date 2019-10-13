@@ -75,7 +75,7 @@ proc mainMerit() {.forceCheck: [].} =
 
         #Handle full blocks.
         functions.merit.addBlock = proc (
-            newBlock: Block,
+            newBlock: SketchyBlock,
             syncing: bool = false
         ) {.forceCheck: [
             ValueError,
@@ -83,11 +83,18 @@ proc mainMerit() {.forceCheck: [].} =
             NotConnected
         ], async.} =
             #Print that we're adding the Block.
-            echo "Adding Block ", newBlock.header.hash, "."
+            echo "Adding Block ", newBlock.data.header.hash, "."
 
             #Sync this Block.
+            var
+                txSketcher: Sketcher[Hash[384]]
+                packetsSketcher: Sketcher[VerificationPacket]
             try:
-                await network.sync(newBlock)
+                await network.sync(
+                    newBlock,
+                    txSketcher,
+                    packetsSketcher
+                )
             except ValueError as e:
                 fcRaise e
             except Exception as e:
@@ -95,12 +102,12 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Verify the Elements. Also see who has their Merit removed.
             var removed: seq[uint16] = @[]
-            for elem in newBlock.body.elements:
+            for elem in newBlock.data.body.elements:
                 discard
 
             #Add the Block to the Blockchain.
             try:
-                merit.processBlock(newBlock)
+                merit.processBlock(newBlock.data)
             except ValueError as e:
                 fcRaise e
             except DataExists as e:
@@ -146,7 +153,7 @@ proc mainMerit() {.forceCheck: [].} =
                 #Broadcast the Block.
                 functions.network.broadcast(
                     MessageType.BlockHeader,
-                    newBlock.header.serialize()
+                    newBlock.data.header.serialize()
                 )
 
                 #If we got a Mint...
@@ -199,21 +206,16 @@ proc mainMerit() {.forceCheck: [].} =
             except NotConnected as e:
                 fcRaise e
 
-            var body: BlockBody
+            var newBlock: SketchyBlock
             try:
-                body = await network.sync(header)
+                newBlock = newSketchyBlockObj(header, await network.sync(header))
             except DataMissing as e:
                 raise newException(ValueError, e.msg)
             except Exception as e:
                 doAssert(false, "Network.sync(BlockHeader) threw an Exception despite catching all Exceptions: " & e.msg)
 
             try:
-                await functions.merit.addBlock(
-                    newBlockObj(
-                        header,
-                        body
-                    )
-                )
+                await functions.merit.addBlock(newBlock)
             except ValueError as e:
                 fcRaise e
             except DataMissing as e:

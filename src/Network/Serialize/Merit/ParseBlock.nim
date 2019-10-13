@@ -1,12 +1,11 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#BlockBody object.
-import ../../../Database/Merit/objects/BlockBodyObj
-
-#BlockHeader and Block libs.
+#BlockHeader lib.
 import ../../../Database/Merit/BlockHeader
-import ../../../Database/Merit/Block
+
+#SketchyBlock object.
+import ../../objects/SketchyBlockObj
 
 #Deserialize/parse functions.
 import ../SerializeCommon
@@ -16,23 +15,18 @@ import ParseBlockBody
 #Parse a Block.
 proc parseBlock*(
     blockStr: string
-): tuple[
-    data: Block,
-    capacity: int,
-    transactions: string,
-    packets: string
-] {.forceCheck: [
+): SketchyBlock {.forceCheck: [
     ValueError,
     BLSError
 ].} =
     #Header | Body
     var
         header: BlockHeader
-        body: BlockBody
+        body: SketchyBlockBody
 
     try:
         header = blockStr.parseBlockHeader()
-        (body, result.capacity, result.transactions, result.packets) = blockStr.substr(
+        body = blockStr.substr(
             INT_LEN + HASH_LEN + HASH_LEN + HASH_LEN + BYTE_LEN +
             INT_LEN + INT_LEN + BLS_SIGNATURE_LEN +
             (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN)
@@ -42,8 +36,8 @@ proc parseBlock*(
     except BLSError as e:
         fcRaise e
 
-    #Create the Block Object.
-    result.data = newBlockObj(
+    #Create the SketchyBlock.
+    result = newSketchyBlockObj(
         header,
         body
     )

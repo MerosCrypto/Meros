@@ -7,6 +7,9 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
+#Sketcher lib.
+import ../../lib/Sketcher
+
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
@@ -50,11 +53,13 @@ import ../Serialize/Consensus/ParseMeritRemoval
 import ../Serialize/Merit/ParseBlockHeader
 import ../Serialize/Merit/ParseBlockBody
 
-#Message and Network objects.
+#Message, SketchyBlock, and Network objects.
 import ../objects/MessageObj
+import ../objects/SketchyBlockObj
 import ../objects/NetworkObj
-#Export the Message and Network objects.
+#Export the Message, SketchyBlock, and Network objects.
 export MessageObj
+export SketchyBlockObj
 export NetworkObj
 
 #Network Function Box.

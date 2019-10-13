@@ -18,6 +18,9 @@ import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 #BlockBody object.
 import ../../../../src/Database/Merit/objects/BlockBodyObj
 
+#SketchyBlockBody object.
+import ../../../../src/Network/objects/SketchyBlockObj
+
 #Serialize libs.
 import ../../../../src/Network/Serialize/Merit/SerializeBlockBody
 import ../../../../src/Network/Serialize/Merit/ParseBlockBody
@@ -44,12 +47,7 @@ proc test*() =
         #Block Body.
         body: BlockBody
         #Reloaded Block Body.
-        reloaded: tuple[
-            data: BlockBody,
-            capacity: int,
-            transactions: string,
-            packets: string
-        ]
+        reloaded: SketchyBlockBody
         #Sketch Results.
         txsResult: SketchResult[Hash[384]]
         packetsResult: SketchResult[VerificationPacket]

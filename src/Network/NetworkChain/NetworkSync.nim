@@ -79,13 +79,14 @@ proc syncTransactions(
     except Exception as e:
         doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Sync a Block's VerificationPackets/Transactions.
+#Sync a Block's Transactions/VerificationPackets.
 proc sync*(
     network: Network,
-    newBlock: Block
-) {.forceCheck: [
-    ValueError
-], async.} =
+    newBlock: SketchyBlock,
+    txSketcher: Sketcher[Hash[384]],
+    packetsSketcher: Sketcher[VerificationPacket]
+) {.forceCheck: [], async.} =
+    discard """
     var
         #Mentioned Transactions.
         mentioned: Table[Hash[384], bool] = initTable[Hash[384], bool]()
@@ -230,12 +231,13 @@ proc sync*(
                         doAssert(false, "Synced an Transaction of an unsyncable type.")
         #Set transactions to todo.
         transactions = todo
+    """
 
 #Sync a Block's Body.
 proc sync*(
     network: Network,
     header: BlockHeader
-): Future[BlockBody] {.forceCheck: [
+): Future[SketchyBlockBody] {.forceCheck: [
     DataMissing
 ], async.} =
     var
@@ -300,8 +302,7 @@ proc sync*(
 proc requestBlock*(
     network: Network,
     hash: Hash[384]
-): Future[Block] {.forceCheck: [
-    ValueError,
+): Future[SketchyBlock] {.forceCheck: [
     DataMissing
 ], async.} =
     var
@@ -361,12 +362,4 @@ proc requestBlock*(
 
     #Make sure we synced the Block.
     if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified BlockHeader.")
-
-    #Sync the Block's contents.
-    try:
-        await network.sync(result)
-    except ValueError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Syncing the data in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        raise newException(DataMissing, "Couldn't sync the specified Block.")

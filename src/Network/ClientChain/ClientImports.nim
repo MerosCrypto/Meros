@@ -34,8 +34,9 @@ import ../Serialize/Consensus/ParseMeritRemoval
 import ../Serialize/Merit/ParseBlockHeader
 import ../Serialize/Merit/ParseBlockBody
 
-#Message and Client objects.
+#Message, SketchyBlock, and Client objects.
 import ../objects/MessageObj
+import ../objects/SketchyBlockObj
 import ../objects/ClientObj
 
 #Export the Client object.

@@ -30,8 +30,9 @@ import ../Database/Transactions/objects/ClaimObj
 import ../Database/Transactions/objects/SendObj
 import ../Database/Transactions/objects/DataObj
 
-#Message object.
+#Message and SketchyBlock objects.
 import ../Network/objects/MessageObj
+import ../Network/objects/SketchyBlockObj
 
 #Async lib.
 import asyncdispatch
@@ -160,7 +161,7 @@ type
         ): bool {.inline, raises: [].}
 
         addBlock*: proc (
-            newBlock: Block,
+            newBlock: SketchyBlock,
             syncing: bool = false
         ): Future[void]
 

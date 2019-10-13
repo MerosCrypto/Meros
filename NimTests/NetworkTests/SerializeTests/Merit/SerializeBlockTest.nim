@@ -15,6 +15,9 @@ import ../../../../src/Wallet/MinerWallet
 #Block lib.
 import ../../../../src/Database/Merit/Block
 
+#SketchyBlockBody object.
+import ../../../../src/Network/objects/SketchyBlockObj
+
 #Serialize/parse lib.
 import ../../../../src/Network/Serialize/Merit/SerializeBlock
 import ../../../../src/Network/Serialize/Merit/ParseBlock
@@ -47,12 +50,7 @@ proc test*() =
         #Block.
         newBlock: Block
         #Reloaded Block.
-        reloaded: tuple[
-            data: Block,
-            capacity: int,
-            transactions: string,
-            packets: string
-        ]
+        reloaded: SketchyBlock
         #Sketch Results.
         txsResult: SketchResult[Hash[384]]
         packetsResult: SketchResult[VerificationPacket]

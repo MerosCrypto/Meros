@@ -10,6 +10,7 @@ const
     BYTE_LEN*:           int = 1
     NICKNAME_LEN*:       int = 2
     INT_LEN*:            int = 4
+    SKETCH_ELEMENT_LEN*: int = 8
     MEROS_LEN*:          int = 8
     HASH_LEN*:           int = 48
 

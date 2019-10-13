@@ -52,7 +52,7 @@ import ../src/Network/Serialize/Transactions/ParseClaim
 import ../src/Network/Serialize/Transactions/ParseSend
 import ../src/Network/Serialize/Transactions/ParseData
 
-#import ../src/Network/Network
+import ../src/Network/Network
 
 #Interfaces.
 import ../src/Interfaces/Interfaces

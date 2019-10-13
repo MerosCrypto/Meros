@@ -145,7 +145,7 @@ proc syncVerificationPacket*(
 proc syncBlockBody*(
     client: Client,
     hash: Hash[384]
-): Future[BlockBody] {.forceCheck: [
+): Future[SketchyBlockBody] {.forceCheck: [
     SocketError,
     ClientError,
     SyncConfigError,
@@ -196,7 +196,7 @@ proc syncBlockBody*(
 proc syncBlock*(
     client: Client,
     hash: Hash[384]
-): Future[Block] {.forceCheck: [
+): Future[SketchyBlock] {.forceCheck: [
     SocketError,
     ClientError,
     SyncConfigError,
@@ -250,7 +250,7 @@ proc syncBlock*(
         raise newException(ClientError, "Client sent us the wrong BlockHeader.")
 
     #Get the BlockBody.
-    var body: BlockBody
+    var body: SketchyBlockBody
     try:
         body = await client.syncBlockBody(header.hash)
     except ValueError as e:
@@ -269,7 +269,7 @@ proc syncBlock*(
         doAssert(false, "Syncing a BlockBody threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Return the Block.
-    result = newBlockObj(header, body)
+    result = newSketchyBlockObj(header, body)
 
 #Tell the Client we're done syncing.
 proc stopSyncing*(

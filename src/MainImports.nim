@@ -7,6 +7,9 @@ import lib/Util
 #Hash lib.
 import lib/Hash
 
+#Sketcher lib.
+import lib/Sketcher
+
 #Wallet libs.
 import Wallet/MinerWallet
 import Wallet/Wallet

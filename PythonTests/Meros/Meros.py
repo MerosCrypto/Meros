@@ -72,7 +72,7 @@ class MessageType(Enum):
 #Lengths of messages.
 #An empty array means the message was just the header.
 #A positive number means read X bytes.
-#A negative number means read the last section * X bytes,
+#A negative number means read the last positive section * X bytes,
 #A zero means custom logic should be used.
 lengths: Dict[MessageType, List[int]] = {
     MessageType.Handshake: [51],
@@ -85,6 +85,7 @@ lengths: Dict[MessageType, List[int]] = {
 
     MessageType.BlockHeaderRequest: [48],
     MessageType.BlockBodyRequest: [48],
+    MessageType.BlockTransactionsRequest: [48],
     MessageType.VerificationPacketRequest: [96],
     MessageType.TransactionRequest: [48],
     MessageType.DataMissing: [],
@@ -99,7 +100,8 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.SignedMeritRemoval: [4, 0, 1, 0, 96],
 
     MessageType.BlockHeader: [149, 0, 104],
-    MessageType.BlockBody: [4, -48, 4, 0, 96],
+    MessageType.BlockBody: [4, 4, 4, -8, -8, 4, 0, 96],
+    MessageType.BlockTransactions: [4, -48],
     MessageType.VerificationPacket: [1, -2, 48]
 }
 
@@ -163,13 +165,17 @@ class Meros:
             self.msgs.append(bytes())
 
         #Get the rest of the message.
+        lastMultiplier: int = 0
+        length: int
         for l in range(len(lengths[header])):
-            length: int = lengths[header][l]
+            length = lengths[header][l]
             if length < 0:
-                length = int.from_bytes(
-                    result[-lengths[header][l - 1]:],
-                    byteorder="big"
-                ) * abs(length)
+                if lengths[header][l - 1] > 0:
+                    lastMultiplier = int.from_bytes(
+                        result[-lengths[header][l - 1]:],
+                        byteorder="big"
+                    )
+                length = lastMultiplier * abs(length)
             elif length == 0:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:

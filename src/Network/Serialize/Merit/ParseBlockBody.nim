@@ -13,6 +13,9 @@ import ../../../Database/Consensus/Elements/Element
 #BlockBody object.
 import ../../../Database/Merit/objects/BlockBodyObj
 
+#SketchyBlock object.
+import ../../objects/SketchyBlockObj
+
 #Deserialize/parse functions.
 import ../SerializeCommon
 
@@ -22,12 +25,7 @@ import ../Consensus/ParseBlockElement
 #Parse a BlockBody.
 proc parseBlockBody*(
     bodyStr: string
-): tuple[
-    data: BlockBody,
-    capacity: int,
-    transactions: string,
-    packets: string
-] {.forceCheck: [
+): SketchyBlockBody {.forceCheck: [
     ValueError,
     BLSError
 ].} =
@@ -40,7 +38,7 @@ proc parseBlockBody*(
 
     result.capacity = bodySeq[2].fromBinary()
     var
-        sketchLen: int = result.capacity * 8
+        sketchLen: int = result.capacity * SKETCH_ELEMENT_LEN
         transactionsStart: int = INT_LEN + INT_LEN + INT_LEN
         packetsStart: int = transactionsStart + sketchLen
         elementsStart: int = packetsStart + sketchLen

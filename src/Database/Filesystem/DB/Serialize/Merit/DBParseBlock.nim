@@ -103,8 +103,8 @@ proc parseBlock*(
             packets[p].holders[h] = uint16(bodyStr[i + (h * NICKNAME_LEN) ..< i + ((h + 1) * NICKNAME_LEN)].fromBinary())
         i += packets[p].holders.len * NICKNAME_LEN
 
-    elementsLen = bodyStr[i ..< i + 4].fromBinary()
-    i += 4
+    elementsLen = bodyStr[i ..< i + INT_LEN].fromBinary()
+    i += INT_LEN
     for e in 0 ..< elementsLen:
         try:
             pbeResult = bodyStr.parseBlockElement(i)
