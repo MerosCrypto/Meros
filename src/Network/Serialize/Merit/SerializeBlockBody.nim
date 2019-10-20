@@ -28,7 +28,7 @@ proc serialize*(
 ): string {.forceCheck: [
     ValueError
 ].} =
-    var capacity: int = body.transactions.len div 5 + 1
+    var capacity: int = if body.transactions.len != 0: body.transactions.len div 5 + 1 else: 0
 
     result =
         body.significant.toBinary().pad(INT_LEN) &

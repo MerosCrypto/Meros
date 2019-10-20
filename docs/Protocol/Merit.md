@@ -57,7 +57,7 @@ Blocks have the following fields:
 - header: Block Header.
 - significant: The threshold of what makes a Transaction significant. 10 means anything which has more than 10 (inclusive) new Merit to archive.
 - sketchSalt: The salt used when hashing elements for inclusion in sketches.
-- transactions: A PinSketch of the included Transactions, with a capacity of at least `transactions.length div 5 + 1` and at most `transactions.length div 5 + 11`, where each Transaction hash is included as `Blake2b-64(sketchSalt + hash)`. If a Transaction's 8-byte hash has a collision with another Transaction's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
+- transactions: A PinSketch of the included Transactions, with a capacity of at least `transactions.length div 5 + 1` and at most `transactions.length div 5 + 11`, where each Transaction hash is included as `Blake2b-64(sketchSalt + hash)`. If there's no transactions in the Block, a capacity of 0 is valid. If a Transaction's 8-byte hash has a collision with another Transaction's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
 - packets: A PinSketch of the included Verification Packets, with a capacity matching transactions, where each Verification Packet is included as `Blake2b-64(sketchSalt + packet.serialize())`. If a Verification Packet's 8-byte hash has a collision with another Verification Packet's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
 - elements: Difficulty updates and gas price sets from Merit Holders.
 - aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives.
@@ -191,6 +191,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 ### Violations in Meros
 
 - Meros doesn't check that newly archived Merit Holders' Merit is greater than significant for every Transaction.
+- Meros doesn't check Sketches have valid capacity fields.
 - Meros allows mentioning previously unmentioned predecessors with their successor.
 - Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 - Meros doesn't automatically include unmentioned predecessors after their successor in BlockBody's local Transactions list.

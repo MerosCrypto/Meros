@@ -114,6 +114,9 @@ proc serialize*[T](
 ): string {.forceCheck: [
     ValueError
 ].} =
+    if capacity == 0:
+        return ""
+
     try:
         sketcher.toSketch(capacity, significant, salt).sketch.serialize()
     except ValueError as e:
@@ -129,6 +132,9 @@ proc merge*[T](
 ): SketchResult[T] {.forceCheck: [
     ValueError
 ].} =
+    if capacity == 0:
+        return
+
     #Get the sketch and the hashes of every element.
     var sketch: tuple[
         sketch: Sketch,
