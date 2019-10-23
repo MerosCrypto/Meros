@@ -39,10 +39,7 @@ proc test*() =
         #Epochs.
         epochs: Epochs = newEpochs(nil, blockchain)
         #Rewards.
-        rewards: seq[Reward] = epochs.shift(
-            newBlankBlock(),
-            initTable[Hash[384], VerificationPacket]()
-        ).calculate(state)
+        rewards: seq[Reward] = epochs.shift(newBlankBlock()).calculate(state)
 
     assert(rewards.len == 0)
 

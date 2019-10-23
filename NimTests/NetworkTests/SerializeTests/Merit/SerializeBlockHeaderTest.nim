@@ -31,8 +31,6 @@ proc test*() =
         last: ArgonHash
         #Contents Hash.
         contents: Hash[384]
-        #Contents Hash.
-        verifiers: Hash[384]
         #Miner.
         miner: MinerWallet
         #Block Header.
@@ -46,7 +44,6 @@ proc test*() =
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
             contents.data[b] = uint8(rand(255))
-            verifiers.data[b] = uint8(rand(255))
 
         #Create the BlockHeaader.
         if s < 128:
@@ -57,7 +54,6 @@ proc test*() =
                 uint32(rand(high(int32))),
                 last,
                 contents,
-                verifiers,
                 miner.publicKey,
                 uint32(rand(high(int32)))
             )
@@ -66,7 +62,6 @@ proc test*() =
                 uint32(rand(high(int32))),
                 last,
                 contents,
-                verifiers,
                 uint16(rand(high(int16))),
                 uint32(rand(high(int32)))
             )

@@ -82,9 +82,9 @@ proc flag*(
         except IndexError as e:
             doAssert(false, "Couldn't get a Block from the Blockchain despite iterating up to the height: " & e.msg)
 
-        for hash in blockInEpochs.body.transactions:
+        for packet in blockInEpochs.body.packets:
             try:
-                status = consensus.getStatus(hash)
+                status = consensus.getStatus(packet.hash)
             except IndexError as e:
                 doAssert(false, "Couldn't get the status of a Transaction in Epochs: " & e.msg)
 
@@ -95,7 +95,7 @@ proc flag*(
                         merit += state[holder]
 
                 if merit < state.protocolThresholdAt(status.epoch):
-                    consensus.unverify(state, hash, status)
+                    consensus.unverify(state, packet.hash, status)
 
 proc checkMalicious*(
     consensus: Consensus,

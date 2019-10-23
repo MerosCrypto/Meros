@@ -34,9 +34,12 @@ import random
 #Create a valid VerificationPacket.
 proc newValidVerificationPacket(
     blockchain: Blockchain,
-    hash: Hash[384],
     holders: seq[BLSPublicKey]
 ): VerificationPacket =
+    var hash: Hash[384]
+    for b in 0 ..< 48:
+        hash.data[b] = uint8(rand(255))
+
     result = newVerificationPacketObj(hash)
     for holder in holders:
         if rand(1) == 0:
@@ -82,14 +85,10 @@ proc test*() =
 
         #Transaction hash.
         hash: Hash[384]
-        #Transactions.
-        transactions: seq[Hash[384]]
         #Packets.
         packets: seq[VerificationPacket]
         #Elements.
         elements: seq[BlockElement]
-        #Verifiers hash.
-        verifiers: Hash[384]
         #Miners.
         miners: seq[MinerWallet]
         #Selected miner for the next Block.
@@ -113,23 +112,12 @@ proc test*() =
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
         if state.holders.len != 0:
-            #Randomize the Transactions.
-            transactions = @[]
-            for _ in 0 ..< rand(300):
-                for b in 0 ..< 48:
-                    hash.data[b] = uint8(rand(255))
-                transactions.add(hash)
-
             #Randomize the Packets.
             packets = @[]
-            for tx in transactions:
-                packets.add(newValidVerificationPacket(blockchain, tx, state.holders))
+            for _ in 0 ..< rand(300):
+                packets.add(newValidVerificationPacket(blockchain, state.holders))
 
         #Randomize the Elements.
-
-        #Create a random verifiers hash.
-        for b in 0 ..< 48:
-            verifiers.data[b] = uint8(rand(255))
 
         #Decide if this is a nickname or new miner Block.
         if (miners.len == 0) or (rand(2) == 0):
@@ -144,7 +132,6 @@ proc test*() =
                 miners[miner],
                 rand(100000),
                 char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-                transactions,
                 packets,
                 elements
             )
@@ -160,7 +147,6 @@ proc test*() =
                 miners[miner],
                 rand(100000),
                 char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-                transactions,
                 packets,
                 elements
             )

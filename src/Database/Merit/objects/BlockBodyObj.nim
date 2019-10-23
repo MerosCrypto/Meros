@@ -16,8 +16,6 @@ type BlockBody* = object
     significant*: int
     #Salt used when hasing sketch elements in order to avoid collisions.
     sketchSalt*: string
-    #List of Transactions in this Block and their sketch.
-    transactions*: seq[Hash[384]]
     #Packets for those Transactions.
     packets*: seq[VerificationPacket]
     #Elements included in this Block.
@@ -29,7 +27,6 @@ type BlockBody* = object
 func newBlockBodyObj*(
     significant: int,
     sketchSalt: string,
-    transactions: seq[Hash[384]],
     packets: seq[VerificationPacket],
     elements: seq[BlockElement],
     aggregate: BLSSignature
@@ -37,7 +34,6 @@ func newBlockBodyObj*(
     BlockBody(
         significant: significant,
         sketchSalt: sketchSalt,
-        transactions: transactions,
         packets: packets,
         elements: elements,
         aggregate: aggregate

@@ -91,14 +91,8 @@ proc postProcessBlock*(
     merit: Merit,
     consensus: Consensus
 ): Epoch {.forceCheck: [].} =
-    #Calculate the packets in the tail Block.
-    var packets: Table[Hash[384], VerificationPacket] = merit.blockchain.getPackets(consensus, merit.blockchain.height - 1)
-
     #Have the Epochs process the Block and return the popped Epoch.
-    result = merit.epochs.shift(
-        merit.blockchain.tail,
-        packets
-    )
+    result = merit.epochs.shift(merit.blockchain.tail)
 
     #Have the state process the block.
     merit.state.processBlock(merit.blockchain)

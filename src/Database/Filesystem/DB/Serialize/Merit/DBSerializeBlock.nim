@@ -32,15 +32,10 @@ proc serialize*(
         blockArg.header.serialize() &
         blockArg.body.significant.toBinary().pad(INT_LEN) &
         blockArg.body.sketchSalt.pad(INT_LEN) &
-        blockArg.body.transactions.len.toBinary().pad(INT_LEN)
+        blockArg.body.packets.len.toBinary().pad(INT_LEN)
 
-    for hash in blockArg.body.transactions:
-        result &= hash.toString()
-
-    var packetStr: string
     for packet in blockArg.body.packets:
-        packetStr = packet.serialize()
-        result &= packetStr[0 ..< packetStr.len - HASH_LEN]
+        result &= packet.serialize()
 
     result &= blockArg.body.elements.len.toBinary().pad(INT_LEN)
     for elem in blockArg.body.elements:

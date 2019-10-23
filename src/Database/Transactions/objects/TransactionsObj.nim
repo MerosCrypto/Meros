@@ -8,6 +8,9 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 import ../../../Wallet/Wallet
 
+#VerificationPacket object.
+import ../../Consensus/Elements/objects/VerificationPacketObj
+
 #Block and Blockchain libs.
 import ../../Merit/Block
 import ../../Merit/Blockchain
@@ -114,18 +117,18 @@ proc newTransactionsObj*(
     try:
         #Find which Transactions were mentioned before the last 5 blocks.
         for b in max(0, blockchain.height - 10) ..< blockchain.height - 5:
-            for hash in blockchain[b].body.transactions:
-                mentioned[hash] = true
+            for packet in blockchain[b].body.packets:
+                mentioned[packet.hash] = true
 
         #Load Transactions in the last 5 Blocks, as long as they aren't first mentioned in older Blocks.
         for b in max(0, blockchain.height - 5) ..< blockchain.height - 5:
-            for hash in blockchain[b].body.transactions:
-                if not mentioned.hasKey(hash):
+            for packet in blockchain[b].body.packets:
+                if not mentioned.hasKey(packet.hash):
                     try:
-                        result.add(db.load(hash), false)
+                        result.add(db.load(packet.hash), false)
                     except DBReadError as e:
                         doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
-                mentioned[hash] = true
+                mentioned[packet.hash] = true
     except IndexError as e:
         doAssert(false, "Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
 

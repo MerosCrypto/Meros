@@ -29,7 +29,7 @@ proc parseBlockBody*(
     ValueError,
     BLSError
 ].} =
-    #Significant | Sketch Salt | Capacity | Transactions Sketch | Packets Sketch | Amount of Elements | Elements | Aggregate Signature
+    #Significant | Sketch Salt | Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
     var bodySeq: seq[string] = bodyStr.deserialize(
         INT_LEN,
         INT_LEN,
@@ -39,9 +39,8 @@ proc parseBlockBody*(
     result.capacity = bodySeq[2].fromBinary()
     var
         sketchLen: int = result.capacity * SKETCH_ELEMENT_LEN
-        transactionsStart: int = INT_LEN + INT_LEN + INT_LEN
-        packetsStart: int = transactionsStart + sketchLen
-        elementsStart: int = packetsStart + sketchLen
+        sketchStart: int = INT_LEN + INT_LEN + INT_LEN
+        elementsStart: int = sketchStart + sketchLen
 
         pbeResult: tuple[
             element: BlockElement,
@@ -55,8 +54,7 @@ proc parseBlockBody*(
     if bodyStr.len < i:
         raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Sketches/Elements.")
 
-    result.transactions = bodyStr[transactionsStart ..< packetsStart]
-    result.packets = bodyStr[packetsStart ..< elementsStart]
+    result.packets = bodyStr[sketchStart ..< elementsStart]
 
     for e in 0 ..< bodyStr[elementsStart ..< i].fromBinary():
         try:
@@ -79,7 +77,6 @@ proc parseBlockBody*(
     result.data = newBlockBodyObj(
         bodySeq[0].fromBinary(),
         bodySeq[1],
-        @[],
         @[],
         elements,
         aggregate

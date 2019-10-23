@@ -19,7 +19,6 @@ The result is an object, as follows:
     - `version`   (int)
     - `last`      (string)
     - `contents`  (string)
-    - `verifiers` (string)
     - `miner`     (int/string): Either the miner's nick as an int or the key as a string if this is their first Block.
     - `time`      (int)
     - `proof`     (int)

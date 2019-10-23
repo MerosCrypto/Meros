@@ -27,22 +27,15 @@ export TestDatabase
 
 #Create a contents Merkle.
 proc newContents(
-    transactions: seq[Hash[384]] = @[],
+    packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
 ): Hash[384] =
-    var contents: Merkle = newMerkle(transactions)
+    var contents: Merkle = newMerkle()
+    for packet in packets:
+        contents.add(Blake384(packet.serialize()))
     for elem in elements:
         contents.add(Blake384(elem.serializeContents()))
     result = contents.hash
-
-#Create a verifiers Merkle.
-proc newVerifiers(
-    packets: seq[VerificationPacket]
-): Hash[384] =
-    var verifiers: Merkle = newMerkle()
-    for packet in packets:
-        verifiers.add(Blake384(packet.serialize()))
-    result = verifiers.hash
 
 #Create a Block, with every setting optional.
 proc newBlankBlock*(
@@ -51,7 +44,6 @@ proc newBlankBlock*(
     miner: MinerWallet = newMinerWallet(),
     significant: int = 0,
     sketchSalt: string = "",
-    transactions: seq[Hash[384]] = @[],
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = nil,
@@ -61,12 +53,10 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        newContents(transactions, elements),
-        newVerifiers(packets),
+        newContents(packets, elements),
         miner.publicKey,
         significant,
         sketchSalt,
-        transactions,
         packets,
         elements,
         aggregate,
@@ -82,7 +72,6 @@ proc newBlankBlock*(
     miner: MinerWallet = newMinerWallet(),
     significant: int = 0,
     sketchSalt: string = "",
-    transactions: seq[Hash[384]] = @[],
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
     aggregate: BLSSignature = nil,
@@ -92,12 +81,10 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        newContents(transactions, elements),
-        newVerifiers(packets),
+        newContents(packets, elements),
         nick,
         significant,
         sketchSalt,
-        transactions,
         packets,
         elements,
         aggregate,

@@ -86,14 +86,11 @@ proc mainMerit() {.forceCheck: [].} =
             echo "Adding Block ", newBlock.data.header.hash, "."
 
             #Sync this Block.
-            var
-                txSketcher: Sketcher[Hash[384]]
-                packetsSketcher: Sketcher[VerificationPacket]
+            var sketcher: Sketcher
             try:
                 await network.sync(
                     newBlock,
-                    txSketcher,
-                    packetsSketcher
+                    sketcher
                 )
             except ValueError as e:
                 fcRaise e

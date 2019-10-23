@@ -72,9 +72,7 @@ proc `%`(
         "header": {
             "version":   blockArg.header.version,
             "last":      $blockArg.header.last,
-
             "contents":  $blockArg.header.contents,
-            "verifiers": $blockArg.header.verifiers,
 
             "time":      blockArg.header.time,
             "proof":     blockArg.header.proof,
@@ -95,10 +93,10 @@ proc `%`(
     #Add the Transactions.
     result["transactions"] = % []
     try:
-        for t in 0 ..< blockArg.body.transactions.len:
+        for packet in blockArg.body.packets:
             result["transactions"].add(%* {
-                "hash": $blockArg.body.transactions[t],
-                "holders": blockArg.body.packets[t].holders
+                "hash": $packet.hash,
+                "holders": packet.holders
             })
     except KeyError as e:
         doAssert(false, "Couldn't add a Transaction hash to a Block's JSON representation despite declaring an array for the hashes: " & e.msg)

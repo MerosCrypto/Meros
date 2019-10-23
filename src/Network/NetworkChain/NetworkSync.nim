@@ -83,8 +83,7 @@ proc syncTransactions(
 proc sync*(
     network: Network,
     newBlock: SketchyBlock,
-    txSketcher: Sketcher[Hash[384]],
-    packetsSketcher: Sketcher[VerificationPacket]
+    sketcher: Sketcher
 ) {.forceCheck: [], async.} =
     discard """
     var

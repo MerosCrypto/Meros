@@ -28,7 +28,7 @@ proc serialize*(
 ): string {.forceCheck: [
     ValueError
 ].} =
-    var capacity: int = if body.transactions.len != 0: body.transactions.len div 5 + 1 else: 0
+    var capacity: int = if body.packets.len != 0: body.packets.len div 5 + 1 else: 0
 
     result =
         body.significant.toBinary().pad(INT_LEN) &
@@ -36,12 +36,6 @@ proc serialize*(
         capacity.toBinary().pad(INT_LEN)
 
     try:
-        result &= newSketcher(body.transactions).serialize(
-            capacity,
-            0,
-            body.sketchSalt
-        )
-
         result &= newSketcher(body.packets).serialize(
             capacity,
             0,

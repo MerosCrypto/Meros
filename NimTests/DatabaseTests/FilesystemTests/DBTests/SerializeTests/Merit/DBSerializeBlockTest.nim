@@ -32,12 +32,8 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Hash.
-        hash: Hash[384]
         #Last hash.
         last: ArgonHash
-        #Transactions.
-        transactions: seq[Hash[384]] = @[]
         #Packets.
         packets: seq[VerificationPacket] = @[]
         #Elements.
@@ -53,17 +49,9 @@ proc test*() =
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
 
-        #Randomize the transactions.
-        for _ in 0 ..< rand(5):
-            for b in 0 ..< 48:
-                hash.data[b] = uint8(rand(255))
-            transactions.add(hash)
-
         #Randomize the packets.
-        for t in 0 ..< transactions.len:
-            packets.add(newRandomVerificationPacket(
-                hash = transactions[t]
-            ))
+        for p in 0 ..< rand(300):
+            packets.add(newRandomVerificationPacket())
 
         #Randomize the elements.
         for _ in 0 ..< rand(300):
@@ -76,7 +64,6 @@ proc test*() =
                 newMinerWallet(),
                 rand(100000),
                 char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-                transactions,
                 packets,
                 elements,
                 newMinerWallet().sign($rand(4096)),
@@ -91,7 +78,6 @@ proc test*() =
                 newMinerWallet(),
                 rand(100000),
                 char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
-                transactions,
                 packets,
                 elements,
                 newMinerWallet().sign($rand(4096)),
@@ -108,8 +94,7 @@ proc test*() =
         #Test the serialized versions.
         assert(newBlock.serialize() == reloaded.serialize())
 
-        #Clear the transactions, packets, and elements.
-        transactions = @[]
+        #Clear the packets and elements.
         packets = @[]
         elements = @[]
 

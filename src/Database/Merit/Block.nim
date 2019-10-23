@@ -45,9 +45,9 @@ proc verify*(
         agInfo: BLSAggregationInfo = nil
     try:
         #Iterate over every Transaction.
-        for tx in blockArg.body.transactions:
-            for verifier in packets[tx].holders:
-                agInfos.add(newBLSAggregationInfo(lookup(verifier), tx.toString()))
+        for packet in blockArg.body.packets:
+            for verifier in packets[packet.hash].holders:
+                agInfos.add(newBLSAggregationInfo(lookup(verifier), packet.hash.toString()))
 
         #Iterate over every Element.
         for elem in blockArg.body.elements:

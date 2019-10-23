@@ -19,11 +19,8 @@ finalsd:
         version* {.final.}: uint32
         #Hash of the last block.
         last* {.final.}: ArgonHash
-
         #Merkle of the contents.
         contents*: Hash[384]
-        #Merkle of who verified each Transaction.
-        verifiers*: Hash[384]
 
         #Miner.
         case newMiner*: bool
@@ -46,7 +43,6 @@ func newBlockHeaderObj*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
-    verifiers: Hash[384],
     miner: BLSPublicKey,
     time: uint32,
     proof: uint32,
@@ -56,7 +52,6 @@ func newBlockHeaderObj*(
         version: version,
         last: last,
         contents: contents,
-        verifiers: verifiers,
         newMiner: true,
         minerKey: miner,
         time: time,
@@ -71,7 +66,6 @@ func newBlockHeaderObj*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
-    verifiers: Hash[384],
     miner: uint16,
     time: uint32,
     proof: uint32,
@@ -81,7 +75,6 @@ func newBlockHeaderObj*(
         version: version,
         last: last,
         contents: contents,
-        verifiers: verifiers,
         newMiner: false,
         minerNick: miner,
         time: time,

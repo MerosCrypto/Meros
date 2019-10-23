@@ -31,51 +31,32 @@ import algorithm
 #Tables standard lib.
 import tables
 
-#Get the packets the specified Block archives.
-#As this uses a Blockchain as the first argument, it should be in Blockchain at first glance.
-#That said, it's only used to shift a new Epoch and reload Epochs at this time.
-proc getPackets*(
-    blockchain: Blockchain,
-    consensus: Consensus,
-    nonce: int
-): Table[Hash[384], VerificationPacket] {.forceCheck: [].} =
-    initTable[Hash[384], VerificationPacket]()
-
 #This shift does three things:
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
 proc shift*(
     epochs: var Epochs,
-    newBlock: Block,
-    packets: Table[Hash[384], VerificationPacket]
+    newBlock: Block
 ): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Transactions that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch()
         #Epoch the hash is in.
         e: int
-        #Packet for the hash.
-        packet: VerificationPacket
 
-    #Loop over every hash.
-    for hash in newBlock.body.transactions:
-        #Grab the packet.
-        try:
-            packet = packets[hash]
-        except KeyError as e:
-            doAssert(false, "Shifting a hash without the matching VerificationPacket: " & e.msg)
-
+    #Loop over every packet.
+    for packet in newBlock.body.packets:
         #Find out what Epoch the hash is in.
         e = 0
         while true:
-            if epochs[e].hasKey(hash):
+            if epochs[e].hasKey(packet.hash):
                 break
 
             #If it's not in any, add the packet to the new Epoch.
             if e == 5:
                 #Create a seq for the Transaction.
-                newEpoch.register(hash)
+                newEpoch.register(packet.hash)
 
                 #Add the packet.
                 newEpoch.add(packet)
@@ -99,12 +80,8 @@ proc newEpochs*(
     #Regenerate the Epochs. To do this, we shift the last 10 blocks. Why?
     #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late elements aren't labelled as first appearances.
     for b in max(blockchain.height - 10, 0) ..< blockchain.height:
-        #Gather the packets for these Blocks.
-        var packets: Table[Hash[384], VerificationPacket] = blockchain.getPackets(consensus, b)
-
-        #Shift the Block.
         try:
-            discard result.shift(blockchain[b], packets)
+            discard result.shift(blockchain[b])
         except IndexError as e:
             doAssert(false, "Couldn't shift the last 10 Blocks from the chain: " & e.msg)
 

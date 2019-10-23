@@ -25,10 +25,8 @@ proc compare*(
     bh2: BlockHeader
 ) =
     assert(bh1.version == bh2.version)
-
     assert(bh1.last == bh2.last)
     assert(bh1.contents == bh2.contents)
-    assert(bh1.verifiers == bh2.verifiers)
 
     assert(bh1.newMiner == bh2.newMiner)
     if bh1.newMiner:
@@ -49,10 +47,6 @@ proc compare*(
 ) =
     assert(bb1.significant == bb2.significant)
     assert(bb1.sketchSalt == bb2.sketchSalt)
-
-    assert(bb1.transactions.len == bb2.transactions.len)
-    for t in 0 ..< bb1.transactions.len:
-        assert(bb1.transactions[t] == bb2.transactions[t])
 
     assert(bb1.packets.len == bb2.packets.len)
     for p in 0 ..< bb1.packets.len:
@@ -113,27 +107,17 @@ proc compare*(
         assert(uint16(h) == s1.reverseLookup(s1.holders[h]))
         assert(s1[uint16(h)] == s2[uint16(h)])
 
-#Compare two Epochs to make sure they have the same value.
+#Compare two Epochs to make sure they have the same values.
 proc compare*(
     e1Arg: Epochs,
     e2Arg: Epochs
 ) =
-    var
-        #Extract the arguments.
-        e1: Epochs = e1Arg
-        e2: Epochs = e2Arg
-        #Popped Epochs.
-        p1: Epoch
-        p2: Epoch
+    assert(e1Arg.len == 5)
+    assert(e2Arg.len == 5)
 
-    for _ in 0 ..< 6:
-        #Shift on an Epoch.
-        p1 = e1.shift(newBlankBlock(), initTable[Hash[384], VerificationPacket]())
-        p2 = e2.shift(newBlankBlock(), initTable[Hash[384], VerificationPacket]())
-
-        #Make sure the Epochs are equivalent.
-        assert(p1.len == p2.len)
-        for h in p1.keys():
-            assert(p1[h].len == p2[h].len)
-            for k in 0 ..< p1[h].len:
-                assert(p1[h][k] == p2[h][k])
+    for e in 0 ..< 5:
+        assert(e1Arg[e].len == e2Arg[e].len)
+        for h in e1Arg[e].keys():
+            assert(e1Arg[e][h].len == e2Arg[e][h].len)
+            for k in 0 ..< e1Arg[e][h].len:
+                assert(e1Arg[e][h][k] == e2Arg[e][h][k])
