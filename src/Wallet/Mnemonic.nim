@@ -190,3 +190,10 @@ proc unlock*(
     password: string = ""
 ): string {.forceCheck: [].} =
     PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).toString()
+
+
+#Stringify a mnemonic.
+func `$`*(
+    mnemonic: Mnemonic
+): string {.forceCheck: [].} =
+    mnemonic.sentence

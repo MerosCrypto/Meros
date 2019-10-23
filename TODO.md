@@ -83,9 +83,7 @@ Merit:
 - Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
 - If our sketch has a collision, check if the Block doesn't (as that would mean it's valid).
 - If we sync a Block with a working Transactions sketch yet invalid merkle, check if there was a collision between one of our elements and one we didn't have which was included in the sketch.
-- Verify the `verifiers` merkle when we verify the Block's aggregate signature.
 - Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
-- Epochs's getPackets.
 
 Consensus:
 
@@ -96,12 +94,14 @@ Consensus:
 
 RPC:
 
-- Updated RPC now that we have sketches in play.
 - Functioning getBlockTemplate/publishBlock. They were disabled when we added sketches.
 
 Network:
 
-- Networking message to turn a 8-byte hash (used in a transactions sketch) into a Transaction hash.
+- Sort VerificationPacket holders.
+- Message receiving uses a last positive to support X, -Y, -Z where Y and Z are both multiples of X. This was added to support having two sketches in a row which share a capacity. This functionality is no longer needed and should likely be removed.
+
+- Networking message to turn a 8-byte hash (used in the sketch) into a VerificationPacket.
 - Networking message to get a Block's full Transaction list.
 - The old code handled the other client syncing in the main message switch, yet had dedicated code for when we synced something. Both cases should have dedicated code for easy detection of if the other party sent a syncing message when they shouldn't have. Since the updated message switch requires that, implement it.
 - Syncing.
@@ -112,6 +112,8 @@ Tests:
 - Epochs Tests.
 - Add Elements to BDBTest.
 - Re-enable StateTests/ValueTest.
+
+- Sketcher Test.
 
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
 - Test the full nickname space is usable both internally and in parsing/serializations.
