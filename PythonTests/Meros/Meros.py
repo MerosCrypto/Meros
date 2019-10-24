@@ -99,8 +99,8 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.SignedVerificationPacket: [1, -2, 48 + 96],
     MessageType.SignedMeritRemoval: [4, 0, 1, 0, 96],
 
-    MessageType.BlockHeader: [149, 0, 104],
-    MessageType.BlockBody: [4, 4, 4, -8, -8, 4, 0, 96],
+    MessageType.BlockHeader: [101, 0, 104],
+    MessageType.BlockBody: [8, 4, -8, 4, 0, 96],
     MessageType.BlockTransactions: [4, -48],
     MessageType.VerificationPacket: [1, -2, 48]
 }
@@ -345,5 +345,6 @@ class Meros:
     ) -> None:
         while self.process.poll() == None:
             pass
+
         if self.process.returncode != 0:
             raise Exception("Meros didn't quit with code 0.")

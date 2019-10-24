@@ -32,7 +32,6 @@ block: Block = Block(
         0,
         blockchain.last(),
         bytes(48),
-        bytes(48),
         privKey.get_public_key().serialize(),
         int(time())
     ),
@@ -53,7 +52,6 @@ for i in range(1, 26):
         BlockHeader(
             0,
             blockchain.last(),
-            bytes(48),
             bytes(48),
             0,
             int(time())

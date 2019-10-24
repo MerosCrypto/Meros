@@ -18,7 +18,7 @@ class MeritRemoval(Element):
         e1: Element,
         e2: Element
     ) -> None:
-        self.prefix: bytes = b'\4'
+        self.prefix: bytes = b'\5'
         self.partial: bool = partial
 
         self.holder: bytes = e1.holder
@@ -94,8 +94,7 @@ class PartiallySignedMeritRemoval(MeritRemoval):
         MeritRemoval.__init__(self, True, e1, se2)
 
         self.se2: SignedElement = se2
-        self.blsSignature: blspy.Signature = self.se2.blsSignature
-        self.signature: bytes = self.blsSignature.serialize()
+        self.signature: bytes = self.se2.signature
 
     #PartiallySignedMeritRemoval -> SignedElement.
     def toSignedElement(
@@ -162,11 +161,10 @@ class SignedMeritRemoval(PartiallySignedMeritRemoval):
 
         self.se1: SignedElement = se1
         self.se2: SignedElement = se2
-        self.blsSignature: blspy.Signature = blspy.Signature.aggregate([
+        self.signature: bytes = blspy.Signature.aggregate([
             self.se1.blsSignature,
             self.se2.blsSignature
-        ])
-        self.signature: bytes = self.blsSignature.serialize()
+        ]).serialize()
 
     #SignedMeritRemoval -> JSON.
     def toSignedJSON(

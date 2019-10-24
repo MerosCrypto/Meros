@@ -1,26 +1,23 @@
 #Types.
-from typing import Dict, Any
+from typing import Dict, List, Any
 
 #Element class.
 from PythonTests.Classes.Consensus.Element import Element
 
-#BLS lib.
-import blspy
-
-#Verification class.
-class Verification(Element):
+#VerificationPacket class.
+class VerificationPacket(Element):
     #Constructor.
     def __init__(
         self,
         txHash: bytes,
-        holder: int
+        holders: List[int]
     ) -> None:
-        self.prefix: bytes = b'\0'
+        self.prefix: bytes = b'\1'
 
         self.hash: bytes = txHash
-        self.holder: int = holder
+        self.holders: List[int] = holders
 
-    #Element -> Verification. Satisifes static typing requirements.
+    #Element -> VerificationPacket. Satisifes static typing requirements.
     @staticmethod
     def fromElement(
         elem: Element
@@ -31,79 +28,74 @@ class Verification(Element):
     def serialize(
         self
     ) -> bytes:
-        return self.holder.to_bytes(2, "big") + self.hash
+        result: bytes = len(self.holders).to_bytes(1, "big")
+        for holder in self.holders:
+            result += holder.to_bytes(2, "big")
+        result += self.hash
+        return result
 
-    #Verification -> JSON.
+    #VerificationPacket -> JSON.
     def toJSON(
         self
     ) -> Dict[str, Any]:
         return {
-            "descendant": "Verification",
+            "descendant": "VerificationPacket",
 
             "hash": self.hash.hex().upper(),
-            "holder": self.holder
+            "holders": self.holders
         }
 
-    #JSON -> Verification.
+    #JSON -> VerificationPacket.
     @staticmethod
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        return Verification(bytes.fromhex(json["hash"]), json["holder"])
+        return VerificationPacket(bytes.fromhex(json["hash"]), json["holders"])
 
-class SignedVerification(Verification):
+class SignedVerificationPacket(VerificationPacket):
     #Constructor.
     def __init__(
         self,
         txHash: bytes,
-        holder: int = 0,
+        holders: List[int],
         signature: bytes = bytes(96)
     ) -> None:
-        Verification.__init__(self, txHash, holder)
+        VerificationPacket.__init__(self, txHash, holders)
         self.signature: bytes = signature
-
-    #Sign.
-    def sign(
-        self,
-        holder: int,
-        privKey: blspy.PrivateKey
-    ) -> None:
-        self.holder = holder
-        self.signature = privKey.sign(self.prefix + self.hash).serialize()
 
     #Serialize.
     def signedSerialize(
         self
     ) -> bytes:
-        return Verification.serialize(self) + self.signature
+        return VerificationPacket.serialize(self) + self.signature
 
-    #SignedVerification -> SignedElement.
+    #SignedVerificationPacket -> SignedElement.
     def toSignedElement(
         self
     ) -> Any:
         return self
 
-    #SignedVerification -> JSON.
+    #SignedVerificationPacket -> JSON.
     def toSignedJSON(
         self
     ) -> Dict[str, Any]:
         return {
-            "descendant": "Verification",
+            "descendant": "VerificationPacket",
 
-            "holder": self.holder,
+            "holders": self.holders,
             "hash": self.hash.hex().upper(),
 
             "signed": True,
             "signature": self.signature.hex().upper()
         }
 
-    #JSON -> Verification.
+    #JSON -> VerificationPacket.
     @staticmethod
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        return SignedVerification(
+        return SignedVerificationPacket(
             bytes.fromhex(json["hash"]),
-            json["holder"],
+            json["holders"],
             bytes.fromhex(json["signature"])
         )

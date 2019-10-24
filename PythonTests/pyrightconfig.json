@@ -5,9 +5,13 @@
     "strict": [
         "Classes",
         "Meros",
+        "Pylint",
         "Stubs",
         "Tests",
         "Vectors"
+    ],
+    "ignore": [
+        "Vectors/Generation/Generate.py"
     ],
 
     "executionEnvironments": [{

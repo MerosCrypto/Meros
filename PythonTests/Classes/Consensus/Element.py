@@ -3,9 +3,6 @@
 #Types.
 from typing import Dict, Any
 
-#BLS lib.
-import blspy
-
 #Element root class.
 class Element:
     prefix: bytes
@@ -22,8 +19,6 @@ class Element:
 
 #SignedElement helper class.
 class SignedElement(Element):
-    blsSignature: blspy.Signature
-
     @staticmethod
     def fromElement(
         elem: Element
