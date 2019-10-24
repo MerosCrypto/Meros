@@ -90,7 +90,11 @@ proc `%`(
     except KeyError as e:
         doAssert(false, "Couldn't add a miner to a BlockHeader's JSON representation despite declaring an object for the header: " & e.msg)
 
-    #Add the Transactions.
+    #Add the significant/sketchSalt.
+    result["significant"] = % blockArg.body.significant
+    result["sketchSalt"] = % blockArg.body.sketchSalt.toHex()
+
+    #Add the Packets.
     result["transactions"] = % []
     try:
         for packet in blockArg.body.packets:

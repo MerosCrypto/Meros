@@ -23,10 +23,15 @@ The result is an object, as follows:
     - `time`      (int)
     - `proof`     (int)
     - `signature` (string)
+
+- `significant` (int)
+- `sketchSalt`  (string)
+
 - `transactions` (array of objects, each as follows)
     - `hash`    (string)
     - `holders` (array of ints)
-- `elements`     (array of objects, each as follows)
+
+- `elements` (array of objects, each as follows)
     - `descendant` (string)
     - `holder`     (int)
 
@@ -49,6 +54,7 @@ The result is an object, as follows:
             When `descendant` == "VerificationPacket":
                 - `holders` (array of strings, each a BLS Public Key)
                 - `hash` (string)
+
 - `aggregate` (string)
 
 ### `getNickname`
