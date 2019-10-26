@@ -98,7 +98,6 @@ RPC:
 
 Network:
 
-- Sort VerificationPacket holders.
 - Message receiving uses a last positive to support X, -Y, -Z where Y and Z are both multiples of X. This was added to support having two sketches in a row which share a capacity. This functionality is no longer needed and should likely be removed.
 
 - Networking message to turn a 8-byte hash (used in the sketch) into a VerificationPacket.

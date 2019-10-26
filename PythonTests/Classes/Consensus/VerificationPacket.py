@@ -29,7 +29,7 @@ class VerificationPacket(Element):
         self
     ) -> bytes:
         result: bytes = len(self.holders).to_bytes(1, "big")
-        for holder in self.holders:
+        for holder in sorted(self.holders):
             result += holder.to_bytes(2, "big")
         result += self.hash
         return result

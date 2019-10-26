@@ -17,12 +17,15 @@ import ../SerializeCommon
 import SerializeElement
 export SerializeElement
 
+#Algorithm standard lib.
+import algorithm
+
 #Serialize a VerificationPacket.
 method serialize*(
     packet: VerificationPacket
 ): string {.forceCheck: [].} =
     result = packet.holders.len.toBinary().pad(BYTE_LEN)
-    for holder in packet.holders:
+    for holder in packet.holders.sorted():
         result &= holder.toBinary().pad(NICKNAME_LEN)
     result &= packet.hash.toString()
 
@@ -34,10 +37,7 @@ method serializeWithoutHolder*(
 ): string {.forceCheck: [].} =
     result =
         char(VERIFICATION_PACKET_PREFIX) &
-        packet.holders.len.toBinary().pad(BYTE_LEN)
-    for holder in packet.holders:
-        result &= holder.toString()
-    result &= packet.hash.toString()
+        packet.serialize()
 
 #Serialize a VerificationPacket for inclusion in a BlockHeader's contents merkle.
 #This should never happen.
