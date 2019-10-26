@@ -1,91 +1,13 @@
 #Include the Second file in the chain, NetworkCore.
 include NetworkCore
 
-#Sync missing VerificationPackets from a specific Client.
-proc syncVerificationPackets(
-    network: Network,
-    id: int,
-    hash: Hash[384],
-    body: BlockBody
-): Future[seq[Element]] {.forceCheck: [], async.} =
-    doAssert(false, "Syncing VerificationPackets for a BlockBody is not supported.")
-
-#Sync a list of Transactions from a specific Client.
-proc syncTransactions(
-    network: Network,
-    id: int,
-    transactions: seq[Hash[384]],
-    sendDiff: Hash[384],
-    dataDiff: Hash[384]
-): Future[seq[Transaction]] {.forceCheck: [
-    SocketError,
-    ClientError,
-    InvalidMessageError,
-    DataMissing,
-    Spam
-], async.} =
-    result = @[]
-
-    #Grab the Client.
-    var client: Client
-    try:
-        client = network.clients[id]
-    except IndexError as e:
-        raise newException(ClientError, "Couldn't grab the client: " & e.msg)
-
-    #Send syncing.
-    try:
-        await client.startSyncing()
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Ask for missing Transactions.
-    for tx in transactions:
-        #Sync the Transaction.
-        try:
-            result.add(
-                await client.syncTransaction(
-                    tx,
-                    sendDiff,
-                    dataDiff
-                )
-            )
-        except SocketError as e:
-            fcRaise e
-        except ClientError as e:
-            fcRaise e
-        except SyncConfigError as e:
-            doAssert(false, "Client we attempted to sync an Transaction from a Client that wasn't configured for syncing: " & e.msg)
-        except InvalidMessageError as e:
-            fcRaise e
-        except DataMissing as e:
-            fcRaise e
-        except Spam as e:
-            fcRaise e
-        except Exception as e:
-            doAssert(false, "Syncing an Transaction in a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Stop syncing.
-    try:
-        await client.stopSyncing()
-    except SocketError as e:
-        fcRaise e
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
+discard """
 #Sync a Block's Transactions/VerificationPackets.
 proc sync*(
     network: Network,
     newBlock: SketchyBlock,
     sketcher: Sketcher
 ) {.forceCheck: [], async.} =
-    discard """
     var
         #Mentioned Transactions.
         mentioned: Table[Hash[384], bool] = initTable[Hash[384], bool]()
@@ -126,16 +48,16 @@ proc sync*(
                     network.mainFunctions.consensus.getDataMinimumDifficulty(),
                 )
             #If the Client had problems, disconnect them.
-            except SocketError, ClientError:
+            except ClientError:
                 toDisconnect.add(client.id)
                 continue
-            #If we got an unexpected message, or this Client didn't have the needed info, try another client.
-            except InvalidMessageError, DataMissing:
+            #If the Client didn't have the needed info, try another client.
+            except DataMissing:
                 #Stop syncing.
                 try:
                     await client.stopSyncing()
                 #If that failed, disconnect the Client.
-                except SocketError, ClientError:
+                except ClientError:
                     toDisconnect.add(client.id)
                 except Exception as e:
                     doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -230,7 +152,7 @@ proc sync*(
                         doAssert(false, "Synced an Transaction of an unsyncable type.")
         #Set transactions to todo.
         transactions = todo
-    """
+"""
 
 #Sync a Block's Body.
 proc sync*(
@@ -239,126 +161,95 @@ proc sync*(
 ): Future[SketchyBlockBody] {.forceCheck: [
     DataMissing
 ], async.} =
-    var
-        toDisconnect: seq[int] = @[]
-        synced: bool
-    for client in network.clients:
-        #Only sync from Clients which aren't syncing from us.
-        if client.remoteSync == true:
-            continue
-
-        #Start syncing.
+    var synced: bool = false
+    for client in network.clients.notSyncing:
         try:
+            #Start syncing.
             await client.startSyncing()
-        except SocketError, ClientError:
-            toDisconnect.add(client.id)
-            continue
-        except Exception as e:
-            doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #Get the BlockBody.
-        try:
-            result = await client.syncBlockBody(header.hash)
-            synced = true
-        except SocketError, ClientError:
-            toDisconnect.add(client.id)
-            continue
-        except SyncConfigError as e:
-            doAssert(false, "Client we attempted to sync a BlockBody from a Client that wasn't configured for syncing: " & e.msg)
-        except InvalidMessageError, DataMissing:
-            #Stop syncing.
+            #Get the BlockBody.
             try:
-                await client.stopSyncing()
-            #If that failed, disconnect the Client.
-            except SocketError, ClientError:
-                toDisconnect.add(client.id)
-            except Exception as e:
-                doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                result = await client.syncBlockBody(header.hash)
+                synced = true
+            except DataMissing:
+                discard
+
+            #Stop syncing.
+            await client.stopSyncing()
+        except ClientError:
+            network.clients.disconnect(client.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing a BlockBody threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #If we made it this far, stop syncing.
-        try:
-            await client.stopSyncing()
-        #If that failed, disconnect the Client.
-        except SocketError, ClientError:
-            toDisconnect.add(client.id)
-        except Exception as e:
-            doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        #Break if we synced the body.
+        if synced:
+            break
 
-        #Break out of the loop.
-        break
-
-    #Disconnect any Clients marked for disconnection.
-    for id in toDisconnect:
-        network.clients.disconnect(id)
-
+    #Raise an Exception if we failed to sync the body.
     if not synced:
-        raise newException(DataMissing, "Couldn't sync the BlockBody for the specified BlockHeader.")
+        raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
 
-#Request a Block.
-proc requestBlock*(
+    discard """
+    https://github.com/nim-lang/Nim/issues/12530
+        #Return if we synced the body.
+        if synced:
+            return
+
+    #If we exited the loop, we failed to sync the body from every client.
+    raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
+    """
+
+#Request a BlockHeader.
+proc requestBlockHeader*(
     network: Network,
     hash: Hash[384]
-): Future[SketchyBlock] {.forceCheck: [
+): Future[BlockHeader] {.forceCheck: [
     DataMissing
 ], async.} =
-    var
-        toDisconnect: seq[int] = @[]
-        synced: bool
-    for client in network.clients:
-        #Only sync from Clients which aren't syncing from us.
-        if client.remoteSync == true:
-            continue
-
-        #Start syncing.
+    var synced: bool = false
+    for client in network.clients.notSyncing:
         try:
+            #Start syncing.
             await client.startSyncing()
-        except SocketError, ClientError:
-            toDisconnect.add(client.id)
-            continue
-        except Exception as e:
-            doAssert(false, "Starting syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #Get the Block.
-        try:
-            result = await client.syncBlock(hash)
-        except SocketError, ClientError:
-            toDisconnect.add(client.id)
-            continue
-        except SyncConfigError as e:
-            doAssert(false, "Client we attempted to sync a Block from a Client that wasn't configured for syncing: " & e.msg)
-        except InvalidMessageError, DataMissing:
-            #Stop syncing.
+            #Get the BlockHeader.
             try:
-                await client.stopSyncing()
-            #If that failed, disconnect the Client.
-            except SocketError, ClientError:
-                toDisconnect.add(client.id)
-            except Exception as e:
-                doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                result = await client.syncBlockHeader(hash)
+                synced = true
+            except DataMissing:
+                discard
+
+            #Stop syncing.
+            await client.stopSyncing()
+        except ClientError:
+            network.clients.disconnect(client.id)
             continue
         except Exception as e:
-            doAssert(false, "Syncing a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            doAssert(false, "Syncing a BlockHeader threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #If we made it this far, stop syncing.
-        try:
-            await client.stopSyncing()
-        #If that failed, disconnect the Client.
-        except SocketError, ClientError:
-            toDisconnect.add(client.id)
-        except Exception as e:
-            doAssert(false, "Stopping syncing threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        #Break if we synced the body.
+        if synced:
+            break
 
-        #Break out of the loop.
-        synced = true
-        break
-
-    #Disconnect any Clients marked for disconnection.
-    for id in toDisconnect:
-        network.clients.disconnect(id)
-
-    #Make sure we synced the Block.
+    #Raise an Exception if we failed to sync the body.
     if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified Block.")
+        raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
+
+    discard """
+    https://github.com/nim-lang/Nim/issues/12530
+        #Return if we synced the header.
+        if synced:
+            return
+
+    #If we exited the loop, we failed to sync the header from every client.
+    raise newException(DataMissing, "Couldn't sync the specified BlockHeader.")
+    """
+
+#Request a Block List.
+proc requestBlockList*(
+    network: Network,
+    forwards: bool,
+    hash: Hash[384]
+): Future[Hash[384]] {.forceCheck: [], async.} =
+    discard

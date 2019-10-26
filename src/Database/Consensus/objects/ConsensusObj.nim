@@ -55,9 +55,6 @@ type Consensus* = ref object
 
     #Transactions which haven't been mentioned in Epochs.
     unmentioned*: Table[Hash[384], bool]
-    #Verifications of unknown Transactions.
-    #This is used when Blocks are added since we add Verifications before Transactions.
-    unknowns*: Table[Hash[384], VerificationPacket]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -80,8 +77,7 @@ proc newConsensusObj*(
         statuses: initTable[Hash[384], TransactionStatus](),
         close: initTable[Hash[384], bool](),
 
-        unmentioned: initTable[Hash[384], bool](),
-        unknowns: initTable[Hash[384], VerificationPacket]()
+        unmentioned: initTable[Hash[384], bool]()
     )
 
     #Load statuses still in Epochs.

@@ -59,7 +59,6 @@ proc newNetwork*(
     ) {.forceCheck: [
         IndexError,
         ClientError,
-        InvalidMessageError,
         Spam
     ], async.} =
         try:
@@ -77,7 +76,7 @@ proc newNetwork*(
             (msg.content == MessageType.BlockBody) or
             (msg.content == MessageType.VerificationPacket)
         ):
-            raise newException(InvalidMessageError, "Client sent us a message which can only be sent while syncing when neither of us are syncing.")
+            raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing.")
 
         #Handle the message.
         case msg.content:
@@ -103,16 +102,16 @@ proc newNetwork*(
                 try:
                     claim = msg.message.parseClaim()
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Claim contained an invalid Signature: " & e.msg)
+                    raise newException(ClientError, "Claim contained an invalid Signature: " & e.msg)
                 except BLSError as e:
-                    raise newException(InvalidMessageError, "Claim contained an invalid BLS Public Key: " & e.msg)
+                    raise newException(ClientError, "Claim contained an invalid BLS Public Key: " & e.msg)
                 except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Claim contained an invalid ED25519 Public Key: " & e.msg)
+                    raise newException(ClientError, "Claim contained an invalid ED25519 Public Key: " & e.msg)
 
                 try:
                     mainFunctions.transactions.addClaim(claim)
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the Claim failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Adding the Claim failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -121,16 +120,16 @@ proc newNetwork*(
                 try:
                     send = msg.message.parseSend(network.mainFunctions.consensus.getSendDifficulty())
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Send contained an invalid Signature: " & e.msg)
+                    raise newException(ClientError, "Send contained an invalid Signature: " & e.msg)
                 except EdPublicKeyError as e:
-                    raise newException(InvalidMessageError, "Send contained an invalid ED25519 Public Key: " & e.msg)
+                    raise newException(ClientError, "Send contained an invalid ED25519 Public Key: " & e.msg)
                 except Spam as e:
                     fcRaise e
 
                 try:
                     mainFunctions.transactions.addSend(send)
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the Send failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Adding the Send failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -139,14 +138,14 @@ proc newNetwork*(
                 try:
                     data = msg.message.parseData(network.mainFunctions.consensus.getDataDifficulty())
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Parsing the Data failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Parsing the Data failed due to a ValueError: " & e.msg)
                 except Spam as e:
                     fcRaise e
 
                 try:
                     mainFunctions.transactions.addData(data)
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the Data failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Adding the Data failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -155,14 +154,14 @@ proc newNetwork*(
                 try:
                     verif = msg.message.parseSignedVerification()
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "SignedVerification didn't contain a valid hash: " & e.msg)
+                    raise newException(ClientError, "SignedVerification didn't contain a valid hash: " & e.msg)
                 except BLSError as e:
-                    raise newException(InvalidMessageError, "SignedVerification contained an invalid BLS Public Key: " & e.msg)
+                    raise newException(ClientError, "SignedVerification contained an invalid BLS Public Key: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedVerification(verif)
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -171,28 +170,28 @@ proc newNetwork*(
                 try:
                     mr = msg.message.parseSignedMeritRemoval()
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Parsing the SignedVerification failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Parsing the SignedVerification failed due to a ValueError: " & e.msg)
                 except BLSError as e:
-                    raise newException(InvalidMessageError, "Parsing the SignedVerification failed due to a BLSError: " & e.msg)
+                    raise newException(ClientError, "Parsing the SignedVerification failed due to a BLSError: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedMeritRemoval(mr)
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the SignedMeritRemoval failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Adding the SignedMeritRemoval failed due to a ValueError: " & e.msg)
 
             of MessageType.BlockHeader:
                 var header: BlockHeader
                 try:
                     header = msg.message.parseBlockHeader()
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Block didn't contain a valid hash: " & e.msg)
+                    raise newException(ClientError, "Block didn't contain a valid hash: " & e.msg)
                 except BLSError as e:
-                    raise newException(InvalidMessageError, "Block contained an invalid BLS Public Key: " & e.msg)
+                    raise newException(ClientError, "Block contained an invalid BLS Public Key: " & e.msg)
 
                 try:
                     await mainFunctions.merit.addBlockByHeader(header)
                 except ValueError as e:
-                    raise newException(InvalidMessageError, "Adding the Block failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Adding the Block failed due to a ValueError: " & e.msg)
                 except DataMissing:
                     return
                 except DataExists:

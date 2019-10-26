@@ -172,19 +172,6 @@ proc register*(
                     except IndexError:
                         doAssert(false, "Competing Transaction doesn't have a Status despite being marked as a spender.")
 
-    #If this Transaction is being added thanks to a handled VerificationPacket, apply it.
-    if consensus.unknowns.hasKey(tx.hash):
-        try:
-            status.add(consensus.unknowns[tx.hash])
-
-            #Delete from the unknowns table.
-            consensus.unknowns.del(tx.hash)
-
-            #Since we added a packet of verifiers, calculate the Merit.
-            consensus.calculateMerit(state, tx.hash, status)
-        except KeyError as e:
-            doAssert(false, "Couldn't get unknown Verifications for a Transaction with unknown Verifications: " & e.msg)
-
     #Set the status.
     consensus.setStatus(tx.hash, status)
 
@@ -201,10 +188,9 @@ proc add*(
     #Get the status.
     try:
         status = consensus.getStatus(packet.hash)
-    #If there's no TX status, the TX wasn't registered. Add it to unknowns.
+    #If there's no TX status, the TX wasn't registered.
     except IndexError:
-        consensus.unknowns[packet.hash] = packet
-        return
+        doAssert(false, "Adding a VerificationPacket for a non-existent Transaction.")
 
     #Add the packet.
     status.add(packet)

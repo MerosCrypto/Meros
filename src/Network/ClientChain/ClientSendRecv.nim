@@ -5,7 +5,6 @@ proc send*(
     client: Client,
     msg: Message
 ) {.forceCheck: [
-    SocketError,
     ClientError
 ], async.} =
     #Make sure the client is open.
@@ -13,7 +12,7 @@ proc send*(
         try:
             await client.socket.send(msg.toString())
         except Exception as e:
-            raise newException(SocketError, "Couldn't send to a Client: " & e.msg)
+            raise newException(ClientError, "Couldn't send to a Client: " & e.msg)
     #If it isn't, raise an Error.
     else:
         raise newException(ClientError, "Client was closed.")
@@ -22,7 +21,6 @@ proc send*(
 proc recv*(
     client: Client
 ): Future[Message] {.forceCheck: [
-    SocketError,
     ClientError
 ], async.} =
     var
@@ -34,7 +32,7 @@ proc recv*(
     try:
         msg = await client.socket.recv(1)
     except Exception as e:
-        raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+        raise newException(ClientError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
     #If the message length is 0, because the client disconnected...
     if msg.len == 0:
@@ -100,7 +98,7 @@ proc recv*(
         try:
             msg &= await client.socket.recv(len)
         except Exception as e:
-            raise newException(SocketError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+            raise newException(ClientError, "Receiving from the Client's socket threw an Exception: " & e.msg)
 
         #Add the length to the size and verify the size.
         size += len

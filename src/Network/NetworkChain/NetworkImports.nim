@@ -20,7 +20,6 @@ import ../../Database/Transactions/Transactions
 import ../../Database/Consensus/Consensus
 
 #Block lib.
-import ../../Database/Merit/BlockHeader
 import ../../Database/Merit/Block as BlockFile
 
 #Global Function Box object.

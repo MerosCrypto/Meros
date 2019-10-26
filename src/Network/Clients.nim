@@ -47,7 +47,6 @@ proc handle(
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [
     IndexError,
-    SocketError,
     ClientError
 ], async.} =
     #Message loop variable.
@@ -58,8 +57,6 @@ proc handle(
         #Read in a new message.
         try:
             msg = await client.recv()
-        except SocketError as e:
-            fcRaise e
         except ClientError as e:
             fcRaise e
         except Exception as e:
@@ -72,8 +69,6 @@ proc handle(
             #Send SyncingAcknowledged.
             try:
                 await client.send(newMessage(MessageType.SyncingAcknowledged))
-            except SocketError as e:
-                fcRaise e
             except ClientError as e:
                 fcRaise e
             except Exception as e:
@@ -84,8 +79,6 @@ proc handle(
                 #Read in a new message.
                 try:
                     msg = await client.recv()
-                except SocketError as e:
-                    fcRaise e
                 except ClientError as e:
                     fcRaise e
                 except Exception as e:
@@ -96,8 +89,6 @@ proc handle(
                     of MessageType.Handshake:
                         try:
                             await client.send(newMessage(MessageType.BlockchainTail, networkFunctions.getTail().toString()))
-                        except SocketError as e:
-                            fcRaise e
                         except ClientError as e:
                             fcRaise e
                         except Exception as e:
@@ -116,8 +107,6 @@ proc handle(
 
                             try:
                                 await client.send(newMessage(MessageType.BlockHeader, header.serialize()))
-                            except SocketError as e:
-                                fcRaise e
                             except ClientError as e:
                                 fcRaise e
                             except Exception as e:
@@ -125,8 +114,6 @@ proc handle(
                         except IndexError:
                             try:
                                 await client.send(newMessage(MessageType.DataMissing))
-                            except SocketError as e:
-                                fcRaise e
                             except ClientError as e:
                                 fcRaise e
                             except Exception as e:
@@ -142,8 +129,6 @@ proc handle(
 
                             try:
                                 await client.send(newMessage(MessageType.BlockBody, body.serialize()))
-                            except SocketError as e:
-                                fcRaise e
                             except ClientError as e:
                                 fcRaise e
                             except Exception as e:
@@ -151,8 +136,6 @@ proc handle(
                         except IndexError:
                             try:
                                 await client.send(newMessage(MessageType.DataMissing))
-                            except SocketError as e:
-                                fcRaise e
                             except ClientError as e:
                                 fcRaise e
                             except Exception as e:
@@ -183,8 +166,6 @@ proc handle(
                                     else:
                                         doAssert(false, "Responding with an unsupported Transaction type to a TransactionRequest.")
                                 await client.send(newMessage(content, tx.serialize()))
-                            except SocketError as e:
-                                fcRaise e
                             except ClientError as e:
                                 fcRaise e
                             except Exception as e:
@@ -192,13 +173,11 @@ proc handle(
                         except IndexError:
                             try:
                                 await client.send(newMessage(MessageType.DataMissing))
-                            except SocketError as e:
-                                fcRaise e
                             except ClientError as e:
                                 fcRaise e
                             except Exception as e:
                                 doAssert(false, "Sending a `DataMissing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-                    
+
                     of MessageType.SyncingOver:
                         client.remoteSync = false
 
@@ -212,8 +191,6 @@ proc handle(
                 fcRaise e
             except ClientError as e:
                 fcRaise e
-            except InvalidMessageError:
-                continue
             except Spam:
                 continue
             except Exception as e:
@@ -246,13 +223,7 @@ proc add*(
             server,
             networkFunctions.getTail()
         )
-    except SocketError:
-        client.close()
-        return
     except ClientError:
-        client.close()
-        return
-    except InvalidMessageError:
         client.close()
         return
     except Exception as e:
@@ -292,8 +263,6 @@ proc add*(
                                             tail.toString()
                                         )
                                     )
-                                except SocketError:
-                                    client.close()
                                 except ClientError:
                                     client.close()
                                 except Exception as e:
@@ -315,12 +284,6 @@ proc add*(
     except IndexError:
         #Disconnect them again to be safe.
         clients.disconnect(client.id)
-    #If a SocketError happend, the Client is likely doomed. Fully disconnect it.
-    except SocketError:
-        clients.disconnect(client.id)
-    #If a ClientError/InvalidMessageError happened, something at a higher level is going on.
-    #This should affect node karma, not be a flat disconnect.
-    #That said, we don't have karma yet.
     except ClientError:
         clients.disconnect(client.id)
     except Exception as e:
@@ -345,8 +308,6 @@ proc reply*(
     try:
         await client.send(res)
     #If that failed, disconnect the client.
-    except SocketError:
-        clients.disconnect(client.id)
     except ClientError:
         clients.disconnect(client.id)
     except Exception as e:
@@ -357,30 +318,17 @@ proc broadcast*(
     clients: Clients,
     msg: Message
 ) {.forceCheck: [], async.} =
-    #Seq of the clients to disconnect.
-    var toDisconnect: seq[int] = @[]
-
     #Iterate over each client.
-    for client in clients.clients:
+    for client in clients.notSyncing:
         #Skip the Client who sent us this.
         if client.id == msg.client:
-            continue
-
-        #Skip Clients who are syncing.
-        if client.remoteSync == true:
             continue
 
         #Try to send the message.
         try:
             await client.send(msg)
         #If that failed, mark the Client for disconnection.
-        except SocketError:
-            toDisconnect.add(client.id)
         except ClientError:
-            toDisconnect.add(client.id)
+            clients.disconnect(client.id)
         except Exception as e:
             doAssert(false, "Broadcasting a message to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Disconnect the clients marked for disconnection.
-    for id in toDisconnect:
-        clients.disconnect(id)

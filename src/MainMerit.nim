@@ -88,10 +88,12 @@ proc mainMerit() {.forceCheck: [].} =
             #Sync this Block.
             var sketcher: Sketcher
             try:
+                discard """
                 await network.sync(
                     newBlock,
                     sketcher
                 )
+                """
             except ValueError as e:
                 fcRaise e
             except Exception as e:

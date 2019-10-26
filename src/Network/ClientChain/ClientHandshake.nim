@@ -8,9 +8,7 @@ proc handshake*(
     server: bool,
     tail: Hash[384]
 ) {.forceCheck: [
-    SocketError,
-    ClientError,
-    InvalidMessageError
+    ClientError
 ], async.} =
     #Send a handshake.
     try:
@@ -23,8 +21,6 @@ proc handshake*(
                 tail.toString()
             )
         )
-    except SocketError as e:
-        fcRaise e
     except ClientError as e:
         fcRaise e
     except Exception as e:
@@ -34,8 +30,6 @@ proc handshake*(
     var handshake: Message
     try:
         handshake = await client.recv()
-    except SocketError as e:
-        fcRaise e
     except ClientError as e:
         fcRaise e
     except Exception as e:
@@ -43,7 +37,7 @@ proc handshake*(
 
     #Verify their handshake is a handshake.
     if handshake.content != MessageType.Handshake:
-        raise newException(InvalidMessageError, "Client responded to a Handshake with something other than a handshake.")
+        raise newException(ClientError, "Client responded to a Handshake with something other than a handshake.")
 
     #Deserialize their message.
     var handshakeSeq: seq[string] = handshake.message.deserialize(
@@ -54,10 +48,10 @@ proc handshake*(
     )
     #Verify their Network ID.
     if int(handshakeSeq[0][0]) != id:
-        raise newException(InvalidMessageError, "Client responded to a Handshake with a different Network ID.")
+        raise newException(ClientError, "Client responded to a Handshake with a different Network ID.")
     #Verify their Protocol version.
     if int(handshakeSeq[1][0]) != protocol:
-        raise newException(InvalidMessageError, "Client responded to a Handshake with a different Protocol Version.")
+        raise newException(ClientError, "Client responded to a Handshake with a different Protocol Version.")
 
     if int(handshakeSeq[2][0]) == 1:
         try:

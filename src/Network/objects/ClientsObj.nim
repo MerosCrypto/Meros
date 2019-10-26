@@ -72,9 +72,28 @@ func `[]`*(
             return client
     raise newException(IndexError, "Couldn't find a Client with that ID.")
 
-#Iterator.
+#Iterators.
 iterator items*(
     clients: Clients
 ): Client {.forceCheck: [].} =
     for client in clients.clients.items():
         yield client
+
+#Return all Clients where the peer isn't syncing in a way that allows disconnecting Clients.
+iterator notSyncing*(
+    clients: Clients
+): Client {.forceCheck: [].} =
+    var
+        c: int = 0
+        id: int
+    while c < clients.clients.len:
+        if clients.clients[c].remoteSync:
+            inc(c)
+            continue
+
+        id = clients.clients[c].id
+        yield clients.clients[c]
+
+        if clients.clients[c].id != id:
+            continue
+        inc(c)

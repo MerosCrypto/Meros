@@ -106,6 +106,8 @@ Network:
 - Syncing.
 - Support BlockchainTail messages.
 
+- Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
+
 Tests:
 
 - Epochs Tests.

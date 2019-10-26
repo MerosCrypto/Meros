@@ -95,7 +95,6 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.Data: [48, 1, -1, 68],
 
     MessageType.SignedVerification: [146],
-    MessageType.SignedVerificationPacket: [1, -2, 48 + 96],
     MessageType.SignedMeritRemoval: [4, 0, 1, 0, 96],
 
     MessageType.BlockHeader: [101, 0, 104],

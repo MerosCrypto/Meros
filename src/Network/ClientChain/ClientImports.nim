@@ -16,8 +16,7 @@ import ../../Database/Transactions/Transactions
 #Consensus lib (for Verification/SignedVerification).
 import ../../Database/Consensus/Consensus
 
-#BlockHeader and Block lib.
-import ../../Database/Merit/BlockHeader
+#Block lib.
 import ../../Database/Merit/Block as BlockFile
 
 #Serialization common lib.
