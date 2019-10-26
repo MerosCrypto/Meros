@@ -10,6 +10,7 @@ from PythonTests.Classes.Transactions.Data import Data
 #Consensus classes.
 from PythonTests.Classes.Consensus.Element import Element, SignedElement
 from PythonTests.Classes.Consensus.Verification import SignedVerification
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 #from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval, PartiallySignedMeritRemoval
 
 #Merit classes.
@@ -81,7 +82,7 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.Syncing: [],
     MessageType.SyncingAcknowledged: [],
     MessageType.BlockListRequest: [50],
-    MessageType.BlockList: [1, -48],
+    MessageType.BlockList: [1, -48, 48],
 
     MessageType.BlockHeaderRequest: [48],
     MessageType.BlockBodyRequest: [48],
@@ -238,7 +239,7 @@ class Meros:
         #Return their height.
         return int.from_bytes(response[3 : 7], "big")
 
-    #Start syncing.
+    #Start Syncing.
     def syncing(
         self
     ) -> bytes:
@@ -246,11 +247,25 @@ class Meros:
         self.send(res)
         return res
 
-    #Acknowledge syncing.
-    def acknowledgeSyncing(
+    #Send Syncing Acknowledged.
+    def syncingAcknowledged(
         self
     ) -> bytes:
         res: bytes = MessageType.SyncingAcknowledged.toByte()
+        self.send(res)
+        return res
+
+    #Send a Block List.
+    def blockList(
+        self,
+        hashes: List[bytes]
+    ) -> bytes:
+        res: bytes = (
+            MessageType.BlockList.toByte() +
+            (len(hashes) - 1).to_bytes(1, byteorder="big")
+        )
+        for blockHash in hashes:
+            res += blockHash
         self.send(res)
         return res
 
@@ -318,16 +333,31 @@ class Meros:
         self.send(res)
         return res
 
-    #Send a VerificationPacket.
-    """
+    #Send a Block Transactions.
+    def blockTransactions(
+        self,
+        txs: List[bytes]
+    ) -> bytes:
+        res: bytes = (
+            MessageType.BlockTransactions.toByte() +
+            len(txs).to_bytes(4, byteorder="big")
+        )
+        for tx in txs:
+            res += tx
+        self.send(res)
+        return res
+
+    #Send a Verification Packet.
     def packet(
         self,
         packet: VerificationPacket
     ) -> bytes:
-        res: bytes = bytes()
+        res: bytes = (
+            MessageType.VerificationPacket.toByte() +
+            packet.serialize()
+        )
         self.send(res)
         return res
-    """
 
     #Playback all received messages and test the responses.
     def playback(

@@ -69,7 +69,7 @@ def VParsableTest(
             break
 
         if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.acknowledgeSyncing()
+            rpc.meros.syncingAcknowledged()
 
         elif MessageType(msg[0]) == MessageType.GetBlockHash:
             height = int.from_bytes(msg[1 : 5], "big")

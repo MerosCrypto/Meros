@@ -68,7 +68,7 @@ class Liver():
                 msg: bytes = self.rpc.meros.recv()
 
                 if MessageType(msg[0]) == MessageType.Syncing:
-                    self.rpc.meros.acknowledgeSyncing()
+                    self.rpc.meros.syncingAcknowledged()
 
                 elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
                     reqHash = msg[1 : 49]
