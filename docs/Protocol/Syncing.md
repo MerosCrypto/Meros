@@ -17,8 +17,6 @@ During syncing, the syncer can only send:
 - `VerificationPacketRequest`
 - `TransactionRequest`
 
-- `SignedVerificationPacketRequest` (disabled)
-
 - `SyncingOver`
 
 The syncee can only send:
@@ -35,8 +33,6 @@ The syncee can only send:
 - `Data`
 - `Lock`
 - `Unlock`
-
-- `SignedVerificationPacket` (disabled)
 
 - `Checkpoint`
 - `BlockHeader`
@@ -76,10 +72,6 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 ### TransactionRequest
 
 `TransactionRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `Claim`, `Send`, or `Data` containing the requested Transaction. If a Mint has the requested hash, the syncer sends `DataMissing`.
-
-### SignedVerificationPacketRequest
-
-`SignedVerificationPacketRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response would be a `SignedVerificationPacket` for the specified Transaction or `DataMissing` if the requested VerificationPacket has already had its signature aggregated in a Block. That said, the expected response is a disconnect because this message is disabled, just as `SignedVerificationPacket` is.
 
 ### DataMissing
 

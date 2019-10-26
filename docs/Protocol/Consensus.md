@@ -1,6 +1,6 @@
 # Consensus
 
-This document defines and describes Consensus Elements, which come in the forms of Verifications, Merit Removals, Difficulty Updates, and Gas Price sets. Every Element has a creator, which is the 2-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message (or a group of Verifications via a `SignedVerificationPacket`), node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasPrice` exists solely to give miners other than the sender the ability to archive the Element as well
+This document defines and describes Consensus Elements, which come in the forms of Verifications, Merit Removals, Difficulty Updates, and Gas Price sets. Every Element has a creator, which is the 2-byte nickname of the Merit Holder who created it. When a new Element is received via a `SignedVerification`, `SignedSendDifficulty`, `SignedDataDifficulty`, or `SignedMeritRemoval` message, node behavior should be to immediately perform the protocol dictated action, as long as the Element is valid. Gas Price Elements can only have their actions applied once archived in a Block. `SignedGasPrice` exists solely to give miners other than the sender the ability to archive the Element as well
 
 Elements do not have hashes, so their signatures are produced by signing their serialization, without the holder, and with a prefix unique to each type of Element.
 
@@ -86,12 +86,6 @@ Every "Signed" object is the same as their non-"Signed" counterpart, except they
 - signature: BLS Signature of the object. In the case of a SignedMeritRemoval, this is the aggregate signature of element1 and element2, unless element1 was already archived on the Blockchain, in which case it's the signature of element2.
 
 Their message lengths are their non-"Signed" message length plus 96 bytes; the 96-byte signature which is appended to the end of the serialized non-"Signed" version.
-
-### SignedVerificationPacket
-
-`SignedVerificationPacket` is the same as the other `Signed` messages, except for two differences. The first is the signature is the aggregate signature of every Verification in the packet. The second is this message is disabled.
-
-This message is meant for Merit Holders to be able to create already aggregated Verifications on a subnet before publishing to the rest of the network. As there's not yet a protocol to coordinate this, this message offers little benefit along with a high amount of codebase complexity. The header byte is effectively reserved until `SignedVerificationPacket` can be used as intended, at which point `SignedVerification` will be disabled.
 
 ### Violations in Meros
 

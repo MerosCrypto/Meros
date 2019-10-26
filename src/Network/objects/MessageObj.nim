@@ -30,26 +30,24 @@ finalsd:
             BlockTransactionsRequest = 11,
             VerificationPacketRequest = 12,
             TransactionRequest = 13,
-            SignedVerificationPacketRequest = 14,
-            DataMissing = 15,
-            SyncingOver = 16,
+            DataMissing = 14,
+            SyncingOver = 15,
 
-            Claim = 17,
-            Send = 18,
-            Data = 19,
+            Claim = 16,
+            Send = 17,
+            Data = 18,
 
-            SignedVerification = 22,
-            SignedVerificationPacket = 23,
-            SignedMeritRemoval = 27,
+            SignedVerification = 21,
+            SignedMeritRemoval = 25,
 
-            BlockHeader = 29,
-            BlockBody = 30,
-            BlockTransactions = 31,
-            VerificationPacket = 32,
+            BlockHeader = 27,
+            BlockBody = 28,
+            BlockTransactions = 29,
+            VerificationPacket = 30,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 33
+            End = 31
 
         #Message object.
         Message* = object
@@ -91,7 +89,6 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Data: @[HASH_LEN, BYTE_LEN, -BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
 
     MessageType.SignedVerification: @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
-    MessageType.SignedVerificationPacket: @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN + BLS_SIGNATURE_LEN],
     MessageType.SignedMeritRemoval: @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, BYTE_LEN, 0, BLS_SIGNATURE_LEN],
 
     MessageType.BlockHeader: @[INT_LEN + HASH_LEN + HASH_LEN + BYTE_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],

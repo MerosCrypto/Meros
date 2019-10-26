@@ -44,22 +44,20 @@ class MessageType(Enum):
     BlockTransactionsRequest = 11
     VerificationPacketRequest = 12
     TransactionRequest = 13
-    SignedVerificationPacketRequest = 14
-    DataMissing = 15
-    SyncingOver = 16
+    DataMissing = 14
+    SyncingOver = 15
 
-    Claim = 17
-    Send = 18
-    Data = 19
+    Claim = 16
+    Send = 17
+    Data = 18
 
-    SignedVerification = 22
-    SignedVerificationPacket = 23
-    SignedMeritRemoval = 27
+    SignedVerification = 21
+    SignedMeritRemoval = 25
 
-    BlockHeader = 29
-    BlockBody = 30
-    BlockTransactions = 31
-    VerificationPacket = 32
+    BlockHeader = 27
+    BlockBody = 28
+    BlockTransactions = 29
+    VerificationPacket = 30
 
     #MessageType -> byte.
     def toByte(

@@ -198,10 +198,7 @@ proc handle(
                                 fcRaise e
                             except Exception as e:
                                 doAssert(false, "Sending a `DataMissing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                    of MessageType.SignedVerificationPacketRequest:
-                        raise newException(ClientError, "Client sent a SignedVerificationPacket (which is a disabled message).")
-
+                    
                     of MessageType.SyncingOver:
                         client.remoteSync = false
 

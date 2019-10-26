@@ -166,9 +166,6 @@ proc newNetwork*(
                 except DataExists:
                     return
 
-            of MessageType.SignedVerificationPacket:
-                raise newException(ClientError, "Client sent a SignedVerificationPacket (which is a disabled message).")
-
             of MessageType.SignedMeritRemoval:
                 var mr: SignedMeritRemoval
                 try:
