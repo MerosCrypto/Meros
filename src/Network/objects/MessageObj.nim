@@ -76,7 +76,7 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Syncing: @[],
     MessageType.SyncingAcknowledged: @[],
     MessageType.BlockListRequest: @[BYTE_LEN + BYTE_LEN + HASH_LEN],
-    MessageType.BlockList: @[BYTE_LEN, -HASH_LEN],
+    MessageType.BlockList: @[BYTE_LEN, -HASH_LEN, HASH_LEN],
 
     MessageType.BlockHeaderRequest: @[HASH_LEN],
     MessageType.BlockBodyRequest: @[HASH_LEN],

@@ -8,6 +8,7 @@ During syncing, the syncer can only send:
 
 - `PeersRequest`
 - `BlockListRequest`
+- `BlockTransactionsRequest`
 
 - `CheckpointRequest`
 - `BlockHeaderRequest`
@@ -54,7 +55,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### BlockListRequest and BlockList
 
-`BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity, and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block, where the first hash is the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte amount of hashes and each 48-byte hash.
+`BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity (where the quantity is the byte's value plus one), and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte quantity (where the quantity is the byte's value plus one) and each 48-byte hash.
 
 ### BlockTransactionsRequest and BlockTransactions
 
