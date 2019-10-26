@@ -92,7 +92,7 @@ proc `%`(
 
     #Add the significant/sketchSalt.
     result["significant"] = % blockArg.body.significant
-    result["sketchSalt"] = % blockArg.body.sketchSalt.toHex()
+    result["sketchSalt"] = % blockArg.body.sketchSalt.pad(4).toHex()
 
     #Add the Packets.
     result["transactions"] = % []
