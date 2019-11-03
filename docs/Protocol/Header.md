@@ -18,7 +18,8 @@ The message types are as follows (with their list number being their byte header
 <li><code>CheckpointRequest</code></li>
 <li><code>BlockHeaderRequest</code></li>
 <li><code>BlockBodyRequest</code></li>
-<li><code>BlockTransactionsRequest</code></li>
+<li><code>SketchHashesRequest</code></li>
+<li><code>SketchHashRequest</code></li>
 <li><code>VerificationPacketRequest</code></li>
 <li><code>TransactionRequest</code></li>
 <li><code>DataMissing</code></li>
@@ -39,12 +40,12 @@ The message types are as follows (with their list number being their byte header
 <li><code>Checkpoint</code></li>
 <li><code>BlockHeader</code></li>
 <li><code>BlockBody</code></li>
-<li><code>BlockTransactions</code></li>
+<li><code>SketchHashes</code></li>
 <li><code>VerificationPacket</code></li>
 </ol>
 
 `Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive) can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing documentation.
 
-Even if the state is syncing, the node which didn't start syncing can send `BlockHeight`, along with every message between `Claim` (inclusive) and `Checkpoint` (inclusive).
+Even if the state is syncing, the node which started syncing can send `Handshake`. The node which didn't start syncing can send `BlockHeight` and every message between `Claim` (inclusive) and `VerificationPacket` (inclusive).
 
 When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive), nor anything after `BlockHeader`, can be sent.

@@ -15,6 +15,8 @@ BlockHeaders have the following fields:
 - version: Block version.
 - last: Last Block Hash.
 - contents: Merkle of included Transactions, their verifiers, and updates to the Difficulties/GasPrice.
+- significant: The threshold of what makes a Transaction significant.
+- sketchSalt: The salt used when hashing elements for inclusion in sketches.
 - miner: BLS Public Key, or miner nickname, to mint Merit to.
 - time: Time this Block was mined at.
 - proof: Arbitrary data used to beat the difficulty.
@@ -52,9 +54,7 @@ Blocks mention Transactions which have had Verification Packets created.
 Blocks have the following fields:
 
 - header: Block Header.
-- significant: The threshold of what makes a Transaction significant. 10 means anything which has more than 10 (inclusive) new Merit to archive.
-- sketchSalt: The salt used when hashing elements for inclusion in sketches.
-- sketch: A PinSketch of the included Verification Packets, with a capacity of at least `packets.length div 5 + 1` and at most `packets.length div 5 + 11`, where each Verification Packet is included as `Blake2b-64(sketchSalt + packet.serialize())`. If a Verification Packet's 8-byte hash has a collision with another Verification Packet's, the sketchSalt must be changed and the sketch regenerated until there is no collision.
+- sketch: A PinSketch of the included Verification Packets, where each Verification Packet is included as `Blake2b-64(header.sketchSalt + packet.serialize())`.
 - elements: Difficulty updates and gas price sets from Merit Holders.
 - aggregate: Aggregated BLS Signature for every Verification Packet/Element this Block archives.
 
@@ -64,12 +64,12 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - Header version of 0,
 - Header last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 48 bytes.
 - Zeroed out contents in the header.
+- significant of 0.
+- Zeroed sketchSalt in the header.
 - Zeroed out miner key in the header.
 - Header time of 0.
 - Header proof of 0.
 - Zeroed out signature in the header.
-- significant of 0.
-- sketchSalt of 0.
 - Empty packets.
 - Empty elements.
 - aggregate is zeroed out.
@@ -96,7 +96,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 207 or 255 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
+`BlockHeader` has a message length of either 213 or 261 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 2-byte significant, 4-byte sketchSalt, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
 
 ### BlockBody
 
@@ -104,12 +104,14 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 
 - The header is valid.
 - contents is the result of a properly constructed Merkle tree. It should be noted the tree used to form contents must include automatically included predecessors.
-- significant is between 0 (exclusive) and 26280 (inclusive).
-- Every Transaction is unique.
-- Every Transaction has a Verification Packet involving Merit Holders not previously archived on the Blockchain.
-- Every Transaction's Verification Packet's newly archived Merit Holders' Merit sums to be greater than significant.
-- Every Transaction's predecessors have Verification Packets.
-- Every Transaction's predecessors, if they have yet to be mentioned on the Blockchain, are not mentioned in this BlockBody.
+- significant is greater than 0 and at most 26280 (inclusive).
+- capacity is at least `packets.length div 5 + 1` and at most `packets.length div 5 + 11`.
+- The Block's included Verification Packets don't collide with the specified sketch salt.
+- Every Verification Packet is for an unique Transaction.
+- Every Verification Packet only contains new Verifications.
+- Every Verification Packet's Merit is greater than significant.
+- Every Transaction's predecessors have Verification Packets either archived or in this Block.
+- Every Transaction's predecessors, if they have yet to be mentioned on the Blockchain, are not mentioned in this Block.
 - Every Transaction either has yet to enter Epochs or is in Epochs.
 - Every Transaction doesn't compete with, or have parents which competed with and lost, Transactions archived 5 Blocks before the last Checkpoint.
 - The sketch is properly constructed from the same data used to construct the Merkle.
@@ -170,7 +172,7 @@ If any scores happen to be 0, they are removed. If the sum of every score is les
 
 After Mints are decided, the Block's miner gets 1 Merit. This is considered live Merit. If these new Merit Holders don't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is no longer live. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. To restore their Merit to live, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Live Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Live Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 52560 Merit.
 
-`BlockBody` has a variable message length; the 4-byte significant, 4-byte sketchSalt, 4-byte sketch capacity, variable length sketch, 4-byte amount of Elements, Elements (each a different length depending on its type), and the 96-byte signature.
+`BlockBody` has a variable message length; the 4-byte sketch capacity, variable length sketch, 4-byte amount of Elements, Elements (each a different length depending on its type), and the 96-byte signature.
 
 ### Checkpoint
 
@@ -184,11 +186,19 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros doesn't check that newly archived Merit Holders' Merit is greater than significant for every Transaction.
-- Meros doesn't check Sketches have valid capacity fields.
+- Meros has the sketchSalt and significant in the BlockBody.
+
+- Meros doesn't check that BlockHeader's have valid significant fields.
+- Meros doesn't check BlockBody's have valid capacity fields.
+- Meros doesn't check that Block's Verification Packets are for unique Transactions.
+- Meros allows Verification Packets which contain archived Verifications.
+- Meros doesn't check that Blocks Verification Packets' Merits are greater than significant.
+- Meros doesn't check that every predecessor has an archived Verification Packet.
 - Meros allows mentioning previously unmentioned predecessors with their successor.
 - Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 - Meros doesn't automatically include unmentioned predecessors after their successor in BlockBody's local Transactions list.
+- Meros doesn't check that Block's Elements are new and have proper nonces.
+- Meros doesn't check that Block's Elements don't cause a MeritRemoval.
 
 - Meros mints Merit before minting Meros.
 - Meros doesn't support dead Merit.
