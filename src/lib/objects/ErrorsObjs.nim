@@ -27,6 +27,7 @@ import json
 type
     #lib Errors.
     RandomError* = object of Exception #Used when the RNG fails.
+    SaltError*   = object of Exception #Used when a sketch salt causes a collision.
 
     #Wallet Errors.
     BLSError*         = object of Exception #Used when the BLS lib fails.

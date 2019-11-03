@@ -10,22 +10,22 @@ type
     SketchyBlockBody* = object
         data*: BlockBody
         capacity*: int
-        packets*: string
+        sketch*: string
 
     SketchyBlock* = object
         data*: Block
         capacity*: int
-        packets*: string
+        sketch*: string
 
 proc newSketchyBlockBodyObj*(
     body: BlockBody,
     capacity: int,
-    packets: string
+    sketch: string
 ): SketchyBlockBody {.inline, forceCheck: [].} =
     SketchyBlockBody(
         data: body,
         capacity: capacity,
-        packets: packets
+        sketch: sketch
     )
 
 proc newSketchyBlockObj*(
@@ -35,5 +35,5 @@ proc newSketchyBlockObj*(
     SketchyBlock(
         data: newBlockObj(header, body.data),
         capacity: body.capacity,
-        packets: body.packets
+        sketch: body.sketch
     )

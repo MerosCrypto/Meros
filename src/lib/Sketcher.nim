@@ -91,13 +91,13 @@ proc collides*(
 proc toSketch(
     sketcher: Sketcher,
     capacity: int,
-    significant: int,
+    significant: uint16,
     salt: string
 ): tuple[
     sketch: Sketch,
     hashes: Table[uint64, int]
 ] {.forceCheck: [
-    ValueError
+    SaltError
 ].} =
     #Create the sketch.
     result.sketch = newSketch(64, 0, capacity)
@@ -106,12 +106,12 @@ proc toSketch(
     var hash: uint64
     for e in 0 ..< sketcher.len:
         #If it's significant, use it.
-        if sketcher[e].significance >= significant:
+        if sketcher[e].significance >= int(significant):
             #Hash the packet.
             hash = sketcher[e].packet.sketchHash(salt)
             #If there's a collision, throw.
             if result.hashes.hasKey(hash):
-                raise newException(ValueError, "Collision found while sketching values.")
+                raise newException(SaltError, "Collision found while sketching values.")
 
             result.sketch.add(hash)
             result.hashes[hash] = e
@@ -120,17 +120,17 @@ proc toSketch(
 proc serialize*(
     sketcher: Sketcher,
     capacity: int,
-    significant: int,
+    significant: uint16,
     salt: string
 ): string {.forceCheck: [
-    ValueError
+    SaltError
 ].} =
     if capacity == 0:
         return ""
 
     try:
         result = sketcher.toSketch(capacity, significant, salt).sketch.serialize()
-    except ValueError as e:
+    except SaltError as e:
         fcRaise e
 
 #Merge two sketches and return the shared/missing packets.
@@ -138,10 +138,11 @@ proc merge*(
     sketcher: Sketcher,
     other: string,
     capacity: int,
-    significant: int,
+    significant: uint16,
     salt: string
 ): SketchResult {.forceCheck: [
-    ValueError
+    ValueError,
+    SaltError
 ].} =
     if capacity == 0:
         return
@@ -153,7 +154,7 @@ proc merge*(
     ]
     try:
         sketch = sketcher.toSketch(capacity, significant, salt)
-    except ValueError as e:
+    except SaltError as e:
         fcRaise e
     #Merge the sketches.
     sketch.sketch.merge(other)
