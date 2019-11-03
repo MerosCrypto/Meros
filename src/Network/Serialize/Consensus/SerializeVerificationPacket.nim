@@ -24,7 +24,7 @@ import algorithm
 method serialize*(
     packet: VerificationPacket
 ): string {.forceCheck: [].} =
-    result = packet.holders.len.toBinary().pad(BYTE_LEN)
+    result = packet.holders.len.toBinary()
     for holder in packet.holders.sorted():
         result &= holder.toBinary().pad(NICKNAME_LEN)
     result &= packet.hash.toString()
@@ -35,9 +35,10 @@ method serialize*(
 method serializeWithoutHolder*(
     packet: MeritRemovalVerificationPacket
 ): string {.forceCheck: [].} =
-    result =
-        char(VERIFICATION_PACKET_PREFIX) &
-        packet.serialize()
+    result = char(VERIFICATION_PACKET_PREFIX) & packet.holders.len.toBinary()
+    for holder in packet.holders:
+        result &= holder.toString()
+    result &= packet.hash.toString()
 
 #Serialize a VerificationPacket for inclusion in a BlockHeader's contents merkle.
 #This should never happen.

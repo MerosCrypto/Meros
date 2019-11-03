@@ -26,6 +26,8 @@ class Blockchain:
                     0,
                     genesis.rjust(48, b'\0'),
                     bytes(48),
+                    0,
+                    bytes(4),
                     bytes(48),
                     0
                 ),

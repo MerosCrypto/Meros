@@ -69,9 +69,9 @@ proc test*() =
                 newBlock = newBlankBlock(
                     uint32(rand(4096)),
                     last,
-                    newMinerWallet(),
-                    rand(100000),
+                    uint16(rand(50000)),
                     char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                    newMinerWallet(),
                     packets,
                     elements,
                     newMinerWallet().sign($rand(4096)),
@@ -82,10 +82,10 @@ proc test*() =
                 newBlock = newBlankBlock(
                     uint32(rand(4096)),
                     last,
+                    uint16(rand(50000)),
+                    char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     uint16(rand(high(int16))),
                     newMinerWallet(),
-                    rand(100000),
-                    char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                     packets,
                     elements,
                     newMinerWallet().sign($rand(4096)),
@@ -94,7 +94,7 @@ proc test*() =
                 )
 
             #Verify the sketch doesn't have a collision.
-            if newSketcher(packets).collides(newBlock.body.sketchSalt):
+            if newSketcher(packets).collides(newBlock.header.sketchSalt):
                 continue
             break
 
@@ -103,10 +103,10 @@ proc test*() =
 
         #Create the Sketch and extract its elements.
         sketchResult = newSketcher(packets).merge(
-            reloaded.packets,
+            reloaded.sketch,
             reloaded.capacity,
             0,
-            reloaded.data.body.sketchSalt
+            reloaded.data.header.sketchSalt
         )
         doAssert(sketchResult.missing.len == 0)
         reloaded.data.body.packets = sketchResult.packets

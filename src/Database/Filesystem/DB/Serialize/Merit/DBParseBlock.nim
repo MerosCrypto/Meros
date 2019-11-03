@@ -47,21 +47,15 @@ proc parseBlock*(
 
     #Grab the body.
     bodyStr = blockStr.substr(
-        INT_LEN + HASH_LEN + HASH_LEN + BYTE_LEN +
-        INT_LEN + INT_LEN + BLS_SIGNATURE_LEN +
-        (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN)
+        INT_LEN + HASH_LEN + HASH_LEN + NICKNAME_LEN + INT_LEN + BYTE_LEN +
+        (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
+        INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
     )
 
-    #Significant | Sketch Salt | Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature
+    #Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature
     var
-        bodySeq: seq[string] = bodyStr.deserialize(
-            INT_LEN,
-            INT_LEN,
-            INT_LEN
-        )
-
-        packetsLen: int = bodySeq[2].fromBinary()
-        packetsStart: int = INT_LEN + INT_LEN + INT_LEN
+        packetsLen: int = bodyStr[0 ..< INT_LEN].fromBinary()
+        packetsStart: int = INT_LEN
 
         packets: seq[VerificationPacket] = newSeq[VerificationPacket](packetsLen)
         i: int
@@ -87,6 +81,7 @@ proc parseBlock*(
         holders = newSeq[uint16](int(bodyStr[i]))
         i += BYTE_LEN
 
+        #The holders is represented by a BYTE_LEN. This uses an INT_LEN so the last packet checks the elements length.
         if bodyStr.len < i + (holders.len * NICKNAME_LEN) + HASH_LEN + INT_LEN:
             raise newException(ValueError, "DB parseBlock not handed enough data to get the holders in this VerificationPacket, its hash, and the amount of holders in the next VerificationPacket.")
 
@@ -125,8 +120,6 @@ proc parseBlock*(
     result = newBlockObj(
         header,
         newBlockBodyObj(
-            bodySeq[0].fromBinary(),
-            bodySeq[1],
             packets,
             elements,
             aggregate

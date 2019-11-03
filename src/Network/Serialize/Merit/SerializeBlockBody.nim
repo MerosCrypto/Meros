@@ -24,25 +24,23 @@ import ../Consensus/SerializeMeritRemoval
 
 #Serialize a Block.
 proc serialize*(
-    body: BlockBody
+    body: BlockBody,
+    sketchSalt: string
 ): string {.forceCheck: [
     ValueError
 ].} =
     var capacity: int = if body.packets.len != 0: body.packets.len div 5 + 1 else: 0
 
-    result =
-        body.significant.toBinary().pad(INT_LEN) &
-        body.sketchSalt.pad(INT_LEN) &
-        capacity.toBinary().pad(INT_LEN)
+    result = capacity.toBinary().pad(INT_LEN)
 
     try:
         result &= newSketcher(body.packets).serialize(
             capacity,
             0,
-            body.sketchSalt
+            sketchSalt
         )
-    except ValueError as e:
-        raise newException(ValueError, "Sketches have a collision with the salt in the BlockBody: " & e.msg)
+    except SaltError as e:
+        raise newException(ValueError, "BlockBody's elements have a collision with the specified sketchSalt: " & e.msg)
 
     result &= body.elements.len.toBinary().pad(INT_LEN)
     for elem in body.elements:

@@ -95,7 +95,7 @@ def VParsableTest(
             reqHash = msg[1 : 49]
             for block in blockchain.blocks:
                 if block.header.hash == reqHash:
-                    rpc.meros.blockBody(block.body)
+                    rpc.meros.blockBody(block)
                     break
 
                 if block.header.hash == blockchain.last():

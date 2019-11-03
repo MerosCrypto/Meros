@@ -100,17 +100,9 @@ proc handle(
                     of MessageType.BlockHeaderRequest:
                         var header: BlockHeader
                         try:
-                            try:
-                                header = networkFunctions.getBlock(msg.message.toHash(384)).header
-                            except ValueError as e:
-                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
-
-                            try:
-                                await client.send(newMessage(MessageType.BlockHeader, header.serialize()))
-                            except ClientError as e:
-                                fcRaise e
-                            except Exception as e:
-                                doAssert(false, "Sending a `BlockHeader` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                            header = networkFunctions.getBlock(msg.message.toHash(384)).header
+                        except ValueError as e:
+                            doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
                         except IndexError:
                             try:
                                 await client.send(newMessage(MessageType.DataMissing))
@@ -118,21 +110,20 @@ proc handle(
                                 fcRaise e
                             except Exception as e:
                                 doAssert(false, "Sending a `DataMissing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+                        try:
+                            await client.send(newMessage(MessageType.BlockHeader, header.serialize()))
+                        except ClientError as e:
+                            fcRaise e
+                        except Exception as e:
+                            doAssert(false, "Sending a `BlockHeader` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                     of MessageType.BlockBodyRequest:
-                        var body: BlockBody
+                        var requested: Block
                         try:
-                            try:
-                                body = networkFunctions.getBlock(msg.message.toHash(384)).body
-                            except ValueError as e:
-                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
-
-                            try:
-                                await client.send(newMessage(MessageType.BlockBody, body.serialize()))
-                            except ClientError as e:
-                                fcRaise e
-                            except Exception as e:
-                                doAssert(false, "Sending a `BlockBody` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                            requested = networkFunctions.getBlock(msg.message.toHash(384))
+                        except ValueError as e:
+                            doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
                         except IndexError:
                             try:
                                 await client.send(newMessage(MessageType.DataMissing))
@@ -140,6 +131,13 @@ proc handle(
                                 fcRaise e
                             except Exception as e:
                                 doAssert(false, "Sending a `DataMissing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+                        try:
+                            await client.send(newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt)))
+                        except ClientError as e:
+                            fcRaise e
+                        except Exception as e:
+                            doAssert(false, "Sending a `BlockBody` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                     of MessageType.VerificationPacketRequest:
                         doAssert(false)

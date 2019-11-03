@@ -28,6 +28,9 @@ proc compare*(
     assert(bh1.last == bh2.last)
     assert(bh1.contents == bh2.contents)
 
+    assert(bh1.significant == bh2.significant)
+    assert(bh1.sketchSalt == bh2.sketchSalt)
+
     assert(bh1.newMiner == bh2.newMiner)
     if bh1.newMiner:
         assert(bh1.minerKey == bh2.minerKey)
@@ -45,9 +48,6 @@ proc compare*(
     bb1: BlockBody,
     bb2: BlockBody
 ) =
-    assert(bb1.significant == bb2.significant)
-    assert(bb1.sketchSalt == bb2.sketchSalt)
-
     assert(bb1.packets.len == bb2.packets.len)
     for p in 0 ..< bb1.packets.len:
         compare(bb1.packets[p], bb2.packets[p])

@@ -76,7 +76,7 @@ class Liver():
                         raise TestError("Meros asked for a Block Body that didn't belong to the header we just sent it.")
 
                     #Send the BlockBody.
-                    self.rpc.meros.blockBody(block.body)
+                    self.rpc.meros.blockBody(block)
 
                 elif MessageType(msg[0]) == MessageType.TransactionRequest:
                     reqHash = msg[1 : 49]

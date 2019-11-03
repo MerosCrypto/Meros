@@ -79,7 +79,6 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
 
     MessageType.BlockHeaderRequest: @[HASH_LEN],
     MessageType.BlockBodyRequest: @[HASH_LEN],
-    MessageType.BlockTransactionsRequest: @[HASH_LEN],
     MessageType.VerificationPacketRequest: @[HASH_LEN + HASH_LEN],
     MessageType.TransactionRequest: @[HASH_LEN],
     MessageType.DataMissing: @[],
@@ -92,9 +91,8 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.SignedVerification: @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
     MessageType.SignedMeritRemoval: @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, BYTE_LEN, 0, BLS_SIGNATURE_LEN],
 
-    MessageType.BlockHeader: @[INT_LEN + HASH_LEN + HASH_LEN + BYTE_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
-    MessageType.BlockBody: @[INT_LEN, INT_LEN, INT_LEN, -SKETCH_ELEMENT_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
-    MessageType.BlockTransactions: @[INT_LEN, -HASH_LEN],
+    MessageType.BlockHeader: @[INT_LEN + HASH_LEN + HASH_LEN + BYTE_LEN + NICKNAME_LEN + INT_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
+    MessageType.BlockBody: @[INT_LEN, -SKETCH_ELEMENT_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
     MessageType.VerificationPacket: @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN]
 }.toTable()
 

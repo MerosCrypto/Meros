@@ -120,21 +120,6 @@ class Syncer():
 
                 self.rpc.meros.blockHeader(self.blocks[0].header)
 
-            elif MessageType(msg[0]) == MessageType.BlockTransactionsRequest:
-                reqHash = msg[1 : 49]
-                if reqHash != self.blocks[0]:
-                    raise TestError("Meros asked for a Block's Transactions other than the next Block on the last BlockList.")
-
-                txs: List[bytes] = []
-                for packet in self.blocks[0].body.packets:
-                    txs.append(packet.hash)
-                    if packet.hash not in self.synced:
-                        self.packets[packet.hash] = True
-                        self.txs[packet.hash] = True
-                self.rpc.meros.blockTransactions(txs)
-
-                del self.blockHashes[reqHash]
-
             elif MessageType(msg[0]) == MessageType.VerificationPacketRequest:
                 reqHash = msg[1 : 49]
                 if reqHash != self.blocks[0]:

@@ -36,6 +36,8 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
+        #Sketch salt.
+        sketchSalt: string
         #Packets.
         packets: seq[VerificationPacket] = @[]
         #Elements.
@@ -59,39 +61,39 @@ proc test*() =
 
         #Create the BlockBody with a randomized aggregate signature.
         while true:
+            sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255))
+
             body = newBlockBodyObj(
-                rand(100000),
-                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 packets,
                 elements,
                 newMinerWallet().sign($rand(4096))
             )
 
             #Verify the sketch doesn't have a collision.
-            if newSketcher(packets).collides(body.sketchSalt):
+            if newSketcher(packets).collides(sketchSalt):
                 continue
             break
 
         #Serialize it and parse it back.
-        reloaded = body.serialize().parseBlockBody()
+        reloaded = body.serialize(sketchSalt).parseBlockBody()
 
         #Create the Sketch and extract its elements.
         sketchResult = newSketcher(packets).merge(
-            reloaded.packets,
+            reloaded.sketch,
             reloaded.capacity,
             0,
-            reloaded.data.sketchSalt
+            sketchSalt
         )
         doAssert(sketchResult.missing.len == 0)
         reloaded.data.packets = sketchResult.packets
 
         #Test the serialized versions.
-        assert(body.serialize() == reloaded.data.serialize())
+        assert(body.serialize(sketchSalt) == reloaded.data.serialize(sketchSalt))
 
         #Compare the BlockBodies.
         compare(body, reloaded.data)
 
-        #Clear the packets, and elements.
+        #Clear the packets and elements.
         packets = @[]
         elements = @[]
 

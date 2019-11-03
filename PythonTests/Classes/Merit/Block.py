@@ -59,7 +59,7 @@ class Block:
     def serialize(
         self
     ) -> bytes:
-        return self.header.serialize() + self.body.serialize()
+        return self.header.serialize() + self.body.serialize(self.header.sketchSalt)
 
     #Block -> JSON.
     def toJSON(

@@ -74,6 +74,9 @@ proc `%`(
             "last":      $blockArg.header.last,
             "contents":  $blockArg.header.contents,
 
+            "significant": blockArg.header.significant,
+            "sketchSalt":  blockArg.header.sketchSalt.pad(4).toHex(),
+
             "time":      blockArg.header.time,
             "proof":     blockArg.header.proof,
             "signature": $blockArg.header.signature
@@ -89,10 +92,6 @@ proc `%`(
             result["header"]["miner"] = % blockArg.header.minerNick
     except KeyError as e:
         doAssert(false, "Couldn't add a miner to a BlockHeader's JSON representation despite declaring an object for the header: " & e.msg)
-
-    #Add the significant/sketchSalt.
-    result["significant"] = % blockArg.body.significant
-    result["sketchSalt"] = % blockArg.body.sketchSalt.pad(4).toHex()
 
     #Add the Packets.
     result["transactions"] = % []

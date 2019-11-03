@@ -15,7 +15,9 @@ class BlockHeader:
             self.version.to_bytes(4, "big") +
             self.last +
             self.contents +
-            (1 if self.newMiner else 0).to_bytes(1, 'big') +
+            self.significant.to_bytes(2, "big") +
+            self.sketchSalt +
+            (1 if self.newMiner else 0).to_bytes(1, "big") +
             (self.minerKey if self.newMiner else self.minerNick.to_bytes(2, "big")) +
             self.time.to_bytes(4, "big")
         )
@@ -48,6 +50,8 @@ class BlockHeader:
         version: int,
         last: bytes,
         contents: bytes,
+        significant: int,
+        sketchSalt: bytes,
         miner: Union[int, bytes],
         time: int,
         proof: int = 0,
@@ -56,6 +60,9 @@ class BlockHeader:
         self.version: int = version
         self.last: bytes = last
         self.contents: bytes = contents
+
+        self.significant: int = significant
+        self.sketchSalt: bytes = sketchSalt
 
         self.newMiner: bool = isinstance(miner, bytes)
         if isinstance(miner, bytes):
@@ -86,6 +93,8 @@ class BlockHeader:
             "version": self.version,
             "last": self.last.hex().upper(),
             "contents": self.contents.hex().upper(),
+            "significant": self.significant,
+            "sketchSalt": self.sketchSalt.hex().upper(),
             "miner": self.minerKey.hex().upper() if self.newMiner else self.minerNick,
             "time": self.time,
             "proof": self.proof,
@@ -101,6 +110,8 @@ class BlockHeader:
             json["version"],
             bytes.fromhex(json["last"]),
             bytes.fromhex(json["contents"]),
+            json["significant"],
+            bytes.fromhex(json["sketchSalt"]),
             bytes.fromhex(json["miner"]) if isinstance(json["miner"], str) else json["miner"],
             json["time"],
             json["proof"],

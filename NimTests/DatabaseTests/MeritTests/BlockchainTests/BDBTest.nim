@@ -129,9 +129,9 @@ proc test*() =
             mining = newBlankBlock(
                 uint32(0),
                 blockchain.tail.header.hash,
-                miners[miner],
-                rand(100000),
+                uint16(rand(50000)),
                 char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                miners[miner],
                 packets,
                 elements
             )
@@ -143,10 +143,10 @@ proc test*() =
             mining = newBlankBlock(
                 uint32(0),
                 blockchain.tail.header.hash,
+                uint16(rand(50000)),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 uint16(miner),
                 miners[miner],
-                rand(100000),
-                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 packets,
                 elements
             )

@@ -22,6 +22,11 @@ finalsd:
         #Merkle of the contents.
         contents*: Hash[384]
 
+        #Amount of Merit required for a Transaction to be included.
+        significant*: uint16
+        #Salt used when hasing sketch elements in order to avoid collisions.
+        sketchSalt*: string
+
         #Miner.
         case newMiner*: bool
             of true:
@@ -43,6 +48,8 @@ func newBlockHeaderObj*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
+    significant: uint16,
+    sketchSalt: string,
     miner: BLSPublicKey,
     time: uint32,
     proof: uint32,
@@ -52,6 +59,10 @@ func newBlockHeaderObj*(
         version: version,
         last: last,
         contents: contents,
+
+        significant: significant,
+        sketchSalt: sketchSalt,
+
         newMiner: true,
         minerKey: miner,
         time: time,
@@ -66,6 +77,8 @@ func newBlockHeaderObj*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
+    significant: uint16,
+    sketchSalt: string,
     miner: uint16,
     time: uint32,
     proof: uint32,
@@ -75,6 +88,10 @@ func newBlockHeaderObj*(
         version: version,
         last: last,
         contents: contents,
+
+        significant: significant,
+        sketchSalt: sketchSalt,
+
         newMiner: false,
         minerNick: miner,
         time: time,

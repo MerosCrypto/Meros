@@ -15,7 +15,7 @@ from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
-from PythonTests.Classes.Merit.BlockBody import BlockBody
+from PythonTests.Classes.Merit.Block import Block
 
 #TestError Exception.
 from PythonTests.Tests.Errors import TestError
@@ -85,7 +85,6 @@ lengths: Dict[MessageType, List[int]] = {
 
     MessageType.BlockHeaderRequest: [48],
     MessageType.BlockBodyRequest: [48],
-    MessageType.BlockTransactionsRequest: [48],
     MessageType.VerificationPacketRequest: [96],
     MessageType.TransactionRequest: [48],
     MessageType.DataMissing: [],
@@ -98,9 +97,8 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.SignedVerification: [146],
     MessageType.SignedMeritRemoval: [4, 0, 1, 0, 96],
 
-    MessageType.BlockHeader: [101, 0, 104],
-    MessageType.BlockBody: [8, 4, -8, 4, 0, 96],
-    MessageType.BlockTransactions: [4, -48],
+    MessageType.BlockHeader: [107, 0, 104],
+    MessageType.BlockBody: [4, -8, 4, 0, 96],
     MessageType.VerificationPacket: [1, -2, 48]
 }
 
@@ -322,26 +320,12 @@ class Meros:
     #Send a Block Body.
     def blockBody(
         self,
-        body: BlockBody
+        block: Block
     ) -> bytes:
         res: bytes = (
             MessageType.BlockBody.toByte() +
-            body.serialize()
+            block.body.serialize(block.header.sketchSalt)
         )
-        self.send(res)
-        return res
-
-    #Send a Block Transactions.
-    def blockTransactions(
-        self,
-        txs: List[bytes]
-    ) -> bytes:
-        res: bytes = (
-            MessageType.BlockTransactions.toByte() +
-            len(txs).to_bytes(4, byteorder="big")
-        )
-        for tx in txs:
-            res += tx
         self.send(res)
         return res
 

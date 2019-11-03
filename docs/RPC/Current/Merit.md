@@ -19,13 +19,12 @@ The result is an object, as follows:
     - `version`   (int)
     - `last`      (string)
     - `contents`  (string)
+    - `significant` (int)
+    - `sketchSalt`  (string)
     - `miner`     (int/string): Either the miner's nick as an int or the key as a string if this is their first Block.
     - `time`      (int)
     - `proof`     (int)
     - `signature` (string)
-
-- `significant` (int)
-- `sketchSalt`  (string)
 
 - `transactions` (array of objects, each as follows)
     - `hash`    (string)

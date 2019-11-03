@@ -30,8 +30,6 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     result =
         blockArg.header.serialize() &
-        blockArg.body.significant.toBinary().pad(INT_LEN) &
-        blockArg.body.sketchSalt.pad(INT_LEN) &
         blockArg.body.packets.len.toBinary().pad(INT_LEN)
 
     for packet in blockArg.body.packets:
