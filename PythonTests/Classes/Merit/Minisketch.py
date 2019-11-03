@@ -83,7 +83,7 @@ class Sketch():
         if self.capacity == 0:
             return []
 
-        decoded: Array = (c_uint64 * self.capacity)()
+        decoded: Array[c_uint64] = (c_uint64 * self.capacity)()
         differences: int = MinisketchLib.minisketch_decode(self.sketch, c_size_t(self.capacity), byref(decoded))
 
         if differences == -1:
