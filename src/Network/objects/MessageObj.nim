@@ -17,37 +17,38 @@ finalsd:
     type
         #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
         MessageType* {.pure.} = enum
-            Handshake = 0,
-            BlockchainTail = 1,
+            Handshake                 = 0,
+            BlockchainTail            = 1,
 
-            Syncing = 2,
-            SyncingAcknowledged = 3,
-            BlockListRequest = 6,
-            BlockList = 7,
+            Syncing                   = 2,
+            SyncingAcknowledged       = 3,
+            BlockListRequest          = 6,
+            BlockList                 = 7,
 
-            BlockHeaderRequest = 9,
-            BlockBodyRequest = 10,
-            BlockTransactionsRequest = 11,
-            VerificationPacketRequest = 12,
-            TransactionRequest = 13,
-            DataMissing = 14,
-            SyncingOver = 15,
+            BlockHeaderRequest        = 9,
+            BlockBodyRequest          = 10,
+            SketchHashesRequest       = 11,
+            SketchHashRequest         = 12,
+            VerificationPacketRequest = 13,
+            TransactionRequest        = 14,
+            DataMissing               = 15,
+            SyncingOver               = 16,
 
-            Claim = 16,
-            Send = 17,
-            Data = 18,
+            Claim                     = 17,
+            Send                      = 18,
+            Data                      = 19,
 
-            SignedVerification = 21,
-            SignedMeritRemoval = 25,
+            SignedVerification        = 22,
+            SignedMeritRemoval        = 26,
 
-            BlockHeader = 27,
-            BlockBody = 28,
-            BlockTransactions = 29,
-            VerificationPacket = 30,
+            BlockHeader               = 28,
+            BlockBody                 = 29,
+            SketchHashes              = 30,
+            VerificationPacket        = 31,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 31
+            End = 32
 
         #Message object.
         Message* = object
