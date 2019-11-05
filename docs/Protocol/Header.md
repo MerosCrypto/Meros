@@ -19,7 +19,7 @@ The message types are as follows (with their list number being their byte header
 <li><code>BlockHeaderRequest</code></li>
 <li><code>BlockBodyRequest</code></li>
 <li><code>SketchHashesRequest</code></li>
-<li><code>SketchHashRequest</code></li>
+<li><code>SketchHashRequests</code></li>
 <li><code>VerificationPacketRequest</code></li>
 <li><code>TransactionRequest</code></li>
 <li><code>DataMissing</code></li>

@@ -13,7 +13,7 @@ During syncing, the syncer can only send:
 - `BlockHeaderRequest`
 - `BlockBodyRequest`
 - `SketchHashesRequest`
-- `SketchHashRequest`
+- `SketchHashRequests`
 - `VerificationPacketRequest`
 - `TransactionRequest`
 
@@ -66,9 +66,9 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 `SketchHashesRequest` has a message length of 48-bytes; the Block's 48-byte hash. The expected response is a `SketchHashes` containing the sketch hashes for the specified Block. `SketchHashes` has a variable message length; the 4-byte amount of hashes and each 8-byte hash.
 
-### SketchHashRequest
+### SketchHashRequests
 
-`SketchHashRequest` has a message length of 56-bytes; the Block's 48-byte hash and the 8-byte sketch hash. The expected response is a `VerificationPacket` containing the VerificationPacket which created the specified sketch hash in the specified Block.
+`SketchHashRequests` has a variable message length; the Block's 48-byte hash, the 4-byte amount of sketch hashes, and each 8-byte sketch hash. The expected response is multiple `VerificationPacket` messages, each containing the VerificationPacket which created the matching sketch hash in the specified Block.
 
 ### VerificationPacketRequest
 
@@ -92,5 +92,5 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 - Meros doesn't support the `BlockListRequest` and `BlockList` message types.
 - Meros doesn't support the `CheckpointRequest` message type.
 - Meros doesn't support the `SketchHashesRequest` and `SketchHashes` message types.
-- Meros doesn't support the `SketchHashRequest` message types.
+- Meros doesn't support the `SketchHashRequests` message type.
 - Meros doesn't support the `VerificationPacketRequest` message type.
