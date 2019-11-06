@@ -42,7 +42,7 @@ class MessageType(Enum):
     BlockHeaderRequest        = 9
     BlockBodyRequest          = 10
     SketchHashesRequest       = 11
-    SketchHashRequest         = 12
+    SketchHashRequests        = 12
     VerificationPacketRequest = 13
     TransactionRequest        = 14
     DataMissing               = 15
@@ -75,31 +75,34 @@ class MessageType(Enum):
 #A negative number means read the last positive section * X bytes,
 #A zero means custom logic should be used.
 lengths: Dict[MessageType, List[int]] = {
-    MessageType.Handshake: [51],
-    MessageType.BlockchainTail: [48],
+    MessageType.Handshake:                 [51],
+    MessageType.BlockchainTail:            [48],
 
-    MessageType.Syncing: [],
-    MessageType.SyncingAcknowledged: [],
-    MessageType.BlockListRequest: [50],
-    MessageType.BlockList: [1, -48, 48],
+    MessageType.Syncing:                   [],
+    MessageType.SyncingAcknowledged:       [],
+    MessageType.BlockListRequest:          [50],
+    MessageType.BlockList:                 [1, -48, 48],
 
-    MessageType.BlockHeaderRequest: [48],
-    MessageType.BlockBodyRequest: [48],
+    MessageType.BlockHeaderRequest:        [48],
+    MessageType.BlockBodyRequest:          [48],
+    MessageType.SketchHashesRequest:       [48],
+    MessageType.SketchHashRequests:        [48, 4, -8],
     MessageType.VerificationPacketRequest: [96],
-    MessageType.TransactionRequest: [48],
-    MessageType.DataMissing: [],
-    MessageType.SyncingOver: [],
+    MessageType.TransactionRequest:        [48],
+    MessageType.DataMissing:               [],
+    MessageType.SyncingOver:               [],
 
-    MessageType.Claim: [1, -48, 128],
-    MessageType.Send: [1, -49, 1, -40, 68],
-    MessageType.Data: [48, 1, -1, 68],
+    MessageType.Claim:                     [1, -48, 128],
+    MessageType.Send:                      [1, -49, 1, -40, 68],
+    MessageType.Data:                      [48, 1, -1, 68],
 
-    MessageType.SignedVerification: [146],
-    MessageType.SignedMeritRemoval: [4, 0, 1, 0, 96],
+    MessageType.SignedVerification:        [146],
+    MessageType.SignedMeritRemoval:        [4, 0, 1, 0, 96],
 
-    MessageType.BlockHeader: [107, 0, 104],
-    MessageType.BlockBody: [4, -8, 4, 0, 96],
-    MessageType.VerificationPacket: [1, -2, 48]
+    MessageType.BlockHeader:               [107, 0, 104],
+    MessageType.BlockBody:                 [4, -8, 4, 0, 96],
+    MessageType.SketchHashes:              [4, -8],
+    MessageType.VerificationPacket:        [1, -2, 48]
 }
 
 class Meros:

@@ -32,7 +32,7 @@ proc parseBlockBody*(
     #Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
     result.capacity = bodyStr[0 ..< INT_LEN].fromBinary()
     var
-        sketchLen: int = result.capacity * SKETCH_ELEMENT_LEN
+        sketchLen: int = result.capacity * SKETCH_HASH_LEN
         sketchStart: int = INT_LEN
         elementsStart: int = sketchStart + sketchLen
 

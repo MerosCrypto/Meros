@@ -28,7 +28,7 @@ finalsd:
             BlockHeaderRequest        = 9,
             BlockBodyRequest          = 10,
             SketchHashesRequest       = 11,
-            SketchHashRequest         = 12,
+            SketchHashRequests        = 12,
             VerificationPacketRequest = 13,
             TransactionRequest        = 14,
             DataMissing               = 15,
@@ -69,31 +69,34 @@ proc hash*(
 #A negative number means read the last positive section * X bytes,
 #A zero means custom logic should be used.
 const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
-    MessageType.Handshake: @[BYTE_LEN + BYTE_LEN + BYTE_LEN + HASH_LEN],
-    MessageType.BlockchainTail: @[HASH_LEN],
+    MessageType.Handshake:                 @[BYTE_LEN + BYTE_LEN + BYTE_LEN + HASH_LEN],
+    MessageType.BlockchainTail:            @[HASH_LEN],
 
-    MessageType.Syncing: @[],
-    MessageType.SyncingAcknowledged: @[],
-    MessageType.BlockListRequest: @[BYTE_LEN + BYTE_LEN + HASH_LEN],
-    MessageType.BlockList: @[BYTE_LEN, -HASH_LEN, HASH_LEN],
+    MessageType.Syncing:                   @[],
+    MessageType.SyncingAcknowledged:       @[],
+    MessageType.BlockListRequest:          @[BYTE_LEN + BYTE_LEN + HASH_LEN],
+    MessageType.BlockList:                 @[BYTE_LEN, -HASH_LEN, HASH_LEN],
 
-    MessageType.BlockHeaderRequest: @[HASH_LEN],
-    MessageType.BlockBodyRequest: @[HASH_LEN],
+    MessageType.BlockHeaderRequest:        @[HASH_LEN],
+    MessageType.BlockBodyRequest:          @[HASH_LEN],
+    MessageType.SketchHashesRequest:       @[HASH_LEN],
+    MessageType.SketchHashRequests:        @[HASH_LEN, INT_LEN, -SKETCH_HASH_LEN],
     MessageType.VerificationPacketRequest: @[HASH_LEN + HASH_LEN],
-    MessageType.TransactionRequest: @[HASH_LEN],
-    MessageType.DataMissing: @[],
-    MessageType.SyncingOver: @[],
+    MessageType.TransactionRequest:        @[HASH_LEN],
+    MessageType.DataMissing:               @[],
+    MessageType.SyncingOver:               @[],
 
-    MessageType.Claim: @[BYTE_LEN, -HASH_LEN, ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
-    MessageType.Send: @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), BYTE_LEN, -(ED_PUBLIC_KEY_LEN + MEROS_LEN), ED_SIGNATURE_LEN + INT_LEN],
-    MessageType.Data: @[HASH_LEN, BYTE_LEN, -BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
+    MessageType.Claim:                     @[BYTE_LEN, -HASH_LEN, ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
+    MessageType.Send:                      @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), BYTE_LEN, -(ED_PUBLIC_KEY_LEN + MEROS_LEN), ED_SIGNATURE_LEN + INT_LEN],
+    MessageType.Data:                      @[HASH_LEN, BYTE_LEN, -BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
 
-    MessageType.SignedVerification: @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
-    MessageType.SignedMeritRemoval: @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, BYTE_LEN, 0, BLS_SIGNATURE_LEN],
+    MessageType.SignedVerification:        @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
+    MessageType.SignedMeritRemoval:        @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, BYTE_LEN, 0, BLS_SIGNATURE_LEN],
 
-    MessageType.BlockHeader: @[INT_LEN + HASH_LEN + HASH_LEN + BYTE_LEN + NICKNAME_LEN + INT_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
-    MessageType.BlockBody: @[INT_LEN, -SKETCH_ELEMENT_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
-    MessageType.VerificationPacket: @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN]
+    MessageType.BlockHeader:               @[INT_LEN + HASH_LEN + HASH_LEN + BYTE_LEN + NICKNAME_LEN + INT_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
+    MessageType.BlockBody:                 @[INT_LEN, -SKETCH_HASH_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
+    MessageType.SketchHashes:              @[INT_LEN, -SKETCH_HASH_LEN],
+    MessageType.VerificationPacket:        @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN]
 }.toTable()
 
 #Finalize the Message.
