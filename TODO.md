@@ -34,29 +34,6 @@ UI:
 
 Network:
 
-- Syncing currently works by:
-    - Get the hash of the next Block.
-    - Get the BlockHeader.
-    - Get the BlockBody.
-    - Sync all the Elements from the Block.
-    - Sync all the Entries from the Elements.
-    - Add the Block.
-
-	Switching this to:
-
-    - Get the hash of the next Block who's nonce modulus 5 == 0.
-    - Get the Checkpoint.
-    - Sync every BlockHeader in the checkpoint, in reverse order.
-    - For each BlockHeader, in order:
-        - Test the BlockHeader.
-        - Sync the BlockBody.
-        - Sync all the Elements from the Block.
-        - Sync all the Entries from the Elements.
-        - Add the Block.
-    - When there are no more Checkpoints, get the hash of each individual Block...
-
-	Will reduce network traffic and increase security.
-
 - Check requested data is requested data.
 - Prevent the same client from connecting multiple times.
 - Peer finding.
@@ -76,14 +53,13 @@ Wallet:
 
 Filesystem:
 
-- No longer save Verifications/VerificationPackets, except pending ones, in the Consensus DB.
+- No longer save Verifications/VerificationPackets in the Consensus DB.
 
 Merit:
 
 - Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
 - If our sketch has a collision, check if the Block doesn't (as that would mean it's valid).
-- If we sync a Block with a working Transactions sketch yet invalid merkle, check if there was a collision between one of our elements and one we didn't have which was included in the sketch.
-- Verify Elements don't cause a MeritRemoval in MainMerit (as well as the fact they have yet to be archived).
+- If we sync a Block with a working sketch yet invalid merkle, check if there was a collision between one of our elements and one we didn't have which was included in the sketch.
 
 Consensus:
 
@@ -94,17 +70,11 @@ Consensus:
 
 RPC:
 
-- Functioning getBlockTemplate/publishBlock. They were disabled when we added sketches.
+- Functioning getBlockTemplate/publishBlock. These were disabled when we added sketches.
 
 Network:
 
 - Message receiving uses a last positive to support X, -Y, -Z where Y and Z are both multiples of X. This was added to support having two sketches in a row which share a capacity. This functionality is no longer needed and should likely be removed.
-
-- Networking message to turn a 8-byte hash (used in the sketch) into a VerificationPacket.
-- Networking message to get a Block's full Transaction list.
-- The old code handled the other client syncing in the main message switch, yet had dedicated code for when we synced something. Both cases should have dedicated code for easy detection of if the other party sent a syncing message when they shouldn't have. Since the updated message switch requires that, implement it.
-- Syncing.
-- Support BlockchainTail messages.
 
 - Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
 

@@ -117,7 +117,7 @@ proc test*() =
         #Compare the Blocks.
         compare(newBlock, reloaded.data)
 
-        #Clear the packets, and elements.
+        #Clear the packets and elements.
         packets = @[]
         elements = @[]
 
