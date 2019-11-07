@@ -25,7 +25,7 @@ from PythonTests.Tests.Consensus.Verify import verifyConsensus
 from PythonTests.Tests.Transactions.Verify import verifyTransactions
 """
 
-#pylint: disable=too-many-instance-attributes
+#pylint: disable=too-many-instance-attributes,too-few-public-methods
 class Syncer():
     def __init__(
         self,
@@ -54,11 +54,11 @@ class Syncer():
 
         #List of Block hashes in this Blockchain.
         self.blockHashes: Dict[bytes, bool] = {}
-        for b in range(self.settings["height"] + 1):
+        for b in range(1, self.settings["height"] + 1):
             self.blockHashes[self.blockchain.blocks[b].header.hash] = True
 
         #List of mentioned Blocks.
-        self.blocks: List[Block]
+        self.blocks: List[Block] = [self.blockchain.blocks[self.settings["height"]]]
 
         #Dict of mentioned packets.
         self.packets: Dict[bytes, int] = {}
@@ -69,7 +69,8 @@ class Syncer():
         self.synced: Dict[bytes, bool] = {}
 
     #Sync the DB and verify it.
-    #The following PyLint error is due to handling all the various message types.
+    #The following PyLint errors are due to handling all the various message types.
+    #pylint: disable=too-many-nested-blocks,too-many-statements
     def sync(
         self
     ) -> None:
@@ -85,9 +86,6 @@ class Syncer():
                 self.rpc.meros.syncingAcknowledged()
 
             elif MessageType(msg[0]) == MessageType.BlockListRequest:
-                if self.blocks != []:
-                    raise TestError("Meros is asking for a new BlockList before finishing syncing the last one.")
-
                 for b in range(len(self.blockchain.blocks)):
                     if self.blockchain.blocks[b].header.hash == reqHash:
                         blockList: List[bytes] = []
@@ -95,15 +93,25 @@ class Syncer():
                             if msg[1] == 0:
                                 if b - bl < 0:
                                     break
-                                self.blocks.append(self.blockchain.blocks[b - bl])
-                                blockList.append(self.blocks[-1].header.hash)
+
+                                blockList.append(self.blockchain.blocks[b - bl].header.hash)
+                                if b - bl != 0:
+                                    self.blocks.append(self.blockchain.blocks[b - bl])
+
                             elif msg[1] == 1:
                                 if b + bl > self.settings["height"]:
                                     break
-                                self.blocks.append(self.blockchain.blocks[b - bl])
-                                blockList.append(self.blocks[-1].header.hash)
+
+                                blockList.append(self.blockchain.blocks[b + bl].header.hash)
+                                self.blocks.append(self.blockchain.blocks[b + bl])
+
                             else:
                                 raise TestError("Meros asked for an invalid direction in a BlockListRequest.")
+
+                        if blockList == []:
+                            self.rpc.meros.dataMissing()
+                            break
+
                         self.rpc.meros.blockList(blockList)
                         break
 
@@ -115,28 +123,41 @@ class Syncer():
                     raise TestError("Meros asked for a new Block before syncing the last Block's Transactions and Packets.")
 
                 reqHash = msg[1 : 49]
-                if reqHash != self.blocks[0]:
-                    raise TestError("Meros asked for a Block's Header other than the next Block's on the last BlockList.")
+                if reqHash != self.blocks[-1].header.hash:
+                    raise TestError("Meros asked for a BlockHeader other than the next Block's on the last BlockList.")
 
-                self.rpc.meros.blockHeader(self.blocks[0].header)
+                self.rpc.meros.blockHeader(self.blocks[-1].header)
+
+            elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+                reqHash = msg[1 : 49]
+                if reqHash != self.blocks[-1].header.hash:
+                    raise TestError("Meros asked for a BlockBody other than the next Block's on the last BlockList.")
+
+                self.rpc.meros.blockBody(self.blocks[-1])
+                del self.blockHashes[reqHash]
+
+                #Set packets/transactions.
+
+                if self.packets == {}:
+                    del self.blocks[-1]
 
             elif MessageType(msg[0]) == MessageType.VerificationPacketRequest:
                 reqHash = msg[1 : 49]
-                if reqHash != self.blocks[0]:
+                if reqHash != self.blocks[-1]:
                     raise TestError("Meros asked for a Block's VerificationPacket other than the next Block on the last BlockList.")
 
                 reqHash = msg[49 : 97]
-                for packet in self.blocks[0].body.packets:
+                for packet in self.blocks[-1].body.packets:
                     if packet.hash == reqHash:
                         self.rpc.meros.packet(packet)
                         del self.packets[reqHash]
                         break
 
-                    if packet.hash == self.blocks[0].body.packets[len(self.blocks[0].body.packets) - 1].hash:
+                    if packet.hash == self.blocks[-1].body.packets[len(self.blocks[-1].body.packets) - 1].hash:
                         raise TestError("Meros asked for a VerificationPacket for a Transaction in a Block which doesn't have that Transaction.")
 
                 if self.packets == {}:
-                    del self.blocks[0]
+                    del self.blocks[-1]
 
             elif MessageType(msg[0]) == MessageType.TransactionRequest:
                 reqHash = msg[1 : 49]

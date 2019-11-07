@@ -2,19 +2,144 @@
 include NetworkCore
 
 discard """
-#Sync a Block's Transactions/VerificationPackets.
+Once https://github.com/nim-lang/Nim/issues/12530 is fixed, the following code block can be applied to the following functions:
+
+    #Return if we synced the body.
+    if synced:
+        return
+
+#If we exited the loop, we failed to sync the body from every client.
+raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
+"""
+
+#Request a Transaction.
+proc requestTransaction*(
+    network: Network,
+    hash: Hash[384]
+): Future[Transaction] {.forceCheck: [
+    DataMissing
+], async.} =
+    var synced: bool = false
+    for client in network.clients.notSyncing:
+        try:
+            #Start syncing.
+            await client.startSyncing()
+
+            #Get the Transaction.
+            try:
+                result = await client.syncTransaction(hash, Hash[384](), Hash[384]())
+                synced = true
+            except DataMissing:
+                discard
+
+            #Stop syncing.
+            await client.stopSyncing()
+        except ClientError:
+            network.clients.disconnect(client.id)
+            continue
+        except Exception as e:
+            doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Break if we synced the Transaction.
+        if synced:
+            break
+
+    #Raise an Exception if we failed to sync the Transaction.
+    if not synced:
+        raise newException(DataMissing, "Couldn't sync the specified Transaction.")
+
+#Request a VerificationPacket.
+proc requestVerificationPacket(
+    network: Network,
+    blockHash: Hash[384],
+    txHash: Hash[384]
+): Future[VerificationPacket] {.forceCheck: [
+    DataMissing
+], async.} =
+    var synced: bool = false
+    for client in network.clients.notSyncing:
+        try:
+            #Start syncing.
+            await client.startSyncing()
+
+            #Get the VerificationPacket.
+            try:
+                result = await client.syncVerificationPacket(blockHash, txHash)
+                synced = true
+            except DataMissing:
+                discard
+
+            #Stop syncing.
+            await client.stopSyncing()
+        except ClientError:
+            network.clients.disconnect(client.id)
+            continue
+        except Exception as e:
+            doAssert(false, "Syncing a Verification Packet threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Break if we synced the VerificationPacket.
+        if synced:
+            break
+
+    #Raise an Exception if we failed to sync the VerificationPacket.
+    if not synced:
+        raise newException(DataMissing, "Couldn't sync the specified Verification Packet.")
+
+#Sync a Block's missing Transactions/VerificationPackets.
 proc sync*(
     network: Network,
     newBlock: SketchyBlock,
     sketcher: Sketcher
-) {.forceCheck: [], async.} =
+) {.forceCheck: [
+    ValueError,
+    DataMissing
+], async.} =
+    discard """
     var
-        #Mentioned Transactions.
-        mentioned: Table[Hash[384], bool] = initTable[Hash[384], bool]()
-        #Hashes of the Transactions mentioned in missing Elements.
-        txHashes: seq[Hash[384]] = @[]
-        #Transactions mentioned in missing Elements.
+        #Block's Transactions.
         transactions: seq[Transaction] = @[]
+        #Block's Verification Packets.
+        packets: seq[VerificationPackets] = @[]
+
+        #Missing Transactions/Packets.
+        missing: seq[Hash[384]] = @[]
+
+        #SketchResult.
+        sketchResult: SketchResult
+
+    try:
+        #Try to resolve the Sketch.
+        sketchResult = sketcher.merge(
+            newBlock.sketch,
+            newBlock.capacity,
+            newBlock.body.data.significant,
+            newBlock.body.data.sketchSalt
+        )
+
+        #IF that succeeded, turn the 8-byte hashes into full 48-byte Transaction hashes.
+    #Sketch failed to decode.
+    except ValueError as e:
+        #Generate a Table of Transactions we have in the Sketcher (which are over significance).
+        var lookup: Table[Hash[384], bool] = initTable[Hash[384], bool]()
+        for elem in sketcher:
+            if elem.significance < newBlock.body.data.significant:
+                continue
+            lookup[elem.packet.hash] = true
+
+        try:
+            missing = await network.requestBlockTransaction(newBlock.data.header.hash)
+        except DataMissing as e:
+            fcRaise e
+
+        #Remove Transactions present in our sketcher.
+        for m in 0 ..< missing.len:
+            if lookup.hasKey(missing[m]):
+                missing.del(m)
+    #Sketch had a collision.
+    except SaltError as e:
+        raise newException(ValueError, "Block's sketch has a collision.")
+
+    #
 
     #Sync the missing VerificationPackets.
 
@@ -152,12 +277,12 @@ proc sync*(
                         doAssert(false, "Synced an Transaction of an unsyncable type.")
         #Set transactions to todo.
         transactions = todo
-"""
+    """
 
-#Sync a Block's Body.
-proc sync*(
+#Request a BlockBody.
+proc requestBlockBody*(
     network: Network,
-    header: BlockHeader
+    hash: Hash[384]
 ): Future[SketchyBlockBody] {.forceCheck: [
     DataMissing
 ], async.} =
@@ -169,7 +294,7 @@ proc sync*(
 
             #Get the BlockBody.
             try:
-                result = await client.syncBlockBody(header.hash)
+                result = await client.syncBlockBody(hash)
                 synced = true
             except DataMissing:
                 discard
@@ -189,16 +314,6 @@ proc sync*(
     #Raise an Exception if we failed to sync the body.
     if not synced:
         raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
-
-    discard """
-    https://github.com/nim-lang/Nim/issues/12530
-        #Return if we synced the body.
-        if synced:
-            return
-
-    #If we exited the loop, we failed to sync the body from every client.
-    raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
-    """
 
 #Request a BlockHeader.
 proc requestBlockHeader*(
@@ -228,28 +343,48 @@ proc requestBlockHeader*(
         except Exception as e:
             doAssert(false, "Syncing a BlockHeader threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #Break if we synced the body.
+        #Break if we synced the header.
         if synced:
             break
 
-    #Raise an Exception if we failed to sync the body.
+    #Raise an Exception if we failed to sync the header.
     if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
-
-    discard """
-    https://github.com/nim-lang/Nim/issues/12530
-        #Return if we synced the header.
-        if synced:
-            return
-
-    #If we exited the loop, we failed to sync the header from every client.
-    raise newException(DataMissing, "Couldn't sync the specified BlockHeader.")
-    """
+        raise newException(DataMissing, "Couldn't sync the specified BlockHeader.")
 
 #Request a Block List.
 proc requestBlockList*(
     network: Network,
     forwards: bool,
+    amount: int,
     hash: Hash[384]
-): Future[Hash[384]] {.forceCheck: [], async.} =
-    discard
+): Future[seq[Hash[384]]] {.forceCheck: [
+    DataMissing
+], async.} =
+    var synced: bool = false
+    for client in network.clients.notSyncing:
+        try:
+            #Start syncing.
+            await client.startSyncing()
+
+            #Get the Block List.
+            try:
+                result = await client.syncBlockList(forwards, amount, hash)
+                synced = true
+            except DataMissing:
+                discard
+
+            #Stop syncing.
+            await client.stopSyncing()
+        except ClientError:
+            network.clients.disconnect(client.id)
+            continue
+        except Exception as e:
+            doAssert(false, "Syncing a Block List threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Break if we synced the list.
+        if synced:
+            break
+
+    #Raise an Exception if we failed to sync the list.
+    if not synced:
+        raise newException(DataMissing, "Couldn't sync the specified Block List.")

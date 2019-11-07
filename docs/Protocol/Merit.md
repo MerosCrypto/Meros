@@ -186,8 +186,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros has the sketchSalt and significant in the BlockBody.
-
 - Meros doesn't check that BlockHeader's have valid significant fields.
 - Meros doesn't check BlockBody's have valid capacity fields.
 - Meros doesn't check that Block's Verification Packets are for unique Transactions.

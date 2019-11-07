@@ -58,37 +58,36 @@ proc syncTransaction*(
     DataMissing,
     Spam
 ], async.} =
-    var msg: Message
     try:
         #Send the request.
         await client.send(newMessage(MessageType.TransactionRequest, hash.toString()))
 
         #Get their response.
-        msg = await client.recv()
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Sending a `TransactionRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        var msg: Message = await client.recv()
 
-    #Parse the response.
-    try:
-        case msg.content:
-            of MessageType.Claim:
-                result = msg.message.parseClaim()
-            of MessageType.Send:
-                result = msg.message.parseSend(sendDiff)
-            of MessageType.Data:
-                result = msg.message.parseData(dataDiff)
-            of MessageType.DataMissing:
-                raise newException(DataMissing, "Client didn't have the requested Transaction.")
-            else:
-                raise newException(ClientError, "Client didn't respond properly to our TransactionRequest.")
-    except ValueError as e:
-        raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
-    except BLSError as e:
-        raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a BLSError: " & e.msg)
-    except EdPublicKeyError as e:
-        raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a EdPublicKeyError: " & e.msg)
+        #Parse the response.
+        try:
+            case msg.content:
+                of MessageType.Claim:
+                    result = msg.message.parseClaim()
+                of MessageType.Send:
+                    result = msg.message.parseSend(sendDiff)
+                of MessageType.Data:
+                    result = msg.message.parseData(dataDiff)
+                of MessageType.DataMissing:
+                    raise newException(DataMissing, "Client didn't have the requested Transaction.")
+                else:
+                    raise newException(ClientError, "Client didn't respond properly to our TransactionRequest.")
+        except ValueError as e:
+            raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
+        except BLSError as e:
+            raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a BLSError: " & e.msg)
+        except EdPublicKeyError as e:
+            raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a EdPublicKeyError: " & e.msg)
+
+        #Verify the received data is what was requested.
+        if result.hash != hash:
+            raise newException(ClientError, "Client sent us the wrong Transaction.")
     except ClientError as e:
         fcRaise e
     except DataMissing as e:
@@ -97,17 +96,51 @@ proc syncTransaction*(
         if e.hash != hash:
             raise newException(ClientError, "Client sent us the wrong Transaction.")
         fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending a `TransactionRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Verify the received data is what was requested.
-    if result.hash != hash:
-        raise newException(ClientError, "Client sent us the wrong Transaction.")
+#Sync a VerificationPacket.
+proc syncVerificationPacket*(
+    client: Client,
+    blockHash: Hash[384],
+    txHash: Hash[384]
+): Future[VerificationPacket] {.forceCheck: [], async.} =
+    discard
 
 #Sync a BlockBody.
 proc syncBlockBody*(
     client: Client,
     hash: Hash[384]
-): Future[SketchyBlockBody] {.forceCheck: [], async.} =
-    discard
+): Future[SketchyBlockBody] {.forceCheck: [
+    ClientError,
+    DataMissing
+], async.} =
+    try:
+        #Send the request.
+        await client.send(newMessage(MessageType.BlockBodyRequest, hash.toString()))
+
+        #Get their response.
+        var msg: Message = await client.recv()
+
+        #Parse the response.
+        try:
+            case msg.content:
+                of MessageType.BlockBody:
+                    result = msg.message.parseBlockBody()
+                of MessageType.DataMissing:
+                    raise newException(DataMissing, "Client didn't have the requested BlockBody.")
+                else:
+                    raise newException(ClientError, "Client didn't respond properly to our BlockBodyRequest.")
+        except ValueError as e:
+            raise newException(ClientError, "Client didn't respond with a valid BlockBody to our BlockBodyRequest, as pointed out by a ValueError: " & e.msg)
+        except BLSError as e:
+            raise newException(ClientError, "Client didn't respond with a valid BlockBody to our BlockBodyRequest, as pointed out by a BLSError: " & e.msg)
+    except ClientError as e:
+        fcRaise e
+    except DataMissing as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending a `BlockBodyRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 #Sync a BlockHeader.
 proc syncBlockHeader*(
@@ -117,39 +150,72 @@ proc syncBlockHeader*(
     ClientError,
     DataMissing
 ], async.} =
-    var msg: Message
     try:
         #Send the request.
         await client.send(newMessage(MessageType.BlockHeaderRequest, hash.toString()))
 
         #Get their response.
-        msg = await client.recv()
-    except ClientError as e:
-        fcRaise e
-    except Exception as e:
-        doAssert(false, "Sending a `BlockHeaderRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        var msg: Message = await client.recv()
 
-    #Parse the response.
-    try:
-        case msg.content:
-            of MessageType.BlockHeader:
-                result = msg.message.parseBlockHeader()
-            of MessageType.DataMissing:
-                raise newException(DataMissing, "Client didn't have the requested BlockHeader.")
-            else:
-                raise newException(ClientError, "Client didn't respond properly to our BlockHeaderRequest.")
-    except ValueError as e:
-        raise newException(ClientError, "Client didn't respond with a valid BlockHeader to our BlockHeaderRequest, as pointed out by a ValueError: " & e.msg)
-    except BLSError as e:
-        raise newException(ClientError, "Client didn't respond with a valid BlockHeader to our BlockHeaderRequest, as pointed out by a BLSError: " & e.msg)
+        #Parse the response.
+        try:
+            case msg.content:
+                of MessageType.BlockHeader:
+                    result = msg.message.parseBlockHeader()
+                of MessageType.DataMissing:
+                    raise newException(DataMissing, "Client didn't have the requested BlockHeader.")
+                else:
+                    raise newException(ClientError, "Client didn't respond properly to our BlockHeaderRequest.")
+        except ValueError as e:
+            raise newException(ClientError, "Client didn't respond with a valid BlockHeader to our BlockHeaderRequest, as pointed out by a ValueError: " & e.msg)
+        except BLSError as e:
+            raise newException(ClientError, "Client didn't respond with a valid BlockHeader to our BlockHeaderRequest, as pointed out by a BLSError: " & e.msg)
+
+        #Verify the received data is what was requested.
+        if result.hash != hash:
+            raise newException(ClientError, "Client sent us the wrong BlockHeader.")
     except ClientError as e:
         fcRaise e
     except DataMissing as e:
         fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending a `BlockHeaderRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Verify the received data is what was requested.
-    if result.hash != hash:
-        raise newException(ClientError, "Client sent us the wrong BlockHeader.")
+#Sync a Block List.
+proc syncBlockList*(
+    client: Client,
+    forwards: bool,
+    amount: int,
+    hash: Hash[384]
+): Future[seq[Hash[384]]] {.forceCheck: [
+    ClientError,
+    DataMissing
+], async.} =
+    try:
+        #Send the request.
+        await client.send(newMessage(MessageType.BlockListRequest, (if forwards: '\1' else: '\0') & char(amount - 1) & hash.toString()))
+
+        #Get their response.
+        var msg: Message = await client.recv()
+
+        #Parse the response.
+        try:
+            case msg.content:
+                of MessageType.BlockList:
+                    for h in countup(1, msg.message.len - 2, 48):
+                        result.add(msg.message[h ..< h + 48].toHash(384))
+                of MessageType.DataMissing:
+                    raise newException(DataMissing, "Client didn't have the requested Block List.")
+                else:
+                    raise newException(ClientError, "Client didn't respond properly to our BlockListRequest.")
+        except ValueError as e:
+            doAssert(false, "48-byte string isn't a valid 48-byte hash: " & e.msg)
+    except ClientError as e:
+        fcRaise e
+    except DataMissing as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending a `BlockListRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 #Tell the Client we're done syncing.
 proc stopSyncing*(

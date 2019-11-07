@@ -44,155 +44,150 @@ import asyncdispatch, asyncnet
 #Handle a client.
 proc handle(
     client: Client,
-    networkFunctions: NetworkLibFunctionBox
+    networkFunctions: NetworkLibFunctionBox,
+    tail: Hash[384]
 ) {.forceCheck: [
-    IndexError,
     ClientError
 ], async.} =
-    #Message loop variable.
-    var msg: Message
-
-    #While the client is still connected...
-    while not client.isClosed():
-        #Read in a new message.
+    try:
+        #Simulate a BlockchainTail message to trigger syncing from a newly handshaked client.
         try:
+            await networkFunctions.handle(newMessage(
+                client.id,
+                MessageType.BlockchainTail,
+                48,
+                tail.toString()
+            ))
+        except Spam:
+            doAssert(false, "Artificial BlockchainTail message threw a Spam exception.")
+
+        #Message loop variable.
+        var msg: Message
+
+        #While the client is still connected...
+        while not client.isClosed():
+            #Read in a new message.
             msg = await client.recv()
-        except ClientError as e:
-            fcRaise e
-        except Exception as e:
-            doAssert(false, "Receiving a message from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #If this was a message changing the sync state, update it and continue.
-        if msg.content == MessageType.Syncing:
-            client.remoteSync = true
+            #If this was a message changing the sync state, update it and continue.
+            if msg.content == MessageType.Syncing:
+                client.remoteSync = true
 
-            #Send SyncingAcknowledged.
-            try:
+                #Send SyncingAcknowledged.
                 await client.send(newMessage(MessageType.SyncingAcknowledged))
-            except ClientError as e:
-                fcRaise e
-            except Exception as e:
-                doAssert(false, "Sending a `SyncingAcknowledged` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-            #Handle the syncing messages.
-            while (not client.isClosed()) and client.remoteSync:
-                #Read in a new message.
-                try:
+                #Handle the syncing messages.
+                while (not client.isClosed()) and client.remoteSync:
+                    #Read in a new message.
                     msg = await client.recv()
-                except ClientError as e:
-                    fcRaise e
-                except Exception as e:
-                    doAssert(false, "Receiving a message from a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-                #Switch based off the message type.
-                case msg.content:
-                    of MessageType.Handshake:
-                        try:
+                    #Switch based off the message type.
+                    case msg.content:
+                        of MessageType.Handshake:
                             await client.send(newMessage(MessageType.BlockchainTail, networkFunctions.getTail().toString()))
-                        except ClientError as e:
-                            fcRaise e
-                        except Exception as e:
-                            doAssert(false, "Sending a `BlockchainTail` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-                    of MessageType.BlockListRequest:
-                        doAssert(false)
+                        of MessageType.BlockListRequest:
+                            var
+                                res: string = ""
+                                last: Hash[384] = msg.message[2 ..< 50].tohash(384)
+                                i: int = -1
 
-                    of MessageType.BlockHeaderRequest:
-                        var header: BlockHeader
-                        try:
-                            header = networkFunctions.getBlock(msg.message.toHash(384)).header
-                        except ValueError as e:
-                            doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
-                        except IndexError:
                             try:
+                                #Backwards.
+                                if int(msg.message[0]) == 0:
+                                    while i < int(msg.message[1]):
+                                        last = networkFunctions.getBlockHashBefore(last)
+                                        res &= last.toString()
+                                        inc(i)
+                                #Forwards.
+                                elif int(msg.message[0]) == 1:
+                                    while i < int(msg.message[1]):
+                                        last = networkFunctions.getBlockHashAfter(last)
+                                        res &= last.toString()
+                                        inc(i)
+                                else:
+                                    raise newException(ClientError, "Client requested an invalid direction for their BlockList.")
+                            except IndexError:
+                                discard
+
+                            if i == -1:
                                 await client.send(newMessage(MessageType.DataMissing))
-                            except ClientError as e:
-                                fcRaise e
-                            except Exception as e:
-                                doAssert(false, "Sending a `DataMissing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                            else:
+                                await client.send(newMessage(MessageType.BlockList, char(i) & res))
 
-                        try:
-                            await client.send(newMessage(MessageType.BlockHeader, header.serialize()))
-                        except ClientError as e:
-                            fcRaise e
-                        except Exception as e:
-                            doAssert(false, "Sending a `BlockHeader` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                    of MessageType.BlockBodyRequest:
-                        var requested: Block
-                        try:
-                            requested = networkFunctions.getBlock(msg.message.toHash(384))
-                        except ValueError as e:
-                            doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
-                        except IndexError:
+                        of MessageType.BlockHeaderRequest:
+                            var header: BlockHeader
                             try:
-                                await client.send(newMessage(MessageType.DataMissing))
-                            except ClientError as e:
-                                fcRaise e
-                            except Exception as e:
-                                doAssert(false, "Sending a `DataMissing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                        try:
-                            await client.send(newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt)))
-                        except ClientError as e:
-                            fcRaise e
-                        except Exception as e:
-                            doAssert(false, "Sending a `BlockBody` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                    of MessageType.VerificationPacketRequest:
-                        doAssert(false)
-
-                    of MessageType.TransactionRequest:
-                        var tx: Transaction
-                        try:
-                            try:
-                                tx = networkFunctions.getTransaction(msg.message.toHash(384))
+                                header = networkFunctions.getBlock(msg.message.toHash(384)).header
                             except ValueError as e:
                                 doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                            except IndexError:
+                                await client.send(newMessage(MessageType.DataMissing))
+                                continue
+
+                            await client.send(newMessage(MessageType.BlockHeader, header.serialize()))
+
+                        of MessageType.BlockBodyRequest:
+                            var requested: Block
+                            try:
+                                requested = networkFunctions.getBlock(msg.message.toHash(384))
+                            except ValueError as e:
+                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                            except IndexError:
+                                await client.send(newMessage(MessageType.DataMissing))
+                                continue
+
+                            await client.send(newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt)))
+
+                        of MessageType.SketchHashesRequest:
+                            doAssert(false)
+
+                        of MessageType.SketchHashRequests:
+                            doAssert(false)
+
+                        of MessageType.VerificationPacketRequest:
+                            doAssert(false)
+
+                        of MessageType.TransactionRequest:
+                            var tx: Transaction
+                            try:
+                                tx = networkFunctions.getTransaction(msg.message.toHash(384))
+                                if tx of Mint:
+                                    raise newException(IndexError, "TransactionRequest asked for a Mint.")
+                            except ValueError as e:
+                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                            except IndexError:
+                                await client.send(newMessage(MessageType.DataMissing))
+                                continue
 
                             var content: MessageType
-                            try:
-                                case tx:
-                                    of Mint as _:
-                                        raise newException(IndexError, "TransactionRequest asked for a Mint.")
-                                    of Claim as _:
-                                        content = MessageType.Claim
-                                    of Send as _:
-                                        content = MessageType.Send
-                                    of Data as _:
-                                        content = MessageType.Data
-                                    else:
-                                        doAssert(false, "Responding with an unsupported Transaction type to a TransactionRequest.")
-                                await client.send(newMessage(content, tx.serialize()))
-                            except ClientError as e:
-                                fcRaise e
-                            except Exception as e:
-                                doAssert(false, "Sending a `BlockBody` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-                        except IndexError:
-                            try:
-                                await client.send(newMessage(MessageType.DataMissing))
-                            except ClientError as e:
-                                fcRaise e
-                            except Exception as e:
-                                doAssert(false, "Sending a `DataMissing` to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                            case tx:
+                                of Claim as _:
+                                    content = MessageType.Claim
+                                of Send as _:
+                                    content = MessageType.Send
+                                of Data as _:
+                                    content = MessageType.Data
+                                else:
+                                    doAssert(false, "Responding with an unsupported Transaction type to a TransactionRequest.")
 
-                    of MessageType.SyncingOver:
-                        client.remoteSync = false
+                            await client.send(newMessage(content, tx.serialize()))
 
-                    else:
-                        raise newException(ClientError, "Client sent a message which can't be sent during syncing during syncing.")
-        else:
-            #Handle our new message.
-            try:
-                await networkFunctions.handle(msg)
-            except IndexError as e:
-                fcRaise e
-            except ClientError as e:
-                fcRaise e
-            except Spam:
-                continue
-            except Exception as e:
-                doAssert(false, "Handling a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        of MessageType.SyncingOver:
+                            client.remoteSync = false
+
+                        else:
+                            raise newException(ClientError, "Client sent a message which can't be sent during syncing during syncing.")
+            else:
+                #Handle our new message.
+                try:
+                    await networkFunctions.handle(msg)
+                except Spam:
+                    continue
+    except ClientError as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Receiving/sending/handling a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 #Add a new Client from a Socket.
 proc add*(
@@ -214,8 +209,9 @@ proc add*(
     inc(clients.count)
 
     #Handshake with the Client.
+    var tail: Hash[384]
     try:
-        await client.handshake(
+        tail = await client.handshake(
             networkFunctions.getNetworkID(),
             networkFunctions.getProtocol(),
             server,
@@ -276,7 +272,7 @@ proc add*(
 
     #Handle it.
     try:
-        await client.handle(networkFunctions)
+        await client.handle(networkFunctions, tail)
     #If an IndexError happened, we couldn't get the Client to reply to them.
     #This means something else disconnected and removed them.
     except IndexError:

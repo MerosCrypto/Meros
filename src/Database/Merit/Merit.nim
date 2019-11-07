@@ -73,17 +73,11 @@ proc processBlock*(
     merit: Merit,
     newBlock: Block
 ) {.forceCheck: [
-    ValueError,
-    DataExists,
-    NotConnected
+    ValueError
 ].} =
     try:
         merit.blockchain.processBlock(newBlock)
     except ValueError as e:
-        fcRaise e
-    except DataExists as e:
-        fcRaise e
-    except NotConnected as e:
         fcRaise e
 
 #Process a Block already addded to the Blockchain.

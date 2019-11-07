@@ -52,7 +52,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### BlockListRequest and BlockList
 
-`BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity (where the quantity is the byte's value plus one), and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte quantity (where the quantity is the byte's value plus one) and each 48-byte hash.
+`BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity (where the quantity is the byte's value plus one), and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte quantity (where the quantity is the byte's value plus one) and each 48-byte hash. If there are no Blocks before/after the specified Block (depending on the requested direction), the syncee sends `DataMissing`.
 
 ### CheckpointRequest
 
@@ -76,7 +76,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### TransactionRequest
 
-`TransactionRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `Claim`, `Send`, or `Data` containing the requested Transaction. If a Mint has the requested hash, the syncer sends `DataMissing`.
+`TransactionRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `Claim`, `Send`, or `Data` containing the requested Transaction. If a Mint has the requested hash, the syncee sends `DataMissing`.
 
 ### DataMissing
 
@@ -89,7 +89,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 ### Violations in Meros
 
 - Meros doesn't support the `PeersRequest` and `Peers` message types.
-- Meros doesn't support the `BlockListRequest` and `BlockList` message types.
+- Meros doesn't support the `BlockListRequest` forwards mode.
 - Meros doesn't support the `CheckpointRequest` message type.
 - Meros doesn't support the `SketchHashesRequest` and `SketchHashes` message types.
 - Meros doesn't support the `SketchHashRequests` message type.

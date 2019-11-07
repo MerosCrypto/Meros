@@ -106,9 +106,3 @@ func newBlockObj*(
         header: header,
         body: body
     )
-
-#Hash getter.
-proc hash*(
-    blockArg: Block
-): Hash[384] {.inline, forceCheck: [].} =
-    blockArg.header.hash

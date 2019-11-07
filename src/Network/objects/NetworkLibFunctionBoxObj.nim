@@ -24,7 +24,20 @@ import asyncdispatch
 type NetworkLibFunctionBox* = ref object
     getNetworkID*: proc (): int {.noSideEffect, raises: [].}
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
+
     getTail*: proc (): Hash[384] {.inline, raises: [].}
+
+    getBlockHashBefore*: proc (
+        hash: Hash[384]
+    ): Hash[384] {.raises: [
+        IndexError
+    ].}
+
+    getBlockHashAfter*: proc (
+        hash: Hash[384]
+    ): Hash[384] {.raises: [
+        IndexError
+    ].}
 
     getBlock*: proc (
         hash: Hash[384]
@@ -40,11 +53,6 @@ type NetworkLibFunctionBox* = ref object
 
     handle*: proc (
         msg: Message
-    ): Future[void]
-
-    addBlock*: proc (
-        newBlock: SketchyBlock,
-        syncing: bool = false
     ): Future[void]
 
 func newNetworkLibFunctionBox*(): NetworkLibFunctionBox {.forceCheck: [].} =

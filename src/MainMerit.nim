@@ -17,6 +17,26 @@ proc mainMerit() {.forceCheck: [].} =
         functions.merit.getTail = proc (): Hash[384] {.inline, forceCheck: [].} =
             merit.blockchain.tail.header.hash
 
+        functions.merit.getBlockHashBefore = proc (
+            hash: Hash[384]
+        ): Hash[384] {.forceCheck: [
+            IndexError
+        ].} =
+            try:
+                result = merit.blockchain[hash].header.last
+            except IndexError as e:
+                fcRaise e
+
+            if result == merit.blockchain.genesis:
+                raise newException(IndexError, "Requested the hash of the Block before the genesis.")
+
+        functions.merit.getBlockHashAfter = proc (
+            hash: Hash[384]
+        ): Hash[384] {.forceCheck: [
+            IndexError
+        ].} =
+            discard
+
         functions.merit.getDifficulty = proc (): Difficulty {.inline, forceCheck: [].} =
             merit.blockchain.difficulty
 
@@ -76,11 +96,9 @@ proc mainMerit() {.forceCheck: [].} =
         #Handle full blocks.
         functions.merit.addBlock = proc (
             newBlock: SketchyBlock,
-            syncing: bool = false
+            syncing: bool
         ) {.forceCheck: [
-            ValueError,
-            DataExists,
-            NotConnected
+            ValueError
         ], async.} =
             #Print that we're adding the Block.
             echo "Adding Block ", newBlock.data.header.hash, "."
@@ -88,12 +106,10 @@ proc mainMerit() {.forceCheck: [].} =
             #Sync this Block.
             var sketcher: Sketcher
             try:
-                discard """
                 await network.sync(
                     newBlock,
                     sketcher
                 )
-                """
             except ValueError as e:
                 fcRaise e
             except Exception as e:
@@ -108,10 +124,6 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 merit.processBlock(newBlock.data)
             except ValueError as e:
-                fcRaise e
-            except DataExists as e:
-                fcRaise e
-            except NotConnected as e:
                 fcRaise e
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
@@ -189,32 +201,115 @@ proc mainMerit() {.forceCheck: [].} =
                         echo "Already added a Claim for the incoming Mint."
 
         functions.merit.addBlockByHeader = proc (
-            header: BlockHeader
+            header: BlockHeader,
+            syncing: bool
         ) {.forceCheck: [
             ValueError,
             DataMissing,
             DataExists,
             NotConnected
         ], async.} =
+            #Return if we already have this Block.
+            if merit.blockchain.hasBlock(header.hash):
+                raise newException(DataExists, "Block was already added.")
+
+            #Sync previous Blocks if this header isn't connected.
+            if merit.blockchain.tail.header.hash != header.last:
+                var
+                    increment: int = 32
+                    queue: seq[Hash[384]] = @[header.hash]
+                    size: int = queue.len
+                while true:
+                    #Get the list of Blocks before this Block.
+                    try:
+                        queue &= await network.requestBlockList(false, increment, queue[^1])
+                    except DataMissing as e:
+                        #This should only be raised if:
+                        #A) The requested Block is unknown.
+                        #B) We requested ONLY the Blocks before the genesis.
+                        #The second is impossible as we break once we find a Block we know.
+                        fcRaise e
+                    except Exception as e:
+                        doAssert(false, "requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
+
+                    #If we have a Block from the list, break.
+                    if merit.blockchain.hasBlock(queue[^1]):
+                        break
+
+                    #If we ran out of Blocks, raise.
+                    #The only three cases we run out of Blocks are:
+                    #A) We synced forwards. We didn't.
+                    #B) Their genesis doesn't match our genesis.
+                    #C) Our peer is an idiot.
+                    if queue.len != size + increment:
+                        raise newException(ValueError, "Blockchain has a different genesis.")
+
+                    #Update the size.
+                    size = queue.len
+
+                #Remove every Block we have from the queue's tail.
+                var lastRemoved: Hash[384] = merit.blockchain.tail.header.hash
+                for i in countdown(queue.len - 1, 1):
+                    if merit.blockchain.hasBlock(queue[i]):
+                        lastRemoved = queue[i]
+                        queue.del(i)
+
+                #If the last Block on both chains isn't our tail, raise NotConnected.
+                if lastRemoved != merit.blockchain.tail.header.hash:
+                    raise newException(NotConnected, "Blockchain split.")
+
+                #Add every previous Block.
+                for h in countdown(queue.len - 1, 1):
+                    try:
+                        await functions.merit.addBlockByHash(queue[h], true)
+                    except ValueError as e:
+                        fcRaise e
+                    except DataMissing as e:
+                        fcRaise e
+                    except DataExists as e:
+                        fcRaise e
+                    except NotConnected as e:
+                        doAssert(false, "Parent addBlockByHeader didn't detect a Blockchain split: " & e.msg)
+                    except Exception as e:
+                        doAssert(false, "addBlockByHash threw an Exception despite catching all Exceptions: " & e.msg)
+
             try:
                 merit.blockchain.testBlockHeader(header)
             except ValueError as e:
                 fcRaise e
-            except DataExists as e:
-                fcRaise e
             except NotConnected as e:
-                fcRaise e
+                doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
 
             var newBlock: SketchyBlock
             try:
-                newBlock = newSketchyBlockObj(header, await network.sync(header))
+                newBlock = newSketchyBlockObj(header, await network.requestBlockBody(header.hash))
             except DataMissing as e:
                 raise newException(ValueError, e.msg)
             except Exception as e:
-                doAssert(false, "Network.sync(BlockHeader) threw an Exception despite catching all Exceptions: " & e.msg)
+                doAssert(false, "Network.requestBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
 
             try:
-                await functions.merit.addBlock(newBlock)
+                await functions.merit.addBlock(newBlock, syncing)
+            except ValueError as e:
+                fcRaise e
+            except Exception as e:
+                doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)
+
+        functions.merit.addBlockByHash = proc (
+            hash: Hash[384],
+            syncing: bool
+        ) {.forceCheck: [
+            ValueError,
+            DataMissing,
+            DataExists,
+            NotConnected
+        ], async.} =
+            #Return if we already have this Block.
+            if merit.blockchain.hasBlock(hash):
+                return
+
+            try:
+                await functions.merit.addBlockByHeader(await network.requestBlockHeader(hash), syncing)
             except ValueError as e:
                 fcRaise e
             except DataMissing as e:
@@ -224,4 +319,4 @@ proc mainMerit() {.forceCheck: [].} =
             except NotConnected as e:
                 fcRaise e
             except Exception as e:
-                doAssert(false, "addBlockByHeader threw an Exception despite catching all Exceptions: " & e.msg)
+                doAssert(false, "addBlockByHeader/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)

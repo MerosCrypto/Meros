@@ -55,23 +55,18 @@ proc testBlockHeader*(
     header: BlockHeader
 ) {.forceCheck: [
     ValueError,
-    DataExists,
     NotConnected
 ].} =
     #Check the difficulty.
     if header.hash < blockchain.difficulty.difficulty:
         raise newException(ValueError, "Block doesn't beat the difficulty.")
 
-    #Check if we already added it.
-    if blockchain.hasBlock(header.hash):
-        raise newException(DataExists, "BlockHeader was already added.")
-
     #Check the version.
     if header.version != 0:
         raise newException(ValueError, "BlockHeader has an invalid version.")
 
     #Check the last hash.
-    if header.last != blockchain.tail.hash:
+    if header.last != blockchain.tail.header.hash:
         raise newException(NotConnected, "Last hash isn't our tip.")
 
     #Check a miner with a nickname isn't being marked as new.
@@ -87,20 +82,8 @@ proc processBlock*(
     blockchain: var Blockchain,
     newBlock: Block
 ) {.forceCheck: [
-    ValueError,
-    DataExists,
-    NotConnected
+    ValueError
 ].} =
-    #Verify the Block Header.
-    try:
-        blockchain.testBlockHeader(newBlock.header)
-    except ValueError as e:
-        fcRaise e
-    except DataExists as e:
-        fcRaise e
-    except NotConnected as e:
-        fcRaise e
-
     #Verify the contents merkle and if there's a MeritRemoval, it's the only Element for that verifier.
     var
         contents: Merkle = newMerkle()

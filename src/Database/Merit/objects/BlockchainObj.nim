@@ -32,6 +32,8 @@ finalsd:
         #DB Function Box.
         db*: DB
 
+        #Genesis hash (derives from the chain params).
+        genesis* {.final.}: Hash[384]
         #Block time (part of the chain params).
         blockTime* {.final.}: int
         #Starting Difficulty (part of the chain params).
@@ -66,27 +68,25 @@ proc newBlockchainObj*(
         doAssert(false, "Couldn't create the Blockchain's starting difficulty.")
 
     #Create the Blockchain.
-    result = Blockchain(
-        db: db,
+    try:
+        result = Blockchain(
+            db: db,
 
-        blockTime: blockTime,
-        startDifficulty: startDifficulty,
+            genesis: genesisArg.pad(48).toArgonHash(),
+            blockTime: blockTime,
+            startDifficulty: startDifficulty,
 
-        height: 0,
-        blocks: initDoublyLinkedList[Block](),
-        difficulty: startDifficulty,
+            height: 0,
+            blocks: initDoublyLinkedList[Block](),
+            difficulty: startDifficulty,
 
-        miners: initTable[BLSPublicKey, uint16]()
-    )
+            miners: initTable[BLSPublicKey, uint16]()
+        )
+    except ValueError as e:
+        doAssert(false, "Couldn't convert the genesis to a hash, despite being padded to 48 bytes: " & e.msg)
+    result.ffinalizeGenesis()
     result.ffinalizeBlockTime()
     result.ffinalizeStartDifficulty()
-
-    #Craft the genesis.
-    var genesis: ArgonHash
-    try:
-        genesis = genesisArg.pad(48).toArgonHash()
-    except ValueError as e:
-        doAssert(false, "Couldn't convert the genesis toa hash, despite being padded to 48 bytes: " & e.msg)
 
     #Grab the height and tip from the DB.
     var tip: Hash[384]
@@ -105,7 +105,7 @@ proc newBlockchainObj*(
         try:
             genesisBlock = newBlockObj(
                 0,
-                genesis,
+                result.genesis,
                 Hash[384](),
                 0,
                 "".pad(4),
@@ -121,7 +121,7 @@ proc newBlockchainObj*(
         except ValueError as e:
             doAssert(false, "Couldn't create the Genesis Block due to a ValueError: " & e.msg)
         #Grab the tip.
-        tip = genesisBlock.hash
+        tip = genesisBlock.header.hash
 
         #Save the height, tip, the Genesis Block, and the starting Difficulty.
         result.db.saveHeight(result.height)
@@ -138,7 +138,7 @@ proc newBlockchainObj*(
         except DBReadError as e:
             doAssert(false, "Couldn't load a Block from the Database: " & e.msg)
 
-        if last.header.last == genesis:
+        if last.header.last == result.genesis:
             break
         tip = last.header.last
 
@@ -165,7 +165,7 @@ proc add*(
         blockchain.blocks.remove(blockchain.blocks.head)
 
     #Save the Block to the database.
-    blockchain.db.saveTip(newBlock.hash)
+    blockchain.db.saveTip(newBlock.header.hash)
     blockchain.db.save(blockchain.height, newBlock)
 
     #Update the height.

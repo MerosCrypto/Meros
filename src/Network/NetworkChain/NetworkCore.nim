@@ -49,7 +49,10 @@ proc newNetwork*(
         id
     result.networkFunctions.getProtocol = func (): int {.forceCheck: [].} =
         protocol
+
     result.networkFunctions.getTail = mainFunctions.merit.getTail
+    result.networkFunctions.getBlockHashBefore = mainFunctions.merit.getBlockHashBefore
+    result.networkFunctions.getBlockHashAfter = mainFunctions.merit.getBlockHashAfter
 
     result.networkFunctions.getBlock = mainFunctions.merit.getBlockByHash
     result.networkFunctions.getTransaction = mainFunctions.transactions.getTransaction
@@ -57,27 +60,9 @@ proc newNetwork*(
     result.networkFunctions.handle = proc (
         msg: Message
     ) {.forceCheck: [
-        IndexError,
         ClientError,
         Spam
     ], async.} =
-        try:
-            if network.clients[msg.client].syncLevels != 0:
-                doAssert(false, "We are attempting to handle a message yet we're Syncing, which shouldn't cause this code to be called.")
-        except IndexError as e:
-            fcRaise e
-
-        #Verify this isn't a message which can only be sent while syncing.
-        if (
-            (
-                (int(MessageType.Syncing) <= int(msg.content)) and
-                (int(msg.content) <= int(MessageType.SyncingOver))
-            ) or
-            (msg.content == MessageType.BlockBody) or
-            (msg.content == MessageType.VerificationPacket)
-        ):
-            raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing.")
-
         #Handle the message.
         case msg.content:
             of MessageType.Handshake:
@@ -95,7 +80,26 @@ proc newNetwork*(
                     doAssert(false, "Replying `Handshake` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.BlockchainTail:
-                doAssert(false, "")
+                #Get the hash.
+                var tail: Hash[384]
+                try:
+                    tail = msg.message[0 ..< 48].toHash(384)
+                except ValueError as e:
+                    doAssert(false, "Couldn't turn a 48-byte string into a 48-byte hash: " & e.msg)
+
+                #Add the Block.
+                try:
+                    await mainFunctions.merit.addBlockByHash(tail, true)
+                except ValueError as e:
+                    raise newException(ClientError, "Client sent us a tail which failed to add due to a ValueError: " & e.msg)
+                except DataMissing as e:
+                    raise newException(ClientError, "Client sent us a tail which failed to fully sync: " & e.msg)
+                except DataExists as e:
+                    doAssert(false, "Syncing and adding a tail we didn't have threw a DataExists error: " & e.msg)
+                except NotConnected:
+                    return
+                except Exception as e:
+                    doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.Claim:
                 var claim: Claim
@@ -189,7 +193,7 @@ proc newNetwork*(
                     raise newException(ClientError, "Block contained an invalid BLS Public Key: " & e.msg)
 
                 try:
-                    await mainFunctions.merit.addBlockByHeader(header)
+                    await mainFunctions.merit.addBlockByHeader(header, false)
                 except ValueError as e:
                     raise newException(ClientError, "Adding the Block failed due to a ValueError: " & e.msg)
                 except DataMissing:
@@ -205,9 +209,7 @@ proc newNetwork*(
                 doAssert(false, "Trying to handle a Message of Type End despite explicitly refusing to receive messages of Type End.")
 
             else:
-                doAssert(false, "Unknown message type made it's way to the main message switch.")
-
-    result.networkFunctions.addBlock = mainFunctions.merit.addBlock
+                raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing.")
 
 #Listen on a port.
 proc listen*(

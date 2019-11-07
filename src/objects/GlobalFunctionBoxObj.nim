@@ -124,6 +124,18 @@ type
         getHeight*: proc (): int {.inline, raises: [].}
         getTail*: proc (): Hash[384] {.inline, raises: [].}
 
+        getBlockHashBefore*: proc (
+            hash: Hash[384]
+        ): Hash[384] {.raises: [
+            IndexError
+        ].}
+
+        getBlockHashAfter*: proc (
+            hash: Hash[384]
+        ): Hash[384] {.raises: [
+            IndexError
+        ].}
+
         getDifficulty*: proc (): Difficulty {.inline, raises: [].}
 
         getBlockByNonce*: proc (
@@ -162,11 +174,17 @@ type
 
         addBlock*: proc (
             newBlock: SketchyBlock,
-            syncing: bool = false
+            syncing: bool
         ): Future[void]
 
         addBlockByHeader*: proc (
-            header: BlockHeader
+            header: BlockHeader,
+            syncing: bool
+        ): Future[void]
+
+        addBlockByHash*: proc (
+            hash: Hash[384],
+            syncing: bool
         ): Future[void]
 
     PersonalFunctionBox* = ref object
