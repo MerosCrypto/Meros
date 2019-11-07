@@ -75,7 +75,7 @@ proc test*() =
         reloaded = header.serialize().parseBlockHeader()
 
         #Test the serialized versions.
-        #assert(header.serialize() == reloaded.serialize())
+        assert(header.serialize() == reloaded.serialize())
 
         #Compare the BlockHeaders.
         compare(header, reloaded)
