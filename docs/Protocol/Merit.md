@@ -160,7 +160,7 @@ for holder in scores:
     scores[holder] *= live_merit(holder)
 ```
 
-The scores are then ordered from highest to lowest. When there is a tie, the Merit Holder with the higher key is placed first. Only the top 100 scoring Merit Holders receive Mints, with the rest of the scores rolling over to the next Block. Once the top 100 scoring Merit Holders are identified, the scores are normalized to 1000 as such:
+The scores are then ordered from highest to lowest. When there is a tie, the Merit Holder with the lower nickname is placed first. Only the top 100 scoring Merit Holders receive Mints, with the rest of the scores rolling over to the next Block. Once the top 100 scoring Merit Holders are identified, the scores are normalized to 1000 as such:
 
 ```
 total = sum(scores)
