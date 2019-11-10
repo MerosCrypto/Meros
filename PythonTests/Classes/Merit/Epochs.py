@@ -72,7 +72,7 @@ class Epochs:
         total: int = 0
         tupleScores: List[Tuple[bytes, int]] = []
         for holder in scores:
-            score: int = scores[holder] * state.live[holder]
+            score: int = scores[holder] * state.unlocked[holder]
             total += score
             tupleScores.append((holder, score))
 

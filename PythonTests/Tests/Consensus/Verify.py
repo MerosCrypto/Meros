@@ -45,13 +45,13 @@ def verifyMeritRemoval(
     if rpc.call("merit", "getTotalMerit") != merit if pending else 0:
         raise TestError("Total Merit doesn't match.")
 
-    #Verify the Live Merit.
-    if rpc.call("merit", "getLiveMerit", [removal.holder.hex()]) != merit if pending else 0:
-        raise TestError("Live Merit doesn't match.")
+    #Verify the Unlocked Merit.
+    if rpc.call("merit", "getUnlockedMerit", [removal.holder.hex()]) != merit if pending else 0:
+        raise TestError("Unlocked Merit doesn't match.")
 
     #Verify the Merit Holder's Merit.
     if rpc.call("merit", "getMerit", [removal.holder.hex()]) != {
-        "live": True,
+        "unlocked": True,
         "malicious": pending,
         "merit": merit if pending else 0
     }:
