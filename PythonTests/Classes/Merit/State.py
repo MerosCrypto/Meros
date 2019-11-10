@@ -1,7 +1,8 @@
 #Types.
 from typing import Dict, List
 
-#Block and Blockchain classes.
+#BlockHeader, Block, and Blockchain classes.
+from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
@@ -16,7 +17,7 @@ class State:
         self.lifetime: int = lifetime
 
         self.merit = 0
-        self.nicks: List[int] = []
+        self.nicks: List[bytes] = []
         self.keys: Dict[bytes, int] = {}
         self.unlocked: Dict[int, int] = {}
 
@@ -24,7 +25,8 @@ class State:
     def add(
         self,
         blockchain: Blockchain,
-        block: Block
+        block: Block,
+        height: int
     ) -> None:
         miner: int
         if block.header.newMiner:
@@ -36,10 +38,10 @@ class State:
             miner = block.header.minerNick
         self.unlocked[miner] += 1
 
-        if len(blockchain.blocks) > self.lifetime:
-            oldHeader: BlockHeader = blockchain.blocks[-self.lifetime].header
+        if height > self.lifetime:
+            oldHeader: BlockHeader = blockchain.blocks[height - self.lifetime].header
             if oldHeader.newMiner:
                 miner = self.keys[oldHeader.minerKey]
             else:
-                miner = self.nicks[oldHeader.minerNick]
+                miner = oldHeader.minerNick
             self.unlocked[miner] -= 1

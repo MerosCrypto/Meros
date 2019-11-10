@@ -89,6 +89,8 @@ Tests:
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
 - Test the full nickname space is usable both internally and in parsing/serializations.
 
+- Add Dead Merit/MeritRemovals to the StateTest.
+
 Cleanup:
 
 - Check if any DB methods are unused.
