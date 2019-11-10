@@ -218,8 +218,20 @@ proc mainMerit() {.forceCheck: [].} =
                 var
                     increment: int = 32
                     queue: seq[Hash[384]] = @[header.hash]
-                    size: int = queue.len
-                while true:
+                    #Malformed size used for the first loop iteration.
+                    size: int = queue.len - increment
+                while not merit.blockchain.hasBlock(queue[^1]):
+                    #If we ran out of Blocks, raise.
+                    #The only three cases we run out of Blocks are:
+                    #A) We synced forwards. We didn't.
+                    #B) Their genesis doesn't match our genesis.
+                    #C) Our peer is an idiot.
+                    if queue.len != size + increment:
+                        raise newException(ValueError, "Blockchain has a different genesis.")
+
+                    #Update the size.
+                    size = queue.len
+
                     #Get the list of Blocks before this Block.
                     try:
                         queue &= await network.requestBlockList(false, increment, queue[^1])
@@ -231,21 +243,6 @@ proc mainMerit() {.forceCheck: [].} =
                         fcRaise e
                     except Exception as e:
                         doAssert(false, "requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
-
-                    #If we have a Block from the list, break.
-                    if merit.blockchain.hasBlock(queue[^1]):
-                        break
-
-                    #If we ran out of Blocks, raise.
-                    #The only three cases we run out of Blocks are:
-                    #A) We synced forwards. We didn't.
-                    #B) Their genesis doesn't match our genesis.
-                    #C) Our peer is an idiot.
-                    if queue.len != size + increment:
-                        raise newException(ValueError, "Blockchain has a different genesis.")
-
-                    #Update the size.
-                    size = queue.len
 
                 #Remove every Block we have from the queue's tail.
                 var lastRemoved: Hash[384] = merit.blockchain.tail.header.hash

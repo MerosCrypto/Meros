@@ -199,5 +199,5 @@ proc reverseLookup*(
 #Access the holders.
 proc holders*(
     state: State
-): seq[BLSPublicKey] {.forceCheck: [].} =
+): seq[BLSPublicKey] {.inline, forceCheck: [].} =
     state.holders
