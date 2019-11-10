@@ -54,8 +54,8 @@ proc processBlock*(
     #Grab the new Block.
     var newBlock: Block = blockchain.tail
 
-    #Save the amount of live Merit.
-    state.saveLive()
+    #Save the amount of Unlocked Merit.
+    state.saveUnlocked()
 
     #Add the miner's Merit to the State.
     var nick: uint16 = state.getNickname(newBlock, true)
@@ -90,23 +90,23 @@ proc processBlock*(
     #Increment the amount of processed Blocks.
     inc(state.processedBlocks)
 
-    #Save the amount of live Merit for the next Block.
+    #Save the amount of Unlocked Merit for the next Block.
     #This will be overwritten when we process the next Block, yet is needed for some statuses.
-    state.saveLive()
+    state.saveUnlocked()
 
 #Calculate the Verification threshold for an Epoch that ends on the specified Block.
 proc protocolThresholdAt*(
     state: State,
     blockNum: int
 ): int {.inline, forceCheck: [].} =
-    state.loadLive(blockNum) div 2 + 1
+    state.loadUnlocked(blockNum) div 2 + 1
 
 #Calculate the threshold for an Epoch that ends on the specified Block.
 proc nodeThresholdAt*(
     state: State,
     blockNum: int
 ): int {.inline, forceCheck: [].} =
-    state.loadLive(blockNum) div 100 * 80
+    state.loadUnlocked(blockNum) div 100 * 80
 
 #Revert to a certain block height.
 proc revert*(

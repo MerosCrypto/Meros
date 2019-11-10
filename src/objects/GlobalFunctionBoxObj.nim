@@ -163,12 +163,12 @@ type
         ].}
 
         getTotalMerit*: proc (): int {.inline, raises: [].}
-        getLiveMerit*: proc (): int {.inline, raises: [].}
+        getUnlockedMerit*: proc (): int {.inline, raises: [].}
         getMerit*: proc (
             nick: uint16
         ): int {.inline, raises: [].}
 
-        isLive*: proc (
+        isUnlocked*: proc (
             nick: uint16
         ): bool {.inline, raises: [].}
 

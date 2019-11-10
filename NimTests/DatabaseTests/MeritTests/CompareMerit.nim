@@ -98,7 +98,7 @@ proc compare*(
     s2: State
 ) =
     assert(s1.deadBlocks == s2.deadBlocks)
-    assert(s1.live == s2.live)
+    assert(s1.unlocked == s2.unlocked)
     assert(s1.processedBlocks == s2.processedBlocks)
 
     assert(s1.holders.len == s2.holders.len)

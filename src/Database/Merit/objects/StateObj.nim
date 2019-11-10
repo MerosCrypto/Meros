@@ -30,8 +30,8 @@ finalsd:
 
         #Blocks until Merit is dead.
         deadBlocks* {.final.}: int
-        #Live Merit.
-        live: int
+        #Unlocked Merit.
+        unlocked: int
 
         #Amount of Blocks processed.
         processedBlocks*: int
@@ -52,7 +52,7 @@ proc newStateObj*(
         oldData: false,
 
         deadBlocks: deadBlocks,
-        live: 0,
+        unlocked: 0,
 
         processedBlocks: blockchainHeight,
 
@@ -61,9 +61,9 @@ proc newStateObj*(
     )
     result.ffinalizeDeadBlocks()
 
-    #Load the amount of Live Merit.
+    #Load the amount of Unlocked Merit.
     try:
-        result.live = result.db.loadLive(result.processedBlocks - 1)
+        result.unlocked = result.db.loadUnlocked(result.processedBlocks - 1)
     except DBReadError:
         discard
 
@@ -75,35 +75,35 @@ proc newStateObj*(
         except DBReadError as e:
             doAssert(false, "Couldn't load a holder's Merit: " & e.msg)
 
-#Save the live Merit.
-proc saveLive*(
+#Save the Unlocked Merit.
+proc saveUnlocked*(
     state: State
 ) {.inline, forceCheck: [].} =
-    state.db.saveLive(state.processedBlocks - 1, state.live)
+    state.db.saveUnlocked(state.processedBlocks - 1, state.unlocked)
 
 #Getters.
-#Return the amount of live Merit.
-func live*(
+#Return the amount of Unlocked Merit.
+func unlocked*(
     state: State
 ): int {.inline, forceCheck: [].} =
-    state.live
+    state.unlocked
 
-proc loadLive*(
+proc loadUnlocked*(
     state: State,
     blockNum: int
 ): int {.forceCheck: [].} =
     #If the Block is in the future, return the amount it will be (without Merit Removals).
     if blockNum >= state.processedBlocks:
         result = min(
-            ((blockNum - state.processedBlocks) * 100) + state.live,
+            ((blockNum - state.processedBlocks) * 100) + state.unlocked,
             state.deadBlocks * 100
         )
-    #Load the amount of live Merit at the specified Block.
+    #Load the amount of Unlocked Merit at the specified Block.
     else:
         try:
-            result = state.db.loadLive(blockNum)
+            result = state.db.loadUnlocked(blockNum)
         except DBReadError:
-            doAssert(false, "Couldn't load the live Merit for a Block below the `processedBlocks`.")
+            doAssert(false, "Couldn't load the Unlocked Merit for a Block below the `processedBlocks`.")
 
 #Register a new Merit Holder.
 proc newHolder*(
@@ -158,11 +158,11 @@ proc `[]=`*(
     var current: int = state[nick]
     #Set their new value.
     state.merit[nick] = value
-    #Update live accrodingly.
+    #Update unlocked accrodingly.
     if value > current:
-        state.live += value - current
+        state.unlocked += value - current
     else:
-        state.live -= current - value
+        state.unlocked -= current - value
 
     #Save the updated values.
     if not state.oldData:
@@ -176,7 +176,7 @@ proc remove*(
 ) {.forceCheck: [].} =
     state.db.remove(nick, state[nick], nonce)
     state[nick] = 0
-    state.db.saveLive(state.processedBlocks, state.live)
+    state.db.saveUnlocked(state.processedBlocks, state.unlocked)
 
 #Delete the last nickname from RAM.
 proc deleteLastNickname*(

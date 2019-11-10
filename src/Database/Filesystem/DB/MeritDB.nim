@@ -116,7 +116,7 @@ proc save*(
 ) {.forceCheck: [].} =
     db.put("difficulty", difficulty.serialize())
 
-proc saveLive*(
+proc saveUnlocked*(
     db: DB,
     blockNum: int,
     merit: int
@@ -220,7 +220,7 @@ proc loadDifficulty*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-proc loadLive*(
+proc loadUnlocked*(
     db: DB,
     blockNum: int
 ): int {.forceCheck: [

@@ -121,7 +121,7 @@ proc test*() =
         compare(state, newState(db, 30, blockchain.height))
 
     #Check that the State saved it had 0 Merit at the start.
-    assert(state.loadLive(0) == 0)
+    assert(state.loadUnlocked(0) == 0)
     #Check the threshold is just plus one.
     assert(state.protocolThresholdAt(0) == 1)
 
@@ -130,10 +130,10 @@ proc test*() =
         assert(state.protocolThresholdAt(t) == thresholds[t])
 
     #Checking loading the Merit for the latest Block returns the State's Merit.
-    assert(state.loadLive(21) == state.live)
+    assert(state.loadUnlocked(21) == state.unlocked)
 
     #Check future thresholds.
     for t in len(thresholds) + 2 ..< len(thresholds) + 22:
-        assert(state.protocolThresholdAt(t) == min(state.live + ((t - 21) * 100), state.deadBlocks * 100) div 2 + 1)
+        assert(state.protocolThresholdAt(t) == min(state.unlocked + ((t - 21) * 100), state.deadBlocks * 100) div 2 + 1)
 
     echo "Finished the Database/Merit/State/DB Test."

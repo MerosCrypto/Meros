@@ -47,7 +47,7 @@ proc newMerit*(
     genesis: string,
     blockTime: int,
     startDifficultyArg: string,
-    live: int
+    deadBlocks: int
 ): Merit {.forceCheck: [].} =
     #Extract the Difficulty.
     var startDifficulty: Hash[384]
@@ -65,7 +65,7 @@ proc newMerit*(
             startDifficulty
         )
     )
-    result.state = newState(db, live, result.blockchain.height)
+    result.state = newState(db, deadBlocks, result.blockchain.height)
     result.epochs = newEpochs(result.blockchain)
 
 #Add a Block to the Blockchain.

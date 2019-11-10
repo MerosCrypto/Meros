@@ -9,7 +9,7 @@ proc mainMerit() {.forceCheck: [].} =
             params.GENESIS,
             params.BLOCK_TIME,
             params.BLOCK_DIFFICULTY,
-            params.LIVE_MERIT
+            params.DEAD_MERIT
         )
 
         functions.merit.getHeight = proc (): int {.inline, forceCheck: [].} =
@@ -80,15 +80,15 @@ proc mainMerit() {.forceCheck: [].} =
                 raise newException(IndexError, e.msg)
 
         functions.merit.getTotalMerit = proc (): int {.inline, forceCheck: [].} =
-            merit.state.live
-        functions.merit.getLiveMerit = proc (): int {.inline, forceCheck: [].} =
-            merit.state.live
+            merit.state.unlocked
+        functions.merit.getUnlockedMerit = proc (): int {.inline, forceCheck: [].} =
+            merit.state.unlocked
         functions.merit.getMerit = proc (
             nick: uint16
         ): int {.inline, forceCheck: [].} =
             merit.state[nick]
 
-        functions.merit.isLive = proc (
+        functions.merit.isUnlocked = proc (
             nick: uint16
         ): bool {.inline, forceCheck: [].} =
             true

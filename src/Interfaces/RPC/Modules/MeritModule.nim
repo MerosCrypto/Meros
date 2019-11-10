@@ -169,12 +169,12 @@ proc module*(
             ) {.forceCheck: [].} =
                 res["result"] = % functions.merit.getTotalMerit()
 
-            #Get Live Merit.
-            "getLiveMerit" = proc (
+            #Get Unlocked Merit.
+            "getUnlockedMerit" = proc (
                 res: JSONNode,
                 params: JSONNode
             ) {.forceCheck: [].} =
-                res["result"] = % functions.merit.getLiveMerit()
+                res["result"] = % functions.merit.getUnlockedMerit()
 
             #Get a MeritHolder's Merit.
             "getMerit" = proc (
@@ -196,7 +196,7 @@ proc module*(
 
                 #Create the result.
                 res["result"] = %* {
-                    "live": functions.merit.isLive(nick),
+                    "unlocked": functions.merit.isUnlocked(nick),
                     "malicious": functions.consensus.isMalicious(nick),
                     "merit": functions.merit.getMerit(nick)
                 }
