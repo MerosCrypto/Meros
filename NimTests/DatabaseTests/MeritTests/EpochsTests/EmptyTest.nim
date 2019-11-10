@@ -9,14 +9,8 @@ import ../../../../src/lib/Hash
 #VerificationPacket lib.
 import ../../../../src/Database/Consensus/Elements/VerificationPacket as VerificationPacketFile
 
-#Blockchain lib.
-import ../../../../src/Database/Merit/Blockchain
-
-#State lib.
-import ../../../../src/Database/Merit/State
-
-#Epochs lib.
-import ../../../../src/Database/Merit/Epochs
+#Merit lib.
+import ../../../../src/Database/Merit/Merit
 
 #Merit Testing functions.
 import ../TestMerit
@@ -37,7 +31,7 @@ proc test*() =
             blockchain.height
         )
         #Epochs.
-        epochs: Epochs = newEpochs(nil, blockchain)
+        epochs: Epochs = newEpochs(blockchain)
         #Rewards.
         rewards: seq[Reward] = epochs.shift(newBlankBlock()).calculate(state)
 

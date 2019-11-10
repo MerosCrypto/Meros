@@ -80,7 +80,7 @@ Network:
 
 Tests:
 
-- Epochs Tests.
+- EDB Test.
 - Add Elements to BDBTest.
 - Re-enable StateTests/ValueTest.
 

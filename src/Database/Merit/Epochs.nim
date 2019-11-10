@@ -4,14 +4,11 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
-#MinerWallet lib.
-import ../../Wallet/MinerWallet
-
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#Consensus lib.
-import ../Consensus/Consensus
+#VerificationPacket object.
+import ../Consensus/Elements/objects/VerificationPacketObj
 
 #Block, Blockcain, and State lib.
 import Block
@@ -49,18 +46,20 @@ proc shift*(
     for packet in newBlock.body.packets:
         #Find out what Epoch the hash is in.
         e = 0
-        while true:
+        while e < 5:
             if epochs[e].hasKey(packet.hash):
                 break
 
             #If it's not in any, add the packet to the new Epoch.
-            if e == 5:
+            if e == 4:
                 #Create a seq for the Transaction.
                 newEpoch.register(packet.hash)
 
                 #Add the packet.
                 newEpoch.add(packet)
-                break
+
+            #Increment e.
+            inc(e)
 
         #If it was in an existing Epoch, add it to said Epoch.
         if e != 5:
@@ -71,7 +70,6 @@ proc shift*(
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
-    consensus: Consensus,
     blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
     #Create the Epochs objects.
@@ -161,7 +159,7 @@ proc calculate*(
             if x.score > y.score:
                 result = 1
             elif x.score == y.score:
-                if x.nick > y.nick:
+                if x.nick < y.nick:
                     return 1
                 elif x.nick == y.nick:
                     doAssert(false, "Epochs generated two rewards for the same nick.")

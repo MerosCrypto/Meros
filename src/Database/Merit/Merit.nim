@@ -66,7 +66,7 @@ proc newMerit*(
         )
     )
     result.state = newState(db, live, result.blockchain.height)
-    result.epochs = newEpochs(consensus, result.blockchain)
+    result.epochs = newEpochs(result.blockchain)
 
 #Add a Block to the Blockchain.
 proc processBlock*(
