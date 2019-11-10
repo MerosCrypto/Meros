@@ -60,9 +60,9 @@ The result is an object, as follows:
 
 `getTotalMerit` replies with the total amount of Merit in existence. It takes in zero arguments and the result is an int of the total amount of Merit.
 
-### `getLiveMerit`
+### `getUnlockedMerit`
 
-`getLiveMerit` replies with the amount of live Merit in existence. It takes in zero arguments and the result is an int of the amount of live Merit.
+`getUnlockedMerit` replies with the amount of Unlocked Merit in existence. It takes in zero arguments and the result is an int of the amount of Unlocked Merit.
 
 ### `getMerit`
 
@@ -70,7 +70,7 @@ The result is an object, as follows:
 - Merit Holder Nickname (int)
 
 The result is an object, as follows:
-- `live`      (bool)
+- `unlocked`      (bool)
 - `malicious` (bool)
 - `merit`     (int)
 

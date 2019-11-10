@@ -74,19 +74,19 @@ The result is an string of the BLS Public Key.
 
 `getTotalMerit` replies with the total amount of Merit in existence. It takes in zero arguments and the result is an int of the total amount of Merit.
 
-### `getLiveMerit`
+### `getUnlockedMerit`
 
-`getLiveMerit` replies with the amount of live Merit in existence. It takes in zero arguments and the result is an int of the amount of live Merit.
+`getUnlockedMerit` replies with the amount of Unlocked Merit in existence. It takes in zero arguments and the result is an int of the amount of Unlocked Merit.
 
 ### `getMerit`
 
 `getMerit` replies with a Merit Holder's Merit. It takes in one argument.
-- Merit Holder (string)
+- Merit Holder Nickname (int)
 
 The result is an object, as follows:
-- `live`      (bool): Whether or not the MeritHolder's Merit is live.
-- `malicious` (bool): Whether or not the MeritHolder has an unarchived MeritRemoval.
-- `merit`     (int):  Amount of Merit the MeritHolder has.
+- `unlocked`      (bool)
+- `malicious` (bool)
+- `merit`     (int)
 
 ### `getBlockTemplate`
 
