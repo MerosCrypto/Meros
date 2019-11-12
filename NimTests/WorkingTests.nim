@@ -9,13 +9,7 @@ import WalletTests
 import NetworkTests
 
 import DatabaseTests/FilesystemTests
-import DatabaseTests/MeritTests/BlockchainTests
-import DatabaseTests/MeritTests/StateTests
-
-import DatabaseTests/MeritTests/EpochsTests/EmptyTest
-import DatabaseTests/MeritTests/EpochsTests/SingleTest
-import DatabaseTests/MeritTests/EpochsTests/SplitTest
-import DatabaseTests/MeritTests/EpochsTests/Perfect1000Test
+import DatabaseTests/MeritTests
 
 #Locks standard lib.
 import locks
@@ -36,13 +30,7 @@ WalletTests.addTests(tests)
 NetworkTests.addTests(tests)
 
 FilesystemTests.addTests(tests)
-BlockchainTests.addTests(tests)
-StateTests.addTests(tests)
-
-tests.add(EmptyTest.test)
-tests.add(SingleTest.test)
-tests.add(SplitTest.test)
-tests.add(Perfect1000Test.test)
+MeritTests.addTests(tests)
 
 proc grabTest(): int =
     {.gcsafe.}:

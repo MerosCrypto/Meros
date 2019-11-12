@@ -80,16 +80,14 @@ Network:
 
 Tests:
 
-- EDB Test.
 - Add Elements to BDBTest.
-- Re-enable StateTests/ValueTest.
+- Add Dead Merit/MeritRemovals to the State Value Test.
+- Add MeritRemovals to EDBTest.
 
 - Sketcher Test.
 
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
 - Test the full nickname space is usable both internally and in parsing/serializations.
-
-- Add Dead Merit/MeritRemovals to the StateTest.
 
 Cleanup:
 
