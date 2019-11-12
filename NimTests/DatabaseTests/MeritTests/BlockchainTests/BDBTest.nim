@@ -31,35 +31,6 @@ import tables
 #Random standard lib.
 import random
 
-#Create a valid VerificationPacket.
-proc newValidVerificationPacket(
-    blockchain: Blockchain,
-    holders: seq[BLSPublicKey]
-): VerificationPacket =
-    var hash: Hash[384]
-    for b in 0 ..< 48:
-        hash.data[b] = uint8(rand(255))
-
-    result = newVerificationPacketObj(hash)
-    for holder in holders:
-        if rand(1) == 0:
-            result.holders.add(
-                blockchain.miners[
-                    holders[rand(high(holders))]
-                ]
-            )
-
-    #Make sure there's at least one holder.
-    if result.holders.len == 0:
-        result.holders.add(
-            blockchain.miners[
-                holders[rand(high(holders))]
-            ]
-        )
-
-    if result.holders.len == 0:
-        doAssert(false)
-
 proc test*() =
     #Seed random.
     randomize(int64(getTime()))
@@ -96,26 +67,13 @@ proc test*() =
         #Block.
         mining: Block
 
-    #Compare the Blockchain against the reloaded Blockchain.
-    proc compare() =
-        #Reload the Blockchain.
-        var reloaded: Blockchain = newBlockchain(
-            db,
-            "BLOCKCHAIN_TEST",
-            30,
-            startDifficulty
-        )
-
-        #Compare the Blockchains.
-        compare(blockchain, reloaded)
-
     #Iterate over 20 'rounds'.
     for _ in 1 .. 20:
         if state.holders.len != 0:
             #Randomize the Packets.
             packets = @[]
             for _ in 0 ..< rand(300):
-                packets.add(newValidVerificationPacket(blockchain, state.holders))
+                packets.add(newValidVerificationPacket(state.holders))
 
         #Randomize the Elements.
 
@@ -163,6 +121,11 @@ proc test*() =
         db.commit(blockchain.height)
 
         #Compare the Blockchains.
-        compare()
+        compare(blockchain, newBlockchain(
+            db,
+            "BLOCKCHAIN_TEST",
+            30,
+            startDifficulty
+        ))
 
     echo "Finished the Database/Merit/Blockchain/DB Test."
