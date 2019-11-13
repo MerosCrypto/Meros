@@ -10,9 +10,6 @@ import ../../lib/Hash
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#Consensus lib.
-import ../Consensus/Consensus
-
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
@@ -43,7 +40,6 @@ type Merit* = ref object
 #Constructor.
 proc newMerit*(
     db: DB,
-    consensus: Consensus,
     genesis: string,
     blockTime: int,
     startDifficultyArg: string,
@@ -82,8 +78,7 @@ proc processBlock*(
 
 #Process a Block already addded to the Blockchain.
 proc postProcessBlock*(
-    merit: Merit,
-    consensus: Consensus
+    merit: Merit
 ): Epoch {.forceCheck: [].} =
     #Have the Epochs process the Block and return the popped Epoch.
     result = merit.epochs.shift(merit.blockchain.tail)

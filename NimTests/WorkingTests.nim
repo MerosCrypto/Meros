@@ -9,6 +9,7 @@ import WalletTests
 import NetworkTests
 
 import DatabaseTests/FilesystemTests
+import DatabaseTests/TransactionsTests
 import DatabaseTests/MeritTests
 
 #Locks standard lib.
@@ -30,6 +31,7 @@ WalletTests.addTests(tests)
 NetworkTests.addTests(tests)
 
 FilesystemTests.addTests(tests)
+TransactionsTests.addTests(tests)
 MeritTests.addTests(tests)
 
 proc grabTest(): int =

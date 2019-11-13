@@ -5,7 +5,6 @@ proc mainMerit() {.forceCheck: [].} =
         #Create the Merit.
         merit = newMerit(
             database,
-            consensus,
             params.GENESIS,
             params.BLOCK_TIME,
             params.BLOCK_DIFFICULTY,
@@ -131,7 +130,7 @@ proc mainMerit() {.forceCheck: [].} =
                 consensus.remove(removee)
 
             #Add the Block to the Epochs and State.
-            var epoch: Epoch = merit.postProcessBlock(consensus)
+            var epoch: Epoch = merit.postProcessBlock()
 
             #Archive the Epochs.
             consensus.archive(merit.state, merit.epochs.latest, epoch)

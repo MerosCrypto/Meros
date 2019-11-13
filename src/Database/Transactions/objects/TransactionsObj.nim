@@ -121,13 +121,15 @@ proc newTransactionsObj*(
                 mentioned[packet.hash] = true
 
         #Load Transactions in the last 5 Blocks, as long as they aren't first mentioned in older Blocks.
-        for b in max(0, blockchain.height - 5) ..< blockchain.height - 5:
+        for b in max(0, blockchain.height - 5) ..< blockchain.height:
             for packet in blockchain[b].body.packets:
-                if not mentioned.hasKey(packet.hash):
-                    try:
-                        result.add(db.load(packet.hash), false)
-                    except DBReadError as e:
-                        doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
+                if mentioned.hasKey(packet.hash):
+                    continue
+
+                try:
+                    result.add(db.load(packet.hash), false)
+                except DBReadError as e:
+                    doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
                 mentioned[packet.hash] = true
     except IndexError as e:
         doAssert(false, "Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)

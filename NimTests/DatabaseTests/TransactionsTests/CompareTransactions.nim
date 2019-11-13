@@ -5,8 +5,8 @@ import ../../../src/lib/Hash
 import ../../../src/Wallet/Wallet
 import ../../../src/Wallet/MinerWallet
 
-#Various Transaction libs.
-import ../../../src/Database/Transactions/Transaction
+#Transactions lib.
+import ../../../src/Database/Transactions/Transactions
 
 #Tables lib.
 import tables
@@ -75,7 +75,6 @@ proc compare*(
             assert(data.argon == cast[Data](tx2).argon)
 
 #Compare two Transactions DAGs to make sure they have the same value.
-#[
 proc compare*(
     txs1: Transactions,
     txs2: Transactions
@@ -87,4 +86,3 @@ proc compare*(
     assert(txs1.transactions.len == txs2.transactions.len)
     for hash in txs1.transactions.keys():
         compare(txs1.transactions[hash], txs2.transactions[hash])
-]#

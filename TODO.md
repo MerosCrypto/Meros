@@ -93,6 +93,7 @@ Cleanup:
 
 - Check if any DB methods are unused.
 - Remove no longer needed Exception checks.
+- Remove latent """ marks.
 
 ### Nim Tests:
 
@@ -134,6 +135,7 @@ Database/Transactions:
 - Mint Test.
 - Claim Test.
 - Send Test.
+- Data Test.
 
 Database/Consensus:
 
