@@ -6,8 +6,10 @@ from PythonTests.Classes.Transactions.Claim import Claim
 from PythonTests.Classes.Transactions.Data import Data
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#SpamFilter, SignedVerification, and VerificationPacket classes.
+#SpamFilter class.
 from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
+
+#SignedVerification and VerificationPacket classes.
 from PythonTests.Classes.Consensus.Verification import SignedVerification
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
@@ -36,12 +38,6 @@ bbFile.close()
 
 #Transactions.
 transactions: Transactions = Transactions()
-#SpamFilter.
-dataFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-    )
-)
 #Merit.
 merit: Merit = Merit(
     b"MEROS_DEVELOPER_NETWORK",
@@ -50,6 +46,12 @@ merit: Merit = Merit(
     100
 )
 
+#SpamFilter.
+dataFilter: SpamFilter = SpamFilter(
+    bytes.fromhex(
+        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+    )
+)
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -88,7 +90,7 @@ block: Block = Block(
     ),
     BlockBody([VerificationPacket(verif.txHash, [0])], [], verif.signature)
 )
-for i in range(7, 13):
+for _ in range(6):
     #Mine it.
     block.mine(blsPrivKey, merit.blockchain.difficulty())
 
