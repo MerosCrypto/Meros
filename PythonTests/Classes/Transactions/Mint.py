@@ -20,7 +20,7 @@ class Mint(Transaction):
     ) -> None:
         self.nonce: int = nonce
         self.output: Tuple[blspy.PublicKey, int] = output
-        self.hash = blake2b(b'\0' + self.nonce.to_bytes(4, "big") + self.output[0].serialize() + self.output[1].to_bytes(8, "big"), digest_size=48).digest()
+        self.txHash = blake2b(b'\0' + self.nonce.to_bytes(4, "big") + self.output[0].serialize() + self.output[1].to_bytes(8, "big"), digest_size=48).digest()
         self.verified: bool = True
 
     #Transaction -> Mint. Satisifes static typing requirements.
@@ -41,7 +41,7 @@ class Mint(Transaction):
                 "key": self.output[0].serialize().hex().upper(),
                 "amount": str(self.output[1])
             }],
-            "hash": self.hash.hex().upper(),
+            "hash": self.txHash.hex().upper(),
 
             "nonce": self.nonce
         }

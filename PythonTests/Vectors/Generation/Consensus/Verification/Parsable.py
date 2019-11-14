@@ -59,7 +59,7 @@ data.signature = edPrivKey.sign(b"INVALID")
 data.beat(consensus.dataFilter)
 
 #Create a Verification.
-sv: SignedVerification = SignedVerification(data.hash)
+sv: SignedVerification = SignedVerification(data.txHash)
 sv.sign(privKey, 0)
 consensus.add(sv)
 

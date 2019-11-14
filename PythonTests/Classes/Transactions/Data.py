@@ -23,7 +23,7 @@ class Data(Transaction):
     ) -> None:
         self.txInput: bytes = txInput
         self.data: bytes = data
-        self.hash: bytes = blake2b(
+        self.txHash: bytes = blake2b(
             b"\3" + txInput + data,
             digest_size=48
         ).digest()
@@ -31,7 +31,7 @@ class Data(Transaction):
         self.signature: bytes = signature
 
         self.proof: int = proof
-        self.argon: bytes = SpamFilter.run(self.hash, self.proof)
+        self.argon: bytes = SpamFilter.run(self.txHash, self.proof)
         self.verified: bool = False
 
     #Transaction -> Data. Satisifes static typing requirements.
@@ -46,14 +46,14 @@ class Data(Transaction):
         self,
         privKey: ed25519.SigningKey
     ) -> None:
-        self.signature = privKey.sign(b"MEROS" + self.hash)
+        self.signature = privKey.sign(b"MEROS" + self.txHash)
 
     #Mine.
     def beat(
         self,
         spamFilter: SpamFilter
     ) -> None:
-        result: Tuple[bytes, int] = spamFilter.beat(self.hash)
+        result: Tuple[bytes, int] = spamFilter.beat(self.txHash)
         self.argon = result[0]
         self.proof = result[1]
 
@@ -79,7 +79,7 @@ class Data(Transaction):
                 "hash": self.txInput.hex().upper()
             }],
             "outputs": [],
-            "hash": self.hash.hex().upper(),
+            "hash": self.txHash.hex().upper(),
 
             "data": self.data.hex().upper(),
             "signature": self.signature.hex().upper(),

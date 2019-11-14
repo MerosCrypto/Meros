@@ -54,7 +54,7 @@ class BlockBody:
 
         for packet in self.packets:
             result["transactions"].append({
-                "hash": packet.hash.hex().upper(),
+                "hash": packet.txHash.hex().upper(),
                 "holders": packet.holders
             })
 

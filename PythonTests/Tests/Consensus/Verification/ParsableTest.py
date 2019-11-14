@@ -54,7 +54,7 @@ def VParsableTest(
     transactions.add(Data.fromJSON(vectors["data"]))
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, self.blockchain.blocks[3].hash)
+    rpc.meros.connect(254, 254, self.blockchain.blocks[3].blockHash)
 
     sentLast: bool = False
     reqHash: bytes = bytes()
@@ -79,26 +79,26 @@ def VParsableTest(
                 if height >= len(blockchain.blocks):
                     raise TestError("Meros asked for a Block Hash we do not have.")
 
-                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
+                rpc.meros.blockHash(blockchain.blocks[height].header.blockHash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
             reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == reqHash:
+                if block.header.blockHash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
-                if block.header.hash == blockchain.last():
+                if block.header.blockHash == blockchain.last():
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
             reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.hash == reqHash:
+                if block.header.blockHash == reqHash:
                     rpc.meros.blockBody(block)
                     break
 
-                if block.header.hash == blockchain.last():
+                if block.header.blockHash == blockchain.last():
                     raise TestError("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msg[0]) == MessageType.ElementRequest:

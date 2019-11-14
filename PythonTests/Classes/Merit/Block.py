@@ -31,10 +31,10 @@ class Block:
         self.header.proof = -1
         while (
             (self.header.proof == -1) or
-            (int.from_bytes(self.header.hash, "big") < difficulty)
+            (int.from_bytes(self.header.blockHash, "big") < difficulty)
         ):
             self.header.proof += 1
-            self.header.hash = argon2.low_level.hash_secret_raw(
+            self.header.blockHash = argon2.low_level.hash_secret_raw(
                 self.header.serializeHash(),
                 self.header.proof.to_bytes(8, "big"),
                 1,
@@ -43,10 +43,10 @@ class Block:
                 48,
                 argon2.low_level.Type.D
             )
-            self.header.signature = privKey.sign(self.header.hash).serialize()
+            self.header.signature = privKey.sign(self.header.blockHash).serialize()
 
-            self.header.hash = argon2.low_level.hash_secret_raw(
-                self.header.hash,
+            self.header.blockHash = argon2.low_level.hash_secret_raw(
+                self.header.blockHash,
                 self.header.signature,
                 1,
                 65536,
@@ -67,7 +67,7 @@ class Block:
     ) -> Dict[str, Any]:
         result: Dict[str, Any] = self.body.toJSON()
         result["header"] = self.header.toJSON()
-        result["hash"] = self.header.hash.hex().upper()
+        result["hash"] = self.header.blockHash.hex().upper()
         return result
 
     #JSON -> Block.

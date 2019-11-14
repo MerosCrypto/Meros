@@ -113,7 +113,7 @@ class Epochs:
 
             for e in range(start, record[1] + 1):
                 if isinstance(consensus.holders[mh][e], Verification):
-                    tx: bytes = Verification.fromElement(consensus.holders[mh][e]).hash
+                    tx: bytes = Verification.fromElement(consensus.holders[mh][e]).txHash
                     if not tx in epoch:
                         epoch[tx] = []
                     epoch[tx].append(mh)

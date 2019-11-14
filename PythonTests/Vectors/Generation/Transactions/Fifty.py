@@ -60,7 +60,7 @@ blsPrivKey2: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\1')
 blsPubKey2: blspy.PublicKey = blsPrivKey2.get_public_key()
 
 #Grab the claim hash.
-claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()][1]).hash
+claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()][1]).txHash
 
 #Create 12 Sends.
 sends: List[Send] = []
@@ -81,7 +81,7 @@ for _ in range(12):
 
     sends.append(
         Send(
-            [(sends[-1].hash, 0)],
+            [(sends[-1].txHash, 0)],
             [(edPubKey.to_bytes(), sends[-1].outputs[0][1])]
         )
     )
@@ -90,7 +90,7 @@ for _ in range(12):
 order: List[int] = [0, 1]
 verif: SignedVerification
 for s in order:
-    verif = SignedVerification(sends[s].hash)
+    verif = SignedVerification(sends[s].txHash)
     verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
     consensus.add(verif)
 
@@ -110,7 +110,7 @@ print("Generated Fifty Block " + str(block.header.nonce) + ".")
 #Verify 3, and then 2, while giving Merit to a second Merit Holder.
 order = [3, 2]
 for s in order:
-    verif = SignedVerification(sends[s].hash)
+    verif = SignedVerification(sends[s].txHash)
     verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
     consensus.add(verif)
 
@@ -133,14 +133,14 @@ print("Generated Fifty Block " + str(block.header.nonce) + ".")
 #2nd Merit Holder:
 order = [5, 6, 9, 11]
 for i in range(len(order)):
-    verif = SignedVerification(sends[order[i]].hash)
+    verif = SignedVerification(sends[order[i]].txHash)
     verif.sign(blsPrivKey2, i)
     consensus.add(verif)
 
 #1st Merit Holder:
 order = [4, 5, 8, 7, 11, 6, 10, 9]
 for s in order:
-    verif = SignedVerification(sends[s].hash)
+    verif = SignedVerification(sends[s].txHash)
     verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
     consensus.add(verif)
 

@@ -69,7 +69,7 @@ for edPrivKey in edKeys:
 #Create 1 Verification per Data.
 verifs: List[SignedVerification] = []
 for d in range(len(datas)):
-    verifs.append(SignedVerification(datas[d].hash))
+    verifs.append(SignedVerification(datas[d].txHash))
     verifs[-1].sign(privKey, d)
     consensus.add(verifs[-1])
 

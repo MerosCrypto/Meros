@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 #Transaction root class.
 class Transaction:
-    hash: bytes
+    txHash: bytes
     verified: bool
 
     def serialize(
