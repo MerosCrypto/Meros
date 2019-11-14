@@ -5,9 +5,6 @@ from typing import Callable, Dict, Union
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#Consensus class.
-from PythonTests.Classes.Consensus.Consensus import Consensus
-
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
@@ -18,10 +15,9 @@ from PythonTests.Tests.Errors import TestError
 from PythonTests.Meros.Meros import MessageType
 from PythonTests.Meros.RPC import RPC
 
-#Merit, Consensus, and Transactions verifiers.
+#Merit and Transactions verifiers.
 from PythonTests.Tests.Merit.Verify import verifyBlockchain
 """
-from PythonTests.Tests.Consensus.Verify import verifyConsensus
 from PythonTests.Tests.Transactions.Verify import verifyTransactions
 """
 
@@ -31,7 +27,6 @@ class Liver():
         self,
         rpc: RPC,
         blockchain: Blockchain,
-        consensus: Union[Consensus, None] = None,
         transactions: Union[Transactions, None] = None,
         callbacks: Dict[int, Callable[[], None]] = {},
         everyBlock: Union[Callable[[int], None], None] = None
@@ -41,7 +36,6 @@ class Liver():
 
         #Arguments.
         self.blockchain: Blockchain = blockchain
-        self.consensus: Union[Consensus, None] = consensus
         self.transactions: Union[Transactions, None] = transactions
 
         self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)
@@ -52,7 +46,7 @@ class Liver():
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.blockchain.blocks[0].header.hash)
+        self.rpc.meros.connect(254, 254, self.blockchain.blocks[0].header.blockHash)
 
         #Send each Block.
         for b in range(1, len(self.blockchain.blocks)):
@@ -72,7 +66,7 @@ class Liver():
 
                 elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
                     reqHash = msg[1 : 49]
-                    if reqHash != block.header.hash:
+                    if reqHash != block.header.blockHash:
                         raise TestError("Meros asked for a Block Body that didn't belong to the header we just sent it.")
 
                     #Send the BlockBody.
@@ -109,17 +103,11 @@ class Liver():
         #Verify the Blockchain.
         verifyBlockchain(self.rpc, self.blockchain)
 
-        #Verify the Consensus.
-        if self.consensus is not None:
-            """
-            verifyConsensus(self.rpc, self.consensus)
-            """
-
         #Verify the Transactions.
+        """
         if self.transactions is not None:
-            """
             verifyTransactions(self.rpc, self.transactions)
-            """
+        """
 
         #Reset the RPC.
         self.rpc.reset()

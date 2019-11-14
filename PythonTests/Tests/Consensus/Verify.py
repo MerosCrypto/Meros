@@ -4,7 +4,6 @@ from typing import Dict, Any
 
 #Consensus classes.
 from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
-from PythonTests.Classes.Consensus.Consensus import Consensus
 
 #TestError Exception.
 from PythonTests.Tests.Errors import TestError
@@ -56,14 +55,4 @@ def verifyMeritRemoval(
         "merit": merit if pending else 0
     }:
         raise TestError("Merit Holder's Merit doesn't match.")
-
-#Verify the Consensus.
-def verifyConsensus(
-    rpc: RPC,
-    consensus: Consensus
-) -> None:
-    for pubKey in consensus.holders:
-        for e in range(len(consensus.holders[pubKey])):
-            if rpc.call("consensus", "getElement", [pubKey.hex(), e]) != consensus.holders[pubKey][e].toJSON():
-                raise TestError("Element doesn't match.")
 """
