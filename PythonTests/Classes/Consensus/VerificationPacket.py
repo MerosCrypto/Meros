@@ -1,8 +1,17 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, List, Optional, Any
+
+#State class.
+from PythonTests.Classes.Merit.State import State
 
 #Element class.
 from PythonTests.Classes.Consensus.Element import Element
+
+#SignedVerification class.
+from PythonTests.Classes.Consensus.Verification import SignedVerification
+
+#BLS lib.
+from blspy import PublicKey, Signature, AggregationInfo
 
 #VerificationPacket class.
 class VerificationPacket(Element):
@@ -14,7 +23,7 @@ class VerificationPacket(Element):
     ) -> None:
         self.prefix: bytes = b'\1'
 
-        self.hash: bytes = txHash
+        self.txHash: bytes = txHash
         self.holders: List[int] = holders
 
     #Element -> VerificationPacket. Satisifes static typing requirements.
@@ -31,7 +40,7 @@ class VerificationPacket(Element):
         result: bytes = len(self.holders).to_bytes(1, "big")
         for holder in sorted(self.holders):
             result += holder.to_bytes(2, "big")
-        result += self.hash
+        result += self.txHash
         return result
 
     #VerificationPacket -> JSON.
@@ -41,7 +50,7 @@ class VerificationPacket(Element):
         return {
             "descendant": "VerificationPacket",
 
-            "hash": self.hash.hex().upper(),
+            "hash": self.txHash.hex().upper(),
             "holders": self.holders
         }
 
@@ -57,11 +66,38 @@ class SignedVerificationPacket(VerificationPacket):
     def __init__(
         self,
         txHash: bytes,
-        holders: List[int],
+        holders: List[int] = [],
+        holderKeys: Optional[List[PublicKey]] = None,
         signature: bytes = bytes(96)
     ) -> None:
         VerificationPacket.__init__(self, txHash, holders)
         self.signature: bytes = signature
+
+        self.blsSignature: Signature
+        if holderKeys:
+            serialized: bytes = SignedVerification.signatureSerialize(self.txHash)
+
+            self.blsSignature = Signature.from_bytes(signature)
+            agInfo: AggregationInfo = AggregationInfo.from_msg(holderKeys[0], serialized)
+
+            for h in range(1, len(self.holders)):
+                agInfo = AggregationInfo.merge_infos([
+                    agInfo,
+                    AggregationInfo.from_msg(holderKeys[h], serialized)
+                ])
+
+    #Add a SignedVerification.
+    def add(
+        self,
+        verif: SignedVerification
+    ) -> None:
+        self.holders.append(verif.holder)
+
+        if self.signature == bytes(96):
+            self.blsSignature = verif.blsSignature
+        else:
+            self.blsSignature = Signature.aggregate([self.blsSignature, verif.blsSignature])
+        self.signature = self.blsSignature.serialize()
 
     #Serialize.
     def signedSerialize(
@@ -83,19 +119,25 @@ class SignedVerificationPacket(VerificationPacket):
             "descendant": "VerificationPacket",
 
             "holders": self.holders,
-            "hash": self.hash.hex().upper(),
+            "hash": self.txHash.hex().upper(),
 
             "signed": True,
             "signature": self.signature.hex().upper()
         }
 
-    #JSON -> VerificationPacket.
+    #JSON -> SignedVerificationPacket.
     @staticmethod
-    def fromJSON(
+    def fromSignedJSON(
+        state: State,
         json: Dict[str, Any]
     ) -> Any:
+        holderKeys: List[PublicKey] = []
+        for holder in json["holders"]:
+            holderKeys.append(PublicKey.from_bytes(state.nicks[holder]))
+
         return SignedVerificationPacket(
             bytes.fromhex(json["hash"]),
             json["holders"],
+            holderKeys,
             bytes.fromhex(json["signature"])
         )
