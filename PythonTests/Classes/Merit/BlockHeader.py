@@ -36,7 +36,7 @@ class BlockHeader:
         while len(merkle) > 1:
             if len(merkle) % 2 != 0:
                 merkle.append(merkle[-1])
-            for h in range(0, len(merkle) // 2):
+            for h in range(len(merkle) // 2):
                 merkle[h] = blake2b(
                     merkle[h * 2] + merkle[(h * 2) + 1],
                     digest_size=48

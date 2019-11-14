@@ -24,7 +24,6 @@ class Mint(Transaction):
             self.output[1].to_bytes(8, "big"),
             digest_size=48
         ).digest()
-        self.verified: bool = True
 
     #Transaction -> Mint. Satisifes static typing requirements.
     @staticmethod
@@ -55,12 +54,6 @@ class Mint(Transaction):
             "nonce": self.nonce
         }
         return result
-
-    #Mint -> JSON. toJSON alias.
-    def toVector(
-        self,
-    ) -> Dict[str, Any]:
-        return self.toJSON()
 
     #JSON -> Mint.
     @staticmethod

@@ -133,7 +133,7 @@ result: Dict[str, Any] = {
     "removal":       removal.toSignedJSON()
 }
 for data in datas:
-    result["datas"].append(data.toVector())
+    result["datas"].append(data.toJSON())
 for verif in verifs:
     result["verifications"].append(verif.toSignedJSON())
 

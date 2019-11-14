@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 #Transaction root class.
 class Transaction(ABC):
     txHash: bytes
-    verified: bool
 
     @abstractmethod
     def serialize(
@@ -19,12 +18,6 @@ class Transaction(ABC):
 
     @abstractmethod
     def toJSON(
-        self
-    ) -> Dict[str, Any]:
-        pass
-
-    @abstractmethod
-    def toVector(
         self
     ) -> Dict[str, Any]:
         pass

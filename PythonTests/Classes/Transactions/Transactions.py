@@ -28,7 +28,7 @@ class Transactions:
     ) -> Dict[str, Dict[str, Any]]:
         result: Dict[str, Dict[str, Any]] = {}
         for tx in self.txs:
-            result[tx.hex().upper()] = self.txs[tx].toVector()
+            result[tx.hex().upper()] = self.txs[tx].toJSON()
         return result
 
     #JSON -> Transactions.

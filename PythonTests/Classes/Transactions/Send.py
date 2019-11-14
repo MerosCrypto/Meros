@@ -30,7 +30,6 @@ class Send(Transaction):
 
         self.proof: int = proof
         self.argon: bytes = SpamFilter.run(self.txHash, self.proof)
-        self.verified: bool = False
 
     #Transaction -> Send. Satisifes static typing requirements.
     @staticmethod
@@ -114,14 +113,6 @@ class Send(Transaction):
             })
         return result
 
-    #Send -> JSON with verified field.
-    def toVector(
-        self,
-    ) -> Dict[str, Any]:
-        result = self.toJSON()
-        result["verified"] = self.verified
-        return result
-
     #JSON -> Send.
     @staticmethod
     def fromJSON(
@@ -137,12 +128,9 @@ class Send(Transaction):
                 int(output["amount"])
             ))
 
-        result: Send = Send(
+        return Send(
             inputs,
             outputs,
             bytes.fromhex(json["signature"]),
             json["proof"]
         )
-        if json["verified"]:
-            result.verified = True
-        return result

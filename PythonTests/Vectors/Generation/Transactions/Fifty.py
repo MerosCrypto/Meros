@@ -98,18 +98,11 @@ for _ in range(12):
 #Tuple's second value is miner.
 orders: List[Tuple[Dict[int, List[int]], Union[bytes, int]]] = [
     #Verify the first two Merit Holders.
-    ({
-        0: [0, 1]
-    }, 0),
+    ({0: [0, 1]}, 0),
     #Verify 3, and then 2, while giving Merit to a second Merit Holder.
-    ({
-        0: [3, 2]
-    }, blsPubKeys[1].serialize()),
+    ({0: [3, 2]}, blsPubKeys[1].serialize()),
     #Verify every other TX.
-    ({
-        1: [5, 6, 9, 11, 3, 0],
-        0: [4, 5, 8, 7, 11, 6, 10, 9]
-    }, 1)
+    ({1: [5, 6, 9, 11, 3, 0], 0: [4, 5, 8, 7, 11, 6, 10, 9]}, 1)
 ]
 #Packets.
 packets: Dict[int, VerificationPacket] = {}
@@ -157,7 +150,7 @@ for order in orders:
     print("Generated Fifty Block " + str(len(blockchain.blocks) - 1) + ".")
 
 #Generate another 5 Blocks.
-for _ in range(0, 5):
+for _ in range(5):
     #Create the next Block.
     block: Block = Block(
         BlockHeader(

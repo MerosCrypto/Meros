@@ -32,7 +32,6 @@ class Data(Transaction):
 
         self.proof: int = proof
         self.argon: bytes = SpamFilter.run(self.txHash, self.proof)
-        self.verified: bool = False
 
     #Transaction -> Data. Satisifes static typing requirements.
     @staticmethod
@@ -87,25 +86,14 @@ class Data(Transaction):
             "argon": self.argon.hex().upper()
         }
 
-    #Data -> JSON with verified field.
-    def toVector(
-        self,
-    ) -> Dict[str, Any]:
-        result = self.toJSON()
-        result["verified"] = self.verified
-        return result
-
     #JSON -> Data.
     @staticmethod
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        result: Data = Data(
+        return Data(
             bytes.fromhex(json["inputs"][0]["hash"]),
             bytes.fromhex(json["data"]),
             bytes.fromhex(json["signature"]),
             json["proof"]
         )
-        if json["verified"]:
-            result.verified = True
-        return result
