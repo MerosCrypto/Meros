@@ -1,8 +1,5 @@
 #Types.
-from typing import Dict, Optional, Any
-
-#State class.
-from PythonTests.Classes.Merit.State import State
+from typing import Dict, List, Optional, Any
 
 #Element class.
 from PythonTests.Classes.Consensus.Element import Element
@@ -124,12 +121,12 @@ class SignedVerification(Verification):
     #JSON -> SignedVerification.
     @staticmethod
     def fromSignedJSON(
-        state: State,
+        nicks: List[bytes],
         json: Dict[str, Any]
     ) -> Any:
         return SignedVerification(
             bytes.fromhex(json["hash"]),
             json["holder"],
-            PublicKey.from_bytes(state.nicks[json["holder"]]),
+            PublicKey.from_bytes(nicks[json["holder"]]),
             bytes.fromhex(json["signature"])
         )

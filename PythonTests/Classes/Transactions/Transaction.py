@@ -3,22 +3,28 @@
 #Types.
 from typing import Dict, Any
 
+#Abstract class standard lib.
+from abc import ABC, abstractmethod
+
 #Transaction root class.
-class Transaction:
+class Transaction(ABC):
     txHash: bytes
     verified: bool
 
+    @abstractmethod
     def serialize(
         self
     ) -> bytes:
-        raise Exception("Base Transaction serialize called.")
+        pass
 
+    @abstractmethod
     def toJSON(
         self
     ) -> Dict[str, Any]:
-        raise Exception("Base Transaction toJSON called.")
+        pass
 
+    @abstractmethod
     def toVector(
         self
     ) -> Dict[str, Any]:
-        raise Exception("Base Transaction toVector called.")
+        pass

@@ -30,6 +30,12 @@ class Mint(Transaction):
     ) -> Any:
         return tx
 
+    #Serialize.
+    def serialize(
+        self
+    ) -> bytes:
+        raise Exception("Mint serialize called.")
+
     #Mint -> JSON.
     def toJSON(
         self
