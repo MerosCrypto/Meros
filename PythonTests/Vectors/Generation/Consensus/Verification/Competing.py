@@ -81,7 +81,6 @@ send1: Send = Send(
 )
 send1.sign(edPrivKey1)
 send1.beat(consensus.sendFilter)
-send1.verified = True
 transactions.add(send1)
 
 send2: Send = Send(

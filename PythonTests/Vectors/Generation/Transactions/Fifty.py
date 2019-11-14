@@ -82,7 +82,6 @@ sends.append(
 for _ in range(12):
     sends[-1].sign(edPrivKey)
     sends[-1].beat(sendFilter)
-    sends[-1].verified = True
     transactions.add(sends[-1])
 
     sends.append(

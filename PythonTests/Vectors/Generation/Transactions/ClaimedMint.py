@@ -69,7 +69,6 @@ for i in range(5):
 data: Data = Data(edPubKey.to_bytes().rjust(48, b'\0'), bytes())
 data.sign(edPrivKey)
 data.beat(dataFilter)
-data.verified = True
 transactions.add(data)
 
 #Verify it.
@@ -116,7 +115,6 @@ for _ in range(6):
 claim: Claim = Claim([merit.mints[0].txHash], edPubKey.to_bytes())
 claim.amount = merit.mints[0].output[1]
 claim.sign([blsPrivKey])
-claim.verified = True
 transactions.add(claim)
 
 #Verify the Claim..
