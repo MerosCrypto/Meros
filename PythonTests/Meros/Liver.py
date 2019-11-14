@@ -17,9 +17,7 @@ from PythonTests.Meros.RPC import RPC
 
 #Merit and Transactions verifiers.
 from PythonTests.Tests.Merit.Verify import verifyBlockchain
-"""
 from PythonTests.Tests.Transactions.Verify import verifyTransactions
-"""
 
 #pylint: disable=too-few-public-methods
 class Liver():
@@ -104,10 +102,8 @@ class Liver():
         verifyBlockchain(self.rpc, self.blockchain)
 
         #Verify the Transactions.
-        """
         if self.transactions is not None:
             verifyTransactions(self.rpc, self.transactions)
-        """
 
         #Reset the RPC.
         self.rpc.reset()

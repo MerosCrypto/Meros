@@ -17,9 +17,7 @@ from PythonTests.Meros.RPC import RPC
 
 #Merit and Transactions verifiers.
 from PythonTests.Tests.Merit.Verify import verifyBlockchain
-"""
 from PythonTests.Tests.Transactions.Verify import verifyTransactions
-"""
 
 #pylint: disable=too-many-instance-attributes,too-few-public-methods
 class Syncer():
@@ -36,7 +34,7 @@ class Syncer():
         #DBs/Settings.
         self.blockchain: Blockchain = blockchain
         if transactions is not None:
-            self.transactions: Transactions = transactions
+            self.transactions: Union[Transactions, None] = transactions
         self.settings: Dict[str, Any] = dict(settings)
 
         #Provide default settings.
@@ -185,12 +183,8 @@ class Syncer():
         verifyBlockchain(self.rpc, self.blockchain)
 
         #Verify the Transactions.
-        """
-        try:
+        if self.transactions is not None:
             verifyTransactions(self.rpc, self.transactions)
-        except AttributeError:
-            pass
-        """
 
         if self.settings["playback"]:
             #Playback their messages.

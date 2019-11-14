@@ -14,9 +14,9 @@ from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
 from PythonTests.Tests.Merit.StateTest import StateTest
 
 from PythonTests.Tests.Transactions.DataTest import DataTest
-"""
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 
+"""
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
@@ -54,11 +54,10 @@ tests: List[Callable[[RPC], None]] = [
     DifficultyTest,
     StateTest,
 
-    DataTest
+    DataTest,
+    FiftyTest
 ]
 """
-FiftyTest,
-
 VUnknownTest,
 VParsableTest,
 VCompetingTest,

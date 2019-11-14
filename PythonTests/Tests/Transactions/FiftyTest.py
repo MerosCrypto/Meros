@@ -1,4 +1,3 @@
-"""
 #https://github.com/MerosCrypto/Meros/issues/50
 
 #Types.
@@ -7,16 +6,13 @@ from typing import Dict, IO, Any
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
-from PythonTests.Classes.Consensus.Consensus import Consensus
-
 #Blockchain class.
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Liver import Liver
-from PythonTests.Meros.Syncer import Syncer
+#from PythonTests.Meros.Syncer import Syncer
 
 #JSON standard lib.
 import json
@@ -34,14 +30,8 @@ def FiftyTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
-    consensus: Consensus = Consensus.fromJSON(
-        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-        vectors["consensus"]
-    )
     transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
     #Create and execute a Liver/Syncer.
-    Liver(rpc, blockchain, consensus, transactions).live()
-    Syncer(rpc, blockchain, consensus, transactions).sync()
-"""
+    Liver(rpc, blockchain, transactions).live()
+    #Syncer(rpc, blockchain, transactions).sync()
