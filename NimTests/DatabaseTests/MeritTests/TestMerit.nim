@@ -73,7 +73,7 @@ proc newContents(
 ): Hash[384] =
     var contents: Merkle = newMerkle()
     for packet in packets:
-        contents.add(Blake384(packet.serialize()))
+        contents.add(Blake384(packet.serializeContents()))
     for elem in elements:
         contents.add(Blake384(elem.serializeContents()))
     result = contents.hash

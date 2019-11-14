@@ -96,7 +96,7 @@ proc processBlock*(
 
     #Add the Verification Packets to the contents.
     for packet in newBlock.body.packets:
-        contents.add(Blake384(packet.serialize()))
+        contents.add(Blake384(packet.serializeContents()))
 
     for elem in newBlock.body.elements:
         try:
