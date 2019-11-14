@@ -79,8 +79,4 @@ class BlockBody:
         for _ in json["elements"]:
             pass
 
-        return BlockBody(
-            packets,
-            elements,
-            bytes.fromhex(json["aggregate"])
-        )
+        return BlockBody(packets, elements, bytes.fromhex(json["aggregate"]))

@@ -1,9 +1,6 @@
 #Types.
 from typing import Dict, List, Optional, Any
 
-#State class.
-from PythonTests.Classes.Merit.State import State
-
 #Element class.
 from PythonTests.Classes.Consensus.Element import Element
 
@@ -13,6 +10,9 @@ from PythonTests.Classes.Consensus.Verification import SignedVerification
 #BLS lib.
 from blspy import PublicKey, Signature, AggregationInfo
 
+#VerificationPacket Prefix.
+VERIFICATION_PACKET_PREFIX: bytes = b'\1'
+
 #VerificationPacket class.
 class VerificationPacket(Element):
     #Constructor.
@@ -21,7 +21,7 @@ class VerificationPacket(Element):
         txHash: bytes,
         holders: List[int]
     ) -> None:
-        self.prefix: bytes = b'\1'
+        self.prefix: bytes = VERIFICATION_PACKET_PREFIX
 
         self.txHash: bytes = txHash
         self.holders: List[int] = holders
@@ -42,6 +42,12 @@ class VerificationPacket(Element):
             result += holder.to_bytes(2, "big")
         result += self.txHash
         return result
+
+    #Serialize for inclusion in the contents Merkle.
+    def serializeContents(
+        self
+    ) -> bytes:
+        return self.prefix + self.serialize()
 
     #VerificationPacket -> JSON.
     def toJSON(
@@ -128,12 +134,12 @@ class SignedVerificationPacket(VerificationPacket):
     #JSON -> SignedVerificationPacket.
     @staticmethod
     def fromSignedJSON(
-        state: State,
+        nicks: List[bytes],
         json: Dict[str, Any]
     ) -> Any:
         holderKeys: List[PublicKey] = []
         for holder in json["holders"]:
-            holderKeys.append(PublicKey.from_bytes(state.nicks[holder]))
+            holderKeys.append(PublicKey.from_bytes(nicks[holder]))
 
         return SignedVerificationPacket(
             bytes.fromhex(json["hash"]),

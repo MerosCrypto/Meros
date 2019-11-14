@@ -1,4 +1,3 @@
-"""
 #Types.
 from typing import IO, Dict, List, Any
 
@@ -7,9 +6,10 @@ from PythonTests.Classes.Transactions.Claim import Claim
 from PythonTests.Classes.Transactions.Data import Data
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
+#SpamFilter, SignedVerification, and VerificationPacket classes.
+from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
 from PythonTests.Classes.Consensus.Verification import SignedVerification
-from PythonTests.Classes.Consensus.Consensus import Consensus
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -36,10 +36,11 @@ bbFile.close()
 
 #Transactions.
 transactions: Transactions = Transactions()
-#$Consensus.
-consensus: Consensus = Consensus(
-    bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-    bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+#SpamFilter.
+dataFilter: SpamFilter = SpamFilter(
+    bytes.fromhex(
+        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+    )
 )
 #Merit.
 merit: Merit = Merit(
@@ -48,6 +49,7 @@ merit: Merit = Merit(
     int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
     100
 )
+
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -59,77 +61,87 @@ blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
 
 #Add 5 Blank Blocks.
 for i in range(5):
-    merit.add(transactions, consensus, Block.fromJSON(blankBlocks[i]))
+    merit.add(Block.fromJSON(blankBlocks[i]))
 
 #Create the Data.
 data: Data = Data(edPubKey.to_bytes().rjust(48, b'\0'), bytes())
 data.sign(edPrivKey)
-data.beat(consensus.dataFilter)
+data.beat(dataFilter)
 data.verified = True
 transactions.add(data)
 
 #Verify it.
-verif: SignedVerification = SignedVerification(data.hash)
-verif.sign(blsPrivKey, 0)
-consensus.add(verif)
+verif: SignedVerification = SignedVerification(data.txHash)
+verif.sign(0, blsPrivKey)
 
 #Generate another 6 Blocks.
-#Next block should have a record.
+#Next block should have a packet.
 block: Block = Block(
     BlockHeader(
-        6,
+        0,
         merit.blockchain.last(),
-        int(time()),
-        consensus.getAggregate([(blsPubKey, 0, -1)])
+        BlockHeader.createContents([VerificationPacket(verif.txHash, [0])], []),
+        1,
+        bytes(4),
+        0,
+        int(time())
     ),
-    BlockBody([(blsPubKey, 0, consensus.getMerkle(blsPubKey, 0))])
+    BlockBody([VerificationPacket(verif.txHash, [0])], [], verif.signature)
 )
 for i in range(7, 13):
     #Mine it.
-    block.mine(merit.blockchain.difficulty())
+    block.mine(blsPrivKey, merit.blockchain.difficulty())
 
     #Add it.
-    merit.add(transactions, consensus, block)
-    print("Generated Claimed Mint Block " + str(block.header.nonce) + ".")
+    merit.add(block)
+    print("Generated Claimed Mint Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
     #Create the next Block.
     block = Block(
-        BlockHeader(i, merit.blockchain.last(), int(time())),
+        BlockHeader(
+            0,
+            merit.blockchain.last(),
+            bytes(48),
+            1,
+            bytes(4),
+            0,
+            int(time())
+        ),
         BlockBody()
     )
 
 #Claim the new Mint.
-claim: Claim = Claim([merit.mints[0].hash], edPubKey.to_bytes())
+claim: Claim = Claim([merit.mints[0].txHash], edPubKey.to_bytes())
 claim.amount = merit.mints[0].output[1]
 claim.sign([blsPrivKey])
 claim.verified = True
 transactions.add(claim)
 
 #Verify the Claim..
-verif = SignedVerification(claim.hash)
-verif.sign(blsPrivKey, 1)
-consensus.add(verif)
+verif = SignedVerification(claim.txHash)
+verif.sign(0, blsPrivKey)
 
 #Mine one more Block.
 block = Block(
     BlockHeader(
-        12,
+        0,
         merit.blockchain.last(),
-        int(time()),
-        consensus.getAggregate([(blsPubKey, 1, -1)])
+        BlockHeader.createContents([VerificationPacket(verif.txHash, [0])], []),
+        1,
+        bytes(4),
+        0,
+        int(time())
     ),
-    BlockBody([(blsPubKey, 1, consensus.getMerkle(blsPubKey, 1))])
+    BlockBody([VerificationPacket(verif.txHash, [0])], [], verif.signature)
 )
-block.mine(merit.blockchain.difficulty())
-merit.add(transactions, consensus, block)
-print("Generated Claimed Mint Block " + str(block.header.nonce) + ".")
+block.mine(blsPrivKey, merit.blockchain.difficulty())
+merit.add(block)
+print("Generated Claimed Mint Block " + str(len(merit.blockchain.blocks) - 1) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": merit.blockchain.toJSON(),
-    "transactions": transactions.toJSON(),
-    "consensus":  consensus.toJSON()
+    "transactions": transactions.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Transactions/ClaimedMint.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()
-"""

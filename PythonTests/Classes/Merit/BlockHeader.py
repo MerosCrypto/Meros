@@ -1,12 +1,50 @@
 #Types.
-from typing import Dict, Union, Any
+from typing import Dict, List, Union, Any
+
+#VerificationPacket class.
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Argon2 lib.
 import argon2
 
+#Blake2b standard function.
+from hashlib import blake2b
+
 #BlockHeader class.
 #pylint: disable=too-many-instance-attributes
 class BlockHeader:
+    #Create a contents merkle.
+    @staticmethod
+    def createContents(
+        packets: List[VerificationPacket] = [],
+        elements: List[None] = []
+    ) -> bytes:
+        #Support empty contents.
+        if (packets == []) and (elements == []):
+            return bytes(48)
+
+        #Define the list.
+        merkle: List[bytes] = []
+
+        #Append Packets.
+        for packet in packets:
+            merkle.append(blake2b(packet.serializeContents(), digest_size=48).digest())
+
+        #Append Elements.
+
+        #Pair down until there's one hash left.
+        while len(merkle) > 1:
+            if len(merkle) % 2 != 0:
+                merkle.append(merkle[-1])
+            for h in range(0, len(merkle) // 2):
+                merkle[h] = blake2b(
+                    merkle[h * 2] + merkle[(h * 2) + 1],
+                    digest_size=48
+                ).digest()
+            merkle = merkle[0 : len(merkle) // 2]
+
+        return merkle[0]
+
     #Serialize to be hashed.
     def serializeHash(
         self
