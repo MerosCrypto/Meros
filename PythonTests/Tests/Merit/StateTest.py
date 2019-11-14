@@ -36,7 +36,7 @@ def StateTest(
     def checkState(
         block: int
     ) -> None:
-        state.add(blockchain, blockchain.blocks[block], block)
+        state.add(blockchain, block)
 
         for miner in state.unlocked:
             if rpc.call("merit", "getMerit", [miner]) != {

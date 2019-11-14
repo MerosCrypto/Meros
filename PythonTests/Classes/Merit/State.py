@@ -25,9 +25,10 @@ class State:
     def add(
         self,
         blockchain: Blockchain,
-        block: Block,
-        height: int
+        b: int
     ) -> None:
+        block: Block = blockchain.blocks[b]
+
         miner: int
         if block.header.newMiner:
             miner = len(self.nicks)
@@ -37,11 +38,13 @@ class State:
         else:
             miner = block.header.minerNick
         self.unlocked[miner] += 1
+        self.merit += 1
 
-        if height > self.lifetime:
-            oldHeader: BlockHeader = blockchain.blocks[height - self.lifetime].header
+        if b > self.lifetime:
+            oldHeader: BlockHeader = blockchain.blocks[b - self.lifetime].header
             if oldHeader.newMiner:
                 miner = self.keys[oldHeader.minerKey]
             else:
                 miner = oldHeader.minerNick
             self.unlocked[miner] -= 1
+            self.merit -= 1

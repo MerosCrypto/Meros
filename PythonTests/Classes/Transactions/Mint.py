@@ -4,9 +4,6 @@ from typing import Dict, Tuple, Any
 #Transaction and SpamFilter classes.
 from PythonTests.Classes.Transactions.Transaction import Transaction
 
-#BLS lib.
-import blspy
-
 #Blake2b standard function.
 from hashlib import blake2b
 
@@ -16,11 +13,17 @@ class Mint(Transaction):
     def __init__(
         self,
         nonce: int,
-        output: Tuple[blspy.PublicKey, int]
+        output: Tuple[int, int]
     ) -> None:
         self.nonce: int = nonce
-        self.output: Tuple[blspy.PublicKey, int] = output
-        self.txHash = blake2b(b'\0' + self.nonce.to_bytes(4, "big") + self.output[0].serialize() + self.output[1].to_bytes(8, "big"), digest_size=48).digest()
+        self.output: Tuple[int, int] = output
+        self.txHash = blake2b(
+            b'\0' +
+            self.nonce.to_bytes(4, "big") +
+            self.output[0].to_bytes(4, "big") +
+            self.output[1].to_bytes(8, "big"),
+            digest_size=48
+        ).digest()
         self.verified: bool = True
 
     #Transaction -> Mint. Satisifes static typing requirements.
@@ -44,7 +47,7 @@ class Mint(Transaction):
             "descendant": "Mint",
             "inputs": [],
             "outputs": [{
-                "key": self.output[0].serialize().hex().upper(),
+                "key": self.output[0],
                 "amount": str(self.output[1])
             }],
             "hash": self.txHash.hex().upper(),
@@ -66,8 +69,5 @@ class Mint(Transaction):
     ) -> Any:
         return Mint(
             json["nonce"],
-            (
-                blspy.PublicKey.from_bytes(bytes.fromhex(json["outputs"][0]["key"])),
-                int(json["outputs"][1])
-            ),
+            (json["outputs"][0]["key"], int(json["outputs"][1])),
         )
