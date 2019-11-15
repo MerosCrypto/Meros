@@ -33,8 +33,7 @@ class Syncer():
 
         #DBs/Settings.
         self.blockchain: Blockchain = blockchain
-        if transactions is not None:
-            self.transactions: Union[Transactions, None] = transactions
+        self.transactions: Union[Transactions, None] = transactions
         self.settings: Dict[str, Any] = dict(settings)
 
         #Provide default settings.
