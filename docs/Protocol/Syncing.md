@@ -14,7 +14,6 @@ During syncing, the syncer can only send:
 - `BlockBodyRequest`
 - `SketchHashesRequest`
 - `SketchHashRequests`
-- `VerificationPacketRequest`
 - `TransactionRequest`
 
 - `SyncingOver`
@@ -70,10 +69,6 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 `SketchHashRequests` has a variable message length; the Block's 48-byte hash, the 4-byte amount of sketch hashes, and each 8-byte sketch hash. The expected response is multiple `VerificationPacket` messages, each containing the VerificationPacket which created the matching sketch hash in the specified Block.
 
-### VerificationPacketRequest
-
-`VerificationPacketRequest` has a message length of 96 bytes; the hash of the Block the VerificationPacket is archived in and the hash of the Transaction it includes Verifications for. The expected response is a `VerificationPacket` for the specified Transaction including the Verifications archived in the specified Block.
-
 ### TransactionRequest
 
 `TransactionRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `Claim`, `Send`, or `Data` containing the requested Transaction. If a Mint has the requested hash, the syncee sends `DataMissing`.
@@ -93,4 +88,3 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 - Meros doesn't support the `CheckpointRequest` message type.
 - Meros doesn't support the `SketchHashesRequest` and `SketchHashes` message types.
 - Meros doesn't support the `SketchHashRequests` message type.
-- Meros doesn't support the `VerificationPacketRequest` message type.

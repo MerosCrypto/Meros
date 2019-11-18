@@ -29,26 +29,25 @@ finalsd:
             BlockBodyRequest          = 10,
             SketchHashesRequest       = 11,
             SketchHashRequests        = 12,
-            VerificationPacketRequest = 13,
-            TransactionRequest        = 14,
-            DataMissing               = 15,
-            SyncingOver               = 16,
+            TransactionRequest        = 13,
+            DataMissing               = 14,
+            SyncingOver               = 15,
 
-            Claim                     = 17,
-            Send                      = 18,
-            Data                      = 19,
+            Claim                     = 16,
+            Send                      = 17,
+            Data                      = 18,
 
-            SignedVerification        = 22,
-            SignedMeritRemoval        = 26,
+            SignedVerification        = 21,
+            SignedMeritRemoval        = 25,
 
-            BlockHeader               = 28,
-            BlockBody                 = 29,
-            SketchHashes              = 30,
-            VerificationPacket        = 31,
+            BlockHeader               = 27,
+            BlockBody                 = 28,
+            SketchHashes              = 29,
+            VerificationPacket        = 30,
 
             #End is used to mark the end of the Enum.
             #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 32
+            End = 31
 
         #Message object.
         Message* = object
