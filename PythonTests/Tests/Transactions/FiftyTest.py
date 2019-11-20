@@ -34,4 +34,6 @@ def FiftyTest(
 
     #Create and execute a Liver/Syncer.
     Liver(rpc, blockchain, transactions).live()
-    #Syncer(rpc, blockchain, transactions).sync()
+    """
+    Syncer(rpc, blockchain, transactions).sync()
+    """

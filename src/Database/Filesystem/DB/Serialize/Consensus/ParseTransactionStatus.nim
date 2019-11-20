@@ -16,6 +16,9 @@ import ../../../../../Network/Serialize/SerializeCommon
 #Tables standard lib.
 import tables
 
+#Start of the holders in a TransactionStatus.
+const holdersStart: int = INT_LEN + BYTE_LEN + BYTE_LEN + BYTE_LEN + NICKNAME_LEN
+
 #Parse function.
 proc parseTransactionStatus*(
     statusStr: string,
@@ -27,11 +30,8 @@ proc parseTransactionStatus*(
         BYTE_LEN,
         BYTE_LEN,
         BYTE_LEN,
-        INT_LEN
+        NICKNAME_LEN
     )
-
-    #Start of holders.
-    const holdersStart: int = INT_LEN + BYTE_LEN + BYTE_LEN + BYTE_LEN + INT_LEN
 
     #Create the TransactionStatus.
     result = newTransactionStatusObj(
@@ -43,6 +43,7 @@ proc parseTransactionStatus*(
     result.verified = bool(statusSeq[2][0])
     result.beaten = bool(statusSeq[3][0])
 
+    result.holders = initTable[uint16, bool]()
     for i in 0 ..< statusSeq[4].fromBinary():
         result.holders[
             uint16(statusStr[
