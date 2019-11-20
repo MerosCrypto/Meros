@@ -58,7 +58,7 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 #BLS keys.
 blsPrivKeys: List[blspy.PrivateKey] = [
     blspy.PrivateKey.from_seed(b'\0'),
-    blspy.PrivateKey.from_seed(b'\0')
+    blspy.PrivateKey.from_seed(b'\1')
 ]
 blsPubKeys: List[blspy.PublicKey] = [
     blsPrivKeys[0].get_public_key(),
@@ -104,11 +104,15 @@ orders: List[Tuple[Dict[int, List[int]], Union[bytes, int]]] = [
     ({1: [5, 6, 9, 11, 3, 0], 0: [4, 5, 8, 7, 11, 6, 10, 9]}, 1)
 ]
 #Packets.
-packets: Dict[int, VerificationPacket] = {}
-toAggregate: List[blspy.Signature] = []
+packets: Dict[int, VerificationPacket]
+toAggregate: List[blspy.Signature]
 
 #Add each Block.
 for order in orders:
+    #Clear old data.
+    packets = {}
+    toAggregate = []
+
     for h in order[0]:
         for s in order[0][h]:
             if s not in packets:
