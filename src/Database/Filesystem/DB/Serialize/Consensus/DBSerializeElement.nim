@@ -20,9 +20,6 @@ proc serialize*(
     elem: Element
 ): string {.forceCheck: [].} =
     case elem:
-        of Verification as verif:
-            result = char(VERIFICATION_PREFIX) & verif.hash.toString()
-
         of MeritRemoval as mr:
             result = char(MERIT_REMOVAL_PREFIX) & mr.serialize()
 

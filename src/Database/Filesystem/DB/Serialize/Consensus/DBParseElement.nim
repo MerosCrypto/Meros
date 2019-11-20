@@ -24,9 +24,6 @@ proc parseElement*(
 ].} =
     try:
         case int(elem[0]):
-            of VERIFICATION_PREFIX:
-                discard
-
             of MERIT_REMOVAL_PREFIX:
                 discard
 

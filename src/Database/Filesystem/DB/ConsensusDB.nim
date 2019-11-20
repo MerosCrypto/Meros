@@ -97,35 +97,6 @@ proc commit*(
 #Save functions.
 proc save*(
     db: DB,
-    holder: BLSPublicKey,
-    archived: int
-) {.forceCheck: [].} =
-    var holderStr: string = holder.toString()
-
-    try:
-        discard db.consensus.holders[holderStr]
-    except KeyError:
-        db.consensus.holders[holderStr] = true
-        db.consensus.holdersStr &= holderStr
-        db.put("holders", db.consensus.holdersStr)
-
-    db.put(holderStr, $archived)
-
-proc saveOutOfEpochs*(
-    db: DB,
-    holder: BLSPublicKey,
-    epoch: int
-) {.forceCheck: [].} =
-    db.put(holder.toString() & "epoch", epoch.toBinary())
-
-proc save*(
-    db: DB,
-    elem: Element
-) {.forceCheck: [].} =
-    db.put("", elem.serialize())
-
-proc save*(
-    db: DB,
     hash: Hash[384],
     status: TransactionStatus
 ) {.forceCheck: [].} =
@@ -137,54 +108,6 @@ proc addUnmentioned*(
 ) {.forceCheck: [].} =
     db.consensus.unmentioned &= unmentioned.toString()
 
-proc loadHolders*(
-    db: DB
-): seq[BLSPublicKey] {.forceCheck: [].} =
-    try:
-        db.consensus.holdersStr = db.get("holders")
-    except DBReadError:
-        return @[]
-
-    result = newSeq[BLSPublicKey](db.consensus.holdersStr.len div 48)
-    for i in countup(0, db.consensus.holdersStr.len - 1, 48):
-        try:
-            result[i div 48] = newBLSPublicKey(db.consensus.holdersStr[i ..< i + 48])
-        except BLSError as e:
-            doAssert(false, "Couldn't load a holder's BLS Public Key: " & e.msg)
-        db.consensus.holders[db.consensus.holdersStr[i ..< i + 48]] = true
-
-proc load*(
-    db: DB,
-    holder: BLSPublicKey
-): int {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = parseInt(db.get(holder.toString()))
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
-
-proc loadOutOfEpochs*(
-    db: DB,
-    holder: BLSPublicKey
-): int {.forceCheck: [].} =
-    try:
-        result = db.get(holder.toString() & "epoch").fromBinary()
-    except Exception:
-        return -1
-
-proc load*(
-    db: DB,
-    nick: uint16,
-    nonce: int
-): Element {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = db.get(nick.toBinary().pad(4) & nonce.toBinary().pad(1)).parseElement(nick)
-    except Exception as e:
-        raise newException(DBReadError, e.msg)
-
 proc load*(
     db: DB,
     hash: Hash[384]
@@ -195,8 +118,7 @@ proc load*(
         result = db.get(hash.toString()).parseTransactionStatus()
     except DBReadError as e:
         fcRaise e
-    except ValueError, BLSError:
-        doAssert(false, "Saved an invalid TransactionStatus to the DB.")
+        doAssert(false, "Saved an invalid TransactionStatus to the DB: " & e.msg)
 
 proc loadUnmentioned*(
     db: DB
@@ -213,11 +135,3 @@ proc loadUnmentioned*(
             result[i div 48] = unmentioned[i ..< i + 48].toHash(384)
         except ValueError as e:
             doAssert(false, "Couldn't parse an unmentioned hash: " & e.msg)
-
-#Delete an element.
-proc del*(
-    db: DB,
-    key: BLSPublicKey,
-    nonce: int
-) {.forceCheck: [].} =
-    db.delete(key.toString() & nonce.toBinary().pad(1))

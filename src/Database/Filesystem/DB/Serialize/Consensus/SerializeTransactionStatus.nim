@@ -17,4 +17,4 @@ import ../../../../../Network/Serialize/SerializeCommon
 proc serialize*(
     status: TransactionStatus
 ): string {.forceCheck: [].} =
-    ""
+    discard

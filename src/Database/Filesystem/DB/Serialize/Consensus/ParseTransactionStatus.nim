@@ -19,6 +19,4 @@ proc parseTransactionStatus*(
 ): TransactionStatus {.forceCheck: [
     ValueError
 ].} =
-    if false:
-        raise newException(ValueError, "")
     discard
