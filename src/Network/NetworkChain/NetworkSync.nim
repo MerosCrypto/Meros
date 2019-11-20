@@ -311,6 +311,10 @@ proc sync*(
         #Set transactions to todo.
         transactions = todo
 
+    #Add every Verification Packet.
+    for packet in result.body.packets:
+        network.mainFunctions.consensus.addVerificationPacket(packet)
+
 #Request a BlockBody.
 proc requestBlockBody*(
     network: Network,

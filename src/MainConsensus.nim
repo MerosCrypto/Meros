@@ -45,7 +45,13 @@ proc mainConsensus() {.forceCheck: [].} =
         functions.consensus.addVerificationPacket = proc (
             packet: VerificationPacket
         ) {.forceCheck: [].} =
-            discard
+            #Print that we're adding the VerificationPacket.
+            echo "Adding a new VerificationPacket from a Block."
+
+            #Add the Verification to the Consensus DAG.
+            consensus.add(merit.state, packet)
+
+            echo "Successfully added a new VerificationPacket."
 
         #Handle SignedVerifications.
         functions.consensus.addSignedVerification = proc (
