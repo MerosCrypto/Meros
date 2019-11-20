@@ -6,9 +6,6 @@ import ../../../../../../src/lib/Util
 #Hash lib.
 import ../../../../../../src/lib/Hash
 
-#MinerWallet lib.
-import ../../../../../../src/Wallet/MinerWallet
-
 #Mint lib.
 import ../../../../../../src/Database/Transactions/Mint
 
@@ -37,7 +34,7 @@ proc test*() =
         #Create the Mint.
         mint = newMint(
             uint32(rand(high(int32))),
-            newMinerWallet().publicKey,
+            uint16(rand(high(int16))),
             uint64(rand(high(int32)))
         )
 

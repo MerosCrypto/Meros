@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
-#MinerWallet lib.
-import ../../Wallet/MinerWallet
-
 #Mint object.
 import objects/MintObj
 export MintObj
@@ -17,7 +14,7 @@ import ../Filesystem/DB/Serialize/Transactions/SerializeMint
 #Create a new Mint.
 proc newMint*(
     nonce: uint32,
-    key: BLSPublicKey,
+    key: uint16,
     amount: uint64
 ): Mint {.forceCheck: [].} =
     #Create the Mint.

@@ -20,7 +20,7 @@ class Mint(Transaction):
         self.txHash = blake2b(
             b'\0' +
             self.nonce.to_bytes(4, "big") +
-            self.output[0].to_bytes(4, "big") +
+            self.output[0].to_bytes(2, "big") +
             self.output[1].to_bytes(8, "big"),
             digest_size=48
         ).digest()

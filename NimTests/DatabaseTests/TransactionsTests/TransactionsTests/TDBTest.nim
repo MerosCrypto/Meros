@@ -133,17 +133,23 @@ proc test*() =
                 if balance <= amount:
                     #Create the Mint.
                     var
-                        mintee: MinerWallet = newMinerWallet()
+                        holder: int = rand(high(holders))
                         mintAmount: uint64 = amount - balance + uint64(rand(5000) + 1)
-                        mintHash: Hash[384] = transactions.mint(mintee.publicKey, mintAmount)
+                        mintHash: Hash[384] = transactions.mint(uint16(holder), mintAmount)
 
                     #Create the Claim.
                     var claim: Claim = newClaim(
                         mintHash,
                         wallet.publicKey
                     )
-                    mintee.sign(claim)
-                    transactions.add(claim)
+                    holders[holder].sign(claim)
+                    transactions.add(
+                        claim,
+                        proc (
+                            nick: uint16
+                        ): BLSPublicKey =
+                            holders[int(nick)].publicKey
+                    )
 
                     verify(claim, 0)
 

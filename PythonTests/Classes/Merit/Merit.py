@@ -71,14 +71,14 @@ class Merit:
         )
         result.state = State(lifetime)
         result.epochs = Epochs()
+        result.mints = []
 
         for b in range(1, len(result.blockchain.blocks)):
-            mints: List[Mint] = result.epochs.shift(
+            result.mints += result.epochs.shift(
                 result.state,
                 result.blockchain,
                 b
             )
-            result.mints += mints
 
             result.state.add(result.blockchain, b)
         return result

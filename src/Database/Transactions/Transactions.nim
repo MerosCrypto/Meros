@@ -40,7 +40,12 @@ proc newTransactions*(
 #Add a Claim.
 proc add*(
     transactions: var Transactions,
-    claim: Claim
+    claim: Claim,
+    lookup: proc (
+        holder: uint16
+    ): BLSPublicKey {.raises: [
+        IndexError
+    ].}
 ) {.forceCheck: [
     ValueError,
     DataExists
@@ -58,12 +63,16 @@ proc add*(
 
         #Output loop variable.
         output: MintOutput
+        #Key loop variable.
+        key: BLSPublicKey
         #Amount this Claim is claiming.
         amount: uint64 = 0
 
     #Grab the first claimer.
     try:
-         claimers[0] = transactions.loadOutput(claim.inputs[0].hash).key
+         claimers[0] = lookup(transactions.loadOutput(claim.inputs[0].hash).key)
+    except IndexError as e:
+        doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
     except DBReadError:
         raise newException(ValueError, "Claim spends a non-existant Mint.")
 
@@ -80,8 +89,13 @@ proc add*(
         except DBReadError:
             raise newException(ValueError, "Claim spends a non-existant Mint.")
 
-        if not claimers.contains(output.key):
-            claimers.add(output.key)
+        try:
+            key = lookup(output.key)
+        except IndexError as e:
+            doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
+
+        if not claimers.contains(key):
+            claimers.add(key)
         amount += output.amount
 
     #Set the Claim's output amount to the amount.
@@ -213,13 +227,13 @@ proc add*(
 #Mint Meros to the specified key.
 proc mint*(
     transactions: var Transactions,
-    key: BLSPublicKey,
+    nick: uint16,
     amount: uint64
 ): Hash[384] {.forceCheck: [].} =
     #Create the Mint.
     var mint: Mint = newMint(
         transactions.mintNonce,
-        key,
+        nick,
         amount
     )
 

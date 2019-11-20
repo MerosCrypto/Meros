@@ -74,7 +74,10 @@ proc mainTransactions() {.forceCheck: [].} =
 
             #Add the Claim.
             try:
-                transactions.add(claim)
+                transactions.add(claim, functions.merit.getPublicKey)
+            #Passing a function which can raise IndexError raised one.
+            except IndexError as e:
+                doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
             #Invalid Claim.
             except ValueError as e:
                 fcRaise e
