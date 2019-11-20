@@ -4,15 +4,18 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash lib.
+#Hash and Merkle libs.
 import ../../lib/Hash
+import ../../lib/Merkle
+
+#Sketcher lib.
+import ../../lib/Sketcher
 
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#Element lib and VerificationPacket object.
+#Element lib.
 import ../Consensus/Elements/Element
-import ../Consensus/Elements/objects/VerificationPacketObj
 
 #BlockHeader lib.
 import BlockHeader
@@ -27,11 +30,47 @@ import ../../Network/Serialize/SerializeCommon
 #Serialize Element libs.
 import ../../Network/Serialize/Consensus/SerializeElement
 
+#Algorithm standard lib.
+import algorithm
+
 #Tables standard lib.
 import tables
 
+#Verify the contents merkle.
+proc verifyContents*(
+    contents: Hash[384],
+    sketchSalt: string,
+    packets: seq[VerificationPacket],
+    missing: seq[uint64],
+    elements: seq[BlockElement]
+) {.raises: [
+    ValueError
+].} =
+    var calculated: Hash[384]
+    if ((packets.len + missing.len) != 0) or (elements.len != 0):
+        var
+            sketchHashes: seq[uint64] = missing
+            packetsSide: Merkle = newMerkle()
+
+            elementsSide: Merkle = newMerkle()
+
+        for packet in packets:
+            sketchHashes.add(sketchHash(sketchSalt, packet))
+        sketchHashes.sort(SortOrder.Descending)
+
+        for hash in sketchHashes:
+            packetsSide.add(Blake384(hash.toBinary().pad(8)))
+
+        for elem in elements:
+            elementsSide.add(Blake384(elem.serializeContents()))
+
+        calculated = Blake384(packetsSide.hash.toString() & elementsSide.hash.toString())
+
+    if calculated != contents:
+        raise newException(ValueError, "Invalid contents merkle.")
+
 #Verify a Block's aggregate signature via a nickname lookup function and a Table of Hash -> VerificationPacket.
-proc verify*(
+proc verifyAggregate*(
     blockArg: Block,
     lookup: proc (
         holder: uint16

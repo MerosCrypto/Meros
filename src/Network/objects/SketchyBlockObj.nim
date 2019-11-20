@@ -46,29 +46,3 @@ proc newSketchyBlockObj*(
         capacity: body.capacity,
         sketch: body.sketch
     )
-
-proc resolve*(
-    sketchyBlock: SketchyBlock,
-    packets: seq[VerificationPacket]
-): Block {.forceCheck: [
-    ValueError
-].} =
-    result = sketchyBlock.data
-    try:
-        result.body.packets = packets.sorted(
-            func (
-                x: VerificationPacket,
-                y: VerificationPacket
-            ): int {.forceCheck: [
-                ValueError
-            ].} =
-                if x.hash > y.hash:
-                    result = 1
-                elif x.hash == y.hash:
-                    raise newException(ValueError, "Multiple packets in the same Block have the same hash.")
-                else:
-                    result = -1
-            , SortOrder.Descending
-        )
-    except ValueError as e:
-        fcRaise e

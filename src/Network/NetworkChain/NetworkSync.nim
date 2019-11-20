@@ -156,6 +156,14 @@ proc sync*(
         #If the sketch resolved, save the found packets/missing items.
         packets = sketchResult.packets
         missingPackets = sketchResult.missing
+
+        #Verify the contents merkle to verify the sketch decoded properly.
+        newBlock.data.header.contents.verifyContents(
+            newBlock.data.header.sketchSalt,
+            packets,
+            missingPackets,
+            newBlock.data.body.elements
+        )
     #Sketch failed to decode.
     except ValueError:
         #Generate a Table of hashes we have in the Sketcher (which are over significance).
@@ -163,7 +171,7 @@ proc sync*(
         for elem in sketcher:
             if elem.significance < int(newBlock.data.header.significant):
                 continue
-            lookup[sketchHash(elem.packet, newBlock.data.header.sketchSalt)] = true
+            lookup[sketchHash(newBlock.data.header.sketchSalt, elem.packet)] = true
 
         try:
             missingPackets = await network.requestSketchHashes(newBlock.data.header.hash)
@@ -182,6 +190,17 @@ proc sync*(
     except SaltError:
         raise newException(ValueError, "Block's sketch has a collision.")
 
+    #Verify the contents merkle.
+    try:
+        newBlock.data.header.contents.verifyContents(
+            newBlock.data.header.sketchSalt,
+            packets,
+            missingPackets,
+            newBlock.data.body.elements
+        )
+    except ValueError as e:
+        fcRaise e
+
     #Sync the missing VerificationPackets.
     if missingPackets.len != 0:
         try:
@@ -192,22 +211,15 @@ proc sync*(
             doAssert(false, "Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Create the Block.
-    try:
-        result = newBlock.resolve(packets)
-    except ValueError as e:
-        fcRaise e
+    result = newBlock.data
+    result.body.packets = packets
 
-    #Verify the contents merkle.
-    var contents: Hash[384]
-    if (result.body.packets.len != 0) or (result.body.elements.len != 0):
-        var contentsMerkle: Merkle = newMerkle()
-        for packet in result.body.packets:
-            contentsMerkle.add(Blake384(packet.serializeContents()))
-        for elem in result.body.elements:
-            contentsMerkle.add(Blake384(elem.serializeContents()))
-        contents = contentsMerkle.hash
-    if contents != result.header.contents:
-        raise newException(ValueError, "Invalid contents merkle.")
+    #Check the Block's aggregate.
+    try:
+        if not result.verifyAggregate(network.mainFunctions.merit.getPublicKey):
+            raise newException(ValueError, "Block which has an invalid aggregate.")
+    except IndexError as e:
+        doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
 
     #Find missing Transactions.
     for packet in result.body.packets:
@@ -228,13 +240,6 @@ proc sync*(
                 raise newException(ValueError, "Block tries to archive unknown Verifications.")
             except Exception as e:
                 doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-    #Check the Block's aggregate.
-    try:
-        if not result.verify(network.mainFunctions.merit.getPublicKey):
-            raise newException(ValueError, "Block which has an invalid aggregate.")
-    except IndexError as e:
-        doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
 
     #List of Transactions we have yet to process.
     var todo: seq[Transaction] = newSeq[Transaction](1)
