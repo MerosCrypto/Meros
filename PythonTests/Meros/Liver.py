@@ -1,9 +1,15 @@
 #Types.
-from typing import Callable, Dict, Union
+from typing import Callable, List, Dict, Union
+
+#Sketch class.
+from PythonTests.Classes.Merit.Minisketch import Sketch
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
+
+#Consensus classes.
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
@@ -19,7 +25,7 @@ from PythonTests.Meros.RPC import RPC
 from PythonTests.Tests.Merit.Verify import verifyBlockchain
 from PythonTests.Tests.Transactions.Verify import verifyTransactions
 
-#pylint: disable=too-few-public-methods
+#pylint: disable=too-few-public-methods,too-many-statements
 class Liver():
     def __init__(
         self,
@@ -65,10 +71,46 @@ class Liver():
                 elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
                     reqHash = msg[1 : 49]
                     if reqHash != block.header.blockHash:
-                        raise TestError("Meros asked for a Block Body that didn't belong to the header we just sent it.")
+                        raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                     #Send the BlockBody.
                     self.rpc.meros.blockBody(block)
+
+                elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
+                    if not block.body.packets:
+                        raise TestError("Meros asked for Sketch Hashes from a Block without any.")
+
+                    reqHash = msg[1 : 49]
+                    if reqHash != block.header.blockHash:
+                        raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
+
+                    #Create the haashes.
+                    hashes: List[int] = []
+                    for packet in block.body.packets:
+                        hashes.append(Sketch.hash(block.header.sketchSalt, packet))
+
+                    #Send the Sketch Hashes.
+                    self.rpc.meros.sketchHashes(hashes)
+
+                elif MessageType(msg[0]) == MessageType.SketchHashRequests:
+                    if not block.body.packets:
+                        raise TestError("Meros asked for Verification Packets from a Block without any.")
+
+                    reqHash = msg[1 : 49]
+                    if reqHash != block.header.blockHash:
+                        raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
+
+                    #Create a lookup of hash to packets.
+                    packets: Dict[int, VerificationPacket] = {}
+                    for packet in block.body.packets:
+                        packets[Sketch.hash(block.header.sketchSalt, packet)] = packet
+
+                    #Look up each requested packet and respond accordingly.
+                    for h in range(int.from_bytes(msg[49 : 53], byteorder="big")):
+                        sketchHash: int = int.from_bytes(msg[53 + (h * 8) : 61 + (h * 8)], byteorder="big")
+                        if sketchHash not in packets:
+                            raise TestError("Meros asked for a non-existent Sketch Hash.")
+                        self.rpc.meros.packet(packets[sketchHash])
 
                 elif MessageType(msg[0]) == MessageType.TransactionRequest:
                     reqHash = msg[1 : 49]
@@ -77,7 +119,7 @@ class Liver():
                         raise TestError("Meros asked for a Transaction when we have none.")
 
                     if reqHash not in self.transactions.txs:
-                        raise TestError("Meros asked for a Transaction we don't have.")
+                        raise TestError("Meros asked for a non-existent Transaction.")
 
                     self.rpc.meros.transaction(self.transactions.txs[reqHash])
 

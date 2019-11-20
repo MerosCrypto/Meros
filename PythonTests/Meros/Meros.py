@@ -86,7 +86,6 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.BlockBodyRequest:          [48],
     MessageType.SketchHashesRequest:       [48],
     MessageType.SketchHashRequests:        [48, 4, -8],
-    MessageType.VerificationPacketRequest: [96],
     MessageType.TransactionRequest:        [48],
     MessageType.DataMissing:               [],
     MessageType.SyncingOver:               [],
@@ -328,6 +327,17 @@ class Meros:
             MessageType.BlockBody.toByte() +
             block.body.serialize(block.header.sketchSalt)
         )
+        self.send(res)
+        return res
+
+    #Send sketch hashes.
+    def sketchHashes(
+        self,
+        hashes: List[int]
+    ) -> bytes:
+        res: bytes = MessageType.SketchHashes.toByte() + len(hashes).to_bytes(4, byteorder="big")
+        for sketchHash in hashes:
+            res += sketchHash.to_bytes(8, byteorder="big")
         self.send(res)
         return res
 

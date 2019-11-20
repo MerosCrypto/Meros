@@ -34,7 +34,17 @@ class Sketch():
         capacity: int
     ) -> None:
         self.capacity: int = capacity
-        self.sketch: Any = MinisketchLib.minisketch_create(c_uint32(12), c_uint32(0), c_size_t(self.capacity)) if self.capacity != 0 else None
+        self.sketch: Any = MinisketchLib.minisketch_create(c_uint32(64), c_uint32(0), c_size_t(self.capacity)) if self.capacity != 0 else None
+
+    @staticmethod
+    def hash(
+        sketchSalt: bytes,
+        packet: VerificationPacket
+    ) -> int:
+        return int.from_bytes(
+            blake2b(sketchSalt + packet.serialize(), digest_size=8).digest(),
+            byteorder="big"
+        )
 
     #Add a Packet.
     def add(
@@ -42,13 +52,7 @@ class Sketch():
         sketchSalt: bytes,
         packet: VerificationPacket
     ) -> None:
-        MinisketchLib.minisketch_add_uint64(
-            self.sketch,
-            c_uint64(int.from_bytes(
-                blake2b(sketchSalt + packet.serialize(), digest_size=8).digest(),
-                byteorder="big"
-            ))
-        )
+        MinisketchLib.minisketch_add_uint64(self.sketch, c_uint64(Sketch.hash(sketchSalt, packet)))
 
     #Serialize a sketch.
     def serialize(

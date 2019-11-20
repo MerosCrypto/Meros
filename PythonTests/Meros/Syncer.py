@@ -1,6 +1,9 @@
 #Types.
 from typing import Dict, List, Union, Any
 
+#Sketch class.
+from PythonTests.Classes.Merit.Minisketch import Sketch
+
 #Block and Blockchain classes.
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
@@ -131,23 +134,21 @@ class Syncer():
                 if self.packets == {}:
                     del self.blocks[-1]
 
-            elif MessageType(msg[0]) == MessageType.VerificationPacketRequest:
+            elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
                 reqHash = msg[1 : 49]
-                if reqHash != self.blocks[-1]:
-                    raise TestError("Meros asked for a Block's VerificationPacket other than the next Block on the last BlockList.")
+                if reqHash != self.blocks[-1].header.blockHash:
+                    raise TestError("Meros asked for Sketch Hashes that didn't belong to the header we just sent it.")
 
-                reqHash = msg[49 : 97]
+                #Create the haashes.
+                hashes: List[int] = []
                 for packet in self.blocks[-1].body.packets:
-                    if packet.txHash == reqHash:
-                        self.rpc.meros.packet(packet)
-                        del self.packets[reqHash]
-                        break
+                    hashes.append(Sketch.hash(self.blocks[-1].header.sketchSalt, packet))
 
-                    if packet.txHash == self.blocks[-1].body.packets[len(self.blocks[-1].body.packets) - 1].txHash:
-                        raise TestError("Meros asked for a VerificationPacket for a Transaction in a Block which doesn't have that Transaction.")
+                #Send the Sketch Hashes.
+                self.rpc.meros.sketchHashes(hashes)
 
-                if self.packets == {}:
-                    del self.blocks[-1]
+            elif MessageType(msg[0]) == MessageType.SketchHashRequests:
+                raise TestError("SketchHashRequests")
 
             elif MessageType(msg[0]) == MessageType.TransactionRequest:
                 reqHash = msg[1 : 49]
