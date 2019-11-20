@@ -268,7 +268,8 @@ proc unverify*(
 proc finalize*(
     consensus: Consensus,
     state: State,
-    hash: Hash[384]
+    hash: Hash[384],
+    holders: seq[uint16]
 ) {.forceCheck: [].} =
     #Get the Transaction/Status.
     var
@@ -283,16 +284,11 @@ proc finalize*(
     #Calculate the final Merit tally.
     var added: Table[uint16, bool] = initTable[uint16, bool]()
     status.merit = 0
-    for packet in status.packets:
-        for holder in packet.holders:
-            #Skip duplicate holders.
-            if added.hasKey(holder):
-                continue
-
-            #Add the Merit.
-            status.merit += state[holder]
-            #Mark the holder as added.
-            added[holder] = true
+    for holder in holders:
+        #Add the Merit.
+        status.merit += state[holder]
+        #Mark the holder as added.
+        added[holder] = true
 
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):

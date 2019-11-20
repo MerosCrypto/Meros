@@ -7,6 +7,9 @@ import ../../../src/lib/Util
 import ../../../src/lib/Hash
 import ../../../src/lib/Merkle
 
+#Sketcher lib.
+import ../../../src/lib/Sketcher
+
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 

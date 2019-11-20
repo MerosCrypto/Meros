@@ -331,7 +331,10 @@ proc archive*(
 
             #If all the parents are finalized, finalize this Transaction.
             if newParents.len == 0:
-                consensus.finalize(state, parent)
+                try:
+                    consensus.finalize(state, parent, popped[hash])
+                except KeyError as e:
+                    doAssert(false, "Couldn't get a value from a Table using a key from .keys(): " & e.msg)
                 outOfOrder[parent] = true
             else:
                 #Else, add back this Transaction, and then add the new parents.

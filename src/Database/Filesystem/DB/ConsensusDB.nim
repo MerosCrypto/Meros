@@ -19,9 +19,7 @@ import ../../Consensus/objects/TransactionStatusObj
 #Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
 
-import Serialize/Consensus/DBSerializeElement
 import Serialize/Consensus/SerializeTransactionStatus
-import Serialize/Consensus/DBParseElement
 import Serialize/Consensus/ParseTransactionStatus
 
 #DB object.
@@ -55,13 +53,6 @@ proc get(
         result = db.lmdb.get("consensus", key)
     except Exception as e:
         raise newException(DBReadError, e.msg)
-
-proc delete(
-    db: DB,
-    key: string
-) {.forceCheck: [].} =
-    db.consensus.cache.del(key)
-    db.consensus.deleted.add(key)
 
 proc commit*(
     db: DB
@@ -115,10 +106,9 @@ proc load*(
     DBReadError
 ].} =
     try:
-        result = db.get(hash.toString()).parseTransactionStatus()
+        result = db.get(hash.toString()).parseTransactionStatus(hash)
     except DBReadError as e:
         fcRaise e
-        doAssert(false, "Saved an invalid TransactionStatus to the DB: " & e.msg)
 
 proc loadUnmentioned*(
     db: DB

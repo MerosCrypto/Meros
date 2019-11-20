@@ -119,7 +119,6 @@ Wallet:
 
 Database/Filesystem/DB/Serialize:
 
-- Consensus/DBSerializeElement Test.
 - Consensus/SerializeTransactionStatus Test.
 - Transactions/SerializeTransaction Test.
 

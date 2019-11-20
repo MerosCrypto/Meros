@@ -35,13 +35,11 @@ type TransactionStatus* = ref object
     #If the Transaction's parent was beaten, this Transaction is automatically beaten.
     beaten*: bool
 
-    #List of VerificationPackets.
-    packets*: seq[VerificationPacket]
-    #Packet for the next Block.
-    pending*: SignedVerificationPacket
     #Participating holders.
     holders*: Table[uint16, bool]
-    #Table of holder to their signature.
+    #Packet for the next Block.
+    pending*: SignedVerificationPacket
+    #Table of pending holders to their signature.
     signatures*: Table[uint16, BLSSignature]
 
     #The final Merit tally. -1 if the Transaction is still in Epochs.
@@ -58,9 +56,8 @@ proc newTransactionStatusObj*(
         verified: false,
         beaten: false,
 
-        packets: @[],
-        pending: newSignedVerificationPacketObj(hash),
         holders: initTable[uint16, bool](),
+        pending: newSignedVerificationPacketObj(hash),
         signatures: initTable[uint16, BLSSignature](),
 
         merit: -1

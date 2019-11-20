@@ -50,8 +50,6 @@ proc add*(
     if status.merit != -1:
         return
 
-    #Add the new packet to the list of packets.
-    status.packets.add(packet)
     #Mark the holders in the table.
     for holder in packet.holders:
         status.holders[holder] = true
