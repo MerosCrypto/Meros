@@ -4,8 +4,9 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash lib.
+#Hash and Merkle lib.
 import ../../lib/Hash
+import ../../lib/Merkle
 
 #Sketcher lib.
 import ../../lib/Sketcher
@@ -37,6 +38,8 @@ import ../Serialize/Transactions/SerializeSend
 import ../Serialize/Transactions/SerializeData
 
 import ../Serialize/Consensus/SerializeVerification
+import ../Serialize/Consensus/SerializeVerificationPacket
+import ../Serialize/Consensus/SerializeMeritRemoval
 
 import ../Serialize/Merit/SerializeBlockHeader
 import ../Serialize/Merit/SerializeBlockBody

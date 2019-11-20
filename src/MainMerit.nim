@@ -94,34 +94,39 @@ proc mainMerit() {.forceCheck: [].} =
 
         #Handle full blocks.
         functions.merit.addBlock = proc (
-            newBlock: SketchyBlock,
+            sketchyBlock: SketchyBlock,
             syncing: bool
         ) {.forceCheck: [
-            ValueError
+            ValueError,
+            DataMissing
         ], async.} =
             #Print that we're adding the Block.
-            echo "Adding Block ", newBlock.data.header.hash, "."
+            echo "Adding Block ", sketchyBlock.data.header.hash, "."
 
             #Sync this Block.
-            var sketcher: Sketcher
+            var
+                sketcher: Sketcher
+                newBlock: Block
             try:
-                await network.sync(
-                    newBlock,
+                newBlock = await network.sync(
+                    sketchyBlock,
                     sketcher
                 )
             except ValueError as e:
                 fcRaise e
+            except DataMissing as e:
+                fcRaise e
             except Exception as e:
-                doAssert(false, "Couldn't sync this Block: " & e.msg)
+                doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
 
             #Verify the Elements. Also see who has their Merit removed.
             var removed: seq[uint16] = @[]
-            for elem in newBlock.data.body.elements:
+            for elem in newBlock.body.elements:
                 discard
 
             #Add the Block to the Blockchain.
             try:
-                merit.processBlock(newBlock.data)
+                merit.processBlock(newBlock)
             except ValueError as e:
                 fcRaise e
 
@@ -144,11 +149,10 @@ proc mainMerit() {.forceCheck: [].} =
             #Create the Mints (which ends up minting a total of 50000 Meri).
             var ourMint: Hash[384]
             for reward in rewards:
-                var
-                    mintHash: Hash[384] = transactions.mint(
-                        merit.state.holders[int(reward.nick)],
-                        reward.score * uint64(50)
-                    )
+                var mintHash: Hash[384] = transactions.mint(
+                    reward.nick,
+                    reward.score * uint64(50)
+                )
 
                 #If we have a miner wallet, check if the mint was to us.
                 if (config.miner.initiated) and (config.miner.nick == reward.nick):
@@ -163,7 +167,7 @@ proc mainMerit() {.forceCheck: [].} =
                 #Broadcast the Block.
                 functions.network.broadcast(
                     MessageType.BlockHeader,
-                    newBlock.data.header.serialize()
+                    newBlock.header.serialize()
                 )
 
                 #If we got a Mint...
@@ -276,17 +280,19 @@ proc mainMerit() {.forceCheck: [].} =
             except NotConnected as e:
                 doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
 
-            var newBlock: SketchyBlock
+            var sketchyBlock: SketchyBlock
             try:
-                newBlock = newSketchyBlockObj(header, await network.requestBlockBody(header.hash))
+                sketchyBlock = newSketchyBlockObj(header, await network.requestBlockBody(header.hash))
             except DataMissing as e:
                 raise newException(ValueError, e.msg)
             except Exception as e:
                 doAssert(false, "Network.requestBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
 
             try:
-                await functions.merit.addBlock(newBlock, syncing)
+                await functions.merit.addBlock(sketchyBlock, syncing)
             except ValueError as e:
+                fcRaise e
+            except DataMissing as e:
                 fcRaise e
             except Exception as e:
                 doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)

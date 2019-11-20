@@ -7,6 +7,9 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
+#Sketcher lib.
+import ../../lib/Sketcher
+
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
@@ -28,6 +31,7 @@ import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
 import ../Serialize/Consensus/ParseVerification
+import ../Serialize/Consensus/ParseVerificationPacket
 import ../Serialize/Consensus/ParseMeritRemoval
 
 import ../Serialize/Merit/ParseBlockHeader

@@ -1,6 +1,9 @@
 #Errors lib.
 import ../Errors
 
+#Util lib.
+import ../Util
+
 #Hash master type.
 import HashCommon
 
@@ -50,7 +53,11 @@ proc Blake2_64*(
     #Hash the bytes.
     doAssert(state.init(8) == 0, "Failed to init a Blake2b State.")
     doAssert(state.update(addr bytes[0], bytes.len) == 0, "Failed to update a Blake2b State.")
-    doAssert(state.finalize(addr result, 8) == 0, "Failed to finalize a Blake2b State.")
+
+    #Save the result.
+    var hash: string = newString(8)
+    doAssert(state.finalize(addr hash[0], 8) == 0, "Failed to finalize a Blake2b State.")
+    result = uint64(hash.fromBinary())
 
     #Deallocate the state.
     dealloc(state)

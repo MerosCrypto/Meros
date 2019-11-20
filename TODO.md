@@ -57,7 +57,6 @@ Filesystem:
 
 Merit:
 
-- Verify the `contents` merkle when syncing the Block Body (currently done in Blockchain.processBlock).
 - If our sketch has a collision, check if the Block doesn't (as that would mean it's valid).
 - If we sync a Block with a working sketch yet invalid merkle, check if there was a collision between one of our elements and one we didn't have which was included in the sketch.
 

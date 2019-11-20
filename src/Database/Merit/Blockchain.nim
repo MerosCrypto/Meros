@@ -84,19 +84,13 @@ proc processBlock*(
 ) {.forceCheck: [
     ValueError
 ].} =
-    #Verify the contents merkle and if there's a MeritRemoval, it's the only Element for that verifier.
+    #Verify if there's a MeritRemoval, it's the only Element for that verifier.
     var
-        contents: Merkle = newMerkle()
-
         #They don't have a key if they don't have an Element.
         #The value is 0 if they do.
         #The value is 1 if they had a MeritRemoval.
         statuses: Table[uint16, int] = initTable[uint16, int]()
         status: int
-
-    #Add the Verification Packets to the contents.
-    for packet in newBlock.body.packets:
-        contents.add(Blake384(packet.serializeContents()))
 
     for elem in newBlock.body.elements:
         try:
@@ -111,11 +105,6 @@ proc processBlock*(
             statuses[elem.holder] = 1
         elif (not (elem of MeritRemoval)) and (status == 1):
             raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
-
-        contents.add(Blake384(elem.serializeContents()))
-
-    if contents.hash != newBlock.header.contents:
-        raise newException(ValueError, "Invalid contents merkle.")
 
     #Add the Block.
     blockchain.add(newBlock)

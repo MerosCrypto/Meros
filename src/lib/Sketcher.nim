@@ -29,8 +29,8 @@ export Sketch, Table
 type
     #SketchElement. Includes both the packet and its significance.
     SketchElement = object
-        packet: VerificationPacket
-        significance: int
+        packet*: VerificationPacket
+        significance*: int
 
     #Sketcher. Just a seq of SketchElements.
     Sketcher* = seq[SketchElement]

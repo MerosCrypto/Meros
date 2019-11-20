@@ -21,6 +21,9 @@ import BlockHeader
 import objects/BlockObj
 export BlockObj
 
+#SerializeCommon lib.
+import ../../Network/Serialize/SerializeCommon
+
 #Serialize Element libs.
 import ../../Network/Serialize/Consensus/SerializeElement
 
@@ -34,8 +37,7 @@ proc verify*(
         holder: uint16
     ): BLSPublicKey {.raises: [
         IndexError
-    ].},
-    packets: Table[Hash[384], VerificationPacket]
+    ].}
 ): bool {.forceCheck: [].} =
     result = true
 
@@ -44,10 +46,13 @@ proc verify*(
         agInfos: seq[BLSAggregationInfo] = @[]
         agInfo: BLSAggregationInfo = nil
     try:
-        #Iterate over every Transaction.
+        #Iterate over every Verification Packet.
         for packet in blockArg.body.packets:
-            for verifier in packets[packet.hash].holders:
-                agInfos.add(newBLSAggregationInfo(lookup(verifier), packet.hash.toString()))
+            for verifier in packet.holders:
+                agInfos.add(newBLSAggregationInfo(
+                    lookup(verifier),
+                    char(VERIFICATION_PREFIX) & packet.hash.toString()
+                ))
 
         #Iterate over every Element.
         for elem in blockArg.body.elements:
@@ -55,12 +60,9 @@ proc verify*(
 
         #Aggregate the infos.
         agInfo = agInfos.aggregate()
-    #The presented Table is missing VerificationPackets.
-    except KeyError:
-        doAssert(false, "Called Block.verify() without the needed data.")
-    #We have VerificationPackets including Verifiers who don't have nicknames.
+    #We have VerificationPackets including Verifiers who don't exist.
     except IndexError:
-        doAssert(false, "Couldn't get the BLS Public Key for a verifier.")
+        return false
     #Couldn't create an AggregationInfo out of a BLSPublicKey and a hash.
     except BLSError:
         return false

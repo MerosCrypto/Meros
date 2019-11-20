@@ -99,13 +99,72 @@ proc syncTransaction*(
     except Exception as e:
         doAssert(false, "Sending a `TransactionRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Sync a VerificationPacket.
-proc syncVerificationPacket*(
+#Sync Verification Packets.
+proc syncVerificationPackets*(
     client: Client,
     blockHash: Hash[384],
-    txHash: Hash[384]
-): Future[VerificationPacket] {.forceCheck: [], async.} =
-    discard
+    sketchHashes: seq[uint64],
+    sketchSalt: string
+): Future[seq[VerificationPacket]] {.forceCheck: [
+    ClientError,
+    DataMissing
+], async.} =
+    try:
+        #Send the request.
+        var req: string = blockHash.toString() & sketchHashes.len.toBinary().pad(4)
+        for hash in sketchHashes:
+            req &= hash.toBinary().pad(8)
+        await client.send(newMessage(MessageType.SketchHashRequests, req))
+
+        for sketchHash in sketchHashes:
+            #Get their response.
+            var msg: Message = await client.recv()
+
+            #Parse the response.
+            try:
+                case msg.content:
+                    of MessageType.VerificationPacket:
+                        result.add(msg.message.parseVerificationPacket())
+                    of MessageType.DataMissing:
+                        raise newException(DataMissing, "Client didn't have the requested VerificationPacket.")
+                    else:
+                        raise newException(ClientError, "Client didn't respond properly to our SketchHashRequests.")
+            except ValueError as e:
+                raise newException(ClientError, "Client didn't respond with a valid VerificationPacket to our SketchHashRequests, as pointed out by a ValueError: " & e.msg)
+
+            if sketchHash(result[^1], sketchSalt) != sketchHash:
+                raise newException(ClientError, "Client didn't respond with the right VerificationPacket for our SketchHashRequests.")
+    except ClientError as e:
+        fcRaise e
+    except DataMissing as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending a `SketchHashRequests` and receiving the responses threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+#Sync Sketch Hashes.
+proc syncSketchHashes*(
+    client: Client,
+    hash: Hash[384]
+): Future[seq[uint64]] {.forceCheck: [
+    ClientError,
+    DataMissing
+], async.} =
+    try:
+        #Send the request.
+        await client.send(newMessage(MessageType.SketchHashesRequest, hash.toString()))
+
+        #Get the response.
+        var msg: Message = await client.recv()
+
+        #Parse out the sketch hashes.
+        for i in 0 ..< msg.message[0 ..< 4].fromBinary():
+            result.add(uint64(msg.message[4 + (i * 8) ..< 12 + (i * 8)].fromBinary()))
+    except ClientError as e:
+        fcRaise e
+    except DataMissing as e:
+        fcRaise e
+    except Exception as e:
+        doAssert(false, "Sending a `SketchHashesRequest` and receiving the responses threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 #Sync a BlockBody.
 proc syncBlockBody*(

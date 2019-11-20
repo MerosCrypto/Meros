@@ -145,9 +145,6 @@ proc handle(
                         of MessageType.SketchHashRequests:
                             doAssert(false)
 
-                        of MessageType.VerificationPacketRequest:
-                            doAssert(false)
-
                         of MessageType.TransactionRequest:
                             var tx: Transaction
                             try:
