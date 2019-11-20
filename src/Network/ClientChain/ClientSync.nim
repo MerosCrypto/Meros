@@ -132,7 +132,7 @@ proc syncVerificationPackets*(
             except ValueError as e:
                 raise newException(ClientError, "Client didn't respond with a valid VerificationPacket to our SketchHashRequests, as pointed out by a ValueError: " & e.msg)
 
-            if sketchHash(result[^1], sketchSalt) != sketchHash:
+            if sketchHash(sketchSalt, result[^1]) != sketchHash:
                 raise newException(ClientError, "Client didn't respond with the right VerificationPacket for our SketchHashRequests.")
     except ClientError as e:
         fcRaise e

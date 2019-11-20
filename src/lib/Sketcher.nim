@@ -42,8 +42,8 @@ type
 
 #Convert a VerificationPacket hash into something sketchable.
 proc sketchHash*(
-    packet: VerificationPacket,
-    salt: string
+    salt: string,
+    packet: VerificationPacket
 ): uint64 {.inline, forceCheck: [].} =
     Blake64(salt & packet.serialize())
 
@@ -80,7 +80,7 @@ proc collides*(
 
     for elem in sketcher:
         #Hash the packet.
-        hash = elem.packet.sketchHash(salt)
+        hash = sketchHash(salt, elem.packet)
 
         #If there's a collision, return false.
         if hashes.hasKey(hash):
@@ -108,7 +108,7 @@ proc toSketch(
         #If it's significant, use it.
         if sketcher[e].significance >= int(significant):
             #Hash the packet.
-            hash = sketcher[e].packet.sketchHash(salt)
+            hash = sketchHash(salt, sketcher[e].packet)
             #If there's a collision, throw.
             if result.hashes.hasKey(hash):
                 raise newException(SaltError, "Collision found while sketching values.")

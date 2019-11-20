@@ -39,12 +39,3 @@ method serializeWithoutHolder*(
     for holder in packet.holders:
         result &= holder.toString()
     result &= packet.hash.toString()
-
-#Serialize a VerificationPacket for inclusion in a BlockHeader's contents merkle.
-#This should never happen.
-method serializeContents*(
-    packet: VerificationPacket
-): string {.forceCheck: [].} =
-    result =
-        char(VERIFICATION_PACKET_PREFIX) &
-        packet.serialize()

@@ -4,6 +4,9 @@ from typing import Dict, List, Union, Any
 #VerificationPacket class.
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
+#Sketch class.
+from PythonTests.Classes.Merit.Minisketch import Sketch
+
 #Argon2 lib.
 import argon2
 
@@ -16,39 +19,44 @@ class BlockHeader:
     #Create a contents merkle.
     @staticmethod
     def createContents(
-        packetsArg: List[VerificationPacket] = [],
+        salt: bytes = bytes(4),
+        packets: List[VerificationPacket] = [],
         elements: List[None] = []
     ) -> bytes:
-        #Extract the packets argument.
-        packets: List[VerificationPacket] = list(packetsArg)
-
         #Support empty contents.
         if (packets == []) and (elements == []):
             return bytes(48)
 
-        #Define the list.
-        merkle: List[bytes] = []
-
-        #Sort and append the Packets.
-        packets.sort(key=lambda packet: packet.txHash, reverse=True)
-
+        #Create sketch hashes for every packet.
+        sketchInts: List[int] = []
         for packet in packets:
-            merkle.append(blake2b(packet.serializeContents(), digest_size=48).digest())
+            sketchInts.append(Sketch.hash(salt, packet))
 
-        #Append Elements.
+        #Sort the Sketch Hashes.
+        sketchInts.sort(reverse=True)
+
+        #Hash each sketch hash to leaf length.
+        sketchHashes: List[bytes] = []
+        for s in range(len(sketchInts)):
+            sketchHashes.append(blake2b(sketchInts[s].to_bytes(8, byteorder="big"), digest_size=48).digest())
 
         #Pair down until there's one hash left.
-        while len(merkle) > 1:
-            if len(merkle) % 2 != 0:
-                merkle.append(merkle[-1])
-            for h in range(len(merkle) // 2):
-                merkle[h] = blake2b(
-                    merkle[h * 2] + merkle[(h * 2) + 1],
+        while len(sketchHashes) > 1:
+            if len(sketchHashes) % 2 != 0:
+                sketchHashes.append(sketchHashes[-1])
+            for h in range(len(sketchHashes) // 2):
+                sketchHashes[h] = blake2b(
+                    sketchHashes[h * 2] + sketchHashes[(h * 2) + 1],
                     digest_size=48
                 ).digest()
-            merkle = merkle[0 : len(merkle) // 2]
+            sketchHashes = sketchHashes[0 : len(sketchHashes) // 2]
+        if len(sketchHashes) == 0:
+            sketchHashes[0] = bytes(48)
 
-        return merkle[0]
+        #Append Elements.
+        elementHashes: List[bytes] = [bytes(48)]
+
+        return blake2b(sketchHashes[0] + elementHashes[0], digest_size=48).digest()
 
     #Serialize to be hashed.
     def serializeHash(

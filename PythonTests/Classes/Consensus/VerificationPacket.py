@@ -43,12 +43,6 @@ class VerificationPacket(Element):
         result += self.txHash
         return result
 
-    #Serialize for inclusion in the contents Merkle.
-    def serializeContents(
-        self
-    ) -> bytes:
-        return self.prefix + self.serialize()
-
     #VerificationPacket -> JSON.
     def toJSON(
         self

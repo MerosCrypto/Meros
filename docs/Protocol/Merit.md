@@ -14,7 +14,7 @@ BlockHeaders have the following fields:
 
 - version: Block version.
 - last: Last Block Hash.
-- contents: Merkle of included Transactions, their verifiers, and updates to the Difficulties/GasPrice.
+- contents: Merkle of included Sketch Hashes and Elements.
 - significant: The threshold of what makes a Transaction significant.
 - sketchSalt: The salt used when hashing elements for inclusion in sketches.
 - miner: BLS Public Key, or miner nickname, to mint Merit to.
@@ -24,7 +24,7 @@ BlockHeaders have the following fields:
 
 Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
 
-The "contents" has leaves for both the Verification Packets (sorted from highest hash to lowest hash) and the Elements included in a Block. Every leaf is defined as `Blake2b(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature.
+"contents" is an unbalanced Merkle tree where the left side has leaves for the Sketch Hashes (sorted from highest to lowest and then hashed via `Blake2b-384`) and the right side has leaves for the Elements included in a Block (defined as `Blake2b-384(prefix + element.serialize())`). If there's no packets in the Block, the left side has a zeroed out hash. If there's no elements in the Block, the right side has a zeroed out hash. If there's no packets or elements in the Block, the entire merkle has a zeroed out hash.
 
 A BlockHeader's signature and hash are defined as follows:
 
@@ -103,7 +103,7 @@ If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockB
 When a new BlockBody is received, a full Block can be formed using the BlockHeader. The Block is valid if:
 
 - The header is valid.
-- contents is the result of a properly constructed Merkle tree. It should be noted the tree used to form contents must include automatically included predecessors.
+- contents is the result of a properly constructed Merkle tree.
 - significant is greater than 0 and at most 26280 (inclusive).
 - capacity is at least `packets.length div 5 + 1` and at most `packets.length div 5 + 11`.
 - The Block's included Verification Packets don't collide with the specified sketch salt.
@@ -111,7 +111,6 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Verification Packet only contains new Verifications.
 - Every Verification Packet's Merit is greater than significant.
 - Every Transaction's predecessors have Verification Packets either archived or in this Block.
-- Every Transaction's predecessors, if they have yet to be mentioned on the Blockchain, are not mentioned in this Block.
 - Every Transaction either has yet to enter Epochs or is in Epochs.
 - Every Transaction doesn't compete with, or have parents which competed with and lost, Transactions archived 5 Blocks before the last Checkpoint.
 - The sketch is properly constructed from the same data used to construct the Merkle.
@@ -127,22 +126,6 @@ for tx in transactions:
 for elem in elements:
     signatures.add(element.signature)
 BLSSignature aggregate = signatures.aggregate()
-```
-
-When a Transaction is first mentioned on the Blockchain, it automatically includes all predecessors which have yet to be mentioned. The predecessors are locally inserted into the Transaction list after the mentioned Transaction, using the following algorithm for the ordering:
-
-```
-List[Hash] toAppend
-for input in tx:
-    if input.hash not in mentioned:
-        toAppend.add(input.hash)
-
-int i = 0
-while i < toAppend.length:
-    for input in transactions[toAppend[i]]:
-        if input.hash not in mentioned:
-            toAppend.add(input.hash)
-    i++
 ```
 
 If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
@@ -191,9 +174,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros allows Verification Packets which contain archived Verifications.
 - Meros doesn't check that Blocks Verification Packets' Merits are greater than significant.
 - Meros doesn't check that every predecessor has an archived Verification Packet.
-- Meros allows mentioning previously unmentioned predecessors with their successor.
 - Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
-- Meros doesn't automatically include unmentioned predecessors after their successor in BlockBody's local Transactions list.
 - Meros doesn't check that Block's Elements are new and have proper nonces.
 - Meros doesn't check that Block's Elements don't cause a MeritRemoval.
 

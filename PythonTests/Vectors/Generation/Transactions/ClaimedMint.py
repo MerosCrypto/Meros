@@ -81,7 +81,7 @@ block: Block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents([VerificationPacket(verif.txHash, [0])], []),
+        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.txHash, [0])], []),
         1,
         bytes(4),
         0,
@@ -126,7 +126,7 @@ block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents([VerificationPacket(verif.txHash, [0])], []),
+        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.txHash, [0])], []),
         1,
         bytes(4),
         0,

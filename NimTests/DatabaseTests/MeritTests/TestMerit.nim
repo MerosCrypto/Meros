@@ -71,45 +71,36 @@ proc newValidVerificationPacket*(
 
 #Create a contents Merkle.
 proc newContents(
-    packetsArg: seq[VerificationPacket] = @[],
+    sketchSalt: string = newString(4),
+    packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
 ): Hash[384] =
-    #Support empty contents merkles.
-    if (packetsArg == @[]) and (elements == @[]):
-        return
+    #Verify the contents merkle.
+    if (packets.len != 0) or (elements.len != 0):
+        var
+            sketchHashes: seq[uint64] = @[]
+            packetsSide: Merkle = newMerkle()
 
-    #Extract the argument.
-    var packets: seq[VerificationPacket] = packetsArg
+            elementsSide: Merkle = newMerkle()
 
-    #Sort the packets.
-    packets.sort(
-        func (
-            x: VerificationPacket,
-            y: VerificationPacket
-        ): int =
-            if x.hash > y.hash:
-                result = 1
-            elif x.hash == y.hash:
-                doAssert(false, "Block has two VerificationPackets with the same hash.")
-            else:
-                result = -1
-        , SortOrder.Descending
-    )
+        for packet in packets:
+            sketchHashes.add(sketchHash(sketchSalt, packet))
+        sketchHashes.sort(SortOrder.Descending)
 
-    #Create the merkle.
-    var contents: Merkle = newMerkle()
-    for packet in packets:
-        contents.add(Blake384(packet.serializeContents()))
-    for elem in elements:
-        contents.add(Blake384(elem.serializeContents()))
-    result = contents.hash
+        for hash in sketchHashes:
+            packetsSide.add(Blake384(hash.toBinary().pad(8)))
+
+        for elem in elements:
+            elementsSide.add(Blake384(elem.serializeContents()))
+
+        result = Blake384(packetsSide.hash.toString() & elementsSide.hash.toString())
 
 #Create a Block, with every setting optional.
 proc newBlankBlock*(
     version: uint32 = 0,
     last: ArgonHash = ArgonHash(),
     significant: uint16 = 0,
-    sketchSalt: string = "\0\0\0\0",
+    sketchSalt: string = newString(4),
     miner: MinerWallet = newMinerWallet(),
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
@@ -120,7 +111,7 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        newContents(packets, elements),
+        newContents(sketchSalt, packets, elements),
         significant,
         sketchSalt,
         miner.publicKey,
@@ -136,7 +127,7 @@ proc newBlankBlock*(
     version: uint32 = 0,
     last: ArgonHash = ArgonHash(),
     significant: uint16 = 0,
-    sketchSalt: string = "\0\0\0\0",
+    sketchSalt: string = newString(4),
     nick: uint16,
     miner: MinerWallet = newMinerWallet(),
     packets: seq[VerificationPacket] = @[],
@@ -148,7 +139,7 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        newContents(packets, elements),
+        newContents(sketchSalt, packets, elements),
         significant,
         sketchSalt,
         nick,

@@ -123,7 +123,7 @@ for order in orders:
         BlockHeader(
             0,
             blockchain.last(),
-            BlockHeader.createContents(list(packets.values())),
+            BlockHeader.createContents(bytes(4), list(packets.values())),
             1,
             bytes(4),
             order[1],
