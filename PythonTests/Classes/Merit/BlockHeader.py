@@ -16,9 +16,12 @@ class BlockHeader:
     #Create a contents merkle.
     @staticmethod
     def createContents(
-        packets: List[VerificationPacket] = [],
+        packetsArg: List[VerificationPacket] = [],
         elements: List[None] = []
     ) -> bytes:
+        #Extract the packets argument.
+        packets: List[VerificationPacket] = list(packetsArg)
+
         #Support empty contents.
         if (packets == []) and (elements == []):
             return bytes(48)
@@ -26,7 +29,9 @@ class BlockHeader:
         #Define the list.
         merkle: List[bytes] = []
 
-        #Append Packets.
+        #Sort and append the Packets.
+        packets.sort(key=lambda packet: packet.txHash, reverse=True)
+
         for packet in packets:
             merkle.append(blake2b(packet.serializeContents(), digest_size=48).digest())
 

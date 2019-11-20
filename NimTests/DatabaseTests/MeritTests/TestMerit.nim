@@ -28,6 +28,9 @@ export TestDatabase
 #Random standard lib.
 import random
 
+#Algorithm standard lib.
+import algorithm
+
 #Create a valid VerificationPacket.
 proc newValidVerificationPacket*(
     holders: seq[BLSPublicKey],
@@ -68,9 +71,32 @@ proc newValidVerificationPacket*(
 
 #Create a contents Merkle.
 proc newContents(
-    packets: seq[VerificationPacket] = @[],
+    packetsArg: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
 ): Hash[384] =
+    #Support empty contents merkles.
+    if (packetsArg == @[]) and (elements == @[]):
+        return
+
+    #Extract the argument.
+    var packets: seq[VerificationPacket] = packetsArg
+
+    #Sort the packets.
+    packets.sort(
+        func (
+            x: VerificationPacket,
+            y: VerificationPacket
+        ): int =
+            if x.hash > y.hash:
+                result = 1
+            elif x.hash == y.hash:
+                doAssert(false, "Block has two VerificationPackets with the same hash.")
+            else:
+                result = -1
+        , SortOrder.Descending
+    )
+
+    #Create the merkle.
     var contents: Merkle = newMerkle()
     for packet in packets:
         contents.add(Blake384(packet.serializeContents()))

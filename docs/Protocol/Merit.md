@@ -24,7 +24,7 @@ BlockHeaders have the following fields:
 
 Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
 
-The "contents" has leaves for both the Verification Packets (which specify a Transaction) and the Elements included in a Block. Every leaf is defined as `Blake2b(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature.
+The "contents" has leaves for both the Verification Packets (sorted from highest hash to lowest hash) and the Elements included in a Block. Every leaf is defined as `Blake2b(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature.
 
 A BlockHeader's signature and hash are defined as follows:
 
