@@ -69,7 +69,7 @@ def PendingActionsTest(
 
         #Verify every Data has 100 Merit.
         for data in datas:
-            if rpc.call("consensus", "getStatus", [data.txHash.hex()])["merit"] != 100:
+            if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 100:
                 raise TestError("Meros didn't verify Transactions with received Verifications.")
 
     #Cause a MeritRemoval.
@@ -85,7 +85,7 @@ def PendingActionsTest(
 
         #Verify every Data has 0 Merit.
         for data in datas:
-            if rpc.call("consensus", "getStatus", [data.txHash.hex()])["merit"] != 0:
+            if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 0:
                 raise TestError("Meros didn't revert pending actions of a malicious MeritHolder.")
 
     #Send a MeritRemoval.
@@ -100,14 +100,14 @@ def PendingActionsTest(
 
         #Verify every Data has 0 Merit.
         for data in datas:
-            if rpc.call("consensus", "getStatus", [data.txHash.hex()])["merit"] != 0:
+            if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 0:
                 raise TestError("Meros didn't revert pending actions of a malicious MeritHolder.")
 
     #Check the Data's finalized with the proper amount of Merit and update the MeritRemoval.
     def check() -> None:
         #Verify the Datas have the Merit they should.
         for data in datas:
-            if rpc.call("consensus", "getStatus", [data.txHash.hex()])["merit"] != 0:
+            if rpc.call("consensus", "getStatus", [data.hash.hex()])["merit"] != 0:
                 raise TestError("Meros didn't finalize with the reverted pending actions of a malicious MeritHolder.")
 
         #Update the MeritRemoval's nonce.

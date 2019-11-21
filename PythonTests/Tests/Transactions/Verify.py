@@ -13,7 +13,7 @@ def verifyTransaction(
     rpc: RPC,
     tx: Transaction
 ) -> None:
-    if rpc.call("transactions", "getTransaction", [tx.txHash.hex()]) != tx.toJSON():
+    if rpc.call("transactions", "getTransaction", [tx.hash.hex()]) != tx.toJSON():
         raise TestError("Transaction doesn't match.")
 
 #Verify the Transactions.

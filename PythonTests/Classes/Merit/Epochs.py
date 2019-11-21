@@ -102,14 +102,14 @@ class Epochs:
         for packet in block.body.packets:
             found: bool = False
             for e in range(len(self.epochs)):
-                if packet.txHash in self.epochs[e]:
+                if packet.hash in self.epochs[e]:
                     found = True
-                    self.epochs[e][packet.txHash] += packet.holders
+                    self.epochs[e][packet.hash] += packet.holders
 
             if not found:
-                if packet.txHash not in epoch:
-                    epoch[packet.txHash] = []
-                epoch[packet.txHash] += packet.holders
+                if packet.hash not in epoch:
+                    epoch[packet.hash] = []
+                epoch[packet.hash] += packet.holders
 
         #Shift on the Epoch.
         self.epochs.append(epoch)

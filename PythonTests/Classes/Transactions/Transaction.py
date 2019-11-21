@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 
 #Transaction root class.
 class Transaction(ABC):
-    txHash: bytes
+    hash: bytes
 
     @abstractmethod
     def serialize(

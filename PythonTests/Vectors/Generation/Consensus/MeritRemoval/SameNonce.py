@@ -61,7 +61,7 @@ data.sign(edPrivKey)
 data.beat(consensus.dataFilter)
 
 #Create two Verifications with the same nonce, yet for the different Datas.
-sv1: SignedVerification = SignedVerification(data.txHash)
+sv1: SignedVerification = SignedVerification(data.hash)
 sv1.sign(privKey, 0)
 
 sv2: SignedVerification = SignedVerification(b'\0' * 48)

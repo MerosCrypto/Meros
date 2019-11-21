@@ -24,12 +24,12 @@ class Send(Transaction):
     ) -> None:
         self.inputs: List[Tuple[bytes, int]] = inputs
         self.outputs: List[Tuple[bytes, int]] = outputs
-        self.txHash = blake2b(b"\2" + self.serializeInputs() + self.serializeOutputs(), digest_size=48).digest()
+        self.hash = blake2b(b"\2" + self.serializeInputs() + self.serializeOutputs(), digest_size=48).digest()
 
         self.signature: bytes = signature
 
         self.proof: int = proof
-        self.argon: bytes = SpamFilter.run(self.txHash, self.proof)
+        self.argon: bytes = SpamFilter.run(self.hash, self.proof)
 
     #Transaction -> Send. Satisifes static typing requirements.
     @staticmethod
@@ -43,14 +43,14 @@ class Send(Transaction):
         self,
         privKey: ed25519.SigningKey
     ) -> None:
-        self.signature = privKey.sign(b"MEROS" + self.txHash)
+        self.signature = privKey.sign(b"MEROS" + self.hash)
 
     #Mine.
     def beat(
         self,
         spamFilter: SpamFilter
     ) -> None:
-        result: Tuple[bytes, int] = spamFilter.beat(self.txHash)
+        result: Tuple[bytes, int] = spamFilter.beat(self.hash)
         self.argon = result[0]
         self.proof = result[1]
 
@@ -95,7 +95,7 @@ class Send(Transaction):
             "descendant": "Send",
             "inputs": [],
             "outputs": [],
-            "hash": self.txHash.hex().upper(),
+            "hash": self.hash.hex().upper(),
 
             "signature": self.signature.hex().upper(),
             "proof": self.proof,

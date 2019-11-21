@@ -121,7 +121,7 @@ class Blockchain:
     def last(
         self
     ) -> bytes:
-        return self.blocks[len(self.blocks) - 1].header.blockHash
+        return self.blocks[len(self.blocks) - 1].header.hash
 
     #Current difficulty.
     def difficulty(

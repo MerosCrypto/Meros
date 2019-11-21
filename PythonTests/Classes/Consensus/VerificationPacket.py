@@ -23,7 +23,7 @@ class VerificationPacket(Element):
     ) -> None:
         self.prefix: bytes = VERIFICATION_PACKET_PREFIX
 
-        self.txHash: bytes = txHash
+        self.hash: bytes = txHash
         self.holders: List[int] = holders
 
     #Element -> VerificationPacket. Satisifes static typing requirements.
@@ -40,7 +40,7 @@ class VerificationPacket(Element):
         result: bytes = len(self.holders).to_bytes(1, "big")
         for holder in sorted(self.holders):
             result += holder.to_bytes(2, "big")
-        result += self.txHash
+        result += self.hash
         return result
 
     #VerificationPacket -> JSON.
@@ -50,7 +50,7 @@ class VerificationPacket(Element):
         return {
             "descendant": "VerificationPacket",
 
-            "hash": self.txHash.hex().upper(),
+            "hash": self.hash.hex().upper(),
             "holders": self.holders
         }
 
@@ -75,7 +75,7 @@ class SignedVerificationPacket(VerificationPacket):
 
         self.blsSignature: Signature
         if holderKeys:
-            serialized: bytes = SignedVerification.signatureSerialize(self.txHash)
+            serialized: bytes = SignedVerification.signatureSerialize(self.hash)
 
             self.blsSignature = Signature.from_bytes(signature)
             agInfo: AggregationInfo = AggregationInfo.from_msg(holderKeys[0], serialized)
@@ -119,7 +119,7 @@ class SignedVerificationPacket(VerificationPacket):
             "descendant": "VerificationPacket",
 
             "holders": self.holders,
-            "hash": self.txHash.hex().upper(),
+            "hash": self.hash.hex().upper(),
 
             "signed": True,
             "signature": self.signature.hex().upper()

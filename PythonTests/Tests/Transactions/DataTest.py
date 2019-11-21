@@ -31,7 +31,7 @@ def DataTest(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-    ).blocks[0].header.blockHash
+    ).blocks[0].header.hash
 
     #Create the Spam Filter.
     spamFilter: SpamFilter = SpamFilter(

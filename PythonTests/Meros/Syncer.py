@@ -51,7 +51,7 @@ class Syncer():
         #List of Block hashes in this Blockchain.
         self.blockHashes: Set[bytes] = set()
         for b in range(1, self.settings["height"] + 1):
-            self.blockHashes.add(self.blockchain.blocks[b].header.blockHash)
+            self.blockHashes.add(self.blockchain.blocks[b].header.hash)
 
         #List of mentioned Blocks.
         self.blocks: List[Block] = [self.blockchain.blocks[self.settings["height"]]]
@@ -71,7 +71,7 @@ class Syncer():
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.blockchain.blocks[self.settings["height"]].header.blockHash)
+        self.rpc.meros.connect(254, 254, self.blockchain.blocks[self.settings["height"]].header.hash)
 
         #Handle sync requests.
         reqHash: bytes = bytes()
@@ -83,14 +83,14 @@ class Syncer():
 
             elif MessageType(msg[0]) == MessageType.BlockListRequest:
                 for b in range(len(self.blockchain.blocks)):
-                    if self.blockchain.blocks[b].header.blockHash == reqHash:
+                    if self.blockchain.blocks[b].header.hash == reqHash:
                         blockList: List[bytes] = []
                         for bl in range(1, msg[2] + 2):
                             if msg[1] == 0:
                                 if b - bl < 0:
                                     break
 
-                                blockList.append(self.blockchain.blocks[b - bl].header.blockHash)
+                                blockList.append(self.blockchain.blocks[b - bl].header.hash)
                                 if b - bl != 0:
                                     self.blocks.append(self.blockchain.blocks[b - bl])
 
@@ -98,7 +98,7 @@ class Syncer():
                                 if b + bl > self.settings["height"]:
                                     break
 
-                                blockList.append(self.blockchain.blocks[b + bl].header.blockHash)
+                                blockList.append(self.blockchain.blocks[b + bl].header.hash)
                                 self.blocks.append(self.blockchain.blocks[b + bl])
 
                             else:
@@ -119,24 +119,24 @@ class Syncer():
                     raise TestError("Meros asked for a new Block before syncing the last Block's Transactions and Packets.")
 
                 reqHash = msg[1 : 49]
-                if reqHash != self.blocks[-1].header.blockHash:
+                if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for a BlockHeader other than the next Block's on the last BlockList.")
 
                 self.rpc.meros.blockHeader(self.blocks[-1].header)
 
             elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
                 reqHash = msg[1 : 49]
-                if reqHash != self.blocks[-1].header.blockHash:
+                if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for a BlockBody other than the next Block's on the last BlockList.")
 
                 self.rpc.meros.blockBody(self.blocks[-1])
-                self.blockHashes.remove(self.blocks[-1].header.blockHash)
+                self.blockHashes.remove(self.blocks[-1].header.hash)
 
                 #Set packets/transactions.
                 self.packets = {}
                 for packet in self.blocks[-1].body.packets:
-                    if packet.txHash not in self.synced:
-                        self.txs.add(packet.txHash)
+                    if packet.hash not in self.synced:
+                        self.txs.add(packet.hash)
                     self.packets[Sketch.hash(self.blocks[-1].header.sketchSalt, packet)] = packet
 
                 if self.packets == {}:
@@ -144,7 +144,7 @@ class Syncer():
 
             elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
                 reqHash = msg[1 : 49]
-                if reqHash != self.blocks[-1].header.blockHash:
+                if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for Sketch Hashes that didn't belong to the header we just sent it.")
 
                 #Get the haashes.
@@ -158,7 +158,7 @@ class Syncer():
                     raise TestError("Meros asked for Verification Packets from a Block without any.")
 
                 reqHash = msg[1 : 49]
-                if reqHash != self.blocks[-1].header.blockHash:
+                if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
                 #Look up each requested packet and respond accordingly.

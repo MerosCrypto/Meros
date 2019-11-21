@@ -20,7 +20,7 @@ class Transactions:
         self,
         tx: Transaction
     ) -> None:
-        self.txs[tx.txHash] = tx
+        self.txs[tx.hash] = tx
 
     #Transactions -> JSON.
     def toJSON(

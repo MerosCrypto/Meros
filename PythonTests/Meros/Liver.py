@@ -50,7 +50,7 @@ class Liver():
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.blockchain.blocks[0].header.blockHash)
+        self.rpc.meros.connect(254, 254, self.blockchain.blocks[0].header.hash)
 
         #Send each Block.
         for b in range(1, len(self.blockchain.blocks)):
@@ -70,7 +70,7 @@ class Liver():
 
                 elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
                     reqHash = msg[1 : 49]
-                    if reqHash != block.header.blockHash:
+                    if reqHash != block.header.hash:
                         raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                     #Send the BlockBody.
@@ -81,7 +81,7 @@ class Liver():
                         raise TestError("Meros asked for Sketch Hashes from a Block without any.")
 
                     reqHash = msg[1 : 49]
-                    if reqHash != block.header.blockHash:
+                    if reqHash != block.header.hash:
                         raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
 
                     #Create the haashes.
@@ -97,7 +97,7 @@ class Liver():
                         raise TestError("Meros asked for Verification Packets from a Block without any.")
 
                     reqHash = msg[1 : 49]
-                    if reqHash != block.header.blockHash:
+                    if reqHash != block.header.hash:
                         raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
                     #Create a lookup of hash to packets.

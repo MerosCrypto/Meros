@@ -28,6 +28,6 @@ def verifyBlockchain(
         if rpc.call(
             "merit",
             "getBlock",
-            [blockchain.blocks[b].header.blockHash.hex().upper()]
+            [blockchain.blocks[b].header.hash.hex().upper()]
         ) != blockchain.blocks[b].toJSON():
             raise TestError("Block doesn't match.")

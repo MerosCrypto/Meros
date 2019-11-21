@@ -66,7 +66,7 @@ blsPubKeys: List[blspy.PublicKey] = [
 ]
 
 #Grab the claim hash.
-claim: bytes = blockchain.blocks[-1].body.packets[0].txHash
+claim: bytes = blockchain.blocks[-1].body.packets[0].hash
 
 #Create 12 Sends.
 sends: List[Send] = []
@@ -86,7 +86,7 @@ for _ in range(12):
 
     sends.append(
         Send(
-            [(sends[-1].txHash, 0)],
+            [(sends[-1].hash, 0)],
             [(edPubKey.to_bytes(), sends[-1].outputs[0][1])]
         )
     )
@@ -116,10 +116,10 @@ for order in orders:
     for h in order[0]:
         for s in order[0][h]:
             if s not in packets:
-                packets[s] = VerificationPacket(sends[s].txHash, [])
+                packets[s] = VerificationPacket(sends[s].hash, [])
             packets[s].holders.append(h)
 
-            verif: SignedVerification = SignedVerification(sends[s].txHash)
+            verif: SignedVerification = SignedVerification(sends[s].hash)
             verif.sign(h, blsPrivKeys[h])
             toAggregate.append(verif.blsSignature)
 

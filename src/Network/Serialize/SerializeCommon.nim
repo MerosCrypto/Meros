@@ -19,8 +19,6 @@ const
     BLS_PUBLIC_KEY_LEN*: int = 48
     BLS_SIGNATURE_LEN*:  int = 96
 
-    DIFFICULTY_LEN*: int = INT_LEN + INT_LEN + HASH_LEN
-
     VERIFICATION_PREFIX*:        int = 0
     VERIFICATION_PACKET_PREFIX*: int = 1
     SEND_DIFFICULTY_PREFIX*:     int = 2

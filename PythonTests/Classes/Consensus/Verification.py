@@ -20,7 +20,7 @@ class Verification(Element):
     ) -> None:
         self.prefix: bytes = VERIFICATION_PREFIX
 
-        self.txHash: bytes = txHash
+        self.hash: bytes = txHash
         self.holder: int = holder
 
     #Element -> Verification. Satisifes static typing requirements.
@@ -34,7 +34,7 @@ class Verification(Element):
     def serialize(
         self
     ) -> bytes:
-        return self.holder.to_bytes(2, "big") + self.txHash
+        return self.holder.to_bytes(2, "big") + self.hash
 
     #Verification -> JSON.
     def toJSON(
@@ -43,7 +43,7 @@ class Verification(Element):
         return {
             "descendant": "Verification",
 
-            "hash": self.txHash.hex().upper(),
+            "hash": self.hash.hex().upper(),
             "holder": self.holder
         }
 
@@ -79,7 +79,7 @@ class SignedVerification(Verification):
             self.blsSignature.set_aggregation_info(
                 AggregationInfo.from_msg(
                     holderKey,
-                    SignedVerification.signatureSerialize(self.txHash)
+                    SignedVerification.signatureSerialize(self.hash)
                 )
             )
     #Sign.
@@ -89,7 +89,7 @@ class SignedVerification(Verification):
         privKey: PrivateKey
     ) -> None:
         self.holder = holder
-        self.blsSignature = privKey.sign(SignedVerification.signatureSerialize(self.txHash))
+        self.blsSignature = privKey.sign(SignedVerification.signatureSerialize(self.hash))
         self.signature = self.blsSignature.serialize()
 
     #Serialize.
@@ -112,7 +112,7 @@ class SignedVerification(Verification):
             "descendant": "Verification",
 
             "holder": self.holder,
-            "hash": self.txHash.hex().upper(),
+            "hash": self.hash.hex().upper(),
 
             "signed": True,
             "signature": self.signature.hex().upper()

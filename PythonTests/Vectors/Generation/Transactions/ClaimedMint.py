@@ -72,7 +72,7 @@ data.beat(dataFilter)
 transactions.add(data)
 
 #Verify it.
-verif: SignedVerification = SignedVerification(data.txHash)
+verif: SignedVerification = SignedVerification(data.hash)
 verif.sign(0, blsPrivKey)
 
 #Generate another 6 Blocks.
@@ -81,13 +81,13 @@ block: Block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.txHash, [0])], []),
+        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.hash, [0])], []),
         1,
         bytes(4),
         0,
         int(time())
     ),
-    BlockBody([VerificationPacket(verif.txHash, [0])], [], verif.signature)
+    BlockBody([VerificationPacket(verif.hash, [0])], [], verif.signature)
 )
 for _ in range(6):
     #Mine it.
@@ -112,13 +112,13 @@ for _ in range(6):
     )
 
 #Claim the new Mint.
-claim: Claim = Claim([merit.mints[0].txHash], edPubKey.to_bytes())
+claim: Claim = Claim([merit.mints[0].hash], edPubKey.to_bytes())
 claim.amount = merit.mints[0].output[1]
 claim.sign([blsPrivKey])
 transactions.add(claim)
 
 #Verify the Claim..
-verif = SignedVerification(claim.txHash)
+verif = SignedVerification(claim.hash)
 verif.sign(0, blsPrivKey)
 
 #Mine one more Block.
@@ -126,13 +126,13 @@ block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.txHash, [0])], []),
+        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.hash, [0])], []),
         1,
         bytes(4),
         0,
         int(time())
     ),
-    BlockBody([VerificationPacket(verif.txHash, [0])], [], verif.signature)
+    BlockBody([VerificationPacket(verif.hash, [0])], [], verif.signature)
 )
 block.mine(blsPrivKey, merit.blockchain.difficulty())
 merit.add(block)

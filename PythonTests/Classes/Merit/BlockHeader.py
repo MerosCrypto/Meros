@@ -77,7 +77,7 @@ class BlockHeader:
     def rehash(
         self
     ) -> None:
-        self.blockHash: bytes = argon2.low_level.hash_secret_raw(
+        self.hash: bytes = argon2.low_level.hash_secret_raw(
             argon2.low_level.hash_secret_raw(
                 self.serializeHash(),
                 self.proof.to_bytes(8, "big"),

@@ -13,9 +13,6 @@ import ../../../../Merit/objects/DifficultyObj
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
-#StInt lib.
-import StInt
-
 #Parse function.
 proc parseDifficulty*(
     difficultyStr: string
@@ -26,7 +23,7 @@ proc parseDifficulty*(
     var difficultySeq: seq[string] = difficultyStr.deserialize(
         INT_LEN,
         INT_LEN,
-        DIFFICULTY_LEN
+        HASH_LEN
     )
 
     #Create the Difficulty.

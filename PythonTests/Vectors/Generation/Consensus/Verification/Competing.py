@@ -69,7 +69,7 @@ blockchain.add(block)
 print("Generated Competing Block " + str(block.header.nonce) + ".")
 
 #Grab the claim hash.
-claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()][1]).txHash
+claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()][1]).hash
 
 #Create two competing Sends.
 send1: Send = Send(
@@ -95,12 +95,12 @@ send2.beat(consensus.sendFilter)
 transactions.add(send2)
 
 #Verify the 1st Send with the 1st key.
-verif = SignedVerification(send1.txHash)
+verif = SignedVerification(send1.hash)
 verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
 consensus.add(verif)
 
 #Verify the 2nd Send with the 2nd key.
-verif = SignedVerification(send2.txHash)
+verif = SignedVerification(send2.hash)
 verif.sign(blsPrivKey2, 0)
 consensus.add(verif)
 

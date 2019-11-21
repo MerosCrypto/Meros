@@ -17,7 +17,7 @@ class Mint(Transaction):
     ) -> None:
         self.nonce: int = nonce
         self.output: Tuple[int, int] = output
-        self.txHash = blake2b(
+        self.hash = blake2b(
             b'\0' +
             self.nonce.to_bytes(4, "big") +
             self.output[0].to_bytes(2, "big") +
@@ -49,7 +49,7 @@ class Mint(Transaction):
                 "key": self.output[0],
                 "amount": str(self.output[1])
             }],
-            "hash": self.txHash.hex().upper(),
+            "hash": self.hash.hex().upper(),
 
             "nonce": self.nonce
         }

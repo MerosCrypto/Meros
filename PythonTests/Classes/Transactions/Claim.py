@@ -24,7 +24,7 @@ class Claim(Transaction):
         self.amount: int = 0
 
         self.signature: bytes = signature
-        self.txHash = blake2b(b'\1' + self.signature, digest_size=48).digest()
+        self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
 
     #Transaction -> Claim. Satisifes static typing requirements.
     @staticmethod
@@ -46,7 +46,7 @@ class Claim(Transaction):
             signatures.append(privKeys[i].sign(b'\1' + self.inputs[i] + self.output))
 
         self.signature = blspy.Signature.aggregate(signatures).serialize()
-        self.txHash = blake2b(b'\1' + self.signature, digest_size=48).digest()
+        self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
 
     #Serialize.
     def serialize(
@@ -74,7 +74,7 @@ class Claim(Transaction):
             }],
 
             "signature": self.signature.hex().upper(),
-            "hash": self.txHash.hex().upper()
+            "hash": self.hash.hex().upper()
         }
         for txInput in self.inputs:
             result["inputs"].append({

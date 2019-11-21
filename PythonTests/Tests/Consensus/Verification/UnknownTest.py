@@ -55,26 +55,26 @@ def VUnknownTest(
                 if height >= len(blockchain.blocks):
                     raise TestError("Meros asked for a Block Hash we do not have.")
 
-                rpc.meros.blockHash(blockchain.blocks[height].header.blockHash)
+                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
             reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.blockHash == reqHash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockHeader(block.header)
                     break
 
-                if block.header.blockHash == blockchain.last():
+                if block.header.hash == blockchain.last():
                     raise TestError("Meros asked for a Block Header we do not have.")
 
         elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
             reqHash = msg[1 : 49]
             for block in blockchain.blocks:
-                if block.header.blockHash == reqHash:
+                if block.header.hash == reqHash:
                     rpc.meros.blockBody(block)
                     break
 
-                if block.header.blockHash == blockchain.last():
+                if block.header.hash == blockchain.last():
                     raise TestError("Meros asked for a Block Body we do not have.")
 
         elif MessageType(msg[0]) == MessageType.ElementRequest:
