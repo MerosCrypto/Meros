@@ -105,7 +105,6 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - The header is valid.
 - contents is the result of a properly constructed Merkle tree.
 - significant is greater than 0 and at most 26280 (inclusive).
-- capacity is at least `packets.length div 5 + 1` and at most `packets.length div 5 + 11`.
 - The Block's included Verification Packets don't collide with the specified sketch salt.
 - Every Verification Packet is for an unique Transaction.
 - Every Verification Packet only contains new Verifications.
@@ -170,7 +169,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 ### Violations in Meros
 
 - Meros doesn't check that BlockHeader's have valid significant fields.
-- Meros doesn't check BlockBody's have valid capacity fields.
 - Meros allows Verification Packets which contain archived Verifications.
 - Meros doesn't check that Blocks Verification Packets' Merits are greater than significant.
 - Meros doesn't check that every predecessor has an archived Verification Packet.
