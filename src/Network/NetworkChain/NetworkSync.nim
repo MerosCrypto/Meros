@@ -143,7 +143,7 @@ proc sync*(
         #Missing Transactions.
         missingTXs: seq[Hash[384]] = @[]
         #Transactions.
-        transactions: seq[Transaction] = @[]
+        transactions: Table[Hash[384], Transaction] = initTable[Hash[384], Transaction]()
 
     try:
         #Try to resolve the Sketch.
@@ -234,7 +234,7 @@ proc sync*(
         #Get the Transactions.
         for tx in missingTXs:
             try:
-                transactions.add(await network.requestTransaction(tx))
+                transactions[tx] = await network.requestTransaction(tx)
             except DataMissing:
                 #Since we did not get this Transaction, this Block is trying to archive unknown Verification OR we just don't have a proper client set.
                 #The first is assumed.
@@ -243,13 +243,15 @@ proc sync*(
                 doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #List of Transactions we have yet to process.
-    var todo: seq[Transaction] = newSeq[Transaction](1)
+    var todo: Table[Hash[384], Transaction] = initTable[Hash[384], Transaction]()
+    #Add a junk element so the loop runs.
+    todo[Hash[384]()] = nil
     #While we still have transactions to do...
     while todo.len > 0:
         #Clear todo.
-        todo = @[]
+        todo = initTable[Hash[384], Transaction]()
         #Iterate over every transaction.
-        for tx in transactions:
+        for tx in transactions.values():
             block thisTX:
                 #Handle initial datas.
                 var first: bool = false
@@ -269,19 +271,15 @@ proc sync*(
                             discard network.mainFunctions.transactions.getTransaction(input.hash)
                         #This TX is missing an input.
                         except IndexError:
-                            #Look for the input in the pending transactions.
-                            var found: bool = false
-                            for todoTX in transactions:
-                                if todoTX.hash == input.hash:
-                                    found = true
-                            #If it's found, add it.
-                            if found:
-                                todo.add(tx)
+                            #Look for the input in the pending Transactions.
+                            if transactions.hasKey(input.hash):
+                                #If it's there, add this Transaction to be handled later.
+                                todo[tx.hash] = tx
                                 break thisTX
                             else:
                                 raise newException(ValueError, "Block includes Verifications of a Transaction which has not had all its inputs mentioned in previous blocks/this block.")
 
-                #Handle the tx.
+                #Handle the Transaction.
                 case tx:
                     of Claim as claim:
                         try:
