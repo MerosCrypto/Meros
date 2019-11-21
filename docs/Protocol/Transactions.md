@@ -113,7 +113,6 @@ The produced Argon hash must also not start with 16 0s.
 
 ### Violations in Meros
 
-- Meros has Mints output to BLS Public Keys, not nicknames.
 - Meros uses Data hashes, instead of Data Argon hashes, for inputs.
 - Meros doesn't check if Datas's Argon hashes start with 0s or not.
 - Meros doesn't support Lock or Unlock Transactions.

@@ -91,7 +91,6 @@ Their message lengths are their non-"Signed" message length plus 96 bytes; the 9
 
 - Meros doesn't support defaulting.
 
-- Meros doesn't handle `VerificationPacket`.
 - Meros doesn't support SendDifficulties or `SignedSendDifficulty`.
 - Meros doesn't support DataDifficulties or `SignedDataDifficulty`.
 - Meros doesn't support GasPrices or `SignedGasPrice`.

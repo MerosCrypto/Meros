@@ -67,7 +67,7 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### SketchHashRequests
 
-`SketchHashRequests` has a variable message length; the Block's 48-byte hash, the 4-byte amount of sketch hashes, and each 8-byte sketch hash. The expected response is multiple `VerificationPacket` messages, each containing the VerificationPacket which created the matching sketch hash in the specified Block.
+`SketchHashRequests` has a variable message length; the Block's 48-byte hash, the 4-byte amount of sketch hashes, and each 8-byte sketch hash. The expected response is multiple `VerificationPacket` messages, each containing the VerificationPacket which created the matching sketch hash in the specified Block. If a hash isn't found, and a `DataMissing` is sent, the entire line of requests is terminated.
 
 ### TransactionRequest
 
@@ -86,5 +86,3 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 - Meros doesn't support the `PeersRequest` and `Peers` message types.
 - Meros doesn't support the `BlockListRequest` forwards mode.
 - Meros doesn't support the `CheckpointRequest` message type.
-- Meros doesn't support the `SketchHashesRequest` and `SketchHashes` message types.
-- Meros doesn't support the `SketchHashRequests` message type.
