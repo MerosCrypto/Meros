@@ -7,6 +7,9 @@ import ../lib/Util
 #Hash lib.
 import ../lib/Hash
 
+#Sketcher lib.
+import ../lib/Sketcher
+
 #Transactions lib (for all Transaction types).
 import ../Database/Transactions/Transactions
 
@@ -17,8 +20,12 @@ import ../Database/Consensus/Elements/Element
 import ../Database/Merit/Block
 
 #Serialization libs.
+import Serialize/SerializeCommon
+
 import Serialize/Merit/SerializeBlockHeader
 import Serialize/Merit/SerializeBlockBody
+
+import Serialize/Consensus/SerializeVerificationPacket
 
 import Serialize/Transactions/SerializeClaim
 import Serialize/Transactions/SerializeSend
@@ -40,6 +47,9 @@ import objects/NetworkLibFunctionBoxObj
 
 #Networking standard libs.
 import asyncdispatch, asyncnet
+
+#Table standard lib.
+import tables
 
 #Handle a client.
 proc handle(
@@ -89,7 +99,7 @@ proc handle(
                         of MessageType.BlockListRequest:
                             var
                                 res: string = ""
-                                last: Hash[384] = msg.message[2 ..< 50].tohash(384)
+                                last: Hash[384] = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN +  HASH_LEN].toHash(384)
                                 i: int = -1
 
                             try:
@@ -140,10 +150,46 @@ proc handle(
                             await client.send(newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt)))
 
                         of MessageType.SketchHashesRequest:
-                            doAssert(false)
+                            var requested: Block
+                            try:
+                                requested = networkFunctions.getBlock(msg.message.toHash(384))
+                            except ValueError as e:
+                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                            except IndexError:
+                                await client.send(newMessage(MessageType.DataMissing))
+                                continue
+
+                            var res: string = requested.body.packets.len.toBinary().pad(4)
+                            for packet in requested.body.packets:
+                                res &= sketchHash(requested.header.sketchSalt, packet).toBinary().pad(8)
+                            await client.send(newMessage(MessageType.SketchHashes, res))
 
                         of MessageType.SketchHashRequests:
-                            doAssert(false)
+                            var requested: Block
+                            try:
+                                requested = networkFunctions.getBlock(msg.message[0 ..< HASH_LEN].toHash(384))
+                            except ValueError as e:
+                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                            except IndexError:
+                                await client.send(newMessage(MessageType.DataMissing))
+                                continue
+
+                            #Create a Table of the Sketch Hashes.
+                            var packets: Table[string, VerificationPacket] = initTable[string, VerificationPacket]()
+                            for packet in requested.body.packets:
+                                packets[sketchHash(requested.header.sketchSalt, packet).toBinary().pad(8)] = packet
+
+                            try:
+                                for i in 0 ..< msg.message[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary():
+                                    await client.send(newMessage(
+                                        MessageType.VerificationPacket,
+                                        packets[msg.message[
+                                            HASH_LEN + INT_LEN + (i * SKETCH_HASH_LEN) ..<
+                                            HASH_LEN + INT_LEN + SKETCH_HASH_LEN + (i * SKETCH_HASH_LEN)
+                                        ]].serialize()
+                                    ))
+                            except KeyError:
+                                await client.send(newMessage(MessageType.DataMissing))
 
                         of MessageType.TransactionRequest:
                             var tx: Transaction

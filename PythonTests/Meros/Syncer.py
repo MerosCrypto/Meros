@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Union, Any
+from typing import Dict, List, Set, Union, Any
 
 #Sketch class.
 from PythonTests.Classes.Merit.Minisketch import Sketch
@@ -7,6 +7,9 @@ from PythonTests.Classes.Merit.Minisketch import Sketch
 #Block and Blockchain classes.
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
+
+#Consensus classes.
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
@@ -46,20 +49,20 @@ class Syncer():
             self.settings["playback"] = True
 
         #List of Block hashes in this Blockchain.
-        self.blockHashes: Dict[bytes, bool] = {}
+        self.blockHashes: Set[bytes] = set()
         for b in range(1, self.settings["height"] + 1):
-            self.blockHashes[self.blockchain.blocks[b].header.blockHash] = True
+            self.blockHashes.add(self.blockchain.blocks[b].header.blockHash)
 
         #List of mentioned Blocks.
         self.blocks: List[Block] = [self.blockchain.blocks[self.settings["height"]]]
 
         #Dict of mentioned packets.
-        self.packets: Dict[bytes, int] = {}
+        self.packets: Dict[int, VerificationPacket] = {}
 
-        #Dict of mentioned Transactions.
-        self.txs: Dict[bytes, bool] = {}
+        #Set of mentioned Transactions.
+        self.txs: Set[bytes] = set()
         #Dict of synced Transactions.
-        self.synced: Dict[bytes, bool] = {}
+        self.synced: Set[bytes] = set()
 
     #Sync the DB and verify it.
     #The following PyLint errors are due to handling all the various message types.
@@ -112,7 +115,7 @@ class Syncer():
                         self.rpc.meros.dataMissing()
 
             elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-                if (self.txs != {}) or (self.packets != {}):
+                if (self.txs != set()) or (self.packets != {}):
                     raise TestError("Meros asked for a new Block before syncing the last Block's Transactions and Packets.")
 
                 reqHash = msg[1 : 49]
@@ -127,9 +130,14 @@ class Syncer():
                     raise TestError("Meros asked for a BlockBody other than the next Block's on the last BlockList.")
 
                 self.rpc.meros.blockBody(self.blocks[-1])
-                del self.blockHashes[reqHash]
+                self.blockHashes.remove(self.blocks[-1].header.blockHash)
 
                 #Set packets/transactions.
+                self.packets = {}
+                for packet in self.blocks[-1].body.packets:
+                    if packet.txHash not in self.synced:
+                        self.txs.add(packet.txHash)
+                    self.packets[Sketch.hash(self.blocks[-1].header.sketchSalt, packet)] = packet
 
                 if self.packets == {}:
                     del self.blocks[-1]
@@ -139,16 +147,27 @@ class Syncer():
                 if reqHash != self.blocks[-1].header.blockHash:
                     raise TestError("Meros asked for Sketch Hashes that didn't belong to the header we just sent it.")
 
-                #Create the haashes.
-                hashes: List[int] = []
-                for packet in self.blocks[-1].body.packets:
-                    hashes.append(Sketch.hash(self.blocks[-1].header.sketchSalt, packet))
+                #Get the haashes.
+                hashes: List[int] = list(self.packets)
 
                 #Send the Sketch Hashes.
                 self.rpc.meros.sketchHashes(hashes)
 
             elif MessageType(msg[0]) == MessageType.SketchHashRequests:
-                raise TestError("SketchHashRequests")
+                if not self.packets:
+                    raise TestError("Meros asked for Verification Packets from a Block without any.")
+
+                reqHash = msg[1 : 49]
+                if reqHash != self.blocks[-1].header.blockHash:
+                    raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
+
+                #Look up each requested packet and respond accordingly.
+                for h in range(int.from_bytes(msg[49 : 53], byteorder="big")):
+                    sketchHash: int = int.from_bytes(msg[53 + (h * 8) : 61 + (h * 8)], byteorder="big")
+                    if sketchHash not in self.packets:
+                        raise TestError("Meros asked for a non-existent Sketch Hash.")
+                    self.rpc.meros.packet(self.packets[sketchHash])
+                    del self.packets[sketchHash]
 
             elif MessageType(msg[0]) == MessageType.TransactionRequest:
                 reqHash = msg[1 : 49]
@@ -163,16 +182,19 @@ class Syncer():
                     raise TestError("Meros asked for a Transaction we haven't mentioned.")
 
                 self.rpc.meros.transaction(self.transactions.txs[reqHash])
-                self.synced[reqHash] = True
-                del self.txs[reqHash]
+                self.synced.add(reqHash)
+                self.txs.remove(reqHash)
+
+                if self.txs == set():
+                    del self.blocks[-1]
 
             elif MessageType(msg[0]) == MessageType.SyncingOver:
                 #Break out of the for loop if the sync finished.
                 #This means we sent every Block, every Element, every Transaction...
                 if (
-                    (self.blockHashes == {}) and
+                    (self.blockHashes == set()) and
                     (self.packets == {}) and
-                    (self.txs == {})
+                    (self.txs == set())
                 ):
                     break
 
