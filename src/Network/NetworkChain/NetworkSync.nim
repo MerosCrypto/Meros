@@ -125,6 +125,7 @@ proc requestSketchHashes(
 #Sync a Block's missing Transactions/VerificationPackets.
 proc sync*(
     network: Network,
+    state: State,
     newBlock: SketchyBlock,
     sketcher: Sketcher
 ): Future[Block] {.forceCheck: [
@@ -313,6 +314,13 @@ proc sync*(
 
     #Add every Verification Packet.
     for packet in result.body.packets:
+        #Verify the packet's significant.
+        var merit: int = 0
+        for holder in packet.holders:
+            merit += state[holder]
+        if merit < int(result.header.significant):
+            raise newException(ValueError, "Block has an invalid significant.")
+
         network.mainFunctions.consensus.addVerificationPacket(packet)
 
 #Request a BlockBody.

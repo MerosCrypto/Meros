@@ -168,7 +168,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros doesn't check that BlockHeader's have valid significant fields.
 - Meros allows Verification Packets which contain archived Verifications.
 - Meros doesn't check that Blocks Verification Packets' Merits are greater than significant.
 - Meros doesn't check that every predecessor has an archived Verification Packet.

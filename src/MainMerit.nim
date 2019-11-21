@@ -109,6 +109,7 @@ proc mainMerit() {.forceCheck: [].} =
                 newBlock: Block
             try:
                 newBlock = await network.sync(
+                    merit.state,
                     sketchyBlock,
                     sketcher
                 )
