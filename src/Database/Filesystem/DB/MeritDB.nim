@@ -127,7 +127,7 @@ proc saveHolder*(
     db: DB,
     key: BLSPublicKey
 ) {.forceCheck: [].} =
-    db.put(key.toString() & "nick", (db.merit.holders.len div 48).toBinary())
+    db.put(key.toString(), (db.merit.holders.len div 48).toBinary())
     db.merit.holders = db.merit.holders & key.toString()
     db.put("holders", db.merit.holders)
 
@@ -268,15 +268,12 @@ proc loadBlockRemovals*(
         return @[]
 
     for i in countup(0, removals.len - 1, NICKNAME_LEN + INT_LEN):
-        try:
-            result.add(
-                (
-                    nick: uint16(removals[i ..< i + NICKNAME_LEN].fromBinary()),
-                    merit: removals[i + NICKNAME_LEN ..< i + BLOCK_REMOVAL_LEN].fromBinary()
-                )
+        result.add(
+            (
+                nick: uint16(removals[i ..< i + NICKNAME_LEN].fromBinary()),
+                merit: removals[i + NICKNAME_LEN ..< i + BLOCK_REMOVAL_LEN].fromBinary()
             )
-        except BLSError as e:
-            doAssert(false, "Saved an invalid BLS key to the Database: " & e.msg)
+        )
 
 proc loadHolderRemovals*(
     db: DB,
@@ -298,7 +295,7 @@ proc loadNickname*(
     DBReadError
 ].} =
     try:
-        result = uint16(db.get(key.toString() & "nick").fromBinary())
+        result = uint16(db.get(key.toString()).fromBinary())
     except DBReadError as e:
         fcRaise e
 

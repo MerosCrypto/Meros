@@ -1,10 +1,10 @@
-discard """
+#[
 These are the config options for the node, which are sourced from three places.
 First. there's a set of default paramters.
 Second, there's a `settings.json` file.
 Finally, there are CLI options.
 CLI options will override options from the settings file which will override the default paramters.
-"""
+]#
 
 #Errors lib.
 import ../lib/Errors

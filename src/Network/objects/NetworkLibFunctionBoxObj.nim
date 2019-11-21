@@ -1,6 +1,4 @@
-discard """
-This is named NetworkLibFunctionBox, not NetworkFunctionBox, `because GlobalFunctionBox` also defines a `NetworkFunctionBox`.
-"""
+#This is named NetworkLibFunctionBox, not NetworkFunctionBox, `because GlobalFunctionBox` also defines a `NetworkFunctionBox`.
 
 #Errors lib.
 import ../../lib/Errors

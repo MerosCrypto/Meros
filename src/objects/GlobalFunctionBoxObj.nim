@@ -1,9 +1,9 @@
-discard """
+#[
 This is a replacement for the previously used EventEmitters (mc_events).
 It's type safe, and serves the same purpose, yet provides an even better API.
 That said, we lose the library format, and instead have this.
 This is annoying, but we no longer have to specify the type when we call events, so we break even.
-"""
+]#
 
 #Errors lib.
 import ../lib/Errors

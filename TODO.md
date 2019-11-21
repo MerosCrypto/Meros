@@ -51,10 +51,6 @@ Wallet:
 
 - Load the nickname/automatically set the nickname for the miner wallet.
 
-Filesystem:
-
-- No longer save Verifications/VerificationPackets in the Consensus DB.
-
 Merit:
 
 - If our sketch has a collision, check if the Block doesn't (as that would mean it's valid).
@@ -65,7 +61,6 @@ Consensus:
 - Load statuses still in Epochs.
 - Load close Transactions.
 - Functioning checkMalicious.
-- Handle VerificationPackets from Main.
 
 RPC:
 
@@ -90,7 +85,6 @@ Tests:
 
 Cleanup:
 
-- Check if any DB methods are unused.
 - Remove no longer needed Exception checks.
 - Remove latent """ marks.
 
@@ -190,8 +184,6 @@ Network:
 - Remove EdPublicKeyError.
 
 - Swap Chia for Milagro.
-
-- Pass the Blockchain Difficulty to the Block parser to immediately check if work was put into it.
 
 ### Documentation:
 

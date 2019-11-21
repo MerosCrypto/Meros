@@ -1,7 +1,7 @@
 #Include the Second file in the chain, NetworkCore.
 include NetworkCore
 
-discard """
+#[
 Once https://github.com/nim-lang/Nim/issues/12530 is fixed, the following code block can be applied to the following functions:
 
     #Return if we synced the body.
@@ -10,7 +10,7 @@ Once https://github.com/nim-lang/Nim/issues/12530 is fixed, the following code b
 
 #If we exited the loop, we failed to sync the body from every client.
 raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
-"""
+]#
 
 #Request a Transaction.
 proc requestTransaction*(

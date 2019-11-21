@@ -11,7 +11,6 @@ from PythonTests.Classes.Transactions.Data import Data
 from PythonTests.Classes.Consensus.Element import Element, SignedElement
 from PythonTests.Classes.Consensus.Verification import SignedVerification
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
-#from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval, PartiallySignedMeritRemoval
 
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
