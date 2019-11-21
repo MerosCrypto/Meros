@@ -243,11 +243,9 @@ proc sync*(
                 doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #List of Transactions we have yet to process.
-    var todo: Table[Hash[384], Transaction] = initTable[Hash[384], Transaction]()
-    #Add a junk element so the loop runs.
-    todo[Hash[384]()] = nil
+    var todo: Table[Hash[384], Transaction]
     #While we still have transactions to do...
-    while todo.len > 0:
+    while transactions.len > 0:
         #Clear todo.
         todo = initTable[Hash[384], Transaction]()
         #Iterate over every transaction.
@@ -307,6 +305,11 @@ proc sync*(
 
                     else:
                         doAssert(false, "Synced an Transaction of an unsyncable type.")
+
+        #Panic if the queue length didn't change.
+        if transactions.len == todo.len:
+            doAssert(false, "Transaction queue length is unchanged.")
+
         #Set transactions to todo.
         transactions = todo
 
