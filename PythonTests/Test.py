@@ -2,7 +2,7 @@
 from typing import Callable, List
 
 #Exceptions.
-from PythonTests.Tests.Errors import EmptyError, NodeError, TestError
+from PythonTests.Tests.Errors import EmptyError, NodeError, TestError, SuccessError
 
 #Meros classes.
 from PythonTests.Meros.Meros import Meros
@@ -16,11 +16,11 @@ from PythonTests.Tests.Merit.StateTest import StateTest
 from PythonTests.Tests.Transactions.DataTest import DataTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 
-"""
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 
+"""
 from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyCompetingTest
 
@@ -55,16 +55,18 @@ tests: List[Callable[[RPC], None]] = [
     StateTest,
 
     DataTest,
-    FiftyTest
+    FiftyTest,
+
+    VUnknownTest,
+    VParsableTest,
+    VCompetingTest
 ]
 """
-VUnknownTest,
-VParsableTest,
-VCompetingTest,
-
 SameNonceTest,
 VerifyCompetingTest,
+
 MultipleTest,
+
 PartialTest,
 PendingActionsTest
 """
@@ -118,15 +120,15 @@ for test in tests:
     rpc: RPC = RPC(meros)
     try:
         test(rpc)
+        raise SuccessError()
+    except SuccessError as e:
         ress.append("\033[0;32m" + test.__name__ + " succeeded.")
     except EmptyError as e:
         ress.append("\033[0;33m" + test.__name__ + " is empty.")
-        continue
     except NodeError as e:
         ress.append(crash)
     except TestError as e:
         ress.append("\033[0;31m" + test.__name__ + " failed: " + str(e))
-        continue
     except Exception as e:
         ress.append("\033[0;31m" + test.__name__ + " is invalid.")
         ress.append(format_exc().rstrip())
@@ -138,6 +140,7 @@ for test in tests:
                 ress.append(crash)
 
         print("\033[0;37m" + ("-" * shutil.get_terminal_size().columns))
+
 for res in ress:
     print(res)
 print("\033[0;37m", end="")

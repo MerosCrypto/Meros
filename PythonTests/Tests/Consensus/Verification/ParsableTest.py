@@ -1,33 +1,35 @@
-"""
 #Tests proper handling of Verifications with unsynced Transactions which are parsable yet have invalid signatures.
 #Meros used to allow any Verifications of any Transaction, no matter its data or signature.
 #Meros no longer allows this. All Verifications must be of Transactions on the DAG.
 
 #Types.
-from typing import Dict, IO, Any
+from typing import Dict, List, IO, Any
 
-#Transaction classes.
+#Sketch class.
+from PythonTests.Classes.Merit.Minisketch import Sketch
+
+#Blockchain classes.
+from PythonTests.Classes.Merit.Block import Block
+from PythonTests.Classes.Merit.Blockchain import Blockchain
+
+#VerificationPacket class.
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
+
+#Transactions classes.
 from PythonTests.Classes.Transactions.Data import Data
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
-from PythonTests.Classes.Consensus.Verification import SignedVerification
-from PythonTests.Classes.Consensus.Consensus import Consensus
-
-#Blockchain class.
-from PythonTests.Classes.Merit.Blockchain import Blockchain
-
-#TestError Exception.
-from PythonTests.Tests.Errors import TestError
+#Exceptions.
+from PythonTests.Tests.Errors import TestError, SuccessError
 
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Meros import MessageType
+from PythonTests.Meros.Liver import Liver
 
 #JSON standard lib.
 import json
 
-#The following PyLint error is due to our custom message rules.
 #pylint: disable=too-many-statements
 def VParsableTest(
     rpc: RPC
@@ -43,78 +45,92 @@ def VParsableTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
-    #Consensus.
-    consensus: Consensus = Consensus(
-        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-    )
-    consensus.add(SignedVerification.fromJSON(vectors["verification"]))
     #Transactions.
     transactions: Transactions = Transactions()
     transactions.add(Data.fromJSON(vectors["data"]))
 
-    #Handshake with the node.
-    rpc.meros.connect(254, 254, self.blockchain.blocks[3].hash)
+    #Custom function to send the last Block and verify it errors at the right place.
+    def checkFail() -> None:
+        #This Block should cause the node to disconnect us AFTER it syncs our Transaction.
+        syncedTX: bool = False
 
-    sentLast: bool = False
-    reqHash: bytes = bytes()
-    msg: bytes = bytes()
-    height: int = 0
-    while True:
-        try:
-            msg = rpc.meros.recv()
-        except TestError as e:
-            if (not sentLast) or (str(e) != "Node disconnected us as a peer."):
-                raise e
-            break
+        #Grab the Block.
+        block: Block = blockchain.blocks[2]
 
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.syncingAcknowledged()
+        #Send the Block.
+        rpc.meros.blockHeader(block.header)
 
-        elif MessageType(msg[0]) == MessageType.GetBlockHash:
-            height = int.from_bytes(msg[1 : 5], "big")
-            if height == 0:
-                rpc.meros.blockHash(blockchain.last())
+        #Handle sync requests.
+        reqHash: bytes = bytes()
+        while True:
+            try:
+                msg: bytes = rpc.meros.recv()
+            except TestError:
+                if syncedTX:
+                    raise SuccessError("Node disconnected us after we sent a parsable, yet invalid, Transaction/Verification.")
+                raise TestError("Node errored before syncing our Transaction.")
+
+            if MessageType(msg[0]) == MessageType.Syncing:
+                rpc.meros.syncingAcknowledged()
+
+            elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+                reqHash = msg[1 : 49]
+                if reqHash != block.header.hash:
+                    raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
+
+                #Send the BlockBody.
+                rpc.meros.blockBody(block)
+
+            elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
+                if not block.body.packets:
+                    raise TestError("Meros asked for Sketch Hashes from a Block without any.")
+
+                reqHash = msg[1 : 49]
+                if reqHash != block.header.hash:
+                    raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
+
+                #Create the haashes.
+                hashes: List[int] = []
+                for packet in block.body.packets:
+                    hashes.append(Sketch.hash(block.header.sketchSalt, packet))
+
+                #Send the Sketch Hashes.
+                rpc.meros.sketchHashes(hashes)
+
+            elif MessageType(msg[0]) == MessageType.SketchHashRequests:
+                if not block.body.packets:
+                    raise TestError("Meros asked for Verification Packets from a Block without any.")
+
+                reqHash = msg[1 : 49]
+                if reqHash != block.header.hash:
+                    raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
+
+                #Create a lookup of hash to packets.
+                packets: Dict[int, VerificationPacket] = {}
+                for packet in block.body.packets:
+                    packets[Sketch.hash(block.header.sketchSalt, packet)] = packet
+
+                #Look up each requested packet and respond accordingly.
+                for h in range(int.from_bytes(msg[49 : 53], byteorder="big")):
+                    sketchHash: int = int.from_bytes(msg[53 + (h * 8) : 61 + (h * 8)], byteorder="big")
+                    if sketchHash not in packets:
+                        raise TestError("Meros asked for a non-existent Sketch Hash.")
+                    rpc.meros.packet(packets[sketchHash])
+
+            elif MessageType(msg[0]) == MessageType.TransactionRequest:
+                reqHash = msg[1 : 49]
+
+                if reqHash not in transactions.txs:
+                    raise TestError("Meros asked for a non-existent Transaction.")
+
+                rpc.meros.transaction(transactions.txs[reqHash])
+                syncedTX = True
+
+            elif MessageType(msg[0]) == MessageType.SyncingOver:
+                pass
+
             else:
-                if height >= len(blockchain.blocks):
-                    raise TestError("Meros asked for a Block Hash we do not have.")
+                raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-                rpc.meros.blockHash(blockchain.blocks[height].header.hash)
-
-        elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockHeader(block.header)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Header we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-            reqHash = msg[1 : 49]
-            for block in blockchain.blocks:
-                if block.header.hash == reqHash:
-                    rpc.meros.blockBody(block)
-                    break
-
-                if block.header.hash == blockchain.last():
-                    raise TestError("Meros asked for a Block Body we do not have.")
-
-        elif MessageType(msg[0]) == MessageType.ElementRequest:
-            holder: bytes = msg[1 : 49]
-
-            rpc.meros.element(
-                consensus.holders[holder][int.from_bytes(msg[49 : 53], "big")]
-            )
-
-        elif MessageType(msg[0]) == MessageType.TransactionRequest:
-            sentLast = True
-            rpc.meros.transaction(transactions.txs[msg[1 : 49]])
-
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
-            pass
-
-        else:
-            raise TestError("Unexpected message sent: " + msg.hex().upper())
-"""
+    #Create and execute a Liver.
+    Liver(rpc, blockchain, transactions, callbacks={1: checkFail}).live()

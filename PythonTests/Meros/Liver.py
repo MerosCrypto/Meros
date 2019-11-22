@@ -1,5 +1,5 @@
 #Types.
-from typing import Callable, List, Dict, Union
+from typing import Callable, Dict, List, Union
 
 #Sketch class.
 from PythonTests.Classes.Merit.Minisketch import Sketch
@@ -8,7 +8,7 @@ from PythonTests.Classes.Merit.Minisketch import Sketch
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#Consensus classes.
+#VerificationPacket class.
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Transactions class.
