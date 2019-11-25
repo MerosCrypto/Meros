@@ -12,7 +12,7 @@ They also require the Minisketch dynamic library, which should've been built in 
 
 ### Static Typing
 
-Meros supports static typing via both Pyright (`pyright -p PythonTests`) and MyPy (`mypy --config-file PythonTests/mypy.ini --namespace-packages PythonTests`).
+Meros supports static typing via both Pyright (`pyright -p PythonTests`) and MyPy (`mypy --config-file PythonTests/mypy.ini PythonTests`).
 
 ### Linting
 

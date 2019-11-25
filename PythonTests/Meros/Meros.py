@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List
+from typing import Dict, List, Any
 
 #Transactions classes.
 from PythonTests.Classes.Transactions.Transaction import Transaction
@@ -116,7 +116,7 @@ class Meros:
         self.rpc: int = rpc
 
         #Create the instance.
-        self.process: Popen = Popen(["./build/Meros", "--gui", "false", "--dataDir", "./data/PythonTests", "--network", "devnet", "--db", db, "--tcpPort", str(tcp), "--rpcPort", str(rpc)])
+        self.process: Popen[Any] = Popen(["./build/Meros", "--gui", "false", "--dataDir", "./data/PythonTests", "--network", "devnet", "--db", db, "--tcpPort", str(tcp), "--rpcPort", str(rpc)])
 
         #Create message/response lists.
         self.msgs: List[bytes] = []
