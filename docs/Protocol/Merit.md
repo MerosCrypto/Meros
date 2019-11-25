@@ -118,7 +118,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Transaction either has yet to enter Epochs or is in Epochs.
 - Every Transaction doesn't compete with, or have parents which competed with and lost, Transactions archived 5 Blocks before the last Checkpoint.
 - The sketch is properly constructed from the same data used to construct the Merkle.
-- Only new Elements are archived.
+- Only new and unique Elements are archived.
 - No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder.
 - Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block.
 - The aggregate signature is formed with the following algorithm:
@@ -179,7 +179,8 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 
 - Meros doesn't support Blocks with Elements.
-- Meros doesn't check that Block's Elements are new and have proper nonces.
+- Meros doesn't check that Block's Elements are new and unique.
+- Meros doesn't check that Block's Elements have proper nonces.
 - Meros doesn't check that Block's Elements don't cause a MeritRemoval.
 
 - Meros mints Merit before minting Meros.

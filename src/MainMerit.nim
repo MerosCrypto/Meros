@@ -120,7 +120,7 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
 
-            #Verify the Elements. Also see who has their Merit removed.
+            #Verify the Elements. Also check who has their Merit removed.
             var removed: seq[uint16] = @[]
             for elem in newBlock.body.elements:
                 discard
