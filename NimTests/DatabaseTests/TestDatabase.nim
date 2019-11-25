@@ -11,7 +11,7 @@ import ../../src/Database/Filesystem/DB/DB
 export DB
 
 #Transactions lib.
-#import ../../src/Database/Transactions/Transactions
+import ../../src/Database/Transactions/Transactions
 
 #GlobalFunctionBox.
 import ../../src/objects/GlobalFunctionBoxObj
@@ -42,7 +42,6 @@ proc commit*(
 ) =
     db.commit(blockNum)
 
-discard """
 #Create a GlobalFunctionBox with the needed Transactions functions for Consensus.
 var transactions {.threadvar.}: ptr Transactions
 proc init*(
@@ -72,4 +71,3 @@ proc init*(
         hash: Hash[384]
     ) =
         discard
-"""

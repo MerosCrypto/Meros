@@ -331,9 +331,9 @@ proc finalize*(
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
 
-#Iterate over every status.
-iterator statuses*(
-    consensus: Consensus
-): Hash[384] {.forceCheck: [].} =
-    for status in consensus.statuses.keys():
-        yield status
+#Provide debug access to the statuses table
+when defined(merosTests):
+    func statuses*(
+        consensus: Consensus
+    ): Table[Hash[384], TransactionStatus] {.inline, forceCheck: [].} =
+        consensus.statuses

@@ -80,6 +80,10 @@ Tests:
 - Add Dead Merit/MeritRemovals to the State Value Test.
 - Add MeritRemovals to EDBTest.
 
+- Add MeritRemovals to CDBTest.
+- Add Verifications of already mentioned Transactions to CDBtest.
+- Add addition of Verifications, not SignedVerifications, to CDBTest.
+
 - Sketcher Test.
 
 - Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.

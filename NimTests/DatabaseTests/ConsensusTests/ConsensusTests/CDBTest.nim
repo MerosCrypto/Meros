@@ -9,20 +9,20 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
-
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
-
-#Transactions lib.
-import ../../../../src/Database/Transactions/Transactions
 
 #Consensus lib.
 import ../../../../src/Database/Consensus/Consensus
 
+#Transactions lib.
+import ../../../../src/Database/Transactions/Transactions
+
 #Test Database lib.
 import ../../TestDatabase
+
+#Test Merit lib.
+import ../../MeritTests/TestMerit
 
 #Compare Consensus lib.
 import ../CompareConsensus
@@ -42,8 +42,15 @@ proc test*() =
         functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database.
         db: DB = newTestDatabase()
-        #State.
-        state: State = newState(db, 1, 0)
+
+        #Merit.
+        merit: Merit = newMerit(
+            db,
+            "CONSENSUS_TEST",
+            10,
+            $Hash[384](),
+            10
+        )
         #Consensus.
         consensus: Consensus = newConsensus(
             functions,
@@ -54,23 +61,70 @@ proc test*() =
         #Transactions.
         transactions: Transactions = newTransactions(
             db,
-            consensus,
-            newBlockchain(db, "", 0, Hash[384]())
+            merit.blockchain
         )
 
-        #MeritHolders.
-        holders: seq[MinerWallet]
-        #Hashes used in Verifications.
-        hashes: seq[Hash[384]] = @[]
-        #SignedVerification we just created.
-        verif: SignedVerification
-        #Transaction used to register the hash.
-        tx: Transaction
-        #Tips we're archiving.
-        archiving: seq[MeritHolderRecord] = @[]
+        #Merit Holders.
+        holders: seq[MinerWallet] = @[]
+        #Packets to include in the next Block.
+        packets: seq[VerificationPacket] = @[]
+        #Aggregate signature to include in the next Block.
+        aggregate: BLSSignature = nil
 
     #Init the Function Box.
     functions.init(addr transactions)
+
+    #Mine and add a Block.
+    proc mineBlock() =
+        #Grab a holder and create a Block.
+        var
+            miner: MinerWallet
+            mining: Block
+        if (rand(1) == 0) or (holders.len == 0):
+            miner = newMinerWallet()
+            holders.add(miner)
+
+            mining = newBlankBlock(
+                last = merit.blockchain.tail.header.hash,
+                sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                miner = miner,
+                packets = packets,
+                aggregate = aggregate
+            )
+        else:
+            var h: int = rand(high(holders))
+            miner = holders[h]
+
+            mining = newBlankBlock(
+                last = merit.blockchain.tail.header.hash,
+                sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                nick = uint16(h),
+                miner = miner,
+                packets = packets,
+                aggregate = aggregate
+            )
+
+        #Mine it.
+        while merit.blockchain.difficulty.difficulty > mining.header.hash:
+            miner.hash(mining.header, mining.header.proof + 1)
+
+        #Add a Block to the Blockchain to generate a holder.
+        merit.processBlock(mining)
+
+        #Add the Block to the Epochs and State.
+        var epoch: Epoch = merit.postProcessBlock()
+
+        #Archive the Epochs.
+        consensus.archive(merit.state, merit.epochs.latest, epoch)
+
+        #Archive the hashes handled by the popped Epoch.
+        transactions.archive(epoch)
+
+        #Commit the DBs.
+        db.commit(merit.blockchain.height)
+
+    #Mine a Block so there's a holder.
+    mineBlock()
 
     #Compare the Consensus against the reloaded Consensus.
     proc compare() =
@@ -87,61 +141,49 @@ proc test*() =
 
     #Iterate over 20 'rounds'.
     for r in 1 .. 20:
-        #Create a random amount of MeritHolders.
-        for _ in 0 ..< rand(2) + 1:
-            holders.add(newMinerWallet())
+        #Clear the packets and aggregate.
+        packets = @[]
+        aggregate = nil
 
-        #Create a random amount of Hashes.
+        #Create a random amount of 'Transaction's.
         for _ in 0 ..< rand(2) + 1:
-            hashes.add(Hash[384]())
             #Randomize the hash.
-            for b in 0 ..< hashes[^1].data.len:
-                hashes[^1].data[b] = uint8(rand(255))
+            var hash: Hash[384]
+            for b in 0 ..< hash.data.len:
+                hash.data[b] = uint8(rand(255))
 
             #Register the Transaction.
-            tx = Transaction()
-            tx.hash = hashes[^1]
+            var tx: Transaction = Transaction()
+            tx.hash = hash
             transactions.transactions[tx.hash] = tx
-            consensus.register(transactions, state, tx, r)
+            consensus.register(merit.state, tx, r)
 
-        #Create Elements.
-        for e in 0 ..< rand(10):
-            var
-                #Grab a random MeritHolder.
-                i: int = rand(holders.len - 1)
-                holder: MinerWallet = holders[i]
-                #Hash used in a SignedVerification.
-                hash: Hash[384] = hashes[rand(hashes.high)]
-            #Create the Verification.
-            verif = newSignedVerificationObj(hash)
-            #Sign it.
-            holder.sign(verif, consensus[holder.publicKey].height)
+            #Create a packet for the Transaction.
+            packets.add(newSignedVerificationPacketObj(hash))
 
-            #Add it as a SignedVerification.
-            if rand(1) == 0:
-                consensus.add(state, verif)
-            #Add it as a Verification.
-            else:
-                consensus.add(state, cast[Verification](verif), true)
+            #Grab random holders to sign the packet.
+            var sv: SignedVerification
+            for h in 0 ..< holders.len:
+                if rand(1) == 0:
+                    continue
 
-        #Clear archiving and recalculate it.
-        archiving = @[]
-        for h in 0 ..< holders.len:
-            if consensus[holders[h].publicKey].height - 1 == consensus[holders[h].publicKey].archived:
-                continue
+                packets[^1].holders.add(uint16(h))
 
-            archiving.add(
-                newMeritHolderRecord(
-                    holders[h].publicKey,
-                    consensus[holders[h].publicKey].height - 1,
-                    consensus[holders[h].publicKey].merkle.hash
-                )
-            )
-        #Archive the records.
-        consensus.archive(state, newEpoch(archiving), newEpoch(@[]))
+                sv = newSignedVerificationObj(packets[^1].hash)
+                holders[h].sign(sv)
+                aggregate = if aggregate.isNil: sv.signature else: @[aggregate, sv.signature].aggregate()
 
-        #Commit the DB.
-        db.commit(0)
+                consensus.add(merit.state, sv)
+
+            #Make sure at least one holder signed the packet.
+            if packets[^1].holders.len == 0:
+                packets[^1].holders.add(uint16(rand(high(holders))))
+
+                sv = newSignedVerificationObj(packets[^1].hash)
+                holders[int(packets[^1].holders[0])].sign(sv)
+                aggregate = if aggregate.isNil: sv.signature else: @[aggregate, sv.signature].aggregate()
+
+                consensus.add(merit.state, sv)
 
         #Compare the Consensus DAGs.
         compare()
