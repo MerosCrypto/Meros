@@ -20,18 +20,16 @@ export SerializeElement
 #Serialize a Verification.
 method serialize*(
     verif: Verification
-): string {.forceCheck: [].} =
-    result =
-        verif.holder.toBinary().pad(NICKNAME_LEN) &
-        verif.hash.toString()
+): string {.inline, forceCheck: [].} =
+    verif.holder.toBinary().pad(NICKNAME_LEN) &
+    verif.hash.toString()
 
 #Serialize a Verification for signing or a MeritRemoval.
 method serializeWithoutHolder*(
     verif: Verification
-): string {.forceCheck: [].} =
-    result =
-        char(VERIFICATION_PREFIX) &
-        verif.hash.toString()
+): string {.inline, forceCheck: [].} =
+    char(VERIFICATION_PREFIX) &
+    verif.hash.toString()
 
 #Serialize a Verification for inclusion in a BlockHeader's contents merkle.
 #This should never happen.
@@ -43,7 +41,6 @@ method serializeContents*(
 #Serialize a Signed Verification.
 method signedSerialize*(
     verif: SignedVerification
-): string {.forceCheck: [].} =
-    result =
-        verif.serialize() &
-        verif.signature.toString()
+): string {.inline, forceCheck: [].} =
+    verif.serialize() &
+    verif.signature.toString()

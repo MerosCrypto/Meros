@@ -20,18 +20,16 @@ export SerializeTransaction
 #Serialization functions.
 method serializeHash*(
     data: Data
-): string {.forceCheck: [].} =
-    result =
-        "\3" &
-        data.inputs[0].hash.toString() &
-        data.data
+): string {.inline, forceCheck: [].} =
+    "\3" &
+    data.inputs[0].hash.toString() &
+    data.data
 
 method serialize*(
     data: Data
 ): string {.inline, forceCheck: [].} =
-    result =
-        data.inputs[0].hash.toString() &
-        char(data.data.len) &
-        data.data &
-        data.signature.toString() &
-        data.proof.toBinary().pad(INT_LEN)
+    data.inputs[0].hash.toString() &
+    char(data.data.len) &
+    data.data &
+    data.signature.toString() &
+    data.proof.toBinary().pad(INT_LEN)

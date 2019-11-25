@@ -19,7 +19,7 @@ import ../SerializeCommon
 #Serialize a Block Header.
 func serializeHash*(
     header: BlockHeader
-): string {.forceCheck: [].} =
+): string {.inline, forceCheck: [].} =
     header.version.toBinary().pad(INT_LEN) &
     header.last.toString() &
     header.contents.toString() &
@@ -35,7 +35,7 @@ func serializeHash*(
 
 func serialize*(
     header: BlockHeader
-): string {.forceCheck: [].} =
+): string {.inline, forceCheck: [].} =
     header.serializeHash() &
     header.proof.toBinary().pad(INT_LEN) &
     header.signature.toString()
