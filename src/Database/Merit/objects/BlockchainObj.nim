@@ -109,6 +109,7 @@ proc newBlockchainObj*(
                 Hash[384](),
                 0,
                 "".pad(4),
+                Hash[384](),
                 nil,
                 @[],
                 @[],

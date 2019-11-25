@@ -74,8 +74,9 @@ proc `%`(
             "last":      $blockArg.header.last,
             "contents":  $blockArg.header.contents,
 
-            "significant": blockArg.header.significant,
-            "sketchSalt":  blockArg.header.sketchSalt.pad(4).toHex(),
+            "significant":  blockArg.header.significant,
+            "sketchSalt":   blockArg.header.sketchSalt.toHex(),
+            "sketchCheck":  $blockArg.header.sketchCheck,
 
             "time":      blockArg.header.time,
             "proof":     blockArg.header.proof,

@@ -26,6 +26,8 @@ finalsd:
         significant*: uint16
         #Salt used when hasing sketch elements in order to avoid collisions.
         sketchSalt*: string
+        #Merkle of the included sketch hashes.
+        sketchCheck*: Hash[384]
 
         #Miner.
         case newMiner*: bool
@@ -50,6 +52,7 @@ func newBlockHeaderObj*(
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,
+    sketchCheck: Hash[384],
     miner: BLSPublicKey,
     time: uint32,
     proof: uint32,
@@ -62,6 +65,7 @@ func newBlockHeaderObj*(
 
         significant: significant,
         sketchSalt: sketchSalt,
+        sketchCheck: sketchCheck,
 
         newMiner: true,
         minerKey: miner,
@@ -79,6 +83,7 @@ func newBlockHeaderObj*(
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,
+    sketchCheck: Hash[384],
     miner: uint16,
     time: uint32,
     proof: uint32,
@@ -91,6 +96,7 @@ func newBlockHeaderObj*(
 
         significant: significant,
         sketchSalt: sketchSalt,
+        sketchCheck: sketchCheck,
 
         newMiner: false,
         minerNick: miner,

@@ -79,6 +79,7 @@ block: Block = Block(
         bytes(48),
         1,
         bytes(4),
+        bytes(48),
         blsPubKeys[1].serialize(),
         int(time())
     ),
@@ -119,9 +120,10 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents(bytes(4), packets, []),
+        BlockHeader.createContents(packets),
         1,
         bytes(4),
+        BlockHeader.createSketchCheck(bytes(4), packets),
         0,
         int(time())
     ),
@@ -140,19 +142,22 @@ for _ in range(6):
         BlockHeader(
             0,
             blockchain.last(),
-            BlockHeader.createContents(),
+            bytes(48),
             1,
             bytes(4),
+            bytes(48),
             0,
             int(time())
         ),
-        BlockBody([], [], bytes(96))
+        BlockBody()
     )
 
 #Save the appended data (3 Blocks and 12 Sends).
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON(),
-    "transactions": transactions.toJSON()
+    "transactions": transactions.toJSON(),
+    "verified": packets[0].hash.hex().upper(),
+    "beaten": packets[1].hash.hex().upper()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/Competing.json", "w")
 vectors.write(json.dumps(result))

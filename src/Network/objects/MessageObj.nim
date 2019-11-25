@@ -91,7 +91,7 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.SignedVerification:        @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
     MessageType.SignedMeritRemoval:        @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, BYTE_LEN, 0, BLS_SIGNATURE_LEN],
 
-    MessageType.BlockHeader:               @[INT_LEN + HASH_LEN + HASH_LEN + BYTE_LEN + NICKNAME_LEN + INT_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
+    MessageType.BlockHeader:               @[BLOCK_HEADER_DATA_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
     MessageType.BlockBody:                 @[INT_LEN, -SKETCH_HASH_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
     MessageType.SketchHashes:              @[INT_LEN, -SKETCH_HASH_LEN],
     MessageType.VerificationPacket:        @[BYTE_LEN, -NICKNAME_LEN, HASH_LEN]

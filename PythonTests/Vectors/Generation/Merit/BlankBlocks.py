@@ -34,6 +34,7 @@ block: Block = Block(
         bytes(48),
         1,
         bytes(4),
+        bytes(48),
         privKey.get_public_key().serialize(),
         int(time())
     ),
@@ -57,6 +58,7 @@ for i in range(1, 26):
             bytes(48),
             1,
             bytes(4),
+            bytes(48),
             0,
             int(time())
         ),

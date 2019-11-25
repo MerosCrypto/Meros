@@ -14,17 +14,20 @@ BlockHeaders have the following fields:
 
 - version: Block version.
 - last: Last Block Hash.
-- contents: Merkle of included Sketch Hashes and Elements.
+- contents: Merkle of the included Verification Packets and Elements.
 - significant: The threshold of what makes a Transaction significant.
 - sketchSalt: The salt used when hashing elements for inclusion in sketches.
+- sketchCheck: Merkle of the Sketch Hashes of the included Verification packets.
 - miner: BLS Public Key, or miner nickname, to mint Merit to.
 - time: Time this Block was mined at.
 - proof: Arbitrary data used to beat the difficulty.
 - signature: Miner's signature of the Block.
 
-Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
+"contents" is a Merkle tree which has leaves for both the Verification Packets (sorted from highest hash to lowest hash) and the Elements included in a Block. Every leaf is defined as `Blake2b(prefix + element.serialize())`, where the prefix is the same one used to create the Element's signature.
 
-"contents" is an unbalanced Merkle tree where the left side has leaves for the Sketch Hashes (sorted from highest to lowest and then hashed via `Blake2b-384`) and the right side has leaves for the Elements included in a Block (defined as `Blake2b-384(prefix + element.serialize())`). If there's no packets in the Block, the left side has a zeroed out hash. If there's no elements in the Block, the right side has a zeroed out hash. If there's no packets or elements in the Block, the entire merkle has a zeroed out hash.
+"sketchCheck" is a Merkle tree which has leaves for the Sketch Hashes (sorted from highest to lowest and then hashed via `Blake2b-384`.
+
+Meros has an on-chain nickname system for Merit Holders, where each nickname is an incremental number assigned forever. The first miner is 0, the second is 1... Referring to a miner who has already earned Merit by their key is not allowed.
 
 A BlockHeader's signature and hash are defined as follows:
 
@@ -66,6 +69,7 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - Zeroed out contents in the header.
 - significant of 0.
 - Zeroed sketchSalt in the header.
+- Zeroed out sketchCheck in the header.
 - Zeroed out miner key in the header.
 - Header time of 0.
 - Header proof of 0.
@@ -96,7 +100,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 213 or 261 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 2-byte significant, 4-byte sketchSalt, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
+`BlockHeader` has a message length of either 261 or 307 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 2-byte significant, 4-byte sketchSalt, 48-byte sketchCheck hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
 
 ### BlockBody
 
@@ -106,6 +110,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - contents is the result of a properly constructed Merkle tree.
 - significant is greater than 0 and at most 26280 (inclusive).
 - The Block's included Verification Packets don't collide with the specified sketch salt.
+- sketchCheck is the result of a properly constructed Merkle tree.
 - Every Verification Packet is for an unique Transaction.
 - Every Verification Packet only contains new Verifications.
 - Every Verification Packet's Merit is greater than significant.
@@ -172,6 +177,8 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros doesn't check that Blocks Verification Packets' Merits are greater than significant.
 - Meros doesn't check that every predecessor has an archived Verification Packet.
 - Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
+
+- Meros doesn't support Blocks with Elements.
 - Meros doesn't check that Block's Elements are new and have proper nonces.
 - Meros doesn't check that Block's Elements don't cause a MeritRemoval.
 

@@ -42,6 +42,7 @@ for i in range(1, 6):
             bytes(48),
             1,
             bytes(4),
+            bytes(48),
             privKeys[i - 1].get_public_key().serialize(),
             int(time())
         ),
@@ -65,6 +66,7 @@ for i in range(6, 10):
             bytes(48),
             1,
             bytes(4),
+            bytes(48),
             0,
             int(time())
         ),

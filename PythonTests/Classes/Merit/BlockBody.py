@@ -17,6 +17,8 @@ class BlockBody:
         aggregate: bytes = bytes(96)
     ) -> None:
         self.packets: List[VerificationPacket] = list(packets)
+        self.packets.sort(key=lambda packet: packet.hash, reverse=True)
+
         self.elements: List[None] = list(elements)
         self.aggregate: bytes = aggregate
 

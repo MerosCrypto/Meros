@@ -158,12 +158,11 @@ proc sync*(
         packets = sketchResult.packets
         missingPackets = sketchResult.missing
 
-        #Verify the contents merkle to verify the sketch decoded properly.
-        newBlock.data.header.contents.verifyContents(
+        #Verify the sketchCheck Merkle to verify the sketch decoded properly.
+        newBlock.data.header.sketchCheck.verifySketchCheck(
             newBlock.data.header.sketchSalt,
             packets,
-            missingPackets,
-            newBlock.data.body.elements
+            missingPackets
         )
     #Sketch failed to decode.
     except ValueError:
@@ -174,12 +173,23 @@ proc sync*(
                 continue
             lookup[sketchHash(newBlock.data.header.sketchSalt, elem.packet)] = true
 
+        #Sync the list of sketch hashes.
         try:
             missingPackets = await network.requestSketchHashes(newBlock.data.header.hash)
         except DataMissing as e:
             fcRaise e
         except Exception as e:
             doAssert(false, "Syncing a Block's SketchHashes threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Verify the sketchCheck merkle.
+        try:
+            newBlock.data.header.sketchCheck.verifySketchCheck(
+                newBlock.data.header.sketchSalt,
+                @[],
+                missingPackets
+            )
+        except ValueError as e:
+            fcRaise e
 
         #Remove packets present in our sketcher.
         var m: int = 0
@@ -191,17 +201,6 @@ proc sync*(
     except SaltError:
         raise newException(ValueError, "Block's sketch has a collision.")
 
-    #Verify the contents merkle.
-    try:
-        newBlock.data.header.contents.verifyContents(
-            newBlock.data.header.sketchSalt,
-            packets,
-            missingPackets,
-            newBlock.data.body.elements
-        )
-    except ValueError as e:
-        fcRaise e
-
     #Sync the missing VerificationPackets.
     if missingPackets.len != 0:
         try:
@@ -210,6 +209,15 @@ proc sync*(
             fcRaise e
         except Exception as e:
             doAssert(false, "Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    #Verify the contents merkle.
+    try:
+        packets = newBlock.data.header.contents.verifyContents(
+            packets,
+            newBlock.data.body.elements
+        )
+    except ValueError as e:
+        fcRaise e
 
     #Create the Block.
     result = newBlock.data

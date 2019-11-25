@@ -26,6 +26,7 @@ func serializeHash*(
 
     header.significant.toBinary().pad(NICKNAME_LEN) &
     header.sketchSalt.pad(INT_LEN) &
+    header.sketchCheck.toString() &
 
     (
         if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary().pad(NICKNAME_LEN)

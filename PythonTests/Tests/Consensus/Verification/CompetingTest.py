@@ -42,16 +42,16 @@ def VCompetingTest(
         if not rpc.call(
             "consensus",
             "getStatus",
-            [blockchain.blocks[14].body.packets[0].hash.hex()]
+            [vectors["verified"]]
         )["verified"]:
-            raise TestError("Didn't verify the first Send.")
+            raise TestError("Didn't verify the Send which should have been verified.")
 
         if rpc.call(
             "consensus",
             "getStatus",
-            [blockchain.blocks[14].body.packets[1].hash.hex()]
+            [vectors["beaten"]]
         )["verified"]:
-            raise TestError("Did verify the second Send.")
+            raise TestError("Did verify the Send which should have been beaten.")
 
     #Create and execute a Liver/Syncer.
     Liver(rpc, blockchain, transactions, callbacks={19: verifyConfirmation}).live()

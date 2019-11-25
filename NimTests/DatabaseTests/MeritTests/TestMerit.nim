@@ -72,31 +72,37 @@ proc newValidVerificationPacket*(
 
         result.holders.add(uint16(h))
 
+#Create a sketchCheck Merkle.
+proc newSketchCheck(
+    sketchSalt: string = newString(4),
+    packets: seq[VerificationPacket] = @[]
+): Hash[384] =
+    var
+        sketchHashes: seq[uint64] = @[]
+        calculated: Merkle = newMerkle()
+
+    for packet in packets:
+        sketchHashes.add(sketchHash(sketchSalt, packet))
+    sketchHashes.sort(SortOrder.Descending)
+
+    for hash in sketchHashes:
+        calculated.add(Blake384(hash.toBinary().pad(8)))
+
+    result = calculated.hash
+
 #Create a contents Merkle.
 proc newContents(
-    sketchSalt: string = newString(4),
     packets: seq[VerificationPacket] = @[],
-    elements: seq[BlockElement] = @[],
+    elements: seq[BlockElement] = @[]
 ): Hash[384] =
-    #Verify the contents merkle.
-    if (packets.len != 0) or (elements.len != 0):
-        var
-            sketchHashes: seq[uint64] = @[]
-            packetsSide: Merkle = newMerkle()
+    var calculated: Merkle = newMerkle()
 
-            elementsSide: Merkle = newMerkle()
+    for packet in packets:
+        calculated.add(Blake384(packet.serializeContents()))
+    for elem in elements:
+        calculated.add(Blake384(elem.serializeContents()))
 
-        for packet in packets:
-            sketchHashes.add(sketchHash(sketchSalt, packet))
-        sketchHashes.sort(SortOrder.Descending)
-
-        for hash in sketchHashes:
-            packetsSide.add(Blake384(hash.toBinary().pad(8)))
-
-        for elem in elements:
-            elementsSide.add(Blake384(elem.serializeContents()))
-
-        result = Blake384(packetsSide.hash.toString() & elementsSide.hash.toString())
+    result = calculated.hash
 
 #Create a Block, with every setting optional.
 proc newBlankBlock*(
@@ -114,9 +120,10 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        newContents(sketchSalt, packets, elements),
+        newContents(packets, elements),
         significant,
         sketchSalt,
+        newSketchCheck(sketchSalt, packets),
         miner.publicKey,
         packets,
         elements,
@@ -142,9 +149,10 @@ proc newBlankBlock*(
     result = newBlockObj(
         version,
         last,
-        newContents(sketchSalt, packets, elements),
+        newContents(packets, elements),
         significant,
         sketchSalt,
+        newSketchCheck(sketchSalt, packets),
         nick,
         packets,
         elements,

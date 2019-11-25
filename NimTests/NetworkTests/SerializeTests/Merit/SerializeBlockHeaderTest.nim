@@ -31,6 +31,8 @@ proc test*() =
         last: ArgonHash
         #Contents Hash.
         contents: Hash[384]
+        #Sketch Check merkle.
+        sketchCheck: Hash[384]
         #Miner.
         miner: MinerWallet
         #Block Header.
@@ -44,6 +46,7 @@ proc test*() =
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
             contents.data[b] = uint8(rand(255))
+            sketchCheck.data[b] = uint8(rand(255))
 
         #Create the BlockHeaader.
         if s < 128:
@@ -56,6 +59,7 @@ proc test*() =
                 contents,
                 uint16(rand(50000)),
                 char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                sketchCheck,
                 miner.publicKey,
                 uint32(rand(high(int32)))
             )
@@ -66,6 +70,7 @@ proc test*() =
                 contents,
                 uint16(rand(50000)),
                 char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                sketchCheck,
                 uint16(rand(high(int16))),
                 uint32(rand(high(int32)))
             )
@@ -74,10 +79,10 @@ proc test*() =
         #Serialize it and parse it back.
         reloaded = header.serialize().parseBlockHeader()
 
-        #Test the serialized versions.
-        assert(header.serialize() == reloaded.serialize())
-
         #Compare the BlockHeaders.
         compare(header, reloaded)
+
+        #Test the serialized versions.
+        assert(header.serialize() == reloaded.serialize())
 
     echo "Finished the Network/Serialize/Merit/BlockHeader Test."

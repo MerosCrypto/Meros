@@ -36,37 +36,70 @@ import algorithm
 #Tables standard lib.
 import tables
 
-#Verify the contents merkle.
-proc verifyContents*(
-    contents: Hash[384],
+#Verify the sketchCheck merkle.
+proc verifySketchCheck*(
+    sketchCheck: Hash[384],
     sketchSalt: string,
     packets: seq[VerificationPacket],
-    missing: seq[uint64],
-    elements: seq[BlockElement]
+    missing: seq[uint64]
 ) {.raises: [
     ValueError
 ].} =
     var calculated: Hash[384]
-    if ((packets.len + missing.len) != 0) or (elements.len != 0):
+    if packets.len + missing.len != 0:
         var
             sketchHashes: seq[uint64] = missing
-            packetsSide: Merkle = newMerkle()
-
-            elementsSide: Merkle = newMerkle()
+            leaves: seq[Hash[384]]
 
         for packet in packets:
             sketchHashes.add(sketchHash(sketchSalt, packet))
         sketchHashes.sort(SortOrder.Descending)
 
-        for hash in sketchHashes:
-            packetsSide.add(Blake384(hash.toBinary().pad(8)))
+        leaves = newSeq[Hash[384]](sketchHashes.len)
+        for h in 0 ..< sketchHashes.len:
+            leaves[h] = Blake384(sketchHashes[h].toBinary().pad(8))
 
-        for elem in elements:
-            elementsSide.add(Blake384(elem.serializeContents()))
+        calculated = newMerkle(leaves).hash
 
-        calculated = Blake384(packetsSide.hash.toString() & elementsSide.hash.toString())
+    if calculated != sketchCheck:
+        raise newException(ValueError, "Invalid sketchCheck merkle.")
 
-    if calculated != contents:
+#Verify the contents merkle.
+proc verifyContents*(
+    contents: Hash[384],
+    packetsArg: seq[VerificationPacket],
+    elements: seq[BlockElement]
+): seq[VerificationPacket] {.raises: [
+    ValueError
+].} =
+    try:
+        result = sorted(
+            packetsArg,
+            func (
+                x: VerificationPacket,
+                y: VerificationPacket
+            ): int {.forceCheck: [
+                ValueError
+            ].} =
+                if x.hash > y.hash:
+                    result = 1
+                elif x.hash == y.hash:
+                    raise newException(ValueError, "Block has two packets for the same hash.")
+                else:
+                    result = -1
+            , SortOrder.Descending
+        )
+    except ValueError as e:
+        fcRaise e
+
+    var calculated: Merkle = newMerkle()
+
+    for packet in result:
+        calculated.add(Blake384(packet.serializeContents()))
+    for elem in elements:
+        calculated.add(Blake384(elem.serializeContents()))
+
+    if calculated.hash != contents:
         raise newException(ValueError, "Invalid contents merkle.")
 
 #Verify a Block's aggregate signature via a nickname lookup function and a Table of Hash -> VerificationPacket.

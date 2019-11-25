@@ -127,9 +127,10 @@ for order in orders:
         BlockHeader(
             0,
             blockchain.last(),
-            BlockHeader.createContents(bytes(4), list(packets.values())),
+            BlockHeader.createContents(list(packets.values())),
             1,
             bytes(4),
+            BlockHeader.createSketchCheck(bytes(4), list(packets.values())),
             order[1],
             int(time())
         ),
@@ -159,9 +160,10 @@ for _ in range(5):
         BlockHeader(
             0,
             blockchain.last(),
-            BlockHeader.createContents(),
+            bytes(48),
             1,
             bytes(4),
+            bytes(48),
             0,
             int(time())
         ),

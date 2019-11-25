@@ -29,6 +29,7 @@ class Blockchain:
                     0,
                     bytes(4),
                     bytes(48),
+                    bytes(48),
                     0
                 ),
                 BlockBody()

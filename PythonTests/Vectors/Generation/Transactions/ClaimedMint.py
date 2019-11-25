@@ -81,9 +81,10 @@ block: Block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.hash, [0])], []),
+        BlockHeader.createContents([VerificationPacket(verif.hash, [0])]),
         1,
         bytes(4),
+        BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(verif.hash, [0])]),
         0,
         int(time())
     ),
@@ -105,6 +106,7 @@ for _ in range(6):
             bytes(48),
             1,
             bytes(4),
+            bytes(48),
             0,
             int(time())
         ),
@@ -126,9 +128,10 @@ block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents(bytes(4), [VerificationPacket(verif.hash, [0])], []),
+        BlockHeader.createContents([VerificationPacket(verif.hash, [0])]),
         1,
         bytes(4),
+        BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(verif.hash, [0])]),
         0,
         int(time())
     ),

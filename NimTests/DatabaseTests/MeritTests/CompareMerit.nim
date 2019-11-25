@@ -30,6 +30,7 @@ proc compare*(
 
     assert(bh1.significant == bh2.significant)
     assert(bh1.sketchSalt == bh2.sketchSalt)
+    assert(bh1.sketchCheck == bh2.sketchCheck)
 
     assert(bh1.newMiner == bh2.newMiner)
     if bh1.newMiner:

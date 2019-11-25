@@ -13,50 +13,77 @@ import argon2
 #Blake2b standard function.
 from hashlib import blake2b
 
+#Merkle constructor.
+def merkle(
+    hashes: List[bytes]
+) -> bytes:
+    #Support empty merkles.
+    if not hashes:
+        return bytes(48)
+
+    #Pair down until there's one hash left.
+    while len(hashes) > 1:
+        if len(hashes) % 2 != 0:
+            hashes.append(hashes[-1])
+        for h in range(len(hashes) // 2):
+            hashes[h] = blake2b(
+                hashes[h * 2] + hashes[(h * 2) + 1],
+                digest_size=48
+            ).digest()
+        hashes = hashes[0 : len(hashes) // 2]
+
+    #Return the merkle hash.
+    return hashes[0]
+
 #BlockHeader class.
 #pylint: disable=too-many-instance-attributes
 class BlockHeader:
     #Create a contents merkle.
     @staticmethod
     def createContents(
-        salt: bytes = bytes(4),
-        packets: List[VerificationPacket] = [],
+        packetsArg: List[VerificationPacket] = [],
         elements: List[None] = []
     ) -> bytes:
-        #Support empty contents.
-        if (packets == []) and (elements == []):
-            return bytes(48)
+        #Sort the VerificationPackets.
+        packets: List[VerificationPacket] = sorted(
+            list(packetsArg),
+            key=lambda packet: packet.hash,
+            reverse=True
+        )
 
-        #Create sketch hashes for every packet.
-        sketchInts: List[int] = []
+        #Hash each packet.
+        hashes: List[bytes] = []
         for packet in packets:
-            sketchInts.append(Sketch.hash(salt, packet))
+            hashes.append(blake2b(packet.prefix + packet.serialize(), digest_size=48).digest())
+
+        #Hash each Element.
+        for _ in elements:
+            pass
+
+        #Return the merkle hash.
+        return merkle(hashes)
+
+    #Create a sketchCheck merkle.
+    @staticmethod
+    def createSketchCheck(
+        salt: bytes = bytes(4),
+        packets: List[VerificationPacket] = []
+    ) -> bytes:
+        #Create sketch hashes for every packet.
+        sketchHashes: List[int] = []
+        for packet in packets:
+            sketchHashes.append(Sketch.hash(salt, packet))
 
         #Sort the Sketch Hashes.
-        sketchInts.sort(reverse=True)
+        sketchHashes.sort(reverse=True)
 
         #Hash each sketch hash to leaf length.
-        sketchHashes: List[bytes] = []
-        for s in range(len(sketchInts)):
-            sketchHashes.append(blake2b(sketchInts[s].to_bytes(8, byteorder="big"), digest_size=48).digest())
+        leaves: List[bytes] = []
+        for sketchHash in sketchHashes:
+            leaves.append(blake2b(sketchHash.to_bytes(8, byteorder="big"), digest_size=48).digest())
 
-        #Pair down until there's one hash left.
-        while len(sketchHashes) > 1:
-            if len(sketchHashes) % 2 != 0:
-                sketchHashes.append(sketchHashes[-1])
-            for h in range(len(sketchHashes) // 2):
-                sketchHashes[h] = blake2b(
-                    sketchHashes[h * 2] + sketchHashes[(h * 2) + 1],
-                    digest_size=48
-                ).digest()
-            sketchHashes = sketchHashes[0 : len(sketchHashes) // 2]
-        if len(sketchHashes) == 0:
-            sketchHashes[0] = bytes(48)
-
-        #Append Elements.
-        elementHashes: List[bytes] = [bytes(48)]
-
-        return blake2b(sketchHashes[0] + elementHashes[0], digest_size=48).digest()
+        #Return the merkle hash.
+        return merkle(leaves)
 
     #Serialize to be hashed.
     def serializeHash(
@@ -68,6 +95,7 @@ class BlockHeader:
             self.contents +
             self.significant.to_bytes(2, "big") +
             self.sketchSalt +
+            self.sketchCheck +
             (1 if self.newMiner else 0).to_bytes(1, "big") +
             (self.minerKey if self.newMiner else self.minerNick.to_bytes(2, "big")) +
             self.time.to_bytes(4, "big")
@@ -103,6 +131,7 @@ class BlockHeader:
         contents: bytes,
         significant: int,
         sketchSalt: bytes,
+        sketchCheck: bytes,
         miner: Union[int, bytes],
         time: int,
         proof: int = 0,
@@ -114,6 +143,7 @@ class BlockHeader:
 
         self.significant: int = significant
         self.sketchSalt: bytes = sketchSalt
+        self.sketchCheck: bytes = sketchCheck
 
         self.newMiner: bool = isinstance(miner, bytes)
         if isinstance(miner, bytes):
@@ -146,6 +176,7 @@ class BlockHeader:
             "contents": self.contents.hex().upper(),
             "significant": self.significant,
             "sketchSalt": self.sketchSalt.hex().upper(),
+            "sketchCheck": self.sketchCheck.hex().upper(),
             "miner": self.minerKey.hex().upper() if self.newMiner else self.minerNick,
             "time": self.time,
             "proof": self.proof,
@@ -163,6 +194,7 @@ class BlockHeader:
             bytes.fromhex(json["contents"]),
             json["significant"],
             bytes.fromhex(json["sketchSalt"]),
+            bytes.fromhex(json["sketchCheck"]),
             bytes.fromhex(json["miner"]) if isinstance(json["miner"], str) else json["miner"],
             json["time"],
             json["proof"],
