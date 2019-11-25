@@ -51,11 +51,6 @@ Wallet:
 
 - Load the nickname/automatically set the nickname for the miner wallet.
 
-Merit:
-
-- If our sketch has a collision, check if the Block doesn't (as that would mean it's valid).
-- If we sync a Block with a working sketch yet invalid merkle, check if there was a collision between one of our elements and one we didn't have which was included in the sketch.
-
 Consensus:
 
 - Load statuses still in Epochs.
@@ -85,8 +80,9 @@ Tests:
 - Add addition of Verifications, not SignedVerifications, to CDBTest.
 
 - Sketcher Test.
+- Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 
-- Test successful recreation of VerificationPackets which include Merit Holders which weren't included in the archived packet.
+- Test successful creation of pending VerificationPackets when an archival leaves out Merit Holders.
 - Test the full nickname space is usable both internally and in parsing/serializations.
 
 Cleanup:

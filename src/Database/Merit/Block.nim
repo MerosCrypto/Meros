@@ -57,6 +57,8 @@ proc verifySketchCheck*(
 
         leaves = newSeq[Hash[384]](sketchHashes.len)
         for h in 0 ..< sketchHashes.len:
+            if (h != 0) and (sketchHashes[h] == sketchHashes[h - 1]):
+                raise newException(ValueError, "Sketch has a collision.")
             leaves[h] = Blake384(sketchHashes[h].toBinary().pad(8))
 
         calculated = newMerkle(leaves).hash

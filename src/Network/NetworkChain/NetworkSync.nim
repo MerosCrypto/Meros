@@ -147,12 +147,15 @@ proc sync*(
 
     try:
         #Try to resolve the Sketch.
-        sketchResult = sketcher.merge(
-            newBlock.sketch,
-            newBlock.capacity,
-            newBlock.data.header.significant,
-            newBlock.data.header.sketchSalt
-        )
+        try:
+            sketchResult = sketcher.merge(
+                newBlock.sketch,
+                newBlock.capacity,
+                newBlock.data.header.significant,
+                newBlock.data.header.sketchSalt
+            )
+        except SaltError:
+            raise newException(ValueError, "Our sketch had a collision.")
 
         #If the sketch resolved, save the found packets/missing items.
         packets = sketchResult.packets
@@ -197,9 +200,6 @@ proc sync*(
             if lookup.hasKey(missingPackets[m]):
                 missingPackets.del(m)
             inc(m)
-    #Sketch had a collision.
-    except SaltError:
-        raise newException(ValueError, "Block's sketch has a collision.")
 
     #Sync the missing VerificationPackets.
     if missingPackets.len != 0:
