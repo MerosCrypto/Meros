@@ -76,7 +76,7 @@ class Blockchain:
             #Change.
             change: int = 0
             #New difficulty.
-            difficulty: int = 0
+            difficulty: int = last
 
             #If we went faster...
             if periodTime < targetTime:
@@ -93,7 +93,7 @@ class Blockchain:
                     change = possible // 10
 
                 #Set the difficulty.
-                difficulty = last + change
+                difficulty += change
             #If we went slower...
             elif periodTime > targetTime:
                 #Set the change to be:
@@ -109,7 +109,7 @@ class Blockchain:
                     change = possible // 10
 
                 #Set the difficulty.
-                difficulty = last - change
+                difficulty -= change
 
             #If the difficulty is lower than the starting difficulty, use that.
             if difficulty < self.startDifficulty:

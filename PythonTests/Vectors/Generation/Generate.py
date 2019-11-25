@@ -2,6 +2,7 @@
 
 #Merit.
 import PythonTests.Vectors.Generation.Merit.BlankBlocks
+import PythonTests.Vectors.Generation.Merit.StateBlocks
 
 #Transactions.
 import PythonTests.Vectors.Generation.Transactions.ClaimedMint
