@@ -288,21 +288,21 @@ proc getUnfinalizedParents(
             except IndexError as e:
                 doAssert(false, "Couldn't get the Status of a Transaction used as an input in the specified Transaction: " & e.msg)
 
-#For each provided Record, archive all Elements from the account's last archived to the provided nonce.
+#Mark all mentioned packets as mentioned, reset pending, finalize finalized Transactions, and check close Transactions.
 proc archive*(
     consensus: Consensus,
     state: State,
-    shifted: Epoch,
+    shifted: seq[VerificationPacket],
     popped: Epoch
 ) {.forceCheck: [].} =
     try:
-        for hash in shifted.keys():
-            #Delete every new Hash in the Epoch from unmentioned.
-            consensus.unmentioned.del(hash)
+        for packet in shifted:
+            #Delete every mentioned hash in the Block from unmentioned.
+            consensus.unmentioned.del(packet.hash)
 
             #Clear the Status's pending VerificationPacket.
-            var status: TransactionStatus = consensus.getStatus(hash)
-            status.pending = newSignedVerificationPacketObj(hash)
+            var status: TransactionStatus = consensus.getStatus(packet.hash)
+            status.pending = newSignedVerificationPacketObj(packet.hash)
             status.signatures = initTable[uint16, BLSSignature]()
 
             #Since this is a ref, we don't need to set it back.

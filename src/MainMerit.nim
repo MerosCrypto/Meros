@@ -139,7 +139,7 @@ proc mainMerit() {.forceCheck: [].} =
             var epoch: Epoch = merit.postProcessBlock()
 
             #Archive the Epochs.
-            consensus.archive(merit.state, merit.epochs.latest, epoch)
+            consensus.archive(merit.state, newBlock.body.packets, epoch)
 
             #Archive the hashes handled by the popped Epoch.
             transactions.archive(epoch)

@@ -65,9 +65,6 @@ Main:
 
 Tests:
 
-- Add Verifications of already mentioned Transactions to CDBtest.
-- Add addition of Verifications, not SignedVerifications, to CDBTest.
-
 - Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 
 ### Nim Tests:

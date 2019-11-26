@@ -71,6 +71,10 @@ proc test*() =
         holders: seq[MinerWallet] = @[]
         #Packets to include in the next Block.
         packets: seq[VerificationPacket] = @[]
+        #List of Transactions we didn't add every SignedVerification for.
+        unsigned: seq[Hash[384]] = @[]
+        #SignedVerification used to generate signatures.
+        sv: SignedVerification
         #Aggregate signature to include in the next Block.
         aggregate: BLSSignature = nil
 
@@ -116,7 +120,7 @@ proc test*() =
         var epoch: Epoch = merit.postProcessBlock()
 
         #Archive the Epochs.
-        consensus.archive(merit.state, merit.epochs.latest, epoch)
+        consensus.archive(merit.state, mining.body.packets, epoch)
 
         #Archive the hashes handled by the popped Epoch.
         transactions.archive(epoch)
@@ -143,8 +147,9 @@ proc test*() =
 
     #Iterate over 20 'rounds'.
     for r in 1 .. 20:
-        #Clear the packets and aggregate.
+        #Clear the packets, unsigned table, and aggregate.
         packets = @[]
+        unsigned = @[]
         aggregate = nil
 
         #Create a random amount of 'Transaction's.
@@ -161,10 +166,9 @@ proc test*() =
             consensus.register(merit.state, tx, r)
 
             #Create a packet for the Transaction.
-            packets.add(newSignedVerificationPacketObj(hash))
+            packets.add(newVerificationPacketObj(hash))
 
             #Grab random holders to sign the packet.
-            var sv: SignedVerification
             for h in 0 ..< holders.len:
                 if rand(1) == 0:
                     continue
@@ -175,7 +179,12 @@ proc test*() =
                 holders[h].sign(sv)
                 aggregate = if aggregate.isNil: sv.signature else: @[aggregate, sv.signature].aggregate()
 
-                consensus.add(merit.state, sv)
+                #Decide to add it to Consensus as a live SignedVerification or later as a VerificationPacket.
+                if rand(3) == 0:
+                    if not unsigned.contains(tx.hash):
+                        unsigned.add(tx.hash)
+                else:
+                    consensus.add(merit.state, sv)
 
             #Make sure at least one holder signed the packet.
             if packets[^1].holders.len == 0:
@@ -185,7 +194,52 @@ proc test*() =
                 holders[int(packets[^1].holders[0])].sign(sv)
                 aggregate = if aggregate.isNil: sv.signature else: @[aggregate, sv.signature].aggregate()
 
-                consensus.add(merit.state, sv)
+                if rand(3) == 0:
+                    if not unsigned.contains(tx.hash):
+                        unsigned.add(tx.hash)
+                else:
+                    consensus.add(merit.state, sv)
+
+        #Iterate through the existing Epochs to add new Verifications to old Transactions.
+        for epoch in merit.epochs:
+            if rand(1) == 0:
+                continue
+
+                if rand(1) == 0:
+                    continue
+
+                #Create the packet.
+                packets.add(newVerificationPacketObj(tx))
+
+                #Run against each Merit Holder.
+                for h in 0 ..< holders.len:
+                    if epoch[tx].contains(uint16(h)) or (rand(2) == 0):
+                        continue
+
+                    #Add the holder.
+                    packets[^1].holders.add(uint16(h))
+
+                    #Create the SignedVerification.
+                    sv = newSignedVerificationObj(packets[^1].hash)
+                    holders[h].sign(sv)
+                    aggregate = @[aggregate, sv.signature].aggregate()
+
+                    if rand(3) == 0:
+                        if not unsigned.contains(tx):
+                            unsigned.add(tx)
+                    else:
+                        consensus.add(merit.state, sv)
+
+                #If no holder was added, delete the packet.
+                if packets[^1].holders == @[]:
+                    packets.del(high(packets))
+
+        #Slow but functional.
+        for tx in unsigned:
+            for packet in packets:
+                if tx == packet.hash:
+                    consensus.add(merit.state, packet)
+                    break
 
         #Mine the packets.
         mineBlock()
@@ -194,3 +248,4 @@ proc test*() =
         compare()
 
     echo "Finished the Database/Consensus/Consensus/DB Test."
+test()
