@@ -317,13 +317,31 @@ proc sync*(
 
     #Add every Verification Packet.
     for packet in result.body.packets:
-        #Verify the packet's significant.
+        #Get the status.
+        var status: TransactionStatus
+        try:
+            status = network.mainFunctions.consensus.getStatus(packet.hash)
+        except IndexError as e:
+            doAssert(false, "Couldn't get the status of a Transaction we're confirmed to have: " & e.msg)
+
+        #Verify the Transaction is still in Epochs.
+        if status.merit != -1:
+            raise newException(ValueError, "Block has a Transaction out of Epochs.")
+
+        #Calculate the Merit to check the significant against.
         var merit: int = 0
         for holder in packet.holders:
+            #Verify every holder in the packet has yet to be archived.
+            if status.holders.hasKey(holder):
+                raise newException(ValueError, "Block archives holders who are already archived.")
+
             merit += state[holder]
+
+        #Check significant.
         if merit < int(result.header.significant):
             raise newException(ValueError, "Block has an invalid significant.")
 
+        #Add the packet.
         network.mainFunctions.consensus.addVerificationPacket(packet)
 
 #Request a BlockBody.
