@@ -205,6 +205,7 @@ proc test*() =
             if rand(1) == 0:
                 continue
 
+            for tx in epoch.keys():
                 if rand(1) == 0:
                     continue
 
