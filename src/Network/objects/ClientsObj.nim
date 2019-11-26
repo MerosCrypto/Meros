@@ -83,24 +83,25 @@ iterator items*(
 iterator notSyncing*(
     clients: Clients
 ): Client {.forceCheck: [].} =
-    var
-        c: int = 0
-        id: int
+    if clients.clients.len != 0:
+        var
+            c: int = 0
+            id: int
 
-    while c < clients.clients.len - 1:
-        if clients.clients[c].remoteSync:
+        while c < clients.clients.len - 1:
+            if clients.clients[c].remoteSync:
+                inc(c)
+                continue
+
+            id = clients.clients[c].id
+            yield clients.clients[c]
+
+            if clients.clients[c].id != id:
+                continue
             inc(c)
-            continue
 
-        id = clients.clients[c].id
-        yield clients.clients[c]
-
-        if clients.clients[c].id != id:
-            continue
-        inc(c)
-
-    #Sort of the opposite of a do while.
-    #Deleting the tail client crashed the if clients[c].id... check.
-    #This knows it's running on the tail element and doesn't do any check on what happened.
-    if not clients.clients[c].remoteSync:
-        yield clients.clients[c]
+        #Sort of the opposite of a do while.
+        #Deleting the tail client crashed the if clients[c].id... check.
+        #This knows it's running on the tail element and doesn't do any check on what happened.
+        if not clients.clients[c].remoteSync:
+            yield clients.clients[c]
