@@ -1,4 +1,4 @@
-#Tests proper creation and handling of multiple MeritRemovals when Meros receives multiple causes for a MeritRemoval.
+#Tests proper handling of a MeritRemoval created from Difficulty/Gas Price Updates sharing nonces.
 
 #EmptyError Exception.
 from PythonTests.Tests.Errors import EmptyError
@@ -6,7 +6,7 @@ from PythonTests.Tests.Errors import EmptyError
 #RPC class.
 from PythonTests.Meros.RPC import RPC
 
-def MultipleTest(
+def SameNonceTest(
     rpc: RPC
 ) -> None:
     raise EmptyError()

@@ -39,18 +39,10 @@ def VCompetingTest(
 
     #Function to verify the right Transaction was confirmed.
     def verifyConfirmation() -> None:
-        if not rpc.call(
-            "consensus",
-            "getStatus",
-            [vectors["verified"]]
-        )["verified"]:
+        if not rpc.call("consensus", "getStatus", [vectors["verified"]])["verified"]:
             raise TestError("Didn't verify the Send which should have been verified.")
 
-        if rpc.call(
-            "consensus",
-            "getStatus",
-            [vectors["beaten"]]
-        )["verified"]:
+        if rpc.call("consensus", "getStatus", [vectors["beaten"]])["verified"]:
             raise TestError("Did verify the Send which should have been beaten.")
 
     #Create and execute a Liver/Syncer.

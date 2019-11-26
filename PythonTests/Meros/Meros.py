@@ -187,8 +187,7 @@ class Meros:
                         length = 2
 
                 elif header == MessageType.BlockBody:
-                    """
-                    """
+                    pass
 
             result += self.socketRecv(length)
 

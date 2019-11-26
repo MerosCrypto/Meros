@@ -20,14 +20,12 @@ from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 
-"""
+from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyCompetingTest
+from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
 
 from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
-
-from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
 from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
-"""
 
 #Arguments.
 from sys import argv
@@ -58,16 +56,15 @@ tests: List[Callable[[RPC], None]] = [
 
     VUnknownTest,
     VParsableTest,
-    VCompetingTest
+    VCompetingTest,
+
+    SameNonceTest,
+    VerifyCompetingTest,
+    PartialTest,
+
+    MultipleTest,
+    PendingActionsTest
 ]
-"""
-VerifyCompetingTest,
-
-MultipleTest,
-
-PartialTest,
-PendingActionsTest
-"""
 
 #Tests to run.
 #If any were specified over the CLI, only run those.
