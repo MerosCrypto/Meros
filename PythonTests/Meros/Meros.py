@@ -70,7 +70,7 @@ class MessageType(Enum):
 #Lengths of messages.
 #An empty array means the message was just the header.
 #A positive number means read X bytes.
-#A negative number means read the last positive section * X bytes,
+#A negative number means read the last length * X bytes.
 #A zero means custom logic should be used.
 lengths: Dict[MessageType, List[int]] = {
     MessageType.Handshake:                 [51],
@@ -162,17 +162,14 @@ class Meros:
             self.msgs.append(bytes())
 
         #Get the rest of the message.
-        lastMultiplier: int = 0
         length: int
         for l in range(len(lengths[header])):
             length = lengths[header][l]
             if length < 0:
-                if lengths[header][l - 1] > 0:
-                    lastMultiplier = int.from_bytes(
-                        result[-lengths[header][l - 1]:],
-                        byteorder="big"
-                    )
-                length = lastMultiplier * abs(length)
+                length = int.from_bytes(
+                    result[-lengths[header][l - 1]:],
+                    byteorder="big"
+                ) * abs(length)
             elif length == 0:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:

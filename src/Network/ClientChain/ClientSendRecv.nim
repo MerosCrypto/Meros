@@ -55,9 +55,7 @@ proc recv*(
     except KeyError:
         doAssert(false, "Handling a message without lengths.")
 
-    var
-        lastMultiplier: int
-        len: int
+    var len: int
     for l in 0 ..< lens.len:
         #Grab the next length.
         len = lens[l]
@@ -66,9 +64,7 @@ proc recv*(
         #If the last section was 4, this multiplies it by the int encoded at that position.
         #If...
         if len < 0:
-            if lens[l - 1] > 0:
-                lastMultiplier = msg.substr(msg.len - lens[l - 1]).fromBinary()
-            len = lastMultiplier * abs(len)
+            len = msg.substr(msg.len - lens[l - 1]).fromBinary() * abs(len)
         #The length has multiple choices depending on the path.
         #Handle this with custom code.
         elif len == 0:

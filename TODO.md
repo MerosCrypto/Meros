@@ -62,8 +62,6 @@ RPC:
 
 Network:
 
-- Message receiving uses a last positive to support X, -Y, -Z where Y and Z are both multiples of X. This was added to support having two sketches in a row which share a capacity. This functionality is no longer needed and should likely be removed.
-
 - Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
 
 - Move the sketchCheck check into requestVerificationPackets.

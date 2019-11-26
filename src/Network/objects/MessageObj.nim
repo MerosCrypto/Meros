@@ -65,7 +65,7 @@ proc hash*(
 #Lengths of messages.
 #An empty array means the message was just the header.
 #A positive number means read X bytes.
-#A negative number means read the last positive section * X bytes,
+#A negative number means read the last length * X bytes.
 #A zero means custom logic should be used.
 const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Handshake:                 @[BYTE_LEN + BYTE_LEN + BYTE_LEN + HASH_LEN],
