@@ -17,11 +17,14 @@ Merit:
 
 Consensus:
 
-- Save/reload unarchived MeritRemovals.
-- Check if Merit Holders verify conflicting Transactions.
+- When a packet is archived, recreate the pending packet to include everyone who wasn't included.
+
 - SendDifficulty.
 - DataDifficulty.
 - GasPrice.
+
+- Same Nonce Merit Removals.
+- Verify Competing Merit Removals.
 
 UI:
 
@@ -34,7 +37,8 @@ UI:
 
 Network:
 
-- Check requested data is requested data.
+- Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
+
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
@@ -51,39 +55,20 @@ Wallet:
 
 - Load the nickname/automatically set the nickname for the miner wallet.
 
-Consensus:
-
-- When a packet is archived, recreate the pending packet to include everyone who wasn't included.
-- Functioning checkMalicious.
-
 RPC:
 
 - Functioning getBlockTemplate/publishBlock. These were disabled when we added sketches.
 
-Network:
+Main:
 
-- Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
+- Actually populate the Sketcher.
 
 Tests:
 
-- Add Elements to BDBTest.
-- Add Dead Merit/MeritRemovals to the State Value Test.
-- Add MeritRemovals to EDBTest.
-
-- Add MeritRemovals to CDBTest.
 - Add Verifications of already mentioned Transactions to CDBtest.
 - Add addition of Verifications, not SignedVerifications, to CDBTest.
 
-- Sketcher Test.
 - Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
-
-- Test successful creation of pending VerificationPackets when an archival leaves out Merit Holders.
-- Test the full nickname space is usable both internally and in parsing/serializations.
-
-Cleanup:
-
-- Remove no longer needed Exception checks.
-- Remove latent """ marks.
 
 ### Nim Tests:
 
@@ -102,6 +87,7 @@ lib:
 
 - Hash/HashCommon Test.
 
+- Sketcher Test.
 - Logger Test.
 
 Wallet:
@@ -154,13 +140,10 @@ Network:
 
 ### Python Tests
 
+- Add Dead Merit/MeritRemovals to the State Value Test.
+
+- MeritRemoval Tests.
 - RPC tests.
-
-- VerifyCompeting Sync test.
-- VerifyCompeting Live test.
-- VerifyCompeting Cause test.
-
-- PendingActionsTest should not have all reverted actions reapplied.
 
 - Test historical and live threshold calculation.
 - Test `TransactionStatus.epoch` is updated as needed.

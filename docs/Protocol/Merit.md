@@ -178,7 +178,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros doesn't check that every predecessor has an archived Verification Packet.
 - Meros allows mentioning Transactions out of Epochs/Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 
-- Meros doesn't support Blocks with Elements.
+- Meros doesn't support Blocks with Elements (as it doesn't support any Elements which are placed in Blocks).
 - Meros doesn't check that Block's Elements are new and unique.
 - Meros doesn't check that Block's Elements have proper nonces.
 - Meros doesn't check that Block's Elements don't cause a MeritRemoval.
