@@ -89,7 +89,8 @@ proc requestVerificationPackets(
 #Request Sketch Hashes.
 proc requestSketchHashes(
     network: Network,
-    hash: Hash[384]
+    hash: Hash[384],
+    sketchCheck: Hash[384]
 ): Future[seq[uint64]] {.forceCheck: [
     DataMissing
 ], async.} =
@@ -101,7 +102,7 @@ proc requestSketchHashes(
 
             #Get the SketchHash.
             try:
-                result = await client.syncSketchHashes(hash)
+                result = await client.syncSketchHashes(hash, sketchCheck)
                 synced = true
             except DataMissing:
                 discard
@@ -178,21 +179,14 @@ proc sync*(
 
         #Sync the list of sketch hashes.
         try:
-            missingPackets = await network.requestSketchHashes(newBlock.data.header.hash)
+            missingPackets = await network.requestSketchHashes(
+                newBlock.data.header.hash,
+                newBlock.data.header.sketchCheck
+            )
         except DataMissing as e:
             fcRaise e
         except Exception as e:
             doAssert(false, "Syncing a Block's SketchHashes threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-        #Verify the sketchCheck merkle.
-        try:
-            newBlock.data.header.sketchCheck.verifySketchCheck(
-                newBlock.data.header.sketchSalt,
-                @[],
-                missingPackets
-            )
-        except ValueError as e:
-            fcRaise e
 
         #Remove packets present in our sketcher.
         var m: int = 0

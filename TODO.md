@@ -64,8 +64,6 @@ Network:
 
 - Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
 
-- Move the sketchCheck check into requestVerificationPackets.
-
 Tests:
 
 - Add Elements to BDBTest.

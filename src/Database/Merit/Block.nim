@@ -39,23 +39,13 @@ import tables
 #Verify the sketchCheck merkle.
 proc verifySketchCheck*(
     sketchCheck: Hash[384],
-    sketchSalt: string,
-    packets: seq[VerificationPacket],
-    missing: seq[uint64]
+    sketchHashes: seq[uint64]
 ) {.raises: [
     ValueError
 ].} =
     var calculated: Hash[384]
-    if packets.len + missing.len != 0:
-        var
-            sketchHashes: seq[uint64] = missing
-            leaves: seq[Hash[384]]
-
-        for packet in packets:
-            sketchHashes.add(sketchHash(sketchSalt, packet))
-        sketchHashes.sort(SortOrder.Descending)
-
-        leaves = newSeq[Hash[384]](sketchHashes.len)
+    if sketchHashes.len != 0:
+        var leaves: seq[Hash[384]] = newSeq[Hash[384]](sketchHashes.len)
         for h in 0 ..< sketchHashes.len:
             if (h != 0) and (sketchHashes[h] == sketchHashes[h - 1]):
                 raise newException(ValueError, "Sketch has a collision.")
@@ -65,6 +55,24 @@ proc verifySketchCheck*(
 
     if calculated != sketchCheck:
         raise newException(ValueError, "Invalid sketchCheck merkle.")
+
+proc verifySketchCheck*(
+    sketchCheck: Hash[384],
+    sketchSalt: string,
+    packets: seq[VerificationPacket],
+    missing: seq[uint64]
+) {.raises: [
+    ValueError
+].} =
+    var sketchHashes: seq[uint64] = missing
+    for packet in packets:
+        sketchHashes.add(sketchHash(sketchSalt, packet))
+    sketchHashes.sort(SortOrder.Descending)
+
+    try:
+        sketchCheck.verifySketchCheck(sketchHashes)
+    except ValueError as e:
+        fcRaise e
 
 #Verify the contents merkle.
 proc verifyContents*(

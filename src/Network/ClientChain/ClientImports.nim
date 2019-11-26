@@ -45,6 +45,9 @@ import ../objects/ClientObj
 #Export the Client object.
 export ClientObj
 
+#Algorithm standard lib.
+import algorithm
+
 #Networking standard libs.
 import asyncdispatch, asyncnet
 

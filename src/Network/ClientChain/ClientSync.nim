@@ -144,7 +144,8 @@ proc syncVerificationPackets*(
 #Sync Sketch Hashes.
 proc syncSketchHashes*(
     client: Client,
-    hash: Hash[384]
+    hash: Hash[384],
+    sketchCheck: Hash[384]
 ): Future[seq[uint64]] {.forceCheck: [
     ClientError,
     DataMissing
@@ -157,8 +158,18 @@ proc syncSketchHashes*(
         var msg: Message = await client.recv()
 
         #Parse out the sketch hashes.
-        for i in 0 ..< msg.message[0 ..< 4].fromBinary():
-            result.add(uint64(msg.message[4 + (i * 8) ..< 12 + (i * 8)].fromBinary()))
+        result = newSeq[uint64](msg.message[0 ..< 4].fromBinary())
+        for i in 0 ..< result.len:
+            result[i] = uint64(msg.message[4 + (i * 8) ..< 12 + (i * 8)].fromBinary())
+
+        #Sort the result.
+        result.sort(SortOrder.Descending)
+        
+        #Verify the sketchCheck merkle.
+        try:
+            sketchCheck.verifySketchCheck(result)
+        except ValueError as e:
+            raise newException(ClientError, e.msg)
     except ClientError as e:
         fcRaise e
     except DataMissing as e:
