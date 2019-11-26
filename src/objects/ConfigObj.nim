@@ -77,6 +77,11 @@ proc newConfig*(): Config {.forceCheck: [].} =
         gui: true
     )
 
+    #Miner's nickname. This is set at the end as it requires the MinerWallet to already be created.
+    var
+        minerNickSet: bool = false
+        minerNick: int
+
     #Check if the data directory was overriden via the CLI.
     #First, confirm the amount of CLI arguments.
     if paramCount() mod 2 != 0:
@@ -153,7 +158,7 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
         try:
             result.miner = newMinerWallet(
-                json.get("miner", JString).getStr()
+                json.get("minerKey", JString).getStr()
             )
         except ValueError as e:
             doAssert(false, e.msg)
@@ -161,6 +166,14 @@ proc newConfig*(): Config {.forceCheck: [].} =
             discard
         except BLSError as e:
             doAssert(false, "Couldn't create a MinerWallet from the value in `" & (result.dataDir / "settings.json") & "`: " & e.msg)
+
+        try:
+            minerNick = json.get("minerNick", JInt).getInt()
+            minerNickSet = true
+        except ValueError as e:
+            doAssert(false, e.msg)
+        except IndexError:
+            discard
 
     #If there are params...
     if paramCount() > 0:
@@ -187,17 +200,39 @@ proc newConfig*(): Config {.forceCheck: [].} =
                     of "--gui":
                         result.gui = parseBool(paramStr(i + 1))
 
-                    of "--miner":
+                    of "--minerKey":
                         try:
                             result.miner = newMinerWallet(paramStr(i + 1))
                         except ValueError as e:
                             doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
                         except BLSError as e:
                             doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
+
+                    of "--minerNick":
+                        minerNick = parseInt(paramStr(i + 1))
+                        minerNickSet = true
         except ValueError as e:
             doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
         except IndexError as e:
             doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
+
+        if result.tcpPort <= 0:
+            doAssert(false, "Invalid TCP port.")
+        if result.rpcPort <= 0:
+            doAssert(false, "Invalid RPC port.")
+
+        if (not minerNickSet) and result.miner.initiated:
+            doAssert(false, "Passed a Miner Key without a Miner Nick.")
+        if minerNickSet:
+            if not result.miner.initiated:
+                doAssert(false, "Passed a Miner Nick without a Miner Key.")
+            if minerNick < 0:
+                doAssert(false, "Passed an invalid Miner Nick.")
+
+            try:
+                result.miner.nick = uint16(minerNick)
+            except FinalAttributeError as e:
+                doAssert(false, "Setting the MinerWallet's nickname raised a FinalAttributeError: " & e.msg)
 
     #Make sure the data directory exists.
     try:

@@ -249,4 +249,3 @@ proc test*() =
         compare()
 
     echo "Finished the Database/Consensus/Consensus/DB Test."
-test()

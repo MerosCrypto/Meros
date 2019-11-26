@@ -51,10 +51,6 @@ Network:
 
 ### No Consensus DAG:
 
-Wallet:
-
-- Load the nickname/automatically set the nickname for the miner wallet.
-
 RPC:
 
 - Functioning getBlockTemplate/publishBlock. These were disabled when we added sketches.
@@ -62,10 +58,6 @@ RPC:
 Main:
 
 - Actually populate the Sketcher.
-
-Tests:
-
-- Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 
 ### Nim Tests:
 
@@ -147,6 +139,7 @@ Network:
 - Test Meros only verifies Transactions which have a chance.
 - Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
 - Test children Transactions are properly unverified.
+- Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 
 ### Features:
 
