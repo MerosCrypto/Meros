@@ -102,11 +102,14 @@ proc protocolThresholdAt*(
     state.loadUnlocked(blockNum) div 2 + 1
 
 #Calculate the threshold for an Epoch that ends on the specified Block.
+#This is meant to return 80% of the amount of Merit at the time of finalization.
+#Thanks to truncation, it returns 55% in the worst case scenario (9).
+#Anything below 5 would return 1, which is 25%, hence the max.
 proc nodeThresholdAt*(
     state: State,
     blockNum: int
 ): int {.inline, forceCheck: [].} =
-    state.loadUnlocked(blockNum) div 100 * 80
+    (max(state.loadUnlocked(blockNum), 5) div 5 * 4) + 1
 
 #Revert to a certain block height.
 proc revert*(
