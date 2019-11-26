@@ -4,18 +4,33 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash lib.
+#Hash and Merkle libs.
 import ../../lib/Hash
+import ../../lib/Merkle
+
+#Sketcher lib.
+import ../../lib/Sketcher
 
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
+
+#Element lib.
+import ../Consensus/Elements/Element
 
 #BlockHeader object.
 import objects/BlockHeaderObj
 export BlockHeaderObj
 
+#Element Serialization libs.
+import ../../Network/Serialize/Consensus/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeVerificationPacket
+import ../../Network/Serialize/Consensus/SerializeMeritRemoval
+
 #Serialization lib.
 import ../../Network/Serialize/Merit/SerializeBlockHeader
+
+#Algorithm standard lib.
+import algorithm
 
 #Sign and hash the header.
 proc hash*(
@@ -40,6 +55,38 @@ func hash*(
         header,
         header.serializeHash()
     )
+
+#Create a sketchCheck Merkle.
+proc newSketchCheck*(
+    sketchSalt: string,
+    packets: seq[VerificationPacket]
+): Hash[384] =
+    var
+        sketchHashes: seq[uint64] = @[]
+        calculated: Merkle = newMerkle()
+
+    for packet in packets:
+        sketchHashes.add(sketchHash(sketchSalt, packet))
+    sketchHashes.sort(SortOrder.Descending)
+
+    for hash in sketchHashes:
+        calculated.add(Blake384(hash.toBinary().pad(8)))
+
+    result = calculated.hash
+
+#Create a contents Merkle.
+proc newContents*(
+    packets: seq[VerificationPacket],
+    elements: seq[BlockElement]
+): Hash[384] =
+    var calculated: Merkle = newMerkle()
+
+    for packet in packets:
+        calculated.add(Blake384(packet.serializeContents()))
+    for elem in elements:
+        calculated.add(Blake384(elem.serializeContents()))
+
+    result = calculated.hash
 
 #Constructor.
 func newBlockHeader*(

@@ -53,7 +53,7 @@ Network:
 
 RPC:
 
-- Functioning getBlockTemplate/publishBlock. These were disabled when we added sketches.
+- getBlockTemplate which actually adds pending VerificationPackets.
 
 Main:
 

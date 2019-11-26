@@ -25,11 +25,14 @@ import ../Consensus/SerializeMeritRemoval
 #Serialize a Block.
 proc serialize*(
     body: BlockBody,
-    sketchSalt: string
+    sketchSalt: string,
+    capacityArg: int = 0
 ): string {.forceCheck: [
     ValueError
 ].} =
-    var capacity: int = if body.packets.len != 0: body.packets.len div 5 + 1 else: 0
+    var capacity: int = capacityArg
+    if (capacity == 0) and (body.packets.len != 0):
+        capacity = body.packets.len div 5 + 1
 
     result = capacity.toBinary().pad(INT_LEN)
 

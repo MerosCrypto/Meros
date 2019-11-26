@@ -74,3 +74,21 @@ The result is an object, as follows:
 - `unlocked`      (bool)
 - `malicious` (bool)
 - `merit`     (int)
+
+### `getBlockTemplate`
+
+`getBlockTemplate` replies with a template for mining a Block. It takes in one argument.
+- miner (string): BLS Public Key of the Miner.
+
+The result is an object, as follows:
+- `header` (string)
+- `body`   (string)
+
+Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` (see below).
+
+### `publishBlock`
+
+`publishBlock` adds the Block to the local Blockchain, and if it's valid, publishes it. It takes in one argument.
+- Block (string)
+
+The result is a bool of true.

@@ -16,9 +16,13 @@ import ../../../Database/Consensus/Elements/Element
 #Merit lib.
 import ../../../Database/Merit/Merit
 
+#SketchyBlock object.
+import ../../../Network/objects/SketchyBlockObj
+
 #Block Serialization libs.
 import ../../../Network/Serialize/Merit/SerializeBlockHeader
 import ../../../Network/Serialize/Merit/SerializeBlockBody
+
 import ../../../Network/Serialize/Merit/ParseBlock
 
 #GlobalFunctionBox object.
@@ -202,7 +206,7 @@ proc module*(
                     "merit": functions.merit.getMerit(nick)
                 }
 
-        discard """
+            #Get a Block template.
             "getBlockTemplate" = proc (
                 res: JSONNode,
                 params: JSONNode
@@ -219,6 +223,23 @@ proc module*(
                     miner = newBLSPublicKey(params[0].getStr())
                 except BLSError:
                     raise newJSONRPCError(-4, "Invalid miner")
+                var
+                    #Packets we're including in the Block.
+                    packets: seq[VerificationPacket] = @[]
+                    #Elements we're including in the Block.
+                    elements: seq[BlockElement] = @[]
+                    #Aggregate signature.
+                    aggregate: BLSSignature = nil
+                    #Sketch salt we're using with the packets.
+                    sketchSalt: string = "".pad(4)
+
+                #Grab the packets we're including in the Block.
+                discard """ """
+
+                #Verify the packets don't collide with our salt.
+                discard """ """
+
+                #Grab the Elements.
 
                 #Create the Header.
                 var header: JSONNode = newJNull()
@@ -229,22 +250,29 @@ proc module*(
                     except IndexError:
                         header = % newBlockHeader(
                             0,
-                            functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
-                            Hash[384](),
-                            Hash[384](),
+                            functions.merit.getTail(),
+                            newContents(packets, elements),
+                            1,
+                            sketchSalt,
+                            newSketchCheck(sketchSalt, packets),
                             miner,
-                            getTime()
+                            getTime(),
+                            0,
+                            nil
                         ).serializeHash().toHex()
-
 
                     if header.kind == JNull:
                         header = % newBlockHeader(
                             0,
-                            functions.merit.getBlockByNonce(functions.merit.getHeight() - 1).hash,
-                            Hash[384](),
-                            Hash[384](),
+                            functions.merit.getTail(),
+                            newContents(packets, elements),
+                            1,
+                            sketchSalt,
+                            newSketchCheck(sketchSalt, packets),
                             nick,
-                            getTime()
+                            getTime(),
+                            0,
+                            nil
                         ).serializeHash().toHex()
                 except IndexError as e:
                     doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
@@ -253,11 +281,16 @@ proc module*(
                 try:
                     res["result"] = %* {
                         "header": header,
-                        "body": newBlockBodyObj(0, "", @[], @[], @[], nil).serialize().toHex()
+                        "body": newBlockBodyObj(
+                            packets,
+                            elements,
+                            aggregate
+                        ).serialize(sketchSalt, packets.len).toHex()
                     }
                 except ValueError as e:
-                    doAssert(false, "Empty Block Body had sketch collision: " & e.msg)
+                    doAssert(false, "Block Body had sketch collision: " & e.msg)
 
+            #Publish a Block.
             "publishBlock" = proc (
                 res: JSONNode,
                 params: JSONNode
@@ -272,26 +305,27 @@ proc module*(
                 ):
                     raise newException(ParamError, "")
 
-                var newBlock: Block
+                var sketchyBlock: SketchyBlock
                 try:
-                    newBlock = params[0].getStr().parseHexStr().parseBlock()
+                    sketchyBlock = params[0].getStr().parseHexStr().parseBlock()
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except BLSError:
                     raise newJSONRPCError(-4, "Invalid BLS data")
 
+                #Test the Block Header.
                 try:
-                    await functions.merit.addBlock(newBlock)
+                    functions.merit.testBlockHeader(sketchyBlock.data.header)
+                except ValueError, NotConnected:
+                    raise newJSONRPCError(-3, "Invalid Block")
+
+                try:
+                    await functions.merit.addBlock(sketchyBlock, false)
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
-                except IndexError:
-                    raise newJSONRPCError(-2, "Invalid/missing Records")
                 except DataMissing:
                     raise newJSONRPCError(-1, "Missing previous Block")
-                except DataExists:
-                    raise newJSONRPCError(0, "Block already exists")
                 except Exception as e:
                     doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
-        """
     except Exception as e:
         doAssert(false, "Couldn't create the Merit Module: " & e.msg)

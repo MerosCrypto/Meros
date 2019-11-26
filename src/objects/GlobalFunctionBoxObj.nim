@@ -187,6 +187,13 @@ type
             syncing: bool
         ): Future[void]
 
+        testBlockHeader*: proc (
+            header: BlockHeader
+        ) {.raises: [
+            ValueError,
+            NotConnected
+        ].}
+
     PersonalFunctionBox* = ref object
         getWallet*: proc (): Wallet {.inline, raises: [].}
 

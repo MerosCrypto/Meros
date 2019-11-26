@@ -3,12 +3,8 @@
 #Util lib.
 import ../../../src/lib/Util
 
-#Hash and Merkle libs.
+#Hash lib.
 import ../../../src/lib/Hash
-import ../../../src/lib/Merkle
-
-#Sketcher lib.
-import ../../../src/lib/Sketcher
 
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
@@ -16,12 +12,7 @@ import ../../../src/Wallet/MinerWallet
 #Element lib.
 import ../../../src/Database/Consensus/Elements/Element
 
-#Element Serialization libs.
-import ../../../src/Network/Serialize/Consensus/SerializeVerification
-import ../../../src/Network/Serialize/Consensus/SerializeVerificationPacket
-import ../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
-
-#Block lib.
+#BlockHeader and Block libs.
 import ../../../src/Database/Merit/Block
 
 #Test Database lib.
@@ -30,9 +21,6 @@ export TestDatabase
 
 #Random standard lib.
 import random
-
-#Algorithm standard lib.
-import algorithm
 
 #Create a valid VerificationPacket.
 proc newValidVerificationPacket*(
@@ -71,38 +59,6 @@ proc newValidVerificationPacket*(
             continue
 
         result.holders.add(uint16(h))
-
-#Create a sketchCheck Merkle.
-proc newSketchCheck(
-    sketchSalt: string = newString(4),
-    packets: seq[VerificationPacket] = @[]
-): Hash[384] =
-    var
-        sketchHashes: seq[uint64] = @[]
-        calculated: Merkle = newMerkle()
-
-    for packet in packets:
-        sketchHashes.add(sketchHash(sketchSalt, packet))
-    sketchHashes.sort(SortOrder.Descending)
-
-    for hash in sketchHashes:
-        calculated.add(Blake384(hash.toBinary().pad(8)))
-
-    result = calculated.hash
-
-#Create a contents Merkle.
-proc newContents(
-    packets: seq[VerificationPacket] = @[],
-    elements: seq[BlockElement] = @[]
-): Hash[384] =
-    var calculated: Merkle = newMerkle()
-
-    for packet in packets:
-        calculated.add(Blake384(packet.serializeContents()))
-    for elem in elements:
-        calculated.add(Blake384(elem.serializeContents()))
-
-    result = calculated.hash
 
 #Create a Block, with every setting optional.
 proc newBlankBlock*(

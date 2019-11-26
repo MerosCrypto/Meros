@@ -323,3 +323,17 @@ proc mainMerit() {.forceCheck: [].} =
                 fcRaise e
             except Exception as e:
                 doAssert(false, "addBlockByHeader/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)
+
+        #Tests a BlockHeader. Used by the RPC's addBlock method.
+        functions.merit.testBlockHeader = proc (
+            header: BlockHeader
+        ) {.forceCheck: [
+            ValueError,
+            NotConnected
+        ].} =
+            try:
+                merit.blockchain.testBlockHeader(header)
+            except ValueError as e:
+                fcRaise e
+            except NotConnected as e:
+                fcRaise e
