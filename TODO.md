@@ -53,8 +53,7 @@ Wallet:
 
 Consensus:
 
-- Load statuses still in Epochs.
-- Load close Transactions.
+- When a packet is archived, recreate the pending packet to include everyone who wasn't included.
 - Functioning checkMalicious.
 
 RPC:

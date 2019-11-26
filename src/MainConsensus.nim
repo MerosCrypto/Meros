@@ -1,4 +1,4 @@
-include MainDatabase
+include MainMerit
 
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
@@ -6,6 +6,7 @@ proc mainConsensus() {.forceCheck: [].} =
             consensus = newConsensus(
                 functions,
                 database,
+                merit.state,
                 params.SEND_DIFFICULTY.toHash(384),
                 params.DATA_DIFFICULTY.toHash(384)
             )

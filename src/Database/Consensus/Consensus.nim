@@ -50,10 +50,11 @@ import tables
 proc newConsensus*(
     functions: GlobalFunctionBox,
     db: DB,
+    state: State,
     sendDiff: Hash[384],
     dataDiff: Hash[384]
-): Consensus {.forceCheck: [].} =
-    newConsensusObj(functions, db, sendDiff, dataDiff)
+): Consensus {.inline, forceCheck: [].} =
+    newConsensusObj(functions, db, state, sendDiff, dataDiff)
 
 #Flag a MeritHolder as malicious.
 proc flag*(
@@ -294,9 +295,21 @@ proc archive*(
     shifted: Epoch,
     popped: Epoch
 ) {.forceCheck: [].} =
-    #Delete every new Hash in Epoch from unmentioned.
-    for hash in shifted.keys():
-        consensus.unmentioned.del(hash)
+    try:
+        for hash in shifted.keys():
+            #Delete every new Hash in the Epoch from unmentioned.
+            consensus.unmentioned.del(hash)
+
+            #Clear the Status's pending VerificationPacket.
+            var status: TransactionStatus = consensus.getStatus(hash)
+            status.pending = newSignedVerificationPacketObj(hash)
+            status.signatures = initTable[uint16, BLSSignature]()
+
+            #Since this is a ref, we don't need to set it back.
+            #We would if it needed to be saved to the DB, but the pending data isn't.
+    except IndexError as e:
+        doAssert(false, "Newly archived Transaction doesn't have a TransactionStatus: " & e.msg)
+
     #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned.keys():
         consensus.incEpoch(hash)

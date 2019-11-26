@@ -4,8 +4,8 @@ The Main files are an "include chain". They include each other sequentially, in 
     MainChainParams
     MainGlobals
     MainDatabase
-    MainConsensus
     MainMerit
+    MainConsensus
     MainTransactions
     MainPersonal
     MainNetwork
@@ -22,8 +22,8 @@ include MainInterfaces
 proc main() {.thread.} =
     {.gcsafe.}:
         mainDatabase()
-        mainConsensus()
         mainMerit()
+        mainConsensus()
         mainTransactions()
         mainPersonal()
         mainNetwork()

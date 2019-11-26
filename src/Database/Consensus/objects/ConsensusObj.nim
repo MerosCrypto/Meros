@@ -60,6 +60,7 @@ type Consensus* = ref object
 proc newConsensusObj*(
     functions: GlobalFunctionBox,
     db: DB,
+    state: State,
     sendDiff: Hash[384],
     dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
@@ -81,7 +82,42 @@ proc newConsensusObj*(
     )
 
     #Load statuses still in Epochs.
-    #Load close Transactions.
+    #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
+    var
+        height: int = functions.merit.getHeight()
+        old: seq[Hash[384]] = @[]
+    try:
+        for i in max(height - 10, 0) ..< height - 5:
+            for packet in functions.merit.getBlockByNonce(i).body.packets:
+                old.add(packet.hash)
+
+        for i in max(height - 5, 0) ..< height:
+            for packet in functions.merit.getBlockByNonce(i).body.packets:
+                try:
+                    result.statuses[packet.hash] = result.db.load(packet.hash)
+                except DBReadError:
+                    doAssert(false, "Transaction archived on the Blockchain doesn't have a status.")
+
+                #If this Transaction is close to being confirmed, add it to close.
+                try:
+                    var merit: int = 0
+                    for holder in result.statuses[packet.hash].holders.keys():
+                        if not result.malicious.hasKey(holder):
+                            merit += state[holder]
+                    if (
+                        (not result.statuses[packet.hash].verified) and
+                        (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 600)
+                    ):
+                        result.close[packet.hash] = true
+                except KeyError as e:
+                    doAssert(false, "Couldn't get a status we just added to the statuses table: " & e.msg)
+    except IndexError as e:
+        doAssert(false, "Couldn't get a Block on the Blockchain: " & e.msg)
+
+    #Delete old Transaction statuses.
+    for oldStatus in old:
+        result.statuses.del(oldStatus)
+        result.close.del(oldStatus)
 
     #Load unmentioned Transactions.
     var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()

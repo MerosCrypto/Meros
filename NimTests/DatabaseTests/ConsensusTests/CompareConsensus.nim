@@ -53,22 +53,21 @@ proc compare*(
     assert(c1.filters.send.difficulty == c2.filters.send.difficulty)
     assert(c1.filters.data.difficulty == c2.filters.data.difficulty)
 
-    #Copare the malicious table.
+    #Compare the malicious table.
     assert(c1.malicious.len == c2.malicious.len)
     for nick in c1.malicious.keys():
         assert(c1.malicious[nick] == c2.malicious[nick])
 
-    #Copare the statuses table.
-    assert(c1.statuses.len == c2.statuses.len)
+    #Compare the statuses table.uses.len)
     for hash in c1.statuses.keys():
-        assert(c1.statuses[hash] == c2.statuses[hash])
+        compare(c1.statuses[hash], c2.statuses[hash])
 
-    #Copare the close table.
+    #Compare the close table.
     assert(c1.close.len == c2.close.len)
     for hash in c1.close.keys():
-        assert(c1.close[hash] == c2.close[hash])
+        assert(c2.close.hasKey(hash))
 
-    #Copare the unmentioned table.
+    #Compare the unmentioned table.
     assert(c1.unmentioned.len == c2.unmentioned.len)
     for hash in c1.unmentioned.keys():
         assert(c1.unmentioned[hash] == c2.unmentioned[hash])

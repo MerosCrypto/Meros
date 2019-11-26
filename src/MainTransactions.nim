@@ -1,4 +1,4 @@
-include MainMerit
+include MainConsensus
 
 #Creates and publishes a Verification.
 proc verify(

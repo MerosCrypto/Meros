@@ -1,4 +1,4 @@
-include MainConsensus
+include MainDatabase
 
 proc mainMerit() {.forceCheck: [].} =
     {.gcsafe.}:

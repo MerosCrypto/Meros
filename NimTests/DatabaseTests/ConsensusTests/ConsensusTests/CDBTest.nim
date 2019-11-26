@@ -38,8 +38,6 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Functions.
-        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database.
         db: DB = newTestDatabase()
 
@@ -51,17 +49,22 @@ proc test*() =
             $Hash[384](),
             10
         )
-        #Consensus.
-        consensus: Consensus = newConsensus(
-            functions,
-            db,
-            Hash[384](),
-            Hash[384]()
-        )
         #Transactions.
         transactions: Transactions = newTransactions(
             db,
             merit.blockchain
+        )
+
+        #Functions.
+        functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, addr transactions)
+
+        #Consensus.
+        consensus: Consensus = newConsensus(
+            functions,
+            db,
+            merit.state,
+            Hash[384](),
+            Hash[384]()
         )
 
         #Merit Holders.
@@ -71,9 +74,6 @@ proc test*() =
         #Aggregate signature to include in the next Block.
         aggregate: BLSSignature = nil
 
-    #Init the Function Box.
-    functions.init(addr transactions)
-
     #Mine and add a Block.
     proc mineBlock() =
         #Grab a holder and create a Block.
@@ -82,6 +82,7 @@ proc test*() =
             mining: Block
         if (rand(1) == 0) or (holders.len == 0):
             miner = newMinerWallet()
+            miner.nick = uint16(holders.len)
             holders.add(miner)
 
             mining = newBlankBlock(
@@ -132,6 +133,7 @@ proc test*() =
         var reloaded: Consensus = newConsensus(
             functions,
             db,
+            merit.state,
             Hash[384](),
             Hash[384]()
         )
@@ -184,6 +186,9 @@ proc test*() =
                 aggregate = if aggregate.isNil: sv.signature else: @[aggregate, sv.signature].aggregate()
 
                 consensus.add(merit.state, sv)
+
+        #Mine the packets.
+        mineBlock()
 
         #Compare the Consensus DAGs.
         compare()
