@@ -95,6 +95,7 @@ proc mainMerit() {.forceCheck: [].} =
         #Handle full blocks.
         functions.merit.addBlock = proc (
             sketchyBlock: SketchyBlock,
+            sketcherArg: Sketcher,
             syncing: bool
         ) {.forceCheck: [
             ValueError,
@@ -103,10 +104,13 @@ proc mainMerit() {.forceCheck: [].} =
             #Print that we're adding the Block.
             echo "Adding Block ", sketchyBlock.data.header.hash, "."
 
+            #Construct a sketcher.
+            var sketcher: Sketcher = sketcherArg
+            if sketcher.len == 0:
+                sketcher = newSketcher(consensus.getPending().packets)
+
             #Sync this Block.
-            var
-                sketcher: Sketcher = newSketcher(consensus.getPending().packets)
-                newBlock: Block
+            var newBlock: Block
             try:
                 newBlock = await network.sync(
                     merit.state,
@@ -290,7 +294,7 @@ proc mainMerit() {.forceCheck: [].} =
                 doAssert(false, "Network.requestBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
 
             try:
-                await functions.merit.addBlock(sketchyBlock, syncing)
+                await functions.merit.addBlock(sketchyBlock, @[], syncing)
             except ValueError as e:
                 fcRaise e
             except DataMissing as e:

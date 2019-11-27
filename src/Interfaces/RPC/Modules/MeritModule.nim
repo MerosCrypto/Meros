@@ -8,7 +8,7 @@ import ../../../lib/Util
 import ../../../lib/Hash
 
 #Sketcher lib.
-import ../../../lib/Sketcher
+import ../../../lib/Sketcher as SketcherFile
 
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
@@ -36,6 +36,9 @@ import ../objects/RPCObj
 
 #String utils standard lib.
 import strutils
+
+#Tables standard lib.
+import tables
 
 #Element -> JSON.
 proc `%`(
@@ -124,6 +127,9 @@ proc `%`(
 proc module*(
     functions: GlobalFunctionBox
 ): RPCFunctions {.forceCheck: [].} =
+    #Table of usable Sketcher objects.
+    var sketchers: Table[int, Sketcher] = initTable[int, Sketcher]()
+
     try:
         newRPCFunctions:
             #Get Height.
@@ -235,6 +241,9 @@ proc module*(
                     ] = functions.consensus.getPending()
                     #Elements we're including in the Block.
                     elements: seq[BlockElement] = @[]
+
+                    #ID for this Sketcher.
+                    id: int = sketchers.len
                     #Sketch salt we're using with the packets.
                     sketchSaltNum: uint32 = 0
                     #Actual sketch salt.
@@ -243,15 +252,21 @@ proc module*(
                 #Verify the packets don't collide with our salt.
                 while true:
                     try:
-                        discard newSketcher(pending.packets).serialize(
+                        sketchers[id] = newSketcher(pending.packets)
+                        discard sketchers[id].serialize(
                             pending.packets.len,
                             0,
                             sketchSaltNum.toBinary().pad(4)
                         )
                         break
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a Sketcher we just created: " & e.msg)
                     except SaltError:
                         inc(sketchSaltNum)
                 sketchSalt = sketchSaltNum.toBinary().pad(4)
+
+                #Delete the sketcher from 5 templates ago.
+                sketchers.del(id - 5)
 
                 #Grab the Elements, updating the aggregate with each's signature.
 
@@ -294,6 +309,7 @@ proc module*(
                 #Create the result.
                 try:
                     res["result"] = %* {
+                        "id": id,
                         "header": header,
                         "body": newBlockBodyObj(
                             pending.packets,
@@ -314,14 +330,15 @@ proc module*(
             ], async.} =
                 #Verify the parameters.
                 if (
-                    (params.len != 1) or
-                    (params[0].kind != JString)
+                    (params.len != 2) or
+                    (params[0].kind != JInt) or
+                    (params[1].kind != JString)
                 ):
                     raise newException(ParamError, "")
 
                 var sketchyBlock: SketchyBlock
                 try:
-                    sketchyBlock = params[0].getStr().parseHexStr().parseBlock()
+                    sketchyBlock = params[1].getStr().parseHexStr().parseBlock()
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except BLSError:
@@ -334,7 +351,13 @@ proc module*(
                     raise newJSONRPCError(-3, "Invalid Block")
 
                 try:
-                    await functions.merit.addBlock(sketchyBlock, false)
+                    await functions.merit.addBlock(
+                        sketchyBlock,
+                        sketchers[params[0].getInt()],
+                        false
+                    )
+                except KeyError:
+                    raise newJSONRPCError(-2, "Invalid ID")
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except DataMissing:

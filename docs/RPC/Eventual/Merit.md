@@ -95,14 +95,16 @@ The result is an object, as follows:
 - miner (string): BLS Public Key of the Miner.
 
 The result is an object, as follows:
+- `id`     (int): The template ID.
 - `header` (string)
 - `body`   (string)
 
-Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` (see below).
+Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` with the ID (see below).
 
 ### `publishBlock`
 
-`publishBlock` adds the Block to the local Blockchain, and if it's valid, publishes it. It takes in one argument.
+`publishBlock` adds the Block to the local Blockchain, and if it's valid, publishes it. It takes in two arguments.
+- ID    (int): The ID of a template. Only an ID from the last 5 templates is valid.
 - Block (string): A Block serialized with a sketch capacity equivalent to the amount of included packets.
 
 The result is a bool of true.

@@ -11,6 +11,9 @@ import ../lib/Errors
 #Hash lib.
 import ../lib/Hash
 
+#Sketcher lib.
+import ../lib/Sketcher
+
 #MinerWallet and Wallet libs.
 import ../Wallet/MinerWallet
 import ../Wallet/Wallet
@@ -179,6 +182,7 @@ type
 
         addBlock*: proc (
             newBlock: SketchyBlock,
+            sketcher: Sketcher,
             syncing: bool
         ): Future[void]
 
