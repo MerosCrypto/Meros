@@ -41,6 +41,13 @@ proc newData*(
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)
 
+    #Verify the Data's hash doesn't start with 16 zeroes.
+    for b in 0 ..< 16:
+        if data.hash.data[b] != 0:
+            break
+        if b == 15:
+            raise newException(ValueError, "Data's hash starts with 16 0s.")
+
 #Sign a Data.
 proc sign*(
     wallet: HDWallet,

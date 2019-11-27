@@ -83,9 +83,9 @@ Data Transactions have the following fields:
 - signature: Ed25519 Signature.
 - proof: Work that proves this isn't spam.
 
-Data Transactions are sequential. The first Data Transaction a sender creates has a single input of their Ed25519 Public Key, left-padded with 16 zeroed out bytes. From then on, Data Transactions always have a single input; the Argon hash (see below) of the previous Data Transaction created by that sender. Data Transactions' input's index and outputs are not used.
+Data Transactions are sequential. The first Data Transaction a sender creates has a single input of their Ed25519 Public Key, left-padded with 16 zeroed out bytes. From then on, Data Transactions always have a single input; the hash of the previous Data Transaction created by that sender. Data Transactions' input's index and outputs are not used.
 
-Data hashes are defined as `Blake2b-384("\3" + input.txHash + data)`, where input.txHash takes up 48 bytes and data variable bytes.
+Data hashes are defined as `Blake2b-384("\3" + input.txHash + data)`, where input.txHash takes up 48 bytes and data variable bytes. The hash must not start with 16 0s.
 
 The signature must be the signature produced by the sender signing the hash.
 
@@ -103,8 +103,6 @@ Argon2d(
 ) > dataDifficulty
 ```
 
-The produced Argon hash must also not start with 16 0s.
-
 `Data` has a variable message length; the 48-byte input, the 1-byte data length, the variable-byte data, the 64-byte Ed25519 signature, and the 4-byte proof.
 
 ### Lock
@@ -113,6 +111,4 @@ The produced Argon hash must also not start with 16 0s.
 
 ### Violations in Meros
 
-- Meros uses Data hashes, instead of Data Argon hashes, for inputs.
-- Meros doesn't check if Datas's Argon hashes start with 0s or not.
 - Meros doesn't support Lock or Unlock Transactions.
