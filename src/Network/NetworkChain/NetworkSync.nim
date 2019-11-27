@@ -333,7 +333,9 @@ proc sync*(
         for holder in packet.holders:
             #Verify every holder in the packet has yet to be archived.
             if status.holders.hasKey(holder):
-                raise newException(ValueError, "Block archives holders who are already archived.")
+                #If they're in holders. they're either an archived holder or a pending holder.
+                if not status.pending.holders.contains(holder):
+                    raise newException(ValueError, "Block archives holders who are already archived.")
 
             merit += state[holder]
 
