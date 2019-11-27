@@ -60,7 +60,7 @@ func hash*(
 proc newSketchCheck*(
     sketchSalt: string,
     packets: seq[VerificationPacket]
-): Hash[384] =
+): Hash[384] {.forceCheck: [].} =
     var
         sketchHashes: seq[uint64] = @[]
         calculated: Merkle = newMerkle()
@@ -78,11 +78,23 @@ proc newSketchCheck*(
 proc newContents*(
     packets: seq[VerificationPacket],
     elements: seq[BlockElement]
-): Hash[384] =
+): Hash[384] {.forceCheck: [].} =
     var calculated: Merkle = newMerkle()
 
-    for packet in packets:
+    for packet in sorted(
+        packets,
+        func (
+            x: VerificationPacket,
+            y: VerificationPacket
+        ): int {.forceCheck: [].} =
+            if x.hash > y.hash:
+                result = 1
+            else:
+                result = -1
+        , SortOrder.Descending
+    ):
         calculated.add(Blake384(packet.serializeContents()))
+
     for elem in elements:
         calculated.add(Blake384(elem.serializeContents()))
 

@@ -26,12 +26,14 @@ Consensus:
 - Same Nonce Merit Removals.
 - Verify Competing Merit Removals.
 
-UI:
+Interfaces:
 
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
 - Correct `transactions_getMerit` which is different from its "Eventual" definition.
 - Passworded RPC.
+
+- In getBlockTemplate, set the header significance to the minimum significance.
 
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
@@ -48,12 +50,6 @@ Network:
 
 - Don't rebroadcast data to who sent it.
 - Don't handle Verifications below a Merit threshold.
-
-### No Consensus DAG:
-
-Main:
-
-- Utilize SketchElement significance.
 
 ### Nim Tests:
 

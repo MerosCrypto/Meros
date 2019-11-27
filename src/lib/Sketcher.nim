@@ -47,9 +47,30 @@ proc sketchHash*(
 ): uint64 {.inline, forceCheck: [].} =
     Blake64(salt & packet.serialize())
 
-#Constructor.
+#Constructors.
 proc newSketcher*(
-    packets: seq[VerificationPacket] = @[]
+    getMerit: proc (
+        nick: uint16
+    ): int {.inline, raises: [].},
+    isMalicious: proc (
+        holder: uint16
+    ): bool {.inline, raises: [].},
+    packets: seq[VerificationPacket]
+): Sketcher {.forceCheck: [].} =
+    result = @[]
+    for packet in packets:
+        var merit: int = 0
+        for holder in packet.holders:
+            if not holder.isMalicious:
+                merit += getMerit(holder)
+
+        result.add(SketchElement(
+            packet: packet,
+            significance: merit
+        ))
+
+proc newSketcher*(
+    packets: seq[VerificationPacket]
 ): Sketcher {.forceCheck: [].} =
     result = @[]
     for packet in packets:

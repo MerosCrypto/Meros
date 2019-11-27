@@ -252,12 +252,18 @@ proc module*(
                 #Verify the packets don't collide with our salt.
                 while true:
                     try:
-                        sketchers[id] = newSketcher(pending.packets)
+                        sketchers[id] = newSketcher(
+                            functions.merit.getMerit,
+                            functions.consensus.isMalicious,
+                            pending.packets
+                        )
+
                         discard sketchers[id].serialize(
                             pending.packets.len,
                             0,
                             sketchSaltNum.toBinary().pad(4)
                         )
+
                         break
                     except KeyError as e:
                         doAssert(false, "Couldn't get a Sketcher we just created: " & e.msg)
@@ -281,7 +287,7 @@ proc module*(
                             0,
                             functions.merit.getTail(),
                             newContents(pending.packets, elements),
-                            0,
+                            1,
                             sketchSalt,
                             newSketchCheck(sketchSalt, pending.packets),
                             miner,
@@ -295,7 +301,7 @@ proc module*(
                             0,
                             functions.merit.getTail(),
                             newContents(pending.packets, elements),
-                            0,
+                            1,
                             sketchSalt,
                             newSketchCheck(sketchSalt, pending.packets),
                             nick,
