@@ -1,11 +1,11 @@
-discard """
+#[
 The Main files are an "include chain". They include each other sequentially, in the following orders:
     MainImports
     MainChainParams
     MainGlobals
     MainDatabase
-    MainConsensus
     MainMerit
+    MainConsensus
     MainTransactions
     MainPersonal
     MainNetwork
@@ -13,7 +13,7 @@ The Main files are an "include chain". They include each other sequentially, in 
 
 We could include all of them in this file, but then all the other files would throw errors.
 IDEs can't, and shouldn't, detect that an external file includes that file, and the external file resolves the dependency requirements.
-"""
+]#
 
 #Include the last file in the chain.
 include MainInterfaces
@@ -22,8 +22,8 @@ include MainInterfaces
 proc main() {.thread.} =
     {.gcsafe.}:
         mainDatabase()
-        mainConsensus()
         mainMerit()
+        mainConsensus()
         mainTransactions()
         mainPersonal()
         mainNetwork()

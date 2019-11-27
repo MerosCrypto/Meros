@@ -111,13 +111,6 @@ proc saveDataSender*(
 ) {.forceCheck: [].} =
     db.put(data.hash.toString() & "s", sender.toString())
 
-proc save*(
-    db: DB,
-    key: BLSPublicKey,
-    height: int
-) {.forceCheck: [].} =
-    db.put(key.toString() & "mh", height.toBinary())
-
 proc saveDataTip*(
     db: DB,
     key: EdPublicKey,
@@ -179,17 +172,6 @@ proc loadDataSender*(
         result = newEdPublicKey(db.get(hash.toString() & "s"))
     except Exception as e:
         raise newException(DBReadError, e.msg)
-
-proc load*(
-    db: DB,
-    key: BLSPublicKey
-): int {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = db.get(key.toString() & "mh").fromBinary()
-    except DBReadError as e:
-        fcRaise e
 
 proc loadMintNonce*(
     db: DB

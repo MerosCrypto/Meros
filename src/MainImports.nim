@@ -7,8 +7,8 @@ import lib/Util
 #Hash lib.
 import lib/Hash
 
-#Merkle lib.
-import Database/common/Merkle
+#Sketcher lib.
+import lib/Sketcher
 
 #Wallet libs.
 import Wallet/MinerWallet
@@ -35,6 +35,7 @@ import Network/Serialize/Transactions/SerializeSend
 import Network/Serialize/Transactions/SerializeData
 
 import Network/Serialize/Consensus/SerializeVerification
+import Network/Serialize/Consensus/SerializeVerificationPacket
 
 import Network/Serialize/Merit/SerializeBlockHeader
 

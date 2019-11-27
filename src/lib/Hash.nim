@@ -30,9 +30,12 @@ export SHA3
 import hashes
 
 #Define Blake_2 as Blake.
-type
-    Blake384Hash* = Blake2_384Hash
+type Blake384Hash* = Blake2_384Hash
 var
+    Blake64*: proc (
+        input: string
+    ): uint64 {.raises: [].} = Blake2_64
+
     Blake384*: proc (
         input: string
     ): Blake384Hash {.raises: [].} = Blake2_384

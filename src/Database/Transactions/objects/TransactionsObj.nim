@@ -8,15 +8,8 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 import ../../../Wallet/Wallet
 
-#MeritHolderRecord object.
-import ../../common/objects/MeritHolderRecordObj
-
-#Element and MeritHolder libs.
-import ../../Consensus/Element
-import ../../Consensus/MeritHolder
-
-#Consensus object.
-import ../../Consensus/objects/ConsensusObj
+#VerificationPacket object.
+import ../../Consensus/Elements/objects/VerificationPacketObj
 
 #Block and Blockchain libs.
 import ../../Merit/Block
@@ -35,10 +28,8 @@ type
     Transactions* = object
         #DB Function Box.
         db: DB
-
         #Mint Nonce.
         mintNonce*: uint32
-
         #Transactions which have yet to leave Epochs.
         transactions*: Table[Hash[384], Transaction]
 
@@ -106,15 +97,12 @@ proc `[]`*(
 #Transactions constructor.
 proc newTransactionsObj*(
     db: DB,
-    consensus: Consensus,
     blockchain: Blockchain
 ): Transactions {.forceCheck: [].} =
     #Create the object.
     result = Transactions(
         db: db,
-
         mintNonce: 0,
-
         transactions: initTable[Hash[384], Transaction]()
     )
 
@@ -124,50 +112,27 @@ proc newTransactionsObj*(
     except DBReadError:
         discard
 
-    #Load the transactions from the DB.
-    #Find every Verifier with a Verification still in Epochs.
-    var mentioned: Table[BLSPublicKey, bool] = initTable[BLSPublicKey, bool]()
+    #Load the Transactions from the DB.
+    var mentioned: Table[Hash[384], bool] = initTable[Hash[384], bool]()
     try:
-        for nonce in max(0, blockchain.height - 5) ..< blockchain.height:
-            for record in blockchain[nonce].records:
-                mentioned[record.key] = true
+        #Find which Transactions were mentioned before the last 5 blocks.
+        for b in max(0, blockchain.height - 10) ..< blockchain.height - 5:
+            for packet in blockchain[b].body.packets:
+                mentioned[packet.hash] = true
+
+        #Load Transactions in the last 5 Blocks, as long as they aren't first mentioned in older Blocks.
+        for b in max(0, blockchain.height - 5) ..< blockchain.height:
+            for packet in blockchain[b].body.packets:
+                if mentioned.hasKey(packet.hash):
+                    continue
+
+                try:
+                    result.add(db.load(packet.hash), false)
+                except DBReadError as e:
+                    doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
+                mentioned[packet.hash] = true
     except IndexError as e:
-        doAssert(false, "Couldn't load records from the Blockchain while reloading Transactions: " & e.msg)
-
-    #Go through each Verifier.
-    var
-        #Properties of each Verifier.
-        outOfEpochs: int
-        height: int
-        elements: seq[Element]
-
-        #Hashes of the TXs to reload.
-        hashes: Table[Hash[384], bool]
-    for key in mentioned.keys():
-        #Find out what slice we're working with.
-        try:
-            outOfEpochs = db.load(key)
-        except DBReadError:
-            outOfEpochs = -1
-        height = consensus[key].height
-
-        try:
-            elements = consensus[key][(outOfEpochs + 1) ..< height]
-        except IndexError as e:
-            doAssert(false, "Couldn't load elements from a MeritHolder while reloading Transactions: " & e.msg)
-        for element in elements:
-            if element of Verification:
-                hashes[cast[Verification](element).hash] = true
-
-    #Load every Transaction.
-    for hash in hashes.keys():
-        if not result.transactions.hasKey(hash):
-            try:
-                result.add(db.load(hash), false)
-            except KeyError:
-                doAssert(false, "Couldn't get a value by a key produced from .keys().")
-            except DBReadError as e:
-                doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
+        doAssert(false, "Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
 
 #Load a Public Key's UTXOs.
 proc getUTXOs*(
@@ -178,14 +143,6 @@ proc getUTXOs*(
         result = transactions.db.loadSpendable(key)
     except DBReadError:
         result = @[]
-
-#Save a MeritHolder's out-of-Epoch tip.
-proc save*(
-    transactions: Transactions,
-    key: BLSPublicKey,
-    nonce: int
-) {.forceCheck: [].} =
-    transactions.db.save(key, nonce)
 
 #Mark a Transaction as verified, removing the outputs it spends from spendable.
 proc verify*(
@@ -249,18 +206,6 @@ func del*(
 
     #Delete the Transaction from the cache.
     transactions.transactions.del(hash)
-
-#Load a MeritHolder's out-of-Epoch tip.
-proc load*(
-    transactions: Transactions,
-    key: BLSPublicKey
-): int {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = transactions.db.load(key)
-    except DBReadError as e:
-        fcRaise e
 
 #Load a Mint Output.
 proc loadOutput*(

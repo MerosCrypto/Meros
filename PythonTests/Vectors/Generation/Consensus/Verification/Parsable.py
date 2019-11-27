@@ -4,9 +4,12 @@ from typing import IO, Dict, List, Any
 #Data class.
 from PythonTests.Classes.Transactions.Data import Data
 
-#Consensus classes.
+#SpamFilter class.
+from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
+
+#Verification classes.
 from PythonTests.Classes.Consensus.Verification import SignedVerification
-from PythonTests.Classes.Consensus.Consensus import Consensus
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -26,11 +29,6 @@ import ed25519
 #JSON standard lib.
 import json
 
-#Consensus.
-consensus: Consensus = Consensus(
-    bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-    bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-)
 #Blockchain.
 blockchain: Blockchain = Blockchain(
     b"MEROS_DEVELOPER_NETWORK",
@@ -38,13 +36,20 @@ blockchain: Blockchain = Blockchain(
     int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
 )
 
+#Spam Filter.
+dataFilter: SpamFilter = SpamFilter(
+    bytes.fromhex(
+        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+    )
+)
+
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS Keys.
-privKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
-pubKey: blspy.PublicKey = privKey.get_public_key()
+blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
+blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
 
 #Add a single Block to create Merit.
 bbFile: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
@@ -55,34 +60,39 @@ bbFile.close()
 #Create a Data with an invalid signature.
 data: Data = Data(edPubKey.to_bytes().rjust(48, b'\0'), bytes())
 data.signature = edPrivKey.sign(b"INVALID")
-data.beat(consensus.dataFilter)
+data.beat(dataFilter)
 
 #Create a Verification.
 sv: SignedVerification = SignedVerification(data.hash)
-sv.sign(privKey, 0)
-consensus.add(sv)
+sv.sign(0, blsPrivKey)
+
+#Create packets out of the Verification.
+packets: List[VerificationPacket] = [VerificationPacket(data.hash, [0])]
 
 #Generate another Block.
-block: Block = Block(
+block = Block(
     BlockHeader(
-        2,
+        0,
         blockchain.last(),
-        int(time()),
-        consensus.getAggregate([(pubKey, 0, -1)])
+        BlockHeader.createContents(packets),
+        1,
+        bytes(4),
+        BlockHeader.createSketchCheck(bytes(4), packets),
+        0,
+        int(time())
     ),
-    BlockBody([(pubKey, 0, consensus.getMerkle(pubKey, 0))])
+    BlockBody(packets, [], sv.signature)
 )
 #Mine it.
-block.mine(blockchain.difficulty())
+block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Parsable Block " + str(block.header.nonce) + ".")
+print("Generated Parsable Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain":   blockchain.toJSON(),
-    "data":         data.toVector(),
-    "verification": sv.toSignedJSON()
+    "blockchain": blockchain.toJSON(),
+    "data":       data.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/Parsable.json", "w")
 vectors.write(json.dumps(result))

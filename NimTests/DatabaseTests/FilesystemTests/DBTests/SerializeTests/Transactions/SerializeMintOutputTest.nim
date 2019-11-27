@@ -3,9 +3,6 @@
 #Util lib.
 import ../../../../../../src/lib/Util
 
-#MinerWallet lib.
-import ../../../../../../src/Wallet/MinerWallet
-
 #MintOutput object.
 import ../../../../../../src/Database/Transactions/objects/TransactionObj
 
@@ -31,8 +28,8 @@ proc test*() =
     for _ in 0 .. 255:
         #Create the MintOutput.
         output = newMintOutput(
-            newMinerWallet().publicKey,
-            uint64(rand(int32.high))
+            uint16(rand(high(int16))),
+            uint64(rand(high(int32)))
         )
 
         #Serialize it and parse it back.

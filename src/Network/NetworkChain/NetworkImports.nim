@@ -4,14 +4,15 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash lib.
+#Hash and Merkle lib.
 import ../../lib/Hash
+import ../../lib/Merkle
+
+#Sketcher lib.
+import ../../lib/Sketcher
 
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
-
-#MeritHolderRecord object.
-import ../../Database/common/objects/MeritHolderRecordObj
 
 #Transactions lib (for all Transaction types).
 import ../../Database/Transactions/Transactions
@@ -19,9 +20,9 @@ import ../../Database/Transactions/Transactions
 #Consensus lib.
 import ../../Database/Consensus/Consensus
 
-#Block lib.
-import ../../Database/Merit/BlockHeader
+#Block and State libs.
 import ../../Database/Merit/Block as BlockFile
+import ../../Database/Merit/State
 
 #Global Function Box object.
 import ../../objects/GlobalFunctionBoxObj
@@ -38,6 +39,8 @@ import ../Serialize/Transactions/SerializeSend
 import ../Serialize/Transactions/SerializeData
 
 import ../Serialize/Consensus/SerializeVerification
+import ../Serialize/Consensus/SerializeVerificationPacket
+import ../Serialize/Consensus/SerializeMeritRemoval
 
 import ../Serialize/Merit/SerializeBlockHeader
 import ../Serialize/Merit/SerializeBlockBody
@@ -53,11 +56,13 @@ import ../Serialize/Consensus/ParseMeritRemoval
 import ../Serialize/Merit/ParseBlockHeader
 import ../Serialize/Merit/ParseBlockBody
 
-#Message and Network objects.
+#Message, SketchyBlock, and Network objects.
 import ../objects/MessageObj
+import ../objects/SketchyBlockObj
 import ../objects/NetworkObj
-#Export the Message and Network objects.
+#Export the Message, SketchyBlock, and Network objects.
 export MessageObj
+export SketchyBlockObj
 export NetworkObj
 
 #Network Function Box.

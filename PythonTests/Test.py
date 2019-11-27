@@ -2,7 +2,7 @@
 from typing import Callable, List
 
 #Exceptions.
-from PythonTests.Tests.Errors import EmptyError, NodeError, TestError
+from PythonTests.Tests.Errors import EmptyError, NodeError, TestError, SuccessError
 
 #Meros classes.
 from PythonTests.Meros.Meros import Meros
@@ -11,6 +11,7 @@ from PythonTests.Meros.RPC import RPC
 #Tests.
 from PythonTests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
+from PythonTests.Tests.Merit.StateTest import StateTest
 
 from PythonTests.Tests.Transactions.DataTest import DataTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
@@ -21,10 +22,9 @@ from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTes
 
 from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyCompetingTest
+from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
 
 from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
-
-from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
 from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
 
 #Arguments.
@@ -49,6 +49,7 @@ ress: List[str] = []
 tests: List[Callable[[RPC], None]] = [
     ChainAdvancementTest,
     DifficultyTest,
+    StateTest,
 
     DataTest,
     FiftyTest,
@@ -59,8 +60,9 @@ tests: List[Callable[[RPC], None]] = [
 
     SameNonceTest,
     VerifyCompetingTest,
-    MultipleTest,
     PartialTest,
+
+    MultipleTest,
     PendingActionsTest
 ]
 
@@ -101,7 +103,7 @@ for test in tests:
         continue
     testsToRun.remove(test.__name__)
 
-    print("Running " + test.__name__ + ".")
+    print("\033[0;37mRunning " + test.__name__ + ".")
 
     #Message to display on a Node crash.
     crash: str = "\033[5;31m" + test.__name__ + " caused the node to crash!\033[0;31m"
@@ -113,19 +115,18 @@ for test in tests:
     rpc: RPC = RPC(meros)
     try:
         test(rpc)
+        raise SuccessError()
+    except SuccessError as e:
         ress.append("\033[0;32m" + test.__name__ + " succeeded.")
     except EmptyError as e:
         ress.append("\033[0;33m" + test.__name__ + " is empty.")
-        continue
     except NodeError as e:
         ress.append(crash)
     except TestError as e:
         ress.append("\033[0;31m" + test.__name__ + " failed: " + str(e))
-        continue
     except Exception as e:
-        ress.append("\r\n")
         ress.append("\033[0;31m" + test.__name__ + " is invalid.")
-        ress.append(format_exc())
+        ress.append(format_exc().rstrip())
     finally:
         try:
             rpc.quit()
@@ -133,7 +134,8 @@ for test in tests:
             if ress[-1] != crash:
                 ress.append(crash)
 
-        print("-" * shutil.get_terminal_size().columns)
+        print("\033[0;37m" + ("-" * shutil.get_terminal_size().columns))
 
 for res in ress:
     print(res)
+print("\033[0;37m", end="")

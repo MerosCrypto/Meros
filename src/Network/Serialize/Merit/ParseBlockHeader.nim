@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -15,7 +12,6 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 
 #Common serialization functions.
 import ../SerializeCommon
-export BLOCK_HEADER_LEN
 
 #Parse function.
 proc parseBlockHeader*(
@@ -24,31 +20,65 @@ proc parseBlockHeader*(
     ValueError,
     BLSError
 ].} =
-    if headerStr.len != BLOCK_HEADER_LEN:
-        raise newException(ValueError, "parseBlockHeader handed the wrong amount of data.")
-
-    #Nonce | Last Hash | Elements Aggregate Signature | Miners Merkle | Time | Proof
+    #Version | Last | Contents | Significant | Sketch Salt | Sketch Check | New Miner | Miner | Time | Proof | Signature
     var headerSeq: seq[string] = headerStr.deserialize(
         INT_LEN,
         HASH_LEN,
-        BLS_SIGNATURE_LEN,
         HASH_LEN,
+        NICKNAME_LEN,
         INT_LEN,
-        INT_LEN
+        HASH_LEN,
+        BYTE_LEN
+    )
+
+    #Extract the rest of the header.
+    headerSeq = headerSeq & headerStr[
+        BLOCK_HEADER_DATA_LEN ..< headerStr.len
+    ].deserialize(
+        if headerSeq[6] == "\0": NICKNAME_LEN else: BLS_PUBLIC_KEY_LEN,
+        INT_LEN,
+        INT_LEN,
+        BLS_SIGNATURE_LEN
     )
 
     #Create the BlockHeader.
     try:
-        result = newBlockHeaderObj(
-            headerSeq[0].fromBinary(),
-            headerSeq[1].toArgonHash(),
-            newBLSSignature(headerSeq[2]),
-            headerSeq[3].toBlake384Hash(),
-            uint32(headerSeq[4].fromBinary()),
-            uint32(headerSeq[5].fromBinary())
-        )
-        result.hash = Argon(headerStr.substr(0, headerStr.len - 5), headerSeq[5].pad(8))
+        if headerSeq[6] == "\0":
+            result = newBlockHeaderObj(
+                uint32(headerSeq[0].fromBinary()),
+                headerSeq[1].toArgonHash(),
+                headerSeq[2].toHash(384),
+                uint16(headerSeq[3].fromBinary()),
+                headerSeq[4],
+                headerSeq[5].toHash(384),
+                uint16(headerSeq[7].fromBinary()),
+                uint32(headerSeq[8].fromBinary()),
+                uint32(headerSeq[9].fromBinary()),
+                newBLSSignature(headerSeq[10])
+            )
+        else:
+            result = newBlockHeaderObj(
+                uint32(headerSeq[0].fromBinary()),
+                headerSeq[1].toArgonHash(),
+                headerSeq[2].toHash(384),
+                uint16(headerSeq[3].fromBinary()),
+                headerSeq[4],
+                headerSeq[5].toHash(384),
+                newBLSPublicKey(headerSeq[7]),
+                uint32(headerSeq[8].fromBinary()),
+                uint32(headerSeq[9].fromBinary()),
+                newBLSSignature(headerSeq[10])
+            )
     except ValueError as e:
         fcRaise e
     except BLSError as e:
         fcRaise e
+    hash(
+        result,
+        headerStr[0 ..< (
+                BLOCK_HEADER_DATA_LEN +
+                (if headerSeq[6] == "\0": NICKNAME_LEN else: BLS_PUBLIC_KEY_LEN) +
+                INT_LEN
+            )
+        ]
+    )

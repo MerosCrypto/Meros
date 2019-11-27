@@ -1,6 +1,9 @@
 #Errors lib.
 import ../Errors
 
+#Util lib.
+import ../Util
+
 #Hash master type.
 import HashCommon
 
@@ -12,6 +15,52 @@ type
     Blake2_256Hash* = HashCommon.Hash[256]
     Blake2_384Hash* = HashCommon.Hash[384]
     Blake2_512Hash* = HashCommon.Hash[512]
+
+#C API which is used solely for Blake2b-64.
+const currentFolder: string = currentSourcePath().substr(0, currentSourcePath().len - 11)
+#We don't compile in Blake2b as it's already compiled in elsewhere.
+#{.compile: currentFolder & "Blake2/blake2b-ref.c".}
+
+{.passC: "-I" & currentFolder & "Blake2/"}
+{.push, header: "blake2.h".}
+type Blake2bState {.importc: "blake2b_state".} = object
+proc init(
+    state: ptr Blake2bState,
+    bytes: int
+): cint {.importc: "blake2b_init".}
+proc update(
+    state: ptr Blake2bState,
+    data: pointer,
+    len: int
+): cint {.importc: "blake2b_update".}
+proc finalize(
+    state: ptr Blake2bState,
+    output: pointer,
+    len: int
+): cint {.importc: "blake2b_final".}
+{.pop.}
+
+#Blake 64 hashing algorithm.
+proc Blake2_64*(
+    bytesArg: string
+): uint64 {.forceCheck: [].} =
+    #Copy the bytes argument.
+    var bytes: string = bytesArg
+
+    #Allocate the State.
+    var state: ptr Blake2bState = cast[ptr Blake2bState](alloc0(sizeof(Blake2bState)))
+
+    #Hash the bytes.
+    doAssert(state.init(8) == 0, "Failed to init a Blake2b State.")
+    doAssert(state.update(addr bytes[0], bytes.len) == 0, "Failed to update a Blake2b State.")
+
+    #Save the result.
+    var hash: string = newString(8)
+    doAssert(state.finalize(addr hash[0], 8) == 0, "Failed to finalize a Blake2b State.")
+    result = uint64(hash.fromBinary())
+
+    #Deallocate the state.
+    dealloc(state)
 
 #Blake 256 hashing algorithm.
 proc Blake2_256*(

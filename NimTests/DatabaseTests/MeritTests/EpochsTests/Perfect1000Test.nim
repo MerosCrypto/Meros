@@ -9,14 +9,9 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
-
-#Transactions lib.
-import ../../../../src/Database/Transactions/Transactions
-
-#Consensus lib.
-import ../../../../src/Database/Consensus/Consensus
+#Verification/VerificationPacket libs.
+import ../../../../src/Database/Consensus/Elements/Verification
+import ../../../../src/Database/Consensus/Elements/VerificationPacket
 
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
@@ -29,29 +24,16 @@ import tables
 
 proc test*() =
     var
-        #Functions.
-        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database Function Box.
         db: DB = newTestDatabase()
-        #Consensus.
-        consensus: Consensus = newConsensus(
-            functions,
-            db,
-            Hash[384](),
-            Hash[384]()
-        )
         #Blockchain.
         blockchain: Blockchain = newBlockchain(db, "EPOCH_PERFECT_1000_TEST", 1, "".pad(48).toHash(384))
         #State.
         state: State = newState(db, 100, blockchain.height)
         #Epochs.
-        epochs: Epochs = newEpochs(db, consensus, blockchain)
-        #Transactions.
-        transactions: Transactions = newTransactions(
-            db,
-            consensus,
-            blockchain
-        )
+        epochs: Epochs = newEpochs(blockchain)
+        #New Block.
+        newBlock: Block
 
         #Hash.
         hash: Hash[384] = "".pad(48, char(128)).toHash(384)
@@ -61,78 +43,64 @@ proc test*() =
             newMinerWallet(),
             newMinerWallet()
         ]
-        #SignedVerification object.
+        #SignedVerification.
         verif: SignedVerification
-        #MeritHolderRecords.
-        records: seq[MeritHolderRecord] = @[]
+        #VerificationPacket.
+        packet: SignedVerificationPacket = newSignedVerificationPacketObj(hash)
         #Rewards.
         rewards: seq[Reward]
 
-    #Init the Function Box.
-    functions.init(addr transactions)
-
-    #Register the Transaction.
-    var tx: Transaction = Transaction()
-    tx.hash = hash
-    transactions.transactions[tx.hash] = tx
-    consensus.register(transactions, state, tx, 0)
-
-    for miner in miners:
+    for m in 0 ..< miners.len:
         #Give the miner Merit.
-        state.processBlock(
-            blockchain,
-            newBlankBlock(
-                miners = newMinersObj(@[
-                    newMinerObj(
-                        miner.publicKey,
-                        100
-                    )
-                ])
-            )
-        )
+        blockchain.processBlock(newBlankBlock(miner = miners[m]))
+        state.processBlock(blockchain)
+
+        #Set the miner's nickname.
+        miners[m].nick = uint16(m)
+
+        #If the miner isn't the first, give them more Merit.
+        #This provides the miners with 1, 2, and 2, respectively.
+        #Below, we mine 4 Blocks with a mod 3.
+        #That adds 2, 1, and 1, respectively, balancing everything out.
+        if m != 0:
+            blockchain.processBlock(newBlankBlock(miner = miners[m]))
+            state.processBlock(blockchain)
 
         #Create the Verification.
         verif = newSignedVerificationObj(hash)
-        miner.sign(verif, 0)
+        miners[m].sign(verif)
 
-        #Add the Verification.
-        consensus.add(state, verif)
+        #Add it to the packet.
+        packet.add(verif)
 
-        #Add a MeritHolderRecord.
-        records.add(newMeritHolderRecord(
-            miner.publicKey,
-            0,
-            hash
-        ))
-
-    #Shift on the records.
-    rewards = epochs.shift(consensus, @[], records).calculate(state)
+    #Shift on the packet.
+    rewards = epochs.shift(newBlankBlock(
+        packets = cast[seq[VerificationPacket]](@[packet])
+    )).calculate(state)
     assert(rewards.len == 0)
 
     #Shift 4 over.
-    for _ in 0 ..< 4:
-        rewards = epochs.shift(consensus, @[], @[]).calculate(state)
+    for e in 0 ..< 4:
+        newBlock = newBlankBlock(
+            nick = uint16(e mod 3),
+            miner = miners[e mod 3]
+        )
+        blockchain.processBlock(newBlock)
+        state.processBlock(blockchain)
+
+        rewards = epochs.shift(newBlock).calculate(state)
         assert(rewards.len == 0)
 
-    #Next shift should result in a Rewards of key 0: 334, key 1: 333, and key 2: 333.
-    rewards = epochs.shift(consensus, @[], @[]).calculate(state)
+    #Next shift should result in a Rewards of 0: 334, 1: 333, and 2: 333.
+    rewards = epochs.shift(newBlankBlock()).calculate(state)
 
     #Veirfy the length.
     assert(rewards.len == 3)
 
-    #Verify each key is unique and one of our keys.
+    #Verify each nick is accurate and assigned to the right key.
     for r1 in 0 ..< rewards.len:
-        for r2 in 0 ..< rewards.len:
-            if r1 == r2:
-                continue
-            assert(rewards[r1].key != rewards[r2].key)
-
-        for m in 0 ..< miners.len:
-            if rewards[r1].key == miners[m].publicKey:
-                break
-
-            if m == miners.len - 1:
-                assert(false)
+        assert(rewards[r1].nick == uint16(r1))
+        assert(state.holders[r1] == miners[r1].publicKey)
 
     #Verify the scores.
     assert(rewards[0].score == 334)

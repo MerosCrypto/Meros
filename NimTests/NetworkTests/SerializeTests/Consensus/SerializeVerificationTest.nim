@@ -3,14 +3,11 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
-
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Verification lib.
-import ../../../../src/Database/Consensus/Verification
+#Elements Testing lib.
+import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 
 #Serialization libs.
 import ../../../../src/Network/Serialize/Consensus/SerializeVerification
@@ -27,8 +24,6 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Hash.
-        hash: Hash[384]
         #SignedVerification Element.
         verif: SignedVerification
         #Reloaded Verification Element.
@@ -38,13 +33,8 @@ proc test*() =
 
     #Test 256 serializations.
     for _ in 0 .. 255:
-        for i in 0 ..< 48:
-            hash.data[i] = uint8(rand(255))
-
         #Create the SignedVerification.
-        verif = newSignedVerificationObj(hash)
-        #Sign it.
-        newMinerWallet().sign(verif, rand(high(int32)))
+        verif = newRandomVerification()
 
         #Serialize it and parse it back.
         reloadedV = verif.serialize().parseVerification()

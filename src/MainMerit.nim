@@ -1,26 +1,44 @@
-include MainConsensus
+include MainDatabase
 
 proc mainMerit() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(
             database,
-            consensus,
             params.GENESIS,
             params.BLOCK_TIME,
             params.BLOCK_DIFFICULTY,
-            params.LIVE_MERIT
+            params.DEAD_MERIT
         )
 
-        #Handle requests for the current height.
         functions.merit.getHeight = proc (): int {.inline, forceCheck: [].} =
             merit.blockchain.height
+        functions.merit.getTail = proc (): Hash[384] {.inline, forceCheck: [].} =
+            merit.blockchain.tail.header.hash
 
-        #Handle requests for the current Difficulty.
+        functions.merit.getBlockHashBefore = proc (
+            hash: Hash[384]
+        ): Hash[384] {.forceCheck: [
+            IndexError
+        ].} =
+            try:
+                result = merit.blockchain[hash].header.last
+            except IndexError as e:
+                fcRaise e
+
+            if result == merit.blockchain.genesis:
+                raise newException(IndexError, "Requested the hash of the Block before the genesis.")
+
+        functions.merit.getBlockHashAfter = proc (
+            hash: Hash[384]
+        ): Hash[384] {.forceCheck: [
+            IndexError
+        ].} =
+            discard
+
         functions.merit.getDifficulty = proc (): Difficulty {.inline, forceCheck: [].} =
             merit.blockchain.difficulty
 
-        #Handle requests for a Block.
         functions.merit.getBlockByNonce = proc (
             nonce: int
         ): Block {.forceCheck: [
@@ -41,185 +59,116 @@ proc mainMerit() {.forceCheck: [].} =
             except IndexError as e:
                 fcRaise e
 
+        functions.merit.getPublicKey = proc (
+            nick: uint16
+        ): BLSPublicKey {.forceCheck: [
+            IndexError
+        ].} =
+            if merit.state.holders.len <= int(nick):
+                raise newException(IndexError, "Nickname doesn't exist.")
+            result = merit.state.holders[nick]
+
+        functions.merit.getNickname = proc (
+            key: BLSPublicKey
+        ): uint16 {.forceCheck: [
+            IndexError
+        ].} =
+            try:
+                result = merit.blockchain.miners[key]
+            except KeyError as e:
+                raise newException(IndexError, e.msg)
+
         functions.merit.getTotalMerit = proc (): int {.inline, forceCheck: [].} =
-            merit.state.live
-
-        functions.merit.getLiveMerit = proc (): int {.inline, forceCheck: [].} =
-            merit.state.live
-
+            merit.state.unlocked
+        functions.merit.getUnlockedMerit = proc (): int {.inline, forceCheck: [].} =
+            merit.state.unlocked
         functions.merit.getMerit = proc (
-            key: BLSPublicKey
+            nick: uint16
         ): int {.inline, forceCheck: [].} =
-            merit.state[key]
+            merit.state[nick]
 
-        functions.merit.isLive = proc (
-            key: BLSPublicKey
+        functions.merit.isUnlocked = proc (
+            nick: uint16
         ): bool {.inline, forceCheck: [].} =
             true
 
         #Handle full blocks.
         functions.merit.addBlock = proc (
-            newBlock: Block,
-            syncing: bool = false
+            sketchyBlock: SketchyBlock,
+            sketcherArg: Sketcher,
+            syncing: bool
         ) {.forceCheck: [
             ValueError,
-            IndexError,
-            GapError,
-            DataExists
+            DataMissing
         ], async.} =
             #Print that we're adding the Block.
-            echo "Adding Block ", newBlock.header.nonce, "."
+            echo "Adding Block ", sketchyBlock.data.header.hash, "."
 
-            #Check if we're missing previous Blocks.
-            if newBlock.header.nonce > merit.blockchain.height:
-                #Iterate over the missing Blocks.
-                for nonce in merit.blockchain.height ..< newBlock.header.nonce:
-                    #Get and test the Block.
-                    var missingBlock: Block
-                    try:
-                        missingBlock = await network.requestBlock(consensus, nonce)
-                    except ValueError as e:
-                        fcRaise e
-                    except DataMissing as e:
-                        #Redefine as a GapError since a failure to sync produces a gap.
-                        raise newException(GapError, e.msg)
-                    except ValidityConcern as e:
-                        raise newException(ValueError, e.msg)
-                    except Exception as e:
-                        doAssert(false, "Couldn't request a Block needed before verifying this Block, despite catching all naturally thrown Exceptions: " & e.msg)
-
-                    try:
-                        await functions.merit.addBlock(missingBlock, true)
-                    except ValueError as e:
-                        fcRaise e
-                    except IndexError as e:
-                        fcRaise e
-                    except GapError as e:
-                        raise newException(ValueError, e.msg)
-                    except DataExists as e:
-                        doAssert(false, "Couldn't add a Block in the gap before this Block because DataExists: " & e.msg)
-                    except Exception as e:
-                        doAssert(false, "Couldn't add a Block before this Block, despite catching all naturally thrown Exceptions: " & e.msg)
+            #Construct a sketcher.
+            var sketcher: Sketcher = sketcherArg
+            if sketcher.len == 0:
+                sketcher = newSketcher(
+                functions.merit.getMerit,
+                    functions.consensus.isMalicious,
+                    consensus.getPending().packets
+                )
 
             #Sync this Block.
+            var newBlock: Block
             try:
-                await network.sync(consensus, newBlock)
+                newBlock = await network.sync(
+                    merit.state,
+                    sketchyBlock,
+                    sketcher
+                )
             except ValueError as e:
                 fcRaise e
             except DataMissing as e:
-                raise newException(GapError, e.msg)
-            except ValidityConcern as e:
-                raise newException(ValueError, e.msg)
+                fcRaise e
             except Exception as e:
-                doAssert(false, "Couldn't sync this Block: " & e.msg)
+                doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
 
-            #Verify Record validity (nonce and Merkle).
-            var
-                removed: seq[MeritHolderRecord] = @[]
-                removedIndexes: Table[BLSPublicKey, int] = initTable[BLSPublicKey, int]()
-                notRemoved: seq[MeritHolderRecord] = @[]
-            for record in newBlock.records:
-                #Make sure every MeritHolder has Merit.
-                if merit.state[record.key] == 0:
-                    raise newException(ValueError, "Block archives Elements of a merit-less MeritHolder.")
-
-                #Check if this holder lost their Merit.
-                if consensus.malicious.hasKey(record.key):
-                    try:
-                        var mrArchived: bool = false
-                        for i in 0 ..< consensus.malicious[record.key].len:
-                            if consensus.malicious[record.key][i].merkle == record.merkle:
-                                mrArchived = true
-                                removed.add(record)
-                                removedIndexes[record.key] = i
-                                break
-
-                        if mrArchived:
-                            continue
-                        else:
-                            notRemoved.add(record)
-                    except KeyError as e:
-                        doAssert(false, "Couldn't get a MeritRemoval we know exists: " & e.msg)
-
-                #Grab the MeritHolder.
-                var holder: MeritHolder = consensus[record.key]
-
-                #Verify this isn't archiving archived Elements.
-                if record.nonce <= holder.archived:
-                    raise newException(IndexError, "Block has a MeritHolderRecord which archives archived Elements.")
-
-                #Verify the merkle.
-                var merkle: Hash[384]
-                try:
-                    merkle = holder.calculateMerkle(record.nonce)
-                except IndexError as e:
-                    fcRaise e
-                if merkle != record.merkle:
-                    raise newException(ValueError, "Block has a MeritHolderRecord with a competing Merkle.")
+            #Verify the Elements. Also check who has their Merit removed.
+            var removed: seq[uint16] = @[]
+            for elem in newBlock.body.elements:
+                discard
 
             #Add the Block to the Blockchain.
             try:
                 merit.processBlock(newBlock)
             except ValueError as e:
                 fcRaise e
-            except GapError as e:
-                fcRaise e
-            except DataExists as e:
-                fcRaise e
 
-            #Save every archived MeritRemoval.
+            #Have the Consensus handle every person who suffered a MeritRemoval.
             for removee in removed:
-                try:
-                    consensus.archive(
-                        consensus.malicious[
-                            removee.key
-                        ][
-                            removedIndexes[removee.key]
-                        ]
-                    )
-                except KeyError as e:
-                    doAssert(false, "Couldn't get the MeritRemoval of someone who has one: " & e.msg)
+                consensus.remove(removee)
 
             #Add the Block to the Epochs and State.
-            var epoch: Epoch = merit.postProcessBlock(consensus, removed, newBlock)
+            var epoch: Epoch = merit.postProcessBlock()
 
-            #Delete the Merit of every Malicious MeritHolder.
-            for removee in removed:
-                merit.state.remove(removee.key, newBlock)
-
-            #Archive the Elements mentioned in the Block.
-            consensus.archive(merit.state, merit.epochs.latest, epoch)
+            #Archive the Epochs.
+            consensus.archive(merit.state, newBlock.body.packets, epoch)
 
             #Archive the hashes handled by the popped Epoch.
-            transactions.archive(consensus, epoch)
+            transactions.archive(epoch)
 
             #Calculate the rewards.
             var rewards: seq[Reward] = epoch.calculate(merit.state)
 
             #Create the Mints (which ends up minting a total of 50000 Meri).
-            var ourMint: ref Hash[384]
+            var ourMint: Hash[384]
             for reward in rewards:
-                try:
-                    var mintHash: Hash[384] = transactions.mint(
-                        reward.key,
-                        reward.score * uint64(50)
-                    )
+                var mintHash: Hash[384] = transactions.mint(
+                    reward.nick,
+                    reward.score * uint64(50)
+                )
 
-                    #If we have a miner wallet, check if the mint was to us.
-                    if (config.miner.initiated) and (config.miner.publicKey == reward.key):
-                        ourMint = new(Hash[384])
-                        ourMint[] = mintHash
-                except ValueError as e:
-                    doAssert(false, "Minting a Block Reward failed due to a ValueError: " & e.msg)
-                except IndexError as e:
-                    doAssert(false, "Minting a Block Reward failed due to a IndexError: " & e.msg)
-                except GapError as e:
-                    doAssert(false, "Minting a Block Reward failed due to a GapError: " & e.msg)
-                except EdPublicKeyError as e:
-                    doAssert(false, "Minting a Block Reward failed due to a EdPublicKeyError: " & e.msg)
+                #If we have a miner wallet, check if the mint was to us.
+                if (config.miner.initiated) and (config.miner.nick == reward.nick):
+                    ourMint = mintHash
 
             #Commit the DBs.
-            database.commit(newBlock.nonce)
+            database.commit(merit.blockchain.height)
 
             echo "Successfully added the Block."
 
@@ -231,17 +180,17 @@ proc mainMerit() {.forceCheck: [].} =
                 )
 
                 #If we got a Mint...
-                if not ourMint.isNil:
+                if ourMint != Hash[384]():
                     #Confirm we have a wallet.
                     if wallet.isNil:
-                        echo "We got a Mint with hash ", ourMint[], ", however, we don't have a Wallet to Claim it to."
+                        echo "We got a Mint with hash ", ourMint, ", however, we don't have a Wallet to Claim it to."
                         return
 
                     #Claim the Reward.
                     var claim: Claim
                     try:
                         claim = newClaim(
-                            transactions[ourMint[]].hash,
+                            transactions[ourMint].hash,
                             wallet.publicKey
                         )
                     except ValueError as e:
@@ -264,46 +213,135 @@ proc mainMerit() {.forceCheck: [].} =
                         echo "Already added a Claim for the incoming Mint."
 
         functions.merit.addBlockByHeader = proc (
-            header: BlockHeader
+            header: BlockHeader,
+            syncing: bool
         ) {.forceCheck: [
             ValueError,
-            IndexError,
-            GapError,
-            DataExists
+            DataMissing,
+            DataExists,
+            NotConnected
         ], async.} =
+            #Return if we already have this Block.
+            if merit.blockchain.hasBlock(header.hash):
+                raise newException(DataExists, "Block was already added.")
+
+            #Sync previous Blocks if this header isn't connected.
+            if merit.blockchain.tail.header.hash != header.last:
+                var
+                    increment: int = 32
+                    queue: seq[Hash[384]] = @[header.hash]
+                    #Malformed size used for the first loop iteration.
+                    size: int = queue.len - increment
+                while not merit.blockchain.hasBlock(queue[^1]):
+                    #If we ran out of Blocks, raise.
+                    #The only three cases we run out of Blocks are:
+                    #A) We synced forwards. We didn't.
+                    #B) Their genesis doesn't match our genesis.
+                    #C) Our peer is an idiot.
+                    if queue.len != size + increment:
+                        raise newException(ValueError, "Blockchain has a different genesis.")
+
+                    #Update the size.
+                    size = queue.len
+
+                    #Get the list of Blocks before this Block.
+                    try:
+                        queue &= await network.requestBlockList(false, increment, queue[^1])
+                    except DataMissing as e:
+                        #This should only be raised if:
+                        #A) The requested Block is unknown.
+                        #B) We requested ONLY the Blocks before the genesis.
+                        #The second is impossible as we break once we find a Block we know.
+                        fcRaise e
+                    except Exception as e:
+                        doAssert(false, "requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
+
+                #Remove every Block we have from the queue's tail.
+                var lastRemoved: Hash[384] = merit.blockchain.tail.header.hash
+                for i in countdown(queue.len - 1, 1):
+                    if merit.blockchain.hasBlock(queue[i]):
+                        lastRemoved = queue[i]
+                        queue.del(i)
+
+                #If the last Block on both chains isn't our tail, raise NotConnected.
+                if lastRemoved != merit.blockchain.tail.header.hash:
+                    raise newException(NotConnected, "Blockchain split.")
+
+                #Add every previous Block.
+                for h in countdown(queue.len - 1, 1):
+                    try:
+                        await functions.merit.addBlockByHash(queue[h], true)
+                    except ValueError as e:
+                        fcRaise e
+                    except DataMissing as e:
+                        fcRaise e
+                    except DataExists as e:
+                        fcRaise e
+                    except NotConnected as e:
+                        doAssert(false, "Parent addBlockByHeader didn't detect a Blockchain split: " & e.msg)
+                    except Exception as e:
+                        doAssert(false, "addBlockByHash threw an Exception despite catching all Exceptions: " & e.msg)
+
             try:
                 merit.blockchain.testBlockHeader(header)
             except ValueError as e:
                 fcRaise e
-            except GapError as e:
-                fcRaise e
-            except UncleBlock as e:
-                raise newException(ValueError, e.msg)
-            except DataExists as e:
-                fcRaise e
+            except NotConnected as e:
+                doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
 
-            var body: BlockBody
+            var sketchyBlock: SketchyBlock
             try:
-                body = await network.sync(header)
+                sketchyBlock = newSketchyBlockObj(header, await network.requestBlockBody(header.hash))
             except DataMissing as e:
                 raise newException(ValueError, e.msg)
             except Exception as e:
-                doAssert(false, "addBlockByHeader threw an Exception despite catching all Exceptions: " & e.msg)
+                doAssert(false, "Network.requestBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
 
             try:
-                await functions.merit.addBlock(
-                    newBlockObj(
-                        header,
-                        body
-                    )
-                )
+                await functions.merit.addBlock(sketchyBlock, @[], syncing)
             except ValueError as e:
                 fcRaise e
-            except IndexError as e:
+            except DataMissing as e:
                 fcRaise e
-            except GapError as e:
+            except Exception as e:
+                doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)
+
+        functions.merit.addBlockByHash = proc (
+            hash: Hash[384],
+            syncing: bool
+        ) {.forceCheck: [
+            ValueError,
+            DataMissing,
+            DataExists,
+            NotConnected
+        ], async.} =
+            #Return if we already have this Block.
+            if merit.blockchain.hasBlock(hash):
+                return
+
+            try:
+                await functions.merit.addBlockByHeader(await network.requestBlockHeader(hash), syncing)
+            except ValueError as e:
+                fcRaise e
+            except DataMissing as e:
                 fcRaise e
             except DataExists as e:
                 fcRaise e
+            except NotConnected as e:
+                fcRaise e
             except Exception as e:
-                doAssert(false, "addBlockByHeader threw an Exception despite catching all Exceptions: " & e.msg)
+                doAssert(false, "addBlockByHeader/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)
+
+        #Tests a BlockHeader. Used by the RPC's addBlock method.
+        functions.merit.testBlockHeader = proc (
+            header: BlockHeader
+        ) {.forceCheck: [
+            ValueError,
+            NotConnected
+        ].} =
+            try:
+                merit.blockchain.testBlockHeader(header)
+            except ValueError as e:
+                fcRaise e
+            except NotConnected as e:
+                fcRaise e

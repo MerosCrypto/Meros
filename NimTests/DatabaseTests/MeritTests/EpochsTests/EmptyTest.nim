@@ -6,34 +6,34 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#Blockchain lib.
-import ../../../../src/Database/Merit/Blockchain
+#VerificationPacket lib.
+import ../../../../src/Database/Consensus/Elements/VerificationPacket as VerificationPacketFile
 
-#State lib.
-import ../../../../src/Database/Merit/State
-
-#Epochs lib.
-import ../../../../src/Database/Merit/Epochs
+#Merit lib.
+import ../../../../src/Database/Merit/Merit
 
 #Merit Testing functions.
 import ../TestMerit
 
+#Tables standard lib.
+import tables
+
 proc test*() =
     var
-        #Database Function Box.
-        functions: DB = newTestDatabase()
+        #Database.
+        db: DB = newTestDatabase()
         #Blockchain.
-        blockchain: Blockchain = newBlockchain(functions, "EPOCH_EMPTY_TEST", 1, "".pad(48).toHash(384))
+        blockchain: Blockchain = newBlockchain(db, "EPOCH_EMPTY_TEST", 1, "".pad(48).toHash(384))
         #State.
-        state: State = newState(functions, 1, blockchain.height)
+        state: State = newState(
+            db,
+            5,
+            blockchain.height
+        )
         #Epochs.
-        epochs: Epochs = newEpochs(functions, nil, blockchain)
+        epochs: Epochs = newEpochs(blockchain)
         #Rewards.
-        rewards: seq[Reward] = epochs.shift(
-            nil,
-            @[],
-            @[]
-        ).calculate(state)
+        rewards: seq[Reward] = epochs.shift(newBlankBlock()).calculate(state)
 
     assert(rewards.len == 0)
 

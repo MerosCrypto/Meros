@@ -6,11 +6,11 @@ from typing import Dict, IO, Any
 #Transaction class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Consensus class.
-from PythonTests.Classes.Consensus.Consensus import Consensus
-
 #Blockchain class.
 from PythonTests.Classes.Merit.Blockchain import Blockchain
+
+#TestError Exception.
+from PythonTests.Tests.Errors import TestError
 
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
@@ -34,15 +34,17 @@ def VCompetingTest(
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
-    #Consensus.
-    consensus: Consensus = Consensus.fromJSON(
-        bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-        vectors["consensus"]
-    )
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
+    #Function to verify the right Transaction was confirmed.
+    def verifyConfirmation() -> None:
+        if not rpc.call("consensus", "getStatus", [vectors["verified"]])["verified"]:
+            raise TestError("Didn't verify the Send which should have been verified.")
+
+        if rpc.call("consensus", "getStatus", [vectors["beaten"]])["verified"]:
+            raise TestError("Did verify the Send which should have been beaten.")
+
     #Create and execute a Liver/Syncer.
-    Liver(rpc, blockchain, consensus, transactions).live()
-    Syncer(rpc, blockchain, consensus, transactions).sync()
+    Liver(rpc, blockchain, transactions, callbacks={19: verifyConfirmation}).live()
+    Syncer(rpc, blockchain, transactions).sync()

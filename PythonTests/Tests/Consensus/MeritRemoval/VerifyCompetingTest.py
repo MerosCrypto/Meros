@@ -1,4 +1,4 @@
-#Tests proper handling of a MeritRemoval created from Elements verifying competing Transactions.
+#Tests proper handling of a MeritRemoval created from Verifications verifying competing Transactions.
 
 #EmptyError Exception.
 from PythonTests.Tests.Errors import EmptyError

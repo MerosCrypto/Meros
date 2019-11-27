@@ -5,7 +5,7 @@ import ../../../src/lib/Hash
 import ../../../src/Wallet/Wallet
 import ../../../src/Wallet/MinerWallet
 
-#Various Transaction libs.
+#Transactions lib.
 import ../../../src/Database/Transactions/Transactions
 
 #Tables lib.

@@ -13,29 +13,21 @@ import ../../../objects/GlobalFunctionBoxObj
 #Consensus DB lib.
 import ../../Filesystem/DB/ConsensusDB
 
-#ConsensusIndex object.
-import ../../common/objects/ConsensusIndexObj
-
 #Transaction object.
 import ../../Transactions/Transaction
 
-#Element objects.
-import ElementObj
-import VerificationObj
-import MeritRemovalObj
+#State lib.
+import ../../Merit/State
+
+#Element lib.
+import ../Elements/Element
 
 #TransactionStatus object.
 import TransactionStatusObj
 export TransactionStatusObj
 
-#State lib.
-import ../../Merit/State
-
 #SpamFilter object.
 import SpamFilterObj
-
-#MeritHolder object.
-import MeritHolderObj
 
 #Tables standard lib.
 import tables
@@ -52,26 +44,23 @@ type Consensus* = ref object
 
     #Filters.
     filters*: tuple[send: SpamFilter, data: SpamFilter]
-
-    #BLS Public Key -> MeritHolder.
-    holders: Table[BLSPublicKey, MeritHolder]
-    #BLS Public Key -> MeritRemoval.
-    malicious*: Table[BLSPublicKey, seq[MeritRemoval]]
+    #Nickname -> MeritRemoval(s).
+    malicious*: Table[uint16, seq[MeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
     statuses: Table[Hash[384], TransactionStatus]
-    #Statuses which haven't been mentioned in Epochs.
-    unmentioned*: Table[Hash[384], bool]
     #Statuses which are close to becoming verified.
+    #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
     close*: Table[Hash[384], bool]
 
-    #Verifications of unknown Transactions.
-    unknowns*: Table[Hash[384], seq[BLSPublicKey]]
+    #Transactions which haven't been mentioned in Epochs.
+    unmentioned*: Table[Hash[384], bool]
 
 #Consensus constructor.
 proc newConsensusObj*(
     functions: GlobalFunctionBox,
     db: DB,
+    state: State,
     sendDiff: Hash[384],
     dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
@@ -84,61 +73,81 @@ proc newConsensusObj*(
             send: newSpamFilterObj(sendDiff),
             data: newSpamFilterObj(dataDiff)
         ),
-
-        holders: initTable[BLSPublicKey, MeritHolder](),
-        malicious: initTable[BLSPublicKey, seq[MeritRemoval]](),
+        malicious: initTable[uint16, seq[MeritRemoval]](),
 
         statuses: initTable[Hash[384], TransactionStatus](),
-        unmentioned: initTable[Hash[384], bool](),
         close: initTable[Hash[384], bool](),
 
-        unknowns: initTable[Hash[384], seq[BLSPublicKey]]()
+        unmentioned: initTable[Hash[384], bool]()
     )
 
-    #Load each MeritHolder.
-    var holders: seq[BLSPublicKey] = result.db.loadHolders()
-    for holder in holders:
-        try:
-            result.holders[holder] = newMeritHolderObj(result.db, holder)
-        except BLSError as e:
-            doAssert(false, "Couldn't create a BLS Public Key for a known MeritHolder: " & e.msg)
+    #Load statuses still in Epochs.
+    #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
+    var
+        height: int = functions.merit.getHeight()
+        old: seq[Hash[384]] = @[]
+    try:
+        for i in max(height - 10, 0) ..< height - 5:
+            for packet in functions.merit.getBlockByNonce(i).body.packets:
+                old.add(packet.hash)
 
-    #Load unmentioned statuses.
+        for i in max(height - 5, 0) ..< height:
+            for packet in functions.merit.getBlockByNonce(i).body.packets:
+                try:
+                    result.statuses[packet.hash] = result.db.load(packet.hash)
+                except DBReadError:
+                    doAssert(false, "Transaction archived on the Blockchain doesn't have a status.")
+
+                #If this Transaction is close to being confirmed, add it to close.
+                try:
+                    var merit: int = 0
+                    for holder in result.statuses[packet.hash].holders.keys():
+                        if not result.malicious.hasKey(holder):
+                            merit += state[holder]
+                    if (
+                        (not result.statuses[packet.hash].verified) and
+                        (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 600)
+                    ):
+                        result.close[packet.hash] = true
+                except KeyError as e:
+                    doAssert(false, "Couldn't get a status we just added to the statuses table: " & e.msg)
+    except IndexError as e:
+        doAssert(false, "Couldn't get a Block on the Blockchain: " & e.msg)
+
+    #Delete old Transaction statuses.
+    for oldStatus in old:
+        result.statuses.del(oldStatus)
+        result.close.del(oldStatus)
+
+    #Load unmentioned Transactions.
     var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()
     for hash in unmentioned:
         result.unmentioned[hash] = true
 
-#Creates a new MeritHolder on the Consensus.
-proc add(
+#Get all pending Verification Packets and the aggregate signature.
+proc getPending*(
+    consensus: Consensus
+): tuple[
+    packets: seq[VerificationPacket],
+    aggregate: BLSSignature
+] {.forceCheck: [].} =
+    for status in consensus.statuses.values():
+        if status.pending.holders.len != 0:
+            result.packets.add(status.pending)
+            if result.aggregate.isNil:
+                result.aggregate = status.pending.signature
+            else:
+                try:
+                    result.aggregate = @[result.aggregate, status.pending.signature].aggregate()
+                except BLSError as e:
+                    doAssert(false, "Failed to aggregate BLS signatures: " & e.msg)
+
+#Set a Transaction as unmentioned.
+proc setUnmentioned*(
     consensus: Consensus,
-    holder: BLSPublicKey
+    hash: Hash[384]
 ) {.forceCheck: [].} =
-    #Make sure the holder doesn't already exist.
-    if consensus.holders.hasKey(holder):
-        return
-
-    #Create a new MeritHolder.
-    consensus.holders[holder] = newMeritHolderObj(consensus.db, holder)
-
-    #Add the MeritHolder to the DB.
-    try:
-        consensus.db.save(holder, consensus.holders[holder].archived)
-    except KeyError as e:
-        doAssert(false, "Couldn't get a newly created MeritHolder's archived: " & e.msg)
-
-#Gets a MeritHolder by their key.
-proc `[]`*(
-    consensus: Consensus,
-    holder: BLSPublicKey
-): var MeritHolder {.forceCheck: [].} =
-    #Call add, which will only create a new MeritHolder if one doesn't exist.
-    consensus.add(holder)
-
-    #Return the holder.
-    try:
-        result = consensus.holders[holder]
-    except KeyError as e:
-        doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
+    consensus.unmentioned[hash] = true
 
 #Set a Transaction's status.
 proc setStatus*(
@@ -147,7 +156,6 @@ proc setStatus*(
     status: TransactionStatus
 ) {.forceCheck: [].} =
     consensus.statuses[hash] = status
-    consensus.unmentioned[hash] = true
     consensus.db.save(hash, status)
 
 #Get a Transaction's statuses.
@@ -190,20 +198,20 @@ proc incEpoch*(
 #Calculate a Transaction's Merit.
 proc calculateMeritSingle(
     consensus: Consensus,
-    state: var State,
+    state: State,
     tx: Transaction,
     status: TransactionStatus
 ) {.forceCheck: [].} =
     #If the Transaction is already verified, or it needs to default, return.
-    if status.verified or status.defaulting:
+    if status.verified or status.competing:
         return
 
     #Calculate Merit.
     var merit: int = 0
-    for verifier in status.verifiers:
+    for holder in status.holders.keys():
         #Skip malicious MeritHolders from Merit calculations.
-        if not consensus.malicious.hasKey(verifier):
-            merit += state[verifier]
+        if not consensus.malicious.hasKey(holder):
+            merit += state[holder]
 
     #Check if the Transaction crossed its threshold.
     if merit >= state.nodeThresholdAt(status.epoch):
@@ -233,7 +241,7 @@ proc calculateMeritSingle(
 #Calculate a Transaction's Merit. If it's verified, also check every descendant
 proc calculateMerit*(
     consensus: Consensus,
-    state: var State,
+    state: State,
     hash: Hash[384],
     statusArg: TransactionStatus
 ) {.forceCheck: [].} =
@@ -269,42 +277,10 @@ proc calculateMerit*(
             except IndexError as e:
                 doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
-#Update a Status with a new verifier.
-proc update*(
-    consensus: Consensus,
-    state: var State,
-    hash: Hash[384],
-    verifier: BLSPublicKey
-) {.forceCheck: [].} =
-    #Grab the status.
-    var status: TransactionStatus
-    try:
-        status = consensus.getStatus(hash)
-    except IndexError:
-        doAssert(false, "Transaction was not registered.")
-
-    #Don't change the status of finalized Transactions.
-    if status.merit != -1:
-        return
-
-    #Make sure this isn't a duplicate.
-    for existing in status.verifiers:
-        if existing == verifier:
-            return
-
-    #Add the Verifier.
-    status.verifiers.add(verifier)
-
-    #Calculate Merit.
-    consensus.calculateMerit(state, hash, status)
-
-    #Save the status.
-    consensus.db.save(hash, status)
-
 #Unverify a Transaction.
 proc unverify*(
     consensus: Consensus,
-    state: var State,
+    state: State,
     hash: Hash[384],
     status: TransactionStatus
 ) {.forceCheck: [].} =
@@ -345,8 +321,9 @@ proc unverify*(
 #Finalize a TransactionStatus.
 proc finalize*(
     consensus: Consensus,
-    state: var State,
-    hash: Hash[384]
+    state: State,
+    hash: Hash[384],
+    holders: seq[uint16]
 ) {.forceCheck: [].} =
     #Get the Transaction/Status.
     var
@@ -359,23 +336,13 @@ proc finalize*(
         doAssert(false, "Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
 
     #Calculate the final Merit tally.
+    var added: Table[uint16, bool] = initTable[uint16, bool]()
     status.merit = 0
-    for verifier in status.verifiers:
-        #Ignore Verifiers who didn't get their Verifications archived.
-        var skip: bool = false
-        try:
-            for e in consensus[verifier].archived + 1 ..< consensus[verifier].height:
-                if consensus[verifier][e] of Verification:
-                    if cast[Verification](consensus[verifier][e]).hash == hash:
-                        skip = true
-                        break
-        except IndexError as e:
-            doAssert(false, "Couldn't get an Element despite iterating from .archived + 1 ..< .height: " & e.msg)
-        if skip:
-            continue
-
+    for holder in holders:
         #Add the Merit.
-        status.merit += state[verifier]
+        status.merit += state[holder]
+        #Mark the holder as added.
+        added[holder] = true
 
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
@@ -418,37 +385,9 @@ proc finalize*(
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
 
-#Gets a Element by its Index.
-proc `[]`*(
-    consensus: Consensus,
-    index: ConsensusIndex
-): Element {.forceCheck: [
-    IndexError
-].} =
-    #Check the nonce isn't out of bounds.
-    if consensus[index.key].height <= index.nonce:
-        raise newException(IndexError, "MeritHolder doesn't have an Element for that nonce.")
-
-    try:
-        result = consensus.holders[index.key][index.nonce]
-    except KeyError as e:
-        doAssert(false, "Couldn't grab a MeritHolder despite just calling `add` for that MeritHolder: " & e.msg)
-    except IndexError as e:
-        fcRaise e
-
-#Iterate over every MeritHolder.
-iterator holders*(
-    consensus: Consensus
-): BLSPublicKey {.forceCheck: [].} =
-    for holder in consensus.holders.keys():
-        try:
-            yield consensus.holders[holder].key
-        except KeyError as e:
-            doAssert(false, "Couldn't grab a MeritHolder despite only asking for it because of the keys iterator: " & e.msg)
-
-#Iterate over every status.
-iterator statuses*(
-    consensus: Consensus
-): Hash[384] {.forceCheck: [].} =
-    for status in consensus.statuses.keys():
-        yield status
+#Provide debug access to the statuses table
+when defined(merosTests):
+    func statuses*(
+        consensus: Consensus
+    ): Table[Hash[384], TransactionStatus] {.inline, forceCheck: [].} =
+        consensus.statuses

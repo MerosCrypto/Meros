@@ -1,9 +1,9 @@
-discard """
+#[
 This is a replacement for the previously used EventEmitters (mc_events).
 It's type safe, and serves the same purpose, yet provides an even better API.
 That said, we lose the library format, and instead have this.
 This is annoying, but we no longer have to specify the type when we call events, so we break even.
-"""
+]#
 
 #Errors lib.
 import ../lib/Errors
@@ -11,16 +11,16 @@ import ../lib/Errors
 #Hash lib.
 import ../lib/Hash
 
+#Sketcher lib.
+import ../lib/Sketcher
+
 #MinerWallet and Wallet libs.
 import ../Wallet/MinerWallet
 import ../Wallet/Wallet
 
-#MeritHolderRecord object.
-import ../Database/common/objects/MeritHolderRecordObj
-
 #Element lib and TransactionStatus object.
 import ../Database/Consensus/objects/TransactionStatusObj
-import ../Database/Consensus/Element
+import ../Database/Consensus/Elements/Element
 
 #Difficulty, BlockHeader, and Block objects.
 import ../Database/Merit/objects/DifficultyObj
@@ -33,8 +33,9 @@ import ../Database/Transactions/objects/ClaimObj
 import ../Database/Transactions/objects/SendObj
 import ../Database/Transactions/objects/DataObj
 
-#Message object.
+#Message and SketchyBlock objects.
 import ../Network/objects/MessageObj
+import ../Network/objects/SketchyBlockObj
 
 #Async lib.
 import asyncdispatch
@@ -92,24 +93,8 @@ type
         getDataDifficulty*: proc (): Hash[384] {.inline, raises: [].}
 
         isMalicious*: proc (
-            key: BLSPublicKey,
+            nick: uint16,
         ): bool {.inline, raises: [].}
-
-        getHeight*: proc (
-            key: BLSPublicKey
-        ): int {.raises: [].}
-
-        getElement*: proc (
-            key: BLSPublicKey,
-            nonce: int
-        ): Element {.raises: [
-            IndexError
-        ].}
-
-        getUnarchivedRecords*: proc (): tuple[
-            records: seq[MeritHolderRecord],
-            aggregate: BLSSignature
-        ] {.raises: [].}
 
         getStatus*: proc (
             hash: Hash[384]
@@ -121,24 +106,20 @@ type
             epoch: int
         ): int {.inline, raises: [].}
 
-        addVerification*: proc (
-            verif: Verification
-        ) {.raises: [
-            ValueError
-        ].}
+        getPending*: proc (): tuple[
+            packets: seq[VerificationPacket],
+            aggregate: BLSSignature
+        ] {.inline, raises: [].}
+
+        addVerificationPacket*: proc (
+            packet: VerificationPacket
+        ) {.raises: [].}
 
         addSignedVerification*: proc (
             verif: SignedVerification
         ) {.raises: [
             ValueError,
-            GapError,
             DataExists
-        ].}
-
-        addMeritRemoval*: proc (
-            mr: MeritRemoval
-        ) {.raises: [
-            ValueError
         ].}
 
         addSignedMeritRemoval*: proc (
@@ -149,6 +130,19 @@ type
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}
+        getTail*: proc (): Hash[384] {.inline, raises: [].}
+
+        getBlockHashBefore*: proc (
+            hash: Hash[384]
+        ): Hash[384] {.raises: [
+            IndexError
+        ].}
+
+        getBlockHashAfter*: proc (
+            hash: Hash[384]
+        ): Hash[384] {.raises: [
+            IndexError
+        ].}
 
         getDifficulty*: proc (): Difficulty {.inline, raises: [].}
 
@@ -164,26 +158,50 @@ type
             IndexError
         ].}
 
-        getTotalMerit*: proc (): int {.inline, raises: [].}
+        getPublicKey*: proc (
+            nick: uint16
+        ): BLSPublicKey {.raises: [
+            IndexError
+        ].}
 
-        getLiveMerit*: proc (): int {.inline, raises: [].}
-
-        getMerit*: proc (
+        getNickname*: proc (
             key: BLSPublicKey
+        ): uint16 {.raises: [
+            IndexError
+        ].}
+
+        getTotalMerit*: proc (): int {.inline, raises: [].}
+        getUnlockedMerit*: proc (): int {.inline, raises: [].}
+        getMerit*: proc (
+            nick: uint16
         ): int {.inline, raises: [].}
 
-        isLive*: proc (
-            key: BLSPublicKey,
+        isUnlocked*: proc (
+            nick: uint16
         ): bool {.inline, raises: [].}
 
         addBlock*: proc (
-            newBlock: Block,
-            syncing: bool = false
+            newBlock: SketchyBlock,
+            sketcher: Sketcher,
+            syncing: bool
         ): Future[void]
 
         addBlockByHeader*: proc (
-            header: BlockHeader
+            header: BlockHeader,
+            syncing: bool
         ): Future[void]
+
+        addBlockByHash*: proc (
+            hash: Hash[384],
+            syncing: bool
+        ): Future[void]
+
+        testBlockHeader*: proc (
+            header: BlockHeader
+        ) {.raises: [
+            ValueError,
+            NotConnected
+        ].}
 
     PersonalFunctionBox* = ref object
         getWallet*: proc (): Wallet {.inline, raises: [].}

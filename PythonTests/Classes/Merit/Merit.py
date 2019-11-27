@@ -1,12 +1,8 @@
 #Types.
 from typing import Dict, List, Any
 
-#Transactions classes.
+#Mint class.
 from PythonTests.Classes.Transactions.Mint import Mint
-from PythonTests.Classes.Transactions.Transactions import Transactions
-
-#Consensus class.
-from PythonTests.Classes.Consensus.Consensus import Consensus
 
 #Block, Blockchain, State, and Epochs classes.
 from PythonTests.Classes.Merit.Block import Block
@@ -36,21 +32,18 @@ class Merit:
     #Add block.
     def add(
         self,
-        transactions: Transactions,
-        consensus: Consensus,
         block: Block
     ) -> List[Mint]:
         self.blockchain.add(block)
 
-        result: List[Mint] = self.epochs.add(
-            transactions,
-            consensus,
+        result: List[Mint] = self.epochs.shift(
             self.state,
-            block
+            self.blockchain,
+            len(self.blockchain.blocks) - 1
         )
         self.mints += result
 
-        self.state.add(self.blockchain, block)
+        self.state.add(self.blockchain, len(self.blockchain.blocks) - 1)
         return result
 
     #Merit -> JSON.
@@ -66,11 +59,9 @@ class Merit:
         blockTime: int,
         startDifficulty: int,
         lifetime: int,
-        transactions: Transactions,
-        consensus: Consensus,
         json: List[Dict[str, Any]]
     ) -> Any:
-        result: Merit = Merit(bytes(), 0, 0, 0)
+        result: Merit = Merit.__new__(Merit)
 
         result.blockchain = Blockchain.fromJSON(
             genesis,
@@ -80,15 +71,14 @@ class Merit:
         )
         result.state = State(lifetime)
         result.epochs = Epochs()
+        result.mints = []
 
         for b in range(1, len(result.blockchain.blocks)):
-            mints: List[Mint] = result.epochs.add(
-                transactions,
-                consensus,
+            result.mints += result.epochs.shift(
                 result.state,
-                result.blockchain.blocks[b]
+                result.blockchain,
+                b
             )
-            result.mints += mints
 
-            result.state.add(result.blockchain, result.blockchain.blocks[b])
+            result.state.add(result.blockchain, b)
         return result

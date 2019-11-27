@@ -45,7 +45,7 @@ proc test*() =
         for m in 0 ..< mints.len:
             mints[m] = newMint(
                 uint32(rand(high(int32))),
-                newMinerWallet().publicKey,
+                uint16(rand(high(int16))),
                 uint64(rand(high(int32)))
             ).hash
 

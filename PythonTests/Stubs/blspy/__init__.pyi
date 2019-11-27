@@ -39,6 +39,12 @@ class AggregationInfo:
     ) -> AggregationInfo:
         ...
 
+    @staticmethod
+    def merge_infos(
+        infos: List[AggregationInfo]
+    ) -> AggregationInfo:
+        ...
+
 class Signature:
     @staticmethod
     def from_bytes(

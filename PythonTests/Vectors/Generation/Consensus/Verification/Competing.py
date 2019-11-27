@@ -1,14 +1,17 @@
 #Types.
-from typing import IO, Dict, Any
+from typing import IO, Dict, List, Any
 
 #Transactions classes.
 from PythonTests.Classes.Transactions.Claim import Claim
 from PythonTests.Classes.Transactions.Send import Send
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Consensus classes.
-from PythonTests.Classes.Consensus.Verification import Verification, SignedVerification
-from PythonTests.Classes.Consensus.Consensus import Consensus
+#SpamFilter class.
+from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
+
+#Verification classes.
+from PythonTests.Classes.Consensus.Verification import SignedVerification
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -32,12 +35,6 @@ cmFile: IO[Any] = open("PythonTests/Vectors/Transactions/ClaimedMint.json", "r")
 cmVectors: Dict[str, Any] = json.loads(cmFile.read())
 #Transactions.
 transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
-#Consensus.
-consensus: Consensus = Consensus.fromJSON(
-    bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-    bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-    cmVectors["consensus"]
-)
 #Blockchain.
 blockchain: Blockchain = Blockchain.fromJSON(
     b"MEROS_DEVELOPER_NETWORK",
@@ -47,92 +44,120 @@ blockchain: Blockchain = Blockchain.fromJSON(
 )
 cmFile.close()
 
+#Spam Filter.
+sendFilter: SpamFilter = SpamFilter(
+    bytes.fromhex(
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    )
+)
+
 #Ed25519 keys.
-edPrivKey1: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
-edPubKey1: ed25519.VerifyingKey = edPrivKey1.get_verifying_key()
-edPubKey2: ed25519.VerifyingKey = ed25519.SigningKey(b'\1' * 32).get_verifying_key()
+edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
+edPubKeys: List[ed25519.VerifyingKey] = [
+    edPrivKey.get_verifying_key(),
+    ed25519.SigningKey(b'\1' * 32).get_verifying_key()
+]
 
 #BLS keys.
-blsPrivKey1: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
-blsPubKey1: blspy.PublicKey = blsPrivKey1.get_public_key()
-blsPrivKey2: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\1')
-blsPubKey2: blspy.PublicKey = blsPrivKey2.get_public_key()
+blsPrivKeys: List[blspy.PrivateKey] = [
+    blspy.PrivateKey.from_seed(b'\0'),
+    blspy.PrivateKey.from_seed(b'\1')
+]
+blsPubKeys: List[blspy.PublicKey] = [
+    blsPrivKeys[0].get_public_key(),
+    blsPrivKeys[1].get_public_key()
+]
+
+#Grab the claim hash.
+claim: bytes = blockchain.blocks[-1].body.packets[0].hash
 
 #Give the second key pair Merit.
 block: Block = Block(
-    BlockHeader(13, blockchain.last(), int(time())),
-    BlockBody([], [(blsPubKey2, 100)])
+    BlockHeader(
+        0,
+        blockchain.last(),
+        bytes(48),
+        1,
+        bytes(4),
+        bytes(48),
+        blsPubKeys[1].serialize(),
+        int(time())
+    ),
+    BlockBody([], [], bytes(96))
 )
-block.mine(blockchain.difficulty())
-blockchain.add(block)
-print("Generated Competing Block " + str(block.header.nonce) + ".")
 
-#Grab the claim hash.
-claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()][1]).hash
+#Mine it.
+block.mine(blsPrivKeys[1], blockchain.difficulty())
+
+#Add it.
+blockchain.add(block)
+print("Generated Competing Block " + str(len(blockchain.blocks)) + ".")
 
 #Create two competing Sends.
-send1: Send = Send(
-    [(claim, 0)],
-    [(
-        edPubKey1.to_bytes(),
-        Claim.fromTransaction(transactions.txs[claim]).amount
-    )]
-)
-send1.sign(edPrivKey1)
-send1.beat(consensus.sendFilter)
-send1.verified = True
-transactions.add(send1)
+packets: List[VerificationPacket] = []
+toAggregate: List[blspy.Signature] = []
+verif: SignedVerification
+for i in range(2):
+    send: Send = Send(
+        [(claim, 0)],
+        [(
+            edPubKeys[i].to_bytes(),
+            Claim.fromTransaction(transactions.txs[claim]).amount
+        )]
+    )
+    send.sign(edPrivKey)
+    send.beat(sendFilter)
+    transactions.add(send)
 
-send2: Send = Send(
-    [(claim, 0)],
-    [(
-        edPubKey2.to_bytes(),
-        Claim.fromTransaction(transactions.txs[claim]).amount
-    )]
-)
-send2.sign(edPrivKey1)
-send2.beat(consensus.sendFilter)
-transactions.add(send2)
+    packets.append(VerificationPacket(send.hash, [i]))
 
-#Verify the 1st Send with the 1st key.
-verif = SignedVerification(send1.hash)
-verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
-consensus.add(verif)
+    verif = SignedVerification(send.hash)
+    verif.sign(i, blsPrivKeys[i])
+    toAggregate.append(verif.blsSignature)
 
-#Verify the 2nd Send with the 2nd key.
-verif = SignedVerification(send2.hash)
-verif.sign(blsPrivKey2, 0)
-consensus.add(verif)
-
-#Archive the Elements and close the Epoch.
+#Archive the Packets and close the Epoch.
 block = Block(
     BlockHeader(
-        14,
+        0,
         blockchain.last(),
-        int(time()),
-        consensus.getAggregate([(blsPubKey1, 2, -1), (blsPubKey2, 0, -1)])
+        BlockHeader.createContents(packets),
+        1,
+        bytes(4),
+        BlockHeader.createSketchCheck(bytes(4), packets),
+        0,
+        int(time())
     ),
-    BlockBody([
-        (blsPubKey1, 2, consensus.getMerkle(blsPubKey1, 2)),
-        (blsPubKey2, 0, consensus.getMerkle(blsPubKey2, 0))
-    ])
+    BlockBody(packets, [], blspy.Signature.aggregate(toAggregate).serialize())
 )
-for i in range(15, 21):
+for _ in range(6):
     #Mine it.
-    block.mine(blockchain.difficulty())
+    block.mine(blsPrivKeys[0], blockchain.difficulty())
 
     #Add it.
     blockchain.add(block)
-    print("Generated Competing Block " + str(block.header.nonce) + ".")
+    print("Generated Competing Block " + str(len(blockchain.blocks)) + ".")
 
     #Create the next Block.
-    block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
+    block = Block(
+        BlockHeader(
+            0,
+            blockchain.last(),
+            bytes(48),
+            1,
+            bytes(4),
+            bytes(48),
+            0,
+            int(time())
+        ),
+        BlockBody()
+    )
 
 #Save the appended data (3 Blocks and 12 Sends).
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON(),
     "transactions": transactions.toJSON(),
-    "consensus":  consensus.toJSON()
+    "verified": packets[0].hash.hex().upper(),
+    "beaten": packets[1].hash.hex().upper()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Verification/Competing.json", "w")
 vectors.write(json.dumps(result))

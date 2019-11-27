@@ -16,9 +16,6 @@ import ../../../../../../src/Database/Filesystem/DB/Serialize/Merit/ParseDifficu
 #Compare Merit lib.
 import ../../../../MeritTests/CompareMerit
 
-#StInt.
-import StInt
-
 #Random standard lib.
 import random
 
@@ -37,7 +34,7 @@ proc test*() =
     #Test 255 serializations.
     for s in 0 .. 255:
         #Randomize the value.
-        value = "".pad(16)
+        value = ""
         for _ in 0 ..< 48:
             value &= char(rand(255))
 
@@ -45,7 +42,7 @@ proc test*() =
         difficulty = newDifficultyObj(
             rand(high(int32)),
             rand(high(int32)),
-            value.toHex().parse(StUint[512], 16)
+            value.toHash(384)
         )
 
         #Serialize it and parse it back.

@@ -4,9 +4,8 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#Wallet libs.
+#Wallet lib.
 import ../../../Wallet/Wallet
-import ../../../Wallet/MinerWallet
 
 #Finals lib.
 import finals
@@ -23,9 +22,9 @@ finalsd:
         #Transaction output types.
         Output* = ref object of RootObj
             amount* {.final.}: uint64
-        #MintOutput, which sends to a BLSPublicKey.
+        #MintOutput, which sends to a MeritHolder nickname.
         MintOutput* = ref object of Output
-            key* {.final.}: BLSPublicKey
+            key* {.final.}: uint16
         #SendOutput, which sends to an EdPublicKey. This also used by Claim.
         SendOutput* = ref object of Output
             key* {.final.}: EdPublicKey
@@ -68,7 +67,7 @@ func newOutput*(
     result.ffinalizeAmount()
 
 func newMintOutput*(
-    key: BLSPublicKey,
+    key: uint16,
     amount: uint64
 ): MintOutput {.inline, forceCheck: [].} =
     result = MintOutput(

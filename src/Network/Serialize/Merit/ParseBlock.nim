@@ -1,19 +1,11 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
-#MeritHolderRecord object.
-import ../../../Database/common/objects/MeritHolderRecordObj
-
-#Miners and BlockBody objects.
-import ../../../Database/Merit/objects/MinersObj
-import ../../../Database/Merit/objects/BlockBodyObj
-
-#BlockHeader and Block libs.
+#BlockHeader lib.
 import ../../../Database/Merit/BlockHeader
-import ../../../Database/Merit/Block
+
+#SketchyBlock object.
+import ../../objects/SketchyBlockObj
 
 #Deserialize/parse functions.
 import ../SerializeCommon
@@ -23,24 +15,29 @@ import ParseBlockBody
 #Parse a Block.
 proc parseBlock*(
     blockStr: string
-): Block {.forceCheck: [
+): SketchyBlock {.forceCheck: [
     ValueError,
     BLSError
 ].} =
     #Header | Body
     var
         header: BlockHeader
-        body: BlockBody
+        body: SketchyBlockBody
+
     try:
-        header = blockStr.substr(0, BLOCK_HEADER_LEN - 1).parseBlockHeader()
-        body = blockStr.substr(BLOCK_HEADER_LEN).parseBlockBody()
+        header = blockStr.parseBlockHeader()
+        body = blockStr.substr(
+            BLOCK_HEADER_DATA_LEN +
+            (if header.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
+            INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
+        ).parseBlockBody()
     except ValueError as e:
         fcRaise e
     except BLSError as e:
         fcRaise e
 
-    #Create the Block Object.
-    result = newBlockObj(
+    #Create the SketchyBlock.
+    result = newSketchyBlockObj(
         header,
         body
     )

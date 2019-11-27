@@ -13,7 +13,7 @@ proc test*() =
     assert("\0\0\0\0".fromBinary() == 0)
 
     #Test char fromBinary behaves the same as string fromBinary.
-    for i in 0 .. 2555:
+    for i in 0 .. 255:
         assert(char(i).fromBinary() == ($char(i)).fromBinary())
 
     #Get the maximum value for each bit size.

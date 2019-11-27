@@ -1,5 +1,5 @@
-#Errors lib.
-import ../lib/Errors
+#Errors objects.
+import ../lib/objects/ErrorsObjs
 
 #Util lib.
 import ../lib/Util
@@ -22,6 +22,8 @@ finalsd:
         privateKey* {.final.}: BLSPrivateKey
         #Public Key.
         publicKey* {.final.}: BLSPublicKey
+        #Nickname.
+        nick* {.final.}: uint16
 
 #Constructors.
 proc newMinerWallet*(

@@ -1,5 +1,5 @@
-#Errors lib.
-import Errors
+#Errors objects.
+import objects/ErrorsObjs
 
 #Times standard lib.
 import times

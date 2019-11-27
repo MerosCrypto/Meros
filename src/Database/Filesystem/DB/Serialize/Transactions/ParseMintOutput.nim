@@ -4,9 +4,6 @@ import ../../../../../lib/Errors
 #Util lib.
 import ../../../../../lib/Util
 
-#MinerWallet lib.
-import ../../../../../Wallet/MinerWallet
-
 #MintOutput object.
 import ../../../..//Transactions/objects/TransactionObj
 
@@ -16,20 +13,15 @@ import ../../../../../Network/Serialize/SerializeCommon
 #Parse function.
 proc parseMintOutput*(
     outputStr: string
-): MintOutput {.forceCheck: [
-    BLSError
-].} =
+): MintOutput {.forceCheck: [].} =
     #Key | Amount
     var outputSeq: seq[string] = outputStr.deserialize(
-        BLS_PUBLIC_KEY_LEN,
+        NICKNAME_LEN,
         MEROS_LEN
     )
 
     #Create the MintOutput.
-    try:
-        result = newMintOutput(
-            newBLSPublicKey(outputSeq[0]),
-            uint64(outputSeq[1].fromBinary())
-        )
-    except BLSError as e:
-        fcRaise e
+    result = newMintOutput(
+        uint16(outputSeq[0].fromBinary()),
+        uint64(outputSeq[1].fromBinary())
+    )

@@ -1,14 +1,11 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
 #MeritRemoval object.
-import ../../../Database/Consensus/objects/MeritRemovalObj
+import ../../../Database/Consensus/Elements/objects/MeritRemovalObj
 
 #Common serialization functions.
 import ../SerializeCommon
@@ -24,7 +21,7 @@ import SerializeVerification
 method serialize*(
     mr: MeritRemoval
 ): string {.forceCheck: [].} =
-    result = mr.holder.toString()
+    result = mr.holder.toBinary().pad(NICKNAME_LEN)
 
     if mr.partial:
         result &= "\1"
@@ -32,13 +29,19 @@ method serialize*(
         result &= "\0"
 
     result &=
-        mr.element1.serializeRemoval() &
-        mr.element2.serializeRemoval()
+        mr.element1.serializeWithoutHolder() &
+        mr.element2.serializeWithoutHolder()
+
+#Serialize a MeritRemoval for inclusion in a BlockHeader's contents merkle.
+method serializeContents*(
+    mr: MeritRemoval
+): string {.inline, forceCheck: [].} =
+    char(MERIT_REMOVAL_PREFIX) &
+    mr.serialize()
 
 #Serialize a Signed MeritRemoval.
 method signedSerialize*(
     mr: SignedMeritRemoval
-): string {.forceCheck: [].} =
-    result =
-        mr.serialize() &
-        mr.signature.toString()
+): string {.inline, forceCheck: [].} =
+    mr.serialize() &
+    mr.signature.toString()

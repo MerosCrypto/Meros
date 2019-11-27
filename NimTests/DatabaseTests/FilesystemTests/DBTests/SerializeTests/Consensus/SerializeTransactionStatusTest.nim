@@ -1,4 +1,4 @@
 #Serialize DB Test.
 
 proc test*() =
-    echo "The Database/Filesystem/DB/Serialize/Consensus/Element Test is empty."
+    echo "The Database/Filesystem/DB/Serialize/Consensus/TransactionStatus Test is empty."

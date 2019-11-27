@@ -6,126 +6,119 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
+#Sketcher lib.
+import ../../../../src/lib/Sketcher
+
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
-
-#Miner object.
-import ../../../../src/Database/Merit/objects/MinersObj
-
-#BlockHeader and Block libs.
-import ../../../../src/Database/Merit/BlockHeader
+#Block lib.
 import ../../../../src/Database/Merit/Block
 
-#Serialize lib.
+#SketchyBlockBody object.
+import ../../../../src/Network/objects/SketchyBlockObj
+
+#Serialize/parse lib.
 import ../../../../src/Network/Serialize/Merit/SerializeBlock
 import ../../../../src/Network/Serialize/Merit/ParseBlock
 
-#Compare Merit lib.
+#Elements Testing lib.
+import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
+
+#Test and Compare Merit libs.
+import ../../../DatabaseTests/MeritTests/TestMerit
 import ../../../DatabaseTests/MeritTests/CompareMerit
 
 #Random standard lib.
 import random
 
 proc test*() =
-    #Seed random.
+    #Seed Random via the time.
     randomize(int64(getTime()))
 
     var
-        #Last Block's Hash.
+        #Last hash.
         last: ArgonHash
-        #Miners Hash.
-        minersHash: Blake384Hash
-        #Block Header.
-        header: BlockHeader
-        #Hash.
-        hash: Hash[384]
-        #Records.
-        records: seq[MeritHolderRecord]
-        #Miners.
-        miners: seq[Miner]
-        #Remaining amount of Merit.
-        remaining: int = 100
-        #Amount to pay this miner.
-        amount: int
-        #Block Body.
-        body: BlockBody
+        #Packets.
+        packets: seq[VerificationPacket] = @[]
+        #Elements.
+        elements: seq[BlockElement] = @[]
         #Block.
-        testBlock: Block
+        newBlock: Block
         #Reloaded Block.
-        reloaded: Block
+        reloaded: SketchyBlock
+        #Sketch Result.
+        sketchResult: SketchResult
 
-    #Test 255 serializations.
-    for s in 0 .. 255:
-        #Randomize the hashes.
+    #Test 128 serializations.
+    for s in 0 .. 127:
+        #Randomize the last hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
-            minersHash.data[b] = uint8(rand(255))
 
-        #Create the BlockHeaader.
-        header = newBlockHeader(
-            rand(high(int32)),
-            last,
-            newMinerWallet().sign(rand(high(int32)).toBinary()),
-            minersHash,
-            uint32(rand(high(int32))),
-            uint32(rand(high(int32)))
-        )
+        #Randomize the packets.
+        for _ in 0 ..< rand(300):
+            packets.add(newRandomVerificationPacket())
 
-        #Randomize the records.
-        records = @[]
-        for _ in 0 ..< s:
-            for b in 0 ..< 48:
-                hash.data[b] = uint8(rand(255))
+        #Randomize the elements.
+        for _ in 0 ..< rand(300):
+            elements.add(newRandomBlockElement())
 
-            records.add(
-                newMeritHolderRecord(
-                    newMinerWallet().publicKey,
-                    rand(high(int32)),
-                    hash
+        while true:
+            if s < 64:
+                newBlock = newBlankBlock(
+                    uint32(rand(4096)),
+                    last,
+                    uint16(rand(50000)),
+                    char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                    newMinerWallet(),
+                    packets,
+                    elements,
+                    newMinerWallet().sign($rand(4096)),
+                    uint32(rand(high(int32))),
+                    uint32(rand(high(int32)))
                 )
-            )
+            else:
+                newBlock = newBlankBlock(
+                    uint32(rand(4096)),
+                    last,
+                    uint16(rand(50000)),
+                    char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                    uint16(rand(high(int16))),
+                    newMinerWallet(),
+                    packets,
+                    elements,
+                    newMinerWallet().sign($rand(4096)),
+                    uint32(rand(high(int32))),
+                    uint32(rand(high(int32)))
+                )
 
-        #Randomize the miners.
-        miners = newSeq[Miner](rand(99) + 1)
-        remaining = 100
-        for m in 0 ..< miners.len:
-            #Set the amount to pay the miner.
-            amount = rand(remaining - 1) + 1
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (miners.len - m):
-                amount = 1
-            #But if this is the last account...
-            if m == miners.len - 1:
-                amount = remaining
-
-            #Set the Miner.
-            miners[m] = newMinerObj(
-                newMinerWallet().publicKey,
-                amount
-            )
-
-            #Subtract the amount from remaining.
-            remaining -= amount
-
-        #Create the BlockBody.
-        body = newBlockBodyObj(
-            records,
-            newMinersObj(miners)
-        )
-
-        #Create the Block.
-        testBlock = newBlockObj(header, body)
+            #Verify the sketch doesn't have a collision.
+            if newSketcher(packets).collides(newBlock.header.sketchSalt):
+                continue
+            break
 
         #Serialize it and parse it back.
-        reloaded = testBlock.serialize().parseBlock()
+        reloaded = newBlock.serialize().parseBlock()
+
+        #Create the Sketch and extract its elements.
+        sketchResult = newSketcher(packets).merge(
+            reloaded.sketch,
+            reloaded.capacity,
+            0,
+            reloaded.data.header.sketchSalt
+        )
+        doAssert(sketchResult.missing.len == 0)
+        reloaded.data.body.packets = sketchResult.packets
 
         #Test the serialized versions.
-        assert(testBlock.serialize() == reloaded.serialize())
+        assert(newBlock.serialize() == reloaded.data.serialize())
 
         #Compare the Blocks.
-        compare(testBlock, reloaded)
+        compare(newBlock, reloaded.data)
+
+        #Clear the packets and elements.
+        packets = @[]
+        elements = @[]
 
     echo "Finished the Network/Serialize/Merit/Block Test."

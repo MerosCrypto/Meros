@@ -1,49 +1,47 @@
 #Types.
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Any
 
-#BLS lib.
-import blspy
+#VerificationPacket class.
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
+
+#Minisketch lib.
+from PythonTests.Classes.Merit.Minisketch import Sketch
 
 #BlockBody class.
 class BlockBody:
     #Constructor.
     def __init__(
         self,
-        records: List[Tuple[blspy.PublicKey, int, bytes]] = [],
-        miners: List[Tuple[blspy.PublicKey, int]] = [
-            (blspy.PrivateKey.from_seed(b'\0').get_public_key(), 100)
-        ]
+        packets: List[VerificationPacket] = [],
+        elements: List[None] = [],
+        aggregate: bytes = bytes(96)
     ) -> None:
-        #Since Tuples are immutable, shallow copies are fine.
-        self.records: List[Tuple[blspy.PublicKey, int, bytes]] = list(records)
-        self.miners: List[Tuple[blspy.PublicKey, int]] = list(miners)
+        self.packets: List[VerificationPacket] = list(packets)
+        self.packets.sort(key=lambda packet: packet.hash, reverse=True)
 
-    #Get the serialized miners.
-    def getSerializedMiners(
-        self
-    ) -> List[bytes]:
-        result: List[bytes] = []
-        for miner in self.miners:
-            result.append(miner[0].serialize() + miner[1].to_bytes(1, "big"))
-        return result
+        self.elements: List[None] = list(elements)
+        self.aggregate: bytes = aggregate
 
     #Serialize.
     def serialize(
-        self
+        self,
+        sketchSalt: bytes
     ) -> bytes:
-        result: bytes = len(self.records).to_bytes(4, "big")
-        for record in self.records:
-            result += (
-                record[0].serialize() +
-                record[1].to_bytes(4, "big") +
-                record[2]
-            )
+        capacity: int = len(self.packets) // 5 + 1 if len(self.packets) != 0 else 0
+        sketch: Sketch = Sketch(capacity)
+        for packet in self.packets:
+            sketch.add(sketchSalt, packet)
 
-        result += (
-            len(self.miners).to_bytes(1, "big") +
-            bytes().join(self.getSerializedMiners())
+        result: bytes = (
+            capacity.to_bytes(4, "big") +
+            sketch.serialize() +
+            len(self.elements).to_bytes(4, "big")
         )
 
+        for _ in self.elements:
+            pass
+
+        result += self.aggregate
         return result
 
     #BlockBody -> JSON.
@@ -51,20 +49,17 @@ class BlockBody:
         self
     ) -> Dict[str, Any]:
         result: Dict[str, Any] = {
-            "records": [],
-            "miners": []
+            "transactions": [],
+            "elements": [],
+            "aggregate": self.aggregate.hex().upper()
         }
-        for record in self.records:
-            result["records"].append({
-                "holder": record[0].serialize().hex().upper(),
-                "nonce": record[1],
-                "merkle": record[2].hex().upper()
+
+        for packet in self.packets:
+            result["transactions"].append({
+                "hash": packet.hash.hex().upper(),
+                "holders": sorted(packet.holders)
             })
-        for miner in self.miners:
-            result["miners"].append({
-                "miner": miner[0].serialize().hex().upper(),
-                "amount": miner[1]
-            })
+
         return result
 
     #JSON -> Blockbody.
@@ -72,18 +67,18 @@ class BlockBody:
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        records: List[Tuple[blspy.PublicKey, int, bytes]] = []
-        miners: List[Tuple[blspy.PublicKey, int]] = []
-        for record in json["records"]:
-            records.append((
-                blspy.PublicKey.from_bytes(bytes.fromhex(record["holder"])),
-                record["nonce"],
-                bytes.fromhex(record["merkle"])
-            ))
-        for miner in json["miners"]:
-            miners.append((
-                blspy.PublicKey.from_bytes(bytes.fromhex(miner["miner"])),
-                miner["amount"]
-            ))
+        packets: List[VerificationPacket] = []
+        elements: List[None] = []
 
-        return BlockBody(records, miners)
+        for packet in json["transactions"]:
+            packets.append(
+                VerificationPacket(
+                    bytes.fromhex(packet["hash"]),
+                    packet["holders"]
+                )
+            )
+
+        for _ in json["elements"]:
+            pass
+
+        return BlockBody(packets, elements, bytes.fromhex(json["aggregate"]))

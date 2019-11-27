@@ -1,4 +1,4 @@
-#Run every Test...
+#Run every Test.
 
 import SyntaxTest
 

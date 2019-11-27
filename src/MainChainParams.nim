@@ -19,7 +19,7 @@ type ChainParams = object
     #Target Block Time in seconds.
     BLOCK_TIME: int
     #Blocks before Merit dies.
-    LIVE_MERIT: int
+    DEAD_MERIT: int
 
     #Initial Blockchain Difficulty.
     BLOCK_DIFFICULTY: string

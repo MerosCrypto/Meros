@@ -1,44 +1,75 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
+#Hash lib.
+import ../../../lib/Hash
 
-#MeritHolderRecord object.
-import ../../../Database/common/objects/MeritHolderRecordObj
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
 
-#Miners and BlockBody objects.
-import ../../../Database/Merit/objects/MinersObj
+#Element lib.
+import ../../../Database/Consensus/Elements/Element
+
+#BlockBody object.
 import ../../../Database/Merit/objects/BlockBodyObj
+
+#SketchyBlock object.
+import ../../objects/SketchyBlockObj
 
 #Deserialize/parse functions.
 import ../SerializeCommon
-import ParseRecords
-import ParseMiners
+
+#Parse BlockElement lib.
+import ../Consensus/ParseBlockElement
 
 #Parse a BlockBody.
 proc parseBlockBody*(
     bodyStr: string
-): BlockBody {.forceCheck: [
+): SketchyBlockBody {.forceCheck: [
     ValueError,
     BLSError
 ].} =
-    #Records | Miners
+    #Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
+    result.capacity = bodyStr[0 ..< INT_LEN].fromBinary()
     var
-        recordsLen: int
-        records: seq[MeritHolderRecord]
-        miners: Miners
+        sketchLen: int = result.capacity * SKETCH_HASH_LEN
+        sketchStart: int = INT_LEN
+        elementsStart: int = sketchStart + sketchLen
+
+        pbeResult: tuple[
+            element: BlockElement,
+            len: int
+        ]
+        i: int = elementsStart + INT_LEN
+        elements: seq[BlockElement] = @[]
+
+        aggregate: BLSSignature
+
+    if bodyStr.len < i:
+        raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Sketches/Elements.")
+
+    result.sketch = bodyStr[sketchStart ..< elementsStart]
+
+    for e in 0 ..< bodyStr[elementsStart ..< i].fromBinary():
+        try:
+            pbeResult = bodyStr.parseBlockElement(i)
+        except ValueError as e:
+            fcRaise e
+        except BLSError as e:
+            fcRaise e
+        i += pbeResult.len
+        elements.add(pbeResult.element)
+
+    if bodyStr.len < i + BLS_SIGNATURE_LEN:
+        raise newException(ValueError, "parseBlockBody not handed enough data to get the aggregate signature.")
+
     try:
-        recordsLen = INT_LEN + (bodyStr.substr(0, INT_LEN - 1).fromBinary() * MERIT_HOLDER_RECORD_LEN)
-        records = bodyStr.substr(0, recordsLen).parseRecords()
-        miners = bodyStr.substr(recordsLen).parseMiners()
-    except ValueError as e:
-        fcRaise e
+        aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
     except BLSError as e:
         fcRaise e
 
-    #Create the BlockBody Object
-    result = newBlockBodyObj(
-        records,
-        miners
+    result.data = newBlockBodyObj(
+        @[],
+        elements,
+        aggregate
     )

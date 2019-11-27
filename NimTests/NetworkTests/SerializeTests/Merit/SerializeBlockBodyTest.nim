@@ -6,15 +6,20 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
+#Sketcher lib.
+import ../../../../src/lib/Sketcher
+
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
+#Elements Testing lib.
+import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 
-#Miners and BlockBody objects.
-import ../../../../src/Database/Merit/objects/MinersObj
+#BlockBody object.
 import ../../../../src/Database/Merit/objects/BlockBodyObj
+
+#SketchyBlockBody object.
+import ../../../../src/Network/objects/SketchyBlockObj
 
 #Serialize libs.
 import ../../../../src/Network/Serialize/Merit/SerializeBlockBody
@@ -31,72 +36,65 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Hash.
-        hash: Hash[384]
-        #Records.
-        records: seq[MeritHolderRecord]
-        #Miners.
-        miners: seq[Miner]
-        #Remaining amount of Merit.
-        remaining: int = 100
-        #Amount to pay this miner.
-        amount: int
+        #Sketch salt.
+        sketchSalt: string
+        #Packets.
+        packets: seq[VerificationPacket] = @[]
+        #Elements.
+        elements: seq[BlockElement] = @[]
         #Block Body.
         body: BlockBody
         #Reloaded Block Body.
-        reloaded: BlockBody
+        reloaded: SketchyBlockBody
+        #Sketch Result.
+        sketchResult: SketchResult
 
-    #Test 255 serializations.
-    for s in 0 .. 255:
-        #Randomize the records.
-        records = @[]
-        for _ in 0 ..< s:
-            for b in 0 ..< 48:
-                hash.data[b] = uint8(rand(255))
+    #Test 128 serializations.
+    for s in 0 .. 127:
+        #Randomize the packets.
+        for _ in 0 ..< rand(300):
+            packets.add(newRandomVerificationPacket())
 
-            records.add(
-                newMeritHolderRecord(
-                    newMinerWallet().publicKey,
-                    rand(high(int32)),
-                    hash
-                )
+        #Randomize the elements.
+        for _ in 0 ..< rand(300):
+            elements.add(newRandomBlockElement())
+
+        #Create the BlockBody with a randomized aggregate signature.
+        while true:
+            sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255))
+
+            body = newBlockBodyObj(
+                packets,
+                elements,
+                newMinerWallet().sign($rand(4096))
             )
 
-        #Randomize the miners.
-        miners = newSeq[Miner](rand(99) + 1)
-        remaining = 100
-        for m in 0 ..< miners.len:
-            #Set the amount to pay the miner.
-            amount = rand(remaining - 1) + 1
-            #Make sure everyone gets at least 1 and we don't go over 100.
-            if (remaining - amount) < (miners.len - m):
-                amount = 1
-            #But if this is the last account...
-            if m == miners.len - 1:
-                amount = remaining
-
-            #Set the Miner.
-            miners[m] = newMinerObj(
-                newMinerWallet().publicKey,
-                amount
-            )
-
-            #Subtract the amount from remaining.
-            remaining -= amount
-
-        #Create the BlockBody.
-        body = newBlockBodyObj(
-            records,
-            newMinersObj(miners)
-        )
+            #Verify the sketch doesn't have a collision.
+            if newSketcher(packets).collides(sketchSalt):
+                continue
+            break
 
         #Serialize it and parse it back.
-        reloaded = body.serialize().parseBlockBody()
+        reloaded = body.serialize(sketchSalt).parseBlockBody()
+
+        #Create the Sketch and extract its elements.
+        sketchResult = newSketcher(packets).merge(
+            reloaded.sketch,
+            reloaded.capacity,
+            0,
+            sketchSalt
+        )
+        doAssert(sketchResult.missing.len == 0)
+        reloaded.data.packets = sketchResult.packets
 
         #Test the serialized versions.
-        assert(body.serialize() == reloaded.serialize())
+        assert(body.serialize(sketchSalt) == reloaded.data.serialize(sketchSalt))
 
         #Compare the BlockBodies.
-        compare(body, reloaded)
+        compare(body, reloaded.data)
+
+        #Clear the packets and elements.
+        packets = @[]
+        elements = @[]
 
     echo "Finished the Network/Serialize/Merit/BlockBody Test."

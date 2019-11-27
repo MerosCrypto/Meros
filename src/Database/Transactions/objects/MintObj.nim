@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
 #Transaction object.
 import TransactionObj
 export TransactionObj
@@ -20,7 +17,7 @@ finalsd:
 #Mint constructor.
 func newMintObj*(
     nonce: uint32,
-    key: BLSPublicKey,
+    key: uint16,
     amount: uint64
 ): Mint {.forceCheck: [].} =
     #Create the Mint

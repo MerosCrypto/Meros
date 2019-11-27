@@ -17,34 +17,34 @@ proc compare*(
 ) =
     assert(e1 == e2)
 
-#Compare two MeritHolders to make sure they have the same value.
-proc compare*(
-    mh1: MeritHolder,
-    mh2: MeritHolder
-) =
-    #Test both have the same fields.
-    assert(mh1.key == mh2.key)
-    assert(mh1.archived == mh2.archived)
-    assert(mh1.merkle.hash == mh2.merkle.hash)
-
-    #Test the Elements.
-    for i in 0 .. mh1.archived:
-        compare(mh1[i], mh2[i])
-
-#Compare two Transaction Statuses to make sure they have the samew value.
+#Compare two Transaction Statuses to make sure they have the same values.
 proc compare*(
     ts1: TransactionStatus,
     ts2: TransactionStatus
 ) =
+    #Compare the Transaction's properties.
     assert(ts1.epoch == ts2.epoch)
-    assert(ts1.defaulting == ts2.defaulting)
+    assert(ts1.competing == ts2.competing)
     assert(ts1.verified == ts2.verified)
+    assert(ts1.beaten == ts2.beaten)
 
-    assert(ts1.verifiers.len == ts2.verifiers.len)
-    for v in 0 ..< ts1.verifiers.len:
-        assert(ts1.verifiers[v] == ts2.verifiers[v])
+    #Compare the Transaction's holders.
+    assert(ts1.holders.len == ts2.holders.len)
+    for h in ts1.holders.keys():
+        assert(ts1.holders[h] == ts1.holders[h])
 
-#Compare two Consensuses to make sure they have the same value.
+    #Compare the pending VerificationPackets.
+    compare(ts1.pending, ts2.pending)
+
+    #Compare the pending signatures table.
+    assert(ts1.signatures.len == ts2.signatures.len)
+    for h in ts1.signatures.keys():
+        assert(ts1.signatures[h] == ts1.signatures[h])
+
+    #Compare the merit table.
+    assert(ts1.merit == ts2.merit)
+
+#Compare two Consensuses to make sure they have the same values.
 proc compare*(
     c1: Consensus,
     c2: Consensus
@@ -53,30 +53,21 @@ proc compare*(
     assert(c1.filters.send.difficulty == c2.filters.send.difficulty)
     assert(c1.filters.data.difficulty == c2.filters.data.difficulty)
 
-    #Get the holders.
-    var
-        c1Holders: seq[BLSPublicKey] = @[]
-        c2Holders: seq[BLSPublicKey] = @[]
-    for holder in c1.holders:
-        c1Holders.add(holder)
-    for holder in c2.holders:
-        c2Holders.add(holder)
+    #Compare the malicious table.
+    assert(c1.malicious.len == c2.malicious.len)
+    for nick in c1.malicious.keys():
+        assert(c1.malicious[nick] == c2.malicious[nick])
 
-    #Compare the holders.
-    assert(c1Holders.len == c2Holders.len)
-    for holder in c1Holders:
-        assert(c2Holders.contains(holder))
-        compare(c1[holder], c2[holder])
+    #Compare the statuses table.uses.len)
+    for hash in c1.statuses.keys():
+        compare(c1.statuses[hash], c2.statuses[hash])
 
-    #Compare the statuses.
-    for status in c1.statuses:
-        compare(c1.getStatus(status), c2.getStatus(status))
+    #Compare the close table.
+    assert(c1.close.len == c2.close.len)
+    for hash in c1.close.keys():
+        assert(c2.close.hasKey(hash))
 
-    #Compare the unmentioned.
+    #Compare the unmentioned table.
     assert(c1.unmentioned.len == c2.unmentioned.len)
     for hash in c1.unmentioned.keys():
-        assert(c2.unmentioned.hasKey(hash))
-
-    #Verify the Unknowns.
-    assert(c1.unknowns.len == 0)
-    assert(c2.unknowns.len == 0)
+        assert(c1.unmentioned[hash] == c2.unmentioned[hash])

@@ -4,74 +4,52 @@
 
 Wallet:
 
-- BIP 173-compliant Bech32.
 - OpenCAP support.
 
 Database:
 
-- Assign a local nickname to every key/hash. With nicknames, the first Verification takes up ~52 bytes (hash + nickname), but the next only takes up ~4 (nickname).
+- Assign a local nickname to every hash.
 
 Merit:
 
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
 - Make RandomX the mining algorithm (node should use the light mode).
-- Decide if Block aggregate should be aggregate(MeritHolderAggregates) or aggregate(signatures).
 
 Consensus:
 
-- Save/reload unarchived MeritRemovals.
-- Check if MeritHolders verify conflicting Transactions.
+- When a packet is archived, recreate the pending packet to include everyone who wasn't included.
+
 - SendDifficulty.
 - DataDifficulty.
+- GasPrice.
 
-UI:
+- Same Nonce Merit Removals.
+- Verify Competing Merit Removals.
+
+Interfaces:
 
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
 - Correct `transactions_getMerit` which is different from its "Eventual" definition.
 - Passworded RPC.
 
+- In getBlockTemplate, set the header significance to the minimum significance.
+
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
 Network:
 
-- Sync missing Blocks when we receive a `Block` with a nonce higher than our block height.
-- Sync missing Blocks when we receive a `BlockHeight` with a higher block height than our own.
+- Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
 
-- Syncing currently works by:
-    - Get the hash of the next Block.
-    - Get the BlockHeader.
-    - Get the BlockBody.
-    - Sync all the Elements from the Block.
-    - Sync all the Entries from the Elements.
-    - Add the Block.
-
-	Switching this to:
-
-    - Get the hash of the next Block who's nonce modulus 5 == 0.
-    - Get the Checkpoint.
-    - Sync every BlockHeader in the checkpoint, in reverse order.
-    - For each BlockHeader, in order:
-        - Test the BlockHeader.
-        - Sync the BlockBody.
-        - Sync all the Elements from the Block.
-        - Sync all the Entries from the Elements.
-        - Add the Block.
-    - When there are no more Checkpoints, get the hash of each individual Block...
-
-	Will reduce network traffic and increase security.
-
-- Check requested data is requested data. We don't do this for Block Bodies, and perform a very weak check for Elements (supplement with a signature/record merkle check).
 - Prevent the same client from connecting multiple times.
 - Peer finding.
 - Node karma.
 
 - Multi-client syncing.
-- Sync gaps (if we get data after X, but don't have X, sync X; applies to both the Transactions and Consensus DAGs).
+- Sync gaps (if we get data after X, but don't have X, sync X; applies to the Transactions DAG).
 
-- Handle ValidityConcerns.
 - Don't rebroadcast data to who sent it.
-- Don't rebroadcast Elements below a Merit threshold.
+- Don't handle Verifications below a Merit threshold.
 
 ### Nim Tests:
 
@@ -90,6 +68,7 @@ lib:
 
 - Hash/HashCommon Test.
 
+- Sketcher Test.
 - Logger Test.
 
 Wallet:
@@ -98,7 +77,6 @@ Wallet:
 
 Database/Filesystem/DB/Serialize:
 
-- Consensus/DBSerializeElement Test.
 - Consensus/SerializeTransactionStatus Test.
 - Transactions/SerializeTransaction Test.
 
@@ -113,17 +91,22 @@ Database/Transactions:
 - Mint Test.
 - Claim Test.
 - Send Test.
+- Data Test.
 
 Database/Consensus:
 
+- TransactionStatus Test.
+- Expand the Consensus DB Test to work with more Elements.
+
+Database/Consensus/Elements:
+
 - Element Test.
 - Verification Test.
+- VerificationPacket Test.
 - SendDifficulty Test.
 - DataDifficulty Test.
 - GasPrice Test.
 - MeritRemoval Test.
-- MeritHolder Test.
-- Expand the Consensus DB Test to work with other Elements.
 
 Database/Merit:
 
@@ -138,19 +121,17 @@ Network:
 
 ### Python Tests
 
+- Add Dead Merit/MeritRemovals to the State Value Test.
+
+- MeritRemoval Tests.
 - RPC tests.
-
-- VerifyCompeting Sync test.
-- VerifyCompeting Live test.
-- VerifyCompeting Cause test.
-
-- PendingActionsTest should not have all reverted actions reapplied.
 
 - Test historical and live threshold calculation.
 - Test `TransactionStatus.epoch` is updated as needed.
 - Test Meros only verifies Transactions which have a chance.
 - Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
 - Test children Transactions are properly unverified.
+- Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 
 ### Features:
 
@@ -165,8 +146,6 @@ Network:
 - Remove EdPublicKeyError.
 
 - Swap Chia for Milagro.
-
-- Pass the Blockchain Difficulty to the Block parser to immediately check if work was put into it.
 
 ### Documentation:
 

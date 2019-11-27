@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -24,8 +21,9 @@ export SerializeTransaction
 #Serialization functions.
 method serializeHash*(
     claim: Claim
-): string {.forceCheck: [].} =
-    result = "\1" & claim.signature.toString()
+): string {.inline, forceCheck: [].} =
+    "\1" &
+    claim.signature.toString()
 
 method serialize*(
     claim: Claim

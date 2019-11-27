@@ -7,19 +7,19 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib (for BLSSignature).
+#MinerWallet lib.
 import ../../../Wallet/MinerWallet
+
+#Element lib.
+import ../../Consensus/Elements/Element
 
 #Block Header lib.
 import ../BlockHeader
+export BlockHeader
 
 #Block Body object.
 import BlockBodyObj
 export BlockBodyObj
-
-#MeritHolderRecord and Miners objects.
-import ../../common/objects/MeritHolderRecordObj
-import MinersObj
 
 #Finals lib.
 import finals
@@ -31,64 +31,74 @@ type Block* = object
     #Block Body.
     body*: BlockBody
 
-#Nonce getter.
-proc nonce*(
-    blockArg: Block
-): int {.inline, forceCheck: [].} =
-    blockArg.header.nonce
-
-#Hash getter.
-proc hash*(
-    blockArg: Block
-): Hash[384] {.inline, forceCheck: [].} =
-    blockArg.header.hash
-
-#Records getter.
-proc records*(
-    blockArg: Block
-): seq[MeritHolderRecord] {.inline, forceCheck: [].} =
-    blockArg.body.records
-
-#Miners getter.
-proc miners*(
-    blockArg: Block
-): Miners {.inline, forceCheck: [].} =
-    blockArg.body.miners
-
-#Miners setter.
-proc `miners=`*(
-    blockArg: var Block,
-    miners: Miners
-) {.forceCheck: [].} =
-    blockArg.miners = miners
-    blockArg.header.miners = miners.merkle.hash
-
 #Constructor.
 func newBlockObj*(
-    nonce: int,
+    version: uint32,
     last: ArgonHash,
+    contents: Hash[384],
+    significant: uint16,
+    sketchSalt: string,
+    sketchCheck: Hash[384],
+    miner: BLSPublicKey,
+    packets: seq[VerificationPacket],
+    elements: seq[BlockElement],
     aggregate: BLSSignature,
-    records: seq[MeritHolderRecord],
-    miners: Miners,
     time: uint32 = getTime(),
-    proof: uint32 = 0
-): Block {.forceCheck: [].} =
-    #Create the Block Header.
-    var header: BlockHeader = newBlockHeader(
-        nonce,
-        last,
-        aggregate,
-        miners.merkle.hash,
-        time,
-        proof
+    proof: uint32 = 0,
+    signature: BLSSignature = nil
+): Block {.inline, forceCheck: [].} =
+    Block(
+        header: newBlockHeader(
+            version,
+            last,
+            contents,
+            significant,
+            sketchSalt,
+            sketchCheck,
+            miner,
+            time,
+            proof,
+            signature
+        ),
+        body: newBlockBodyObj(
+            packets,
+            elements,
+            aggregate
+        )
     )
 
-    #Create the Block.
-    result = Block(
-        header: header,
+func newBlockObj*(
+    version: uint32,
+    last: ArgonHash,
+    contents: Hash[384],
+    significant: uint16,
+    sketchSalt: string,
+    sketchCheck: Hash[384],
+    miner: uint16,
+    packets: seq[VerificationPacket],
+    elements: seq[BlockElement],
+    aggregate: BLSSignature,
+    time: uint32 = getTime(),
+    proof: uint32 = 0,
+    signature: BLSSignature = nil
+): Block {.inline, forceCheck: [].} =
+    Block(
+        header: newBlockHeader(
+            version,
+            last,
+            contents,
+            significant,
+            sketchSalt,
+            sketchCheck,
+            miner,
+            time,
+            proof,
+            signature
+        ),
         body: newBlockBodyObj(
-            records,
-            miners
+            packets,
+            elements,
+            aggregate
         )
     )
 

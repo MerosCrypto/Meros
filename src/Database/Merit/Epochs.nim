@@ -1,23 +1,14 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Util lib.
-import ../../lib/Util
-
 #Hash lib.
 import ../../lib/Hash
-
-#MinerWallet lib (for BLSPublicKey's toString).
-import ../../Wallet/MinerWallet
-
-#Consensus lib.
-import ../Consensus/Consensus
 
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
-#MeritHolderRecord object.
-import ../common/objects/MeritHolderRecordObj
+#VerificationPacket object.
+import ../Consensus/Elements/objects/VerificationPacketObj
 
 #Block, Blockcain, and State lib.
 import Block
@@ -37,124 +28,60 @@ import algorithm
 #Tables standard lib.
 import tables
 
-#This shift does four things:
+#This shift does three things:
 # - Adds the newest set of Verifications.
 # - Stores the oldest Epoch to be returned.
 # - Removes the oldest Epoch from Epochs.
-# - Saves the MeritHolderRecords in the Epoch to-be-returned to the Database.
-#If tips is provided, which it is when loading from the DB, those are used instead of holder.archived.
 proc shift*(
     epochs: var Epochs,
-    consensus: Consensus,
-    removals: seq[MeritHolderRecord],
-    records: seq[MeritHolderRecord],
-    tips: TableRef[BLSPublicKey, int] = nil
+    newBlock: Block
 ): Epoch {.forceCheck: [].} =
     var
         #New Epoch for any Verifications belonging to Transactions that aren't in an older Epoch.
-        newEpoch: Epoch = newEpoch(records)
-        #Loop variable of what Element to start with.
-        start: int
-        #Verifications we're handling.
-        elements: seq[Element]
+        newEpoch: Epoch = newEpoch()
+        #Epoch the hash is in.
+        e: int
 
-    #Loop over each record.
-    for record in records:
-        #If this person just lost their Merit, they have no elements.
-        var contains: bool = false
-        for removal in removals:
-            if removal.key == record.key:
-                contains = true
+    #Loop over every packet.
+    for packet in newBlock.body.packets:
+        #Find out what Epoch the hash is in.
+        e = 0
+        while e < 5:
+            if epochs[e].hasKey(packet.hash):
                 break
-        if contains:
-            continue
 
-        #If we were passed tips, use those for the starting point.
-        if not tips.isNil:
-            try:
-                start = tips[record.key]
-            except KeyError as e:
-                doAssert(false, "Reloading Epochs from the DB using invalid tips: " & e.msg)
-        #Else, use the holder's archived.
-        else:
-            start = consensus[record.key].archived
+            #If it's not in any, add the packet to the new Epoch.
+            if e == 4:
+                #Create a seq for the Transaction.
+                newEpoch.register(packet.hash)
 
-        #Grab the Verifs.
-        try:
-            elements = consensus[record.key][start .. record.nonce]
-        #This will be thrown if we access a nonce too high, which shouldn't happen as we check a Block only has valid tips.
-        except IndexError as e:
-            doAssert(false, "An invalid tip was passed to shift: " & e.msg)
+                #Add the packet.
+                newEpoch.add(packet)
 
-        #Iterate over every Verification.
-        for element in elements:
-            if element of Verification:
-                #Try adding this hash to an existing Epoch.
-                try:
-                    epochs.add(cast[Verification](element).hash, element.holder)
-                #If it wasn't in any existing Epoch, add it to the new one.
-                except NotInEpochs:
-                    newEpoch.add(cast[Verification](element).hash, element.holder)
+            #Increment e.
+            inc(e)
 
-        #If we were passed a set of tips, update them.
-        if not tips.isNil:
-            tips[record.key] = record.nonce
+        #If it was in an existing Epoch, add it to said Epoch.
+        if e != 5:
+            epochs[e].add(packet)
 
     #Return the popped Epoch.
-    result = epochs.shift(newEpoch, not tips.isNil)
+    result = epochs.shift(newEpoch)
 
 #Constructor. Below shift as it calls shift.
 proc newEpochs*(
-    db: DB,
-    consensus: Consensus,
     blockchain: Blockchain
 ): Epochs {.forceCheck: [].} =
     #Create the Epochs objects.
-    result = newEpochsObj(db)
+    result = newEpochsObj()
 
-    #Regenerate the Epochs.
-    var
-        #Use the Holders from the State.
-        holders: seq[BLSPublicKey] = db.loadHolders()
-        #Table of every archived tip before the current Epochs.
-        tips: TableRef[BLSPublicKey, int] = newTable[BLSPublicKey, int]()
-
-    #We don't just return in the above except in case an empty holders is saved to the DB.
-    #That should be impossible, as the State, as of right now, only saves the holders once it has some.
-    #That said, if we change how the State operates the DB, it shouldn't break this.
-    if holders.len == 0:
-        return
-
-    #Load each's tip.
-    for holder in holders:
-        try:
-            tips[holder] = db.loadHolderEpoch(holder) + 1
-        except DBReadError:
-            #If this failed, it's because they have Merit but don't have Elements older than 5 blocks.
-            tips[holder] = 0
-
-    #Shift the last 10 blocks. Why?
+    #Regenerate the Epochs. To do this, we shift the last 10 blocks. Why?
     #We want to regenerate the Epochs for the last 5, but we need to regenerate the 5 before that so late elements aren't labelled as first appearances.
-    try:
-        for b in max(blockchain.height - 10, 0) ..< blockchain.height:
-            #See if any MeritHolders lost Merit.
-            var removals: seq[MeritHolderRecord] = @[]
-            for record in blockchain[b].records:
-                try:
-                    if tips[record.key] == record.nonce - 1:
-                        if consensus[record.key][record.nonce] of MeritRemoval:
-                            removals.add(record)
-                except KeyError as e:
-                    doAssert(false, "Either a MeritHolder with no Merit had an Element archived or we couldn't load an Element archived in a Block saved to the disk: " & e.msg)
-
-            discard result.shift(
-                consensus,
-                removals,
-                blockchain[b].records,
-                tips
-            )
-    except IndexError as e:
-        doAssert(false, "Couldn't shift the last blocks of the chain: " & e.msg)
+    for b in max(blockchain.height - 10, 0) ..< blockchain.height:
+        try:
+            discard result.shift(blockchain[b])
+        except IndexError as e:
+            doAssert(false, "Couldn't shift the last 10 Blocks from the chain: " & e.msg)
 
 #Calculate what share each holder deserves of the minted Meros.
 proc calculate*(
@@ -162,39 +89,39 @@ proc calculate*(
     state: var State
 ): seq[Reward] {.forceCheck: [].} =
     #If the epoch is empty, do nothing.
-    if epoch.hashes.len == 0:
+    if epoch.len == 0:
         return @[]
 
     var
         #Total Merit behind an Transaction.
         weight: int
         #Score of a holder.
-        scores: Table[BLSPublicKey, uint64] = initTable[BLSPublicKey, uint64]()
+        scores: Table[uint16, uint64] = initTable[uint16, uint64]()
         #Total score.
         total: uint64
         #Total normalized score.
         normalized: int
 
     #Find out how many Verifications for verified Transactions were created by each Merit Holder.
-    for tx in epoch.hashes.keys():
+    for tx in epoch.keys():
         #Clear the loop variable.
         weight = 0
 
         try:
             #Iterate over every holder who verified a tx.
-            for holder in epoch.hashes[tx]:
+            for holder in epoch[tx]:
                 #Add their Merit to the Transaction's weight.
                 weight += state[holder]
         except KeyError as e:
-            doAssert(false, "Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.hashes.keys(): " & e.msg)
+            doAssert(false, "Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.keys(): " & e.msg)
 
         #Make sure the Transaction was verified.
-        if weight < ((state.live div 2) + 1):
+        if weight < ((state.unlocked div 2) + 1):
             continue
 
         #If it was, increment every verifier's score.
         try:
-            for holder in epoch.hashes[tx]:
+            for holder in epoch[tx]:
                 if not scores.hasKey(holder):
                     scores[holder] = 0
                 scores[holder] += 1
@@ -229,22 +156,15 @@ proc calculate*(
             x: Reward,
             y: Reward
         ): int {.forceCheck: [].} =
-            #Extract the keys.
-            var
-                xKey: string = x.key.toString()
-                yKey: string = y.key.toString()
-
             if x.score > y.score:
                 result = 1
             elif x.score == y.score:
-                for b in 0 ..< xKey.len:
-                    if xKey[b] > yKey[b]:
-                        return 1
-                    elif xKey[b] == yKey[b]:
-                        continue
-                    else:
-                        return -1
-                doAssert(false, "Epochs generated two rewards for the same key.")
+                if x.nick < y.nick:
+                    return 1
+                elif x.nick == y.nick:
+                    doAssert(false, "Epochs generated two rewards for the same nick.")
+                else:
+                    return -1
             else:
                 result = -1
         , SortOrder.Descending

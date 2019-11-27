@@ -1,20 +1,16 @@
 #Types.
-from typing import Dict, List, Tuple
+from typing import Deque, Dict, List, Tuple
 
-#Mint and Transactions classes.
+#Mint class.
 from PythonTests.Classes.Transactions.Mint import Mint
-from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Verification Consensus classes.
-from PythonTests.Classes.Consensus.Verification import Verification
-from PythonTests.Classes.Consensus.Consensus import Consensus
-
-#Block and State classes.
+#Block, Blockchain, and State classes.
 from PythonTests.Classes.Merit.Block import Block
+from PythonTests.Classes.Merit.Blockchain import Blockchain
 from PythonTests.Classes.Merit.State import State
 
-#BLS lib.
-import blspy
+#Deque standard lib.
+from collections import deque
 
 #Epochs class.
 class Epochs:
@@ -22,45 +18,43 @@ class Epochs:
     def __init__(
         self
     ) -> None:
-        self.tips: Dict[bytes, int] = {}
-        self.epochs: List[Dict[bytes, List[bytes]]] = [{}, {}, {}, {}, {}]
+        self.epochs: Deque[Dict[bytes, List[int]]] = deque([{}] * 5)
         self.mint: int = 0
 
     #Turn scores into rewards.
     def reward(
         self,
-        scores: List[Tuple[bytes, int]]
+        scores: List[Tuple[int, int]]
     ) -> List[Mint]:
         result: List[Mint] = []
         for score in scores:
             if score[1] == 0:
-                continue
+                break
 
-            result.append(Mint(
-                self.mint,
-                (blspy.PublicKey.from_bytes(score[0]), score[1] * 50)
-            ))
+            result.append(Mint(self.mint, (score[0], score[1] * 50)))
             self.mint += 1
         return result
 
     #Score an Epoch and generate rewards.
     def score(
         self,
-        transactions: Transactions,
         state: State,
-        epoch: Dict[bytes, List[bytes]]
+        epoch: Dict[bytes, List[int]]
     ) -> List[Mint]:
-        #Grab the verified transactions.
+        #Grab the verified Transactions.
         verified: List[bytes] = []
         for tx in epoch:
-            if transactions.txs[tx].verified:
+            merit: int = 0
+            for holder in epoch[tx]:
+                merit += state.unlocked[holder]
+            if merit >= state.merit // 2 + 1:
                 verified.append(tx)
 
         if not verified:
             return []
 
         #Assign each Merit Holder 1 point per verified transaction.
-        scores: Dict[bytes, int] = {}
+        scores: Dict[int, int] = {}
         for tx in verified:
             for holder in epoch[tx]:
                 if not holder in scores:
@@ -69,14 +63,14 @@ class Epochs:
 
         #Multiply each Merit Holder's score by their weight.
         total: int = 0
-        tupleScores: List[Tuple[bytes, int]] = []
+        tupleScores: List[Tuple[int, int]] = []
         for holder in scores:
-            score: int = scores[holder] * state.live[holder]
+            score: int = scores[holder] * state.unlocked[holder]
             total += score
             tupleScores.append((holder, score))
 
         #Sort the scores and remove trailing scores.
-        tupleScores.sort(key=lambda tup: (tup[1], int.from_bytes(tup[0], "big")), reverse=True)
+        tupleScores.sort(key=lambda tup: (-tup[1], tup[0]))
         for i in range(100, len(tupleScores)):
             del tupleScores[i]
 
@@ -93,41 +87,32 @@ class Epochs:
         #Create Mints.
         return self.reward(tupleScores)
 
-    #Add block.
-    def add(
+    #Shift a Block.
+    def shift(
         self,
-        transactions: Transactions,
-        consensus: Consensus,
         state: State,
-        block: Block
+        blockchain: Blockchain,
+        b: int
     ) -> List[Mint]:
+        #Grab the Block.
+        block: Block = blockchain.blocks[b]
+
         #Construct the new Epoch.
-        epoch: Dict[bytes, List[bytes]] = {}
-        for record in block.body.records:
-            mh: bytes = record[0].serialize()
-            start = 0
-            if mh in self.tips:
-                start = self.tips[mh]
-            self.tips[mh] = record[1]
+        epoch: Dict[bytes, List[int]] = {}
+        for packet in block.body.packets:
+            found: bool = False
+            for e in range(len(self.epochs)):
+                if packet.hash in self.epochs[e]:
+                    found = True
+                    self.epochs[e][packet.hash] += packet.holders
 
-            for e in range(start, record[1] + 1):
-                if isinstance(consensus.holders[mh][e], Verification):
-                    tx: bytes = Verification.fromElement(consensus.holders[mh][e]).hash
-                    if not tx in epoch:
-                        epoch[tx] = []
-                    epoch[tx].append(mh)
+            if not found:
+                if packet.hash not in epoch:
+                    epoch[packet.hash] = []
+                epoch[packet.hash] += packet.holders
 
-        #Move TXs belonging to an old Epoch to said Epoch.
-        txs: List[bytes] = list(epoch.keys())
-        for tx in txs:
-            for e in range(5):
-                if tx in self.epochs[e]:
-                    self.epochs[e][tx] += epoch[tx]
-                    del epoch[tx]
-
-        #Grab the oldest Epoch.
+        #Shift on the Epoch.
         self.epochs.append(epoch)
-        epoch = self.epochs[0]
-        del self.epochs[0]
+        epoch = self.epochs.popleft()
 
-        return self.score(transactions, state, epoch)
+        return self.score(state, epoch)

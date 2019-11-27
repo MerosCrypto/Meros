@@ -10,6 +10,10 @@ import ../../src/lib/Hash
 import ../../src/Database/Filesystem/DB/DB
 export DB
 
+#Block and Blockchain libs.
+import ../../src/Database/Merit/Block
+import ../../src/Database/Merit/Blockchain
+
 #Transactions lib.
 import ../../src/Database/Transactions/Transactions
 
@@ -42,32 +46,45 @@ proc commit*(
 ) =
     db.commit(blockNum)
 
-#Create a GlobalFunctionBox with the needed Transactions functions for Consensus.
-var transactions {.threadvar.}: ptr Transactions
-proc init*(
-    functions: var GlobalFunctionBox,
+#Create a GlobalFunctionBox with the needed functions for Consensus.
+var
+    blockchain {.threadvar.}: ptr Blockchain
+    transactions {.threadvar.}: ptr Transactions
+proc newTestGlobalFunctionBox*(
+    blockchainArg: ptr Blockchain,
     transactionsArg: ptr Transactions
-) =
-    #Save Transactions locally.
+): GlobalFunctionBox =
+    #Save Blockchain/Transactions locally.
+    blockchain = blockchainArg
     transactions = transactionsArg
 
     #Create the functions.
-    functions.transactions.getTransaction = proc (
+    result = newGlobalFunctionBox()
+
+    result.merit.getHeight = proc (): int {.inline.} =
+        blockchain[].height
+
+    result.merit.getBlockByNonce = proc (
+        nonce: int
+    ): Block =
+        blockchain[][nonce]
+
+    result.transactions.getTransaction = proc (
         hash: Hash[384]
     ): Transaction =
         transactions[][hash]
 
-    functions.transactions.getSpenders = proc (
+    result.transactions.getSpenders = proc (
         input: Input
     ): seq[Hash[384]] {.inline.} =
         transactions[].loadSpenders(input)
 
-    functions.transactions.verify = proc (
+    result.transactions.verify = proc (
         hash: Hash[384]
     ) =
         discard
 
-    functions.transactions.unverify = proc (
+    result.transactions.unverify = proc (
         hash: Hash[384]
     ) =
         discard

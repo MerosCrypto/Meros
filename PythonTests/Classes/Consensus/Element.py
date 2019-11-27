@@ -3,43 +3,41 @@
 #Types.
 from typing import Dict, Any
 
-#BLS lib.
-import blspy
+#Abstract class standard lib.
+from abc import ABC, abstractmethod
 
 #Element root class.
-class Element:
+class Element(ABC):
     prefix: bytes
 
-    holder: bytes
-    nonce: int
-
+    @abstractmethod
     def serialize(
         self
     ) -> bytes:
-        raise Exception("Base Element serialize called.")
+        pass
 
+    @abstractmethod
     def toJSON(
         self
     ) -> Dict[str, Any]:
-        raise Exception("Base Element toJSON called.")
+        pass
 
 #SignedElement helper class.
 class SignedElement(Element):
-    blsSignature: blspy.Signature
-
     @staticmethod
     def fromElement(
         elem: Element
     ) -> Any:
         return elem
 
+    @abstractmethod
     def signedSerialize(
         self
     ) -> bytes:
-        raise Exception("Base SignedElement serialize called.")
+        pass
 
-    #SignedElement -> JSON.
+    @abstractmethod
     def toSignedJSON(
         self
     ) -> Dict[str, Any]:
-        raise Exception("Base SignedElement toSignedJSON called.")
+        pass

@@ -1,41 +1,64 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#Verification Packet object.
+import ../Elements/objects/VerificationPacketObj
+
 #Finals lib.
 import finals
+
+#Tables standard lib.
+import tables
 
 #Transaction Status.
 type TransactionStatus* = ref object
     #Block number that the Transaction's Epoch ends in.
     epoch*: int
-    #Whether or not the Transaction can only be verified at the end of the Transaction's Epoch.
-    #False means the Transaction just has to cross the threshold.
-    #True means the Transaction cannot be verified until its Epoch ends.
-    #This is not technically defaulting, as the Transaction may have more than the threshold of Merit, yet it looks similar.
-    #It's used when the Transaction has a competitor.
-    defaulting*: bool
+
+    #Whether or not the Transaction has competitors.
+    #If it does, Meros will only mark the Transaction as verified at the end of its Epoch.
+    #False means the Transaction has no competitors and just has to cross the threshold.
+    #True means the Transaction has competitors and will not be verified until its Epoch ends.
+    competing*: bool
+
     #If the Transaction was verified.
-    #If the Transaction was already verified, and then a competing Transaction is found, both defaulting and verified will be true.
+    #If the Transaction was already verified, and then a competing Transaction is found, both competing and verified will be true.
     verified*: bool
+
     #If the Transaction was beaten when finalized.
     #If the Transaction's parent was beaten, this Transaction is automatically beaten.
     beaten*: bool
-    #List of Verifiers.
-    verifiers*: seq[BLSPublicKey]
-    #The final Merit tally.
+
+    #Participating holders.
+    holders*: Table[uint16, bool]
+    #Packet for the next Block.
+    pending*: SignedVerificationPacket
+    #Table of pending holders to their signature.
+    signatures*: Table[uint16, BLSSignature]
+
+    #The final Merit tally. -1 if the Transaction is still in Epochs.
     merit*: int
 
 #Constructor.
 proc newTransactionStatusObj*(
+    hash: Hash[384],
     epoch: int
 ): TransactionStatus {.inline, forceCheck: [].} =
     TransactionStatus(
         epoch: epoch,
-        defaulting: false,
+        competing: false,
         verified: false,
-        verifiers: @[],
+        beaten: false,
+
+        holders: initTable[uint16, bool](),
+        pending: newSignedVerificationPacketObj(hash),
+        signatures: initTable[uint16, BLSSignature](),
+
         merit: -1
     )

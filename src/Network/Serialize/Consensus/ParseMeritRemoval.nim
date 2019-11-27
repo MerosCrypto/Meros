@@ -1,26 +1,25 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
 #MeritRemoval object.
-import ../../../Database/Consensus/objects/MeritRemovalObj
+import ../../../Database/Consensus/Elements/objects/MeritRemovalObj
 
 #Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Parse ELement libs.
+#Parse Element libs.
+import ParseElement
 import ParseVerification
+import ParseVerificationPacket
 
-#Parse an Element.
-proc parseElement(
-    elem: string,
-    holder: string,
-    i: int
+#Parse an Element in a MeritRemoval.
+proc parseMeritRemovalElement(
+    data: string,
+    i: int,
+    holder: string = ""
 ): tuple[
     element: Element,
     len: int
@@ -28,22 +27,30 @@ proc parseElement(
     ValueError,
     BLSError
 ].} =
-    case int(elem[i]):
-        of VERIFICATION_PREFIX:
-            result.len = VERIFICATION_LEN - BLS_PUBLIC_KEY_LEN
-            if elem.len < result.len + i:
-                raise newException(ValueError, "ParseMeritRemoval's parseElement not handed enough data to get an Element.")
+    try:
+        result.len = data.getLength(
+            {
+                int8(VERIFICATION_PREFIX),
+                int8(VERIFICATION_PACKET_PREFIX),
+                int8(SEND_DIFFICULTY_PREFIX),
+                int8(DATA_DIFFICULTY_PREFIX),
+                int8(GAS_PRICE_PREFIX)
+            },
+            i,
+            holder
+        )
 
-            try:
-                result.element = parseVerification(holder & elem[i + 1 ..< i + 1 + result.len])
-                inc(result.len)
-            except ValueError as e:
-                fcRaise e
-            except BLSError as e:
-                fcRaise e
-
-        else:
-            raise newException(ValueError, "ParseMeritRemoval's parseElement tried to parse an invalid/unsupported Element type")
+        case int(data[i]):
+            of VERIFICATION_PREFIX:
+                result.element = parseVerification(holder & data[i + 1 ..< i + result.len])
+            of VERIFICATION_PACKET_PREFIX:
+                result.element = parseMeritRemovalVerificationPacket(data[i + 1 ..< i + result.len])
+            else:
+                raise newException(ValueError, "parseMeritRemovalElement tried to parse an invalid/unsupported Element type.")
+    except ValueError as e:
+        fcRaise e
+    except BLSError as e:
+        fcRaise e
 
 #Parse a MeritRemoval.
 proc parseMeritRemoval*(
@@ -52,19 +59,19 @@ proc parseMeritRemoval*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
+    #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
-            BLS_PUBLIC_KEY_LEN,
+            NICKNAME_LEN,
             BYTE_LEN
         )
         partial: bool
 
-        i: int = BLS_PUBLIC_KEY_LEN + BYTE_LEN
-        peResult: tuple[
+        pmreResult: tuple[
             element: Element,
             len: int
         ]
+        i: int = NICKNAME_LEN + BYTE_LEN
 
         element1: Element
         element2: Element
@@ -80,17 +87,17 @@ proc parseMeritRemoval*(
             raise newException(ValueError, "MeritRemoval has an invalid partial field.")
 
     try:
-        peResult = mrStr.parseElement(mrSeq[0], i)
-        i += peResult.len
-        element1 = peResult.element
+        pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
+        i += pmreResult.len
+        element1 = pmreResult.element
     except ValueError as e:
         fcRaise e
     except BLSError as e:
         fcRaise e
 
     try:
-        peResult = mrStr.parseElement(mrSeq[0], i)
-        element2 = peResult.element
+        pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
+        element2 = pmreResult.element
     except ValueError as e:
         fcRaise e
     except BLSError as e:
@@ -98,6 +105,7 @@ proc parseMeritRemoval*(
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(
+        uint16(mrSeq[0].fromBinary()),
         partial,
         element1,
         element2
@@ -110,16 +118,16 @@ proc parseSignedMeritRemoval*(
     ValueError,
     BLSError
 ].} =
-    #BLS Public Key | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
+    #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
         mrSeq: seq[string] = mrStr.deserialize(
-            BLS_PUBLIC_KEY_LEN,
+            NICKNAME_LEN,
             BYTE_LEN
         )
         partial: bool
 
-        i: int = BLS_PUBLIC_KEY_LEN + BYTE_LEN
-        peResult: tuple[
+        i: int = NICKNAME_LEN + BYTE_LEN
+        pmreResult: tuple[
             element: Element,
             len: int
         ]
@@ -138,17 +146,17 @@ proc parseSignedMeritRemoval*(
             raise newException(ValueError, "MeritRemoval has an invalid partial field.")
 
     try:
-        peResult = mrStr.parseElement(mrSeq[0], i)
-        i += peResult.len
-        element1 = peResult.element
+        pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
+        i += pmreResult.len
+        element1 = pmreResult.element
     except ValueError as e:
         fcRaise e
     except BLSError as e:
         fcRaise e
 
     try:
-        peResult = mrStr.parseElement(mrSeq[0], i)
-        element2 = peResult.element
+        pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
+        element2 = pmreResult.element
     except ValueError as e:
         fcRaise e
     except BLSError as e:
@@ -157,6 +165,7 @@ proc parseSignedMeritRemoval*(
     #Create the SignedMeritRemoval.
     try:
         result = newSignedMeritRemovalObj(
+            uint16(mrSeq[0].fromBinary()),
             partial,
             element1,
             element2,

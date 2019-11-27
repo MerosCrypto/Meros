@@ -1,16 +1,13 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
 #Merkle lib.
-import ../../../Database/common/Merkle
+import ../../../lib/Merkle
 
-#MinerWallet lib (for BLSSignature's toString).
+#MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
 #BlockHeader object.
@@ -22,21 +19,23 @@ import ../SerializeCommon
 #Serialize a Block Header.
 func serializeHash*(
     header: BlockHeader
-): string {.forceCheck: [].} =
-    result =
-        header.nonce.toBinary().pad(INT_LEN) &
-        header.last.toString() &
-        header.aggregate.toString() &
-        header.miners.toString() &
-        header.time.toBinary().pad(INT_LEN)
+): string {.inline, forceCheck: [].} =
+    header.version.toBinary().pad(INT_LEN) &
+    header.last.toString() &
+    header.contents.toString() &
+
+    header.significant.toBinary().pad(NICKNAME_LEN) &
+    header.sketchSalt.pad(INT_LEN) &
+    header.sketchCheck.toString() &
+
+    (
+        if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary().pad(NICKNAME_LEN)
+    ) &
+    header.time.toBinary().pad(INT_LEN)
 
 func serialize*(
     header: BlockHeader
-): string {.forceCheck: [].} =
-    result =
-        header.nonce.toBinary().pad(INT_LEN) &
-        header.last.toString() &
-        header.aggregate.toString() &
-        header.miners.toString() &
-        header.time.toBinary().pad(INT_LEN) &
-        header.proof.toBinary().pad(INT_LEN)
+): string {.inline, forceCheck: [].} =
+    header.serializeHash() &
+    header.proof.toBinary().pad(INT_LEN) &
+    header.signature.toString()

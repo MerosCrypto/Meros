@@ -16,9 +16,6 @@ def verifyTransaction(
     if rpc.call("transactions", "getTransaction", [tx.hash.hex()]) != tx.toJSON():
         raise TestError("Transaction doesn't match.")
 
-    if rpc.call("consensus", "getStatus", [tx.hash.hex()])["verified"] != tx.verified:
-        raise TestError("Transaction's status doesn't match.")
-
 #Verify the Transactions.
 def verifyTransactions(
     rpc: RPC,

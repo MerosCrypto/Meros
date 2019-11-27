@@ -8,18 +8,12 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 import ../../Wallet/MinerWallet
 
-#Consensus lib.
-import ../Consensus/Consensus
-
 #Blockchain and Epochs libs.
 import ../Merit/Blockchain
 import ../Merit/Epochs
 
 #Transactions DB lib.
 import ../Filesystem/DB/TransactionsDB
-
-#MeritHolderRecord object.
-import ../common/objects/MeritHolderRecordObj
 
 #Transaction lib.
 import Transaction
@@ -39,19 +33,19 @@ import tables
 #Constructor.
 proc newTransactions*(
     db: DB,
-    consensus: Consensus,
     blockchain: Blockchain
 ): Transactions {.inline, forceCheck: [].} =
-    newTransactionsObj(
-        db,
-        consensus,
-        blockchain
-    )
+    newTransactionsObj(db, blockchain)
 
 #Add a Claim.
 proc add*(
     transactions: var Transactions,
-    claim: Claim
+    claim: Claim,
+    lookup: proc (
+        holder: uint16
+    ): BLSPublicKey {.raises: [
+        IndexError
+    ].}
 ) {.forceCheck: [
     ValueError,
     DataExists
@@ -69,12 +63,16 @@ proc add*(
 
         #Output loop variable.
         output: MintOutput
+        #Key loop variable.
+        key: BLSPublicKey
         #Amount this Claim is claiming.
         amount: uint64 = 0
 
     #Grab the first claimer.
     try:
-         claimers[0] = transactions.loadOutput(claim.inputs[0].hash).key
+         claimers[0] = lookup(transactions.loadOutput(claim.inputs[0].hash).key)
+    except IndexError as e:
+        doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
     except DBReadError:
         raise newException(ValueError, "Claim spends a non-existant Mint.")
 
@@ -91,8 +89,13 @@ proc add*(
         except DBReadError:
             raise newException(ValueError, "Claim spends a non-existant Mint.")
 
-        if not claimers.contains(output.key):
-            claimers.add(output.key)
+        try:
+            key = lookup(output.key)
+        except IndexError as e:
+            doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
+
+        if not claimers.contains(key):
+            claimers.add(key)
         amount += output.amount
 
     #Set the Claim's output amount to the amount.
@@ -224,13 +227,13 @@ proc add*(
 #Mint Meros to the specified key.
 proc mint*(
     transactions: var Transactions,
-    key: BLSPublicKey,
+    nick: uint16,
     amount: uint64
 ): Hash[384] {.forceCheck: [].} =
     #Create the Mint.
     var mint: Mint = newMint(
         transactions.mintNonce,
-        key,
+        nick,
         amount
     )
 
@@ -243,36 +246,13 @@ proc mint*(
     #Return the mint hash.
     result = mint.hash
 
-#Remove every hash in this Epoch from the cache/RAM, updating archived and the amount of Elements to reload.
+#Remove every hash in this Epoch from the cache/RAM.
 proc archive*(
     transactions: var Transactions,
-    consensus: Consensus,
     epoch: Epoch
 ) {.forceCheck: [].} =
-    for record in epoch.records:
-        #Remove every hash from this Epoch.
-        #If we used the hashes in the Epoch, we'd only remove confirmed hashes.
-        #We need to iterate over every Element archived in this Epoch and remove every mentioned hash.
-        var
-            #Previously popped height.
-            prev: int
-            #Elements.
-            elems: seq[Element]
-        try:
-            prev = transactions.load(record.key)
-        except DBReadError:
-            prev = -1
-        try:
-            elems = consensus[record.key][prev + 1 .. record.nonce]
-        except IndexError as e:
-            doAssert(false, "Couldn't load Elements which were archived: " & e.msg)
-
-        #Iterate over every archived Element,
-        for elem in elems:
-            transactions.del(cast[Verification](elem).hash)
-
-        #Save the popped height so we can reload Elements.
-        transactions.save(record.key, record.nonce)
+    for hash in epoch.keys():
+        transactions.del(hash)
 
 #Check if a Transaction is the first to spend all its inputs.
 proc isFirst*(

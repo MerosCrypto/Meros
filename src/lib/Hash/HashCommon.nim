@@ -4,9 +4,9 @@ import ../Errors
 #Util lib.
 import ../Util
 
-#Hash master type.
-type Hash*[bits: static[int]] = object
-    data*: array[bits div 8, uint8]
+#Hash type.
+import objects/HashObj
+export HashObj
 
 #Empty uint8 'array'.
 var EmptyHash*: ptr uint8

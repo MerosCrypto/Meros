@@ -26,9 +26,9 @@ Mint Transactions are locally created when Blocks are added to the Blockchain, a
 
 - nonce: The nonce for this Mint. The first has a nonce of 0, the second has a nonce of 1...
 
-Mints have no inputs, yet are considered to be created by "minter". It has a single output, whose key is a BLS Public Key and whose amount is the amount being minted.
+Mints have no inputs, yet are considered to be created by "minter". It has a single output, whose key is a nickname and whose amount is the amount being minted.
 
-The hash is defined as `Blake2b-384("\0" + nonce + output.key + output.amount)`, where nonce takes up 4 bytes, the output key 48 bytes, and the output amount 8 bytes.
+The hash is defined as `Blake2b-384("\0" + nonce + output.key + output.amount)`, where nonce takes up 4 bytes, the output key 2 bytes, and the output amount 8 bytes.
 
 ### Claim
 

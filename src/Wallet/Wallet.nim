@@ -7,7 +7,7 @@ export HDWallet
 
 #mnemonic lib.
 import Mnemonic
-export Mnemonic.Mnemonic
+export Mnemonic.Mnemonic, `$`
 
 #Finals lib.
 import finals

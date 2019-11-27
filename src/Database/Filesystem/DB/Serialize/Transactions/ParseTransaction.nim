@@ -23,10 +23,7 @@ proc parseTransaction*(
 ].} =
     case tx[0]:
         of '\0':
-            try:
-                result = tx.substr(1).parseMint()
-            except BLSError as e:
-                fcRaise e
+            result = tx.substr(1).parseMint()
 
         of '\1':
             try:

@@ -4,14 +4,14 @@ import ../../../../../lib/Errors
 #Util lib.
 import ../../../../../lib/Util
 
-#MinerWallet lib.
-import ../../../../../Wallet/MinerWallet
-
 #TransactionStatus object.
 import ../../../../Consensus/objects/TransactionStatusObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
+
+#Tables standard lib.
+import tables
 
 #Serialization function.
 proc serialize*(
@@ -19,12 +19,13 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     result =
         status.epoch.toBinary().pad(INT_LEN) &
-        (if status.defaulting: char(1) else: char(0)) &
-        (if status.verified: char(1) else: char(0)) &
-        (if status.beaten: char(1) else: char(0))
+        char(status.competing) &
+        char(status.verified) &
+        char(status.beaten) &
+        status.holders.len.toBinary().pad(NICKNAME_LEN)
 
-    for verifier in status.verifiers:
-        result &= verifier.toString()
+    for holder in status.holders.keys():
+        result &= holder.toBinary().pad(NICKNAME_LEN)
 
     if status.merit != -1:
-        result &= status.merit.toBinary().pad(INT_LEN)
+        result &= status.merit.toBinary().pad(NICKNAME_LEN)

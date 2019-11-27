@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Util lib.
-import ../../../lib/Util
-
 #Hash lib.
 import ../../../lib/Hash
 
@@ -11,7 +8,7 @@ import ../../../lib/Hash
 import ../../../Wallet/MinerWallet
 
 #Verification object.
-import ../../../Database/Consensus/objects/VerificationObj
+import ../../../Database/Consensus/Elements/objects/VerificationObj
 
 #Common serialization functions.
 import ../SerializeCommon
@@ -23,33 +20,27 @@ export SerializeElement
 #Serialize a Verification.
 method serialize*(
     verif: Verification
-): string {.forceCheck: [].} =
-    result =
-        verif.holder.toString() &
-        verif.nonce.toBinary().pad(INT_LEN) &
-        verif.hash.toString()
+): string {.inline, forceCheck: [].} =
+    verif.holder.toBinary().pad(NICKNAME_LEN) &
+    verif.hash.toString()
 
-#Serialize a Verification for signing.
-method serializeSign*(
+#Serialize a Verification for signing or a MeritRemoval.
+method serializeWithoutHolder*(
+    verif: Verification
+): string {.inline, forceCheck: [].} =
+    char(VERIFICATION_PREFIX) &
+    verif.hash.toString()
+
+#Serialize a Verification for inclusion in a BlockHeader's contents merkle.
+#This should never happen.
+method serializeContents*(
     verif: Verification
 ): string {.forceCheck: [].} =
-    result =
-        char(VERIFICATION_PREFIX) &
-        verif.serialize()
+    doAssert(false, "Verification was serialized for inclusion in a BlockHeader's contents merkle.")
 
 #Serialize a Signed Verification.
 method signedSerialize*(
     verif: SignedVerification
-): string {.forceCheck: [].} =
-    result =
-        verif.serialize() &
-        verif.signature.toString()
-
-#Serialize a Verification for a MeritRemoval.
-method serializeRemoval*(
-    verif: Verification
-): string {.forceCheck: [].} =
-    result =
-        char(VERIFICATION_PREFIX) &
-        verif.nonce.toBinary().pad(INT_LEN) &
-        verif.hash.toString()
+): string {.inline, forceCheck: [].} =
+    verif.serialize() &
+    verif.signature.toString()

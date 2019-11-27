@@ -95,7 +95,7 @@ disable=wrong-import-order,
         #- EmptyError (test is empty)
         #- NodeError (node broke)
         #- TestError (test didn't pass)
-        #- Exception (test failed)
+        #- Exception (test broke)
         #To catch Exception, you need a broad except.
         broad-except
 

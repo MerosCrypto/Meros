@@ -26,8 +26,6 @@ class Claim(Transaction):
         self.signature: bytes = signature
         self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
 
-        self.verified: bool = False
-
     #Transaction -> Claim. Satisifes static typing requirements.
     @staticmethod
     def fromTransaction(
@@ -84,14 +82,6 @@ class Claim(Transaction):
             })
         return result
 
-    #Claim -> JSON with verified field.
-    def toVector(
-        self,
-    ) -> Dict[str, Any]:
-        result = self.toJSON()
-        result["verified"] = self.verified
-        return result
-
     #JSON -> Claim.
     @staticmethod
     def fromJSON(
@@ -107,6 +97,4 @@ class Claim(Transaction):
             bytes.fromhex(json["signature"])
         )
         result.amount = int(json["outputs"][0]["amount"])
-        if json["verified"]:
-            result.verified = True
         return result

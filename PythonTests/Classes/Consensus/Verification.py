@@ -1,27 +1,27 @@
 #Types.
-from typing import Dict, Any
+from typing import Dict, List, Optional, Any
 
 #Element class.
 from PythonTests.Classes.Consensus.Element import Element
 
 #BLS lib.
-import blspy
+from blspy import PrivateKey, PublicKey, Signature, AggregationInfo
+
+#Verification Prefix.
+VERIFICATION_PREFIX: bytes = b'\0'
 
 #Verification class.
 class Verification(Element):
     #Constructor.
     def __init__(
         self,
-        holder: bytes,
-        nonce: int,
-        txHash: bytes
+        txHash: bytes,
+        holder: int
     ) -> None:
-        self.prefix: bytes = b'\0'
-
-        self.holder: bytes = holder
-        self.nonce: int = nonce
+        self.prefix: bytes = VERIFICATION_PREFIX
 
         self.hash: bytes = txHash
+        self.holder: int = holder
 
     #Element -> Verification. Satisifes static typing requirements.
     @staticmethod
@@ -34,7 +34,7 @@ class Verification(Element):
     def serialize(
         self
     ) -> bytes:
-        return self.holder + self.nonce.to_bytes(4, "big") + self.hash
+        return self.holder.to_bytes(2, "big") + self.hash
 
     #Verification -> JSON.
     def toJSON(
@@ -42,10 +42,9 @@ class Verification(Element):
     ) -> Dict[str, Any]:
         return {
             "descendant": "Verification",
-            "holder": self.holder.hex().upper(),
-            "nonce": self.nonce,
 
-            "hash": self.hash.hex().upper()
+            "hash": self.hash.hex().upper(),
+            "holder": self.holder
         }
 
     #JSON -> Verification.
@@ -53,43 +52,44 @@ class Verification(Element):
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        return Verification(
-            bytes.fromhex(json["holder"]),
-            json["nonce"],
-            bytes.fromhex(json["hash"])
-        )
+        return Verification(bytes.fromhex(json["hash"]), json["holder"])
 
 class SignedVerification(Verification):
+    #Serialize for signing.
+    @staticmethod
+    def signatureSerialize(
+        txHash: bytes
+    ) -> bytes:
+        return VERIFICATION_PREFIX + txHash
+
     #Constructor.
     def __init__(
         self,
         txHash: bytes,
-        holder: bytes = bytes(48),
-        nonce: int = 0,
+        holder: int = 0,
+        holderKey: Optional[PublicKey] = None,
         signature: bytes = bytes(96)
     ) -> None:
-        Verification.__init__(self, holder, nonce, txHash)
-
+        Verification.__init__(self, txHash, holder)
         self.signature: bytes = signature
-        if signature != bytes(96):
-            self.blsSignature: blspy.Signature = blspy.Signature.from_bytes(self.signature)
+
+        self.blsSignature: Signature
+        if holderKey:
+            self.blsSignature = Signature.from_bytes(self.signature)
             self.blsSignature.set_aggregation_info(
-                blspy.AggregationInfo.from_msg(
-                    blspy.PublicKey.from_bytes(holder),
-                    self.prefix + Verification.serialize(self)
+                AggregationInfo.from_msg(
+                    holderKey,
+                    SignedVerification.signatureSerialize(self.hash)
                 )
             )
-
     #Sign.
     def sign(
         self,
-        privKey: blspy.PrivateKey,
-        nonce: int
+        holder: int,
+        privKey: PrivateKey
     ) -> None:
-        self.holder = privKey.get_public_key().serialize()
-        self.nonce = nonce
-
-        self.blsSignature = privKey.sign(self.prefix + Verification.serialize(self))
+        self.holder = holder
+        self.blsSignature = privKey.sign(SignedVerification.signatureSerialize(self.hash))
         self.signature = self.blsSignature.serialize()
 
     #Serialize.
@@ -111,23 +111,22 @@ class SignedVerification(Verification):
         return {
             "descendant": "Verification",
 
-            "holder": self.holder.hex().upper(),
-            "nonce": self.nonce,
-
+            "holder": self.holder,
             "hash": self.hash.hex().upper(),
 
             "signed": True,
             "signature": self.signature.hex().upper()
         }
 
-    #JSON -> Verification.
+    #JSON -> SignedVerification.
     @staticmethod
-    def fromJSON(
+    def fromSignedJSON(
+        nicks: List[bytes],
         json: Dict[str, Any]
     ) -> Any:
         return SignedVerification(
             bytes.fromhex(json["hash"]),
-            bytes.fromhex(json["holder"]),
-            json["nonce"],
+            json["holder"],
+            PublicKey.from_bytes(nicks[json["holder"]]),
             bytes.fromhex(json["signature"])
         )

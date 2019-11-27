@@ -29,37 +29,60 @@ proc test*() =
     var
         #Last Block's Hash.
         last: ArgonHash
-        #Miners Hash.
-        miners: Blake384Hash
+        #Contents Hash.
+        contents: Hash[384]
+        #Sketch Check merkle.
+        sketchCheck: Hash[384]
+        #Miner.
+        miner: MinerWallet
         #Block Header.
         header: BlockHeader
         #Reloaded Block Header.
         reloaded: BlockHeader
 
     #Test 255 serializations.
-    for _ in 0 .. 255:
+    for s in 0 .. 255:
         #Randomize the hashes.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
-            miners.data[b] = uint8(rand(255))
+            contents.data[b] = uint8(rand(255))
+            sketchCheck.data[b] = uint8(rand(255))
 
         #Create the BlockHeaader.
-        header = newBlockHeader(
-            rand(high(int32)),
-            last,
-            newMinerWallet().sign(rand(high(int32)).toBinary()),
-            miners,
-            uint32(rand(high(int32))),
-            uint32(rand(high(int32)))
-        )
+        if s < 128:
+            #Get a new miner.
+            miner = newMinerWallet()
+
+            header = newBlockHeader(
+                uint32(rand(high(int32))),
+                last,
+                contents,
+                uint16(rand(50000)),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                sketchCheck,
+                miner.publicKey,
+                uint32(rand(high(int32)))
+            )
+        else:
+            header = newBlockHeader(
+                uint32(rand(high(int32))),
+                last,
+                contents,
+                uint16(rand(50000)),
+                char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
+                sketchCheck,
+                uint16(rand(high(int16))),
+                uint32(rand(high(int32)))
+            )
+        miner.hash(header, uint16(rand(high(int16))))
 
         #Serialize it and parse it back.
         reloaded = header.serialize().parseBlockHeader()
 
-        #Test the serialized versions.
-        assert(header.serialize() == reloaded.serialize())
-
         #Compare the BlockHeaders.
         compare(header, reloaded)
+
+        #Test the serialized versions.
+        assert(header.serialize() == reloaded.serialize())
 
     echo "Finished the Network/Serialize/Merit/BlockHeader Test."

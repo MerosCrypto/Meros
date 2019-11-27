@@ -9,14 +9,9 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
-
-#Transactions lib.
-import ../../../../src/Database/Transactions/Transactions
-
-#Consensus lib.
-import ../../../../src/Database/Consensus/Consensus
+#Verification/VerificationPacket libs.
+import ../../../../src/Database/Consensus/Elements/Verification
+import ../../../../src/Database/Consensus/Elements/VerificationPacket
 
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
@@ -29,91 +24,65 @@ import tables
 
 proc test*() =
     var
-        #Functions.
-        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database Function Box.
         db: DB = newTestDatabase()
-        #Consensus.
-        consensus: Consensus = newConsensus(
-            functions,
-            db,
-            Hash[384](),
-            Hash[384]()
-        )
         #Blockchain.
         blockchain: Blockchain = newBlockchain(db, "EPOCH_SINGLE_TEST", 1, "".pad(48).toHash(384))
         #State.
         state: State = newState(db, 100, blockchain.height)
         #Epochs.
-        epochs: Epochs = newEpochs(db, consensus, blockchain)
-        #Transactions.
-        transactions: Transactions = newTransactions(
-            db,
-            consensus,
-            blockchain
-        )
+        epochs: Epochs = newEpochs(blockchain)
+        #New Block.
+        newBlock: Block
 
         #Hash.
         hash: Hash[384] = "".pad(48, char(128)).toHash(384)
         #MinerWallets.
         miner: MinerWallet = newMinerWallet()
-        #SignedVerification object.
+        #SignedVerification.
         verif: SignedVerification
+        #VerificationPacket.
+        packet: SignedVerificationPacket = newSignedVerificationPacketObj(hash)
         #Rewards.
         rewards: seq[Reward]
 
-    #Init the Function Box.
-    functions.init(addr transactions)
-
-    #Register the Transaction.
-    var tx: Transaction = Transaction()
-    tx.hash = hash
-    transactions.transactions[tx.hash] = tx
-    consensus.register(transactions, state, tx, 0)
-
     #Give the miner Merit.
-    state.processBlock(
-        blockchain,
-        newBlankBlock(
-            miners = newMinersObj(@[
-                newMinerObj(
-                    miner.publicKey,
-                    100
-                )
-            ])
-        )
-    )
+    blockchain.processBlock(newBlankBlock(miner = miner))
+    state.processBlock(blockchain)
+
+    #Set the miner's nickname.
+    miner.nick = uint16(0)
 
     #Create the Verification.
     verif = newSignedVerificationObj(hash)
-    miner.sign(verif, 0)
+    miner.sign(verif)
 
-    #Add the Verification.
-    consensus.add(state, verif)
+    #Add it to the packet.
+    packet.add(verif)
 
-    #Shift on the records.
-    rewards = epochs.shift(
-        consensus,
-        @[],
-        @[
-            newMeritHolderRecord(
-                miner.publicKey,
-                0,
-                hash
-            )
-        ]
-    ).calculate(state)
+    #Shift on the packet.
+    rewards = epochs.shift(newBlankBlock(
+        packets = cast[seq[VerificationPacket]](@[packet])
+    )).calculate(state)
     assert(rewards.len == 0)
 
     #Shift 4 over.
-    for _ in 0 ..< 4:
-        rewards = epochs.shift(consensus, @[], @[]).calculate(state)
+    for e in 0 ..< 4:
+        newBlock = newBlankBlock(
+            nick = uint16(0),
+            miner = miner
+        )
+        blockchain.processBlock(newBlock)
+        state.processBlock(blockchain)
+
+        rewards = epochs.shift(newBlock).calculate(state)
         assert(rewards.len == 0)
 
-    #Next shift should result in a Rewards of key 0, 1000.
-    rewards = epochs.shift(consensus, @[], @[]).calculate(state)
+    #Next shift should result in a Rewards of 0: 1000.
+    rewards = epochs.shift(newBlankBlock()).calculate(state)
     assert(rewards.len == 1)
-    assert(rewards[0].key == miner.publicKey)
+    assert(rewards[0].nick == 0)
+    assert(state.holders[0] == miner.publicKey)
     assert(rewards[0].score == 1000)
 
     echo "Finished the Database/Merit/Epochs Single Test."

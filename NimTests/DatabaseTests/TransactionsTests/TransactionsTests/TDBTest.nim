@@ -10,11 +10,8 @@ import ../../../../src/lib/Hash
 import ../../../../src/Wallet/Wallet
 import ../../../../src/Wallet/MinerWallet
 
-#MeritHolderRecord object.
-import ../../../../src/Database/common/objects/MeritHolderRecordObj
-
-#Consensus lib.
-import ../../../../src/Database/Consensus/Consensus
+#VerificationPacket lib.
+import ../../../../src/Database/Consensus/Elements/VerificationPacket
 
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
@@ -22,8 +19,8 @@ import ../../../../src/Database/Merit/Merit
 #Transactions lib.
 import ../../../../src/Database/Transactions/Transactions
 
-#Test Database lib.
-import ../../TestDatabase
+#Test Merit lib.
+import ../../MeritTests/TestMerit
 
 #Compare Transactions lib.
 import ../CompareTransactions
@@ -39,23 +36,13 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Functions.
-        functions: GlobalFunctionBox = newGlobalFunctionBox()
         #Database.
         db: DB = newTestDatabase()
 
-        #Consensus.
-        consensus: Consensus = newConsensus(
-            functions,
-            db,
-            Hash[384](),
-            Hash[384]()
-        )
         #Merit.
         merit: Merit = newMerit(
             db,
-            consensus,
-            "BLOCKCHAIN_TEST",
+            "TRANSACTIONS_TEST",
             30,
             "".pad(48),
             100
@@ -63,88 +50,60 @@ proc test*() =
         #Transactions.
         transactions: Transactions = newTransactions(
             db,
-            consensus,
             merit.blockchain
         )
 
-        #MeritHolder.
-        holder: MinerWallet = newMinerWallet()
+        #MeritHolders.
+        holders: seq[MinerWallet] = @[
+            newMinerWallet(),
+            newMinerWallet(),
+            newMinerWallet(),
+            newMinerWallet(),
+            newMinerWallet(),
+            newMinerWallet()
+        ]
         #Wallets.
         wallets: seq[Wallet] = @[]
 
-    #Init the Function Box.
-    functions.init(addr transactions)
+        #Transactions.
+        txs: seq[Transaction] = @[]
+        #Table of a hash to the block it first appeared on.
+        first: Table[Hash[384], int] = initTable[Hash[384], int]()
 
-    #Compare the Transactions against the reloaded Transactions.
-    proc compare() =
-        #Reload the Transactions.
-        var reloaded: Transactions = newTransactions(
-            db,
-            consensus,
-            merit.blockchain
-        )
+        #Packets.
+        packets: seq[VerificationPacket]
+        #New Block.
+        newBlock: Block
 
-        #Compare the Transactionss.
-        compare(transactions, reloaded)
-
-    #Adds a Block, containing the passed records.
-    proc addBlock() =
-        #Create the new Block.
-        var newBlock: Block = newBlockObj(
-            merit.blockchain.height,
-            merit.blockchain.tip.header.hash,
-            nil,
-            @[
-                newMeritHolderRecord(
-                    holder.publicKey,
-                    consensus[holder.publicKey].height - 1,
-                    "".pad(48).toHash(384)
-                )
-            ],
-            newMinersObj(@[
-                newMinerObj(holder.publicKey, 100)
-            ]),
-            getTime(),
-            0
-        )
-
-        #Mine it.
-        while not merit.blockchain.difficulty.verify(newBlock.header.hash):
-            inc(newBlock)
-
-        #Add it,
-        merit.processBlock(newBlock)
-        var epoch: Epoch = merit.postProcessBlock(consensus, @[], newBlock)
-
-        #Manually clear the difficulty.
-        merit.blockchain.difficulty = newDifficultyObj(
-            merit.blockchain.difficulty.start,
-            merit.blockchain.difficulty.endBlock,
-            "".pad(48).toHash(384)
-        )
-
-        #Archive the Records.
-        consensus.archive(merit.state, merit.epochs.latest, epoch)
-        transactions.archive(consensus, epoch)
-
-    #Add Verifications for an Transaction.
+    #Verify a transaction.
     proc verify(
-        tx: Transaction
+        tx: Transaction,
+        holder: int
     ) =
-        #Create the Verification.
-        var verif: SignedVerification = newSignedVerificationObj(tx.hash)
-        holder.sign(verif, consensus[holder.publicKey].height)
+        packets.add(newVerificationPacketObj(tx.hash))
+        packets[^1].holders.add(uint16(holder))
 
-        #Register the Transaction.
-        consensus.register(transactions, merit.state, tx, merit.blockchain.height)
+        if not first.hasKey(tx.hash):
+            if (tx of Claim) or (tx of Send):
+                transactions.verify(tx.hash)
 
-        #Add the Verification.
-        consensus.add(merit.state, verif)
-        if (tx of Claim) or (tx of Send):
-            transactions.verify(verif.hash)
+            first[tx.hash] = merit.blockchain.height
+            txs.add(tx)
+
+    #Give each holder Merit.
+    for holder in holders:
+        newBlock = newBlankBlock(
+            last = merit.blockchain.tail.header.hash,
+            miner = holder
+        )
+        merit.processBlock(newBlock)
+        transactions.archive(merit.postProcessBlock())
 
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
+        #Clear packets.
+        packets = @[]
+
         #Create a random amount of Wallets.
         for _ in 0 ..< rand(2) + 2:
             wallets.add(newWallet(""))
@@ -174,18 +133,25 @@ proc test*() =
                 if balance <= amount:
                     #Create the Mint.
                     var
-                        mintee: MinerWallet = newMinerWallet()
+                        holder: int = rand(high(holders))
                         mintAmount: uint64 = amount - balance + uint64(rand(5000) + 1)
-                        mintHash: Hash[384] = transactions.mint(mintee.publicKey, mintAmount)
+                        mintHash: Hash[384] = transactions.mint(uint16(holder), mintAmount)
 
                     #Create the Claim.
                     var claim: Claim = newClaim(
                         mintHash,
                         wallet.publicKey
                     )
-                    mintee.sign(claim)
-                    transactions.add(claim)
-                    verify(claim)
+                    holders[holder].sign(claim)
+                    transactions.add(
+                        claim,
+                        proc (
+                            nick: uint16
+                        ): BLSPublicKey =
+                            holders[int(nick)].publicKey
+                    )
+
+                    verify(claim, 0)
 
                     #Update the UTXOs/balance.
                     spendable.add(newSendInput(claim.hash, 0))
@@ -213,7 +179,8 @@ proc test*() =
                 wallet.sign(send)
                 send.mine(Hash[384]())
                 transactions.add(send)
-                verify(send)
+
+                verify(send, 0)
 
                 #Make sure spendable was properly set.
                 doAssert(transactions.getUTXOs(wallet.publicKey).len == 1)
@@ -232,15 +199,41 @@ proc test*() =
                 wallet.sign(data)
                 data.mine(Hash[384]())
                 transactions.add(data)
-                verify(data)
 
-        #Mine a Block.
-        addBlock()
+                verify(data, 0)
+
+        #Randomly select old transactions.
+        var reused: Table[Hash[384], bool] = initTable[Hash[384], bool]()
+        for _ in 0 ..< 10:
+            var tx: Transaction = txs[rand(high(txs))]
+            if (
+                (first[tx.hash] < merit.blockchain.height - 5) or
+                (first[tx.hash] == merit.blockchain.height) or
+                (reused.hasKey(tx.hash))
+            ):
+                continue
+
+            verify(tx, merit.blockchain.height - first[tx.hash])
+            reused[tx.hash] = true
+
+        #Add a block.
+        newBlock = newBlankBlock(
+            last = merit.blockchain.tail.header.hash,
+            miner = holders[^1],
+            packets = packets
+        )
+
+        #Add it,
+        merit.processBlock(newBlock)
+
+        #Archive the epoch.
+        transactions.archive(merit.postProcessBlock())
 
         #Commit the DB.
-        commit(merit.blockchain.tip.nonce)
+        commit(merit.blockchain.height)
 
         #Compare the Transactions DAGs.
-        compare()
+        var reloaded: Transactions = newTransactions(db, merit.blockchain)
+        compare(transactions, reloaded)
 
     echo "Finished the Database/Transactions/Transactions/DB Test."

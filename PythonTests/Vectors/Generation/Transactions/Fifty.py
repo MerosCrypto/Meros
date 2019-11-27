@@ -1,14 +1,17 @@
 #Types.
-from typing import IO, Dict, List, Any
+from typing import IO, Dict, List, Tuple, Union, Any
 
 #Transactions classes.
 from PythonTests.Classes.Transactions.Send import Send
 from PythonTests.Classes.Transactions.Claim import Claim
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Consensus class.
-from PythonTests.Classes.Consensus.Verification import Verification, SignedVerification
-from PythonTests.Classes.Consensus.Consensus import Consensus
+#SpamFilter class.
+from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
+
+#SignedVerification and VerificationPacket classes.
+from PythonTests.Classes.Consensus.Verification import SignedVerification
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -32,12 +35,6 @@ cmFile: IO[Any] = open("PythonTests/Vectors/Transactions/ClaimedMint.json", "r")
 cmVectors: Dict[str, Any] = json.loads(cmFile.read())
 #Transactions.
 transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
-#Consensus.
-consensus: Consensus = Consensus.fromJSON(
-    bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-    bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
-    cmVectors["consensus"]
-)
 #Blockchain.
 blockchain: Blockchain = Blockchain.fromJSON(
     b"MEROS_DEVELOPER_NETWORK",
@@ -47,19 +44,29 @@ blockchain: Blockchain = Blockchain.fromJSON(
 )
 cmFile.close()
 
+#SpamFilter.
+sendFilter: SpamFilter = SpamFilter(
+    bytes.fromhex(
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    )
+)
+
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
-blsPrivKey1: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
-blsPubKey1: blspy.PublicKey = blsPrivKey1.get_public_key()
-
-blsPrivKey2: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\1')
-blsPubKey2: blspy.PublicKey = blsPrivKey2.get_public_key()
+blsPrivKeys: List[blspy.PrivateKey] = [
+    blspy.PrivateKey.from_seed(b'\0'),
+    blspy.PrivateKey.from_seed(b'\1')
+]
+blsPubKeys: List[blspy.PublicKey] = [
+    blsPrivKeys[0].get_public_key(),
+    blsPrivKeys[1].get_public_key()
+]
 
 #Grab the claim hash.
-claim: bytes = Verification.fromElement(consensus.holders[blsPubKey1.serialize()][1]).hash
+claim: bytes = blockchain.blocks[-1].body.packets[0].hash
 
 #Create 12 Sends.
 sends: List[Send] = []
@@ -74,8 +81,7 @@ sends.append(
 )
 for _ in range(12):
     sends[-1].sign(edPrivKey)
-    sends[-1].beat(consensus.sendFilter)
-    sends[-1].verified = True
+    sends[-1].beat(sendFilter)
     transactions.add(sends[-1])
 
     sends.append(
@@ -85,99 +91,96 @@ for _ in range(12):
         )
     )
 
-#Verify 0 and 1 in order.
-order: List[int] = [0, 1]
-verif: SignedVerification
-for s in order:
-    verif = SignedVerification(sends[s].hash)
-    verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
-    consensus.add(verif)
+#Order to verify the Transactions in.
+#Dict key is holder nick.
+#Dict value is list of transactions.
+#Tuple's second value is miner.
+orders: List[Tuple[Dict[int, List[int]], Union[bytes, int]]] = [
+    #Verify the first two Merit Holders.
+    ({0: [0, 1]}, 0),
+    #Verify 3, and then 2, while giving Merit to a second Merit Holder.
+    ({0: [3, 2]}, blsPubKeys[1].serialize()),
+    #Verify every other TX.
+    ({1: [5, 6, 9, 11, 3, 0], 0: [4, 5, 8, 7, 11, 6, 10, 9]}, 1)
+]
+#Packets.
+packets: Dict[int, VerificationPacket]
+toAggregate: List[blspy.Signature]
 
-block: Block = Block(
-    BlockHeader(
-        13,
-        blockchain.last(),
-        int(time()),
-        consensus.getAggregate([(blsPubKey1, 2, -1)])
-    ),
-    BlockBody([(blsPubKey1, 3, consensus.getMerkle(blsPubKey1, 2))])
-)
-block.mine(blockchain.difficulty())
-blockchain.add(block)
-print("Generated Fifty Block " + str(block.header.nonce) + ".")
+#Add each Block.
+for order in orders:
+    #Clear old data.
+    packets = {}
+    toAggregate = []
 
-#Verify 3, and then 2, while giving Merit to a second Merit Holder.
-order = [3, 2]
-for s in order:
-    verif = SignedVerification(sends[s].hash)
-    verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
-    consensus.add(verif)
+    for h in order[0]:
+        for s in order[0][h]:
+            if s not in packets:
+                packets[s] = VerificationPacket(sends[s].hash, [])
+            packets[s].holders.append(h)
 
-block = Block(
-    BlockHeader(
-        14,
-        blockchain.last(),
-        int(time()),
-        consensus.getAggregate([(blsPubKey1, 4, -1)])
-    ),
-    BlockBody(
-        [(blsPubKey1, 5, consensus.getMerkle(blsPubKey1, 4))],
-        [(blsPubKey2, 100)]
+            verif: SignedVerification = SignedVerification(sends[s].hash)
+            verif.sign(h, blsPrivKeys[h])
+            toAggregate.append(verif.blsSignature)
+
+    block: Block = Block(
+        BlockHeader(
+            0,
+            blockchain.last(),
+            BlockHeader.createContents(list(packets.values())),
+            1,
+            bytes(4),
+            BlockHeader.createSketchCheck(bytes(4), list(packets.values())),
+            order[1],
+            int(time())
+        ),
+        BlockBody(
+            list(packets.values()),
+            [],
+            blspy.Signature.aggregate(toAggregate).serialize()
+        )
     )
-)
-block.mine(blockchain.difficulty())
-blockchain.add(block)
-print("Generated Fifty Block " + str(block.header.nonce) + ".")
 
-#2nd Merit Holder:
-order = [5, 6, 9, 11]
-for i in range(len(order)):
-    verif = SignedVerification(sends[order[i]].hash)
-    verif.sign(blsPrivKey2, i)
-    consensus.add(verif)
+    miner: Union[bytes, int] = order[1]
+    if isinstance(miner, bytes):
+        for k in range(len(blsPubKeys)):
+            if miner == blsPubKeys[k].serialize():
+                block.mine(blsPrivKeys[k], blockchain.difficulty())
+                break
+    else:
+        block.mine(blsPrivKeys[miner], blockchain.difficulty())
 
-#1st Merit Holder:
-order = [4, 5, 8, 7, 11, 6, 10, 9]
-for s in order:
-    verif = SignedVerification(sends[s].hash)
-    verif.sign(blsPrivKey1, len(consensus.holders[blsPubKey1.serialize()]))
-    consensus.add(verif)
-
-block = Block(
-    BlockHeader(
-        15,
-        blockchain.last(),
-        int(time()),
-        consensus.getAggregate([(blsPubKey2, 0, -1), (blsPubKey1, 6, -1)])
-    ),
-    BlockBody(
-        [
-            (blsPubKey2, 3, consensus.getMerkle(blsPubKey2, 0)),
-            (blsPubKey1, 13, consensus.getMerkle(blsPubKey1, 6))
-        ]
-    )
-)
-block.mine(blockchain.difficulty())
-blockchain.add(block)
-print("Generated Fifty Block " + str(block.header.nonce) + ".")
+    blockchain.add(block)
+    print("Generated Fifty Block " + str(len(blockchain.blocks) - 1) + ".")
 
 #Generate another 5 Blocks.
-for i in range(16, 21):
+for _ in range(5):
     #Create the next Block.
-    block = Block(BlockHeader(i, blockchain.last(), int(time())), BlockBody())
+    block: Block = Block(
+        BlockHeader(
+            0,
+            blockchain.last(),
+            bytes(48),
+            1,
+            bytes(4),
+            bytes(48),
+            0,
+            int(time())
+        ),
+        BlockBody()
+    )
 
     #Mine it.
-    block.mine(blockchain.difficulty())
+    block.mine(blsPrivKeys[0], blockchain.difficulty())
 
     #Add it.
     blockchain.add(block)
-    print("Generated Fifty Block " + str(block.header.nonce) + ".")
+    print("Generated Fifty Block " + str(len(blockchain.blocks) - 1) + ".")
 
-#Save the appended data (3 Blocks and 12 Sends).
+#Save the appended data (8 Blocks and 12 Sends).
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON(),
-    "transactions": transactions.toJSON(),
-    "consensus":  consensus.toJSON()
+    "transactions": transactions.toJSON()
 }
 vectors: IO[Any] = open("PythonTests/Vectors/Transactions/Fifty.json", "w")
 vectors.write(json.dumps(result))
