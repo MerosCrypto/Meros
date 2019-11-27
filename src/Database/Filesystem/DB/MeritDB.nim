@@ -184,7 +184,7 @@ proc loadBlockHeader*(
     DBReadError
 ].} =
     try:
-        result = db.get(hash.toString()).parseBlockHeader()
+        result = db.get(hash.toString()).parseBlockHeader(hash)
     except Exception as e:
         raise newException(DBReadError, e.msg)
 

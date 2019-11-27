@@ -51,6 +51,10 @@ proc test*() =
 
     #Test 128 serializations.
     for s in 0 .. 127:
+        #Clear packets and elements.
+        packets = @[]
+        elements = @[]
+
         #Randomize the packets.
         for _ in 0 ..< rand(300):
             packets.add(newRandomVerificationPacket())

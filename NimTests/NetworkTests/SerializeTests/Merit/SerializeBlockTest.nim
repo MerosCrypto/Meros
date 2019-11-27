@@ -52,6 +52,10 @@ proc test*() =
 
     #Test 128 serializations.
     for s in 0 .. 127:
+        #Clear packets and elements.
+        packets = @[]
+        elements = @[]
+    
         #Randomize the last hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))

@@ -13,9 +13,10 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 #Common serialization functions.
 import ../SerializeCommon
 
-#Parse function.
+#Parse functions.
 proc parseBlockHeader*(
-    headerStr: string
+    headerStr: string,
+    hash: ArgonHash
 ): BlockHeader {.forceCheck: [
     ValueError,
     BLSError
@@ -73,11 +74,29 @@ proc parseBlockHeader*(
         fcRaise e
     except BLSError as e:
         fcRaise e
+
+    #Set the hash.
+    result.hash = hash
+
+proc parseBlockHeader*(
+    headerStr: string
+): BlockHeader {.forceCheck: [
+    ValueError,
+    BLSError
+].} =
+    try:
+        result = parseBlockHeader(headerStr, Hash[384]())
+    except ValueError as e:
+        fcRaise e
+    except BLSError as e:
+        fcRaise e
+
+    #Set the BlockHeader's actual hash.
     hash(
         result,
         headerStr[0 ..< (
                 BLOCK_HEADER_DATA_LEN +
-                (if headerSeq[6] == "\0": NICKNAME_LEN else: BLS_PUBLIC_KEY_LEN) +
+                (if result.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
                 INT_LEN
             )
         ]
