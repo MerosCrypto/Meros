@@ -124,6 +124,24 @@ proc newConsensusObj*(
     for hash in unmentioned:
         result.unmentioned[hash] = true
 
+#Get all pending Verification Packets and the aggregate signature.
+proc getPending*(
+    consensus: Consensus
+): tuple[
+    packets: seq[VerificationPacket],
+    aggregate: BLSSignature
+] {.forceCheck: [].} =
+    for status in consensus.statuses.values():
+        if status.pending.holders.len != 0:
+            result.packets.add(status.pending)
+            if result.aggregate.isNil:
+                result.aggregate = status.pending.signature
+            else:
+                try:
+                    result.aggregate = @[result.aggregate, status.pending.signature].aggregate()
+                except BLSError as e:
+                    doAssert(false, "Failed to aggregate BLS signatures: " & e.msg)
+
 #Set a Transaction as unmentioned.
 proc setUnmentioned*(
     consensus: Consensus,

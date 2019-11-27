@@ -57,7 +57,7 @@ RPC:
 
 Main:
 
-- Actually populate the Sketcher.
+- Utilize SketchElement significance.
 
 ### Nim Tests:
 

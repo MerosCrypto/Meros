@@ -105,7 +105,7 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Sync this Block.
             var
-                sketcher: Sketcher
+                sketcher: Sketcher = newSketcher(consensus.getPending().packets)
                 newBlock: Block
             try:
                 newBlock = await network.sync(
