@@ -111,9 +111,9 @@ proc syncVerificationPackets*(
 ], async.} =
     try:
         #Send the request.
-        var req: string = blockHash.toString() & sketchHashes.len.toBinary().pad(4)
+        var req: string = blockHash.toString() & sketchHashes.len.toBinary(INT_LEN)
         for hash in sketchHashes:
-            req &= hash.toBinary().pad(8)
+            req &= hash.toBinary(SKETCH_HASH_LEN)
         await client.send(newMessage(MessageType.SketchHashRequests, req))
 
         for sketchHash in sketchHashes:
@@ -164,7 +164,7 @@ proc syncSketchHashes*(
 
         #Sort the result.
         result.sort(SortOrder.Descending)
-        
+
         #Verify the sketchCheck merkle.
         try:
             sketchCheck.verifySketchCheck(result)

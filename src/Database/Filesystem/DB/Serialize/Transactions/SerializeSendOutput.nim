@@ -23,4 +23,4 @@ method serialize*(
 ): string {.inline, forceCheck: [].} =
     result =
         output.key.toString() &
-        output.amount.toBinary().pad(MEROS_LEN)
+        output.amount.toBinary(MEROS_LEN)

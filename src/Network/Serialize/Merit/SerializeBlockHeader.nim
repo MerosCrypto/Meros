@@ -20,22 +20,22 @@ import ../SerializeCommon
 func serializeHash*(
     header: BlockHeader
 ): string {.inline, forceCheck: [].} =
-    header.version.toBinary().pad(INT_LEN) &
+    header.version.toBinary(INT_LEN) &
     header.last.toString() &
     header.contents.toString() &
 
-    header.significant.toBinary().pad(NICKNAME_LEN) &
+    header.significant.toBinary(NICKNAME_LEN) &
     header.sketchSalt.pad(INT_LEN) &
     header.sketchCheck.toString() &
 
     (
-        if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary().pad(NICKNAME_LEN)
+        if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary(NICKNAME_LEN)
     ) &
-    header.time.toBinary().pad(INT_LEN)
+    header.time.toBinary(INT_LEN)
 
 func serialize*(
     header: BlockHeader
 ): string {.inline, forceCheck: [].} =
     header.serializeHash() &
-    header.proof.toBinary().pad(INT_LEN) &
+    header.proof.toBinary(INT_LEN) &
     header.signature.toString()

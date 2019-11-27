@@ -159,9 +159,9 @@ proc handle(
                                 await client.send(newMessage(MessageType.DataMissing))
                                 continue
 
-                            var res: string = requested.body.packets.len.toBinary().pad(4)
+                            var res: string = requested.body.packets.len.toBinary(INT_LEN)
                             for packet in requested.body.packets:
-                                res &= sketchHash(requested.header.sketchSalt, packet).toBinary().pad(8)
+                                res &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
                             await client.send(newMessage(MessageType.SketchHashes, res))
 
                         of MessageType.SketchHashRequests:
@@ -177,7 +177,7 @@ proc handle(
                             #Create a Table of the Sketch Hashes.
                             var packets: Table[string, VerificationPacket] = initTable[string, VerificationPacket]()
                             for packet in requested.body.packets:
-                                packets[sketchHash(requested.header.sketchSalt, packet).toBinary().pad(8)] = packet
+                                packets[sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)] = packet
 
                             try:
                                 for i in 0 ..< msg.message[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary():

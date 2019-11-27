@@ -14,7 +14,8 @@ import ../../Wallet/Wallet
 import objects/SendObj
 export SendObj
 
-#Serialization lib.
+#Serialization libs.
+import ../../Network/Serialize/SerializeCommon
 import ../../Network/Serialize/Transactions/SerializeSend
 
 #Create a new Send.
@@ -52,10 +53,10 @@ proc mine*(
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: uint32 = 0
-        hash: ArgonHash = Argon(send.hash.toString(), proof.toBinary().pad(8), true)
+        hash: ArgonHash = Argon(send.hash.toString(), proof.toBinary(SALT_LEN), true)
     while hash <= networkDifficulty:
         inc(proof)
-        hash = Argon(send.hash.toString(), proof.toBinary().pad(8), true)
+        hash = Argon(send.hash.toString(), proof.toBinary(SALT_LEN), true)
 
     try:
         send.proof = proof

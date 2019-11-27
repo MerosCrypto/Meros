@@ -6,7 +6,7 @@ import random
 
 proc test*() =
     #Seed random.
-    randomize(int64(getTime()))
+    randomize(int64(5))
 
     #Make sure leading 0 bytes are ignored.
     assert(0.toBinary() == "")

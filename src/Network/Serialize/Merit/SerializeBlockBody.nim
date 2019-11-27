@@ -34,7 +34,7 @@ proc serialize*(
     if (capacity == 0) and (body.packets.len != 0):
         capacity = body.packets.len div 5 + 1
 
-    result = capacity.toBinary().pad(INT_LEN)
+    result = capacity.toBinary(INT_LEN)
 
     try:
         result &= newSketcher(body.packets).serialize(
@@ -45,7 +45,7 @@ proc serialize*(
     except SaltError as e:
         raise newException(ValueError, "BlockBody's elements have a collision with the specified sketchSalt: " & e.msg)
 
-    result &= body.elements.len.toBinary().pad(INT_LEN)
+    result &= body.elements.len.toBinary(INT_LEN)
     for elem in body.elements:
         case elem:
             of MeritRemoval as _:

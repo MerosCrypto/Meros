@@ -14,7 +14,8 @@ import ../../Wallet/Wallet
 import objects/DataObj
 export DataObj
 
-#Serialization lib.
+#Serialization libs.
+import ../../Network/Serialize/SerializeCommon
 import ../../Network/Serialize/Transactions/SerializeData
 
 #Data constructosr
@@ -58,10 +59,10 @@ proc mine*(
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: uint32 = 0
-        hash: ArgonHash = Argon(data.hash.toString(), proof.toBinary().pad(8), true)
+        hash: ArgonHash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN), true)
     while hash <= networkDifficulty:
         inc(proof)
-        hash = Argon(data.hash.toString(), proof.toBinary().pad(8), true)
+        hash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN), true)
 
     try:
         data.proof = proof

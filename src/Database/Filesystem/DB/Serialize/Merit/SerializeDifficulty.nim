@@ -21,6 +21,6 @@ proc serialize*(
     difficulty: Difficulty
 ): string {.forceCheck: [].} =
     result =
-        difficulty.start.toBinary().pad(INT_LEN) &
-        difficulty.endHeight.toBinary().pad(INT_LEN) &
+        difficulty.start.toBinary(INT_LEN) &
+        difficulty.endHeight.toBinary(INT_LEN) &
         difficulty.difficulty.toString()

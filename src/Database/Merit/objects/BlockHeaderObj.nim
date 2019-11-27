@@ -10,6 +10,9 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#SerializeCommon lib.
+import ../../../Network/Serialize/SerializeCommon
+
 #Finals lib.
 import finals
 
@@ -120,7 +123,7 @@ proc hash*(
     header.proof = proof
     header.hash = Argon(
         serialized,
-        header.proof.toBinary().pad(8)
+        header.proof.toBinary(SALT_LEN)
     )
     try:
         header.signature = miner.sign(header.hash.toString())
@@ -136,7 +139,7 @@ func hash*(
     header.hash = Argon(
         Argon(
             serialized,
-            header.proof.toBinary().pad(8)
+            header.proof.toBinary(SALT_LEN)
         ).toString(),
         header.signature.toString()
     )

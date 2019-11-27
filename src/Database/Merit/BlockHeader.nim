@@ -21,12 +21,15 @@ import ../Consensus/Elements/Element
 import objects/BlockHeaderObj
 export BlockHeaderObj
 
+#SerializeCommon lib.
+import ../../Network/Serialize/SerializeCommon
+
 #Element Serialization libs.
 import ../../Network/Serialize/Consensus/SerializeVerification
 import ../../Network/Serialize/Consensus/SerializeVerificationPacket
 import ../../Network/Serialize/Consensus/SerializeMeritRemoval
 
-#Serialization lib.
+#BlockHeader Serialization lib.
 import ../../Network/Serialize/Merit/SerializeBlockHeader
 
 #Algorithm standard lib.
@@ -70,7 +73,7 @@ proc newSketchCheck*(
     sketchHashes.sort(SortOrder.Descending)
 
     for hash in sketchHashes:
-        calculated.add(Blake384(hash.toBinary().pad(8)))
+        calculated.add(Blake384(hash.toBinary(SKETCH_HASH_LEN)))
 
     result = calculated.hash
 

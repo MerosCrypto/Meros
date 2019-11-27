@@ -30,12 +30,12 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     result =
         blockArg.header.serialize() &
-        blockArg.body.packets.len.toBinary().pad(INT_LEN)
+        blockArg.body.packets.len.toBinary(INT_LEN)
 
     for packet in blockArg.body.packets:
         result &= packet.serialize()
 
-    result &= blockArg.body.elements.len.toBinary().pad(INT_LEN)
+    result &= blockArg.body.elements.len.toBinary(INT_LEN)
     for elem in blockArg.body.elements:
         case elem:
             of MeritRemoval as _:

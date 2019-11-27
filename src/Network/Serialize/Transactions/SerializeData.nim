@@ -32,4 +32,4 @@ method serialize*(
     char(data.data.len) &
     data.data &
     data.signature.toString() &
-    data.proof.toBinary().pad(INT_LEN)
+    data.proof.toBinary(INT_LEN)

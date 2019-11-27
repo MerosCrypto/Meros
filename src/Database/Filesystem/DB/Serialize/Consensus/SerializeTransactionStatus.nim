@@ -18,14 +18,14 @@ proc serialize*(
     status: TransactionStatus
 ): string {.forceCheck: [].} =
     result =
-        status.epoch.toBinary().pad(INT_LEN) &
+        status.epoch.toBinary(INT_LEN) &
         char(status.competing) &
         char(status.verified) &
         char(status.beaten) &
-        status.holders.len.toBinary().pad(NICKNAME_LEN)
+        status.holders.len.toBinary(NICKNAME_LEN)
 
     for holder in status.holders.keys():
-        result &= holder.toBinary().pad(NICKNAME_LEN)
+        result &= holder.toBinary(NICKNAME_LEN)
 
     if status.merit != -1:
-        result &= status.merit.toBinary().pad(NICKNAME_LEN)
+        result &= status.merit.toBinary(NICKNAME_LEN)

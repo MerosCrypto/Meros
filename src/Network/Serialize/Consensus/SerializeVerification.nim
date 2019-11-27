@@ -21,7 +21,7 @@ export SerializeElement
 method serialize*(
     verif: Verification
 ): string {.inline, forceCheck: [].} =
-    verif.holder.toBinary().pad(NICKNAME_LEN) &
+    verif.holder.toBinary(NICKNAME_LEN) &
     verif.hash.toString()
 
 #Serialize a Verification for signing or a MeritRemoval.

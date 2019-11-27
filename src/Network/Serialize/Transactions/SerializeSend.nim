@@ -25,11 +25,11 @@ method serializeHash*(
     for input in send.inputs:
         result &=
             input.hash.toString() &
-            cast[SendInput](input).nonce.toBinary().pad(BYTE_LEN)
+            cast[SendInput](input).nonce.toBinary(BYTE_LEN)
     for output in send.outputs:
         result &=
             cast[SendOutput](output).key.toString() &
-            output.amount.toBinary().pad(MEROS_LEN)
+            output.amount.toBinary(MEROS_LEN)
 
 method serialize*(
     send: Send
@@ -46,8 +46,8 @@ method serialize*(
     for output in send.outputs:
         result &=
             cast[SendOutput](output).key.toString() &
-            output.amount.toBinary().pad(MEROS_LEN)
+            output.amount.toBinary(MEROS_LEN)
 
     result &=
         send.signature.toString() &
-        send.proof.toBinary().pad(INT_LEN)
+        send.proof.toBinary(INT_LEN)

@@ -19,5 +19,5 @@ method serialize*(
     output: MintOutput
 ): string {.inline, forceCheck: [].} =
     result =
-        output.key.toBinary().pad(NICKNAME_LEN) &
-        output.amount.toBinary().pad(MEROS_LEN)
+        output.key.toBinary(NICKNAME_LEN) &
+        output.amount.toBinary(MEROS_LEN)

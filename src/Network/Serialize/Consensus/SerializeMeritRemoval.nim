@@ -21,7 +21,7 @@ import SerializeVerification
 method serialize*(
     mr: MeritRemoval
 ): string {.forceCheck: [].} =
-    result = mr.holder.toBinary().pad(NICKNAME_LEN)
+    result = mr.holder.toBinary(NICKNAME_LEN)
 
     if mr.partial:
         result &= "\1"

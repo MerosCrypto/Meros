@@ -26,7 +26,7 @@ method serialize*(
 ): string {.forceCheck: [].} =
     result = packet.holders.len.toBinary()
     for holder in packet.holders.sorted():
-        result &= holder.toBinary().pad(NICKNAME_LEN)
+        result &= holder.toBinary(NICKNAME_LEN)
     result &= packet.hash.toString()
 
 #Serialize a VerificationPacket (as a MeritRemovalVerificationPacket) for a MeritRemoval.

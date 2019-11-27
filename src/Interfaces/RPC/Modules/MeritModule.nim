@@ -22,6 +22,9 @@ import ../../../Database/Merit/Merit
 #SketchyBlock object.
 import ../../../Network/objects/SketchyBlockObj
 
+#SerializeCommon lib.
+import ../../../Network/Serialize/SerializeCommon
+
 #Block Serialization libs.
 import ../../../Network/Serialize/Merit/SerializeBlockHeader
 import ../../../Network/Serialize/Merit/SerializeBlockBody
@@ -261,7 +264,7 @@ proc module*(
                         discard sketchers[id].serialize(
                             pending.packets.len,
                             0,
-                            sketchSaltNum.toBinary().pad(4)
+                            sketchSaltNum.toBinary(INT_LEN)
                         )
 
                         break
@@ -269,7 +272,7 @@ proc module*(
                         doAssert(false, "Couldn't get a Sketcher we just created: " & e.msg)
                     except SaltError:
                         inc(sketchSaltNum)
-                sketchSalt = sketchSaltNum.toBinary().pad(4)
+                sketchSalt = sketchSaltNum.toBinary(INT_LEN)
 
                 #Delete the sketcher from 5 templates ago.
                 sketchers.del(id - 5)

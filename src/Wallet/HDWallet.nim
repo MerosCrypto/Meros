@@ -7,6 +7,9 @@ import ../lib/Util
 #Hash lib.
 import ../lib/Hash
 
+#SerializeCommon lib.
+import ../Network/Serialize/SerializeCommon
+
 #Ed25519 lib.
 import Ed25519
 export Ed25519
@@ -118,7 +121,7 @@ proc derive*(
         pPublicKey: string = wallet.publicKey.toString()
 
         #Child index, in little endian.
-        child: string = childArg.toBinary().pad(4).reverse()
+        child: string = childArg.toBinary(INT_LEN).reverse()
         #Is this a Hardened derivation?
         hardened: bool = childArg >= (uint32(2) ^ 31)
     for i in 0 ..< 32:

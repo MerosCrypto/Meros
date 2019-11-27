@@ -1,6 +1,9 @@
 #Errors objects.
 import objects/ErrorsObjs
 
+#Math standard lib.
+import math
+
 #Times standard lib.
 import times
 
@@ -19,7 +22,7 @@ proc getTime*(): uint32 {.inline, forceCheck: [].} =
 
 #Left-pads data, with a char or string, until the data is a certain length.
 func pad*(
-    data: char or string,
+    data: string,
     len: int,
     prefix: char or string = char(0)
 ): string {.forceCheck: [].} =
@@ -38,37 +41,27 @@ func reverse*(
 
 #Converts a number to a binary string.
 func toBinary*(
-    number: SomeNumber
+    number: SomeNumber,
+    length: int = 0
 ): string {.forceCheck: [].} =
+    #Get the amount of bytes the number actually uses.
+    var used: int = 0
+    if number != 0:
+        used = ceil((floor(log2(float(number))) + 1) / 8).toInt()
+    
+    #Add filler bytes to the final result is at least length.
+    #If the amount of bytes needed is more than the length, the result will be the amount needed.
+    result = newString(max(length - used, 0))
+
+    #Shift counters.
     var
-        #Get the bytes of the number.
-        bytes: int = sizeof(number)
-        #Init the shift counters.
-        left: int = -8
-        right: int = bytes * 8
-        #Have we encountered a non 0 byte yet?
-        filler: bool = true
+        mask: uint = 255
+        fromEnd: int = (used - 1) * 8
 
     #Iterate over each byte.
-    for i in 0 ..< bytes:
-        #Update left/right.
-        left += 8
-        right -= 8
-
-        #Clear the left side, shift it back, and clear the right side.
-        var b: int = int(number shl left shr (left + right))
-
-        #If we haven't hit a non-0 byte...
-        if filler:
-            #And this is a 0 byte...
-            if b == 0:
-                #Continue.
-                continue
-            #Else, mark that we have hit a 0 byte.
-            filler = false
-
-        #Put the byte in the string.
-        result &= char(b)
+    while fromEnd >= 0:
+        result &= char((uint64(number) and uint64(mask shl fromEnd)) shr fromEnd)
+        fromEnd -= 8
 
 #Converts a binary char/string to a number.
 func fromBinary*(

@@ -75,7 +75,7 @@ proc commit*(
     var removals: string = ""
     try:
         for nick in db.merit.removals.keys():
-            removals &= nick.toBinary().pad(NICKNAME_LEN) & db.merit.removals[nick].toBinary().pad(INT_LEN)
+            removals &= nick.toBinary(NICKNAME_LEN) & db.merit.removals[nick].toBinary(INT_LEN)
     except KeyError as e:
         doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
     if removals != "":
@@ -147,14 +147,14 @@ proc remove*(
     db.merit.removals[nick] = merit
 
     var
-        nickStr: string = nick.toBinary().pad(1)
+        nickStr: string = nick.toBinary(BYTE_LEN)
         removals: string
     try:
         removals = db.get(nickStr & "removals")
     except DBReadError:
         removals = ""
 
-    db.put(nickStr & "removals", removals & blockNum.toBinary().pad(4))
+    db.put(nickStr & "removals", removals & blockNum.toBinary(INT_LEN))
 
 #Load functions.
 proc loadHeight*(
@@ -263,7 +263,7 @@ proc loadBlockRemovals*(
 ): seq[tuple[nick: uint16, merit: int]] {.forceCheck: [].} =
     var removals: string
     try:
-        removals = db.get("removals" & blockNum.toBinary().pad(1))
+        removals = db.get("removals" & blockNum.toBinary(BYTE_LEN))
     except DBReadError:
         return @[]
 
@@ -281,7 +281,7 @@ proc loadHolderRemovals*(
 ): seq[int] {.forceCheck: [].} =
     var removals: string
     try:
-        removals = db.get(nick.toBinary().pad(1) & "removals")
+        removals = db.get(nick.toBinary(BYTE_LEN) & "removals")
     except DBReadError:
         return @[]
 

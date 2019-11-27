@@ -18,7 +18,7 @@ proc serialize*(
     mint: Mint
 ): string {.inline, forceCheck: [].} =
     result =
-        mint.nonce.toBinary().pad(INT_LEN) &
+        mint.nonce.toBinary(INT_LEN) &
         cast[MintOutput](mint.outputs[0]).serialize()
 
 proc serializeHash*(
