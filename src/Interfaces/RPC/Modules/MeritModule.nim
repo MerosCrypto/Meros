@@ -13,8 +13,8 @@ import ../../../lib/Sketcher as SketcherFile
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Element lib.
-import ../../../Database/Consensus/Elements/Element
+#Element libs.
+import ../../../Database/Consensus/Elements/Elements
 
 #Merit lib.
 import ../../../Database/Merit/Merit

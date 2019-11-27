@@ -1,4 +1,4 @@
 #Element Test.
 
 proc test*() =
-    echo "The Database/Consensus/Elements/Element Test is empty."
+    echo "The Database/Consensus/Elements/Elements Test is empty."

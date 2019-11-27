@@ -4,7 +4,7 @@ import ../../../../lib/objects/ErrorsObjs
 #MinerWallet lib.
 import ../../../../Wallet/MinerWallet
 
-#Element lib.
+#Element objects.
 import ElementObj
 export ElementObj
 

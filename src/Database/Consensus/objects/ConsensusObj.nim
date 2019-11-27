@@ -19,8 +19,8 @@ import ../../Transactions/Transaction
 #State lib.
 import ../../Merit/State
 
-#Element lib.
-import ../Elements/Element
+#Element libs.
+import ../Elements/Elements
 
 #TransactionStatus object.
 import TransactionStatusObj

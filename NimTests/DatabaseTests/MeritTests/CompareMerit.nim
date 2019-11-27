@@ -4,8 +4,8 @@ import ../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
-#Element lib.
-import ../../../src/Database/Consensus/Elements/Element
+#Element libs.
+import ../../../src/Database/Consensus/Elements/Elements
 
 #Merit libs.
 import ../../../src/Database/Merit/Merit

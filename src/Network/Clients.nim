@@ -13,8 +13,8 @@ import ../lib/Sketcher
 #Transactions lib (for all Transaction types).
 import ../Database/Transactions/Transactions
 
-#Element lib.
-import ../Database/Consensus/Elements/Element
+#Element libs.
+import ../Database/Consensus/Elements/Elements
 
 #Block lib.
 import ../Database/Merit/Block

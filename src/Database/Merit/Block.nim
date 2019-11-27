@@ -14,8 +14,8 @@ import ../../lib/Sketcher
 #MinerWallet lib.
 import ../../Wallet/MinerWallet
 
-#Element lib.
-import ../Consensus/Elements/Element
+#Element libs.
+import ../Consensus/Elements/Elements
 
 #BlockHeader lib.
 import BlockHeader

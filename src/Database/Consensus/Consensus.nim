@@ -28,9 +28,9 @@ import ../Merit/State
 import objects/SpamFilterObj
 export SpamFilterObj
 
-#Element lib.
-import Elements/Element
-export Element
+#Element libs.
+import Elements/Elements
+export Elements
 
 #TransactionStatus lib.
 import TransactionStatus

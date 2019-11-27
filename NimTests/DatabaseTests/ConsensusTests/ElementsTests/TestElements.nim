@@ -9,9 +9,9 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Element lib.
-import ../../../../src/Database/Consensus/Elements/Element
-export Element
+#Element libs.
+import ../../../../src/Database/Consensus/Elements/Elements
+export Elements
 
 #Random standard lib.
 import random

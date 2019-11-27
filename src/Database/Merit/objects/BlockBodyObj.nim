@@ -7,8 +7,8 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Element lib.
-import ../../Consensus/Elements/Element
+#Element libs.
+import ../../Consensus/Elements/Elements
 
 #BlockBody object.
 type BlockBody* = object
