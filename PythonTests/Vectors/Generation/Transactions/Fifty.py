@@ -65,7 +65,7 @@ blsPubKeys: List[blspy.PublicKey] = [
     blsPrivKeys[1].get_public_key()
 ]
 
-#Grab the claim hash.
+#Grab the Claim hash.
 claim: bytes = blockchain.blocks[-1].body.packets[0].hash
 
 #Create 12 Sends.
@@ -177,7 +177,7 @@ for _ in range(5):
     blockchain.add(block)
     print("Generated Fifty Block " + str(len(blockchain.blocks) - 1) + ".")
 
-#Save the appended data (8 Blocks and 12 Sends).
+#Save the vector.
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON(),
     "transactions": transactions.toJSON()

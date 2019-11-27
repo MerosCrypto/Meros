@@ -129,6 +129,10 @@ def VParsableTest(
             elif MessageType(msg[0]) == MessageType.SyncingOver:
                 pass
 
+            elif MessageType(msg[0]) == MessageType.BlockHeader:
+                #Raise a TestError if the Block was added.
+                raise TestError("Meros synced a Verification which verified a parsable, yet invalid, Transaction.")
+
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())
 

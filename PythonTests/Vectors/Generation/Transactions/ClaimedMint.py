@@ -119,7 +119,7 @@ claim.amount = merit.mints[0].output[1]
 claim.sign([blsPrivKey])
 transactions.add(claim)
 
-#Verify the Claim..
+#Verify the Claim.
 verif = SignedVerification(claim.hash)
 verif.sign(0, blsPrivKey)
 

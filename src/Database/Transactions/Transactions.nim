@@ -61,6 +61,8 @@ proc add*(
         #Claimers.
         claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey](1)
 
+        #Table of spent inputs.
+        inputTable: Table[string, bool] = initTable[string, bool]()
         #Output loop variable.
         output: MintOutput
         #Key loop variable.
@@ -76,8 +78,12 @@ proc add*(
     except DBReadError:
         raise newException(ValueError, "Claim spends a non-existant Mint.")
 
-    #Add the amount the inputs provide.
+    #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
     for input in claim.inputs:
+        if inputTable.hasKey(input.toString()):
+            raise newException(ValueError, "Claim spends the same input twice.")
+        inputTable[input.toString()] = true
+
         try:
             if not (transactions[input.hash] of Mint):
                 raise newException(ValueError, "Claim doesn't spend a Mint.")
@@ -140,6 +146,8 @@ proc add*(
         #Sender.
         senders: seq[EdPublicKey] = newSeq[EdPublicKey](1)
 
+        #Table of spent inputs.
+        inputTable: Table[string, bool] = initTable[string, bool]()
         #Spent output loop variable.
         spent: SendOutput
         #Amount this transaction is processing.
@@ -151,8 +159,12 @@ proc add*(
     except DBReadError:
         raise newException(ValueError, "Send spends a non-existant output.")
 
-    #Add the amount the inputs provide.
+    #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
     for input in send.inputs:
+        if inputTable.hasKey(input.toString()):
+            raise newException(ValueError, "Send spends the same input twice.")
+        inputTable[input.toString()] = true
+
         try:
             if (
                 (not (transactions[input.hash] of Claim)) and

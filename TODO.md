@@ -122,6 +122,7 @@ Network:
 ### Python Tests
 
 - Add Dead Merit/MeritRemovals to the State Value Test.
+- Add same input Claims to the Same Input Test.
 
 - MeritRemoval Tests.
 - RPC tests.
