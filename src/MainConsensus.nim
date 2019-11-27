@@ -42,6 +42,12 @@ proc mainConsensus() {.forceCheck: [].} =
         ): int {.inline, raises: [].} =
             merit.state.nodeThresholdAt(epoch)
 
+        functions.consensus.getPending = proc (): tuple[
+            packets: seq[VerificationPacket],
+            aggregate: BLSSignature
+        ] {.inline, forceCheck: [].} =
+            consensus.getPending()
+
         #Handle VerificationPackets.
         functions.consensus.addVerificationPacket = proc (
             packet: VerificationPacket

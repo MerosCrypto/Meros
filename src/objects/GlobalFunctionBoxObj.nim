@@ -103,6 +103,11 @@ type
             epoch: int
         ): int {.inline, raises: [].}
 
+        getPending*: proc (): tuple[
+            packets: seq[VerificationPacket],
+            aggregate: BLSSignature
+        ] {.inline, raises: [].}
+
         addVerificationPacket*: proc (
             packet: VerificationPacket
         ) {.raises: [].}

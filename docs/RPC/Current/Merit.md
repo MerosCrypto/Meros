@@ -71,7 +71,7 @@ The result is an object, as follows:
 - Merit Holder Nickname (int)
 
 The result is an object, as follows:
-- `unlocked`      (bool)
+- `unlocked`  (bool)
 - `malicious` (bool)
 - `merit`     (int)
 
@@ -89,6 +89,6 @@ Mining the Block occurs by hashing the header with an 8-byte left padded proof, 
 ### `publishBlock`
 
 `publishBlock` adds the Block to the local Blockchain, and if it's valid, publishes it. It takes in one argument.
-- Block (string)
+- Block (string): A Block serialized with a sketch capacity equivalent to the amount of included packets.
 
 The result is a bool of true.

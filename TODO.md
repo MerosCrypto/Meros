@@ -51,10 +51,6 @@ Network:
 
 ### No Consensus DAG:
 
-RPC:
-
-- getBlockTemplate which actually adds pending VerificationPackets.
-
 Main:
 
 - Utilize SketchElement significance.

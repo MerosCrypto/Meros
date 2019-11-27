@@ -7,6 +7,9 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
+#Sketcher lib.
+import ../../../lib/Sketcher
+
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
@@ -223,23 +226,34 @@ proc module*(
                     miner = newBLSPublicKey(params[0].getStr())
                 except BLSError:
                     raise newJSONRPCError(-4, "Invalid miner")
+
                 var
-                    #Packets we're including in the Block.
-                    packets: seq[VerificationPacket] = @[]
+                    #Pending
+                    pending: tuple[
+                        packets: seq[VerificationPacket],
+                        aggregate: BLSSignature
+                    ] = functions.consensus.getPending()
                     #Elements we're including in the Block.
                     elements: seq[BlockElement] = @[]
-                    #Aggregate signature.
-                    aggregate: BLSSignature = nil
                     #Sketch salt we're using with the packets.
-                    sketchSalt: string = "".pad(4)
-
-                #Grab the packets we're including in the Block.
-                discard """ """
+                    sketchSaltNum: uint32 = 0
+                    #Actual sketch salt.
+                    sketchSalt: string
 
                 #Verify the packets don't collide with our salt.
-                discard """ """
+                while true:
+                    try:
+                        discard newSketcher(pending.packets).serialize(
+                            pending.packets.len,
+                            0,
+                            sketchSaltNum.toBinary().pad(4)
+                        )
+                        break
+                    except SaltError:
+                        inc(sketchSaltNum)
+                sketchSalt = sketchSaltNum.toBinary().pad(4)
 
-                #Grab the Elements.
+                #Grab the Elements, updating the aggregate with each's signature.
 
                 #Create the Header.
                 var header: JSONNode = newJNull()
@@ -251,10 +265,10 @@ proc module*(
                         header = % newBlockHeader(
                             0,
                             functions.merit.getTail(),
-                            newContents(packets, elements),
-                            1,
+                            newContents(pending.packets, elements),
+                            0,
                             sketchSalt,
-                            newSketchCheck(sketchSalt, packets),
+                            newSketchCheck(sketchSalt, pending.packets),
                             miner,
                             getTime(),
                             0,
@@ -265,10 +279,10 @@ proc module*(
                         header = % newBlockHeader(
                             0,
                             functions.merit.getTail(),
-                            newContents(packets, elements),
-                            1,
+                            newContents(pending.packets, elements),
+                            0,
                             sketchSalt,
-                            newSketchCheck(sketchSalt, packets),
+                            newSketchCheck(sketchSalt, pending.packets),
                             nick,
                             getTime(),
                             0,
@@ -282,10 +296,10 @@ proc module*(
                     res["result"] = %* {
                         "header": header,
                         "body": newBlockBodyObj(
-                            packets,
+                            pending.packets,
                             elements,
-                            aggregate
-                        ).serialize(sketchSalt, packets.len).toHex()
+                            pending.aggregate
+                        ).serialize(sketchSalt, pending.packets.len).toHex()
                     }
                 except ValueError as e:
                     doAssert(false, "Block Body had sketch collision: " & e.msg)
@@ -324,7 +338,7 @@ proc module*(
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
                 except DataMissing:
-                    raise newJSONRPCError(-1, "Missing previous Block")
+                    raise newJSONRPCError(-1, "Missing Block-referenced data")
                 except Exception as e:
                     doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
     except Exception as e:
