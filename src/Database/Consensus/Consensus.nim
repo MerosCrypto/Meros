@@ -141,7 +141,7 @@ proc register*(
     height: int
 ) {.forceCheck: [].} =
     #Create the status.
-    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 6)
+    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 7)
 
     for input in tx.inputs:
         #Check if this Transaction's parent was beaten.

@@ -106,7 +106,7 @@ proc newConsensusObj*(
                             merit += state[holder]
                     if (
                         (not result.statuses[packet.hash].verified) and
-                        (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 600)
+                        (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 5)
                     ):
                         result.close[packet.hash] = true
                 except KeyError as e:
@@ -235,7 +235,7 @@ proc calculateMeritSingle(
         status.verified = true
         consensus.db.save(tx.hash, status)
         consensus.functions.transactions.verify(tx.hash)
-    elif merit >= state.nodeThresholdAt(status.epoch) - 600:
+    elif merit >= state.nodeThresholdAt(status.epoch) - 5:
         consensus.close[tx.hash] = true
 
 #Calculate a Transaction's Merit. If it's verified, also check every descendant

@@ -63,7 +63,9 @@ proc compare*(
         compare(c1.statuses[hash], c2.statuses[hash])
 
     #Compare the close table.
-    assert(c1.close.len == c2.close.len)
+    #We don't compare the length as c2 can have more Transactions if their verifiers gained Merit.
+    #If we only reloaded Transactions which are still close, we wouldn't have more Transactions, yet we would have less.
+    #That would rewrite the check to `for hash in c2.close.keys(): assert(c1.close.hasKey(hash))`.
     for hash in c1.close.keys():
         assert(c2.close.hasKey(hash))
 

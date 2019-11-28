@@ -95,8 +95,8 @@ proc loadUnlocked*(
     #If the Block is in the future, return the amount it will be (without Merit Removals).
     if blockNum >= state.processedBlocks:
         result = min(
-            ((blockNum - state.processedBlocks) * 100) + state.unlocked,
-            state.deadBlocks * 100
+            (blockNum - state.processedBlocks) + state.unlocked,
+            state.deadBlocks
         )
     #Load the amount of Unlocked Merit at the specified Block.
     else:

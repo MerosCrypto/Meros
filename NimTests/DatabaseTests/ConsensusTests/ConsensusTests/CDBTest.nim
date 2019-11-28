@@ -47,7 +47,7 @@ proc test*() =
             "CONSENSUS_TEST",
             10,
             $Hash[384](),
-            10
+            30
         )
         #Transactions.
         transactions: Transactions = newTransactions(
