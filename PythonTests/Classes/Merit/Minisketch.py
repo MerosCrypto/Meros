@@ -5,8 +5,8 @@ from typing import List, Any
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #CTypes.
-from ctypes import Array, c_uint64, c_uint32, c_size_t, c_char, c_char_p, \
-                   cdll, create_string_buffer, byref
+from ctypes import cdll, c_uint64, c_uint32, c_size_t, c_char, \
+                   Array, c_char_p, c_void_p, create_string_buffer, byref
 
 #OS standard lib.
 import os
@@ -26,6 +26,22 @@ if os.name == "nt":
 else:
     MinisketchLib = cdll.LoadLibrary("PythonTests/Stubs/libminisketch.so")
 
+#Define the function types.
+MinisketchLib.minisketch_create.argtypes = [c_uint32, c_uint32, c_size_t]
+MinisketchLib.minisketch_create.restype = c_void_p
+
+MinisketchLib.minisketch_add_uint64.argtypes = [c_void_p, c_uint64]
+MinisketchLib.minisketch_add_uint64.restype = None
+
+MinisketchLib.minisketch_serialize.argtypes = [c_void_p, c_void_p]
+MinisketchLib.minisketch_serialize.restype = None
+
+MinisketchLib.minisketch_deserialize.argtypes = [c_void_p, c_char_p]
+MinisketchLib.minisketch_deserialize.restype = None
+
+MinisketchLib.minisketch_decode.argtypes = [c_void_p, c_size_t, c_void_p]
+MinisketchLib.minisketch_decode.restype = c_size_t
+
 #Sketch class.
 class Sketch():
     #Constructor.
@@ -34,7 +50,8 @@ class Sketch():
         capacity: int
     ) -> None:
         self.capacity: int = capacity
-        self.sketch: Any = MinisketchLib.minisketch_create(c_uint32(64), c_uint32(0), c_size_t(self.capacity)) if self.capacity != 0 else None
+        if self.capacity != 0:
+            self.sketch: Any = MinisketchLib.minisketch_create(c_uint32(64), c_uint32(0), c_size_t(self.capacity))
 
     @staticmethod
     def hash(
@@ -61,7 +78,7 @@ class Sketch():
         if self.capacity == 0:
             return bytes()
 
-        serialization: Array[c_char] = create_string_buffer(MinisketchLib.minisketch_serialized_size(self.sketch))
+        serialization: Array[c_char] = create_string_buffer(self.capacity * 8)
         MinisketchLib.minisketch_serialize(self.sketch, byref(serialization))
 
         result: bytes = bytes()

@@ -40,13 +40,11 @@ proc disconnect*(
     clients: Clients,
     id: int
 ) {.forceCheck: [].} =
-    var toDelete: int
-    for i, client in clients.clients:
-        if client.id == id:
-            client.close()
-            toDelete = i
+    for i in 0 ..< clients.clients.len:
+        if id == clients.clients[i].id:
+            clients.clients[i].close()
+            clients.clients.del(i)
             break
-    clients.clients.delete(toDelete)
 
 #Disconnects every client.
 proc shutdown*(
