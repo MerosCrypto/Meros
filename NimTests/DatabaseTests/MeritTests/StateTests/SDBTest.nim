@@ -134,6 +134,6 @@ proc test*() =
 
     #Check future thresholds.
     for t in len(thresholds) + 2 ..< len(thresholds) + 22:
-        assert(state.protocolThresholdAt(t) == min(state.unlocked + ((t - 21) * 100), state.deadBlocks * 100) div 2 + 1)
+        assert(state.protocolThresholdAt(t) == min(state.unlocked + (t - 21), state.deadBlocks) div 2 + 1)
 
     echo "Finished the Database/Merit/State/DB Test."

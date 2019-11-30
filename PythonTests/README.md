@@ -8,7 +8,7 @@ These tests require Python 3.6+ and pip. To install the needed modules:
 
 `pip3 install argon2-cffi ed25519 blspy`
 
-They also require the Minisketch dynamic library, which should've been built in the process of setting up the `mc_pinsketch` Nimble package. Place `libminisketch.so` or `minisketch.dll` under `PythonTests/Stubs`.
+They also require the Minisketch dynamic library, which should've been built in the process of setting up the `mc_minisketch` Nimble package. Place `libminisketch.so` or `minisketch.dll` under `PythonTests/Stubs`.
 
 ### Static Typing
 

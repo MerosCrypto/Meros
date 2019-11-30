@@ -6,7 +6,7 @@ import PythonTests.Vectors.Generation.Merit.StateBlocks
 
 #Transactions.
 import PythonTests.Vectors.Generation.Transactions.ClaimedMint
-import PythonTests.Vectors.Generation.Transactions.SameInputTest
+import PythonTests.Vectors.Generation.Transactions.SameInput
 import PythonTests.Vectors.Generation.Transactions.Fifty
 
 #Consensus.
