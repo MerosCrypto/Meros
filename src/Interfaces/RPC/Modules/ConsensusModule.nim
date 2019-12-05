@@ -16,6 +16,9 @@ import ../../../objects/GlobalFunctionBoxObj
 #RPC object.
 import ../objects/RPCObj
 
+#Sets standard lib.
+import sets
+
 #Create the Consensus module.
 proc module*(
     functions: GlobalFunctionBox
@@ -57,7 +60,7 @@ proc module*(
                     merit: int = status.merit
                 if merit == -1:
                     merit = 0
-                    for holder in status.holders.keys():
+                    for holder in status.holders:
                         verifiers.add(% holder)
                         if not functions.consensus.isMalicious(holder):
                             merit += functions.merit.getMerit(holder)

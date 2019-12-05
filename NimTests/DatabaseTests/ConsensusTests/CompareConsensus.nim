@@ -7,6 +7,9 @@ import ../../../src/Wallet/MinerWallet
 #Consensus lib.
 import ../../../src/Database/Consensus/Consensus
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -30,7 +33,7 @@ proc compare*(
 
     #Compare the Transaction's holders.
     assert(ts1.holders.len == ts2.holders.len)
-    for h in ts1.holders.keys():
+    for h in ts1.holders:
         assert(ts1.holders[h] == ts1.holders[h])
 
     #Compare the pending VerificationPackets.
@@ -66,10 +69,10 @@ proc compare*(
     #We don't compare the length as c2 can have more Transactions if their verifiers gained Merit.
     #If we only reloaded Transactions which are still close, we wouldn't have more Transactions, yet we would have less.
     #That would rewrite the check to `for hash in c2.close.keys(): assert(c1.close.hasKey(hash))`.
-    for hash in c1.close.keys():
-        assert(c2.close.hasKey(hash))
+    for hash in c1.close:
+        assert(c2.close.contains(hash))
 
     #Compare the unmentioned table.
     assert(c1.unmentioned.len == c2.unmentioned.len)
-    for hash in c1.unmentioned.keys():
-        assert(c1.unmentioned[hash] == c2.unmentioned[hash])
+    for hash in c1.unmentioned:
+        assert(c2.unmentioned.contains(hash))

@@ -15,6 +15,9 @@ export TransactionStatusObj
 #Finals lib.
 import finals
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -30,13 +33,13 @@ proc add*(
         return
 
     #Raise DataExists if this verifier was already added.
-    if status.holders.hasKey(verif.holder):
+    if status.holders.contains(verif.holder):
         raise newException(DataExists, "Verification was already added.")
 
     #Add the Verification to the pending packet.
     status.pending.add(verif)
     #Add the holder to holders.
-    status.holders[verif.holder] = true
+    status.holders.incl(verif.holder)
     #Cache the signature.
     status.signatures[verif.holder] = verif.signature
 
@@ -52,7 +55,7 @@ proc add*(
 
     #Mark the holders in the table.
     for holder in packet.holders:
-        status.holders[holder] = true
+        status.holders.incl(holder)
 
     var
         #Grab the pending packet.

@@ -171,11 +171,11 @@ proc sync*(
     #Sketch failed to decode.
     except ValueError:
         #Generate a Table of hashes we have in the Sketcher (which are over significance).
-        var lookup: Table[uint64, bool] = initTable[uint64, bool]()
+        var lookup: HashSet[uint64] = initHashSet[uint64]()
         for elem in sketcher:
             if elem.significance < int(newBlock.data.header.significant):
                 continue
-            lookup[sketchHash(newBlock.data.header.sketchSalt, elem.packet)] = true
+            lookup.incl(sketchHash(newBlock.data.header.sketchSalt, elem.packet))
 
         #Sync the list of sketch hashes.
         try:
@@ -191,7 +191,7 @@ proc sync*(
         #Remove packets present in our sketcher.
         var m: int = 0
         while m < missingPackets.len:
-            if lookup.hasKey(missingPackets[m]):
+            if lookup.contains(missingPackets[m]):
                 missingPackets.del(m)
             inc(m)
 
@@ -332,7 +332,7 @@ proc sync*(
         var merit: int = 0
         for holder in packet.holders:
             #Verify every holder in the packet has yet to be archived.
-            if status.holders.hasKey(holder):
+            if status.holders.contains(holder):
                 #If they're in holders. they're either an archived holder or a pending holder.
                 if not status.pending.holders.contains(holder):
                     raise newException(ValueError, "Block archives holders who are already archived.")

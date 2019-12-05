@@ -13,6 +13,9 @@ import ../Elements/objects/VerificationPacketObj
 #Finals lib.
 import finals
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -36,7 +39,9 @@ type TransactionStatus* = ref object
     beaten*: bool
 
     #Participating holders.
-    holders*: Table[uint16, bool]
+    #Since this an uint16, it could be a set, yet we need to be able to get the Set length.
+    #Nim's set type doesn't have that functionality.
+    holders*: HashSet[uint16]
     #Packet for the next Block.
     pending*: SignedVerificationPacket
     #Table of pending holders to their signature.
@@ -56,7 +61,7 @@ proc newTransactionStatusObj*(
         verified: false,
         beaten: false,
 
-        holders: initTable[uint16, bool](),
+        holders: initHashSet[uint16](),
         pending: newSignedVerificationPacketObj(hash),
         signatures: initTable[uint16, BLSSignature](),
 

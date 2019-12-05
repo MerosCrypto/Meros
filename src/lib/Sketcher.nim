@@ -16,6 +16,9 @@ import ../Network/Serialize/Consensus/SerializeVerificationPacket
 #Minisketch lib.
 import mc_minisketch
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -96,7 +99,7 @@ proc collides*(
     salt: string
 ): bool {.forceCheck: [].} =
     var
-        hashes: Table[uint64, bool] = initTable[uint64, bool]()
+        hashes: HashSet[uint64] = initHashSet[uint64]()
         hash: uint64
 
     for elem in sketcher:
@@ -104,9 +107,9 @@ proc collides*(
         hash = sketchHash(salt, elem.packet)
 
         #If there's a collision, return false.
-        if hashes.hasKey(hash):
+        if hashes.contains(hash):
             return false
-        hashes[hash] = true
+        hashes.incl(hash)
 
 #Convert a Sketcher to a Sketch.
 proc toSketch(

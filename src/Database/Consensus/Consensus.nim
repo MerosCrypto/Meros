@@ -43,6 +43,9 @@ export ConsensusObj
 #Serialize Verification lib.
 import ../../Network/Serialize/Consensus/SerializeVerification
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -89,9 +92,9 @@ proc flag*(
             except IndexError as e:
                 doAssert(false, "Couldn't get the status of a Transaction in Epochs: " & e.msg)
 
-            if status.verified and status.holders.hasKey(removal.holder):
+            if status.verified and status.holders.contains(removal.holder):
                 var merit: int = 0
-                for holder in status.holders.keys():
+                for holder in status.holders:
                     if not consensus.malicious.hasKey(holder):
                         merit += state[holder]
 
@@ -298,7 +301,7 @@ proc archive*(
     try:
         for packet in shifted:
             #Delete every mentioned hash in the Block from unmentioned.
-            consensus.unmentioned.del(packet.hash)
+            consensus.unmentioned.excl(packet.hash)
 
             #Clear the Status's pending VerificationPacket.
             var status: TransactionStatus = consensus.getStatus(packet.hash)
@@ -311,16 +314,16 @@ proc archive*(
         doAssert(false, "Newly archived Transaction doesn't have a TransactionStatus: " & e.msg)
 
     #Update the Epoch for every unmentioned Transaction.
-    for hash in consensus.unmentioned.keys():
+    for hash in consensus.unmentioned:
         consensus.incEpoch(hash)
         consensus.db.addUnmentioned(hash)
 
     #Transactions finalized out of order.
-    var outOfOrder: Table[Hash[384], bool] = initTable[Hash[384], bool]()
+    var outOfOrder: HashSet[Hash[384]] = initHashSet[Hash[384]]()
     #Mark every hash in this Epoch as out of Epochs.
     for hash in popped.keys():
         #Skip Transaction we verified out of order.
-        if outOfOrder.hasKey(hash):
+        if outOfOrder.contains(hash):
             continue
 
         var parents: seq[Hash[384]] = @[hash]
@@ -329,7 +332,7 @@ proc archive*(
             var parent: Hash[384] = parents.pop()
 
             #Skip this Transaction if we already verified it.
-            if outOfOrder.hasKey(parent):
+            if outOfOrder.contains(parent):
                 continue
 
             #Grab the Transaction.
@@ -348,7 +351,7 @@ proc archive*(
                     consensus.finalize(state, parent, popped[hash])
                 except KeyError as e:
                     doAssert(false, "Couldn't get a value from a Table using a key from .keys(): " & e.msg)
-                outOfOrder[parent] = true
+                outOfOrder.incl(parent)
             else:
                 #Else, add back this Transaction, and then add the new parents.
                 parents.add(parent)
@@ -356,7 +359,7 @@ proc archive*(
 
     #Reclaulcate every close Status.
     var toDelete: seq[Hash[384]] = @[]
-    for hash in consensus.close.keys():
+    for hash in consensus.close:
         var status: TransactionStatus
         try:
             status = consensus.getStatus(hash)
@@ -377,4 +380,4 @@ proc archive*(
 
     #Delete all close hashes marked for deletion.
     for hash in toDelete:
-        consensus.close.del(hash)
+        consensus.close.excl(hash)

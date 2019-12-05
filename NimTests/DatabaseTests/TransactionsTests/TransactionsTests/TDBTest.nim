@@ -25,7 +25,10 @@ import ../../MeritTests/TestMerit
 #Compare Transactions lib.
 import ../CompareTransactions
 
-#Tables lib.
+#Sets standard lib.
+import sets
+
+#Tables standard lib.
 import tables
 
 #Random standard lib.
@@ -203,18 +206,18 @@ proc test*() =
                 verify(data, 0)
 
         #Randomly select old transactions.
-        var reused: Table[Hash[384], bool] = initTable[Hash[384], bool]()
+        var reused: HashSet[Hash[384]] = initHashSet[Hash[384]]()
         for _ in 0 ..< 10:
             var tx: Transaction = txs[rand(high(txs))]
             if (
                 (first[tx.hash] < merit.blockchain.height - 5) or
                 (first[tx.hash] == merit.blockchain.height) or
-                (reused.hasKey(tx.hash))
+                (reused.contains(tx.hash))
             ):
                 continue
 
             verify(tx, merit.blockchain.height - first[tx.hash])
-            reused[tx.hash] = true
+            reused.incl(tx.hash)
 
         #Add a block.
         newBlock = newBlankBlock(

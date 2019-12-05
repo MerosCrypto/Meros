@@ -21,6 +21,9 @@ import ../../Filesystem/DB/TransactionsDB
 #Transaction lib.
 import ../Transaction as TransactionFile
 
+#Sets standard lib.
+import sets
+
 #Tables standard library.
 import tables
 
@@ -113,24 +116,24 @@ proc newTransactionsObj*(
         discard
 
     #Load the Transactions from the DB.
-    var mentioned: Table[Hash[384], bool] = initTable[Hash[384], bool]()
+    var mentioned: HashSet[Hash[384]] = initHashSet[Hash[384]]()
     try:
         #Find which Transactions were mentioned before the last 5 blocks.
         for b in max(0, blockchain.height - 10) ..< blockchain.height - 5:
             for packet in blockchain[b].body.packets:
-                mentioned[packet.hash] = true
+                mentioned.incl(packet.hash)
 
         #Load Transactions in the last 5 Blocks, as long as they aren't first mentioned in older Blocks.
         for b in max(0, blockchain.height - 5) ..< blockchain.height:
             for packet in blockchain[b].body.packets:
-                if mentioned.hasKey(packet.hash):
+                if mentioned.contains(packet.hash):
                     continue
 
                 try:
                     result.add(db.load(packet.hash), false)
                 except DBReadError as e:
                     doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
-                mentioned[packet.hash] = true
+                mentioned.incl(packet.hash)
     except IndexError as e:
         doAssert(false, "Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
 

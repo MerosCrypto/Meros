@@ -29,6 +29,9 @@ export TransactionStatusObj
 #SpamFilter object.
 import SpamFilterObj
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -51,10 +54,10 @@ type Consensus* = ref object
     statuses: Table[Hash[384], TransactionStatus]
     #Statuses which are close to becoming verified.
     #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
-    close*: Table[Hash[384], bool]
+    close*: HashSet[Hash[384]]
 
     #Transactions which haven't been mentioned in Epochs.
-    unmentioned*: Table[Hash[384], bool]
+    unmentioned*: HashSet[Hash[384]]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -76,9 +79,9 @@ proc newConsensusObj*(
         malicious: initTable[uint16, seq[MeritRemoval]](),
 
         statuses: initTable[Hash[384], TransactionStatus](),
-        close: initTable[Hash[384], bool](),
+        close: initHashSet[Hash[384]](),
 
-        unmentioned: initTable[Hash[384], bool]()
+        unmentioned: initHashSet[Hash[384]]()
     )
 
     #Load statuses still in Epochs.
@@ -101,14 +104,14 @@ proc newConsensusObj*(
                 #If this Transaction is close to being confirmed, add it to close.
                 try:
                     var merit: int = 0
-                    for holder in result.statuses[packet.hash].holders.keys():
+                    for holder in result.statuses[packet.hash].holders:
                         if not result.malicious.hasKey(holder):
                             merit += state[holder]
                     if (
                         (not result.statuses[packet.hash].verified) and
                         (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 5)
                     ):
-                        result.close[packet.hash] = true
+                        result.close.incl(packet.hash)
                 except KeyError as e:
                     doAssert(false, "Couldn't get a status we just added to the statuses table: " & e.msg)
     except IndexError as e:
@@ -117,12 +120,12 @@ proc newConsensusObj*(
     #Delete old Transaction statuses.
     for oldStatus in old:
         result.statuses.del(oldStatus)
-        result.close.del(oldStatus)
+        result.close.excl(oldStatus)
 
     #Load unmentioned Transactions.
     var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()
     for hash in unmentioned:
-        result.unmentioned[hash] = true
+        result.unmentioned.incl(hash)
 
 #Get all pending Verification Packets and the aggregate signature.
 proc getPending*(
@@ -147,7 +150,7 @@ proc setUnmentioned*(
     consensus: Consensus,
     hash: Hash[384]
 ) {.forceCheck: [].} =
-    consensus.unmentioned[hash] = true
+    consensus.unmentioned.incl(hash)
 
 #Set a Transaction's status.
 proc setStatus*(
@@ -208,7 +211,7 @@ proc calculateMeritSingle(
 
     #Calculate Merit.
     var merit: int = 0
-    for holder in status.holders.keys():
+    for holder in status.holders:
         #Skip malicious MeritHolders from Merit calculations.
         if not consensus.malicious.hasKey(holder):
             merit += state[holder]
@@ -236,7 +239,7 @@ proc calculateMeritSingle(
         consensus.db.save(tx.hash, status)
         consensus.functions.transactions.verify(tx.hash)
     elif merit >= state.nodeThresholdAt(status.epoch) - 5:
-        consensus.close[tx.hash] = true
+        consensus.close.incl(tx.hash)
 
 #Calculate a Transaction's Merit. If it's verified, also check every descendant
 proc calculateMerit*(
@@ -336,13 +339,10 @@ proc finalize*(
         doAssert(false, "Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
 
     #Calculate the final Merit tally.
-    var added: Table[uint16, bool] = initTable[uint16, bool]()
     status.merit = 0
     for holder in holders:
         #Add the Merit.
         status.merit += state[holder]
-        #Mark the holder as added.
-        added[holder] = true
 
     #Make sure verified Transaction's Merit is above the node protocol threshold.
     if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):

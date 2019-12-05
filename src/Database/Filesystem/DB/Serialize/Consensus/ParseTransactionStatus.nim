@@ -13,6 +13,9 @@ import ../../../../Consensus/objects/TransactionStatusObj
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -43,14 +46,14 @@ proc parseTransactionStatus*(
     result.verified = bool(statusSeq[2][0])
     result.beaten = bool(statusSeq[3][0])
 
-    result.holders = initTable[uint16, bool]()
+    result.holders = initHashSet[uint16]()
     for i in 0 ..< statusSeq[4].fromBinary():
-        result.holders[
+        result.holders.incl(
             uint16(statusStr[
                 holdersStart + (i * NICKNAME_LEN) ..<
                 holdersStart + NICKNAME_LEN + (i * NICKNAME_LEN)
             ].fromBinary())
-        ] = true
+        )
 
     if statusStr.len != holdersStart + (result.holders.len * NICKNAME_LEN):
         result.merit = statusStr[

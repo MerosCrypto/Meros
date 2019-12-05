@@ -10,6 +10,9 @@ import ../../../../Consensus/objects/TransactionStatusObj
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -24,7 +27,7 @@ proc serialize*(
         char(status.beaten) &
         status.holders.len.toBinary(NICKNAME_LEN)
 
-    for holder in status.holders.keys():
+    for holder in status.holders:
         result &= holder.toBinary(NICKNAME_LEN)
 
     if status.merit != -1:

@@ -7,6 +7,9 @@ import asyncdispatch
 #String utils standard lib.
 import strutils
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables
 
@@ -21,17 +24,17 @@ var
         "blockchain": [],
         "transactions": {}
     }
-    #Table of Transactionss.
-    hashes: Table[string, bool] = initTable[string, bool]()
+    #Table of Transactions.
+    hashes: HashSet[string] = initHashSet[string]()
 
 #Get every Block.
 for nonce in 0 ..< waitFor rpc.merit.getHeight():
     db["blockchain"].add(waitFor rpc.merit.getBlock(nonce))
     for tx in db["blockchain"][db["blockchain"].len - 1]["transactions"]:
-        hashes[parseHexStr(tx["hash"].getStr())] = true
+        hashes.incl(parseHexStr(tx["hash"].getStr()))
 
 #Get every Transaction.
-for hash in hashes.keys():
+for hash in hashes:
     db["transactions"][hash.toHex()] = waitFor rpc.transactions.getTransaction(hash)
 
 #Write it to a file.
