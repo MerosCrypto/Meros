@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Import the Wallet lib.
-import ../../Wallet/Wallet
-
 #GUI object.
 import objects/GUIObj
 export GUI, newGUIObj, call

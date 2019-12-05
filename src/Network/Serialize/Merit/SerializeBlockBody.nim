@@ -4,8 +4,6 @@ import ../../../lib/Errors
 #Sketcher lib.
 import ../../../lib/Sketcher
 
-import ../../../lib/Hash
-
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 

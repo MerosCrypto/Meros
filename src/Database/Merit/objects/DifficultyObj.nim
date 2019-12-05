@@ -10,9 +10,6 @@ import ../../../lib/Hash
 #Finals lib.
 import finals
 
-#StInt lib.
-import StInt
-
 #Difficulty object.
 finalsd:
     type Difficulty* = object

@@ -9,8 +9,7 @@ import ../../../../src/lib/Hash
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet
 
-#Verification/VerificationPacket libs.
-import ../../../../src/Database/Consensus/Elements/Verification
+#Verification lib.
 import ../../../../src/Database/Consensus/Elements/VerificationPacket
 
 #Merit lib.

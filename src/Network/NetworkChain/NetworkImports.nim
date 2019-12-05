@@ -4,9 +4,8 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash and Merkle lib.
+#Hash lib.
 import ../../lib/Hash
-import ../../lib/Merkle
 
 #Sketcher lib.
 import ../../lib/Sketcher
@@ -30,21 +29,6 @@ import ../../objects/GlobalFunctionBoxObj
 #Config object.
 import ../../objects/ConfigObj
 
-#Serialization common lib.
-import ../Serialize/SerializeCommon
-
-#Serialize libs.
-import ../Serialize/Transactions/SerializeClaim
-import ../Serialize/Transactions/SerializeSend
-import ../Serialize/Transactions/SerializeData
-
-import ../Serialize/Consensus/SerializeVerification
-import ../Serialize/Consensus/SerializeVerificationPacket
-import ../Serialize/Consensus/SerializeMeritRemoval
-
-import ../Serialize/Merit/SerializeBlockHeader
-import ../Serialize/Merit/SerializeBlockBody
-
 #Parse libs.
 import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend
@@ -54,7 +38,6 @@ import ../Serialize/Consensus/ParseVerification
 import ../Serialize/Consensus/ParseMeritRemoval
 
 import ../Serialize/Merit/ParseBlockHeader
-import ../Serialize/Merit/ParseBlockBody
 
 #Message, SketchyBlock, and Network objects.
 import ../objects/MessageObj
@@ -73,9 +56,6 @@ import ../Clients
 
 #Networking standard libs.
 import asyncdispatch, asyncnet
-
-#Seq utils standard lib.
-import sequtils
 
 #Sets standard lib.
 import sets

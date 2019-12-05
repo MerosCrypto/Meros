@@ -7,9 +7,6 @@ import Hash
 #VerificationPacket object.
 import ../Database/Consensus/Elements/objects/VerificationPacketObj
 
-#SerializeCommon lib.
-import ../Network/Serialize/SerializeCommon
-
 #Serialize Verification Packet lib.
 import ../Network/Serialize/Consensus/SerializeVerificationPacket
 

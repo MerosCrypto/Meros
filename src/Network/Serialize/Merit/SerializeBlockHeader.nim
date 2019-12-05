@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#Merkle lib.
-import ../../../lib/Merkle
-
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 

@@ -3,9 +3,8 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash and Merkle libs.
+#Hash lib.
 import ../../../../src/lib/Hash
-import ../../../../src/lib/Merkle
 
 #MinerWallet lib.
 import ../../../../src/Wallet/MinerWallet

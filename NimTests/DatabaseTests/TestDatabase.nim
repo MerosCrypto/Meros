@@ -1,8 +1,5 @@
 #Database Testing Functions.
 
-#Errors lib.
-import ../../src/lib/Errors
-
 #Hash lib.
 import ../../src/lib/Hash
 

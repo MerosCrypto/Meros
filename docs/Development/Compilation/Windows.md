@@ -8,7 +8,7 @@ Meros requires:
 - Make (for LMDB)
 - CMake (for BLS)
 
-- Nim 0.20.2
+- Nim 1.0.4
 - Nimble
 
 - Chia's BLS library

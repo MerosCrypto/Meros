@@ -33,9 +33,6 @@ import ../../Network/Serialize/Consensus/SerializeElement
 #Algorithm standard lib.
 import algorithm
 
-#Tables standard lib.
-import tables
-
 #Verify the sketchCheck merkle.
 proc verifySketchCheck*(
     sketchCheck: Hash[384],

@@ -6,9 +6,6 @@ import ../../../../src/lib/Util
 #Hash lib.
 import ../../../../src/lib/Hash
 
-#VerificationPacket lib.
-import ../../../../src/Database/Consensus/Elements/VerificationPacket as VerificationPacketFile
-
 #Merit lib.
 import ../../../../src/Database/Merit/Merit
 

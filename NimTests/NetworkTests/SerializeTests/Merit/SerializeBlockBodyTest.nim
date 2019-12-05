@@ -3,9 +3,6 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#Hash lib.
-import ../../../../src/lib/Hash
-
 #Sketcher lib.
 import ../../../../src/lib/Sketcher
 

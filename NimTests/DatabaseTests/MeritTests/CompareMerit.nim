@@ -13,9 +13,6 @@ import ../../../src/Database/Merit/Merit
 #Compare Consensus lib.
 import ../ConsensusTests/CompareConsensus
 
-#Merit Testing Functions.
-import TestMerit
-
 #Tables standard lib.
 import tables
 

@@ -1,8 +1,7 @@
 #Hash lib.
 import ../../../src/lib/Hash
 
-#Wallet libs.
-import ../../../src/Wallet/Wallet
+#MinerWallet lib.
 import ../../../src/Wallet/MinerWallet
 
 #Transactions lib.

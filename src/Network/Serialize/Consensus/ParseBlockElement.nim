@@ -7,10 +7,8 @@ import ../../../Database/Consensus/Elements/objects/ElementObj
 #Serialize/Deserialize functions.
 import ../SerializeCommon
 
-#Parse ELement libs.
+#Parse Element libs.
 import ParseElement
-import ParseVerification
-import ParseVerificationPacket
 import ParseMeritRemoval
 
 const BLOCK_ELEMENT_SET: set[int8] = {

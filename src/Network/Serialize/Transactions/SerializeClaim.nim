@@ -11,9 +11,6 @@ import ../../../Wallet/MinerWallet
 #Claim object.
 import ../../../Database/Transactions/objects/ClaimObj
 
-#Common serialization functions.
-import ../SerializeCommon
-
 #SerializeTransaction method.
 import SerializeTransaction
 export SerializeTransaction

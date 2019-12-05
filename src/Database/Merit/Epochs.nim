@@ -4,9 +4,6 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
-#Merit DB lib.
-import ../Filesystem/DB/MeritDB
-
 #VerificationPacket object.
 import ../Consensus/Elements/objects/VerificationPacketObj
 

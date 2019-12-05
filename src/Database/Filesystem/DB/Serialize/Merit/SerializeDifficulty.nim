@@ -13,9 +13,6 @@ import ../../../../Merit/objects/DifficultyObj
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
-#StInt lib.
-import StInt
-
 #Serialization function.
 proc serialize*(
     difficulty: Difficulty

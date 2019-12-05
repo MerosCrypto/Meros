@@ -4,12 +4,6 @@ import ../../lib/Errors
 #Client object.
 import ClientObj
 
-#sequtils standard lib.
-import sequtils
-
-#Networking standard lib.
-import asyncnet
-
 #Clients object.
 type Clients* = ref object
     #Used to provide each Client an unique ID.

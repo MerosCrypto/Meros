@@ -24,9 +24,6 @@ import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
 export toString, getUTXOs, loadSpenders, loadDataTip, verify, unverify
 
-#Seq utils standard lib.
-import sequtils
-
 #Sets standard lib.
 import sets
 

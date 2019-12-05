@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Wallet lib.
-import ../../../Wallet/Wallet
-
 #GUI object.
 import ../objects/GUIObj
 

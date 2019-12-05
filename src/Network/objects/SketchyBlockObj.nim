@@ -1,18 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Hash lib.
-import ../../lib/Hash
-
-#VerificationPacket object.
-import ../../Database/Consensus/Elements/VerificationPacket
-
 #BlockHeader/Block libs.
 import ../../Database/Merit/BlockHeader
 import ../../Database/Merit/Block
-
-#Algorithm standard lib (used to sort Verification Packets).
-import algorithm
 
 #Type for partial BlockBody/Block data and the matching sketches.
 type

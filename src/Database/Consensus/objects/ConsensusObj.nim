@@ -35,9 +35,6 @@ import sets
 #Tables standard lib.
 import tables
 
-#Finals lib.
-import finals
-
 #Consensus object.
 type Consensus* = ref object
     #Global Functions.

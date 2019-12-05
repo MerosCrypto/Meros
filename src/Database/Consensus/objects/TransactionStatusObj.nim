@@ -10,9 +10,6 @@ import ../../../Wallet/MinerWallet
 #Verification Packet object.
 import ../Elements/objects/VerificationPacketObj
 
-#Finals lib.
-import finals
-
 #Sets standard lib.
 import sets
 

@@ -16,9 +16,6 @@ import ../../../../../Network/Serialize/SerializeCommon
 #Sets standard lib.
 import sets
 
-#Tables standard lib.
-import tables
-
 #Start of the holders in a TransactionStatus.
 const holdersStart: int = INT_LEN + BYTE_LEN + BYTE_LEN + BYTE_LEN + NICKNAME_LEN
 

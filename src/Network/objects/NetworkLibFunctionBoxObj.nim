@@ -12,9 +12,8 @@ import ../../Database/Merit/Block
 #Transaction lib.
 import ../../Database/Transactions/Transaction
 
-#Message and SketchyBlock objects.
+#Message object.
 import MessageObj
-import SketchyBlockObj
 
 #Async standard lib.
 import asyncdispatch

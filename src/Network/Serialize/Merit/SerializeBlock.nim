@@ -4,8 +4,7 @@ import ../../../lib/Errors
 #Block lib.
 import ../../../Database/Merit/Block
 
-#Serialize/Deserialize functions.
-import ../SerializeCommon
+#Serialize functions.
 import SerializeBlockHeader
 import SerializeBlockBody
 

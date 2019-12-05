@@ -7,9 +7,6 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#MinerWallet lib.
-import ../../Wallet/MinerWallet
-
 #Merit DB lib.
 import ../Filesystem/DB/MeritDB
 
@@ -27,9 +24,6 @@ export Block
 export Blockchain
 export State
 export Epochs
-
-#Tables standard lib.
-import tables
 
 #Blockchain, State, and Epochs wrapper.
 type Merit* = ref object

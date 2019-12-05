@@ -12,9 +12,6 @@ import Elements/VerificationPacket
 import objects/TransactionStatusObj
 export TransactionStatusObj
 
-#Finals lib.
-import finals
-
 #Sets standard lib.
 import sets
 

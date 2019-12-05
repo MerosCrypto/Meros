@@ -7,17 +7,8 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
-#Element libs.
-import ../../Consensus/Elements/Elements
-
 #TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
-
-#Serialization libs.
-import ../../../Network/Serialize/SerializeCommon
 
 import Serialize/Consensus/SerializeTransactionStatus
 import Serialize/Consensus/ParseTransactionStatus

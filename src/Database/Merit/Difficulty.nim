@@ -10,9 +10,6 @@ import ../../lib/Hash
 #Blockchain object.
 import objects/BlockchainObj
 
-#Block lib.
-import Block
-
 #Difficulty object.
 import objects/DifficultyObj
 export DifficultyObj

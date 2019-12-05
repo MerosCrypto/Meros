@@ -21,9 +21,6 @@ export BlockHeader
 import BlockBodyObj
 export BlockBodyObj
 
-#Finals lib.
-import finals
-
 #Block class.
 type Block* = object
     #Block Header.

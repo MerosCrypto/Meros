@@ -13,9 +13,6 @@ import ../../../../../Network/Serialize/SerializeCommon
 #Sets standard lib.
 import sets
 
-#Tables standard lib.
-import tables
-
 #Serialization function.
 proc serialize*(
     status: TransactionStatus
