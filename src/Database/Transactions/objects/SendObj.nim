@@ -26,7 +26,7 @@ finalsd:
 
 #Send constructor.
 func newSendObj*(
-    inputs: varargs[SendInput],
+    inputs: varargs[FundedInput],
     outputs: varargs[SendOutput]
 ): Send {.forceCheck: [].} =
     #Sreate the Send.

@@ -79,8 +79,8 @@ func toString*(
     input: Input
 ): string {.forceCheck: [].} =
     result = input.hash.toString()
-    if input of SendInput:
-        result &= char(cast[SendInput](input).nonce)
+    if input of FundedInput:
+        result &= char(cast[FundedInput](input).nonce)
     else:
         result &= char(0)
 
@@ -92,14 +92,11 @@ proc save*(
     var hash: string = tx.hash.toString()
     db.put(hash, tx.serialize())
 
-    if tx of Mint:
-        db.put("mint", (cast[Mint](tx).nonce + 1).toBinary())
-    else:
-        for input in tx.inputs:
-            try:
-                db.put(input.toString() & "s", db.get(input.toString() & "s") & hash)
-            except DBReadError:
-                db.put(input.toString() & "s", hash)
+    for input in tx.inputs:
+        try:
+            db.put(input.toString() & "s", db.get(input.toString() & "s") & hash)
+        except DBReadError:
+            db.put(input.toString() & "s", hash)
 
     for o in 0 ..< tx.outputs.len:
         db.put(hash & char(o), tx.outputs[o].serialize())
@@ -126,7 +123,7 @@ proc load*(
     DBReadError
 ].} =
     try:
-        result = db.get(hash.toString()).parseTransaction()
+        result = hash.parseTransaction(db.get(hash.toString()))
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -185,18 +182,18 @@ proc loadMintNonce*(
 
 proc loadMintOutput*(
     db: DB,
-    hash: Hash[384]
+    input: FundedInput
 ): MintOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(hash.toString() & char(0)).parseMintOutput()
+        result = db.get(input.toString()).parseMintOutput()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
 proc loadSendOutput*(
     db: DB,
-    input: SendInput
+    input: FundedInput
 ): SendOutput {.forceCheck: [
     DBReadError
 ].} =
@@ -221,7 +218,7 @@ proc loadDataTip*(
 proc loadSpendable*(
     db: DB,
     key: EdPublicKey
-): seq[SendInput] {.forceCheck: [
+): seq[FundedInput] {.forceCheck: [
     DBReadError
 ].} =
     var spendable: string
@@ -233,7 +230,7 @@ proc loadSpendable*(
     for i in countup(0, spendable.len - 1, 49):
         try:
             result.add(
-                newSendInput(
+                newFundedInput(
                     spendable[i ..< i + 48].toHash(384),
                     int(spendable[i + 48])
                 )
@@ -292,14 +289,14 @@ proc verify*(
         for input in tx.inputs:
             var key: string
             try:
-                key = db.loadSendOutput(cast[SendInput](input)).key.toString()
+                key = db.loadSendOutput(cast[FundedInput](input)).key.toString()
             except DBReadError:
                 doAssert(false, "Removing a non-existent output.")
 
             db.removeFromSpendable(
                 key,
                 input.hash,
-                cast[SendInput](input).nonce
+                cast[FundedInput](input).nonce
             )
 
 #Add a Send's inputs back to spendable while removing the Claim/Send's outputs.
@@ -312,14 +309,14 @@ proc unverify*(
         for input in tx.inputs:
             var key: string
             try:
-                key = db.loadSendOutput(cast[SendInput](input)).key.toString()
+                key = db.loadSendOutput(cast[FundedInput](input)).key.toString()
             except DBReadError:
                 doAssert(false, "Restoring a non-existent output.")
 
             db.addToSpendable(
                 key,
                 input.hash,
-                cast[SendInput](input).nonce
+                cast[FundedInput](input).nonce
             )
 
     #Remove outputs.

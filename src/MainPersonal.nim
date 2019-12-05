@@ -33,7 +33,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 #Wallet we're using.
                 child: HDWallet
                 #Spendable UTXOs.
-                utxos: seq[SendInput]
+                utxos: seq[FundedInput]
                 #Amount in.
                 amountIn: uint64
                 #Amount out.

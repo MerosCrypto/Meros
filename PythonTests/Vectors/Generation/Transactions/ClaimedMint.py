@@ -114,8 +114,8 @@ for _ in range(6):
     )
 
 #Claim the new Mint.
-claim: Claim = Claim([merit.mints[0].hash], edPubKey.to_bytes())
-claim.amount = merit.mints[0].output[1]
+claim: Claim = Claim([(merit.mints[0].hash, 0)], edPubKey.to_bytes())
+claim.amount = merit.mints[0].outputs[0][1]
 claim.sign([blsPrivKey])
 transactions.add(claim)
 

@@ -72,7 +72,7 @@ proc add*(
 
     #Grab the first claimer.
     try:
-         claimers[0] = lookup(transactions.loadOutput(claim.inputs[0].hash).key)
+         claimers[0] = lookup(transactions.loadMintOutput(cast[FundedInput](claim.inputs[0])).key)
     except IndexError as e:
         doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
     except DBReadError:
@@ -91,7 +91,7 @@ proc add*(
             raise newException(ValueError, "Claim spends a non-existant Mint.")
 
         try:
-            output = transactions.loadOutput(input.hash)
+            output = transactions.loadMintOutput(cast[FundedInput](input))
         except DBReadError:
             raise newException(ValueError, "Claim spends a non-existant Mint.")
 
@@ -155,7 +155,7 @@ proc add*(
 
     #Grab the first sender.
     try:
-        senders[0] = transactions.loadOutput(cast[SendInput](send.inputs[0])).key
+        senders[0] = transactions.loadSendOutput(cast[FundedInput](send.inputs[0])).key
     except DBReadError:
         raise newException(ValueError, "Send spends a non-existant output.")
 
@@ -175,7 +175,7 @@ proc add*(
             raise newException(ValueError, "Send spends a non-existant Claim or Send.")
 
         try:
-            spent = transactions.loadOutput(cast[SendInput](input))
+            spent = transactions.loadSendOutput(cast[FundedInput](input))
         except DBReadError:
             raise newException(ValueError, "Send spends a non-existant output.")
 
@@ -246,24 +246,22 @@ proc add*(
 #Mint Meros to the specified key.
 proc mint*(
     transactions: var Transactions,
-    nick: uint16,
-    amount: uint64
-): Hash[384] {.forceCheck: [].} =
+    hash: Hash[384],
+    rewards: seq[Reward]
+) {.forceCheck: [].} =
+    #Create the outputs.
+    #The used Meri quantity is the score * 50.
+    #Once we add a proper rewards curve, this will change.
+    #This is just a value which works for testing.
+    var outputs: seq[MintOutput] = newSeq[MintOutput](rewards.len)
+    for r in 0 ..< rewards.len:
+        outputs[r] = newMintOutput(rewards[r].nick, rewards[r].score * 50)
+
     #Create the Mint.
-    var mint: Mint = newMint(
-        transactions.mintNonce,
-        nick,
-        amount
-    )
+    var mint: Mint = newMint(hash, outputs)
 
     #Add it to Transactions.
     transactions.add(cast[Transaction](mint))
-
-    #Increment the mint nonce.
-    inc(transactions.mintNonce)
-
-    #Return the mint hash.
-    result = mint.hash
 
 #Remove every hash in this Epoch from the cache/RAM.
 proc archive*(

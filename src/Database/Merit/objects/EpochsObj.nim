@@ -24,7 +24,7 @@ import finals
 
 finalsd:
     type
-        #Reward object. Declares a nick and a number which adds up to 1000 when combined with the other rewards.
+        #Reward object.
         Reward* = object
             nick* {.final.}: uint16
             score*: uint64

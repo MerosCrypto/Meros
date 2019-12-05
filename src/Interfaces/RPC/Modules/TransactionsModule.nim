@@ -51,9 +51,9 @@ proc `%`(
         of Mint as mint:
             result["descendant"] = % "Mint"
 
-            result["nonce"] = % mint.nonce
             try:
-                result["outputs"][0]["key"] = % $cast[MintOutput](mint.outputs[0]).key
+                for o in 0 ..< result["outputs"].len:
+                    result["outputs"][o]["key"] = % $cast[MintOutput](mint.outputs[o]).key
             except KeyError as e:
                 doAssert(false, "Couldn't add a Mint's output's key to its output: " & e.msg)
 
@@ -61,6 +61,8 @@ proc `%`(
             result["descendant"] = % "Claim"
 
             try:
+                for i in 0 ..< claim.inputs.len:
+                    result["inputs"][i]["nonce"] = % cast[FundedInput](claim.inputs[i]).nonce
                 for o in 0 ..< claim.outputs.len:
                     result["outputs"][o]["key"] = % $cast[SendOutput](claim.outputs[o]).key
             except KeyError as e:
@@ -73,7 +75,7 @@ proc `%`(
 
             try:
                 for i in 0 ..< send.inputs.len:
-                    result["inputs"][i]["nonce"] = % cast[SendInput](send.inputs[i]).nonce
+                    result["inputs"][i]["nonce"] = % cast[FundedInput](send.inputs[i]).nonce
                 for o in 0 ..< send.outputs.len:
                     result["outputs"][o]["key"] = % $cast[SendOutput](send.outputs[o]).key
             except KeyError as e:

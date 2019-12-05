@@ -11,22 +11,19 @@ The result is an object, as follows:
 - `inputs` (array of objects, each as follows)
     - `hash` (string)
 
-    	When `descendant` == "Send":
+    	When (`descendant` == "Claim") or (`descendant` == "Send"):
         - `nonce` (int)
 
 - `outputs` (array of objects, each as follows)
     - `amount` (string)
 
         When `descendant` == "Mint":
-        - `key` (string): BLS Public Key.
+        - `key` (int): Miner nickname.
 
         When `descendant` == "Claim" or `descendant` == "Send":
         - `key` (string): Ed25519 Public Key.
 
 - `hash` (string)
-
-	When `descendant` == "Mint":
-    - `nonce` (int)
 
 	When `descendant` == "Claim":
     - `signature` (string)

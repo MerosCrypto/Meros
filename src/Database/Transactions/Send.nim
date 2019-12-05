@@ -20,7 +20,7 @@ import ../../Network/Serialize/Transactions/SerializeSend
 
 #Create a new Send.
 proc newSend*(
-    inputs: varargs[SendInput],
+    inputs: varargs[FundedInput],
     outputs: varargs[SendOutput]
 ): Send {.forceCheck: [].} =
     #Create the Send.

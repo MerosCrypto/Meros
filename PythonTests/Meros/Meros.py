@@ -89,7 +89,7 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.DataMissing:               [],
     MessageType.SyncingOver:               [],
 
-    MessageType.Claim:                     [1, -48, 128],
+    MessageType.Claim:                     [1, -49, 128],
     MessageType.Send:                      [1, -49, 1, -40, 68],
     MessageType.Data:                      [48, 1, -1, 68],
 

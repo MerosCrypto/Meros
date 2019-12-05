@@ -15,6 +15,7 @@ import ../../../../../Network/Serialize/Transactions/ParseData
 
 #Serialize the TransactionObj.
 proc parseTransaction*(
+    hash: Hash[384],
     tx: string
 ): Transaction {.forceCheck: [
     ValueError,
@@ -23,7 +24,7 @@ proc parseTransaction*(
 ].} =
     case tx[0]:
         of '\0':
-            result = tx.substr(1).parseMint()
+            result = hash.parseMint(tx.substr(1))
 
         of '\1':
             try:

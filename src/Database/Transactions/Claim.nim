@@ -20,19 +20,14 @@ import ../../Network/Serialize/Transactions/SerializeClaim
 
 #Create a new Claim.
 proc newClaim*(
-    mints: varargs[Hash[384]],
+    inputs: varargs[FundedInput],
     output: EdPublicKey
 ): Claim {.forceCheck: [
     ValueError
 ].} =
-    #Verify the mints length.
-    if mints.len < 1 or 255 < mints.len:
-        raise newException(ValueError, "Claim has too little or too many Mints.")
-
-    #Convert the Claim.
-    var inputs: seq[Input] = newSeq[Input](mints.len)
-    for i in 0 ..< mints.len:
-        inputs[i] = newInput(mints[i])
+    #Verify the inputs length.
+    if inputs.len < 1 or 255 < inputs.len:
+        raise newException(ValueError, "Claim has too little or too many inputs.")
 
     #Create the result.
     result = newClaimObj(
@@ -82,7 +77,15 @@ proc verify*(
     try:
         #Create each AggregationInfo.
         for i in 0 ..< claim.inputs.len:
-                agInfos[i] = newBLSAggregationInfo(claimer, "\1" & claim.inputs[i].hash.toString() & cast[SendOutput](claim.outputs[0]).key.toString())
+                agInfos[i] = newBLSAggregationInfo(
+                    claimer,
+                    (
+                        "\1" &
+                        claim.inputs[i].hash.toString() &
+                        char(cast[FundedInput](claim.inputs[i]).nonce) &
+                        cast[SendOutput](claim.outputs[0]).key.toString()
+                    )
+                )
 
         #Verify the signature.
         claim.signature.setAggregationInfo(agInfos.aggregate())

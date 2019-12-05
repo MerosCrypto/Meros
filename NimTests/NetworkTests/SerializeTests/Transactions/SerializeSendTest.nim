@@ -30,7 +30,7 @@ proc test*() =
         #Hash used to create an input.
         hash: Hash[384]
         #Inputs.
-        inputs: seq[SendInput]
+        inputs: seq[FundedInput]
         #Outputs.
         outputs: seq[SendOutput]
         #Send.
@@ -43,12 +43,12 @@ proc test*() =
     #Test 255 serializations.
     for s in 0 .. 255:
         #Create the inputs.
-        inputs = newSeq[SendInput](rand(254) + 1)
+        inputs = newSeq[FundedInput](rand(254) + 1)
         for i in 0 ..< inputs.len:
             #Randomize the hash.
             for b in 0 ..< hash.data.len:
                 hash.data[b] = uint8(rand(255))
-            inputs[i] = newSendInput(hash, rand(255))
+            inputs[i] = newFundedInput(hash, rand(255))
 
         #Create the outputs.
         outputs = newSeq[SendOutput](rand(254) + 1)

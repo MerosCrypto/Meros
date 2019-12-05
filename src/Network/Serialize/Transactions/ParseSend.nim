@@ -46,12 +46,12 @@ proc parseSend*(
         raise newSpam("Send didn't beat the difficulty.", hash, argon)
 
     #Convert the inputs.
-    var inputs: seq[SendInput] = newSeq[SendInput](sendSeq[0].fromBinary())
+    var inputs: seq[FundedInput] = newSeq[FundedInput](sendSeq[0].fromBinary())
     if inputs.len == 0:
         raise newException(ValueError, "parseSend handed a Send with no inputs.")
     for i in countup(0, sendSeq[1].len - 1, 49):
         try:
-            inputs[i div 49] = newSendInput(sendSeq[1][i ..< i + 48].toHash(384), sendSeq[1][i + 48].fromBinary())
+            inputs[i div 49] = newFundedInput(sendSeq[1][i ..< i + 48].toHash(384), sendSeq[1][i + 48].fromBinary())
         except ValueError as e:
             fcRaise e
 

@@ -47,19 +47,19 @@ proc test*() =
         send: Send
 
         #Public Key -> Spendable Outputs.
-        spendable: Table[EdPublicKey, seq[SendInput]] = initTable[EdPublicKey, seq[SendInput]]()
+        spendable: Table[EdPublicKey, seq[FundedInput]] = initTable[EdPublicKey, seq[FundedInput]]()
         #Inputs.
-        inputs: seq[SendInput] = @[]
+        inputs: seq[FundedInput] = @[]
         #Loaded Spendable.
-        loaded: seq[SendInput] = @[]
+        loaded: seq[FundedInput] = @[]
         #Sends.
         sends: seq[Send] = @[]
-        #Who can spend a SendInput.
+        #Who can spend a FundedInput.
         spenders: Table[string, EdPublicKey] = initTable[string, EdPublicKey]()
 
     proc inputSort(
-        x: SendInput,
-        y: SendInput
+        x: FundedInput,
+        y: FundedInput
     ): int =
         if x.hash < y.hash:
             result = -1
@@ -107,7 +107,7 @@ proc test*() =
             for o in 0 ..< outputs.len:
                 if not spendable.hasKey(outputs[o].key):
                     spendable[outputs[o].key] = @[]
-                spendable[outputs[o].key].add(newSendInput(send.hash, o))
+                spendable[outputs[o].key].add(newFundedInput(send.hash, o))
                 spenders[send.hash.toString() & char(o)] = outputs[o].key
 
         compare()
@@ -138,7 +138,7 @@ proc test*() =
 
                 if not spendable.hasKey(outputKey):
                     spendable[outputKey] = @[]
-                spendable[outputKey].add(newSendInput(send.hash, 0))
+                spendable[outputKey].add(newFundedInput(send.hash, 0))
                 spenders[send.hash.toString() & char(0)] = outputKey
 
         compare()
@@ -149,8 +149,8 @@ proc test*() =
             db.unverify(sends[s])
             for input in sends[s].inputs:
                 spendable[
-                    spenders[input.hash.toString() & char(cast[SendInput](input).nonce)]
-                ].add(cast[SendInput](input))
+                    spenders[input.hash.toString() & char(cast[FundedInput](input).nonce)]
+                ].add(cast[FundedInput](input))
 
             for o1 in 0 ..< sends[s].outputs.len:
                 var output: SendOutput = cast[SendOutput](sends[s].outputs[o1])

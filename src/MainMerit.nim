@@ -155,17 +155,16 @@ proc mainMerit() {.forceCheck: [].} =
             #Calculate the rewards.
             var rewards: seq[Reward] = epoch.calculate(merit.state)
 
-            #Create the Mints (which ends up minting a total of 50000 Meri).
-            var ourMint: Hash[384]
-            for reward in rewards:
-                var mintHash: Hash[384] = transactions.mint(
-                    reward.nick,
-                    reward.score * uint64(50)
-                )
+            #If there are rewards, create the Mint.
+            var receivedMint: int = -1
+            if rewards.len != 0:
+                transactions.mint(newBlock.header.hash, rewards)
 
-                #If we have a miner wallet, check if the mint was to us.
-                if (config.miner.initiated) and (config.miner.nick == reward.nick):
-                    ourMint = mintHash
+                #If we have a miner wallet, check if a mint was to us.
+                if config.miner.initiated:
+                    for r in 0 ..< rewards.len:
+                        if config.miner.nick == rewards[r].nick:
+                            receivedMint = r
 
             #Commit the DBs.
             database.commit(merit.blockchain.height)
@@ -180,17 +179,17 @@ proc mainMerit() {.forceCheck: [].} =
                 )
 
                 #If we got a Mint...
-                if ourMint != Hash[384]():
+                if receivedMint != -1:
                     #Confirm we have a wallet.
                     if wallet.isNil:
-                        echo "We got a Mint with hash ", ourMint, ", however, we don't have a Wallet to Claim it to."
+                        echo "We got a Mint with hash ", newBlock.header.hash, ", however, we don't have a Wallet to Claim it to."
                         return
 
                     #Claim the Reward.
                     var claim: Claim
                     try:
                         claim = newClaim(
-                            transactions[ourMint].hash,
+                            newFundedInput(newBlock.header.hash, receivedMint),
                             wallet.publicKey
                         )
                     except ValueError as e:

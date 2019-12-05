@@ -25,7 +25,7 @@ method serializeHash*(
     for input in send.inputs:
         result &=
             input.hash.toString() &
-            cast[SendInput](input).nonce.toBinary(BYTE_LEN)
+            cast[FundedInput](input).nonce.toBinary(BYTE_LEN)
     for output in send.outputs:
         result &=
             cast[SendOutput](output).key.toString() &
@@ -39,7 +39,7 @@ method serialize*(
     for input in send.inputs:
         result &=
             input.hash.toString() &
-            char(cast[SendInput](input).nonce)
+            char(cast[FundedInput](input).nonce)
 
     #Serialize the outputs.
     result &= char(send.outputs.len)

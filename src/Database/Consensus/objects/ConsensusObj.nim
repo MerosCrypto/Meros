@@ -271,7 +271,7 @@ proc calculateMerit*(
         if (not wasVerified) and (status.verified):
             try:
                 for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newSendInput(child, o))
+                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
                     for spender in spenders:
                         children.add(spender)
             except IndexError as e:
@@ -309,7 +309,7 @@ proc unverify*(
 
             try:
                 for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newSendInput(child, o))
+                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
                     for spender in spenders:
                         children.add(spender)
             except IndexError as e:

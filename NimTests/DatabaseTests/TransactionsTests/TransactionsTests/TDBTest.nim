@@ -67,6 +67,11 @@ proc test*() =
         ]
         #Wallets.
         wallets: seq[Wallet] = @[]
+        #Mint Hash.
+        #This hash is supposed to be the hash of the last Block.
+        #Since we don't queue actions, yet handle them individually, we need unique hashes.
+        #We just increment this blank hash to get a new hash. It's a nonce.
+        mintHash: Hash[384]
 
         #Transactions.
         txs: seq[Transaction] = @[]
@@ -126,7 +131,7 @@ proc test*() =
                     #Current balance.
                     balance: uint64 = 0
                     #Spenable UTXOs.
-                    spendable: seq[SendInput] = @[]
+                    spendable: seq[FundedInput] = @[]
                 #Calculate the balance/spendable UTXOs.
                 for input in transactions.getUTXOs(wallet.publicKey):
                     spendable.add(input)
@@ -134,17 +139,22 @@ proc test*() =
 
                 #Fund them if they need funding.
                 if balance <= amount:
+                    #Increment mintHash.
+                    if mintHash.data[^1] == 255:
+                        mintHash.data[^1] = 0
+                        inc(mintHash.data[^2])
+                    inc(mintHash.data[^1])
+
                     #Create the Mint.
                     var
                         holder: int = rand(high(holders))
                         mintAmount: uint64 = amount - balance + uint64(rand(5000) + 1)
-                        mintHash: Hash[384] = transactions.mint(uint16(holder), mintAmount)
+                    transactions.mint(mintHash, @[
+                        newReward(uint16(holder), mintAmount)
+                    ])
 
                     #Create the Claim.
-                    var claim: Claim = newClaim(
-                        mintHash,
-                        wallet.publicKey
-                    )
+                    var claim: Claim = newClaim(@[newFundedInput(mintHash, 0)], wallet.publicKey)
                     holders[holder].sign(claim)
                     transactions.add(
                         claim,
@@ -157,7 +167,7 @@ proc test*() =
                     verify(claim, 0)
 
                     #Update the UTXOs/balance.
-                    spendable.add(newSendInput(claim.hash, 0))
+                    spendable.add(newFundedInput(claim.hash, 0))
                     balance += transactions[mintHash].outputs[0].amount
 
                 #Select a recepient.

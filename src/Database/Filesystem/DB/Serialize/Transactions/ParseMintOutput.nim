@@ -5,10 +5,13 @@ import ../../../../../lib/Errors
 import ../../../../../lib/Util
 
 #MintOutput object.
-import ../../../..//Transactions/objects/TransactionObj
+import ../../../../Transactions/objects/TransactionObj
 
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
+
+#Mint output length.
+const MINT_OUTPUT_LEN*: int = NICKNAME_LEN + MEROS_LEN
 
 #Parse function.
 proc parseMintOutput*(

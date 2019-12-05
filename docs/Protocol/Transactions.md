@@ -22,13 +22,11 @@ When a new Transaction is received via a `Claim`, `Send`, `Data`, `Lock`, or `Un
 
 ### Mint
 
-Mint Transactions are locally created when Blocks are added to the Blockchain, as described in the Merit documentation, and are never sent over the network. They have the following additional field:
+Mint Transactions are locally created when Blocks are added to the Blockchain, as described in the Merit documentation, and are never sent over the network.
 
-- nonce: The nonce for this Mint. The first has a nonce of 0, the second has a nonce of 1...
+Mints have no inputs. It has one output per reward from the Epochs, where key is a Merit Holder's nickname and amount is the amount being minted to that Merit Holder.
 
-Mints have no inputs, yet are considered to be created by "minter". It has a single output, whose key is a nickname and whose amount is the amount being minted.
-
-The hash is defined as `Blake2b-384("\0" + nonce + output.key + output.amount)`, where nonce takes up 4 bytes, the output key 2 bytes, and the output amount 8 bytes.
+The hash is the hash of the Block which created it.
 
 ### Claim
 
@@ -36,13 +34,13 @@ Claim Transactions are created in response to a Mint, and have the following add
 
 - signature: BLS Signature that proves the Merit Holder which earned the newly minted Meros wants this person to receive their reward.
 
-Claim inputs are hashes of Mints which have yet to be claimed. As Mints have a singular output, the input index is not used. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the Mint amounts. The specified key does not need to be a valid Ed25519 Public Key.
+Claim inputs are hashes of Mints which have yet to be claimed. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the Mint amounts. The specified key does not need to be a valid Ed25519 Public Key.
 
-signature must be the BLS signature produced by Mint's designated claimee signing `"\1" + mint.hash + claim.output.key`, where mint.hash takes up 48 bytes and claim.output.key takes up 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key created from every unique BLS Public Key.
+signature must be the BLS signature produced by Mint's designated claimee signing `"\1" + mint.hash + mint.index + claim.output.key`, where `mint.hash` takes up 48 bytes and `claim.output.key` takes up 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key created from every unique BLS Public Key.
 
 Claim hashes are defined as `Blake2b-384("\1" + signature)`, where signature takes up 96 bytes.
 
-`Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 48 bytes), the 32-byte output key, and the 96-byte BLS signature.
+`Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 49 bytes), the 32-byte output key, and the 96-byte BLS signature.
 
 ### Send
 

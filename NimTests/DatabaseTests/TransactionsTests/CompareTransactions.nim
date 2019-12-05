@@ -40,12 +40,11 @@ proc compare*(
 
     #Test the sub-type fields.
     case tx1:
-        of Mint as mint:
+        of Mint as _:
             if not (tx2 of Mint):
                 assert(false)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[MintOutput](tx1.outputs[o]), cast[MintOutput](tx2.outputs[o]))
-            assert(mint.nonce == cast[Mint](tx2).nonce)
 
         of Claim as claim:
             if not (tx2 of Claim):
@@ -58,7 +57,7 @@ proc compare*(
             if not (tx2 of Send):
                 assert(false)
             for i in 0 ..< tx1.inputs.len:
-                assert(cast[SendInput](tx1.inputs[i]).nonce == cast[SendInput](tx2.inputs[i]).nonce)
+                assert(cast[FundedInput](tx1.inputs[i]).nonce == cast[FundedInput](tx2.inputs[i]).nonce)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
             assert(send.signature == cast[Send](tx2).signature)
@@ -78,9 +77,6 @@ proc compare*(
     txs1: Transactions,
     txs2: Transactions
 ) =
-    #Test the mint nonce.
-    assert(txs1.mintNonce == txs2.mintNonce)
-
     #Test the Transactions and get a list of spent outputs.
     assert(txs1.transactions.len == txs2.transactions.len)
     for hash in txs1.transactions.keys():

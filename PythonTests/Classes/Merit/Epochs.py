@@ -1,5 +1,5 @@
 #Types.
-from typing import Deque, Dict, List, Tuple
+from typing import Deque, Dict, List, Tuple, Optional
 
 #Mint class.
 from PythonTests.Classes.Transactions.Mint import Mint
@@ -22,25 +22,26 @@ class Epochs:
         self.mint: int = 0
 
     #Turn scores into rewards.
+    @staticmethod
     def reward(
-        self,
+        blockHash: bytes,
         scores: List[Tuple[int, int]]
-    ) -> List[Mint]:
-        result: List[Mint] = []
+    ) -> Optional[Mint]:
+        outputs: List[Tuple[int, int]] = []
         for score in scores:
             if score[1] == 0:
                 break
+            outputs.append((score[0], score[1] * 50))
 
-            result.append(Mint(self.mint, (score[0], score[1] * 50)))
-            self.mint += 1
-        return result
+        return Mint(blockHash, outputs)
 
     #Score an Epoch and generate rewards.
+    @staticmethod
     def score(
-        self,
         state: State,
+        blockHash: bytes,
         epoch: Dict[bytes, List[int]]
-    ) -> List[Mint]:
+    ) -> Optional[Mint]:
         #Grab the verified Transactions.
         verified: List[bytes] = []
         for tx in epoch:
@@ -51,7 +52,7 @@ class Epochs:
                 verified.append(tx)
 
         if not verified:
-            return []
+            return None
 
         #Assign each Merit Holder 1 point per verified transaction.
         scores: Dict[int, int] = {}
@@ -85,7 +86,7 @@ class Epochs:
         tupleScores[0] = (tupleScores[0][0], tupleScores[0][1] + (1000 - total))
 
         #Create Mints.
-        return self.reward(tupleScores)
+        return Epochs.reward(blockHash, tupleScores)
 
     #Shift a Block.
     def shift(
@@ -93,7 +94,7 @@ class Epochs:
         state: State,
         blockchain: Blockchain,
         b: int
-    ) -> List[Mint]:
+    ) -> Optional[Mint]:
         #Grab the Block.
         block: Block = blockchain.blocks[b]
 
@@ -115,4 +116,4 @@ class Epochs:
         self.epochs.append(epoch)
         epoch = self.epochs.popleft()
 
-        return self.score(state, epoch)
+        return Epochs.score(state, block.header.hash, epoch)

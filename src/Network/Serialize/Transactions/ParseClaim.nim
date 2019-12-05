@@ -26,21 +26,24 @@ proc parseClaim*(
     if claimStr.len < BYTE_LEN:
         raise newException(ValueError, "parseClaim not handed enough data to get the amount of inputs.")
 
-    #Inputs Length | Input Hashes | Output Ed25519 Key | BLS Signatture
+    #Inputs Length | Inputs | Output Ed25519 Key | BLS Signatture
     var claimSeq: seq[string] = claimStr.deserialize(
         BYTE_LEN,
-        claimStr[0].fromBinary() * HASH_LEN,
+        int(claimStr[0]) * (HASH_LEN + BYTE_LEN),
         ED_PUBLIC_KEY_LEN,
         BLS_SIGNATURE_LEN
     )
 
     #Convert the inputs.
-    var inputs: seq[Input] = newSeq[Input](claimSeq[1].len div 48)
+    var inputs: seq[FundedInput] = newSeq[FundedInput](int(claimSeq[0][0]))
     if inputs.len == 0:
         raise newException(ValueError, "parseClaim handed a Claim with no inputs.")
-    for i in countup(0, claimSeq[1].len - 1, 48):
+    for i in countup(0, claimSeq[1].len - 1, HASH_LEN + BYTE_LEN):
         try:
-            inputs[i div 48] = newInput(claimSeq[1][i ..< i + 48].toHash(384))
+            inputs[i div (HASH_LEN + BYTE_LEN)] = newFundedInput(
+                claimSeq[1][i ..< i + HASH_LEN].toHash(384),
+                int(claimSeq[1][i + HASH_LEN])
+            )
         except ValueError as e:
             fcRaise e
 

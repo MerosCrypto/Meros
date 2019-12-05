@@ -15,8 +15,8 @@ finalsd:
         #Transaction input types.
         Input* = ref object of RootObj
             hash* {.final.}: Hash[384]
-        #SendInput, which also includes a nonce.
-        SendInput* = ref object of Input
+        #FundedInput, which also includes a nonce.
+        FundedInput* = ref object of Input
             nonce* {.final,}: int
 
         #Transaction output types.
@@ -47,11 +47,11 @@ func newInput*(
     )
     result.ffinalizeHash()
 
-func newSendInput*(
+func newFundedInput*(
     hash: Hash[384],
     nonce: int
-): SendInput {.inline, forceCheck: [].} =
-    result = SendInput(
+): FundedInput {.inline, forceCheck: [].} =
+    result = FundedInput(
         hash: hash,
         nonce: nonce
     )

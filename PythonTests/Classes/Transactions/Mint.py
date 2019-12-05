@@ -1,29 +1,19 @@
 #Types.
-from typing import Dict, Tuple, Any
+from typing import Dict, List, Tuple, Any
 
 #Transaction and SpamFilter classes.
 from PythonTests.Classes.Transactions.Transaction import Transaction
-
-#Blake2b standard function.
-from hashlib import blake2b
 
 #Mint class.
 class Mint(Transaction):
     #Constructor.
     def __init__(
         self,
-        nonce: int,
-        output: Tuple[int, int]
+        blockHash: bytes,
+        outputs: List[Tuple[int, int]]
     ) -> None:
-        self.nonce: int = nonce
-        self.output: Tuple[int, int] = output
-        self.hash = blake2b(
-            b'\0' +
-            self.nonce.to_bytes(4, "big") +
-            self.output[0].to_bytes(2, "big") +
-            self.output[1].to_bytes(8, "big"),
-            digest_size=48
-        ).digest()
+        self.outputs: List[Tuple[int, int]] = outputs
+        self.hash = blockHash
 
     #Transaction -> Mint. Satisifes static typing requirements.
     @staticmethod
@@ -45,14 +35,14 @@ class Mint(Transaction):
         result: Dict[str, Any] = {
             "descendant": "Mint",
             "inputs": [],
-            "outputs": [{
-                "key": self.output[0],
-                "amount": str(self.output[1])
-            }],
-            "hash": self.hash.hex().upper(),
-
-            "nonce": self.nonce
+            "outputs": [],
+            "hash": self.hash.hex().upper()
         }
+        for output in self.outputs:
+            result["outputs"].append({
+                "key": output[0],
+                "amount": str(output[1])
+            })
         return result
 
     #JSON -> Mint.
@@ -60,7 +50,8 @@ class Mint(Transaction):
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        return Mint(
-            json["nonce"],
-            (json["outputs"][0]["key"], int(json["outputs"][1])),
-        )
+        outputs: List[Tuple[int, int]] = []
+        for output in json["outputs"]:
+            outputs.append((output["key"], int(output["amount"])))
+
+        return Mint(bytes.fromhex(json["hash"]), outputs)

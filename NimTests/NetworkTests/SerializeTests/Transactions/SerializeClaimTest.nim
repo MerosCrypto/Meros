@@ -29,8 +29,10 @@ proc test*() =
     randomize(int64(getTime()))
 
     var
-        #Mints.
-        mints: seq[Hash[384]]
+        #Inputs.
+        inputs: seq[FundedInput]
+        #Input Hash.
+        inputHash: Hash[384]
         #Claim.
         claim: Claim
         #Reloaded Claim.
@@ -40,20 +42,15 @@ proc test*() =
 
     #Test 255 serializations.
     for s in 0 .. 255:
-        #Create Mints.
-        mints = newSeq[Hash[384]](rand(254) + 1)
-        for m in 0 ..< mints.len:
-            mints[m] = newMint(
-                uint32(rand(high(int32))),
-                uint16(rand(high(int16))),
-                uint64(rand(high(int32)))
-            ).hash
+        #Create inputs.
+        inputs = newSeq[FundedInput](rand(254) + 1)
+        for i in 0 ..< inputs.len:
+            for b in 0 ..< inputHash.data.len:
+                inputHash.data[b] = uint8(rand(255))
+            inputs[i] = newFundedInput(inputHash, rand(255))
 
         #Create the Claim.
-        claim = newClaim(
-            mints,
-            wallet.next(last = uint32(s * 1000)).publicKey
-        )
+        claim = newClaim(inputs, wallet.next(last = uint32(s * 1000)).publicKey)
 
         #The Meros protocol requires this signature be produced by the aggregate of every unique MinerWallet paid via the Mints.
         #Serialization/Parsing doesn't care at all.

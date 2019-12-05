@@ -13,17 +13,10 @@ import ../../../../../Network/Serialize/SerializeCommon
 #Serialize Mint lib.
 import SerializeMintOutput
 
-#Serialization functions.
+#Serialization function.
 proc serialize*(
     mint: Mint
 ): string {.inline, forceCheck: [].} =
-    result =
-        mint.nonce.toBinary(INT_LEN) &
-        cast[MintOutput](mint.outputs[0]).serialize()
-
-proc serializeHash*(
-    mint: Mint
-): string {.forceCheck: [].} =
-    result =
-        "\0" &
-        mint.serialize()
+    result = mint.outputs.len.toBinary(INT_LEN)
+    for output in mint.outputs:
+        result &= cast[MintOutput](output).serialize()

@@ -20,7 +20,7 @@ def verifyBlockchain(
     if blockchain.difficulty() != int(rpc.call("merit", "getDifficulty"), 16):
         raise TestError("Difficulty doesn't match.")
 
-    #Verify the blocks.
+    #Verify the Blocks.
     for b in range(len(blockchain.blocks)):
         if rpc.call("merit", "getBlock", [b]) != blockchain.blocks[b].toJSON():
             raise TestError("Block doesn't match.")

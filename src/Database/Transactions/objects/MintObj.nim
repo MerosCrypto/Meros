@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #Transaction object.
 import TransactionObj
 export TransactionObj
@@ -9,25 +12,19 @@ export TransactionObj
 import finals
 
 #Mint object.
-finalsd:
-    type Mint* = ref object of Transaction
-        #Nonce of the Mint.
-        nonce* {.final.}: uint32
+type Mint* = ref object of Transaction
 
 #Mint constructor.
 func newMintObj*(
-    nonce: uint32,
-    key: uint16,
-    amount: uint64
+    hash: Hash[384],
+    outputs: seq[MintOutput]
 ): Mint {.forceCheck: [].} =
-    #Create the Mint
     result = Mint(
-        nonce: nonce,
         inputs: @[],
-        outputs: cast[seq[Output]](
-            @[
-                newMintOutput(key, amount)
-            ]
-        )
+        outputs: cast[seq[Output]](outputs)
     )
-    result.ffinalizeNonce()
+
+    try:
+        result.hash = hash
+    except FinalAttributeError as e:
+        doAssert(false, "Set a final attribute twice when constructing a Mint: " & e.msg)

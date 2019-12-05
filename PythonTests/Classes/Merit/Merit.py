@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, List, Optional, Any
 
 #Mint class.
 from PythonTests.Classes.Transactions.Mint import Mint
@@ -33,18 +33,18 @@ class Merit:
     def add(
         self,
         block: Block
-    ) -> List[Mint]:
+    ):
         self.blockchain.add(block)
 
-        result: List[Mint] = self.epochs.shift(
+        mint: Optional[Mint] = self.epochs.shift(
             self.state,
             self.blockchain,
             len(self.blockchain.blocks) - 1
         )
-        self.mints += result
+        if mint is not None:
+            self.mints.append(mint)
 
         self.state.add(self.blockchain, len(self.blockchain.blocks) - 1)
-        return result
 
     #Merit -> JSON.
     def toJSON(

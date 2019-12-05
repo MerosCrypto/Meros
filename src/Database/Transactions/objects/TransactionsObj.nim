@@ -31,8 +31,6 @@ type
     Transactions* = object
         #DB Function Box.
         db: DB
-        #Mint Nonce.
-        mintNonce*: uint32
         #Transactions which have yet to leave Epochs.
         transactions*: Table[Hash[384], Transaction]
 
@@ -105,15 +103,8 @@ proc newTransactionsObj*(
     #Create the object.
     result = Transactions(
         db: db,
-        mintNonce: 0,
         transactions: initTable[Hash[384], Transaction]()
     )
-
-    #Load the mint nonce.
-    try:
-        result.mintNonce = db.loadMintNonce()
-    except DBReadError:
-        discard
 
     #Load the Transactions from the DB.
     var mentioned: HashSet[Hash[384]] = initHashSet[Hash[384]]()
@@ -141,7 +132,7 @@ proc newTransactionsObj*(
 proc getUTXOs*(
     transactions: Transactions,
     key: EdPublicKey
-): seq[SendInput] {.forceCheck: [].} =
+): seq[FundedInput] {.forceCheck: [].} =
     try:
         result = transactions.db.loadSpendable(key)
     except DBReadError:
@@ -211,21 +202,21 @@ func del*(
     transactions.transactions.del(hash)
 
 #Load a Mint Output.
-proc loadOutput*(
+proc loadMintOutput*(
     transactions: Transactions,
-    tx: Hash[384]
+    input: FundedInput
 ): MintOutput {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = transactions.db.loadMintOutput(tx)
+        result = transactions.db.loadMintOutput(input)
     except DBReadError as e:
         fcRaise e
 
-#Load a Send Output.
-proc loadOutput*(
+#Load a Claim or Send Output.
+proc loadSendOutput*(
     transactions: Transactions,
-    input: SendInput
+    input: FundedInput
 ): SendOutput {.forceCheck: [
     DBReadError
 ].} =

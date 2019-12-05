@@ -13,26 +13,22 @@ import ../../../..//Transactions/objects/MintObj
 #Common serialization functions.
 import ../../../../../Network/Serialize/SerializeCommon
 
+#Parse MintOutput lib.
+import ParseMintOutput
+
 #Parse function.
 proc parseMint*(
+    hash: Hash[384],
     mintStr: string
 ): Mint {.forceCheck: [].} =
-    #Nonce | Recepient | Meros
-    var mintSeq: seq[string] = mintStr.deserialize(
-        INT_LEN,
-        NICKNAME_LEN,
-        MEROS_LEN
-    )
+    #Amount of Outputs | Outputs
+    var
+        outputsLen: int = mintStr[0 ..< INT_LEN].fromBinary()
+        outputs: seq[MintOutput] = newSeq[MintOutput](outputsLen)
+
+    #Parse the outputs.
+    for o in 0 ..< outputsLen:
+        outputs[o] = mintStr[INT_LEN + (o * MINT_OUTPUT_LEN) ..< INT_LEN + ((o + 1) * MINT_OUTPUT_LEN)].parseMintOutput()
 
     #Create the Mint.
-    result = newMintObj(
-        uint32(mintSeq[0].fromBinary()),
-        uint16(mintSeq[1].fromBinary()),
-        uint64(mintSeq[2].fromBinary())
-    )
-
-    #Hash it.
-    try:
-        result.hash = Blake384("\0" & mintStr)
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when parsing a Mint: " & e.msg)
+    result = newMintObj(hash, outputs)

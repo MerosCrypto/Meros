@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple, Any
 
 #Transaction classs.
 from PythonTests.Classes.Transactions.Transaction import Transaction
@@ -15,11 +15,11 @@ class Claim(Transaction):
     #Constructor.
     def __init__(
         self,
-        inputs: List[bytes],
+        inputs: List[Tuple[bytes, int]],
         output: bytes,
         signature: bytes = bytes(96)
     ) -> None:
-        self.inputs: List[bytes] = inputs
+        self.inputs: List[Tuple[bytes, int]] = inputs
         self.output: bytes = output
         self.amount: int = 0
 
@@ -39,11 +39,23 @@ class Claim(Transaction):
         privKeys: List[blspy.PrivateKey]
     ) -> None:
         signatures: List[blspy.Signature] = [
-            privKeys[0].sign(b'\1' + self.inputs[0] + self.output)
+            privKeys[0].sign(
+                b'\1' +
+                self.inputs[0][0] +
+                self.inputs[0][1].to_bytes(1, "big") +
+                self.output
+            )
         ]
 
         for i in range(1, len(self.inputs)):
-            signatures.append(privKeys[i].sign(b'\1' + self.inputs[i] + self.output))
+            signatures.append(
+                privKeys[i].sign(
+                    b'\1' +
+                    self.inputs[i][0] +
+                    self.inputs[i][1].to_bytes(1, "big") +
+                    self.output
+                )
+            )
 
         self.signature = blspy.Signature.aggregate(signatures).serialize()
         self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
@@ -54,7 +66,7 @@ class Claim(Transaction):
     ) -> bytes:
         result: bytes = len(self.inputs).to_bytes(1, "big")
         for txInput in self.inputs:
-            result += txInput
+            result += txInput[0] + txInput[1].to_bytes(1, "big")
         result += self.output + self.signature
         return result
 
@@ -78,7 +90,8 @@ class Claim(Transaction):
         }
         for txInput in self.inputs:
             result["inputs"].append({
-                "hash": txInput.hex().upper()
+                "hash": txInput[0].hex().upper(),
+                "nonce": txInput[1]
             })
         return result
 
@@ -87,9 +100,9 @@ class Claim(Transaction):
     def fromJSON(
         json: Dict[str, Any]
     ) -> Any:
-        inputs: List[bytes] = []
+        inputs: List[Tuple[bytes, int]] = []
         for txInput in json["inputs"]:
-            inputs.append(bytes.fromhex(txInput["hash"]))
+            inputs.append((bytes.fromhex(txInput["hash"]), txInput["nonce"]))
 
         result: Claim = Claim(
             inputs,

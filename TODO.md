@@ -127,6 +127,10 @@ Network:
 - MeritRemoval Tests.
 - RPC tests.
 
+- Expand verifyBlockchain to verifyMerit.
+
+- Test Mints with multiple outputs.
+
 - Test historical and live threshold calculation.
 - Test `TransactionStatus.epoch` is updated as needed.
 - Test Meros only verifies Transactions which have a chance.
@@ -135,8 +139,6 @@ Network:
 - Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 
 ### Features:
-
-- Add Mints to DBDumpSample.
 
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
