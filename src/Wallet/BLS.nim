@@ -7,6 +7,9 @@ import mc_bls
 #Hashes standard lib.
 import hashes
 
+#String utils standard lib.
+import strutils
+
 #Type aliases.
 type
     BLSPrivateKey* = PrivateKey
@@ -14,62 +17,39 @@ type
     BLSSignature* = Signature
     BLSAggregationInfo* = AggregationInfo
 
+#Export the G1 and G2 lengths.
+export G1_LEN, G2_LEN
+
 #Constructors.
-proc newBLSPrivateKeyFromSeed*(
+proc newBLSPrivateKey*(
     key: string
 ): BLSPrivateKey {.forceCheck: [
     BLSError
 ].} =
     try:
-        result = newPrivateKeyFromSeed(key)
-    except Exception:
-        raise newException(BLSError, "Couldn't create a BLS Private Key from a Seed: " & getCurrentExceptionMsg())
-
-proc newBLSPrivateKeyFromBytes*(
-    key: string
-): BLSPrivateKey {.forceCheck: [
-    BLSError
-].} =
-    try:
-        result = newPrivateKeyFromBytes(key)
-    except Exception:
-        raise newException(BLSError, "Couldn't create a BLS Private Key from its Bytes: " & getCurrentExceptionMsg())
-
-proc getPublicKey*(
-    key: BLSPrivateKey
-): BLSPublicKey {.forceCheck: [
-    BLSError
-].} =
-    try:
-        result = mc_bls.getPublicKey(key)
-    except Exception:
-        raise newException(BLSError, "Couldn't create a BLS Public Key from a Private Key: " & getCurrentExceptionMsg())
+        result = newPrivateKey(key)
+    except BLSError as e:
+        fcRaise e
 
 proc newBLSPublicKey*(
-    key: string
+    key: string = char(0b11000000) & newString(95)
 ): BLSPublicKey {.forceCheck: [
     BLSError
 ].} =
     try:
-        result = newPublicKeyFromBytes(key)
-    except Exception:
-        raise newException(
-            BLSError,
-            "Couldn't create a BLS Public Key from its Bytes: " & getCurrentExceptionMsg()
-        )
+        result = newPublicKey(key)
+    except BLSError as e:
+        fcRaise e
 
 proc newBLSSignature*(
-    sig: string
+    sig: string = char(0b11000000) & newString(47)
 ): BLSSignature {.forceCheck: [
     BLSError
 ].} =
     try:
-        result = newSignatureFromBytes(sig)
-    except Exception:
-        raise newException(
-            BLSError,
-            "Couldn't create a BLS Signature from its Bytes: " & getCurrentExceptionMsg()
-        )
+        result = newSignature(sig)
+    except BLSError as e:
+        fcRaise e
 
 proc newBLSAggregationInfo*(
     key: BLSPublicKey,
@@ -78,102 +58,79 @@ proc newBLSAggregationInfo*(
     BLSError
 ].} =
     try:
-        result = newAggregationInfoFromMsg(key, msg)
-    except Exception:
-        raise newException(
-            BLSError,
-            "Couldn't create a BLS AggregationInfo from a Message: " & getCurrentExceptionMsg()
-        )
+        result = newAggregationInfo(key, msg)
+    except BLSError as e:
+        fcRaise e
 
-#Equality operators.
-export `==`
-export `!=`
-
-#Stringify functions.
-export toString
-export `$`
-
-#Signature functions.
-proc setAggregationInfo*(
-    signature: BLSSignature,
-    agInfo: BLSAggregationInfo
-) {.forceCheck: [
-    BLSError
-].} =
-    try:
-        mc_bls.setAggregationInfo(signature, agInfo)
-    except Exception as e:
-        raise newException(
-            BLSError,
-            "Couldn't set a BLS Signature's Aggregation Info: " & e.msg
-        )
-
-proc verify*(
-    signature: BLSSignature
-): bool {.forceCheck: [
-    BLSError
-].} =
-    try:
-        result = mc_bls.verify(signature)
-    except Exception as e:
-        raise newException(
-            BLSError,
-            "Couldn't verify a BLS Signature: " & e.msg
-        )
-
-#Private Key functions.
-proc sign*(
-    key: BLSPrivateKey,
+proc newBLSAggregationInfo*(
+    keys: seq[BLSPublicKey],
     msg: string
-): BLSSignature {.forceCheck: [
-    BLSError
-].} =
-    try:
-        result = mc_bls.sign(key, msg)
-    except Exception:
-        raise newException(BLSError, "Couldn't sign a message: " & getCurrentExceptionMsg())
-
-#Aggregation functions.
-proc aggregate*(
-    keys: seq[BLSPublicKey]
-): BLSPublicKey {.forceCheck: [
-    BLSError
-].} =
-    try:
-        result = mc_bls.aggregate(keys)
-    except Exception:
-        raise newException(
-            BLSError,
-            "Couldn't aggregate the BLS Public Keys: " & getCurrentExceptionMsg()
-        )
-
-proc aggregate*(
-    agInfos: seq[BLSAggregationInfo]
 ): BLSAggregationInfo {.forceCheck: [
     BLSError
 ].} =
     try:
-        result = mc_bls.aggregate(agInfos)
-    except Exception:
-        raise newException(
-            BLSError,
-            "Couldn't aggregate the BLS AggregationInfos: " & getCurrentExceptionMsg()
-        )
+        result = newAggregationInfo(keys, msg)
+    except BLSError as e:
+        fcRaise e
 
-proc aggregate*(
-    sigs: seq[BLSSignature]
-): BLSSignature {.forceCheck: [
-    BLSError
-].} =
-    try:
-        result = mc_bls.aggregate(sigs)
-    except Exception:
-        raise newException(
-            BLSError,
-            "Couldn't aggregate the BLS Signatures: " & getCurrentExceptionMsg()
-        )
+#Export member functions.
+export toPublicKey, sign, verify, aggregate, serialize, isInf
 
+#Equality functions.
+proc `==`*(
+    x: BLSPrivateKey,
+    y: BLSPrivateKey
+): bool {.inline, forceCheck: [].} =
+    x.serialize() == y.serialize()
+
+proc `==`*(
+    x: BLSPublicKey,
+    y: BLSPublicKey
+): bool {.inline, forceCheck: [].} =
+    x.serialize() == y.serialize()
+
+proc `==`*(
+    x: BLSSignature,
+    y: BLSSignature
+): bool {.inline, forceCheck: [].} =
+    x.serialize() == y.serialize()
+
+proc `!=`*(
+    x: BLSPrivateKey,
+    y: BLSPrivateKey
+): bool {.inline, forceCheck: [].} =
+    not (x.serialize() == y.serialize())
+
+proc `!=`*(
+    x: BLSPublicKey,
+    y: BLSPublicKey
+): bool {.inline, forceCheck: [].} =
+    not (x.serialize() == y.serialize())
+
+proc `!=`*(
+    x: BLSSignature,
+    y: BLSSignature
+): bool {.inline, forceCheck: [].} =
+    not (x.serialize() == y.serialize())
+
+#Stringify functions.
+proc `$`*(
+    key: BLSPrivateKey
+): string {.inline, forceCheck: [].} =
+    key.serialize().toHex()
+
+proc `$`*(
+    key: BLSPublicKey
+): string {.inline, forceCheck: [].} =
+    key.serialize().toHex()
+
+proc `$`*(
+    sig: Signature
+): string {.inline, forceCheck: [].} =
+    sig.serialize().toHex()
+
+#BLSPublicKey -> Hash so it can be used as an index in an Table.
 proc hash*(
     key: BLSPublicKey
 ): Hash {.inline, forceCheck: [].} =
-    hash(key.toString())
+    hash(key.serialize())

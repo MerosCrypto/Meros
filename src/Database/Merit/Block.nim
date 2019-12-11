@@ -120,41 +120,42 @@ proc verifyAggregate*(
 ): bool {.forceCheck: [].} =
     result = true
 
-    #Aggregation Infos.
     var
-        agInfos: seq[BLSAggregationInfo] = @[]
-        agInfo: BLSAggregationInfo = nil
+        #Aggregation Infos.
+        agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](
+            blockArg.body.packets.len + blockArg.body.elements.len
+        )
+        #Merit Holder Keys. Used as a loop variable for the Verification Packets.
+        pubKeys: seq[BLSPublicKey]
     try:
         #Iterate over every Verification Packet.
-        for packet in blockArg.body.packets:
-            for verifier in packet.holders:
-                agInfos.add(newBLSAggregationInfo(
-                    lookup(verifier),
-                    char(VERIFICATION_PREFIX) & packet.hash.toString()
-                ))
+        for p in 0 ..< blockArg.body.packets.len:
+            pubKeys = newSeq[BLSPublicKey](blockArg.body.packets[p].holders.len)
+            for h in 0 ..< blockArg.body.packets[p].holders.len:
+                pubKeys[h] = lookup(blockArg.body.packets[p].holders[h])
+
+            agInfos[p] = newBLSAggregationInfo(
+                pubKeys,
+                char(VERIFICATION_PREFIX) & blockArg.body.packets[p].hash.toString()
+            )
 
         #Iterate over every Element.
-        for elem in blockArg.body.elements:
-            agInfos.add(newBLSAggregationInfo(lookup(elem.holder), elem.serializeWithoutHolder()))
-
-        #Aggregate the infos.
-        agInfo = agInfos.aggregate()
-    #We have VerificationPackets including Verifiers who don't exist.
+        for e in 0 ..< blockArg.body.elements.len:
+            agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
+                lookup(blockArg.body.elements[e].holder),
+                blockArg.body.elements[e].serializeWithoutHolder()
+            )
+    #We have Verification Packets including Verifiers who don't exist.
     except IndexError:
         return false
-    #Couldn't create an AggregationInfo out of a BLSPublicKey and a hash.
+    #One of our holders has an infinite key.
     except BLSError:
-        return false
+        doAssert(false, "Holder with an infinite key entered the system.")
 
-    #Both the AgInfo and the Aggregate should be null, or neither should be.
-    if agInfo.isNil != blockArg.body.aggregate.isNil:
-        return false
-
-    #If it's not null, verify it.
-    if not agInfo.isNil:
-        try:
-            blockArg.body.aggregate.setAggregationInfo(agInfo)
-            if not blockArg.body.aggregate.verify():
-                return false
-        except BLSError:
+    #Verify the Signature.
+    try:
+        if not blockArg.body.aggregate.verify(agInfos.aggregate()):
             return false
+    #We had zero Aggregation Infos. Therefore, the signature should be infinite.
+    except BLSError:
+        return blockArg.body.aggregate.isInf

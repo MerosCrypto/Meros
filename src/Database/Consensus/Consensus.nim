@@ -109,24 +109,19 @@ proc checkMalicious*(
     ValueError,
     #MaliciousMeritHolder
 ].} =
-    #This method is called before the Element is added.
-    #Only when we add the Element, do we verify its signature.
-    #This method will fail to aggregate unless we set its AggregationInfo now.
+    #We deleted the rest of this function for the No Consensus DAG branch.
+    #This function called the function in MeritHolder which verified the signature.
+    #Since we deleted the code which does that, along with the call, verify it now.
     try:
-        verif.signature.setAggregationInfo(
+        if not verif.signature.verify(
             newBLSAggregationInfo(
                 state.holders[verif.holder],
                 verif.serializeWithoutHolder()
             )
-        )
-
-        #We deleted the rest of this function for the No Consensus DAG branch.
-        #This function called the function in MeritHolder which verified the signature.
-        #Since we deleted the code which does that, along with the call, verify it now.
-        if not verif.signature.verify():
+        ):
             raise newException(ValueError, "Invalid SignedVerification signature.")
-    except BLSError as e:
-        doAssert(false, "Failed to create a BLS Aggregation Info: " & e.msg)
+    except BLSError:
+        doAssert(false, "Holder with an infinite key entered the system.")
 
 proc checkMalicious*(
     consensus: Consensus,
@@ -239,12 +234,8 @@ proc add*(
     ValueError
 ].} =
     #Verify the MeritRemoval's signature.
-    try:
-        mr.signature.setAggregationInfo(mr.agInfo(state.holders[mr.holder]))
-        if not mr.signature.verify():
-            raise newException(ValueError, "Invalid MeritRemoval signature.")
-    except BLSError as e:
-        doAssert(false, "Failed to verify the MeritRemoval's signature: " & e.msg)
+    if not mr.signature.verify(mr.agInfo(state.holders[mr.holder])):
+        raise newException(ValueError, "Invalid MeritRemoval signature.")
 
     #If this is a partial MeritRemoval, make sure the first Element is already archived on the Blockchain.
     if mr.partial:

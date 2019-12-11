@@ -16,8 +16,7 @@ import ParseBlockBody
 proc parseBlock*(
     blockStr: string
 ): SketchyBlock {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Header | Body
     var
@@ -32,8 +31,6 @@ proc parseBlock*(
             INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
         ).parseBlockBody()
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e
 
     #Create the SketchyBlock.

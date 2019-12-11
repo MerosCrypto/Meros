@@ -158,14 +158,14 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
         try:
             result.miner = newMinerWallet(
-                json.get("minerKey", JString).getStr()
+                parseHexStr(json.get("minerKey", JString).getStr())
             )
         except ValueError as e:
             doAssert(false, e.msg)
         except IndexError:
             discard
         except BLSError as e:
-            doAssert(false, "Couldn't create a MinerWallet from the value in `" & (result.dataDir / "settings.json") & "`: " & e.msg)
+            doAssert(false, e.msg)
 
         try:
             minerNick = json.get("minerNick", JInt).getInt()
@@ -202,9 +202,7 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
                     of "--minerKey":
                         try:
-                            result.miner = newMinerWallet(paramStr(i + 1))
-                        except ValueError as e:
-                            doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
+                            result.miner = newMinerWallet(parseHexStr(paramStr(i + 1)))
                         except BLSError as e:
                             doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
 

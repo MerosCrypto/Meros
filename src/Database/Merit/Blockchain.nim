@@ -70,6 +70,10 @@ proc testBlockHeader*(
     if header.newMiner and blockchain.miners.hasKey(header.minerKey):
         raise newException(ValueError, "Header marks a miner with a nickname as new.")
 
+    #If this is a new miner, make sure the key isn't infinite.
+    if header.newMiner and header.minerKey.isInf:
+        raise newException(ValueError, "Header has an infinite miner key.")
+
     #Check the time.
     if (header.time < blockchain.tail.header.time) or (header.time > getTime() + 120):
         raise newException(ValueError, "Block has an invalid time.")

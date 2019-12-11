@@ -5,7 +5,6 @@
 - 1 Meros is equivalent to 10,000,000,000 Meri, and Meri is the lowest denomination of Meros. This means Meros has 10 decimals.
 
 - Ed25519 Signatures are created with a prefix of "MEROS" before the signed data. This is to stop transaction replays across networks.
-- The used BLS specification is BLS12-381, with 48-byte Public Keys and 96-byte Signatures. Meros currently uses Chia's BLS library, yet Meros will move to either Herumi or Milagro, and swap the groups used for Public Keys/Signatures, before mainnet.
 
 - `Locks`/`Unlocks` are not specified as the MerosScript specification is still under development.
 

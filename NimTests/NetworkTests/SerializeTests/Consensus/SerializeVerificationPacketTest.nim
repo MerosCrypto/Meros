@@ -3,9 +3,6 @@
 #Util lib.
 import ../../../../src/lib/Util
 
-#MinerWallet lib.
-import ../../../../src/Wallet/MinerWallet
-
 #Elements Testing lib.
 import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 

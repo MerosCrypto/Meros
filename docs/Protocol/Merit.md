@@ -70,13 +70,13 @@ The genesis Block on the Meros mainnet Blockchain has a:
 - significant of 0.
 - Zeroed sketchSalt in the header.
 - Zeroed out sketchCheck in the header.
-- Zeroed out miner key in the header.
+- Infinite miner key in the header.
 - Header time of 0.
 - Header proof of 0.
-- Zeroed out signature in the header.
+- Infinite signature in the header.
 - Empty packets.
 - Empty elements.
-- aggregate is zeroed out.
+- Infinite aggregate.
 
 ### Checkpoint Data Type
 
@@ -93,14 +93,13 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 - version is 0.
 - last must be equivalent to the hash of the current tail Block.
-- miner is a valid BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
-- time must be greater than the current Block’s time.
-- time must be less than 2 minutes into the future.
+- miner is a valid, non-infinite, BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
+- time must be greater than the latest Block’s time.
 - hash must not be less than the current difficulty.
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 261 or 307 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 2-byte significant, 4-byte sketchSalt, 48-byte sketchCheck hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 48-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 96-byte signature.
+`BlockHeader` has a message length of either 213 or 307 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 2-byte significant, 4-byte sketchSalt, 48-byte sketchCheck hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 96-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 48-byte signature.
 
 ### BlockBody
 
@@ -110,7 +109,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - contents is the result of a properly constructed Merkle tree.
 - significant is greater than 0 and at most 26280 (inclusive).
 - The Block's included Verification Packets don't collide with the specified sketch salt.
-- sketchCheck is the result of a properly constructed Merkle tree.
+- sketchCheck is the result of a properly constructed Merkle tree
 - Every Verification Packet is for an unique Transaction.
 - Every Verification Packet only contains new Verifications.
 - Every Verification Packet's Merit is greater than significant.
@@ -129,7 +128,9 @@ for tx in transactions:
     signatures.add(packets[tx])
 for elem in elements:
     signatures.add(element.signature)
-BLSSignature aggregate = signatures.aggregate()
+BLSSignature aggregate = infinity
+if signatures.length != 0
+    aggregate = signatures.aggregate()
 ```
 
 If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
@@ -169,7 +170,7 @@ Even with Checkpoints, Blockchain reorganizations can happen if a different, val
 
 Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace a Transaction via chain reorganization and defaulting manipulation. A Transaction can be replaced by having it verified via normal operation, then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Transaction default. Once the Transaction defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Transaction has a Checkpoint during the time it takes to default, attackers cannot use a momentary hash power surge to force a Transaction to be verified.
 
-`Checkpoint` has a variable message length; the 48-byte Block hash, 4-byte amount of signers, every signer's 96-byte BLS Public Key, and the 96-byte aggregate signature.
+`Checkpoint` has a variable message length; the 48-byte Block hash, 2-byte amount of Merit Holders, the Merit Holders (each represented by their 2-byte nickname), and the 48-byte aggregate signature.
 
 ### Violations in Meros
 

@@ -24,8 +24,7 @@ proc parseMeritRemovalElement(
     element: Element,
     len: int
 ] {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     try:
         result.len = data.getLength(
@@ -49,15 +48,12 @@ proc parseMeritRemovalElement(
                 raise newException(ValueError, "parseMeritRemovalElement tried to parse an invalid/unsupported Element type.")
     except ValueError as e:
         fcRaise e
-    except BLSError as e:
-        fcRaise e
 
 #Parse a MeritRemoval.
 proc parseMeritRemoval*(
     mrStr: string
 ): MeritRemoval {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
@@ -92,15 +88,11 @@ proc parseMeritRemoval*(
         element1 = pmreResult.element
     except ValueError as e:
         fcRaise e
-    except BLSError as e:
-        fcRaise e
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
         element2 = pmreResult.element
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e
 
     #Create the MeritRemoval.
@@ -115,8 +107,7 @@ proc parseMeritRemoval*(
 proc parseSignedMeritRemoval*(
     mrStr: string
 ): SignedMeritRemoval {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Holder's Nickname | Partial | Element Prefix | Serialized Element without Holder | Element Prefix | Serialized Element without Holder
     var
@@ -151,15 +142,11 @@ proc parseSignedMeritRemoval*(
         element1 = pmreResult.element
     except ValueError as e:
         fcRaise e
-    except BLSError as e:
-        fcRaise e
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
         element2 = pmreResult.element
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e
 
     #Create the SignedMeritRemoval.
@@ -169,7 +156,7 @@ proc parseSignedMeritRemoval*(
             partial,
             element1,
             element2,
-            newBLSSignature(mrStr[mrStr.len - 96 ..< mrStr.len])
+            newBLSSignature(mrStr[mrStr.len - BLS_SIGNATURE_LEN ..< mrStr.len])
         )
-    except BLSError as e:
-        fcRaise e
+    except BLSError:
+        raise newException(ValueError, "Invalid Signature.")

@@ -15,16 +15,11 @@ import ../../../Network/Serialize/Consensus/SerializeVerification
 proc sign*(
     miner: MinerWallet,
     verif: SignedVerification
-) {.forceCheck: [
-    BLSError
-].} =
+) {.forceCheck: [].} =
     try:
         #Set the holder.
         verif.holder = miner.nick
         #Sign the hash of the Verification.
-        try:
-            verif.signature = miner.sign(verif.serializeWithoutHolder())
-        except BLSError as e:
-            fcRaise e
+        verif.signature = miner.sign(verif.serializeWithoutHolder())
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when signing a Verification: " & e.msg)

@@ -44,4 +44,4 @@ method signedSerialize*(
     mr: SignedMeritRemoval
 ): string {.inline, forceCheck: [].} =
     mr.serialize() &
-    mr.signature.toString()
+    mr.signature.serialize()

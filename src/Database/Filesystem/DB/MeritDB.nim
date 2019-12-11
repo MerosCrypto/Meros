@@ -127,8 +127,8 @@ proc saveHolder*(
     db: DB,
     key: BLSPublicKey
 ) {.forceCheck: [].} =
-    db.put(key.toString(), (db.merit.holders.len div 48).toBinary())
-    db.merit.holders = db.merit.holders & key.toString()
+    db.put(key.serialize(), (db.merit.holders.len div BLS_PUBLIC_KEY_LEN).toBinary())
+    db.merit.holders = db.merit.holders & key.serialize()
     db.put("holders", db.merit.holders)
 
 proc saveMerit*(
@@ -239,10 +239,10 @@ proc loadHolders*(
     except DBReadError:
         return @[]
 
-    result = newSeq[BLSPublicKey](db.merit.holders.len div 48)
-    for i in countup(0, db.merit.holders.len - 1, 48):
+    result = newSeq[BLSPublicKey](db.merit.holders.len div BLS_PUBLIC_KEY_LEN)
+    for i in countup(0, db.merit.holders.len - 1, BLS_PUBLIC_KEY_LEN):
         try:
-            result[i div 48] = newBLSPublicKey(db.merit.holders[i ..< i + 48])
+            result[i div BLS_PUBLIC_KEY_LEN] = newBLSPublicKey(db.merit.holders[i ..< i + BLS_PUBLIC_KEY_LEN])
         except BLSError as e:
             doAssert(false, "Couldn't load a holder's BLS Public Key: " & e.msg)
 
@@ -295,7 +295,7 @@ proc loadNickname*(
     DBReadError
 ].} =
     try:
-        result = uint16(db.get(key.toString()).fromBinary())
+        result = uint16(db.get(key.serialize()).fromBinary())
     except DBReadError as e:
         fcRaise e
 

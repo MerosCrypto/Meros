@@ -88,5 +88,5 @@ proc agInfo*(
                 newBLSAggregationInfo(holder, mr.element1.serializeWithoutHolder()),
                 newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
             ].aggregate()
-    except BLSError as e:
-        doAssert(false, "Failed to create the MeritRemoval's AggregationInfo: " & e.msg)
+    except BLSError:
+        doAssert(false, "Holder with an infinite key entered the system.")

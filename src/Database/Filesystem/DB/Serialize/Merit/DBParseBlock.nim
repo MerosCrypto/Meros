@@ -29,8 +29,7 @@ import ../../../../../Network/Serialize/Consensus/ParseBlockElement
 proc parseBlock*(
     blockStr: string
 ): Block {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Header | Body
     var
@@ -41,8 +40,6 @@ proc parseBlock*(
     try:
         header = blockStr.parseBlockHeader()
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e
 
     #Grab the body.
@@ -103,8 +100,6 @@ proc parseBlock*(
             pbeResult = bodyStr.parseBlockElement(i)
         except ValueError as e:
             fcRaise e
-        except BLSError as e:
-            fcRaise e
         i += pbeResult.len
         elements.add(pbeResult.element)
 
@@ -113,8 +108,8 @@ proc parseBlock*(
 
     try:
         aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
-    except BLSError as e:
-        fcRaise e
+    except BLSError:
+        raise newException(ValueError, "Invalid aggregate signature.")
 
     #Create the Block Object.
     result = newBlockObj(

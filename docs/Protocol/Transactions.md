@@ -36,7 +36,7 @@ Claim Transactions are created in response to a Mint, and have the following add
 
 Claim inputs are hashes of Mints which have yet to be claimed. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the Mint amounts. The specified key does not need to be a valid Ed25519 Public Key.
 
-signature must be the BLS signature produced by Mint's designated claimee signing `"\1" + mint.hash + mint.index + claim.output.key`, where `mint.hash` takes up 48 bytes and `claim.output.key` takes up 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key created from every unique BLS Public Key.
+signature must be the BLS signature produced by the Mint's designated claimee signing `"\1" + mint.hash + mint.index + claim.output.key`, where `mint.hash` takes up 48 bytes and `claim.output.key` takes up 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key created from every unique BLS Public Key.
 
 Claim hashes are defined as `Blake2b-384("\1" + signature)`, where signature takes up 96 bytes.
 

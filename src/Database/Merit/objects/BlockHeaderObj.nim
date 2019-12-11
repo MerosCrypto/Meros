@@ -17,7 +17,7 @@ import ../../../Network/Serialize/SerializeCommon
 import finals
 
 finalsd:
-    type BlockHeader* = object
+    type BlockHeader* = ref object
         #Version.
         version* {.final.}: uint32
         #Hash of the last block.
@@ -117,22 +117,17 @@ proc hash*(
     header: var BlockHeader,
     serialized: string,
     proof: uint32
-) {.forceCheck: [
-    BLSError
-].} =
+) {.forceCheck: [].} =
     header.proof = proof
     header.hash = Argon(
         serialized,
         header.proof.toBinary(SALT_LEN)
     )
-    try:
-        header.signature = miner.sign(header.hash.toString())
-    except BLSError as e:
-        fcRaise e
-    header.hash = Argon(header.hash.toString(), header.signature.toString())
+    header.signature = miner.sign(header.hash.toString())
+    header.hash = Argon(header.hash.toString(), header.signature.serialize())
 
 #Hash the header via a passed in serialization.
-func hash*(
+proc hash*(
     header: var BlockHeader,
     serialized: string
 ) {.forceCheck: [].} =
@@ -141,5 +136,5 @@ func hash*(
             serialized,
             header.proof.toBinary(SALT_LEN)
         ).toString(),
-        header.signature.toString()
+        header.signature.serialize()
     )

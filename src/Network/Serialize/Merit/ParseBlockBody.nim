@@ -23,8 +23,7 @@ import ../Consensus/ParseBlockElement
 proc parseBlockBody*(
     bodyStr: string
 ): SketchyBlockBody {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
     result.capacity = bodyStr[0 ..< INT_LEN].fromBinary()
@@ -52,8 +51,6 @@ proc parseBlockBody*(
             pbeResult = bodyStr.parseBlockElement(i)
         except ValueError as e:
             fcRaise e
-        except BLSError as e:
-            fcRaise e
         i += pbeResult.len
         elements.add(pbeResult.element)
 
@@ -62,8 +59,8 @@ proc parseBlockBody*(
 
     try:
         aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
-    except BLSError as e:
-        fcRaise e
+    except BLSError:
+        raise newException(ValueError, "Invalid aggregate signature.")
 
     result.data = newBlockBodyObj(
         @[],

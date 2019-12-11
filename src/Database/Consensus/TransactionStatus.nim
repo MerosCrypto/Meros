@@ -79,7 +79,4 @@ proc add*(
                 doAssert(false, "Couldn't create a new pending VerificaionPacket due to missing signatures: " & e.msg)
 
     #Aggregate and set the signature.
-    try:
-        status.pending.signature = signatures.aggregate()
-    except BLSError as e:
-        doAssert(false, "Failed to aggregate the signatures of holders not included in the archived packet: " & e.msg)
+    status.pending.signature = signatures.aggregate()

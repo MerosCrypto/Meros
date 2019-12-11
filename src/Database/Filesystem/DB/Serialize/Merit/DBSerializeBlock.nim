@@ -41,4 +41,4 @@ proc serialize*(
                 doAssert(false, "serialize(BlockBody) tried to serialize an unsupported Element.")
         result &= elem.serialize()
 
-    result &= blockArg.body.aggregate.toString()
+    result &= blockArg.body.aggregate.serialize()

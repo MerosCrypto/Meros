@@ -80,8 +80,6 @@ proc syncTransaction*(
                     raise newException(ClientError, "Client didn't respond properly to our TransactionRequest.")
         except ValueError as e:
             raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
-        except BLSError as e:
-            raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a BLSError: " & e.msg)
         except EdPublicKeyError as e:
             raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a EdPublicKeyError: " & e.msg)
 
@@ -203,8 +201,6 @@ proc syncBlockBody*(
                     raise newException(ClientError, "Client didn't respond properly to our BlockBodyRequest.")
         except ValueError as e:
             raise newException(ClientError, "Client didn't respond with a valid BlockBody to our BlockBodyRequest, as pointed out by a ValueError: " & e.msg)
-        except BLSError as e:
-            raise newException(ClientError, "Client didn't respond with a valid BlockBody to our BlockBodyRequest, as pointed out by a BLSError: " & e.msg)
     except ClientError as e:
         fcRaise e
     except DataMissing as e:
@@ -238,8 +234,6 @@ proc syncBlockHeader*(
                     raise newException(ClientError, "Client didn't respond properly to our BlockHeaderRequest.")
         except ValueError as e:
             raise newException(ClientError, "Client didn't respond with a valid BlockHeader to our BlockHeaderRequest, as pointed out by a ValueError: " & e.msg)
-        except BLSError as e:
-            raise newException(ClientError, "Client didn't respond with a valid BlockHeader to our BlockHeaderRequest, as pointed out by a BLSError: " & e.msg)
 
         #Verify the received data is what was requested.
         if result.hash != hash:
