@@ -22,9 +22,9 @@ class SketchError(Exception):
 #pylint: disable=invalid-name
 MinisketchLib: Any
 if os.name == "nt":
-    MinisketchLib = cdll.LoadLibrary("PythonTests/Stubs/minisketch")
+    MinisketchLib = cdll.LoadLibrary("PythonTests/Libs/minisketch")
 else:
-    MinisketchLib = cdll.LoadLibrary("PythonTests/Stubs/libminisketch.so")
+    MinisketchLib = cdll.LoadLibrary("PythonTests/Libs/libminisketch.so")
 
 #Define the function types.
 MinisketchLib.minisketch_create.argtypes = [c_uint32, c_uint32, c_size_t]
