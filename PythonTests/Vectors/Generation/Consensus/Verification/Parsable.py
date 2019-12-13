@@ -1,6 +1,9 @@
 #Types.
 from typing import IO, Dict, List, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey, PublicKey
+
 #Data class.
 from PythonTests.Classes.Transactions.Data import Data
 
@@ -17,14 +20,14 @@ from PythonTests.Classes.Merit.BlockBody import BlockBody
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#BLS lib.
-import blspy
-
 #Time standard function.
 from time import time
 
 #Ed25519 lib.
 import ed25519
+
+#Blake2b standard function.
+from hashlib import blake2b
 
 #JSON standard lib.
 import json
@@ -48,8 +51,8 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS Keys.
-blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
-blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
+blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=48).digest())
+blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Add a single Block to create Merit.
 bbFile: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")

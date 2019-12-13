@@ -1,14 +1,14 @@
 #Types.
 from typing import Dict, List, Optional, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PublicKey, Signature, AggregationInfo
+
 #Element class.
 from PythonTests.Classes.Consensus.Element import Element
 
 #SignedVerification class.
 from PythonTests.Classes.Consensus.Verification import SignedVerification
-
-#BLS lib.
-from blspy import PublicKey, Signature, AggregationInfo
 
 #VerificationPacket Prefix.
 VERIFICATION_PACKET_PREFIX: bytes = b'\1'
@@ -68,7 +68,7 @@ class SignedVerificationPacket(VerificationPacket):
         txHash: bytes,
         holders: List[int] = [],
         holderKeys: Optional[List[PublicKey]] = None,
-        signature: bytes = bytes(96)
+        signature: bytes = Signature().serialize()
     ) -> None:
         VerificationPacket.__init__(self, txHash, holders)
         self.signature: bytes = signature
@@ -77,13 +77,13 @@ class SignedVerificationPacket(VerificationPacket):
         if holderKeys:
             serialized: bytes = SignedVerification.signatureSerialize(self.hash)
 
-            self.blsSignature = Signature.from_bytes(signature)
-            agInfo: AggregationInfo = AggregationInfo.from_msg(holderKeys[0], serialized)
+            self.blsSignature = Signature(signature)
+            agInfo: AggregationInfo = AggregationInfo(holderKeys[0], serialized)
 
             for h in range(1, len(self.holders)):
-                agInfo = AggregationInfo.merge_infos([
+                agInfo = AggregationInfo.aggregate([
                     agInfo,
-                    AggregationInfo.from_msg(holderKeys[h], serialized)
+                    AggregationInfo(holderKeys[h], serialized)
                 ])
 
     #Add a SignedVerification.
@@ -93,7 +93,7 @@ class SignedVerificationPacket(VerificationPacket):
     ) -> None:
         self.holders.append(verif.holder)
 
-        if self.signature == bytes(96):
+        if self.signature == Signature().serialize():
             self.blsSignature = verif.blsSignature
         else:
             self.blsSignature = Signature.aggregate([self.blsSignature, verif.blsSignature])
@@ -133,7 +133,7 @@ class SignedVerificationPacket(VerificationPacket):
     ) -> Any:
         holderKeys: List[PublicKey] = []
         for holder in json["holders"]:
-            holderKeys.append(PublicKey.from_bytes(nicks[holder]))
+            holderKeys.append(PublicKey(nicks[holder]))
 
         return SignedVerificationPacket(
             bytes.fromhex(json["hash"]),

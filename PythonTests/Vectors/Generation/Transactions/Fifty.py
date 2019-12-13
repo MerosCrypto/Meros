@@ -1,6 +1,9 @@
 #Types.
 from typing import IO, Dict, List, Tuple, Union, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey, PublicKey, Signature
+
 #Transactions classes.
 from PythonTests.Classes.Transactions.Send import Send
 from PythonTests.Classes.Transactions.Claim import Claim
@@ -22,11 +25,11 @@ from PythonTests.Classes.Merit.Blockchain import Blockchain
 #Ed25519 lib.
 import ed25519
 
-#BLS lib.
-import blspy
-
 #Time standard function.
 from time import time
+
+#Blake2b standard function.
+from hashlib import blake2b
 
 #JSON standard lib.
 import json
@@ -56,13 +59,13 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
-blsPrivKeys: List[blspy.PrivateKey] = [
-    blspy.PrivateKey.from_seed(b'\0'),
-    blspy.PrivateKey.from_seed(b'\1')
+blsPrivKeys: List[PrivateKey] = [
+    PrivateKey(blake2b(b'\0', digest_size=48).digest()),
+    PrivateKey(blake2b(b'\1', digest_size=48).digest())
 ]
-blsPubKeys: List[blspy.PublicKey] = [
-    blsPrivKeys[0].get_public_key(),
-    blsPrivKeys[1].get_public_key()
+blsPubKeys: List[PublicKey] = [
+    blsPrivKeys[0].toPublicKey(),
+    blsPrivKeys[1].toPublicKey()
 ]
 
 #Grab the Claim hash.
@@ -105,7 +108,7 @@ orders: List[Tuple[Dict[int, List[int]], Union[bytes, int]]] = [
 ]
 #Packets.
 packets: Dict[int, VerificationPacket]
-toAggregate: List[blspy.Signature]
+toAggregate: List[Signature]
 
 #Add each Block.
 for order in orders:
@@ -137,7 +140,7 @@ for order in orders:
         BlockBody(
             list(packets.values()),
             [],
-            blspy.Signature.aggregate(toAggregate).serialize()
+            Signature.aggregate(toAggregate).serialize()
         )
     )
 

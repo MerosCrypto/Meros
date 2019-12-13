@@ -89,15 +89,15 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.DataMissing:               [],
     MessageType.SyncingOver:               [],
 
-    MessageType.Claim:                     [1, -49, 128],
+    MessageType.Claim:                     [1, -49, 80],
     MessageType.Send:                      [1, -49, 1, -40, 68],
     MessageType.Data:                      [48, 1, -1, 68],
 
-    MessageType.SignedVerification:        [146],
-    MessageType.SignedMeritRemoval:        [4, 0, 1, 0, 96],
+    MessageType.SignedVerification:        [98],
+    MessageType.SignedMeritRemoval:        [4, 0, 1, 0, 48],
 
-    MessageType.BlockHeader:               [155, 0, 104],
-    MessageType.BlockBody:                 [4, -8, 4, 0, 96],
+    MessageType.BlockHeader:               [155, 0, 56],
+    MessageType.BlockBody:                 [4, -8, 4, 0, 48],
     MessageType.SketchHashes:              [4, -8],
     MessageType.VerificationPacket:        [1, -2, 48]
 }
@@ -179,7 +179,7 @@ class Meros:
 
                 elif header == MessageType.BlockHeader:
                     if result[-1] == 1:
-                        length = 48
+                        length = 96
                     else:
                         length = 2
 

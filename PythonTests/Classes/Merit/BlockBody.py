@@ -1,11 +1,14 @@
 #Types.
 from typing import Dict, List, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import Signature
+
 #VerificationPacket class.
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Minisketch lib.
-from PythonTests.Classes.Merit.Minisketch import Sketch
+from PythonTests.Libs.Minisketch import Sketch
 
 #BlockBody class.
 class BlockBody:
@@ -14,7 +17,7 @@ class BlockBody:
         self,
         packets: List[VerificationPacket] = [],
         elements: List[None] = [],
-        aggregate: bytes = bytes(96)
+        aggregate: bytes = Signature().serialize()
     ) -> None:
         self.packets: List[VerificationPacket] = list(packets)
         self.packets.sort(key=lambda packet: packet.hash, reverse=True)

@@ -27,7 +27,6 @@ def msgToG(
     hashed.val = c_char_p(shake.digest(48))
     hashed.len = 48
     hashed.max = 48
-    print(bytes(hashed.val).hex())
 
     MilagroCurve.ECP_BLS381_mapit(byref(result), hashed)
     return result
@@ -315,23 +314,9 @@ class PrivateKey():
         self,
         msgArg: bytes
     ) -> Signature:
-        print("Private Key:  " + self.serialize().hex())
-        print("Public Key:   " + self.toPublicKey().serialize().hex())
-        print("Message:      " + msgArg.hex())
-
-        hashed: OctetObj = OctetObj()
-        shake: Any = shake_256()
-        shake.update(msgArg)
-        hashed.val = c_char_p(shake.digest(48))
-        hashed.len = 48
-        hashed.max = 48
-        print("Message Hash: " + bytes(hashed.val).hex())
-
         result: Signature = Signature.__new__(Signature)
         result.value = msgToG(msgArg)
-        print("Message G:    " + result.serialize().hex())
         MilagroPairing.ECP_BLS381_mul(byref(result.value), byref(self.value))
-        print("Signature:    " + result.serialize().hex())
         return result
 
     def serialize(

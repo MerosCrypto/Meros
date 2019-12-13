@@ -1,6 +1,9 @@
 #Types.
 from typing import Dict, List, Tuple, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PublicKey
+
 #BlockHeader, BlockBody, and Block classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.BlockBody import BlockBody
@@ -29,7 +32,7 @@ class Blockchain:
                     0,
                     bytes(4),
                     bytes(48),
-                    bytes(48),
+                    PublicKey().serialize(),
                     0
                 ),
                 BlockBody()

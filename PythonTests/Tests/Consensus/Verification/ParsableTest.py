@@ -6,7 +6,7 @@
 from typing import Dict, List, IO, Any
 
 #Sketch class.
-from PythonTests.Classes.Merit.Minisketch import Sketch
+from PythonTests.Libs.Minisketch import Sketch
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.Block import Block
