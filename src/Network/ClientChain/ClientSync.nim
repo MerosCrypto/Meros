@@ -61,9 +61,11 @@ proc syncTransaction*(
     try:
         #Send the request.
         await client.send(newMessage(MessageType.TransactionRequest, hash.toString()))
+        client.pendingSyncRequest = true
 
         #Get their response.
         var msg: Message = await client.recv()
+        client.pendingSyncRequest = false
 
         #Parse the response.
         try:
@@ -113,6 +115,7 @@ proc syncVerificationPackets*(
         for hash in sketchHashes:
             req &= hash.toBinary(SKETCH_HASH_LEN)
         await client.send(newMessage(MessageType.SketchHashRequests, req))
+        client.pendingSyncRequest = true
 
         for sketchHash in sketchHashes:
             #Get their response.
@@ -132,6 +135,7 @@ proc syncVerificationPackets*(
 
             if sketchHash(sketchSalt, result[^1]) != sketchHash:
                 raise newException(ClientError, "Client didn't respond with the right VerificationPacket for our SketchHashRequests.")
+        client.pendingSyncRequest = false
     except ClientError as e:
         fcRaise e
     except DataMissing as e:
@@ -151,9 +155,11 @@ proc syncSketchHashes*(
     try:
         #Send the request.
         await client.send(newMessage(MessageType.SketchHashesRequest, hash.toString()))
+        client.pendingSyncRequest = true
 
         #Get the response.
         var msg: Message = await client.recv()
+        client.pendingSyncRequest = false
 
         #Parse out the sketch hashes.
         result = newSeq[uint64](msg.message[0 ..< 4].fromBinary())
@@ -186,9 +192,11 @@ proc syncBlockBody*(
     try:
         #Send the request.
         await client.send(newMessage(MessageType.BlockBodyRequest, hash.toString()))
+        client.pendingSyncRequest = true
 
         #Get their response.
         var msg: Message = await client.recv()
+        client.pendingSyncRequest = false
 
         #Parse the response.
         try:
@@ -219,9 +227,11 @@ proc syncBlockHeader*(
     try:
         #Send the request.
         await client.send(newMessage(MessageType.BlockHeaderRequest, hash.toString()))
+        client.pendingSyncRequest = true
 
         #Get their response.
         var msg: Message = await client.recv()
+        client.pendingSyncRequest = false
 
         #Parse the response.
         try:
@@ -258,9 +268,11 @@ proc syncBlockList*(
     try:
         #Send the request.
         await client.send(newMessage(MessageType.BlockListRequest, (if forwards: '\1' else: '\0') & char(amount - 1) & hash.toString()))
+        client.pendingSyncRequest = true
 
         #Get their response.
         var msg: Message = await client.recv()
+        client.pendingSyncRequest = false
 
         #Parse the response.
         try:

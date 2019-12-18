@@ -279,7 +279,11 @@ proc add*(
             ): bool {.forceCheck: [].} =
                 if client.last + 60 <= getTime():
                     client.close()
-                elif client.last + 40 <= getTime():
+
+                if client.pendingSyncRequest == true:
+                    return
+
+                if client.last + 40 <= getTime():
                     try:
                         asyncCheck (
                             proc (): Future[void] {.forceCheck: [], async.} =

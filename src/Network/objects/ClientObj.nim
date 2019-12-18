@@ -24,6 +24,8 @@ finalsd:
         id* {.final.}: int
         #Are we syncing? Every sync process adds one, removing one as it terminates.
         syncLevels*: int
+        #Do we have a pending sync request?
+        pendingSyncRequest*: bool
         #Whether or not the client is syncing.
         remoteSync*: bool
         #Time of their last message.
@@ -46,6 +48,7 @@ func newClient*(
 
         id: id,
         syncLevels: 0,
+        pendingSyncRequest: false,
         remoteSync: false,
         last: 0,
 
