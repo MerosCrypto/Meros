@@ -20,7 +20,7 @@ method serializeHash*(
     claim: Claim
 ): string {.inline, forceCheck: [].} =
     "\1" &
-    claim.signature.toString()
+    claim.signature.serialize()
 
 method serialize*(
     claim: Claim
@@ -33,4 +33,4 @@ method serialize*(
     #Serialize the output and signature.
     result &=
         cast[SendOutput](claim.outputs[0]).key.toString() &
-        claim.signature.toString()
+        claim.signature.serialize()

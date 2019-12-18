@@ -1,17 +1,20 @@
 #Types.
 from typing import IO, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey
+
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.BlockBody import BlockBody
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#BLS lib.
-import blspy
-
 #Time standard function.
 from time import time
+
+#Blake2b standard function.
+from hashlib import blake2b
 
 #JSON standard lib.
 import json
@@ -24,7 +27,7 @@ blockchain: Blockchain = Blockchain(
 )
 
 #Miner Private Key.
-privKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
+privKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=48).digest())
 
 #Create the Block.
 block: Block = Block(
@@ -35,7 +38,7 @@ block: Block = Block(
         1,
         bytes(4),
         bytes(48),
-        privKey.get_public_key().serialize(),
+        privKey.toPublicKey().serialize(),
         int(time())
     ),
     BlockBody()

@@ -13,3 +13,6 @@ __pycache__
 #Minisketch lib.
 libminisketch.so
 minisketch.dll
+
+#Milagro.
+incubator-milagro-crypto-c

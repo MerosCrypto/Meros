@@ -29,7 +29,7 @@ type Block* = object
     body*: BlockBody
 
 #Constructor.
-func newBlockObj*(
+proc newBlockObj*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
@@ -42,7 +42,7 @@ func newBlockObj*(
     aggregate: BLSSignature,
     time: uint32 = getTime(),
     proof: uint32 = 0,
-    signature: BLSSignature = nil
+    signature: BLSSignature = newBLSSignature()
 ): Block {.inline, forceCheck: [].} =
     Block(
         header: newBlockHeader(
@@ -64,7 +64,7 @@ func newBlockObj*(
         )
     )
 
-func newBlockObj*(
+proc newBlockObj*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
@@ -77,7 +77,7 @@ func newBlockObj*(
     aggregate: BLSSignature,
     time: uint32 = getTime(),
     proof: uint32 = 0,
-    signature: BLSSignature = nil
+    signature: BLSSignature = newBLSSignature()
 ): Block {.inline, forceCheck: [].} =
     Block(
         header: newBlockHeader(
@@ -99,7 +99,7 @@ func newBlockObj*(
         )
     )
 
-func newBlockObj*(
+proc newBlockObj*(
     header: BlockHeader,
     body: BlockBody
 ): Block {.inline, forceCheck: [].} =

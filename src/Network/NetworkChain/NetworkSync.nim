@@ -220,7 +220,7 @@ proc sync*(
     #Check the Block's aggregate.
     try:
         if not result.verifyAggregate(network.mainFunctions.merit.getPublicKey):
-            raise newException(ValueError, "Block which has an invalid aggregate.")
+            raise newException(ValueError, "Block has an invalid aggregate.")
     except IndexError as e:
         doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
 

@@ -10,7 +10,11 @@ import ../../Database/Consensus/Elements/objects/ElementObj
 import ForceCheck
 export ForceCheck
 
-#Finals lib, imported so we can export its Error.
+#mc_bls lib. Imported so we can export its error.
+import mc_bls
+export BLSError
+
+#Finals lib, Imported so we can export its Error.
 import finals
 export FinalAttributeError
 
@@ -30,7 +34,6 @@ type
     SaltError*   = object of Exception #Used when a sketch salt causes a collision.
 
     #Wallet Errors.
-    BLSError*         = object of Exception #Used when the BLS lib fails.
     EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
 
     #Database/common Statuses.

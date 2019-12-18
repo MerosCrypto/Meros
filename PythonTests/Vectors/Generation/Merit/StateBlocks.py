@@ -1,17 +1,20 @@
 #Types.
 from typing import List, IO, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey
+
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.BlockBody import BlockBody
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#BLS lib.
-import blspy
-
 #Time standard function.
 from time import time
+
+#Blake2b standard function.
+from hashlib import blake2b
 
 #JSON standard lib.
 import json
@@ -24,12 +27,12 @@ blockchain: Blockchain = Blockchain(
 )
 
 #Miner Private Keys.
-privKeys: List[blspy.PrivateKey] = [
-    blspy.PrivateKey.from_seed(b'\0'),
-    blspy.PrivateKey.from_seed(b'\1'),
-    blspy.PrivateKey.from_seed(b'\2'),
-    blspy.PrivateKey.from_seed(b'\3'),
-    blspy.PrivateKey.from_seed(b'\4')
+privKeys: List[PrivateKey] = [
+    PrivateKey(blake2b(b'\0', digest_size=48).digest()),
+    PrivateKey(blake2b(b'\1', digest_size=48).digest()),
+    PrivateKey(blake2b(b'\2', digest_size=48).digest()),
+    PrivateKey(blake2b(b'\3', digest_size=48).digest()),
+    PrivateKey(blake2b(b'\4', digest_size=48).digest())
 ]
 
 #Assign every Miner Merit.
@@ -43,7 +46,7 @@ for i in range(1, 6):
             1,
             bytes(4),
             bytes(48),
-            privKeys[i - 1].get_public_key().serialize(),
+            privKeys[i - 1].toPublicKey().serialize(),
             int(time())
         ),
         BlockBody()

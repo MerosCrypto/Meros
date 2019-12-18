@@ -43,12 +43,11 @@ proc parseVerificationPacket*(
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a VerificationPacket: " & e.msg)
 
-#Parse a MeritRemovalVerificationPacket.
+#Parse a MeritRemoval's VerificationPacket.
 proc parseMeritRemovalVerificationPacket*(
     packet: string
 ): MeritRemovalVerificationPacket {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Amount of Verifiers | Verifiers | Transaction Hash
 
@@ -71,7 +70,7 @@ proc parseMeritRemovalVerificationPacket*(
             )
     except ValueError as e:
         fcRaise e
-    except BLSError as e:
-        fcRaise e
+    except BLSError:
+        raise newException(ValueError, "Invalid Public Key.")
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a VerificationPacket: " & e.msg)

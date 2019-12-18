@@ -1,6 +1,9 @@
 #Types.
 from typing import IO, Dict, List, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey, PublicKey, Signature
+
 #Transactions classes.
 from PythonTests.Classes.Transactions.Claim import Claim
 from PythonTests.Classes.Transactions.Send import Send
@@ -22,11 +25,11 @@ from PythonTests.Classes.Merit.Merit import Blockchain
 #Ed25519 lib.
 import ed25519
 
-#BLS lib.
-import blspy
-
 #Time standard function.
 from time import time
+
+#Blake2b standard function.
+from hashlib import blake2b
 
 #JSON standard lib.
 import json
@@ -59,13 +62,13 @@ edPubKeys: List[ed25519.VerifyingKey] = [
 ]
 
 #BLS keys.
-blsPrivKeys: List[blspy.PrivateKey] = [
-    blspy.PrivateKey.from_seed(b'\0'),
-    blspy.PrivateKey.from_seed(b'\1')
+blsPrivKeys: List[PrivateKey] = [
+    PrivateKey(blake2b(b'\0', digest_size=48).digest()),
+    PrivateKey(blake2b(b'\1', digest_size=48).digest())
 ]
-blsPubKeys: List[blspy.PublicKey] = [
-    blsPrivKeys[0].get_public_key(),
-    blsPrivKeys[1].get_public_key()
+blsPubKeys: List[PublicKey] = [
+    blsPrivKeys[0].toPublicKey(),
+    blsPrivKeys[1].toPublicKey()
 ]
 
 #Grab the claim hash.
@@ -83,7 +86,7 @@ block: Block = Block(
         blsPubKeys[1].serialize(),
         int(time())
     ),
-    BlockBody([], [], bytes(96))
+    BlockBody()
 )
 
 #Mine it.
@@ -95,7 +98,7 @@ print("Generated Competing Block " + str(len(blockchain.blocks)) + ".")
 
 #Create two competing Sends.
 packets: List[VerificationPacket] = []
-toAggregate: List[blspy.Signature] = []
+toAggregate: List[Signature] = []
 verif: SignedVerification
 for i in range(2):
     send: Send = Send(
@@ -127,7 +130,7 @@ block = Block(
         0,
         int(time())
     ),
-    BlockBody(packets, [], blspy.Signature.aggregate(toAggregate).serialize())
+    BlockBody(packets, [], Signature.aggregate(toAggregate).serialize())
 )
 for _ in range(6):
     #Mine it.

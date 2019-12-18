@@ -1,11 +1,11 @@
 #Types.
 from typing import Dict, List, Optional, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey, PublicKey, Signature
+
 #Element class.
 from PythonTests.Classes.Consensus.Element import Element
-
-#BLS lib.
-from blspy import PrivateKey, PublicKey, Signature, AggregationInfo
 
 #Verification Prefix.
 VERIFICATION_PREFIX: bytes = b'\0'
@@ -68,20 +68,15 @@ class SignedVerification(Verification):
         txHash: bytes,
         holder: int = 0,
         holderKey: Optional[PublicKey] = None,
-        signature: bytes = bytes(96)
+        signature: bytes = Signature().serialize()
     ) -> None:
         Verification.__init__(self, txHash, holder)
         self.signature: bytes = signature
 
         self.blsSignature: Signature
         if holderKey:
-            self.blsSignature = Signature.from_bytes(self.signature)
-            self.blsSignature.set_aggregation_info(
-                AggregationInfo.from_msg(
-                    holderKey,
-                    SignedVerification.signatureSerialize(self.hash)
-                )
-            )
+            self.blsSignature = Signature(self.signature)
+
     #Sign.
     def sign(
         self,
@@ -127,6 +122,6 @@ class SignedVerification(Verification):
         return SignedVerification(
             bytes.fromhex(json["hash"]),
             json["holder"],
-            PublicKey.from_bytes(nicks[json["holder"]]),
+            PublicKey(nicks[json["holder"]]),
             bytes.fromhex(json["signature"])
         )

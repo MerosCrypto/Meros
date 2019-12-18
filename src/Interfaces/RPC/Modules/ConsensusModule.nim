@@ -4,9 +4,6 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#MinerWallet lib.
-import ../../../Wallet/MinerWallet
-
 #Consensus lib.
 import ../../../Database/Consensus/Consensus
 

@@ -10,9 +10,6 @@ import ../../lib/Hash
 #Sketcher lib.
 import ../../lib/Sketcher
 
-#MinerWallet lib.
-import ../../Wallet/MinerWallet
-
 #Transactions lib (for all of the Transaction types).
 import ../../Database/Transactions/Transactions
 

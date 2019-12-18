@@ -19,8 +19,7 @@ proc parseTransaction*(
     tx: string
 ): Transaction {.forceCheck: [
     ValueError,
-    EdPublicKeyError,
-    BLSError
+    EdPublicKeyError
 ].} =
     case tx[0]:
         of '\0':
@@ -32,8 +31,6 @@ proc parseTransaction*(
             except ValueError as e:
                 fcRaise e
             except EdPublicKeyError as e:
-                fcRaise e
-            except BLSError as e:
                 fcRaise e
 
         of '\2':

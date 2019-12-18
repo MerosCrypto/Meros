@@ -76,7 +76,7 @@ proc test*() =
         #SignedVerification used to generate signatures.
         sv: SignedVerification
         #Aggregate signature to include in the next Block.
-        aggregate: BLSSignature = nil
+        aggregate: BLSSignature = newBLSSignature()
 
     #Mine and add a Block.
     proc mineBlock() =
@@ -150,7 +150,7 @@ proc test*() =
         #Clear the packets, unsigned table, and aggregate.
         packets = @[]
         unsigned = @[]
-        aggregate = nil
+        aggregate = newBLSSignature()
 
         #Create a random amount of 'Transaction's.
         for _ in 0 ..< rand(2) + 1:
@@ -177,7 +177,7 @@ proc test*() =
 
                 sv = newSignedVerificationObj(packets[^1].hash)
                 holders[h].sign(sv)
-                aggregate = if aggregate.isNil: sv.signature else: @[aggregate, sv.signature].aggregate()
+                aggregate = if aggregate.isInf: sv.signature else: @[aggregate, sv.signature].aggregate()
 
                 #Decide to add it to Consensus as a live SignedVerification or later as a VerificationPacket.
                 if rand(3) == 0:
@@ -192,7 +192,7 @@ proc test*() =
 
                 sv = newSignedVerificationObj(packets[^1].hash)
                 holders[int(packets[^1].holders[0])].sign(sv)
-                aggregate = if aggregate.isNil: sv.signature else: @[aggregate, sv.signature].aggregate()
+                aggregate = if aggregate.isInf: sv.signature else: @[aggregate, sv.signature].aggregate()
 
                 if rand(3) == 0:
                     if not unsigned.contains(tx.hash):

@@ -14,7 +14,7 @@ import ../../../Database/Merit/objects/BlockHeaderObj
 import ../SerializeCommon
 
 #Serialize a Block Header.
-func serializeHash*(
+proc serializeHash*(
     header: BlockHeader
 ): string {.inline, forceCheck: [].} =
     header.version.toBinary(INT_LEN) &
@@ -26,13 +26,13 @@ func serializeHash*(
     header.sketchCheck.toString() &
 
     (
-        if header.newMiner: '\1' & header.minerKey.toString() else: '\0' & header.minerNick.toBinary(NICKNAME_LEN)
+        if header.newMiner: '\1' & header.minerKey.serialize() else: '\0' & header.minerNick.toBinary(NICKNAME_LEN)
     ) &
     header.time.toBinary(INT_LEN)
 
-func serialize*(
+proc serialize*(
     header: BlockHeader
 ): string {.inline, forceCheck: [].} =
     header.serializeHash() &
     header.proof.toBinary(INT_LEN) &
-    header.signature.toString()
+    header.signature.serialize()

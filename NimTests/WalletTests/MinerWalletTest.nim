@@ -29,17 +29,17 @@ proc test*() =
         wallet = newMinerWallet()
 
         #Test recreating the Private Key.
-        assert(newBLSPrivateKeyFromBytes(wallet.privateKey.toString()).toString() == wallet.privateKey.toString())
-        assert($newBLSPrivateKeyFromBytes($wallet.privateKey) == $wallet.privateKey)
+        assert(newBLSPrivateKey(wallet.privateKey.serialize()).serialize() == wallet.privateKey.serialize())
+        assert($newBLSPrivateKey(wallet.privateKey.serialize()) == $wallet.privateKey)
 
         #Test recreating the Public Key.
-        assert(newBLSPublicKey(wallet.publicKey.toString()).toString() == wallet.publicKey.toString())
-        assert($newBLSPublicKey($wallet.publicKey) == $wallet.publicKey)
+        assert(newBLSPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize())
+        assert($newBLSPublicKey(wallet.publicKey.serialize()) == $wallet.publicKey)
 
         #Reload the MinerWallet.
-        reloaded = newMinerWallet(wallet.seed)
-        assert(wallet.privateKey.toString() == reloaded.privateKey.toString())
-        assert(wallet.publicKey.toString() == reloaded.publicKey.toString())
+        reloaded = newMinerWallet(wallet.privateKey.serialize())
+        assert(wallet.privateKey.serialize() == reloaded.privateKey.serialize())
+        assert(wallet.publicKey.serialize() == reloaded.publicKey.serialize())
 
         #Create messages.
         for m in 1 .. 100:
@@ -52,19 +52,12 @@ proc test*() =
             rSig = reloaded.sign(msg)
 
             #Verify they're the same signature..
-            assert(wSig.toString() == rSig.toString())
+            assert(wSig.serialize() == rSig.serialize())
 
-            #Test recreating the signatures.
-            assert(newBLSSignature(wSig.toString()).toString() == wSig.toString())
-            assert($newBLSSignature($wSig) == $wSig)
+            #Test recreating the signature.
+            assert(newBLSSignature(wSig.serialize()).serialize() == wSig.serialize())
 
             #Verify the signature.
-            wSig.setAggregationInfo(
-                newBLSAggregationInfo(
-                    wallet.publicKey,
-                    msg
-                )
-            )
-            assert(wSig.verify())
+            assert(wSig.verify(newBLSAggregationInfo(wallet.publicKey, msg)))
 
     echo "Finished the Wallet/MinerWallet Test."

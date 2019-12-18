@@ -26,8 +26,7 @@ proc parseBlockElement*(
     element: BlockElement,
     len: int
 ] {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     if not (int8(data[i]) in BLOCK_ELEMENT_SET):
         raise newException(ValueError, "parseBlockElement tried to parse an invalid/unsupported Element type.")
@@ -40,6 +39,4 @@ proc parseBlockElement*(
             else:
                 doAssert(false, "parseBlockElement tried to parse an unsupported Element despite having an existing if check.")
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e

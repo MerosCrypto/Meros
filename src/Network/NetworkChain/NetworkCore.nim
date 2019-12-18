@@ -107,8 +107,6 @@ proc newNetwork*(
                     claim = msg.message.parseClaim()
                 except ValueError as e:
                     raise newException(ClientError, "Claim contained an invalid Signature: " & e.msg)
-                except BLSError as e:
-                    raise newException(ClientError, "Claim contained an invalid BLS Public Key: " & e.msg)
                 except EdPublicKeyError as e:
                     raise newException(ClientError, "Claim contained an invalid ED25519 Public Key: " & e.msg)
 
@@ -159,8 +157,6 @@ proc newNetwork*(
                     verif = msg.message.parseSignedVerification()
                 except ValueError as e:
                     raise newException(ClientError, "SignedVerification didn't contain a valid hash: " & e.msg)
-                except BLSError as e:
-                    raise newException(ClientError, "SignedVerification contained an invalid BLS Public Key: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedVerification(verif)
@@ -175,8 +171,6 @@ proc newNetwork*(
                     mr = msg.message.parseSignedMeritRemoval()
                 except ValueError as e:
                     raise newException(ClientError, "Parsing the SignedVerification failed due to a ValueError: " & e.msg)
-                except BLSError as e:
-                    raise newException(ClientError, "Parsing the SignedVerification failed due to a BLSError: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedMeritRemoval(mr)
@@ -189,8 +183,6 @@ proc newNetwork*(
                     header = msg.message.parseBlockHeader()
                 except ValueError as e:
                     raise newException(ClientError, "Block didn't contain a valid hash: " & e.msg)
-                except BLSError as e:
-                    raise newException(ClientError, "Block contained an invalid BLS Public Key: " & e.msg)
 
                 try:
                     await mainFunctions.merit.addBlockByHeader(header, false)

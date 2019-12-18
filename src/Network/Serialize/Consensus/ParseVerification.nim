@@ -40,8 +40,7 @@ proc parseVerification*(
 proc parseSignedVerification*(
     verifStr: string
 ): SignedVerification {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Holder's Nickname | Transaction Hash | BLS Signature
     var verifSeq: seq[string] = verifStr.deserialize(
@@ -59,7 +58,7 @@ proc parseSignedVerification*(
         result.signature = newBLSSignature(verifSeq[2])
     except ValueError as e:
         fcRaise e
-    except BLSError as e:
-        fcRaise e
+    except BLSError:
+        raise newException(ValueError, "Invalid signature.")
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Signed Verification: " & e.msg)

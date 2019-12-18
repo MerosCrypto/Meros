@@ -19,8 +19,7 @@ proc parseClaim*(
     claimStr: string
 ): Claim {.forceCheck: [
     ValueError,
-    EdPublicKeyError,
-    BLSError
+    EdPublicKeyError
 ].} =
     #Verify the input length.
     if claimStr.len < BYTE_LEN:
@@ -60,7 +59,7 @@ proc parseClaim*(
     try:
         result.signature = newBLSSignature(claimSeq[3])
         result.hash = Blake384("\1" & claimSeq[3])
-    except BLSError as e:
-        fcRaise e
+    except BLSError:
+        raise newException(ValueError, "Invalid Signature.")
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a Claim: " & e.msg)

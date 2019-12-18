@@ -110,17 +110,19 @@ proc newBlockchainObj*(
                 0,
                 "".pad(4),
                 Hash[384](),
-                nil,
+                newBLSPublicKey(),
                 @[],
                 @[],
-                nil,
+                newBLSSignature(),
                 0,
                 0,
-                nil
+                newBLSSignature()
             )
             hash(genesisBlock.header)
         except ValueError as e:
             doAssert(false, "Couldn't create the Genesis Block due to a ValueError: " & e.msg)
+        except BLSError as e:
+            doAssert(false, "Couldn't create the Genesis Block due to a BLSError: " & e.msg)
         #Grab the tip.
         tip = genesisBlock.header.hash
 

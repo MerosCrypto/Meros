@@ -198,10 +198,7 @@ proc mainMerit() {.forceCheck: [].} =
                         doAssert(false, "Couldn't grab a Mint we just added: " & e.msg)
 
                     #Sign the claim.
-                    try:
-                        config.miner.sign(claim)
-                    except BLSError as e:
-                        doAssert(false, "Failed to sign a Claim due to a BLSError: " & e.msg)
+                    config.miner.sign(claim)
 
                     #Emit it.
                     try:

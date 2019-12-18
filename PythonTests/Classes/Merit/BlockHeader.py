@@ -1,11 +1,14 @@
 #Types.
 from typing import Dict, List, Union, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import Signature
+
 #VerificationPacket class.
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Sketch class.
-from PythonTests.Classes.Merit.Minisketch import Sketch
+from PythonTests.Libs.Minisketch import Sketch
 
 #Argon2 lib.
 import argon2
@@ -135,7 +138,7 @@ class BlockHeader:
         miner: Union[int, bytes],
         time: int,
         proof: int = 0,
-        signature: bytes = bytes(96)
+        signature: bytes = Signature().serialize()
     ) -> None:
         self.version: int = version
         self.last: bytes = last

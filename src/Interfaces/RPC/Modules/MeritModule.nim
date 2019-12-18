@@ -232,7 +232,9 @@ proc module*(
 
                 var miner: BLSPublicKey
                 try:
-                    miner = newBLSPublicKey(params[0].getStr())
+                    miner = newBLSPublicKey(params[0].getStr().parseHexStr())
+                except ValueError:
+                    raise newJSONRPCError(-3, "Invalid miner")
                 except BLSError:
                     raise newJSONRPCError(-4, "Invalid miner")
 
@@ -296,7 +298,7 @@ proc module*(
                             miner,
                             getTime(),
                             0,
-                            nil
+                            newBLSSignature()
                         ).serializeHash().toHex()
 
                     if header.kind == JNull:
@@ -310,10 +312,12 @@ proc module*(
                             nick,
                             getTime(),
                             0,
-                            nil
+                            newBLSSignature()
                         ).serializeHash().toHex()
                 except IndexError as e:
                     doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
+                except BLSError:
+                    doAssert(false, "Couldn't create a temporary signature for a BlockHeader template.")
 
                 #Create the result.
                 try:
@@ -350,8 +354,6 @@ proc module*(
                     sketchyBlock = params[1].getStr().parseHexStr().parseBlock()
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Block")
-                except BLSError:
-                    raise newJSONRPCError(-4, "Invalid BLS data")
 
                 #Test the Block Header.
                 try:

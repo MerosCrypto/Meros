@@ -69,7 +69,7 @@ proc newBlankBlock*(
     miner: MinerWallet = newMinerWallet(),
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
-    aggregate: BLSSignature = nil,
+    aggregate: BLSSignature = newBLSSignature(),
     time: uint32 = getTime(),
     proof: uint32 = 0
 ): Block =
@@ -98,7 +98,7 @@ proc newBlankBlock*(
     miner: MinerWallet = newMinerWallet(),
     packets: seq[VerificationPacket] = @[],
     elements: seq[BlockElement] = @[],
-    aggregate: BLSSignature = nil,
+    aggregate: BLSSignature = newBLSSignature(),
     time: uint32 = getTime(),
     proof: uint32 = 0
 ): Block =

@@ -111,11 +111,8 @@ proc add*(
         doAssert(false, "Set a final attribute twice when adding a Claim: " & e.msg)
 
     #Verify the signature.
-    try:
-        if not claim.verify(claimers.aggregate()):
-            raise newException(ValueError, "Claim has an invalid Signature.")
-    except BLSError as e:
-        doAssert(false, "Failed to aggregate BLS Public Keys: " & e.msg)
+    if not claim.verify(claimers.aggregate()):
+        raise newException(ValueError, "Claim has an invalid Signature.")
 
     #Add the Claim.
     transactions.add(cast[Transaction](claim))

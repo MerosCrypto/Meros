@@ -1,15 +1,15 @@
 #Types.
 from typing import Dict, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey
+
 #BlockHeader and BlockBody classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.BlockBody import BlockBody
 
 #Argon2 lib.
 import argon2
-
-#BLS lib.
-import blspy
 
 #Block class.
 class Block:
@@ -25,7 +25,7 @@ class Block:
     #Mine.
     def mine(
         self,
-        privKey: blspy.PrivateKey,
+        privKey: PrivateKey,
         difficulty: int
     ) -> None:
         self.header.proof = -1

@@ -1,11 +1,11 @@
 #Types.
 from typing import Dict, List, Tuple, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey, Signature
+
 #Transaction classs.
 from PythonTests.Classes.Transactions.Transaction import Transaction
-
-#BLS lib.
-import blspy
 
 #Blake2b standard function.
 from hashlib import blake2b
@@ -17,7 +17,7 @@ class Claim(Transaction):
         self,
         inputs: List[Tuple[bytes, int]],
         output: bytes,
-        signature: bytes = bytes(96)
+        signature: bytes = Signature().serialize()
     ) -> None:
         self.inputs: List[Tuple[bytes, int]] = inputs
         self.output: bytes = output
@@ -36,9 +36,9 @@ class Claim(Transaction):
     #Sign.
     def sign(
         self,
-        privKeys: List[blspy.PrivateKey]
+        privKeys: List[PrivateKey]
     ) -> None:
-        signatures: List[blspy.Signature] = [
+        signatures: List[Signature] = [
             privKeys[0].sign(
                 b'\1' +
                 self.inputs[0][0] +
@@ -57,7 +57,7 @@ class Claim(Transaction):
                 )
             )
 
-        self.signature = blspy.Signature.aggregate(signatures).serialize()
+        self.signature = Signature.aggregate(signatures).serialize()
         self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
 
     #Serialize.

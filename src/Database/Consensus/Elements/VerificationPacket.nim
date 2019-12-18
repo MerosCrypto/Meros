@@ -33,16 +33,13 @@ proc add*(
     verif: SignedVerification
 ) {.forceCheck: [].} =
     packet.holders.add(verif.holder)
-    if packet.signature == nil:
+    if packet.signature.isInf:
         packet.signature = verif.signature
     else:
-        try:
-            packet.signature = @[
-                packet.signature,
-                verif.signature
-            ].aggregate()
-        except BLSError as e:
-            doAssert(false, "Couldn't add a new SignedVerification to an existing packet: " & e.msg)
+        packet.signature = @[
+            packet.signature,
+            verif.signature
+        ].aggregate()
 
 #Error if the add function is called when one arg is signed but the other is not.
 proc add*(

@@ -2,7 +2,7 @@
 from typing import Dict, List, Set, Union, Any
 
 #Sketch class.
-from PythonTests.Classes.Merit.Minisketch import Sketch
+from PythonTests.Libs.Minisketch import Sketch
 
 #Block and Blockchain classes.
 from PythonTests.Classes.Merit.Block import Block

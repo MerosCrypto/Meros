@@ -43,4 +43,4 @@ method signedSerialize*(
     verif: SignedVerification
 ): string {.inline, forceCheck: [].} =
     verif.serialize() &
-    verif.signature.toString()
+    verif.signature.serialize()

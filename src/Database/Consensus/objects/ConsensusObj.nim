@@ -134,13 +134,10 @@ proc getPending*(
     for status in consensus.statuses.values():
         if status.pending.holders.len != 0:
             result.packets.add(status.pending)
-            if result.aggregate.isNil:
+            if result.aggregate.isInf:
                 result.aggregate = status.pending.signature
             else:
-                try:
-                    result.aggregate = @[result.aggregate, status.pending.signature].aggregate()
-                except BLSError as e:
-                    doAssert(false, "Failed to aggregate BLS signatures: " & e.msg)
+                result.aggregate = @[result.aggregate, status.pending.signature].aggregate()
 
 #Set a Transaction as unmentioned.
 proc setUnmentioned*(

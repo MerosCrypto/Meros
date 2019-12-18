@@ -1,6 +1,9 @@
 #Types.
 from typing import IO, Dict, List, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import PrivateKey, PublicKey
+
 #Transactions classes.
 from PythonTests.Classes.Transactions.Claim import Claim
 from PythonTests.Classes.Transactions.Data import Data
@@ -22,11 +25,11 @@ from PythonTests.Classes.Merit.Merit import Merit
 #Ed25519 lib.
 import ed25519
 
-#BLS lib.
-import blspy
-
 #Time standard function.
 from time import time
+
+#Blake2b standard function.
+from hashlib import blake2b
 
 #JSON standard lib.
 import json
@@ -58,8 +61,8 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
-blsPrivKey: blspy.PrivateKey = blspy.PrivateKey.from_seed(b'\0')
-blsPubKey: blspy.PublicKey = blsPrivKey.get_public_key()
+blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=48).digest())
+blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Add 5 Blank Blocks.
 for i in range(5):

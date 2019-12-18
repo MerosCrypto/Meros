@@ -8,6 +8,6 @@ import strutils
 var miner: MinerWallet = newMinerWallet()
 
 #Print the info.
-echo "Seed: ", miner.seed.toHex()
+echo "Private Key: ", miner.privateKey
 echo "----"
 echo "Public Key: ", miner.publicKey

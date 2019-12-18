@@ -1,9 +1,6 @@
 #Define "merosTests".
 switch("define", "merosTests")
 
-#Use C++ instead of C.
-setCommand("cpp")
-
 #Necessary flags.
 switch("threads", "on")
 switch("experimental", "caseStmtMacros")

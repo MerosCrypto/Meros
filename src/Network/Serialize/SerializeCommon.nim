@@ -17,8 +17,8 @@ const
 
     ED_PUBLIC_KEY_LEN*:  int = 32
     ED_SIGNATURE_LEN*:   int = 64
-    BLS_PUBLIC_KEY_LEN*: int = 48
-    BLS_SIGNATURE_LEN*:  int = 96
+    BLS_PUBLIC_KEY_LEN*: int = 96
+    BLS_SIGNATURE_LEN*:  int = 48
 
     BLOCK_HEADER_DATA_LEN*: int = INT_LEN + HASH_LEN + HASH_LEN + NICKNAME_LEN + INT_LEN + HASH_LEN + BYTE_LEN
 

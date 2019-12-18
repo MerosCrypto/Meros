@@ -23,10 +23,7 @@ proc verify(
 
         #Verify the Transaction.
         var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
-        try:
-            config.miner.sign(verif)
-        except BLSError as e:
-            doAssert(false, "Couldn't create a SignedVerification due to a BLSError: " & e.msg)
+        config.miner.sign(verif)
 
         #Add the Verification.
         try:

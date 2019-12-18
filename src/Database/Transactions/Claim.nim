@@ -39,9 +39,7 @@ proc newClaim*(
 proc sign*(
     wallet: MinerWallet,
     claim: Claim
-) {.forceCheck: [
-    BLSError
-].} =
+) {.forceCheck: [].} =
     #Create a seq of signatures.
     var
         #Final signature.
@@ -49,15 +47,17 @@ proc sign*(
         #Signature of each input.
         signatures: seq[BLSSignature] = newSeq[BLSSignature](claim.inputs.len)
 
-    try:
-        #Sign every input.
-        for i in 0 ..< signatures.len:
-            signatures[i] = wallet.sign("\1" & claim.inputs[i].hash.toString() & cast[SendOutput](claim.outputs[0]).key.toString())
+    #Sign every input.
+    for i in 0 ..< signatures.len:
+        signatures[i] = wallet.sign(
+            "\1" &
+            claim.inputs[i].hash.toString() &
+            char(cast[FundedInput](claim.inputs[i]).nonce) &
+            cast[SendOutput](claim.outputs[0]).key.toString()
+        )
 
-        #Aggregate the input signatures.
-        signature = signatures.aggregate()
-    except BLSError as e:
-        fcRaise e
+    #Aggregate the input signatures.
+    signature = signatures.aggregate()
 
     #Set the signature and hash the Claim.
     try:
@@ -74,21 +74,23 @@ proc verify*(
     #Create a seq of AggregationInfos.
     var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](claim.inputs.len)
 
-    try:
-        #Create each AggregationInfo.
-        for i in 0 ..< claim.inputs.len:
-                agInfos[i] = newBLSAggregationInfo(
-                    claimer,
-                    (
-                        "\1" &
-                        claim.inputs[i].hash.toString() &
-                        char(cast[FundedInput](claim.inputs[i]).nonce) &
-                        cast[SendOutput](claim.outputs[0]).key.toString()
-                    )
+    #Create each AggregationInfo.
+    for i in 0 ..< claim.inputs.len:
+        try:
+            agInfos[i] = newBLSAggregationInfo(
+                claimer,
+                (
+                    "\1" &
+                    claim.inputs[i].hash.toString() &
+                    char(cast[FundedInput](claim.inputs[i]).nonce) &
+                    cast[SendOutput](claim.outputs[0]).key.toString()
                 )
+            )
+        except BLSError:
+            return false
 
-        #Verify the signature.
-        claim.signature.setAggregationInfo(agInfos.aggregate())
-        result = claim.signature.verify()
+    #Verify the signature.
+    try:
+        result = claim.signature.verify(agInfos.aggregate())
     except BLSError:
         return false

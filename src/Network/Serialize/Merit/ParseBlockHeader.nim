@@ -18,8 +18,7 @@ proc parseBlockHeader*(
     headerStr: string,
     hash: ArgonHash
 ): BlockHeader {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     #Version | Last | Contents | Significant | Sketch Salt | Sketch Check | New Miner | Miner | Time | Proof | Signature
     var headerSeq: seq[string] = headerStr.deserialize(
@@ -72,8 +71,8 @@ proc parseBlockHeader*(
             )
     except ValueError as e:
         fcRaise e
-    except BLSError as e:
-        fcRaise e
+    except BLSError:
+        raise newException(ValueError, "Invalid Public Key or Signature.")
 
     #Set the hash.
     result.hash = hash
@@ -81,14 +80,11 @@ proc parseBlockHeader*(
 proc parseBlockHeader*(
     headerStr: string
 ): BlockHeader {.forceCheck: [
-    ValueError,
-    BLSError
+    ValueError
 ].} =
     try:
         result = parseBlockHeader(headerStr, Hash[384]())
     except ValueError as e:
-        fcRaise e
-    except BLSError as e:
         fcRaise e
 
     #Set the BlockHeader's actual hash.

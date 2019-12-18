@@ -40,17 +40,12 @@ proc hash*(
     miner: MinerWallet,
     header: var BlockHeader,
     proof: uint32
-) {.forceCheck: [
-    BLSError
-].} =
+) {.forceCheck: [].} =
     header.proof = proof
-    try:
-        miner.hash(header, header.serializeHash(), proof)
-    except BLSError as e:
-        fcRaise e
+    miner.hash(header, header.serializeHash(), proof)
 
 #Hash the header.
-func hash*(
+proc hash*(
     header: var BlockHeader
 ) {.forceCheck: [].} =
     #header.hash would be preferred yet it failed to compile. Likely due to the hash field.
@@ -104,7 +99,7 @@ proc newContents*(
     result = calculated.hash
 
 #Constructor.
-func newBlockHeader*(
+proc newBlockHeader*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
@@ -114,7 +109,7 @@ func newBlockHeader*(
     miner: BLSPublicKey,
     time: uint32,
     proof: uint32 = 0,
-    signature: BLSSignature = nil
+    signature: BLSSignature = newBLSSignature()
 ): BlockHeader {.forceCheck: [].} =
     result = newBlockHeaderObj(
         version,
@@ -128,10 +123,10 @@ func newBlockHeader*(
         proof,
         signature
     )
-    if signature != nil:
+    if not signature.isInf:
         hash(result)
 
-func newBlockHeader*(
+proc newBlockHeader*(
     version: uint32,
     last: ArgonHash,
     contents: Hash[384],
@@ -141,7 +136,7 @@ func newBlockHeader*(
     miner: uint16,
     time: uint32,
     proof: uint32 = 0,
-    signature: BLSSignature = nil
+    signature: BLSSignature = newBLSSignature()
 ): BlockHeader {.forceCheck: [].} =
     result = newBlockHeaderObj(
         version,
@@ -155,6 +150,5 @@ func newBlockHeader*(
         proof,
         signature
     )
-    hash(result)
-    if signature != nil:
+    if not signature.isInf:
         hash(result)
