@@ -40,7 +40,7 @@ signature must be the BLS signature produced by the Mint's designated claimee si
 
 Claim hashes are defined as `Blake2b-384("\1" + signature)`, where signature takes up 96 bytes.
 
-`Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 49 bytes), the 32-byte output key, and the 96-byte BLS signature.
+`Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 49 bytes), the 32-byte output key, and the 48-byte BLS signature.
 
 ### Send
 
