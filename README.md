@@ -8,10 +8,13 @@
 ### Meros Whitepaper: Being  Written
 
 #### Current State
+
 Meros is still under development and occasionally runs Developer Testnets. Anyone can participate, as long as they compile their own Node.
 
 #### Compiling
+
 For guides on how to compile Meros, please see https://github.com/MerosCrypto/Meros/tree/master/docs/Development/Compilation.
 
 #### Contributing
-Meros is seeking out developers to contribute to the codebase! If you wish to help out, please read the [Style Guide](https://github.com/MerosCrypto/Meros/tree/master/docs/Development/NimStyleGuide.md), and then pick an item from the [TODO](https://github.com/MerosCrypto/Meros/tree/master/TODO.md).
+
+Meros is seeking out developers to contribute to the codebase! If you wish to help out, please read the [Style Guide](https://github.com/MerosCrypto/Meros/tree/master/docs/Development/NimStyleGuide.md), and then pick an item from the [TODO](https://github.com/MerosCrypto/Meros/tree/master/docs/Development/TODO.md).
