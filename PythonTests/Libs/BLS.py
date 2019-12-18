@@ -2,7 +2,7 @@
 from typing import List, Tuple, Any
 
 #Milagro sub-libraries.
-from PythonTests.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, OctetObj, Q
+from PythonTests.Libs.Milagro.PrivateKeysAndSignatures import MilagroCurve, Big384, FP1Obj, G1Obj, OctetObj, r
 from PythonTests.Libs.Milagro.PublicKeysAndPairings import MilagroPairing, FP2Obj, G2Obj, FP12Obj
 
 #CTypes.
@@ -109,11 +109,7 @@ class PublicKey():
             return
 
         x: FP2Obj = FP2Obj()
-        x.a.g = g1[3]
-        x.a.XES = 1
-        x.b.g = g2[3]
-        x.b.XES = 1
-
+        MilagroPairing.FP2_BLS381_from_BIGs(byref(x), g2[3], g1[3])
         if MilagroPairing.ECP2_BLS381_setx(byref(self.value), byref(x)) == 0:
             raise Exception("Invalid G2.")
 
@@ -121,9 +117,15 @@ class PublicKey():
         cmpRes: int
         MilagroPairing.FP2_BLS381_neg(byref(yNeg), byref(self.value.y))
 
-        cmpRes = MilagroCurve.BIG_384_58_comp(self.value.y.b.g, yNeg.b.g)
+        a: Big384 = Big384()
+        b: Big384 = Big384()
+        MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.b))
+        MilagroCurve.FP_BLS381_redc(b, byref(yNeg.b))
+        cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
         if cmpRes == 0:
-            cmpRes = MilagroCurve.BIG_384_58_comp(self.value.y.a.g, yNeg.a.g)
+            MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.a))
+            MilagroCurve.FP_BLS381_redc(b, byref(yNeg.a))
+            cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
 
         if (cmpRes == 1) != g1[2]:
             self.value.y = yNeg
@@ -140,12 +142,20 @@ class PublicKey():
         cmpRes: int
         MilagroPairing.FP2_BLS381_neg(byref(yNeg), byref(self.value.y))
 
-        cmpRes = MilagroCurve.BIG_384_58_comp(self.value.y.b.g, yNeg.b.g)
+        a: Big384 = Big384()
+        b: Big384 = Big384()
+        MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.b))
+        MilagroCurve.FP_BLS381_redc(b, byref(yNeg.b))
+        cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
         if cmpRes == 0:
-            cmpRes = MilagroCurve.BIG_384_58_comp(self.value.y.a.g, yNeg.a.g)
+            MilagroCurve.FP_BLS381_redc(a, byref(self.value.y.a))
+            MilagroCurve.FP_BLS381_redc(b, byref(yNeg.a))
+            cmpRes = MilagroCurve.BIG_384_58_comp(a, b)
 
-        result: bytearray = serialize(self.value.x.a.g, cmpRes == 1)
-        result += serialize(self.value.x.b.g, False)
+        MilagroCurve.FP_BLS381_redc(a, byref(self.value.x.a))
+        MilagroCurve.FP_BLS381_redc(b, byref(self.value.x.b))
+        result: bytearray = serialize(b, cmpRes == 1)
+        result += serialize(a, False)
         result[48] = result[48] & CLEAR_FLAGS
         return bytes(result)
 
@@ -224,7 +234,11 @@ class Signature():
         yNeg: FP1Obj = FP1Obj()
         MilagroPairing.FP_BLS381_neg(byref(yNeg), byref(self.value.y))
 
-        if (MilagroCurve.BIG_384_58_comp(self.value.y.g, yNeg.g) == 1) != g[2]:
+        a: Big384 = Big384()
+        b: Big384 = Big384()
+        MilagroCurve.FP_BLS381_redc(a, byref(self.value.y))
+        MilagroCurve.FP_BLS381_redc(b, byref(yNeg))
+        if (MilagroCurve.BIG_384_58_comp(a, b) == 1) != g[2]:
             if MilagroPairing.ECP_BLS381_setx(byref(self.value), g[3], 1) != 1:
                 raise Exception("Setting a proven valid X failed.")
 
@@ -255,19 +269,18 @@ class Signature():
     def serialize(
         self
     ) -> bytes:
-        negY: FP1Obj = FP1Obj()
-        MilagroCurve.FP_BLS381_neg(negY, self.value.y)
+        yNeg: FP1Obj = FP1Obj()
+        MilagroCurve.FP_BLS381_neg(yNeg, self.value.y)
 
         x: Big384 = Big384()
         junk: Big384 = Big384()
         MilagroCurve.ECP_BLS381_get(x, junk, byref(self.value))
 
-        return bytes(
-            serialize(
-                x,
-                MilagroCurve.BIG_384_58_comp(self.value.y.g, negY.g) == 1
-            )
-        )
+        a: Big384 = Big384()
+        b: Big384 = Big384()
+        MilagroCurve.FP_BLS381_redc(a, byref(self.value.y))
+        MilagroCurve.FP_BLS381_redc(b, byref(yNeg))
+        return bytes(serialize(x, MilagroCurve.BIG_384_58_comp(a, b) == 1))
 
     @staticmethod
     def aggregate(
@@ -297,7 +310,7 @@ class PrivateKey():
     ) -> None:
         self.value: Big384 = Big384()
         MilagroCurve.BIG_384_58_fromBytesLen(self.value, c_char_p(keyArg), 48)
-        MilagroCurve.BIG_384_58_mod(self.value, Q)
+        MilagroCurve.BIG_384_58_mod(self.value, r)
 
     def toPublicKey(
         self

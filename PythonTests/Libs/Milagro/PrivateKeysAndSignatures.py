@@ -64,6 +64,9 @@ MilagroCurve.BIG_384_58_fromBytesLen.restype = None
 MilagroCurve.FP_BLS381_neg.argtypes = [FP1, FP1]
 MilagroCurve.FP_BLS381_neg.restype = None
 
+MilagroCurve.FP_BLS381_redc.argtypes = [Big384, FP1]
+MilagroCurve.FP_BLS381_redc.restype = None
+
 MilagroCurve.ECP_BLS381_inf.argtypes = [G1]
 MilagroCurve.ECP_BLS381_inf.restype = None
 
@@ -88,5 +91,5 @@ MilagroCurve.ECP_BLS381_get.restype = c_int
 MilagroCurve.ECP_BLS381_mapit.argtypes = [G1, Octet]
 MilagroCurve.ECP_BLS381_mapit.restype = None
 
-#Define Q.
-Q: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Order_BLS381")
+#Define r.
+r: Big384 = Big384.in_dll(MilagroCurve, "CURVE_Order_BLS381")

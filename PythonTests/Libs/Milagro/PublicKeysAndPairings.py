@@ -88,6 +88,9 @@ MilagroPairing.ECP2_BLS381_neg.restype = None
 MilagroPairing.ECP2_BLS381_get.argtypes = [FP2, FP2, G2]
 MilagroPairing.ECP2_BLS381_get.restype = c_int
 
+MilagroPairing.FP2_BLS381_from_BIGs.argtypes = [FP2, Big384, Big384]
+MilagroPairing.FP2_BLS381_from_BIGs.restype = None
+
 MilagroPairing.PAIR_BLS381_ate.argtypes = [FP12, G2, G1]
 MilagroPairing.PAIR_BLS381_ate.restype = None
 
