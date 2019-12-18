@@ -269,18 +269,16 @@ class Signature():
     def serialize(
         self
     ) -> bytes:
-        yNeg: FP1Obj = FP1Obj()
-        MilagroCurve.FP_BLS381_neg(yNeg, self.value.y)
-
         x: Big384 = Big384()
-        junk: Big384 = Big384()
-        MilagroCurve.ECP_BLS381_get(x, junk, byref(self.value))
+        y: Big384 = Big384()
+        MilagroCurve.ECP_BLS381_get(x, y, byref(self.value))
 
-        a: Big384 = Big384()
-        b: Big384 = Big384()
-        MilagroCurve.FP_BLS381_redc(a, byref(self.value.y))
-        MilagroCurve.FP_BLS381_redc(b, byref(yNeg))
-        return bytes(serialize(x, MilagroCurve.BIG_384_58_comp(a, b) == 1))
+        yNeg: Big384 = Big384()
+        MilagroCurve.FP_BLS381_neg(self.value.y, self.value.y)
+        MilagroCurve.ECP_BLS381_get(x, yNeg, byref(self.value))
+        MilagroCurve.FP_BLS381_neg(self.value.y, self.value.y)
+
+        return bytes(serialize(x, MilagroCurve.BIG_384_58_comp(y, yNeg) == 1))
 
     @staticmethod
     def aggregate(
