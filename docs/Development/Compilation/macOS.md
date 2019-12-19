@@ -6,6 +6,7 @@
 - Make
 - CMake _(for BLS)_
 - autoconf / automake / libtool _(for Minisketch)_
+- Python 3.6 and Pip _(for the tests)_
 - choosenim
 - Nim 1.0.4
 
@@ -14,7 +15,7 @@ To install every prerequisite, run:
 ```
 xcode-select --install
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install git cmake autoconf automake libtool
+brew install git cmake autoconf automake libtool python
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.0.4
 ```
@@ -24,10 +25,10 @@ choosenim 1.0.4
 To install the Nimble packages:
 
 ```
-nimble install https://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_pinsketch https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals stint nimcrypto normalize
+nimble install https://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_minisketch https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals stint nimcrypto normalize
 ```
 
-For instructions on setting up Minisketch, see https://github.com/MerosCrypto/mc_pinsketch.
+For instructions on setting up Minisketch, see https://github.com/MerosCrypto/mc_minisketch.
 
 For instructions on setting up LMDB, see https://github.com/MerosCrypto/mc_lmdb.
 
