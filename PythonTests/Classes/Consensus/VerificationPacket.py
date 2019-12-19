@@ -37,7 +37,7 @@ class VerificationPacket(Element):
     def serialize(
         self
     ) -> bytes:
-        result: bytes = len(self.holders).to_bytes(1, "big")
+        result: bytes = len(self.holders).to_bytes(2, "big")
         for holder in sorted(self.holders):
             result += holder.to_bytes(2, "big")
         result += self.hash

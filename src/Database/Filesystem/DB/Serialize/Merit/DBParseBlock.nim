@@ -75,10 +75,10 @@ proc parseBlock*(
 
     var holders: seq[uint16]
     for p in 0 ..< packetsLen:
-        holders = newSeq[uint16](int(bodyStr[i]))
-        i += BYTE_LEN
+        holders = newSeq[uint16](bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
+        i += NICKNAME_LEN
 
-        #The holders is represented by a BYTE_LEN. This uses an INT_LEN so the last packet checks the elements length.
+        #The holders is represented by a NICKNAME_LEN. This uses an INT_LEN so the last packet checks the elements length.
         if bodyStr.len < i + (holders.len * NICKNAME_LEN) + HASH_LEN + INT_LEN:
             raise newException(ValueError, "DB parseBlock not handed enough data to get the holders in this VerificationPacket, its hash, and the amount of holders in the next VerificationPacket.")
 

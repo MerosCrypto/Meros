@@ -99,7 +99,7 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.BlockHeader:               [155, 0, 56],
     MessageType.BlockBody:                 [4, -8, 4, 0, 48],
     MessageType.SketchHashes:              [4, -8],
-    MessageType.VerificationPacket:        [1, -2, 48]
+    MessageType.VerificationPacket:        [2, -2, 48]
 }
 
 class Meros:

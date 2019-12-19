@@ -54,7 +54,7 @@ proc newRandomVerificationPacket*(
     result = newSignedVerificationPacketObj(hash)
 
     #Randomize the participating holders.
-    for h in 0 ..< rand(50) + 1:
+    for h in 0 ..< rand(500) + 1:
         if h == 0:
             result.holders.add(holder)
         else:

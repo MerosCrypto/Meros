@@ -87,7 +87,7 @@ Data hashes are defined as `Blake2b-384("\3" + input.txHash + data)`, where inpu
 
 The signature must be the signature produced by the sender signing the hash.
 
-The data must be less than 256 bytes long (enforced by only providing a single byte to store the data length).
+The data must be less than 255 bytes long (enforced by only providing a single byte to store the data length).
 
 The proof must satisfy the following check, where dataDifficulty is the Datas' spam filter's difficulty (described in the Consensus documentation):
 

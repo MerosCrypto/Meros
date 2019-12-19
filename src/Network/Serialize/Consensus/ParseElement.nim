@@ -27,11 +27,11 @@ proc getLength*(
             inc(result)
 
         of VERIFICATION_PACKET_PREFIX:
-            result = BYTE_LEN
+            result = NICKNAME_LEN
             if data.len < result + i:
                 raise newException(ValueError, "parseElement not handed enough data to get a Verification Packet's verifiers length.")
 
-            var verifiers: int = int(data[result + i])
+            var verifiers: int = data[i + 1 .. i + result].fromBinary()
             result += (BLS_PUBLIC_KEY_LEN * verifiers) + HASH_LEN
             if data.len < result + i:
                 raise newException(ValueError, "parseElement not handed enough data to get a Verification Packet's verifiers/hash.")

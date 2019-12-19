@@ -24,7 +24,7 @@ import algorithm
 method serialize*(
     packet: VerificationPacket
 ): string {.forceCheck: [].} =
-    result = packet.holders.len.toBinary()
+    result = packet.holders.len.toBinary(NICKNAME_LEN)
     for holder in packet.holders.sorted():
         result &= holder.toBinary(NICKNAME_LEN)
     result &= packet.hash.toString()
@@ -35,7 +35,7 @@ method serialize*(
 method serializeWithoutHolder*(
     packet: MeritRemovalVerificationPacket
 ): string {.forceCheck: [].} =
-    result = char(VERIFICATION_PACKET_PREFIX) & packet.holders.len.toBinary()
+    result = char(VERIFICATION_PACKET_PREFIX) & packet.holders.len.toBinary(NICKNAME_LEN)
     for holder in packet.holders:
         result &= holder.serialize()
     result &= packet.hash.toString()
