@@ -25,9 +25,6 @@ from PythonTests.Classes.Merit.Blockchain import Blockchain
 #Ed25519 lib.
 import ed25519
 
-#Time standard function.
-from time import time
-
 #Blake2b standard function.
 from hashlib import blake2b
 
@@ -135,7 +132,7 @@ for order in orders:
             bytes(4),
             BlockHeader.createSketchCheck(bytes(4), list(packets.values())),
             order[1],
-            int(time())
+            blockchain.blocks[-1].header.time + 1200
         ),
         BlockBody(
             list(packets.values()),
@@ -168,7 +165,7 @@ for _ in range(5):
             bytes(4),
             bytes(48),
             0,
-            int(time())
+            blockchain.blocks[-1].header.time + 1200
         ),
         BlockBody()
     )

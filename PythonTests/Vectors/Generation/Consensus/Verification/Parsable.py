@@ -20,9 +20,6 @@ from PythonTests.Classes.Merit.BlockBody import BlockBody
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#Time standard function.
-from time import time
-
 #Ed25519 lib.
 import ed25519
 
@@ -82,7 +79,7 @@ block = Block(
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), packets),
         0,
-        int(time())
+        blockchain.blocks[-1].header.time + 1200
     ),
     BlockBody(packets, [], sv.signature)
 )

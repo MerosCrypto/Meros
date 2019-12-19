@@ -10,9 +10,6 @@ from PythonTests.Classes.Merit.BlockBody import BlockBody
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Blockchain import Blockchain
 
-#Time standard function.
-from time import time
-
 #Blake2b standard function.
 from hashlib import blake2b
 
@@ -39,7 +36,7 @@ block: Block = Block(
         bytes(4),
         bytes(48),
         privKey.toPublicKey().serialize(),
-        int(time())
+        blockchain.blocks[-1].header.time + 1200
     ),
     BlockBody()
 )
@@ -63,7 +60,7 @@ for i in range(1, 26):
             bytes(4),
             bytes(48),
             0,
-            int(time())
+            blockchain.blocks[-1].header.time + 1200
         ),
         BlockBody()
     )
