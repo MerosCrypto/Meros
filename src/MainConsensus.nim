@@ -75,7 +75,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 consensus.checkMalicious(merit.state, verif)
             #Invalid signature.
             except ValueError as e:
-                fcRaise e
+                raise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
                 #Flag the MeritRemoval.
@@ -101,7 +101,7 @@ proc mainConsensus() {.forceCheck: [].} =
             try:
                 consensus.add(merit.state, verif)
             except DataExists as e:
-                fcRaise e
+                raise e
 
             echo "Successfully added a new Signed Verification."
 
@@ -124,7 +124,7 @@ proc mainConsensus() {.forceCheck: [].} =
             try:
                 consensus.add(merit.blockchain, merit.state, mr)
             except ValueError as e:
-                fcRaise e
+                raise e
 
             echo "Successfully added a new Signed Merit Removal."
 

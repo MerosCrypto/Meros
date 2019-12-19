@@ -50,7 +50,7 @@ proc mainTransactions() {.forceCheck: [].} =
             try:
                 result = transactions[hash]
             except IndexError as e:
-                fcRaise e
+                raise e
 
         #Get a Transaction's spenders.
         functions.transactions.getSpenders = proc (
@@ -77,10 +77,10 @@ proc mainTransactions() {.forceCheck: [].} =
                 doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
             #Invalid Claim.
             except ValueError as e:
-                fcRaise e
+                raise e
             #Data already exisrs.
             except DataExists as e:
-                fcRaise e
+                raise e
 
             #Register the Claim with Consensus.
             consensus.register(merit.state, claim, merit.blockchain.height)
@@ -116,10 +116,10 @@ proc mainTransactions() {.forceCheck: [].} =
                 transactions.add(send)
             #Invalid Send.
             except ValueError as e:
-                fcRaise e
+                raise e
             #Data already exisrs.
             except DataExists as e:
-                fcRaise e
+                raise e
 
             #Register the Send with Consensus.
             consensus.register(merit.state, send, merit.blockchain.height)
@@ -155,10 +155,10 @@ proc mainTransactions() {.forceCheck: [].} =
                 transactions.add(data)
             #Invalid Data.
             except ValueError as e:
-                fcRaise e
+                raise e
             #Data already exisrs.
             except DataExists as e:
-                fcRaise e
+                raise e
 
             #Register the Data with Consensus.
             consensus.register(merit.state, data, merit.blockchain.height)

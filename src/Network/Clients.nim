@@ -228,7 +228,7 @@ proc handle(
                 except Spam:
                     continue
     except ClientError as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Receiving/sending/handling a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -343,7 +343,7 @@ proc reply*(
     try:
         client = clients[msg.client]
     except IndexError as e:
-        fcRaise e
+        raise e
 
     #Try to send the message.
     try:

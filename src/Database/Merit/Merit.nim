@@ -68,7 +68,7 @@ proc processBlock*(
     try:
         merit.blockchain.processBlock(newBlock)
     except ValueError as e:
-        fcRaise e
+        raise e
 
 #Process a Block already addded to the Blockchain.
 proc postProcessBlock*(

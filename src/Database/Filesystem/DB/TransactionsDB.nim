@@ -178,7 +178,7 @@ proc loadMintNonce*(
     try:
         result = uint32(db.get("mint").fromBinary())
     except DBReadError as e:
-        fcRaise e
+        raise e
 
 proc loadMintOutput*(
     db: DB,
@@ -211,7 +211,7 @@ proc loadDataTip*(
     try:
         result = db.get(key.toString() & "d").toHash(384)
     except DBReadError as e:
-        fcRaise e
+        raise e
     except ValueError as e:
         raise newException(DBReadError, e.msg)
 

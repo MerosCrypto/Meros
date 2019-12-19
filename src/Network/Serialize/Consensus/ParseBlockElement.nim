@@ -39,4 +39,4 @@ proc parseBlockElement*(
             else:
                 doAssert(false, "parseBlockElement tried to parse an unsupported Element despite having an existing if check.")
     except ValueError as e:
-        fcRaise e
+        raise e

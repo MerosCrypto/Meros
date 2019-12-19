@@ -211,7 +211,7 @@ proc loadMintOutput*(
     try:
         result = transactions.db.loadMintOutput(input)
     except DBReadError as e:
-        fcRaise e
+        raise e
 
 #Load a Claim or Send Output.
 proc loadSendOutput*(
@@ -223,7 +223,7 @@ proc loadSendOutput*(
     try:
         result = transactions.db.loadSendOutput(input)
     except DBReadError as e:
-        fcRaise e
+        raise e
 
 proc loadSpenders*(
     transactions: Transactions,

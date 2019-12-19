@@ -24,7 +24,7 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 result = merit.blockchain[hash].header.last
             except IndexError as e:
-                fcRaise e
+                raise e
 
             if result == merit.blockchain.genesis:
                 raise newException(IndexError, "Requested the hash of the Block before the genesis.")
@@ -47,7 +47,7 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 result = merit.blockchain[nonce]
             except IndexError as e:
-                fcRaise e
+                raise e
 
         functions.merit.getBlockByHash = proc (
             hash: Hash[384]
@@ -57,7 +57,7 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 result = merit.blockchain[hash]
             except IndexError as e:
-                fcRaise e
+                raise e
 
         functions.merit.getPublicKey = proc (
             nick: uint16
@@ -122,9 +122,9 @@ proc mainMerit() {.forceCheck: [].} =
                     sketcher
                 )
             except ValueError as e:
-                fcRaise e
+                raise e
             except DataMissing as e:
-                fcRaise e
+                raise e
             except Exception as e:
                 doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
 
@@ -137,7 +137,7 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 merit.processBlock(newBlock)
             except ValueError as e:
-                fcRaise e
+                raise e
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
             for removee in removed:
@@ -248,7 +248,7 @@ proc mainMerit() {.forceCheck: [].} =
                         #A) The requested Block is unknown.
                         #B) We requested ONLY the Blocks before the genesis.
                         #The second is impossible as we break once we find a Block we know.
-                        fcRaise e
+                        raise e
                     except Exception as e:
                         doAssert(false, "requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
 
@@ -268,11 +268,11 @@ proc mainMerit() {.forceCheck: [].} =
                     try:
                         await functions.merit.addBlockByHash(queue[h], true)
                     except ValueError as e:
-                        fcRaise e
+                        raise e
                     except DataMissing as e:
-                        fcRaise e
+                        raise e
                     except DataExists as e:
-                        fcRaise e
+                        raise e
                     except NotConnected as e:
                         doAssert(false, "Parent addBlockByHeader didn't detect a Blockchain split: " & e.msg)
                     except Exception as e:
@@ -281,7 +281,7 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 merit.blockchain.testBlockHeader(header)
             except ValueError as e:
-                fcRaise e
+                raise e
             except NotConnected as e:
                 doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
 
@@ -296,9 +296,9 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 await functions.merit.addBlock(sketchyBlock, @[], syncing)
             except ValueError as e:
-                fcRaise e
+                raise e
             except DataMissing as e:
-                fcRaise e
+                raise e
             except Exception as e:
                 doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)
 
@@ -318,13 +318,13 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 await functions.merit.addBlockByHeader(await network.requestBlockHeader(hash), syncing)
             except ValueError as e:
-                fcRaise e
+                raise e
             except DataMissing as e:
-                fcRaise e
+                raise e
             except DataExists as e:
-                fcRaise e
+                raise e
             except NotConnected as e:
-                fcRaise e
+                raise e
             except Exception as e:
                 doAssert(false, "addBlockByHeader/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)
 
@@ -338,6 +338,6 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 merit.blockchain.testBlockHeader(header)
             except ValueError as e:
-                fcRaise e
+                raise e
             except NotConnected as e:
-                fcRaise e
+                raise e

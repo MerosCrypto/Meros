@@ -32,4 +32,4 @@ proc parseSendOutput*(
             uint64(outputSeq[1].fromBinary())
         )
     except EdPublicKeyError as e:
-        fcRaise e
+        raise e

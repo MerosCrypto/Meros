@@ -19,4 +19,4 @@ proc serialize*(
             blockArg.header.serialize() &
             blockArg.body.serialize(blockArg.header.sketchSalt)
     except ValueError as e:
-        fcRaise e
+        raise e

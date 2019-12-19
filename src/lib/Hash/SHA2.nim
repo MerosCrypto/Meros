@@ -69,7 +69,7 @@ func toSHA2_256Hash*(
     try:
         result = hash.toHash(256)
     except ValueError as e:
-        fcRaise e
+        raise e
 
 #String to SHA2_512Hash.
 func toSHA2_512Hash*(
@@ -80,4 +80,4 @@ func toSHA2_512Hash*(
     try:
         result = hash.toHash(512)
     except ValueError as e:
-        fcRaise e
+        raise e

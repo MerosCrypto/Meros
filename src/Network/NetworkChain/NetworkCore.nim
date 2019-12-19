@@ -22,7 +22,7 @@ proc reply*(
     try:
         await network.clients.reply(msg, res)
     except IndexError as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Clients.reply(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
 
@@ -126,7 +126,7 @@ proc newNetwork*(
                 except EdPublicKeyError as e:
                     raise newException(ClientError, "Send contained an invalid ED25519 Public Key: " & e.msg)
                 except Spam as e:
-                    fcRaise e
+                    raise e
 
                 try:
                     mainFunctions.transactions.addSend(send)
@@ -142,7 +142,7 @@ proc newNetwork*(
                 except ValueError as e:
                     raise newException(ClientError, "Parsing the Data failed due to a ValueError: " & e.msg)
                 except Spam as e:
-                    fcRaise e
+                    raise e
 
                 try:
                     mainFunctions.transactions.addData(data)

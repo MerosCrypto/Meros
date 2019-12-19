@@ -39,7 +39,7 @@ proc parseVerificationPacket*(
                 uint16(packet[BYTE_LEN + (NICKNAME_LEN * v) ..< BYTE_LEN + (NICKNAME_LEN * (v + 1))].fromBinary())
             )
     except ValueError as e:
-        fcRaise e
+        raise e
     except FinalAttributeError as e:
         doAssert(false, "Set a final attribute twice when parsing a VerificationPacket: " & e.msg)
 
@@ -69,7 +69,7 @@ proc parseMeritRemovalVerificationPacket*(
                 newBLSPublicKey(packet[BYTE_LEN + (BLS_PUBLIC_KEY_LEN * v) ..< BYTE_LEN + (BLS_PUBLIC_KEY_LEN * (v + 1))])
             )
     except ValueError as e:
-        fcRaise e
+        raise e
     except BLSError:
         raise newException(ValueError, "Invalid Public Key.")
     except FinalAttributeError as e:

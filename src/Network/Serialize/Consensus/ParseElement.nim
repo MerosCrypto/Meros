@@ -57,7 +57,7 @@ proc getLength*(
                         data[i + 1 ..< i + 1 + NICKNAME_LEN]
                     )
                 except ValueError as e:
-                    fcRaise e
+                    raise e
 
                 if (e == 0) and (data.len < result + i):
                     raise newException(ValueError, "parseElement not handed enough data to get the type of the second Element in the MeritRemoval.")

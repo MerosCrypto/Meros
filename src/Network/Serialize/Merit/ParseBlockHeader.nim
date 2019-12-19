@@ -70,7 +70,7 @@ proc parseBlockHeader*(
                 newBLSSignature(headerSeq[10])
             )
     except ValueError as e:
-        fcRaise e
+        raise e
     except BLSError:
         raise newException(ValueError, "Invalid Public Key or Signature.")
 
@@ -85,7 +85,7 @@ proc parseBlockHeader*(
     try:
         result = parseBlockHeader(headerStr, Hash[384]())
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #Set the BlockHeader's actual hash.
     hash(

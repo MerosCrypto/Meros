@@ -29,7 +29,7 @@ proc newBLSPrivateKey*(
     try:
         result = newPrivateKey(key)
     except BLSError as e:
-        fcRaise e
+        raise e
 
 proc newBLSPublicKey*(
     key: string = char(0b11000000) & newString(95)
@@ -39,7 +39,7 @@ proc newBLSPublicKey*(
     try:
         result = newPublicKey(key)
     except BLSError as e:
-        fcRaise e
+        raise e
 
 proc newBLSSignature*(
     sig: string = char(0b11000000) & newString(47)
@@ -49,7 +49,7 @@ proc newBLSSignature*(
     try:
         result = newSignature(sig)
     except BLSError as e:
-        fcRaise e
+        raise e
 
 proc newBLSAggregationInfo*(
     key: BLSPublicKey,
@@ -60,7 +60,7 @@ proc newBLSAggregationInfo*(
     try:
         result = newAggregationInfo(key, msg)
     except BLSError as e:
-        fcRaise e
+        raise e
 
 proc newBLSAggregationInfo*(
     keys: seq[BLSPublicKey],
@@ -71,7 +71,7 @@ proc newBLSAggregationInfo*(
     try:
         result = newAggregationInfo(keys, msg)
     except BLSError as e:
-        fcRaise e
+        raise e
 
 #Export member functions.
 export toPublicKey, sign, verify, aggregate, serialize, isInf

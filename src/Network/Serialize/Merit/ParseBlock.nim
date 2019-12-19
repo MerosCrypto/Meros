@@ -31,7 +31,7 @@ proc parseBlock*(
             INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
         ).parseBlockBody()
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #Create the SketchyBlock.
     result = newSketchyBlockObj(

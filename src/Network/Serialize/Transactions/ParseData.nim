@@ -50,7 +50,7 @@ proc parseData*(
             dataSeq[2]
         )
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #Hash it and set its signature/proof/argon.
     try:
@@ -59,7 +59,7 @@ proc parseData*(
         try:
             result.signature = newEdSignature(dataSeq[3])
         except ValueError as e:
-            fcRaise e
+            raise e
 
         result.proof = uint32(dataSeq[4].fromBinary())
         result.argon = argon

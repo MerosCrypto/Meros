@@ -207,7 +207,7 @@ proc derive*(
         for i in path[1 ..< path.len]:
                 result = result.derive(i)
     except ValueError as e:
-        fcRaise e
+        raise e
 
 #Get a specific BIP 44 child.
 proc `[]`*(
@@ -227,7 +227,7 @@ proc `[]`*(
         discard result.derive(0)
         discard result.derive(1)
     except ValueError as e:
-        fcRaise e
+        raise e
 
 #Grab the next valid key on this path.
 proc next*(
@@ -243,7 +243,7 @@ proc next*(
     try:
         pathWallet = wallet.derive(path)
     except ValueError as e:
-        fcRaise e
+        raise e
 
     while true:
         try:

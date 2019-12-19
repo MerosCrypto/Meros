@@ -53,7 +53,7 @@ proc parseSend*(
         try:
             inputs[i div 49] = newFundedInput(sendSeq[1][i ..< i + 48].toHash(384), sendSeq[1][i + 48].fromBinary())
         except ValueError as e:
-            fcRaise e
+            raise e
 
     #Convert the outputs.
     var outputs: seq[SendOutput] = newSeq[SendOutput](sendSeq[2].fromBinary())
@@ -63,7 +63,7 @@ proc parseSend*(
         try:
             outputs[i div 40] = newSendOutput(newEdPublicKey(sendSeq[3][i ..< i + 32]), uint64(sendSeq[3][i + 32 ..< i + 40].fromBinary()))
         except EdPublicKeyError as e:
-            fcRaise e
+            raise e
 
     #Create the Send.
     result = newSendObj(
@@ -78,7 +78,7 @@ proc parseSend*(
         try:
             result.signature = newEdSignature(sendSeq[4])
         except ValueError as e:
-            fcRaise e
+            raise e
 
         result.proof = uint32(sendSeq[5].fromBinary())
         result.argon = argon

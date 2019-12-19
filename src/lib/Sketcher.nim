@@ -152,7 +152,7 @@ proc serialize*(
     try:
         result = sketcher.toSketch(capacity, significant, salt).sketch.serialize()
     except SaltError as e:
-        fcRaise e
+        raise e
 
 #Merge two sketches and return the shared/missing packets.
 proc merge*(
@@ -176,7 +176,7 @@ proc merge*(
     try:
         sketch = sketcher.toSketch(capacity, significant, salt)
     except SaltError as e:
-        fcRaise e
+        raise e
     #Merge the sketches.
     sketch.sketch.merge(other)
 
@@ -184,7 +184,7 @@ proc merge*(
     try:
         result.missing = sketch.sketch.decode()
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #The packets are every packet in our sketcher, minus packets which showed up as a difference.
     result.packets = @[]

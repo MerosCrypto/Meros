@@ -19,7 +19,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 try:
                     wallet = newWallet(mnemonic, password)
                 except ValueError as e:
-                    fcRaise e
+                    raise e
 
         #Create a Send Transaction.
         functions.personal.send = proc (
@@ -48,7 +48,7 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 amountOut = parseUInt(amountStr)
             except ValueError as e:
-                fcRaise e
+                raise e
 
             #Grab the needed UTXOs.
             try:
@@ -88,7 +88,7 @@ proc mainPersonal() {.forceCheck: [].} =
             except EdPublicKeyError as e:
                 raise newException(ValueError, e.msg)
             except ValueError as e:
-                fcRaise e
+                raise e
 
             #Add a change output.
             if amountIn != amountOut:
@@ -145,7 +145,7 @@ proc mainPersonal() {.forceCheck: [].} =
                 dataStr
             )
         except ValueError as e:
-            fcRaise e
+            raise e
 
         #Sign the Data.
         child.sign(data)
@@ -159,7 +159,7 @@ proc mainPersonal() {.forceCheck: [].} =
         except ValueError as e:
             doAssert(false, "Created a Data which was invalid: " & e.msg)
         except DataExists as e:
-            fcRaise e
+            raise e
 
         #Retun the hash.
         result = data.hash

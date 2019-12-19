@@ -217,7 +217,7 @@ proc add*(
     try:
         status.add(verif)
     except DataExists as e:
-        fcRaise e
+        raise e
 
     #Calculate Merit.
     consensus.calculateMerit(state, verif.hash, status)

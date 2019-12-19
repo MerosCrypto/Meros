@@ -229,7 +229,7 @@ proc loadUnlocked*(
     try:
         result = db.get("merit" & blockNum.toBinary()).fromBinary()
     except DBReadError as e:
-        fcRaise e
+        raise e
 
 proc loadHolders*(
     db: DB
@@ -255,7 +255,7 @@ proc loadMerit*(
     try:
         result = db.get("h" & nick.toBinary()).fromBinary()
     except DBReadError as e:
-        fcRaise e
+        raise e
 
 proc loadBlockRemovals*(
     db: DB,
@@ -297,7 +297,7 @@ proc loadNickname*(
     try:
         result = uint16(db.get(key.serialize()).fromBinary())
     except DBReadError as e:
-        fcRaise e
+        raise e
 
 #Check if a Block exists.
 proc hasBlock*(

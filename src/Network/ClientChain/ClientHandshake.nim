@@ -55,6 +55,6 @@ proc handshake*(
         except ValueError as e:
             doAssert(false, "Couldn't turn a 48-byte string into a 48-byte hash: " & e.msg)
     except ClientError as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Handshaking with a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)

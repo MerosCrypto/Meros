@@ -50,7 +50,7 @@ proc parseBlockBody*(
         try:
             pbeResult = bodyStr.parseBlockElement(i)
         except ValueError as e:
-            fcRaise e
+            raise e
         i += pbeResult.len
         elements.add(pbeResult.element)
 

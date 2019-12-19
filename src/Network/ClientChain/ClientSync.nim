@@ -43,7 +43,7 @@ proc startSyncing*(
         if not shouldWait:
             raise newException(ClientError, "Client never responded to the fact we were syncing.")
     except ClientError as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Starting Syncing with a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -89,13 +89,13 @@ proc syncTransaction*(
         if result.hash != hash:
             raise newException(ClientError, "Client sent us the wrong Transaction.")
     except ClientError as e:
-        fcRaise e
+        raise e
     except DataMissing as e:
-        fcRaise e
+        raise e
     except Spam as e:
         if e.hash != hash:
             raise newException(ClientError, "Client sent us the wrong Transaction.")
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Sending a `TransactionRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -137,9 +137,9 @@ proc syncVerificationPackets*(
                 raise newException(ClientError, "Client didn't respond with the right VerificationPacket for our SketchHashRequests.")
         client.pendingSyncRequest = false
     except ClientError as e:
-        fcRaise e
+        raise e
     except DataMissing as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Sending a `SketchHashRequests` and receiving the responses threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -175,9 +175,9 @@ proc syncSketchHashes*(
         except ValueError as e:
             raise newException(ClientError, e.msg)
     except ClientError as e:
-        fcRaise e
+        raise e
     except DataMissing as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Sending a `SketchHashesRequest` and receiving the responses threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -210,9 +210,9 @@ proc syncBlockBody*(
         except ValueError as e:
             raise newException(ClientError, "Client didn't respond with a valid BlockBody to our BlockBodyRequest, as pointed out by a ValueError: " & e.msg)
     except ClientError as e:
-        fcRaise e
+        raise e
     except DataMissing as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Sending a `BlockBodyRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -249,9 +249,9 @@ proc syncBlockHeader*(
         if result.hash != hash:
             raise newException(ClientError, "Client sent us the wrong BlockHeader.")
     except ClientError as e:
-        fcRaise e
+        raise e
     except DataMissing as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Sending a `BlockHeaderRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -287,9 +287,9 @@ proc syncBlockList*(
         except ValueError as e:
             doAssert(false, "48-byte string isn't a valid 48-byte hash: " & e.msg)
     except ClientError as e:
-        fcRaise e
+        raise e
     except DataMissing as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Sending a `BlockListRequest` and receiving the response threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -310,6 +310,6 @@ proc stopSyncing*(
         #Send that we're done syncing.
         await client.send(newMessage(MessageType.SyncingOver))
     except ClientError as e:
-        fcRaise e
+        raise e
     except Exception as e:
         doAssert(false, "Starting Syncing with a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)

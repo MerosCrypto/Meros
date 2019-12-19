@@ -99,7 +99,7 @@ proc load*(
     try:
         result = db.get(hash.toString()).parseTransactionStatus(hash)
     except DBReadError as e:
-        fcRaise e
+        raise e
 
 proc loadUnmentioned*(
     db: DB

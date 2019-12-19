@@ -34,4 +34,4 @@ proc parseDifficulty*(
             difficultySeq[2].toHash(384)
         )
     except ValueError as e:
-        fcRaise e
+        raise e

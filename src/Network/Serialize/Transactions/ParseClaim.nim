@@ -44,7 +44,7 @@ proc parseClaim*(
                 int(claimSeq[1][i + HASH_LEN])
             )
         except ValueError as e:
-            fcRaise e
+            raise e
 
     #Create the Claim.
     try:
@@ -53,7 +53,7 @@ proc parseClaim*(
             newEdPublicKey(claimSeq[2])
         )
     except EdPublicKeyError as e:
-        fcRaise e
+        raise e
 
     #Set the signature and hash it.
     try:

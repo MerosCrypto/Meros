@@ -36,7 +36,7 @@ proc newMinerWallet*(
         )
         result.publicKey = result.privateKey.toPublicKey()
     except BLSError as e:
-        fcRaise e
+        raise e
     result.ffinalizeInitiated()
     result.ffinalizePrivateKey()
     result.ffinalizePublicKey()
@@ -56,7 +56,7 @@ proc newMinerWallet*(): MinerWallet {.forceCheck: [
     try:
         result = newMinerWallet(privKey)
     except BLSError as e:
-        fcRaise e
+        raise e
 
 #Sign a message via a MinerWallet.
 proc sign*(

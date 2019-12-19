@@ -29,17 +29,17 @@ proc parseTransaction*(
             try:
                 result = tx.substr(1).parseClaim()
             except ValueError as e:
-                fcRaise e
+                raise e
             except EdPublicKeyError as e:
-                fcRaise e
+                raise e
 
         of '\2':
             try:
                 result = tx.substr(1).parseSend(Hash[384]())
             except ValueError as e:
-                fcRaise e
+                raise e
             except EdPublicKeyError as e:
-                fcRaise e
+                raise e
             except Spam:
                 doAssert(false, "parseSend believes a Hash is less than 0.")
 
@@ -47,7 +47,7 @@ proc parseTransaction*(
             try:
                 result = tx.substr(1).parseData(Hash[384]())
             except ValueError as e:
-                fcRaise e
+                raise e
             except Spam:
                 doAssert(false, "parseData believes a Hash is less than 0.")
 

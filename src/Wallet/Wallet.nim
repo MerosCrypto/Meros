@@ -46,7 +46,7 @@ proc newWallet*(
         result.mnemonic = newMnemonic(mnemonic)
         result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
     except ValueError as e:
-        fcRaise e
+        raise e
 
 #Converter.
 converter toHDWallet*(

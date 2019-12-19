@@ -69,7 +69,7 @@ proc verifySketchCheck*(
     try:
         sketchCheck.verifySketchCheck(sketchHashes)
     except ValueError as e:
-        fcRaise e
+        raise e
 
 #Verify the contents merkle.
 proc verifyContents*(
@@ -97,7 +97,7 @@ proc verifyContents*(
             , SortOrder.Descending
         )
     except ValueError as e:
-        fcRaise e
+        raise e
 
     var calculated: Merkle = newMerkle()
 

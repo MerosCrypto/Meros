@@ -47,7 +47,7 @@ proc parseMeritRemovalElement(
             else:
                 raise newException(ValueError, "parseMeritRemovalElement tried to parse an invalid/unsupported Element type.")
     except ValueError as e:
-        fcRaise e
+        raise e
 
 #Parse a MeritRemoval.
 proc parseMeritRemoval*(
@@ -87,13 +87,13 @@ proc parseMeritRemoval*(
         i += pmreResult.len
         element1 = pmreResult.element
     except ValueError as e:
-        fcRaise e
+        raise e
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
         element2 = pmreResult.element
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #Create the MeritRemoval.
     result = newMeritRemovalObj(
@@ -141,13 +141,13 @@ proc parseSignedMeritRemoval*(
         i += pmreResult.len
         element1 = pmreResult.element
     except ValueError as e:
-        fcRaise e
+        raise e
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
         element2 = pmreResult.element
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #Create the SignedMeritRemoval.
     try:

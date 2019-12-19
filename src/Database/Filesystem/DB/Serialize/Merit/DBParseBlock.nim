@@ -40,7 +40,7 @@ proc parseBlock*(
     try:
         header = blockStr.parseBlockHeader()
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #Grab the body.
     bodyStr = blockStr.substr(
@@ -90,7 +90,7 @@ proc parseBlock*(
             packets[p] = newVerificationPacketObj(bodyStr[i ..< i + HASH_LEN].toHash(384))
             i += HASH_LEN
         except ValueError as e:
-            fcRaise e
+            raise e
         packets[p].holders = holders
 
     elementsLen = bodyStr[i ..< i + INT_LEN].fromBinary()
@@ -99,7 +99,7 @@ proc parseBlock*(
         try:
             pbeResult = bodyStr.parseBlockElement(i)
         except ValueError as e:
-            fcRaise e
+            raise e
         i += pbeResult.len
         elements.add(pbeResult.element)
 

@@ -184,7 +184,7 @@ proc sync*(
                 newBlock.data.header.sketchCheck
             )
         except DataMissing as e:
-            fcRaise e
+            raise e
         except Exception as e:
             doAssert(false, "Syncing a Block's SketchHashes threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -200,7 +200,7 @@ proc sync*(
         try:
             packets &= await network.requestVerificationPackets(newBlock.data.header.hash, missingPackets, newBlock.data.header.sketchSalt)
         except DataMissing as e:
-            fcRaise e
+            raise e
         except Exception as e:
             doAssert(false, "Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -211,7 +211,7 @@ proc sync*(
             newBlock.data.body.elements
         )
     except ValueError as e:
-        fcRaise e
+        raise e
 
     #Create the Block.
     result = newBlock.data
