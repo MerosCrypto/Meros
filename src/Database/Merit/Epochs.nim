@@ -179,3 +179,7 @@ proc calculate*(
     #If the score isn't a perfect 1000, attribute everything left over to the top verifier.
     if normalized < 1000:
         result[0].score += uint64(1000 - normalized)
+
+    #Delete 0 scores.
+    while result[^1].score == 0:
+        result.delete(result.len - 1)

@@ -186,7 +186,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 - Meros doesn't support dead Merit.
 
 - Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.
-- Meros doesn't check for 0-scores before minting Meros.
 - Meros doesn't rollover rewards or use a negative sigmoid.
 - Merps doesn't wait 10 Blocks to create Mints.
 
