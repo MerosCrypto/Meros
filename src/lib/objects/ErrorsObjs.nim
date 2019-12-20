@@ -33,9 +33,6 @@ type
     RandomError* = object of Exception #Used when the RNG fails.
     SaltError*   = object of Exception #Used when a sketch salt causes a collision.
 
-    #Wallet Errors.
-    EdPublicKeyError* = object of Exception #Used when passed an invalid Ed25519 Public Key.
-
     #Database/common Statuses.
     DataMissing* = object of Exception #Used when data is missing. Also used by Network for the same reason.
     DataExists* = object of Exception #Used when trying to add data which was already added.

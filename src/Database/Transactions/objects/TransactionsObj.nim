@@ -44,8 +44,8 @@ proc getSender*(
     if data.isFirstData:
         try:
             return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 48]))
-        except EdPublicKeyError as e:
-            doAssert(false, "Couldn't grab an EdPublicKey from a Data's input: " & e.msg)
+        except ValueError as e:
+            doAssert(false, "Couldn't create an EdPublicKey from a Data's input: " & e.msg)
     else:
         try:
             return transactions.db.loadDataSender(data.inputs[0].hash)

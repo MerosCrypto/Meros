@@ -18,8 +18,7 @@ proc parseTransaction*(
     hash: Hash[384],
     tx: string
 ): Transaction {.forceCheck: [
-    ValueError,
-    EdPublicKeyError
+    ValueError
 ].} =
     case tx[0]:
         of '\0':
@@ -30,15 +29,11 @@ proc parseTransaction*(
                 result = tx.substr(1).parseClaim()
             except ValueError as e:
                 raise e
-            except EdPublicKeyError as e:
-                raise e
 
         of '\2':
             try:
                 result = tx.substr(1).parseSend(Hash[384]())
             except ValueError as e:
-                raise e
-            except EdPublicKeyError as e:
                 raise e
             except Spam:
                 doAssert(false, "parseSend believes a Hash is less than 0.")

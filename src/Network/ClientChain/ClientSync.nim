@@ -82,8 +82,6 @@ proc syncTransaction*(
                     raise newException(ClientError, "Client didn't respond properly to our TransactionRequest.")
         except ValueError as e:
             raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a ValueError: " & e.msg)
-        except EdPublicKeyError as e:
-            raise newException(ClientError, "Client didn't respond with a valid Transaction to our TransactionRequest, as pointed out by a EdPublicKeyError: " & e.msg)
 
         #Verify the received data is what was requested.
         if result.hash != hash:

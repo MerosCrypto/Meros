@@ -18,8 +18,7 @@ import ../SerializeCommon
 proc parseClaim*(
     claimStr: string
 ): Claim {.forceCheck: [
-    ValueError,
-    EdPublicKeyError
+    ValueError
 ].} =
     #Verify the input length.
     if claimStr.len < BYTE_LEN:
@@ -52,7 +51,7 @@ proc parseClaim*(
             inputs,
             newEdPublicKey(claimSeq[2])
         )
-    except EdPublicKeyError as e:
+    except ValueError as e:
         raise e
 
     #Set the signature and hash it.

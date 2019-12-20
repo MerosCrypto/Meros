@@ -107,8 +107,6 @@ proc newNetwork*(
                     claim = msg.message.parseClaim()
                 except ValueError as e:
                     raise newException(ClientError, "Claim contained an invalid Signature: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(ClientError, "Claim contained an invalid ED25519 Public Key: " & e.msg)
 
                 try:
                     mainFunctions.transactions.addClaim(claim)
@@ -123,8 +121,6 @@ proc newNetwork*(
                     send = msg.message.parseSend(network.mainFunctions.consensus.getSendDifficulty())
                 except ValueError as e:
                     raise newException(ClientError, "Send contained an invalid Signature: " & e.msg)
-                except EdPublicKeyError as e:
-                    raise newException(ClientError, "Send contained an invalid ED25519 Public Key: " & e.msg)
                 except Spam as e:
                     raise e
 

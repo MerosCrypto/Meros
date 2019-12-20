@@ -31,7 +31,7 @@ type
 func newEdPublicKey*(
     key: string
 ): EdPublicKey {.forceCheck: [
-    EdPublicKeyError
+    ValueError
 ].} =
     #If it's binary...
     if key.len == 32:
@@ -43,9 +43,9 @@ func newEdPublicKey*(
             for i in countup(0, 63, 2):
                 result.data[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
         except ValueError:
-            raise newException(EdPublicKeyError, "Hex-length Public Key with invalid Hex data passed to newEdPublicKey.")
+            raise newException(ValueError, "Hex-length Public Key with invalid hex data passed to newEdPublicKey.")
     else:
-        raise newException(EdPublicKeyError, "Invalid length Public Key passed to newEdPublicKey.")
+        raise newException(ValueError, "Invalid length Public Key passed to newEdPublicKey.")
 
 func newEdSignature*(
     sigArg: string

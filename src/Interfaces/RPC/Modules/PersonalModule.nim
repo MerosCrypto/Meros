@@ -164,7 +164,7 @@ proc module*(
 
                 try:
                     res["result"] = % newAddress(params[0].getStr())
-                except EdPublicKeyError:
+                except ValueError:
                     raise newJSONRPCError(-3, "Invalid Public Key")
     except Exception as e:
         doAssert(false, "Couldn't create the Consensus Module: " & e.msg)

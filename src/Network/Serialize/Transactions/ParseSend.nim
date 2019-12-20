@@ -19,7 +19,6 @@ proc parseSend*(
     diff: Hash[384]
 ): Send {.forceCheck: [
     ValueError,
-    EdPublicKeyError,
     Spam
 ].} =
     #Verify the input length.
@@ -62,7 +61,7 @@ proc parseSend*(
     for i in countup(0, sendSeq[3].len - 1, 40):
         try:
             outputs[i div 40] = newSendOutput(newEdPublicKey(sendSeq[3][i ..< i + 32]), uint64(sendSeq[3][i + 32 ..< i + 40].fromBinary()))
-        except EdPublicKeyError as e:
+        except ValueError as e:
             raise e
 
     #Create the Send.

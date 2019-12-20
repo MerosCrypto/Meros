@@ -17,7 +17,7 @@ import ../../../../../Network/Serialize/SerializeCommon
 proc parseSendOutput*(
     outputStr: string
 ): SendOutput {.forceCheck: [
-    EdPublicKeyError
+    ValueError
 ].} =
     #Key | Amount
     var outputSeq: seq[string] = outputStr.deserialize(
@@ -31,5 +31,5 @@ proc parseSendOutput*(
             newEdPublicKey(outputSeq[0]),
             uint64(outputSeq[1].fromBinary())
         )
-    except EdPublicKeyError as e:
+    except ValueError as e:
         raise e

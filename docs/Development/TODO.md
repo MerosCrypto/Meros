@@ -30,7 +30,6 @@ Interfaces:
 
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
-- Correct `transactions_getMerit` which is different from its "Eventual" definition.
 - Passworded RPC.
 
 - In getBlockTemplate, set the header significance to the minimum significance.
@@ -38,8 +37,6 @@ Interfaces:
 - Meet the following GUI spec: https://docs.google.com/document/d/1-9qz327eQiYijrPTtRhS-D3rGg3F5smw7yRqKOm31xQ/edit
 
 Network:
-
-- Check if sketches should be saved to the Database to save speed when BlockBodyRequests are sent (question raised by https://github.com/MerosCrypto/Meros/issues/97).
 
 - Prevent the same client from connecting multiple times.
 - Peer finding.
@@ -143,12 +140,6 @@ Network:
 - Utilize Logger.
 - Have `Logger.urgent` open a dialog box.
 - Make `Logger.extraneous` enabled via a runtime option.
-
-### Improvements:
-
-- Remove EdPublicKeyError.
-
-- Swap Chia for Milagro.
 
 ### Documentation:
 

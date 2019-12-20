@@ -85,8 +85,6 @@ proc mainPersonal() {.forceCheck: [].} =
                         amountOut
                     )
                 ]
-            except EdPublicKeyError as e:
-                raise newException(ValueError, e.msg)
             except ValueError as e:
                 raise e
 
