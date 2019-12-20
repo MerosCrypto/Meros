@@ -36,7 +36,7 @@ type TransactionStatus* = ref object
     beaten*: bool
 
     #Participating holders.
-    #Since this an uint16, it could be a set, yet we need to be able to get the Set length.
+    #Since this an uint16, it could be a set, yet we need to be able to get the set length.
     #Nim's set type doesn't have that functionality.
     holders*: HashSet[uint16]
     #Packet for the next Block.

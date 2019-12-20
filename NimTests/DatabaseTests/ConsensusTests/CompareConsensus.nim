@@ -32,9 +32,7 @@ proc compare*(
     assert(ts1.beaten == ts2.beaten)
 
     #Compare the Transaction's holders.
-    assert(ts1.holders.len == ts2.holders.len)
-    for h in ts1.holders:
-        assert(ts1.holders[h] == ts1.holders[h])
+    assert(symmetricDifference(ts1.holders, ts2.holders).len == 0)
 
     #Compare the pending VerificationPackets.
     compare(ts1.pending, ts2.pending)
@@ -42,7 +40,7 @@ proc compare*(
     #Compare the pending signatures table.
     assert(ts1.signatures.len == ts2.signatures.len)
     for h in ts1.signatures.keys():
-        assert(ts1.signatures[h] == ts1.signatures[h])
+        assert(ts1.signatures[h] == ts2.signatures[h])
 
     #Compare the merit table.
     assert(ts1.merit == ts2.merit)
@@ -73,6 +71,4 @@ proc compare*(
         assert(c2.close.contains(hash))
 
     #Compare the unmentioned table.
-    assert(c1.unmentioned.len == c2.unmentioned.len)
-    for hash in c1.unmentioned:
-        assert(c2.unmentioned.contains(hash))
+    assert(symmetricDifference(c1.unmentioned, c2.unmentioned).len == 0)
