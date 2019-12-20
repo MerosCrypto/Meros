@@ -26,6 +26,21 @@ proc mainConsensus() {.forceCheck: [].} =
         ): bool {.inline, forceCheck: [].} =
             consensus.malicious.hasKey(nick)
 
+        #Get if a hash has an archived packet or not.
+        #Any hash with holder(s) that isn't unmentioned has an archived packet.
+        functions.consensus.hasArchivedPacket = proc (
+            hash: Hash[384]
+        ): bool {.raises: [
+            IndexError
+        ].} =
+            var status: TransactionStatus
+            try:
+                status = consensus.getStatus(hash)
+            except IndexError as e:
+                fcRaise e
+
+            return (status.holders.len != 0) and (not consensus.unmentioned.contains(hash))
+
         #Get a Transaction's status.
         functions.consensus.getStatus = proc (
             hash: Hash[384]

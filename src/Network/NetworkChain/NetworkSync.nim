@@ -141,6 +141,9 @@ proc sync*(
         #SketchResult.
         sketchResult: SketchResult
 
+        #Transactions included in the Block.
+        includedTXs: HashSet[Hash[384]] = initHashSet[Hash[384]]()
+
         #Missing Transactions.
         missingTXs: seq[Hash[384]] = @[]
         #Transactions.
@@ -226,6 +229,7 @@ proc sync*(
 
     #Find missing Transactions.
     for packet in result.body.packets:
+        includedTXs.incl(packet.hash)
         try:
             discard network.mainFunctions.transactions.getTransaction(packet.hash)
         except IndexError:
@@ -315,8 +319,23 @@ proc sync*(
         #Set transactions to todo.
         transactions = todo
 
-    #Add every Verification Packet.
+    #Verify the included packets.
     for packet in result.body.packets:
+        #Verify the predecessors of every Transaction are already mentioned on the chain OR also in this Block.
+        var tx: Transaction
+        try:
+            tx = network.mainFunctions.transactions.getTransaction(packet.hash)
+        except IndexError as e:
+            doAssert(false, "Couldn't get a Transaction we're confirmed to have: " & e.msg)
+
+        if not ((tx of Claim) or ((tx of Data) and cast[Data](tx).isFirstData)):
+            for input in tx.inputs:
+                try:
+                    if not (network.mainFunctions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
+                        raise newException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
+                except IndexError as e:
+                    doAssert(false, "Couldn't get if a Transaction we're confirmed to have has an archived packet: " & e.msg)
+
         #Get the status.
         var status: TransactionStatus
         try:
@@ -339,11 +358,12 @@ proc sync*(
 
             merit += state[holder]
 
-        #Check significant.
+        #Verify significant.
         if merit < int(result.header.significant):
             raise newException(ValueError, "Block has an invalid significant.")
 
-        #Add the packet.
+    #Add every Verification Packet.
+    for packet in result.body.packets:
         network.mainFunctions.consensus.addVerificationPacket(packet)
 
 #Request a BlockBody.

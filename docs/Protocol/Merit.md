@@ -174,7 +174,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros doesn't check that every predecessor has an archived Verification Packet.
 - Meros allows Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 
 - Meros doesn't support Blocks with Elements (as it doesn't support any Elements which are placed in Blocks).

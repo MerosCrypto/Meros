@@ -66,5 +66,8 @@ import json
 #Seq utils standard lib.
 import sequtils
 
+#Sets standard lib.
+import sets
+
 #Tables standard lib.
 import tables

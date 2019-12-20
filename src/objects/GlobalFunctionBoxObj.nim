@@ -96,6 +96,12 @@ type
             nick: uint16,
         ): bool {.inline, raises: [].}
 
+        hasArchivedPacket*: proc (
+            hash: Hash[384]
+        ): bool {.raises: [
+            IndexError
+        ].}
+
         getStatus*: proc (
             hash: Hash[384]
         ): TransactionStatus {.raises: [
