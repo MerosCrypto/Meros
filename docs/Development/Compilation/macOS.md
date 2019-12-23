@@ -20,18 +20,6 @@ curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.0.4
 ```
 
-### Libraries
-
-To install the Nimble packages:
-
-```
-nimble install https://github.com/MerosCrypto/ForceCheck https://github.com/MerosCrypto/Argon2 https://github.com/MerosCrypto/mc_bls https://github.com/MerosCrypto/mc_ed25519 https://github.com/MerosCrypto/mc_minisketch https://github.com/MerosCrypto/mc_lmdb https://github.com/MerosCrypto/Nim-Meros-RPC https://github.com/MerosCrypto/mc_webview finals stint nimcrypto normalize
-```
-
-For instructions on setting up Minisketch, see https://github.com/MerosCrypto/mc_minisketch.
-
-For instructions on setting up LMDB, see https://github.com/MerosCrypto/mc_lmdb.
-
 ### Meros
 
 #### Build
@@ -39,7 +27,7 @@ For instructions on setting up LMDB, see https://github.com/MerosCrypto/mc_lmdb.
 ```
 git clone https://github.com/MerosCrypto/Meros.git
 cd Meros
-nim c src/main.nim
+nimble build
 ```
 
 > There's also a headless version which doesn't import any GUI files available via adding `-d:nogui` to the build command.
