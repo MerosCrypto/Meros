@@ -22,6 +22,20 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
     try:
         newRPCFunctions:
+            #Get a Send Difficulty.
+            "getSendDifficulty" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                res["result"] = % $functions.consensus.getSendDifficulty()
+
+            #Get a Data Difficulty.
+            "getDataDifficulty" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                res["result"] = % $functions.consensus.getDataDifficulty()
+
             #Get a Transaction's Status.
             "getStatus" = proc (
                 res: JSONNode,

@@ -1,5 +1,13 @@
 # Consensus Module
 
+### `getSendDifficulty`
+
+`getSendDifficulty` replies with a Send Difficulty. It takes in zero arguments and the result is a string of the current difficulty.
+
+### `getDataDifficulty`
+
+`getDataDifficulty` replies with a Data Difficulty. It takes in zero arguments and the result is a string of the current difficulty.
+
 ### `getStatus`
 
 `getStatus` replies with the Status for the specified Transaction. It takes in one argument:

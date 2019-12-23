@@ -30,6 +30,8 @@ Interfaces:
 
 - Add missing methods detailed under the Eventual docs.
 - Correct `personal_getAddress` which is different from its "Eventual" definition.
+- Correct `consensus_getSendDifficulty` which is different from its "Eventual" definition.
+- Correct `consensus_getDataDifficulty` which is different from its "Eventual" definition.
 - Passworded RPC.
 
 - In getBlockTemplate, set the header significance to the minimum significance.
