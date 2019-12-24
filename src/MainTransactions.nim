@@ -2,6 +2,8 @@ include MainConsensus
 
 #Creates and publishes a Verification.
 proc verify(
+    functions: GlobalFunctionBox,
+    config: Config,
     transaction: Transaction
 ) {.forceCheck: [], async.} =
     #Make sure we're a Miner with Merit.
@@ -36,7 +38,10 @@ proc verify(
         #Release the verify lock.
         release(verifyLock)
 
-proc mainTransactions() {.forceCheck: [].} =
+proc mainTransactions(
+    functions: GlobalFunctionBox, 
+    config: Config
+) {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Transactions.
         transactions = newTransactions(database, merit.blockchain)
@@ -96,7 +101,7 @@ proc mainTransactions() {.forceCheck: [].} =
 
                 #Create a Verification.
                 try:
-                    asyncCheck verify(claim)
+                    asyncCheck verify(functions, config, claim)
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
@@ -135,7 +140,7 @@ proc mainTransactions() {.forceCheck: [].} =
 
                 #Create a Verification.
                 try:
-                    asyncCheck verify(send)
+                    asyncCheck verify(functions, config, send)
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
@@ -174,7 +179,7 @@ proc mainTransactions() {.forceCheck: [].} =
 
                 #Create a Verification.
                 try:
-                    asyncCheck verify(data)
+                    asyncCheck verify(functions, config, data)
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 

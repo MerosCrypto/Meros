@@ -1,9 +1,9 @@
 #Binary files.
-build
+/build/
 *.dll
 
 #Data files.
-data
+/data/
 settings.json
 
 #Python files.
@@ -16,3 +16,7 @@ minisketch.dll
 
 #Milagro.
 incubator-milagro-crypto-c
+
+#Test files.
+/tests/nim.cfg
+/tests/AllTests.nim

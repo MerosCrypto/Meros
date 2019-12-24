@@ -1,6 +1,8 @@
 include MainTransactions
 
-proc mainPersonal() {.forceCheck: [].} =
+proc mainPersonal(
+    functions: GlobalFunctionBox
+) {.forceCheck: [].} =
     {.gcsafe.}:
         #Get the Wallet.
         functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =

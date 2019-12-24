@@ -22,35 +22,35 @@ type NetworkLibFunctionBox* = ref object
     getNetworkID*: proc (): int {.noSideEffect, raises: [].}
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
 
-    getTail*: proc (): Hash[384] {.inline, raises: [].}
+    getTail*: proc (): Hash[384] {.inline, gcsafe, raises: [].}
 
     getBlockHashBefore*: proc (
         hash: Hash[384]
     ): Hash[384] {.raises: [
         IndexError
-    ].}
+    ], gcsafe.}
 
     getBlockHashAfter*: proc (
         hash: Hash[384]
     ): Hash[384] {.raises: [
         IndexError
-    ].}
+    ], gcsafe.}
 
     getBlock*: proc (
         hash: Hash[384]
     ): Block {.raises: [
         IndexError
-    ].}
+    ], gcsafe.}
 
     getTransaction*: proc (
         hash: Hash[384]
     ): Transaction {.raises: [
         IndexError
-    ].}
+    ], gcsafe.}
 
     handle*: proc (
         msg: Message
-    ): Future[void]
+    ): Future[void] {.gcsafe.}
 
 func newNetworkLibFunctionBox*(): NetworkLibFunctionBox {.forceCheck: [].} =
     NetworkLibFunctionBox()

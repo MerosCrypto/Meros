@@ -31,18 +31,18 @@ import hashes
 
 #Define Blake_2 as Blake.
 type Blake384Hash* = Blake2_384Hash
-var
-    Blake64*: proc (
-        input: string
-    ): uint64 {.raises: [].} = Blake2_64
 
-    Blake384*: proc (
-        input: string
-    ): Blake384Hash {.raises: [].} = Blake2_384
+template Blake64*(
+    input: string
+): uint64 = Blake2_64(input)
 
-    toBlake384Hash*: proc (
-        input: string
-    ): Blake384Hash {.noSideEffect, raises: [ValueError].} = toBlake2_384Hash
+template Blake384*(
+    input: string
+): Blake384Hash = Blake2_384(input)
+
+template toBlake384Hash*(
+    input: string
+): Blake384Hash = toBlake2_384Hash(input)
 
 proc hash*[L](
     hash: HashCommon.Hash[L]

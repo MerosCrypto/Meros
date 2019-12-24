@@ -51,10 +51,10 @@ proc sketchHash*(
 proc newSketcher*(
     getMerit: proc (
         nick: uint16
-    ): int {.inline, raises: [].},
+    ): int {.inline, gcsafe, raises: [].},
     isMalicious: proc (
         holder: uint16
-    ): bool {.inline, raises: [].},
+    ): bool {.inline, gcsafe, raises: [].},
     packets: seq[VerificationPacket]
 ): Sketcher {.forceCheck: [].} =
     result = @[]

@@ -1,6 +1,9 @@
 include MainDatabase
 
-proc mainMerit() {.forceCheck: [].} =
+proc mainMerit(
+    functions: GlobalFunctionBox,
+    config: Config
+) {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Merit.
         merit = newMerit(
