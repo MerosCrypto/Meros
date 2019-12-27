@@ -22,6 +22,8 @@ from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
 
+from PythonTests.Tests.Consensus.Difficulties.DataDifficultyTest import DataDifficultyTest
+
 from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyCompetingTest
 from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
@@ -61,6 +63,8 @@ tests: List[Callable[[RPC], None]] = [
     VUnknownTest,
     VParsableTest,
     VCompetingTest,
+
+    DataDifficultyTest,
 
     SameNonceTest,
     VerifyCompetingTest,

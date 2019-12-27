@@ -12,3 +12,4 @@ import PythonTests.Vectors.Generation.Transactions.Fifty
 #Consensus.
 import PythonTests.Vectors.Generation.Consensus.Verification.Parsable
 import PythonTests.Vectors.Generation.Consensus.Verification.Competing
+import PythonTests.Vectors.Generation.Consensus.Difficulties.DataDifficulty

@@ -4,11 +4,13 @@ from typing import Dict, List, Any
 #BLS lib.
 from PythonTests.Libs.BLS import Signature
 
-#VerificationPacket class.
-from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
-
 #Minisketch lib.
 from PythonTests.Libs.Minisketch import Sketch
+
+#Element classes.
+from PythonTests.Classes.Consensus.Element import Element
+from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
+from PythonTests.Classes.Consensus.DataDifficulty import DataDifficulty
 
 #BlockBody class.
 class BlockBody:
@@ -16,13 +18,13 @@ class BlockBody:
     def __init__(
         self,
         packets: List[VerificationPacket] = [],
-        elements: List[None] = [],
+        elements: List[Element] = [],
         aggregate: bytes = Signature().serialize()
     ) -> None:
         self.packets: List[VerificationPacket] = list(packets)
         self.packets.sort(key=lambda packet: packet.hash, reverse=True)
 
-        self.elements: List[None] = list(elements)
+        self.elements: List[Element] = list(elements)
         self.aggregate: bytes = aggregate
 
     #Serialize.
@@ -41,8 +43,8 @@ class BlockBody:
             len(self.elements).to_bytes(4, "big")
         )
 
-        for _ in self.elements:
-            pass
+        for elem in self.elements:
+            result += elem.serialize()
 
         result += self.aggregate
         return result
@@ -63,6 +65,9 @@ class BlockBody:
                 "holders": sorted(packet.holders)
             })
 
+        for element in self.elements:
+            result["elements"].append(element.toJSON())
+
         return result
 
     #JSON -> Blockbody.
@@ -71,7 +76,7 @@ class BlockBody:
         json: Dict[str, Any]
     ) -> Any:
         packets: List[VerificationPacket] = []
-        elements: List[None] = []
+        elements: List[Element] = []
 
         for packet in json["transactions"]:
             packets.append(
@@ -81,7 +86,8 @@ class BlockBody:
                 )
             )
 
-        for _ in json["elements"]:
-            pass
+        for element in json["elements"]:
+            if element["descendant"] == "DataDifficulty":
+                elements.append(DataDifficulty.fromJSON(element))
 
         return BlockBody(packets, elements, bytes.fromhex(json["aggregate"]))

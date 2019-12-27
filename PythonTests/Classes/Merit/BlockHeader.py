@@ -4,7 +4,8 @@ from typing import Dict, List, Union, Any
 #BLS lib.
 from PythonTests.Libs.BLS import Signature
 
-#VerificationPacket class.
+#Element classes.
+from PythonTests.Classes.Consensus.Element import Element
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 
 #Sketch class.
@@ -45,7 +46,7 @@ class BlockHeader:
     @staticmethod
     def createContents(
         packetsArg: List[VerificationPacket] = [],
-        elements: List[None] = []
+        elements: List[Element] = []
     ) -> bytes:
         #Sort the VerificationPackets.
         packets: List[VerificationPacket] = sorted(
@@ -60,8 +61,8 @@ class BlockHeader:
             hashes.append(blake2b(packet.prefix + packet.serialize(), digest_size=48).digest())
 
         #Hash each Element.
-        for _ in elements:
-            pass
+        for element in elements:
+            hashes.append(blake2b(element.prefix + element.serialize(), digest_size=48).digest())
 
         #Return the merkle hash.
         return merkle(hashes)
