@@ -5,8 +5,8 @@ import ../../lib/Errors
 import ../../lib/Util
 export Util
 
-#Lengths of various data types and messages.
 const
+    #Lengths of various data types and messages.
     BYTE_LEN*:           int = 1
     NICKNAME_LEN*:       int = 2
     INT_LEN*:            int = 4
@@ -28,6 +28,24 @@ const
     DATA_DIFFICULTY_PREFIX*:     int = 3
     GAS_PRICE_PREFIX*:           int = 4
     MERIT_REMOVAL_PREFIX*:       int = 5
+
+    #Elements that can be in a MeritRemoval.
+    MERIT_REMOVAL_ELEMENT_SET*: set[int8] = {
+        int8(VERIFICATION_PREFIX),
+        int8(VERIFICATION_PACKET_PREFIX),
+        int8(SEND_DIFFICULTY_PREFIX),
+        int8(DATA_DIFFICULTY_PREFIX),
+        int8(GAS_PRICE_PREFIX)
+    }
+
+    #Elements that can be in a Block.
+    BLOCK_ELEMENT_SET*: set[int8] = {
+        int8(SEND_DIFFICULTY_PREFIX),
+        int8(DATA_DIFFICULTY_PREFIX),
+        int8(GAS_PRICE_PREFIX),
+        int8(MERIT_REMOVAL_PREFIX)
+    }
+
 
 #Deseralizes a string by getting the length of the next set of bytes, slicing that out, and moving on.
 func deserialize*(

@@ -11,13 +11,6 @@ import ../SerializeCommon
 import ParseElement
 import ParseMeritRemoval
 
-const BLOCK_ELEMENT_SET: set[int8] = {
-    int8(SEND_DIFFICULTY_PREFIX),
-    int8(DATA_DIFFICULTY_PREFIX),
-    int8(GAS_PRICE_PREFIX),
-    int8(MERIT_REMOVAL_PREFIX)
-}
-
 #Parse a BlockElement.
 proc parseBlockElement*(
     data: string,
@@ -28,15 +21,43 @@ proc parseBlockElement*(
 ] {.forceCheck: [
     ValueError
 ].} =
-    if not (int8(data[i]) in BLOCK_ELEMENT_SET):
-        raise newException(ValueError, "parseBlockElement tried to parse an invalid/unsupported Element type.")
+    try:
+        result.len = BLOCK_ELEMENT_SET.getLength(data[i])
+
+        if int(data[i]) == MERIT_REMOVAL_PREFIX:
+            for _ in 0 ..< 2:
+                var
+                    holdersLen: int = 0
+                    holders: int = 0
+                if int(data[i + result.len]) == VERIFICATION_PACKET_PREFIX:
+                    holdersLen = {
+                        int8(VERIFICATION_PACKET_PREFIX)
+                    }.getLength(data[i + result.len])
+                    holders = data[i + result.len + 1 .. i + result.len + holdersLen].fromBinary()
+
+                result.len += MERIT_REMOVAL_ELEMENT_SET.getLength(
+                    data[i + result.len],
+                    holders,
+                    MERIT_REMOVAL_PREFIX
+                )
+                result.len += holdersLen + 1
+    except ValueError as e:
+        raise e
+
+    if i + result.len > data.len:
+        raise newException(ValueError, "parseBlockElement not handed enough data to parse the next Element.")
 
     try:
-        result.len = data.getLength(BLOCK_ELEMENT_SET, i)
         case int(data[i]):
+            of SEND_DIFFICULTY_PREFIX:
+                doAssert(false, "SendDifficulties are not supported.")
+            of DATA_DIFFICULTY_PREFIX:
+                doAssert(false, "DataDifficulties are not supported.")
+            of GAS_PRICE_PREFIX:
+                doAssert(false, "GasPrices are not supported.")
             of MERIT_REMOVAL_PREFIX:
                 result.element = parseMeritRemoval(data[i + 1 ..< i + result.len])
             else:
-                doAssert(false, "parseBlockElement tried to parse an unsupported Element despite having an existing if check.")
+                doAssert(false, "Possible Element wasn't supported.")
     except ValueError as e:
         raise e

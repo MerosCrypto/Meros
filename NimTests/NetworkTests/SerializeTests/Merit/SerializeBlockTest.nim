@@ -55,7 +55,7 @@ proc test*() =
         #Clear packets and elements.
         packets = @[]
         elements = @[]
-    
+
         #Randomize the last hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
@@ -124,5 +124,8 @@ proc test*() =
         #Clear the packets and elements.
         packets = @[]
         elements = @[]
+
+        if (s mod 16 == 0) and (s != 0):
+            echo "Finished round ", s, " of the Network/Serialize/Merit/Block Test."
 
     echo "Finished the Network/Serialize/Merit/Block Test."

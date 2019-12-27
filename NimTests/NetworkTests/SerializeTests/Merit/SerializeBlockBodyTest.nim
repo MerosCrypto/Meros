@@ -98,4 +98,7 @@ proc test*() =
         packets = @[]
         elements = @[]
 
+        if (s mod 16 == 0) and (s != 0):
+            echo "Finished round ", s, " of the Network/Serialize/Merit/BlockBody Test."
+
     echo "Finished the Network/Serialize/Merit/BlockBody Test."

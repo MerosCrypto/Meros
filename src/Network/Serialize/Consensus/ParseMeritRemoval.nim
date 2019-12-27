@@ -27,25 +27,38 @@ proc parseMeritRemovalElement(
     ValueError
 ].} =
     try:
-        result.len = data.getLength(
-            {
-                int8(VERIFICATION_PREFIX),
-                int8(VERIFICATION_PACKET_PREFIX),
-                int8(SEND_DIFFICULTY_PREFIX),
-                int8(DATA_DIFFICULTY_PREFIX),
-                int8(GAS_PRICE_PREFIX)
-            },
-            i,
-            holder
-        )
+        result.len = 0
+        if int(data[i]) == VERIFICATION_PACKET_PREFIX:
+            result.len = {
+                int8(VERIFICATION_PACKET_PREFIX)
+            }.getLength(data[i])
 
+        result.len += MERIT_REMOVAL_ELEMENT_SET.getLength(
+            data[i],
+            data[i + 1 .. i + result.len].fromBinary(),
+            MERIT_REMOVAL_PREFIX
+        )
+    except ValueError as e:
+        raise e
+
+    inc(result.len)
+    if i + result.len > data.len:
+        raise newException(ValueError, "parseMeritRemovalElement not handed enough data to parse the next Element.")
+
+    try:
         case int(data[i]):
             of VERIFICATION_PREFIX:
                 result.element = parseVerification(holder & data[i + 1 ..< i + result.len])
             of VERIFICATION_PACKET_PREFIX:
                 result.element = parseMeritRemovalVerificationPacket(data[i + 1 ..< i + result.len])
+            of SEND_DIFFICULTY_PREFIX:
+                doAssert(false, "SendDifficulties are not supported.")
+            of DATA_DIFFICULTY_PREFIX:
+                doAssert(false, "DataDifficulties are not supported.")
+            of GAS_PRICE_PREFIX:
+                doAssert(false, "GasPrices are not supported.")
             else:
-                raise newException(ValueError, "parseMeritRemovalElement tried to parse an invalid/unsupported Element type.")
+                doAssert(false, "Possible Element wasn't supported.")
     except ValueError as e:
         raise e
 
