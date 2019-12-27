@@ -2,6 +2,7 @@
 
 import ConsensusTests/ElementsTest
 import ConsensusTests/TransactionStatusTest
+import ConsensusTests/SpamFilterTest
 import ConsensusTests/ConsensusTest
 
 proc addTests*(
@@ -9,4 +10,5 @@ proc addTests*(
 ) =
     ElementsTest.addTests(tests)
     tests.add(TransactionStatusTest.test)
+    tests.add(SpamFilterTest.test)
     ConsensusTest.addTests(tests)

@@ -1,5 +1,8 @@
 #SpamFilter Test.
 
+#Util lib.
+import ../../../src/lib/Util
+
 #Hash lib.
 import ../../../src/lib/Hash
 
@@ -27,6 +30,9 @@ type VotedDifficultyTest = object
     holders: seq[uint16]
 
 proc test*() =
+    #Seed random.
+    randomize(int64(getTime()))
+
     var
         #Starting difficulty.
         startDiff: Hash[384] = parseHexStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
