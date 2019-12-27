@@ -36,9 +36,11 @@ The result is an object, as follows:
     - `holder`     (int)
 
         When `descendant` == "SendDifficulty":
+        - `nonce`      (int)
         - `difficulty` (string)
 
         When `descendant` == "DataDifficulty":
+        - `nonce`      (int)
         - `difficulty` (string)
 
         When `descendant` == "GasPrice":

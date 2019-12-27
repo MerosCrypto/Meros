@@ -39,7 +39,7 @@ They have the following fields:
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
 
-`SendDifficulty` has a message length of 50 bytes; the 2-byte holder and the 48-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type.
+`SendDifficulty` has a message length of 54 bytes; the 2-byte holder, 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type.
 
 ### DataDifficulty
 
@@ -52,7 +52,7 @@ They have the following fields:
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
 - difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
 
-`DataDifficulty` has a message length of 50 bytes; the 2-byte holder and the 48-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
+`DataDifficulty` has a message length of 54 bytes; the 2-byte holder, 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
 
 ### GasPrice
 
