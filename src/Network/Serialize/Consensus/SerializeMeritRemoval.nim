@@ -32,7 +32,7 @@ method serialize*(
         mr.element1.serializeWithoutHolder() &
         mr.element2.serializeWithoutHolder()
 
-#Serialize a MeritRemoval for inclusion in a BlockHeader's contents merkle.
+#Serialize a MeritRemoval for inclusion in a BlockHeader's contents Merkle.
 method serializeContents*(
     mr: MeritRemoval
 ): string {.inline, forceCheck: [].} =

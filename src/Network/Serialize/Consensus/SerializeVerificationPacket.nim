@@ -40,7 +40,7 @@ method serializeWithoutHolder*(
         result &= holder.serialize()
     result &= packet.hash.toString()
 
-#Serialize a VerificationPacket for inclusion in a BlockHeader's contents merkle.
+#Serialize a VerificationPacket for inclusion in a BlockHeader's contents Merkle.
 method serializeContents*(
     packet: VerificationPacket
 ): string {.inline, forceCheck: [].} =

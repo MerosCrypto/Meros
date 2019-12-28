@@ -33,7 +33,7 @@ import ../../Network/Serialize/Consensus/SerializeElement
 #Algorithm standard lib.
 import algorithm
 
-#Verify the sketchCheck merkle.
+#Verify the sketchCheck Merkle.
 proc verifySketchCheck*(
     sketchCheck: Hash[384],
     sketchHashes: seq[uint64]
@@ -51,7 +51,7 @@ proc verifySketchCheck*(
         calculated = newMerkle(leaves).hash
 
     if calculated != sketchCheck:
-        raise newException(ValueError, "Invalid sketchCheck merkle.")
+        raise newException(ValueError, "Invalid sketchCheck Merkle.")
 
 proc verifySketchCheck*(
     sketchCheck: Hash[384],
@@ -71,7 +71,7 @@ proc verifySketchCheck*(
     except ValueError as e:
         raise e
 
-#Verify the contents merkle.
+#Verify the contents Merkle.
 proc verifyContents*(
     contents: Hash[384],
     packetsArg: seq[VerificationPacket],
@@ -107,7 +107,7 @@ proc verifyContents*(
         calculated.add(Blake384(elem.serializeContents()))
 
     if calculated.hash != contents:
-        raise newException(ValueError, "Invalid contents merkle.")
+        raise newException(ValueError, "Invalid contents Merkle.")
 
 #Verify a Block's aggregate signature via a nickname lookup function and a Table of Hash -> VerificationPacket.
 proc verifyAggregate*(

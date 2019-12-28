@@ -207,7 +207,7 @@ proc sync*(
         except Exception as e:
             doAssert(false, "Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Verify the contents merkle.
+    #Verify the contents Merkle.
     try:
         packets = newBlock.data.header.contents.verifyContents(
             packets,

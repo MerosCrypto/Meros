@@ -24,7 +24,7 @@ Verifications can only be of valid Transactions, meaning Transactions which have
 
 A Verification packet is a group of Verifications belonging to a single Transaction. They use less bandwidth than individual Verifications and are faster to handle in the moment as their signed version uses a single signature for every message.
 
-`VerificationPacket` has a variable message length; the 2-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname, in ascending order), and the 48-byte hash. Even though VerificationPackets are not directly signed, they use a prefix of "\1" inside a Block Header's content merkle.
+`VerificationPacket` has a variable message length; the 2-byte amount of Verifications, the verifiers (each represented by their 2-byte nickname, in ascending order), and the 48-byte hash. Even though VerificationPackets are not directly signed, they use a prefix of "\1" inside a Block Header's content Merkle.
 
 ### SendDifficulty
 
@@ -43,14 +43,14 @@ They have the following fields:
 
 ### DataDifficulty
 
-A DataDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Datas. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound. Datas with an argon hash below this lower bound are invalid.
+A DataDifficulty is a Merit Holder voting to update the difficulty of the spam filter applied to Data Transactions. The way this difficulty is determined is the exact same as the way the Sends' spam filter difficulty is determined. That said, the difficulty has a lower bound of `000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000`, where any vote for something lower is counted as a vote for this lower bound. Data Transactions with a hash below this lower bound are invalid.
 
 In the case no DataDifficulties have been added to the Consensus yet, the spam filter defaults to using a difficulty of 48 "CC" bytes.
 
 They have the following fields:
 
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: 384-bit number that should be the difficulty for the Datas' spam filter.
+- difficulty: 384-bit number that should be the difficulty for the Data Transactions' spam filter.
 
 `DataDifficulty` has a message length of 54 bytes; the 2-byte holder, 4-byte nonce, and the 48-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
 
@@ -79,7 +79,7 @@ MeritRemovals have the following fields:
 - element1: The first Element.
 - element2: The second Element.
 
-`MeritRemoval` has a variable message length; the 2-byte holder, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized including every Merit Holder's BLS Public Key, instead of their nickname, without any sorting required. This is to enable MeritRemovals involving holders whose nicknames were lost due to a chain reorganization. None of the included keys may be infinite. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content merkle. That said, `MeritRemoval` is not a standalone message type.
+`MeritRemoval` has a variable message length; the 2-byte holder, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized including every Merit Holder's BLS Public Key, instead of their nickname, without any sorting required. This is to enable MeritRemovals involving holders whose nicknames were lost due to a chain reorganization. None of the included keys may be infinite. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content Merkle. That said, `MeritRemoval` is not a standalone message type.
 
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 

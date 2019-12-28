@@ -64,7 +64,7 @@ Blocks have the following fields:
 A Block's hash is defined as the hash of its header.
 
 The genesis Block on the Meros mainnet Blockchain has a:
-- Header version of 0,
+- Header version of 0.
 - Header last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 48 bytes.
 - Zeroed out contents in the header.
 - significant of 0.

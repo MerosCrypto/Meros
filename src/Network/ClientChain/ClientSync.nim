@@ -167,7 +167,7 @@ proc syncSketchHashes*(
         #Sort the result.
         result.sort(SortOrder.Descending)
 
-        #Verify the sketchCheck merkle.
+        #Verify the sketchCheck Merkle.
         try:
             sketchCheck.verifySketchCheck(result)
         except ValueError as e:

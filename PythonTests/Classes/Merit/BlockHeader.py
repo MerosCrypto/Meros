@@ -21,7 +21,7 @@ from hashlib import blake2b
 def merkle(
     hashes: List[bytes]
 ) -> bytes:
-    #Support empty merkles.
+    #Support empty Merkles.
     if not hashes:
         return bytes(48)
 
@@ -36,13 +36,13 @@ def merkle(
             ).digest()
         hashes = hashes[0 : len(hashes) // 2]
 
-    #Return the merkle hash.
+    #Return the Merkle hash.
     return hashes[0]
 
 #BlockHeader class.
 #pylint: disable=too-many-instance-attributes
 class BlockHeader:
-    #Create a contents merkle.
+    #Create a contents Merkle.
     @staticmethod
     def createContents(
         packetsArg: List[VerificationPacket] = [],
@@ -64,10 +64,10 @@ class BlockHeader:
         for element in elements:
             hashes.append(blake2b(element.prefix + element.serialize(), digest_size=48).digest())
 
-        #Return the merkle hash.
+        #Return the Merkle hash.
         return merkle(hashes)
 
-    #Create a sketchCheck merkle.
+    #Create a sketchCheck Merkle.
     @staticmethod
     def createSketchCheck(
         salt: bytes = bytes(4),
@@ -86,7 +86,7 @@ class BlockHeader:
         for sketchHash in sketchHashes:
             leaves.append(blake2b(sketchHash.to_bytes(8, byteorder="big"), digest_size=48).digest())
 
-        #Return the merkle hash.
+        #Return the Merkle hash.
         return merkle(leaves)
 
     #Serialize to be hashed.

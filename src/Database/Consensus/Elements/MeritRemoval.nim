@@ -67,7 +67,7 @@ func newSignedMeritRemoval*(
         signature
     )
 
-#Calculate the MeritRemoval's merkle leaf hash.
+#Calculate the MeritRemoval's Merkle leaf hash.
 proc merkle*(
     mr: MeritRemoval
 ): Hash[384] {.forceCheck: [].} =

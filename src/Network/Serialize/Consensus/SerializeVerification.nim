@@ -31,12 +31,12 @@ method serializeWithoutHolder*(
     char(VERIFICATION_PREFIX) &
     verif.hash.toString()
 
-#Serialize a Verification for inclusion in a BlockHeader's contents merkle.
+#Serialize a Verification for inclusion in a BlockHeader's contents Merkle.
 #This should never happen.
 method serializeContents*(
     verif: Verification
 ): string {.forceCheck: [].} =
-    doAssert(false, "Verification was serialized for inclusion in a BlockHeader's contents merkle.")
+    doAssert(false, "Verification was serialized for inclusion in a BlockHeader's contents Merkle.")
 
 #Serialize a Signed Verification.
 method signedSerialize*(

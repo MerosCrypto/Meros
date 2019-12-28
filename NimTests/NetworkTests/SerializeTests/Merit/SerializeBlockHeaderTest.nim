@@ -31,7 +31,7 @@ proc test*() =
         last: ArgonHash
         #Contents Hash.
         contents: Hash[384]
-        #Sketch Check merkle.
+        #Sketch Check Merkle.
         sketchCheck: Hash[384]
         #Miner.
         miner: MinerWallet
