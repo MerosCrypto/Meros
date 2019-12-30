@@ -16,10 +16,12 @@ export SignedElementObj
 #Element sub-type libs.
 import Verification as VerificationFile
 import VerificationPacket as VerificationPacketFile
+import DataDifficulty as DataDifficultyFile
 import MeritRemoval as MeritRemovalFile
 
 export VerificationFile
 export VerificationPacketFile
+export DataDifficultyFile
 export MeritRemovalFile
 
 #Algorithm standard lib.
@@ -114,6 +116,22 @@ proc `==`*(
             ):
                 return false
 
+        of VerificationPacket as vp1:
+            if (
+                (not (e2 of VerificationPacket)) or
+                (vp1.holders.sorted() != cast[VerificationPacket](e2).holders.sorted()) or
+                (vp1.hash != cast[VerificationPacket](e2).hash)
+            ):
+                return false
+
+        of DataDifficulty as dd1:
+            if (
+                (not (e2 of DataDifficulty)) or
+                (dd1.holder != cast[DataDifficulty](e2).holder) or
+                (dd1.difficulty != cast[DataDifficulty](e2).difficulty)
+            ):
+                return false
+
         of MeritRemovalVerificationPacket as mrvp1:
             if (
                 (not (e2 of MeritRemovalVerificationPacket)) or
@@ -125,14 +143,6 @@ proc `==`*(
             for h in 0 ..< mrvp1.holders.len:
                 if mrvp1.holders[h] != cast[MeritRemovalVerificationPacket](e2).holders[h]:
                     return false
-
-        of VerificationPacket as vp1:
-            if (
-                (not (e2 of VerificationPacket)) or
-                (vp1.holders.sorted() != cast[VerificationPacket](e2).holders.sorted()) or
-                (vp1.hash != cast[VerificationPacket](e2).hash)
-            ):
-                return false
 
         of MeritRemoval as mr1:
             if (

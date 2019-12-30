@@ -63,6 +63,27 @@ proc newRandomVerificationPacket*(
     #Set a random signature.
     result.signature = miner.sign("")
 
+proc newRandomDataDifficulty*(
+    holder: uint16 = uint16(rand(high(int16)))
+): SignedDataDifficulty =
+    var
+        #Hash.
+        difficulty: Hash[384]
+        #Miner.
+        miner: MinerWallet = newMinerWallet()
+
+    #Randomize the difficulty.
+    for b in 0 ..< 48:
+        difficulty.data[b] = uint8(rand(255))
+
+    #Randomize the miner's nick name.
+    miner.nick = holder
+
+    #Create the SignedDataDifficulty.
+    result = newSignedDataDifficultyObj(difficulty)
+    #Sign it.
+    miner.sign(result)
+
 proc newRandomMeritRemoval*(
     holder: uint16 = uint16(rand(high(int16)))
 ): SignedMeritRemoval
@@ -83,11 +104,9 @@ proc newRandomElement*(
     #Include all possibilities in the set.
     if verification: possibilities.incl(0)
     if packet: possibilities.incl(1)
-    #[
-    if sendDifficulty: possibilities.incl(2)
+    #if sendDifficulty: possibilities.incl(2)
     if dataDifficulty: possibilities.incl(3)
-    if gasPrice: possibilities.incl(4)
-    ]#
+    #if gasPrice: possibilities.incl(4)
     if removal: possibilities.incl(5)
 
     #While r is not a possibility, randomize it.
@@ -96,17 +115,13 @@ proc newRandomElement*(
 
     case r:
         of 0:
-            result = newRandomVerification(
-                holder = holder
-            )
+            result = newRandomVerification(holder)
         of 1:
-            result = newRandomVerificationPacket(
-                holder = holder
-            )
+            result = newRandomVerificationPacket(holder)
         of 2:
             discard
         of 3:
-            discard
+            result = newRandomDataDifficulty(holder)
         of 4:
             discard
         of 5:
@@ -143,14 +158,12 @@ proc newRandomMeritRemoval*(
                 signatures.add(cast[SignedVerification](verif).signature)
             of VerificationPacket as vp:
                 signatures.add(cast[SignedVerificationPacket](vp).signature)
-            #[
-            of SendDifficulty as sd:
-                signatures.add(cast[SignedSendDifficulty](sd).signature)
+            #of SendDifficulty as sd:
+            #    signatures.add(cast[SignedSendDifficulty](sd).signature)
             of DataDifficulty as dd:
                 signatures.add(cast[SignedDataDifficulty](dd).signature)
-            of GasPrice as gp:
-                signatures.add(cast[SignedGasPrice](gp).signature)
-            ]#
+            #of GasPrice as gp:
+            #    signatures.add(cast[SignedGasPrice](gp).signature)
             else:
                 assert(false, "newRandomElement generated a MeritRemoval despite being told not to.")
 
@@ -159,14 +172,12 @@ proc newRandomMeritRemoval*(
             signatures.add(cast[SignedVerification](verif).signature)
         of VerificationPacket as vp:
             signatures.add(cast[SignedVerificationPacket](vp).signature)
-        #[
-        of SendDifficulty as sd:
-            signatures.add(cast[SignedSendDifficulty](sd).signature)
+        #of SendDifficulty as sd:
+        #    signatures.add(cast[SignedSendDifficulty](sd).signature)
         of DataDifficulty as dd:
             signatures.add(cast[SignedDataDifficulty](dd).signature)
-        of GasPrice as gp:
-            signatures.add(cast[SignedGasPrice](gp).signature)
-        ]#
+        #of GasPrice as gp:
+        #    signatures.add(cast[SignedGasPrice](gp).signature)
         else:
             assert(false, "newRandomElement generated a MeritRemoval despite being told not to.")
 
@@ -190,11 +201,9 @@ proc newRandomBlockElement*(
         r: int8 = int8(rand(3))
 
     #Include all possibilities in the set.
-    #[
-    if sendDifficulty: possibilities.incl(0)
+    #if sendDifficulty: possibilities.incl(0)
     if dataDifficulty: possibilities.incl(1)
-    if gasPrice: possibilities.incl(2)
-    ]#
+    #if gasPrice: possibilities.incl(2)
     if removal: possibilities.incl(3)
 
     #While r is not a possibility, randomize it.
@@ -208,7 +217,7 @@ proc newRandomBlockElement*(
 
         #Data Difficulty.
         of 1:
-            discard
+            result = newRandomDataDifficulty()
 
         #Gas Price.
         of 2:
