@@ -14,6 +14,7 @@ import ../SerializeCommon
 import ParseElement
 import ParseVerification
 import ParseVerificationPacket
+import ParseDataDifficulty
 
 #Parse an Element in a MeritRemoval.
 proc parseMeritRemovalElement(
@@ -41,7 +42,6 @@ proc parseMeritRemovalElement(
     except ValueError as e:
         raise e
 
-    inc(result.len)
     if i + result.len > data.len:
         raise newException(ValueError, "parseMeritRemovalElement not handed enough data to parse the next Element.")
 
@@ -54,7 +54,7 @@ proc parseMeritRemovalElement(
             of SEND_DIFFICULTY_PREFIX:
                 doAssert(false, "SendDifficulties are not supported.")
             of DATA_DIFFICULTY_PREFIX:
-                doAssert(false, "DataDifficulties are not supported.")
+                result.element = parseDataDifficulty(holder & data[i + 1 ..< i + result.len])
             of GAS_PRICE_PREFIX:
                 doAssert(false, "GasPrices are not supported.")
             else:

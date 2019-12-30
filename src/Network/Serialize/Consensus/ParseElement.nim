@@ -22,7 +22,7 @@ proc getLength*(
             result = HASH_LEN
 
         #VerificationPackets are never in Blocks.
-        #They can be in MeritRemovals, and MeritRemoval VerificationPacket use an expanded serialization to guarantee usability.
+        #They can be in MeritRemovals, and MeritRemoval VerificationPackets use an expanded serialization to guarantee usability.
         of VERIFICATION_PACKET_PREFIX:
             if actual != MERIT_REMOVAL_PREFIX:
                 result = NICKNAME_LEN
@@ -49,3 +49,6 @@ proc getLength*(
 
         else:
             doAssert(false, "Possible Element wasn't supported.")
+
+    if actual == MERIT_REMOVAL_PREFIX:
+        inc(result)

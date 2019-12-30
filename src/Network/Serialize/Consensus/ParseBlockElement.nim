@@ -9,6 +9,7 @@ import ../SerializeCommon
 
 #Parse Element libs.
 import ParseElement
+import ParseDataDifficulty
 import ParseMeritRemoval
 
 #Parse a BlockElement.
@@ -39,8 +40,7 @@ proc parseBlockElement*(
                     data[i + result.len],
                     holders,
                     MERIT_REMOVAL_PREFIX
-                )
-                result.len += holdersLen + 1
+                ) + holdersLen
     except ValueError as e:
         raise e
 
@@ -52,12 +52,15 @@ proc parseBlockElement*(
             of SEND_DIFFICULTY_PREFIX:
                 doAssert(false, "SendDifficulties are not supported.")
             of DATA_DIFFICULTY_PREFIX:
-                doAssert(false, "DataDifficulties are not supported.")
+                result.element = parseDataDifficulty(data[i + 1 .. i + result.len])
             of GAS_PRICE_PREFIX:
                 doAssert(false, "GasPrices are not supported.")
             of MERIT_REMOVAL_PREFIX:
-                result.element = parseMeritRemoval(data[i + 1 ..< i + result.len])
+                result.element = parseMeritRemoval(data[i + 1 .. i + result.len])
             else:
                 doAssert(false, "Possible Element wasn't supported.")
     except ValueError as e:
         raise e
+
+    if int(data[i]) != MERIT_REMOVAL_PREFIX:
+        inc(result.len)

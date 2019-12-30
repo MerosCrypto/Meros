@@ -34,11 +34,6 @@ proc serialize*(
 
     result &= blockArg.body.elements.len.toBinary(INT_LEN)
     for elem in blockArg.body.elements:
-        case elem:
-            of MeritRemoval as _:
-                result &= char(MERIT_REMOVAL_PREFIX)
-            else:
-                doAssert(false, "serialize(BlockBody) tried to serialize an unsupported Element.")
-        result &= elem.serialize()
+        result &= elem.serializeContents()
 
     result &= blockArg.body.aggregate.serialize()

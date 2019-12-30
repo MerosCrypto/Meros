@@ -18,6 +18,7 @@ import ../SerializeCommon
 
 #Serialize Element libs.
 import ../Consensus/SerializeVerification
+import ../Consensus/SerializeDataDifficulty
 import ../Consensus/SerializeMeritRemoval
 
 #Serialize a Block.
@@ -45,11 +46,6 @@ proc serialize*(
 
     result &= body.elements.len.toBinary(INT_LEN)
     for elem in body.elements:
-        case elem:
-            of MeritRemoval as _:
-                result &= char(MERIT_REMOVAL_PREFIX)
-            else:
-                doAssert(false, "serialize(BlockBody) tried to serialize an unsupported Element.")
-        result &= elem.serialize()
+        result &= elem.serializeContents()
 
     result &= body.aggregate.serialize()
