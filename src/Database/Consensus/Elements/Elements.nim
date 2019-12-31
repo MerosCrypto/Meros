@@ -128,6 +128,7 @@ proc `==`*(
             if (
                 (not (e2 of DataDifficulty)) or
                 (dd1.holder != cast[DataDifficulty](e2).holder) or
+                (dd1.nonce != cast[DataDifficulty](e2).nonce) or
                 (dd1.difficulty != cast[DataDifficulty](e2).difficulty)
             ):
                 return false

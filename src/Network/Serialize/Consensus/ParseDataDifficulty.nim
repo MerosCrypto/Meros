@@ -17,16 +17,18 @@ import ../SerializeCommon
 proc parseDataDifficulty*(
     dataDiffStr: string
 ): DataDifficulty {.forceCheck: [].} =
-    #Holder's Nickname | Difficulty
+    #Holder's Nickname | Nonce | Difficulty
     var dataDiffSeq: seq[string] = dataDiffStr.deserialize(
         NICKNAME_LEN,
+        INT_LEN,
         HASH_LEN
     )
 
     #Create the DataDifficulty.
     try:
         result = newDataDifficultyObj(
-            dataDiffSeq[1].toHash(384)
+            dataDiffSeq[1].fromBinary(),
+            dataDiffSeq[2].toHash(384)
         )
         result.holder = uint16(dataDiffSeq[0].fromBinary())
     except ValueError as e:
@@ -50,7 +52,8 @@ proc parseSignedDataDifficulty*(
     #Create the DataDifficulty.
     try:
         result = newSignedDataDifficultyObj(
-            dataDiffSeq[1].toHash(384)
+            dataDiffSeq[1].fromBinary(),
+            dataDiffSeq[2].toHash(384)
         )
         result.holder = uint16(dataDiffSeq[0].fromBinary())
         result.signature = newBLSSignature(dataDiffSeq[2])

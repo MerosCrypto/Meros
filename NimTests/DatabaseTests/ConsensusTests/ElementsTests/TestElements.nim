@@ -67,6 +67,8 @@ proc newRandomDataDifficulty*(
     holder: uint16 = uint16(rand(high(int16)))
 ): SignedDataDifficulty =
     var
+        #Nonce.
+        nonce: int = rand(high(int32))
         #Hash.
         difficulty: Hash[384]
         #Miner.
@@ -80,7 +82,7 @@ proc newRandomDataDifficulty*(
     miner.nick = holder
 
     #Create the SignedDataDifficulty.
-    result = newSignedDataDifficultyObj(difficulty)
+    result = newSignedDataDifficultyObj(nonce, difficulty)
     #Sign it.
     miner.sign(result)
 
