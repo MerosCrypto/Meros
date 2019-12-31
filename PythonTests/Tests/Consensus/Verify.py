@@ -9,5 +9,5 @@ def verifyDataDifficulty(
     rpc: RPC,
     dataDiff: bytes
 ) -> None:
-    if rpc.call("consensus", "getDataDifficulty") != dataDiff.hex():
+    if rpc.call("consensus", "getDataDifficulty") != dataDiff.hex().upper():
         raise TestError("Data Difficulty doesn't match.")

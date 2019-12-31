@@ -7,9 +7,6 @@ import ../../../../../lib/Util
 #MinerWallet lib.
 import ../../../../../Wallet/MinerWallet
 
-#Element libs.
-import ../../../../Consensus/Elements/Elements
-
 #Block lib.
 import ../../../../Merit/Block
 

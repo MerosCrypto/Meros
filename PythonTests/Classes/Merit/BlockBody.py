@@ -44,7 +44,7 @@ class BlockBody:
         )
 
         for elem in self.elements:
-            result += elem.serialize()
+            result += elem.prefix + elem.serialize()
 
         result += self.aggregate
         return result

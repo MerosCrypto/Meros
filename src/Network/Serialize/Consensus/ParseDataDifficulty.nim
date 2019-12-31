@@ -42,9 +42,10 @@ proc parseSignedDataDifficulty*(
 ): SignedDataDifficulty {.forceCheck: [
     ValueError
 ].} =
-    #Holder's Nickname | Difficulty | BLS Signature
+    #Holder's Nickname | Nonce | Difficulty | BLS Signature
     var dataDiffSeq: seq[string] = dataDiffStr.deserialize(
         NICKNAME_LEN,
+        INT_LEN,
         HASH_LEN,
         BLS_SIGNATURE_LEN
     )
@@ -56,7 +57,7 @@ proc parseSignedDataDifficulty*(
             dataDiffSeq[2].toHash(384)
         )
         result.holder = uint16(dataDiffSeq[0].fromBinary())
-        result.signature = newBLSSignature(dataDiffSeq[2])
+        result.signature = newBLSSignature(dataDiffSeq[3])
     except ValueError as e:
         doAssert(false, "Failed to parse a 48-byte hash: " & e.msg)
     except BLSError:
