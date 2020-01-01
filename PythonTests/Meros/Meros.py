@@ -184,7 +184,19 @@ class Meros:
                         length = 2
 
                 elif header == MessageType.BlockBody:
-                    pass
+                    elementsLen: int = int.from_bytes(result[-4:], byteorder="big")
+                    for _ in range(elementsLen):
+                        result += self.socketRecv(1)
+                        if result[-1] == 2:
+                            result += self.socketRecv(54)
+                        elif result[-1] == 3:
+                            result += self.socketRecv(54)
+                        elif result[-1] == 4:
+                            result += self.socketRecv(10)
+                        elif result[-1] == 5:
+                            raise Exception("Block Bodies with Merit Removals are not supported.")
+                        else:
+                            raise Exception("Block Body has an unknown element.")
 
             result += self.socketRecv(length)
 
