@@ -73,9 +73,9 @@ proc processBlock*(
 #Process a Block already addded to the Blockchain.
 proc postProcessBlock*(
     merit: Merit
-): Epoch {.forceCheck: [].} =
+): (Epoch, uint16, int) {.forceCheck: [].} =
     #Have the Epochs process the Block and return the popped Epoch.
-    result = merit.epochs.shift(merit.blockchain.tail)
+    result[0] = merit.epochs.shift(merit.blockchain.tail)
 
     #Have the state process the block.
-    merit.state.processBlock(merit.blockchain)
+    (result[1], result[2]) = merit.state.processBlock(merit.blockchain)

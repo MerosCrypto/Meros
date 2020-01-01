@@ -7,8 +7,14 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
+#DataDifficulty object.
+import ../../Consensus/Elements/objects/DataDifficultyObj
+
 #TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
+
+#Serialization libs.
+import ../../../Network/Serialize/SerializeCommon
 
 import Serialize/Consensus/SerializeTransactionStatus
 import Serialize/Consensus/ParseTransactionStatus
@@ -79,6 +85,18 @@ proc commit*(
 #Save functions.
 proc save*(
     db: DB,
+    dataDiff: DataDifficulty
+) {.forceCheck: [].} =
+    db.put(dataDiff.holder.toBinary().pad(NICKNAME_LEN) & "d", dataDiff.difficulty.toString())
+
+    var nonce: int = -1
+    try:
+        nonce = db.get(dataDiff.holder.toBinary().pad(NICKNAME_LEN)).fromBinary()
+    except DBReadError:
+        db.put(dataDiff.holder.toBinary().pad(NICKNAME_LEN), (nonce + 1).toBinary())
+
+proc save*(
+    db: DB,
     hash: Hash[384],
     status: TransactionStatus
 ) {.forceCheck: [].} =
@@ -89,6 +107,29 @@ proc addUnmentioned*(
     unmentioned: Hash[384]
 ) {.forceCheck: [].} =
     db.consensus.unmentioned &= unmentioned.toString()
+
+#Load functions.
+proc load*(
+    db: DB,
+    holder: uint16
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(holder.toBinary().pad(NICKNAME_LEN)).fromBinary()
+    except DBReadError:
+        result = -1
+
+proc loadDataDifficulty*(
+    db: DB,
+    holder: uint16
+): Hash[384] {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get(holder.toBinary().pad(NICKNAME_LEN) & "d").toHash(384)
+    except ValueError:
+        doAssert(false, "Couldn't turn a 48-byte value into a 48-byte hash.")
+    except DBReadError as e:
+        raise e
 
 proc load*(
     db: DB,

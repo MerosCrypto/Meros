@@ -44,18 +44,37 @@ import strutils
 import tables
 
 #Element -> JSON.
-proc `%`(
+#This wouldn't work with %, broke everything with %*, so now we have this.
+proc `%**`(
     elem: Element
 ): JSONNode {.forceCheck: [].} =
     result = %* {}
-    if elem of BlockElement:
-        result["holder"] = % cast[BlockElement](elem).holder
 
     case elem:
         of Verification as verif:
+            result["descendant"] = % "Verification"
+
             result["hash"] = % $verif.hash
 
+        #[
+        of SendDifficulty as sendDiff:
+            result["descendant"] = % "SendDifficulty"
+
+            result["holder"] = % sendDiff.holder
+            result["nonce"] = % sendDiff.nonce
+            result["difficulty"] = % $sendDiff.difficulty
+        ]#
+
+        of DataDifficulty as dataDiff:
+            result["descendant"] = % "DataDifficulty"
+
+            result["holder"] = % dataDiff.holder
+            result["nonce"] = % dataDiff.nonce
+            result["difficulty"] = % $dataDiff.difficulty
+
         of MeritRemovalVerificationPacket as packet:
+            result["descendant"] = % "VerificationPacket"
+
             result["hash"] = % $packet.hash
             result["holders"] = % []
             for holder in packet.holders:
@@ -65,7 +84,8 @@ proc `%`(
                     doAssert(false, "Couldn't add a holder to a VerificationPacket's JSON representation despite declaring an array for the holders: " & e.msg)
 
         of MeritRemoval as mr:
-            result["descendent"] = % "MeritRemoval"
+            result["descendant"] = % "MeritRemoval"
+
             result["partial"] = % mr.partial
             result["elements"] = %* [
                 mr.element1,
@@ -122,7 +142,7 @@ proc `%`(
     result["elements"] = % []
     try:
         for elem in blockArg.body.elements:
-            result["elements"].add(% elem)
+            result["elements"].add(%** elem)
     except KeyError as e:
         doAssert(false, "Couldn't add an Element to a Block's JSON representation despite declaring an array for the Elements: " & e.msg)
 

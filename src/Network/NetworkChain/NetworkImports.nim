@@ -32,6 +32,7 @@ import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
 import ../Serialize/Consensus/ParseVerification
+import ../Serialize/Consensus/ParseDataDifficulty
 import ../Serialize/Consensus/ParseMeritRemoval
 
 import ../Serialize/Merit/ParseBlockHeader
@@ -53,6 +54,9 @@ import ../Clients
 
 #Networking standard libs.
 import asyncdispatch, asyncnet
+
+#Algorithm standard lib.
+import algorithm
 
 #Sets standard lib.
 import sets

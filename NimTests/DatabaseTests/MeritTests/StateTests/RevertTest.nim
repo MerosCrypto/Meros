@@ -112,7 +112,7 @@ proc test*() =
 
         #Add it to the Blockchain and latest State.
         blockchain.processBlock(mining)
-        states[^1].processBlock(blockchain)
+        discard states[^1].processBlock(blockchain)
 
         #Commit the DB.
         db.commit(blockchain.height)

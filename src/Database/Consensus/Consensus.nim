@@ -40,8 +40,10 @@ export TransactionStatus
 import objects/ConsensusObj
 export ConsensusObj
 
-#Serialize Verification lib.
+#Serialize libs.
+import ../../Network/Serialize/Consensus/SerializeElement
 import ../../Network/Serialize/Consensus/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeDataDifficulty
 
 #Sets standard lib.
 import sets
@@ -130,6 +132,13 @@ proc checkMalicious*(
     #MaliciousMeritHolder
 ].} =
     discard
+
+#Get a holder's nonce.
+proc getNonce*(
+    consensus: Consensus,
+    holder: uint16
+): int {.inline, forceCheck: [].} =
+    consensus.db.load(holder)
 
 #Register a Transaction.
 proc register*(
@@ -224,6 +233,49 @@ proc add*(
     #Set the status.
     consensus.setStatus(verif.hash, status)
 
+#Add a DataDifficulty.
+proc add*(
+    consensus: Consensus,
+    state: State,
+    dataDiff: DataDifficulty
+) {.forceCheck: [].} =
+    consensus.db.save(dataDiff)
+    consensus.filters.data.update(dataDiff.holder, state[dataDiff.holder], dataDiff.difficulty)
+
+#Add a SignedDataDifficulty.
+proc add*(
+    consensus: Consensus,
+    state: State,
+    dataDiff: SignedDataDifficulty
+) {.forceCheck: [
+    ValueError
+].} =
+    #Verify the DataDifficulty's signature.
+    try:
+        if not dataDiff.signature.verify(
+            newBLSAggregationInfo(
+                state.holders[dataDiff.holder],
+                dataDiff.serializeWithoutHolder()
+            )
+        ):
+            raise newException(ValueError, "Invalid DataDifficulty signature.")
+    except BLSError:
+        raise newException(ValueError, "Invalid DataDifficulty signature.")
+
+    #Verify the nonce.
+    if dataDiff.nonce != consensus.db.load(dataDiff.holder) + 1:
+        if dataDiff.nonce <= consensus.db.load(dataDiff.holder):
+            #If this isn't the existing Element, it's cause for a MeritRemoval.
+            doAssert(false)
+
+        raise newException(ValueError, "DataDifficulty skips a nonce.")
+
+    #Add the DataDifficulty.
+    try:
+        consensus.add(state, cast[DataDifficulty](dataDiff))
+    except ValueError as e:
+        raise e
+
 #Add a SignedMeritRemoval.
 proc add*(
     consensus: Consensus,
@@ -287,7 +339,9 @@ proc archive*(
     consensus: Consensus,
     state: State,
     shifted: seq[VerificationPacket],
-    popped: Epoch
+    popped: Epoch,
+    incd: uint16,
+    decd: int
 ) {.forceCheck: [].} =
     try:
         for packet in shifted:
@@ -372,3 +426,19 @@ proc archive*(
     #Delete all close hashes marked for deletion.
     for hash in toDelete:
         consensus.close.excl(hash)
+
+    #Update the filters.
+    if decd == -1:
+        #consensus.filters.send.handleBlock(incd, state[incd])
+        consensus.filters.data.handleBlock(incd, state[incd])
+    else:
+        #consensus.filters.send.handleBlock(incd, state[incd], decd, state[decd])
+        consensus.filters.data.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
+
+    #If the holder just got their first vote, make sure their difficulty is counted.
+    if state[incd] == 50:
+        try:
+            #consensus.filters.send.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
+            consensus.filters.data.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
+        except DBReadError:
+            discard

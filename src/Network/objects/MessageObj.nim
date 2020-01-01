@@ -38,6 +38,7 @@ finalsd:
             Data                      = 18,
 
             SignedVerification        = 21,
+            SignedDataDifficulty      = 23,
             SignedMeritRemoval        = 25,
 
             BlockHeader               = 27,

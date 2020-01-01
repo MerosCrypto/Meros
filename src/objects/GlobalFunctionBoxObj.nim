@@ -96,6 +96,10 @@ type
             nick: uint16,
         ): bool {.inline, raises: [].}
 
+        getNonce*: proc (
+            holder: uint16
+        ): int {.inline, raises: [].}
+
         hasArchivedPacket*: proc (
             hash: Hash[384]
         ): bool {.raises: [
@@ -117,12 +121,23 @@ type
             aggregate: BLSSignature
         ] {.inline, raises: [].}
 
+        addSignedVerification*: proc (
+            verif: SignedVerification
+        ) {.raises: [
+            ValueError,
+            DataExists
+        ].}
+
         addVerificationPacket*: proc (
             packet: VerificationPacket
         ) {.raises: [].}
 
-        addSignedVerification*: proc (
-            verif: SignedVerification
+        addDataDifficulty*: proc (
+            dataDiff: DataDifficulty
+        ) {.raises: [].}
+
+        addSignedDataDifficulty*: proc (
+            dataDiff: SignedDataDifficulty
         ) {.raises: [
             ValueError,
             DataExists

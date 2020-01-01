@@ -50,7 +50,10 @@ proc getNickname(
 proc processBlock*(
     state: var State,
     blockchain: Blockchain
-) {.forceCheck: [].} =
+): (uint16, int) {.forceCheck: [].} =
+    #Init the result.
+    result = (uint16(0), -1)
+
     #Grab the new Block.
     var newBlock: Block = blockchain.tail
 
@@ -59,6 +62,7 @@ proc processBlock*(
 
     #Add the miner's Merit to the State.
     var nick: uint16 = state.getNickname(newBlock, true)
+    result[0] = nick
     state[nick] = state[nick] + 1
 
     #If the Blockchain's height is over the dead blocks quantity, meaning there is a block to remove from the state...
@@ -80,6 +84,7 @@ proc processBlock*(
 
         #If they didn't have their Merit removed, remove their old Merit.
         if not removed:
+            result[1] = int(nick)
             state[nick] = state[nick] - 1
 
     #Remove Merit from Merit Holders who had their Merit Removals archived in this Block.

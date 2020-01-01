@@ -48,7 +48,7 @@ proc test*() =
 
     #Give the miner Merit.
     blockchain.processBlock(newBlankBlock(miner = miner))
-    state.processBlock(blockchain)
+    discard state.processBlock(blockchain)
 
     #Set the miner's nickname.
     miner.nick = uint16(0)
@@ -73,7 +73,7 @@ proc test*() =
             miner = miner
         )
         blockchain.processBlock(newBlock)
-        state.processBlock(blockchain)
+        discard state.processBlock(blockchain)
 
         rewards = epochs.shift(newBlock).calculate(state)
         assert(rewards.len == 0)

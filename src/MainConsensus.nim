@@ -26,11 +26,17 @@ proc mainConsensus() {.forceCheck: [].} =
         ): bool {.inline, forceCheck: [].} =
             consensus.malicious.hasKey(nick)
 
+        #Provides access to a holder's nonce.
+        functions.consensus.getNonce = proc (
+            holder: uint16
+        ): int {.inline, forceCheck: [].} =
+            consensus.getNonce(holder)
+
         #Get if a hash has an archived packet or not.
         #Any hash with holder(s) that isn't unmentioned has an archived packet.
         functions.consensus.hasArchivedPacket = proc (
             hash: Hash[384]
-        ): bool {.raises: [
+        ): bool {.forceCheck: [
             IndexError
         ].} =
             var status: TransactionStatus
@@ -44,7 +50,7 @@ proc mainConsensus() {.forceCheck: [].} =
         #Get a Transaction's status.
         functions.consensus.getStatus = proc (
             hash: Hash[384]
-        ): TransactionStatus {.raises: [
+        ): TransactionStatus {.forceCheck: [
             IndexError
         ].} =
             try:
@@ -54,7 +60,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
         functions.consensus.getThreshold = proc (
             epoch: int
-        ): int {.inline, raises: [].} =
+        ): int {.inline, forceCheck: [].} =
             merit.state.nodeThresholdAt(epoch)
 
         functions.consensus.getPending = proc (): tuple[
@@ -62,18 +68,6 @@ proc mainConsensus() {.forceCheck: [].} =
             aggregate: BLSSignature
         ] {.inline, forceCheck: [].} =
             consensus.getPending()
-
-        #Handle VerificationPackets.
-        functions.consensus.addVerificationPacket = proc (
-            packet: VerificationPacket
-        ) {.forceCheck: [].} =
-            #Print that we're adding the VerificationPacket.
-            echo "Adding a new VerificationPacket from a Block."
-
-            #Add the Verification to the Consensus DAG.
-            consensus.add(merit.state, packet)
-
-            echo "Successfully added a new VerificationPacket."
 
         #Handle SignedVerifications.
         functions.consensus.addSignedVerification = proc (
@@ -124,6 +118,53 @@ proc mainConsensus() {.forceCheck: [].} =
             functions.network.broadcast(
                 MessageType.SignedVerification,
                 verif.signedSerialize()
+            )
+
+        #Handle VerificationPackets.
+        functions.consensus.addVerificationPacket = proc (
+            packet: VerificationPacket
+        ) {.forceCheck: [].} =
+            #Print that we're adding the VerificationPacket.
+            echo "Adding a new Verification Packet from a Block."
+
+            #Add the Verification to the Consensus DAG.
+            consensus.add(merit.state, packet)
+
+            echo "Successfully added a new Verification Packet."
+
+        #Handle DataDifficulties.
+        functions.consensus.addDataDifficulty = proc (
+            dataDiff: DataDifficulty
+        ) {.forceCheck: [].} =
+            #Print that we're adding the DataDifficulty.
+            echo "Adding a new Data Difficulty from a Block."
+
+            #Add the DataDifficulty to the Consensus DAG.
+            consensus.add(merit.state, dataDiff)
+
+            echo "Successfully added a new Data Difficulty."
+
+        #Handle SignedDataDifficulties.
+        functions.consensus.addSignedDataDifficulty = proc (
+            dataDiff: SignedDataDifficulty
+        ) {.forceCheck: [
+            ValueError
+        ].} =
+            #Print that we're adding the DataDifficulty.
+            echo "Adding a new Data Difficulty."
+
+            #Add the DataDifficulty.
+            try:
+                consensus.add(merit.state, dataDiff)
+            except ValueError as e:
+                raise e
+
+            echo "Successfully added a new Signed Data Difficulty."
+
+            #Broadcast the DataDifficulty.
+            functions.network.broadcast(
+                MessageType.SignedDataDifficulty,
+                dataDiff.signedSerialize()
             )
 
         #Handle SignedMeritRemovals.

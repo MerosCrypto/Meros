@@ -27,6 +27,7 @@ import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
+import ../Serialize/Consensus/ParseElement
 import ../Serialize/Consensus/ParseVerificationPacket
 
 import ../Serialize/Merit/ParseBlockHeader

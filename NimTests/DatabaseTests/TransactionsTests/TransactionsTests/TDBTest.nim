@@ -105,7 +105,7 @@ proc test*() =
             miner = holder
         )
         merit.processBlock(newBlock)
-        transactions.archive(merit.postProcessBlock())
+        transactions.archive(merit.postProcessBlock()[0])
 
     #Iterate over 20 'rounds'.
     for _ in 0 ..< 20:
@@ -240,7 +240,7 @@ proc test*() =
         merit.processBlock(newBlock)
 
         #Archive the epoch.
-        transactions.archive(merit.postProcessBlock())
+        transactions.archive(merit.postProcessBlock()[0])
 
         #Commit the DB.
         commit(merit.blockchain.height)

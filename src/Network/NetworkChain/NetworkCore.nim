@@ -152,12 +152,26 @@ proc newNetwork*(
                 try:
                     verif = msg.message.parseSignedVerification()
                 except ValueError as e:
-                    raise newException(ClientError, "SignedVerification didn't contain a valid hash: " & e.msg)
+                    raise newException(ClientError, "SignedVerification didn't contain a valid signature: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedVerification(verif)
                 except ValueError as e:
                     raise newException(ClientError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
+                except DataExists:
+                    return
+
+            of MessageType.SignedDataDifficulty:
+                var dataDiff: SignedDataDifficulty
+                try:
+                    dataDiff = msg.message.parseSignedDataDifficulty()
+                except ValueError as e:
+                    raise newException(ClientError, "SignedDataDifficulty didn't contain a valid signature: " & e.msg)
+
+                try:
+                    mainFunctions.consensus.addSignedDataDifficulty(dataDiff)
+                except ValueError as e:
+                    raise newException(ClientError, "Adding the SignedDataDifficulty failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 

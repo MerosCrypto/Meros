@@ -128,7 +128,7 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
 
-            #Verify the Elements. Also check who has their Merit removed.
+            #Check who has their Merit removed.
             var removed: seq[uint16] = @[]
             for elem in newBlock.body.elements:
                 discard
@@ -144,10 +144,14 @@ proc mainMerit() {.forceCheck: [].} =
                 consensus.remove(removee)
 
             #Add the Block to the Epochs and State.
-            var epoch: Epoch = merit.postProcessBlock()
+            var
+                epoch: Epoch
+                incd: uint16
+                decd: int
+            (epoch, incd, decd) = merit.postProcessBlock()
 
             #Archive the Epochs.
-            consensus.archive(merit.state, newBlock.body.packets, epoch)
+            consensus.archive(merit.state, newBlock.body.packets, epoch, incd, decd)
 
             #Archive the hashes handled by the popped Epoch.
             transactions.archive(epoch)

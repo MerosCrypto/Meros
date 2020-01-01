@@ -362,9 +362,78 @@ proc sync*(
         if merit < int(result.header.significant):
             raise newException(ValueError, "Block has an invalid significant.")
 
+    #Verify the included Elements.
+    var
+        elements: seq[BlockElement] = result.body.elements
+        newNonces: Table[uint16, int] = initTable[uint16, int]()
+    #Sort by nonce so we don't risk a gap.
+    elements.sort(
+        proc (
+            e1: BlockElement,
+            e2: BlockElement
+        ): int {.forceCheck: [].} =
+            var e1Nonce: int = -1
+            var e2Nonce: int = -1
+
+            case e1:
+                #of SendDifficulty as sendDiff:
+                #    e1Nonce = sendDiff.nonce
+                of DataDifficulty as dataDiff:
+                    e1Nonce = dataDiff.nonce
+                #of GasPrice as gasPrice:
+                #    e1Nonce = gasPrice.nonce
+
+            case e2:
+                #of SendDifficulty as sendDiff:
+                #    e2Nonce = sendDiff.nonce
+                of DataDifficulty as dataDiff:
+                    e2Nonce = dataDiff.nonce
+                #of GasPrice as gasPrice:
+                #    e2Nonce = gasPrice.nonce
+
+            if e1Nonce < e2Nonce: -1 else: 1
+    )
+
+    for elem in elements:
+        case elem:
+            #of SendDifficulty as sendDiff:
+            #    discard
+
+            of DataDifficulty as dataDiff:
+                if not newNonces.hasKey(dataDiff.holder):
+                    newNonces[dataDiff.holder] = network.mainFunctions.consensus.getNonce(dataDiff.holder)
+
+                try:
+                    if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
+                        #[
+                        Ideally, we'd now check if this was an existing Element or a conflicting Element.
+                        Unfortunately, MeritRemovals require the second Element to have an independent signature.
+                        The Block's aggregate signature won't work as a proof.
+                        So even though we can know there's a malicious Merit Holder, we can't tell the network.
+                        If we then acted on this knowledge, we'd risk desyncing.
+                        Therefore, we have to just reject the Block for being invalid.
+                        ]#
+
+                        raise newException(ValueError, "Block has an Element with an invalid nonce.")
+                    inc(newNonces[dataDiff.holder])
+                except KeyError:
+                    doAssert(false, "Table doesn't have a value for a key we made sure we had.")
+
+            #of GasPrice as gasPrice:
+            #    discard
+
+            #of MeritRemoval as mr:
+            #    discard
+
     #Add every Verification Packet.
     for packet in result.body.packets:
         network.mainFunctions.consensus.addVerificationPacket(packet)
+
+    #Add every Element.
+    for elem in elements:
+        case elem:
+            of DataDifficulty as dataDiff:
+                network.mainFunctions.consensus.addDataDifficulty(dataDiff)
 
 #Request a BlockBody.
 proc requestBlockBody*(

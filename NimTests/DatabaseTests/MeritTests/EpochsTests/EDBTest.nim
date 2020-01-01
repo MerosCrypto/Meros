@@ -104,7 +104,7 @@ proc test*() =
         blockchain.processBlock(newBlock)
 
         #Add it to the State.
-        state.processBlock(blockchain)
+        discard state.processBlock(blockchain)
 
         #Shift the records onto the Epochs.
         discard epochs.shift(blockchain.tail)

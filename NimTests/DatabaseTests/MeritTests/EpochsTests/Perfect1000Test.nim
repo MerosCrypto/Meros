@@ -53,7 +53,7 @@ proc test*() =
     for m in 0 ..< miners.len:
         #Give the miner Merit.
         blockchain.processBlock(newBlankBlock(miner = miners[m]))
-        state.processBlock(blockchain)
+        discard state.processBlock(blockchain)
 
         #Set the miner's nickname.
         miners[m].nick = uint16(m)
@@ -64,7 +64,7 @@ proc test*() =
         #That adds 2, 1, and 1, respectively, balancing everything out.
         if m != 0:
             blockchain.processBlock(newBlankBlock(miner = miners[m]))
-            state.processBlock(blockchain)
+            discard state.processBlock(blockchain)
 
         #Create the Verification.
         verif = newSignedVerificationObj(hash)
@@ -86,7 +86,7 @@ proc test*() =
             miner = miners[e mod 3]
         )
         blockchain.processBlock(newBlock)
-        state.processBlock(blockchain)
+        discard state.processBlock(blockchain)
 
         rewards = epochs.shift(newBlock).calculate(state)
         assert(rewards.len == 0)

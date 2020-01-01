@@ -41,5 +41,5 @@ def DataDifficultyTest(
     vddVoted: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888"))
 
     #Create and execute a Liver/Syncer.
-    Liver(rpc, blockchain, callbacks={27: vddStarting, 51: vddEarnedVote, 52: vddVoted}).live()
+    Liver(rpc, blockchain, callbacks={26: vddStarting, 50: vddEarnedVote, 51: vddVoted}).live()
     Syncer(rpc, blockchain).sync()

@@ -117,10 +117,14 @@ proc test*() =
         merit.processBlock(mining)
 
         #Add the Block to the Epochs and State.
-        var epoch: Epoch = merit.postProcessBlock()
+        var
+            epoch: Epoch
+            incd: uint16
+            decd: int
+        (epoch, incd, decd) = merit.postProcessBlock()
 
         #Archive the Epochs.
-        consensus.archive(merit.state, mining.body.packets, epoch)
+        consensus.archive(merit.state, mining.body.packets, epoch, incd, decd)
 
         #Archive the hashes handled by the popped Epoch.
         transactions.archive(epoch)

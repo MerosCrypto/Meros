@@ -176,8 +176,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 - Meros allows Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
 
-- Meros doesn't check that a Block's Elements are new and unique.
-- Meros doesn't check that a Block's Elements have proper nonces.
 - Meros doesn't check that a Block's Elements don't cause a MeritRemoval.
 
 - Meros mints Merit before minting Meros.

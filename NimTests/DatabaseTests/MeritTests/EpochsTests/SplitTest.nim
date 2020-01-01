@@ -52,7 +52,7 @@ proc test*() =
     for m in 0 ..< miners.len:
         #Give the miner Merit.
         blockchain.processBlock(newBlankBlock(miner = miners[m]))
-        state.processBlock(blockchain)
+        discard state.processBlock(blockchain)
 
         #Set the miner's nickname.
         miners[m].nick = uint16(m)
@@ -81,7 +81,7 @@ proc test*() =
         else:
             newBlock = newBlankBlock()
         blockchain.processBlock(newBlock)
-        state.processBlock(blockchain)
+        discard state.processBlock(blockchain)
 
         rewards = epochs.shift(newBlock).calculate(state)
         assert(rewards.len == 0)

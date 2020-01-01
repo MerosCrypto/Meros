@@ -20,7 +20,6 @@ Consensus:
 - When a packet is archived, recreate the pending packet to include everyone who wasn't included.
 
 - SendDifficulty.
-- DataDifficulty.
 - GasPrice.
 
 - Same Nonce Merit Removals.
