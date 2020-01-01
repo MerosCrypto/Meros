@@ -61,11 +61,10 @@ lib:
 - Hash/Blake2 Test.
 - Hash/Argon Test.
 
-- Hash/SHA2 (384) Test.
-- Hash/Keccak (384) Test.
-- Hash/SHA3 (384) Test.
-
-- Hash/HashCommon Test.
+- Expand the Hash/SHA2 Test.
+- Expand the Hash/Keccak (384) Test.
+- Expand the Hash/SHA3 Test.
+- Expand the Hash/RipeMD Test.
 
 - Sketcher Test.
 - Logger Test.
@@ -85,34 +84,13 @@ Datbase/Filesystem/DB:
 - ConsensusDB Test.
 - MeritDB Test.
 
-Database/Transactions:
-
-- Mint Test.
-- Claim Test.
-- Send Test.
-- Data Test.
-
 Database/Consensus:
 
-- TransactionStatus Test.
 - Expand the Consensus DB Test to work with more Elements.
 
 Database/Consensus/Elements:
 
-- Element Test.
-- Verification Test.
-- VerificationPacket Test.
-- SendDifficulty Test.
-- DataDifficulty Test.
-- GasPrice Test.
-- MeritRemoval Test.
-
-Database/Merit:
-
-- BlockHeader Test.
-- Block Test.
-- Difficulty Test.
-- Merit Test.
+- Elements Test.
 
 Network:
 
