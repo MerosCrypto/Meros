@@ -160,7 +160,7 @@ If any scores happen to be 0, they are removed. If the sum of every score is les
 
 After Mints are decided, the Block's miner gets 1 Merit. If this the miner's initial Merit, this is Unlocked Merit. If a Merit Holder loses all their Merit and then regains Merit, the regained Merit counts as "initial" Merit. If the new Merit Holder doesn't publish any Elements which get archived in a Block, for an entire Checkpoint period, not including the Checkpoint period in which they get their initial Merit, their Merit is locked. To restore their Merit to unlocked, a Merit Holder must get an Element archived in a Block. This turns their Merit into Pending Merit, and their Merit will be restored to Unlocked Merit after the next Checkpoint period. Pending Merit cannot be used on the Consensus DAG, but does contribute towards the amount of Unlocked Merit, and can be used on Checkpoints. After 52560 Blocks, Merit dies. It cannot be restored. This sets a hard cap on the total supply of Merit at 52560 Merit.
 
-`BlockBody` has a variable message length; the 4-byte sketch capacity, variable length sketch, 4-byte amount of Elements, Elements (each a different length depending on its type, with a 1-byte prefix of its type (same prefix used in the contents merkle)), and the 96-byte signature.
+`BlockBody` has a variable message length; the 4-byte sketch capacity, variable length sketch, 4-byte amount of Elements, Elements (each a different length depending on its type, with a 1-byte prefix of its type (same prefix used in the contents merkle)), and the 48-byte signature.
 
 ### Checkpoint
 

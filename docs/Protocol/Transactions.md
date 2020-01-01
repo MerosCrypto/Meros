@@ -38,7 +38,7 @@ Claim inputs are hashes of Mints which have yet to be claimed. The Claim's singu
 
 signature must be the BLS signature produced by the Mint's designated claimee signing `"\1" + mint.hash + mint.index + claim.output.key`, where `mint.hash` takes up 48 bytes and `claim.output.key` takes up 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key created from every unique BLS Public Key.
 
-Claim hashes are defined as `Blake2b-384("\1" + signature)`, where signature takes up 96 bytes.
+Claim hashes are defined as `Blake2b-384("\1" + signature)`, where signature takes up 48 bytes.
 
 `Claim` has a variable message length; the 1-byte amount of inputs, the inputs (each 49 bytes), the 32-byte output key, and the 48-byte BLS signature.
 
