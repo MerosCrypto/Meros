@@ -272,18 +272,19 @@ proc add*(
     #Add a repeating timer which confirms this node is active.
     try:
         addTimer(
-            20000,
+            10000,
             false,
             proc (
                 fd: AsyncFD
             ): bool {.forceCheck: [].} =
-                if client.last + 60 <= getTime():
+                if client.isClosed or (client.last + 30 <= getTime()):
                     client.close()
+                    return true
 
                 if client.pendingSyncRequest == true:
                     return
 
-                if client.last + 40 <= getTime():
+                if client.last + 20 <= getTime():
                     try:
                         asyncCheck (
                             proc (): Future[void] {.forceCheck: [], async.} =

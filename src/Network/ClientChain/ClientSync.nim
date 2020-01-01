@@ -16,32 +16,16 @@ proc startSyncing*(
     try:
         #Send that we're syncing.
         await client.send(newMessage(MessageType.Syncing))
-
-        #Bool of if we should still wait for a SyncingAcknowledged.
-        #Set to false after 5 seconds.
-        var shouldWait: bool = true
-        try:
-            addTimer(
-                5000,
-                true,
-                func (
-                    fd: AsyncFD
-                ): bool {.forceCheck: [].} =
-                    shouldWait = false
-            )
-        except OSError as e:
-            doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
+        var sentReq: uint32 = getTime()
 
         #Discard every message until we get a SyncingAcknowledged.
         var msg: Message
-        while shouldWait:
-            msg = await client.recv()
-            if msg.content == SyncingAcknowledged:
-                break
+        while msg.content != SyncingAcknowledged:
+            #If the client doesn't send a SyncingAcknowledged in time, raise an error.
+            if getTime() > sentReq + 2:
+                raise newException(ClientError, "Client never responded to the fact we were syncing.")
 
-        #If we broke because shouldWait expired, raise a client error.
-        if not shouldWait:
-            raise newException(ClientError, "Client never responded to the fact we were syncing.")
+            msg = await client.recv()
     except ClientError as e:
         raise e
     except Exception as e:
