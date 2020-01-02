@@ -81,6 +81,20 @@ proc newConsensusObj*(
         unmentioned: initHashSet[Hash[384]]()
     )
 
+    #Reload the filters.
+    for h in 0 ..< state.holders.len:
+        #[
+        try:
+            result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h))
+        except DBReadError:
+            discard
+        ]#
+
+        try:
+            result.filters.data.update(uint16(h), state[uint16(h)], result.db.loadDataDifficulty(uint16(h)))
+        except DBReadError:
+            discard
+
     #Load statuses still in Epochs.
     #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
     var

@@ -71,6 +71,8 @@ proc test*() =
         holders: seq[MinerWallet] = @[]
         #Packets to include in the next Block.
         packets: seq[VerificationPacket] = @[]
+        #Elements to include in the next Block.
+        elements: seq[BlockElement] = @[]
         #List of Transactions we didn't add every SignedVerification for.
         unsigned: seq[Hash[384]] = @[]
         #SignedVerification used to generate signatures.
@@ -84,7 +86,7 @@ proc test*() =
         var
             miner: MinerWallet
             mining: Block
-        if (rand(1) == 0) or (holders.len == 0):
+        if (rand(2) == 0) or (holders.len == 0):
             miner = newMinerWallet()
             miner.nick = uint16(holders.len)
             holders.add(miner)
@@ -94,6 +96,7 @@ proc test*() =
                 sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255)),
                 miner = miner,
                 packets = packets,
+                elements = elements,
                 aggregate = aggregate
             )
         else:
@@ -106,6 +109,7 @@ proc test*() =
                 nick = uint16(h),
                 miner = miner,
                 packets = packets,
+                elements = elements,
                 aggregate = aggregate
             )
 
@@ -123,8 +127,20 @@ proc test*() =
             decd: int
         (epoch, incd, decd) = merit.postProcessBlock()
 
+        #Add/remove an extra 24 Merit from each to speed up the process of getting difficulty votes.
+        merit.state[incd] = merit.state[incd] + 24
+        if decd != -1:
+            merit.state[uint16(decd)] = merit.state[uint16(decd)] + 24
+
         #Archive the Epochs.
         consensus.archive(merit.state, mining.body.packets, epoch, incd, decd)
+
+        #Add the elements.
+        for elem in elements:
+            case elem:
+                of DataDifficulty as dataDiff:
+                    consensus.add(merit.state, dataDiff)
+        elements = @[]
 
         #Archive the hashes handled by the popped Epoch.
         transactions.archive(epoch)
@@ -149,8 +165,8 @@ proc test*() =
         #Compare the Consensus DAGs.
         compare(consensus, reloaded)
 
-    #Iterate over 20 'rounds'.
-    for r in 1 .. 20:
+    #Iterate over 30 'rounds'.
+    for r in 1 .. 30:
         #Clear the packets, unsigned table, and aggregate.
         packets = @[]
         unsigned = @[]
@@ -245,6 +261,16 @@ proc test*() =
                 if tx == packet.hash:
                     consensus.add(merit.state, packet)
                     break
+
+        #Add a Data Difficulty.
+        var
+            holder: int = rand(holders.len - 1)
+            difficulty: Hash[384]
+            dataDiff: SignedDataDifficulty
+        for b in 0 ..< 48:
+            difficulty.data[b] = uint8(rand(255))
+        dataDiff = newSignedDataDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
+        elements.add(dataDiff)
 
         #Mine the packets.
         mineBlock()

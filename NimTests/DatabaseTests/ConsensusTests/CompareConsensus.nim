@@ -45,14 +45,70 @@ proc compare*(
     #Compare the merit table.
     assert(ts1.merit == ts2.merit)
 
+#Compare two Spam Filters.
+proc compare*(
+    sf1: SpamFilter,
+    sf2: SpamFilter
+) =
+    #If one is nil, verify both are.
+    if sf1.median.isNil:
+        assert(sf2.median.isNil)
+    #If one isn't nil, verify both aren't.
+    else:
+        assert(not sf2.median.isNil)
+
+        #Get the left most difficulties.
+        var
+            curr1: VotedDifficulty = sf1.median
+            curr2: VotedDifficulty = sf2.median
+        while not curr1.prev.isNil:
+            curr1 = curr1.prev
+        while not curr2.prev.isNil:
+            curr2 = curr2.prev
+
+        while curr1.votes == 0:
+            curr1 = curr1.next
+        while curr2.votes == 0:
+            curr2 = curr2.next
+
+        #Function to get the next difficulty in the list.
+        #Skips over 0 elements as the SpamFilter only removes 0s when adjusted the median over.
+        proc getNext(
+            diff: VotedDifficulty
+        ): VotedDifficulty =
+            result = diff.next
+            while not result.isNil:
+                if result.votes == 0:
+                    result = result.next
+
+        while not curr1.isNil:
+            #Verify their equality.
+            assert(curr1.difficulty == curr2.difficulty)
+            assert(curr1.votes == curr2.votes)
+
+            #Get the next difficulties.
+            curr1 = curr1.getNext()
+            curr2 = curr2.getNext()
+            #Verify if one is nil, both are.
+            assert(curr1.isNil == curr2.isNil)
+
+    #Verify the SpamFilters agree on who voted for what.
+    assert(sf1.votes.len == sf2.votes.len)
+    for holder in sf1.votes.keys():
+        assert(sf1.votes[holder].difficulty == sf2.votes[holder].difficulty)
+
+    #Verify the starting difficulty and current difficulty.
+    assert(sf1.startDifficulty == sf2.startDifficulty)
+    assert(sf1.difficulty == sf2.difficulty)
+
 #Compare two Consensuses to make sure they have the same values.
 proc compare*(
     c1: Consensus,
     c2: Consensus
 ) =
     #Compare the SpamFilters.
-    assert(c1.filters.send.difficulty == c2.filters.send.difficulty)
-    assert(c1.filters.data.difficulty == c2.filters.data.difficulty)
+    compare(c1.filters.send, c2.filters.send)
+    compare(c1.filters.data, c2.filters.data)
 
     #Compare the malicious table.
     assert(c1.malicious.len == c2.malicious.len)

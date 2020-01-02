@@ -10,22 +10,33 @@ import tables
 type
     #VotedDifficulty object.
     VotedDifficulty* = ref object
-        difficulty: Hash[384]
-        votes: int
-        prev: VotedDifficulty
-        next: VotedDifficulty
+        when defined(merosTests):
+            difficulty*: Hash[384]
+            votes*: int
+            prev*: VotedDifficulty
+            next*: VotedDifficulty
+        else:
+            difficulty: Hash[384]
+            votes: int
+            prev: VotedDifficulty
+            next: VotedDifficulty
 
     #SpamFilter object.
     SpamFilter* = object
-        #Median node.
-        median: VotedDifficulty
-        #Merit left of the median value.
-        left: int
-        #Merit right of the median value.
-        right: int
-
-        #Nicknames -> voted node.
-        votes: Table[uint16, VotedDifficulty]
+        when defined(merosTests):
+            #Median node.
+            median*: VotedDifficulty
+            #Merit left of the median value.
+            left*: int
+            #Merit right of the median value.
+            right*: int
+            #Nicknames -> voted node.
+            votes*: Table[uint16, VotedDifficulty]
+        else:
+            median: VotedDifficulty
+            left: int
+            right: int
+            votes: Table[uint16, VotedDifficulty]
 
         #Starting difficulty.
         startDifficulty*: Hash[384]
