@@ -18,6 +18,7 @@ import ../SerializeCommon
 
 #Serialize Element libs.
 import ../Consensus/SerializeVerification
+import ../Consensus/SerializeSendDifficulty
 import ../Consensus/SerializeDataDifficulty
 import ../Consensus/SerializeMeritRemoval
 

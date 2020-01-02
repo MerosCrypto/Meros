@@ -16,11 +16,13 @@ export SignedElementObj
 #Element sub-type libs.
 import Verification as VerificationFile
 import VerificationPacket as VerificationPacketFile
+import SendDifficulty as SendDifficultyFile
 import DataDifficulty as DataDifficultyFile
 import MeritRemoval as MeritRemovalFile
 
 export VerificationFile
 export VerificationPacketFile
+export SendDifficultyFile
 export DataDifficultyFile
 export MeritRemovalFile
 
@@ -121,6 +123,15 @@ proc `==`*(
                 (not (e2 of VerificationPacket)) or
                 (vp1.holders.sorted() != cast[VerificationPacket](e2).holders.sorted()) or
                 (vp1.hash != cast[VerificationPacket](e2).hash)
+            ):
+                return false
+
+        of SendDifficulty as sd1:
+            if (
+                (not (e2 of SendDifficulty)) or
+                (sd1.holder != cast[SendDifficulty](e2).holder) or
+                (sd1.nonce != cast[SendDifficulty](e2).nonce) or
+                (sd1.difficulty != cast[SendDifficulty](e2).difficulty)
             ):
                 return false
 

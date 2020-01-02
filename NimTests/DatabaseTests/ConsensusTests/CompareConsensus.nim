@@ -80,6 +80,8 @@ proc compare*(
             while not result.isNil:
                 if result.votes == 0:
                     result = result.next
+                else:
+                    return
 
         while not curr1.isNil:
             #Verify their equality.

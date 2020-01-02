@@ -138,6 +138,8 @@ proc test*() =
         #Add the elements.
         for elem in elements:
             case elem:
+                of SendDifficulty as sendDiff:
+                    consensus.add(merit.state, sendDiff)
                 of DataDifficulty as dataDiff:
                     consensus.add(merit.state, dataDiff)
         elements = @[]
@@ -262,11 +264,19 @@ proc test*() =
                     consensus.add(merit.state, packet)
                     break
 
-        #Add a Data Difficulty.
+        #Add a Send Difficulty.
         var
             holder: int = rand(holders.len - 1)
             difficulty: Hash[384]
-            dataDiff: SignedDataDifficulty
+            sendDiff: SignedSendDifficulty
+        for b in 0 ..< 48:
+            difficulty.data[b] = uint8(rand(255))
+        sendDiff = newSignedSendDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
+        elements.add(sendDiff)
+
+        #Add a Data Difficulty.
+        var dataDiff: SignedDataDifficulty
+        holder = rand(holders.len - 1)
         for b in 0 ..< 48:
             difficulty.data[b] = uint8(rand(255))
         dataDiff = newSignedDataDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)

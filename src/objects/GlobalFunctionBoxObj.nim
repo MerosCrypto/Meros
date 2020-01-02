@@ -132,6 +132,16 @@ type
             packet: VerificationPacket
         ) {.raises: [].}
 
+        addSendDifficulty*: proc (
+            dataDiff: SendDifficulty
+        ) {.raises: [].}
+
+        addSignedSendDifficulty*: proc (
+            dataDiff: SignedSendDifficulty
+        ) {.raises: [
+            ValueError
+        ].}
+
         addDataDifficulty*: proc (
             dataDiff: DataDifficulty
         ) {.raises: [].}
@@ -139,8 +149,7 @@ type
         addSignedDataDifficulty*: proc (
             dataDiff: SignedDataDifficulty
         ) {.raises: [
-            ValueError,
-            DataExists
+            ValueError
         ].}
 
         addSignedMeritRemoval*: proc (

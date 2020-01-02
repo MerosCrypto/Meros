@@ -51,6 +51,8 @@ class MessageType(Enum):
     Data                      = 18
 
     SignedVerification        = 21
+    SignedSendDifficulty      = 22
+    SignedDataDifficulty      = 23
     SignedMeritRemoval        = 25
 
     BlockHeader               = 27
@@ -94,6 +96,8 @@ lengths: Dict[MessageType, List[int]] = {
     MessageType.Data:                      [48, 1, -1, 68],
 
     MessageType.SignedVerification:        [98],
+    MessageType.SignedSendDifficulty:      [2, 4, 48],
+    MessageType.SignedDataDifficulty:      [2, 4, 48],
     MessageType.SignedMeritRemoval:        [4, 0, 1, 0, 48],
 
     MessageType.BlockHeader:               [155, 0, 56],

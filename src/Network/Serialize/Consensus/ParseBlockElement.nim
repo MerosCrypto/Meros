@@ -9,6 +9,7 @@ import ../SerializeCommon
 
 #Parse Element libs.
 import ParseElement
+import ParseSendDifficulty
 import ParseDataDifficulty
 import ParseMeritRemoval
 
@@ -50,7 +51,7 @@ proc parseBlockElement*(
     try:
         case int(data[i]):
             of SEND_DIFFICULTY_PREFIX:
-                doAssert(false, "SendDifficulties are not supported.")
+                result.element = parseSendDifficulty(data[i + 1 .. i + result.len])
             of DATA_DIFFICULTY_PREFIX:
                 result.element = parseDataDifficulty(data[i + 1 .. i + result.len])
             of GAS_PRICE_PREFIX:

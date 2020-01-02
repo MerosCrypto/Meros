@@ -132,6 +132,41 @@ proc mainConsensus() {.forceCheck: [].} =
 
             echo "Successfully added a new Verification Packet."
 
+        #Handle SendDifficulties.
+        functions.consensus.addSendDifficulty = proc (
+            sendDiff: SendDifficulty
+        ) {.forceCheck: [].} =
+            #Print that we're adding the SendDifficulty.
+            echo "Adding a new Send Difficulty from a Block."
+
+            #Add the SendDifficulty to the Consensus DAG.
+            consensus.add(merit.state, sendDiff)
+
+            echo "Successfully added a new Send Difficulty."
+
+        #Handle SignedSendDifficulties.
+        functions.consensus.addSignedSendDifficulty = proc (
+            sendDiff: SignedSendDifficulty
+        ) {.forceCheck: [
+            ValueError
+        ].} =
+            #Print that we're adding the SendDifficulty.
+            echo "Adding a new Send Difficulty."
+
+            #Add the SendDifficulty.
+            try:
+                consensus.add(merit.state, sendDiff)
+            except ValueError as e:
+                raise e
+
+            echo "Successfully added a new Signed Send Difficulty."
+
+            #Broadcast the SendDifficulty.
+            functions.network.broadcast(
+                MessageType.SignedSendDifficulty,
+                sendDiff.signedSerialize()
+            )
+
         #Handle DataDifficulties.
         functions.consensus.addDataDifficulty = proc (
             dataDiff: DataDifficulty

@@ -32,6 +32,7 @@ import ../Serialize/Transactions/ParseSend
 import ../Serialize/Transactions/ParseData
 
 import ../Serialize/Consensus/ParseVerification
+import ../Serialize/Consensus/ParseSendDifficulty
 import ../Serialize/Consensus/ParseDataDifficulty
 import ../Serialize/Consensus/ParseMeritRemoval
 

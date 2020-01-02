@@ -1,6 +1,6 @@
 #Tests proper handling of singular DataDifficulties.
 #Does test that DataDifficulties from before having votes are applied when the Merit Holder gains votes.
-#Doesn't test live DataDifficulties, despite having a Liver.
+#Doesn't test signed DataDifficulties, despite having a Liver.
 
 #Types.
 from typing import Dict, Callable, IO, Any

@@ -83,12 +83,10 @@ proc newConsensusObj*(
 
     #Reload the filters.
     for h in 0 ..< state.holders.len:
-        #[
         try:
-            result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h))
+            result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h)))
         except DBReadError:
             discard
-        ]#
 
         try:
             result.filters.data.update(uint16(h), state[uint16(h)], result.db.loadDataDifficulty(uint16(h)))

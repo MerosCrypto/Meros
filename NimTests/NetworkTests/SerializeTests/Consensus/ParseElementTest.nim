@@ -29,7 +29,7 @@ import ../../../DatabaseTests/ConsensusTests/ElementsTests/TestElements
 #Serialization libs.
 import ../../../../src/Network/Serialize/SerializeCommon
 import ../../../../src/Network/Serialize/Consensus/ParseElement
-#import ../../../../src/Network/Serialize/Consensus/SerializeSendDifficulty
+import ../../../../src/Network/Serialize/Consensus/SerializeSendDifficulty
 import ../../../../src/Network/Serialize/Consensus/SerializeDataDifficulty
 #import ../../../../src/Network/Serialize/Consensus/SerializeGasPrize
 import ../../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
@@ -38,12 +38,10 @@ import ../../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
 import random
 
 proc test*() =
-    #[
     var sendDiff: SendDifficulty = newRandomSendDifficulty()
-    assert(sendDiff.serializeContents().len == {
+    assert(sendDiff.serialize().len == {
         int8(SEND_DIFFICULTY_PREFIX)
     }.getLength(char(SEND_DIFFICULTY_PREFIX)))
-    ]#
 
     var dataDiff: DataDifficulty = newRandomDataDifficulty()
     assert(dataDiff.serialize().len == {
@@ -75,7 +73,7 @@ proc test*() =
 
                 e1 = mrvp
             of 2:
-                continue
+                e1 = newRandomSendDifficulty(holder)
             of 3:
                 e1 = newRandomDataDifficulty(holder)
             of 4:
@@ -99,7 +97,7 @@ proc test*() =
 
                     e2 = mrvp
                 of 2:
-                    continue
+                    e2 = newRandomSendDifficulty(holder)
                 of 3:
                     e2 = newRandomDataDifficulty(holder)
                 of 4:

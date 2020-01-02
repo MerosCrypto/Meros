@@ -14,22 +14,27 @@ export ElementObj
 #SendDifficulty objects.
 type
     SendDifficulty* = ref object of BlockElement
+        nonce*: int
         difficulty*: Hash[384]
 
     SignedSendDifficulty* = ref object of SendDifficulty
         signature*: BLSSignature
 
-#Constructors/
+#Constructors.
 func newSendDifficultyObj*(
+    nonce: int,
     difficulty: Hash[384]
 ): SendDifficulty {.inline, forceCheck: [].} =
     SendDifficulty(
+        nonce: nonce,
         difficulty: difficulty
     )
 
 func newSignedSendDifficultyObj*(
+    nonce: int,
     difficulty: Hash[384]
 ): SignedSendDifficulty {.inline, forceCheck: [].} =
     SignedSendDifficulty(
+        nonce: nonce,
         difficulty: difficulty
     )

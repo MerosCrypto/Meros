@@ -14,6 +14,7 @@ import ../SerializeCommon
 import ParseElement
 import ParseVerification
 import ParseVerificationPacket
+import ParseSendDifficulty
 import ParseDataDifficulty
 
 #Parse an Element in a MeritRemoval.
@@ -52,7 +53,7 @@ proc parseMeritRemovalElement(
             of VERIFICATION_PACKET_PREFIX:
                 result.element = parseMeritRemovalVerificationPacket(data[i + 1 ..< i + result.len])
             of SEND_DIFFICULTY_PREFIX:
-                doAssert(false, "SendDifficulties are not supported.")
+                result.element = parseSendDifficulty(holder & data[i + 1 ..< i + result.len])
             of DATA_DIFFICULTY_PREFIX:
                 result.element = parseDataDifficulty(holder & data[i + 1 ..< i + result.len])
             of GAS_PRICE_PREFIX:

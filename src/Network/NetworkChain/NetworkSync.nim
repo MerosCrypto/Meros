@@ -378,16 +378,16 @@ proc sync*(
             var e2Nonce: int = -1
 
             case e1:
-                #of SendDifficulty as sendDiff:
-                #    e1Nonce = sendDiff.nonce
+                of SendDifficulty as sendDiff:
+                    e1Nonce = sendDiff.nonce
                 of DataDifficulty as dataDiff:
                     e1Nonce = dataDiff.nonce
                 #of GasPrice as gasPrice:
                 #    e1Nonce = gasPrice.nonce
 
             case e2:
-                #of SendDifficulty as sendDiff:
-                #    e2Nonce = sendDiff.nonce
+                of SendDifficulty as sendDiff:
+                    e2Nonce = sendDiff.nonce
                 of DataDifficulty as dataDiff:
                     e2Nonce = dataDiff.nonce
                 #of GasPrice as gasPrice:
@@ -401,15 +401,12 @@ proc sync*(
             raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
 
         case elem:
-            #of SendDifficulty as sendDiff:
-            #    discard
-
-            of DataDifficulty as dataDiff:
-                if not newNonces.hasKey(dataDiff.holder):
-                    newNonces[dataDiff.holder] = network.mainFunctions.consensus.getNonce(dataDiff.holder)
+            of SendDifficulty as sendDiff:
+                if not newNonces.hasKey(sendDiff.holder):
+                    newNonces[sendDiff.holder] = network.mainFunctions.consensus.getNonce(sendDiff.holder)
 
                 try:
-                    if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
+                    if sendDiff.nonce != newNonces[sendDiff.holder] + 1:
                         #[
                         Ideally, we'd now check if this was an existing Element or a conflicting Element.
                         Unfortunately, MeritRemovals require the second Element to have an independent signature.
@@ -418,8 +415,20 @@ proc sync*(
                         If we then acted on this knowledge, we'd risk desyncing.
                         Therefore, we have to just reject the Block for being invalid.
                         ]#
-
                         raise newException(ValueError, "Block has an Element with an invalid nonce.")
+
+                    inc(newNonces[sendDiff.holder])
+                except KeyError:
+                    doAssert(false, "Table doesn't have a value for a key we made sure we had.")
+
+            of DataDifficulty as dataDiff:
+                if not newNonces.hasKey(dataDiff.holder):
+                    newNonces[dataDiff.holder] = network.mainFunctions.consensus.getNonce(dataDiff.holder)
+
+                try:
+                    if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
+                        raise newException(ValueError, "Block has an Element with an invalid nonce.")
+
                     inc(newNonces[dataDiff.holder])
                 except KeyError:
                     doAssert(false, "Table doesn't have a value for a key we made sure we had.")

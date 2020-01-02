@@ -93,7 +93,6 @@ Their message lengths are their non-"Signed" message length plus 48 bytes; the 4
 
 - Meros doesn't support defaulting.
 
-- Meros doesn't support SendDifficulties or `SignedSendDifficulty`.
 - Meros doesn't support GasPrices or `SignedGasPrice`.
 
 - Meros doesn't support MeritRemovals, despite having the infrastructure.

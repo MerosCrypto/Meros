@@ -43,6 +43,7 @@ export ConsensusObj
 #Serialize libs.
 import ../../Network/Serialize/Consensus/SerializeElement
 import ../../Network/Serialize/Consensus/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeSendDifficulty
 import ../../Network/Serialize/Consensus/SerializeDataDifficulty
 
 #Sets standard lib.
@@ -232,6 +233,49 @@ proc add*(
     consensus.calculateMerit(state, verif.hash, status)
     #Set the status.
     consensus.setStatus(verif.hash, status)
+
+#Add a SendDifficulty.
+proc add*(
+    consensus: Consensus,
+    state: State,
+    sendDiff: SendDifficulty
+) {.forceCheck: [].} =
+    consensus.db.save(sendDiff)
+    consensus.filters.send.update(sendDiff.holder, state[sendDiff.holder], sendDiff.difficulty)
+
+#Add a SignedSendDifficulty.
+proc add*(
+    consensus: Consensus,
+    state: State,
+    sendDiff: SignedSendDifficulty
+) {.forceCheck: [
+    ValueError
+].} =
+    #Verify the SendDifficulty's signature.
+    try:
+        if not sendDiff.signature.verify(
+            newBLSAggregationInfo(
+                state.holders[sendDiff.holder],
+                sendDiff.serializeWithoutHolder()
+            )
+        ):
+            raise newException(ValueError, "Invalid SendDifficulty signature.")
+    except BLSError:
+        raise newException(ValueError, "Invalid SendDifficulty signature.")
+
+    #Verify the nonce.
+    if sendDiff.nonce != consensus.db.load(sendDiff.holder) + 1:
+        if sendDiff.nonce <= consensus.db.load(sendDiff.holder):
+            #If this isn't the existing Element, it's cause for a MeritRemoval.
+            doAssert(false)
+
+        raise newException(ValueError, "SendDifficulty skips a nonce.")
+
+    #Add the SendDifficulty.
+    try:
+        consensus.add(state, cast[SendDifficulty](sendDiff))
+    except ValueError as e:
+        raise e
 
 #Add a DataDifficulty.
 proc add*(
@@ -429,16 +473,20 @@ proc archive*(
 
     #Update the filters.
     if decd == -1:
-        #consensus.filters.send.handleBlock(incd, state[incd])
+        consensus.filters.send.handleBlock(incd, state[incd])
         consensus.filters.data.handleBlock(incd, state[incd])
     else:
-        #consensus.filters.send.handleBlock(incd, state[incd], decd, state[decd])
+        consensus.filters.send.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
         consensus.filters.data.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
 
     #If the holder just got their first vote, make sure their difficulty is counted.
     if state[incd] == 50:
         try:
-            #consensus.filters.send.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
+            consensus.filters.send.update(incd, state[incd], consensus.db.loadSendDifficulty(incd))
+        except DBReadError:
+            discard
+
+        try:
             consensus.filters.data.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
         except DBReadError:
             discard

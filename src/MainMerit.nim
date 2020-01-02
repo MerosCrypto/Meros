@@ -159,6 +159,8 @@ proc mainMerit() {.forceCheck: [].} =
             #Add every Element.
             for elem in elements:
                 case elem:
+                    of SendDifficulty as sendDiff:
+                        network.mainFunctions.consensus.addSendDifficulty(sendDiff)
                     of DataDifficulty as dataDiff:
                         network.mainFunctions.consensus.addDataDifficulty(dataDiff)
 

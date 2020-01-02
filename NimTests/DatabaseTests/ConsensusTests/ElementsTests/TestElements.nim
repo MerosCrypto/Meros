@@ -63,6 +63,29 @@ proc newRandomVerificationPacket*(
     #Set a random signature.
     result.signature = miner.sign("")
 
+proc newRandomSendDifficulty*(
+    holder: uint16 = uint16(rand(high(int16)))
+): SignedSendDifficulty =
+    var
+        #Nonce.
+        nonce: int = rand(high(int32))
+        #Hash.
+        difficulty: Hash[384]
+        #Miner.
+        miner: MinerWallet = newMinerWallet()
+
+    #Randomize the difficulty.
+    for b in 0 ..< 48:
+        difficulty.data[b] = uint8(rand(255))
+
+    #Randomize the miner's nick name.
+    miner.nick = holder
+
+    #Create the SignedSendDifficulty.
+    result = newSignedSendDifficultyObj(nonce, difficulty)
+    #Sign it.
+    miner.sign(result)
+
 proc newRandomDataDifficulty*(
     holder: uint16 = uint16(rand(high(int16)))
 ): SignedDataDifficulty =
@@ -106,7 +129,7 @@ proc newRandomElement*(
     #Include all possibilities in the set.
     if verification: possibilities.incl(0)
     if packet: possibilities.incl(1)
-    #if sendDifficulty: possibilities.incl(2)
+    if sendDifficulty: possibilities.incl(2)
     if dataDifficulty: possibilities.incl(3)
     #if gasPrice: possibilities.incl(4)
     if removal: possibilities.incl(5)
@@ -121,7 +144,7 @@ proc newRandomElement*(
         of 1:
             result = newRandomVerificationPacket(holder)
         of 2:
-            discard
+            result = newRandomSendDifficulty(holder)
         of 3:
             result = newRandomDataDifficulty(holder)
         of 4:
@@ -160,8 +183,8 @@ proc newRandomMeritRemoval*(
                 signatures.add(cast[SignedVerification](verif).signature)
             of VerificationPacket as vp:
                 signatures.add(cast[SignedVerificationPacket](vp).signature)
-            #of SendDifficulty as sd:
-            #    signatures.add(cast[SignedSendDifficulty](sd).signature)
+            of SendDifficulty as sd:
+                signatures.add(cast[SignedSendDifficulty](sd).signature)
             of DataDifficulty as dd:
                 signatures.add(cast[SignedDataDifficulty](dd).signature)
             #of GasPrice as gp:
@@ -174,8 +197,8 @@ proc newRandomMeritRemoval*(
             signatures.add(cast[SignedVerification](verif).signature)
         of VerificationPacket as vp:
             signatures.add(cast[SignedVerificationPacket](vp).signature)
-        #of SendDifficulty as sd:
-        #    signatures.add(cast[SignedSendDifficulty](sd).signature)
+        of SendDifficulty as sd:
+            signatures.add(cast[SignedSendDifficulty](sd).signature)
         of DataDifficulty as dd:
             signatures.add(cast[SignedDataDifficulty](dd).signature)
         #of GasPrice as gp:
@@ -203,7 +226,7 @@ proc newRandomBlockElement*(
         r: int8 = int8(rand(3))
 
     #Include all possibilities in the set.
-    #if sendDifficulty: possibilities.incl(0)
+    if sendDifficulty: possibilities.incl(0)
     if dataDifficulty: possibilities.incl(1)
     #if gasPrice: possibilities.incl(2)
     if removal: possibilities.incl(3)
@@ -215,7 +238,7 @@ proc newRandomBlockElement*(
     case r:
         #Send Difficulty.
         of 0:
-            discard
+            result = newRandomSendDifficulty()
 
         #Data Difficulty.
         of 1:

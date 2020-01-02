@@ -10,6 +10,7 @@ from PythonTests.Libs.Minisketch import Sketch
 #Element classes.
 from PythonTests.Classes.Consensus.Element import Element
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
+from PythonTests.Classes.Consensus.SendDifficulty import SendDifficulty
 from PythonTests.Classes.Consensus.DataDifficulty import DataDifficulty
 
 #BlockBody class.
@@ -87,7 +88,9 @@ class BlockBody:
             )
 
         for element in json["elements"]:
-            if element["descendant"] == "DataDifficulty":
+            if element["descendant"] == "SendDifficulty":
+                elements.append(SendDifficulty.fromJSON(element))
+            elif element["descendant"] == "DataDifficulty":
                 elements.append(DataDifficulty.fromJSON(element))
 
         return BlockBody(packets, elements, bytes.fromhex(json["aggregate"]))

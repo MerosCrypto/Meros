@@ -56,14 +56,12 @@ proc `%**`(
 
             result["hash"] = % $verif.hash
 
-        #[
         of SendDifficulty as sendDiff:
             result["descendant"] = % "SendDifficulty"
 
             result["holder"] = % sendDiff.holder
             result["nonce"] = % sendDiff.nonce
             result["difficulty"] = % $sendDiff.difficulty
-        ]#
 
         of DataDifficulty as dataDiff:
             result["descendant"] = % "DataDifficulty"
