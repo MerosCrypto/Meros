@@ -11,18 +11,14 @@ import ../../../Wallet/Wallet
 import TransactionObj
 export TransactionObj
 
-#Finals lib.
-import finals
-
 #Send object.
-finalsd:
-    type Send* = ref object of Transaction
-        #Signature.
-        signature* {.final.}: EdSignature
-        #Proof this isn't spam.
-        proof* {.final.}: uint32
-        #Argon hash.
-        argon* {.final.}: ArgonHash
+type Send* = ref object of Transaction
+    #Signature.
+    signature*: EdSignature
+    #Proof this isn't spam.
+    proof*: uint32
+    #Argon hash.
+    argon*: ArgonHash
 
 #Send constructor.
 func newSendObj*(

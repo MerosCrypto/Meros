@@ -12,14 +12,10 @@ export TransactionObj
 #Mint object.
 import MintObj
 
-#Finals lib.
-import finals
-
 #Claim object.
-finalsd:
-    type Claim* = ref object of Transaction
-        #BLS Signature that proves the Merit Holder which earned these Mints wants the specified output to receive their reward.
-        signature* {.final.}: BLSSignature
+type Claim* = ref object of Transaction
+    #BLS Signature that proves the Merit Holder which earned these Mints wants the specified output to receive their reward.
+    signature*: BLSSignature
 
 #Claim constructor.
 func newClaimObj*(

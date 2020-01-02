@@ -16,11 +16,6 @@ switch("define", "release")
 switch("stackTrace", "on")
 switch("lineTrace", "on")
 
-#Disable checks (which also disables assertions).
-#On branches that should never be executed, we use doAssert which is independent of this flag.
-#We previously had checks enabled. This creates inconsistent release/debug conditions.
-switch("checks", "off")
-
 #Enable hints.
 switch("hints", "on")
 
@@ -32,16 +27,10 @@ switch("nimcache", thisDir() & "/../build/nimcache/samples")
 switch("out", thisDir() & "/../build/Sample")
 
 when defined(merosRelease):
-    #Disable finals.
-    switch("define", "finalsOff")
-
     #Disable extra debug info.
     switch("excessiveStackTrace", "off")
     switch("lineDir", "off")
 else:
-    #Enable finals.
-    switch("define", "finalsOn")
-
     #Enable extra debug info.
     switch("debuginfo")
     switch("excessiveStackTrace", "on")

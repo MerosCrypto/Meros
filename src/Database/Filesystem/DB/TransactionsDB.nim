@@ -138,10 +138,7 @@ proc load*(
             except Exception as e:
                 doAssert(false, "Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
 
-        try:
-            claim.outputs[0].amount = amount
-        except FinalAttributeError as e:
-            doAssert(false, "Set a final attribute twice when reloading a Claim: " & e.msg)
+        claim.outputs[0].amount = amount
 
 proc loadSpenders*(
     db: DB,
@@ -266,7 +263,7 @@ proc removeFromSpendable(
         doAssert(false, "Trying to spend from someone without anything spendable.")
 
     #Remove the specified output.
-    for o in countup(0, spendable.len, 49):
+    for o in countup(0, spendable.len - 1, 49):
         if spendable[o ..< o + 49] == output:
             db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
             break

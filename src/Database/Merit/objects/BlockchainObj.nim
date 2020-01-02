@@ -17,9 +17,6 @@ import ../../Filesystem/DB/MeritDB
 import DifficultyObj
 import BlockObj
 
-#Finals lib.
-import finals
-
 #Lists standard lib.
 import lists
 
@@ -27,27 +24,26 @@ import lists
 import tables
 
 #Blockchain object.
-finalsd:
-    type Blockchain* = object
-        #DB Function Box.
-        db*: DB
+type Blockchain* = object
+    #DB Function Box.
+    db*: DB
 
-        #Genesis hash (derives from the chain params).
-        genesis* {.final.}: Hash[384]
-        #Block time (part of the chain params).
-        blockTime* {.final.}: int
-        #Starting Difficulty (part of the chain params).
-        startDifficulty* {.final.}: Difficulty
+    #Genesis hash (derives from the chain params).
+    genesis*: Hash[384]
+    #Block time (part of the chain params).
+    blockTime*: int
+    #Starting Difficulty (part of the chain params).
+    startDifficulty*: Difficulty
 
-        #Height.
-        height*: int
-        #Linked List of the last 10 Blocks.
-        blocks: DoublyLinkedList[Block]
-        #Current Difficulty.
-        difficulty*: Difficulty
+    #Height.
+    height*: int
+    #Linked List of the last 10 Blocks.
+    blocks: DoublyLinkedList[Block]
+    #Current Difficulty.
+    difficulty*: Difficulty
 
-        #Miners from past blocks. Serves as a reverse lookup.
-        miners*: Table[BLSPublicKey, uint16]
+    #Miners from past blocks. Serves as a reverse lookup.
+    miners*: Table[BLSPublicKey, uint16]
 
 #Create a Blockchain object.
 proc newBlockchainObj*(
@@ -84,9 +80,6 @@ proc newBlockchainObj*(
         )
     except ValueError as e:
         doAssert(false, "Couldn't convert the genesis to a hash, despite being padded to 48 bytes: " & e.msg)
-    result.ffinalizeGenesis()
-    result.ffinalizeBlockTime()
-    result.ffinalizeStartDifficulty()
 
     #Grab the height and tip from the DB.
     var tip: Hash[384]
@@ -183,7 +176,7 @@ proc add*(
 proc hasBlock*(
     blockchain: Blockchain,
     hash: Hash[384]
-): bool {.forceCheck: [].} =
+): bool {.inline, forceCheck: [].} =
     blockchain.db.hasBlock(hash)
 
 #Block getters.

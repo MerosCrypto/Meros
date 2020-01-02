@@ -4,63 +4,59 @@ import ../../lib/Errors
 #Serialization common lib.
 import ../Serialize/SerializeCommon
 
-#Finals lib.
-import finals
-
 #Hashes standard lib.
 import hashes
 
 #Tables standard lib.
 import tables
 
-finalsd:
-    type
-        #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
-        MessageType* {.pure.} = enum
-            Handshake                 = 0,
-            BlockchainTail            = 1,
+type
+    #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
+    MessageType* {.pure.} = enum
+        Handshake                 = 0,
+        BlockchainTail            = 1,
 
-            Syncing                   = 2,
-            SyncingAcknowledged       = 3,
-            BlockListRequest          = 6,
-            BlockList                 = 7,
+        Syncing                   = 2,
+        SyncingAcknowledged       = 3,
+        BlockListRequest          = 6,
+        BlockList                 = 7,
 
-            BlockHeaderRequest        = 9,
-            BlockBodyRequest          = 10,
-            SketchHashesRequest       = 11,
-            SketchHashRequests        = 12,
-            TransactionRequest        = 13,
-            DataMissing               = 14,
-            SyncingOver               = 15,
+        BlockHeaderRequest        = 9,
+        BlockBodyRequest          = 10,
+        SketchHashesRequest       = 11,
+        SketchHashRequests        = 12,
+        TransactionRequest        = 13,
+        DataMissing               = 14,
+        SyncingOver               = 15,
 
-            Claim                     = 16,
-            Send                      = 17,
-            Data                      = 18,
+        Claim                     = 16,
+        Send                      = 17,
+        Data                      = 18,
 
-            SignedVerification        = 21,
-            SignedDataDifficulty      = 23,
-            SignedMeritRemoval        = 25,
+        SignedVerification        = 21,
+        SignedDataDifficulty      = 23,
+        SignedMeritRemoval        = 25,
 
-            BlockHeader               = 27,
-            BlockBody                 = 28,
-            SketchHashes              = 29,
-            VerificationPacket        = 30,
+        BlockHeader               = 27,
+        BlockBody                 = 28,
+        SketchHashes              = 29,
+        VerificationPacket        = 30,
 
-            #End is used to mark the end of the Enum.
-            #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-            End = 31
+        #End is used to mark the end of the Enum.
+        #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
+        End = 31
 
-        #Message object.
-        Message* = object
-            client* {.final.}: int
-            content* {.final.}: MessageType
-            len* {.final.}: int
-            message* {.final.}: string
+    #Message object.
+    Message* = object
+        client*: int
+        content*: MessageType
+        len*: int
+        message*: string
 
 #Hash a MessageType.
 proc hash*(
     msgType: MessageType
-): Hash {.forceCheck: [].} =
+): Hash {.inline, forceCheck: [].} =
     hash(ord(msgType))
 
 #Lengths of messages.
@@ -98,46 +94,34 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.VerificationPacket:        @[NICKNAME_LEN, -NICKNAME_LEN, HASH_LEN]
 }.toTable()
 
-#Finalize the Message.
-func finalize(
-    msg: var Message
-) {.forceCheck: [].} =
-    msg.ffinalizeClient()
-    msg.ffinalizeContent()
-    msg.ffinalizeLen()
-    msg.ffinalizeMessage()
-
 #Constructor for incoming data.
 func newMessage*(
     client: int,
     content: MessageType,
     len: int,
     message: string
-): Message {.forceCheck: [].} =
-    result = Message(
+): Message {.inline, forceCheck: [].} =
+    Message(
         client: client,
         content: content,
         len: len,
         message: message
     )
-    result.finalize()
 
 #Constructor for outgoing data.
 func newMessage*(
     content: MessageType,
     message: string = ""
-): Message {.forceCheck: [].} =
-    #Create the Message.
-    result = Message(
+): Message {.inline, forceCheck: [].} =
+    Message(
         client: 0,
         content: content,
         len: message.len,
         message: message
     )
-    result.finalize()
 
 #Stringify.
 func toString*(
     msg: Message
-): string {.forceCheck: [].} =
+): string {.inline, forceCheck: [].} =
     char(msg.content) & msg.message

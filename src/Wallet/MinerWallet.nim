@@ -8,20 +8,16 @@ import ../lib/Util
 import BLS
 export BLS
 
-#Finals lib.
-import finals
-
-finalsd:
-    #Miner object.
-    type MinerWallet* = object
-        #Initiated.
-        initiated* {.final.}: bool
-        #Private Key.
-        privateKey* {.final.}: BLSPrivateKey
-        #Public Key.
-        publicKey* {.final.}: BLSPublicKey
-        #Nickname.
-        nick* {.final.}: uint16
+#Miner object.
+type MinerWallet* = object
+    #Initiated.
+    initiated*: bool
+    #Private Key.
+    privateKey*: BLSPrivateKey
+    #Public Key.
+    publicKey*: BLSPublicKey
+    #Nickname.
+    nick*: uint16
 
 #Constructors.
 proc newMinerWallet*(
@@ -37,9 +33,6 @@ proc newMinerWallet*(
         result.publicKey = result.privateKey.toPublicKey()
     except BLSError as e:
         raise e
-    result.ffinalizeInitiated()
-    result.ffinalizePrivateKey()
-    result.ffinalizePublicKey()
 
 proc newMinerWallet*(): MinerWallet {.forceCheck: [
     RandomError,
@@ -62,5 +55,5 @@ proc newMinerWallet*(): MinerWallet {.forceCheck: [
 proc sign*(
     miner: MinerWallet,
     msg: string
-): BLSSignature {.forceCheck: [].} =
-    result = miner.privateKey.sign(msg)
+): BLSSignature {.inline, forceCheck: [].} =
+    miner.privateKey.sign(msg)

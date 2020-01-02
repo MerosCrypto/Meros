@@ -30,20 +30,14 @@ proc newSend*(
     )
 
     #Hash it.
-    try:
-        result.hash = Blake384(result.serializeHash())
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)
+    result.hash = Blake384(result.serializeHash())
 
 #Sign a Send.
 proc sign*(
     wallet: HDWallet,
     send: Send
-) {.forceCheck: [].} =
-    try:
-        send.signature = wallet.sign(send.hash.toString())
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when signing a Send: " & e.msg)
+) {.inline, forceCheck: [].} =
+    send.signature = wallet.sign(send.hash.toString())
 
 #Mine the Send.
 proc mine*(
@@ -58,8 +52,5 @@ proc mine*(
         inc(proof)
         hash = Argon(send.hash.toString(), proof.toBinary(SALT_LEN), true)
 
-    try:
-        send.proof = proof
-        send.argon = hash
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when mining a Send: " & e.msg)
+    send.proof = proof
+    send.argon = hash

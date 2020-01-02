@@ -11,31 +11,25 @@ import ../../../../Wallet/MinerWallet
 import ElementObj
 export ElementObj
 
-#Finals lib.
-import finals
-
 #SendDifficulty objects.
-finalsd:
-    type
-        SendDifficulty* = ref object of BlockElement
-            difficulty* {.final.}: Hash[384]
+type
+    SendDifficulty* = ref object of BlockElement
+        difficulty*: Hash[384]
 
-        SignedSendDifficulty* = ref object of SendDifficulty
-            signature* {.final.}: BLSSignature
+    SignedSendDifficulty* = ref object of SendDifficulty
+        signature*: BLSSignature
 
 #Constructors/
 func newSendDifficultyObj*(
     difficulty: Hash[384]
-): SendDifficulty {.forceCheck: [].} =
-    result = SendDifficulty(
+): SendDifficulty {.inline, forceCheck: [].} =
+    SendDifficulty(
         difficulty: difficulty
     )
-    result.ffinalizeDifficulty()
 
 func newSignedSendDifficultyObj*(
     difficulty: Hash[384]
-): SignedSendDifficulty {.forceCheck: [].} =
-    result = SignedSendDifficulty(
+): SignedSendDifficulty {.inline, forceCheck: [].} =
+    SignedSendDifficulty(
         difficulty: difficulty
     )
-    result.ffinalizeDifficulty()

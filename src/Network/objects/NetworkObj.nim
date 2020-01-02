@@ -10,26 +10,22 @@ import ClientsObj
 #Network Function Box.
 import NetworkLibFunctionBoxObj
 
-#finals lib.
-import finals
-
 #Asyncnet standard lib.
 import asyncnet
 
-finalsd:
-    type Network* = ref object
-        #Network ID.
-        id* {.final.}: int
-        #Protocol version.
-        protocol* {.final.}: int
-        #Clients.
-        clients*: Clients
-        #Server.
-        server* {.final.}: AsyncSocket
-        #Network Function Box.
-        networkFunctions* {.final.}: NetworkLibFunctionBox
-        #Global Function Box.
-        mainFunctions* {.final.}: GlobalFunctionBox
+type Network* = ref object
+    #Network ID.
+    id*: int
+    #Protocol version.
+    protocol*: int
+    #Clients.
+    clients*: Clients
+    #Server.
+    server*: AsyncSocket
+    #Network Function Box.
+    networkFunctions*: NetworkLibFunctionBox
+    #Global Function Box.
+    mainFunctions*: GlobalFunctionBox
 
 #Constructor.
 func newNetworkObj*(
@@ -38,15 +34,11 @@ func newNetworkObj*(
     clients: Clients,
     networkFunctions: NetworkLibFunctionBox,
     mainFunctions: GlobalFunctionBox
-): Network {.forceCheck: [].} =
-    result = Network(
+): Network {.inline, forceCheck: [].} =
+    Network(
         id: id,
         protocol: protocol,
         clients: clients,
         networkFunctions: networkFunctions,
         mainFunctions: mainFunctions
     )
-    result.ffinalizeID()
-    result.ffinalizeProtocol()
-    result.ffinalizeNetworkFunctions()
-    result.ffinalizeMainFunctions()

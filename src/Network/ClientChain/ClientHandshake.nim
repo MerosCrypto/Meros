@@ -44,10 +44,7 @@ proc handshake*(
             raise newException(ClientError, "Client responded to a Handshake with a different Protocol Version.")
 
         if int(handshakeSeq[2][0]) == 1:
-            try:
-                client.server = true
-            except FinalAttributeError as e:
-                doAssert(false, "Set a final attribute twice when handshaking with a Client: " & e.msg)
+            client.server = true
 
         #Return their tail.
         try:

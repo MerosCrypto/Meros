@@ -19,19 +19,15 @@ import sequtils
 #Unicode Normalize lib.
 import normalize
 
-#Finals lib.
-import finals
-
 #Word List.
 const
     LISTFILE: string = staticRead("WordLists/English.txt")
     LIST: seq[string] = LISTFILE.splitLines()
 
-finalsd:
-    type Mnemonic* = object
-         entropy* {.final.}: string
-         checksum* {.final.}: string
-         sentence* {.final.}: string
+type Mnemonic* = object
+     entropy*: string
+     checksum*: string
+     sentence*: string
 
 #Create a Mnemonic from RNG.
 proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
@@ -73,10 +69,6 @@ proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
         #Increase the bit by 11.
         bit += 11
     result.sentence = result.sentence[ 0 ..< result.sentence.len - 1]
-
-    result.ffinalizeEntropy()
-    result.ffinalizeChecksum()
-    result.ffinalizeSentence()
 
 #Create a Mnemonic from a sentence.
 proc newMnemonic*(

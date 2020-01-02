@@ -21,9 +21,6 @@ export Address
 #StInt lib.
 import StInt
 
-#Finals lib.
-import finals
-
 #Math standard lib.
 import math
 
@@ -33,17 +30,16 @@ const COIN_TYPE {.intdefine.}: uint32 = 0
 #Ed25519's l value.
 var l: StUInt[256] = "7237005577332262213973186563042994240857116359379907606001950938285454250989".parse(StUInt[256])
 
-finalsd:
-    #HDWallet.
-    type HDWallet* = object
-        #Chain Code.
-        chainCode* {.final.}: SHA2_256Hash
-        #Private Key.
-        privateKey*: EdPrivateKey
-        #Public Key.
-        publicKey*: EdPublicKey
-        #Address.
-        address*: string
+#HDWallet.
+type HDWallet* = object
+    #Chain Code.
+    chainCode*: SHA2_256Hash
+    #Private Key.
+    privateKey*: EdPrivateKey
+    #Public Key.
+    publicKey*: EdPublicKey
+    #Address.
+    address*: string
 
 #Sign a message via a Wallet.
 func sign*(
@@ -103,7 +99,6 @@ proc newHDWallet*(
         #Create the chain code.
         chainCode: SHA2_256('\1' & secret)
     )
-    result.ffinalizeChainCode()
 
 #Derive a Child HD Wallet.
 proc derive*(
@@ -176,19 +171,15 @@ proc derive*(
     #Create the Public Key.
     var publicKey: EdPublicKey = privateKey.toPublicKey()
 
-    try:
-        result = HDWallet(
-            #Set the Wallet fields.
-            privateKey: privateKey,
-            publicKey: publicKey,
-            address: newAddress(publicKey.toString()),
+    result = HDWallet(
+        #Set the Wallet fields.
+        privateKey: privateKey,
+        publicKey: publicKey,
+        address: newAddress(publicKey.toString()),
 
-            #Set the chain code.
-            chainCode: chainCode
-        )
-        result.ffinalizeChainCode()
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when deriving a HDWallet: " & e.msg)
+        #Set the chain code.
+        chainCode: chainCode
+    )
 
 #Derive a full path.
 proc derive*(

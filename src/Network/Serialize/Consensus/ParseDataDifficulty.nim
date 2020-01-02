@@ -33,8 +33,6 @@ proc parseDataDifficulty*(
         result.holder = uint16(dataDiffSeq[0].fromBinary())
     except ValueError as e:
         doAssert(false, "Failed to parse a 48-byte hash: " & e.msg)
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when parsing a DataDifficulty: " & e.msg)
 
 #Parse a Signed DataDifficulty.
 proc parseSignedDataDifficulty*(
@@ -62,5 +60,3 @@ proc parseSignedDataDifficulty*(
         doAssert(false, "Failed to parse a 48-byte hash: " & e.msg)
     except BLSError:
         raise newException(ValueError, "Invalid signature.")
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when parsing a Signed DataDifficulty: " & e.msg)

@@ -11,20 +11,16 @@ import ../../../Wallet/Wallet
 import TransactionObj
 export TransactionObj
 
-#Finals lib.
-import finals
-
 #Data object.
-finalsd:
-    type Data* = ref object of Transaction
-        #Data stored in this Transaction.
-        data* {.final.}: string
-        #Signature.
-        signature* {.final.}: EdSignature
-        #Proof this isn't spam.
-        proof* {.final.}: uint32
-        #Argon hash.
-        argon* {.final.}: ArgonHash
+type Data* = ref object of Transaction
+    #Data stored in this Transaction.
+    data*: string
+    #Signature.
+    signature*: EdSignature
+    #Proof this isn't spam.
+    proof*: uint32
+    #Argon hash.
+    argon*: ArgonHash
 
 #Data constructor.
 func newDataObj*(

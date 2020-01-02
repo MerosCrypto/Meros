@@ -11,32 +11,26 @@ import ../../../../Wallet/MinerWallet
 import ElementObj
 export ElementObj
 
-#Finals lib.
-import finals
-
 #Verification objects.
-finalsd:
-    type
-        Verification* = ref object of Element
-            holder*: uint16
-            hash* {.final.}: Hash[384]
+type
+    Verification* = ref object of Element
+        holder*: uint16
+        hash*: Hash[384]
 
-        SignedVerification* = ref object of Verification
-            signature* {.final.}: BLSSignature
+    SignedVerification* = ref object of Verification
+        signature*: BLSSignature
 
 #Constructors.
 func newVerificationObj*(
     hash: Hash[384]
-): Verification {.forceCheck: [].} =
-    result = Verification(
+): Verification {.inline, forceCheck: [].} =
+    Verification(
         hash: hash
     )
-    result.ffinalizeHash()
 
 func newSignedVerificationObj*(
     hash: Hash[384]
-): SignedVerification {.forceCheck: [].} =
-    result = SignedVerification(
+): SignedVerification {.inline, forceCheck: [].} =
+    SignedVerification(
         hash: hash
     )
-    result.ffinalizeHash()

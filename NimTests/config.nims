@@ -19,13 +19,6 @@ switch("define", "release")
 switch("stackTrace", "on")
 switch("lineTrace", "on")
 
-#Disable checks.
-#We previously had checks enabled. This creates inconsistent release/debug conditions.
-switch("checks", "off")
-
-#Re-enable assertions.
-switch("assertions", "on")
-
 #Enable hints.
 switch("hints", "on")
 
@@ -37,16 +30,10 @@ switch("nimcache", thisDir() & "/../build/nimcache/tests")
 switch("out", thisDir() & "/../build/Test")
 
 when defined(merosRelease):
-    #Disable finals.
-    switch("define", "finalsOff")
-
     #Disable extra debug info.
     switch("excessiveStackTrace", "off")
     switch("lineDir", "off")
 else:
-    #Enable finals.
-    switch("define", "finalsOn")
-
     #Enable extra debug info.
     switch("debuginfo")
     switch("excessiveStackTrace", "on")

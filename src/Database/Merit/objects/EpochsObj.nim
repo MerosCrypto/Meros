@@ -19,32 +19,27 @@ import sequtils
 #Tables standard lib.
 import tables
 
-#Finals lib.
-import finals
+type
+    #Reward object.
+    Reward* = object
+        nick*: uint16
+        score*: uint64
 
-finalsd:
-    type
-        #Reward object.
-        Reward* = object
-            nick* {.final.}: uint16
-            score*: uint64
+    #Epoch object. Transaction Hash -> Nicks of verifiers.
+    Epoch* = Table[Hash[384], seq[uint16]]
 
-        #Epoch object. Transaction Hash -> Nicks of verifiers.
-        Epoch* = Table[Hash[384], seq[uint16]]
-
-        #Epochs object. Seq of the current 5 Epochs.
-        Epochs* = seq[Epoch]
+    #Epochs object. Seq of the current 5 Epochs.
+    Epochs* = seq[Epoch]
 
 #Constructors.
 func newReward*(
     nick: uint16,
     score: uint64
-): Reward {.forceCheck: [].} =
-    result = Reward(
+): Reward {.inline, forceCheck: [].} =
+    Reward(
         nick: nick,
         score: score
     )
-    result.ffinalizeNick()
 
 func newEpoch*(): Epoch {.inline, forceCheck: [].} =
     initTable[Hash[384], seq[uint16]]()
@@ -89,5 +84,5 @@ proc shift*(
 #Get the latest Epoch.
 func latest*(
     epochs: Epochs
-): Epoch {.forceCheck: [].} =
+): Epoch {.inline, forceCheck: [].} =
     epochs[4]

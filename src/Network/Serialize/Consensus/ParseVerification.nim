@@ -33,8 +33,6 @@ proc parseVerification*(
         result.holder = uint16(verifSeq[0].fromBinary())
     except ValueError as e:
         raise e
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when parsing a Verification: " & e.msg)
 
 #Parse a Signed Verification.
 proc parseSignedVerification*(
@@ -60,5 +58,3 @@ proc parseSignedVerification*(
         raise e
     except BLSError:
         raise newException(ValueError, "Invalid signature.")
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when parsing a Signed Verification: " & e.msg)

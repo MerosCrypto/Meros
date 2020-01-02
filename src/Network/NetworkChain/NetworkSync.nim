@@ -129,7 +129,7 @@ proc sync*(
     state: State,
     newBlock: SketchyBlock,
     sketcher: Sketcher
-): Future[Block] {.forceCheck: [
+): Future[(Block, seq[BlockElement])] {.forceCheck: [
     ValueError,
     DataMissing
 ], async.} =
@@ -217,18 +217,18 @@ proc sync*(
         raise e
 
     #Create the Block.
-    result = newBlock.data
-    result.body.packets = packets
+    result[0] = newBlock.data
+    result[0].body.packets = packets
 
     #Check the Block's aggregate.
     try:
-        if not result.verifyAggregate(network.mainFunctions.merit.getPublicKey):
+        if not result[0].verifyAggregate(network.mainFunctions.merit.getPublicKey):
             raise newException(ValueError, "Block has an invalid aggregate.")
     except IndexError as e:
         doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
 
     #Find missing Transactions.
-    for packet in result.body.packets:
+    for packet in result[0].body.packets:
         includedTXs.incl(packet.hash)
         try:
             discard network.mainFunctions.transactions.getTransaction(packet.hash)
@@ -320,7 +320,7 @@ proc sync*(
         transactions = todo
 
     #Verify the included packets.
-    for packet in result.body.packets:
+    for packet in result[0].body.packets:
         #Verify the predecessors of every Transaction are already mentioned on the chain OR also in this Block.
         var tx: Transaction
         try:
@@ -359,17 +359,17 @@ proc sync*(
             merit += state[holder]
 
         #Verify significant.
-        if merit < int(result.header.significant):
+        if merit < int(result[0].header.significant):
             raise newException(ValueError, "Block has an invalid significant.")
 
     #Verify the included Elements.
+    result[1] = result[0].body.elements
     var
-        elements: seq[BlockElement] = result.body.elements
         newNonces: Table[uint16, int] = initTable[uint16, int]()
         hasElem: set[uint16] = {}
         hasMR: set[uint16] = {}
     #Sort by nonce so we don't risk a gap.
-    elements.sort(
+    result[1].sort(
         proc (
             e1: BlockElement,
             e2: BlockElement
@@ -396,7 +396,7 @@ proc sync*(
             if e1Nonce < e2Nonce: -1 else: 1
     )
 
-    for elem in elements:
+    for elem in result[1]:
         if hasMR.contains(elem.holder):
             raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
 

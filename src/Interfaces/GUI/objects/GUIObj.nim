@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Finals lib.
-import finals
-
 #WebView.
 import mc_webview
 export mc_webview
@@ -17,24 +14,22 @@ const
     SEND*: string = staticRead("../static/Send.html")
 
 #GUI object.
-finalsd:
-    type GUI* = ref object
-        toRPC: ptr Channel[JSONNode]
-        toGUI: ptr Channel[JSONNode]
-        webview* {.final.}: WebView
+type GUI* = ref object
+    toRPC: ptr Channel[JSONNode]
+    toGUI: ptr Channel[JSONNode]
+    webview*: WebView
 
 #Constructor.
 func newGUIObj*(
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode],
     webview: WebView
-): GUI {.forceCheck: [].} =
-    result = GUI(
+): GUI {.inline, forceCheck: [].} =
+    GUI(
         toRPC: toRPC,
         toGUI: toGUI,
         webview: webview
     )
-    result.ffinalizeWebView()
 
 #RPC helper.
 proc call*(

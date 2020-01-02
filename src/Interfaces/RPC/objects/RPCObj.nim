@@ -1,9 +1,6 @@
 #Errors lib.
 import ../../../lib/Errors
 
-#Finals lib.
-import finals
-
 #Macros standard lib.
 import macros
 
@@ -23,26 +20,25 @@ import json
 export json
 
 #RPC object.
-finalsd:
-    type
-        RPCFunction = proc (
-            res: JSONNode,
-            params: JSONNode
-        ): Future[void]
+type
+    RPCFunction = proc (
+        res: JSONNode,
+        params: JSONNode
+    ): Future[void]
 
-        RPCFunctions* = Table[string, RPCFunction]
+    RPCFunctions* = Table[string, RPCFunction]
 
-        RPC* = ref object
-            alive*: bool
+    RPC* = ref object
+        alive*: bool
 
-            functions*: RPCFunctions
-            quit*: proc () {.raises: [].}
+        functions*: RPCFunctions
+        quit*: proc () {.raises: [].}
 
-            toRPC* {.final.}: ptr Channel[JSONNode]
-            toGUI* {.final.}: ptr Channel[JSONNode]
+        toRPC*: ptr Channel[JSONNode]
+        toGUI*: ptr Channel[JSONNode]
 
-            server* {.final.}: AsyncSocket
-            clients*: seq[AsyncSocket]
+        server*: AsyncSocket
+        clients*: seq[AsyncSocket]
 
 #RPCFunctions constructor.
 macro newRPCFunctions*(
@@ -105,8 +101,8 @@ proc newRPCObj*(
     quit: proc () {.raises: [].},
     toRPC: ptr Channel[JSONNode],
     toGUI: ptr Channel[JSONNode]
-): RPC {.forceCheck: [].} =
-    result = RPC(
+): RPC {.inline, forceCheck: [].} =
+    RPC(
         alive: true,
 
         functions: functions,
@@ -115,5 +111,3 @@ proc newRPCObj*(
         toRPC: toRPC,
         toGUI: toGUI
     )
-    result.ffinalizeToRPC()
-    result.ffinalizeToGUI()

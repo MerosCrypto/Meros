@@ -53,15 +53,12 @@ proc parseData*(
         raise e
 
     #Hash it and set its signature/proof/argon.
+    result.hash = hash
+
     try:
-        result.hash = hash
+        result.signature = newEdSignature(dataSeq[3])
+    except ValueError as e:
+        raise e
 
-        try:
-            result.signature = newEdSignature(dataSeq[3])
-        except ValueError as e:
-            raise e
-
-        result.proof = uint32(dataSeq[4].fromBinary())
-        result.argon = argon
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)
+    result.proof = uint32(dataSeq[4].fromBinary())
+    result.argon = argon

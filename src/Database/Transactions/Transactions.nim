@@ -105,10 +105,7 @@ proc add*(
         amount += output.amount
 
     #Set the Claim's output amount to the amount.
-    try:
-        claim.outputs[0].amount = amount
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when adding a Claim: " & e.msg)
+    claim.outputs[0].amount = amount
 
     #Verify the signature.
     if not claim.verify(claimers.aggregate()):

@@ -71,15 +71,12 @@ proc parseSend*(
     )
 
     #Hash it and set its signature/proof/argon.
+    result.hash = hash
+
     try:
-        result.hash = hash
+        result.signature = newEdSignature(sendSeq[4])
+    except ValueError as e:
+        raise e
 
-        try:
-            result.signature = newEdSignature(sendSeq[4])
-        except ValueError as e:
-            raise e
-
-        result.proof = uint32(sendSeq[5].fromBinary())
-        result.argon = argon
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Send: " & e.msg)
+    result.proof = uint32(sendSeq[5].fromBinary())
+    result.argon = argon

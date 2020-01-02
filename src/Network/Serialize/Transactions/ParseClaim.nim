@@ -60,5 +60,3 @@ proc parseClaim*(
         result.hash = Blake384("\1" & claimSeq[3])
     except BLSError:
         raise newException(ValueError, "Invalid Signature.")
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when parsing a Claim: " & e.msg)

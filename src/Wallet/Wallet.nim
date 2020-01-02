@@ -9,15 +9,11 @@ export HDWallet
 import Mnemonic
 export Mnemonic.Mnemonic, `$`
 
-#Finals lib.
-import finals
-
-finalsd:
-    type Wallet* = ref object
-        mnemonic* {.final.}: Mnemonic
-        hd* {.final.}: HDWallet
-        external* {.final.}: HDWallet
-        internal* {.final.}: HDWallet
+type Wallet* = ref object
+    mnemonic*: Mnemonic
+    hd*: HDWallet
+    external*: HDWallet
+    internal*: HDWallet
 
 #Constructors.
 proc newWallet*(

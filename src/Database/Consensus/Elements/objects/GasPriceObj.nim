@@ -8,31 +8,25 @@ import ../../../../Wallet/MinerWallet
 import ElementObj
 export ElementObj
 
-#Finals lib.
-import finals
-
 #GasPrice objects.
-finalsd:
-    type
-        GasPrice* = ref object of BlockElement
-            price* {.final.}: uint32
+type
+    GasPrice* = ref object of BlockElement
+        price*: uint32
 
-        SignedGasPrice* = ref object of GasPrice
-            signature* {.final.}: BLSSignature
+    SignedGasPrice* = ref object of GasPrice
+        signature*: BLSSignature
 
 #Constructors.
 func newGasPriceObj*(
     price: uint32
-): GasPrice {.forceCheck: [].} =
-    result = GasPrice(
+): GasPrice {.inline, forceCheck: [].} =
+    GasPrice(
         price: price
     )
-    result.ffinalizePrice()
 
 func newSignedGasPriceObj*(
     price: uint32
-): SignedGasPrice {.forceCheck: [].} =
-    result = SignedGasPrice(
+): SignedGasPrice {.inline, forceCheck: [].} =
+    SignedGasPrice(
         price: price
     )
-    result.ffinalizePrice()

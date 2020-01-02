@@ -13,33 +13,29 @@ import ../../Filesystem/DB/MeritDB
 #Block object.
 import BlockObj
 
-#Finals lib.
-import finals
-
 #Tables standard lib.
 import tables
 
 #State object.
-finalsd:
-    #This cannot be a ref object due to how we copy it for reversions.
-    type State* = object
-        #DB.
-        db: DB
-        #Reverting/Catching up.
-        oldData*: bool
+#This cannot be a ref object due to how we copy it for reversions.
+type State* = object
+    #DB.
+    db: DB
+    #Reverting/Catching up.
+    oldData*: bool
 
-        #Blocks until Merit is dead.
-        deadBlocks* {.final.}: int
-        #Unlocked Merit.
-        unlocked: int
+    #Blocks until Merit is dead.
+    deadBlocks*: int
+    #Unlocked Merit.
+    unlocked: int
 
-        #Amount of Blocks processed.
-        processedBlocks*: int
+    #Amount of Blocks processed.
+    processedBlocks*: int
 
-        #List of holders. Position on the list is their nickname.
-        holders: seq[BLSPublicKey]
-        #Nickname -> Merit
-        merit: Table[uint16, int]
+    #List of holders. Position on the list is their nickname.
+    holders: seq[BLSPublicKey]
+    #Nickname -> Merit
+    merit: Table[uint16, int]
 
 #Constructor.
 proc newStateObj*(
@@ -59,7 +55,6 @@ proc newStateObj*(
         holders: @[],
         merit: initTable[uint16, int]()
     )
-    result.ffinalizeDeadBlocks()
 
     #Load the amount of Unlocked Merit.
     try:
@@ -181,7 +176,7 @@ proc remove*(
 #Delete the last nickname from RAM.
 proc deleteLastNickname*(
     state: var State
-) {.forceCheck: [].} =
+) {.inline, forceCheck: [].} =
     state.holders.del(high(state.holders))
 
 #Reverse lookup for a key to nickname.

@@ -8,19 +8,15 @@ import ../../../../Wallet/MinerWallet
 import ElementObj
 export ElementObj
 
-#Finals lib.
-import finals
-
 #MeritRemoval objects.
-finalsd:
-    type
-        MeritRemoval* = ref object of BlockElement
-            partial* {.final.}: bool
-            element1* {.final.}: Element
-            element2* {.final.}: Element
+type
+    MeritRemoval* = ref object of BlockElement
+        partial*: bool
+        element1*: Element
+        element2*: Element
 
-        SignedMeritRemoval* = ref object of MeritRemoval
-            signature* {.final.}: BLSSignature
+    SignedMeritRemoval* = ref object of MeritRemoval
+        signature*: BLSSignature
 
 #Constructors.
 func newMeritRemovalObj*(
@@ -28,20 +24,13 @@ func newMeritRemovalObj*(
     partial: bool,
     element1: Element,
     element2: Element
-): MeritRemoval {.forceCheck: [].} =
-    result = MeritRemoval(
+): MeritRemoval {.inline, forceCheck: [].} =
+    MeritRemoval(
+        holder: nick,
         partial: partial,
         element1: element1,
         element2: element2
     )
-    result.ffinalizePartial()
-    result.ffinalizeElement1()
-    result.ffinalizeElement2()
-
-    try:
-        result.holder = nick
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a MeritRemoval: " & e.msg)
 
 func newSignedMeritRemovalObj*(
     nick: uint16,
@@ -49,19 +38,11 @@ func newSignedMeritRemovalObj*(
     element1: Element,
     element2: Element,
     signature: BLSSignature
-): SignedMeritRemoval {.forceCheck: [].} =
+): SignedMeritRemoval {.inline, forceCheck: [].} =
     result = SignedMeritRemoval(
+        holder: nick,
         partial: partial,
         element1: element1,
         element2: element2,
         signature: signature
     )
-    result.ffinalizePartial()
-    result.ffinalizeElement1()
-    result.ffinalizeElement2()
-    result.ffinalizeSignature()
-
-    try:
-        result.holder = nick
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a SignedMeritRemoval: " & e.msg)

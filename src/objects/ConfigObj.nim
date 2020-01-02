@@ -227,10 +227,7 @@ proc newConfig*(): Config {.forceCheck: [].} =
             if minerNick < 0:
                 doAssert(false, "Passed an invalid Miner Nick.")
 
-            try:
-                result.miner.nick = uint16(minerNick)
-            except FinalAttributeError as e:
-                doAssert(false, "Setting the MinerWallet's nickname raised a FinalAttributeError: " & e.msg)
+            result.miner.nick = uint16(minerNick)
 
     #Make sure the data directory exists.
     try:

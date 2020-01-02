@@ -60,11 +60,8 @@ proc sign*(
     signature = signatures.aggregate()
 
     #Set the signature and hash the Claim.
-    try:
-        claim.signature = signature
-        claim.hash = Blake384(claim.serializeHash())
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when signing a Claim: " & e.msg)
+    claim.signature = signature
+    claim.hash = Blake384(claim.serializeHash())
 
 #Verify a Claim.
 proc verify*(

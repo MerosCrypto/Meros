@@ -14,10 +14,6 @@ export ForceCheck
 import mc_bls
 export BLSError
 
-#Finals lib, Imported so we can export its Error.
-import finals
-export FinalAttributeError
-
 #DB lib, imported so we can export a masked LMDBerror.
 import mc_lmdb
 

@@ -114,9 +114,11 @@ proc mainMerit() {.forceCheck: [].} =
                 )
 
             #Sync this Block.
-            var newBlock: Block
+            var
+                newBlock: Block
+                elements: seq[BlockElement]
             try:
-                newBlock = await network.sync(
+                (newBlock, elements) = await network.sync(
                     merit.state,
                     sketchyBlock,
                     sketcher
@@ -129,7 +131,7 @@ proc mainMerit() {.forceCheck: [].} =
                 doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
 
             #Add every Verification Packet.
-            for packet in result.body.packets:
+            for packet in newBlock.body.packets:
                 network.mainFunctions.consensus.addVerificationPacket(packet)
 
             #Check who has their Merit removed.

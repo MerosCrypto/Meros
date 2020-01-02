@@ -221,8 +221,6 @@ proc listen*(
     #Start listening.
     try:
         network.server = newAsyncSocket()
-    except FinalAttributeError as e:
-        doAssert(false, "Server is already listening: " & e.msg)
     except ValueError as e:
         doAssert(false, "Failed to create the Network's server socket due to a ValueError: " & e.msg)
     except IOSelectorsException as e:

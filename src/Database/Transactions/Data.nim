@@ -36,10 +36,7 @@ proc newData*(
     )
 
     #Hash it.
-    try:
-        result.hash = Blake384(result.serializeHash())
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when creating a Data: " & e.msg)
+    result.hash = Blake384(result.serializeHash())
 
     #Verify the Data's hash doesn't start with 16 zeroes.
     for b in 0 ..< 16:
@@ -52,11 +49,8 @@ proc newData*(
 proc sign*(
     wallet: HDWallet,
     data: Data
-) {.forceCheck: [].} =
-    try:
-        data.signature = wallet.sign(data.hash.toString())
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when signing a Data: " & e.msg)
+) {.inline, forceCheck: [].} =
+    data.signature = wallet.sign(data.hash.toString())
 
 #Mine the Data.
 proc mine*(
@@ -71,8 +65,5 @@ proc mine*(
         inc(proof)
         hash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN), true)
 
-    try:
-        data.proof = proof
-        data.argon = hash
-    except FinalAttributeError as e:
-        doAssert(false, "Set a final attribute twice when mining a Data: " & e.msg)
+    data.proof = proof
+    data.argon = hash
