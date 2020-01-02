@@ -62,13 +62,8 @@ proc newMerit*(
 proc processBlock*(
     merit: Merit,
     newBlock: Block
-) {.forceCheck: [
-    ValueError
-].} =
-    try:
-        merit.blockchain.processBlock(newBlock)
-    except ValueError as e:
-        raise e
+) {.inline, forceCheck: [].} =
+    merit.blockchain.processBlock(newBlock)
 
 #Process a Block already addded to the Blockchain.
 proc postProcessBlock*(

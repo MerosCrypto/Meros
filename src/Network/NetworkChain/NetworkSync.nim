@@ -366,6 +366,8 @@ proc sync*(
     var
         elements: seq[BlockElement] = result.body.elements
         newNonces: Table[uint16, int] = initTable[uint16, int]()
+        hasElem: set[uint16] = {}
+        hasMR: set[uint16] = {}
     #Sort by nonce so we don't risk a gap.
     elements.sort(
         proc (
@@ -395,6 +397,9 @@ proc sync*(
     )
 
     for elem in elements:
+        if hasMR.contains(elem.holder):
+            raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
+
         case elem:
             #of SendDifficulty as sendDiff:
             #    discard
@@ -422,18 +427,13 @@ proc sync*(
             #of GasPrice as gasPrice:
             #    discard
 
-            #of MeritRemoval as mr:
-            #    discard
+            of MeritRemoval as mr:
+                if hasElem.contains(mr.holder):
+                    raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
 
-    #Add every Verification Packet.
-    for packet in result.body.packets:
-        network.mainFunctions.consensus.addVerificationPacket(packet)
+                discard
 
-    #Add every Element.
-    for elem in elements:
-        case elem:
-            of DataDifficulty as dataDiff:
-                network.mainFunctions.consensus.addDataDifficulty(dataDiff)
+        hasElem.incl(elem.holder)
 
 #Request a BlockBody.
 proc requestBlockBody*(

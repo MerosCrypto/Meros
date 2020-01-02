@@ -128,16 +128,17 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
 
+            #Add every Verification Packet.
+            for packet in result.body.packets:
+                network.mainFunctions.consensus.addVerificationPacket(packet)
+
             #Check who has their Merit removed.
             var removed: seq[uint16] = @[]
             for elem in newBlock.body.elements:
                 discard
 
             #Add the Block to the Blockchain.
-            try:
-                merit.processBlock(newBlock)
-            except ValueError as e:
-                raise e
+            merit.processBlock(newBlock)
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
             for removee in removed:
@@ -152,6 +153,12 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Archive the Epochs.
             consensus.archive(merit.state, newBlock.body.packets, epoch, incd, decd)
+
+            #Add every Element.
+            for elem in elements:
+                case elem:
+                    of DataDifficulty as dataDiff:
+                        network.mainFunctions.consensus.addDataDifficulty(dataDiff)
 
             #Archive the hashes handled by the popped Epoch.
             transactions.archive(epoch)

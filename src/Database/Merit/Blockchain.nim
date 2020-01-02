@@ -82,31 +82,7 @@ proc testBlockHeader*(
 proc processBlock*(
     blockchain: var Blockchain,
     newBlock: Block
-) {.forceCheck: [
-    ValueError
-].} =
-    #Verify if there's a MeritRemoval, it's the only Element for that verifier.
-    var
-        #They don't have a key if they don't have an Element.
-        #The value is 0 if they do.
-        #The value is 1 if they had a MeritRemoval.
-        statuses: Table[uint16, int] = initTable[uint16, int]()
-        status: int
-
-    for elem in newBlock.body.elements:
-        try:
-            status = statuses[elem.holder]
-        except KeyError:
-            status = -1
-            statuses[elem.holder] = 0
-
-        if elem of MeritRemoval:
-            if status != -1:
-                raise newException(ValueError, "Block archives a Merit Removal for a Merit Holder who also has Elements archived.")
-            statuses[elem.holder] = 1
-        elif (not (elem of MeritRemoval)) and (status == 1):
-            raise newException(ValueError, "Block archives Elements for a Merit Holder who also has a Merit Removal archived.")
-
+) {.forceCheck: [].} =
     #Add the Block.
     blockchain.add(newBlock)
 
