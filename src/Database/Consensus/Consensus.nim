@@ -148,44 +148,45 @@ proc register*(
     tx: Transaction,
     height: int
 ) {.forceCheck: [].} =
-    #Create the status.
-    var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 7)
+    {.gcsafe.}:
+        #Create the status.
+        var status: TransactionStatus = newTransactionStatusObj(tx.hash, height + 7)
 
-    for input in tx.inputs:
-        #Check if this Transaction's parent was beaten.
-        try:
-            if (
-                (not status.beaten) and
-                (not (tx of Claim)) and
-                (not ((tx of Data) and cast[Data](tx).isFirstData)) and
-                (consensus.getStatus(input.hash).beaten)
-            ):
-                status.beaten = true
-        except IndexError:
-            doAssert(false, "Parent Transaction doesn't have a status.")
+        for input in tx.inputs:
+            #Check if this Transaction's parent was beaten.
+            try:
+                if (
+                    (not status.beaten) and
+                    (not (tx of Claim)) and
+                    (not ((tx of Data) and cast[Data](tx).isFirstData)) and
+                    (consensus.getStatus(input.hash).beaten)
+                ):
+                    status.beaten = true
+            except IndexError:
+                doAssert(false, "Parent Transaction doesn't have a status.")
 
-        #Check for competing Transactions.
-        var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
-        if spenders.len != 1:
-            status.competing = true
+            #Check for competing Transactions.
+            var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
+            if spenders.len != 1:
+                status.competing = true
 
-            #If there's a competing Transaction, mark competitors as needing to default.
-            #This will run for every input with multiple spenders.
-            if status.competing:
-                for spender in spenders:
-                    if spender == tx.hash:
-                        continue
+                #If there's a competing Transaction, mark competitors as needing to default.
+                #This will run for every input with multiple spenders.
+                if status.competing:
+                    for spender in spenders:
+                        if spender == tx.hash:
+                            continue
 
-                    try:
-                        consensus.getStatus(spender).competing = true
-                    except IndexError:
-                        doAssert(false, "Competing Transaction doesn't have a Status despite being marked as a spender.")
+                        try:
+                            consensus.getStatus(spender).competing = true
+                        except IndexError:
+                            doAssert(false, "Competing Transaction doesn't have a Status despite being marked as a spender.")
 
-    #Set the status.
-    consensus.setStatus(tx.hash, status)
+        #Set the status.
+        consensus.setStatus(tx.hash, status)
 
-    #Mark the Transaction as unmentioned.
-    consensus.setUnmentioned(tx.hash)
+        #Mark the Transaction as unmentioned.
+        consensus.setUnmentioned(tx.hash)
 
 #Add a VerificationPacket.
 proc add*(
@@ -387,106 +388,107 @@ proc archive*(
     incd: uint16,
     decd: int
 ) {.forceCheck: [].} =
-    try:
-        for packet in shifted:
-            #Delete every mentioned hash in the Block from unmentioned.
-            consensus.unmentioned.excl(packet.hash)
+    {.gcsafe.}:
+        try:
+            for packet in shifted:
+                #Delete every mentioned hash in the Block from unmentioned.
+                consensus.unmentioned.excl(packet.hash)
 
-            #Clear the Status's pending VerificationPacket.
-            var status: TransactionStatus = consensus.getStatus(packet.hash)
-            status.pending = newSignedVerificationPacketObj(packet.hash)
-            status.signatures = initTable[uint16, BLSSignature]()
+                #Clear the Status's pending VerificationPacket.
+                var status: TransactionStatus = consensus.getStatus(packet.hash)
+                status.pending = newSignedVerificationPacketObj(packet.hash)
+                status.signatures = initTable[uint16, BLSSignature]()
 
-            #Since this is a ref, we don't need to set it back.
-            #We would if it needed to be saved to the DB, but the pending data isn't.
-    except IndexError as e:
-        doAssert(false, "Newly archived Transaction doesn't have a TransactionStatus: " & e.msg)
+                #Since this is a ref, we don't need to set it back.
+                #We would if it needed to be saved to the DB, but the pending data isn't.
+        except IndexError as e:
+            doAssert(false, "Newly archived Transaction doesn't have a TransactionStatus: " & e.msg)
 
-    #Update the Epoch for every unmentioned Transaction.
-    for hash in consensus.unmentioned:
-        consensus.incEpoch(hash)
-        consensus.db.addUnmentioned(hash)
+        #Update the Epoch for every unmentioned Transaction.
+        for hash in consensus.unmentioned:
+            consensus.incEpoch(hash)
+            consensus.db.addUnmentioned(hash)
 
-    #Transactions finalized out of order.
-    var outOfOrder: HashSet[Hash[384]] = initHashSet[Hash[384]]()
-    #Mark every hash in this Epoch as out of Epochs.
-    for hash in popped.keys():
-        #Skip Transaction we verified out of order.
-        if outOfOrder.contains(hash):
-            continue
-
-        var parents: seq[Hash[384]] = @[hash]
-        while parents.len != 0:
-            #Grab the last parent.
-            var parent: Hash[384] = parents.pop()
-
-            #Skip this Transaction if we already verified it.
-            if outOfOrder.contains(parent):
+        #Transactions finalized out of order.
+        var outOfOrder: HashSet[Hash[384]] = initHashSet[Hash[384]]()
+        #Mark every hash in this Epoch as out of Epochs.
+        for hash in popped.keys():
+            #Skip Transaction we verified out of order.
+            if outOfOrder.contains(hash):
                 continue
 
-            #Grab the Transaction.
-            var tx: Transaction
-            try:
-                tx = consensus.functions.transactions.getTransaction(parent)
-            except IndexError as e:
-                doAssert(false, "Couldn't get a Transaction that's out of Epochs: " & e.msg)
+            var parents: seq[Hash[384]] = @[hash]
+            while parents.len != 0:
+                #Grab the last parent.
+                var parent: Hash[384] = parents.pop()
 
-            #Grab this Transaction's unfinalized parents.
-            var newParents: seq[Hash[384]] = consensus.getUnfinalizedParents(tx)
+                #Skip this Transaction if we already verified it.
+                if outOfOrder.contains(parent):
+                    continue
 
-            #If all the parents are finalized, finalize this Transaction.
-            if newParents.len == 0:
+                #Grab the Transaction.
+                var tx: Transaction
                 try:
-                    consensus.finalize(state, parent, popped[hash])
-                except KeyError as e:
-                    doAssert(false, "Couldn't get a value from a Table using a key from .keys(): " & e.msg)
-                outOfOrder.incl(parent)
-            else:
-                #Else, add back this Transaction, and then add the new parents.
-                parents.add(parent)
-                parents &= newParents
+                    tx = consensus.functions.transactions.getTransaction(parent)
+                except IndexError as e:
+                    doAssert(false, "Couldn't get a Transaction that's out of Epochs: " & e.msg)
 
-    #Reclaulcate every close Status.
-    var toDelete: seq[Hash[384]] = @[]
-    for hash in consensus.close:
-        var status: TransactionStatus
-        try:
-            status = consensus.getStatus(hash)
-        except IndexError:
-            doAssert(false, "Couldn't get the status of a Transaction that's close to being verified: " & $hash)
+                #Grab this Transaction's unfinalized parents.
+                var newParents: seq[Hash[384]] = consensus.getUnfinalizedParents(tx)
 
-        #Remove finalized Transactions.
-        if status.merit != -1:
-            toDelete.add(hash)
-            continue
+                #If all the parents are finalized, finalize this Transaction.
+                if newParents.len == 0:
+                    try:
+                        consensus.finalize(state, parent, popped[hash])
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a value from a Table using a key from .keys(): " & e.msg)
+                    outOfOrder.incl(parent)
+                else:
+                    #Else, add back this Transaction, and then add the new parents.
+                    parents.add(parent)
+                    parents &= newParents
 
-        #Recalculate Merit.
-        consensus.calculateMerit(state, hash, status)
-        #Remove verified Transactions.
-        if status.verified:
-            toDelete.add(hash)
-            continue
+        #Reclaulcate every close Status.
+        var toDelete: seq[Hash[384]] = @[]
+        for hash in consensus.close:
+            var status: TransactionStatus
+            try:
+                status = consensus.getStatus(hash)
+            except IndexError:
+                doAssert(false, "Couldn't get the status of a Transaction that's close to being verified: " & $hash)
 
-    #Delete all close hashes marked for deletion.
-    for hash in toDelete:
-        consensus.close.excl(hash)
+            #Remove finalized Transactions.
+            if status.merit != -1:
+                toDelete.add(hash)
+                continue
 
-    #Update the filters.
-    if decd == -1:
-        consensus.filters.send.handleBlock(incd, state[incd])
-        consensus.filters.data.handleBlock(incd, state[incd])
-    else:
-        consensus.filters.send.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
-        consensus.filters.data.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
+            #Recalculate Merit.
+            consensus.calculateMerit(state, hash, status)
+            #Remove verified Transactions.
+            if status.verified:
+                toDelete.add(hash)
+                continue
 
-    #If the holder just got their first vote, make sure their difficulty is counted.
-    if state[incd] == 50:
-        try:
-            consensus.filters.send.update(incd, state[incd], consensus.db.loadSendDifficulty(incd))
-        except DBReadError:
-            discard
+        #Delete all close hashes marked for deletion.
+        for hash in toDelete:
+            consensus.close.excl(hash)
 
-        try:
-            consensus.filters.data.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
-        except DBReadError:
-            discard
+        #Update the filters.
+        if decd == -1:
+            consensus.filters.send.handleBlock(incd, state[incd])
+            consensus.filters.data.handleBlock(incd, state[incd])
+        else:
+            consensus.filters.send.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
+            consensus.filters.data.handleBlock(incd, state[incd], uint16(decd), state[uint16(decd)])
+
+        #If the holder just got their first vote, make sure their difficulty is counted.
+        if state[incd] == 50:
+            try:
+                consensus.filters.send.update(incd, state[incd], consensus.db.loadSendDifficulty(incd))
+            except DBReadError:
+                discard
+
+            try:
+                consensus.filters.data.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
+            except DBReadError:
+                discard

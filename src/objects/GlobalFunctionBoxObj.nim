@@ -42,23 +42,23 @@ import asyncdispatch
 
 type
     SystemFunctionBox* = ref object
-        quit*: proc () {.gcsafe, raises: [].}
+        quit*: proc () {.raises: [].}
 
     TransactionsFunctionBox* = ref object
         getTransaction*: proc (
             hash: Hash[384]
-        ): Transaction {.gcsafe, raises: [
+        ): Transaction {.raises: [
             IndexError
         ].}
 
         getSpenders*: proc (
             input: Input
-        ): seq[Hash[384]] {.inline, gcsafe, raises: [].}
+        ): seq[Hash[384]] {.inline, raises: [].}
 
         addClaim*: proc (
             claim: Claim,
             syncing: bool = false
-        ) {.gcsafe, raises: [
+        ) {.raises: [
             ValueError,
             DataExists
         ].}
@@ -66,7 +66,7 @@ type
         addSend*: proc (
             send: Send,
             syncing: bool = false
-        ) {.gcsafe, raises: [
+        ) {.raises: [
             ValueError,
             DataExists
         ].}
@@ -74,27 +74,27 @@ type
         addData*: proc (
             data: Data,
             syncing: bool = false
-        ) {.gcsafe, raises: [
+        ) {.raises: [
             ValueError,
             DataExists
         ].}
 
         verify*: proc (
             hash: Hash[384]
-        ) {.gcsafe, raises: [].}
+        ) {.raises: [].}
 
         unverify*: proc (
             hash: Hash[384]
-        ) {.gcsafe, raises: [].}
+        ) {.raises: [].}
 
     ConsensusFunctionBox* = ref object
-        getSendDifficulty*: proc (): Hash[384] {.inline, gcsafe, raises: [].}
+        getSendDifficulty*: proc (): Hash[384] {.inline, raises: [].}
         getDataMinimumDifficulty*: proc (): Hash[384] {.inline, raises: [].}
-        getDataDifficulty*: proc (): Hash[384] {.inline, gcsafe, raises: [].}
+        getDataDifficulty*: proc (): Hash[384] {.inline, raises: [].}
 
         isMalicious*: proc (
             nick: uint16,
-        ): bool {.inline, gcsafe, raises: [].}
+        ): bool {.inline, raises: [].}
 
         getNonce*: proc (
             holder: uint16
@@ -102,28 +102,28 @@ type
 
         hasArchivedPacket*: proc (
             hash: Hash[384]
-        ): bool {.gcsafe, raises: [
+        ): bool {.raises: [
             IndexError
         ].}
 
         getStatus*: proc (
             hash: Hash[384]
-        ): TransactionStatus {.gcsafe, raises: [
+        ): TransactionStatus {.raises: [
             IndexError
         ].}
 
         getThreshold*: proc (
             epoch: int
-        ): int {.gcsafe, inline, raises: [].}
+        ): int {.inline, raises: [].}
 
         getPending*: proc (): tuple[
             packets: seq[VerificationPacket],
             aggregate: BLSSignature
-        ] {.gcsafe, inline, raises: [].}
+        ] {.inline, raises: [].}
 
         addSignedVerification*: proc (
             verif: SignedVerification
-        ) {.gcsafe, raises: [
+        ) {.raises: [
             ValueError,
             DataExists
         ].}
@@ -154,106 +154,106 @@ type
 
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
-        ) {.gcsafe, raises: [
+        ) {.raises: [
             ValueError
         ].}
 
     MeritFunctionBox* = ref object
-        getHeight*: proc (): int {.inline, gcsafe, raises: [].}
-        getTail*: proc (): Hash[384] {.inline, gcsafe, raises: [].}
+        getHeight*: proc (): int {.inline, raises: [].}
+        getTail*: proc (): Hash[384] {.inline, raises: [].}
 
         getBlockHashBefore*: proc (
             hash: Hash[384]
-        ): Hash[384] {.gcsafe, raises: [
+        ): Hash[384] {.raises: [
             IndexError
         ].}
 
         getBlockHashAfter*: proc (
             hash: Hash[384]
-        ): Hash[384] {.gcsafe, raises: [
+        ): Hash[384] {.raises: [
             IndexError
         ].}
 
-        getDifficulty*: proc (): Difficulty {.inline, gcsafe, raises: [].}
+        getDifficulty*: proc (): Difficulty {.inline, raises: [].}
 
         getBlockByNonce*: proc (
             nonce: int
-        ): Block {.gcsafe, raises: [
+        ): Block {.raises: [
             IndexError
         ].}
 
         getBlockByHash*: proc (
             hash: Hash[384]
-        ): Block {.gcsafe, raises: [
+        ): Block {.raises: [
             IndexError
         ].}
 
         getPublicKey*: proc (
             nick: uint16
-        ): BLSPublicKey {.gcsafe, raises: [
+        ): BLSPublicKey {.raises: [
             IndexError
         ].}
 
         getNickname*: proc (
             key: BLSPublicKey
-        ): uint16 {.gcsafe, raises: [
+        ): uint16 {.raises: [
             IndexError
         ].}
 
-        getTotalMerit*: proc (): int {.inline, gcsafe, raises: [].}
-        getUnlockedMerit*: proc (): int {.inline, gcsafe, raises: [].}
+        getTotalMerit*: proc (): int {.inline, raises: [].}
+        getUnlockedMerit*: proc (): int {.inline, raises: [].}
         getMerit*: proc (
             nick: uint16
-        ): int {.inline, gcsafe, raises: [].}
+        ): int {.inline, raises: [].}
 
         isUnlocked*: proc (
             nick: uint16
-        ): bool {.inline, gcsafe, raises: [].}
+        ): bool {.inline, raises: [].}
 
         addBlock*: proc (
             newBlock: SketchyBlock,
             sketcher: Sketcher,
             syncing: bool
-        ): Future[void] {.gcsafe.}
+        ): Future[void]
 
         addBlockByHeader*: proc (
             header: BlockHeader,
             syncing: bool
-        ): Future[void] {.gcsafe.}
+        ): Future[void]
 
         addBlockByHash*: proc (
             hash: Hash[384],
             syncing: bool
-        ): Future[void] {.gcsafe.}
+        ): Future[void]
 
         testBlockHeader*: proc (
             header: BlockHeader
-        ) {.gcsafe, raises: [
+        ) {.raises: [
             ValueError,
             NotConnected
         ].}
 
     PersonalFunctionBox* = ref object
-        getWallet*: proc (): Wallet {.inline, gcsafe, raises: [].}
+        getWallet*: proc (): Wallet {.inline, raises: [].}
 
         setMnemonic*: proc (
             mnemonic: string,
             paassword: string
-        ) {.gcsafe, raises: [
+        ) {.raises: [
             ValueError
         ].}
 
         send*: proc (
             destination: string,
             amount: string
-        ): Hash[384] {.gcsafe, raises: [
+        ): Hash[384] {.raises: [
             ValueError,
             NotEnoughMeros
         ].}
 
         data*: proc (
             data: string
-        ): Hash[384] {.gcsafe, raises: [
+        ): Hash[384] {.raises: [
             ValueError,
             DataExists
         ].}
@@ -262,12 +262,12 @@ type
         connect*: proc (
             ip: string,
             port: int
-        ): Future[void] {.gcsafe.}
+        ): Future[void]
 
         broadcast*: proc (
             msgType: MessageType,
             msg: string
-        ) {.gcsafe, raises: [].}
+        ) {.raises: [].}
 
     GlobalFunctionBox* = ref object
         system*:       SystemFunctionBox

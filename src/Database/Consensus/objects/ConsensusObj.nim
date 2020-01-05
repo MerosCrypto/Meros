@@ -64,77 +64,78 @@ proc newConsensusObj*(
     sendDiff: Hash[384],
     dataDiff: Hash[384]
 ): Consensus {.forceCheck: [].} =
-    #Create the Consensus object.
-    result = Consensus(
-        functions: functions,
-        db: db,
+    {.gcsafe.}:
+        #Create the Consensus object.
+        result = Consensus(
+            functions: functions,
+            db: db,
 
-        filters: (
-            send: newSpamFilterObj(sendDiff),
-            data: newSpamFilterObj(dataDiff)
-        ),
-        malicious: initTable[uint16, seq[MeritRemoval]](),
+            filters: (
+                send: newSpamFilterObj(sendDiff),
+                data: newSpamFilterObj(dataDiff)
+            ),
+            malicious: initTable[uint16, seq[MeritRemoval]](),
 
-        statuses: initTable[Hash[384], TransactionStatus](),
-        close: initHashSet[Hash[384]](),
+            statuses: initTable[Hash[384], TransactionStatus](),
+            close: initHashSet[Hash[384]](),
 
-        unmentioned: initHashSet[Hash[384]]()
-    )
+            unmentioned: initHashSet[Hash[384]]()
+        )
 
-    #Reload the filters.
-    for h in 0 ..< state.holders.len:
+        #Reload the filters.
+        for h in 0 ..< state.holders.len:
+            try:
+                result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h)))
+            except DBReadError:
+                discard
+
+            try:
+                result.filters.data.update(uint16(h), state[uint16(h)], result.db.loadDataDifficulty(uint16(h)))
+            except DBReadError:
+                discard
+
+        #Load statuses still in Epochs.
+        #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
+        var
+            height: int = functions.merit.getHeight()
+            old: seq[Hash[384]] = @[]
         try:
-            result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h)))
-        except DBReadError:
-            discard
+            for i in max(height - 10, 0) ..< height - 5:
+                for packet in functions.merit.getBlockByNonce(i).body.packets:
+                    old.add(packet.hash)
 
-        try:
-            result.filters.data.update(uint16(h), state[uint16(h)], result.db.loadDataDifficulty(uint16(h)))
-        except DBReadError:
-            discard
+            for i in max(height - 5, 0) ..< height:
+                for packet in functions.merit.getBlockByNonce(i).body.packets:
+                    try:
+                        result.statuses[packet.hash] = result.db.load(packet.hash)
+                    except DBReadError:
+                        doAssert(false, "Transaction archived on the Blockchain doesn't have a status.")
 
-    #Load statuses still in Epochs.
-    #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
-    var
-        height: int = functions.merit.getHeight()
-        old: seq[Hash[384]] = @[]
-    try:
-        for i in max(height - 10, 0) ..< height - 5:
-            for packet in functions.merit.getBlockByNonce(i).body.packets:
-                old.add(packet.hash)
+                    #If this Transaction is close to being confirmed, add it to close.
+                    try:
+                        var merit: int = 0
+                        for holder in result.statuses[packet.hash].holders:
+                            if not result.malicious.hasKey(holder):
+                                merit += state[holder]
+                        if (
+                            (not result.statuses[packet.hash].verified) and
+                            (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 5)
+                        ):
+                            result.close.incl(packet.hash)
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a status we just added to the statuses table: " & e.msg)
+        except IndexError as e:
+            doAssert(false, "Couldn't get a Block on the Blockchain: " & e.msg)
 
-        for i in max(height - 5, 0) ..< height:
-            for packet in functions.merit.getBlockByNonce(i).body.packets:
-                try:
-                    result.statuses[packet.hash] = result.db.load(packet.hash)
-                except DBReadError:
-                    doAssert(false, "Transaction archived on the Blockchain doesn't have a status.")
+        #Delete old Transaction statuses.
+        for oldStatus in old:
+            result.statuses.del(oldStatus)
+            result.close.excl(oldStatus)
 
-                #If this Transaction is close to being confirmed, add it to close.
-                try:
-                    var merit: int = 0
-                    for holder in result.statuses[packet.hash].holders:
-                        if not result.malicious.hasKey(holder):
-                            merit += state[holder]
-                    if (
-                        (not result.statuses[packet.hash].verified) and
-                        (merit >= state.nodeThresholdAt(result.statuses[packet.hash].epoch) - 5)
-                    ):
-                        result.close.incl(packet.hash)
-                except KeyError as e:
-                    doAssert(false, "Couldn't get a status we just added to the statuses table: " & e.msg)
-    except IndexError as e:
-        doAssert(false, "Couldn't get a Block on the Blockchain: " & e.msg)
-
-    #Delete old Transaction statuses.
-    for oldStatus in old:
-        result.statuses.del(oldStatus)
-        result.close.excl(oldStatus)
-
-    #Load unmentioned Transactions.
-    var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()
-    for hash in unmentioned:
-        result.unmentioned.incl(hash)
+        #Load unmentioned Transactions.
+        var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()
+        for hash in unmentioned:
+            result.unmentioned.incl(hash)
 
 #Get all pending Verification Packets and the aggregate signature.
 proc getPending*(
@@ -254,37 +255,38 @@ proc calculateMerit*(
     hash: Hash[384],
     statusArg: TransactionStatus
 ) {.forceCheck: [].} =
-    var
-        children: seq[Hash[384]] = @[hash]
-        child: Hash[384]
-        tx: Transaction
-        status: TransactionStatus = statusArg
-        wasVerified: bool
+    {.gcsafe.}:
+        var
+            children: seq[Hash[384]] = @[hash]
+            child: Hash[384]
+            tx: Transaction
+            status: TransactionStatus = statusArg
+            wasVerified: bool
 
-    while children.len != 0:
-        child = children.pop()
-        try:
-            tx = consensus.functions.transactions.getTransaction(child)
-            if child != hash:
-                status = consensus.getStatus(child)
-        except IndexError:
-            doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
-        wasVerified = status.verified
-
-        consensus.calculateMeritSingle(
-            state,
-            tx,
-            status
-        )
-
-        if (not wasVerified) and (status.verified):
+        while children.len != 0:
+            child = children.pop()
             try:
-                for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
-                    for spender in spenders:
-                        children.add(spender)
-            except IndexError as e:
-                doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
+                tx = consensus.functions.transactions.getTransaction(child)
+                if child != hash:
+                    status = consensus.getStatus(child)
+            except IndexError:
+                doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
+            wasVerified = status.verified
+
+            consensus.calculateMeritSingle(
+                state,
+                tx,
+                status
+            )
+
+            if (not wasVerified) and (status.verified):
+                try:
+                    for o in 0 ..< tx.outputs.len:
+                        var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
+                        for spender in spenders:
+                            children.add(spender)
+                except IndexError as e:
+                    doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
 #Unverify a Transaction.
 proc unverify*(
@@ -334,62 +336,63 @@ proc finalize*(
     hash: Hash[384],
     holders: seq[uint16]
 ) {.forceCheck: [].} =
-    #Get the Transaction/Status.
-    var
-        tx: Transaction
-        status: TransactionStatus
-    try:
-        tx = consensus.functions.transactions.getTransaction(hash)
-        status = consensus.getStatus(hash)
-    except IndexError as e:
-        doAssert(false, "Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
-
-    #Calculate the final Merit tally.
-    status.merit = 0
-    for holder in holders:
-        #Add the Merit.
-        status.merit += state[holder]
-
-    #Make sure verified Transaction's Merit is above the node protocol threshold.
-    if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
-        #If it's now unverified, unverify the tree.
-        consensus.unverify(state, hash, status)
-    #If it wasn't verified, check if it actually was.
-    elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
-        #Make sure all parents are verified.
+    {.gcsafe.}:
+        #Get the Transaction/Status.
+        var
+            tx: Transaction
+            status: TransactionStatus
         try:
-            for input in tx.inputs:
-                if (tx of Data) and (cast[Data](tx).isFirstData):
-                    break
-
-                if (
-                    (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
-                    (not consensus.getStatus(input.hash).verified)
-                ):
-                    consensus.statuses.del(hash)
-                    return
+            tx = consensus.functions.transactions.getTransaction(hash)
+            status = consensus.getStatus(hash)
         except IndexError as e:
-            doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
+            doAssert(false, "Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
 
-        #Mark the Transaction as verified.
-        status.verified = true
-        consensus.functions.transactions.verify(tx.hash)
+        #Calculate the final Merit tally.
+        status.merit = 0
+        for holder in holders:
+            #Add the Merit.
+            status.merit += state[holder]
 
-    #Check if the Transaction was beaten, if it's not already marked as beaten.
-    if (not status.beaten) and (not status.verified):
-        for input in tx.inputs:
-            var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
-            for spender in spenders:
-                try:
-                    if consensus.getStatus(spender).verified:
-                        status.beaten = true
-                except IndexError as e:
-                    doAssert(false, "Couldn't get the Status of a competing Transaction: " & e.msg)
+        #Make sure verified Transaction's Merit is above the node protocol threshold.
+        if (status.verified) and (status.merit < state.protocolThresholdAt(state.processedBlocks)):
+            #If it's now unverified, unverify the tree.
+            consensus.unverify(state, hash, status)
+        #If it wasn't verified, check if it actually was.
+        elif (not status.verified) and (status.merit >= state.protocolThresholdAt(state.processedBlocks)):
+            #Make sure all parents are verified.
+            try:
+                for input in tx.inputs:
+                    if (tx of Data) and (cast[Data](tx).isFirstData):
+                        break
 
-    #Save the status.
-    #This will cause a double save for the finalized TX in the unverified case.
-    consensus.db.save(hash, status)
-    consensus.statuses.del(hash)
+                    if (
+                        (not (consensus.functions.transactions.getTransaction(input.hash) of Mint)) and
+                        (not consensus.getStatus(input.hash).verified)
+                    ):
+                        consensus.statuses.del(hash)
+                        return
+            except IndexError as e:
+                doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
+
+            #Mark the Transaction as verified.
+            status.verified = true
+            consensus.functions.transactions.verify(tx.hash)
+
+        #Check if the Transaction was beaten, if it's not already marked as beaten.
+        if (not status.beaten) and (not status.verified):
+            for input in tx.inputs:
+                var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
+                for spender in spenders:
+                    try:
+                        if consensus.getStatus(spender).verified:
+                            status.beaten = true
+                    except IndexError as e:
+                        doAssert(false, "Couldn't get the Status of a competing Transaction: " & e.msg)
+
+        #Save the status.
+        #This will cause a double save for the finalized TX in the unverified case.
+        consensus.db.save(hash, status)
+        consensus.statuses.del(hash)
 
 #Provide debug access to the statuses table
 when defined(merosTests):
