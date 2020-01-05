@@ -17,6 +17,5 @@ minisketch.dll
 #Milagro.
 incubator-milagro-crypto-c
 
-#Test files.
-/tests/nim.cfg
-/tests/AllTests.nim
+#Nimble temp files.
+/Meros_*.nims
