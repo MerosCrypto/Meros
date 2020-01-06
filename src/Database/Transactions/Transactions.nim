@@ -50,70 +50,69 @@ proc add*(
     ValueError,
     DataExists
 ].} =
-    {.gcsafe.}:
-        #Verify it wasn't already added.
+    #Verify it wasn't already added.
+    try:
+        discard transactions[claim.hash]
+        raise newException(DataExists, "Claim was already added.")
+    except IndexError:
+        discard
+
+    var
+        #Claimers.
+        claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey](1)
+
+        #Table of spent inputs.
+        inputTable: HashSet[string] = initHashSet[string]()
+        #Output loop variable.
+        output: MintOutput
+        #Key loop variable.
+        key: BLSPublicKey
+        #Amount this Claim is claiming.
+        amount: uint64 = 0
+
+    #Grab the first claimer.
+    try:
+        claimers[0] = lookup(transactions.loadMintOutput(cast[FundedInput](claim.inputs[0])).key)
+    except IndexError as e:
+        doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
+    except DBReadError:
+        raise newException(ValueError, "Claim spends a non-existant Mint.")
+
+    #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
+    for input in claim.inputs:
+        if inputTable.contains(input.toString()):
+            raise newException(ValueError, "Claim spends the same input twice.")
+        inputTable.incl(input.toString())
+
         try:
-            discard transactions[claim.hash]
-            raise newException(DataExists, "Claim was already added.")
+            if not (transactions[input.hash] of Mint):
+                raise newException(ValueError, "Claim doesn't spend a Mint.")
         except IndexError:
-            discard
+            raise newException(ValueError, "Claim spends a non-existant Mint.")
 
-        var
-            #Claimers.
-            claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey](1)
-
-            #Table of spent inputs.
-            inputTable: HashSet[string] = initHashSet[string]()
-            #Output loop variable.
-            output: MintOutput
-            #Key loop variable.
-            key: BLSPublicKey
-            #Amount this Claim is claiming.
-            amount: uint64 = 0
-
-        #Grab the first claimer.
         try:
-            claimers[0] = lookup(transactions.loadMintOutput(cast[FundedInput](claim.inputs[0])).key)
-        except IndexError as e:
-            doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
+            output = transactions.loadMintOutput(cast[FundedInput](input))
         except DBReadError:
             raise newException(ValueError, "Claim spends a non-existant Mint.")
 
-        #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
-        for input in claim.inputs:
-            if inputTable.contains(input.toString()):
-                raise newException(ValueError, "Claim spends the same input twice.")
-            inputTable.incl(input.toString())
+        try:
+            key = lookup(output.key)
+        except IndexError as e:
+            doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
 
-            try:
-                if not (transactions[input.hash] of Mint):
-                    raise newException(ValueError, "Claim doesn't spend a Mint.")
-            except IndexError:
-                raise newException(ValueError, "Claim spends a non-existant Mint.")
+        if not claimers.contains(key):
+            claimers.add(key)
+        amount += output.amount
 
-            try:
-                output = transactions.loadMintOutput(cast[FundedInput](input))
-            except DBReadError:
-                raise newException(ValueError, "Claim spends a non-existant Mint.")
+    #Set the Claim's output amount to the amount.
+    claim.outputs[0].amount = amount
 
-            try:
-                key = lookup(output.key)
-            except IndexError as e:
-                doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
+    #Verify the signature.
+    if not claim.verify(claimers.aggregate()):
+        raise newException(ValueError, "Claim has an invalid Signature.")
 
-            if not claimers.contains(key):
-                claimers.add(key)
-            amount += output.amount
-
-        #Set the Claim's output amount to the amount.
-        claim.outputs[0].amount = amount
-
-        #Verify the signature.
-        if not claim.verify(claimers.aggregate()):
-            raise newException(ValueError, "Claim has an invalid Signature.")
-
-        #Add the Claim.
-        transactions.add(cast[Transaction](claim))
+    #Add the Claim.
+    transactions.add(cast[Transaction](claim))
 
 #Add a Send.
 proc add*(
