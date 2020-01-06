@@ -38,7 +38,7 @@ suite "DBSerializeBlock":
         #Seed random.
         randomize(int64(getTime()))
         
-    midFuzzTest "Verify.":
+    midFuzzTest "Serialize and parse.":
         var
             #Last hash.
             last: ArgonHash

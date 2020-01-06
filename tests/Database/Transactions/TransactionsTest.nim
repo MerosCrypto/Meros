@@ -116,7 +116,7 @@ suite "Transactions":
             merit.processBlock(newBlock)
             transactions.archive(merit.postProcessBlock()[0])
 
-    midFuzzTest "Verify transactions.":
+    midFuzzTest "Reloaded transactions.":
         #Clear packets.
         packets = @[]
 

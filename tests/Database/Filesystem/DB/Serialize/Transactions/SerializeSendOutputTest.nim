@@ -30,7 +30,7 @@ suite "SerializeSendOutput":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    midFuzzTest "Verify.":
+    midFuzzTest "Serialize and parse.":
         #SendOutputs.
         var
             output: SendOutput

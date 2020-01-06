@@ -30,7 +30,7 @@ suite "SerializeDifficulty":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    midFuzzTest "Verify.":
+    midFuzzTest "Serialize and parse.":
         var
             #Difficulty value.
             value: string

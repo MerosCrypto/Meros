@@ -46,7 +46,7 @@ suite "Serialize Send":
             #Wallet.
             wallet: Wallet = newWallet("")
 
-    midFuzzTest "Verify serialization.":
+    midFuzzTest "Serialize and parse.":
         #Create the inputs.
         inputs = newSeq[FundedInput](rand(254) + 1)
         for i in 0 ..< inputs.len:

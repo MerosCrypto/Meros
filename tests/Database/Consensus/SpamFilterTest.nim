@@ -33,31 +33,33 @@ type VotedDifficultyTest = object
     holders: seq[uint16]
 
 suite "SpamFilter":
+    const
+        #Starting difficulty.
+        START_DIFF: Hash[384] = parseHexStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
+        #Other difficulty.
+        OTHER_DIFF: Hash[384] = parseHexStr("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
+
     setup:
         var
-            #Starting difficulty.
-            startDiff: Hash[384] = parseHexStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
-            #Other difficulty.
-            otherDiff: Hash[384] = parseHexStr("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
             #Holder -> Merit.
             merit: Table[uint16, int]
             #List of Difficulties and their votes.
             difficulties: seq[VotedDifficultyTest] = @[]
             #SpamFilter.
-            filter: SpamFilter = newSpamFilterObj(startDiff)
+            filter: SpamFilter = newSpamFilterObj(START_DIFF)
 
     test "Verify the starting difficulty is correct.":
-        assert(filter.difficulty == startDiff)
+        assert(filter.difficulty == START_DIFF)
 
     test "Verify adding 0 votes doesn't change the starting difficulty.":
-        filter.update(0, 49, otherDiff)
-        assert(filter.difficulty == startDiff)
+        filter.update(0, 49, OTHER_DIFF)
+        assert(filter.difficulty == START_DIFF)
 
     test "Add 1 vote and remove it.":
-        filter.update(0, 50, otherDiff)
-        assert(filter.difficulty == otherDiff)
+        filter.update(0, 50, OTHER_DIFF)
+        assert(filter.difficulty == OTHER_DIFF)
         filter.handleBlock(1, 1, 0, 49)
-        assert(filter.difficulty == startDiff)
+        assert(filter.difficulty == START_DIFF)
 
     midFuzzTest "Verify.":
         #Create a random amount of holders.
@@ -140,7 +142,7 @@ suite "SpamFilter":
 
             #Handle no votes.
             if difficulties.len == 0:
-                assert(filter.difficulty == startDiff)
+                assert(filter.difficulty == START_DIFF)
                 continue
 
             #Sort difficulties.

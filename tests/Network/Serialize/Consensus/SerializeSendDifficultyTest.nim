@@ -30,7 +30,7 @@ suite "SerializeSendDiffculty":
         #Seed random.
         randomize(int64(getTime()))
 
-    highFuzzTest "Verify.":
+    highFuzzTest "Serialize and parse.":
         var
             #SignedSendDifficulty Element.
             sendDiff: SignedSendDifficulty

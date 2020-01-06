@@ -43,7 +43,7 @@ suite "SerializeBlock":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    midFuzzTest "Verify serialization.":
+    midFuzzTest "Serialize and parse.":
         var
             #Last hash.
             last: ArgonHash

@@ -1,5 +1,4 @@
 #TransactionsDB Spendable Test.
-#Tests saving UTXOs, checking which UYTXOs an account can spend, and deleting UTXOs.
 
 #Test lib.
 import unittest2
@@ -39,7 +38,7 @@ suite "Spendable":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    test "Verify":
+    test "Saving UTXOs, checking which UYTXOs an account can spend, and deleting UTXOs.":
         var
             #DB.
             db = newTestDatabase()

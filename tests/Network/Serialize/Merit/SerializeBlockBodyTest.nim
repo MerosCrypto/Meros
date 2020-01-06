@@ -39,7 +39,7 @@ suite "SerializeBlockBody":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    midFuzzTest "Verify serialization.":
+    midFuzzTest "Serialize and parse.":
         var
             #Sketch salt.
             sketchSalt: string

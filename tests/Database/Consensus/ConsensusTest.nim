@@ -41,7 +41,7 @@ suite "Consensus":
         #Seed random.
         randomize(int64(getTime()))
 
-    test "Verify.":
+    test "Reloaded consensus.":
         var
             #Database.
             db: DB = newTestDatabase()

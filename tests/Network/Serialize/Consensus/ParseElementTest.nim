@@ -40,7 +40,7 @@ import ../../../../src/Network/Serialize/Consensus/SerializeMeritRemoval
 import random
 
 suite "ParseElement":
-    test "Verify.":
+    test "Serialization.":
         var sendDiff: SendDifficulty = newRandomSendDifficulty()
         assert(sendDiff.serialize().len == {
             int8(SEND_DIFFICULTY_PREFIX)

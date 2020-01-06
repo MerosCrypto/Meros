@@ -45,7 +45,7 @@ suite "Serialize Data":
             #Wallet.
             wallet: Wallet = newWallet("")
 
-    midFuzzTest "Verify serialization.":
+    midFuzzTest "Serialize and parse.":
         #Randomize the input.
         for b in 0 ..< input.data.len:
             input.data[b] = uint8(rand(255))

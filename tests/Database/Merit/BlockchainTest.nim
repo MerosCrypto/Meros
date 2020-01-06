@@ -4,36 +4,39 @@
 import unittest2
 
 #Fuzzing lib.
-import ../../../Fuzzed
+import ../../Fuzzed
 
 #Util lib.
-import ../../../../src/lib/Util
+import ../../../src/lib/Util
 
 #Hash lib.
-import ../../../../src/lib/Hash
+import ../../../src/lib/Hash
 
 #MinerWallet lib.
-import ../../../../src/Wallet/MinerWallet
+import ../../../src/Wallet/MinerWallet
 
 #Element libs.
-import ../../../../src/Database/Consensus/Elements/Elements
+import ../../../src/Database/Consensus/Elements/Elements
 
 #Difficulty, Block, Blockchain, and State libs.
-import ../../../../src/Database/Merit/Difficulty
-import ../../../../src/Database/Merit/Block
-import ../../../../src/Database/Merit/Blockchain
-import ../../../../src/Database/Merit/State
+import ../../../src/Database/Merit/Difficulty
+import ../../../src/Database/Merit/Block
+import ../../../src/Database/Merit/Blockchain
+import ../../../src/Database/Merit/State
 
 #Merit Testing lib.
-import ../TestMerit
+import TestMerit
 
 #Compare Merit lib.
-import ../CompareMerit
+import CompareMerit
 
 #Random standard lib.
 import random
 
-suite "BDB":
+suite "Blockchain":
+    #Starting Difficultty.
+    const startDifficulty: Hash[384] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(384)
+
     setup:
         #Seed random.
         randomize(int64(getTime()))
@@ -41,8 +44,6 @@ suite "BDB":
         var
             #Database.
             db: DB = newTestDatabase()
-            #Starting Difficultty.
-            startDifficulty: Hash[384] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(384)
             #Blockchain.
             blockchain: Blockchain = newBlockchain(
                 db,
@@ -70,7 +71,7 @@ suite "BDB":
             #Block.
             mining: Block
 
-    lowFuzzTest "Verify.":
+    lowFuzzTest "Reloaded blockchain.":
         if state.holders.len != 0:
             #Randomize the Packets.
             packets = @[]
