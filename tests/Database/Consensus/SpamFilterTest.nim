@@ -1,3 +1,6 @@
+#Spam Filter Test.
+
+#Test lib.
 import unittest2
 
 #Fuzzing lib.
@@ -27,18 +30,18 @@ import algorithm
 #Tables standard lib.
 import tables
 
+const
+    #Starting difficulty.
+    START_DIFFICULTY: Hash[384] = parseHexStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
+    #Other difficulty.
+    OTHER_DIFFICULTY: Hash[384] = parseHexStr("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
+
 #Recreate the VotedDifficulty object for testing purposes.
 type VotedDifficultyTest = object
     difficulty: Hash[384]
     holders: seq[uint16]
 
 suite "SpamFilter":
-    const
-        #Starting difficulty.
-        START_DIFF: Hash[384] = parseHexStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
-        #Other difficulty.
-        OTHER_DIFF: Hash[384] = parseHexStr("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
-
     setup:
         var
             #Holder -> Merit.
@@ -46,20 +49,20 @@ suite "SpamFilter":
             #List of Difficulties and their votes.
             difficulties: seq[VotedDifficultyTest] = @[]
             #SpamFilter.
-            filter: SpamFilter = newSpamFilterObj(START_DIFF)
+            filter: SpamFilter = newSpamFilterObj(START_DIFFICULTY)
 
     test "Verify the starting difficulty is correct.":
-        assert(filter.difficulty == START_DIFF)
+        assert(filter.difficulty == START_DIFFICULTY)
 
     test "Verify adding 0 votes doesn't change the starting difficulty.":
-        filter.update(0, 49, OTHER_DIFF)
-        assert(filter.difficulty == START_DIFF)
+        filter.update(0, 49, OTHER_DIFFICULTY)
+        assert(filter.difficulty == START_DIFFICULTY)
 
     test "Add 1 vote and remove it.":
-        filter.update(0, 50, OTHER_DIFF)
-        assert(filter.difficulty == OTHER_DIFF)
+        filter.update(0, 50, OTHER_DIFFICULTY)
+        assert(filter.difficulty == OTHER_DIFFICULTY)
         filter.handleBlock(1, 1, 0, 49)
-        assert(filter.difficulty == START_DIFF)
+        assert(filter.difficulty == START_DIFFICULTY)
 
     midFuzzTest "Verify.":
         #Create a random amount of holders.
@@ -142,7 +145,7 @@ suite "SpamFilter":
 
             #Handle no votes.
             if difficulties.len == 0:
-                assert(filter.difficulty == START_DIFF)
+                assert(filter.difficulty == START_DIFFICULTY)
                 continue
 
             #Sort difficulties.

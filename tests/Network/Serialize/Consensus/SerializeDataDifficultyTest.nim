@@ -38,11 +38,10 @@ suite "SerializeDataDifficulty":
             #Reloaded SignedDataDifficulty Element.
             reloadedSDD: SignedDataDifficulty = dataDiff.signedSerialize().parseSignedDataDifficulty()
 
-    highFuzzTest "Compare the Elements.":
+    lowFuzzTest "Compare the Elements/serializations.":
+        compare(dataDiff, reloadedDD)
         compare(dataDiff, reloadedSDD)
         assert(dataDiff.signature == reloadedSDD.signature)
-        compare(dataDiff, reloadedDD)
 
-    highFuzzTest "Compare serialized versions.":
         assert(dataDiff.serialize() == reloadedDD.serialize())
         assert(dataDiff.signedSerialize() == reloadedSDD.signedSerialize())

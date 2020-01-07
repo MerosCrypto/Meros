@@ -1,4 +1,4 @@
-#Merkle Tree Test.
+#Merkle Test.
 
 #Test lib.
 import unittest2

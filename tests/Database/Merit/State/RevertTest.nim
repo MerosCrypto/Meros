@@ -48,7 +48,7 @@ suite "Revert":
             blockchain: Blockchain = newBlockchain(
                 db,
                 "STATE_TEST",
-                30,
+                1,
                 "".pad(48).toHash(384)
             )
             #State.
@@ -148,7 +148,7 @@ suite "Revert":
             copy: State
             reloaded: State
             revertedAtOnce: State
-        
+
         copy = states[^(rand(3) + 1)]
         copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))
         copy.revert(blockchain, copy.processedBlocks - (rand(3) + 1))

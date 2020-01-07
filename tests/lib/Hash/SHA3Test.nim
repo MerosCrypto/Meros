@@ -1,4 +1,4 @@
-#SHA3 Tests.
+#SHA3 Test.
 
 #Test lib.
 import unittest2

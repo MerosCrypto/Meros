@@ -22,10 +22,10 @@ include MainInterfaces
 proc main() {.thread.} =
     {.gcsafe.}:
         mainDatabase()
-        mainMerit(functions, config)
-        mainConsensus(functions)
-        mainTransactions(functions, config)
-        mainPersonal(functions)
+        mainMerit()
+        mainConsensus()
+        mainTransactions()
+        mainPersonal()
         mainNetwork()
         mainRPC()
 

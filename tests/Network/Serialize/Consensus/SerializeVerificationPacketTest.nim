@@ -27,27 +27,13 @@ suite "SerializeVerificationPacket":
         #Seed random.
         randomize(int64(getTime()))
 
-    highFuzzTest "Serialize.":
         var
             #SignedVerificationPacket Element.
-            packet: SignedVerificationPacket
+            packet: SignedVerificationPacket = newRandomVerificationPacket()
             #Reloaded VerificationPacket Element.
-            reloadedVP: VerificationPacket
-            #Reloaded SignedVerificationPacket Element.
-            #reloadedSVP: SignedVerificationPacket
+            reloadedVP: VerificationPacket = packet.serialize().parseVerificationPacket()
 
-        #Create the SignedVerificationPacket.
-        packet = newRandomVerificationPacket()
-
-        #Serialize it and parse it back.
-        reloadedVP = packet.serialize().parseVerificationPacket()
-        #reloadedSVP = packet.signedSerialize().parseSignedVerificationPacket()
-
-        #Compare the Elements.
-        #compare(packet, reloadedSVP)
-        #assert(packet.signature == reloadedSVP.signature)
+    midFuzzTest "Compare the Elements/serializations.":
         compare(packet, reloadedVP)
 
-        #Test the serialized versions.
         assert(packet.serialize() == reloadedVP.serialize())
-        #assert(packet.signedSerialize() == reloadedSVP.signedSerialize())

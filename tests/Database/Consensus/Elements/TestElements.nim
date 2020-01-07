@@ -111,7 +111,7 @@ proc newRandomDataDifficulty*(
 
 proc newRandomMeritRemoval*(
     holder: uint16 = uint16(rand(high(int16)))
-): SignedMeritRemoval {.gcsafe.}
+): SignedMeritRemoval
 
 proc newRandomElement*(
     holder: uint16 = uint16(rand(high(int16))),

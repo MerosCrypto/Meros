@@ -1,3 +1,5 @@
+#Util test.
+
 #Test lib.
 import unittest2
 
@@ -28,7 +30,7 @@ suite "Util":
         assert(0.toBinary() == "")
         assert("\0\0\0\0".fromBinary() == 0)
 
-    midFuzzTest "char fromBinary behaves the same as string fromBinary.":
+    test "char fromBinary behaves the same as string fromBinary.":
         var r: int = rand(255)
         assert(char(r).fromBinary() == ($char(r)).fromBinary())
 
@@ -56,10 +58,10 @@ suite "Util":
         var u32: uint32 = uint32(rand(MAXU32))
         assert(u32 == uint32(u32.toBinary().fromBinary()))
 
-    midFuzzTest "an extremely high number (21 million Meros).":
+    test "An extremely high number (21 million Meros).":
         var u64: uint64 = uint64(210000000000000000)
         assert(u64 == uint64(u64.toBinary().fromBinary()))
 
-    midFuzzTest "the same number yet with the Nim standard lib.":
+    test "The same number yet with the Nim standard lib.":
         var u64: uint64 = uint64(210000000000000000)
         assert(u64 == uint64(parseUInt($u64)))

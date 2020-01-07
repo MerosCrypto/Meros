@@ -1,4 +1,4 @@
-#Keccak Tests.
+#Keccak Test.
 
 #Test lib.
 import unittest2

@@ -30,27 +30,18 @@ suite "SerializeMeritRemoval":
         #Seed random.
         randomize(int64(getTime()))
 
-    highFuzzTest "Serialize.":
         var
             #SignedMeritRemoval Element.
-            mr: SignedMeritRemoval
+            mr: SignedMeritRemoval = newRandomMeritRemoval()
             #Reloaded MeritRemoval Element.
-            reloadedMR: MeritRemoval
+            reloadedMR: MeritRemoval = mr.serialize().parseMeritRemoval()
             #Reloaded SignedMeritRemoval Element.
-            reloadedSMR: SignedMeritRemoval
+            reloadedSMR: SignedMeritRemoval = mr.signedSerialize().parseSignedMeritRemoval()
 
-        #Create the SignedMeritRemoval.
-        mr = newRandomMeritRemoval()
-
-        #Serialize it and parse it back.
-        reloadedMR = mr.serialize().parseMeritRemoval()
-        reloadedSMR = mr.signedSerialize().parseSignedMeritRemoval()
-
-        #Compare the Elements.
+    highFuzzTest "Compare the Elements/serializations.":
+        compare(mr, reloadedMR)
         compare(mr, reloadedSMR)
         assert(mr.signature == reloadedSMR.signature)
-        compare(mr, reloadedMR)
 
-        #Test the serialized versions.
         assert(mr.serialize() == reloadedMR.serialize())
         assert(mr.signedSerialize() == reloadedSMR.signedSerialize())

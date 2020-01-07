@@ -1,8 +1,6 @@
 include MainMerit
 
-proc mainConsensus(
-    functions: GlobalFunctionBox
-) {.forceCheck: [].} =
+proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         try:
             consensus = newConsensus(

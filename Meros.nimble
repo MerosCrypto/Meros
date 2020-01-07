@@ -76,11 +76,11 @@ task unit, "Run unit tests.":
     # Gather parameters to pass to `nim c -r ...`
     var additionalParams: seq[string] = newSeq[string]()
     for i in countdown(system.paramCount(), 1):
-        var v: string = system.paramStr(i) 
+        var v: string = system.paramStr(i)
         if v == "unit":
             break
         additionalParams.add(v)
-    
+
     var params: string =
         additionalParams
             .reversed()
@@ -114,7 +114,7 @@ task test, "Run all tests.":
 
 task ci, "Run CI tasks.":
     nimbleExec "clean"
-    
+
     mkDir testWorkingDir
     cpFile(projectDir() / "tests" / "ci.cfg", testWorkingDir / "nim.cfg")
     defer: rmFile testWorkingDir / "nim.cfg"

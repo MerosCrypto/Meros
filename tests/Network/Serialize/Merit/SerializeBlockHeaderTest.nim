@@ -28,6 +28,9 @@ import ../../../Database/Merit/CompareMerit
 #Random standard lib.
 import random
 
+#Whether or not to create a BlockHeader with a new miner.
+var newMiner: bool = true
+
 suite "SerializeBlockHeader":
     setup:
         #Seed random.
@@ -55,7 +58,7 @@ suite "SerializeBlockHeader":
             sketchCheck.data[b] = uint8(rand(255))
 
         #Create the BlockHeaader.
-        if rand(1) == 0:
+        if newMiner:
             #Get a new miner.
             miner = newMinerWallet()
 
@@ -99,3 +102,6 @@ suite "SerializeBlockHeader":
         #Test it.
         compare(header, reloaded)
         assert(header.serialize() == reloaded.serialize())
+
+        #Flip the newMiner bool.
+        newMiner = not newMiner

@@ -1,5 +1,6 @@
-#Transactions DB Test.
+#Transactions Test.
 
+#Test lib.
 import unittest2
 
 #Fuzzing lib.
@@ -157,7 +158,7 @@ suite "Transactions":
                     var
                         holder: int = rand(high(holders))
                         mintAmount: uint64 = amount - balance + uint64(rand(5000) + 1)
-                    
+
                     transactions.mint(mintHash, @[newReward(uint16(holder), mintAmount)])
 
                     #Create the Claim.
@@ -166,9 +167,9 @@ suite "Transactions":
                     transactions.add(
                         claim,
                         proc (
-                                nick: uint16
-                            ): BLSPublicKey =
-                        holders[int(nick)].publicKey
+                            nick: uint16
+                        ): BLSPublicKey =
+                            holders[int(nick)].publicKey
                     )
 
                     verify(claim, 0)
@@ -178,8 +179,7 @@ suite "Transactions":
                     balance += transactions[mintHash].outputs[0].amount
 
                 #Select a recepient.
-                var recepient: EdPublicKey = wallets[rand(
-                        wallets.high)].publicKey
+                var recepient: EdPublicKey = wallets[rand(wallets.high)].publicKey
                 while recepient == wallet.publicKey:
                     recepient = wallets[rand(wallets.high)].publicKey
 
@@ -190,12 +190,12 @@ suite "Transactions":
                         newSendOutput(
                             recepient,
                             amount
-                    ),
-                    newSendOutput(
-                        wallet.publicKey,
-                        balance - amount
-                    )
-                ]
+                        ),
+                        newSendOutput(
+                            wallet.publicKey,
+                            balance - amount
+                        )
+                    ]
                 )
                 wallet.sign(send)
                 send.mine(Hash[384]())

@@ -27,7 +27,7 @@ suite "SerializeMintOutput":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    midFuzzTest "Serialize and parse.":
+    lowFuzzTest "Serialize and parse.":
         var
             output: MintOutput
             reloaded: MintOutput

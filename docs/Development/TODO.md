@@ -82,9 +82,9 @@ Datbase/Filesystem/DB:
 - ConsensusDB Test.
 - MeritDB Test.
 
-Database/Consensus:
+Database/Merit:
 
-- Expand the Consensus DB Test to work with more Elements.
+- Expand the Blockchain DB Test to work with Elements.
 
 Database/Consensus/Elements:
 

@@ -21,6 +21,5 @@ import ../../../../../Network/Serialize/SerializeCommon
 method serialize*(
     output: SendOutput
 ): string {.inline, forceCheck: [].} =
-    result =
-        output.key.toString() &
-        output.amount.toBinary(MEROS_LEN)
+    output.key.toString() &
+    output.amount.toBinary(MEROS_LEN)

@@ -38,12 +38,15 @@ import ../../../Database/Merit/CompareMerit
 #Random standard lib.
 import random
 
+#Whether or not to create a Block with a new miner.
+var newMiner: bool = true
+
 suite "SerializeBlock":
     setup:
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    midFuzzTest "Serialize and parse.":
+    highFuzzTest "Serialize and parse.":
         var
             #Last hash.
             last: ArgonHash
@@ -75,7 +78,7 @@ suite "SerializeBlock":
             elements.add(newRandomBlockElement())
 
         while true:
-            if rand(128) < 64:
+            if newMiner:
                 newBlock = newBlankBlock(
                     uint32(rand(4096)),
                     last,
@@ -130,3 +133,6 @@ suite "SerializeBlock":
         #Clear the packets and elements.
         packets = @[]
         elements = @[]
+
+        #Flip the newMiner bool.
+        newMiner = not newMiner

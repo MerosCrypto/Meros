@@ -15,7 +15,7 @@ import ../../../../src/Wallet/MinerWallet
 #Elements Testing lib.
 import ../../../Database/Consensus/Elements/TestElements
 
-#Serialization libs.    
+#Serialization libs.
 import ../../../../src/Network/Serialize/Consensus/SerializeSendDifficulty
 import ../../../../src/Network/Serialize/Consensus/ParseSendDifficulty
 
@@ -30,27 +30,18 @@ suite "SerializeSendDiffculty":
         #Seed random.
         randomize(int64(getTime()))
 
-    highFuzzTest "Serialize and parse.":
         var
             #SignedSendDifficulty Element.
-            sendDiff: SignedSendDifficulty
+            sendDiff: SignedSendDifficulty = newRandomSendDifficulty()
             #Reloaded SendDifficulty Element.
-            reloadedDD: SendDifficulty
+            reloadedSD: SendDifficulty = sendDiff.serialize().parseSendDifficulty()
             #Reloaded SignedSendDifficulty Element.
-            reloadedSDD: SignedSendDifficulty
+            reloadedSSD: SignedSendDifficulty = sendDiff.signedSerialize().parseSignedSendDifficulty()
 
-        #Create the SignedSendDifficulty.
-        sendDiff = newRandomSendDifficulty()
+    lowFuzzTest "Compare the Elements/serializations.":
+        compare(sendDiff, reloadedSD)
+        compare(sendDiff, reloadedSSD)
+        assert(sendDiff.signature == reloadedSSD.signature)
 
-        #Serialize it and parse it back.
-        reloadedDD = sendDiff.serialize().parseSendDifficulty()
-        reloadedSDD = sendDiff.signedSerialize().parseSignedSendDifficulty()
-
-        #Compare the Elements.
-        compare(sendDiff, reloadedSDD)
-        assert(sendDiff.signature == reloadedSDD.signature)
-        compare(sendDiff, reloadedDD)
-
-        #Test the serialized versions.
-        assert(sendDiff.serialize() == reloadedDD.serialize())
-        assert(sendDiff.signedSerialize() == reloadedSDD.signedSerialize())
+        assert(sendDiff.serialize() == reloadedSD.serialize())
+        assert(sendDiff.signedSerialize() == reloadedSSD.signedSerialize())

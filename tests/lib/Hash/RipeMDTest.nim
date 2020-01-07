@@ -1,4 +1,4 @@
-#RipeMD Tests.
+#RipeMD Test.
 
 #Test lib.
 import unittest2

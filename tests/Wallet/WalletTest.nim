@@ -1,3 +1,5 @@
+#Wallet Test.
+
 #Test lib.
 import unittest2
 
@@ -38,13 +40,13 @@ suite "Wallet":
     setup:
         randomize(int64(getTime()))
 
-    test "New wallet without password.":
+    test "New Wallet without password.":
         verify(newWallet(""))
 
-    test "New wallet with password.":
+    test "New Wallet with password.":
         verify(newWallet("password"))
 
-    test "Reload wallet.":
+    test "Reloaded Wallet.":
         var
             wallet = newWallet("password")
             reloaded = newWallet(wallet.mnemonic.sentence, "password")

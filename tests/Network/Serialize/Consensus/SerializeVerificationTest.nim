@@ -30,27 +30,14 @@ suite "SerializeVerification":
         #Seed random.
         randomize(int64(getTime()))
 
-    highFuzzTest "Serialize.":
         var
             #SignedVerification Element.
-            verif: SignedVerification
-            #Reloaded Verification Element.
-            reloadedV: Verification
+            verif: SignedVerification = newRandomVerification()
             #Reloaded SignedVerification Element.
-            reloadedSV: SignedVerification
+            reloadedSV: SignedVerification = verif.signedSerialize().parseSignedVerification()
 
-        #Create the SignedVerification.
-        verif = newRandomVerification()
-
-        #Serialize it and parse it back.
-        reloadedV = verif.serialize().parseVerification()
-        reloadedSV = verif.signedSerialize().parseSignedVerification()
-
-        #Compare the Elements.
+    lowFuzzTest "Compare the Elements/serializations.":
         compare(verif, reloadedSV)
         assert(verif.signature == reloadedSV.signature)
-        compare(verif, reloadedV)
 
-        #Test the serialized versions.
-        assert(verif.serialize() == reloadedV.serialize())
         assert(verif.signedSerialize() == reloadedSV.signedSerialize())

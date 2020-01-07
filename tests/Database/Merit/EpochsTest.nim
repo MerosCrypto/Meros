@@ -1,4 +1,4 @@
-#Epochs DB Test.
+#Epochs Test.
 
 #Test lib.
 import unittest2
@@ -36,22 +36,23 @@ suite "Epochs":
         #Seed random.
         randomize(int64(getTime()))
 
-    test "Reloaded epochs.":
         var
             #Database.
             db: DB = newTestDatabase()
             #Blockchain.
-            blockchain: Blockchain = newBlockchain(
-                db,
-                "EPOCHS_TEST_DB",
-                30,
-                "".pad(48).toHash(384)
-            )
+            blockchain: Blockchain = newBlockchain(db, "EPOCH_TEST", 1, "".pad(48).toHash(384))
             #State.
-            state: State = newState(db, 5, blockchain.height)
+            state: State = newState(db, 100, blockchain.height)
             #Epochs.
             epochs: Epochs = newEpochs(blockchain)
 
+            #New Block.
+            newBlock: Block
+            #Rewards.
+            rewards: seq[Reward]
+
+    test "Reloaded Epochs.":
+        var
             #Table of a hash to the block it first appeared on.
             first: Table[Hash[384], int] = initTable[Hash[384], int]()
             #Table of a hash to every nick which has already signed it.
@@ -122,37 +123,10 @@ suite "Epochs":
             compare(epochs, newEpochs(blockchain))
 
     test "Empty.":
-        var
-            #Database.
-            db: DB = newTestDatabase()
-            #Blockchain.
-            blockchain: Blockchain = newBlockchain(db, "EPOCH_EMPTY_TEST", 1, "".pad(48).toHash(384))
-            #State.
-            state: State = newState(
-                db,
-                5,
-                blockchain.height
-            )
-            #Epochs.
-            epochs: Epochs = newEpochs(blockchain)
-            #Rewards.
-            rewards: seq[Reward] = epochs.shift(newBlankBlock()).calculate(state)
-
-        assert(rewards.len == 0)
+        assert(epochs.shift(newBlankBlock()).calculate(state).len == 0)
 
     test "Perfect 1000.":
         var
-            #Database Function Box.
-            db: DB = newTestDatabase()
-            #Blockchain.
-            blockchain: Blockchain = newBlockchain(db, "EPOCH_PERFECT_1000_TEST", 1, "".pad(48).toHash(384))
-            #State.
-            state: State = newState(db, 100, blockchain.height)
-            #Epochs.
-            epochs: Epochs = newEpochs(blockchain)
-            #New Block.
-            newBlock: Block
-
             #Hash.
             hash: Hash[384] = "".pad(48, char(128)).toHash(384)
             #MinerWallets.
@@ -165,8 +139,6 @@ suite "Epochs":
             verif: SignedVerification
             #VerificationPacket.
             packet: SignedVerificationPacket = newSignedVerificationPacketObj(hash)
-            #Rewards.
-            rewards: seq[Reward]
 
         for m in 0 ..< miners.len:
             #Give the miner Merit.
@@ -227,17 +199,6 @@ suite "Epochs":
 
     test "Single.":
         var
-            #Database Function Box.
-            db: DB = newTestDatabase()
-            #Blockchain.
-            blockchain: Blockchain = newBlockchain(db, "EPOCH_SINGLE_TEST", 1, "".pad(48).toHash(384))
-            #State.
-            state: State = newState(db, 100, blockchain.height)
-            #Epochs.
-            epochs: Epochs = newEpochs(blockchain)
-            #New Block.
-            newBlock: Block
-
             #Hash.
             hash: Hash[384] = "".pad(48, char(128)).toHash(384)
             #MinerWallets.
@@ -246,8 +207,6 @@ suite "Epochs":
             verif: SignedVerification
             #VerificationPacket.
             packet: SignedVerificationPacket = newSignedVerificationPacketObj(hash)
-            #Rewards.
-            rewards: seq[Reward]
 
         #Give the miner Merit.
         blockchain.processBlock(newBlankBlock(miner = miner))
@@ -290,17 +249,6 @@ suite "Epochs":
 
     test "Split.":
         var
-            #Database Function Box.
-            db: DB = newTestDatabase()
-            #Blockchain.
-            blockchain: Blockchain = newBlockchain(db, "EPOCH_SPLIT_TEST", 1, "".pad(48).toHash(384))
-            #State.
-            state: State = newState(db, 100, blockchain.height)
-            #Epochs.
-            epochs: Epochs = newEpochs(blockchain)
-            #New Block.
-            newBlock: Block
-
             #Hash.
             hash: Hash[384] = "".pad(48, char(128)).toHash(384)
             #MinerWallets.
@@ -312,8 +260,6 @@ suite "Epochs":
             verif: SignedVerification
             #VerificationPacket.
             packet: SignedVerificationPacket
-            #Rewards.
-            rewards: seq[Reward]
 
         for m in 0 ..< miners.len:
             #Give the miner Merit.
@@ -366,4 +312,3 @@ suite "Epochs":
         #Verify the scores.
         assert(rewards[0].score == 500)
         assert(rewards[1].score == 500)
-    

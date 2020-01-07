@@ -1,4 +1,4 @@
-#Consensus DB Test.
+#Consensus Test.
 
 #Test lib.
 import unittest2
@@ -41,7 +41,7 @@ suite "Consensus":
         #Seed random.
         randomize(int64(getTime()))
 
-    test "Reloaded consensus.":
+    test "Reloaded Consensus.":
         var
             #Database.
             db: DB = newTestDatabase()
@@ -49,7 +49,7 @@ suite "Consensus":
             #Merit.
             merit: Merit = newMerit(
                 db,
-                "CONSENSUS_TEST",
+                "CONSENSUS_DB_TEST",
                 10,
                 $Hash[384](),
                 30
@@ -131,12 +131,12 @@ suite "Consensus":
                 incd: uint16
                 decd: int
             (epoch, incd, decd) = merit.postProcessBlock()
-    
+
             #Add/remove an extra 24 Merit from each to speed up the process of getting difficulty votes.
             merit.state[incd] = merit.state[incd] + 24
             if decd != -1:
                 merit.state[uint16(decd)] = merit.state[uint16(decd)] + 24
-    
+
             #Archive the Epochs.
             consensus.archive(merit.state, mining.body.packets, epoch, incd, decd)
 
@@ -291,4 +291,4 @@ suite "Consensus":
             mineBlock()
 
             #Compare the Consensus DAGs.
-            compare() 
+            compare()

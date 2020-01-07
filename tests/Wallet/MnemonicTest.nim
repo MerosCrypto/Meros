@@ -37,7 +37,7 @@ suite "Mnemonic":
             assert(mnemonic.entropy.toHex().toLower() == vector[0].getStr())
             assert(mnemonic.unlock("TREZOR").toHex().toLower() == vector[2].getStr())
 
-    highFuzzTest "Generated Mnemonics.":
+    midFuzzTest "Generated Mnemonics.":
         mnemonic = newMnemonic()
         reloaded = newMnemonic(mnemonic.sentence)
 

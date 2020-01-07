@@ -28,25 +28,25 @@ type NetworkLibFunctionBox* = ref object
         hash: Hash[384]
     ): Hash[384] {.raises: [
         IndexError
-    ]}
+    ].}
 
     getBlockHashAfter*: proc (
         hash: Hash[384]
     ): Hash[384] {.raises: [
         IndexError
-    ]}
+    ].}
 
     getBlock*: proc (
         hash: Hash[384]
     ): Block {.raises: [
         IndexError
-    ]}
+    ].}
 
     getTransaction*: proc (
         hash: Hash[384]
     ): Transaction {.raises: [
         IndexError
-    ]}
+    ].}
 
     handle*: proc (
         msg: Message
