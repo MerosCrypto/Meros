@@ -33,7 +33,7 @@ import ../CompareMerit
 #Random standard lib.
 import random
 
-suite "SDB":
+suite "StateDB":
     setup:
         #Seed random.
         randomize(int64(getTime()))
@@ -44,7 +44,7 @@ suite "SDB":
             #Blockchain.
             blockchain: Blockchain = newBlockchain(
                 db,
-                "STATE_TEST",
+                "STATE_DB_TEST",
                 30,
                 "".pad(48).toHash(384)
             )
@@ -126,17 +126,17 @@ suite "SDB":
             compare(state, newState(db, 30, blockchain.height))
 
         #Check that the State saved it had 0 Merit at the start.
-        assert(state.loadUnlocked(0) == 0)
+        check(state.loadUnlocked(0) == 0)
         #Check the threshold is just plus one.
-        assert(state.protocolThresholdAt(0) == 1)
+        check(state.protocolThresholdAt(0) == 1)
 
         #Check every existing threshold.
         for t in 0 ..< thresholds.len:
-            assert(state.protocolThresholdAt(t) == thresholds[t])
+            check(state.protocolThresholdAt(t) == thresholds[t])
 
         #Checking loading the Merit for the latest Block returns the State's Merit.
-        assert(state.loadUnlocked(21) == state.unlocked)
+        check(state.loadUnlocked(21) == state.unlocked)
 
         #Check future thresholds.
         for t in len(thresholds) + 2 ..< len(thresholds) + 22:
-            assert(state.protocolThresholdAt(t) == min(state.unlocked + (t - 21), state.deadBlocks) div 2 + 1)
+            check(state.protocolThresholdAt(t) == min(state.unlocked + (t - 21), state.deadBlocks) div 2 + 1)

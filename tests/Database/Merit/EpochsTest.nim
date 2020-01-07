@@ -123,7 +123,7 @@ suite "Epochs":
             compare(epochs, newEpochs(blockchain))
 
     test "Empty.":
-        assert(epochs.shift(newBlankBlock()).calculate(state).len == 0)
+        check(epochs.shift(newBlankBlock()).calculate(state).len == 0)
 
     test "Perfect 1000.":
         var
@@ -167,7 +167,7 @@ suite "Epochs":
         rewards = epochs.shift(newBlankBlock(
             packets = cast[seq[VerificationPacket]](@[packet])
         )).calculate(state)
-        assert(rewards.len == 0)
+        check(rewards.len == 0)
 
         #Shift 4 over.
         for e in 0 ..< 4:
@@ -179,23 +179,23 @@ suite "Epochs":
             discard state.processBlock(blockchain)
 
             rewards = epochs.shift(newBlock).calculate(state)
-            assert(rewards.len == 0)
+            check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 334, 1: 333, and 2: 333.
         rewards = epochs.shift(newBlankBlock()).calculate(state)
 
         #Veirfy the length.
-        assert(rewards.len == 3)
+        check(rewards.len == 3)
 
         #Verify each nick is accurate and assigned to the right key.
         for r1 in 0 ..< rewards.len:
-            assert(rewards[r1].nick == uint16(r1))
-            assert(state.holders[r1] == miners[r1].publicKey)
+            check(rewards[r1].nick == uint16(r1))
+            check(state.holders[r1] == miners[r1].publicKey)
 
         #Verify the scores.
-        assert(rewards[0].score == 334)
-        assert(rewards[1].score == 333)
-        assert(rewards[2].score == 333)
+        check(rewards[0].score == 334)
+        check(rewards[1].score == 333)
+        check(rewards[2].score == 333)
 
     test "Single.":
         var
@@ -226,7 +226,7 @@ suite "Epochs":
         rewards = epochs.shift(newBlankBlock(
             packets = cast[seq[VerificationPacket]](@[packet])
         )).calculate(state)
-        assert(rewards.len == 0)
+        check(rewards.len == 0)
 
         #Shift 4 over.
         for e in 0 ..< 4:
@@ -238,14 +238,14 @@ suite "Epochs":
             discard state.processBlock(blockchain)
 
             rewards = epochs.shift(newBlock).calculate(state)
-            assert(rewards.len == 0)
+            check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 1000.
         rewards = epochs.shift(newBlankBlock()).calculate(state)
-        assert(rewards.len == 1)
-        assert(rewards[0].nick == 0)
-        assert(state.holders[0] == miner.publicKey)
-        assert(rewards[0].score == 1000)
+        check(rewards.len == 1)
+        check(rewards[0].nick == 0)
+        check(state.holders[0] == miner.publicKey)
+        check(rewards[0].score == 1000)
 
     test "Split.":
         var
@@ -281,7 +281,7 @@ suite "Epochs":
             rewards = epochs.shift(newBlankBlock(
                 packets = cast[seq[VerificationPacket]](@[packet])
             )).calculate(state)
-            assert(rewards.len == 0)
+            check(rewards.len == 0)
 
         #Shift 3 over.
         for e in 0 ..< 3:
@@ -296,19 +296,19 @@ suite "Epochs":
             discard state.processBlock(blockchain)
 
             rewards = epochs.shift(newBlock).calculate(state)
-            assert(rewards.len == 0)
+            check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 500, 1: 500, and 2: 500.
         rewards = epochs.shift(newBlankBlock()).calculate(state)
 
         #Veirfy the length.
-        assert(rewards.len == 2)
+        check(rewards.len == 2)
 
         #Verify each nick is accurate and assigned to the right key.
         for r1 in 0 ..< rewards.len:
-            assert(rewards[r1].nick == uint16(r1))
-            assert(state.holders[r1] == miners[r1].publicKey)
+            check(rewards[r1].nick == uint16(r1))
+            check(state.holders[r1] == miners[r1].publicKey)
 
         #Verify the scores.
-        assert(rewards[0].score == 500)
-        assert(rewards[1].score == 500)
+        check(rewards[0].score == 500)
+        check(rewards[1].score == 500)

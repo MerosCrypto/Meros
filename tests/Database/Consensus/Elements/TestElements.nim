@@ -1,5 +1,8 @@
 #Elements Testing Functions.
 
+#Test lib.
+import unittest2
+
 #Util lib.
 import ../../../../src/lib/Util
 
@@ -152,7 +155,7 @@ proc newRandomElement*(
         of 5:
             result = newRandomMeritRemoval()
         else:
-            assert(false, "TestElements generated a number in possibilities that is not a valid case.")
+            check(false)
 
 proc newRandomMeritRemoval*(
     holder: uint16 = uint16(rand(high(int16)))
@@ -189,8 +192,10 @@ proc newRandomMeritRemoval*(
                 signatures.add(cast[SignedDataDifficulty](dd).signature)
             #of GasPrice as gp:
             #    signatures.add(cast[SignedGasPrice](gp).signature)
+            of MeritRemoval as mr:
+                check(false)
             else:
-                assert(false, "newRandomElement generated a MeritRemoval despite being told not to.")
+                check(false)
 
     case e2:
         of Verification as verif:
@@ -203,8 +208,10 @@ proc newRandomMeritRemoval*(
             signatures.add(cast[SignedDataDifficulty](dd).signature)
         #of GasPrice as gp:
         #    signatures.add(cast[SignedGasPrice](gp).signature)
+        of MeritRemoval as mr:
+            check(false)
         else:
-            assert(false, "newRandomElement generated a MeritRemoval despite being told not to.")
+            check(false)
 
     result = newSignedMeritRemoval(
         holder,
@@ -252,4 +259,4 @@ proc newRandomBlockElement*(
         of 3:
             result = newRandomMeritRemoval()
         else:
-            assert(false, "TestElements generated a number in possibilities that is not a valid case.")
+            check(false)

@@ -24,11 +24,11 @@ suite "Merkle":
         randomize(int64(getTime()))
 
     test "`nil` Merkle trees.":
-        assert(newMerkle().isLeaf)
-        assert(newMerkle().hash == "".pad(48).toHash(384))
+        check(newMerkle().isLeaf)
+        check(newMerkle().hash == "".pad(48).toHash(384))
 
     test "Leaves.":
-        assert(newMerkle("1".pad(48).toHash(384)).hash == "1".pad(48).toHash(384))
+        check(newMerkle("1".pad(48).toHash(384)).hash == "1".pad(48).toHash(384))
 
     test "A blank Merkle tree with an added leaf is the same as a tree created with said leaf.":
         var
@@ -36,9 +36,9 @@ suite "Merkle":
             added: Merkle = newMerkle()
 
         added.add("".pad(48).toHash(384))
-        assert(created.isLeaf)
-        assert(added.isLeaf)
-        assert(added.hash == created.hash)
+        check(created.isLeaf)
+        check(added.isLeaf)
+        check(added.hash == created.hash)
 
     highFuzzTest "Verify.":
         #Create a random amount of hashes.
@@ -97,22 +97,22 @@ suite "Merkle":
                 inc(d)
 
         #Test that the constructor and addition tree have the same hash as fullCopy.
-        assert(constructor.hash == fullCopy[0])
-        assert(addition.hash == fullCopy[0])
+        check(constructor.hash == fullCopy[0])
+        check(addition.hash == fullCopy[0])
 
         #Test that the both tree has the same hash as partialCopy.
-        assert(both.hash == partialCopy[0])
+        check(both.hash == partialCopy[0])
 
         #Test that when hashLen - bothLen elements are trimmed, their hashes equal both's.
-        assert(constructor.trim(hashLen - bothLen).hash == both.hash)
-        assert(addition.trim(hashLen - bothLen).hash == both.hash)
+        check(constructor.trim(hashLen - bothLen).hash == both.hash)
+        check(addition.trim(hashLen - bothLen).hash == both.hash)
 
         #Complete the both tree.
         for hash in hashes[bothLen ..< hashLen]:
             both.add(hash)
 
         #Test that the both tree and the fullCopy have the same hash.
-        assert(both.hash == fullCopy[0])
+        check(both.hash == fullCopy[0])
 
         #Make sure trimming, as long as we don't break the lower bound, still works.
-        assert(constructor.trim(hashLen div 2).hash == addition.trim(hashLen div 2).hash)
+        check(constructor.trim(hashLen div 2).hash == addition.trim(hashLen div 2).hash)

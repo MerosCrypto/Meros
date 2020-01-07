@@ -3,9 +3,6 @@
 #Test lib.
 import unittest2
 
-#Fuzzing lib.
-import ../../Fuzzed
-
 #Util lib.
 import ../../../src/lib/Util
 

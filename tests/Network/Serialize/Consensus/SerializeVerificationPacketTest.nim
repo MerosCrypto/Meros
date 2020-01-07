@@ -36,4 +36,4 @@ suite "SerializeVerificationPacket":
     midFuzzTest "Compare the Elements/serializations.":
         compare(packet, reloadedVP)
 
-        assert(packet.serialize() == reloadedVP.serialize())
+        check(packet.serialize() == reloadedVP.serialize())

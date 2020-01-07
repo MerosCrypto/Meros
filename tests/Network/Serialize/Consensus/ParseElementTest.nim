@@ -43,18 +43,18 @@ import random
 suite "ParseElement":
     test "Serialization.":
         var sendDiff: SendDifficulty = newRandomSendDifficulty()
-        assert(sendDiff.serialize().len == {
+        check(sendDiff.serialize().len == {
             int8(SEND_DIFFICULTY_PREFIX)
         }.getLength(char(SEND_DIFFICULTY_PREFIX)))
 
         var dataDiff: DataDifficulty = newRandomDataDifficulty()
-        assert(dataDiff.serialize().len == {
+        check(dataDiff.serialize().len == {
             int8(DATA_DIFFICULTY_PREFIX)
         }.getLength(char(DATA_DIFFICULTY_PREFIX)))
 
         #[
         var gasPrice: GasPrice = newRandomGasPrice()
-        assert(gasPrice.serialize().len == {
+        check(gasPrice.serialize().len == {
             int8(GAS_PRICE_PREFIX)
         }.getLength(char(GAS_PRICE_PREFIX)))
         ]#
@@ -136,4 +136,4 @@ suite "ParseElement":
                         MERIT_REMOVAL_PREFIX
                     ) + eLen
 
-                assert(mr.serialize().len == len)
+                check(mr.serialize().len == len)

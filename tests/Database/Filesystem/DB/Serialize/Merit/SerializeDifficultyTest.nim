@@ -55,7 +55,7 @@ suite "SerializeDifficulty":
         reloaded = difficulty.serialize().parseDifficulty()
 
         #Test the serialized versions.
-        assert(difficulty.serialize() == reloaded.serialize())
+        check(difficulty.serialize() == reloaded.serialize())
 
         #Compare the Difficulty.
         compare(difficulty, reloaded)

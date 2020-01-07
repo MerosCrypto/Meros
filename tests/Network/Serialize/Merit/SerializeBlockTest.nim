@@ -121,11 +121,11 @@ suite "SerializeBlock":
             0,
             reloaded.data.header.sketchSalt
         )
-        doAssert(sketchResult.missing.len == 0)
+        check(sketchResult.missing.len == 0)
         reloaded.data.body.packets = sketchResult.packets
 
         #Test the serialized versions.
-        assert(newBlock.serialize() == reloaded.data.serialize())
+        check(newBlock.serialize() == reloaded.data.serialize())
 
         #Compare the Blocks.
         compare(newBlock, reloaded.data)

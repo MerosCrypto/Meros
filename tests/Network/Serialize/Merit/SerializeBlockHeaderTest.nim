@@ -94,14 +94,14 @@ suite "SerializeBlockHeader":
         compare(header, reloaded)
 
         #Test the serialized versions.
-        assert(header.serialize() == reloaded.serialize())
+        check(header.serialize() == reloaded.serialize())
 
         #Serialize it and parse it back with the hash.
         reloaded = header.serialize().parseBlockHeader(header.hash)
 
         #Test it.
         compare(header, reloaded)
-        assert(header.serialize() == reloaded.serialize())
+        check(header.serialize() == reloaded.serialize())
 
         #Flip the newMiner bool.
         newMiner = not newMiner

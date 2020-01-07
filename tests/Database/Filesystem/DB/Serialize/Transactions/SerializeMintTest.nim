@@ -64,4 +64,4 @@ suite "SerializeMint":
         compare(mint, reloaded)
 
         #Test the serialized versions.
-        assert(mint.serialize() == reloaded.serialize())
+        check(mint.serialize() == reloaded.serialize())

@@ -85,10 +85,10 @@ suite "Spendable":
                 spendable[key].sort(inputSort)
                 loaded.sort(inputSort)
 
-                assert(spendable[key].len == loaded.len)
+                check(spendable[key].len == loaded.len)
                 for i in 0 ..< spendable[key].len:
-                    assert(spendable[key][i].hash == loaded[i].hash)
-                    assert(spendable[key][i].nonce == loaded[i].nonce)
+                    check(spendable[key][i].hash == loaded[i].hash)
+                    check(spendable[key][i].nonce == loaded[i].nonce)
 
         #Generate 10 wallets.
         for _ in 0 ..< 10:

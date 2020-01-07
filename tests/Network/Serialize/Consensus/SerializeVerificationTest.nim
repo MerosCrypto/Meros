@@ -38,6 +38,6 @@ suite "SerializeVerification":
 
     lowFuzzTest "Compare the Elements/serializations.":
         compare(verif, reloadedSV)
-        assert(verif.signature == reloadedSV.signature)
+        check(verif.signature == reloadedSV.signature)
 
-        assert(verif.signedSerialize() == reloadedSV.signedSerialize())
+        check(verif.signedSerialize() == reloadedSV.signedSerialize())

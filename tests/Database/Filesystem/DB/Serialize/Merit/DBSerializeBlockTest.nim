@@ -101,7 +101,7 @@ suite "DBSerializeBlock":
         compare(newBlock, reloaded)
 
         #Test the serialized versions.
-        assert(newBlock.serialize() == reloaded.serialize())
+        check(newBlock.serialize() == reloaded.serialize())
 
         #Clear the packets and elements.
         packets = @[]

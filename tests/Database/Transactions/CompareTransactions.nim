@@ -1,3 +1,6 @@
+#Test lib.
+import unittest2
+
 #Hash lib.
 import ../../../src/lib/Hash
 
@@ -15,16 +18,16 @@ proc compare*(
     so1: MintOutput,
     so2: MintOutput
 ) =
-    assert(so1.amount == so2.amount)
-    assert(so1.key == so2.key)
+    check(so1.amount == so2.amount)
+    check(so1.key == so2.key)
 
 #Compare two SendOutputs to make sure they have the same value.
 proc compare*(
     so1: SendOutput,
     so2: SendOutput
 ) =
-    assert(so1.amount == so2.amount)
-    assert(so1.key == so2.key)
+    check(so1.amount == so2.amount)
+    check(so1.key == so2.key)
 
 #Compare two Transactions to make sure they have the same value.
 proc compare*(
@@ -32,45 +35,45 @@ proc compare*(
     tx2: Transaction
 ) =
     #Test the Transaction fields.
-    assert(tx1.inputs.len == tx2.inputs.len)
+    check(tx1.inputs.len == tx2.inputs.len)
     for i in 0 ..< tx1.inputs.len:
-        assert(tx1.inputs[i].hash == tx2.inputs[i].hash)
-    assert(tx1.outputs.len == tx2.outputs.len)
-    assert(tx1.hash == tx2.hash)
+        check(tx1.inputs[i].hash == tx2.inputs[i].hash)
+    check(tx1.outputs.len == tx2.outputs.len)
+    check(tx1.hash == tx2.hash)
 
     #Test the sub-type fields.
     case tx1:
         of Mint as _:
             if not (tx2 of Mint):
-                assert(false)
+                check(false)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[MintOutput](tx1.outputs[o]), cast[MintOutput](tx2.outputs[o]))
 
         of Claim as claim:
             if not (tx2 of Claim):
-                assert(false)
+                check(false)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
-            assert(claim.signature == cast[Claim](tx2).signature)
+            check(claim.signature == cast[Claim](tx2).signature)
 
         of Send as send:
             if not (tx2 of Send):
-                assert(false)
+                check(false)
             for i in 0 ..< tx1.inputs.len:
-                assert(cast[FundedInput](tx1.inputs[i]).nonce == cast[FundedInput](tx2.inputs[i]).nonce)
+                check(cast[FundedInput](tx1.inputs[i]).nonce == cast[FundedInput](tx2.inputs[i]).nonce)
             for o in 0 ..< tx1.outputs.len:
                 compare(cast[SendOutput](tx1.outputs[o]), cast[SendOutput](tx2.outputs[o]))
-            assert(send.signature == cast[Send](tx2).signature)
-            assert(send.proof == cast[Send](tx2).proof)
-            assert(send.argon == cast[Send](tx2).argon)
+            check(send.signature == cast[Send](tx2).signature)
+            check(send.proof == cast[Send](tx2).proof)
+            check(send.argon == cast[Send](tx2).argon)
 
         of Data as data:
             if not (tx2 of Data):
-                assert(false)
-            assert(data.data == cast[Data](tx2).data)
-            assert(data.signature == cast[Data](tx2).signature)
-            assert(data.proof == cast[Data](tx2).proof)
-            assert(data.argon == cast[Data](tx2).argon)
+                check(false)
+            check(data.data == cast[Data](tx2).data)
+            check(data.signature == cast[Data](tx2).signature)
+            check(data.proof == cast[Data](tx2).proof)
+            check(data.argon == cast[Data](tx2).argon)
 
 #Compare two Transactions DAGs to make sure they have the same value.
 proc compare*(
@@ -78,6 +81,6 @@ proc compare*(
     txs2: Transactions
 ) =
     #Test the Transactions and get a list of spent outputs.
-    assert(txs1.transactions.len == txs2.transactions.len)
+    check(txs1.transactions.len == txs2.transactions.len)
     for hash in txs1.transactions.keys():
         compare(txs1.transactions[hash], txs2.transactions[hash])

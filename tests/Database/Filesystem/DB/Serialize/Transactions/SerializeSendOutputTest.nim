@@ -49,4 +49,4 @@ suite "SerializeSendOutput":
         compare(output, reloaded)
 
         #Test the serialized versions.
-        assert(output.serialize() == reloaded.serialize())
+        check(output.serialize() == reloaded.serialize())

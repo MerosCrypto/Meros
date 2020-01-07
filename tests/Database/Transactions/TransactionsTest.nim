@@ -204,9 +204,9 @@ suite "Transactions":
                 verify(send, 0)
 
                 #Make sure spendable was properly set.
-                doAssert(transactions.getUTXOs(wallet.publicKey).len == 1)
-                doAssert(transactions.getUTXOs(wallet.publicKey)[0].hash == send.hash)
-                doAssert(transactions.getUTXOs(wallet.publicKey)[0].nonce == 1)
+                check(transactions.getUTXOs(wallet.publicKey).len == 1)
+                check(transactions.getUTXOs(wallet.publicKey)[0].hash == send.hash)
+                check(transactions.getUTXOs(wallet.publicKey)[0].nonce == 1)
 
             #Create a Data.
             else:

@@ -26,20 +26,20 @@ suite "MinerWaller":
             reloaded: MinerWallet = newMinerWallet(wallet.privateKey.serialize())
 
     midFuzzTest "Recreating the Private Key.":
-        assert(newBLSPrivateKey(wallet.privateKey.serialize()).serialize() == wallet.privateKey.serialize())
-        assert($newBLSPrivateKey(wallet.privateKey.serialize()) == $wallet.privateKey)
+        check(newBLSPrivateKey(wallet.privateKey.serialize()).serialize() == wallet.privateKey.serialize())
+        check($newBLSPrivateKey(wallet.privateKey.serialize()) == $wallet.privateKey)
 
     midFuzzTest "Recreating the Public Key.":
-        assert(newBLSPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize())
-        assert($newBLSPublicKey(wallet.publicKey.serialize()) == $wallet.publicKey)
+        check(newBLSPublicKey(wallet.publicKey.serialize()).serialize() == wallet.publicKey.serialize())
+        check($newBLSPublicKey(wallet.publicKey.serialize()) == $wallet.publicKey)
 
     midFuzzTest "Reload the MinerWallet.":
         reloaded = newMinerWallet(wallet.privateKey.serialize())
-        assert(wallet.privateKey.serialize() == reloaded.privateKey.serialize())
-        assert(wallet.publicKey.serialize() == reloaded.publicKey.serialize())
+        check(wallet.privateKey.serialize() == reloaded.privateKey.serialize())
+        check(wallet.publicKey.serialize() == reloaded.publicKey.serialize())
 
     midFuzzTest "Messages.":
-        var 
+        var
             msg: string
             wSig: BLSSignature
             rSig: BLSSignature
@@ -52,10 +52,10 @@ suite "MinerWaller":
         rSig = reloaded.sign(msg)
 
         #Verify they're the same signature..
-        assert(wSig.serialize() == rSig.serialize())
+        check(wSig.serialize() == rSig.serialize())
 
         #Test recreating the signature.
-        assert(newBLSSignature(wSig.serialize()).serialize() == wSig.serialize())
+        check(newBLSSignature(wSig.serialize()).serialize() == wSig.serialize())
 
         #Verify the signature.
-        assert(wSig.verify(newBLSAggregationInfo(wallet.publicKey, msg)))
+        check(wSig.verify(newBLSAggregationInfo(wallet.publicKey, msg)))

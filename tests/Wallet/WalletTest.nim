@@ -17,9 +17,9 @@ proc verify(
     wallet: Wallet
 ) =
     #Test recreating the Public Key.
-    assert(newEdPublicKey(wallet.publicKey.toString()).toString() ==
+    check(newEdPublicKey(wallet.publicKey.toString()).toString() ==
         wallet.publicKey.toString())
-    assert($newEdPublicKey($wallet.publicKey) == $wallet.publicKey)
+    check($newEdPublicKey($wallet.publicKey) == $wallet.publicKey)
 
     #Create messages.
     var
@@ -34,7 +34,7 @@ proc verify(
         sig = wallet.sign(msg)
 
         #Verify the signature.
-        assert(wallet.verify(msg, sig))
+        check(wallet.verify(msg, sig))
 
 suite "Wallet":
     setup:
@@ -51,11 +51,11 @@ suite "Wallet":
             wallet = newWallet("password")
             reloaded = newWallet(wallet.mnemonic.sentence, "password")
 
-        assert(wallet.mnemonic.entropy == reloaded.mnemonic.entropy)
-        assert(wallet.mnemonic.checksum == reloaded.mnemonic.checksum)
-        assert(wallet.mnemonic.sentence == reloaded.mnemonic.sentence)
+        check(wallet.mnemonic.entropy == reloaded.mnemonic.entropy)
+        check(wallet.mnemonic.checksum == reloaded.mnemonic.checksum)
+        check(wallet.mnemonic.sentence == reloaded.mnemonic.sentence)
 
-        assert(wallet.hd.chainCode == reloaded.hd.chainCode)
-        assert(wallet.hd.privateKey == reloaded.hd.privateKey)
-        assert(wallet.hd.publicKey == reloaded.hd.publicKey)
-        assert(wallet.hd.address == reloaded.hd.address)
+        check(wallet.hd.chainCode == reloaded.hd.chainCode)
+        check(wallet.hd.privateKey == reloaded.hd.privateKey)
+        check(wallet.hd.publicKey == reloaded.hd.publicKey)
+        check(wallet.hd.address == reloaded.hd.address)

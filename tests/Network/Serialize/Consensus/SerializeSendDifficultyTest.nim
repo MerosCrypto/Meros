@@ -41,7 +41,7 @@ suite "SerializeSendDiffculty":
     lowFuzzTest "Compare the Elements/serializations.":
         compare(sendDiff, reloadedSD)
         compare(sendDiff, reloadedSSD)
-        assert(sendDiff.signature == reloadedSSD.signature)
+        check(sendDiff.signature == reloadedSSD.signature)
 
-        assert(sendDiff.serialize() == reloadedSD.serialize())
-        assert(sendDiff.signedSerialize() == reloadedSSD.signedSerialize())
+        check(sendDiff.serialize() == reloadedSD.serialize())
+        check(sendDiff.signedSerialize() == reloadedSSD.signedSerialize())

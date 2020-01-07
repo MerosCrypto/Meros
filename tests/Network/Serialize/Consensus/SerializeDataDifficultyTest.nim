@@ -41,7 +41,7 @@ suite "SerializeDataDifficulty":
     lowFuzzTest "Compare the Elements/serializations.":
         compare(dataDiff, reloadedDD)
         compare(dataDiff, reloadedSDD)
-        assert(dataDiff.signature == reloadedSDD.signature)
+        check(dataDiff.signature == reloadedSDD.signature)
 
-        assert(dataDiff.serialize() == reloadedDD.serialize())
-        assert(dataDiff.signedSerialize() == reloadedSDD.signedSerialize())
+        check(dataDiff.serialize() == reloadedDD.serialize())
+        check(dataDiff.signedSerialize() == reloadedSDD.signedSerialize())

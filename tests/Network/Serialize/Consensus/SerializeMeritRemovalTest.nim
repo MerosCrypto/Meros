@@ -41,7 +41,7 @@ suite "SerializeMeritRemoval":
     highFuzzTest "Compare the Elements/serializations.":
         compare(mr, reloadedMR)
         compare(mr, reloadedSMR)
-        assert(mr.signature == reloadedSMR.signature)
+        check(mr.signature == reloadedSMR.signature)
 
-        assert(mr.serialize() == reloadedMR.serialize())
-        assert(mr.signedSerialize() == reloadedSMR.signedSerialize())
+        check(mr.serialize() == reloadedMR.serialize())
+        check(mr.signedSerialize() == reloadedSMR.signedSerialize())

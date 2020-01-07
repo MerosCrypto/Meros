@@ -1,3 +1,6 @@
+#Test lib.
+import unittest2
+
 #Hash lib.
 import ../../../src/lib/Hash
 
@@ -18,7 +21,7 @@ proc compare*(
     e1: Element,
     e2: Element
 ) =
-    assert(e1 == e2)
+    check(e1 == e2)
 
 #Compare two Transaction Statuses to make sure they have the same values.
 proc compare*(
@@ -26,24 +29,24 @@ proc compare*(
     ts2: TransactionStatus
 ) =
     #Compare the Transaction's properties.
-    assert(ts1.epoch == ts2.epoch)
-    assert(ts1.competing == ts2.competing)
-    assert(ts1.verified == ts2.verified)
-    assert(ts1.beaten == ts2.beaten)
+    check(ts1.epoch == ts2.epoch)
+    check(ts1.competing == ts2.competing)
+    check(ts1.verified == ts2.verified)
+    check(ts1.beaten == ts2.beaten)
 
     #Compare the Transaction's holders.
-    assert(symmetricDifference(ts1.holders, ts2.holders).len == 0)
+    check(symmetricDifference(ts1.holders, ts2.holders).len == 0)
 
     #Compare the pending VerificationPackets.
     compare(ts1.pending, ts2.pending)
 
     #Compare the pending signatures table.
-    assert(ts1.signatures.len == ts2.signatures.len)
+    check(ts1.signatures.len == ts2.signatures.len)
     for h in ts1.signatures.keys():
-        assert(ts1.signatures[h] == ts2.signatures[h])
+        check(ts1.signatures[h] == ts2.signatures[h])
 
     #Compare the merit table.
-    assert(ts1.merit == ts2.merit)
+    check(ts1.merit == ts2.merit)
 
 #Compare two Spam Filters.
 proc compare*(
@@ -52,10 +55,10 @@ proc compare*(
 ) =
     #If one is nil, verify both are.
     if sf1.median.isNil:
-        assert(sf2.median.isNil)
+        check(sf2.median.isNil)
     #If one isn't nil, verify both aren't.
     else:
-        assert(not sf2.median.isNil)
+        check(not sf2.median.isNil)
 
         #Get the left most difficulties.
         var
@@ -85,23 +88,23 @@ proc compare*(
 
         while not curr1.isNil:
             #Verify their equality.
-            assert(curr1.difficulty == curr2.difficulty)
-            assert(curr1.votes == curr2.votes)
+            check(curr1.difficulty == curr2.difficulty)
+            check(curr1.votes == curr2.votes)
 
             #Get the next difficulties.
             curr1 = curr1.getNext()
             curr2 = curr2.getNext()
             #Verify if one is nil, both are.
-            assert(curr1.isNil == curr2.isNil)
+            check(curr1.isNil == curr2.isNil)
 
     #Verify the SpamFilters agree on who voted for what.
-    assert(sf1.votes.len == sf2.votes.len)
+    check(sf1.votes.len == sf2.votes.len)
     for holder in sf1.votes.keys():
-        assert(sf1.votes[holder].difficulty == sf2.votes[holder].difficulty)
+        check(sf1.votes[holder].difficulty == sf2.votes[holder].difficulty)
 
     #Verify the starting difficulty and current difficulty.
-    assert(sf1.startDifficulty == sf2.startDifficulty)
-    assert(sf1.difficulty == sf2.difficulty)
+    check(sf1.startDifficulty == sf2.startDifficulty)
+    check(sf1.difficulty == sf2.difficulty)
 
 #Compare two Consensuses to make sure they have the same values.
 proc compare*(
@@ -113,9 +116,9 @@ proc compare*(
     compare(c1.filters.data, c2.filters.data)
 
     #Compare the malicious table.
-    assert(c1.malicious.len == c2.malicious.len)
+    check(c1.malicious.len == c2.malicious.len)
     for nick in c1.malicious.keys():
-        assert(c1.malicious[nick] == c2.malicious[nick])
+        check(c1.malicious[nick] == c2.malicious[nick])
 
     #Compare the statuses table.uses.len)
     for hash in c1.statuses.keys():
@@ -124,9 +127,9 @@ proc compare*(
     #Compare the close table.
     #We don't compare the length as c2 can have more Transactions if their verifiers gained Merit.
     #If we only reloaded Transactions which are still close, we wouldn't have more Transactions, yet we would have less.
-    #That would rewrite the check to `for hash in c2.close.keys(): assert(c1.close.hasKey(hash))`.
+    #That would rewrite the check to `for hash in c2.close.keys(): check(c1.close.hasKey(hash))`.
     for hash in c1.close:
-        assert(c2.close.contains(hash))
+        check(c2.close.contains(hash))
 
     #Compare the unmentioned table.
-    assert(symmetricDifference(c1.unmentioned, c2.unmentioned).len == 0)
+    check(symmetricDifference(c1.unmentioned, c2.unmentioned).len == 0)

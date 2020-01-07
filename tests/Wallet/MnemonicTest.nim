@@ -34,15 +34,15 @@ suite "Mnemonic":
     test "Each vector.":
         for vector in vectors["english"]:
             mnemonic = newMnemonic(vector[1].getStr())
-            assert(mnemonic.entropy.toHex().toLower() == vector[0].getStr())
-            assert(mnemonic.unlock("TREZOR").toHex().toLower() == vector[2].getStr())
+            check(mnemonic.entropy.toHex().toLower() == vector[0].getStr())
+            check(mnemonic.unlock("TREZOR").toHex().toLower() == vector[2].getStr())
 
     midFuzzTest "Generated Mnemonics.":
         mnemonic = newMnemonic()
         reloaded = newMnemonic(mnemonic.sentence)
 
-        assert(mnemonic.entropy == reloaded.entropy)
-        assert(mnemonic.checksum == reloaded.checksum)
-        assert(mnemonic.sentence == reloaded.sentence)
+        check(mnemonic.entropy == reloaded.entropy)
+        check(mnemonic.checksum == reloaded.checksum)
+        check(mnemonic.sentence == reloaded.sentence)
 
-        assert(mnemonic.unlock("password") == reloaded.unlock("password"))
+        check(mnemonic.unlock("password") == reloaded.unlock("password"))

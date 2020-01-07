@@ -68,13 +68,13 @@ suite "HDWallet.":
                     wallet = newHDWallet(vector["secret"].getStr()).derive(path)
                 except:
                     raised = true
-                assert(raised)
+                check(raised)
                 continue
 
             #If this wallet is valid, load and derive it.
             wallet = newHDWallet(vector["secret"].getStr()).derive(path)
 
             #Compare the Wallet with the vector.
-            assert($wallet.privateKey == (vector["node"]["kLP"].getStr() & vector["node"]["kRP"].getStr()).toUpper())
-            assert($wallet.publicKey == vector["node"]["AP"].getStr().toUpper())
-            assert($wallet.chainCode == vector["node"]["cP"].getStr().toUpper())
+            check($wallet.privateKey == (vector["node"]["kLP"].getStr() & vector["node"]["kRP"].getStr()).toUpper())
+            check($wallet.publicKey == vector["node"]["AP"].getStr().toUpper())
+            check($wallet.chainCode == vector["node"]["cP"].getStr().toUpper())
