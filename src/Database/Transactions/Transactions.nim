@@ -72,7 +72,7 @@ proc add*(
 
     #Grab the first claimer.
     try:
-         claimers[0] = lookup(transactions.loadMintOutput(cast[FundedInput](claim.inputs[0])).key)
+        claimers[0] = lookup(transactions.loadMintOutput(cast[FundedInput](claim.inputs[0])).key)
     except IndexError as e:
         doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
     except DBReadError:
