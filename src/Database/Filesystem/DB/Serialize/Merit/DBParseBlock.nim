@@ -66,9 +66,6 @@ proc parseBlock*(
 
         aggregate: BLSSignature
 
-    if bodyStr.len < packetsStart:
-        raise newException(ValueError, "DB parseBlock not handed enough data to get the amount of Transactions.")
-
     i = packetsStart
     if bodyStr.len < i + NICKNAME_LEN:
         raise newException(ValueError, "DB parseBlock not handed enough data to get the amount of holders in the next VerificationPacket.")
@@ -76,6 +73,9 @@ proc parseBlock*(
     var holders: seq[uint16]
     for p in 0 ..< packetsLen:
         holders = newSeq[uint16](bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
+        #https://github.com/MerosCrypto/Meros/issues/115
+        if holders.len == 0:
+            holders = newSeq[uint16](256)
         i += NICKNAME_LEN
 
         #The holders is represented by a NICKNAME_LEN. This uses an INT_LEN so the last packet checks the elements length.

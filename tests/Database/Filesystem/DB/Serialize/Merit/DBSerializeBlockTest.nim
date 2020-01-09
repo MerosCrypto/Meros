@@ -53,6 +53,45 @@ suite "DBSerializeBlock":
             #Reloaded Block.
             reloaded: Block
 
+    highFuzzTest "Block with a VerificationPacket with 256 holders.":
+        #Hash.
+        var hash: Hash[384]
+        for b in 0 ..< 48:
+            hash.data[b] = uint8(rand(255))
+
+        packets.add(newVerificationPacketObj(hash))
+
+        #Randomize the participating holders.
+        packets[0].holders = newSeq[uint16](256)
+        for h in 24 ..< 256:
+            packets[0].holders[h] = uint16(65535 - (256 - h))
+
+        packets.add(newVerificationPacketObj(hash))
+        packets[1].holders = @[uint16(0)]
+
+        var miner: MinerWallet = newMinerWallet(parseHexStr("0000000000000000000000000000000033B6A75DDA4FA4283F7F073EB8CAAD671C67CF17349D8EF479EC70E6265DB7F5"))
+        newBlock = newBlankBlock(
+            uint32(2050),
+            last,
+            uint16(40520),
+            "Test",
+            miner,
+            packets,
+            @[],
+            miner.sign(""),
+            uint32(3500000),
+            uint32(2501500)
+        )
+
+        #Serialize it and parse it back.
+        reloaded = newBlock.serialize().parseBlock()
+
+        #Compare the Blocks.
+        compare(newBlock, reloaded)
+
+        #Test the serialized versions.
+        check(newBlock.serialize() == reloaded.serialize())
+
     highFuzzTest "Serialize and parse.":
         #Randomize the last hash.
         for b in 0 ..< 48:
