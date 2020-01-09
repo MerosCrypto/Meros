@@ -41,7 +41,6 @@ suite "DBSerializeBlock":
         #Seed random.
         randomize(int64(getTime()))
 
-    highFuzzTest "Serialize and parse.":
         var
             #Last hash.
             last: ArgonHash
@@ -54,6 +53,7 @@ suite "DBSerializeBlock":
             #Reloaded Block.
             reloaded: Block
 
+    highFuzzTest "Serialize and parse.":
         #Randomize the last hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))
@@ -102,10 +102,6 @@ suite "DBSerializeBlock":
 
         #Test the serialized versions.
         check(newBlock.serialize() == reloaded.serialize())
-
-        #Clear the packets and elements.
-        packets = @[]
-        elements = @[]
 
         #Flip the newMiner bool.
         newMiner = not newMiner

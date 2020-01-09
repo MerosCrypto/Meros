@@ -46,7 +46,6 @@ suite "SerializeBlock":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    highFuzzTest "Serialize and parse.":
         var
             #Last hash.
             last: ArgonHash
@@ -61,10 +60,7 @@ suite "SerializeBlock":
             #Sketch Result.
             sketchResult: SketchResult
 
-        #Clear packets and elements.
-        packets = @[]
-        elements = @[]
-
+    highFuzzTest "Serialize and parse.":
         #Randomize the last hash.
         for b in 0 ..< 48:
             last.data[b] = uint8(rand(255))

@@ -89,7 +89,7 @@ suite "Transactions":
             first: Table[Hash[384], int] = initTable[Hash[384], int]()
 
             #Packets.
-            packets: seq[VerificationPacket]
+            packets: seq[VerificationPacket] = @[]
             #New Block.
             newBlock: Block
 
@@ -118,9 +118,6 @@ suite "Transactions":
             transactions.archive(merit.postProcessBlock()[0])
 
     midFuzzTest "Reloaded transactions.":
-        #Clear packets.
-        packets = @[]
-
         #Create a random amount of Wallets.
         for _ in 0 ..< rand(2) + 2:
             wallets.add(newWallet(""))

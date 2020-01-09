@@ -39,7 +39,6 @@ suite "SerializeBlockBody":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    highFuzzTest "Serialize and parse.":
         var
             #Sketch salt.
             sketchSalt: string
@@ -54,10 +53,7 @@ suite "SerializeBlockBody":
             #Sketch Result.
             sketchResult: SketchResult
 
-        #Clear packets and elements.
-        packets = @[]
-        elements = @[]
-
+    highFuzzTest "Serialize and parse.":
         #Randomize the packets.
         for _ in 0 ..< rand(300):
             packets.add(newRandomVerificationPacket())
@@ -99,7 +95,3 @@ suite "SerializeBlockBody":
 
         #Compare the BlockBodies.
         compare(body, reloaded.data)
-
-        #Clear the packets and elements.
-        packets = @[]
-        elements = @[]
