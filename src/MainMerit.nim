@@ -16,6 +16,9 @@ proc mainMerit() {.forceCheck: [].} =
         functions.merit.getTail = proc (): Hash[384] {.inline, forceCheck: [].} =
             merit.blockchain.tail.header.hash
 
+        functions.merit.getRandomXCacheKey = proc (): string {.inline, forceCheck: [].} =
+            merit.blockchain.cacheKey
+
         functions.merit.getBlockHashBefore = proc (
             hash: Hash[384]
         ): Hash[384] {.forceCheck: [

@@ -317,7 +317,7 @@ proc module*(
                             getTime(),
                             0,
                             newBLSSignature()
-                        ).serializeHash().toHex()
+                        ).serializeTemplate().toHex()
 
                     if header.kind == JNull:
                         header = % newBlockHeader(
@@ -331,7 +331,7 @@ proc module*(
                             getTime(),
                             0,
                             newBLSSignature()
-                        ).serializeHash().toHex()
+                        ).serializeTemplate().toHex()
                 except IndexError as e:
                     doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
                 except BLSError:
@@ -341,6 +341,7 @@ proc module*(
                 try:
                     res["result"] = %* {
                         "id": id,
+                        "key":  functions.merit.getRandomXCacheKey().toHex(),
                         "header": header,
                         "body": newBlockBodyObj(
                             pending.packets,

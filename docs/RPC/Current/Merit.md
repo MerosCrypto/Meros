@@ -84,10 +84,11 @@ The result is an object, as follows:
 
 The result is an object, as follows:
 - `id`     (int): The template ID.
+- `key`    (string): The RandomX cache key.
 - `header` (string)
 - `body`   (string)
 
-Mining the Block occurs by hashing the header with an 8-byte left padded proof, despite the proof only being 4 bytes. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature as the salt. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` with the ID (see below).
+Mining the Block occurs by hashing the header with a 4-byte proof appended. After the initial hash, the hash is signed by the miner, and the hash is hashed with the signature appended. If it beats the difficulty, it can be published by appending the 4-byte proof to the header, then appending the signature to the header, then appending the body to the completed header, and then calling `merit_publishBlock` with the ID (see below).
 
 ### `publishBlock`
 

@@ -42,6 +42,9 @@ type Blockchain* = object
     #Current Difficulty.
     difficulty*: Difficulty
 
+    #RandomX Cache Key.
+    cacheKey*: string
+
     #Miners from past blocks. Serves as a reverse lookup.
     miners*: Table[BLSPublicKey, uint16]
 
@@ -84,11 +87,13 @@ proc newBlockchainObj*(
 
     #Get the RandomX key from the DB.
     try:
-        setRandomXKey(result.db.loadKey())
+        result.cacheKey = result.db.loadKey()
+        setRandomXKey(result.cacheKey)
     except DBReadError:
-        setRandomXKey(genesis)
-        result.db.saveUpcomingKey(genesis)
-        result.db.saveKey(genesis)
+        result.cacheKey = genesis
+        setRandomXKey(result.cacheKey)
+        result.db.saveUpcomingKey(result.cacheKey)
+        result.db.saveKey(result.cacheKey)
 
     #Grab the height and tip from the DB.
     var tip: Hash[384]
@@ -191,8 +196,9 @@ proc add*(
         except DBReadError:
             doAssert(false, "Couldn't load the latest RandomX key.")
 
-        setRandomXKey(key)
-        blockchain.db.saveKey(key)
+        blockchain.cacheKey = key
+        setRandomXKey(blockchain.cacheKey)
+        blockchain.db.saveKey(blockchain.cacheKey)
 
 #Check if a Block exists.
 proc hasBlock*(
