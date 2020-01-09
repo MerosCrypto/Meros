@@ -39,7 +39,7 @@ suite "SerializeBlockHeader":
     midFuzzTest "Serialize and parse.":
         var
             #Last Block's Hash.
-            last: ArgonHash
+            last: RandomXHash
             #Contents Hash.
             contents: Hash[384]
             #Sketch Check Merkle.

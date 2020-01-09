@@ -63,7 +63,7 @@ proc newValidVerificationPacket*(
 #Create a Block, with every setting optional.
 proc newBlankBlock*(
     version: uint32 = 0,
-    last: ArgonHash = ArgonHash(),
+    last: RandomXHash = RandomXHash(),
     significant: uint16 = 0,
     sketchSalt: string = newString(4),
     miner: MinerWallet = newMinerWallet(),
@@ -91,7 +91,7 @@ proc newBlankBlock*(
 #Create a Block with a nicname.
 proc newBlankBlock*(
     version: uint32 = 0,
-    last: ArgonHash = ArgonHash(),
+    last: RandomXHash = RandomXHash(),
     significant: uint16 = 0,
     sketchSalt: string = newString(4),
     nick: uint16,

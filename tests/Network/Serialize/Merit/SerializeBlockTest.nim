@@ -48,7 +48,7 @@ suite "SerializeBlock":
 
         var
             #Last hash.
-            last: ArgonHash
+            last: RandomXHash
             #Packets.
             packets: seq[VerificationPacket] = @[]
             #Elements.
