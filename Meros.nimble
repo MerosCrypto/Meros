@@ -15,6 +15,7 @@ skipExt = @["nim"]
 #Dependencies
 requires "nim >= 1.0.4"
 requires "https://github.com/MerosCrypto/Argon2"
+requires "https://github.com/MerosCrypto/mc_randomx"
 requires "https://github.com/MerosCrypto/mc_bls"
 requires "https://github.com/MerosCrypto/mc_ed25519"
 requires "https://github.com/MerosCrypto/mc_minisketch"

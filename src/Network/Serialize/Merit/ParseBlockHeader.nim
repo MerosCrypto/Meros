@@ -16,7 +16,7 @@ import ../SerializeCommon
 #Parse functions.
 proc parseBlockHeader*(
     headerStr: string,
-    hash: ArgonHash
+    hash: RandomXHash
 ): BlockHeader {.forceCheck: [
     ValueError
 ].} =
@@ -46,7 +46,7 @@ proc parseBlockHeader*(
         if headerSeq[6] == "\0":
             result = newBlockHeaderObj(
                 uint32(headerSeq[0].fromBinary()),
-                headerSeq[1].toArgonHash(),
+                headerSeq[1].toRandomXHash(),
                 headerSeq[2].toHash(384),
                 uint16(headerSeq[3].fromBinary()),
                 headerSeq[4],
@@ -59,7 +59,7 @@ proc parseBlockHeader*(
         else:
             result = newBlockHeaderObj(
                 uint32(headerSeq[0].fromBinary()),
-                headerSeq[1].toArgonHash(),
+                headerSeq[1].toRandomXHash(),
                 headerSeq[2].toHash(384),
                 uint16(headerSeq[3].fromBinary()),
                 headerSeq[4],
@@ -93,7 +93,7 @@ proc parseBlockHeader*(
         headerStr[0 ..< (
                 BLOCK_HEADER_DATA_LEN +
                 (if result.newMiner: BLS_PUBLIC_KEY_LEN else: NICKNAME_LEN) +
-                INT_LEN
+                INT_LEN + INT_LEN
             )
         ]
     )

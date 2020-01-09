@@ -1,15 +1,15 @@
 #Types.
 from typing import Dict, Any
 
+#RandomX lib.
+from PythonTests.Libs.RandomX import RandomX
+
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey
 
 #BlockHeader and BlockBody classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.BlockBody import BlockBody
-
-#Argon2 lib.
-import argon2
 
 #Block class.
 class Block:
@@ -34,26 +34,10 @@ class Block:
             (int.from_bytes(self.header.hash, "big") < difficulty)
         ):
             self.header.proof += 1
-            self.header.hash = argon2.low_level.hash_secret_raw(
-                self.header.serializeHash(),
-                self.header.proof.to_bytes(8, "big"),
-                1,
-                65536,
-                1,
-                48,
-                argon2.low_level.Type.D
-            )
+            self.header.hash = RandomX(self.header.serializeHash())
             self.header.signature = privKey.sign(self.header.hash).serialize()
 
-            self.header.hash = argon2.low_level.hash_secret_raw(
-                self.header.hash,
-                self.header.signature,
-                1,
-                65536,
-                1,
-                48,
-                argon2.low_level.Type.D
-            )
+            self.header.hash = RandomX(self.header.hash + self.header.signature)
 
     #Serialize.
     def serialize(

@@ -6,11 +6,15 @@ export HashCommon
 import Hash/Blake2
 export Blake2
 
+#RandomX lib (used by Meros).
+import Hash/RandomX
+export RandomX
+
 #Argon lib (used by Meros).
 import Hash/Argon
 export Argon
 
-#SHA2 lib (for compatibility with old systems such as BTC).
+#SHA2 lib (for compatibility with older systems such as BTC).
 import Hash/SHA2
 export SHA2
 

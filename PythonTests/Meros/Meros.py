@@ -382,4 +382,4 @@ class Meros:
             pass
 
         if self.process.returncode != 0:
-            raise Exception("Meros didn't quit with code 0.")
+            raise NodeError("Meros didn't quit with code 0.")

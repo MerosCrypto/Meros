@@ -28,11 +28,11 @@ proc serializeHash*(
     (
         if header.newMiner: '\1' & header.minerKey.serialize() else: '\0' & header.minerNick.toBinary(NICKNAME_LEN)
     ) &
-    header.time.toBinary(INT_LEN)
+    header.time.toBinary(INT_LEN) &
+    header.proof.toBinary(INT_LEN)
 
 proc serialize*(
     header: BlockHeader
 ): string {.inline, forceCheck: [].} =
     header.serializeHash() &
-    header.proof.toBinary(INT_LEN) &
     header.signature.serialize()

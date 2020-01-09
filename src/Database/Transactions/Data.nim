@@ -60,10 +60,10 @@ proc mine*(
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var
         proof: uint32 = 0
-        hash: ArgonHash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN), true)
+        hash: ArgonHash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN))
     while hash <= networkDifficulty:
         inc(proof)
-        hash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN), true)
+        hash = Argon(data.hash.toString(), proof.toBinary(SALT_LEN))
 
     data.proof = proof
     data.argon = hash

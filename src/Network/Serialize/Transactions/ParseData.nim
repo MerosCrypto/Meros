@@ -39,7 +39,7 @@ proc parseData*(
 
     var
         hash: Hash[384] = Blake384("\3" & dataSeq[0] & dataSeq[2])
-        argon: ArgonHash = Argon(hash.toString(), dataSeq[4].pad(8), true)
+        argon: ArgonHash = Argon(hash.toString(), dataSeq[4].pad(8))
     if argon < diff:
         raise newSpam("Data didn't beat the difficulty.", hash, argon)
 

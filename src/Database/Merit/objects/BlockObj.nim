@@ -31,7 +31,7 @@ type Block* = object
 #Constructor.
 proc newBlockObj*(
     version: uint32,
-    last: ArgonHash,
+    last: RandomXHash,
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,
@@ -66,7 +66,7 @@ proc newBlockObj*(
 
 proc newBlockObj*(
     version: uint32,
-    last: ArgonHash,
+    last: RandomXHash,
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,

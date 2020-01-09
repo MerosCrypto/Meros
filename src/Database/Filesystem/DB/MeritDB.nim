@@ -110,6 +110,18 @@ proc save*(
     db.put(blockArg.header.hash.toString(), blockArg.serialize())
     db.put("n" & nonce.toBinary(), blockArg.header.hash.toString())
 
+proc saveUpcomingKey*(
+    db: DB,
+    key: string
+) {.forceCheck: [].} =
+    db.put("upcoming", key)
+
+proc saveKey*(
+    db: DB,
+    key: string
+) {.forceCheck: [].} =
+    db.put("key", key)
+
 proc save*(
     db: DB,
     difficulty: Difficulty
@@ -209,6 +221,26 @@ proc loadBlock*(
         result = db.get(db.get("n" & nonce.toBinary())).parseBlock()
     except Exception as e:
         raise newException(DBReadError, e.msg)
+
+proc loadUpcomingKey*(
+    db: DB
+): string {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get("upcoming")
+    except DBReadError as e:
+        raise e
+
+proc loadKey*(
+    db: DB
+): string {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = db.get("key")
+    except DBReadError as e:
+        raise e
 
 proc loadDifficulty*(
     db: DB

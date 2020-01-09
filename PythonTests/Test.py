@@ -120,7 +120,7 @@ for test in tests:
 
     #Meros instance.
     meros: Meros = Meros(test.__name__, port, port + 1)
-    sleep(2)
+    sleep(5)
 
     rpc: RPC = RPC(meros)
     try:
@@ -140,6 +140,7 @@ for test in tests:
     finally:
         try:
             rpc.quit()
+            meros.quit()
         except NodeError:
             if ress[-1] != crash:
                 ress.append(crash)

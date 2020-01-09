@@ -11,8 +11,8 @@ from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 #Sketch class.
 from PythonTests.Libs.Minisketch import Sketch
 
-#Argon2 lib.
-import argon2
+#RandomX lib.
+from PythonTests.Libs.RandomX import RandomX
 
 #Blake2b standard function.
 from hashlib import blake2b
@@ -102,30 +102,15 @@ class BlockHeader:
             self.sketchCheck +
             (1 if self.newMiner else 0).to_bytes(1, "big") +
             (self.minerKey if self.newMiner else self.minerNick.to_bytes(2, "big")) +
-            self.time.to_bytes(4, "big")
+            self.time.to_bytes(4, "big") +
+            self.proof.to_bytes(4, "big")
         )
 
     #Hash.
     def rehash(
         self
     ) -> None:
-        self.hash: bytes = argon2.low_level.hash_secret_raw(
-            argon2.low_level.hash_secret_raw(
-                self.serializeHash(),
-                self.proof.to_bytes(8, "big"),
-                1,
-                65536,
-                1,
-                48,
-                argon2.low_level.Type.D
-            ),
-            self.signature,
-            1,
-            65536,
-            1,
-            48,
-            argon2.low_level.Type.D
-        )
+        self.hash: bytes = RandomX(RandomX(self.serializeHash()) + self.signature)
 
     #Constructor.
     def __init__(
@@ -164,11 +149,7 @@ class BlockHeader:
     def serialize(
         self
     ) -> bytes:
-        return (
-            self.serializeHash() +
-            self.proof.to_bytes(4, "big") +
-            self.signature
-        )
+        return self.serializeHash() + self.signature
 
     #BlockHeader -> JSON.
     def toJSON(

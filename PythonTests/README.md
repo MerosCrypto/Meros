@@ -8,9 +8,27 @@ These tests require Python 3.6+ and pip. To install the needed modules:
 
 `python3 -m pip install --user argon2-cffi ed25519`
 
-They also require the Minisketch and Milagro dynamic libraries. The first should have been built in the process of setting up the `mc_minisketch` Nimble package. Place `libminisketch.so` or `minisketch.dll` under `PythonTests/Libs`. The second needs to be rebuilt by running the following commands from within the `PythonTests/Libs` directory.
+They also require the Minisketch, RandomX, and Milagro shared libraries. Minisketch's should have been built as part of `mc_minisketch`.
+
+- Place `libminisketch.so` (or `minisketch.dll`) from `mc_minisketch` under `PythonTests/Libs`.
+
+RandomX and Milagro need to be built again by running the following commands from within the `PythonTests/Libs` directory.
 
 ```
+git clone https://github.com/MerosCrypto/mc_randomx
+cd mc_randomx
+git submodule update --init --recursive
+cd RandomX/src
+rm configuration.h
+rm randomx.h
+cp ../../MerosConfiguration/* .
+cd ..
+mkdir build
+cd build
+cmake -DARCH=native -DBUILD_SHARED_LIBS=ON ..
+make
+cd ../../..
+
 git clone https://github.com/apache/incubator-milagro-crypto-c
 cd incubator-milagro-crypto-c
 mkdir build

@@ -32,23 +32,12 @@ Meros has an on-chain nickname system for Merit Holders, where each nickname is 
 A BlockHeader's signature and hash are defined as follows:
 
 ```
-h1 = Argon2d(
-    iterations = 1,
-    memory = 65536,
-    parallelism = 1
-    data = header.serializeWithoutProofOrSignature(),
-    salt = proof left padded to be 8 bytes long
-)
-
+h1 = RandomX(header.serializeWithoutSignature())
 signature = miner.sign(h1)
-hash = Argon2d(
-    iterations = 1,
-    memory = 65536,
-    parallelism = 1
-    data = h1,
-    salt = signature
-)
+hash = RandomX(h1 || signature)
 ```
+
+Meros uses a RandomX modified with both a custom configuration and a 48-byte hash length. The modified headers can be found [here](https://github.com/MerosCrypto/mc_randomx/tree/master/MerosConfiguration). The cache's key is updated when the Blockchain's height modulo 2048 is 64. The cache's key is updated to the hash of the latest Block on the Blockchain to match height modulo 2048 == 0.
 
 ### Block Data Type
 

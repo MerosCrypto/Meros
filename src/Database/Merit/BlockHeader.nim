@@ -101,7 +101,7 @@ proc newContents*(
 #Constructor.
 proc newBlockHeader*(
     version: uint32,
-    last: ArgonHash,
+    last: RandomXHash,
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,
@@ -128,7 +128,7 @@ proc newBlockHeader*(
 
 proc newBlockHeader*(
     version: uint32,
-    last: ArgonHash,
+    last: RandomXHash,
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,

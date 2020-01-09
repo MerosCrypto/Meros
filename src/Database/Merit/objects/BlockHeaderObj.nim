@@ -10,14 +10,11 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#SerializeCommon lib.
-import ../../../Network/Serialize/SerializeCommon
-
 type BlockHeader* = ref object
     #Version.
     version*: uint32
     #Hash of the last block.
-    last*: ArgonHash
+    last*: RandomXHash
     #Merkle of the contents.
     contents*: Hash[384]
 
@@ -42,12 +39,12 @@ type BlockHeader* = ref object
     signature*: BLSSignature
 
     #Block hash.
-    hash*: ArgonHash
+    hash*: RandomXHash
 
 #Constructors.
 func newBlockHeaderObj*(
     version: uint32,
-    last: ArgonHash,
+    last: RandomXHash,
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,
@@ -75,7 +72,7 @@ func newBlockHeaderObj*(
 
 func newBlockHeaderObj*(
     version: uint32,
-    last: ArgonHash,
+    last: RandomXHash,
     contents: Hash[384],
     significant: uint16,
     sketchSalt: string,
@@ -109,22 +106,15 @@ proc hash*(
     proof: uint32
 ) {.forceCheck: [].} =
     header.proof = proof
-    header.hash = Argon(
-        serialized,
-        header.proof.toBinary(SALT_LEN)
-    )
+    header.hash = RandomX(serialized)
     header.signature = miner.sign(header.hash.toString())
-    header.hash = Argon(header.hash.toString(), header.signature.serialize())
+    header.hash = RandomX(header.hash.toString() & header.signature.serialize())
 
 #Hash the header via a passed in serialization.
 proc hash*(
     header: var BlockHeader,
     serialized: string
 ) {.forceCheck: [].} =
-    header.hash = Argon(
-        Argon(
-            serialized,
-            header.proof.toBinary(SALT_LEN)
-        ).toString(),
-        header.signature.serialize()
+    header.hash = RandomX(
+        RandomX(serialized).toString() & header.signature.serialize()
     )

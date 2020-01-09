@@ -13,18 +13,14 @@ type ArgonHash* = HashCommon.Hash[384]
 #Take in data and a salt; return a ArgonHash.
 proc Argon*(
     data: string,
-    salt: string,
-    reduced: bool = false
+    salt: string
 ): ArgonHash {.forceCheck: [].} =
     #The iteration quantity and memory usage values are for testing only.
     #They are not final and will be changed.
     var
         #Reduced paramters:
         iterations: uint32 = 1
-        memory: uint32 = 8 #8 KB of memory.
-    if not reduced:
-        #Regular paramters.
-        memory = 65536 #128 MB of memory.
+        memory: uint32 = 8 #8 KB of memor
 
     try:
         result.data = Argon2d(

@@ -1,6 +1,9 @@
 #Types.
 from typing import Dict, List, Tuple, Any
 
+#RandomX lib.
+from PythonTests.Libs.RandomX import setRandomXKey
+
 #BLS lib.
 from PythonTests.Libs.BLS import PublicKey
 
@@ -18,6 +21,9 @@ class Blockchain:
         blockTime: int,
         startDifficulty: int
     ) -> None:
+        self.upcomingKey: bytes = genesis.rjust(48, b'\0')
+        setRandomXKey(self.upcomingKey)
+
         self.blockTime: int = blockTime
 
         self.startDifficulty: int = startDifficulty
@@ -45,6 +51,11 @@ class Blockchain:
         block: Block
     ) -> None:
         self.blocks.append(block)
+
+        if len(self.blocks) % 2048 == 0:
+            self.upcomingKey = block.header.hash
+        elif len(self.blocks) % 2048 == 64:
+            setRandomXKey(self.upcomingKey)
 
         if len(self.blocks) - 1 == self.difficulties[-1][1]:
             #Blocks per months.

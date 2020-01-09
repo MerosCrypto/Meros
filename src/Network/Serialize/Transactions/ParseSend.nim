@@ -40,7 +40,7 @@ proc parseSend*(
 
     var
         hash: Hash[384] = Blake384("\2" & sendSeq[1] & sendSeq[3])
-        argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8), true)
+        argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8))
     if argon < diff:
         raise newSpam("Send didn't beat the difficulty.", hash, argon)
 

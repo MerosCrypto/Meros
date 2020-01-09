@@ -64,11 +64,12 @@ proc newBlockchainObj*(
         doAssert(false, "Couldn't create the Blockchain's starting difficulty.")
 
     #Create the Blockchain.
+    var genesis: string = genesisArg.pad(48)
     try:
         result = Blockchain(
             db: db,
 
-            genesis: genesisArg.pad(48).toArgonHash(),
+            genesis: genesis.toRandomXHash(),
             blockTime: blockTime,
             startDifficulty: startDifficulty,
 
@@ -80,6 +81,14 @@ proc newBlockchainObj*(
         )
     except ValueError as e:
         doAssert(false, "Couldn't convert the genesis to a hash, despite being padded to 48 bytes: " & e.msg)
+
+    #Get the RandomX key from the DB.
+    try:
+        setRandomXKey(result.db.loadKey())
+    except DBReadError:
+        setRandomXKey(genesis)
+        result.db.saveUpcomingKey(genesis)
+        result.db.saveKey(genesis)
 
     #Grab the height and tip from the DB.
     var tip: Hash[384]
@@ -171,6 +180,19 @@ proc add*(
     #Update miners, if necessary
     if newBlock.header.newMiner:
         blockchain.miners[newBlock.header.minerKey] = uint16(blockchain.miners.len)
+
+    #If the height mod 2048 == 0, save the upcoming key.
+    if blockchain.height mod 2048 == 0:
+        blockchain.db.saveUpcomingKey(newBlock.header.hash.toString())
+    elif blockchain.height mod 2048 == 64:
+        var key: string
+        try:
+            key = blockchain.db.loadUpcomingKey()
+        except DBReadError:
+            doAssert(false, "Couldn't load the latest RandomX key.")
+
+        setRandomXKey(key)
+        blockchain.db.saveKey(key)
 
 #Check if a Block exists.
 proc hasBlock*(

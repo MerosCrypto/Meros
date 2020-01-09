@@ -103,7 +103,7 @@ class RPC:
 
         #Launch Meros.
         self.meros = Meros(self.meros.db, self.meros.tcp, self.meros.rpc)
-        sleep(3)
+        sleep(5)
 
         #Reconnect.
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
