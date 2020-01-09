@@ -43,6 +43,9 @@ type VotedDifficultyTest = object
 
 suite "SpamFilter":
     setup:
+        #Seed random.
+        randomize(int64(getTime()))
+
         var
             #Holder -> Merit.
             merit: Table[uint16, int]
