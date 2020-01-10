@@ -65,10 +65,3 @@ suite "Util":
     test "The same number yet with the Nim standard lib.":
         var u64: uint64 = uint64(210000000000000000)
         check(u64 == uint64(parseUInt($u64)))
-
-    test "Make sure 256 serializes as 0100.":
-        check(256.toBinary().fromBinary() == 256)
-        check(256.toBinary(2).fromBinary() == 256)
-
-        check(256.toBinary() == parseHexStr("0100"))
-        check(256.toBinary(2) == parseHexStr("0100"))

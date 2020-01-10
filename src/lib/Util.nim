@@ -1,8 +1,11 @@
 #Errors objects.
 import objects/ErrorsObjs
 
-#Math standard lib.
-import math
+#Nimcrypto lib (for secure RNG).
+import nimcrypto
+
+#Bit operations standard lib.
+import bitops
 
 #Times standard lib.
 import times
@@ -12,9 +15,6 @@ import strutils
 #Export the commonly used int/hex functions from it.
 export parseInt, parseUInt
 export toHex, parseHexInt, parseHexStr
-
-#Nimcrypto lib (for secure RNG).
-import nimcrypto
 
 #Gets the epoch and returns it as a Time.
 proc getTime*(): uint32 {.inline, forceCheck: [].} =
@@ -47,8 +47,8 @@ func toBinary*(
     #Get the amount of bytes the number actually uses.
     var used: int = 0
     if number != 0:
-        used = ceil((floor(log2(float(number))) + 1) / 8).toInt()
-    
+        used = sizeof(number) - (countLeadingZeroBits(number) div 8)
+
     #Add filler bytes to the final result is at least length.
     #If the amount of bytes needed is more than the length, the result will be the amount needed.
     result = newString(max(length - used, 0))
