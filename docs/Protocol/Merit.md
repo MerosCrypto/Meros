@@ -53,6 +53,7 @@ Blocks have the following fields:
 A Block's hash is defined as the hash of its header.
 
 The genesis Block on the Meros mainnet Blockchain has a:
+
 - Header version of 0.
 - Header last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 48 bytes.
 - Zeroed out contents in the header.
@@ -98,7 +99,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - contents is the result of a properly constructed Merkle tree.
 - significant is greater than 0 and at most 26280 (inclusive).
 - The Block's included Verification Packets don't collide with the specified sketch salt.
-- sketchCheck is the result of a properly constructed Merkle tree
+- sketchCheck is the result of a properly constructed Merkle tree.
 - Every Verification Packet is for an unique Transaction.
 - Every Verification Packet only contains new Verifications.
 - Every Verification Packet's Merit is greater than significant.
