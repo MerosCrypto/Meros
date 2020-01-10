@@ -16,8 +16,8 @@ from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
 from PythonTests.Classes.Merit.Block import Block
 
-#TestError Exception.
-from PythonTests.Tests.Errors import TestError
+#NodeError and TestError Exceptions.
+from PythonTests.Tests.Errors import NodeError, TestError
 
 #Enum class.
 from enum import Enum
