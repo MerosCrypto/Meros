@@ -65,8 +65,6 @@ suite "Epochs":
 
             #Packets we've created.
             packets: seq[VerificationPacket]
-            #Block we're creating.
-            newBlock: Block
 
         #Iterate over 20 'rounds'.
         for i in 1 .. 20:

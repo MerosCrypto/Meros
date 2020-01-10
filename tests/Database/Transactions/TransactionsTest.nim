@@ -117,139 +117,140 @@ suite "Transactions":
             merit.processBlock(newBlock)
             transactions.archive(merit.postProcessBlock()[0])
 
-    midFuzzTest "Reloaded transactions.":
-        #Create a random amount of Wallets.
-        for _ in 0 ..< rand(2) + 2:
-            wallets.add(newWallet(""))
+    test "Reloaded transactions.":
+        for i in 0 ..< 30:
+            #Create a random amount of Wallets.
+            for _ in 0 ..< rand(2) + 2:
+                wallets.add(newWallet(""))
 
-        #Create Transactions and verify them.
-        for e in 0 ..< rand(9) + 1:
-            #Grab a random Wallet.
-            var
-                sender: int = rand(wallets.len - 1)
-                wallet: Wallet = wallets[sender]
-
-            #Create a Send.
-            if rand(1) == 0:
+            #Create Transactions and verify them.
+            for e in 0 ..< rand(9) + 1:
+                #Grab a random Wallet.
                 var
-                    #Decide how much to Send.
-                    amount: uint64 = uint64(rand(10000) + 1)
-                    #Current balance.
-                    balance: uint64 = 0
-                    #Spenable UTXOs.
-                    spendable: seq[FundedInput] = @[]
-                #Calculate the balance/spendable UTXOs.
-                for input in transactions.getUTXOs(wallet.publicKey):
-                    spendable.add(input)
-                    balance += transactions[input.hash].outputs[input.nonce].amount
+                    sender: int = rand(wallets.len - 1)
+                    wallet: Wallet = wallets[sender]
 
-                #Fund them if they need funding.
-                if balance <= amount:
-                    #Increment mintHash.
-                    if mintHash.data[^1] == 255:
-                        mintHash.data[^1] = 0
-                        inc(mintHash.data[^2])
-                    inc(mintHash.data[^1])
-
-                    #Create the Mint.
+                #Create a Send.
+                if rand(1) == 0:
                     var
-                        holder: int = rand(high(holders))
-                        mintAmount: uint64 = amount - balance + uint64(rand(5000) + 1)
+                        #Decide how much to Send.
+                        amount: uint64 = uint64(rand(10000) + 1)
+                        #Current balance.
+                        balance: uint64 = 0
+                        #Spenable UTXOs.
+                        spendable: seq[FundedInput] = @[]
+                    #Calculate the balance/spendable UTXOs.
+                    for input in transactions.getUTXOs(wallet.publicKey):
+                        spendable.add(input)
+                        balance += transactions[input.hash].outputs[input.nonce].amount
 
-                    transactions.mint(mintHash, @[newReward(uint16(holder), mintAmount)])
+                    #Fund them if they need funding.
+                    if balance <= amount:
+                        #Increment mintHash.
+                        if mintHash.data[^1] == 255:
+                            mintHash.data[^1] = 0
+                            inc(mintHash.data[^2])
+                        inc(mintHash.data[^1])
 
-                    #Create the Claim.
-                    var claim: Claim = newClaim(@[newFundedInput(mintHash, 0)], wallet.publicKey)
-                    holders[holder].sign(claim)
-                    transactions.add(
-                        claim,
-                        proc (
-                            nick: uint16
-                        ): BLSPublicKey =
-                            holders[int(nick)].publicKey
-                    )
+                        #Create the Mint.
+                        var
+                            holder: int = rand(high(holders))
+                            mintAmount: uint64 = amount - balance + uint64(rand(5000) + 1)
 
-                    verify(claim, 0)
+                        transactions.mint(mintHash, @[newReward(uint16(holder), mintAmount)])
 
-                    #Update the UTXOs/balance.
-                    spendable.add(newFundedInput(claim.hash, 0))
-                    balance += transactions[mintHash].outputs[0].amount
-
-                #Select a recepient.
-                var recepient: EdPublicKey = wallets[rand(wallets.high)].publicKey
-                while recepient == wallet.publicKey:
-                    recepient = wallets[rand(wallets.high)].publicKey
-
-                #Create the Send.
-                var send: Send = newSend(
-                    spendable,
-                    @[
-                        newSendOutput(
-                            recepient,
-                            amount
-                        ),
-                        newSendOutput(
-                            wallet.publicKey,
-                            balance - amount
+                        #Create the Claim.
+                        var claim: Claim = newClaim(@[newFundedInput(mintHash, 0)], wallet.publicKey)
+                        holders[holder].sign(claim)
+                        transactions.add(
+                            claim,
+                            proc (
+                                nick: uint16
+                            ): BLSPublicKey =
+                                holders[int(nick)].publicKey
                         )
-                    ]
-                )
-                wallet.sign(send)
-                send.mine(Hash[384]())
-                transactions.add(send)
 
-                verify(send, 0)
+                        verify(claim, 0)
 
-                #Make sure spendable was properly set.
-                check(transactions.getUTXOs(wallet.publicKey).len == 1)
-                check(transactions.getUTXOs(wallet.publicKey)[0].hash == send.hash)
-                check(transactions.getUTXOs(wallet.publicKey)[0].nonce == 1)
+                        #Update the UTXOs/balance.
+                        spendable.add(newFundedInput(claim.hash, 0))
+                        balance += transactions[mintHash].outputs[0].amount
 
-            #Create a Data.
-            else:
-                var
-                    dataStr: string = newString(rand(254) + 1)
-                    data: Data
-                for c in 0 ..< dataStr.len:
-                    dataStr[c] = char(rand(255))
+                    #Select a recepient.
+                    var recepient: EdPublicKey = wallets[rand(wallets.high)].publicKey
+                    while recepient == wallet.publicKey:
+                        recepient = wallets[rand(wallets.high)].publicKey
 
-                data = newData(transactions.loadDataTip(wallet.publicKey), dataStr)
-                wallet.sign(data)
-                data.mine(Hash[384]())
-                transactions.add(data)
+                    #Create the Send.
+                    var send: Send = newSend(
+                        spendable,
+                        @[
+                            newSendOutput(
+                                recepient,
+                                amount
+                            ),
+                            newSendOutput(
+                                wallet.publicKey,
+                                balance - amount
+                            )
+                        ]
+                    )
+                    wallet.sign(send)
+                    send.mine(Hash[384]())
+                    transactions.add(send)
 
-                verify(data, 0)
+                    verify(send, 0)
 
-        #Randomly select old transactions.
-        var reused: HashSet[Hash[384]] = initHashSet[Hash[384]]()
-        for _ in 0 ..< 10:
-            var tx: Transaction = txs[rand(high(txs))]
-            if (
-                (first[tx.hash] < merit.blockchain.height - 5) or
-                (first[tx.hash] == merit.blockchain.height) or
-                (reused.contains(tx.hash))
-            ):
-                continue
+                    #Make sure spendable was properly set.
+                    check(transactions.getUTXOs(wallet.publicKey).len == 1)
+                    check(transactions.getUTXOs(wallet.publicKey)[0].hash == send.hash)
+                    check(transactions.getUTXOs(wallet.publicKey)[0].nonce == 1)
 
-            verify(tx, merit.blockchain.height - first[tx.hash])
-            reused.incl(tx.hash)
+                #Create a Data.
+                else:
+                    var
+                        dataStr: string = newString(rand(254) + 1)
+                        data: Data
+                    for c in 0 ..< dataStr.len:
+                        dataStr[c] = char(rand(255))
 
-        #Add a block.
-        newBlock = newBlankBlock(
-            last = merit.blockchain.tail.header.hash,
-            miner = holders[^1],
-            packets = packets
-        )
+                    data = newData(transactions.loadDataTip(wallet.publicKey), dataStr)
+                    wallet.sign(data)
+                    data.mine(Hash[384]())
+                    transactions.add(data)
 
-        #Add it,
-        merit.processBlock(newBlock)
+                    verify(data, 0)
 
-        #Archive the epoch.
-        transactions.archive(merit.postProcessBlock()[0])
+            #Randomly select old transactions.
+            var reused: HashSet[Hash[384]] = initHashSet[Hash[384]]()
+            for _ in 0 ..< 10:
+                var tx: Transaction = txs[rand(high(txs))]
+                if (
+                    (first[tx.hash] < merit.blockchain.height - 5) or
+                    (first[tx.hash] == merit.blockchain.height) or
+                    (reused.contains(tx.hash))
+                ):
+                    continue
 
-        #Commit the DB.
-        commit(merit.blockchain.height)
+                verify(tx, merit.blockchain.height - first[tx.hash])
+                reused.incl(tx.hash)
 
-        #Compare the Transactions DAGs.
-        var reloaded: Transactions = newTransactions(db, merit.blockchain)
-        compare(transactions, reloaded)
+            #Add a block.
+            newBlock = newBlankBlock(
+                last = merit.blockchain.tail.header.hash,
+                miner = holders[^1],
+                packets = packets
+            )
+
+            #Add it,
+            merit.processBlock(newBlock)
+
+            #Archive the epoch.
+            transactions.archive(merit.postProcessBlock()[0])
+
+            #Commit the DB.
+            commit(merit.blockchain.height)
+
+            #Compare the Transactions DAGs.
+            var reloaded: Transactions = newTransactions(db, merit.blockchain)
+            compare(transactions, reloaded)
