@@ -1,7 +1,7 @@
 #Wallet Test.
 
 #Test lib.
-import unittest2
+import unittest
 
 #Util lib.
 import ../../src/lib/Util

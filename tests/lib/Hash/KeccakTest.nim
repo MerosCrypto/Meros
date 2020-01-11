@@ -1,7 +1,7 @@
 #Keccak Test.
 
 #Test lib.
-import unittest2
+import unittest
 
 #Hash lib.
 import ../../../src/lib/Hash

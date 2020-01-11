@@ -20,15 +20,11 @@ requires "https://github.com/MerosCrypto/mc_bls"
 requires "https://github.com/MerosCrypto/mc_ed25519"
 requires "https://github.com/MerosCrypto/mc_minisketch"
 requires "https://github.com/MerosCrypto/mc_lmdb"
-requires "https://github.com/MerosCrypto/Nim-Meros-RPC"
 requires "https://github.com/MerosCrypto/mc_webview"
 requires "https://github.com/kayabaNerve/ForceCheck >= 1.3.2"
 requires "stint"
 requires "nimcrypto"
 requires "normalize"
-
-#Test Dependencies
-requires "https://github.com/stefantalpalaru/nim-unittest2"
 
 #Procedures
 proc gatherTestFiles(dir: string): seq[string] =

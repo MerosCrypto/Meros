@@ -1,4 +1,4 @@
-import unittest2
+import unittest
 
 const TEST_FUZZING_LOW {.intdefine.}: int = 1
 const TEST_FUZZING_MID {.intdefine.}: int = 4

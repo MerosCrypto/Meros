@@ -5,25 +5,25 @@
 If the following conventions are followed, everything should _just work_.
 
 - The file name MUST follow the pattern `*Test.nim`.
-- It MUST use [`unittest2`](https://github.com/stefantalpalaru/nim-unittest2) framework and thereby format.
+- It MUST use the [`unittest`](https://nim-lang.org/docs/unittest.html) framework and thereby format.
 
 ### Running Tests
 
 ##### All unit tests
 
-```shell
+```
 nimble unit
 ```
 
 ###### A specific set of unit tests
 
-```shell
+```
 nimble unit "some test" "some other test"
 ```
 
 ###### A specific set of suites
 
-```shell
+```
 nimble unit "some suite::" "some other suite::"
 ```
 

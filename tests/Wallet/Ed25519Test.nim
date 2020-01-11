@@ -1,7 +1,7 @@
 #Ed25519 Test.
 
 #Test lib.
-import unittest2
+import unittest
 
 import ../../src/Wallet/Ed25519
 
