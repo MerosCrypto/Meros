@@ -66,7 +66,7 @@ for i in range(5):
     merit.add(Block.fromJSON(blankBlocks[i]))
 
 #Create the Data.
-data: Data = Data(edPubKey.to_bytes().rjust(32, b'\0'), bytes())
+data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.sign(edPrivKey)
 data.beat(dataFilter)
 transactions.add(data)

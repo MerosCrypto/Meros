@@ -51,7 +51,7 @@ suite "Serialize Data":
             input.data[b] = uint8(rand(255))
 
         #Create the data string.
-        dataStr = newString(rand(254) + 1)
+        dataStr = newString(rand(255) + 1)
         for b in 0 ..< dataStr.len:
             dataStr[b] = char(rand(255))
 

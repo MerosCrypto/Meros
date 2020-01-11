@@ -3,6 +3,9 @@
 #Test lib.
 import unittest
 
+#Errors lib.
+import ../../../src/lib/Errors
+
 #Util lib.
 import ../../../src/lib/Util
 
@@ -207,9 +210,21 @@ suite "Transactions":
                 else:
                     var
                         dataStr: string = newString(rand(254) + 1)
+                        tip: Hash[256]
                         data: Data
                     for c in 0 ..< dataStr.len:
                         dataStr[c] = char(rand(255))
+
+                    try:
+                        tip = transactions.loadDataTip(wallet.publicKey)
+                    except DataMissing:
+                        data = newData(Hash[256](), wallet.publicKey.toString())
+                        wallet.sign(data)
+                        data.mine(Hash[256]())
+                        transactions.add(data)
+                        verify(data, 0)
+                        transactions.verify(data.hash)
+                        tip = data.hash
 
                     data = newData(transactions.loadDataTip(wallet.publicKey), dataStr)
                     wallet.sign(data)

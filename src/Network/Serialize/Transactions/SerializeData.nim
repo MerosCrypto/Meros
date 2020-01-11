@@ -29,7 +29,7 @@ method serialize*(
     data: Data
 ): string {.inline, forceCheck: [].} =
     data.inputs[0].hash.toString() &
-    char(data.data.len) &
+    char(data.data.len - 1) &
     data.data &
     data.signature.toString() &
     data.proof.toBinary(INT_LEN)

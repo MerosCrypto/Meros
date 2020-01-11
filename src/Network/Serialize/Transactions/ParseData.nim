@@ -32,7 +32,7 @@ proc parseData*(
     var dataSeq: seq[string] = dataStr.deserialize(
         HASH_LEN,
         BYTE_LEN,
-        int(dataStr[HASH_LEN]),
+        int(dataStr[HASH_LEN]) + 1,
         ED_SIGNATURE_LEN,
         INT_LEN
     )

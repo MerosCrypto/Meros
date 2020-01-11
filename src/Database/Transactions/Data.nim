@@ -26,7 +26,7 @@ proc newData*(
     ValueError
 ].} =
     #Verify the data length.
-    if data.len < 1 or 255 < data.len:
+    if data.len == 0 or 256 < data.len:
         raise newException(ValueError, "Data is too small or too large.")
 
     #Create the Data.
@@ -37,13 +37,6 @@ proc newData*(
 
     #Hash it.
     result.hash = Blake256(result.serializeHash())
-
-    #Verify the Data's hash doesn't start with 16 zeroes.
-    for b in 0 ..< 16:
-        if result.hash.data[b] != 0:
-            break
-        if b == 15:
-            raise newException(ValueError, "Data's hash starts with 16 0s.")
 
 #Sign a Data.
 proc sign*(

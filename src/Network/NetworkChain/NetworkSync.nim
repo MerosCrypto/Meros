@@ -257,16 +257,8 @@ proc sync*(
         #Iterate over every transaction.
         for tx in transactions.values():
             block thisTX:
-                #Handle initial datas.
-                var first: bool = false
-                if tx of Data:
-                    for i in 0 ..< 16:
-                        if tx.inputs[0].hash.data[i] != 0:
-                            break
-
-                        if i == 15:
-                            first = true
-                            break
+                #Handle initial Datas.
+                var first: bool = (tx of Data) and (tx.inputs[0].hash == Hash[256]())
 
                 #Make sure we have already added every input.
                 if not first:

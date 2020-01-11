@@ -43,7 +43,9 @@ proc getSender*(
 ].} =
     if data.isFirstData:
         try:
-            return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 32]))
+            if data.data.len != 32:
+                raise newException(DataMissing, "Initial data wasn't provided a public key.")
+            return newEdPublicKey(data.data)
         except ValueError as e:
             doAssert(false, "Couldn't create an EdPublicKey from a Data's input: " & e.msg)
     else:
@@ -235,10 +237,10 @@ proc loadSpenders*(
 proc loadDataTip*(
     transactions: Transactions,
     key: EdPublicKey
-): Hash[256] {.forceCheck: [].} =
+): Hash[256] {.forceCheck: [
+    DataMissing
+].} =
     try:
         result = transactions.db.loadDataTip(key)
     except DBReadError:
-        result = Hash[256]()
-        for b in 16 ..< 32:
-            result.data[b] = uint8(key.data[b - 16])
+        raise newException(DataMissing, "Data tip not found.")

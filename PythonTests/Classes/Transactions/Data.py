@@ -62,7 +62,7 @@ class Data(Transaction):
     ) -> bytes:
         return (
             self.txInput +
-            len(self.data).to_bytes(1, "big") +
+            (len(self.data) - 1).to_bytes(1, "big") +
             self.data +
             self.signature +
             self.proof.to_bytes(4, "big")

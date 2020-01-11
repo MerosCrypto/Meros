@@ -58,7 +58,7 @@ blockchain.add(Block.fromJSON(blocks[0]))
 bbFile.close()
 
 #Create a Data with an invalid signature.
-data: Data = Data(edPubKey.to_bytes().rjust(32, b'\0'), bytes())
+data: Data = Data(bytes(32), edPubKey.to_bytes())
 data.signature = edPrivKey.sign(b"INVALID")
 data.beat(dataFilter)
 

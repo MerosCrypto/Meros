@@ -93,7 +93,7 @@ lengths: Dict[MessageType, List[int]] = {
 
     MessageType.Claim:                     [1, -33, 80],
     MessageType.Send:                      [1, -33, 1, -40, 68],
-    MessageType.Data:                      [32, 1, -1, 68],
+    MessageType.Data:                      [32, 1, -1, 69],
 
     MessageType.SignedVerification:        [82],
     MessageType.SignedSendDifficulty:      [86],

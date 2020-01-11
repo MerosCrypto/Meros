@@ -9,9 +9,6 @@ const
     MAX_DB_SIZE: int64 = 107374182400 #Max DB size.
     DB_VERSION: int = 0               #DB Version.
 
-    #Minimum Data Difficulty constant.
-    minimumDataDifficulty: Hash[256] = Hash[256]()
-
 type ChainParams = object
     #Genesis.
     GENESIS: string

@@ -15,8 +15,6 @@ proc mainConsensus() {.forceCheck: [].} =
 
         functions.consensus.getSendDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
             consensus.filters.send.difficulty
-        functions.consensus.getDataMinimumDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
-            minimumDataDifficulty
         functions.consensus.getDataDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
             consensus.filters.data.difficulty
 

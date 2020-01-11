@@ -40,8 +40,8 @@ def DataTest(
 
     #Create the Data.
     data: Data = Data(
-        pubKey.to_bytes().rjust(32, b'\0'),
-        b"Hello There! General Kenobi."
+        bytes(32),
+        pubKey.to_bytes()
     )
     data.sign(privKey)
     data.beat(spamFilter)
