@@ -15,7 +15,7 @@ raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
 #Request a Transaction.
 proc requestTransaction*(
     network: Network,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Future[Transaction] {.forceCheck: [
     DataMissing
 ], async.} =
@@ -27,7 +27,7 @@ proc requestTransaction*(
 
             #Get the Transaction.
             try:
-                result = await client.syncTransaction(hash, Hash[384](), Hash[384]())
+                result = await client.syncTransaction(hash, Hash[256](), Hash[256]())
                 synced = true
             except DataMissing:
                 discard
@@ -51,7 +51,7 @@ proc requestTransaction*(
 #Request Verification Packets.
 proc requestVerificationPackets(
     network: Network,
-    blockHash: Hash[384],
+    blockHash: Hash[256],
     sketchHashes: seq[uint64],
     sketchSalt: string
 ): Future[seq[VerificationPacket]] {.forceCheck: [
@@ -89,8 +89,8 @@ proc requestVerificationPackets(
 #Request Sketch Hashes.
 proc requestSketchHashes(
     network: Network,
-    hash: Hash[384],
-    sketchCheck: Hash[384]
+    hash: Hash[256],
+    sketchCheck: Hash[256]
 ): Future[seq[uint64]] {.forceCheck: [
     DataMissing
 ], async.} =
@@ -142,12 +142,12 @@ proc sync*(
         sketchResult: SketchResult
 
         #Transactions included in the Block.
-        includedTXs: HashSet[Hash[384]] = initHashSet[Hash[384]]()
+        includedTXs: HashSet[Hash[256]] = initHashSet[Hash[256]]()
 
         #Missing Transactions.
-        missingTXs: seq[Hash[384]] = @[]
+        missingTXs: seq[Hash[256]] = @[]
         #Transactions.
-        transactions: Table[Hash[384], Transaction] = initTable[Hash[384], Transaction]()
+        transactions: Table[Hash[256], Transaction] = initTable[Hash[256], Transaction]()
 
     try:
         #Try to resolve the Sketch.
@@ -249,11 +249,11 @@ proc sync*(
                 doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #List of Transactions we have yet to process.
-    var todo: Table[Hash[384], Transaction]
+    var todo: Table[Hash[256], Transaction]
     #While we still have transactions to do...
     while transactions.len > 0:
         #Clear todo.
-        todo = initTable[Hash[384], Transaction]()
+        todo = initTable[Hash[256], Transaction]()
         #Iterate over every transaction.
         for tx in transactions.values():
             block thisTX:
@@ -447,7 +447,7 @@ proc sync*(
 #Request a BlockBody.
 proc requestBlockBody*(
     network: Network,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Future[SketchyBlockBody] {.forceCheck: [
     DataMissing
 ], async.} =
@@ -483,7 +483,7 @@ proc requestBlockBody*(
 #Request a BlockHeader.
 proc requestBlockHeader*(
     network: Network,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Future[BlockHeader] {.forceCheck: [
     DataMissing
 ], async.} =
@@ -521,8 +521,8 @@ proc requestBlockList*(
     network: Network,
     forwards: bool,
     amount: int,
-    hash: Hash[384]
-): Future[seq[Hash[384]]] {.forceCheck: [
+    hash: Hash[256]
+): Future[seq[Hash[256]]] {.forceCheck: [
     DataMissing
 ], async.} =
     var synced: bool = false

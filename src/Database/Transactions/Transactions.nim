@@ -240,7 +240,7 @@ proc add*(
 #Mint Meros to the specified key.
 proc mint*(
     transactions: var Transactions,
-    hash: Hash[384],
+    hash: Hash[256],
     rewards: seq[Reward]
 ) {.forceCheck: [].} =
     #Create the outputs.

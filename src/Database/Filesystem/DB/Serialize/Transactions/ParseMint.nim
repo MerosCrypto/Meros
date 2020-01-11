@@ -18,7 +18,7 @@ import ParseMintOutput
 
 #Parse function.
 proc parseMint*(
-    hash: Hash[384],
+    hash: Hash[256],
     mintStr: string
 ): Mint {.forceCheck: [].} =
     #Amount of Outputs | Outputs

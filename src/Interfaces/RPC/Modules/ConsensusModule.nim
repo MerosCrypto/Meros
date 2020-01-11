@@ -52,9 +52,9 @@ proc module*(
                     raise newException(ParamError, "")
 
                 #Extract the parameter.
-                var hash: Hash[384]
+                var hash: Hash[256]
                 try:
-                    hash = params[0].getStr().toHash(384)
+                    hash = params[0].getStr().toHash(256)
                 except ValueError:
                     raise newException(ParamError, "")
 

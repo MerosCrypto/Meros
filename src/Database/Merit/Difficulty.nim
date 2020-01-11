@@ -19,9 +19,9 @@ import StInt
 
 let
     #Ten.
-    TEN: StUint[512] = stuint(10, 512)
+    TEN: StUint[256] = stuint(10, 256)
     #Highest difficulty.
-    MAX: StUint[512] = "".pad(96, 'F').parse(StUint[512], 16)
+    MAX: StUint[256] = "".pad(64, 'F').parse(StUint[256], 16)
 
 #Calculate the next difficulty using the blockchain and blocks per period.
 proc calculateNextDifficulty*(
@@ -32,17 +32,17 @@ proc calculateNextDifficulty*(
         #Last difficulty.
         last: Difficulty = blockchain.difficulty
         #New difficulty.
-        difficulty: StUint[512]
+        difficulty: StUint[256]
 
     #Convert the difficulty to a StUInt.
     try:
-         difficulty = ($last.difficulty).parse(StUInt[512], 16)
+         difficulty = ($last.difficulty).parse(StUInt[256], 16)
     except ValueError as e:
         doAssert(false, "Couldn't parse a hash into a StUint: " & e.msg)
 
     var
         #Final difficulty.
-        difficultyHash: Hash[384]
+        difficultyHash: Hash[256]
         #Target time.
         targetTime: uint32 = uint32(blockchain.blockTime * blocksPerPeriod)
         #Start time of this period.
@@ -52,9 +52,9 @@ proc calculateNextDifficulty*(
         #Period time.
         actualTime: uint32
         #Possible values.
-        possible: StUint[512] = MAX - difficulty
+        possible: StUint[256] = MAX - difficulty
         #Change.
-        change: StUint[512]
+        change: StUint[256]
 
     #Grab the start time.
     try:
@@ -73,7 +73,7 @@ proc calculateNextDifficulty*(
                     #The targetTime (bigger) minus the actualTime (smaller)
                     #Over the targetTime
             #Since we need the difficulty to increase.
-            change = (possible * stuint(targetTime - actualTime, 512)) div stuint(targetTime, 512)
+            change = (possible * stuint(targetTime - actualTime, 256)) div stuint(targetTime, 256)
 
             #If we're increasing the difficulty by more than 10%...
             if possible div TEN < change:
@@ -89,7 +89,7 @@ proc calculateNextDifficulty*(
                 #Multipled by the targetTime (smaller)
                 #Divided by the actualTime (bigger)
             #Since we need the difficulty to decrease.
-            change = difficulty * stuint(targetTime div actualTime, 512)
+            change = difficulty * stuint(targetTime div actualTime, 256)
 
             #If we're decreasing the difficulty by more than 10% of the possible values...
             if possible div TEN < change:
@@ -103,7 +103,7 @@ proc calculateNextDifficulty*(
 
     #Convert the difficulty to a hash.
     try:
-        difficultyHash = dumpHex(difficulty)[32 ..< 128].toHash(384)
+        difficultyHash = dumpHex(difficulty).toHash(256)
     except ValueError as e:
         doAssert(false, "Couldn't convert a StUInt to a hash: " & e.msg)
 

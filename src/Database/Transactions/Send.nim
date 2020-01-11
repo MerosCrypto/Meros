@@ -30,7 +30,7 @@ proc newSend*(
     )
 
     #Hash it.
-    result.hash = Blake384(result.serializeHash())
+    result.hash = Blake256(result.serializeHash())
 
 #Sign a Send.
 proc sign*(
@@ -42,7 +42,7 @@ proc sign*(
 #Mine the Send.
 proc mine*(
     send: Send,
-    networkDifficulty: Hash[384]
+    networkDifficulty: Hash[256]
 ) {.forceCheck: [].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var

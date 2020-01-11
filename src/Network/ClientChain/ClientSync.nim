@@ -34,9 +34,9 @@ proc startSyncing*(
 #Sync a Transaction.
 proc syncTransaction*(
     client: Client,
-    hash: Hash[384],
-    sendDiff: Hash[384],
-    dataDiff: Hash[384]
+    hash: Hash[256],
+    sendDiff: Hash[256],
+    dataDiff: Hash[256]
 ): Future[Transaction] {.forceCheck: [
     ClientError,
     DataMissing,
@@ -84,7 +84,7 @@ proc syncTransaction*(
 #Sync Verification Packets.
 proc syncVerificationPackets*(
     client: Client,
-    blockHash: Hash[384],
+    blockHash: Hash[256],
     sketchHashes: seq[uint64],
     sketchSalt: string
 ): Future[seq[VerificationPacket]] {.forceCheck: [
@@ -128,8 +128,8 @@ proc syncVerificationPackets*(
 #Sync Sketch Hashes.
 proc syncSketchHashes*(
     client: Client,
-    hash: Hash[384],
-    sketchCheck: Hash[384]
+    hash: Hash[256],
+    sketchCheck: Hash[256]
 ): Future[seq[uint64]] {.forceCheck: [
     ClientError,
     DataMissing
@@ -166,7 +166,7 @@ proc syncSketchHashes*(
 #Sync a BlockBody.
 proc syncBlockBody*(
     client: Client,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Future[SketchyBlockBody] {.forceCheck: [
     ClientError,
     DataMissing
@@ -201,7 +201,7 @@ proc syncBlockBody*(
 #Sync a BlockHeader.
 proc syncBlockHeader*(
     client: Client,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Future[BlockHeader] {.forceCheck: [
     ClientError,
     DataMissing
@@ -242,8 +242,8 @@ proc syncBlockList*(
     client: Client,
     forwards: bool,
     amount: int,
-    hash: Hash[384]
-): Future[seq[Hash[384]]] {.forceCheck: [
+    hash: Hash[256]
+): Future[seq[Hash[256]]] {.forceCheck: [
     ClientError,
     DataMissing
 ], async.} =
@@ -260,14 +260,14 @@ proc syncBlockList*(
         try:
             case msg.content:
                 of MessageType.BlockList:
-                    for h in countup(1, msg.message.len - 2, 48):
-                        result.add(msg.message[h ..< h + 48].toHash(384))
+                    for h in countup(1, msg.message.len - 2, 32):
+                        result.add(msg.message[h ..< h + 32].toHash(256))
                 of MessageType.DataMissing:
                     raise newException(DataMissing, "Client didn't have the requested Block List.")
                 else:
                     raise newException(ClientError, "Client didn't respond properly to our BlockListRequest.")
         except ValueError as e:
-            doAssert(false, "48-byte string isn't a valid 48-byte hash: " & e.msg)
+            doAssert(false, "32-byte string isn't a valid 32-byte hash: " & e.msg)
     except ClientError as e:
         raise e
     except DataMissing as e:

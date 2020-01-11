@@ -20,7 +20,7 @@ import ../../Network/Serialize/Transactions/SerializeData
 
 #Data constructosr
 proc newData*(
-    input: Hash[384],
+    input: Hash[256],
     data: string
 ): Data {.forceCheck: [
     ValueError
@@ -36,7 +36,7 @@ proc newData*(
     )
 
     #Hash it.
-    result.hash = Blake384(result.serializeHash())
+    result.hash = Blake256(result.serializeHash())
 
     #Verify the Data's hash doesn't start with 16 zeroes.
     for b in 0 ..< 16:
@@ -55,7 +55,7 @@ proc sign*(
 #Mine the Data.
 proc mine*(
     data: Data,
-    networkDifficulty: Hash[384]
+    networkDifficulty: Hash[256]
 ) {.forceCheck: [].} =
     #Generate proofs until the reduced Argon2 hash beats the difficulty.
     var

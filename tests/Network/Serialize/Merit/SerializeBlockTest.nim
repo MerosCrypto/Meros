@@ -62,7 +62,7 @@ suite "SerializeBlock":
 
     highFuzzTest "Serialize and parse.":
         #Randomize the last hash.
-        for b in 0 ..< 48:
+        for b in 0 ..< 32:
             last.data[b] = uint8(rand(255))
 
         #Randomize the packets.

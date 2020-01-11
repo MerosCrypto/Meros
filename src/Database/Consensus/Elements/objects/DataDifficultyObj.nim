@@ -15,7 +15,7 @@ export ElementObj
 type
     DataDifficulty* = ref object of BlockElement
         nonce*: int
-        difficulty*: Hash[384]
+        difficulty*: Hash[256]
 
     SignedDataDifficulty* = ref object of DataDifficulty
         signature*: BLSSignature
@@ -23,7 +23,7 @@ type
 #Constructors.
 func newDataDifficultyObj*(
     nonce: int,
-    difficulty: Hash[384]
+    difficulty: Hash[256]
 ): DataDifficulty {.inline, forceCheck: [].} =
     DataDifficulty(
         nonce: nonce,
@@ -32,7 +32,7 @@ func newDataDifficultyObj*(
 
 func newSignedDataDifficultyObj*(
     nonce: int,
-    difficulty: Hash[384]
+    difficulty: Hash[256]
 ): SignedDataDifficulty {.inline, forceCheck: [].} =
     SignedDataDifficulty(
         nonce: nonce,

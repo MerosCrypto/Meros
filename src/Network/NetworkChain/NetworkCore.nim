@@ -81,11 +81,11 @@ proc newNetwork*(
 
             of MessageType.BlockchainTail:
                 #Get the hash.
-                var tail: Hash[384]
+                var tail: Hash[256]
                 try:
-                    tail = msg.message[0 ..< 48].toHash(384)
+                    tail = msg.message[0 ..< 32].toHash(256)
                 except ValueError as e:
-                    doAssert(false, "Couldn't turn a 48-byte string into a 48-byte hash: " & e.msg)
+                    doAssert(false, "Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
 
                 #Add the Block.
                 try:

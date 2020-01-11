@@ -21,8 +21,8 @@ proc newMaliciousMeritHolder*(
 
 proc newSpam*(
     msg: string,
-    hash: Hash[384],
-    argon: Hash[384]
+    hash: Hash[256],
+    argon: Hash[256]
 ): ref Spam {.forceCheck: [].} =
     result = newException(Spam, msg)
     result.hash = hash

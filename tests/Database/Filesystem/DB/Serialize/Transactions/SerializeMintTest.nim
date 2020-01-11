@@ -41,7 +41,7 @@ suite "SerializeMint":
             reloaded: Mint
 
             #Hash.
-            hash: Hash[384]
+            hash: Hash[256]
             #Outputs.
             outputs: seq[MintOutput]
 

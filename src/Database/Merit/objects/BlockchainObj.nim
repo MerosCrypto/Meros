@@ -29,7 +29,7 @@ type Blockchain* = object
     db*: DB
 
     #Genesis hash (derives from the chain params).
-    genesis*: Hash[384]
+    genesis*: Hash[256]
     #Block time (part of the chain params).
     blockTime*: int
     #Starting Difficulty (part of the chain params).
@@ -53,7 +53,7 @@ proc newBlockchainObj*(
     db: DB,
     genesisArg: string,
     blockTime: int,
-    startDifficultyArg: Hash[384]
+    startDifficultyArg: Hash[256]
 ): Blockchain {.forceCheck: [].} =
     #Create the start difficulty.
     var startDifficulty: Difficulty
@@ -67,7 +67,7 @@ proc newBlockchainObj*(
         doAssert(false, "Couldn't create the Blockchain's starting difficulty.")
 
     #Create the Blockchain.
-    var genesis: string = genesisArg.pad(48)
+    var genesis: string = genesisArg.pad(32)
     try:
         result = Blockchain(
             db: db,
@@ -83,7 +83,7 @@ proc newBlockchainObj*(
             miners: initTable[BLSPublicKey, uint16]()
         )
     except ValueError as e:
-        doAssert(false, "Couldn't convert the genesis to a hash, despite being padded to 48 bytes: " & e.msg)
+        doAssert(false, "Couldn't convert the genesis to a hash, despite being padded to 32 bytes: " & e.msg)
 
     #Get the RandomX key from the DB.
     try:
@@ -96,7 +96,7 @@ proc newBlockchainObj*(
         result.db.saveKey(result.cacheKey)
 
     #Grab the height and tip from the DB.
-    var tip: Hash[384]
+    var tip: Hash[256]
     try:
         result.height = result.db.loadHeight()
         tip = result.db.loadTip()
@@ -113,10 +113,10 @@ proc newBlockchainObj*(
             genesisBlock = newBlockObj(
                 0,
                 result.genesis,
-                Hash[384](),
+                Hash[256](),
                 0,
                 "".pad(4),
-                Hash[384](),
+                Hash[256](),
                 newBLSPublicKey(),
                 @[],
                 @[],
@@ -203,7 +203,7 @@ proc add*(
 #Check if a Block exists.
 proc hasBlock*(
     blockchain: Blockchain,
-    hash: Hash[384]
+    hash: Hash[256]
 ): bool {.inline, forceCheck: [].} =
     blockchain.db.hasBlock(hash)
 
@@ -232,7 +232,7 @@ proc `[]`*(
 
 proc `[]`*(
     blockchain: Blockchain,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Block {.forceCheck: [
     IndexError
 ].} =

@@ -32,7 +32,7 @@ type
         #DB Function Box.
         db: DB
         #Transactions which have yet to leave Epochs.
-        transactions*: Table[Hash[384], Transaction]
+        transactions*: Table[Hash[256], Transaction]
 
 #Get a Data's sender.
 proc getSender*(
@@ -43,7 +43,7 @@ proc getSender*(
 ].} =
     if data.isFirstData:
         try:
-            return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 48]))
+            return newEdPublicKey(cast[string](data.inputs[0].hash.data[16 ..< 32]))
         except ValueError as e:
             doAssert(false, "Couldn't create an EdPublicKey from a Data's input: " & e.msg)
     else:
@@ -77,7 +77,7 @@ proc add*(
 #Get a Transaction by its hash.
 proc `[]`*(
     transactions: Transactions,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Transaction {.forceCheck: [
     IndexError
 ].} =
@@ -103,11 +103,11 @@ proc newTransactionsObj*(
     #Create the object.
     result = Transactions(
         db: db,
-        transactions: initTable[Hash[384], Transaction]()
+        transactions: initTable[Hash[256], Transaction]()
     )
 
     #Load the Transactions from the DB.
-    var mentioned: HashSet[Hash[384]] = initHashSet[Hash[384]]()
+    var mentioned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
     try:
         #Find which Transactions were mentioned before the last 5 blocks.
         for b in max(0, blockchain.height - 10) ..< blockchain.height - 5:
@@ -141,7 +141,7 @@ proc getUTXOs*(
 #Mark a Transaction as verified, removing the outputs it spends from spendable.
 proc verify*(
     transactions: var Transactions,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     var tx: Transaction
     try:
@@ -165,7 +165,7 @@ proc verify*(
 #Mark a Transaction as unverified, removing its outputs from spendable.
 proc unverify*(
     transactions: var Transactions,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     var tx: Transaction
     try:
@@ -189,7 +189,7 @@ proc unverify*(
 #Delete a hash from the cache.
 func del*(
     transactions: var Transactions,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     #Grab the transaction.
     var tx: Transaction
@@ -228,17 +228,17 @@ proc loadSendOutput*(
 proc loadSpenders*(
     transactions: Transactions,
     input: Input
-): seq[Hash[384]] {.inline, forceCheck: [].} =
+): seq[Hash[256]] {.inline, forceCheck: [].} =
     transactions.db.loadSpenders(input)
 
 #Load a Data Tip.
 proc loadDataTip*(
     transactions: Transactions,
     key: EdPublicKey
-): Hash[384] {.forceCheck: [].} =
+): Hash[256] {.forceCheck: [].} =
     try:
         result = transactions.db.loadDataTip(key)
     except DBReadError:
-        result = Hash[384]()
-        for b in 16 ..< 48:
+        result = Hash[256]()
+        for b in 16 ..< 32:
             result.data[b] = uint8(key.data[b - 16])

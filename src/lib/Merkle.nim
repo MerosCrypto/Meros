@@ -16,7 +16,7 @@ type Merkle* = ref object
         of false:
             left*: Merkle
             right*: Merkle
-    hash*: Hash[384]
+    hash*: Hash[256]
 
 #Nil leaf constructor.
 #This exists, instead of just using nil, so we can still access the isLeaf and hash fields.
@@ -28,7 +28,7 @@ func newNilLeaf(): Merkle {.forceCheck: [].} =
 
 #Leaf constructor.
 func newMerkle(
-    hash: Hash[384]
+    hash: Hash[256]
 ): Merkle {.forceCheck: [].} =
     Merkle(
         isLeaf: true,
@@ -45,14 +45,14 @@ proc rehash(
 
     #If the left tree is nil, meaning this is an empty tree, 0-out the hash.
     if tree.left.isNil:
-        for i in 0 ..< 48:
+        for i in 0 ..< 32:
             tree.hash.data[i] = 0
     #If there's an odd number of children, duplicate the left one.
     elif tree.right.isNil:
-        tree.hash = Blake384(tree.left.hash.toString() & tree.left.hash.toString())
+        tree.hash = Blake256(tree.left.hash.toString() & tree.left.hash.toString())
     #Hash the left & right hashes.
     else:
-        tree.hash = Blake384(tree.left.hash.toString() & tree.right.hash.toString())
+        tree.hash = Blake256(tree.left.hash.toString() & tree.right.hash.toString())
 
 #Merkle constructor based on two other Merkles.
 proc newMerkle(
@@ -107,7 +107,7 @@ func leafCount(
 #Creates a Merkle Tree out of a single hash, filling in duplicates.
 proc chainOfDepth(
     depth: int,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Merkle {.forceCheck: [].} =
     if depth == 0:
         return newMerkle(hash)
@@ -116,7 +116,7 @@ proc chainOfDepth(
 #Adds a hash to a Merkle Tree.
 proc add*(
     tree: var Merkle,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     if tree.unset:
         tree = newMerkle(hash)
@@ -178,7 +178,7 @@ func ceilLog2(
     result = y
 
 proc newMerkleAux(
-    hashes: varargs[Hash[384]],
+    hashes: varargs[Hash[256]],
     targetDepth: int
 ): Merkle {.forceCheck: [].} =
     if targetDepth == 0:
@@ -196,7 +196,7 @@ proc newMerkleAux(
 
 #Merkle constructor based on a seq or array of hashes (as strings).
 proc newMerkle*(
-    hashes: varargs[Hash[384]]
+    hashes: varargs[Hash[256]]
 ): Merkle {.forceCheck: [].} =
     #If there were no hashes, return nil.
     if hashes.len == 0:

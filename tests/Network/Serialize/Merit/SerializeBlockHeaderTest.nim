@@ -41,9 +41,9 @@ suite "SerializeBlockHeader":
             #Last Block's Hash.
             last: RandomXHash
             #Contents Hash.
-            contents: Hash[384]
+            contents: Hash[256]
             #Sketch Check Merkle.
-            sketchCheck: Hash[384]
+            sketchCheck: Hash[256]
             #Miner.
             miner: MinerWallet
             #Block Header.
@@ -52,7 +52,7 @@ suite "SerializeBlockHeader":
             reloaded: BlockHeader
 
         #Randomize the hashes.
-        for b in 0 ..< 48:
+        for b in 0 ..< 32:
             last.data[b] = uint8(rand(255))
             contents.data[b] = uint8(rand(255))
             sketchCheck.data[b] = uint8(rand(255))

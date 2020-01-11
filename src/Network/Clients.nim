@@ -55,7 +55,7 @@ import tables
 proc handle(
     client: Client,
     networkFunctions: NetworkLibFunctionBox,
-    tail: Hash[384]
+    tail: Hash[256]
 ) {.forceCheck: [
     ClientError
 ], async.} =
@@ -65,7 +65,7 @@ proc handle(
             await networkFunctions.handle(newMessage(
                 client.id,
                 MessageType.BlockchainTail,
-                48,
+                32,
                 tail.toString()
             ))
         except Spam:
@@ -99,7 +99,7 @@ proc handle(
                         of MessageType.BlockListRequest:
                             var
                                 res: string = ""
-                                last: Hash[384] = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN +  HASH_LEN].toHash(384)
+                                last: Hash[256] = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN +  HASH_LEN].toHash(256)
                                 i: int = -1
 
                             try:
@@ -128,9 +128,9 @@ proc handle(
                         of MessageType.BlockHeaderRequest:
                             var header: BlockHeader
                             try:
-                                header = networkFunctions.getBlock(msg.message.toHash(384)).header
+                                header = networkFunctions.getBlock(msg.message.toHash(256)).header
                             except ValueError as e:
-                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                                doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
                                 await client.send(newMessage(MessageType.DataMissing))
                                 continue
@@ -140,9 +140,9 @@ proc handle(
                         of MessageType.BlockBodyRequest:
                             var requested: Block
                             try:
-                                requested = networkFunctions.getBlock(msg.message.toHash(384))
+                                requested = networkFunctions.getBlock(msg.message.toHash(256))
                             except ValueError as e:
-                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                                doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
                                 await client.send(newMessage(MessageType.DataMissing))
                                 continue
@@ -152,9 +152,9 @@ proc handle(
                         of MessageType.SketchHashesRequest:
                             var requested: Block
                             try:
-                                requested = networkFunctions.getBlock(msg.message.toHash(384))
+                                requested = networkFunctions.getBlock(msg.message.toHash(256))
                             except ValueError as e:
-                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                                doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
                                 await client.send(newMessage(MessageType.DataMissing))
                                 continue
@@ -167,9 +167,9 @@ proc handle(
                         of MessageType.SketchHashRequests:
                             var requested: Block
                             try:
-                                requested = networkFunctions.getBlock(msg.message[0 ..< HASH_LEN].toHash(384))
+                                requested = networkFunctions.getBlock(msg.message[0 ..< HASH_LEN].toHash(256))
                             except ValueError as e:
-                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                                doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
                                 await client.send(newMessage(MessageType.DataMissing))
                                 continue
@@ -194,11 +194,11 @@ proc handle(
                         of MessageType.TransactionRequest:
                             var tx: Transaction
                             try:
-                                tx = networkFunctions.getTransaction(msg.message.toHash(384))
+                                tx = networkFunctions.getTransaction(msg.message.toHash(256))
                                 if tx of Mint:
                                     raise newException(IndexError, "TransactionRequest asked for a Mint.")
                             except ValueError as e:
-                                doAssert(false, "Couln't convert a 48-byte message to a 48-byte hash: " & e.msg)
+                                doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
                                 await client.send(newMessage(MessageType.DataMissing))
                                 continue
@@ -252,7 +252,7 @@ proc add*(
     inc(clients.count)
 
     #Handshake with the Client.
-    var tail: Hash[384]
+    var tail: Hash[256]
     try:
         tail = await client.handshake(
             networkFunctions.getNetworkID(),
@@ -291,7 +291,7 @@ proc add*(
                                 if client.remoteSync == true:
                                     return
 
-                                var tail: Hash[384]
+                                var tail: Hash[256]
                                 {.gcsafe.}:
                                     tail = networkFunctions.getTail()
 

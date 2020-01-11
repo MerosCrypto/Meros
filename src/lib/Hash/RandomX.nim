@@ -8,7 +8,7 @@ import HashCommon
 import mc_randomx
 
 #Define the Hash Type.
-type RandomXHash* = HashCommon.Hash[384]
+type RandomXHash* = HashCommon.Hash[256]
 
 #Cache/VM.
 var
@@ -33,7 +33,7 @@ proc RandomX*(
 ): RandomXHash {.forceCheck: [].} =
     try:
         var hashStr: string = vm.hash(data)
-        copyMem(addr result.data[0], addr hashStr[0], 48)
+        copyMem(addr result.data[0], addr hashStr[0], 32)
     except Exception:
         doAssert(false, "RandomX raised an error.")
 
@@ -44,6 +44,6 @@ func toRandomXHash*(
     ValueError
 ].} =
     try:
-        result = hash.toHash(384)
+        result = hash.toHash(256)
     except ValueError as e:
         raise e

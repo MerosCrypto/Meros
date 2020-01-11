@@ -40,7 +40,7 @@ suite "Epochs":
             #Database.
             db: DB = newTestDatabase()
             #Blockchain.
-            blockchain: Blockchain = newBlockchain(db, "EPOCH_TEST", 1, "".pad(48).toHash(384))
+            blockchain: Blockchain = newBlockchain(db, "EPOCH_TEST", 1, "".pad(32).toHash(256))
             #State.
             state: State = newState(db, 100, blockchain.height)
             #Epochs.
@@ -54,9 +54,9 @@ suite "Epochs":
     test "Reloaded Epochs.":
         var
             #Table of a hash to the block it first appeared on.
-            first: Table[Hash[384], int] = initTable[Hash[384], int]()
+            first: Table[Hash[256], int] = initTable[Hash[256], int]()
             #Table of a hash to every nick which has already signed it.
-            signed: Table[Hash[384], seq[uint16]] = initTable[Hash[384], seq[uint16]]()
+            signed: Table[Hash[256], seq[uint16]] = initTable[Hash[256], seq[uint16]]()
 
             #List of MeritHolders.
             holders: seq[MinerWallet] = @[]
@@ -126,7 +126,7 @@ suite "Epochs":
     test "Perfect 1000.":
         var
             #Hash.
-            hash: Hash[384] = "".pad(48, char(128)).toHash(384)
+            hash: Hash[256] = "".pad(32, char(128)).toHash(256)
             #MinerWallets.
             miners: seq[MinerWallet] = @[
                 newMinerWallet(),
@@ -198,7 +198,7 @@ suite "Epochs":
     test "Single.":
         var
             #Hash.
-            hash: Hash[384] = "".pad(48, char(128)).toHash(384)
+            hash: Hash[256] = "".pad(32, char(128)).toHash(256)
             #MinerWallets.
             miner: MinerWallet = newMinerWallet()
             #SignedVerification.
@@ -248,7 +248,7 @@ suite "Epochs":
     test "Split.":
         var
             #Hash.
-            hash: Hash[384] = "".pad(48, char(128)).toHash(384)
+            hash: Hash[256] = "".pad(32, char(128)).toHash(256)
             #MinerWallets.
             miners: seq[MinerWallet] = @[
                 newMinerWallet(),

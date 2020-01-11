@@ -52,9 +52,9 @@ type
     #Network Statuses.
     Spam* = object of Exception #Used when a Send/Data doesn't beat the difficulty.
         #Hash of the Transaction.
-        hash*: Hash[384]
+        hash*: Hash[256]
         #Argon hash.
-        argon*: Hash[384]
+        argon*: Hash[256]
 
     #Interfaces/RPC Errors.
     ParamError*   = object of Exception #Used when an invalid parameter is passed.

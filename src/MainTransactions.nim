@@ -43,7 +43,7 @@ proc mainTransactions() {.forceCheck: [].} =
 
         #Handle requests for an Transaction.
         functions.transactions.getTransaction = proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): Transaction {.forceCheck: [
             IndexError
         ].} =
@@ -55,7 +55,7 @@ proc mainTransactions() {.forceCheck: [].} =
         #Get a Transaction's spenders.
         functions.transactions.getSpenders = proc (
             input: Input
-        ): seq[Hash[384]] {.inline, forceCheck: [].} =
+        ): seq[Hash[256]] {.inline, forceCheck: [].} =
             transactions.loadSpenders(input)
 
         #Handle Claims.
@@ -180,12 +180,12 @@ proc mainTransactions() {.forceCheck: [].} =
 
         #Mark a Transaction as verified.
         functions.transactions.verify = proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ) {.forceCheck: [].} =
             transactions.verify(hash)
 
         #Mark a Transaction as unverified.
         functions.transactions.unverify = proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ) {.forceCheck: [].} =
             transactions.unverify(hash)

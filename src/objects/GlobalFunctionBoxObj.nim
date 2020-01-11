@@ -46,14 +46,14 @@ type
 
     TransactionsFunctionBox* = ref object
         getTransaction*: proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): Transaction {.raises: [
             IndexError
         ].}
 
         getSpenders*: proc (
             input: Input
-        ): seq[Hash[384]] {.inline, raises: [].}
+        ): seq[Hash[256]] {.inline, raises: [].}
 
         addClaim*: proc (
             claim: Claim,
@@ -80,17 +80,17 @@ type
         ].}
 
         verify*: proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ) {.raises: [].}
 
         unverify*: proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ) {.raises: [].}
 
     ConsensusFunctionBox* = ref object
-        getSendDifficulty*: proc (): Hash[384] {.inline, raises: [].}
-        getDataMinimumDifficulty*: proc (): Hash[384] {.inline, raises: [].}
-        getDataDifficulty*: proc (): Hash[384] {.inline, raises: [].}
+        getSendDifficulty*: proc (): Hash[256] {.inline, raises: [].}
+        getDataMinimumDifficulty*: proc (): Hash[256] {.inline, raises: [].}
+        getDataDifficulty*: proc (): Hash[256] {.inline, raises: [].}
 
         isMalicious*: proc (
             nick: uint16,
@@ -101,13 +101,13 @@ type
         ): int {.inline, raises: [].}
 
         hasArchivedPacket*: proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): bool {.raises: [
             IndexError
         ].}
 
         getStatus*: proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): TransactionStatus {.raises: [
             IndexError
         ].}
@@ -160,19 +160,19 @@ type
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}
-        getTail*: proc (): Hash[384] {.inline, raises: [].}
+        getTail*: proc (): Hash[256] {.inline, raises: [].}
 
         getRandomXCacheKey*: proc (): string {.inline, raises: [].}
 
         getBlockHashBefore*: proc (
-            hash: Hash[384]
-        ): Hash[384] {.raises: [
+            hash: Hash[256]
+        ): Hash[256] {.raises: [
             IndexError
         ].}
 
         getBlockHashAfter*: proc (
-            hash: Hash[384]
-        ): Hash[384] {.raises: [
+            hash: Hash[256]
+        ): Hash[256] {.raises: [
             IndexError
         ].}
 
@@ -185,7 +185,7 @@ type
         ].}
 
         getBlockByHash*: proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): Block {.raises: [
             IndexError
         ].}
@@ -224,7 +224,7 @@ type
         ): Future[void]
 
         addBlockByHash*: proc (
-            hash: Hash[384],
+            hash: Hash[256],
             syncing: bool
         ): Future[void]
 
@@ -248,14 +248,14 @@ type
         send*: proc (
             destination: string,
             amount: string
-        ): Hash[384] {.raises: [
+        ): Hash[256] {.raises: [
             ValueError,
             NotEnoughMeros
         ].}
 
         data*: proc (
             data: string
-        ): Hash[384] {.raises: [
+        ): Hash[256] {.raises: [
             ValueError,
             DataExists
         ].}

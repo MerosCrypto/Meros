@@ -48,21 +48,21 @@ type Consensus* = ref object
     malicious*: Table[uint16, seq[MeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
-    statuses: Table[Hash[384], TransactionStatus]
+    statuses: Table[Hash[256], TransactionStatus]
     #Statuses which are close to becoming verified.
     #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
-    close*: HashSet[Hash[384]]
+    close*: HashSet[Hash[256]]
 
     #Transactions which haven't been mentioned in Epochs.
-    unmentioned*: HashSet[Hash[384]]
+    unmentioned*: HashSet[Hash[256]]
 
 #Consensus constructor.
 proc newConsensusObj*(
     functions: GlobalFunctionBox,
     db: DB,
     state: State,
-    sendDiff: Hash[384],
-    dataDiff: Hash[384]
+    sendDiff: Hash[256],
+    dataDiff: Hash[256]
 ): Consensus {.forceCheck: [].} =
     #Create the Consensus object.
     result = Consensus(
@@ -75,10 +75,10 @@ proc newConsensusObj*(
         ),
         malicious: initTable[uint16, seq[MeritRemoval]](),
 
-        statuses: initTable[Hash[384], TransactionStatus](),
-        close: initHashSet[Hash[384]](),
+        statuses: initTable[Hash[256], TransactionStatus](),
+        close: initHashSet[Hash[256]](),
 
-        unmentioned: initHashSet[Hash[384]]()
+        unmentioned: initHashSet[Hash[256]]()
     )
 
     #Reload the filters.
@@ -97,7 +97,7 @@ proc newConsensusObj*(
     #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
     var
         height: int = functions.merit.getHeight()
-        old: seq[Hash[384]] = @[]
+        old: seq[Hash[256]] = @[]
     try:
         for i in max(height - 10, 0) ..< height - 5:
             for packet in functions.merit.getBlockByNonce(i).body.packets:
@@ -132,7 +132,7 @@ proc newConsensusObj*(
         result.close.excl(oldStatus)
 
     #Load unmentioned Transactions.
-    var unmentioned: seq[Hash[384]] = result.db.loadUnmentioned()
+    var unmentioned: seq[Hash[256]] = result.db.loadUnmentioned()
     for hash in unmentioned:
         result.unmentioned.incl(hash)
 
@@ -154,14 +154,14 @@ proc getPending*(
 #Set a Transaction as unmentioned.
 proc setUnmentioned*(
     consensus: Consensus,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     consensus.unmentioned.incl(hash)
 
 #Set a Transaction's status.
 proc setStatus*(
     consensus: Consensus,
-    hash: Hash[384],
+    hash: Hash[256],
     status: TransactionStatus
 ) {.forceCheck: [].} =
     consensus.statuses[hash] = status
@@ -170,7 +170,7 @@ proc setStatus*(
 #Get a Transaction's statuses.
 proc getStatus*(
     consensus: Consensus,
-    hash: Hash[384]
+    hash: Hash[256]
 ): TransactionStatus {.forceCheck: [
     IndexError
 ].} =
@@ -192,7 +192,7 @@ proc getStatus*(
 #Increment a Status's Epoch.
 proc incEpoch*(
     consensus: Consensus,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     var status: TransactionStatus
     try:
@@ -251,12 +251,12 @@ proc calculateMeritSingle(
 proc calculateMerit*(
     consensus: Consensus,
     state: State,
-    hash: Hash[384],
+    hash: Hash[256],
     statusArg: TransactionStatus
 ) {.forceCheck: [].} =
     var
-        children: seq[Hash[384]] = @[hash]
-        child: Hash[384]
+        children: seq[Hash[256]] = @[hash]
+        child: Hash[256]
         tx: Transaction
         status: TransactionStatus = statusArg
         wasVerified: bool
@@ -280,7 +280,7 @@ proc calculateMerit*(
         if (not wasVerified) and (status.verified):
             try:
                 for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
+                    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
                     for spender in spenders:
                         children.add(spender)
             except IndexError as e:
@@ -290,12 +290,12 @@ proc calculateMerit*(
 proc unverify*(
     consensus: Consensus,
     state: State,
-    hash: Hash[384],
+    hash: Hash[256],
     status: TransactionStatus
 ) {.forceCheck: [].} =
     var
-        children: seq[Hash[384]] = @[hash]
-        child: Hash[384]
+        children: seq[Hash[256]] = @[hash]
+        child: Hash[256]
         tx: Transaction
         childStatus: TransactionStatus = status
 
@@ -318,7 +318,7 @@ proc unverify*(
 
             try:
                 for o in 0 ..< tx.outputs.len:
-                    var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
+                    var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(newFundedInput(child, o))
                     for spender in spenders:
                         children.add(spender)
             except IndexError as e:
@@ -331,7 +331,7 @@ proc unverify*(
 proc finalize*(
     consensus: Consensus,
     state: State,
-    hash: Hash[384],
+    hash: Hash[256],
     holders: seq[uint16]
 ) {.forceCheck: [].} =
     #Get the Transaction/Status.
@@ -378,7 +378,7 @@ proc finalize*(
     #Check if the Transaction was beaten, if it's not already marked as beaten.
     if (not status.beaten) and (not status.verified):
         for input in tx.inputs:
-            var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
+            var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
             for spender in spenders:
                 try:
                     if consensus.getStatus(spender).verified:
@@ -395,5 +395,5 @@ proc finalize*(
 when defined(merosTests):
     func statuses*(
         consensus: Consensus
-    ): Table[Hash[384], TransactionStatus] {.inline, forceCheck: [].} =
+    ): Table[Hash[256], TransactionStatus] {.inline, forceCheck: [].} =
         consensus.statuses

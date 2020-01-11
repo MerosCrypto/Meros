@@ -11,13 +11,13 @@ type Difficulty* = object
     #End of the period.
     endHeight*: int
     #Difficulty to beat.
-    difficulty*: Hash[384]
+    difficulty*: Hash[256]
 
 #Constructor.
 func newDifficultyObj*(
     start: int,
     endHeight: int,
-    difficulty: Hash[384]
+    difficulty: Hash[256]
 ): Difficulty {.inline, forceCheck: [].} =
     Difficulty(
         start: start,

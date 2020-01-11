@@ -22,28 +22,28 @@ type NetworkLibFunctionBox* = ref object
     getNetworkID*: proc (): int {.noSideEffect, raises: [].}
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
 
-    getTail*: proc (): Hash[384] {.inline, raises: [].}
+    getTail*: proc (): Hash[256] {.inline, raises: [].}
 
     getBlockHashBefore*: proc (
-        hash: Hash[384]
-    ): Hash[384] {.raises: [
+        hash: Hash[256]
+    ): Hash[256] {.raises: [
         IndexError
     ].}
 
     getBlockHashAfter*: proc (
-        hash: Hash[384]
-    ): Hash[384] {.raises: [
+        hash: Hash[256]
+    ): Hash[256] {.raises: [
         IndexError
     ].}
 
     getBlock*: proc (
-        hash: Hash[384]
+        hash: Hash[256]
     ): Block {.raises: [
         IndexError
     ].}
 
     getTransaction*: proc (
-        hash: Hash[384]
+        hash: Hash[256]
     ): Transaction {.raises: [
         IndexError
     ].}

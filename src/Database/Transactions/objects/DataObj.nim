@@ -24,7 +24,7 @@ type Data* = ref object of Transaction
 
 #Data constructor.
 func newDataObj*(
-    input: Hash[384],
+    input: Hash[256],
     data: string
 ): Data {.forceCheck: [].} =
     #Create the Data.

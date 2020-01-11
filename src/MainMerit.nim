@@ -13,15 +13,15 @@ proc mainMerit() {.forceCheck: [].} =
 
         functions.merit.getHeight = proc (): int {.inline, forceCheck: [].} =
             merit.blockchain.height
-        functions.merit.getTail = proc (): Hash[384] {.inline, forceCheck: [].} =
+        functions.merit.getTail = proc (): Hash[256] {.inline, forceCheck: [].} =
             merit.blockchain.tail.header.hash
 
         functions.merit.getRandomXCacheKey = proc (): string {.inline, forceCheck: [].} =
             merit.blockchain.cacheKey
 
         functions.merit.getBlockHashBefore = proc (
-            hash: Hash[384]
-        ): Hash[384] {.forceCheck: [
+            hash: Hash[256]
+        ): Hash[256] {.forceCheck: [
             IndexError
         ].} =
             try:
@@ -33,8 +33,8 @@ proc mainMerit() {.forceCheck: [].} =
                 raise newException(IndexError, "Requested the hash of the Block before the genesis.")
 
         functions.merit.getBlockHashAfter = proc (
-            hash: Hash[384]
-        ): Hash[384] {.forceCheck: [
+            hash: Hash[256]
+        ): Hash[256] {.forceCheck: [
             IndexError
         ].} =
             discard
@@ -53,7 +53,7 @@ proc mainMerit() {.forceCheck: [].} =
                 raise e
 
         functions.merit.getBlockByHash = proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): Block {.forceCheck: [
             IndexError
         ].} =
@@ -243,7 +243,7 @@ proc mainMerit() {.forceCheck: [].} =
             if merit.blockchain.tail.header.hash != header.last:
                 var
                     increment: int = 32
-                    queue: seq[Hash[384]] = @[header.hash]
+                    queue: seq[Hash[256]] = @[header.hash]
                     #Malformed size used for the first loop iteration.
                     size: int = queue.len - increment
                 while not merit.blockchain.hasBlock(queue[^1]):
@@ -271,7 +271,7 @@ proc mainMerit() {.forceCheck: [].} =
                         doAssert(false, "requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
 
                 #Remove every Block we have from the queue's tail.
-                var lastRemoved: Hash[384] = merit.blockchain.tail.header.hash
+                var lastRemoved: Hash[256] = merit.blockchain.tail.header.hash
                 for i in countdown(queue.len - 1, 1):
                     if merit.blockchain.hasBlock(queue[i]):
                         lastRemoved = queue[i]
@@ -321,7 +321,7 @@ proc mainMerit() {.forceCheck: [].} =
                 doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)
 
         functions.merit.addBlockByHash = proc (
-            hash: Hash[384],
+            hash: Hash[256],
             syncing: bool
         ) {.forceCheck: [
             ValueError,

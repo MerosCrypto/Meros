@@ -16,7 +16,7 @@ import ../SerializeCommon
 #Parse function.
 proc parseData*(
     dataStr: string,
-    diff: Hash[384]
+    diff: Hash[256]
 ): Data {.forceCheck: [
     ValueError,
     Spam
@@ -38,7 +38,7 @@ proc parseData*(
     )
 
     var
-        hash: Hash[384] = Blake384("\3" & dataSeq[0] & dataSeq[2])
+        hash: Hash[256] = Blake256("\3" & dataSeq[0] & dataSeq[2])
         argon: ArgonHash = Argon(hash.toString(), dataSeq[4].pad(8))
     if argon < diff:
         raise newSpam("Data didn't beat the difficulty.", hash, argon)
@@ -46,7 +46,7 @@ proc parseData*(
     #Create the Data.
     try:
         result = newDataObj(
-            dataSeq[0].toHash(384),
+            dataSeq[0].toHash(256),
             dataSeq[2]
         )
     except ValueError as e:

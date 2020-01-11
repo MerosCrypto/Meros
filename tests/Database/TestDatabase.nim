@@ -67,21 +67,21 @@ proc newTestGlobalFunctionBox*(
         blockchain[][nonce]
 
     result.transactions.getTransaction = proc (
-        hash: Hash[384]
+        hash: Hash[256]
     ): Transaction =
         transactions[][hash]
 
     result.transactions.getSpenders = proc (
         input: Input
-    ): seq[Hash[384]] {.inline.} =
+    ): seq[Hash[256]] {.inline.} =
         transactions[].loadSpenders(input)
 
     result.transactions.verify = proc (
-        hash: Hash[384]
+        hash: Hash[256]
     ) =
         discard
 
     result.transactions.unverify = proc (
-        hash: Hash[384]
+        hash: Hash[256]
     ) =
         discard

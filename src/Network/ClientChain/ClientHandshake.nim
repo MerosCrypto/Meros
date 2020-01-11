@@ -6,8 +6,8 @@ proc handshake*(
     id: int,
     protocol: int,
     server: bool,
-    tail: Hash[384]
-): Future[Hash[384]] {.forceCheck: [
+    tail: Hash[256]
+): Future[Hash[256]] {.forceCheck: [
     ClientError
 ], async.} =
     try:
@@ -48,9 +48,9 @@ proc handshake*(
 
         #Return their tail.
         try:
-            result = handshake.message[3 ..< 51].toHash(384)
+            result = handshake.message[3 ..< 35].toHash(256)
         except ValueError as e:
-            doAssert(false, "Couldn't turn a 48-byte string into a 48-byte hash: " & e.msg)
+            doAssert(false, "Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
     except ClientError as e:
         raise e
     except Exception as e:

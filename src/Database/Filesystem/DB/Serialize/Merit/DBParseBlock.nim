@@ -84,7 +84,7 @@ proc parseBlock*(
             i += NICKNAME_LEN
 
         try:
-            packets[p] = newVerificationPacketObj(bodyStr[i ..< i + HASH_LEN].toHash(384))
+            packets[p] = newVerificationPacketObj(bodyStr[i ..< i + HASH_LEN].toHash(256))
             i += HASH_LEN
         except ValueError as e:
             raise e

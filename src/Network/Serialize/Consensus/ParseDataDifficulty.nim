@@ -28,11 +28,11 @@ proc parseDataDifficulty*(
     try:
         result = newDataDifficultyObj(
             dataDiffSeq[1].fromBinary(),
-            dataDiffSeq[2].toHash(384)
+            dataDiffSeq[2].toHash(256)
         )
         result.holder = uint16(dataDiffSeq[0].fromBinary())
     except ValueError as e:
-        doAssert(false, "Failed to parse a 48-byte hash: " & e.msg)
+        doAssert(false, "Failed to parse a 32-byte hash: " & e.msg)
 
 #Parse a Signed DataDifficulty.
 proc parseSignedDataDifficulty*(
@@ -52,11 +52,11 @@ proc parseSignedDataDifficulty*(
     try:
         result = newSignedDataDifficultyObj(
             dataDiffSeq[1].fromBinary(),
-            dataDiffSeq[2].toHash(384)
+            dataDiffSeq[2].toHash(256)
         )
         result.holder = uint16(dataDiffSeq[0].fromBinary())
         result.signature = newBLSSignature(dataDiffSeq[3])
     except ValueError as e:
-        doAssert(false, "Failed to parse a 48-byte hash: " & e.msg)
+        doAssert(false, "Failed to parse a 32-byte hash: " & e.msg)
     except BLSError:
         raise newException(ValueError, "Invalid signature.")

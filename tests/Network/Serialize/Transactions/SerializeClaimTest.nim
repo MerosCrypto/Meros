@@ -38,7 +38,7 @@ suite "Serialize Claim":
             #Inputs.
             inputs: seq[FundedInput]
             #Input Hash.
-            inputHash: Hash[384]
+            inputHash: Hash[256]
             #Claim.
             claim: Claim
             #Reloaded Claim.

@@ -10,7 +10,7 @@ const
     DB_VERSION: int = 0               #DB Version.
 
     #Minimum Data Difficulty constant.
-    minimumDataDifficulty: Hash[384] = ("".pad(15) & char(1) & "".pad(32)).toHash(384)
+    minimumDataDifficulty: Hash[256] = Hash[256]()
 
 type ChainParams = object
     #Genesis.

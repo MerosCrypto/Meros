@@ -46,7 +46,7 @@ suite "StateDB":
                 db,
                 "STATE_DB_TEST",
                 30,
-                "".pad(48).toHash(384)
+                "".pad(32).toHash(256)
             )
             #State.
             state: State = newState(db, 30, blockchain.height)

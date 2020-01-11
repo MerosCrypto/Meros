@@ -24,12 +24,12 @@ proc newRandomVerification*(
 ): SignedVerification =
     var
         #Hash.
-        hash: Hash[384]
+        hash: Hash[256]
         #Miner.
         miner: MinerWallet = newMinerWallet()
 
     #Randomize the hash.
-    for b in 0 ..< 48:
+    for b in 0 ..< 32:
         hash.data[b] = uint8(rand(255))
 
     #Randomize the miner's nick name.
@@ -42,17 +42,17 @@ proc newRandomVerification*(
 
 proc newRandomVerificationPacket*(
     holder: uint16 = uint16(rand(high(int16))),
-    hashArg: Hash[384] = Hash[384]()
+    hashArg: Hash[256] = Hash[256]()
 ): SignedVerificationPacket =
     var
         #Hash.
-        hash: Hash[384] = hashArg
+        hash: Hash[256] = hashArg
         #Miner.
         miner: MinerWallet = newMinerWallet()
 
-    if hash == Hash[384]():
+    if hash == Hash[256]():
         #Randomize the hash.
-        for b in 0 ..< 48:
+        for b in 0 ..< 32:
             hash.data[b] = uint8(rand(255))
     result = newSignedVerificationPacketObj(hash)
 
@@ -73,12 +73,12 @@ proc newRandomSendDifficulty*(
         #Nonce.
         nonce: int = rand(high(int32))
         #Hash.
-        difficulty: Hash[384]
+        difficulty: Hash[256]
         #Miner.
         miner: MinerWallet = newMinerWallet()
 
     #Randomize the difficulty.
-    for b in 0 ..< 48:
+    for b in 0 ..< 32:
         difficulty.data[b] = uint8(rand(255))
 
     #Randomize the miner's nick name.
@@ -96,12 +96,12 @@ proc newRandomDataDifficulty*(
         #Nonce.
         nonce: int = rand(high(int32))
         #Hash.
-        difficulty: Hash[384]
+        difficulty: Hash[256]
         #Miner.
         miner: MinerWallet = newMinerWallet()
 
     #Randomize the difficulty.
-    for b in 0 ..< 48:
+    for b in 0 ..< 32:
         difficulty.data[b] = uint8(rand(255))
 
     #Randomize the miner's nick name.

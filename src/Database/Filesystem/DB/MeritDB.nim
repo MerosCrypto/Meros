@@ -98,7 +98,7 @@ proc saveHeight*(
 
 proc saveTip*(
     db: DB,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     db.put("tip", hash.toString())
 
@@ -181,17 +181,17 @@ proc loadHeight*(
 
 proc loadTip*(
     db: DB
-): Hash[384] {.forceCheck: [
+): Hash[256] {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get("tip").toHash(384)
+        result = db.get("tip").toHash(256)
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
 proc loadBlockHeader*(
     db: DB,
-    hash: Hash[384]
+    hash: Hash[256]
 ): BlockHeader {.forceCheck: [
     DBReadError
 ].} =
@@ -202,7 +202,7 @@ proc loadBlockHeader*(
 
 proc loadBlock*(
     db: DB,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Block {.forceCheck: [
     DBReadError
 ].} =
@@ -334,7 +334,7 @@ proc loadNickname*(
 #Check if a Block exists.
 proc hasBlock*(
     db: DB,
-    hash: Hash[384]
+    hash: Hash[256]
 ): bool {.forceCheck: [].} =
     try:
         discard db.get(hash.toString())

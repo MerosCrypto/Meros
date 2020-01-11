@@ -25,7 +25,7 @@ proc mainPersonal() {.forceCheck: [].} =
         functions.personal.send = proc (
             destination: string,
             amountStr: string
-        ): Hash[384] {.forceCheck: [
+        ): Hash[256] {.forceCheck: [
             ValueError,
             NotEnoughMeros
         ].} =
@@ -123,7 +123,7 @@ proc mainPersonal() {.forceCheck: [].} =
     #Create a Data Transaction.
     functions.personal.data = proc (
         dataStr: string
-    ): Hash[384] {.forceCheck: [
+    ): Hash[256] {.forceCheck: [
         ValueError,
         DataExists
     ].} =
