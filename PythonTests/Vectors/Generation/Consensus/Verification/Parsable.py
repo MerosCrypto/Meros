@@ -33,13 +33,13 @@ import json
 blockchain: Blockchain = Blockchain(
     b"MEROS_DEVELOPER_NETWORK",
     60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
+    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
 )
 
 #Spam Filter.
 dataFilter: SpamFilter = SpamFilter(
     bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
     )
 )
 
@@ -48,7 +48,7 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS Keys.
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=48).digest())
+blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Add a single Block to create Merit.
@@ -58,7 +58,7 @@ blockchain.add(Block.fromJSON(blocks[0]))
 bbFile.close()
 
 #Create a Data with an invalid signature.
-data: Data = Data(edPubKey.to_bytes().rjust(48, b'\0'), bytes())
+data: Data = Data(edPubKey.to_bytes().rjust(32, b'\0'), bytes())
 data.signature = edPrivKey.sign(b"INVALID")
 data.beat(dataFilter)
 

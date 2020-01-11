@@ -25,7 +25,7 @@ class Data(Transaction):
         self.data: bytes = data
         self.hash: bytes = blake2b(
             b"\3" + txInput + data,
-            digest_size=48
+            digest_size=32
         ).digest()
 
         self.signature: bytes = signature

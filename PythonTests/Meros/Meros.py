@@ -75,35 +75,35 @@ class MessageType(Enum):
 #A negative number means read the last length * X bytes.
 #A zero means custom logic should be used.
 lengths: Dict[MessageType, List[int]] = {
-    MessageType.Handshake:                 [51],
-    MessageType.BlockchainTail:            [48],
+    MessageType.Handshake:                 [35],
+    MessageType.BlockchainTail:            [32],
 
     MessageType.Syncing:                   [],
     MessageType.SyncingAcknowledged:       [],
-    MessageType.BlockListRequest:          [50],
-    MessageType.BlockList:                 [1, -48, 48],
+    MessageType.BlockListRequest:          [34],
+    MessageType.BlockList:                 [1, -32, 32],
 
-    MessageType.BlockHeaderRequest:        [48],
-    MessageType.BlockBodyRequest:          [48],
-    MessageType.SketchHashesRequest:       [48],
-    MessageType.SketchHashRequests:        [48, 4, -8],
-    MessageType.TransactionRequest:        [48],
+    MessageType.BlockHeaderRequest:        [32],
+    MessageType.BlockBodyRequest:          [32],
+    MessageType.SketchHashesRequest:       [32],
+    MessageType.SketchHashRequests:        [32, 4, -8],
+    MessageType.TransactionRequest:        [32],
     MessageType.DataMissing:               [],
     MessageType.SyncingOver:               [],
 
-    MessageType.Claim:                     [1, -49, 80],
-    MessageType.Send:                      [1, -49, 1, -40, 68],
-    MessageType.Data:                      [48, 1, -1, 68],
+    MessageType.Claim:                     [1, -33, 80],
+    MessageType.Send:                      [1, -33, 1, -40, 68],
+    MessageType.Data:                      [32, 1, -1, 68],
 
-    MessageType.SignedVerification:        [98],
-    MessageType.SignedSendDifficulty:      [2, 4, 48],
-    MessageType.SignedDataDifficulty:      [2, 4, 48],
+    MessageType.SignedVerification:        [82],
+    MessageType.SignedSendDifficulty:      [86],
+    MessageType.SignedDataDifficulty:      [86],
     MessageType.SignedMeritRemoval:        [4, 0, 1, 0, 48],
 
-    MessageType.BlockHeader:               [155, 0, 56],
+    MessageType.BlockHeader:               [107, 0, 56],
     MessageType.BlockBody:                 [4, -8, 4, 0, 48],
     MessageType.SketchHashes:              [4, -8],
-    MessageType.VerificationPacket:        [2, -2, 48]
+    MessageType.VerificationPacket:        [2, -2, 32]
 }
 
 class Meros:
@@ -177,7 +177,7 @@ class Meros:
             elif length == 0:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:
-                        length = 50
+                        length = 34
                     else:
                         raise Exception("Meros sent an Element we don't recognize.")
 
@@ -192,9 +192,9 @@ class Meros:
                     for _ in range(elementsLen):
                         result += self.socketRecv(1)
                         if result[-1] == 2:
-                            result += self.socketRecv(54)
+                            result += self.socketRecv(38)
                         elif result[-1] == 3:
-                            result += self.socketRecv(54)
+                            result += self.socketRecv(38)
                         elif result[-1] == 4:
                             result += self.socketRecv(10)
                         elif result[-1] == 5:
@@ -371,7 +371,10 @@ class Meros:
         for i in range(len(self.ress)):
             self.send(self.ress[i])
             if len(self.msgs[i]) != 0:
-                if self.msgs[i] != self.recv():
+                buf: bytes = self.recv()
+                if self.msgs[i] != buf:
+                    print(self.msgs[i].hex())
+                    print(buf.hex())
                     raise TestError("Invalid playback response.")
 
     #Check the return code.

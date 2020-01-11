@@ -39,7 +39,7 @@ transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
 blockchain: Blockchain = Blockchain.fromJSON(
     b"MEROS_DEVELOPER_NETWORK",
     60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
     cmVectors["blockchain"]
 )
 cmFile.close()
@@ -47,7 +47,7 @@ cmFile.close()
 #SpamFilter.
 sendFilter: SpamFilter = SpamFilter(
     bytes.fromhex(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     )
 )
 
@@ -56,7 +56,7 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=48).digest())
+blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Grab the Claim hash.

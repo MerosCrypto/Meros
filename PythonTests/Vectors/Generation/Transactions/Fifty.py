@@ -39,7 +39,7 @@ transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
 blockchain: Blockchain = Blockchain.fromJSON(
     b"MEROS_DEVELOPER_NETWORK",
     60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
     cmVectors["blockchain"]
 )
 cmFile.close()
@@ -47,7 +47,7 @@ cmFile.close()
 #SpamFilter.
 sendFilter: SpamFilter = SpamFilter(
     bytes.fromhex(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     )
 )
 
@@ -57,8 +57,8 @@ edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
 blsPrivKeys: List[PrivateKey] = [
-    PrivateKey(blake2b(b'\0', digest_size=48).digest()),
-    PrivateKey(blake2b(b'\1', digest_size=48).digest())
+    PrivateKey(blake2b(b'\0', digest_size=32).digest()),
+    PrivateKey(blake2b(b'\1', digest_size=32).digest())
 ]
 blsPubKeys: List[PublicKey] = [
     blsPrivKeys[0].toPublicKey(),
@@ -160,10 +160,10 @@ for _ in range(5):
         BlockHeader(
             0,
             blockchain.last(),
-            bytes(48),
+            bytes(32),
             1,
             bytes(4),
-            bytes(48),
+            bytes(32),
             0,
             blockchain.blocks[-1].header.time + 1200
         ),

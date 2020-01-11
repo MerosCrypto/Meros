@@ -31,14 +31,14 @@ def DataDifficultyTest(
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
 
     #Verify functions.
-    vddStarting: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"))
-    vddEarnedVote: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
-    vddVoted: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888"))
+    vddStarting: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"))
+    vddEarnedVote: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
+    vddVoted: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"))
 
     #Create and execute a Liver/Syncer.
     Liver(rpc, blockchain, callbacks={26: vddStarting, 50: vddEarnedVote, 51: vddVoted}).live()

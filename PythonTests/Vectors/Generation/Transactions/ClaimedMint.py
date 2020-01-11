@@ -42,14 +42,14 @@ transactions: Transactions = Transactions()
 merit: Merit = Merit(
     b"MEROS_DEVELOPER_NETWORK",
     60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
     100
 )
 
 #SpamFilter.
 dataFilter: SpamFilter = SpamFilter(
     bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
     )
 )
 
@@ -58,7 +58,7 @@ edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
 edPubKey: ed25519.VerifyingKey = edPrivKey.get_verifying_key()
 
 #BLS keys.
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=48).digest())
+blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Add 5 Blank Blocks.
@@ -66,7 +66,7 @@ for i in range(5):
     merit.add(Block.fromJSON(blankBlocks[i]))
 
 #Create the Data.
-data: Data = Data(edPubKey.to_bytes().rjust(48, b'\0'), bytes())
+data: Data = Data(edPubKey.to_bytes().rjust(32, b'\0'), bytes())
 data.sign(edPrivKey)
 data.beat(dataFilter)
 transactions.add(data)
@@ -103,10 +103,10 @@ for _ in range(6):
         BlockHeader(
             0,
             merit.blockchain.last(),
-            bytes(48),
+            bytes(32),
             1,
             bytes(4),
-            bytes(48),
+            bytes(32),
             0,
             merit.blockchain.blocks[-1].header.time + 1200
         ),

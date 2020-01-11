@@ -23,7 +23,7 @@ def merkle(
 ) -> bytes:
     #Support empty Merkles.
     if not hashes:
-        return bytes(48)
+        return bytes(32)
 
     #Pair down until there's one hash left.
     while len(hashes) > 1:
@@ -32,7 +32,7 @@ def merkle(
         for h in range(len(hashes) // 2):
             hashes[h] = blake2b(
                 hashes[h * 2] + hashes[(h * 2) + 1],
-                digest_size=48
+                digest_size=32
             ).digest()
         hashes = hashes[0 : len(hashes) // 2]
 
@@ -58,11 +58,11 @@ class BlockHeader:
         #Hash each packet.
         hashes: List[bytes] = []
         for packet in packets:
-            hashes.append(blake2b(packet.prefix + packet.serialize(), digest_size=48).digest())
+            hashes.append(blake2b(packet.prefix + packet.serialize(), digest_size=32).digest())
 
         #Hash each Element.
         for element in elements:
-            hashes.append(blake2b(element.prefix + element.serialize(), digest_size=48).digest())
+            hashes.append(blake2b(element.prefix + element.serialize(), digest_size=32).digest())
 
         #Return the Merkle hash.
         return merkle(hashes)
@@ -84,7 +84,7 @@ class BlockHeader:
         #Hash each sketch hash to leaf length.
         leaves: List[bytes] = []
         for sketchHash in sketchHashes:
-            leaves.append(blake2b(sketchHash.to_bytes(8, byteorder="big"), digest_size=48).digest())
+            leaves.append(blake2b(sketchHash.to_bytes(8, byteorder="big"), digest_size=32).digest())
 
         #Return the Merkle hash.
         return merkle(leaves)
