@@ -67,15 +67,21 @@ proc Blake2_256*(
 ): Blake2_256Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
-
-    #If it's an empty string...
     if bytes.len == 0:
-        return Blake2_256Hash(
-            data: blake2_256.digest(EmptyHash, uint(bytes.len)).data
-        )
+        bytes = $char(0)
 
-    #Digest the byte array.
-    result.data = blake2_256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
+    #Allocate the State.
+    var state: ptr Blake2bState = cast[ptr Blake2bState](alloc0(sizeof(Blake2bState)))
+
+    #Hash the bytes.
+    doAssert(state.init(32) == 0, "Failed to init a Blake2b State.")
+    doAssert(state.update(addr bytes[0], bytesArg.len) == 0, "Failed to update a Blake2b State.")
+
+    #Save the result.
+    doAssert(state.finalize(addr result.data[0], 32) == 0, "Failed to finalize a Blake2b State.")
+
+    #Deallocate the state.
+    dealloc(state)
 
 #Blake 512 hashing algorithm.
 proc Blake2_512*(
