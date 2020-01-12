@@ -45,7 +45,7 @@ suite "SpamFilter":
     setup:
         #Seed random.
         var seed: int64 = int64(getTime())
-        randomize(seed)
+        randomize(1578534473)
 
         var
             #Holder -> Merit.
@@ -109,13 +109,10 @@ suite "SpamFilter":
                 else:
                     var found: bool = true
                     while found:
-                        for b in 0 ..< 32:
-                            difficulty.data[b] = uint8(rand(255))
                         #https://github.com/MerosCrypto/Meros/issues/114
-                        if seed == 1578534473:
-                            for _ in 0 ..< 16:
-                                discard rand(255)
-
+                        for b in 0 ..< 48:
+                            difficulty.data[b mod 32] = uint8(rand(255))
+                        
                         #Break if no existing difficulty is the same.
                         found = false
                         for diff in difficulties:
