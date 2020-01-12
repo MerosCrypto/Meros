@@ -119,14 +119,14 @@ class Syncer():
                 if (self.txs != set()) or (self.packets != {}):
                     raise TestError("Meros asked for a new Block before syncing the last Block's Transactions and Packets.")
 
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
                 if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for a BlockHeader other than the next Block's on the last BlockList.")
 
                 self.rpc.meros.blockHeader(self.blocks[-1].header)
 
             elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
                 if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for a BlockBody other than the next Block's on the last BlockList.")
 
@@ -144,7 +144,7 @@ class Syncer():
                     del self.blocks[-1]
 
             elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
                 if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for Sketch Hashes that didn't belong to the header we just sent it.")
 
@@ -158,20 +158,20 @@ class Syncer():
                 if not self.packets:
                     raise TestError("Meros asked for Verification Packets from a Block without any.")
 
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
                 if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
                 #Look up each requested packet and respond accordingly.
-                for h in range(int.from_bytes(msg[49 : 53], byteorder="big")):
-                    sketchHash: int = int.from_bytes(msg[53 + (h * 8) : 61 + (h * 8)], byteorder="big")
+                for h in range(int.from_bytes(msg[33 : 37], byteorder="big")):
+                    sketchHash: int = int.from_bytes(msg[37 + (h * 8) : 45 + (h * 8)], byteorder="big")
                     if sketchHash not in self.packets:
                         raise TestError("Meros asked for a non-existent Sketch Hash.")
                     self.rpc.meros.packet(self.packets[sketchHash])
                     del self.packets[sketchHash]
 
             elif MessageType(msg[0]) == MessageType.TransactionRequest:
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
 
                 if self.transactions is None:
                     raise TestError("Meros asked for a Transaction when we have none.")
