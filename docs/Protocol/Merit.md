@@ -37,7 +37,7 @@ signature = miner.sign(h1)
 hash = RandomX(h1 || signature)
 ```
 
-Meros uses a RandomX modified with both a custom configuration and a 48-byte hash length. The modified headers can be found [here](https://github.com/MerosCrypto/mc_randomx/tree/master/MerosConfiguration). The cache's key is updated when the Blockchain's height modulo 2048 is 64. The cache's key is updated to the hash of the latest Block on the Blockchain to match height modulo 2048 == 0.
+Meros uses a RandomX modified with a custom configuration. The modified configuration can be found [here](https://github.com/MerosCrypto/mc_randomx/tree/master/MerosConfiguration/configuration.h). The cache's key is updated when the Blockchain's height modulo 2048 is 64. The cache's key is updated to the hash of the latest Block on the Blockchain to match height modulo 2048 == 0.
 
 ### Block Data Type
 
@@ -55,7 +55,7 @@ A Block's hash is defined as the hash of its header.
 The genesis Block on the Meros mainnet Blockchain has a:
 
 - Header version of 0.
-- Header last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 48 bytes.
+- Header last of “MEROS_MAINNET” left padded with 0 bytes until it has a length of 32 bytes.
 - Zeroed out contents in the header.
 - significant of 0.
 - Zeroed sketchSalt in the header.
@@ -89,7 +89,7 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
 
-`BlockHeader` has a message length of either 213 or 307 bytes; the 4-byte version, 48-byte last hash, 48-byte contents hash, 2-byte significant, 4-byte sketchSalt, 48-byte sketchCheck hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 96-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 48-byte signature.
+`BlockHeader` has a message length of either 165 or 259 bytes; the 4-byte version, 32-byte last hash, 32-byte contents hash, 2-byte significant, 4-byte sketchSalt, 32-byte sketchCheck hash, 1-byte of "\1" if the miner is new or "\0" if not, 2-byte miner nickname if the last byte is "\0" or 96-byte miner BLS Public Key if the last byte is "\1", 4-byte time, 4-byte proof, and 48-byte signature.
 
 ### BlockBody
 
@@ -160,7 +160,7 @@ Even with Checkpoints, Blockchain reorganizations can happen if a different, val
 
 Checkpoints are important, not just to make 51% attacks harder, but also to stop people without Merit from being able to replace a Transaction via chain reorganization and defaulting manipulation. A Transaction can be replaced by having it verified via normal operation, then wiping out all the Blocks that archive its Verifications, and then adding in Blocks which have a competing Transaction default. Once the Transaction defaults, it is finalized, even if the original Verifications are eventually archived on the Blockchain. Since every Transaction has a Checkpoint during the time it takes to default, attackers cannot use a momentary hash power surge to force a Transaction to be verified.
 
-`Checkpoint` has a variable message length; the 48-byte Block hash, 2-byte amount of Merit Holders, the Merit Holders (each represented by their 2-byte nickname), and the 48-byte aggregate signature.
+`Checkpoint` has a variable message length; the 32-byte Block hash, 2-byte amount of Merit Holders, the Merit Holders (each represented by their 2-byte nickname), and the 48-byte aggregate signature.
 
 ### Violations in Meros
 

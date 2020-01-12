@@ -35,7 +35,7 @@ suite "Serialize Data":
 
         var
             #Input.
-            input: Hash[384]
+            input: Hash[256]
             #Data string.
             dataStr: string
             #Data object.
@@ -51,7 +51,7 @@ suite "Serialize Data":
             input.data[b] = uint8(rand(255))
 
         #Create the data string.
-        dataStr = newString(rand(254) + 1)
+        dataStr = newString(rand(255) + 1)
         for b in 0 ..< dataStr.len:
             dataStr[b] = char(rand(255))
 
@@ -65,10 +65,10 @@ suite "Serialize Data":
         wallet.next(last = uint32(rand(200) * 1000)).sign(data)
 
         #mine the Data.
-        data.mine("".pad(96, "cc").toHash(384))
+        data.mine("".pad(64, "cc").toHash(256))
 
         #Serialize it and parse it back.
-        reloaded = data.serialize().parseData(Hash[384]())
+        reloaded = data.serialize().parseData(Hash[256]())
 
         #Compare the Datas.
         compare(data, reloaded)

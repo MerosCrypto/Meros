@@ -70,8 +70,8 @@ func newSignedMeritRemoval*(
 #Calculate the MeritRemoval's Merkle leaf hash.
 proc merkle*(
     mr: MeritRemoval
-): Hash[384] {.forceCheck: [].} =
-    Blake384(char(MERIT_REMOVAL_PREFIX) & mr.serialize())
+): Hash[256] {.forceCheck: [].} =
+    Blake256(char(MERIT_REMOVAL_PREFIX) & mr.serialize())
 
 #Calculate the MeritRemoval's aggregation info.
 proc agInfo*(

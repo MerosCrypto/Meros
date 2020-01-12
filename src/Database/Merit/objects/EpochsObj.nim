@@ -26,7 +26,7 @@ type
         score*: uint64
 
     #Epoch object. Transaction Hash -> Nicks of verifiers.
-    Epoch* = Table[Hash[384], seq[uint16]]
+    Epoch* = Table[Hash[256], seq[uint16]]
 
     #Epochs object. Seq of the current 5 Epochs.
     Epochs* = seq[Epoch]
@@ -42,7 +42,7 @@ func newReward*(
     )
 
 func newEpoch*(): Epoch {.inline, forceCheck: [].} =
-    initTable[Hash[384], seq[uint16]]()
+    initTable[Hash[256], seq[uint16]]()
 
 func newEpochsObj*(): Epochs {.forceCheck: [].} =
     #Create the seq.
@@ -55,7 +55,7 @@ func newEpochsObj*(): Epochs {.forceCheck: [].} =
 #Register a hash within an Epoch.
 func register*(
     epoch: var Epoch,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.inline, forceCheck: [].} =
     epoch[hash] = @[]
 

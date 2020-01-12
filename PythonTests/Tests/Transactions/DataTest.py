@@ -30,18 +30,18 @@ def DataTest(
     genesis: bytes = Blockchain(
         b"MEROS_DEVELOPER_NETWORK",
         60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
+        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
     ).blocks[0].header.hash
 
     #Create the Spam Filter.
     spamFilter: SpamFilter = SpamFilter(
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
     )
 
     #Create the Data.
     data: Data = Data(
-        pubKey.to_bytes().rjust(48, b'\0'),
-        b"Hello There! General Kenobi."
+        bytes(32),
+        pubKey.to_bytes()
     )
     data.sign(privKey)
     data.beat(spamFilter)

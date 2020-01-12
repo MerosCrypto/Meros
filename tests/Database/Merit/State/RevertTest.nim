@@ -49,7 +49,7 @@ suite "Revert":
                 db,
                 "STATE_TEST",
                 1,
-                "".pad(48).toHash(384)
+                "".pad(32).toHash(256)
             )
             #State.
             states: seq[State] = @[]

@@ -7,17 +7,15 @@ proc mainConsensus() {.forceCheck: [].} =
                 functions,
                 database,
                 merit.state,
-                params.SEND_DIFFICULTY.toHash(384),
-                params.DATA_DIFFICULTY.toHash(384)
+                params.SEND_DIFFICULTY.toHash(256),
+                params.DATA_DIFFICULTY.toHash(256)
             )
         except ValueError:
             doAssert(false, "Invalid initial Send/Data difficulty.")
 
-        functions.consensus.getSendDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+        functions.consensus.getSendDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
             consensus.filters.send.difficulty
-        functions.consensus.getDataMinimumDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
-            minimumDataDifficulty
-        functions.consensus.getDataDifficulty = proc (): Hash[384] {.inline, forceCheck: [].} =
+        functions.consensus.getDataDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
             consensus.filters.data.difficulty
 
         #Provide access to if a holder is malicious.
@@ -35,7 +33,7 @@ proc mainConsensus() {.forceCheck: [].} =
         #Get if a hash has an archived packet or not.
         #Any hash with holder(s) that isn't unmentioned has an archived packet.
         functions.consensus.hasArchivedPacket = proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): bool {.forceCheck: [
             IndexError
         ].} =
@@ -49,7 +47,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
         #Get a Transaction's status.
         functions.consensus.getStatus = proc (
-            hash: Hash[384]
+            hash: Hash[256]
         ): TransactionStatus {.forceCheck: [
             IndexError
         ].} =

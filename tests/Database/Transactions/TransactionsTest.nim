@@ -3,8 +3,8 @@
 #Test lib.
 import unittest
 
-#Fuzzing lib.
-import ../../Fuzzed
+#Errors lib.
+import ../../../src/lib/Errors
 
 #Util lib.
 import ../../../src/lib/Util
@@ -57,7 +57,7 @@ suite "Transactions":
                 db,
                 "TRANSACTIONS_TEST",
                 30,
-                "".pad(48),
+                "".pad(32),
                 100
             )
             #Transactions.
@@ -81,12 +81,12 @@ suite "Transactions":
             #This hash is supposed to be the hash of the last Block.
             #Since we don't queue actions, yet handle them individually, we need unique hashes.
             #We just increment this blank hash to get a new hash. It's a nonce.
-            mintHash: Hash[384]
+            mintHash: Hash[256]
 
             #Transactions.
             txs: seq[Transaction] = @[]
             #Table of a hash to the block it first appeared on.
-            first: Table[Hash[384], int] = initTable[Hash[384], int]()
+            first: Table[Hash[256], int] = initTable[Hash[256], int]()
 
             #Packets.
             packets: seq[VerificationPacket] = @[]
@@ -196,7 +196,7 @@ suite "Transactions":
                         ]
                     )
                     wallet.sign(send)
-                    send.mine(Hash[384]())
+                    send.mine(Hash[256]())
                     transactions.add(send)
 
                     verify(send, 0)
@@ -210,19 +210,31 @@ suite "Transactions":
                 else:
                     var
                         dataStr: string = newString(rand(254) + 1)
+                        tip: Hash[256]
                         data: Data
                     for c in 0 ..< dataStr.len:
                         dataStr[c] = char(rand(255))
 
+                    try:
+                        tip = transactions.loadDataTip(wallet.publicKey)
+                    except DataMissing:
+                        data = newData(Hash[256](), wallet.publicKey.toString())
+                        wallet.sign(data)
+                        data.mine(Hash[256]())
+                        transactions.add(data)
+                        verify(data, 0)
+                        transactions.verify(data.hash)
+                        tip = data.hash
+
                     data = newData(transactions.loadDataTip(wallet.publicKey), dataStr)
                     wallet.sign(data)
-                    data.mine(Hash[384]())
+                    data.mine(Hash[256]())
                     transactions.add(data)
 
                     verify(data, 0)
 
             #Randomly select old transactions.
-            var reused: HashSet[Hash[384]] = initHashSet[Hash[384]]()
+            var reused: HashSet[Hash[256]] = initHashSet[Hash[256]]()
             for _ in 0 ..< 10:
                 var tx: Transaction = txs[rand(high(txs))]
                 if (

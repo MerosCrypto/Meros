@@ -39,7 +39,7 @@ proc parseClaim*(
     for i in countup(0, claimSeq[1].len - 1, HASH_LEN + BYTE_LEN):
         try:
             inputs[i div (HASH_LEN + BYTE_LEN)] = newFundedInput(
-                claimSeq[1][i ..< i + HASH_LEN].toHash(384),
+                claimSeq[1][i ..< i + HASH_LEN].toHash(256),
                 int(claimSeq[1][i + HASH_LEN])
             )
         except ValueError as e:
@@ -57,6 +57,6 @@ proc parseClaim*(
     #Set the signature and hash it.
     try:
         result.signature = newBLSSignature(claimSeq[3])
-        result.hash = Blake384("\1" & claimSeq[3])
+        result.hash = Blake256("\1" & claimSeq[3])
     except BLSError:
         raise newException(ValueError, "Invalid Signature.")

@@ -8,7 +8,7 @@ import HashCommon
 import Argon2
 
 #Define the Hash Type.
-type ArgonHash* = HashCommon.Hash[384]
+type ArgonHash* = HashCommon.Hash[256]
 
 #Take in data and a salt; return a ArgonHash.
 proc Argon*(
@@ -40,6 +40,6 @@ func toArgonHash*(
     ValueError
 ].} =
     try:
-        result = hash.toHash(384)
+        result = hash.toHash(256)
     except ValueError as e:
         raise e

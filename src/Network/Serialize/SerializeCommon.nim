@@ -13,7 +13,7 @@ const
     SALT_LEN*:           int = 8
     SKETCH_HASH_LEN*:    int = 8
     MEROS_LEN*:          int = 8
-    HASH_LEN*:           int = 48
+    HASH_LEN*:           int = 32
 
     ED_PUBLIC_KEY_LEN*:  int = 32
     ED_SIGNATURE_LEN*:   int = 64

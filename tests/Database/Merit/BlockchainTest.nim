@@ -31,7 +31,7 @@ import CompareMerit
 import random
 
 #Starting Difficultty.
-const startDifficulty: Hash[384] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(384)
+const startDifficulty: Hash[256] = "00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA".toHash(256)
 
 suite "Blockchain":
     setup:
@@ -57,7 +57,7 @@ suite "Blockchain":
             )
 
             #Transaction hash.
-            hash: Hash[384]
+            hash: Hash[256]
             #Packets.
             packets: seq[VerificationPacket]
             #Elements.

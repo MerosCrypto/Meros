@@ -205,13 +205,6 @@ proc add*(
     ValueError,
     DataExists
 ].} =
-    #Verify the Data's hash doesn't start with 16 zeroes.
-    for b in 0 ..< 16:
-        if data.hash.data[b] != 0:
-            break
-        if b == 15:
-            raise newException(ValueError, "Data's hash starts with 16 0s.")
-
     #Verify it wasn't already added.
     try:
         discard transactions[data.hash]
@@ -240,7 +233,7 @@ proc add*(
 #Mint Meros to the specified key.
 proc mint*(
     transactions: var Transactions,
-    hash: Hash[384],
+    hash: Hash[256],
     rewards: seq[Reward]
 ) {.forceCheck: [].} =
     #Create the outputs.

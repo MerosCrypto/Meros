@@ -31,7 +31,7 @@ proc parseDifficulty*(
         result = newDifficultyObj(
             difficultySeq[0].fromBinary(),
             difficultySeq[1].fromBinary(),
-            difficultySeq[2].toHash(384)
+            difficultySeq[2].toHash(256)
         )
     except ValueError as e:
         raise e

@@ -10,7 +10,7 @@ import ../../../Wallet/Wallet
 type
     #Transaction input types.
     Input* = ref object of RootObj
-        hash*: Hash[384]
+        hash*: Hash[256]
     #FundedInput, which also includes a nonce.
     FundedInput* = ref object of Input
         nonce*: int
@@ -32,18 +32,18 @@ type
         #Outputs,
         outputs*: seq[Output]
         #Hash.
-        hash*: Hash[384]
+        hash*: Hash[256]
 
 #Input/Output constructors.
 func newInput*(
-    hash: Hash[384]
+    hash: Hash[256]
 ): Input {.inline, forceCheck: [].} =
     Input(
         hash: hash
     )
 
 func newFundedInput*(
-    hash: Hash[384],
+    hash: Hash[256],
     nonce: int
 ): FundedInput {.inline, forceCheck: [].} =
     FundedInput(

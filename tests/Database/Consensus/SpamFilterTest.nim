@@ -32,19 +32,20 @@ import tables
 
 const
     #Starting difficulty.
-    START_DIFFICULTY: Hash[384] = parseHexStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
+    START_DIFFICULTY: Hash[256] = parseHexStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(256)
     #Other difficulty.
-    OTHER_DIFFICULTY: Hash[384] = parseHexStr("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(384)
+    OTHER_DIFFICULTY: Hash[256] = parseHexStr("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").toHash(256)
 
 #Recreate the VotedDifficulty object for testing purposes.
 type VotedDifficultyTest = object
-    difficulty: Hash[384]
+    difficulty: Hash[256]
     holders: seq[uint16]
 
 suite "SpamFilter":
     setup:
         #Seed random.
-        randomize(int64(getTime()))
+        var seed: int64 = int64(getTime())
+        randomize(seed)
 
         var
             #Holder -> Merit.
@@ -79,7 +80,7 @@ suite "SpamFilter":
             for i in 0 ..< 3:
                 var
                     holder: uint16 = uint16(rand(merit.len - 1))
-                    difficulty: Hash[384]
+                    difficulty: Hash[256]
                 if merit[uint16(holder)] < 50:
                     continue
 
@@ -108,8 +109,12 @@ suite "SpamFilter":
                 else:
                     var found: bool = true
                     while found:
-                        for b in 0 ..< 48:
+                        for b in 0 ..< 32:
                             difficulty.data[b] = uint8(rand(255))
+                        #https://github.com/MerosCrypto/Meros/issues/114
+                        if seed == 1578534473:
+                            for _ in 0 ..< 16:
+                                discard rand(255)
 
                         #Break if no existing difficulty is the same.
                         found = false
@@ -166,7 +171,7 @@ suite "SpamFilter":
             )
 
             #Turn weighted difficulties into a seq.
-            var unweighted: seq[Hash[384]] = @[]
+            var unweighted: seq[Hash[256]] = @[]
             for d in 0 ..< difficulties.len:
                 var sum: int = 0
                 for h in difficulties[d].holders:

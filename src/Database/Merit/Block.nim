@@ -35,18 +35,18 @@ import algorithm
 
 #Verify the sketchCheck Merkle.
 proc verifySketchCheck*(
-    sketchCheck: Hash[384],
+    sketchCheck: Hash[256],
     sketchHashes: seq[uint64]
 ) {.raises: [
     ValueError
 ].} =
-    var calculated: Hash[384]
+    var calculated: Hash[256]
     if sketchHashes.len != 0:
-        var leaves: seq[Hash[384]] = newSeq[Hash[384]](sketchHashes.len)
+        var leaves: seq[Hash[256]] = newSeq[Hash[256]](sketchHashes.len)
         for h in 0 ..< sketchHashes.len:
             if (h != 0) and (sketchHashes[h] == sketchHashes[h - 1]):
                 raise newException(ValueError, "Sketch has a collision.")
-            leaves[h] = Blake384(sketchHashes[h].toBinary(SKETCH_HASH_LEN))
+            leaves[h] = Blake256(sketchHashes[h].toBinary(SKETCH_HASH_LEN))
 
         calculated = newMerkle(leaves).hash
 
@@ -54,7 +54,7 @@ proc verifySketchCheck*(
         raise newException(ValueError, "Invalid sketchCheck Merkle.")
 
 proc verifySketchCheck*(
-    sketchCheck: Hash[384],
+    sketchCheck: Hash[256],
     sketchSalt: string,
     packets: seq[VerificationPacket],
     missing: seq[uint64]
@@ -73,7 +73,7 @@ proc verifySketchCheck*(
 
 #Verify the contents Merkle.
 proc verifyContents*(
-    contents: Hash[384],
+    contents: Hash[256],
     packetsArg: seq[VerificationPacket],
     elements: seq[BlockElement]
 ): seq[VerificationPacket] {.raises: [
@@ -102,9 +102,9 @@ proc verifyContents*(
     var calculated: Merkle = newMerkle()
 
     for packet in result:
-        calculated.add(Blake384(packet.serializeContents()))
+        calculated.add(Blake256(packet.serializeContents()))
     for elem in elements:
-        calculated.add(Blake384(elem.serializeContents()))
+        calculated.add(Blake256(elem.serializeContents()))
 
     if calculated.hash != contents:
         raise newException(ValueError, "Invalid contents Merkle.")

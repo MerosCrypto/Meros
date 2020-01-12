@@ -34,7 +34,7 @@ suite "Serialize Send":
 
         var
             #Hash used to create an input.
-            hash: Hash[384]
+            hash: Hash[256]
             #Inputs.
             inputs: seq[FundedInput]
             #Outputs.
@@ -75,10 +75,10 @@ suite "Serialize Send":
         wallet.next(last = uint32(rand(200) * 1000)).sign(send)
 
         #mine the Send.
-        send.mine("".pad(96, "aa").toHash(384))
+        send.mine("".pad(64, "aa").toHash(256))
 
         #Serialize it and parse it back.
-        reloaded = send.serialize().parseSend(Hash[384]())
+        reloaded = send.serialize().parseSend(Hash[256]())
 
         #Compare the Sends.
         compare(send, reloaded)

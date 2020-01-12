@@ -31,7 +31,7 @@ def HundredTest(
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         blocks
     )
 
@@ -60,7 +60,7 @@ def HundredTest(
             rpc.meros.syncingAcknowledged()
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
-            reqHash = msg[1 : 49]
+            reqHash = msg[1 : 33]
             if reqHash != blockchain.blocks[-1].header.hash:
                 raise TestError("Meros asked for a BlockHeader other than the one in the Block from the Handshake.")
 

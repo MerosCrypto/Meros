@@ -42,7 +42,7 @@ def VParsableTest(
     blockchain: Blockchain = Blockchain.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
         vectors["blockchain"]
     )
     #Transactions.
@@ -74,7 +74,7 @@ def VParsableTest(
                 rpc.meros.syncingAcknowledged()
 
             elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
                 if reqHash != block.header.hash:
                     raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
@@ -85,7 +85,7 @@ def VParsableTest(
                 if not block.body.packets:
                     raise TestError("Meros asked for Sketch Hashes from a Block without any.")
 
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
                 if reqHash != block.header.hash:
                     raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
 
@@ -101,7 +101,7 @@ def VParsableTest(
                 if not block.body.packets:
                     raise TestError("Meros asked for Verification Packets from a Block without any.")
 
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
                 if reqHash != block.header.hash:
                     raise TestError("Meros asked for Verification Packets that didn't belong to the Block we just sent it.")
 
@@ -111,14 +111,14 @@ def VParsableTest(
                     packets[Sketch.hash(block.header.sketchSalt, packet)] = packet
 
                 #Look up each requested packet and respond accordingly.
-                for h in range(int.from_bytes(msg[49 : 53], byteorder="big")):
-                    sketchHash: int = int.from_bytes(msg[53 + (h * 8) : 61 + (h * 8)], byteorder="big")
+                for h in range(int.from_bytes(msg[33 : 37], byteorder="big")):
+                    sketchHash: int = int.from_bytes(msg[37 + (h * 8) : 45 + (h * 8)], byteorder="big")
                     if sketchHash not in packets:
                         raise TestError("Meros asked for a non-existent Sketch Hash.")
                     rpc.meros.packet(packets[sketchHash])
 
             elif MessageType(msg[0]) == MessageType.TransactionRequest:
-                reqHash = msg[1 : 49]
+                reqHash = msg[1 : 33]
 
                 if reqHash not in transactions.txs:
                     raise TestError("Meros asked for a non-existent Transaction.")

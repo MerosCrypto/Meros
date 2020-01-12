@@ -61,7 +61,7 @@ proc sign*(
 
     #Set the signature and hash the Claim.
     claim.signature = signature
-    claim.hash = Blake384(claim.serializeHash())
+    claim.hash = Blake256(claim.serializeHash())
 
 #Verify a Claim.
 proc verify*(

@@ -25,17 +25,17 @@ suite "Merkle":
 
     test "`nil` Merkle trees.":
         check(newMerkle().isLeaf)
-        check(newMerkle().hash == "".pad(48).toHash(384))
+        check(newMerkle().hash == "".pad(32).toHash(256))
 
     test "Leaves.":
-        check(newMerkle("1".pad(48).toHash(384)).hash == "1".pad(48).toHash(384))
+        check(newMerkle("1".pad(32).toHash(256)).hash == "1".pad(32).toHash(256))
 
     test "A blank Merkle tree with an added leaf is the same as a tree created with said leaf.":
         var
-            created: Merkle = newMerkle("".pad(48).toHash(384))
+            created: Merkle = newMerkle("".pad(32).toHash(256))
             added: Merkle = newMerkle()
 
-        added.add("".pad(48).toHash(384))
+        added.add("".pad(32).toHash(256))
         check(created.isLeaf)
         check(added.isLeaf)
         check(added.hash == created.hash)
@@ -44,18 +44,18 @@ suite "Merkle":
         #Create a random amount of hashes.
         var
             hashLen: int = rand(900) + 100
-            hashes: seq[Hash[384]] = newSeq[Hash[384]](hashLen)
+            hashes: seq[Hash[256]] = newSeq[Hash[256]](hashLen)
         for h in 0 ..< hashLen:
-            hashes[h] = Blake384(h.toBinary())
+            hashes[h] = Blake256(h.toBinary())
 
         var
             #Copy the hashes so we can form our own tree of it (albeit slowly).
-            fullCopy: seq[Hash[384]] = hashes
+            fullCopy: seq[Hash[256]] = hashes
             #Pick a random sub-amount for use in a Merkle tree created with both the constructor and addition.
             #The +1 is to make sure we don't skip the both test.
             bothLen: int = rand(hashLen - 2) + 1
             #Create a second copy of the hashes with this smaller range.
-            partialCopy: seq[Hash[384]] = hashes[0 ..< bothLen]
+            partialCopy: seq[Hash[256]] = hashes[0 ..< bothLen]
             #Define three trees. One of newMerkle, one of addition, and one of both.
             constructor: Merkle = newMerkle(hashes)
             addition: Merkle = newMerkle()
@@ -75,7 +75,7 @@ suite "Merkle":
                     fullCopy.add(fullCopy[fullCopy.len - 1])
 
                 #Turn fullCopy[h] into the branch hash for fullCopy[h .. h + 1].
-                fullCopy[h] = Blake384(fullCopy[h].toString() & fullCopy[h + 1].toString())
+                fullCopy[h] = Blake256(fullCopy[h].toString() & fullCopy[h + 1].toString())
 
             #Delete every other element.
             var d: int = 1
@@ -89,7 +89,7 @@ suite "Merkle":
                 if partialCopy.len mod 2 == 1:
                     partialCopy.add(partialCopy[partialCopy.len - 1])
 
-                partialCopy[h] = Blake384(partialCopy[h].toString() & partialCopy[h + 1].toString())
+                partialCopy[h] = Blake256(partialCopy[h].toString() & partialCopy[h + 1].toString())
 
             var d: int = 1
             while d < partialCopy.len:

@@ -57,8 +57,8 @@ proc newConsensus*(
     functions: GlobalFunctionBox,
     db: DB,
     state: State,
-    sendDiff: Hash[384],
-    dataDiff: Hash[384]
+    sendDiff: Hash[256],
+    dataDiff: Hash[256]
 ): Consensus {.inline, forceCheck: [].} =
     newConsensusObj(functions, db, state, sendDiff, dataDiff)
 
@@ -165,7 +165,7 @@ proc register*(
             doAssert(false, "Parent Transaction doesn't have a status.")
 
         #Check for competing Transactions.
-        var spenders: seq[Hash[384]] = consensus.functions.transactions.getSpenders(input)
+        var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
         if spenders.len != 1:
             status.competing = true
 
@@ -361,7 +361,7 @@ proc remove*(
 proc getUnfinalizedParents(
     consensus: Consensus,
     tx: Transaction
-): seq[Hash[384]] {.forceCheck: [].} =
+): seq[Hash[256]] {.forceCheck: [].} =
     #If this Transaction doesn't have inputs with statuses, don't do anything.
     if not (
         (tx of Claim) or
@@ -408,17 +408,17 @@ proc archive*(
         consensus.db.addUnmentioned(hash)
 
     #Transactions finalized out of order.
-    var outOfOrder: HashSet[Hash[384]] = initHashSet[Hash[384]]()
+    var outOfOrder: HashSet[Hash[256]] = initHashSet[Hash[256]]()
     #Mark every hash in this Epoch as out of Epochs.
     for hash in popped.keys():
         #Skip Transaction we verified out of order.
         if outOfOrder.contains(hash):
             continue
 
-        var parents: seq[Hash[384]] = @[hash]
+        var parents: seq[Hash[256]] = @[hash]
         while parents.len != 0:
             #Grab the last parent.
-            var parent: Hash[384] = parents.pop()
+            var parent: Hash[256] = parents.pop()
 
             #Skip this Transaction if we already verified it.
             if outOfOrder.contains(parent):
@@ -432,7 +432,7 @@ proc archive*(
                 doAssert(false, "Couldn't get a Transaction that's out of Epochs: " & e.msg)
 
             #Grab this Transaction's unfinalized parents.
-            var newParents: seq[Hash[384]] = consensus.getUnfinalizedParents(tx)
+            var newParents: seq[Hash[256]] = consensus.getUnfinalizedParents(tx)
 
             #If all the parents are finalized, finalize this Transaction.
             if newParents.len == 0:
@@ -447,7 +447,7 @@ proc archive*(
                 parents &= newParents
 
     #Reclaulcate every close Status.
-    var toDelete: seq[Hash[384]] = @[]
+    var toDelete: seq[Hash[256]] = @[]
     for hash in consensus.close:
         var status: TransactionStatus
         try:

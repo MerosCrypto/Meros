@@ -37,7 +37,7 @@ proc newBlockchain*(
     db: DB,
     genesis: string,
     blockTime: int,
-    startDifficulty: Hash[384]
+    startDifficulty: Hash[256]
 ): Blockchain {.forceCheck: [].} =
     newBlockchainObj(
         db,

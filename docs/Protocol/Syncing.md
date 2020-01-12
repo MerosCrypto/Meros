@@ -51,27 +51,27 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### BlockListRequest and BlockList
 
-`BlockListRequest` has a message length of 50 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity (where the quantity is the byte's value plus one), and the 48-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte quantity (where the quantity is the byte's value plus one) and each 48-byte hash. If there are no Blocks before/after the specified Block (depending on the requested direction), the syncee sends `DataMissing`.
+`BlockListRequest` has a message length of 34 bytes; 1-byte of 0, to request Blocks before the specified Block, or 1 to request Blocks after the specified Block, 1-byte quantity (where the quantity is the byte's value plus one), and the 32-byte hash of the Block to work off of. The expected response is a `BlockList` containing the Blocks before/after the specified Block. The amount of hashes provided by `BlockList` may be less than the amount requested if the genesis Block or the tail Block is reached. `BlockList` has a variable message length; the 1-byte quantity (where the quantity is the byte's value plus one) and each 32-byte hash. If there are no Blocks before/after the specified Block (depending on the requested direction), the syncee sends `DataMissing`.
 
 ### CheckpointRequest
 
-`CheckpointRequest` has a message length of 48 bytes; the Block's 48-byte hash. The expected response is a `Checkpoint` containing the Checkpoint for the specified Block.
+`CheckpointRequest` has a message length of 32 bytes; the Block's 32-byte hash. The expected response is a `Checkpoint` containing the Checkpoint for the specified Block.
 
 ### BlockHeaderRequest and BlockBodyRequest
 
-`BlockHeaderRequest` and `BlockBodyRequest` both have a message length of 48 bytes; the Block's 48-byte hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` with the requested BlockHeader. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested Block's body.
+`BlockHeaderRequest` and `BlockBodyRequest` both have a message length of 32 bytes; the Block's 32-byte hash. The expected response to a `BlockHeaderRequest` is a `BlockHeader` containing the requested BlockHeader. The expected response to a `BlockBodyRequest` is a `BlockBody` containing the requested BlockBody.
 
 ### SketchHashesRequest and SketchHashes
 
-`SketchHashesRequest` has a message length of 48-bytes; the Block's 48-byte hash. The expected response is a `SketchHashes` containing the sketch hashes for the specified Block. `SketchHashes` has a variable message length; the 4-byte amount of hashes and each 8-byte hash.
+`SketchHashesRequest` has a message length of 32-bytes; the Block's 32-byte hash. The expected response is a `SketchHashes` containing the sketch hashes for the specified Block. `SketchHashes` has a variable message length; the 4-byte amount of hashes and each 8-byte hash.
 
 ### SketchHashRequests
 
-`SketchHashRequests` has a variable message length; the Block's 48-byte hash, the 4-byte amount of sketch hashes, and each 8-byte sketch hash. The expected response is multiple `VerificationPacket` messages, each containing the VerificationPacket which created the matching sketch hash in the specified Block. If a hash isn't found, and a `DataMissing` is sent, the entire line of requests is terminated.
+`SketchHashRequests` has a variable message length; the Block's 32-byte hash, the 4-byte amount of sketch hashes, and each 8-byte sketch hash. The expected response is multiple `VerificationPacket` messages, each containing the VerificationPacket which created the matching sketch hash in the specified Block. If a hash isn't found, and a `DataMissing` is sent, the entire line of requests is terminated.
 
 ### TransactionRequest
 
-`TransactionRequest` has a message length of 48 bytes; the Transaction's 48-byte hash. The expected response is a `Claim`, `Send`, or `Data` containing the requested Transaction. If a Mint has the requested hash, the syncee sends `DataMissing`.
+`TransactionRequest` has a message length of 32 bytes; the Transaction's 32-byte hash. The expected response is a `Claim`, `Send`, or `Data` containing the requested Transaction. If a Mint has the requested hash, the syncee sends `DataMissing`.
 
 ### DataMissing
 

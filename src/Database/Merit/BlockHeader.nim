@@ -58,7 +58,7 @@ proc hash*(
 proc newSketchCheck*(
     sketchSalt: string,
     packets: seq[VerificationPacket]
-): Hash[384] {.forceCheck: [].} =
+): Hash[256] {.forceCheck: [].} =
     var
         sketchHashes: seq[uint64] = @[]
         calculated: Merkle = newMerkle()
@@ -68,7 +68,7 @@ proc newSketchCheck*(
     sketchHashes.sort(SortOrder.Descending)
 
     for hash in sketchHashes:
-        calculated.add(Blake384(hash.toBinary(SKETCH_HASH_LEN)))
+        calculated.add(Blake256(hash.toBinary(SKETCH_HASH_LEN)))
 
     result = calculated.hash
 
@@ -76,7 +76,7 @@ proc newSketchCheck*(
 proc newContents*(
     packets: seq[VerificationPacket],
     elements: seq[BlockElement]
-): Hash[384] {.forceCheck: [].} =
+): Hash[256] {.forceCheck: [].} =
     var calculated: Merkle = newMerkle()
 
     for packet in sorted(
@@ -91,10 +91,10 @@ proc newContents*(
                 result = -1
         , SortOrder.Descending
     ):
-        calculated.add(Blake384(packet.serializeContents()))
+        calculated.add(Blake256(packet.serializeContents()))
 
     for elem in elements:
-        calculated.add(Blake384(elem.serializeContents()))
+        calculated.add(Blake256(elem.serializeContents()))
 
     result = calculated.hash
 
@@ -102,10 +102,10 @@ proc newContents*(
 proc newBlockHeader*(
     version: uint32,
     last: RandomXHash,
-    contents: Hash[384],
+    contents: Hash[256],
     significant: uint16,
     sketchSalt: string,
-    sketchCheck: Hash[384],
+    sketchCheck: Hash[256],
     miner: BLSPublicKey,
     time: uint32,
     proof: uint32 = 0,
@@ -129,10 +129,10 @@ proc newBlockHeader*(
 proc newBlockHeader*(
     version: uint32,
     last: RandomXHash,
-    contents: Hash[384],
+    contents: Hash[256],
     significant: uint16,
     sketchSalt: string,
-    sketchCheck: Hash[384],
+    sketchCheck: Hash[256],
     miner: uint16,
     time: uint32,
     proof: uint32 = 0,

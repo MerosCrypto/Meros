@@ -25,7 +25,7 @@ proc mainPersonal() {.forceCheck: [].} =
         functions.personal.send = proc (
             destination: string,
             amountStr: string
-        ): Hash[384] {.forceCheck: [
+        ): Hash[256] {.forceCheck: [
             ValueError,
             NotEnoughMeros
         ].} =
@@ -40,6 +40,8 @@ proc mainPersonal() {.forceCheck: [].} =
                 amountOut: uint64
                 #Send we'll end up creating.
                 send: Send
+
+            #Grab a child.
             try:
                 child = wallet.external.next()
             except ValueError as e:
@@ -123,25 +125,52 @@ proc mainPersonal() {.forceCheck: [].} =
     #Create a Data Transaction.
     functions.personal.data = proc (
         dataStr: string
-    ): Hash[384] {.forceCheck: [
+    ): Hash[256] {.forceCheck: [
         ValueError,
         DataExists
     ].} =
         var
             #Wallet we're using.
             child: HDWallet
+            #Data tip.
+            tip: Hash[256] = Hash[256]()
             #Data.
             data: Data
+
+        #Grab a child.
         try:
             child = wallet.external.next()
         except ValueError as e:
             doAssert(false, "Wallet has no usable keys: " & e.msg)
 
         try:
-            data = newData(
-                transactions.loadDataTip(child.publicKey),
-                dataStr
-            )
+            tip = transactions.loadDataTip(child.publicKey)
+        except DataMissing:
+            #Create the initial Data.
+            try:
+                data = newData(Hash[256](), child.publicKey.toString())
+            except ValueError as e:
+                doAssert(false, "Couldn't create the initial data: " & e.msg)
+
+            #Sign it.
+            child.sign(data)
+
+            #Mine it.
+            data.mine(functions.consensus.getDataDifficulty())
+
+            #Add it.
+            try:
+                functions.transactions.addData(data)
+            except ValueError as e:
+                doAssert(false, "Created a Data which was invalid: " & e.msg)
+            except DataExists as e:
+                raise e
+
+            #Set the tip to the initial data.
+            tip = data.hash
+
+        try:
+            data = newData(tip, dataStr)
         except ValueError as e:
             raise e
 

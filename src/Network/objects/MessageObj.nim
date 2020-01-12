@@ -84,7 +84,7 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
 
     MessageType.Claim:                     @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
     MessageType.Send:                      @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), BYTE_LEN, -(ED_PUBLIC_KEY_LEN + MEROS_LEN), ED_SIGNATURE_LEN + INT_LEN],
-    MessageType.Data:                      @[HASH_LEN, BYTE_LEN, -BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
+    MessageType.Data:                      @[HASH_LEN, BYTE_LEN, -BYTE_LEN, BYTE_LEN, ED_SIGNATURE_LEN + INT_LEN],
 
     MessageType.SignedVerification:        @[NICKNAME_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
     MessageType.SignedSendDifficulty:      @[NICKNAME_LEN + INT_LEN + HASH_LEN],

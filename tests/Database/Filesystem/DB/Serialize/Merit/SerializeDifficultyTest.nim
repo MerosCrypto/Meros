@@ -41,14 +41,14 @@ suite "SerializeDifficulty":
 
         #Randomize the value.
         value = ""
-        for _ in 0 ..< 48:
+        for _ in 0 ..< 32:
             value &= char(rand(255))
 
         #Create the Difficulty.
         difficulty = newDifficultyObj(
             rand(high(int32)),
             rand(high(int32)),
-            value.toHash(384)
+            value.toHash(256)
         )
 
         #Serialize it and parse it back.

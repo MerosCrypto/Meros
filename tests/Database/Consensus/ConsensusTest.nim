@@ -51,7 +51,7 @@ suite "Consensus":
                 db,
                 "CONSENSUS_DB_TEST",
                 10,
-                $Hash[384](),
+                $Hash[256](),
                 30
             )
             #Transactions.
@@ -68,8 +68,8 @@ suite "Consensus":
                 functions,
                 db,
                 merit.state,
-                Hash[384](),
-                Hash[384]()
+                Hash[256](),
+                Hash[256]()
             )
 
             #Merit Holders.
@@ -79,7 +79,7 @@ suite "Consensus":
             #Elements to include in the next Block.
             elements: seq[BlockElement] = @[]
             #List of Transactions we didn't add every SignedVerification for.
-            unsigned: seq[Hash[384]] = @[]
+            unsigned: seq[Hash[256]] = @[]
             #SignedVerification used to generate signatures.
             sv: SignedVerification
             #Aggregate signature to include in the next Block.
@@ -165,8 +165,8 @@ suite "Consensus":
                 functions,
                 db,
                 merit.state,
-                Hash[384](),
-                Hash[384]()
+                Hash[256](),
+                Hash[256]()
             )
 
             #Compare the Consensus DAGs.
@@ -182,7 +182,7 @@ suite "Consensus":
             #Create a random amount of 'Transaction's.
             for _ in 0 ..< rand(2) + 1:
                 #Randomize the hash.
-                var hash: Hash[384]
+                var hash: Hash[256]
                 for b in 0 ..< hash.data.len:
                     hash.data[b] = uint8(rand(255))
 
@@ -272,9 +272,9 @@ suite "Consensus":
             #Add a Send Difficulty.
             var
                 holder: int = rand(holders.len - 1)
-                difficulty: Hash[384]
+                difficulty: Hash[256]
                 sendDiff: SignedSendDifficulty
-            for b in 0 ..< 48:
+            for b in 0 ..< 32:
                 difficulty.data[b] = uint8(rand(255))
             sendDiff = newSignedSendDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
             elements.add(sendDiff)
@@ -282,7 +282,7 @@ suite "Consensus":
             #Add a Data Difficulty.
             var dataDiff: SignedDataDifficulty
             holder = rand(holders.len - 1)
-            for b in 0 ..< 48:
+            for b in 0 ..< 32:
                 difficulty.data[b] = uint8(rand(255))
             dataDiff = newSignedDataDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
             elements.add(dataDiff)

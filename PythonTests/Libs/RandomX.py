@@ -49,7 +49,7 @@ def setRandomXKey(
 def RandomX(
     data: bytes
 ) -> bytes:
-    hashResult: Array[c_char] = create_string_buffer(48)
+    hashResult: Array[c_char] = create_string_buffer(32)
     RandomXLib.randomx_calculate_hash(vm, c_char_p(data), c_int(len(data)), byref(hashResult))
 
     result: bytes = bytes()

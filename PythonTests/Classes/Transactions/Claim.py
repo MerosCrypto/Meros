@@ -24,7 +24,7 @@ class Claim(Transaction):
         self.amount: int = 0
 
         self.signature: bytes = signature
-        self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
+        self.hash = blake2b(b'\1' + self.signature, digest_size=32).digest()
 
     #Transaction -> Claim. Satisifes static typing requirements.
     @staticmethod
@@ -58,7 +58,7 @@ class Claim(Transaction):
             )
 
         self.signature = Signature.aggregate(signatures).serialize()
-        self.hash = blake2b(b'\1' + self.signature, digest_size=48).digest()
+        self.hash = blake2b(b'\1' + self.signature, digest_size=32).digest()
 
     #Serialize.
     def serialize(

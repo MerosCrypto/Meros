@@ -11,12 +11,12 @@ type
     #VotedDifficulty object.
     VotedDifficulty* = ref object
         when defined(merosTests):
-            difficulty*: Hash[384]
+            difficulty*: Hash[256]
             votes*: int
             prev*: VotedDifficulty
             next*: VotedDifficulty
         else:
-            difficulty: Hash[384]
+            difficulty: Hash[256]
             votes: int
             prev: VotedDifficulty
             next: VotedDifficulty
@@ -39,13 +39,13 @@ type
             votes: Table[uint16, VotedDifficulty]
 
         #Starting difficulty.
-        startDifficulty*: Hash[384]
+        startDifficulty*: Hash[256]
         #Current median difficulty.
-        difficulty*: Hash[384]
+        difficulty*: Hash[256]
 
 #Constructors.
 func newVotedDifficulty(
-    difficulty: Hash[384],
+    difficulty: Hash[256],
     votes: int,
     prev: VotedDifficulty,
     next: VotedDifficulty
@@ -58,7 +58,7 @@ func newVotedDifficulty(
     )
 
 func newSpamFilterObj*(
-    difficulty: Hash[384]
+    difficulty: Hash[256]
 ): SpamFilter {.inline, forceCheck: [].} =
     SpamFilter(
         median: nil,
@@ -193,7 +193,7 @@ func update*(
     filter: var SpamFilter,
     holder: uint16,
     merit: int,
-    difficulty: Hash[384]
+    difficulty: Hash[256]
 ) {.forceCheck: [].} =
     #Calculate the holder's votes.
     var votes: int = merit div 50

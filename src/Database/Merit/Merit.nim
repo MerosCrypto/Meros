@@ -40,9 +40,9 @@ proc newMerit*(
     deadBlocks: int
 ): Merit {.forceCheck: [].} =
     #Extract the Difficulty.
-    var startDifficulty: Hash[384]
+    var startDifficulty: Hash[256]
     try:
-        startDifficulty = startDifficultyArg.toHash(384)
+        startDifficulty = startDifficultyArg.toHash(256)
     except ValueError as e:
         doAssert(false, "Invalid chain specs (start difficulty) passed to newMerit: " & e.msg)
 

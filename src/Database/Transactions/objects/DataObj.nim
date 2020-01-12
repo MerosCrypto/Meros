@@ -24,7 +24,7 @@ type Data* = ref object of Transaction
 
 #Data constructor.
 func newDataObj*(
-    input: Hash[384],
+    input: Hash[256],
     data: string
 ): Data {.forceCheck: [].} =
     #Create the Data.
@@ -39,8 +39,4 @@ func newDataObj*(
 proc isFirstData*(
     data: Data
 ): bool {.forceCheck: [].} =
-    for b in 0 ..< 16:
-        if data.inputs[0].hash.data[b] != 0:
-            return false
-
-    result = true
+    result = data.inputs[0].hash == Hash[256]()

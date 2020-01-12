@@ -22,7 +22,7 @@ class SpamFilter:
             1,
             8,
             1,
-            48,
+            32,
             argon2.low_level.Type.D
         )
         return result

@@ -15,7 +15,7 @@ import ../../../../../Network/Serialize/Transactions/ParseData
 
 #Serialize the TransactionObj.
 proc parseTransaction*(
-    hash: Hash[384],
+    hash: Hash[256],
     tx: string
 ): Transaction {.forceCheck: [
     ValueError
@@ -32,7 +32,7 @@ proc parseTransaction*(
 
         of '\2':
             try:
-                result = tx.substr(1).parseSend(Hash[384]())
+                result = tx.substr(1).parseSend(Hash[256]())
             except ValueError as e:
                 raise e
             except Spam:
@@ -40,7 +40,7 @@ proc parseTransaction*(
 
         of '\3':
             try:
-                result = tx.substr(1).parseData(Hash[384]())
+                result = tx.substr(1).parseData(Hash[256]())
             except ValueError as e:
                 raise e
             except Spam:

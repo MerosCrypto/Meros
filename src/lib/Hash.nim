@@ -34,19 +34,19 @@ export SHA3
 import hashes
 
 #Define Blake_2 as Blake.
-type Blake384Hash* = Blake2_384Hash
+type Blake256Hash* = Blake2_256Hash
 
 template Blake64*(
     input: string
 ): uint64 = Blake2_64(input)
 
-template Blake384*(
+template Blake256*(
     input: string
-): Blake384Hash = Blake2_384(input)
+): Blake256Hash = Blake2_256(input)
 
-template toBlake384Hash*(
+template toBlake256Hash*(
     input: string
-): Blake384Hash = toBlake2_384Hash(input)
+): Blake256Hash = toBlake2_256Hash(input)
 
 proc hash*[L](
     hash: HashCommon.Hash[L]

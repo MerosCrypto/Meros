@@ -16,14 +16,14 @@ type BlockHeader* = ref object
     #Hash of the last block.
     last*: RandomXHash
     #Merkle of the contents.
-    contents*: Hash[384]
+    contents*: Hash[256]
 
     #Amount of Merit required for a Transaction to be included.
     significant*: uint16
     #Salt used when hasing sketch elements in order to avoid collisions.
     sketchSalt*: string
     #Merkle of the included sketch hashes.
-    sketchCheck*: Hash[384]
+    sketchCheck*: Hash[256]
 
     #Miner.
     case newMiner*: bool
@@ -45,10 +45,10 @@ type BlockHeader* = ref object
 func newBlockHeaderObj*(
     version: uint32,
     last: RandomXHash,
-    contents: Hash[384],
+    contents: Hash[256],
     significant: uint16,
     sketchSalt: string,
-    sketchCheck: Hash[384],
+    sketchCheck: Hash[256],
     miner: BLSPublicKey,
     time: uint32,
     proof: uint32,
@@ -73,10 +73,10 @@ func newBlockHeaderObj*(
 func newBlockHeaderObj*(
     version: uint32,
     last: RandomXHash,
-    contents: Hash[384],
+    contents: Hash[256],
     significant: uint16,
     sketchSalt: string,
-    sketchCheck: Hash[384],
+    sketchCheck: Hash[256],
     miner: uint16,
     time: uint32,
     proof: uint32,

@@ -25,17 +25,17 @@ blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
 blockchain: Blockchain = Blockchain.fromJSON(
     b"MEROS_DEVELOPER_NETWORK",
     60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
     blocks
 )
 bbFile.close()
 
 #BLS Keys.
-blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=48).digest())
+blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Create a DataDifficulty.
-dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), 0)
+dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), 0)
 dataDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the DataDifficulty.
@@ -46,7 +46,7 @@ block = Block(
         BlockHeader.createContents([], [dataDiff.toSignedElement()]),
         1,
         bytes(4),
-        bytes(48),
+        bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
@@ -65,10 +65,10 @@ for _ in range(24):
         BlockHeader(
             0,
             blockchain.last(),
-            bytes(48),
+            bytes(32),
             1,
             bytes(4),
-            bytes(48),
+            bytes(32),
             0,
             blockchain.blocks[-1].header.time + 1200
         ),
@@ -82,7 +82,7 @@ for _ in range(24):
     print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 #Now that we have aa vote, update our vote.
-dataDiff = SignedDataDifficulty(bytes.fromhex("888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888"), 1)
+dataDiff = SignedDataDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 1)
 dataDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the new DataDifficulty.
@@ -93,7 +93,7 @@ block = Block(
         BlockHeader.createContents([], [dataDiff.toSignedElement()]),
         1,
         bytes(4),
-        bytes(48),
+        bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),

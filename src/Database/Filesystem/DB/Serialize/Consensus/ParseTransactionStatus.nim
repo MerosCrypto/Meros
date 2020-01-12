@@ -22,7 +22,7 @@ const holdersStart: int = INT_LEN + BYTE_LEN + BYTE_LEN + BYTE_LEN + NICKNAME_LE
 #Parse function.
 proc parseTransactionStatus*(
     statusStr: string,
-    hash: Hash[384]
+    hash: Hash[256]
 ): TransactionStatus {.forceCheck: [].} =
     #Epoch | Competing | Verified | Beaten | Holders Len | Holders | Merit (if finalized)
     var statusSeq: seq[string] = statusStr.deserialize(

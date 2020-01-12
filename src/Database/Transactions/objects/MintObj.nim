@@ -13,7 +13,7 @@ type Mint* = ref object of Transaction
 
 #Mint constructor.
 func newMintObj*(
-    hash: Hash[384],
+    hash: Hash[256],
     outputs: seq[MintOutput]
 ): Mint {.inline, forceCheck: [].} =
     Mint(

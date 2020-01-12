@@ -100,14 +100,14 @@ proc save*(
 
 proc save*(
     db: DB,
-    hash: Hash[384],
+    hash: Hash[256],
     status: TransactionStatus
 ) {.forceCheck: [].} =
     db.put(hash.toString(), status.serialize())
 
 proc addUnmentioned*(
     db: DB,
-    unmentioned: Hash[384]
+    unmentioned: Hash[256]
 ) {.forceCheck: [].} =
     db.consensus.unmentioned &= unmentioned.toString()
 
@@ -124,32 +124,32 @@ proc load*(
 proc loadSendDifficulty*(
     db: DB,
     holder: uint16
-): Hash[384] {.forceCheck: [
+): Hash[256] {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(holder.toBinary().pad(NICKNAME_LEN) & "s").toHash(384)
+        result = db.get(holder.toBinary().pad(NICKNAME_LEN) & "s").toHash(256)
     except ValueError:
-        doAssert(false, "Couldn't turn a 48-byte value into a 48-byte hash.")
+        doAssert(false, "Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
         raise e
 
 proc loadDataDifficulty*(
     db: DB,
     holder: uint16
-): Hash[384] {.forceCheck: [
+): Hash[256] {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(holder.toBinary().pad(NICKNAME_LEN) & "d").toHash(384)
+        result = db.get(holder.toBinary().pad(NICKNAME_LEN) & "d").toHash(256)
     except ValueError:
-        doAssert(false, "Couldn't turn a 48-byte value into a 48-byte hash.")
+        doAssert(false, "Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
         raise e
 
 proc load*(
     db: DB,
-    hash: Hash[384]
+    hash: Hash[256]
 ): TransactionStatus {.forceCheck: [
     DBReadError
 ].} =
@@ -160,16 +160,16 @@ proc load*(
 
 proc loadUnmentioned*(
     db: DB
-): seq[Hash[384]] {.forceCheck: [].} =
+): seq[Hash[256]] {.forceCheck: [].} =
     var unmentioned: string
     try:
         unmentioned = db.get("unmentioned")
     except DBReadError:
         return @[]
 
-    result = newSeq[Hash[384]](unmentioned.len div 48)
-    for i in countup(0, unmentioned.len - 1, 48):
+    result = newSeq[Hash[256]](unmentioned.len div 32)
+    for i in countup(0, unmentioned.len - 1, 32):
         try:
-            result[i div 48] = unmentioned[i ..< i + 48].toHash(384)
+            result[i div 32] = unmentioned[i ..< i + 32].toHash(256)
         except ValueError as e:
             doAssert(false, "Couldn't parse an unmentioned hash: " & e.msg)

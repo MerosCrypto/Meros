@@ -49,7 +49,7 @@ type TransactionStatus* = ref object
 
 #Constructor.
 proc newTransactionStatusObj*(
-    hash: Hash[384],
+    hash: Hash[256],
     epoch: int
 ): TransactionStatus {.inline, forceCheck: [].} =
     TransactionStatus(

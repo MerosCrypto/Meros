@@ -21,23 +21,23 @@ class Blockchain:
         blockTime: int,
         startDifficulty: int
     ) -> None:
-        self.upcomingKey: bytes = genesis.rjust(48, b'\0')
+        self.upcomingKey: bytes = genesis.rjust(32, b'\0')
         setRandomXKey(self.upcomingKey)
 
         self.blockTime: int = blockTime
 
         self.startDifficulty: int = startDifficulty
-        self.maxDifficulty: int = (2 ** 384) - 1
+        self.maxDifficulty: int = (2 ** 256) - 1
         self.difficulties: List[Tuple[int, int]] = [(startDifficulty, 1)]
         self.blocks: List[Block] = [
             Block(
                 BlockHeader(
                     0,
-                    genesis.rjust(48, b'\0'),
-                    bytes(48),
+                    genesis.rjust(32, b'\0'),
+                    bytes(32),
                     0,
                     bytes(4),
-                    bytes(48),
+                    bytes(32),
                     PublicKey().serialize(),
                     0
                 ),

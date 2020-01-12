@@ -67,8 +67,8 @@ suite "ParseElement":
                 of 0:
                     e1 = newRandomVerification(holder)
                 of 1:
-                    var hash: Hash[384] = Hash[384]()
-                    for b in 0 ..< 48:
+                    var hash: Hash[256] = Hash[256]()
+                    for b in 0 ..< 32:
                         hash.data[b] = uint8(rand(255))
 
                     var mrvp: MeritRemovalVerificationPacket = newMeritRemovalVerificationPacketObj(hash)
@@ -91,8 +91,8 @@ suite "ParseElement":
                     of 0:
                         e2 = newRandomVerification(holder)
                     of 1:
-                        var hash: Hash[384] = Hash[384]()
-                        for b in 0 ..< 48:
+                        var hash: Hash[256] = Hash[256]()
+                        for b in 0 ..< 32:
                             hash.data[b] = uint8(rand(255))
 
                         var mrvp: MeritRemovalVerificationPacket = newMeritRemovalVerificationPacketObj(hash)

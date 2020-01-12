@@ -16,7 +16,7 @@ import ../SerializeCommon
 #Parse function.
 proc parseSend*(
     sendStr: string,
-    diff: Hash[384]
+    diff: Hash[256]
 ): Send {.forceCheck: [
     ValueError,
     Spam
@@ -39,7 +39,7 @@ proc parseSend*(
     )
 
     var
-        hash: Hash[384] = Blake384("\2" & sendSeq[1] & sendSeq[3])
+        hash: Hash[256] = Blake256("\2" & sendSeq[1] & sendSeq[3])
         argon: ArgonHash = Argon(hash.toString(), sendSeq[5].pad(8))
     if argon < diff:
         raise newSpam("Send didn't beat the difficulty.", hash, argon)
@@ -48,9 +48,9 @@ proc parseSend*(
     var inputs: seq[FundedInput] = newSeq[FundedInput](sendSeq[0].fromBinary())
     if inputs.len == 0:
         raise newException(ValueError, "parseSend handed a Send with no inputs.")
-    for i in countup(0, sendSeq[1].len - 1, 49):
+    for i in countup(0, sendSeq[1].len - 1, 33):
         try:
-            inputs[i div 49] = newFundedInput(sendSeq[1][i ..< i + 48].toHash(384), sendSeq[1][i + 48].fromBinary())
+            inputs[i div 33] = newFundedInput(sendSeq[1][i ..< i + 32].toHash(256), sendSeq[1][i + 32].fromBinary())
         except ValueError as e:
             raise e
 

@@ -26,11 +26,11 @@ import random
 proc newValidVerificationPacket*(
     holders: seq[BLSPublicKey],
     exclude: seq[uint16] = @[],
-    hashArg: Hash[384] = Hash[384]()
+    hashArg: Hash[256] = Hash[256]()
 ): VerificationPacket =
-    var hash: Hash[384] = hashArg
-    if hash == Hash[384]():
-        for b in 0 ..< 48:
+    var hash: Hash[256] = hashArg
+    if hash == Hash[256]():
+        for b in 0 ..< 32:
             hash.data[b] = uint8(rand(255))
 
     result = newVerificationPacketObj(hash)

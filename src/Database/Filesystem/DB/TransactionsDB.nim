@@ -111,14 +111,14 @@ proc saveDataSender*(
 proc saveDataTip*(
     db: DB,
     key: EdPublicKey,
-    hash: Hash[384]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     db.put(key.toString() & "d", hash.toString())
 
 #Load functions.
 proc load*(
     db: DB,
-    hash: Hash[384]
+    hash: Hash[256]
 ): Transaction {.forceCheck: [
     DBReadError
 ].} =
@@ -143,22 +143,22 @@ proc load*(
 proc loadSpenders*(
     db: DB,
     input: Input
-): seq[Hash[384]] {.forceCheck: [].} =
+): seq[Hash[256]] {.forceCheck: [].} =
     var spenders: string = ""
     try:
         spenders = db.get(input.toString() & "s")
     except DBReadError:
         return
 
-    for h in countup(0, spenders.len - 1, 48):
+    for h in countup(0, spenders.len - 1, 32):
         try:
-            result.add(spenders[h ..< h + 48].toHash(384))
+            result.add(spenders[h ..< h + 32].toHash(256))
         except ValueError as e:
             doAssert(false, "Couldn't load a spending hash from the DB: " & e.msg)
 
 proc loadDataSender*(
     db: DB,
-    hash: Hash[384]
+    hash: Hash[256]
 ): EdPublicKey {.forceCheck: [
     DBReadError
 ].} =
@@ -202,11 +202,11 @@ proc loadSendOutput*(
 proc loadDataTip*(
     db: DB,
     key: EdPublicKey
-): Hash[384] {.forceCheck: [
+): Hash[256] {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(key.toString() & "d").toHash(384)
+        result = db.get(key.toString() & "d").toHash(256)
     except DBReadError as e:
         raise e
     except ValueError as e:
@@ -224,12 +224,12 @@ proc loadSpendable*(
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
-    for i in countup(0, spendable.len - 1, 49):
+    for i in countup(0, spendable.len - 1, 33):
         try:
             result.add(
                 newFundedInput(
-                    spendable[i ..< i + 48].toHash(384),
-                    int(spendable[i + 48])
+                    spendable[i ..< i + 32].toHash(256),
+                    int(spendable[i + 32])
                 )
             )
         except ValueError as e:
@@ -238,7 +238,7 @@ proc loadSpendable*(
 proc addToSpendable(
     db: DB,
     key: string,
-    hash: Hash[384],
+    hash: Hash[256],
     nonce: int
 ) {.forceCheck: [].} =
     try:
@@ -249,7 +249,7 @@ proc addToSpendable(
 proc removeFromSpendable(
     db: DB,
     key: string,
-    hash: Hash[384],
+    hash: Hash[256],
     nonce: int
 ) {.forceCheck: [].} =
     var
@@ -263,9 +263,9 @@ proc removeFromSpendable(
         doAssert(false, "Trying to spend from someone without anything spendable.")
 
     #Remove the specified output.
-    for o in countup(0, spendable.len - 1, 49):
-        if spendable[o ..< o + 49] == output:
-            db.put(key, spendable[0 ..< o] & spendable[o + 49 ..< spendable.len])
+    for o in countup(0, spendable.len - 1, 33):
+        if spendable[o ..< o + 33] == output:
+            db.put(key, spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
             break
 
 #Add a Claim/Send's outputs to spendable while removing a Send's inputs.

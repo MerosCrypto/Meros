@@ -47,10 +47,10 @@ proc parseBlockHeader*(
             result = newBlockHeaderObj(
                 uint32(headerSeq[0].fromBinary()),
                 headerSeq[1].toRandomXHash(),
-                headerSeq[2].toHash(384),
+                headerSeq[2].toHash(256),
                 uint16(headerSeq[3].fromBinary()),
                 headerSeq[4],
-                headerSeq[5].toHash(384),
+                headerSeq[5].toHash(256),
                 uint16(headerSeq[7].fromBinary()),
                 uint32(headerSeq[8].fromBinary()),
                 uint32(headerSeq[9].fromBinary()),
@@ -60,10 +60,10 @@ proc parseBlockHeader*(
             result = newBlockHeaderObj(
                 uint32(headerSeq[0].fromBinary()),
                 headerSeq[1].toRandomXHash(),
-                headerSeq[2].toHash(384),
+                headerSeq[2].toHash(256),
                 uint16(headerSeq[3].fromBinary()),
                 headerSeq[4],
-                headerSeq[5].toHash(384),
+                headerSeq[5].toHash(256),
                 newBLSPublicKey(headerSeq[7]),
                 uint32(headerSeq[8].fromBinary()),
                 uint32(headerSeq[9].fromBinary()),
@@ -83,7 +83,7 @@ proc parseBlockHeader*(
     ValueError
 ].} =
     try:
-        result = parseBlockHeader(headerStr, Hash[384]())
+        result = parseBlockHeader(headerStr, Hash[256]())
     except ValueError as e:
         raise e
 

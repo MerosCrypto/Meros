@@ -13,7 +13,6 @@ import nimcrypto
 #Define the Hash Types.
 type
     Blake2_256Hash* = HashCommon.Hash[256]
-    Blake2_384Hash* = HashCommon.Hash[384]
     Blake2_512Hash* = HashCommon.Hash[512]
 
 #C API which is used solely for Blake2b-64.
@@ -68,31 +67,21 @@ proc Blake2_256*(
 ): Blake2_256Hash {.forceCheck: [].} =
     #Copy the bytes argument.
     var bytes: string = bytesArg
-
-    #If it's an empty string...
     if bytes.len == 0:
-        return Blake2_256Hash(
-            data: blake2_256.digest(EmptyHash, uint(bytes.len)).data
-        )
+        bytes = $char(0)
 
-    #Digest the byte array.
-    result.data = blake2_256.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
+    #Allocate the State.
+    var state: ptr Blake2bState = cast[ptr Blake2bState](alloc0(sizeof(Blake2bState)))
 
-#Blake 384 hashing algorithm.
-proc Blake2_384*(
-    bytesArg: string
-): Blake2_384Hash {.forceCheck: [].} =
-    #Copy the bytes argument.
-    var bytes: string = bytesArg
+    #Hash the bytes.
+    doAssert(state.init(32) == 0, "Failed to init a Blake2b State.")
+    doAssert(state.update(addr bytes[0], bytesArg.len) == 0, "Failed to update a Blake2b State.")
 
-    #If it's an empty string...
-    if bytes.len == 0:
-        return Blake2_384Hash(
-            data: blake2_384.digest(EmptyHash, uint(bytes.len)).data
-        )
+    #Save the result.
+    doAssert(state.finalize(addr result.data[0], 32) == 0, "Failed to finalize a Blake2b State.")
 
-    #Digest the byte array.
-    result.data = blake2_384.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
+    #Deallocate the state.
+    dealloc(state)
 
 #Blake 512 hashing algorithm.
 proc Blake2_512*(
@@ -118,17 +107,6 @@ func toBlake2_256Hash*(
 ].} =
     try:
         result = hash.toHash(256)
-    except ValueError as e:
-        raise e
-
-#String to Blake2_384Hash.
-func toBlake2_384Hash*(
-    hash: string
-): Blake2_384Hash {.forceCheck: [
-    ValueError
-].} =
-    try:
-        result = hash.toHash(384)
     except ValueError as e:
         raise e
 
