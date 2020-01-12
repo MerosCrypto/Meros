@@ -263,7 +263,7 @@ proc add*(
     except BLSError:
         raise newException(ValueError, "Invalid SendDifficulty signature.")
 
-    #Verify the nonce.
+    #Verify the nonce. This is done in NetworkSync for non-signed versions.
     if sendDiff.nonce != consensus.db.load(sendDiff.holder) + 1:
         if sendDiff.nonce <= consensus.db.load(sendDiff.holder):
             #If this isn't the existing Element, it's cause for a MeritRemoval.
@@ -272,10 +272,7 @@ proc add*(
         raise newException(ValueError, "SendDifficulty skips a nonce.")
 
     #Add the SendDifficulty.
-    try:
-        consensus.add(state, cast[SendDifficulty](sendDiff))
-    except ValueError as e:
-        raise e
+    consensus.add(state, cast[SendDifficulty](sendDiff))
 
 #Add a DataDifficulty.
 proc add*(
@@ -306,7 +303,7 @@ proc add*(
     except BLSError:
         raise newException(ValueError, "Invalid DataDifficulty signature.")
 
-    #Verify the nonce.
+    #Verify the nonce. This is done in NetworkSync for non-signed versions.
     if dataDiff.nonce != consensus.db.load(dataDiff.holder) + 1:
         if dataDiff.nonce <= consensus.db.load(dataDiff.holder):
             #If this isn't the existing Element, it's cause for a MeritRemoval.
@@ -315,10 +312,7 @@ proc add*(
         raise newException(ValueError, "DataDifficulty skips a nonce.")
 
     #Add the DataDifficulty.
-    try:
-        consensus.add(state, cast[DataDifficulty](dataDiff))
-    except ValueError as e:
-        raise e
+    consensus.add(state, cast[DataDifficulty](dataDiff))
 
 #Add a SignedMeritRemoval.
 proc add*(
