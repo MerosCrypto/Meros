@@ -44,8 +44,7 @@ type VotedDifficultyTest = object
 suite "SpamFilter":
     setup:
         #Seed random.
-        var seed: int64 = int64(getTime())
-        randomize(1578534473)
+        randomize(int64(getTime()))
 
         var
             #Holder -> Merit.
@@ -85,13 +84,27 @@ suite "SpamFilter":
                     continue
 
                 #Remove the holder from the existing difficulty.
-                var d: int = 0
+                #Also remove holders/difficulties which no longer have votes.
+                var
+                    d: int = 0
+                    h: int
+                    diffVotes: int
                 while d < difficulties.len:
-                    for h in 0 ..< difficulties[d].holders.len:
+                    h = 0
+                    diffVotes = 0
+                    while h < difficulties[d].holders.len:
                         if difficulties[d].holders[h] == holder:
                             difficulties[d].holders.del(h)
-                            break
-                    if difficulties[d].holders.len == 0:
+                            continue
+
+                        if merit[difficulties[d].holders[h]] div 50 == 0:
+                            difficulties[d].holders.del(h)
+                            continue
+
+                        diffVotes += merit[difficulties[d].holders[h]] div 50
+                        inc(h)
+
+                    if diffVotes == 0:
                         difficulties.del(d)
                         continue
                     inc(d)
@@ -112,7 +125,7 @@ suite "SpamFilter":
                         #https://github.com/MerosCrypto/Meros/issues/114
                         for b in 0 ..< 48:
                             difficulty.data[b mod 32] = uint8(rand(255))
-                        
+
                         #Break if no existing difficulty is the same.
                         found = false
                         for diff in difficulties:
@@ -148,6 +161,27 @@ suite "SpamFilter":
 
                 filter.handleBlock(incd, merit[incd], decd, merit[decd])
 
+                #Remove holders/difficulties which no longer have votes.
+                var
+                    d: int = 0
+                    h: int
+                    diffVotes: int
+                while d < difficulties.len:
+                    h = 0
+                    diffVotes = 0
+                    while h < difficulties[d].holders.len:
+                        if merit[difficulties[d].holders[h]] div 50 == 0:
+                            difficulties[d].holders.del(h)
+                            continue
+
+                        diffVotes += merit[difficulties[d].holders[h]] div 50
+                        inc(h)
+
+                    if diffVotes == 0:
+                        difficulties.del(d)
+                        continue
+                    inc(d)
+
             #Handle no votes.
             if difficulties.len == 0:
                 check(filter.difficulty == START_DIFFICULTY)
@@ -179,3 +213,7 @@ suite "SpamFilter":
 
             #Verify the median.
             check(filter.difficulty == unweighted[unweighted.len div 2])
+
+            #Verify no difficulties have 0 votes.
+            for diff in filter.difficulties:
+                check(diff.votes != 0)

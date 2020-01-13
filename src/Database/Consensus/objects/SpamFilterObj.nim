@@ -13,29 +13,28 @@ type
         when defined(merosTests):
             difficulty*: Hash[256]
             votes*: int
-            prev*: VotedDifficulty
-            next*: VotedDifficulty
         else:
             difficulty: Hash[256]
             votes: int
-            prev: VotedDifficulty
-            next: VotedDifficulty
 
     #SpamFilter object.
     SpamFilter* = object
         when defined(merosTests):
-            #Median node.
-            median*: VotedDifficulty
-            #Merit left of the median value.
+            #Median difficulty.
+            medianPos*: int
+            #Votes left of the median value.
             left*: int
-            #Merit right of the median value.
+            #Votes right of the median value.
             right*: int
-            #Nicknames -> voted node.
+            #Voted Difficulties.
+            difficulties*: seq[VotedDifficulty]
+            #Nicknames -> VotedDifficulty.
             votes*: Table[uint16, VotedDifficulty]
         else:
-            median: VotedDifficulty
+            median: int
             left: int
             right: int
+            difficulties: seq[VotedDifficulty]
             votes: Table[uint16, VotedDifficulty]
 
         #Starting difficulty.
@@ -46,24 +45,21 @@ type
 #Constructors.
 func newVotedDifficulty(
     difficulty: Hash[256],
-    votes: int,
-    prev: VotedDifficulty,
-    next: VotedDifficulty
+    votes: int
 ): VotedDifficulty {.inline, forceCheck: [].} =
     VotedDifficulty(
         difficulty: difficulty,
-        votes: votes,
-        prev: prev,
-        next: next
+        votes: votes
     )
 
 func newSpamFilterObj*(
     difficulty: Hash[256]
 ): SpamFilter {.inline, forceCheck: [].} =
     SpamFilter(
-        median: nil,
+        medianPos: -1,
         left: 0,
         right: 0,
+        difficulties: @[],
 
         votes: initTable[uint16, VotedDifficulty](),
 
@@ -71,32 +67,51 @@ func newSpamFilterObj*(
         difficulty: difficulty
     )
 
-#Remove the median.
-func removeMedian(
-    filter: var SpamFilter,
-) {.forceCheck: [].} =
-    if filter.median.isNil:
-        return
+#Access the median element.
+func median*(
+    filter: var SpamFilter
+): VotedDifficulty {.inline, forceCheck: [].} =
+    filter.difficulties[filter.medianPos]
 
-    while filter.median.votes == 0:
-        if filter.median.prev.isNil and filter.median.next.isNil:
-            filter.median = nil
+#Access the element before the median element.
+func prevMedian*(
+    filter: var SpamFilter
+): VotedDifficulty {.inline, forceCheck: [].} =
+    filter.difficulties[filter.medianPos - 1]
+
+#Access the element after the median element.
+func nextMedian*(
+    filter: var SpamFilter
+): VotedDifficulty {.inline, forceCheck: [].} =
+    filter.difficulties[filter.medianPos + 1]
+
+#Remove a difficulty.
+func remove(
+    filter: var SpamFilter,
+    difficulty: VotedDifficulty
+) {.forceCheck: [].} =
+    var d: int = 0
+    while d < filter.difficulties.len:
+        if difficulty == filter.difficulties[d]:
+            break
+        inc(d)
+
+    filter.difficulties.delete(d)
+
+    if d < filter.medianPos:
+        dec(filter.medianPos)
+    elif filter.medianPos == d:
+        if filter.difficulties.len == 0:
+            filter.medianPos = -1
             filter.difficulty = filter.startDifficulty
             filter.left = 0
             filter.right = 0
-            break
-        elif filter.median.prev.isNil:
-            filter.median.next.prev = nil
-            filter.median = filter.median.next
-            filter.right -= filter.median.votes
-        elif filter.median.next.isNil:
-            filter.median.prev.next = nil
-            filter.median = filter.median.prev
+        elif d == filter.difficulties.len:
+            dec(filter.medianPos)
+            filter.difficulty = filter.median.difficulty
             filter.left -= filter.median.votes
         else:
-            filter.median.prev.next = filter.median.next
-            filter.median.next.prev = filter.median.prev
-            filter.median = filter.median.next
+            filter.difficulty = filter.median.difficulty
             filter.right -= filter.median.votes
 
 #Recalculate the median.
@@ -107,33 +122,25 @@ func recalculate(
     if filter.votes.len == 0:
         return
 
-    #If this median wasn't voted for, remove it.
-    filter.removeMedian()
-
     #Make sure median is accurate.
     while filter.left > filter.right:
         if filter.right + filter.median.votes < filter.left:
-            filter.left -= filter.median.prev.votes
+            filter.left -= filter.prevMedian.votes
             filter.right += filter.median.votes
-            filter.median = filter.median.prev
-            filter.removeMedian()
+            filter.medianPos -= 1
         else:
             break
 
     while filter.right > filter.left:
         if filter.left + filter.median.votes <= filter.right:
             filter.left += filter.median.votes
-            filter.right -= filter.median.next.votes
-            filter.median = filter.median.next
-            filter.removeMedian()
+            filter.right -= filter.nextMedian.votes
+            filter.medianPos += 1
         else:
             break
 
     #Update the difficulty.
-    if filter.median.isNil:
-        filter.difficulty = filter.startDifficulty
-    else:
-        filter.difficulty = filter.median.difficulty
+    filter.difficulty = filter.median.difficulty
 
 #Handle the Merit change that comes with a new Block.
 func handleBlock*(
@@ -183,6 +190,11 @@ func handleBlock*(
                 discard
             else:
                 dec(filter.right)
+
+            if filter.votes[decd].votes == 0:
+                filter.remove(filter.votes[decd])
+            if decdMerit div 50 == 0:
+                filter.votes.del(decd)
     except KeyError as e:
         doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
 
@@ -203,8 +215,9 @@ func update*(
         return
 
     #If this is the first vote, set median/difficulty and return.
-    if filter.median.isNil:
-        filter.median = newVotedDifficulty(difficulty, votes, nil, nil)
+    if filter.medianPos == -1:
+        filter.medianPos = 0
+        filter.difficulties.add(newVotedDifficulty(difficulty, votes))
         filter.difficulty = difficulty
         filter.votes[holder] = filter.median
         return
@@ -217,48 +230,52 @@ func update*(
                 filter.left -= votes
             elif filter.votes[holder].difficulty > filter.median.difficulty:
                 filter.right -= votes
+
+            if filter.votes[holder].votes == 0:
+                filter.remove(filter.votes[holder])
         except KeyError as e:
             doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
 
-    #Find the node matching the new vote, adding it if needed.
-    var curr: VotedDifficulty = filter.median
-    if difficulty < filter.difficulty:
-        filter.left += votes
-
-        while not curr.prev.isNil:
-            if curr.prev.difficulty < difficulty:
-                break
-            curr = curr.prev
-
-        if curr.difficulty == difficulty:
-            filter.votes[holder] = curr
-            curr.votes += votes
-        else:
-            var shifted: VotedDifficulty = curr.prev
-            curr.prev = newVotedDifficulty(difficulty, votes, shifted, curr)
-            filter.votes[holder] = curr.prev
-            if not shifted.isNil:
-                shifted.next = curr.prev
-    elif difficulty > filter.difficulty:
-        filter.right += votes
-
-        while not curr.next.isNil:
-            if curr.next.difficulty > difficulty:
-                break
-            curr = curr.next
-
-        if curr.difficulty == difficulty:
-            filter.votes[holder] = curr
-            curr.votes += votes
-        else:
-            var shifted: VotedDifficulty = curr.next
-            curr.next = newVotedDifficulty(difficulty, votes, curr, shifted)
-            filter.votes[holder] = curr.next
-            if not shifted.isNil:
-                shifted.prev = curr.next
+    #If we just removed the median, create a new one.
+    if filter.medianPos == -1:
+        filter.medianPos = 0
+        filter.difficulties = @[newVotedDifficulty(difficulty, votes)]
+        filter.votes[holder] = filter.difficulties[0]
     else:
-        filter.votes[holder] = curr
-        curr.votes += votes
+        #Find the node matching the new vote, adding it if needed.
+        var curr: int = filter.medianPos
+        if difficulty < filter.difficulty:
+            filter.left += votes
+
+            while curr != 0:
+                if filter.difficulties[curr - 1].difficulty < difficulty:
+                    break
+                dec(curr)
+
+            if filter.difficulties[curr].difficulty == difficulty:
+                filter.votes[holder] = filter.difficulties[curr]
+                filter.difficulties[curr].votes += votes
+            else:
+                filter.difficulties.insert(newVotedDifficulty(difficulty, votes), curr)
+                filter.votes[holder] = filter.difficulties[curr]
+                inc(filter.medianPos)
+        elif difficulty > filter.difficulty:
+            filter.right += votes
+
+            while curr != filter.difficulties.len - 1:
+                if filter.difficulties[curr + 1].difficulty > difficulty:
+                    break
+                inc(curr)
+
+            if filter.difficulties[curr].difficulty == difficulty:
+                filter.votes[holder] = filter.difficulties[curr]
+                filter.difficulties[curr].votes += votes
+            else:
+                filter.difficulties.insert(newVotedDifficulty(difficulty, votes), curr + 1)
+                filter.votes[holder] = filter.difficulties[curr + 1]
+        else:
+            filter.votes[holder] = filter.difficulties[curr]
+            filter.difficulties[curr].votes += votes
 
     #Recalculate the median.
     filter.recalculate()
