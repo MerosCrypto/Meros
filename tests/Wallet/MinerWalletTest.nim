@@ -18,7 +18,7 @@ import random
 #PrivateKey random.
 randomize(int64(getTime()))
 
-suite "MinerWaller":
+suite "MinerWallet":
     setup:
         var
             #MinerWallets.

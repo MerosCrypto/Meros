@@ -31,9 +31,13 @@ class BlockBody:
     #Serialize.
     def serialize(
         self,
-        sketchSalt: bytes
+        sketchSalt: bytes,
+        capacityArg: int = -1
     ) -> bytes:
-        capacity: int = len(self.packets) // 5 + 1 if len(self.packets) != 0 else 0
+        capacity: int = capacityArg
+        if capacity == -1:
+            capacity = len(self.packets) // 5 + 1 if len(self.packets) != 0 else 0
+
         sketch: Sketch = Sketch(capacity)
         for packet in self.packets:
             sketch.add(sketchSalt, packet)

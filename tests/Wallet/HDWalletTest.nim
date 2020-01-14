@@ -27,7 +27,7 @@ import json
 #Vectors File.
 const vectorsFile: string = staticRead("Vectors" / "HDWallet.json")
 
-suite "HDWallet.":
+suite "HDWallet":
     setup:
         var
             #HDWallets.

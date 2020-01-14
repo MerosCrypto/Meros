@@ -39,10 +39,7 @@ def DataTest(
     )
 
     #Create the Data.
-    data: Data = Data(
-        bytes(32),
-        pubKey.to_bytes()
-    )
+    data: Data = Data(bytes(32), pubKey.to_bytes())
     data.sign(privKey)
     data.beat(spamFilter)
 

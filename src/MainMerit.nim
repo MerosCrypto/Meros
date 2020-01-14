@@ -111,9 +111,9 @@ proc mainMerit() {.forceCheck: [].} =
             var sketcher: Sketcher = sketcherArg
             if sketcher.len == 0:
                 sketcher = newSketcher(
-                functions.merit.getMerit,
+                    functions.merit.getMerit,
                     functions.consensus.isMalicious,
-                    consensus.getPending().packets
+                    cast[seq[VerificationPacket]](consensus.getPending().packets)
                 )
 
             #Sync this Block.

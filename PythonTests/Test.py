@@ -18,6 +18,7 @@ from PythonTests.Tests.Transactions.DataTest import DataTest
 from PythonTests.Tests.Transactions.SameInputTest import SameInputTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 
+from PythonTests.Tests.Consensus.Verification.EightyEightTest import EightyEightTest
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
@@ -38,7 +39,7 @@ from sys import argv
 #Sleep standard function.
 from time import sleep
 
-#SHUtil standard lib.
+#ShUtil standard lib.
 import shutil
 
 #Format Exception standard function.
@@ -61,6 +62,7 @@ tests: List[Callable[[RPC], None]] = [
     SameInputTest,
     FiftyTest,
 
+    EightyEightTest,
     VUnknownTest,
     VParsableTest,
     VCompetingTest,

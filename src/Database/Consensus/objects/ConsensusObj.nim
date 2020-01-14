@@ -136,21 +136,6 @@ proc newConsensusObj*(
     for hash in unmentioned:
         result.unmentioned.incl(hash)
 
-#Get all pending Verification Packets and the aggregate signature.
-proc getPending*(
-    consensus: Consensus
-): tuple[
-    packets: seq[VerificationPacket],
-    aggregate: BLSSignature
-] {.forceCheck: [].} =
-    for status in consensus.statuses.values():
-        if status.pending.holders.len != 0:
-            result.packets.add(status.pending)
-            if result.aggregate.isInf:
-                result.aggregate = status.pending.signature
-            else:
-                result.aggregate = @[result.aggregate, status.pending.signature].aggregate()
-
 #Set a Transaction as unmentioned.
 proc setUnmentioned*(
     consensus: Consensus,
@@ -390,6 +375,57 @@ proc finalize*(
     #This will cause a double save for the finalized TX in the unverified case.
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
+
+#Get all pending Verification Packets and the aggregate signature.
+proc getPending*(
+    consensus: Consensus
+): tuple[
+    packets: seq[SignedVerificationPacket],
+    aggregate: BLSSignature
+] {.forceCheck: [].} =
+    var included: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+    for status in consensus.statuses.values():
+        if status.pending.holders.len != 0:
+            result.packets.add(status.pending)
+            included.incl(status.pending.hash)
+
+    var p: int = 0
+    while p < result.packets.len:
+        var
+            tx: Transaction
+            mentioned: bool
+
+        try:
+            tx = consensus.functions.transactions.getTransaction(result.packets[p].hash)
+        except IndexError as e:
+            doAssert(false, "Couldn't get a Transaction which has a packet: " & e.msg)
+
+        block checkPredecessors:
+            if tx of Claim:
+                break checkPredecessors
+            if (tx of Data) and (tx.inputs[0].hash == Hash[256]()):
+                break checkPredecessors
+
+            for input in tx.inputs:
+                var status: TransactionStatus
+                try:
+                    status = consensus.getStatus(input.hash)
+                except IndexError as e:
+                    doAssert(false, "Couldn't get the status of a Transaction before the current Transaction: " & e.msg)
+
+                mentioned = included.contains(input.hash) or ((status.holders.len != 0) and (not consensus.unmentioned.contains(input.hash)))
+                if not mentioned:
+                    break
+
+            if not mentioned:
+                result.packets.del(p)
+                continue
+
+        if p == 0:
+            result.aggregate = result.packets[p].signature
+        else:
+            result.aggregate = @[result.aggregate, result.packets[p].signature].aggregate()
+        inc(p)
 
 #Provide debug access to the statuses table
 when defined(merosTests):

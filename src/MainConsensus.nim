@@ -64,8 +64,13 @@ proc mainConsensus() {.forceCheck: [].} =
         functions.consensus.getPending = proc (): tuple[
             packets: seq[VerificationPacket],
             aggregate: BLSSignature
-        ] {.inline, forceCheck: [].} =
-            consensus.getPending()
+        ] {.forceCheck: [].} =
+            var pending: tuple[
+                packets: seq[SignedVerificationPacket],
+                aggregate: BLSSignature
+            ] = consensus.getPending()
+
+            result = (cast[seq[VerificationPacket]](pending.packets), pending.aggregate)
 
         #Handle SignedVerifications.
         functions.consensus.addSignedVerification = proc (

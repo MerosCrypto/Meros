@@ -118,7 +118,7 @@ type
         getPending*: proc (): tuple[
             packets: seq[VerificationPacket],
             aggregate: BLSSignature
-        ] {.inline, raises: [].}
+        ] {.raises: [].}
 
         addSignedVerification*: proc (
             verif: SignedVerification
