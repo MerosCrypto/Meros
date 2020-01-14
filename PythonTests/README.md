@@ -20,7 +20,6 @@ cd mc_randomx
 git submodule update --init --recursive
 cd RandomX/src
 rm configuration.h
-rm randomx.h
 cp ../../MerosConfiguration/* .
 cd ..
 mkdir build

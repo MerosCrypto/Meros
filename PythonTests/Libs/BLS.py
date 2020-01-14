@@ -304,10 +304,11 @@ class Signature():
 class PrivateKey():
     def __init__(
         self,
-        keyArg: bytes
+        key: bytes
     ) -> None:
+        key = key.rjust(48, b'\0')
         self.value: Big384 = Big384()
-        MilagroCurve.BIG_384_58_fromBytesLen(self.value, c_char_p(keyArg), 48)
+        MilagroCurve.BIG_384_58_fromBytesLen(self.value, c_char_p(key), 48)
         MilagroCurve.BIG_384_58_mod(self.value, r)
 
     def toPublicKey(
