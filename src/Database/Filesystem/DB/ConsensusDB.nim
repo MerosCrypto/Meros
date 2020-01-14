@@ -88,15 +88,23 @@ proc save*(
     db: DB,
     sendDiff: SendDifficulty
 ) {.forceCheck: [].} =
-    db.put(sendDiff.holder.toBinary().pad(NICKNAME_LEN) & "s", sendDiff.difficulty.toString())
-    db.put(sendDiff.holder.toBinary().pad(NICKNAME_LEN), sendDiff.nonce.toBinary())
+    db.put(
+        sendDiff.holder.toBinary(NICKNAME_LEN) & sendDiff.nonce.toBinary(INT_LEN),
+        SEND_DIFFICULTY_PREFIX & sendDiff.difficulty.toString()
+    )
+    db.put(sendDiff.holder.toBinary(NICKNAME_LEN) & "s", sendDiff.difficulty.toString())
+    db.put(sendDiff.holder.toBinary(NICKNAME_LEN), sendDiff.nonce.toBinary())
 
 proc save*(
     db: DB,
     dataDiff: DataDifficulty
 ) {.forceCheck: [].} =
-    db.put(dataDiff.holder.toBinary().pad(NICKNAME_LEN) & "d", dataDiff.difficulty.toString())
-    db.put(dataDiff.holder.toBinary().pad(NICKNAME_LEN), dataDiff.nonce.toBinary())
+    db.put(
+        dataDiff.holder.toBinary(NICKNAME_LEN) & dataDiff.nonce.toBinary(INT_LEN),
+        DATA_DIFFICULTY_PREFIX & dataDiff.difficulty.toString()
+    )
+    db.put(dataDiff.holder.toBinary(NICKNAME_LEN) & "d", dataDiff.difficulty.toString())
+    db.put(dataDiff.holder.toBinary(NICKNAME_LEN), dataDiff.nonce.toBinary())
 
 proc save*(
     db: DB,
@@ -117,9 +125,32 @@ proc load*(
     holder: uint16
 ): int {.forceCheck: [].} =
     try:
-        result = db.get(holder.toBinary().pad(NICKNAME_LEN)).fromBinary()
+        result = db.get(holder.toBinary(NICKNAME_LEN)).fromBinary()
     except DBReadError:
         result = -1
+
+proc load*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+): BlockElement {.forceCheck: [
+    DBReadError
+].} =
+    var elem: string
+    try:
+        elem = db.get(holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN))
+    except DBReadError as e:
+        fcRaise e
+
+    case int(elem[0]):
+        of SEND_DIFFICULTY_PREFIX:
+            result = newSendDifficultyObj(nonce, elem[1 ..< 33].toHash(256))
+            result.holder = holder
+        of DATA_DIFFICULTY_PREFIX:
+            result = newDataDifficultyObj(nonce, elem[1 ..< 33].toHash(256))
+            result.holder = holder
+        else:
+            doAssert(false, "Tried to load an unknown Block Element: " & $int(elem[0]))
 
 proc loadSendDifficulty*(
     db: DB,
@@ -128,7 +159,7 @@ proc loadSendDifficulty*(
     DBReadError
 ].} =
     try:
-        result = db.get(holder.toBinary().pad(NICKNAME_LEN) & "s").toHash(256)
+        result = db.get(holder.toBinary(NICKNAME_LEN) & "s").toHash(256)
     except ValueError:
         doAssert(false, "Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
@@ -141,7 +172,7 @@ proc loadDataDifficulty*(
     DBReadError
 ].} =
     try:
-        result = db.get(holder.toBinary().pad(NICKNAME_LEN) & "d").toHash(256)
+        result = db.get(holder.toBinary(NICKNAME_LEN) & "d").toHash(256)
     except ValueError:
         doAssert(false, "Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
