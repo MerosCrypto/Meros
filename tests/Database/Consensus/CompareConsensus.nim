@@ -53,49 +53,16 @@ proc compare*(
     sf1: SpamFilter,
     sf2: SpamFilter
 ) =
-    #If one is nil, verify both are.
-    if sf1.median.isNil:
-        check(sf2.median.isNil)
-    #If one isn't nil, verify both aren't.
-    else:
-        check(not sf2.median.isNil)
+    #Verify the median position and left/right are the same.
+    check(sf1.medianPos == sf2.medianPos)
+    check(sf1.left == sf2.left)
+    check(sf1.right == sf2.right)
 
-        #Get the left most difficulties.
-        var
-            curr1: VotedDifficulty = sf1.median
-            curr2: VotedDifficulty = sf2.median
-        while not curr1.prev.isNil:
-            curr1 = curr1.prev
-        while not curr2.prev.isNil:
-            curr2 = curr2.prev
-
-        while curr1.votes == 0:
-            curr1 = curr1.next
-        while curr2.votes == 0:
-            curr2 = curr2.next
-
-        #Function to get the next difficulty in the list.
-        #Skips over 0 elements as the SpamFilter only removes 0s when adjusted the median over.
-        proc getNext(
-            diff: VotedDifficulty
-        ): VotedDifficulty =
-            result = diff.next
-            while not result.isNil:
-                if result.votes == 0:
-                    result = result.next
-                else:
-                    return
-
-        while not curr1.isNil:
-            #Verify their equality.
-            check(curr1.difficulty == curr2.difficulty)
-            check(curr1.votes == curr2.votes)
-
-            #Get the next difficulties.
-            curr1 = curr1.getNext()
-            curr2 = curr2.getNext()
-            #Verify if one is nil, both are.
-            check(curr1.isNil == curr2.isNil)
+    #Verify the difficulties are the same.
+    check(sf1.difficulties.len == sf2.difficulties.len)
+    for d in 0 ..< sf1.difficulties.len:
+        check(sf1.difficulties[d].difficulty == sf2.difficulties[d].difficulty)
+        check(sf1.difficulties[d].votes == sf2.difficulties[d].votes)
 
     #Verify the SpamFilters agree on who voted for what.
     check(sf1.votes.len == sf2.votes.len)

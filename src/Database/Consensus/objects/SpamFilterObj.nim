@@ -31,7 +31,7 @@ type
             #Nicknames -> VotedDifficulty.
             votes*: Table[uint16, VotedDifficulty]
         else:
-            median: int
+            medianPos: int
             left: int
             right: int
             difficulties: seq[VotedDifficulty]
@@ -69,19 +69,19 @@ func newSpamFilterObj*(
 
 #Access the median element.
 func median*(
-    filter: var SpamFilter
+    filter: SpamFilter
 ): VotedDifficulty {.inline, forceCheck: [].} =
     filter.difficulties[filter.medianPos]
 
 #Access the element before the median element.
 func prevMedian*(
-    filter: var SpamFilter
+    filter: SpamFilter
 ): VotedDifficulty {.inline, forceCheck: [].} =
     filter.difficulties[filter.medianPos - 1]
 
 #Access the element after the median element.
 func nextMedian*(
-    filter: var SpamFilter
+    filter: SpamFilter
 ): VotedDifficulty {.inline, forceCheck: [].} =
     filter.difficulties[filter.medianPos + 1]
 

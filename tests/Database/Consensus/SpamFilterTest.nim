@@ -122,8 +122,7 @@ suite "SpamFilter":
                 else:
                     var found: bool = true
                     while found:
-                        #https://github.com/MerosCrypto/Meros/issues/114
-                        for b in 0 ..< 48:
+                        for b in 0 ..< 32:
                             difficulty.data[b mod 32] = uint8(rand(255))
 
                         #Break if no existing difficulty is the same.
