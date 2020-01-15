@@ -29,6 +29,7 @@ class Blockchain:
         self.startDifficulty: int = startDifficulty
         self.maxDifficulty: int = (2 ** 256) - 1
         self.difficulties: List[Tuple[int, int]] = [(startDifficulty, 1)]
+
         self.blocks: List[Block] = [
             Block(
                 BlockHeader(
@@ -44,6 +45,8 @@ class Blockchain:
                 BlockBody()
             )
         ]
+
+        self.keys: Dict[bytes, int] = {}
 
     #Add block.
     def add(
@@ -132,6 +135,9 @@ class Blockchain:
             #Add the new difficulty.
             self.difficulties.append((difficulty, self.difficulties[-1][1] + blocksPerPeriod))
 
+        if block.header.newMiner:
+            self.keys[block.header.minerKey] = len(self.keys)
+
     #Last hash.
     def last(
         self
@@ -163,5 +169,5 @@ class Blockchain:
     ) -> Any:
         result = Blockchain(genesis, blockTime, startDifficulty)
         for block in blocks:
-            result.add(Block.fromJSON(block))
+            result.add(Block.fromJSON(result.keys, block))
         return result

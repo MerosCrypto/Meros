@@ -27,13 +27,14 @@ class Merit:
         )
         self.state: State = State(lifetime)
         self.epochs = Epochs()
+
         self.mints: List[Mint] = []
 
     #Add block.
     def add(
         self,
         block: Block
-    ):
+    ) -> None:
         self.blockchain.add(block)
 
         mint: Optional[Mint] = self.epochs.shift(
@@ -74,11 +75,13 @@ class Merit:
         result.mints = []
 
         for b in range(1, len(result.blockchain.blocks)):
-            result.mints += result.epochs.shift(
+            mint: Optional[Mint] = result.epochs.shift(
                 result.state,
                 result.blockchain,
                 b
             )
+            if mint is not None:
+                result.mints.append(mint)
 
             result.state.add(result.blockchain, b)
         return result

@@ -43,7 +43,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [sendDiff.toSignedElement()]),
+        BlockHeader.createContents([], [], [sendDiff.toSignedElement()]),
         1,
         bytes(4),
         bytes(32),
@@ -90,7 +90,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [sendDiff.toSignedElement()]),
+        BlockHeader.createContents([], [], [sendDiff.toSignedElement()]),
         1,
         bytes(4),
         bytes(32),

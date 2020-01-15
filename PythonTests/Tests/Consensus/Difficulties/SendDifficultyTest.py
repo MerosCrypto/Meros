@@ -5,9 +5,6 @@
 #Types.
 from typing import Dict, Callable, IO, Any
 
-#Blockchain class.
-from PythonTests.Classes.Merit.Blockchain import Blockchain
-
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Liver import Liver
@@ -27,19 +24,11 @@ def SendDifficultyTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        vectors["blockchain"]
-    )
-
     #Verify functions.
     vddStarting: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
     vddEarnedVote: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"))
     vddVoted: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"))
 
     #Create and execute a Liver/Syncer.
-    Liver(rpc, blockchain, callbacks={26: vddStarting, 50: vddEarnedVote, 51: vddVoted}).live()
-    Syncer(rpc, blockchain).sync()
+    Liver(rpc, vectors["blockchain"], callbacks={26: vddStarting, 50: vddEarnedVote, 51: vddVoted}).live()
+    Syncer(rpc, vectors["blockchain"]).sync()

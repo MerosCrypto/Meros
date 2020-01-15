@@ -1,11 +1,12 @@
 #Types.
-from typing import IO, Dict, List, Any
+from typing import IO, Dict, Any
 
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey, PublicKey
 
-#DataDifficulty class.
+#Consensus class.
 from PythonTests.Classes.Consensus.DataDifficulty import SignedDataDifficulty
+from PythonTests.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -20,19 +21,36 @@ from hashlib import blake2b
 import json
 
 #Blockchain.
-bbFile: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
-blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
-blockchain: Blockchain = Blockchain.fromJSON(
+blockchain: Blockchain = Blockchain(
     b"MEROS_DEVELOPER_NETWORK",
     60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    blocks
+    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
 )
-bbFile.close()
 
 #BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
+
+#Generate a Block granting the holder Merit.
+block = Block(
+    BlockHeader(
+        0,
+        blockchain.last(),
+        bytes(48),
+        1,
+        bytes(4),
+        bytes(32),
+        blsPubKey.serialize(),
+        blockchain.blocks[-1].header.time + 1200
+    ),
+    BlockBody()
+)
+#Mine it.
+block.mine(blsPrivKey, blockchain.difficulty())
+
+#Add it.
+blockchain.add(block)
+print("Generated Partial Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a DataDifficulty.
 dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), 0)
@@ -57,58 +75,40 @@ block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Partial Block " + str(len(blockchain.blocks)) + ".")
 
-#Mine 24 more Blocks until there's a vote.
-for _ in range(24):
-    block = Block(
-        BlockHeader(
-            0,
-            blockchain.last(),
-            bytes(32),
-            1,
-            bytes(4),
-            bytes(32),
-            0,
-            blockchain.blocks[-1].header.time + 1200
-        ),
-        BlockBody()
-    )
-    #Mine it.
-    block.mine(blsPrivKey, blockchain.difficulty())
+#Create a conflicting DataDifficulty with the same nonce.
+dataDiffConflicting = SignedDataDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 0)
+dataDiffConflicting.sign(0, blsPrivKey)
 
-    #Add it.
-    blockchain.add(block)
-    print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
+#Create a MeritRemoval out of the two of them.
+mr: PartialMeritRemoval = PartialMeritRemoval(dataDiff, dataDiffConflicting.toSignedElement())
 
-#Now that we have aa vote, update our vote.
-dataDiff = SignedDataDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 1)
-dataDiff.sign(0, blsPrivKey)
-
-#Generate a Block containing the new DataDifficulty.
+#Generate a Block containing the MeritRemoval.
 block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], [dataDiff.toSignedElement()]),
+        BlockHeader.createContents([], [], [mr.toSignedElement()]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [dataDiff.toSignedElement()], dataDiff.signature)
+    BlockBody([], [mr.toSignedElement()], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Partial Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON()
+    "blockchain": blockchain.toJSON(),
+    "removal": mr.toSignedJSON(),
 }
-vectors: IO[Any] = open("PythonTests/Vectors/Consensus/Difficulties/DataDifficulty.json", "w")
+vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Partial.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()

@@ -6,9 +6,6 @@ from typing import Dict, IO, Any
 #Transaction class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Blockchain class.
-from PythonTests.Classes.Merit.Blockchain import Blockchain
-
 #TestError Exception.
 from PythonTests.Tests.Errors import TestError
 
@@ -27,13 +24,6 @@ def VCompetingTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        vectors["blockchain"]
-    )
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
@@ -46,5 +36,5 @@ def VCompetingTest(
             raise TestError("Did verify the Send which should have been beaten.")
 
     #Create and execute a Liver/Syncer.
-    Liver(rpc, blockchain, transactions, callbacks={19: verifyConfirmation}).live()
-    Syncer(rpc, blockchain, transactions).sync()
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={19: verifyConfirmation}).live()
+    Syncer(rpc, vectors["blockchain"], transactions).sync()

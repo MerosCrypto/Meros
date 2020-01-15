@@ -6,9 +6,6 @@ from typing import Dict, IO, Any
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
 
-#Blockchain class.
-from PythonTests.Classes.Merit.Blockchain import Blockchain
-
 #Meros classes.
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Liver import Liver
@@ -24,14 +21,6 @@ def FiftyTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    blockchain: Blockchain = Blockchain.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        vectors["blockchain"]
-    )
-    transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
-
     #Create and execute a Liver/Syncer.
-    Liver(rpc, blockchain, transactions).live()
-    Syncer(rpc, blockchain, transactions).sync()
+    Liver(rpc, vectors["blockchain"], Transactions.fromJSON(vectors["transactions"])).live()
+    Syncer(rpc, vectors["blockchain"], Transactions.fromJSON(vectors["transactions"])).sync()

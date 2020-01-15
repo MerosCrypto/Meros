@@ -3,8 +3,8 @@
 #Types.
 from typing import Dict, List, IO, Any
 
-#Blockchain class.
-from PythonTests.Classes.Merit.Blockchain import Blockchain
+#Merit class.
+from PythonTests.Classes.Merit.Merit import Merit
 
 #TestError and SuccessError Exceptions.
 from PythonTests.Tests.Errors import TestError, SuccessError
@@ -27,11 +27,12 @@ def HundredTest(
     #Grab only the first block.
     blocks = [blocks[0]]
 
-    #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(
+    #Merit.
+    merit: Merit = Merit.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        100,
         blocks
     )
 
@@ -49,7 +50,7 @@ def HundredTest(
     #This test verifies we get disconnected without a Handshake attempt.
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, blockchain.blocks[1].header.hash)
+    rpc.meros.connect(254, 254, merit.blockchain.blocks[1].header.hash)
 
     #Handle sync requests.
     reqHash: bytes = bytes()
@@ -61,7 +62,7 @@ def HundredTest(
 
         elif MessageType(msg[0]) == MessageType.BlockHeaderRequest:
             reqHash = msg[1 : 33]
-            if reqHash != blockchain.blocks[-1].header.hash:
+            if reqHash != merit.blockchain.blocks[-1].header.hash:
                 raise TestError("Meros asked for a BlockHeader other than the one in the Block from the Handshake.")
 
             #Wait until Meros disconnects us.

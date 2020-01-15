@@ -30,9 +30,17 @@ class Verification(Element):
     ) -> Any:
         return elem
 
+    #Serialize for signing.
+    def signatureSerialize(
+        self,
+        lookup: List[bytes] = []
+    ) -> bytes:
+        return self.prefix + self.hash
+
     #Serialize.
     def serialize(
-        self
+        self,
+        lookup: List[bytes] = []
     ) -> bytes:
         return self.holder.to_bytes(2, "big") + self.hash
 
@@ -55,13 +63,6 @@ class Verification(Element):
         return Verification(bytes.fromhex(json["hash"]), json["holder"])
 
 class SignedVerification(Verification):
-    #Serialize for signing.
-    @staticmethod
-    def signatureSerialize(
-        txHash: bytes
-    ) -> bytes:
-        return VERIFICATION_PREFIX + txHash
-
     #Constructor.
     def __init__(
         self,
@@ -84,12 +85,14 @@ class SignedVerification(Verification):
         privKey: PrivateKey
     ) -> None:
         self.holder = holder
-        self.blsSignature = privKey.sign(SignedVerification.signatureSerialize(self.hash))
+        self.blsSignature = privKey.sign(self.signatureSerialize())
         self.signature = self.blsSignature.serialize()
 
     #Serialize.
+    #pylint: disable=unused-argument
     def signedSerialize(
-        self
+        self,
+        lookup: List[bytes] = []
     ) -> bytes:
         return Verification.serialize(self) + self.signature
 

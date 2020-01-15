@@ -6,9 +6,9 @@ from typing import Dict, List, IO, Any
 #Sketch class.
 from PythonTests.Libs.Minisketch import Sketch
 
-#Blockchain classes.
+#Merit classes.
 from PythonTests.Classes.Merit.Block import Block
-from PythonTests.Classes.Merit.Blockchain import Blockchain
+from PythonTests.Classes.Merit.Merit import Merit
 
 #VerificationPacket class.
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
@@ -35,11 +35,12 @@ def SameInputTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(
+    #Merit.
+    merit: Merit = Merit.fromJSON(
         b"MEROS_DEVELOPER_NETWORK",
         60,
         int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        100,
         vectors["blockchain"]
     )
     #Transactions.
@@ -51,7 +52,7 @@ def SameInputTest(
         syncedTX: bool = False
 
         #Grab the Block.
-        block: Block = blockchain.blocks[13]
+        block: Block = merit.blockchain.blocks[13]
 
         #Send the Block.
         rpc.meros.blockHeader(block.header)
@@ -75,7 +76,7 @@ def SameInputTest(
                     raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                 #Send the BlockBody.
-                rpc.meros.blockBody(block)
+                rpc.meros.blockBody(merit.state.nicks, block)
 
             elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
                 if not block.body.packets:
@@ -134,4 +135,4 @@ def SameInputTest(
                 raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Create and execute a Liver.
-    Liver(rpc, blockchain, transactions, callbacks={12: checkFail}).live()
+    Liver(rpc, vectors["blockchain"], transactions, callbacks={12: checkFail}).live()

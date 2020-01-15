@@ -1,8 +1,11 @@
-#TestError Exception.
-from PythonTests.Tests.Errors import TestError
+#MeritRemoval class.
+from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
 
 #RPC class.
 from PythonTests.Meros.RPC import RPC
+
+#TestError Exception.
+from PythonTests.Tests.Errors import TestError
 
 #Verify the Send Difficulty.
 def verifySendDifficulty(
@@ -19,3 +22,23 @@ def verifyDataDifficulty(
 ) -> None:
     if rpc.call("consensus", "getDataDifficulty") != dataDiff.hex().upper():
         raise TestError("Data Difficulty doesn't match.")
+
+#Verify a MeritRemoval.
+def verifyMeritRemoval(
+    rpc: RPC,
+    total: int,
+    merit: int,
+    removal: MeritRemoval,
+    pending: bool
+) -> None:
+    #Verify the total Merit.
+    if rpc.call("merit", "getTotalMerit") != total if pending else total - merit:
+        raise TestError("Total Merit doesn't match.")
+
+    #Verify the holder's Merit.
+    if rpc.call("merit", "getMerit", [removal.holder]) != {
+        "unlocked": True,
+        "malicious": pending,
+        "merit": merit if pending else 0
+    }:
+        raise TestError("Holder's Merit doesn't match.")

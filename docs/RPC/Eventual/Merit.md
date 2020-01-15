@@ -44,6 +44,7 @@ The result is an object, as follows:
         - `difficulty` (string)
 
         When `descendant` == "GasPrice":
+        - `nonce` (int)
         - `price` (int)
 
         When `descendant` == "MeritRemoval":
@@ -56,6 +57,18 @@ The result is an object, as follows:
             When `descendant` == "VerificationPacket":
                 - `holders` (array of strings, each a BLS Public Key)
                 - `hash` (string)
+
+            When `descendant` == "SendDifficulty":
+            - `nonce`      (int)
+            - `difficulty` (string)
+
+            When `descendant` == "DataDifficulty":
+            - `nonce`      (int)
+            - `difficulty` (string)
+
+            When `descendant` == "GasPrice":
+            - `nonce` (int)
+            - `price` (int)
 
 - `aggregate` (string)
 

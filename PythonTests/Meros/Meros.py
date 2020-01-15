@@ -332,11 +332,12 @@ class Meros:
     #Send a Block Body.
     def blockBody(
         self,
+        lookup: List[bytes],
         block: Block
     ) -> bytes:
         res: bytes = (
             MessageType.BlockBody.toByte() +
-            block.body.serialize(block.header.sketchSalt)
+            block.body.serialize(lookup, block.header.sketchSalt)
         )
         self.send(res)
         return res

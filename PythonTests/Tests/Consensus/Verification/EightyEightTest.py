@@ -4,11 +4,11 @@ from typing import Dict, List, IO, Any
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey, Signature
 
-#Blockchain classes.
+#Merit classes.
 from PythonTests.Classes.Merit.Blockchain import BlockHeader
 from PythonTests.Classes.Merit.Blockchain import BlockBody
 from PythonTests.Classes.Merit.Blockchain import Block
-from PythonTests.Classes.Merit.Blockchain import Blockchain
+from PythonTests.Classes.Merit.Merit import Merit
 
 #Consensus classes.
 from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
@@ -57,11 +57,12 @@ def EightyEightTest(
     blocks: List[Dict[str, Any]] = json.loads(file.read())
     file.close()
 
-    #Blockchain.
-    blockchain: Blockchain = Blockchain(
+    #Merit.
+    merit: Merit = Merit(
         b"MEROS_DEVELOPER_NETWORK",
         60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
+        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+        100
     )
 
     #Spam Filter.
@@ -72,11 +73,11 @@ def EightyEightTest(
     )
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, blockchain.blocks[0].header.hash)
+    rpc.meros.connect(254, 254, merit.blockchain.blocks[0].header.hash)
 
     #Send the first Block.
-    block: Block = Block.fromJSON(blocks[0])
-    blockchain.add(block)
+    block: Block = Block.fromJSON(merit.blockchain.keys, blocks[0])
+    merit.blockchain.add(block)
     rpc.meros.blockHeader(block.header)
 
     #Handle sync requests.
@@ -93,7 +94,7 @@ def EightyEightTest(
                 raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
             #Send the BlockBody.
-            rpc.meros.blockBody(block)
+            rpc.meros.blockBody(merit.state.nicks, block)
 
         elif MessageType(msg[0]) == MessageType.SyncingOver:
             pass
@@ -146,7 +147,7 @@ def EightyEightTest(
     )
     template["header"] = bytes.fromhex(template["header"])
     packets: List[VerificationPacket] = [VerificationPacket(datas[0].hash, [0]), VerificationPacket(datas[1].hash, [0])]
-    if template["header"][36 : 68] != BlockHeader.createContents(packets):
+    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, packets):
         raise TestError("Block template doesn't have both Verification Packets.")
 
     #Mine the Block.
@@ -154,7 +155,7 @@ def EightyEightTest(
         BlockHeader(
             0,
             block.header.hash,
-            BlockHeader.createContents(packets),
+            BlockHeader.createContents(merit.state.nicks, packets),
             1,
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], packets),
@@ -169,11 +170,15 @@ def EightyEightTest(
     )
     if block.header.serializeHash()[:-4] != template["header"]:
         raise TestError("Failed to recreate the header.")
-    if block.body.serialize(block.header.sketchSalt, len(packets)) != bytes.fromhex(template["body"]):
+    if block.body.serialize(
+        merit.state.nicks,
+        block.header.sketchSalt,
+        len(packets)
+    ) != bytes.fromhex(template["body"]):
         raise TestError("Failed to recreate the body.")
 
-    block.mine(blsPrivKey, blockchain.difficulty())
-    blockchain.add(block)
+    block.mine(blsPrivKey, merit.blockchain.difficulty())
+    merit.blockchain.add(block)
 
     #Publish it.
     rpc.call(
@@ -185,10 +190,10 @@ def EightyEightTest(
                 template["header"] +
                 block.header.proof.to_bytes(4, byteorder="big") +
                 block.header.signature +
-                block.body.serialize(block.header.sketchSalt, len(packets))
+                block.body.serialize(merit.state.nicks, block.header.sketchSalt, len(packets))
             ).hex()
         ]
     )
 
     #Verify the Blockchain.
-    verifyBlockchain(rpc, blockchain)
+    verifyBlockchain(rpc, merit.blockchain)

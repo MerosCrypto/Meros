@@ -32,9 +32,17 @@ class SendDifficulty(Element):
     ) -> Any:
         return elem
 
+    #Serialize for signing.
+    def signatureSerialize(
+        self,
+        lookup: List[bytes] = []
+    ) -> bytes:
+        return SEND_DIFFICULTY_PREFIX + self.nonce.to_bytes(4, "big") + self.difficulty
+
     #Serialize.
     def serialize(
-        self
+        self,
+        lookup: List[bytes] = []
     ) -> bytes:
         return self.holder.to_bytes(2, "big") + self.nonce.to_bytes(4, "big") + self.difficulty
 
@@ -58,14 +66,6 @@ class SendDifficulty(Element):
         return SendDifficulty(bytes.fromhex(json["difficulty"]), json["nonce"], json["holder"])
 
 class SignedSendDifficulty(SendDifficulty):
-    #Serialize for signing.
-    @staticmethod
-    def signatureSerialize(
-        difficulty: bytes,
-        nonce: int
-    ) -> bytes:
-        return SEND_DIFFICULTY_PREFIX + nonce.to_bytes(4, "big") + difficulty
-
     #Constructor.
     def __init__(
         self,
@@ -89,12 +89,14 @@ class SignedSendDifficulty(SendDifficulty):
         privKey: PrivateKey
     ) -> None:
         self.holder = holder
-        self.blsSignature = privKey.sign(SignedSendDifficulty.signatureSerialize(self.difficulty, self.nonce))
+        self.blsSignature = privKey.sign(self.signatureSerialize())
         self.signature = self.blsSignature.serialize()
 
     #Serialize.
+    #pylint: disable=unused-argument
     def signedSerialize(
-        self
+        self,
+        lookup: List[bytes] = []
     ) -> bytes:
         return SendDifficulty.serialize(self) + self.signature
 

@@ -46,4 +46,4 @@ def StateTest(
             }:
                 raise TestError("Merit doesn't match.")
 
-    Liver(rpc, blockchain, everyBlock=checkState).live()
+    Liver(rpc, blocks, everyBlock=checkState).live()

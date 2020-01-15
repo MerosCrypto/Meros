@@ -120,7 +120,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents(packets),
+        BlockHeader.createContents([], packets),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), packets),

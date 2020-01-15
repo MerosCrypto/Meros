@@ -36,4 +36,4 @@ def DifficultyTest(
         if int(rpc.call("merit", "getDifficulty"), 16) != blockchain.difficulties[block][0]:
             raise TestError("Difficulty doesn't match.")
 
-    Liver(rpc, blockchain, everyBlock=checkDifficulty).live()
+    Liver(rpc, blocks, everyBlock=checkDifficulty).live()

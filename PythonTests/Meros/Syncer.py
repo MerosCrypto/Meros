@@ -4,9 +4,9 @@ from typing import Dict, List, Set, Union, Any
 #Sketch class.
 from PythonTests.Libs.Minisketch import Sketch
 
-#Block and Blockchain classes.
+#Merit classes.
 from PythonTests.Classes.Merit.Block import Block
-from PythonTests.Classes.Merit.Blockchain import Blockchain
+from PythonTests.Classes.Merit.Merit import Merit
 
 #Consensus classes.
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
@@ -30,7 +30,7 @@ class Syncer():
     def __init__(
         self,
         rpc: RPC,
-        blockchain: Blockchain,
+        blockchain: List[Dict[str, Any]],
         transactions: Union[Transactions, None] = None,
         settings: Dict[str, Any] = {}
     ) -> None:
@@ -38,23 +38,29 @@ class Syncer():
         self.rpc: RPC = rpc
 
         #DBs/Settings.
-        self.blockchain: Blockchain = blockchain
+        self.merit: Merit = Merit.fromJSON(
+            b"MEROS_DEVELOPER_NETWORK",
+            60,
+            int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+            100,
+            blockchain
+        )
         self.transactions: Union[Transactions, None] = transactions
         self.settings: Dict[str, Any] = dict(settings)
 
         #Provide default settings.
         if "height" not in self.settings:
-            self.settings["height"] = len(self.blockchain.blocks) - 1
+            self.settings["height"] = len(self.merit.blockchain.blocks) - 1
         if "playback" not in self.settings:
             self.settings["playback"] = True
 
         #List of Block hashes in this Blockchain.
         self.blockHashes: Set[bytes] = set()
         for b in range(1, self.settings["height"] + 1):
-            self.blockHashes.add(self.blockchain.blocks[b].header.hash)
+            self.blockHashes.add(self.merit.blockchain.blocks[b].header.hash)
 
         #List of mentioned Blocks.
-        self.blocks: List[Block] = [self.blockchain.blocks[self.settings["height"]]]
+        self.blocks: List[Block] = [self.merit.blockchain.blocks[self.settings["height"]]]
 
         #Dict of mentioned packets.
         self.packets: Dict[int, VerificationPacket] = {}
@@ -71,7 +77,7 @@ class Syncer():
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.blockchain.blocks[self.settings["height"]].header.hash)
+        self.rpc.meros.connect(254, 254, self.merit.blockchain.blocks[self.settings["height"]].header.hash)
 
         #Handle sync requests.
         reqHash: bytes = bytes()
@@ -83,24 +89,24 @@ class Syncer():
 
             elif MessageType(msg[0]) == MessageType.BlockListRequest:
                 reqHash = msg[3 : 51]
-                for b in range(len(self.blockchain.blocks)):
-                    if self.blockchain.blocks[b].header.hash == reqHash:
+                for b in range(len(self.merit.blockchain.blocks)):
+                    if self.merit.blockchain.blocks[b].header.hash == reqHash:
                         blockList: List[bytes] = []
                         for bl in range(1, msg[2] + 2):
                             if msg[1] == 0:
                                 if b - bl < 0:
                                     break
 
-                                blockList.append(self.blockchain.blocks[b - bl].header.hash)
+                                blockList.append(self.merit.blockchain.blocks[b - bl].header.hash)
                                 if b - bl != 0:
-                                    self.blocks.append(self.blockchain.blocks[b - bl])
+                                    self.blocks.append(self.merit.blockchain.blocks[b - bl])
 
                             elif msg[1] == 1:
                                 if b + bl > self.settings["height"]:
                                     break
 
-                                blockList.append(self.blockchain.blocks[b + bl].header.hash)
-                                self.blocks.append(self.blockchain.blocks[b + bl])
+                                blockList.append(self.merit.blockchain.blocks[b + bl].header.hash)
+                                self.blocks.append(self.merit.blockchain.blocks[b + bl])
 
                             else:
                                 raise TestError("Meros asked for an invalid direction in a BlockListRequest.")
@@ -130,7 +136,7 @@ class Syncer():
                 if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for a BlockBody other than the next Block's on the last BlockList.")
 
-                self.rpc.meros.blockBody(self.blocks[-1])
+                self.rpc.meros.blockBody(self.merit.state.nicks, self.blocks[-1])
                 self.blockHashes.remove(self.blocks[-1].header.hash)
 
                 #Set packets/transactions.
@@ -203,7 +209,7 @@ class Syncer():
                 raise TestError("Unexpected message sent: " + msg.hex().upper())
 
         #Verify the Blockchain.
-        verifyBlockchain(self.rpc, self.blockchain)
+        verifyBlockchain(self.rpc, self.merit.blockchain)
 
         #Verify the Transactions.
         if self.transactions is not None:

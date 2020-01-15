@@ -1,12 +1,12 @@
 #Types.
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Union, Any
 
 #Sketch class.
 from PythonTests.Libs.Minisketch import Sketch
 
-#Blockchain classes.
+#Merit classes.
 from PythonTests.Classes.Merit.Block import Block
-from PythonTests.Classes.Merit.Blockchain import Blockchain
+from PythonTests.Classes.Merit.Merit import Merit
 
 #VerificationPacket class.
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
@@ -30,7 +30,7 @@ class Liver():
     def __init__(
         self,
         rpc: RPC,
-        blockchain: Blockchain,
+        blockchain: List[Dict[str, Any]],
         transactions: Union[Transactions, None] = None,
         callbacks: Dict[int, Callable[[], None]] = {},
         everyBlock: Union[Callable[[int], None], None] = None
@@ -39,7 +39,13 @@ class Liver():
         self.rpc: RPC = rpc
 
         #Arguments.
-        self.blockchain: Blockchain = blockchain
+        self.merit: Merit = Merit.fromJSON(
+            b"MEROS_DEVELOPER_NETWORK",
+            60,
+            int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
+            100,
+            blockchain
+        )
         self.transactions: Union[Transactions, None] = transactions
 
         self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)
@@ -50,12 +56,12 @@ class Liver():
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.blockchain.blocks[0].header.hash)
+        self.rpc.meros.connect(254, 254, self.merit.blockchain.blocks[0].header.hash)
 
         #Send each Block.
-        for b in range(1, len(self.blockchain.blocks)):
+        for b in range(1, len(self.merit.blockchain.blocks)):
             #Grab the Block.
-            block: Block = self.blockchain.blocks[b]
+            block: Block = self.merit.blockchain.blocks[b]
 
             #Send the Block.
             self.rpc.meros.blockHeader(block.header)
@@ -74,7 +80,7 @@ class Liver():
                         raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                     #Send the BlockBody.
-                    self.rpc.meros.blockBody(block)
+                    self.rpc.meros.blockBody(self.merit.state.nicks, block)
 
                 elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
                     if not block.body.packets:
@@ -132,6 +138,10 @@ class Liver():
                 else:
                     raise TestError("Unexpected message sent: " + msg.hex().upper())
 
+            #Add any new nicks to the lookup table.
+            if self.merit.blockchain.blocks[b].header.newMiner:
+                self.merit.state.nicks.append(self.merit.blockchain.blocks[b].header.minerKey)
+
             #If there's a callback at this height, call it.
             if b in self.callbacks:
                 self.callbacks[b]()
@@ -141,7 +151,7 @@ class Liver():
                 self.everyBlock(b)
 
         #Verify the Blockchain.
-        verifyBlockchain(self.rpc, self.blockchain)
+        verifyBlockchain(self.rpc, self.merit.blockchain)
 
         #Verify the Transactions.
         if self.transactions is not None:

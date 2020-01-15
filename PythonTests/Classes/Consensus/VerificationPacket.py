@@ -4,8 +4,9 @@ from typing import Dict, List, Optional, Any
 #BLS lib.
 from PythonTests.Libs.BLS import PublicKey, Signature, AggregationInfo
 
-#Element class.
+#Element classes.
 from PythonTests.Classes.Consensus.Element import Element
+from PythonTests.Classes.Consensus.Verification import Verification
 
 #SignedVerification class.
 from PythonTests.Classes.Consensus.Verification import SignedVerification
@@ -33,9 +34,22 @@ class VerificationPacket(Element):
     ) -> Any:
         return elem
 
+    #'Signature' serialize. Used by MeritRemovals.
+    def signatureSerialize(
+        self,
+        lookup: List[bytes]
+    ) -> bytes:
+        result: bytes = self.prefix + len(self.holders).to_bytes(2, "big")
+        for holder in self.holders:
+            result += lookup[holder]
+        result += self.hash
+
+        return result
+
     #Serialize.
     def serialize(
-        self
+        self,
+        lookup: List[bytes] = []
     ) -> bytes:
         result: bytes = len(self.holders).to_bytes(2, "big")
         for holder in sorted(self.holders):
@@ -75,7 +89,7 @@ class SignedVerificationPacket(VerificationPacket):
 
         self.blsSignature: Signature
         if holderKeys:
-            serialized: bytes = SignedVerification.signatureSerialize(self.hash)
+            serialized: bytes = Verification(txHash, 0).signatureSerialize()
 
             self.blsSignature = Signature(signature)
             agInfo: AggregationInfo = AggregationInfo(holderKeys[0], serialized)

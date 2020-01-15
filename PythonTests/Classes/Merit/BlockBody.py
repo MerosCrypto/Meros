@@ -12,6 +12,7 @@ from PythonTests.Classes.Consensus.Element import Element
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 from PythonTests.Classes.Consensus.SendDifficulty import SendDifficulty
 from PythonTests.Classes.Consensus.DataDifficulty import DataDifficulty
+from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
 
 #BlockBody class.
 class BlockBody:
@@ -31,6 +32,7 @@ class BlockBody:
     #Serialize.
     def serialize(
         self,
+        lookup: List[bytes],
         sketchSalt: bytes,
         capacityArg: int = -1
     ) -> bytes:
@@ -49,7 +51,7 @@ class BlockBody:
         )
 
         for elem in self.elements:
-            result += elem.prefix + elem.serialize()
+            result += elem.prefix + elem.serialize(lookup)
 
         result += self.aggregate
         return result
@@ -78,6 +80,7 @@ class BlockBody:
     #JSON -> Blockbody.
     @staticmethod
     def fromJSON(
+        keys: Dict[bytes, int],
         json: Dict[str, Any]
     ) -> Any:
         packets: List[VerificationPacket] = []
@@ -96,5 +99,7 @@ class BlockBody:
                 elements.append(SendDifficulty.fromJSON(element))
             elif element["descendant"] == "DataDifficulty":
                 elements.append(DataDifficulty.fromJSON(element))
+            elif element["descendant"] == "MeritRemoval":
+                elements.append(MeritRemoval.fromJSON(keys, element))
 
         return BlockBody(packets, elements, bytes.fromhex(json["aggregate"]))

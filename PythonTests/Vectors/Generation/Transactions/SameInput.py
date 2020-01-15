@@ -84,7 +84,7 @@ block: Block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([packet]),
+        BlockHeader.createContents([], [packet]),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), [packet]),
