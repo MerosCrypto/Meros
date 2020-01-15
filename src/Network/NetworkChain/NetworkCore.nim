@@ -172,6 +172,8 @@ proc newNetwork*(
                     mainFunctions.consensus.addSignedSendDifficulty(sendDiff)
                 except ValueError as e:
                     raise newException(ClientError, "Adding the SignedSendDifficulty failed due to a ValueError: " & e.msg)
+                except DataExists:
+                    return
 
             of MessageType.SignedDataDifficulty:
                 var dataDiff: SignedDataDifficulty
@@ -184,6 +186,8 @@ proc newNetwork*(
                     mainFunctions.consensus.addSignedDataDifficulty(dataDiff)
                 except ValueError as e:
                     raise newException(ClientError, "Adding the SignedDataDifficulty failed due to a ValueError: " & e.msg)
+                except DataExists:
+                    return
 
             of MessageType.SignedMeritRemoval:
                 var mr: SignedMeritRemoval

@@ -82,11 +82,20 @@ proc mainConsensus() {.forceCheck: [].} =
             #Print that we're adding the SignedVerification.
             echo "Adding a new Signed Verification."
 
-            #Check if this is cause for a MaliciousMeritRemoval.
+            #See if the Transaction exists.
             try:
-                consensus.checkMalicious(merit.state, verif)
+                discard transactions[verif.hash]
+            except IndexError:
+                raise newException(ValueError, "Unknown Verification.")
+
+            #Add the SignedVerification to the Consensus DAG.
+            try:
+                consensus.add(merit.state, verif)
             #Invalid signature.
             except ValueError as e:
+                raise e
+            #Already added.
+            except DataExists as e:
                 raise e
             #MeritHolder committed a malicious act against the network.
             except MaliciousMeritHolder as e:
@@ -102,18 +111,6 @@ proc mainConsensus() {.forceCheck: [].} =
                 except KeyError as e:
                     doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
                 return
-
-            #See if the Transaction exists.
-            try:
-                discard transactions[verif.hash]
-            except IndexError:
-                raise newException(ValueError, "Unknown Verification.")
-
-            #Add the SignedVerification to the Elements DAG.
-            try:
-                consensus.add(merit.state, verif)
-            except DataExists as e:
-                raise e
 
             echo "Successfully added a new Signed Verification."
 
@@ -151,7 +148,8 @@ proc mainConsensus() {.forceCheck: [].} =
         functions.consensus.addSignedSendDifficulty = proc (
             sendDiff: SignedSendDifficulty
         ) {.forceCheck: [
-            ValueError
+            ValueError,
+            DataExists
         ].} =
             #Print that we're adding the SendDifficulty.
             echo "Adding a new Send Difficulty."
@@ -161,6 +159,21 @@ proc mainConsensus() {.forceCheck: [].} =
                 consensus.add(merit.state, sendDiff)
             except ValueError as e:
                 raise e
+            except DataExists as e:
+                raise e
+            except MaliciousMeritHolder as e:
+                #Flag the MeritRemoval.
+                consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+
+                try:
+                    #Broadcast the first MeritRemoval.
+                    functions.network.broadcast(
+                        MessageType.SignedMeritRemoval,
+                        cast[SignedMeritRemoval](consensus.malicious[sendDiff.holder][0]).signedSerialize()
+                    )
+                except KeyError as e:
+                    doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+                return
 
             echo "Successfully added a new Signed Send Difficulty."
 
@@ -186,7 +199,8 @@ proc mainConsensus() {.forceCheck: [].} =
         functions.consensus.addSignedDataDifficulty = proc (
             dataDiff: SignedDataDifficulty
         ) {.forceCheck: [
-            ValueError
+            ValueError,
+            DataExists
         ].} =
             #Print that we're adding the DataDifficulty.
             echo "Adding a new Data Difficulty."
@@ -196,6 +210,21 @@ proc mainConsensus() {.forceCheck: [].} =
                 consensus.add(merit.state, dataDiff)
             except ValueError as e:
                 raise e
+            except DataExists as e:
+                raise e
+            except MaliciousMeritHolder as e:
+                #Flag the MeritRemoval.
+                consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
+
+                try:
+                    #Broadcast the first MeritRemoval.
+                    functions.network.broadcast(
+                        MessageType.SignedMeritRemoval,
+                        cast[SignedMeritRemoval](consensus.malicious[dataDiff.holder][0]).signedSerialize()
+                    )
+                except KeyError as e:
+                    doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+                return
 
             echo "Successfully added a new Signed Data Difficulty."
 

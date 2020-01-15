@@ -138,7 +138,8 @@ type
         addSignedSendDifficulty*: proc (
             dataDiff: SignedSendDifficulty
         ) {.raises: [
-            ValueError
+            ValueError,
+            DataExists
         ].}
 
         addDataDifficulty*: proc (
@@ -148,7 +149,8 @@ type
         addSignedDataDifficulty*: proc (
             dataDiff: SignedDataDifficulty
         ) {.raises: [
-            ValueError
+            ValueError,
+            DataExists
         ].}
 
         addSignedMeritRemoval*: proc (

@@ -79,7 +79,7 @@ proc flag*(
     except KeyError as e:
         doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
 
-    #Reclaulcate the affected verified Transactions.
+    #Reclaulcate the affected Transactions in Epochs.
     var
         status: TransactionStatus
         blockInEpochs: Block
@@ -104,35 +104,21 @@ proc flag*(
                 if merit < state.protocolThresholdAt(status.epoch):
                     consensus.unverify(state, packet.hash, status)
 
-proc checkMalicious*(
-    consensus: Consensus,
-    state: State,
-    verif: SignedVerification
-) {.forceCheck: [
-    ValueError,
-    #MaliciousMeritHolder
-].} =
-    #We deleted the rest of this function for the No Consensus DAG branch.
-    #This function called the function in MeritHolder which verified the signature.
-    #Since we deleted the code which does that, along with the call, verify it now.
-    try:
-        if not verif.signature.verify(
-            newBLSAggregationInfo(
-                state.holders[verif.holder],
-                verif.serializeWithoutHolder()
-            )
-        ):
-            raise newException(ValueError, "Invalid SignedVerification signature.")
-    except BLSError:
-        doAssert(false, "Holder with an infinite key entered the system.")
+    #Recalculate the affected Transactions not yet in Epochs.
+    for hash in consensus.unmentioned:
+        try:
+            status = consensus.getStatus(hash)
+        except IndexError as e:
+            doAssert(false, "Couldn't get the status of a Transaction yet to be mentioned in Epochs: " & e.msg)
 
-proc checkMalicious*(
-    consensus: Consensus,
-    packet: VerificationPacket
-) {.forceCheck: [
-    #MaliciousMeritHolder
-].} =
-    discard
+        if status.verified and status.holders.contains(removal.holder):
+            var merit: int = 0
+            for holder in status.holders:
+                if not consensus.malicious.hasKey(holder):
+                    merit += state[holder]
+
+            if merit < state.protocolThresholdAt(status.epoch):
+                consensus.unverify(state, hash, status)
 
 #Get a holder's nonce.
 proc getNonce*(
@@ -214,8 +200,21 @@ proc add*(
     state: State,
     verif: SignedVerification
 ) {.forceCheck: [
+    ValueError,
     DataExists
 ].} =
+    #Verify the signature.
+    try:
+        if not verif.signature.verify(
+            newBLSAggregationInfo(
+                state.holders[verif.holder],
+                verif.serializeWithoutHolder()
+            )
+        ):
+            raise newException(ValueError, "Invalid SignedVerification signature.")
+    except BLSError:
+        doAssert(false, "Holder with an infinite key entered the system.")
+
     #Get the status.
     var status: TransactionStatus
     try:
@@ -249,7 +248,9 @@ proc add*(
     state: State,
     sendDiff: SignedSendDifficulty
 ) {.forceCheck: [
-    ValueError
+    ValueError,
+    DataExists,
+    MaliciousMeritHolder
 ].} =
     #Verify the SendDifficulty's signature.
     try:
@@ -267,7 +268,19 @@ proc add*(
     if sendDiff.nonce != consensus.db.load(sendDiff.holder) + 1:
         if sendDiff.nonce <= consensus.db.load(sendDiff.holder):
             #If this isn't the existing Element, it's cause for a MeritRemoval.
-            doAssert(false)
+            var other: BlockElement
+            try:
+                other = consensus.db.load(sendDiff.holder, sendDiff.nonce)
+            except DBReadError as e:
+                doAssert(false, "Couldn't read a Block Element with a nonce lower than the holder's current nonce: " & e.msg)
+
+            if other == sendDiff:
+                raise newException(DataExists, "Already added this SendDifficulty.")
+
+            raise newMaliciousMeritHolder(
+                "SendDifficulty shares a nonce with a different Element.",
+                newSignedMeritRemoval(sendDiff.holder, true, other, sendDiff, sendDiff.signature, state.holders)
+            )
 
         raise newException(ValueError, "SendDifficulty skips a nonce.")
 
@@ -289,7 +302,9 @@ proc add*(
     state: State,
     dataDiff: SignedDataDifficulty
 ) {.forceCheck: [
-    ValueError
+    ValueError,
+    DataExists,
+    MaliciousMeritHolder
 ].} =
     #Verify the DataDifficulty's signature.
     try:
@@ -307,7 +322,19 @@ proc add*(
     if dataDiff.nonce != consensus.db.load(dataDiff.holder) + 1:
         if dataDiff.nonce <= consensus.db.load(dataDiff.holder):
             #If this isn't the existing Element, it's cause for a MeritRemoval.
-            doAssert(false)
+            var other: BlockElement
+            try:
+                other = consensus.db.load(dataDiff.holder, dataDiff.nonce)
+            except DBReadError as e:
+                doAssert(false, "Couldn't read a Block Element with a nonce lower than the holder's current nonce: " & e.msg)
+
+            if other == dataDiff:
+                raise newException(DataExists, "Already added this DataDifficulty.")
+
+            raise newMaliciousMeritHolder(
+                "DataDifficulty shares a nonce with a different Element.",
+                newSignedMeritRemoval(dataDiff.holder, true, other, dataDiff, dataDiff.signature, state.holders)
+            )
 
         raise newException(ValueError, "DataDifficulty skips a nonce.")
 
