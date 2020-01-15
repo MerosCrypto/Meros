@@ -81,7 +81,12 @@ task unit, "Run unit tests.":
     var params: string =
         additionalParams
             .reversed()
-            .map(proc (x: string): string = "\"" & x & "\"")
+            .map(
+                proc (
+                    x: string
+                ): string =
+                    "\"" & x & "\""
+            )
             .join(" ")
 
     #Ensure dependencies are installed.

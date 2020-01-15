@@ -27,7 +27,7 @@ import ../../../Database/Transactions/CompareTransactions
 #Random standard lib.
 import random
 
-suite "Serialize Send":
+suite "SerializeSend":
     setup:
         #Seed Random via the time.
         randomize(int64(getTime()))
