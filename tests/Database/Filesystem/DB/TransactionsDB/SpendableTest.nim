@@ -3,6 +3,9 @@
 #Test lib.
 import unittest
 
+#Fuzzed lib.
+import ../../../../Fuzzed
+
 #Util lib.
 import ../../../../../src/lib/Util
 
@@ -38,7 +41,7 @@ suite "Spendable":
         #Seed Random via the time.
         randomize(int64(getTime()))
 
-    test "Saving UTXOs, checking which UYTXOs an account can spend, and deleting UTXOs.":
+    midFuzzTest "Saving UTXOs, checking which UTXOs an account can spend, and deleting UTXOs.":
         var
             #DB.
             db = newTestDatabase()
@@ -117,6 +120,7 @@ suite "Spendable":
             compare()
 
             #Spend outputs.
+            var queue: seq[(EdPublicKey, FundedInput)] = @[]
             for key in spendable.keys():
                 if spendable[key].len == 0:
                     continue
@@ -140,10 +144,13 @@ suite "Spendable":
                     db.verify(send)
                     sends.add(send)
 
-                    if not spendable.hasKey(outputKey):
-                        spendable[outputKey] = @[]
-                    spendable[outputKey].add(newFundedInput(send.hash, 0))
+                    queue.add((outputKey, newFundedInput(send.hash, 0)))
                     spenders[send.hash.toString() & char(0)] = outputKey
+
+            for output in queue:
+                if not spendable.hasKey(output[0]):
+                    spendable[output[0]] = @[]
+                spendable[output[0]].add(output[1])
 
             compare()
 

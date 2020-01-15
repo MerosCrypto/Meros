@@ -15,6 +15,8 @@ import ../../../Wallet/Wallet
 import ../../Transactions/Transaction
 
 #Serialization libs.
+import ../../../Network/Serialize/SerializeCommon
+
 import Serialize/Transactions/SerializeMintOutput
 import Serialize/Transactions/SerializeSendOutput
 import Serialize/Transactions/DBSerializeTransaction
@@ -29,6 +31,53 @@ export DBObj
 
 #Tables standard lib.
 import tables
+
+#Helper function to convert an input to a string.
+func toString*(
+    input: Input
+): string {.forceCheck: [].} =
+    result = input.hash.toString()
+    if input of FundedInput:
+        result &= char(cast[FundedInput](input).nonce)
+    else:
+        result &= char(0)
+
+#Key generators.
+template TRANSACTION(
+    hash: Hash[256]
+): string =
+    hash.toString()
+
+template OUTPUT_SPENDERS(
+    input: Input
+): string =
+    input.toString() & "$"
+
+template OUTPUT(
+    hash: Hash[256],
+    o: int
+): string =
+    hash.toString() & o.toBinary(BYTE_LEN)
+
+template OUTPUT(
+    output: Input
+): string =
+    input.toString()
+
+template DATA_SENDER(
+    hash: Hash[256]
+): string =
+    hash.toString() & "se"
+
+template DATA_TIP(
+    key: EdPublicKey
+): string =
+    key.toString() & "dt"
+
+template SPENDABLE(
+    key: EdPublicKey
+): string =
+    key.toString() & "$p"
 
 #Put/Get/Delete/Commit for the Transactions DB.
 proc put(
@@ -74,46 +123,35 @@ proc commit*(
 
     db.transactions.cache = initTable[string, string]()
 
-#Helper functions to convert an input to a string.
-func toString*(
-    input: Input
-): string {.forceCheck: [].} =
-    result = input.hash.toString()
-    if input of FundedInput:
-        result &= char(cast[FundedInput](input).nonce)
-    else:
-        result &= char(0)
-
 #Save functions.
 proc save*(
     db: DB,
     tx: Transaction
 ) {.forceCheck: [].} =
-    var hash: string = tx.hash.toString()
-    db.put(hash, tx.serialize())
+    db.put(TRANSACTION(tx.hash), tx.serialize())
 
     for input in tx.inputs:
         try:
-            db.put(input.toString() & "s", db.get(input.toString() & "s") & hash)
+            db.put(OUTPUT_SPENDERS(input), db.get(OUTPUT_SPENDERS(input)) & tx.hash.toString())
         except DBReadError:
-            db.put(input.toString() & "s", hash)
+            db.put(OUTPUT_SPENDERS(input), tx.hash.toString())
 
     for o in 0 ..< tx.outputs.len:
-        db.put(hash & char(o), tx.outputs[o].serialize())
+        db.put(OUTPUT(tx.hash, o), tx.outputs[o].serialize())
 
 proc saveDataSender*(
     db: DB,
     data: Data,
     sender: EdPublicKey
 ) {.forceCheck: [].} =
-    db.put(data.hash.toString() & "s", sender.toString())
+    db.put(DATA_SENDER(data.hash), sender.toString())
 
 proc saveDataTip*(
     db: DB,
     key: EdPublicKey,
     hash: Hash[256]
 ) {.forceCheck: [].} =
-    db.put(key.toString() & "d", hash.toString())
+    db.put(DATA_TIP(key), hash.toString())
 
 #Load functions.
 proc load*(
@@ -123,7 +161,7 @@ proc load*(
     DBReadError
 ].} =
     try:
-        result = hash.parseTransaction(db.get(hash.toString()))
+        result = hash.parseTransaction(db.get(TRANSACTION(hash)))
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -134,7 +172,7 @@ proc load*(
             amount: uint64 = 0
         for input in claim.inputs:
             try:
-                amount += db.get(input.toString()).parseMintOutput().amount
+                amount += db.get(OUTPUT(input)).parseMintOutput().amount
             except Exception as e:
                 doAssert(false, "Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
 
@@ -146,7 +184,7 @@ proc loadSpenders*(
 ): seq[Hash[256]] {.forceCheck: [].} =
     var spenders: string = ""
     try:
-        spenders = db.get(input.toString() & "s")
+        spenders = db.get(OUTPUT(input) & "s")
     except DBReadError:
         return
 
@@ -163,19 +201,9 @@ proc loadDataSender*(
     DBReadError
 ].} =
     try:
-        result = newEdPublicKey(db.get(hash.toString() & "s"))
+        result = newEdPublicKey(db.get(DATA_SENDER(hash)))
     except Exception as e:
         raise newException(DBReadError, e.msg)
-
-proc loadMintNonce*(
-    db: DB
-): uint32 {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = uint32(db.get("mint").fromBinary())
-    except DBReadError as e:
-        raise e
 
 proc loadMintOutput*(
     db: DB,
@@ -184,7 +212,7 @@ proc loadMintOutput*(
     DBReadError
 ].} =
     try:
-        result = db.get(input.toString()).parseMintOutput()
+        result = db.get(OUTPUT(input)).parseMintOutput()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -195,7 +223,7 @@ proc loadSendOutput*(
     DBReadError
 ].} =
     try:
-        result = db.get(input.toString()).parseSendOutput()
+        result = db.get(OUTPUT(input)).parseSendOutput()
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -206,7 +234,7 @@ proc loadDataTip*(
     DBReadError
 ].} =
     try:
-        result = db.get(key.toString() & "d").toHash(256)
+        result = db.get(DATA_TIP(key)).toHash(256)
     except DBReadError as e:
         raise e
     except ValueError as e:
@@ -220,7 +248,7 @@ proc loadSpendable*(
 ].} =
     var spendable: string
     try:
-        spendable = db.get(key.toString())
+        spendable = db.get(SPENDABLE(key))
     except Exception as e:
         raise newException(DBReadError, e.msg)
 
@@ -237,18 +265,18 @@ proc loadSpendable*(
 
 proc addToSpendable(
     db: DB,
-    key: string,
+    key: EdPublicKey,
     hash: Hash[256],
     nonce: int
 ) {.forceCheck: [].} =
     try:
-        db.put(key, db.get(key) & hash.toString() & char(nonce))
+        db.put(SPENDABLE(key), db.get(SPENDABLE(key)) & hash.toString() & char(nonce))
     except DBReadError:
-        db.put(key, "" & hash.toString() & char(nonce))
+        db.put(SPENDABLE(key), hash.toString() & char(nonce))
 
 proc removeFromSpendable(
     db: DB,
-    key: string,
+    key: EdPublicKey,
     hash: Hash[256],
     nonce: int
 ) {.forceCheck: [].} =
@@ -258,14 +286,14 @@ proc removeFromSpendable(
 
     #Load the output.
     try:
-        spendable = db.get(key)
+        spendable = db.get(SPENDABLE(key))
     except DBReadError:
         doAssert(false, "Trying to spend from someone without anything spendable.")
 
     #Remove the specified output.
     for o in countup(0, spendable.len - 1, 33):
         if spendable[o ..< o + 33] == output:
-            db.put(key, spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
+            db.put(SPENDABLE(key), spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
             break
 
 #Add a Claim/Send's outputs to spendable while removing a Send's inputs.
@@ -276,7 +304,7 @@ proc verify*(
     #Add spendable outputs.
     for o in 0 ..< tx.outputs.len:
         db.addToSpendable(
-            cast[SendOutput](tx.outputs[o]).key.toString(),
+            cast[SendOutput](tx.outputs[o]).key,
             tx.hash,
             o
         )
@@ -284,9 +312,9 @@ proc verify*(
     if tx of Send:
         #Remove spent inputs.
         for input in tx.inputs:
-            var key: string
+            var key: EdPublicKey
             try:
-                key = db.loadSendOutput(cast[FundedInput](input)).key.toString()
+                key = db.loadSendOutput(cast[FundedInput](input)).key
             except DBReadError:
                 doAssert(false, "Removing a non-existent output.")
 
@@ -304,9 +332,9 @@ proc unverify*(
     #Restore inputs.
     if tx of Send:
         for input in tx.inputs:
-            var key: string
+            var key: EdPublicKey
             try:
-                key = db.loadSendOutput(cast[FundedInput](input)).key.toString()
+                key = db.loadSendOutput(cast[FundedInput](input)).key
             except DBReadError:
                 doAssert(false, "Restoring a non-existent output.")
 
@@ -319,7 +347,7 @@ proc unverify*(
     #Remove outputs.
     for o in 0 ..< tx.outputs.len:
         db.removeFromSpendable(
-            cast[SendOutput](tx.outputs[o]).key.toString(),
+            cast[SendOutput](tx.outputs[o]).key,
             tx.hash,
             o
         )
