@@ -91,12 +91,5 @@ proc compare*(
     for hash in c1.statuses.keys():
         compare(c1.statuses[hash], c2.statuses[hash])
 
-    #Compare the close table.
-    #We don't compare the length as c2 can have more Transactions if their verifiers gained Merit.
-    #If we only reloaded Transactions which are still close, we wouldn't have more Transactions, yet we would have less.
-    #That would rewrite the check to `for hash in c2.close.keys(): check(c1.close.hasKey(hash))`.
-    for hash in c1.close:
-        check(c2.close.contains(hash))
-
     #Compare the unmentioned table.
     check(symmetricDifference(c1.unmentioned, c2.unmentioned).len == 0)

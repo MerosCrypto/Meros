@@ -148,7 +148,7 @@ func handleBlock*(
     incd: uint16,
     incdMerit: int
 ) {.forceCheck: [].} =
-    if ((incdMerit div 50) != ((incdMerit - 1) div 50)) and filter.votes.hasKey(incd):
+    if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(incd):
         try:
             inc(filter.votes[incd].votes)
             if filter.votes[incd].difficulty < filter.difficulty:
@@ -169,8 +169,11 @@ func handleBlock*(
     decd: uint16,
     decdMerit: int
 ) {.forceCheck: [].} =
+    if incd == decd:
+        return
+
     try:
-        if ((incdMerit div 50) != ((incdMerit - 1) div 50)) and filter.votes.hasKey(incd):
+        if (incdMerit mod 50 == 0) and (incdMerit != 0) and filter.votes.hasKey(incd):
             inc(filter.votes[incd].votes)
             if filter.votes[incd].difficulty < filter.difficulty:
                 inc(filter.left)
@@ -182,7 +185,7 @@ func handleBlock*(
         doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
 
     try:
-        if ((decdMerit div 50) != ((decdMerit + 1) div 50)) and filter.votes.hasKey(decd):
+        if (decdMerit mod 50 == 49) and filter.votes.hasKey(decd):
             dec(filter.votes[decd].votes)
             if filter.votes[decd].difficulty < filter.difficulty:
                 dec(filter.left)

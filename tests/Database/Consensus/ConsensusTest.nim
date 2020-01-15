@@ -50,9 +50,9 @@ suite "Consensus":
             merit: Merit = newMerit(
                 db,
                 "CONSENSUS_DB_TEST",
-                10,
+                1,
                 $Hash[256](),
-                30
+                25
             )
             #Transactions.
             transactions: Transactions = newTransactions(
@@ -132,13 +132,16 @@ suite "Consensus":
                 decd: int
             (epoch, incd, decd) = merit.postProcessBlock()
 
-            #Add/remove an extra 24 Merit from each to speed up the process of getting difficulty votes.
+            #Add an extra 24 Merit from each to speed up the process of getting difficulty votes.
             merit.state[incd] = merit.state[incd] + 24
-            if decd != -1:
-                merit.state[uint16(decd)] = merit.state[uint16(decd)] + 24
 
             #Archive the Epochs.
             consensus.archive(merit.state, mining.body.packets, epoch, incd, decd)
+
+            #Remove 24 Merit, if neccessary.
+            #This is done here so we can still trigger the merit + 1 mod 50 == 0 check.
+            if decd != -1:
+                merit.state[uint16(decd)] = merit.state[uint16(decd)] - 24
 
             #Add the elements.
             for elem in elements:
@@ -172,8 +175,8 @@ suite "Consensus":
             #Compare the Consensus DAGs.
             compare(consensus, reloaded)
 
-        #Iterate over 30 'rounds'.
-        for r in 1 .. 30:
+        #Iterate over 50 'rounds'.
+        for r in 1 .. 50:
             #Clear the packets, unsigned table, and aggregate.
             packets = @[]
             unsigned = @[]
@@ -277,6 +280,7 @@ suite "Consensus":
             for b in 0 ..< 32:
                 difficulty.data[b] = uint8(rand(255))
             sendDiff = newSignedSendDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
+            sendDiff.holder = uint16(holder)
             elements.add(sendDiff)
 
             #Add a Data Difficulty.
@@ -285,6 +289,7 @@ suite "Consensus":
             for b in 0 ..< 32:
                 difficulty.data[b] = uint8(rand(255))
             dataDiff = newSignedDataDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
+            dataDiff.holder = uint16(holder)
             elements.add(dataDiff)
 
             #Mine the packets.
