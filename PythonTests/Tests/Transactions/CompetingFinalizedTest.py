@@ -126,8 +126,7 @@ def CompetingFinalizedTest(
 
             elif MessageType(msg[0]) == MessageType.BlockHeader:
                 #Raise a TestError if the Block was added.
-                raise TestError("Meros synced a Transaction which spent the same input twice.")
-
+                raise TestError("Meros synced a Transaction which competed with a finalized Transaction.")
 
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())

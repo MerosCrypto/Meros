@@ -13,7 +13,6 @@ Database:
 Merit:
 
 - Have the Difficulty recalculate every Block based on a window of the previous Blocks/Difficulties, not a period.
-- Make RandomX the mining algorithm (node should use the light mode).
 
 Consensus:
 
@@ -103,8 +102,6 @@ Network:
 - RPC tests.
 
 - Expand verifyBlockchain to verifyMerit.
-
-- Test Mints with multiple outputs.
 
 - Test historical and live threshold calculation.
 - Test `TransactionStatus.epoch` is updated as needed.

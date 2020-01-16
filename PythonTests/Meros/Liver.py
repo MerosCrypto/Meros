@@ -157,5 +157,5 @@ class Liver():
         if self.transactions is not None:
             verifyTransactions(self.rpc, self.transactions)
 
-        #Reset the RPC.
+        #Reset the node.
         self.rpc.reset()

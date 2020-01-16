@@ -130,7 +130,6 @@ def SameInputTest(
                 #Raise a TestError if the Block was added.
                 raise TestError("Meros synced a Transaction which spent the same input twice.")
 
-
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())
 
