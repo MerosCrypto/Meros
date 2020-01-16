@@ -22,6 +22,9 @@ import ../../../src/Database/Consensus/Elements/VerificationPacket
 #Merit lib.
 import ../../../src/Database/Merit/Merit
 
+#Transactions DB lib.
+import ../../../src/Database/Filesystem/DB/TransactionsDB
+
 #Transactions lib.
 import ../../../src/Database/Transactions/Transactions
 
@@ -210,13 +213,12 @@ suite "Transactions":
                 else:
                     var
                         dataStr: string = newString(rand(254) + 1)
-                        tip: Hash[256]
                         data: Data
                     for c in 0 ..< dataStr.len:
                         dataStr[c] = char(rand(255))
 
                     try:
-                        tip = transactions.loadDataTip(wallet.publicKey)
+                        discard transactions.loadDataTip(wallet.publicKey)
                     except DataMissing:
                         data = newData(Hash[256](), wallet.publicKey.toString())
                         wallet.sign(data)
@@ -224,7 +226,19 @@ suite "Transactions":
                         transactions.add(data)
                         verify(data, 0)
                         transactions.verify(data.hash)
-                        tip = data.hash
+
+                    #We don't guarantee the data tip will be verified except for the initial verification.
+                    #Any Data which isn't verified won't be saved as the tip.
+                    #That said, if it's out-of-Epochs, it can no longer be competed with.
+                    #Manually update the tip under these situations.
+                    var spenders: seq[Hash[256]] = db.loadSpenders(
+                        newInput(
+                            transactions.loadDataTip(wallet.publicKey)
+                        )
+                    )
+                    if spenders.len != 0:
+                        if not transactions.transactions.hasKey(spenders[0]):
+                            db.saveDataTip(wallet.publicKey, spenders[0])
 
                     data = newData(transactions.loadDataTip(wallet.publicKey), dataStr)
                     wallet.sign(data)
