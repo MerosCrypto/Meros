@@ -1,5 +1,3 @@
-#Blockchain class.
-
 #Transactions classes.
 from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
 from PythonTests.Classes.Transactions.Data import Data

@@ -205,7 +205,7 @@ class AggregationInfo():
         result: AggregationInfo = AggregationInfo.__new__(AggregationInfo)
         result.value = agInfos[0].value
         for i in range(1, len(agInfos)):
-            MilagroPairing.FP12_BLS381_mul(byref(result.value), byref(agInfos[i]))
+            MilagroPairing.FP12_BLS381_mul(byref(result.value), byref(agInfos[i].value))
 
         return result
 
