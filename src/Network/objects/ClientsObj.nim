@@ -1,8 +1,23 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Client object.
-import ClientObj
+#Util lib.
+import ../../lib/Util
+
+#Hash lib.
+import ../../lib/Hash
+
+#Message object.
+import MessageObj
+
+#Network Function Box.
+import NetworkLibFunctionBoxObj
+
+#Client library.
+import ../Client as ClientFile
+
+#Async standard lib.
+import asyncdispatch
 
 #Clients object.
 type Clients* = ref object
@@ -12,12 +27,87 @@ type Clients* = ref object
     clients*: seq[Client]
 
 #Constructor.
-func newClients*(): Clients {.forceCheck: [].} =
-    Clients(
+proc newClients*(
+    networkFunctions: NetworkLibFunctionBox,
+    server: bool
+): Clients {.forceCheck: [].} =
+    var clients: Clients = Clients(
         #Starts at 1 because the local node is 0.
         count: 1,
         clients: newSeq[Client]()
     )
+    result = clients
+
+    #Add a repeating timer to remove inactive clients.
+    try:
+        addTimer(
+            7000,
+            false,
+            proc (
+                fd: AsyncFD
+            ): bool {.forceCheck: [].} =
+                var
+                    c: int = 0
+                    noInc: bool
+                while c < clients.clients.len:
+                    #Close clients who have been inactive for half a minute.
+                    if clients.clients[c].isClosed or (clients.clients[c].last + 30 <= getTime()):
+                        clients.clients[c].close()
+                        clients.clients.del(c)
+                        continue
+
+                    #Reset noInc.
+                    noInc = false
+
+                    #Don't attempt to handshake with clients who we have a pending sync request with.
+                    #This is because the sync response is just as valid and we've historically had issues with this.
+                    #See https://github.com/MerosCrypto/Meros/issues/100.
+                    if clients.clients[c].pendingSyncRequest == true:
+                        return
+
+                    #Handshake with clients who have been inactive for 20 seconds.
+                    if clients.clients[c].last + 20 <= getTime():
+                        try:
+                            asyncCheck (
+                                proc (): Future[void] {.forceCheck: [], async.} =
+                                    #Don't handshake with clients who are syncing from us.
+                                    #We aren't allowed to send the handshake message in this case.
+                                    #The syncer must send the handshake.
+                                    if clients.clients[c].remoteSync == true:
+                                        return
+
+                                    #Send the handshake.
+                                    var tail: Hash[256]
+                                    {.gcsafe.}:
+                                        tail = networkFunctions.getTail()
+                                    try:
+                                        await clients.clients[c].send(
+                                            newMessage(
+                                                MessageType.Handshake,
+                                                char(networkFunctions.getNetworkID()) &
+                                                char(networkFunctions.getProtocol()) &
+                                                (if server: char(1) else: char(0)) &
+                                                tail.toString()
+                                            )
+                                        )
+                                    except ClientError:
+                                        clients.clients[c].close()
+                                        clients.clients.del(c)
+                                        noInc = true
+                                    except Exception as e:
+                                        doAssert(false, "Sending to a client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                            )()
+                        except Exception as e:
+                            doAssert(false, "Calling a function to send a keep-alive to a client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+                    #Move on to the next client.
+                    if not noInc:
+                        inc(c)
+        )
+    except OSError as e:
+        doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
+    except Exception as e:
+        doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
 
 #Add a new Client.
 func add*(

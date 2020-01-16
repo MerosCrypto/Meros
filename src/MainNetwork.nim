@@ -6,6 +6,7 @@ proc mainNetwork() {.forceCheck: [].} =
         network = newNetwork(
             params.NETWORK_ID,
             params.NETWORK_PROTOCOL,
+            config.server,
             functions
         )
 

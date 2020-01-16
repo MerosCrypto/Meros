@@ -30,13 +30,14 @@ proc reply*(
 proc newNetwork*(
     id: int,
     protocol: int,
+    server: bool,
     mainFunctions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     #Create the Network.
     var network: Network = newNetworkObj(
         id,
         protocol,
-        newClients(),
+        server,
         newNetworkLibFunctionBox(),
         mainFunctions
     )

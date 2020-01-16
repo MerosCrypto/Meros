@@ -269,55 +269,6 @@ proc add*(
     #Add the new Client to Clients.
     clients.add(client)
 
-    #Add a repeating timer which confirms this node is active.
-    try:
-        addTimer(
-            10000,
-            false,
-            proc (
-                fd: AsyncFD
-            ): bool {.forceCheck: [].} =
-                if client.isClosed or (client.last + 30 <= getTime()):
-                    client.close()
-                    return true
-
-                if client.pendingSyncRequest == true:
-                    return
-
-                if client.last + 20 <= getTime():
-                    try:
-                        asyncCheck (
-                            proc (): Future[void] {.forceCheck: [], async.} =
-                                if client.remoteSync == true:
-                                    return
-
-                                var tail: Hash[256]
-                                {.gcsafe.}:
-                                    tail = networkFunctions.getTail()
-
-                                try:
-                                    await client.send(
-                                        newMessage(
-                                            MessageType.Handshake,
-                                            char(networkFunctions.getNetworkID()) &
-                                            char(networkFunctions.getProtocol()) &
-                                            (if server: char(1) else: char(0)) &
-                                            tail.toString()
-                                        )
-                                    )
-                                except ClientError:
-                                    client.close()
-                                except Exception as e:
-                                    doAssert(false, "Sending to a client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-                        )()
-                    except Exception as e:
-                        doAssert(false, "Calling a function to send a keep-alive to a client threw an Exception despite catching all thrown Exceptions: " & e.msg)
-        )
-    except OSError as e:
-        doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
-    except Exception as e:
-        doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
-
     #Handle it.
     try:
         await client.handle(networkFunctions, tail)

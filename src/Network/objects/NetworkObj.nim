@@ -28,17 +28,17 @@ type Network* = ref object
     mainFunctions*: GlobalFunctionBox
 
 #Constructor.
-func newNetworkObj*(
+proc newNetworkObj*(
     id: int,
     protocol: int,
-    clients: Clients,
+    server: bool,
     networkFunctions: NetworkLibFunctionBox,
     mainFunctions: GlobalFunctionBox
 ): Network {.inline, forceCheck: [].} =
     Network(
         id: id,
         protocol: protocol,
-        clients: clients,
+        clients: newClients(networkFunctions, server),
         networkFunctions: networkFunctions,
         mainFunctions: mainFunctions
     )
