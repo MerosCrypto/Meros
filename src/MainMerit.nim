@@ -149,6 +149,9 @@ proc mainMerit() {.forceCheck: [].} =
             for removee in removed:
                 consensus.remove(removee)
 
+            #Copy the State.
+            var rewardsState = merit.state
+
             #Add the Block to the Epochs and State.
             var
                 epoch: Epoch
@@ -171,7 +174,7 @@ proc mainMerit() {.forceCheck: [].} =
             transactions.archive(epoch)
 
             #Calculate the rewards.
-            var rewards: seq[Reward] = epoch.calculate(merit.state)
+            var rewards: seq[Reward] = epoch.calculate(rewardsState)
 
             #If there are rewards, create the Mint.
             var receivedMint: int = -1
