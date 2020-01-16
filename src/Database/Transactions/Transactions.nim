@@ -103,7 +103,10 @@ proc add*(
         raise newException(ValueError, "Claim has an invalid Signature.")
 
     #Add the Claim.
-    transactions.add(cast[Transaction](claim))
+    try:
+        transactions.add(cast[Transaction](claim))
+    except ValueError as e:
+        raise e
 
 #Add a Send.
 proc add*(
@@ -186,7 +189,10 @@ proc add*(
         raise newException(ValueError, "Send has an invalid Signature.")
 
     #Add the Send.
-    transactions.add(cast[Transaction](send))
+    try:
+        transactions.add(cast[Transaction](send))
+    except ValueError as e:
+        raise e
 
 #Add a Data.
 proc add*(
@@ -219,7 +225,10 @@ proc add*(
         raise newException(ValueError, "Data has an invalid Signature.")
 
     #Add the Data.
-    transactions.add(cast[Transaction](data))
+    try:
+        transactions.add(cast[Transaction](data))
+    except ValueError as e:
+        raise e
 
 #Mint Meros to the specified key.
 proc mint*(
@@ -239,7 +248,10 @@ proc mint*(
     var mint: Mint = newMint(hash, outputs)
 
     #Add it to Transactions.
-    transactions.add(cast[Transaction](mint))
+    try:
+        transactions.add(cast[Transaction](mint))
+    except ValueError as e:
+        doAssert(false, "Adding a Mint raised a ValueError: " & e.msg)
 
 #Remove every hash in this Epoch from the cache/RAM.
 proc archive*(

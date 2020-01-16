@@ -164,8 +164,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
-- Meros allows Transactions which compete with old Transactions. This behavior should be fixed on the Transactions DAG, not on the Blockchain.
-
 - Meros doesn't support dead Merit.
 
 - Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.

@@ -184,7 +184,7 @@ proc loadSpenders*(
 ): seq[Hash[256]] {.forceCheck: [].} =
     var spenders: string = ""
     try:
-        spenders = db.get(OUTPUT(input) & "s")
+        spenders = db.get(OUTPUT_SPENDERS(input))
     except DBReadError:
         return
 

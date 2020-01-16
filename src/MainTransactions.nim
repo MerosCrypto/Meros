@@ -78,7 +78,7 @@ proc mainTransactions() {.forceCheck: [].} =
             #Invalid Claim.
             except ValueError as e:
                 raise e
-            #Data already exisrs.
+            #Data already exists.
             except DataExists as e:
                 raise e
 

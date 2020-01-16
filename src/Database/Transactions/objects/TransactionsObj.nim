@@ -59,7 +59,18 @@ proc add*(
     transactions: var Transactions,
     tx: Transaction,
     save: bool = true
-) {.forceCheck: [].} =
+) {.forceCheck: [
+    ValueError
+].} =
+    if save:
+        #Verify every input doesn't have a spender out of Epochs.
+        if not ((tx of Data) and (tx.inputs[0].hash == Hash[256]())):
+            for input in tx.inputs:
+                var spenders: seq[Hash[256]] = transactions.db.loadSpenders(input)
+                for spender in spenders:
+                    if not transactions.transactions.hasKey(spender):
+                        raise newException(ValueError, "Transaction competes with a finalized Transaction.")
+
     if not (tx of Mint):
         #Add the Transaction to the cache.
         transactions.transactions[tx.hash] = tx
@@ -124,6 +135,8 @@ proc newTransactionsObj*(
 
                 try:
                     result.add(db.load(packet.hash), false)
+                except ValueError as e:
+                    doAssert(false, "Adding a reloaded Transaction raised a ValueError: " & e.msg)
                 except DBReadError as e:
                     doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
                 mentioned.incl(packet.hash)
@@ -193,14 +206,6 @@ func del*(
     transactions: var Transactions,
     hash: Hash[256]
 ) {.forceCheck: [].} =
-    #Grab the transaction.
-    var tx: Transaction
-    try:
-        tx = transactions.transactions[hash]
-    except KeyError:
-        return
-
-    #Delete the Transaction from the cache.
     transactions.transactions.del(hash)
 
 #Load a Mint Output.
