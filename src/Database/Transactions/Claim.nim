@@ -66,7 +66,7 @@ proc sign*(
 #Verify a Claim.
 proc verify*(
     claim: Claim,
-    claimer: BLSPublicKey
+    claimers: seq[BLSPublicKey]
 ): bool {.forceCheck: [].} =
     #Create a seq of AggregationInfos.
     var agInfos: seq[BLSAggregationInfo] = newSeq[BLSAggregationInfo](claim.inputs.len)
@@ -75,7 +75,7 @@ proc verify*(
     for i in 0 ..< claim.inputs.len:
         try:
             agInfos[i] = newBLSAggregationInfo(
-                claimer,
+                claimers[i],
                 (
                     "\1" &
                     claim.inputs[i].hash.toString() &
@@ -83,11 +83,11 @@ proc verify*(
                     cast[SendOutput](claim.outputs[0]).key.toString()
                 )
             )
-        except BLSError:
-            return false
+        except BLSError as e:
+            doAssert(false, "Infinite BLS Public Key entered the system: " & e.msg)
 
     #Verify the signature.
     try:
         result = claim.signature.verify(agInfos.aggregate())
-    except BLSError:
-        return false
+    except BLSError as e:
+        doAssert(false, "Couldn't verify a signature: " & e.msg)

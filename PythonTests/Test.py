@@ -15,6 +15,7 @@ from PythonTests.Tests.Merit.StateTest import StateTest
 from PythonTests.Tests.Merit.HundredTest import HundredTest
 
 from PythonTests.Tests.Transactions.DataTest import DataTest
+from PythonTests.Tests.Transactions.AggregatedClaimTest import AggregatedClaimTest
 from PythonTests.Tests.Transactions.SameInputTest import SameInputTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 
@@ -59,6 +60,7 @@ tests: List[Callable[[RPC], None]] = [
     HundredTest,
 
     DataTest,
+    AggregatedClaimTest,
     SameInputTest,
     FiftyTest,
 

@@ -59,7 +59,7 @@ proc add*(
 
     var
         #Claimers.
-        claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey](1)
+        claimers: seq[BLSPublicKey] = newSeq[BLSPublicKey]()
 
         #Table of spent inputs.
         inputTable: HashSet[string] = initHashSet[string]()
@@ -69,14 +69,6 @@ proc add*(
         key: BLSPublicKey
         #Amount this Claim is claiming.
         amount: uint64 = 0
-
-    #Grab the first claimer.
-    try:
-        claimers[0] = lookup(transactions.loadMintOutput(cast[FundedInput](claim.inputs[0])).key)
-    except IndexError as e:
-        doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
-    except DBReadError:
-        raise newException(ValueError, "Claim spends a non-existant Mint.")
 
     #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
     for input in claim.inputs:
@@ -100,15 +92,14 @@ proc add*(
         except IndexError as e:
             doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
 
-        if not claimers.contains(key):
-            claimers.add(key)
+        claimers.add(key)
         amount += output.amount
 
     #Set the Claim's output amount to the amount.
     claim.outputs[0].amount = amount
 
     #Verify the signature.
-    if not claim.verify(claimers.aggregate()):
+    if not claim.verify(claimers):
         raise newException(ValueError, "Claim has an invalid Signature.")
 
     #Add the Claim.
