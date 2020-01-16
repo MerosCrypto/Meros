@@ -31,9 +31,12 @@ from PythonTests.Tests.Consensus.Difficulties.DataDifficultyTest import DataDiff
 from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyCompetingTest
 from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
-
 from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
 from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
+
+from PythonTests.Tests.Consensus.HundredSix.HundredSixSignedElementsTest import HundredSixSignedElementsTest
+from PythonTests.Tests.Consensus.HundredSix.HundredSixBlockElementsTest import HundredSixBlockElementsTest
+from PythonTests.Tests.Consensus.HundredSix.HundredSixMeritRemovalsTest import HundredSixMeritRemovalsTest
 
 #Arguments.
 from sys import argv
@@ -77,9 +80,12 @@ tests: List[Callable[[RPC], None]] = [
     SameNonceTest,
     VerifyCompetingTest,
     PartialTest,
-
     MultipleTest,
-    PendingActionsTest
+    PendingActionsTest,
+
+    HundredSixSignedElementsTest,
+    HundredSixBlockElementsTest,
+    HundredSixMeritRemovalsTest
 ]
 
 #Tests to run.

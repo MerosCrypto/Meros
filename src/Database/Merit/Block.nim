@@ -145,7 +145,7 @@ proc verifyAggregate*(
                 lookup(blockArg.body.elements[e].holder),
                 blockArg.body.elements[e].serializeWithoutHolder()
             )
-    #We have Verification Packets including Verifiers who don't exist.
+    #We have Verification Packets/Elements including Verifiers who don't exist.
     except IndexError:
         return false
     #One of our holders has an infinite key.

@@ -11,6 +11,8 @@ from PythonTests.Classes.Transactions.Data import Data
 from PythonTests.Classes.Consensus.Element import Element, SignedElement
 from PythonTests.Classes.Consensus.Verification import SignedVerification
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
+from PythonTests.Classes.Consensus.SendDifficulty import SignedSendDifficulty
+from PythonTests.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -310,6 +312,10 @@ class Meros:
         res: bytes = bytes()
         if isinstance(elem, SignedVerification):
             res = MessageType.SignedVerification.toByte()
+        elif isinstance(elem, SignedDataDifficulty):
+            res = MessageType.SignedDataDifficulty.toByte()
+        elif isinstance(elem, SignedSendDifficulty):
+            res = MessageType.SignedSendDifficulty.toByte()
         else:
             raise Exception("Unsupported Element passed to Meros.signedElement.")
         res += SignedElement.fromElement(elem).signedSerialize()

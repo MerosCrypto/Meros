@@ -203,6 +203,10 @@ proc add*(
     ValueError,
     DataExists
 ].} =
+    #Verify the holder exists.
+    if verif.holder >= uint16(state.holders.len):
+        raise newException(ValueError, "Invalid holder.")
+
     #Verify the signature.
     try:
         if not verif.signature.verify(
@@ -252,6 +256,10 @@ proc add*(
     DataExists,
     MaliciousMeritHolder
 ].} =
+    #Verify the holder exists.
+    if sendDiff.holder >= uint16(state.holders.len):
+        raise newException(ValueError, "Invalid holder.")
+
     #Verify the SendDifficulty's signature.
     try:
         if not sendDiff.signature.verify(
@@ -306,6 +314,10 @@ proc add*(
     DataExists,
     MaliciousMeritHolder
 ].} =
+    #Verify the holder exists.
+    if dataDiff.holder >= uint16(state.holders.len):
+        raise newException(ValueError, "Invalid holder.")
+
     #Verify the DataDifficulty's signature.
     try:
         if not dataDiff.signature.verify(
