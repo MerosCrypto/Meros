@@ -133,7 +133,7 @@ proc mainPersonal() {.forceCheck: [].} =
             #Wallet we're using.
             child: HDWallet
             #Data tip.
-            tip: Hash[256] = Hash[256]()
+            tip: Hash[256]
             #Data.
             data: Data
 
@@ -150,7 +150,7 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 data = newData(Hash[256](), child.publicKey.toString())
             except ValueError as e:
-                doAssert(false, "Couldn't create the initial data: " & e.msg)
+                doAssert(false, "Couldn't create the initial Data: " & e.msg)
 
             #Sign it.
             child.sign(data)
@@ -166,7 +166,7 @@ proc mainPersonal() {.forceCheck: [].} =
             except DataExists as e:
                 raise e
 
-            #Set the tip to the initial data.
+            #Set the tip to the initial Data.
             tip = data.hash
 
         try:
