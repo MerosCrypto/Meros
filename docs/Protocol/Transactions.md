@@ -34,9 +34,9 @@ Claim Transactions are created in response to a Mint, and have the following add
 
 - signature: BLS Signature that proves the Merit Holder which earned the newly minted Meros wants this person to receive their reward.
 
-Claim inputs are hashes of Mints which have yet to be claimed. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the Mint amounts. The specified key does not need to be a valid Ed25519 Public Key.
+Every Claim must have at least 1 input. Claim inputs must be Mints, where the specified output is to the sender. The Claim's singular output is to an Ed25519 Public Key with the amount being the sum of the input amounts. The specified key does not need to be a valid Ed25519 Public Key.
 
-signature must be the BLS signature produced by the Mint's designated claimee signing `"\1" + mint.hash + mint.index + claim.output.key`, where `mint.hash` takes up 32 bytes and `claim.output.key` takes up 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key created from every unique BLS Public Key.
+signature must be the BLS signature produced by the Mint's designated claimee signing `"\1" + mint.hash + mint.index + claim.output.key`, where `mint.hash` takes 32 bytes, `mint.index` takes 1 byte, and `claim.output.key` takes 32 bytes, for every input, and then aggregating the produced signatures (if there's more than one). If the Mints are for different BLS Public Keys, the designated claimee is the aggregated BLS Public Key.
 
 Claim hashes are defined as `Blake2b-256("\1" + signature)`, where signature takes up 48 bytes.
 
@@ -49,7 +49,7 @@ Send Transactions have the following additional field:
 - signature: Ed25519 Signature.
 - proof: Work that proves this isn't spam.
 
-Every Send must have at least 1 input. Every Send input must be either a Claim or a Send, where the specified output is to the sender. If the specified outputs are to different keys, the sender is the MuSig Public Key created out of the unique keys. No transaction outputs specified as inputs must have been used as inputs before.
+Every Send must have at least 1 input. Every Send input must be either a Claim or a Send, where the specified output is to the sender. If the specified outputs are to different keys, the sender is the MuSig Public Key created out of the unique keys.
 
 Every output's key must be an Ed25519 Public Key. The specified key does not need to be a valid Ed25519 Public Key. The output's amount must be non-zero.
 
