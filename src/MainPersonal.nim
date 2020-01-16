@@ -134,6 +134,8 @@ proc mainPersonal() {.forceCheck: [].} =
             child: HDWallet
             #Data tip.
             tip: Hash[256]
+            #Whether or not we need to create the intial data.
+            initial: bool = false
             #Data.
             data: Data
 
@@ -146,6 +148,16 @@ proc mainPersonal() {.forceCheck: [].} =
         try:
             tip = transactions.loadDataTip(child.publicKey)
         except DataMissing:
+            #Nim can't handle the following chain of events:
+            #Spawning an awaited async task
+            #From within a checked async task
+            #From within an except Block.
+            #Adding the initial Data from this except Block would trigger that chain of events.
+            #That's why we use a flag.
+            #For more info, see https://github.com/nim-lang/Nim/issues/13171.
+            initial = true
+
+        if initial:
             #Create the initial Data.
             try:
                 data = newData(Hash[256](), child.publicKey.toString())

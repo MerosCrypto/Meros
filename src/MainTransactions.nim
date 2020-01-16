@@ -166,30 +166,17 @@ proc mainTransactions() {.forceCheck: [].} =
             echo "Successfully added the Data."
 
             if not syncing:
-                #Nim sometimes sets the current exception to null after executing these two calls.
-                #https://github.com/nim-lang/Nim/issues/13171
-                #It was consistently stopping personal.data from working.
-                #This manually sets the exception, although it's not a good solution.
-                #If either broadcast or verify raised and the exception remained null, this changes the state.
-                var cachedException: ref Exception = getCurrentException()
-
                 #Broadcast the Data.
                 functions.network.broadcast(
                     MessageType.Data,
                     data.serialize()
                 )
 
-                if getCurrentException().isNil:
-                    setCurrentException(cachedException)
-
                 #Create a Verification.
                 try:
                     asyncCheck verify(data)
                 except Exception as e:
                     doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
-
-                if getCurrentException().isNil:
-                    setCurrentException(cachedException)
 
         #Mark a Transaction as verified.
         functions.transactions.verify = proc (
