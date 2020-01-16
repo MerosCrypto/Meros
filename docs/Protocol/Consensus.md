@@ -37,7 +37,7 @@ In the case no SendDifficulties have been added to the Consensus yet, the spam f
 They have the following fields:
 
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: 384-bit number that should be the difficulty for the Sends' spam filter.
+- difficulty: 256-bit number that should be the difficulty for the Sends' spam filter.
 
 `SendDifficulty` has a message length of 38 bytes; the 2-byte holder, 4-byte nonce, and the 32-byte difficulty. The signature is produced with a prefix of "\2". That said, `SendDifficulty` is not a standalone message type.
 
@@ -50,7 +50,7 @@ In the case no DataDifficulties have been added to the Consensus yet, the spam f
 They have the following fields:
 
 - nonce: An incrementing number based on the Merit Holder used to stop replay attacks.
-- difficulty: 384-bit number that should be the difficulty for the Data Transactions' spam filter.
+- difficulty: 256-bit number that should be the difficulty for the Data Transactions' spam filter.
 
 `DataDifficulty` has a message length of 38 bytes; the 2-byte holder, 4-byte nonce, and the 32-byte difficulty. The signature is produced with a prefix of "\3". That said, `DataDifficulty` is not a standalone message type.
 
