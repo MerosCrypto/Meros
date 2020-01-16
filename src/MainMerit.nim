@@ -300,7 +300,7 @@ proc mainMerit() {.forceCheck: [].} =
                         doAssert(false, "addBlockByHash threw an Exception despite catching all Exceptions: " & e.msg)
 
             try:
-                merit.blockchain.testBlockHeader(header)
+                merit.blockchain.testBlockHeader(merit.state.holders, header)
             except ValueError as e:
                 raise e
             except NotConnected as e:
@@ -357,7 +357,7 @@ proc mainMerit() {.forceCheck: [].} =
             NotConnected
         ].} =
             try:
-                merit.blockchain.testBlockHeader(header)
+                merit.blockchain.testBlockHeader(merit.state.holders, header)
             except ValueError as e:
                 raise e
             except NotConnected as e:

@@ -83,8 +83,10 @@ When a new BlockHeader is received, it's tested for validity. The BlockHeader is
 
 - version is 0.
 - last must be equivalent to the hash of the current tail Block.
+- significant is greater than 0 (exclusive) and at most 26280 (inclusive).
 - miner is a valid, non-infinite, BLS Public Key if the miner is new or a valid nickname if the miner isn't new.
 - time must be greater than the latest Block’s time.
+- signature must be valid.
 - hash must not be less than the current difficulty.
 
 If the BlockHeader is valid, full nodes sync the rest of the Block via a `BlockBodyRequest`.
@@ -97,7 +99,6 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 
 - The header is valid.
 - contents is the result of a properly constructed Merkle tree.
-- significant is greater than 0 and at most 26280 (inclusive).
 - The Block's included Verification Packets don't collide with the specified sketch salt.
 - sketchCheck is the result of a properly constructed Merkle tree.
 - Every Verification Packet is for an unique Transaction.
@@ -108,8 +109,8 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Transaction doesn't compete with, or have parents which competed with and lost, Transactions archived 5 Blocks before the last Checkpoint.
 - The sketch is properly constructed from the same data used to construct the Merkle.
 - Only new and unique Elements are archived.
-- No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder.
-- Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block. That said, the Verification Packets still can.
+- No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder. That said, the Block may skip a nonce if the skipped nonce is present later in the Block.
+- Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block. That said, the Verification Packets still can as long as the matching MeritRemoval is included in the Block.
 - The aggregate signature is formed with the following algorithm:
 
 ```
@@ -164,11 +165,13 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 
 ### Violations in Meros
 
+- Meros doesn't check that if VerificationPackets in a Block cause MeritRemovals, the matching MeritRemoval is included in the Block.
+
 - Meros doesn't support dead Merit.
 
 - Meros puts competitors in the first archived TX's Epoch, instead of bringing that TX forward.
 - Meros doesn't rollover rewards or use a negative sigmoid.
-- Merps doesn't wait 10 Blocks to create Mints.
+- Meros doesn't wait 10 Blocks to create Mints.
 
 - Meros doesn't support chain reorganizations.
 - Meros doesn't support the `Checkpoint` message type.

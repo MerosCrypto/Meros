@@ -14,7 +14,8 @@ import ../../Wallet/MinerWallet
 import ../Consensus/Elements/objects/VerificationPacketObj
 import ../Consensus/Elements/objects/MeritRemovalObj
 
-#Serialize Element lib.
+#Serialization libs.
+import ../../Network/Serialize/Merit/SerializeBlockHeader
 import ../../Network/Serialize/Consensus/SerializeElement
 
 #Merit DB lib.
@@ -49,6 +50,7 @@ proc newBlockchain*(
 #Test a BlockHeader.
 proc testBlockHeader*(
     blockchain: Blockchain,
+    lookup: seq[BLSPublicKey],
     header: BlockHeader
 ) {.forceCheck: [
     ValueError,
@@ -66,17 +68,39 @@ proc testBlockHeader*(
     if header.last != blockchain.tail.header.hash:
         raise newException(NotConnected, "Last hash isn't our tip.")
 
-    #Check a miner with a nickname isn't being marked as new.
-    if header.newMiner and blockchain.miners.hasKey(header.minerKey):
-        raise newException(ValueError, "Header marks a miner with a nickname as new.")
+    #Check significant.
+    if (header.significant == 0) or (header.significant > uint16(26280)):
+        raise newException(ValueError, "Invalid significant.")
 
-    #If this is a new miner, make sure the key isn't infinite.
-    if header.newMiner and header.minerKey.isInf:
-        raise newException(ValueError, "Header has an infinite miner key.")
+    var key: BLSPublicKey
+    if header.newMiner:
+        #Check a miner with a nickname isn't being marked as new.
+        if blockchain.miners.hasKey(header.minerKey):
+            raise newException(ValueError, "Header marks a miner with a nickname as new.")
+
+        #Make sure the key isn't infinite.
+        if header.minerKey.isInf:
+            raise newException(ValueError, "Header has an infinite miner key.")
+
+        #Grab the key.
+        key = header.minerKey
+    else:
+        #Make sure the nick is valid.
+        if header.minerNick >= uint16(lookup.len):
+            raise newException(ValueError, "Header has an invalid nickname.")
+
+        key = lookup[header.minerNick]
 
     #Check the time.
-    if (header.time < blockchain.tail.header.time) or (header.time > getTime() + 120):
+    if (header.time < blockchain.tail.header.time) or (header.time > getTime() + 30):
         raise newException(ValueError, "Block has an invalid time.")
+
+    #Check the signature.
+    try:
+        if not header.signature.verify(newBLSAggregationInfo(key, RandomX(header.serializeHash()).toString())):
+            raise newException(ValueError, "Block has an invalid signature.")
+    except BLSError as e:
+        doAssert(false, "Failed to verify a BlockHeader's signature: " & e.msg)
 
 #Adds a block to the blockchain.
 proc processBlock*(
