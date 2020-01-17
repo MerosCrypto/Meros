@@ -35,7 +35,7 @@ def PartialTest(
 
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: PartialMeritRemoval = PartialMeritRemoval.fromJSON(keys, vectors["removal"])
+    removal: PartialMeritRemoval = PartialMeritRemoval.fromSignedJSON(nicks, keys, vectors["removal"])
 
     #Create and execute a Liver to cause a Partial MeritRemoval.
     def sendElement() -> None:
@@ -45,17 +45,17 @@ def PartialTest(
         #Verify the MeritRemoval.
         if rpc.meros.recv() != (
             MessageType.SignedMeritRemoval.toByte() +
-            removal.serialize(nicks)
+            removal.signedSerialize(nicks)
         ):
             raise TestError("Meros didn't send us the Merit Removal.")
-        verifyMeritRemoval(rpc, 200, 200, removal, True)
+        verifyMeritRemoval(rpc, 2, 2, removal, True)
 
     Liver(
         rpc,
         vectors["blockchain"],
         callbacks={
             2: sendElement,
-            3: lambda: verifyMeritRemoval(rpc, 200, 200, removal, False)
+            3: lambda: verifyMeritRemoval(rpc, 2, 2, removal, False)
         }
     ).live()
 
@@ -64,17 +64,17 @@ def PartialTest(
         #Send and verify the MeritRemoval.
         if rpc.meros.signedElement(removal) != rpc.meros.recv():
             raise TestError("Meros didn't send us the Merit Removal.")
-        verifyMeritRemoval(rpc, 200, 200, removal, True)
+        verifyMeritRemoval(rpc, 2, 2, removal, True)
 
     Liver(
         rpc,
         vectors["blockchain"],
         callbacks={
             2: sendMeritRemoval,
-            3: lambda: verifyMeritRemoval(rpc, 200, 200, removal, False)
+            3: lambda: verifyMeritRemoval(rpc, 2, 2, removal, False)
         }
     ).live()
 
     #Create and execute a Syncer to handle a Partial MeritRemoval.
     Syncer(rpc, vectors["blockchain"]).sync()
-    verifyMeritRemoval(rpc, 200, 200, removal, False)
+    verifyMeritRemoval(rpc, 2, 2, removal, False)

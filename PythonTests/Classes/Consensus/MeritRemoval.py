@@ -53,7 +53,7 @@ class MeritRemoval(Element):
             self.e2.signatureSerialize(lookup)
         )
 
-    #DataDifficulty -> JSON.
+    #MeritRemoval -> JSON.
     def toJSON(
         self
     ) -> Dict[str, Any]:
@@ -135,24 +135,26 @@ class PartialMeritRemoval(MeritRemoval):
     ) -> bytes:
         return MeritRemoval.serialize(self, lookup) + self.signature
 
-    #SignedDataDifficulty -> SignedElement.
+    #PartialMeritRemoval -> SignedElement.
     def toSignedElement(
         self
     ) -> Any:
         return self
 
-    #SignedDataDifficulty -> JSON.
+    #PartialMeritRemoval -> JSON.
     def toSignedJSON(
         self
     ) -> Dict[str, Any]:
         result: Dict[str, Any] = MeritRemoval.toJSON(self)
+        result["elements"][1]["signature"] = self.se2.signature.hex().upper()
         result["signed"] = True
         result["signature"] = self.signature.hex().upper()
         return result
 
-    #JSON -> SignedDataDifficulty.
+    #JSON -> PartialMeritRemoval.
     @staticmethod
     def fromSignedJSON(
+        nicks: List[bytes],
         keys: Dict[bytes, int],
         jsonArg: Dict[str, Any]
     ) -> Any:
@@ -179,15 +181,15 @@ class PartialMeritRemoval(MeritRemoval):
 
         e2: SignedElement = SignedVerification(bytes(32), 0).toSignedElement()
         if json["elements"][1]["descendant"] == "Verification":
-            e2 = SignedVerification.fromJSON(json["elements"][1])
+            e2 = SignedVerification.fromSignedJSON(nicks, json["elements"][1])
         elif json["elements"][1]["descendant"] == "VerificationPacket":
             json["elements"][1]["holders"] = list(json["elements"][1]["holders"])
             for h in range(len(json["elements"][1]["holders"])):
                 json["elements"][1]["holders"][h] = keys[bytes.fromhex(json["elements"][1]["holders"][h])]
-            e2 = SignedVerificationPacket.fromJSON(json["elements"][1])
+            e2 = SignedVerificationPacket.fromSignedJSON(nicks, json["elements"][1])
         elif json["elements"][1]["descendant"] == "SendDifficulty":
-            e2 = SignedSendDifficulty.fromJSON(json["h"][1])
+            e2 = SignedSendDifficulty.fromSignedJSON(nicks, json["h"][1])
         elif json["elements"][1]["descendant"] == "DataDifficulty":
-            e2 = SignedDataDifficulty.fromJSON(json["elements"][1])
+            e2 = SignedDataDifficulty.fromSignedJSON(nicks, json["elements"][1])
 
         return PartialMeritRemoval(e1, e2)

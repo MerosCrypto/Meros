@@ -26,6 +26,8 @@ import ../../Network/Serialize/SerializeCommon
 
 #Element Serialization libs.
 import ../../Network/Serialize/Consensus/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeSendDifficulty
+import ../../Network/Serialize/Consensus/SerializeDataDifficulty
 import ../../Network/Serialize/Consensus/SerializeVerificationPacket
 import ../../Network/Serialize/Consensus/SerializeMeritRemoval
 

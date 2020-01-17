@@ -27,8 +27,12 @@ export BlockObj
 #SerializeCommon lib.
 import ../../Network/Serialize/SerializeCommon
 
-#Serialize Element libs.
-import ../../Network/Serialize/Consensus/SerializeElement
+#Element Serialization libs.
+import ../../Network/Serialize/Consensus/SerializeVerification
+import ../../Network/Serialize/Consensus/SerializeSendDifficulty
+import ../../Network/Serialize/Consensus/SerializeDataDifficulty
+import ../../Network/Serialize/Consensus/SerializeVerificationPacket
+import ../../Network/Serialize/Consensus/SerializeMeritRemoval
 
 #Algorithm standard lib.
 import algorithm
@@ -141,10 +145,25 @@ proc verifyAggregate*(
 
         #Iterate over every Element.
         for e in 0 ..< blockArg.body.elements.len:
-            agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
-                lookup(blockArg.body.elements[e].holder),
-                blockArg.body.elements[e].serializeWithoutHolder()
-            )
+            if blockArg.body.elements[e] of MeritRemoval:
+                var mr: MeritRemoval = cast[MeritRemoval](blockArg.body.elements[e])
+                agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
+                    lookup(blockArg.body.elements[e].holder),
+                    mr.element2.serializeWithoutHolder()
+                )
+                if not mr.partial:
+                    agInfos[blockArg.body.packets.len + e] = @[
+                        newBLSAggregationInfo(
+                            lookup(blockArg.body.elements[e].holder),
+                            mr.element1.serializeWithoutHolder()
+                        ),
+                        agInfos[blockArg.body.packets.len + e]
+                    ].aggregate()
+            else:
+                agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
+                    lookup(blockArg.body.elements[e].holder),
+                    blockArg.body.elements[e].serializeWithoutHolder()
+                )
     #We have Verification Packets/Elements including Verifiers who don't exist.
     except IndexError:
         return false

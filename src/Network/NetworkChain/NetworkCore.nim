@@ -195,7 +195,7 @@ proc newNetwork*(
                 try:
                     mr = msg.message.parseSignedMeritRemoval()
                 except ValueError as e:
-                    raise newException(ClientError, "Parsing the SignedVerification failed due to a ValueError: " & e.msg)
+                    raise newException(ClientError, "Parsing the SignedMeritRemoval failed due to a ValueError: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedMeritRemoval(mr)

@@ -140,7 +140,8 @@ proc mainMerit() {.forceCheck: [].} =
             #Check who has their Merit removed.
             var removed: seq[uint16] = @[]
             for elem in newBlock.body.elements:
-                discard
+                if elem of MeritRemoval:
+                    removed.add(elem.holder)
 
             #Add the Block to the Blockchain.
             merit.processBlock(newBlock)

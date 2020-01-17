@@ -70,7 +70,6 @@ proc recv*(
         elif len == 0:
             case content:
                 of MessageType.SignedMeritRemoval:
-                    discard """
                     var elemI: int = msg.len - 1
                     try:
                         if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
@@ -80,12 +79,14 @@ proc recv*(
 
                         len += MERIT_REMOVAL_ELEMENT_SET.getLength(
                             msg[elemI],
-                            msg[elemI .. elemI + len],
+                            if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
+                                msg[elemI .. elemI + len].fromBinary()
+                            else:
+                                0,
                             MERIT_REMOVAL_PREFIX
-                        )
+                        ) + 1
                     except ValueError as e:
                         raise newException(ClientError, e.msg)
-                    """
 
                 of MessageType.BlockHeader:
                     if int(msg[^1]) == 1:
@@ -111,7 +112,6 @@ proc recv*(
                         except ValueError as e:
                             raise newException(ClientError, e.msg)
 
-                        discard """
                         if int(msg[^1]) == MERIT_REMOVAL_PREFIX:
                             for _ in 0 ..< 2:
                                 try:
@@ -122,12 +122,8 @@ proc recv*(
                                 if msg.len != size:
                                     raise newException(ClientError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
-                                try:
-                                    len = MERIT_REMOVAL_ELEMENT_SET.getLength(msg[^1], ?, MERIT_REMOVAL_PREFIX)
-                                except ValueError as e:
-                                    raise newException(ClientError, e.msg)
-
                                 var elemI: int = msg.len - 1
+                                len = 0
                                 try:
                                     if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
                                         len = {
@@ -136,12 +132,15 @@ proc recv*(
 
                                     len += MERIT_REMOVAL_ELEMENT_SET.getLength(
                                         msg[elemI],
-                                        msg[elemI .. elemI + len],
+                                        if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
+                                            msg[elemI .. elemI + len].fromBinary()
+                                        else:
+                                            0,
                                         MERIT_REMOVAL_PREFIX
-                                    ) + 1
+                                    )
                                 except ValueError as e:
                                     raise newException(ClientError, e.msg)
-                                """
+                            dec(len)
 
                 else:
                     doAssert(false, "Length of 0 was found for a message other than the ones we support.")

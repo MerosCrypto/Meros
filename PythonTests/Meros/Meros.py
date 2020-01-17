@@ -13,6 +13,7 @@ from PythonTests.Classes.Consensus.Verification import SignedVerification
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 from PythonTests.Classes.Consensus.SendDifficulty import SignedSendDifficulty
 from PythonTests.Classes.Consensus.DataDifficulty import SignedDataDifficulty
+from PythonTests.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -180,6 +181,13 @@ class Meros:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:
                         length = 34
+                    elif result[-1] == 1:
+                        result += self.socketRecv(2)
+                        length = (int.from_bytes(result[-2:], byteorder="big") * 96) + 32
+                    elif result[-1] == 2:
+                        length = 38
+                    elif result[-1] == 3:
+                        length = 38
                     else:
                         raise Exception("Meros sent an Element we don't recognize.")
 
@@ -200,7 +208,22 @@ class Meros:
                         elif result[-1] == 4:
                             result += self.socketRecv(10)
                         elif result[-1] == 5:
-                            raise Exception("Block Bodies with Merit Removals are not supported.")
+                            result += self.socketRecv(4)
+                            for e in range(2):
+                                print("Start: " + result.hex())
+                                if result[-1] == 0:
+                                    result += self.socketRecv(32)
+                                elif result[-1] == 1:
+                                    result += self.socketRecv(2)
+                                    result += self.socketRecv((int.from_bytes(result[-2:], byteorder="big") * 96) + 32)
+                                elif result[-1] == 2:
+                                    result += self.socketRecv(36)
+                                elif result[-1] == 3:
+                                    result += self.socketRecv(36)
+                                elif result[-1] == 4:
+                                    result += self.socketRecv(8)
+                                if e == 0:
+                                    result += self.socketRecv(1)
                         else:
                             raise Exception("Block Body has an unknown element.")
 
@@ -307,7 +330,8 @@ class Meros:
     #Send a Signed Element.
     def signedElement(
         self,
-        elem: Element
+        elem: Element,
+        lookup: List[bytes] = []
     ) -> bytes:
         res: bytes = bytes()
         if isinstance(elem, SignedVerification):
@@ -316,9 +340,11 @@ class Meros:
             res = MessageType.SignedDataDifficulty.toByte()
         elif isinstance(elem, SignedSendDifficulty):
             res = MessageType.SignedSendDifficulty.toByte()
+        elif isinstance(elem, PartialMeritRemoval):
+            res = MessageType.SignedMeritRemoval.toByte()
         else:
             raise Exception("Unsupported Element passed to Meros.signedElement.")
-        res += SignedElement.fromElement(elem).signedSerialize()
+        res += SignedElement.fromElement(elem).signedSerialize(lookup)
 
         self.send(res)
         return res
@@ -380,8 +406,6 @@ class Meros:
             if len(self.msgs[i]) != 0:
                 buf: bytes = self.recv()
                 if self.msgs[i] != buf:
-                    print(self.msgs[i].hex())
-                    print(buf.hex())
                     raise TestError("Invalid playback response.")
 
     #Check the return code.

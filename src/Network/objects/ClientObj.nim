@@ -58,7 +58,9 @@ func isClosed*(
     client.socket.isClosed()
 
 #Close a Client.
-proc close*(client: Client) {.forceCheck: [].} =
+proc close*(
+    client: Client
+) {.forceCheck: [].} =
     try:
         client.socket.close()
     except Exception:

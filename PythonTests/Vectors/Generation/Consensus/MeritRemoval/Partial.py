@@ -36,7 +36,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        bytes(48),
+        bytes(32),
         1,
         bytes(4),
         bytes(32),
