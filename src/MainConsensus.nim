@@ -89,6 +89,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 raise newException(ValueError, "Unknown Verification.")
 
             #Add the SignedVerification to the Consensus DAG.
+            var mr: bool
             try:
                 consensus.add(merit.state, verif)
             #Invalid signature.
@@ -102,6 +103,10 @@ proc mainConsensus() {.forceCheck: [].} =
                 #Flag the MeritRemoval.
                 consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
 
+                #Set mr to true.
+                mr = true
+
+            if mr:
                 try:
                     #Broadcast the first MeritRemoval.
                     functions.network.broadcast(
@@ -155,6 +160,7 @@ proc mainConsensus() {.forceCheck: [].} =
             echo "Adding a new Send Difficulty."
 
             #Add the SendDifficulty.
+            var mr: bool
             try:
                 consensus.add(merit.state, sendDiff)
             except ValueError as e:
@@ -165,6 +171,10 @@ proc mainConsensus() {.forceCheck: [].} =
                 #Flag the MeritRemoval.
                 consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
 
+                #Set mr to true.
+                mr = true
+
+            if mr:
                 try:
                     #Broadcast the first MeritRemoval.
                     functions.network.broadcast(
@@ -206,6 +216,7 @@ proc mainConsensus() {.forceCheck: [].} =
             echo "Adding a new Data Difficulty."
 
             #Add the DataDifficulty.
+            var mr: bool = false
             try:
                 consensus.add(merit.state, dataDiff)
             except ValueError as e:
@@ -216,6 +227,10 @@ proc mainConsensus() {.forceCheck: [].} =
                 #Flag the MeritRemoval.
                 consensus.flag(merit.blockchain, merit.state, cast[SignedMeritRemoval](e.removal))
 
+                #Set mr to true.
+                mr = true
+
+            if mr:
                 try:
                     #Broadcast the first MeritRemoval.
                     functions.network.broadcast(
