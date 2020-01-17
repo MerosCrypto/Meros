@@ -153,6 +153,12 @@ type
             DataExists
         ].}
 
+        verifyMeritRemoval*: proc (
+            mr: MeritRemoval
+        ) {.raises: [
+            ValueError
+        ].}
+
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
         ) {.raises: [

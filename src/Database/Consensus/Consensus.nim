@@ -62,6 +62,72 @@ proc newConsensus*(
 ): Consensus {.inline, forceCheck: [].} =
     newConsensusObj(functions, db, state, sendDiff, dataDiff)
 
+#Verify a MeritRemoval's validity.
+proc verify*(
+    consensus: Consensus,
+    mr: MeritRemoval
+) {.forceCheck: [
+    ValueError
+].} =
+    proc checkSecondCompeting(
+        hash: Hash[256]
+    ) {.forceCheck: [
+        ValueError
+    ].} =
+        if mr.partial:
+            var status: TransactionStatus
+            try:
+                status = consensus.db.load(hash)
+            except DBReadError:
+                raise newException(ValueError, "Unknown hash.")
+
+            if (not status.holders.contains(mr.holder)) or status.signatures.hasKey(mr.holder):
+                raise newException(ValueError, "Verification isn't archived.")
+
+        doAssert(false, "Verified competing MeritRemovals aren't supported.")
+
+    proc checkSecondSameNonce(
+        nonce: int
+    ) {.forceCheck: [
+        ValueError
+    ].} =
+        try:
+            if mr.partial and ((nonce > consensus.archived[mr.holder]) or (mr.element1 != consensus.db.load(mr.holder, nonce))):
+                raise newException(ValueError, "First Element isn't archived.")
+        except KeyError as e:
+            raise newException(ValueError, "MeritRemoval has an invalid holder.")
+        except DBReadError as e:
+            doAssert(false, "Nonce was within bounds yet no Element could be loaded: " & e.msg)
+
+        case mr.element2:
+            of Verification as _:
+                raise newException(ValueError, "Invalid second Element.")
+            of VerificationPacket as _:
+                raise newException(ValueError, "Invalid second Element.")
+            of SendDifficulty as sd:
+                if nonce != sd.nonce:
+                    raise newException(ValueError, "Second Element has a distinct nonce.")
+            of DataDifficulty as dd:
+                if nonce != dd.nonce:
+                    raise newException(ValueError, "Second Element has a distinct nonce.")
+            else:
+                doAssert(false, "Unsupported MeritRemoval Element.")
+
+    try:
+        case mr.element1:
+            of Verification as verif:
+                checkSecondCompeting(verif.hash)
+            of VerificationPacket as packet:
+                checkSecondCompeting(packet.hash)
+            of SendDifficulty as sd:
+                checkSecondSameNonce(sd.nonce)
+            of DataDifficulty as dd:
+                checkSecondSameNonce(dd.nonce)
+            else:
+                doAssert(false, "Unsupported MeritRemoval Element.")
+    except ValueError as e:
+        raise e
+
 #Flag a MeritHolder as malicious.
 proc flag*(
     consensus: Consensus,
@@ -366,19 +432,10 @@ proc add*(
     if not mr.signature.verify(mr.agInfo(state.holders[mr.holder])):
         raise newException(ValueError, "Invalid MeritRemoval signature.")
 
-    #If this is a partial MeritRemoval, make sure the first Element is already archived on the Blockchain.
-    if mr.partial:
-        doAssert(false, "Partial MeritRemovals aren't supported.")
-
-    #Same nonce.
-    #This is only used for SendDifficulty, DataDifficulty, and GasPrice elements.
-    #None of those are supported.
-    elif false:
-        discard
-
-    #Verified competing elements.
-    else:
-        doAssert(false, "Verified competing MeritRemovals aren't supported.")
+    try:
+        consensus.verify(mr)
+    except ValueError as e:
+        raise e
 
     consensus.flag(blockchain, state, mr)
 
@@ -416,6 +473,7 @@ proc archive*(
     consensus: Consensus,
     state: State,
     shifted: seq[VerificationPacket],
+    elements: seq[BlockElement],
     popped: Epoch,
     incd: uint16,
     decd: int
@@ -439,6 +497,25 @@ proc archive*(
     for hash in consensus.unmentioned:
         consensus.incEpoch(hash)
         consensus.db.addUnmentioned(hash)
+
+    #Update the archived nonce of every holder.
+    try:
+        for elem in elements:
+            case elem:
+                of SendDifficulty as sd:
+                    if consensus.archived[sd.holder] < sd.nonce:
+                        consensus.archived[sd.holder] = sd.nonce
+                        consensus.db.saveArchived(sd.holder, sd.nonce)
+                of DataDifficulty as dd:
+                    if consensus.archived[dd.holder] < dd.nonce:
+                        consensus.archived[dd.holder] = dd.nonce
+                        consensus.db.saveArchived(dd.holder, dd.nonce)
+                of MeritRemoval as _:
+                    discard
+                else:
+                    doAssert(false, "Unsupported Block Element.")
+    except KeyError:
+        doAssert(false, "Tried to archive an Element for a non-existent holder.")
 
     #Transactions finalized out of order.
     var outOfOrder: HashSet[Hash[256]] = initHashSet[Hash[256]]()
@@ -523,3 +600,7 @@ proc archive*(
             consensus.filters.data.update(incd, state[incd], consensus.db.loadDataDifficulty(incd))
         except DBReadError:
             discard
+
+    #If the amount of holders increased, update the archived nonce table.
+    if state.holders.len > consensus.archived.len:
+        consensus.archived[uint16(consensus.archived.len)] = 0

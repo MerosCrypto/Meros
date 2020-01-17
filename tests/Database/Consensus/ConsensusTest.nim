@@ -136,7 +136,7 @@ suite "Consensus":
             merit.state[incd] = merit.state[incd] + 24
 
             #Archive the Epochs.
-            consensus.archive(merit.state, mining.body.packets, epoch, incd, decd)
+            consensus.archive(merit.state, mining.body.packets, mining.body.elements, epoch, incd, decd)
 
             #Remove 24 Merit, if neccessary.
             #This is done here so we can still trigger the merit + 1 mod 50 == 0 check.

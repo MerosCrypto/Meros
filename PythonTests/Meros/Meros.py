@@ -210,7 +210,6 @@ class Meros:
                         elif result[-1] == 5:
                             result += self.socketRecv(4)
                             for e in range(2):
-                                print("Start: " + result.hex())
                                 if result[-1] == 0:
                                     result += self.socketRecv(32)
                                 elif result[-1] == 1:

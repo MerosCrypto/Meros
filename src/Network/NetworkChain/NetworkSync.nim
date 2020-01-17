@@ -432,7 +432,10 @@ proc sync*(
                 if hasElem.contains(mr.holder):
                     raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
 
-                discard
+                try:
+                    network.mainFunctions.consensus.verifyMeritRemoval(mr)
+                except ValueError as e:
+                    raise e
 
         hasElem.incl(elem.holder)
 

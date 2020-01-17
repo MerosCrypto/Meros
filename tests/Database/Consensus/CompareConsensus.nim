@@ -87,9 +87,15 @@ proc compare*(
     for nick in c1.malicious.keys():
         check(c1.malicious[nick] == c2.malicious[nick])
 
-    #Compare the statuses table.uses.len)
+    #Compare the statuses table.
+    check(c1.statuses.len == c2.statuses.len)
     for hash in c1.statuses.keys():
         compare(c1.statuses[hash], c2.statuses[hash])
 
-    #Compare the unmentioned table.
+    #Compare the unmentioned set.
     check(symmetricDifference(c1.unmentioned, c2.unmentioned).len == 0)
+
+    #Comoare the archived table.
+    check(c1.archived.len == c2.archived.len)
+    for holder in c1.archived.keys():
+        check(c1.archived[holder] == c2.archived[holder])

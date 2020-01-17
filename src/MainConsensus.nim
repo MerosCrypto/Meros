@@ -249,6 +249,17 @@ proc mainConsensus() {.forceCheck: [].} =
                 dataDiff.signedSerialize()
             )
 
+        #Verify MeritRemovals.
+        functions.consensus.verifyMeritRemoval = proc(
+            mr: MeritRemoval
+        ) {.forceCheck: [
+            ValueError
+        ].} =
+            try:
+                consensus.verify(mr)
+            except ValueError as e:
+                raise e
+
         #Handle SignedMeritRemovals.
         functions.consensus.addSignedMeritRemoval = proc (
             mr: SignedMeritRemoval

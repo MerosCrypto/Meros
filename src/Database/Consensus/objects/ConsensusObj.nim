@@ -52,9 +52,11 @@ type Consensus* = ref object
     #Statuses which are close to becoming verified.
     #Every Transaction in this Table is checked when new Blocks are added to see if they crossed the threshold.
     close*: HashSet[Hash[256]]
-
     #Transactions which haven't been mentioned in Epochs.
     unmentioned*: HashSet[Hash[256]]
+
+    #Archived nonces.
+    archived*: Table[uint16, int]
 
 #Consensus constructor.
 proc newConsensusObj*(
@@ -77,12 +79,13 @@ proc newConsensusObj*(
 
         statuses: initTable[Hash[256], TransactionStatus](),
         close: initHashSet[Hash[256]](),
+        unmentioned: initHashSet[Hash[256]](),
 
-        unmentioned: initHashSet[Hash[256]]()
+        archived: initTable[uint16, int]()
     )
 
-    #Reload the filters.
     for h in 0 ..< state.holders.len:
+        #Reload the filters.
         try:
             result.filters.send.update(uint16(h), state[uint16(h)], result.db.loadSendDifficulty(uint16(h)))
         except DBReadError:
@@ -92,6 +95,9 @@ proc newConsensusObj*(
             result.filters.data.update(uint16(h), state[uint16(h)], result.db.loadDataDifficulty(uint16(h)))
         except DBReadError:
             discard
+
+        #Reload the table of archived nonces.
+        result.archived[uint16(h)] = result.db.loadArchived(uint16(h))
 
     #Load statuses still in Epochs.
     #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.

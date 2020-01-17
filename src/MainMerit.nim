@@ -161,7 +161,7 @@ proc mainMerit() {.forceCheck: [].} =
             (epoch, incd, decd) = merit.postProcessBlock()
 
             #Archive the Epochs.
-            consensus.archive(merit.state, newBlock.body.packets, epoch, incd, decd)
+            consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
 
             #Add every Element.
             for elem in elements:

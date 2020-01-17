@@ -67,7 +67,7 @@ macro match*(
                             branch[0][1],
                             newNimNode(nnkCast).add(
                                 branch[0][1],
-                                newIdentNode(symbol.strVal)
+                                symbol
                             )
                         )
                     )

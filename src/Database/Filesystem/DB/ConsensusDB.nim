@@ -41,6 +41,11 @@ template HOLDER_NONCE(
 ): string =
     holder.toBinary(NICKNAME_LEN)
 
+template HOLDER_ARCHIVED_NONCE(
+    holder: uint16
+): string =
+    holder.toBinary(NICKNAME_LEN) & "a"
+
 template HOLDER_SEND_DIFFICULTY(
     holder: uint16
 ): string =
@@ -118,13 +123,13 @@ proc save*(
     db: DB,
     hash: Hash[256],
     status: TransactionStatus
-) {.forceCheck: [].} =
+) {.inline, forceCheck: [].} =
     db.put(STATUS(hash), status.serialize())
 
 proc addUnmentioned*(
     db: DB,
     unmentioned: Hash[256]
-) {.forceCheck: [].} =
+) {.inline, forceCheck: [].} =
     db.consensus.unmentioned &= unmentioned.toString()
 
 proc save*(
@@ -150,6 +155,13 @@ proc save*(
         BLOCK_ELEMENT(dataDiff.holder, dataDiff.nonce),
         char(DATA_DIFFICULTY_PREFIX) & dataDiff.difficulty.toString()
     )
+
+proc saveArchived*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+) {.inline, forceCheck: [].} =
+    db.put(HOLDER_ARCHIVED_NONCE(holder), nonce.toBinary())
 
 #Load functions.
 proc load*(
@@ -239,3 +251,12 @@ proc load*(
                 doAssert(false, "Tried to load an unknown Block Element: " & $int(elem[0]))
     except ValueError:
         doAssert(false, "Couldn't convert a 32-byte value to a 32-byte hash.")
+
+proc loadArchived*(
+    db: DB,
+    holder: uint16
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(HOLDER_ARCHIVED_NONCE(holder)).fromBinary()
+    except DBReadeRROR:
+        result = 0
