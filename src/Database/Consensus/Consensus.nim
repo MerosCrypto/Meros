@@ -365,10 +365,27 @@ proc add*(
             if other == sendDiff:
                 raise newException(DataExists, "Already added this SendDifficulty.")
 
-            raise newMaliciousMeritHolder(
-                "SendDifficulty shares a nonce with a different Element.",
-                newSignedMeritRemoval(sendDiff.holder, true, other, sendDiff, sendDiff.signature, state.holders)
-            )
+            try:
+                var partial: bool = sendDiff.nonce <= consensus.archived[sendDiff.holder]
+                raise newMaliciousMeritHolder(
+                    "SendDifficulty shares a nonce with a different Element.",
+                    newSignedMeritRemoval(
+                        sendDiff.holder,
+                        partial,
+                        other,
+                        sendDiff,
+                        if partial:
+                            sendDiff.signature
+                        else:
+                            @[
+                                consensus.signatures[sendDiff.holder][sendDiff.nonce - consensus.archived[sendDiff.holder] - 1],
+                                sendDiff.signature
+                            ].aggregate()
+                        , state.holders
+                    )
+                )
+            except KeyError as e:
+                doAssert(false, "Either couldn't get a holder's archived nonce or one of their signatures: " & e.msg)
 
         raise newException(ValueError, "SendDifficulty skips a nonce.")
 
@@ -430,10 +447,27 @@ proc add*(
             if other == dataDiff:
                 raise newException(DataExists, "Already added this DataDifficulty.")
 
-            raise newMaliciousMeritHolder(
-                "DataDifficulty shares a nonce with a different Element.",
-                newSignedMeritRemoval(dataDiff.holder, true, other, dataDiff, dataDiff.signature, state.holders)
-            )
+            try:
+                var partial: bool = dataDiff.nonce <= consensus.archived[dataDiff.holder]
+                raise newMaliciousMeritHolder(
+                    "DataDifficulty shares a nonce with a different Element.",
+                    newSignedMeritRemoval(
+                        dataDiff.holder,
+                        partial,
+                        other,
+                        dataDiff,
+                        if partial:
+                            dataDiff.signature
+                        else:
+                            @[
+                                consensus.signatures[dataDiff.holder][dataDiff.nonce - consensus.archived[dataDiff.holder] - 1],
+                                dataDiff.signature
+                            ].aggregate()
+                        , state.holders
+                    )
+                )
+            except KeyError as e:
+                doAssert(false, "Either couldn't get a holder's archived nonce or one of their signatures: " & e.msg)
 
         raise newException(ValueError, "DataDifficulty skips a nonce.")
 
