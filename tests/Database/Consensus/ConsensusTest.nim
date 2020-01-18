@@ -279,7 +279,7 @@ suite "Consensus":
                 sendDiff: SignedSendDifficulty
             for b in 0 ..< 32:
                 difficulty.data[b] = uint8(rand(255))
-            sendDiff = newSignedSendDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
+            sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, difficulty)
             sendDiff.holder = uint16(holder)
             elements.add(sendDiff)
 
@@ -288,7 +288,7 @@ suite "Consensus":
             holder = rand(holders.len - 1)
             for b in 0 ..< 32:
                 difficulty.data[b] = uint8(rand(255))
-            dataDiff = newSignedDataDifficultyObj(consensus.getNonce(uint16(holder)) + 1, difficulty)
+            dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, difficulty)
             dataDiff.holder = uint16(holder)
             elements.add(dataDiff)
 

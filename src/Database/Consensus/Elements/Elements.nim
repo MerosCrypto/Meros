@@ -160,8 +160,8 @@ proc `==`*(
             if (
                 (not (e2 of MeritRemoval)) or
                 (mr1.partial != cast[MeritRemoval](e2).partial) or
-                (not (mr1.element1 == cast[MeritRemoval](e2).element1)) or
-                (not (mr1.element2 == cast[MeritRemoval](e2).element2))
+                (mr1.element1 != cast[MeritRemoval](e2).element1) or
+                (mr1.element2 != cast[MeritRemoval](e2).element2)
             ):
                 return false
 

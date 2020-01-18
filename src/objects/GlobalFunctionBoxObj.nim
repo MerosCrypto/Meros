@@ -154,16 +154,18 @@ type
             DataExists
         ].}
 
-        verifyMeritRemoval*: proc (
+        verifyUnsignedMeritRemoval*: proc (
             mr: MeritRemoval
         ) {.raises: [
-            ValueError
+            ValueError,
+            DataExists
         ].}
 
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
         ) {.raises: [
-            ValueError
+            ValueError,
+            DataExists
         ].}
 
     MeritFunctionBox* = ref object

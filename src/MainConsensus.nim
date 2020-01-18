@@ -252,21 +252,35 @@ proc mainConsensus() {.forceCheck: [].} =
             )
 
         #Verify MeritRemovals.
-        functions.consensus.verifyMeritRemoval = proc(
+        functions.consensus.verifyUnsignedMeritRemoval = proc(
             mr: MeritRemoval
         ) {.forceCheck: [
-            ValueError
+            ValueError,
+            DataExists
         ].} =
             try:
                 consensus.verify(mr)
             except ValueError as e:
+                raise e
+            except DataExists as e:
+                #If it's cached, it's already been verified and it's not archived yet.
+                if not consensus.malicious.hasKey(mr.holder):
+                    raise e
+
+                try:
+                    for cachedMR in consensus.malicious[mr.holder]:
+                        if cast[Element](mr) == cast[Element](cachedMR):
+                            return
+                except KeyError:
+                    doAssert(false, "Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
                 raise e
 
         #Handle SignedMeritRemovals.
         functions.consensus.addSignedMeritRemoval = proc (
             mr: SignedMeritRemoval
         ) {.forceCheck: [
-            ValueError
+            ValueError,
+            DataExists
         ].} =
             #Print that we're adding the MeritRemoval.
             echo "Adding a new Merit Removal."
@@ -275,6 +289,8 @@ proc mainConsensus() {.forceCheck: [].} =
             try:
                 consensus.add(merit.blockchain, merit.state, mr)
             except ValueError as e:
+                raise e
+            except DataExists as e:
                 raise e
 
             echo "Successfully added a new Signed Merit Removal."

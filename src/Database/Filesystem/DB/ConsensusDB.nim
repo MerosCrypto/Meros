@@ -10,15 +10,18 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#Difficulty objects.
+#Element objects.
 import ../../Consensus/Elements/objects/SendDifficultyObj
 import ../../Consensus/Elements/objects/DataDifficultyObj
+import ../../Consensus/Elements/objects/MeritRemovalObj
 
 #TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
 
 #Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
+
+import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 
 import Serialize/Consensus/SerializeTransactionStatus
 import Serialize/Consensus/ParseTransactionStatus
@@ -70,6 +73,11 @@ template SIGNATURE(
     nonce: int
 ): string =
     BLOCK_ELEMENT(holder, nonce) & "s"
+
+template MERIT_REMOVAL(
+    mr: MeritRemoval
+): string =
+    Blake256(mr.serialize()).toString() & "r"
 
 #Put/Get/Delete/Commit for the Consensus DB.
 proc put(
@@ -179,6 +187,12 @@ proc saveArchived*(
     nonce: int
 ) {.inline, forceCheck: [].} =
     db.put(HOLDER_ARCHIVED_NONCE(holder), nonce.toBinary())
+
+proc save*(
+    db: DB,
+    mr: MeritRemoval
+) {.inline, forceCheck: [].} =
+    db.put(MERIT_REMOVAL(mr), "")
 
 #Load functions.
 proc load*(
@@ -297,5 +311,16 @@ proc deleteSignature*(
     db: DB,
     holder: uint16,
     nonce: int
-) {.forceCheck: [].} =
+) {.inline, forceCheck: [].} =
     db.consensus.deleted.add(SIGNATURE(holder, nonce))
+
+#Check if a MeritRemoval exists.
+proc hasMeritRemoval*(
+    db: DB,
+    removal: MeritRemoval
+): bool {.forceCheck: [].} =
+    try:
+        discard db.get(MERIT_REMOVAL(removal))
+        result = true
+    except DBReadError:
+        result = false

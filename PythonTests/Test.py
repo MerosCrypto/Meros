@@ -35,6 +35,7 @@ from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyC
 from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
 from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
 from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
+from PythonTests.Tests.Consensus.MeritRemoval.RepeatTest import RepeatTest
 
 from PythonTests.Tests.Consensus.HundredSix.HundredSixSignedElementsTest import HundredSixSignedElementsTest
 from PythonTests.Tests.Consensus.HundredSix.HundredSixBlockElementsTest import HundredSixBlockElementsTest
@@ -86,6 +87,7 @@ tests: List[Callable[[RPC], None]] = [
     PartialTest,
     MultipleTest,
     PendingActionsTest,
+    RepeatTest,
 
     HundredSixSignedElementsTest,
     HundredSixBlockElementsTest,

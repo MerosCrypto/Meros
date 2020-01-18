@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, IO, Any
+from typing import Dict, List, IO, Any
 
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey, PublicKey
@@ -50,7 +50,7 @@ block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Partial Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a DataDifficulty.
 dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), 0)
@@ -75,7 +75,7 @@ block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Partial Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a conflicting DataDifficulty with the same nonce.
 dataDiffConflicting = SignedDataDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 0)
@@ -103,12 +103,30 @@ block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Partial Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
 
-result: Dict[str, Any] = {
-    "blockchain": blockchain.toJSON(),
-    "removal": mr.toSignedJSON(),
-}
-vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Partial.json", "w")
+#Generate another Block containing the MeritRemoval.
+block = Block(
+    BlockHeader(
+        0,
+        blockchain.last(),
+        BlockHeader.createContents([], [], [mr.toSignedElement()]),
+        1,
+        bytes(4),
+        bytes(32),
+        0,
+        blockchain.blocks[-1].header.time + 1200
+    ),
+    BlockBody([], [mr.toSignedElement()], mr.signature)
+)
+#Mine it.
+block.mine(blsPrivKey, blockchain.difficulty())
+
+#Add it.
+blockchain.add(block)
+print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
+
+result: List[Dict[str, Any]] = blockchain.toJSON()
+vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Repeat.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()

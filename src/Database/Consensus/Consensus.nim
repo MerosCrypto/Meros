@@ -67,8 +67,12 @@ proc verify*(
     consensus: Consensus,
     mr: MeritRemoval
 ) {.forceCheck: [
-    ValueError
+    ValueError,
+    DataExists
 ].} =
+    if consensus.db.hasMeritRemoval(mr):
+        raise newException(DataExists, "MeritRemoval already exists.")
+
     proc checkSecondCompeting(
         hash: Hash[256]
     ) {.forceCheck: [
@@ -138,6 +142,9 @@ proc flag*(
     #Make sure there's a seq.
     if not consensus.malicious.hasKey(removal.holder):
         consensus.malicious[removal.holder] = @[]
+
+    #Save the MeritRemoval to the database.
+    consensus.db.save(removal)
 
     #Add the MeritRemoval, if it's signed.
     if removal of SignedMeritRemoval:
@@ -447,7 +454,8 @@ proc add*(
     state: State,
     mr: SignedMeritRemoval
 ) {.forceCheck: [
-    ValueError
+    ValueError,
+    DataExists
 ].} =
     #Verify the MeritRemoval's signature.
     if not mr.signature.verify(mr.agInfo(state.holders[mr.holder])):
@@ -456,6 +464,8 @@ proc add*(
     try:
         consensus.verify(mr)
     except ValueError as e:
+        raise e
+    except DataExists as e:
         raise e
 
     consensus.flag(blockchain, state, mr)
