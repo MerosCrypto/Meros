@@ -138,10 +138,10 @@ proc mainMerit() {.forceCheck: [].} =
                 network.mainFunctions.consensus.addVerificationPacket(packet)
 
             #Check who has their Merit removed.
-            var removed: seq[uint16] = @[]
+            var removed: set[uint16] = {}
             for elem in newBlock.body.elements:
                 if elem of MeritRemoval:
-                    removed.add(elem.holder)
+                    removed.incl(elem.holder)
 
             #Add the Block to the Blockchain.
             merit.processBlock(newBlock)
@@ -175,7 +175,7 @@ proc mainMerit() {.forceCheck: [].} =
             transactions.archive(epoch)
 
             #Calculate the rewards.
-            var rewards: seq[Reward] = epoch.calculate(rewardsState)
+            var rewards: seq[Reward] = epoch.calculate(rewardsState, removed)
 
             #If there are rewards, create the Mint.
             var receivedMint: int = -1

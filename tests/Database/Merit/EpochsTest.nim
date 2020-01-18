@@ -121,7 +121,7 @@ suite "Epochs":
             compare(epochs, newEpochs(blockchain))
 
     test "Empty.":
-        check(epochs.shift(newBlankBlock()).calculate(state).len == 0)
+        check(epochs.shift(newBlankBlock()).calculate(state, {}).len == 0)
 
     test "Perfect 1000.":
         var
@@ -164,7 +164,7 @@ suite "Epochs":
         #Shift on the packet.
         rewards = epochs.shift(newBlankBlock(
             packets = cast[seq[VerificationPacket]](@[packet])
-        )).calculate(state)
+        )).calculate(state, {})
         check(rewards.len == 0)
 
         #Shift 4 over.
@@ -176,11 +176,11 @@ suite "Epochs":
             blockchain.processBlock(newBlock)
             discard state.processBlock(blockchain)
 
-            rewards = epochs.shift(newBlock).calculate(state)
+            rewards = epochs.shift(newBlock).calculate(state, {})
             check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 334, 1: 333, and 2: 333.
-        rewards = epochs.shift(newBlankBlock()).calculate(state)
+        rewards = epochs.shift(newBlankBlock()).calculate(state, {})
 
         #Veirfy the length.
         check(rewards.len == 3)
@@ -223,7 +223,7 @@ suite "Epochs":
         #Shift on the packet.
         rewards = epochs.shift(newBlankBlock(
             packets = cast[seq[VerificationPacket]](@[packet])
-        )).calculate(state)
+        )).calculate(state, {})
         check(rewards.len == 0)
 
         #Shift 4 over.
@@ -235,11 +235,11 @@ suite "Epochs":
             blockchain.processBlock(newBlock)
             discard state.processBlock(blockchain)
 
-            rewards = epochs.shift(newBlock).calculate(state)
+            rewards = epochs.shift(newBlock).calculate(state, {})
             check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 1000.
-        rewards = epochs.shift(newBlankBlock()).calculate(state)
+        rewards = epochs.shift(newBlankBlock()).calculate(state, {})
         check(rewards.len == 1)
         check(rewards[0].nick == 0)
         check(state.holders[0] == miner.publicKey)
@@ -278,7 +278,7 @@ suite "Epochs":
             #Shift on the packet.
             rewards = epochs.shift(newBlankBlock(
                 packets = cast[seq[VerificationPacket]](@[packet])
-            )).calculate(state)
+            )).calculate(state, {})
             check(rewards.len == 0)
 
         #Shift 3 over.
@@ -293,11 +293,11 @@ suite "Epochs":
             blockchain.processBlock(newBlock)
             discard state.processBlock(blockchain)
 
-            rewards = epochs.shift(newBlock).calculate(state)
+            rewards = epochs.shift(newBlock).calculate(state, {})
             check(rewards.len == 0)
 
         #Next shift should result in a Rewards of 0: 500, 1: 500, and 2: 500.
-        rewards = epochs.shift(newBlankBlock()).calculate(state)
+        rewards = epochs.shift(newBlankBlock()).calculate(state, {})
 
         #Veirfy the length.
         check(rewards.len == 2)

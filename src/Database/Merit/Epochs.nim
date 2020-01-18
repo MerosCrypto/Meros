@@ -83,7 +83,8 @@ proc newEpochs*(
 #Calculate what share each holder deserves of the minted Meros.
 proc calculate*(
     epoch: Epoch,
-    state: var State
+    state: var State,
+    removed: set[uint16]
 ): seq[Reward] {.forceCheck: [].} =
     #If the epoch is empty, do nothing.
     if epoch.len == 0:
@@ -107,8 +108,9 @@ proc calculate*(
         try:
             #Iterate over every holder who verified a tx.
             for holder in epoch[tx]:
-                #Add their Merit to the Transaction's weight.
-                weight += state[holder]
+                if not removed.contains(holder):
+                    #Add their Merit to the Transaction's weight.
+                    weight += state[holder]
         except KeyError as e:
             doAssert(false, "Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.keys(): " & e.msg)
 
@@ -127,6 +129,9 @@ proc calculate*(
 
     #Multiply every score by how much Merit the holder has.
     try:
+        for malicious in removed:
+            scores.del(malicious)
+
         for holder in scores.keys():
             scores[holder] = scores[holder] * uint64(state[holder])
             #Add the update score to the total.

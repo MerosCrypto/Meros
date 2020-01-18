@@ -124,7 +124,10 @@ if signatures.length != 0
     aggregate = signatures.aggregate()
 ```
 
-If the Block is valid, it's added, triggering two events. The first event is the emission of newly-minted Meros and the second event is the emission of newly-mined Merit.
+Packets
+
+
+If the Block is valid, it's added, triggering three events. The first event is the addition of all included VerificationPackets and Elements. The second event is the emission of newly-minted Meros. The third event is the emission of newly-mined Merit. Any MeritRemovals included in the Block prevent the malicious Merit Holder from gaining newly-mined Merit that Block.
 
 On Block addition, a new Epoch is created. Epochs keep track of who verified a Transaction. Every Transaction that is first verified in that Block is added to the new Epoch. If a new Transaction competes with an existing Transaction, all competitors (and competitors of competitors) and children (and children of competitors) are brought up into the new Epoch. Every Transaction in Epochs is updated with the list of Merit Holders who verified it. The new Epoch is added to a list of the past 5 Epochs, and the oldest Epoch is removed. This oldest Epoch has all of its Transactions which weren't verified by the majority of the Unlocked Merit removed, and is then used to calculate rewards.
 
