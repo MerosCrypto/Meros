@@ -94,7 +94,7 @@ proc verify*(
         try:
             if mr.partial and ((nonce > consensus.archived[mr.holder]) or (mr.element1 != consensus.db.load(mr.holder, nonce))):
                 raise newException(ValueError, "First Element isn't archived.")
-        except KeyError as e:
+        except KeyError:
             raise newException(ValueError, "MeritRemoval has an invalid holder.")
         except DBReadError as e:
             doAssert(false, "Nonce was within bounds yet no Element could be loaded: " & e.msg)
@@ -441,11 +441,15 @@ proc add*(
 
 #Remove a holder's Merit.
 #As Consensus doesn't track Merit, this just clears their pending MeritRemovals.
+#This also removes any votes they may have in the SpamFilter.
 proc remove*(
     consensus: Consensus,
-    holder: uint16
+    holder: uint16,
+    merit: int
 ) {.forceCheck: [].} =
     consensus.malicious.del(holder)
+    consensus.filters.send.remove(holder, merit)
+    consensus.filters.data.remove(holder, merit)
 
 #Get a Transaction's unfinalized parents.
 proc getUnfinalizedParents(

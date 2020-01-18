@@ -10,8 +10,8 @@ from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Liver import Liver
 from PythonTests.Meros.Syncer import Syncer
 
-#Difficulty verifier.
-from PythonTests.Tests.Consensus.Verify import verifyDataDifficulty
+#Difficulty/MeritRemoval verifier.
+from PythonTests.Tests.Consensus.Verify import verifyDataDifficulty, verifyMeritRemoval
 
 #JSON standard lib.
 import json
@@ -28,7 +28,10 @@ def DataDifficultyTest(
     vddStarting: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"))
     vddEarnedVote: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
     vddVoted: Callable[[], None] = lambda: verifyDataDifficulty(rpc, bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"))
+    def vmr() -> None:
+        verifyMeritRemoval(rpc, 52, 52, 0, False)
+        vddStarting()
 
     #Create and execute a Liver/Syncer.
-    Liver(rpc, vectors["blockchain"], callbacks={26: vddStarting, 50: vddEarnedVote, 51: vddVoted}).live()
+    Liver(rpc, vectors["blockchain"], callbacks={26: vddStarting, 50: vddEarnedVote, 51: vddVoted, 52: vmr}).live()
     Syncer(rpc, vectors["blockchain"]).sync()

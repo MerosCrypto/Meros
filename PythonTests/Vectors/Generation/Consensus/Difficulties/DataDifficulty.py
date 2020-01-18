@@ -4,8 +4,9 @@ from typing import IO, Dict, List, Any
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey, PublicKey
 
-#DataDifficulty class.
+#DataDifficulty and MeritRemoval classes.
 from PythonTests.Classes.Consensus.DataDifficulty import SignedDataDifficulty
+from PythonTests.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -98,6 +99,32 @@ block = Block(
         blockchain.blocks[-1].header.time + 1200
     ),
     BlockBody([], [dataDiff.toSignedElement()], dataDiff.signature)
+)
+#Mine it.
+block.mine(blsPrivKey, blockchain.difficulty())
+
+#Add it.
+blockchain.add(block)
+print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
+
+#Create a MeritRemoval by reusing a nonce.
+competing: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), 1)
+competing.sign(0, blsPrivKey)
+mr: PartialMeritRemoval = PartialMeritRemoval(dataDiff, competing.toSignedElement())
+
+#Generate a Block containing the MeritRemoval.
+block = Block(
+    BlockHeader(
+        0,
+        blockchain.last(),
+        BlockHeader.createContents([], [], [mr.toSignedElement()]),
+        1,
+        bytes(4),
+        bytes(32),
+        0,
+        blockchain.blocks[-1].header.time + 1200
+    ),
+    BlockBody([], [mr.toSignedElement()], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())

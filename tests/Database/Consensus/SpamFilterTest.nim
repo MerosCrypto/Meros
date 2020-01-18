@@ -61,13 +61,25 @@ suite "SpamFilter":
         filter.update(0, 49, OTHER_DIFFICULTY)
         check(filter.difficulty == START_DIFFICULTY)
 
-    test "Add 1 vote and remove it.":
+    test "Add 1 vote and remove it via a decrement.":
         filter.update(0, 50, OTHER_DIFFICULTY)
         check(filter.difficulty == OTHER_DIFFICULTY)
         filter.handleBlock(1, 1, 0, 49)
         check(filter.difficulty == START_DIFFICULTY)
+        check(filter.left == 0)
+        check(filter.right == 0)
+        check(filter.medianPos == -1)
 
-    midFuzzTest "Verify.":
+    test "Add 1 vote and remove it via a MeritRemoval.":
+        filter.update(0, 50, OTHER_DIFFICULTY)
+        check(filter.difficulty == OTHER_DIFFICULTY)
+        filter.remove(0, 50)
+        check(filter.difficulty == START_DIFFICULTY)
+        check(filter.left == 0)
+        check(filter.right == 0)
+        check(filter.medianPos == -1)
+
+    highFuzzTest "Verify.":
         #Create a random amount of holders.
         for h in 0 ..< rand(50) + 2:
             merit[uint16(h)] = 0
@@ -180,6 +192,28 @@ suite "SpamFilter":
                         difficulties.del(d)
                         continue
                     inc(d)
+
+            #Remove Merit from a holder.
+            if rand(1000) == 0:
+                var holder: uint16 = uint16(rand(merit.len - 1))
+                filter.remove(holder, merit[holder])
+                merit[holder] = 0
+
+                block removeHolder:
+                    var
+                        d: int = 0
+                        h: int
+                    while d < difficulties.len:
+                        h = 0
+                        while h < difficulties[d].holders.len:
+                            if difficulties[d].holders[h] == holder:
+                                if difficulties[d].holders.len == 1:
+                                    difficulties.del(d)
+                                else:
+                                    difficulties[d].holders.del(h)
+                                break removeHolder
+                            inc(h)
+                        inc(d)
 
             #Handle no votes.
             if difficulties.len == 0:

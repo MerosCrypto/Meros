@@ -203,6 +203,34 @@ func handleBlock*(
 
     filter.recalculate()
 
+#Remove a holder's vote.
+func remove*(
+    filter: var SpamFilter,
+    holder: uint16,
+    merit: int
+) {.forceCheck: [].} =
+    if filter.votes.hasKey(holder):
+        #Remove the existing votes.
+        var votes: int = merit div 50
+        try:
+            filter.votes[holder].votes -= votes
+            if filter.votes[holder].difficulty < filter.median.difficulty:
+                filter.left -= votes
+            elif filter.votes[holder].difficulty > filter.median.difficulty:
+                filter.right -= votes
+
+            if filter.votes[holder].votes == 0:
+                filter.remove(filter.votes[holder])
+        except KeyError as e:
+            doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
+
+        #Delete the entry in the votes table.
+        filter.votes.del(holder)
+
+        #If there's votes left, recalculate the median.
+        if filter.medianPos != -1:
+            filter.recalculate()
+
 #Update a holder's vote.
 func update*(
     filter: var SpamFilter,
@@ -226,18 +254,7 @@ func update*(
         return
 
     #Remove the holder's Merit from their existing vote.
-    if filter.votes.hasKey(holder):
-        try:
-            filter.votes[holder].votes -= votes
-            if filter.votes[holder].difficulty < filter.median.difficulty:
-                filter.left -= votes
-            elif filter.votes[holder].difficulty > filter.median.difficulty:
-                filter.right -= votes
-
-            if filter.votes[holder].votes == 0:
-                filter.remove(filter.votes[holder])
-        except KeyError as e:
-            doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
+    filter.remove(holder, merit)
 
     #If we just removed the median, create a new one.
     if filter.medianPos == -1:

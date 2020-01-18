@@ -146,10 +146,6 @@ proc mainMerit() {.forceCheck: [].} =
             #Add the Block to the Blockchain.
             merit.processBlock(newBlock)
 
-            #Have the Consensus handle every person who suffered a MeritRemoval.
-            for removee in removed:
-                consensus.remove(removee)
-
             #Copy the State.
             var rewardsState = merit.state
 
@@ -162,6 +158,10 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Archive the Epochs.
             consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
+
+            #Have the Consensus handle every person who suffered a MeritRemoval.
+            for removee in removed:
+                consensus.remove(removee, rewardsState[removee])
 
             #Add every Element.
             for elem in elements:

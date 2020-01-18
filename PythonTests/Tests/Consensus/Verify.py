@@ -1,6 +1,3 @@
-#MeritRemoval class.
-from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
-
 #RPC class.
 from PythonTests.Meros.RPC import RPC
 
@@ -28,7 +25,7 @@ def verifyMeritRemoval(
     rpc: RPC,
     total: int,
     merit: int,
-    removal: MeritRemoval,
+    holder: int,
     pending: bool
 ) -> None:
     #Verify the total Merit.
@@ -36,7 +33,7 @@ def verifyMeritRemoval(
         raise TestError("Total Merit doesn't match.")
 
     #Verify the holder's Merit.
-    if rpc.call("merit", "getMerit", [removal.holder]) != {
+    if rpc.call("merit", "getMerit", [holder]) != {
         "unlocked": True,
         "malicious": pending,
         "merit": merit if pending else 0
