@@ -31,6 +31,11 @@ class Element(ABC):
     ) -> Dict[str, Any]:
         pass
 
+    def toElement(
+        self
+    ) -> Any:
+        return self
+
 #SignedElement helper class.
 class SignedElement(Element):
     signature: bytes
