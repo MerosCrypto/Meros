@@ -25,10 +25,10 @@ proc mainConsensus() {.forceCheck: [].} =
             consensus.malicious.hasKey(nick)
 
         #Provides access to a holder's nonce.
-        functions.consensus.getNonce = proc (
+        functions.consensus.getArchivedNonce = proc (
             holder: uint16
         ): int {.inline, forceCheck: [].} =
-            consensus.getNonce(holder)
+            consensus.getArchivedNonce(holder)
 
         #Get if a hash has an archived packet or not.
         #Any hash with holder(s) that isn't unmentioned has an archived packet.
@@ -63,14 +63,16 @@ proc mainConsensus() {.forceCheck: [].} =
 
         functions.consensus.getPending = proc (): tuple[
             packets: seq[VerificationPacket],
+            elements: seq[BlockElement],
             aggregate: BLSSignature
         ] {.forceCheck: [].} =
             var pending: tuple[
                 packets: seq[SignedVerificationPacket],
+                elements: seq[BlockElement],
                 aggregate: BLSSignature
             ] = consensus.getPending()
 
-            result = (cast[seq[VerificationPacket]](pending.packets), pending.aggregate)
+            result = (cast[seq[VerificationPacket]](pending.packets), pending.elements, pending.aggregate)
 
         #Handle SignedVerifications.
         functions.consensus.addSignedVerification = proc (

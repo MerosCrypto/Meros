@@ -141,6 +141,7 @@ proc mainMerit() {.forceCheck: [].} =
             var removed: set[uint16] = {}
             for elem in newBlock.body.elements:
                 if elem of MeritRemoval:
+                    consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
                     removed.incl(elem.holder)
 
             #Add the Block to the Blockchain.

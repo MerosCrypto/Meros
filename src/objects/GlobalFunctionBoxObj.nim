@@ -95,7 +95,7 @@ type
             nick: uint16,
         ): bool {.inline, raises: [].}
 
-        getNonce*: proc (
+        getArchivedNonce*: proc (
             holder: uint16
         ): int {.inline, raises: [].}
 
@@ -117,6 +117,7 @@ type
 
         getPending*: proc (): tuple[
             packets: seq[VerificationPacket],
+            elements: seq[BlockElement],
             aggregate: BLSSignature
         ] {.raises: [].}
 

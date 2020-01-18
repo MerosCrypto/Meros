@@ -14,13 +14,15 @@ from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
 from PythonTests.Tests.Merit.StateTest import StateTest
 from PythonTests.Tests.Merit.HundredTest import HundredTest
 
+from PythonTests.Tests.Merit.Templates.EightyEightTest import EightyEightTest
+from PythonTests.Tests.Merit.Templates.TElementTest import TElementTest
+
 from PythonTests.Tests.Transactions.DataTest import DataTest
 from PythonTests.Tests.Transactions.AggregatedClaimTest import AggregatedClaimTest
 from PythonTests.Tests.Transactions.SameInputTest import SameInputTest
 from PythonTests.Tests.Transactions.CompetingFinalizedTest import CompetingFinalizedTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 
-from PythonTests.Tests.Consensus.Verification.EightyEightTest import EightyEightTest
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
@@ -63,13 +65,15 @@ tests: List[Callable[[RPC], None]] = [
     StateTest,
     HundredTest,
 
+    EightyEightTest,
+    TElementTest,
+
     DataTest,
     AggregatedClaimTest,
     SameInputTest,
     CompetingFinalizedTest,
     FiftyTest,
 
-    EightyEightTest,
     VUnknownTest,
     VParsableTest,
     VCompetingTest,

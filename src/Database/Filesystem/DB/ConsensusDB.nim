@@ -7,6 +7,9 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
+#MinerWallet lib.
+import ../../../Wallet/MinerWallet
+
 #Difficulty objects.
 import ../../Consensus/Elements/objects/SendDifficultyObj
 import ../../Consensus/Elements/objects/DataDifficultyObj
@@ -61,6 +64,12 @@ template BLOCK_ELEMENT(
     nonce: int
 ): string =
     holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN)
+
+template SIGNATURE(
+    holder: uint16,
+    nonce: int
+): string =
+    BLOCK_ELEMENT(holder, nonce) & "s"
 
 #Put/Get/Delete/Commit for the Consensus DB.
 proc put(
@@ -155,6 +164,14 @@ proc save*(
         BLOCK_ELEMENT(dataDiff.holder, dataDiff.nonce),
         char(DATA_DIFFICULTY_PREFIX) & dataDiff.difficulty.toString()
     )
+
+proc saveSignature*(
+    db: DB,
+    holder: uint16,
+    nonce: int,
+    signature: BLSSignature
+) {.inline, forceCheck: [].} =
+    db.put(SIGNATURE(holder, nonce), signature.serialize())
 
 proc saveArchived*(
     db: DB,
@@ -252,6 +269,20 @@ proc load*(
     except ValueError:
         doAssert(false, "Couldn't convert a 32-byte value to a 32-byte hash.")
 
+proc loadSignature*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+): BLSSignature {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = newBLSSignature(db.get(SIGNATURE(holder, nonce)))
+    except BLSError as e:
+        doAssert(false, "Saved an invalid BLS signature to the Database: " & e.msg)
+    except DBReadError as e:
+        raise e
+
 proc loadArchived*(
     db: DB,
     holder: uint16
@@ -259,4 +290,12 @@ proc loadArchived*(
     try:
         result = db.get(HOLDER_ARCHIVED_NONCE(holder)).fromBinary()
     except DBReadeRROR:
-        result = 0
+        result = -1
+
+#Delete a now-aggregated signature.
+proc deleteSignature*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+) {.forceCheck: [].} =
+    db.consensus.deleted.add(SIGNATURE(holder, nonce))

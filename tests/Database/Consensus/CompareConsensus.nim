@@ -95,6 +95,13 @@ proc compare*(
     #Compare the unmentioned set.
     check(symmetricDifference(c1.unmentioned, c2.unmentioned).len == 0)
 
+    #Check the signatures table.
+    check(c1.signatures.len == c2.signatures.len)
+    for holder in c1.signatures.keys():
+        check(c1.signatures[holder].len == c2.signatures[holder].len)
+        for s in 0 ..< c1.signatures[holder].len:
+            check(c1.signatures[holder][s] == c2.signatures[holder][s])
+
     #Comoare the archived table.
     check(c1.archived.len == c2.archived.len)
     for holder in c1.archived.keys():

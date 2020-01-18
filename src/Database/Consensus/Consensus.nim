@@ -139,11 +139,12 @@ proc flag*(
     if not consensus.malicious.hasKey(removal.holder):
         consensus.malicious[removal.holder] = @[]
 
-    #Add the MeritRemoval.
-    try:
-        consensus.malicious[removal.holder].add(removal)
-    except KeyError as e:
-        doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
+    #Add the MeritRemoval, if it's signed.
+    if removal of SignedMeritRemoval:
+        try:
+            consensus.malicious[removal.holder].add(cast[SignedMeritRemoval](removal))
+        except KeyError as e:
+            doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
 
     #Reclaulcate the affected Transactions in Epochs.
     var
@@ -187,11 +188,17 @@ proc flag*(
                 consensus.unverify(state, hash, status)
 
 #Get a holder's nonce.
-proc getNonce*(
+#Used to verify Blocks in NetworkSync.
+proc getArchivedNonce*(
     consensus: Consensus,
     holder: uint16
 ): int {.inline, forceCheck: [].} =
-    consensus.db.load(holder)
+    try:
+        result = consensus.archived[holder]
+    except KeyError:
+        #This causes Blocks with invalid holders to get rejected for having an invalid nonce.
+        #We shouldn't need it due to other checks, and this removes the neccessity to add try/catches to the entire chain.
+        result = -2
 
 #Register a Transaction.
 proc register*(
@@ -361,6 +368,13 @@ proc add*(
     #Add the SendDifficulty.
     consensus.add(state, cast[SendDifficulty](sendDiff))
 
+    #Save the signature.
+    try:
+        consensus.signatures[sendDiff.holder].add(sendDiff.signature)
+        consensus.db.saveSignature(sendDiff.holder, sendDiff.nonce, sendDiff.signature)
+    except KeyError as e:
+        doAssert(false, "Couldn't cache a signature: " & e.msg)
+
 #Add a DataDifficulty.
 proc add*(
     consensus: Consensus,
@@ -418,6 +432,13 @@ proc add*(
 
     #Add the DataDifficulty.
     consensus.add(state, cast[DataDifficulty](dataDiff))
+
+    #Save the signature.
+    try:
+        consensus.signatures[dataDiff.holder].add(dataDiff.signature)
+        consensus.db.saveSignature(dataDiff.holder, dataDiff.nonce, dataDiff.signature)
+    except KeyError as e:
+        doAssert(false, "Couldn't cache a signature: " & e.msg)
 
 #Add a SignedMeritRemoval.
 proc add*(
@@ -502,18 +523,34 @@ proc archive*(
         consensus.incEpoch(hash)
         consensus.db.addUnmentioned(hash)
 
-    #Update the archived nonce of every holder.
+    #Update the signature/nonces of every holder.
+    proc updateSignatureAndNonce(
+        holder: uint16,
+        nonce: int
+    ) {.forceCheck: [].} =
+        try:
+            if consensus.archived[holder] < nonce:
+                #Remove signatures.
+                #There won't be any if we only ever saw the unsigned version of this Element.
+                for s in 1 .. nonce - consensus.archived[holder]:
+                    if consensus.signatures[holder].len == 0:
+                        break
+                    consensus.signatures[holder].delete(0)
+                    consensus.db.deleteSignature(holder, consensus.archived[holder] + s)
+
+                #Update the nonces.
+                consensus.archived[holder] = nonce
+                consensus.db.saveArchived(holder, nonce)
+        except KeyError as e:
+            doAssert(false, "Block had Elements with an invalid holder: " & e.msg)
+
     try:
         for elem in elements:
             case elem:
                 of SendDifficulty as sd:
-                    if consensus.archived[sd.holder] < sd.nonce:
-                        consensus.archived[sd.holder] = sd.nonce
-                        consensus.db.saveArchived(sd.holder, sd.nonce)
+                    updateSignatureAndNonce(sd.holder, sd.nonce)
                 of DataDifficulty as dd:
-                    if consensus.archived[dd.holder] < dd.nonce:
-                        consensus.archived[dd.holder] = dd.nonce
-                        consensus.db.saveArchived(dd.holder, dd.nonce)
+                    updateSignatureAndNonce(dd.holder, dd.nonce)
                 of MeritRemoval as _:
                     discard
                 else:
@@ -605,6 +642,7 @@ proc archive*(
         except DBReadError:
             discard
 
-    #If the amount of holders increased, update the archived nonce table.
+    #If the amount of holders increased, update the signatures and archived nonce tables.
     if state.holders.len > consensus.archived.len:
-        consensus.archived[uint16(consensus.archived.len)] = 0
+        consensus.signatures[uint16(consensus.archived.len)] = @[]
+        consensus.archived[uint16(consensus.archived.len)] = -1

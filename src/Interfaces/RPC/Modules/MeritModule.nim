@@ -274,10 +274,9 @@ proc module*(
                     #Pending
                     pending: tuple[
                         packets: seq[VerificationPacket],
+                        elements: seq[BlockElement],
                         aggregate: BLSSignature
                     ] = functions.consensus.getPending()
-                    #Elements we're including in the Block.
-                    elements: seq[BlockElement] = @[]
 
                     #ID for this Sketcher.
                     id: int = sketchers.len
@@ -311,8 +310,6 @@ proc module*(
                 #Delete the sketcher from 5 templates ago.
                 sketchers.del(id - 5)
 
-                #Grab the Elements, updating the aggregate with each's signature.
-
                 #Create the Header.
                 var header: JSONNode = newJNull()
                 try:
@@ -323,7 +320,7 @@ proc module*(
                         header = % newBlockHeader(
                             0,
                             functions.merit.getTail(),
-                            newContents(pending.packets, elements),
+                            newContents(pending.packets, pending.elements),
                             1,
                             sketchSalt,
                             newSketchCheck(sketchSalt, pending.packets),
@@ -337,7 +334,7 @@ proc module*(
                         header = % newBlockHeader(
                             0,
                             functions.merit.getTail(),
-                            newContents(pending.packets, elements),
+                            newContents(pending.packets, pending.elements),
                             1,
                             sketchSalt,
                             newSketchCheck(sketchSalt, pending.packets),
@@ -359,7 +356,7 @@ proc module*(
                         "header": header,
                         "body": newBlockBodyObj(
                             pending.packets,
-                            elements,
+                            pending.elements,
                             pending.aggregate
                         ).serialize(sketchSalt, pending.packets.len).toHex()
                     }

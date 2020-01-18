@@ -45,7 +45,7 @@ type Consensus* = ref object
     #Filters.
     filters*: tuple[send: SpamFilter, data: SpamFilter]
     #Nickname -> MeritRemoval(s).
-    malicious*: Table[uint16, seq[MeritRemoval]]
+    malicious*: Table[uint16, seq[SignedMeritRemoval]]
 
     #Statuses of Transactions not yet out of Epochs.
     statuses: Table[Hash[256], TransactionStatus]
@@ -55,6 +55,8 @@ type Consensus* = ref object
     #Transactions which haven't been mentioned in Epochs.
     unmentioned*: HashSet[Hash[256]]
 
+    #Signatures of unarchived elements.
+    signatures*: Table[uint16, seq[BLSSignature]]
     #Archived nonces.
     archived*: Table[uint16, int]
 
@@ -75,7 +77,7 @@ proc newConsensusObj*(
             send: newSpamFilterObj(sendDiff),
             data: newSpamFilterObj(dataDiff)
         ),
-        malicious: initTable[uint16, seq[MeritRemoval]](),
+        malicious: initTable[uint16, seq[SignedMeritRemoval]](),
 
         statuses: initTable[Hash[256], TransactionStatus](),
         close: initHashSet[Hash[256]](),
@@ -98,6 +100,16 @@ proc newConsensusObj*(
 
         #Reload the table of archived nonces.
         result.archived[uint16(h)] = result.db.loadArchived(uint16(h))
+
+        #Reload the signatures.
+        result.signatures[uint16(h)] = @[]
+        try:
+            for n in result.archived[uint16(h)] + 1 .. result.db.load(uint16(h)):
+                result.signatures[uint16(h)].add(result.db.loadSignature(uint16(h), n))
+        except KeyError as e:
+            doAssert(false, "Couldn't add a signature to the signature cache of a holder we just added: " & e.msg)
+        except DBReadError as e:
+            doAssert(false, "Couldn't load a signature we know we have: " & e.msg)
 
     #Load statuses still in Epochs.
     #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
@@ -382,11 +394,12 @@ proc finalize*(
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)
 
-#Get all pending Verification Packets and the aggregate signature.
+#Get all pending Verification Packets/Elements, as well as the aggregate signature.
 proc getPending*(
     consensus: Consensus
 ): tuple[
     packets: seq[SignedVerificationPacket],
+    elements: seq[BlockElement],
     aggregate: BLSSignature
 ] {.forceCheck: [].} =
     var included: HashSet[Hash[256]] = initHashSet[Hash[256]]()
@@ -394,6 +407,24 @@ proc getPending*(
         if status.pending.holders.len != 0:
             result.packets.add(status.pending)
             included.incl(status.pending.hash)
+
+    var signatures: seq[BLSSignature] = @[]
+    try:
+        for holder in consensus.signatures.keys():
+            if consensus.malicious.hasKey(holder):
+                result.elements.add(consensus.malicious[holder][0])
+                signatures.add(consensus.malicious[holder][0].signature)
+                continue
+
+            if consensus.signatures[holder].len != 0:
+                var nonce: int = consensus.archived[holder] + 1
+                for s in 0 ..< consensus.signatures[holder].len:
+                    result.elements.add(consensus.db.load(holder, nonce + s))
+                    signatures.add(consensus.signatures[holder][s])
+    except KeyError as e:
+        doAssert(false, "Couldn't get the nonce/signatures/MeritRemoval of a holder we know we have: " & e.msg)
+    except DBReadError as e:
+        doAssert(false, "Couldn't get an Element we know we have: " & e.msg)
 
     var p: int = 0
     while p < result.packets.len:
@@ -427,11 +458,10 @@ proc getPending*(
                 result.packets.del(p)
                 continue
 
-        if p == 0:
-            result.aggregate = result.packets[p].signature
-        else:
-            result.aggregate = @[result.aggregate, result.packets[p].signature].aggregate()
+        signatures.add(result.packets[p].signature)
         inc(p)
+
+    result.aggregate = signatures.aggregate()
 
 #Provide debug access to the statuses table
 when defined(merosTests):

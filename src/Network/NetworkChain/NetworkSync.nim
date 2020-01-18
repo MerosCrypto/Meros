@@ -395,7 +395,7 @@ proc sync*(
         case elem:
             of SendDifficulty as sendDiff:
                 if not newNonces.hasKey(sendDiff.holder):
-                    newNonces[sendDiff.holder] = network.mainFunctions.consensus.getNonce(sendDiff.holder)
+                    newNonces[sendDiff.holder] = network.mainFunctions.consensus.getArchivedNonce(sendDiff.holder)
 
                 try:
                     if sendDiff.nonce != newNonces[sendDiff.holder] + 1:
@@ -415,7 +415,7 @@ proc sync*(
 
             of DataDifficulty as dataDiff:
                 if not newNonces.hasKey(dataDiff.holder):
-                    newNonces[dataDiff.holder] = network.mainFunctions.consensus.getNonce(dataDiff.holder)
+                    newNonces[dataDiff.holder] = network.mainFunctions.consensus.getArchivedNonce(dataDiff.holder)
 
                 try:
                     if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
