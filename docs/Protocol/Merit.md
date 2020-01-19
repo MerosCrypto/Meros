@@ -111,7 +111,6 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Only new and unique Elements are archived.
 - No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder. That said, the Block may skip a nonce if the skipped nonce is present later in the Block.
 - Every Element is valid and doesn't cause a MeritRemoval when combined with another Element either already on the Blockchain or in the same Block. That said, the Verification Packets still can as long as the matching MeritRemoval is included in the Block.
-- Every MeritRemoval caused by verifying competing Transactions must have its Verifications either already on the Blockchain or included in the same Block via VerificationPackets.
 - The aggregate signature is formed with the following algorithm:
 
 ```
@@ -124,9 +123,6 @@ BLSSignature aggregate = infinity
 if signatures.length != 0
     aggregate = signatures.aggregate()
 ```
-
-Packets
-
 
 If the Block is valid, it's added, triggering three events. The first event is the addition of all included VerificationPackets and Elements. The second event is the emission of newly-minted Meros. The third event is the emission of newly-mined Merit. Any MeritRemovals included in the Block prevent the malicious Merit Holder from gaining newly-mined Merit that Block.
 
@@ -170,7 +166,6 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 ### Violations in Meros
 
 - Meros doesn't check that if VerificationPackets in a Block cause MeritRemovals, the matching MeritRemoval is included in the Block.
-- Meros doesn't check that if a Block has a MeritRemoval caused by verifying competing Transactions, its Verifications are included in the same Block.
 
 - Meros doesn't support dead Merit.
 
