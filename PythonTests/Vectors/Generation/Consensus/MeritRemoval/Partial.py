@@ -4,7 +4,7 @@ from typing import Dict, IO, Any
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey, PublicKey
 
-#Consensus class.
+#Element classes.
 from PythonTests.Classes.Consensus.DataDifficulty import SignedDataDifficulty
 from PythonTests.Classes.Consensus.MeritRemoval import PartialMeritRemoval
 

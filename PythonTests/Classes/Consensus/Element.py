@@ -47,6 +47,12 @@ class SignedElement(Element):
         return elem
 
     @abstractmethod
+    def signedSerialize(
+        self
+    ) -> bytes:
+        pass
+
+    @abstractmethod
     def toSignedJSON(
         self
     ) -> Dict[str, Any]:

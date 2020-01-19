@@ -17,5 +17,6 @@ import PythonTests.Vectors.Generation.Consensus.Difficulties.SendDifficulty
 import PythonTests.Vectors.Generation.Consensus.Difficulties.DataDifficulty
 
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.SameNonce
+import PythonTests.Vectors.Generation.Consensus.MeritRemoval.VerifyCompeting
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Partial
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Repeat
