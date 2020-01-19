@@ -93,7 +93,7 @@ task unit, "Run unit tests.":
     nimbleExec "install --depsOnly"
 
     #Create a single test file will all test imports.
-    var contents: string = "{.warning[UnusedImport]:off.}\n\n"
+    var contents: string = "{.warning[UnusedImport]: off.}\n\n"
     for f in gatherTestFiles(testsDir):
         contents &= "import ../../tests" & f.replace(testsDir).changeFileExt("") & "\n"
     mkDir testWorkingDir

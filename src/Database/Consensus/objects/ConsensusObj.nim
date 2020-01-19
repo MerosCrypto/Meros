@@ -115,14 +115,18 @@ proc newConsensusObj*(
     #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
     var
         height: int = functions.merit.getHeight()
-        old: seq[Hash[256]] = @[]
+        old: HashSet[Hash[256]] = initHashSet[Hash[256]]()
     try:
         for i in max(height - 10, 0) ..< height - 5:
             for packet in functions.merit.getBlockByNonce(i).body.packets:
-                old.add(packet.hash)
+                old.incl(packet.hash)
 
         for i in max(height - 5, 0) ..< height:
+            #Skip old Transactions.
             for packet in functions.merit.getBlockByNonce(i).body.packets:
+                if old.contains(packet.hash):
+                    continue
+
                 try:
                     result.statuses[packet.hash] = result.db.load(packet.hash)
                 except DBReadError:
@@ -143,11 +147,6 @@ proc newConsensusObj*(
                     doAssert(false, "Couldn't get a status we just added to the statuses table: " & e.msg)
     except IndexError as e:
         doAssert(false, "Couldn't get a Block on the Blockchain: " & e.msg)
-
-    #Delete old Transaction statuses.
-    for oldStatus in old:
-        result.statuses.del(oldStatus)
-        result.close.excl(oldStatus)
 
     #Load unmentioned Transactions.
     var unmentioned: seq[Hash[256]] = result.db.loadUnmentioned()
@@ -312,12 +311,11 @@ proc unverify*(
             doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
 
         #If this child was verified, unverify it and grab children.
-        #Children of Transactions which aren't verified cann't be verified and therefore can be skipped.
+        #Children of Transactions which aren't verified can't be verified and therefore can be skipped.
         if childStatus.verified:
             echo "Verified Transaction was unverified: ", child
             childStatus.verified = false
             consensus.db.save(child, childStatus)
-            consensus.statuses.del(child)
 
             try:
                 for o in 0 ..< tx.outputs.len:

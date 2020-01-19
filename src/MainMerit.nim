@@ -148,7 +148,7 @@ proc mainMerit() {.forceCheck: [].} =
             merit.processBlock(newBlock)
 
             #Copy the State.
-            var rewardsState = merit.state
+            var rewardsState: State = merit.state
 
             #Add the Block to the Epochs and State.
             var

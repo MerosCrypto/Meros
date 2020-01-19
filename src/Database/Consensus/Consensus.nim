@@ -168,7 +168,11 @@ proc flag*(
             try:
                 status = consensus.getStatus(packet.hash)
             except IndexError as e:
-                doAssert(false, "Couldn't get the status of a Transaction in Epochs: " & e.msg)
+                doAssert(false, "Couldn't get the status of a Transaction in Epochs at one point: " & e.msg)
+
+            #Don't recalculate Transactions which have already finalized.
+            if status.merit != -1:
+                continue
 
             if status.verified and status.holders.contains(removal.holder):
                 var merit: int = 0

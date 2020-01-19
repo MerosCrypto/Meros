@@ -133,7 +133,7 @@ suite "Consensus":
                 "CONSENSUS_DB_TEST",
                 1,
                 $Hash[256](),
-                25
+                625
             )
             #Transactions.
             transactions: Transactions = newTransactions(
@@ -172,7 +172,7 @@ suite "Consensus":
             var
                 miner: MinerWallet
                 mining: Block
-            if (rand(2) == 0) or (holders.len == 0):
+            if (rand(74) == 0) or (holders.len == 0):
                 miner = newMinerWallet()
                 miner.nick = uint16(holders.len)
                 holders.add(miner)
@@ -199,12 +199,18 @@ suite "Consensus":
                     aggregate = aggregate
                 )
 
-            #Mine it.
-            while merit.blockchain.difficulty.difficulty > mining.header.hash:
-                miner.hash(mining.header, mining.header.proof + 1)
+            #Check who has their Merit removed.
+            var removed: set[uint16] = {}
+            for elem in mining.body.elements:
+                if elem of MeritRemoval:
+                    consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
+                    removed.incl(elem.holder)
 
             #Add a Block to the Blockchain to generate a holder.
             merit.processBlock(mining)
+
+            #Copy the State.
+            var rewardsState: State = merit.state
 
             #Add the Block to the Epochs and State.
             var
@@ -213,16 +219,12 @@ suite "Consensus":
                 decd: int
             (epoch, incd, decd) = merit.postProcessBlock()
 
-            #Add an extra 24 Merit from each to speed up the process of getting difficulty votes.
-            merit.state[incd] = merit.state[incd] + 24
-
             #Archive the Epochs.
             consensus.archive(merit.state, mining.body.packets, mining.body.elements, epoch, incd, decd)
 
-            #Remove 24 Merit, if neccessary.
-            #This is done here so we can still trigger the merit + 1 mod 50 == 0 check.
-            if decd != -1:
-                merit.state[uint16(decd)] = merit.state[uint16(decd)] - 24
+            #Have the Consensus handle every person who suffered a MeritRemoval.
+            for removee in removed:
+                consensus.remove(removee, rewardsState[removee])
 
             #Add the elements.
             for elem in elements:
@@ -256,8 +258,8 @@ suite "Consensus":
             #Compare the Consensus DAGs.
             compare(consensus, reloaded)
 
-        #Iterate over 50 'rounds'.
-        for r in 1 .. 50:
+        #Iterate over 1250 'rounds'.
+        for r in 1 .. 1250:
             #Clear the packets, unsigned table, and aggregate.
             packets = @[]
             unsigned = @[]
@@ -353,25 +355,50 @@ suite "Consensus":
                         consensus.add(merit.state, packet)
                         break
 
-            #Add a Send Difficulty.
+            #Add Difficulties.
             var
                 holder: int = rand(holders.len - 1)
-                difficulty: Hash[256]
+                diff1: Hash[256]
+                diff2: Hash[256]
                 sendDiff: SignedSendDifficulty
+                dataDiff: SignedDataDifficulty
             for b in 0 ..< 32:
-                difficulty.data[b] = uint8(rand(255))
-            sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, difficulty)
+                diff1.data[b] = uint8(rand(255))
+                diff2.data[b] = uint8(rand(255))
+
+            sendDiff = newSignedSendDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, diff1)
             sendDiff.holder = uint16(holder)
             elements.add(sendDiff)
 
-            #Add a Data Difficulty.
-            var dataDiff: SignedDataDifficulty
             holder = rand(holders.len - 1)
-            for b in 0 ..< 32:
-                difficulty.data[b] = uint8(rand(255))
-            dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, difficulty)
+            dataDiff = newSignedDataDifficultyObj(consensus.getArchivedNonce(uint16(holder)) + 1, diff2)
             dataDiff.holder = uint16(holder)
             elements.add(dataDiff)
+
+            if rand(125) == 0:
+                #Add a Merit Removal.
+                holder = rand(holders.len - 1)
+                while merit.state[uint16(holder)] == 0:
+                    holder = rand(holders.len - 1)
+                for b in 0 ..< 32:
+                    diff1.data[b] = uint8(rand(255))
+                    diff2.data[b] = uint8(rand(255))
+
+                var
+                    e1: SendDifficulty
+                    e2: DataDifficulty
+                e1 = newSendDifficultyObj(0, diff1)
+                e1.holder = uint16(holder)
+                e2 = newDataDifficultyObj(0, diff2)
+                e2.holder = uint16(holder)
+
+                elements.add(newMeritRemoval(
+                    uint16(holder),
+                    false,
+                    e1,
+                    e2,
+                    merit.state.holders
+                ))
 
             #Mine the packets.
             mineBlock()
