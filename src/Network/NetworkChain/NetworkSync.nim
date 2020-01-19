@@ -173,6 +173,9 @@ proc sync*(
         )
     #Sketch failed to decode.
     except ValueError:
+        #Clear packets.
+        packets = @[]
+
         #Generate a Table of hashes we have in the Sketcher (which are over significance).
         var lookup: HashSet[uint64] = initHashSet[uint64]()
         for elem in sketcher:

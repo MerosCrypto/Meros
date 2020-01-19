@@ -180,14 +180,14 @@ class Meros:
             elif length == 0:
                 if header == MessageType.SignedMeritRemoval:
                     if result[-1] == 0:
-                        length = 34
+                        length = 32
                     elif result[-1] == 1:
                         result += self.socketRecv(2)
                         length = (int.from_bytes(result[-2:], byteorder="big") * 96) + 32
                     elif result[-1] == 2:
-                        length = 38
+                        length = 36
                     elif result[-1] == 3:
-                        length = 38
+                        length = 36
                     else:
                         raise Exception("Meros sent an Element we don't recognize.")
 

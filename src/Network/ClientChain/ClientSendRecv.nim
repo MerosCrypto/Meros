@@ -84,7 +84,7 @@ proc recv*(
                             else:
                                 0,
                             MERIT_REMOVAL_PREFIX
-                        ) + 1
+                        )
                     except ValueError as e:
                         raise newException(ClientError, e.msg)
 
