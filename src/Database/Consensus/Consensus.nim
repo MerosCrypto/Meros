@@ -13,6 +13,9 @@ import ../../objects/GlobalFunctionBoxObj
 #Consensus DB lib.
 import ../Filesystem/DB/ConsensusDB
 
+#Input toString function.
+from ../Filesystem/DB/TransactionsDB import toString
+
 #Transaction lib.
 import ../Transactions/Transaction
 
@@ -88,7 +91,34 @@ proc verify*(
             if (not status.holders.contains(mr.holder)) or status.signatures.hasKey(mr.holder):
                 raise newException(ValueError, "Verification isn't archived.")
 
-        doAssert(false, "Verified competing MeritRemovals aren't supported.")
+        var
+            inputs: HashSet[string] = initHashSet[string]()
+            tx: Transaction
+        try:
+            tx = consensus.functions.transactions.getTransaction(hash)
+        except IndexError:
+            raise newException(ValueError, "Unknown Transaction verified in first Element.")
+
+        for input in tx.inputs:
+            inputs.incl(input.toString())
+
+        var secondHash: Hash[256]
+        case mr.element2:
+            of Verification as verif:
+                secondHash = verif.hash
+            of VerificationPacket as packet:
+                secondHash = packet.hash
+            else:
+                raise newException(ValueError, "Invalid second Element.")
+        try:
+            tx = consensus.functions.transactions.getTransaction(secondHash)
+        except IndexError:
+            raise newException(ValueError, "Unknown Transaction verified in second Element.")
+
+        for input in tx.inputs:
+            if inputs.contains(input.toString()):
+                return
+        raise newException(ValueError, "Transactions don't compete.")
 
     proc checkSecondSameNonce(
         nonce: int
@@ -286,7 +316,8 @@ proc add*(
     verif: SignedVerification
 ) {.forceCheck: [
     ValueError,
-    DataExists
+    DataExists,
+    MaliciousMeritHolder
 ].} =
     #Verify the holder exists.
     if verif.holder >= uint16(state.holders.len):
@@ -303,6 +334,47 @@ proc add*(
             raise newException(ValueError, "Invalid SignedVerification signature.")
     except BLSError:
         doAssert(false, "Holder with an infinite key entered the system.")
+
+    #Get the Transaction.
+    var tx: Transaction
+    try:
+        tx = consensus.functions.transactions.getTransaction(verif.hash)
+    except IndexError:
+        raise newException(ValueError, "Unknown Verification.")
+
+    #Check if this holder verified a competing Transaction.
+    for input in tx.inputs:
+        var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
+        for spender in spenders:
+            if spender == verif.hash:
+                continue
+
+            #Get the spender's status.
+            var status: TransactionStatus
+            try:
+                status = consensus.getStatus(spender)
+            except IndexError as e:
+                doAssert(false, "Couldn't get the status of a Transaction: " & e.msg)
+
+            if status.holders.contains(verif.holder):
+                try:
+                    var partial: bool = not status.signatures.hasKey(verif.holder)
+                    raise newMaliciousMeritHolder(
+                        "Verifier verified competing Transactions.",
+                        newSignedMeritRemoval(
+                            verif.holder,
+                            partial,
+                            newVerificationObj(spender),
+                            verif,
+                            if partial:
+                                verif.signature
+                            else:
+                                @[status.signatures[verif.holder], verif.signature].aggregate()
+                            , state.holders
+                        )
+                    )
+                except KeyError as e:
+                    doAssert(false, "Couldn't get a holder's unarchived Verification signature: " & e.msg)
 
     #Get the status.
     var status: TransactionStatus

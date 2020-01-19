@@ -371,7 +371,7 @@ proc loadMaliciousProofs*(
                     result[holder].add(db.get(HOLDER_MALICIOUS_PROOF(holder, p)).parseSignedMeritRemoval())
                 except ValueError as e:
                     doAssert(false, "Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
-        except DBReadError as e:
+        except DBReadError:
             result.del(holder)
 
 #Delete a now-aggregated signature.
@@ -392,7 +392,7 @@ proc deleteMaliciousProofs*(
         db.consensus.deleted.incl(HOLDER_MALICIOUS_PROOFS(holder))
         for p in 0 .. proofs:
             db.consensus.deleted.incl(HOLDER_MALICIOUS_PROOF(holder, p))
-    except DBReadError as e:
+    except DBReadError:
         discard
 
 #Check if a MeritRemoval exists.

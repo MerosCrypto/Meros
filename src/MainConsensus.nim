@@ -84,12 +84,6 @@ proc mainConsensus() {.forceCheck: [].} =
             #Print that we're adding the SignedVerification.
             echo "Adding a new Signed Verification."
 
-            #See if the Transaction exists.
-            try:
-                discard transactions[verif.hash]
-            except IndexError:
-                raise newException(ValueError, "Unknown Verification.")
-
             #Add the SignedVerification to the Consensus DAG.
             var mr: bool
             try:
