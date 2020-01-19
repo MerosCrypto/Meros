@@ -21,14 +21,17 @@ class MeritRemoval(Element):
         self,
         e1: Element,
         e2: Element,
-        partial: bool
+        partial: bool,
+        holder: int = -1
     ) -> None:
         self.prefix: bytes = MERIT_REMOVAL_PREFIX
 
         self.e1: Element = e1
         self.e2: Element = e2
         self.partial: bool = partial
-        self.holder: int = self.e1.holder
+        self.holder: int = holder
+        if self.holder == -1:
+            self.holder = self.e1.holder
 
     #Element -> MeritRemoval. Satisifes static typing requirements.
     @staticmethod
@@ -124,9 +127,10 @@ class PartialMeritRemoval(MeritRemoval):
     def __init__(
         self,
         e1: Element,
-        e2: SignedElement
+        e2: SignedElement,
+        holder: int = -1
     ) -> None:
-        MeritRemoval.__init__(self, e1, e2, True)
+        MeritRemoval.__init__(self, e1, e2, True, holder)
 
         self.se2: SignedElement = e2
         self.signature: bytes = e2.signature
@@ -202,9 +206,10 @@ class SignedMeritRemoval(PartialMeritRemoval):
     def __init__(
         self,
         e1: SignedElement,
-        e2: SignedElement
+        e2: SignedElement,
+        holder: int = -1
     ) -> None:
-        PartialMeritRemoval.__init__(self, e1, e2)
+        PartialMeritRemoval.__init__(self, e1, e2, holder)
         self.partial = False
 
         self.se1: SignedElement = e1
