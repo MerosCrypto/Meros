@@ -558,6 +558,25 @@ proc add*(
     except KeyError as e:
         doAssert(false, "Couldn't cache a signature: " & e.msg)
 
+#Add a Merit Removal's Transaction.
+proc addMeritRemovalTransaction*(
+    consensus: Consensus,
+    tx: Transaction
+) {.inline, forceCheck: [].} =
+    consensus.db.saveTransaction(tx)
+
+#Get a Merit Removal's Transaction.
+proc getMeritRemovalTransaction*(
+    consensus: Consensus,
+    hash: Hash[256]
+): Transaction {.forceCheck: [
+    IndexError
+].} =
+    try:
+        result = consensus.db.loadTransaction(hash)
+    except DBReadError as e:
+        raise newException(IndexError, e.msg)
+
 #Add a SignedMeritRemoval.
 proc add*(
     consensus: Consensus,

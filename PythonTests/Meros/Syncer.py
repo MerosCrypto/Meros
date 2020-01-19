@@ -8,8 +8,10 @@ from PythonTests.Libs.Minisketch import Sketch
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Merit import Merit
 
-#Consensus classes.
+#Element classes.
+from PythonTests.Classes.Consensus.Verification import Verification
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
+from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
 
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
@@ -146,7 +148,18 @@ class Syncer():
                         self.txs.add(packet.hash)
                     self.packets[Sketch.hash(self.blocks[-1].header.sketchSalt, packet)] = packet
 
-                if self.packets == {}:
+                #Update the list of mentioned Transactions.
+                noVCMRs: bool = True
+                for elem in self.blocks[-1].body.elements:
+                    if isinstance(elem, MeritRemoval):
+                        if isinstance(elem.e1, (Verification, VerificationPacket)):
+                            self.txs.add(elem.e1.hash)
+                            noVCMRs = False
+                        if isinstance(elem.e2, (Verification, VerificationPacket)):
+                            self.txs.add(elem.e2.hash)
+                            noVCMRs = False
+
+                if (self.packets == {}) and noVCMRs:
                     del self.blocks[-1]
 
             elif MessageType(msg[0]) == MessageType.SketchHashesRequest:

@@ -1,5 +1,47 @@
 include MainMerit
 
+proc syncMeritRemovalTransactions(
+    removal: MeritRemoval
+): Future[void] {.forceCheck: [
+    ValueError
+], async.} =
+    #Sync the MeritRemoval's transactions, if we don't have them already.
+    proc syncMeritRemovalTransaction(
+        hash: Hash[256]
+    ): Future[void] {.forceCheck: [
+        ValueError
+    ], async.} =
+        try:
+            discard functions.transactions.getTransaction(hash)
+        except IndexError:
+            try:
+                consensus.addMeritRemovalTransaction(await network.requestTransaction(hash))
+            except DataMissing:
+                raise newException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
+            except Exception as e:
+                doAssert(false, "Syncing a MeritRemoval's Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    try:
+        case removal.element1:
+            of Verification as verif:
+                await syncMeritRemovalTransaction(verif.hash)
+            of VerificationPacket as packet:
+                await syncMeritRemovalTransaction(packet.hash)
+            else:
+                discard
+
+        case removal.element2:
+            of Verification as verif:
+                await syncMeritRemovalTransaction(verif.hash)
+            of VerificationPacket as packet:
+                await syncMeritRemovalTransaction(packet.hash)
+            else:
+                discard
+    except ValueError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
         try:
@@ -245,13 +287,20 @@ proc mainConsensus() {.forceCheck: [].} =
                 dataDiff.signedSerialize()
             )
 
-        #Verify MeritRemovals.
-        functions.consensus.verifyUnsignedMeritRemoval = proc(
+        #Verify an unsigned MeritRemoval.
+        functions.consensus.verifyUnsignedMeritRemoval = proc (
             mr: MeritRemoval
-        ) {.forceCheck: [
+        ): Future[void] {.forceCheck: [
             ValueError,
             DataExists
-        ].} =
+        ], async.} =
+            try:
+                await syncMeritRemovalTransactions(mr)
+            except ValueError as e:
+                raise e
+            except Exception as e:
+                doAssert(false, "Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
             try:
                 consensus.verify(mr)
             except ValueError as e:
@@ -272,12 +321,19 @@ proc mainConsensus() {.forceCheck: [].} =
         #Handle SignedMeritRemovals.
         functions.consensus.addSignedMeritRemoval = proc (
             mr: SignedMeritRemoval
-        ) {.forceCheck: [
+        ): Future[void] {.forceCheck: [
             ValueError,
             DataExists
-        ].} =
+        ], async.} =
             #Print that we're adding the MeritRemoval.
             echo "Adding a new Merit Removal."
+
+            try:
+                await syncMeritRemovalTransactions(mr)
+            except ValueError as e:
+                raise e
+            except Exception as e:
+                doAssert(false, "Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             #Add the MeritRemoval.
             try:

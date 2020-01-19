@@ -32,6 +32,7 @@ from PythonTests.Tests.Consensus.Difficulties.DataDifficultyTest import DataDiff
 
 from PythonTests.Tests.Consensus.MeritRemoval.SameNonceTest import SameNonceTest
 from PythonTests.Tests.Consensus.MeritRemoval.VerifyCompetingTest import VerifyCompetingTest
+from PythonTests.Tests.Consensus.MeritRemoval.InvalidCompetingTest import InvalidCompetingTest
 from PythonTests.Tests.Consensus.MeritRemoval.PartialTest import PartialTest
 from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
 from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
@@ -84,6 +85,7 @@ tests: List[Callable[[RPC], None]] = [
 
     SameNonceTest,
     VerifyCompetingTest,
+    InvalidCompetingTest,
     PartialTest,
     MultipleTest,
     PendingActionsTest,

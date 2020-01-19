@@ -198,11 +198,13 @@ proc newNetwork*(
                     raise newException(ClientError, "Parsing the SignedMeritRemoval failed due to a ValueError: " & e.msg)
 
                 try:
-                    mainFunctions.consensus.addSignedMeritRemoval(mr)
+                    await mainFunctions.consensus.addSignedMeritRemoval(mr)
                 except ValueError as e:
                     raise newException(ClientError, "Adding the SignedMeritRemoval failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
+                except Exception as e:
+                    doAssert(false, "Adding a SignedMeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             of MessageType.BlockHeader:
                 var header: BlockHeader

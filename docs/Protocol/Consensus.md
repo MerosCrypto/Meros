@@ -16,7 +16,7 @@ They have the following fields:
 
 - hash: Hash of the Transaction verified.
 
-Verifications, except when present in a MeritRemoval, can only be of valid Transactions, meaning Transactions which have been mentioned on the chain or still can be mentioned in a future Block. The Transaction does NOT have to beat any spam filter. When present in a MeritRemoval, Verifications can be of any parsable Transaction. This is in case a MeritRemoval is delayed to the point a Transaction can no longer be included on the chain.
+Verifications, except when present in a MeritRemoval, can only be of valid Transactions, meaning Transactions which have been mentioned on the chain or still can be mentioned in a future Block. The Transaction does NOT have to beat any spam filter. When present in a MeritRemoval, Verifications can be of any parsable Transaction. This is in case a MeritRemoval is delayed to the point a Transaction can no longer be included on the chain. Parsable is defined as being a valid network message with valid BLS data.
 
 `Verification` has a message length of 34 bytes; the 2-byte holder and the 32-byte hash. The signature is produced with a prefix of "\0".
 

@@ -74,9 +74,6 @@ class Claim(Transaction):
     def toJSON(
         self
     ) -> Dict[str, Any]:
-        if self.amount == 0:
-            raise Exception("Python tests didn't set this Claim's value.")
-
         result: Dict[str, Any] = {
             "descendant": "Claim",
             "inputs": [],

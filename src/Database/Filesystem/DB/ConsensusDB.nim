@@ -10,6 +10,9 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#Transaction object.
+import ../../Transactions/objects/TransactionObj
+
 #Element objects.
 import ../../Consensus/Elements/objects/SendDifficultyObj
 import ../../Consensus/Elements/objects/DataDifficultyObj
@@ -20,6 +23,9 @@ import ../../Consensus/objects/TransactionStatusObj
 
 #Serialization libs.
 import ../../../Network/Serialize/SerializeCommon
+
+import Serialize/Transactions/DBSerializeTransaction
+import Serialize/Transactions/ParseTransaction
 
 import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 import ../../../Network/Serialize/Consensus/ParseMeritRemoval
@@ -77,6 +83,11 @@ template SIGNATURE(
     nonce: int
 ): string =
     BLOCK_ELEMENT(holder, nonce) & "s"
+
+template TRANSACTION(
+    hash: Hash[256]
+): string =
+    hash.toString() & "t"
 
 template MERIT_REMOVAL(
     mr: MeritRemoval
@@ -209,6 +220,12 @@ proc saveArchived*(
     nonce: int
 ) {.inline, forceCheck: [].} =
     db.put(HOLDER_ARCHIVED_NONCE(holder), nonce.toBinary())
+
+proc saveTransaction*(
+    db: DB,
+    tx: Transaction
+) {.inline, forceCheck: [].} =
+    db.put(TRANSACTION(tx.hash), tx.serialize())
 
 proc saveMaliciousProof*(
     db: DB,
@@ -345,8 +362,21 @@ proc loadArchived*(
 ): int {.forceCheck: [].} =
     try:
         result = db.get(HOLDER_ARCHIVED_NONCE(holder)).fromBinary()
-    except DBReadeRROR:
+    except DBReadError:
         result = -1
+
+proc loadTransaction*(
+    db: DB,
+    hash: Hash[256]
+): Transaction {.forceCheck: [
+    DBReadError
+].} =
+    try:
+        result = hash.parseTransaction(db.get(TRANSACTION(hash)))
+    except ValueError as e:
+        doAssert(false, "Couldn't parse a Transaction saved to the Consensus DB: " & e.msg)
+    except DBReadError as e:
+        raise e
 
 #Load the malicious proofs table.
 proc loadMaliciousProofs*(

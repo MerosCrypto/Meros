@@ -156,17 +156,11 @@ type
 
         verifyUnsignedMeritRemoval*: proc (
             mr: MeritRemoval
-        ) {.raises: [
-            ValueError,
-            DataExists
-        ].}
+        ): Future[void]
 
         addSignedMeritRemoval*: proc (
             mr: SignedMeritRemoval
-        ) {.raises: [
-            ValueError,
-            DataExists
-        ].}
+        ): Future[void]
 
     MeritFunctionBox* = ref object
         getHeight*: proc (): int {.inline, raises: [].}
