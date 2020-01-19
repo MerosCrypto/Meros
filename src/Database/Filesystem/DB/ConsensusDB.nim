@@ -22,6 +22,7 @@ import ../../Consensus/objects/TransactionStatusObj
 import ../../../Network/Serialize/SerializeCommon
 
 import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
+import ../../../Network/Serialize/Consensus/ParseMeritRemoval
 
 import Serialize/Consensus/SerializeTransactionStatus
 import Serialize/Consensus/ParseTransactionStatus
@@ -29,6 +30,9 @@ import Serialize/Consensus/ParseTransactionStatus
 #DB object.
 import objects/DBObj
 export DBObj
+
+#Sets standard lib.
+import sets
 
 #Tables standard lib.
 import tables
@@ -79,6 +83,20 @@ template MERIT_REMOVAL(
 ): string =
     Blake256(mr.serialize()).toString() & "r"
 
+template MALICIOUS_PROOFS(): string =
+    "p"
+
+template HOLDER_MALICIOUS_PROOFS(
+    holder: uint16
+): string =
+    holder.toBinary(NICKNAME_LEN) & "p"
+
+template HOLDER_MALICIOUS_PROOF(
+    holder: uint16,
+    nonce: int
+): string =
+    holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN) & "p"
+
 #Put/Get/Delete/Commit for the Consensus DB.
 proc put(
     db: DB,
@@ -86,6 +104,7 @@ proc put(
     val: string
 ) {.forceCheck: [].} =
     db.consensus.cache[key] = val
+    db.consensus.deleted.excl(key)
 
 proc get(
     db: DB,
@@ -93,6 +112,9 @@ proc get(
 ): string {.forceCheck: [
     DBReadError
 ].} =
+    if db.consensus.deleted.contains(key):
+        raise newException(DBReadError, "Key deleted.")
+
     if db.consensus.cache.hasKey(key):
         try:
             return db.consensus.cache[key]
@@ -113,7 +135,7 @@ proc commit*(
         except Exception:
             #If we delete something before it's committed, it'll throw.
             discard
-    db.consensus.deleted = @[]
+    db.consensus.deleted = initHashSet[string]()
 
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.consensus.cache.len + 1)
     try:
@@ -187,6 +209,26 @@ proc saveArchived*(
     nonce: int
 ) {.inline, forceCheck: [].} =
     db.put(HOLDER_ARCHIVED_NONCE(holder), nonce.toBinary())
+
+proc saveMaliciousProof*(
+    db: DB,
+    mr: SignedMeritRemoval
+) {.forceCheck: [].} =
+    var nonce: int = 0
+    try:
+        nonce = db.get(HOLDER_MALICIOUS_PROOFS(mr.holder)).fromBinary() + 1
+    except DBReadError:
+        discard
+    db.put(HOLDER_MALICIOUS_PROOF(mr.holder, nonce), mr.signedSerialize())
+    db.put(HOLDER_MALICIOUS_PROOFS(mr.holder), nonce.toBinary())
+
+    if not db.consensus.malicious.contains(mr.holder):
+        var malicious: string = ""
+        try:
+            malicious = db.get(MALICIOUS_PROOFS())
+        except DBReadError:
+            discard
+        db.put(MALICIOUS_PROOFS(), malicious & mr.holder.toBinary(NICKNAME_LEN))
 
 proc save*(
     db: DB,
@@ -306,13 +348,52 @@ proc loadArchived*(
     except DBReadeRROR:
         result = -1
 
+#Load the malicious proofs table.
+proc loadMaliciousProofs*(
+    db: DB
+): Table[uint16, seq[SignedMeritRemoval]] {.forceCheck: [].} =
+    result = initTable[uint16, seq[SignedMeritRemoval]]()
+
+    var malicious: string = ""
+    try:
+        malicious = db.get(MALICIOUS_PROOFS())
+    except DBReadError:
+        discard
+
+    for h in countup(0, malicious.len - 1, 2):
+        var holder: uint16 = uint16(malicious[h ..< h + 2].fromBinary())
+        db.consensus.malicious.incl(holder)
+        result[holder] = @[]
+
+        try:
+            for p in 0 .. db.get(HOLDER_MALICIOUS_PROOFS(holder)).fromBinary():
+                try:
+                    result[holder].add(db.get(HOLDER_MALICIOUS_PROOF(holder, p)).parseSignedMeritRemoval())
+                except ValueError as e:
+                    doAssert(false, "Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
+        except DBReadError as e:
+            result.del(holder)
+
 #Delete a now-aggregated signature.
 proc deleteSignature*(
     db: DB,
     holder: uint16,
     nonce: int
 ) {.inline, forceCheck: [].} =
-    db.consensus.deleted.add(SIGNATURE(holder, nonce))
+    db.consensus.deleted.incl(SIGNATURE(holder, nonce))
+
+#Delete malicious proofs for a holder.
+proc deleteMaliciousProofs*(
+    db: DB,
+    holder: uint16
+) {.forceCheck: [].} =
+    try:
+        var proofs: int = db.get(HOLDER_MALICIOUS_PROOFS(holder)).fromBinary()
+        db.consensus.deleted.incl(HOLDER_MALICIOUS_PROOFS(holder))
+        for p in 0 .. proofs:
+            db.consensus.deleted.incl(HOLDER_MALICIOUS_PROOF(holder, p))
+    except DBReadError as e:
+        discard
 
 #Check if a MeritRemoval exists.
 proc hasMeritRemoval*(

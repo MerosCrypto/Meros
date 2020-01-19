@@ -77,7 +77,7 @@ proc newConsensusObj*(
             send: newSpamFilterObj(sendDiff),
             data: newSpamFilterObj(dataDiff)
         ),
-        malicious: initTable[uint16, seq[SignedMeritRemoval]](),
+        malicious: db.loadMaliciousProofs(),
 
         statuses: initTable[Hash[256], TransactionStatus](),
         close: initHashSet[Hash[256]](),

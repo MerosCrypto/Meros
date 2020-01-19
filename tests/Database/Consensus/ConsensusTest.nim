@@ -3,6 +3,9 @@
 #Test lib.
 import unittest
 
+#Fuzzing lib.
+import ../../Fuzzed
+
 #Util lib.
 import ../../../src/lib/Util
 
@@ -40,6 +43,84 @@ suite "Consensus":
     setup:
         #Seed random.
         randomize(int64(getTime()))
+
+    midFuzzTest "Reloaded malicious table.":
+        var
+            #Database.
+            db: DB = newTestDatabase()
+
+            #Merit.
+            merit: Merit = newMerit(
+                db,
+                "CONSENSUS_DB_TEST",
+                1,
+                $Hash[256](),
+                25
+            )
+
+            #Functions.
+            functions: GlobalFunctionBox = newTestGlobalFunctionBox(addr merit.blockchain, nil)
+
+            #Consensus.
+            consensus: Consensus = newConsensus(
+                functions,
+                db,
+                merit.state,
+                Hash[256](),
+                Hash[256]()
+            )
+
+            #Currently have Merit Removals.
+            malicious: seq[uint16] = @[]
+
+        #Create 100 Merit Holders.
+        for h in 0 ..< 100:
+            consensus.archive(merit.state, @[], @[], newEpoch(), uint16(h), -1)
+
+        #Iterate over 100 actions.
+        for a in 0 ..< 100:
+            #Create three removals.
+            for r in 0 ..< 3:
+                var
+                    diff1: Hash[256]
+                    diff2: Hash[256]
+                for b in 0 ..< 32:
+                    diff1.data[b] = uint8(rand(255))
+                    diff2.data[b] = uint8(rand(255))
+
+                var
+                    sendDiff: SendDifficulty = newSendDifficultyObj(rand(200000), diff1)
+                    dataDiff: DataDifficulty = newDataDifficultyObj(rand(200000), diff2)
+                    removal: SignedMeritRemoval = newSignedMeritRemovalObj(
+                        uint16(rand(500)),
+                        rand(1) == 0,
+                        sendDiff,
+                        dataDiff,
+                        newMinerWallet().sign("")
+                    )
+                sendDiff.holder = removal.holder
+                dataDiff.holder = removal.holder
+
+                consensus.flag(merit.blockchain, merit.state, removal)
+                if not malicious.contains(removal.holder):
+                    malicious.add(removal.holder)
+
+            #Remove an existing holder's MeritRemovals.
+            var toRemove: int = rand(malicious.len - 1)
+            consensus.remove(malicious[toRemove], 0)
+            malicious.del(toRemove)
+
+            #Reload Consensus.
+            var reloaded: Consensus = newConsensus(
+                functions,
+                db,
+                merit.state,
+                Hash[256](),
+                Hash[256]()
+            )
+
+            #Compare the Consensus DAGs.
+            compare(consensus, reloaded)
 
     test "Reloaded Consensus.":
         var

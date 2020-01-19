@@ -150,6 +150,7 @@ proc flag*(
     if removal of SignedMeritRemoval:
         try:
             consensus.malicious[removal.holder].add(cast[SignedMeritRemoval](removal))
+            consensus.db.saveMaliciousProof(cast[SignedMeritRemoval](removal))
         except KeyError as e:
             doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
 
@@ -513,6 +514,8 @@ proc remove*(
     merit: int
 ) {.forceCheck: [].} =
     consensus.malicious.del(holder)
+    consensus.db.deleteMaliciousProofs(holder)
+
     consensus.filters.send.remove(holder, merit)
     consensus.filters.data.remove(holder, merit)
 

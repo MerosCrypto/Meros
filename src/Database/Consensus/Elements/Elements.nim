@@ -95,19 +95,6 @@ proc `==`*(
 ): bool {.forceCheck: [].} =
     result = true
 
-    #If this a BlockElement, test the other is as well and holder.
-    if (
-        (e1 of BlockElement) and (
-            (not (e2 of BlockElement)) or
-            (cast[BlockElement](e1).holder != cast[BlockElement](e2).holder)
-        )
-    ):
-        return false
-
-    #Make sure e1 isn't a BlockElement when e2 is.
-    if (not (e1 of BlockElement)) and (e2 of BlockElement):
-        return false
-
     #Test the descendant fields.
     case e1:
         of Verification as v1:
@@ -159,9 +146,10 @@ proc `==`*(
         of MeritRemoval as mr1:
             if (
                 (not (e2 of MeritRemoval)) or
+                (mr1.holder != cast[MeritRemoval](e2).holder) or
                 (mr1.partial != cast[MeritRemoval](e2).partial) or
-                (mr1.element1 != cast[MeritRemoval](e2).element1) or
-                (mr1.element2 != cast[MeritRemoval](e2).element2)
+                (not (cast[Element](mr1.element1) == cast[Element](cast[MeritRemoval](e2).element1))) or
+                (not (cast[Element](mr1.element2) == cast[Element](cast[MeritRemoval](e2).element2)))
             ):
                 return false
 

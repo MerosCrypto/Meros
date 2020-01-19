@@ -85,7 +85,10 @@ proc compare*(
     #Compare the malicious table.
     check(c1.malicious.len == c2.malicious.len)
     for nick in c1.malicious.keys():
-        check(c1.malicious[nick] == c2.malicious[nick])
+        check(c1.malicious[nick].len == c2.malicious[nick].len)
+        for r in 0 ..< c1.malicious[nick].len:
+            check(cast[Element](c1.malicious[nick][r]) == cast[Element](c2.malicious[nick][r]))
+            check(c1.malicious[nick][r].signature == c2.malicious[nick][r].signature)
 
     #Compare the statuses table.
     check(c1.statuses.len == c2.statuses.len)
