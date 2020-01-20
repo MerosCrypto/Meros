@@ -44,7 +44,6 @@ def HundredSixSignedElementsTest(
 
     #Create a Data.
     #This is required so the Verification isn't terminated early for having an unknown hash.
-    rpc.call("personal", "setMnemonic")
     data: bytes = bytes.fromhex(rpc.call("personal", "data", ["AA"]))
 
     #Create a signed Verification, SendDifficulty, and DataDifficulty.
