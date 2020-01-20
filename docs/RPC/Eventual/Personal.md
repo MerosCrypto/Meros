@@ -1,8 +1,19 @@
 # Personal Module
 
+### `setMiner`
+
+`setMiner` creates a new Miner Wallet using the passed in BLS Private Key and sets the Node's Miner Wallet to it. It takes in one argument:
+- Private Key (string): Optional; creates a new Private Key if omitted.
+
+The result is a bool of true.
+
+### `getMiner`
+
+`getMiner` replies with the BLS Private Key of the current Miner Wallet. It takes in zero arguments and the result is a string of the private key.
+
 ### `setMnemonic`
 
-`setMnemonic` creates a new Wallet using the passed in Mnemonic and password, and set the Node's Wallet to it. It takes in two arguments:
+`setMnemonic` creates a new Wallet using the passed in Mnemonic and password and sets the Node's Wallet to it. It takes in two arguments:
 - Mnemonic (string): Optional; creates a new Mnemonic if omitted.
 - Password (string): Optional; defaults to "" if omitted, as according to the BIP 39 spec.
 

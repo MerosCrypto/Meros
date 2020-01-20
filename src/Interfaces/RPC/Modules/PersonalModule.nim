@@ -7,8 +7,9 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#Wallet lib.
+#Wallet libs.
 import ../../../Wallet/Wallet
+import ../../../Wallet/MinerWallet
 
 #Transactions lib.
 import ../../../Database/Transactions/Transactions
@@ -25,6 +26,13 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
     try:
         newRPCFunctions:
+            #Get the Node's MinerWallet's private key.
+            "getMiner" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [].} =
+                res["result"] = % $functions.personal.getMinerWallet().privateKey
+
             #Set the Node's Wallet's Mnemonic.
             "setMnemonic" = proc (
                 res: JSONNode,
@@ -143,7 +151,7 @@ proc module*(
                 try:
                     res["result"] = % $functions.personal.data(params[0].getStr())
                 except ValueError:
-                    raise newJSONRPCError(-3, "Invalid data length")
+                    raise newJSONRPCError(-3, "Invalid data length or missing datas")
                 except DataExists:
                     raise newJSONRPCError(0, "Data exists")
 

@@ -20,9 +20,6 @@ Consensus:
 
 - GasPrice.
 
-- Same Nonce Merit Removals.
-- Verify Competing Merit Removals.
-
 Interfaces:
 
 - Add missing methods detailed under the Eventual docs.
