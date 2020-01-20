@@ -21,10 +21,11 @@ export GlobalFunctionBoxObj
 #OS standard lib.
 import os
 
-#Create a Database.
-var db {.threadvar.}: DB
 discard existsOrCreateDir("./data")
 discard existsOrCreateDir("./data/NimTests")
+
+#Create a Database.
+var db {.threadvar.}: DB
 proc newTestDatabase*(): DB =
     #Close any existing DB.
     if not db.isNil:

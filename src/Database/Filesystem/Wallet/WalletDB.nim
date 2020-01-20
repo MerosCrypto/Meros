@@ -66,11 +66,18 @@ type WalletDB* = ref object
     wallet*: Wallet
     miner*: MinerWallet
 
-    finalizedNonces: int
-    unfinalizedNonces: int
-    verified: Table[string, int]
+    when defined(merosTests):
+        finalizedNonces*: int
+        unfinalizedNonces*: int
+        verified*: Table[string, int]
 
-    elementNonce: int
+        elementNonce*: int
+    else:
+        finalizedNonces: int
+        unfinalizedNonces: int
+        verified: Table[string, int]
+
+        elementNonce: int
 
 #Put/Get/Delete/Commit for the Wallet DB.
 proc put(
@@ -145,8 +152,9 @@ proc commit*(
     #To handle out of order finalizations, do one last pass through.
     for n in db.finalizedNonces ..< db.unfinalizedNonces:
         try:
-            if int(db.get(INPUT_NONCE(n))[0]) == 1:
-                inc(db.finalizedNonces)
+            if int(db.get(INPUT_NONCE(n))[0]) == 0:
+                break
+            inc(db.finalizedNonces)
         except DBReadError as e:
             doAssert(false, "Couldn't get an input by its nonce: " & e.msg)
 
