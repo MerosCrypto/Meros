@@ -12,9 +12,6 @@ import ../lib/Errors
 #Utils lib.
 import ../lib/Util
 
-#MinerWallet lib.
-import ../Wallet/MinerWallet
-
 #OS standard lib.
 import os
 
@@ -42,9 +39,6 @@ type Config* = object
 
     #Spawn a GUI or not.
     gui*: bool
-
-    #MinerWallet to verify transactions with.
-    miner*: MinerWallet
 
 #Returns the key if it exists and matches the passed type.
 func get(
@@ -76,11 +70,6 @@ proc newConfig*(): Config {.forceCheck: [].} =
         rpcPort: 5133,
         gui: true
     )
-
-    #Miner's nickname. This is set at the end as it requires the MinerWallet to already be created.
-    var
-        minerNickSet: bool = false
-        minerNick: int
 
     #Check if the data directory was overriden via the CLI.
     #First, confirm the amount of CLI arguments.
@@ -156,25 +145,6 @@ proc newConfig*(): Config {.forceCheck: [].} =
         except IndexError:
             discard
 
-        try:
-            result.miner = newMinerWallet(
-                parseHexStr(json.get("minerKey", JString).getStr())
-            )
-        except ValueError as e:
-            doAssert(false, e.msg)
-        except IndexError:
-            discard
-        except BLSError as e:
-            doAssert(false, e.msg)
-
-        try:
-            minerNick = json.get("minerNick", JInt).getInt()
-            minerNickSet = true
-        except ValueError as e:
-            doAssert(false, e.msg)
-        except IndexError:
-            discard
-
     #If there are params...
     if paramCount() > 0:
         #Iterate over each param.
@@ -199,16 +169,6 @@ proc newConfig*(): Config {.forceCheck: [].} =
 
                     of "--gui":
                         result.gui = parseBool(paramStr(i + 1))
-
-                    of "--minerKey":
-                        try:
-                            result.miner = newMinerWallet(parseHexStr(paramStr(i + 1)))
-                        except BLSError as e:
-                            doAssert(false, "Couldn't create a MinerWallet from the passed value: " & e.msg)
-
-                    of "--minerNick":
-                        minerNick = parseInt(paramStr(i + 1))
-                        minerNickSet = true
         except ValueError as e:
             doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
         except IndexError as e:
@@ -218,16 +178,6 @@ proc newConfig*(): Config {.forceCheck: [].} =
             doAssert(false, "Invalid TCP port.")
         if result.rpcPort <= 0:
             doAssert(false, "Invalid RPC port.")
-
-        if (not minerNickSet) and result.miner.initiated:
-            doAssert(false, "Passed a Miner Key without a Miner Nick.")
-        if minerNickSet:
-            if not result.miner.initiated:
-                doAssert(false, "Passed a Miner Nick without a Miner Key.")
-            if minerNick < 0:
-                doAssert(false, "Passed an invalid Miner Nick.")
-
-            result.miner.nick = uint16(minerNick)
 
     #Make sure the data directory exists.
     try:

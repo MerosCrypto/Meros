@@ -5,25 +5,24 @@ proc verify(
     transaction: Transaction
 ) {.forceCheck: [], async.} =
     #Make sure we're a Miner with Merit.
-    if config.miner.initiated and (merit.state[config.miner.nick] > 0):
-        #Acquire the verify lock.
-        while not tryAcquire(verifyLock):
-            #While we can't acquire it, allow other async processes to run.
-            try:
-                await sleepAsync(1)
-            except Exception as e:
-                doAssert(false, "Couldn't sleep for 0.001 seconds after failing to acqure the lock: " & e.msg)
-
-        #Make sure we didn't already verify a competing Transaction/make sure this Transaction can be verified.
+    if wallet.miner.initiated and (merit.state[wallet.miner.nick] > 0):
+        #Inform the WalletDB were verifying a Transaction.
         try:
-            if (not transactions.isFirst(transaction)) or consensus.getStatus(transaction.hash).beaten:
+            wallet.verifyTransaction(transaction)
+        #We already verified a competitor.
+        except ValueError:
+            return
+
+        #Make sure this Transaction can be verified.
+        try:
+            if consensus.getStatus(transaction.hash).beaten:
                 return
         except IndexError as e:
             doAssert(false, "Asked to verify a Transaction without a Status: " & e.msg)
 
         #Verify the Transaction.
         var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
-        config.miner.sign(verif)
+        wallet.miner.sign(verif)
 
         #Add the Verification.
         try:
@@ -32,9 +31,6 @@ proc verify(
             doAssert(false, "Created a Verification with an invalid signature: " & e.msg)
         except DataExists as e:
             doAssert(false, "Created a Verification which already exists: " & e.msg)
-
-        #Release the verify lock.
-        release(verifyLock)
 
 proc mainTransactions() {.forceCheck: [].} =
     {.gcsafe.}:

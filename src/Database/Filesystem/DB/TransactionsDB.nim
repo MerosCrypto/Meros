@@ -79,7 +79,7 @@ template SPENDABLE(
 ): string =
     key.toString() & "$p"
 
-#Put/Get/Delete/Commit for the Transactions DB.
+#Put/Get/Commit for the Transactions DB.
 proc put(
     db: DB,
     key: string,

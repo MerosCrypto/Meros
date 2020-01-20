@@ -108,7 +108,7 @@ template HOLDER_MALICIOUS_PROOF(
 ): string =
     holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN) & "p"
 
-#Put/Get/Delete/Commit for the Consensus DB.
+#Put/Get/Commit for the Consensus DB.
 proc put(
     db: DB,
     key: string,

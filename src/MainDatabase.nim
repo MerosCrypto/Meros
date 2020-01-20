@@ -21,3 +21,9 @@ proc mainDatabase() {.forceCheck: [].} =
         #Confirm the version.
         if version != DB_VERSION:
             doAssert(false, "DB has a different version.")
+
+        #Open the Wallet Database.
+        try:
+            wallet = newWalletDB(config.dataDir / (config.network & "-" & config.db & "-wallet"), MAX_DB_SIZE)
+        except DBError as e:
+            doAssert(false, "Couldn't create the DB: " & e.msg)

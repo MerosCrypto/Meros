@@ -260,16 +260,3 @@ proc archive*(
 ) {.forceCheck: [].} =
     for hash in epoch.keys():
         transactions.del(hash)
-
-#Check if a Transaction is the first to spend all its inputs.
-proc isFirst*(
-    transactions: Transactions,
-    tx: Transaction
-): bool {.forceCheck: [].} =
-    for input in tx.inputs:
-        try:
-            if transactions.loadSpenders(input)[0] != tx.hash:
-                return false
-        except IndexError:
-            doAssert(false, "Transaction spends non-existent input.")
-    return true

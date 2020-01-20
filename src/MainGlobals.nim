@@ -23,9 +23,8 @@ var
     #DB.
     database {.threadvar.}: DB
 
-    #Personal.
-    verifyLock: Lock               #Verify lock to stop us from triggering a MeritRemoval.
-    wallet {.threadvar.}: Wallet   #Wallet.
+    #WalletDB.
+    wallet {.threadvar.}: WalletDB
 
     #Network.
     network {.threadvar.}: Network #Network.
@@ -90,9 +89,10 @@ functions.system.quit = proc () {.forceCheck: [].} =
     #Shut down the Network.
     network.shutdown()
 
-    #Shut down the DB.
+    #Shut down the databases.
     try:
         database.close()
+        wallet.close()
     except DBError as e:
         echo "Couldn't shutdown the DB: " & e.msg
 

@@ -41,6 +41,8 @@ proc newWallet*(
     try:
         result.mnemonic = newMnemonic(mnemonic)
         result.hd = newHDWallet(result.mnemonic.unlock(password)[0 ..< 32])
+        result.external = result.hd[0].derive(0)
+        result.internal = result.hd[0].derive(1)
     except ValueError as e:
         raise e
 

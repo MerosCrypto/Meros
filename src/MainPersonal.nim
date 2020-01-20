@@ -2,9 +2,13 @@ include MainTransactions
 
 proc mainPersonal() {.forceCheck: [].} =
     {.gcsafe.}:
+        #Get the MinerWallet.
+        functions.personal.getMinerWallet = proc (): MinerWallet {.inline, forceCheck: [].} =
+            wallet.miner
+
         #Get the Wallet.
         functions.personal.getWallet = proc (): Wallet {.inline, forceCheck: [].} =
-            wallet
+            wallet.wallet
 
         #Set the Wallet's Mnemonic.
         functions.personal.setMnemonic = proc (
@@ -13,13 +17,10 @@ proc mainPersonal() {.forceCheck: [].} =
         ) {.forceCheck: [
             ValueError
         ].} =
-            if mnemonic.len == 0:
-                wallet = newWallet(password)
-            else:
-                try:
-                    wallet = newWallet(mnemonic, password)
-                except ValueError as e:
-                    raise e
+            try:
+                wallet.setWallet(mnemonic, password)
+            except ValueError as e:
+                raise e
 
         #Create a Send Transaction.
         functions.personal.send = proc (
@@ -43,7 +44,7 @@ proc mainPersonal() {.forceCheck: [].} =
 
             #Grab a child.
             try:
-                child = wallet.external.next()
+                child = wallet.wallet.external.next()
             except ValueError as e:
                 doAssert(false, "Wallet has no usable keys: " & e.msg)
             utxos = transactions.getUTXOs(child.publicKey)
@@ -141,12 +142,12 @@ proc mainPersonal() {.forceCheck: [].} =
 
         #Grab a child.
         try:
-            child = wallet.external.next()
+            child = wallet.wallet.external.next()
         except ValueError as e:
             doAssert(false, "Wallet has no usable keys: " & e.msg)
 
         try:
-            tip = transactions.loadDataTip(child.publicKey)
+            tip = wallet.loadDataTip()
         except DataMissing:
             #Nim can't handle the following chain of events:
             #Spawning an awaited async task
@@ -181,6 +182,23 @@ proc mainPersonal() {.forceCheck: [].} =
             #Set the tip to the initial Data.
             tip = data.hash
 
+        #Technically, the tip could be out of date.
+        #We don't save the tip until after we publish it.
+        var spenders: seq[Hash[256]] = newSeq[Hash[256]](1)
+        while spenders.len != 0:
+            spenders = functions.transactions.getSpenders(newInput(tip))
+            if spenders.len != 0:
+                tip = spenders[0]
+
+        #Verify the tip exists.
+        #It may not if we created a Data, saved the tip, rebooted without flushing the Transactions DB, and then tried to create a new Data.
+        try:
+            discard transactions[tip]
+        except IndexError as e:
+            raise newException(ValueError, "Creating a Data which competed with a previous Data thanks to missing Datas: " & e.msg)
+
+
+        #Create the Data.
         try:
             data = newData(tip, dataStr)
         except ValueError as e:
@@ -200,5 +218,8 @@ proc mainPersonal() {.forceCheck: [].} =
         except DataExists as e:
             raise e
 
-        #Retun the hash.
+        #Save the new Data tip.
+        wallet.saveDataTip(data.hash)
+
+        #Return the hash.
         result = data.hash

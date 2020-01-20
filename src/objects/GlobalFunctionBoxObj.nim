@@ -240,6 +240,8 @@ type
         ].}
 
     PersonalFunctionBox* = ref object
+        getMinerWallet*: proc(): MinerWallet {.inline, raises: [].}
+
         getWallet*: proc (): Wallet {.inline, raises: [].}
 
         setMnemonic*: proc (

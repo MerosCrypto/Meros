@@ -175,6 +175,11 @@ proc mainMerit() {.forceCheck: [].} =
             #Archive the hashes handled by the popped Epoch.
             transactions.archive(epoch)
 
+            #If this header had a new miner, check if it was us.
+            if newBlock.header.newMiner:
+                if newBlock.header.minerKey == wallet.miner.publicKey:
+                    wallet.setMinerNick(uint16(merit.state.holders.len - 1))
+
             #Calculate the rewards.
             var rewards: seq[Reward] = epoch.calculate(rewardsState, removed)
 
@@ -184,13 +189,17 @@ proc mainMerit() {.forceCheck: [].} =
                 transactions.mint(newBlock.header.hash, rewards)
 
                 #If we have a miner wallet, check if a mint was to us.
-                if config.miner.initiated:
+                if wallet.miner.initiated:
                     for r in 0 ..< rewards.len:
-                        if config.miner.nick == rewards[r].nick:
+                        if wallet.miner.nick == rewards[r].nick:
                             receivedMint = r
 
             #Commit the DBs.
             database.commit(merit.blockchain.height)
+            try:
+                wallet.commit(epoch, functions.transactions.getTransaction)
+            except IndexError as e:
+                doAssert(false, "Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
             echo "Successfully added the Block."
 
@@ -203,17 +212,12 @@ proc mainMerit() {.forceCheck: [].} =
 
                 #If we got a Mint...
                 if receivedMint != -1:
-                    #Confirm we have a wallet.
-                    if wallet.isNil:
-                        echo "We got a Mint with hash ", newBlock.header.hash, ", however, we don't have a Wallet to Claim it to."
-                        return
-
                     #Claim the Reward.
                     var claim: Claim
                     try:
                         claim = newClaim(
                             newFundedInput(newBlock.header.hash, receivedMint),
-                            wallet.publicKey
+                            wallet.wallet.publicKey
                         )
                     except ValueError as e:
                         doAssert(false, "Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
@@ -221,7 +225,7 @@ proc mainMerit() {.forceCheck: [].} =
                         doAssert(false, "Couldn't grab a Mint we just added: " & e.msg)
 
                     #Sign the claim.
-                    config.miner.sign(claim)
+                    wallet.miner.sign(claim)
 
                     #Emit it.
                     try:

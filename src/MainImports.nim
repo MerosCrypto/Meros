@@ -26,6 +26,9 @@ import Database/Merit/Merit
 #DB.
 import Database/Filesystem/DB/DB
 
+#WalletDB.
+import Database/Filesystem/Wallet/WalletDB
+
 #Network.
 import Network/Network
 
@@ -50,9 +53,6 @@ import objects/ConfigObj
 
 #OS standard lib.
 import os
-
-#Locks standard lib.
-import locks
 
 #Thread standard lib.
 import threadpool
