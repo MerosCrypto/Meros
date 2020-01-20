@@ -74,7 +74,7 @@ proc newGUI*(
                 var js: string
                 try:
                     js = &"""
-                        document.body.innerHTML = `{MAIN}`;
+                        document.body.innerHTML = `{SEND}`;
                     """
                 except ValueError as e:
                     doAssert(false, "Couldn't format the JS to load the main page: " & e.msg)

@@ -10,8 +10,8 @@ import json
 
 #Constants of the HTML.
 const
-    MAIN*: string = staticRead("../static/Main.html")
     SEND*: string = staticRead("../static/Send.html")
+    DATA*: string = staticRead("../static/Data.html")
 
 #GUI object.
 type GUI* = ref object

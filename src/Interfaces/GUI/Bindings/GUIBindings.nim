@@ -46,11 +46,11 @@ proc addTo*(
 
                 #Grab the page we're trying to load.
                 case pageArg:
-                    of "main":
-                        page = MAIN
                     of "send":
                         page = SEND
-                
+                    of "data":
+                        page = DATA
+
                 #Format it as a line of JS code.
                 try:
                     page = &"document.body.innerHTML = (`{page}`);"

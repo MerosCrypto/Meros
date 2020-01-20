@@ -1,0 +1,22 @@
+<html>
+    <body>
+        <h1>Send</h1>
+        <button onclick="GUI.load('send')">Send</button>
+        <button onclick="GUI.load('data')">Data</button>
+        <button onclick="GUI.quit()">Quit</button>
+        <hr>
+
+        Data: <input type="text" id="data"></input>
+        <br>
+        <button onclick="
+            var data = document.getElementById('data').value;
+            Personal.data(data);
+        ">Publish</button>
+
+        <br>
+        <hr>
+        <br>
+
+        <div id="hash"></div>
+    </body>
+</html>
