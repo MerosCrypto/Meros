@@ -14,7 +14,7 @@
 To install every prerequisite, run:
 
 ```
-sudo apt-get install git gcc g++ make cmake autoconf automake libtool gtk+-3.0 at-spi2-core webkit2gtk-4.0 curl python3 pip3
+sudo apt-get install git gcc g++ make cmake autoconf automake libtool gtk+-3.0 at-spi2-core webkit2gtk-4.0 curl python3 python3-pip
 curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.0.4
 ```
