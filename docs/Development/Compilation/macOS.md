@@ -20,6 +20,8 @@ curl https://nim-lang.org/choosenim/init.sh -sSf | sh
 choosenim 1.0.4
 ```
 
+You will have to update your path, as according to choosenim, before running any Nim-related commands.
+
 ### Meros
 
 #### Build
