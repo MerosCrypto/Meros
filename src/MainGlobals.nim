@@ -37,7 +37,8 @@ var
 
 case config.network:
     of "mainnet":
-        doAssert(false, "The mainnet has yet to launch.")
+        echo "The mainnet has yet to launch."
+        quit(0)
 
     of "testnet":
         params = ChainParams(
@@ -71,7 +72,8 @@ case config.network:
         )
 
     else:
-        doAssert(false, "Invalid network specified.")
+        echo "Invalid network specified."
+        quit(0)
 
 #Function to safely shut down all elements of the node.
 functions.system.quit = proc () {.forceCheck: [].} =

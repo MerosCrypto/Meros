@@ -18,8 +18,50 @@ import os
 #String utils standard lib.
 import strutils
 
+#Tables standard lib.
+import tables
+
 #JSON standard lib.
 import json
+
+const
+    #Help test.
+    HELP_TEXT: string = """
+Meros Full Node v0.6.0.
+Parameters can be specified over the CLI or via a JSON file, named
+`settings.json`, placed in the data directory.
+
+OPTIONS:
+    -h,  --help                       Prints this help.
+    -d,  --data-dir  <DATA_DIRECTORY> Directory to store data in.
+         --db        <DB_NAME>        Name for the database file.
+    -n,  --network   <NETWORK>        Network to connect to.
+    -ns, --no-server                  Don't accept incoming connections.
+    -t,  --tcp-port  <PORT>           Port to listen for connections on.
+    -r,  --rpc-port  <PORT>           Port the RPC should listen on.
+    -ng, --no-gui                     Don't start the GUI."""
+
+    #Table of which long parameter a short parameter represents.
+    shortParams: Table[string, string] = {
+        "h":  "help",
+        "d":  "data-dir",
+        "n":  "network",
+        "ns": "no-server",
+        "t":  "tcp-port",
+        "r":  "rpc-port",
+        "ng": "no-gui"
+    }.toTable()
+
+    #Table of how many arguments each parameter takes.
+    longParams: Table[string, int] = {
+        "data-dir":  1,
+        "db":        1,
+        "network":   1,
+        "no-server": 0,
+        "tcp-port":  1,
+        "rpc-port":  1,
+        "no-gui":    0
+    }.toTable()
 
 type Config* = object
     #Data Directory.
@@ -71,113 +113,175 @@ proc newConfig*(): Config {.forceCheck: [].} =
         gui: true
     )
 
-    #Check if the data directory was overriden via the CLI.
-    #First, confirm the amount of CLI arguments.
-    if paramCount() mod 2 != 0:
-        doAssert(false, "Invalid amount of arguments passed via the CLI.")
-
-    #Look for the --dataDir switch.
-    if paramCount() > 0:
+    #Parse the command line options.
+    var
+        options: Table[string, seq[string]] = initTable[string, seq[string]]()
+        param: string
+        value: string
+        length: int
+        p: int = 1
+    while p <= paramCount():
         try:
-            for i in countup(1, paramCount(), 2):
-                if paramStr(i) == "--dataDir":
-                    result.dataDir = paramStr(i + 1)
-        except ValueError as e:
-            doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
-        except IndexError as e:
-            doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
+            #Skip "" parameters.
+            if paramStr(p).len == 0:
+                inc(p)
+                continue
+            value = paramStr(p)
+        except IndexError:
+            doAssert(false, "Couldn't get a parameter.")
 
-    #If the settings file exists...
+        #Make sure this isn't "-".
+        if value.len == 1:
+            echo value, " is too short to be a valid parameter. Please run --help for more info."
+            quit(0)
+
+        #Check for shortened paramters.
+        if (value[0] == '-') and (value[1] != '-'):
+            #Grab the shortened parameter.
+            try:
+                param = shortParams[value[1 ..< value.len]]
+            except KeyError:
+                echo value, " is not a valid shortened parameter. Please run --help for more info."
+                quit(0)
+        #Check for long parameters.
+        elif value[0 ..< 2] == "--":
+            param = value[2 ..< value.len]
+        else:
+            echo "An argument was provided as the first parameter."
+            quit(0)
+
+        #If the parameter is help, print the help text and quit.
+        if param == "help":
+            echo HELP_TEXT
+            quit(0)
+
+        #Grab the amount of arguments for this parameter.
+        try:
+            length = longParams[param]
+        except KeyError:
+            echo value, " is not a valid parameter. Please run --help for more info."
+            quit(0)
+
+        #Parse out the arguments.
+        options[param] = newSeq[string](length)
+        for a in 0 ..< length:
+            try:
+                #Move from the parameter to the argument.
+                inc(p)
+
+                #Skip "" parameters.
+                while paramStr(p).len == 0:
+                    inc(p)
+
+                #Verify this is actually an argument.
+                if paramStr(p)[0] == '-':
+                    echo param, " was not given enough arguments. Please run --help for more info."
+                    quit(0)
+
+                try:
+                    options[param][a] = paramStr(p)
+                except KeyError as e:
+                    doAssert(false, "Couldn't add an argument to a parameter despite creating a seq for it: " & e.msg)
+            except IndexError:
+                echo param, " was not given enough arguments. Please run --help for more info."
+                quit(0)
+
+        #Increment to the next parameter.
+        inc(p)
+        #Verify the next parameter isn't another argument for the previous parameter.
+        try:
+            #Skip "" parameters.
+            while paramStr(p).len == 0:
+                inc(p)
+
+            if paramStr(p)[0] != '-':
+                echo param, " was given too many arguments. Please run --help for more info."
+                quit(0)
+        except IndexError:
+            #We reached the end of the arguments.
+            discard
+
+    #Set the dataDir parameter, if it was passed.
+    if options.hasKey("data-dir"):
+        try:
+            result.dataDir = options["data-dir"][0]
+        except KeyError as e:
+            doAssert(false, "Couldn't grab a key from the options we're confirmed to have: " & e.msg)
+
+    #Declare a JSON object for the settings file.
+    var settings: JSONNode = newJObject()
+    #If the settings file exists, load it.
     if fileExists(result.dataDir / "settings.json"):
         #Parse it.
-        var
-            settings: string
-            json: JSONNode
         try:
-            settings = readFile(result.dataDir / "settings.json")
+            settings = parseJSON(readFile(result.dataDir / "settings.json"))
         except Exception as e:
-            doAssert(false, "Couldn't read from `" & (result.dataDir / "settings.json") & "` despite it existing: " & e.msg)
-        try:
-            json = parseJSON(settings)
-        except Exception as e:
-            doAssert(false, "Couldn't parse `" & (result.dataDir / "settings.json") & "` despite it existing: " & e.msg)
+            doAssert(false, "Either couldn't read or parse the settings file despite it existing: " & e.msg)
 
-        #Handle the settings.
+    #Handle the settings.
+    template setParameter[X](
+        variable: var X,
+        parameter: string,
+        value: untyped,
+        overrideValue: untyped
+    ): untyped =
         try:
-            result.db = json.get("db", JString).getStr()
-        except ValueError as e:
-            doAssert(false, e.msg)
+            variable = value
+        except ValueError:
+            echo "Invalid ", parameter, " value in the JSON settings. Please run --help for more info."
+            quit(0)
         except IndexError:
             discard
 
         try:
-            result.network = json.get("network", JString).getStr()
-        except ValueError as e:
-            doAssert(false, e.msg)
-        except IndexError:
+            variable = overrideValue
+        except KeyError:
             discard
+        except ValueError:
+            echo "Invalid ", parameter, " value passed over the CLI. Please run --help for more info."
+            quit(0)
 
-        try:
-            result.server = json.get("server", JBool).getBool()
-        except ValueError as e:
-            doAssert(false, e.msg)
-        except IndexError:
-            discard
+    result.db.setParameter(
+        "db",
+        settings.get("db", JString).getStr(),
+        options["db"][0]
+    )
 
-        try:
-            result.tcpPort = json.get("tcpPort", JInt).getInt()
-        except ValueError as e:
-            doAssert(false, e.msg)
-        except IndexError:
-            discard
+    result.network.setParameter(
+        "network",
+        settings.get("network", JString).getStr(),
+        options["network"][0]
+    )
 
-        try:
-            result.rpcPort = json.get("rpcPort", JInt).getInt()
-        except ValueError as e:
-            doAssert(false, e.msg)
-        except IndexError:
-            discard
+    if options.hasKey("no-server"):
+        result.server = false
+    else:
+        result.server.setParameter(
+            "no-server",
+            not settings.get("no-server", JBool).getBool(),
+            parseBool(options["no-server"][0])
+        )
 
-        try:
-            result.gui = json.get("gui", JBool).getBool()
-        except ValueError as e:
-            doAssert(false, e.msg)
-        except IndexError:
-            discard
+    result.tcpPort.setParameter(
+        "tcp-port",
+        settings.get("tcp-port", JInt).getInt(),
+        int(parseUInt(options["tcp-port"][0]))
+    )
 
-    #If there are params...
-    if paramCount() > 0:
-        #Iterate over each param.
-        try:
-            for i in countup(1, paramCount(), 2):
-                #Switch based off the param.
-                case paramStr(i):
-                    of "--db":
-                        result.db = paramStr(i + 1)
+    result.rpcPort.setParameter(
+        "rpc-port",
+        settings.get("rpc-port", JInt).getInt(),
+        int(parseUInt(options["rpc-port"][0]))
+    )
 
-                    of "--network":
-                        result.network = paramStr(i + 1)
-
-                    of "--server":
-                        result.server = (paramStr(i + 1) == "true")
-
-                    of "--tcpPort":
-                        result.tcpPort = parseInt(paramStr(i + 1))
-
-                    of "--rpcPort":
-                        result.rpcPort = parseInt(paramStr(i + 1))
-
-                    of "--gui":
-                        result.gui = parseBool(paramStr(i + 1))
-        except ValueError as e:
-            doAssert(false, "Couldn't parse a value passed via the CLI: " & e.msg)
-        except IndexError as e:
-            doAssert(false, "Exceeded paramCount despite counting up to it: " & e.msg)
-
-        if result.tcpPort <= 0:
-            doAssert(false, "Invalid TCP port.")
-        if result.rpcPort <= 0:
-            doAssert(false, "Invalid RPC port.")
+    if options.hasKey("no-gui"):
+        result.gui = false
+    else:
+        result.gui.setParameter(
+            "no-gui",
+            not settings.get("no-gui", JBool).getBool(),
+            parseBool(options["no-gui"][0])
+        )
 
     #Make sure the data directory exists.
     try:
