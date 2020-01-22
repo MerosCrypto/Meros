@@ -123,7 +123,7 @@ class Meros:
         self.rpc: int = rpc
 
         #Create the instance.
-        self.process: Popen[Any] = Popen(["./build/Meros", "--gui", "false", "--dataDir", "./data/PythonTests", "--network", "devnet", "--db", db, "--tcpPort", str(tcp), "--rpcPort", str(rpc)])
+        self.process: Popen[Any] = Popen(["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", db, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)])
 
         #Create message/response lists.
         self.msgs: List[bytes] = []
