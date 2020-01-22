@@ -45,6 +45,12 @@ export ClientsObj
 #Network Function Box.
 import objects/NetworkLibFunctionBoxObj
 
+#Math standard lib.
+import math
+
+#Random standard lib.
+import random
+
 #Networking standard libs.
 import asyncdispatch, asyncnet
 
@@ -311,17 +317,37 @@ proc broadcast*(
     clients: Clients,
     msg: Message
 ) {.forceCheck: [], async.} =
-    #Iterate over each client.
-    for client in clients.notSyncing:
-        #Skip the Client who sent us this.
-        if client.id == msg.client:
+    var
+        #Clients we need to broadcast to.
+        req: int = max(
+            min(clients.clients.len, 3),
+            int(ceil(sqrt(float(clients.clients.len))))
+        )
+        #Clients we have yet to handle.
+        usable: seq[Client] = clients.clients
+
+    while req > 0:
+        if usable[0].remoteSync or (usable[0].syncLevels != 0):
+            usable.del(0)
             continue
 
-        #Try to send the message.
-        try:
-            await client.send(msg)
-        #If that failed, mark the Client for disconnection.
-        except ClientError:
-            clients.disconnect(client.id)
-        except Exception as e:
-            doAssert(false, "Broadcasting a message to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        if rand(high(usable)) < req:
+            #Skip the Client who sent us this message.
+            if usable[0].id == msg.client:
+                usable.del(0)
+                if req > usable.len:
+                    dec(req)
+                continue
+
+            #Try to send the message.
+            try:
+                await usable[0].send(msg)
+                dec(req)
+            #If that failed, mark the Client for disconnection.
+            except ClientError:
+                clients.disconnect(usable[0].id)
+            except Exception as e:
+                doAssert(false, "Broadcasting a message to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+        #Delete this Client from usable.
+        usable.del(0)
