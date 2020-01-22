@@ -217,7 +217,7 @@ proc mainMerit() {.forceCheck: [].} =
                     try:
                         claim = newClaim(
                             newFundedInput(newBlock.header.hash, receivedMint),
-                            wallet.wallet.publicKey
+                            wallet.wallet.external.next().publicKey
                         )
                     except ValueError as e:
                         doAssert(false, "Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
