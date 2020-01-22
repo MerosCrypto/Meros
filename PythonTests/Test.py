@@ -13,6 +13,7 @@ from PythonTests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
 from PythonTests.Tests.Merit.StateTest import StateTest
 from PythonTests.Tests.Merit.HundredTest import HundredTest
+from PythonTests.Tests.Merit.HundredTwentyFourTest import HundredTwentyFourTest
 
 from PythonTests.Tests.Merit.Templates.EightyEightTest import EightyEightTest
 from PythonTests.Tests.Merit.Templates.TElementTest import TElementTest
@@ -66,6 +67,7 @@ tests: List[Callable[[RPC], None]] = [
     DifficultyTest,
     StateTest,
     HundredTest,
+    HundredTwentyFourTest,
 
     EightyEightTest,
     TElementTest,

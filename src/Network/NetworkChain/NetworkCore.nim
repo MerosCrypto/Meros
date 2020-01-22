@@ -80,6 +80,16 @@ proc newNetwork*(
                 except Exception as e:
                     doAssert(false, "Replying `Handshake` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
+                #Create an artificial BlockchainTail message.
+                try:
+                    await network.networkFunctions.handle(newMessage(MessageType.BlockchainTail, msg.message[3 ..< 35]))
+                except ClientError as e:
+                    raise e
+                except Spam as e:
+                    doAssert(false, "BlockchainTail message raised a Spam exception: " & e.msg)
+                except Exception as e:
+                    doAssert(false, "Handling a BlockchainTail threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
             of MessageType.BlockchainTail:
                 #Get the hash.
                 var tail: Hash[256]
