@@ -16,8 +16,6 @@ Merit:
 
 Consensus:
 
-- When a packet is archived, recreate the pending packet to include everyone who wasn't included.
-
 - GasPrice.
 
 Interfaces:
@@ -105,6 +103,7 @@ Network:
 - Test Meros only verifies Transactions which have a chance.
 - Test Transactions with unverified parents aren't verified, yet become verified when their parents are verified.
 - Test children Transactions are properly unverified.
+- Test Meros successfully recreates VerificationPackets with the holders not included in the last Block.
 - Test that if our Sketcher has a collision, yet the Block's sketch doesn't, Meros still adds the Block.
 - Test Blocks with a Difficulty nonce 2 and then Difficulty nonce 1 add correctly.
 

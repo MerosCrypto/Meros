@@ -106,7 +106,7 @@ When a new BlockBody is received, a full Block can be formed using the BlockHead
 - Every Verification Packet's Merit is greater than significant.
 - Every Transaction's predecessors have Verification Packets either archived or in this Block.
 - Every Transaction either has yet to enter Epochs or is in Epochs.
-- Every Transaction doesn't compete with, or have parents which competed with and lost, Transactions archived 5 Blocks before the last Checkpoint.
+- Every Transaction doesn't compete with, or have parents which competed with and lost, finalized Transactions.
 - The sketch is properly constructed from the same data used to construct the Merkle.
 - Only new and unique Elements are archived.
 - No SendDifficulty, DataDifficulty, or GasPrice skips a nonce for their Merit Holder. That said, the Block may skip a nonce if the skipped nonce is present later in the Block.
@@ -166,6 +166,7 @@ Checkpoints are important, not just to make 51% attacks harder, but also to stop
 ### Violations in Meros
 
 - Meros doesn't check that if VerificationPackets in a Block cause MeritRemovals, the matching MeritRemoval is included in the Block.
+- Meros allows Transactions which are descendants of Transactions which competed with finalized Transactions and lost.
 
 - Meros doesn't support dead Merit.
 
