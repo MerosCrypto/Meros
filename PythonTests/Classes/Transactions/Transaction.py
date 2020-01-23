@@ -7,7 +7,9 @@ from typing import Dict, Any
 from abc import ABC, abstractmethod
 
 #Transaction root class.
-class Transaction(ABC):
+class Transaction(
+    ABC
+):
     hash: bytes
 
     @abstractmethod

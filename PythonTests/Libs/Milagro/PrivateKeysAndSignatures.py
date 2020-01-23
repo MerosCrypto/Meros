@@ -20,7 +20,9 @@ Big384 = c_int64 * 7   #type: Any
 DBig384 = c_int64 * 14 #type: Any
 
 #pylint: disable=too-few-public-methods
-class OctetObj(Structure):
+class OctetObj(
+    Structure
+):
     _fields_: List[Tuple[str, Type[Any]]] = [
         ("len", c_int),
         ("max", c_int),
@@ -29,7 +31,9 @@ class OctetObj(Structure):
 Octet: Any = POINTER(OctetObj)
 
 #pylint: disable=too-few-public-methods,unneeded-multiline-expansion
-class FP1Obj(Structure):
+class FP1Obj(
+    Structure
+):
     _fields_: List[Tuple[str, Type[Any]]] = [
         ("g", Big384),
         ("XES", c_int32)
@@ -37,7 +41,9 @@ class FP1Obj(Structure):
 FP1: Any = POINTER(FP1Obj)
 
 #pylint: disable=too-few-public-methods
-class G1Obj(Structure):
+class G1Obj(
+    Structure
+):
     _fields_: List[Tuple[str, Type[Any]]] = [
         ("x", FP1Obj),
         ("y", FP1Obj),
@@ -69,6 +75,9 @@ MilagroCurve.FP_BLS381_redc.restype = None
 
 MilagroCurve.ECP_BLS381_inf.argtypes = [G1]
 MilagroCurve.ECP_BLS381_inf.restype = None
+
+MilagroCurve.ECP_BLS381_copy.argtypes = [G1, G1]
+MilagroCurve.ECP_BLS381_copy.restype = None
 
 MilagroCurve.ECP_BLS381_isinf.argtypes = [G1]
 MilagroCurve.ECP_BLS381_isinf.restype = c_int

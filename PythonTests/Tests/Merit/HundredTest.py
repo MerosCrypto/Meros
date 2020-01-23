@@ -28,13 +28,7 @@ def HundredTest(
     blocks = [blocks[0]]
 
     #Merit.
-    merit: Merit = Merit.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100,
-        blocks
-    )
+    merit: Merit = Merit.fromJSON(blocks)
 
     #The normal flow would be:
     #Handshake

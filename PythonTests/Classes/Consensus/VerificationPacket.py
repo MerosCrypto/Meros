@@ -1,12 +1,11 @@
 #Types.
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 #BLS lib.
-from PythonTests.Libs.BLS import PublicKey, Signature, AggregationInfo
+from PythonTests.Libs.BLS import Signature
 
 #Element classes.
-from PythonTests.Classes.Consensus.Element import Element
-from PythonTests.Classes.Consensus.Verification import Verification
+from PythonTests.Classes.Consensus.Element import Element, SignedElement
 
 #SignedVerification class.
 from PythonTests.Classes.Consensus.Verification import SignedVerification
@@ -15,7 +14,9 @@ from PythonTests.Classes.Consensus.Verification import SignedVerification
 VERIFICATION_PACKET_PREFIX: bytes = b'\1'
 
 #VerificationPacket class.
-class VerificationPacket(Element):
+class VerificationPacket(
+    Element
+):
     #Constructor.
     def __init__(
         self,
@@ -27,17 +28,10 @@ class VerificationPacket(Element):
         self.hash: bytes = txHash
         self.holders: List[int] = holders
 
-    #Element -> VerificationPacket. Satisifes static typing requirements.
-    @staticmethod
-    def fromElement(
-        elem: Element
-    ) -> Any:
-        return elem
-
     #'Signature' serialize. Used by MeritRemovals.
     def signatureSerialize(
         self,
-        lookup: List[bytes]
+        lookup: List[bytes] = []
     ) -> bytes:
         result: bytes = self.prefix + len(self.holders).to_bytes(2, "big")
         for holder in self.holders:
@@ -75,30 +69,19 @@ class VerificationPacket(Element):
     ) -> Any:
         return VerificationPacket(bytes.fromhex(json["hash"]), json["holders"])
 
-class SignedVerificationPacket(VerificationPacket):
+class SignedVerificationPacket(
+    SignedElement,
+    VerificationPacket
+):
     #Constructor.
     def __init__(
         self,
         txHash: bytes,
         holders: List[int] = [],
-        holderKeys: Optional[List[PublicKey]] = None,
-        signature: bytes = Signature().serialize()
+        signature: Signature = Signature()
     ) -> None:
         VerificationPacket.__init__(self, txHash, holders)
-        self.signature: bytes = signature
-
-        self.blsSignature: Signature
-        if holderKeys:
-            serialized: bytes = Verification(txHash, 0).signatureSerialize()
-
-            self.blsSignature = Signature(signature)
-            agInfo: AggregationInfo = AggregationInfo(holderKeys[0], serialized)
-
-            for h in range(1, len(self.holders)):
-                agInfo = AggregationInfo.aggregate([
-                    agInfo,
-                    AggregationInfo(holderKeys[h], serialized)
-                ])
+        self.signature: Signature = signature
 
     #Add a SignedVerification.
     def add(
@@ -107,23 +90,17 @@ class SignedVerificationPacket(VerificationPacket):
     ) -> None:
         self.holders.append(verif.holder)
 
-        if self.signature == Signature().serialize():
-            self.blsSignature = verif.blsSignature
+        if self.signature.isInf():
+            self.signature = verif.signature
         else:
-            self.blsSignature = Signature.aggregate([self.blsSignature, verif.blsSignature])
-        self.signature = self.blsSignature.serialize()
+            self.signature = Signature.aggregate([self.signature, verif.signature])
 
     #Serialize.
     def signedSerialize(
-        self
+        self,
+        lookup: List[bytes] = []
     ) -> bytes:
-        return VerificationPacket.serialize(self) + self.signature
-
-    #SignedVerificationPacket -> SignedElement.
-    def toSignedElement(
-        self
-    ) -> Any:
-        return self
+        return VerificationPacket.serialize(self) + self.signature.serialize()
 
     #SignedVerificationPacket -> JSON.
     def toSignedJSON(
@@ -136,22 +113,16 @@ class SignedVerificationPacket(VerificationPacket):
             "hash": self.hash.hex().upper(),
 
             "signed": True,
-            "signature": self.signature.hex().upper()
+            "signature": self.signature.serialize().hex().upper()
         }
 
     #JSON -> SignedVerificationPacket.
     @staticmethod
     def fromSignedJSON(
-        nicks: List[bytes],
         json: Dict[str, Any]
     ) -> Any:
-        holderKeys: List[PublicKey] = []
-        for holder in json["holders"]:
-            holderKeys.append(PublicKey(nicks[holder]))
-
         return SignedVerificationPacket(
             bytes.fromhex(json["hash"]),
             json["holders"],
-            holderKeys,
-            bytes.fromhex(json["signature"])
+            Signature(bytes.fromhex(json["signature"]))
         )

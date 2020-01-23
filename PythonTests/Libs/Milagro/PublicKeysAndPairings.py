@@ -19,7 +19,9 @@ else:
     MilagroPairing = cdll.LoadLibrary("PythonTests/Libs/incubator-milagro-crypto-c/build/lib/libamcl_pairing_BLS381.so")
 
 #pylint: disable=too-few-public-methods,unneeded-multiline-expansion
-class FP2Obj(Structure):
+class FP2Obj(
+    Structure
+):
     _fields_: List[Tuple[str, Type[Any]]] = [
         ("a", FP1Obj),
         ("b", FP1Obj)
@@ -27,7 +29,9 @@ class FP2Obj(Structure):
 FP2: Any = POINTER(FP2Obj)
 
 #pylint: disable=too-few-public-methods
-class FP4Obj(Structure):
+class FP4Obj(
+    Structure
+):
     _fields_: List[Tuple[str, Type[Any]]] = [
         ("a", FP2Obj),
         ("b", FP2Obj),
@@ -36,7 +40,9 @@ class FP4Obj(Structure):
 FP4: Any = POINTER(FP4Obj)
 
 #pylint: disable=too-few-public-methods
-class FP12Obj(Structure):
+class FP12Obj(
+    Structure
+):
     _fields_: List[Tuple[str, Type[Any]]] = [
         ("a", FP4Obj),
         ("b", FP4Obj),
@@ -46,7 +52,9 @@ class FP12Obj(Structure):
 FP12: Any = POINTER(FP12Obj)
 
 #pylint: disable=too-few-public-methods
-class G2Obj(Structure):
+class G2Obj(
+    Structure
+):
     _fields_: List[Tuple[str, Type[Any]]] = [
         ("x", FP2Obj),
         ("y", FP2Obj),

@@ -17,11 +17,7 @@ from hashlib import blake2b
 import json
 
 #Blockchain.
-blockchain: Blockchain = Blockchain(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-)
+blockchain: Blockchain = Blockchain()
 
 #Miner Private Keys.
 privKeys: List[PrivateKey] = [

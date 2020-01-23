@@ -38,19 +38,10 @@ bbFile.close()
 #Transactions.
 transactions: Transactions = Transactions()
 #Merit.
-merit: Merit = Merit(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    100
-)
+merit: Merit = Merit()
 
 #SpamFilter.
-dataFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-    )
-)
+dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -100,7 +91,7 @@ block: Block = Block(
         0,
         merit.blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody(packets, [], Signature.aggregate([firstVerif.blsSignature, secondVerif.blsSignature]).serialize())
+    BlockBody(packets, [], Signature.aggregate([firstVerif.signature, secondVerif.signature]))
 )
 for _ in range(6):
     #Mine it.

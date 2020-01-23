@@ -39,19 +39,10 @@ bbFile.close()
 #Transactions.
 transactions: Transactions = Transactions()
 #Merit.
-merit: Merit = Merit(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    100
-)
+merit: Merit = Merit()
 
 #SpamFilter.
-dataFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-    )
-)
+dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)

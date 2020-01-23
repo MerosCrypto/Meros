@@ -12,7 +12,9 @@ import ed25519
 from hashlib import blake2b
 
 #Send class.
-class Send(Transaction):
+class Send(
+    Transaction
+):
     #Constructor.
     #Even though this calls serializeInputs/serializeOutputs, it is above those as it provides the class's type hints.
     def __init__(

@@ -33,11 +33,7 @@ from hashlib import blake2b
 import json
 
 #Blockchain. Solely used to get the genesis Block hash.
-blockchain: Blockchain = Blockchain(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-)
+blockchain: Blockchain = Blockchain()
 
 #Block vectors.
 blocks: List[Dict[str, Any]] = []
@@ -46,11 +42,7 @@ blocks: List[Dict[str, Any]] = []
 transactions: Transactions = Transactions()
 
 #Spam Filter.
-dataFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-    )
-)
+dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -77,7 +69,7 @@ block = Block(
         blsPrivKey.toPublicKey().serialize(),
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([VerificationPacket(data.hash, [1])], [], blsPrivKey.sign(b"").serialize())
+    BlockBody([VerificationPacket(data.hash, [1])], [], blsPrivKey.sign(b""))
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -100,7 +92,7 @@ block = Block(
         blsPrivKey.toPublicKey().serialize(),
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], elements, blsPrivKey.sign(b"").serialize())
+    BlockBody([], elements, blsPrivKey.sign(b""))
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -123,7 +115,7 @@ block = Block(
         blsPrivKey.toPublicKey().serialize(),
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], elements, blsPrivKey.sign(b"").serialize())
+    BlockBody([], elements, blsPrivKey.sign(b""))
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())

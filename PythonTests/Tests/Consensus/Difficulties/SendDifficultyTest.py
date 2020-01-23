@@ -25,9 +25,9 @@ def SendDifficultyTest(
     file.close()
 
     #Verify functions.
-    vddStarting: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
-    vddEarnedVote: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"))
-    vddVoted: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"))
+    vddStarting: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("AA" * 32))
+    vddEarnedVote: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("CC" * 32))
+    vddVoted: Callable[[], None] = lambda: verifySendDifficulty(rpc, bytes.fromhex("88" * 32))
     def vmr() -> None:
         verifyMeritRemoval(rpc, 52, 52, 0, False)
         vddStarting()

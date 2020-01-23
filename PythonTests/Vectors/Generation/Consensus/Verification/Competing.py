@@ -36,20 +36,11 @@ cmVectors: Dict[str, Any] = json.loads(cmFile.read())
 #Transactions.
 transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
 #Blockchain.
-blockchain: Blockchain = Blockchain.fromJSON(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    cmVectors["blockchain"]
-)
+blockchain: Blockchain = Blockchain.fromJSON(cmVectors["blockchain"])
 cmFile.close()
 
 #Spam Filter.
-sendFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    )
-)
+sendFilter: SpamFilter = SpamFilter(bytes.fromhex("AA" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -113,7 +104,7 @@ for i in range(2):
 
     verif = SignedVerification(send.hash)
     verif.sign(i, blsPrivKeys[i])
-    toAggregate.append(verif.blsSignature)
+    toAggregate.append(verif.signature)
 
 #Archive the Packets and close the Epoch.
 block = Block(
@@ -127,7 +118,7 @@ block = Block(
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody(packets, [], Signature.aggregate(toAggregate).serialize())
+    BlockBody(packets, [], Signature.aggregate(toAggregate))
 )
 for _ in range(6):
     #Mine it.

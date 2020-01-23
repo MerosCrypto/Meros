@@ -14,7 +14,7 @@ from PythonTests.Classes.Consensus.SpamFilter import SpamFilter
 
 #SignedVerification and VerificationPacket classes.
 from PythonTests.Classes.Consensus.Verification import SignedVerification
-from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket, SignedVerificationPacket
+from PythonTests.Classes.Consensus.VerificationPacket import SignedVerificationPacket
 
 #Merit classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -39,19 +39,10 @@ bbFile.close()
 #Transactions.
 transactions: Transactions = Transactions()
 #Merit.
-merit: Merit = Merit(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    100
-)
+merit: Merit = Merit()
 
 #SpamFilter.
-dataFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-    )
-)
+dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -116,8 +107,7 @@ for packet in verifs:
         SignedVerificationPacket(
             packet[0].hash,
             [0, 1],
-            [blsPubKeys[0], blsPubKeys[1]],
-            Signature.aggregate([packet[0].blsSignature, packet[1].blsSignature]).serialize()
+            Signature.aggregate([packet[0].signature, packet[1].signature])
         )
     )
 
@@ -127,14 +117,14 @@ for packet in packets:
         BlockHeader(
             0,
             merit.blockchain.last(),
-            BlockHeader.createContents([], [VerificationPacket.fromElement(packet)]),
+            BlockHeader.createContents([], [packet]),
             1,
             bytes(4),
-            BlockHeader.createSketchCheck(bytes(4), [VerificationPacket.fromElement(packet)]),
+            BlockHeader.createSketchCheck(bytes(4), [packet]),
             1,
             merit.blockchain.blocks[-1].header.time + 1200
         ),
-        BlockBody([VerificationPacket.fromElement(packet)], [], packet.signature)
+        BlockBody([packet], [], packet.signature)
     )
     block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
     merit.add(block)
@@ -204,8 +194,7 @@ for packet in verifs:
         SignedVerificationPacket(
             packet[0].hash,
             [0, 1],
-            [blsPubKeys[0], blsPubKeys[1]],
-            Signature.aggregate([packet[0].blsSignature, packet[1].blsSignature]).serialize()
+            Signature.aggregate([packet[0].signature, packet[1].signature])
         )
     )
 
@@ -215,14 +204,14 @@ for packet in packets:
         BlockHeader(
             0,
             merit.blockchain.last(),
-            BlockHeader.createContents([], [VerificationPacket.fromElement(packet)]),
+            BlockHeader.createContents([], [packet]),
             1,
             bytes(4),
-            BlockHeader.createSketchCheck(bytes(4), [VerificationPacket.fromElement(packet)]),
+            BlockHeader.createSketchCheck(bytes(4), [packet]),
             1,
             merit.blockchain.blocks[-1].header.time + 1200
         ),
-        BlockBody([VerificationPacket.fromElement(packet)], [], packet.signature)
+        BlockBody([packet], [], packet.signature)
     )
     block.mine(blsPrivKeys[1], merit.blockchain.difficulty())
     merit.add(block)

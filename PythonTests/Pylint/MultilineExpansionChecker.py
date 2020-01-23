@@ -269,10 +269,18 @@ def getMultilineExpansionlength(
     return 0
 
 #MyPy is failing to ID this, even with the stub files.
-class MultilineExpansionChecker(BaseChecker): #type: ignore
+class MultilineExpansionChecker(
+    BaseChecker  #type: ignore
+):
     __implements__: Any = IRawChecker
     name: str = "multiline-expansion"
     msgs: Dict[str, Tuple[str, str, str]] = {
+        "R5131": (
+            "Place each class definition's parents on their own line and omit () when there's no parents.",
+            "improper-class-multiline-definition",
+            "Used when a class definition does not have its parents each on their own line or includes () despite not having parents."
+        ),
+
         "R5132": (
             "Place each function definition's arguments on their own line.",
             "improper-function-multiline-definition",
@@ -297,6 +305,28 @@ class MultilineExpansionChecker(BaseChecker): #type: ignore
         linter: PyLinter
     ) -> None:
         BaseChecker.__init__(self, linter)
+
+    #Check a class definition had its parents written properly.
+    def checkClass(
+        self,
+        lines: List[Tuple[int, str]],
+        num: int
+    ) -> None:
+        #Extract the line.
+        line: str = lines[num][1]
+
+        #Check if the class has no parents.
+        if re.match(r"class +\w*\:", line) is not None:
+            return
+
+        #If it does have arguments, make sure the function doesn't place any argument on the first line.
+        if (line.count('(') != 1) or (line[-1] != '('):
+            self.add_message("improper-class-multiline-definition", line=num+1)
+            return
+
+        #Check every argument is on their own line.
+        if not checkMultilineExpansion(lines, num):
+            self.add_message("improper-class-multiline-definition", line=num+1)
 
     #Check a function definition had its arguments written properly.
     def checkFunction(
@@ -327,6 +357,11 @@ class MultilineExpansionChecker(BaseChecker): #type: ignore
     ) -> None:
         #Extract the line.
         line: str = lines[num][1]
+
+        #Check if the line starts with a class def.
+        if (len(line) > 5) and (line[0 : 5] == "class"):
+            self.checkClass(lines, num)
+            return
 
         #Check if the line starts with a function def.
         if (len(line) > 3) and (line[0 : 3] == "def"):

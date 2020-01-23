@@ -30,18 +30,10 @@ from hashlib import blake2b
 import json
 
 #Blockchain.
-blockchain: Blockchain = Blockchain(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-)
+blockchain: Blockchain = Blockchain()
 
 #Spam Filter.
-dataFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-    )
-)
+dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)

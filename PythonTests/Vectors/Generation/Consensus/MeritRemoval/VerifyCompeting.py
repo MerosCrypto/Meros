@@ -39,16 +39,10 @@ blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #SpamFilter.
-spamFilter: SpamFilter = SpamFilter(
-    bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-)
+spamFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
 #Blockchain.
-blockchain: Blockchain = Blockchain(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-)
+blockchain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
 block = Block(
@@ -83,19 +77,19 @@ for data in datas:
 verifs: List[SignedVerification] = []
 packets: List[VerificationPacket] = []
 for data in datas:
-    verifs.append(SignedVerification(data.hash, 0, blsPubKey))
+    verifs.append(SignedVerification(data.hash, 0))
     verifs[-1].sign(0, blsPrivKey)
     packets.append(VerificationPacket(data.hash, [0]))
 
 #Create a MeritRemoval out of the conflicting Verifications.
-mr: SignedMeritRemoval = SignedMeritRemoval(verifs[1].toSignedElement(), verifs[2].toSignedElement())
+mr: SignedMeritRemoval = SignedMeritRemoval(verifs[1], verifs[2])
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], packets, [mr.toSignedElement()]),
+        BlockHeader.createContents([], packets, [mr]),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), packets),
@@ -104,15 +98,15 @@ block = Block(
     ),
     BlockBody(
         packets,
-        [mr.toSignedElement()],
+        [mr],
         Signature.aggregate(
             [
-                verifs[0].blsSignature,
-                verifs[1].blsSignature,
-                verifs[2].blsSignature,
-                Signature(mr.signature)
+                verifs[0].signature,
+                verifs[1].signature,
+                verifs[2].signature,
+                mr.signature
             ]
-        ).serialize()
+        )
     )
 )
 #Mine it.

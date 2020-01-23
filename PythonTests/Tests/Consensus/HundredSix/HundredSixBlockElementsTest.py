@@ -36,11 +36,7 @@ def HundredSixBlockElementsTest(
     file.close()
 
     #Blockchain. Solely used to get the genesis Block hash.
-    blockchain: Blockchain = Blockchain(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-    )
+    blockchain: Blockchain = Blockchain()
 
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(vectors["transactions"])

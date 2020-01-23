@@ -82,7 +82,7 @@ def parse(
 
     return (flags & B_FLAG != 0, b == 48, flags & A_FLAG != 0, result)
 
-class PublicKey():
+class PublicKey:
     def __init__(
         self,
         key: bytes = bytes()
@@ -182,7 +182,7 @@ class PublicKey():
         return result
 
 #pylint: disable=too-few-public-methods
-class AggregationInfo():
+class AggregationInfo:
     def __init__(
         self,
         key: PublicKey,
@@ -209,7 +209,7 @@ class AggregationInfo():
 
         return result
 
-class Signature():
+class Signature:
     def __init__(
         self,
         sig: bytes = bytes()
@@ -291,7 +291,7 @@ class Signature():
             MilagroPairing.ECP_BLS381_inf(byref(result.value))
             return result
 
-        result.value = sigs[0].value
+        MilagroPairing.ECP_BLS381_copy(byref(result.value), byref(sigs[0].value))
         for s in range(1, len(sigs)):
             if sigs[s].isInf():
                 MilagroPairing.ECP_BLS381_inf(byref(result.value))
@@ -301,7 +301,7 @@ class Signature():
 
         return result
 
-class PrivateKey():
+class PrivateKey:
     def __init__(
         self,
         key: bytes

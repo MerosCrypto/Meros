@@ -1,6 +1,8 @@
 from enum import Enum
 
-class Type(Enum):
+class Type(
+    Enum
+):
     D = ...
 
 def hash_secret_raw(

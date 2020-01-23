@@ -25,16 +25,10 @@ def DataTest(
     rpc: RPC
 ) -> None:
     #Get the genesis hash.
-    genesis: bytes = Blockchain(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-    ).blocks[0].header.hash
+    genesis: bytes = Blockchain().blocks[0].header.hash
 
     #Create the Spam Filter.
-    spamFilter: SpamFilter = SpamFilter(
-        bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-    )
+    spamFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
     #Create the Data.
     data: Data = Data(bytes(32), pubKey.to_bytes())

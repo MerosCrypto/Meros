@@ -36,20 +36,11 @@ cmVectors: Dict[str, Any] = json.loads(cmFile.read())
 #Transactions.
 transactions: Transactions = Transactions.fromJSON(cmVectors["transactions"])
 #Blockchain.
-blockchain: Blockchain = Blockchain.fromJSON(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    cmVectors["blockchain"]
-)
+blockchain: Blockchain = Blockchain.fromJSON(cmVectors["blockchain"])
 cmFile.close()
 
 #SpamFilter.
-sendFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    )
-)
+sendFilter: SpamFilter = SpamFilter(bytes.fromhex("AA" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)

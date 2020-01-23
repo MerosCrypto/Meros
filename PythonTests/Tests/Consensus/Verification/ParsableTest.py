@@ -39,13 +39,7 @@ def VParsableTest(
     file.close()
 
     #Merit.
-    merit: Merit = Merit.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100,
-        vectors["blockchain"]
-    )
+    merit: Merit = Merit.fromJSON(vectors["blockchain"])
     #Transactions.
     transactions: Transactions = Transactions()
     transactions.add(Data.fromJSON(vectors["data"]))

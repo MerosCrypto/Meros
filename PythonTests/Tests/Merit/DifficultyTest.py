@@ -23,12 +23,7 @@ def DifficultyTest(
     file.close()
 
     #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        blocks
-    )
+    blockchain: Blockchain = Blockchain.fromJSON(blocks)
 
     def checkDifficulty(
         block: int

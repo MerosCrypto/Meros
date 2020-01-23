@@ -11,10 +11,9 @@ from PythonTests.Classes.Merit.Blockchain import Blockchain
 class State:
     #Constructor.
     def __init__(
-        self,
-        lifetime: int
+        self
     ) -> None:
-        self.lifetime: int = lifetime
+        self.lifetime: int = 100
 
         self.merit = 0
         self.nicks: List[bytes] = []

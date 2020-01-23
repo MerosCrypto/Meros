@@ -3,25 +3,30 @@
 #Types.
 from typing import Dict, List, Any
 
+#BLS lib.
+from PythonTests.Libs.BLS import Signature
+
 #Abstract class standard lib.
 from abc import ABC, abstractmethod
 
-#Element root class.
-class Element(ABC):
+#Element class
+class Element(
+    ABC
+):
     prefix: bytes
     holder: int
 
     @abstractmethod
     def signatureSerialize(
         self,
-        lookup: List[bytes]
+        lookup: List[bytes] = []
     ) -> bytes:
         pass
 
     @abstractmethod
     def serialize(
         self,
-        lookup: List[bytes]
+        lookup: List[bytes] = []
     ) -> bytes:
         pass
 
@@ -31,24 +36,16 @@ class Element(ABC):
     ) -> Dict[str, Any]:
         pass
 
-    def toElement(
-        self
-    ) -> Any:
-        return self
-
-#SignedElement helper class.
-class SignedElement(Element):
-    signature: bytes
-
-    @staticmethod
-    def fromElement(
-        elem: Element
-    ) -> Any:
-        return elem
+#SignedElement class.
+class SignedElement(
+    ABC
+):
+    signature: Signature
 
     @abstractmethod
     def signedSerialize(
-        self
+        self,
+        lookup: List[bytes] = []
     ) -> bytes:
         pass
 

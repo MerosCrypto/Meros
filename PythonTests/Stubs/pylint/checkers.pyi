@@ -2,7 +2,7 @@ from typing import Any
 
 from pylint.lint import PyLinter
 
-class BaseChecker():
+class BaseChecker:
     def __init__(
         self,
         linter: PyLinter

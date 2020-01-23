@@ -21,13 +21,13 @@ class BlockBody:
         self,
         packets: List[VerificationPacket] = [],
         elements: List[Element] = [],
-        aggregate: bytes = Signature().serialize()
+        aggregate: Signature = Signature()
     ) -> None:
         self.packets: List[VerificationPacket] = list(packets)
         self.packets.sort(key=lambda packet: packet.hash, reverse=True)
 
         self.elements: List[Element] = list(elements)
-        self.aggregate: bytes = aggregate
+        self.aggregate: Signature = aggregate
 
     #Serialize.
     def serialize(
@@ -53,7 +53,7 @@ class BlockBody:
         for elem in self.elements:
             result += elem.prefix + elem.serialize(lookup)
 
-        result += self.aggregate
+        result += self.aggregate.serialize()
         return result
 
     #BlockBody -> JSON.
@@ -63,7 +63,7 @@ class BlockBody:
         result: Dict[str, Any] = {
             "transactions": [],
             "elements": [],
-            "aggregate": self.aggregate.hex().upper()
+            "aggregate": self.aggregate.serialize().hex().upper()
         }
 
         for packet in self.packets:
@@ -102,4 +102,4 @@ class BlockBody:
             elif element["descendant"] == "MeritRemoval":
                 elements.append(MeritRemoval.fromJSON(keys, element))
 
-        return BlockBody(packets, elements, bytes.fromhex(json["aggregate"]))
+        return BlockBody(packets, elements, Signature(bytes.fromhex(json["aggregate"])))

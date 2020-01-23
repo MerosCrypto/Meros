@@ -8,7 +8,7 @@ from PythonTests.Classes.Transactions.Send import Send
 from PythonTests.Classes.Transactions.Data import Data
 
 #Consensus classes.
-from PythonTests.Classes.Consensus.Element import Element, SignedElement
+from PythonTests.Classes.Consensus.Element import SignedElement
 from PythonTests.Classes.Consensus.Verification import SignedVerification
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
 from PythonTests.Classes.Consensus.SendDifficulty import SignedSendDifficulty
@@ -32,7 +32,9 @@ from subprocess import Popen
 import socket
 
 #Message Types.
-class MessageType(Enum):
+class MessageType(
+    Enum
+):
     Handshake                 = 0
     BlockchainTail            = 1
 
@@ -329,7 +331,7 @@ class Meros:
     #Send a Signed Element.
     def signedElement(
         self,
-        elem: Element,
+        elem: SignedElement,
         lookup: List[bytes] = []
     ) -> bytes:
         res: bytes = bytes()
@@ -343,7 +345,7 @@ class Meros:
             res = MessageType.SignedMeritRemoval.toByte()
         else:
             raise Exception("Unsupported Element passed to Meros.signedElement.")
-        res += SignedElement.fromElement(elem).signedSerialize(lookup)
+        res += elem.signedSerialize(lookup)
 
         self.send(res)
         return res

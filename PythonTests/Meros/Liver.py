@@ -26,7 +26,7 @@ from PythonTests.Tests.Merit.Verify import verifyBlockchain
 from PythonTests.Tests.Transactions.Verify import verifyTransactions
 
 #pylint: disable=too-few-public-methods,too-many-statements
-class Liver():
+class Liver:
     def __init__(
         self,
         rpc: RPC,
@@ -39,13 +39,7 @@ class Liver():
         self.rpc: RPC = rpc
 
         #Arguments.
-        self.merit: Merit = Merit.fromJSON(
-            b"MEROS_DEVELOPER_NETWORK",
-            60,
-            int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-            100,
-            blockchain
-        )
+        self.merit: Merit = Merit.fromJSON(blockchain)
         self.transactions: Union[Transactions, None] = transactions
 
         self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)

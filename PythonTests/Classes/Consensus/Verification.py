@@ -1,17 +1,19 @@
 #Types.
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 #BLS lib.
-from PythonTests.Libs.BLS import PrivateKey, PublicKey, Signature
+from PythonTests.Libs.BLS import PrivateKey, Signature
 
 #Element class.
-from PythonTests.Classes.Consensus.Element import Element
+from PythonTests.Classes.Consensus.Element import Element, SignedElement
 
 #Verification Prefix.
 VERIFICATION_PREFIX: bytes = b'\0'
 
 #Verification class.
-class Verification(Element):
+class Verification(
+    Element
+):
     #Constructor.
     def __init__(
         self,
@@ -22,13 +24,6 @@ class Verification(Element):
 
         self.hash: bytes = txHash
         self.holder: int = holder
-
-    #Element -> Verification. Satisifes static typing requirements.
-    @staticmethod
-    def fromElement(
-        elem: Element
-    ) -> Any:
-        return elem
 
     #Serialize for signing.
     def signatureSerialize(
@@ -62,21 +57,19 @@ class Verification(Element):
     ) -> Any:
         return Verification(bytes.fromhex(json["hash"]), json["holder"])
 
-class SignedVerification(Verification):
+class SignedVerification(
+    SignedElement,
+    Verification
+):
     #Constructor.
     def __init__(
         self,
         txHash: bytes,
         holder: int = 0,
-        holderKey: Optional[PublicKey] = None,
-        signature: bytes = Signature().serialize()
+        signature: Signature = Signature()
     ) -> None:
         Verification.__init__(self, txHash, holder)
-        self.signature: bytes = signature
-
-        self.blsSignature: Signature
-        if holderKey:
-            self.blsSignature = Signature(self.signature)
+        self.signature: Signature = signature
 
     #Sign.
     def sign(
@@ -85,8 +78,7 @@ class SignedVerification(Verification):
         privKey: PrivateKey
     ) -> None:
         self.holder = holder
-        self.blsSignature = privKey.sign(self.signatureSerialize())
-        self.signature = self.blsSignature.serialize()
+        self.signature = privKey.sign(self.signatureSerialize())
 
     #Serialize.
     #pylint: disable=unused-argument
@@ -94,13 +86,7 @@ class SignedVerification(Verification):
         self,
         lookup: List[bytes] = []
     ) -> bytes:
-        return Verification.serialize(self) + self.signature
-
-    #SignedVerification -> SignedElement.
-    def toSignedElement(
-        self
-    ) -> Any:
-        return self
+        return Verification.serialize(self) + self.signature.serialize()
 
     #SignedVerification -> JSON.
     def toSignedJSON(
@@ -113,18 +99,16 @@ class SignedVerification(Verification):
             "hash": self.hash.hex().upper(),
 
             "signed": True,
-            "signature": self.signature.hex().upper()
+            "signature": self.signature.serialize().hex().upper()
         }
 
     #JSON -> SignedVerification.
     @staticmethod
     def fromSignedJSON(
-        nicks: List[bytes],
         json: Dict[str, Any]
     ) -> Any:
         return SignedVerification(
             bytes.fromhex(json["hash"]),
             json["holder"],
-            PublicKey(nicks[json["holder"]]),
-            bytes.fromhex(json["signature"])
+            Signature(bytes.fromhex(json["signature"]))
         )

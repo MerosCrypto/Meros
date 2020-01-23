@@ -23,12 +23,7 @@ import json
 #Blockchain.
 bbFile: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
 blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
-blockchain: Blockchain = Blockchain.fromJSON(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    blocks
-)
+blockchain: Blockchain = Blockchain.fromJSON(blocks)
 bbFile.close()
 
 #BLS Keys.
@@ -36,7 +31,7 @@ blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Create a SendDifficulty.
-sendDiff: SignedSendDifficulty = SignedSendDifficulty(bytes.fromhex("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"), 0)
+sendDiff: SignedSendDifficulty = SignedSendDifficulty(bytes.fromhex("CC" * 32), 0)
 sendDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the SendDifficulty.
@@ -44,14 +39,14 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], [sendDiff.toSignedElement()]),
+        BlockHeader.createContents([], [], [sendDiff]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [sendDiff.toSignedElement()], sendDiff.signature)
+    BlockBody([], [sendDiff], sendDiff.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -91,14 +86,14 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], [sendDiff.toSignedElement()]),
+        BlockHeader.createContents([], [], [sendDiff]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [sendDiff.toSignedElement()], sendDiff.signature)
+    BlockBody([], [sendDiff], sendDiff.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -110,21 +105,21 @@ print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 #Create a MeritRemoval by reusing a nonce.
 competing: SignedSendDifficulty = SignedSendDifficulty(bytes.fromhex("00" * 32), 1)
 competing.sign(0, blsPrivKey)
-mr: PartialMeritRemoval = PartialMeritRemoval(sendDiff, competing.toSignedElement())
+mr: PartialMeritRemoval = PartialMeritRemoval(sendDiff, competing)
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], [mr.toSignedElement()]),
+        BlockHeader.createContents([], [], [mr]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [mr.toSignedElement()], mr.signature)
+    BlockBody([], [mr], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())

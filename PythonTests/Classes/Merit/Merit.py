@@ -14,18 +14,10 @@ from PythonTests.Classes.Merit.Epochs import Epochs
 class Merit:
     #Constructor.
     def __init__(
-        self,
-        genesis: bytes,
-        blockTime: int,
-        startDifficulty: int,
-        lifetime: int
+        self
     ) -> None:
-        self.blockchain: Blockchain = Blockchain(
-            genesis,
-            blockTime,
-            startDifficulty
-        )
-        self.state: State = State(lifetime)
+        self.blockchain: Blockchain = Blockchain()
+        self.state: State = State()
         self.epochs = Epochs()
 
         self.mints: List[Mint] = []
@@ -56,21 +48,12 @@ class Merit:
     #JSON -> Merit.
     @staticmethod
     def fromJSON(
-        genesis: bytes,
-        blockTime: int,
-        startDifficulty: int,
-        lifetime: int,
         json: List[Dict[str, Any]]
     ) -> Any:
         result: Merit = Merit.__new__(Merit)
 
-        result.blockchain = Blockchain.fromJSON(
-            genesis,
-            blockTime,
-            startDifficulty,
-            json
-        )
-        result.state = State(lifetime)
+        result.blockchain = Blockchain.fromJSON(json)
+        result.state = State()
         result.epochs = Epochs()
         result.mints = []
 

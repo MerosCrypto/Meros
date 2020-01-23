@@ -15,7 +15,9 @@ import os
 from hashlib import blake2b
 
 #SketchError Exception. Used when a sketch has more differences than its capacity.
-class SketchError(Exception):
+class SketchError(
+    Exception
+):
     pass
 
 #Import the Minisketch library.
@@ -43,7 +45,7 @@ MinisketchLib.minisketch_decode.argtypes = [c_void_p, c_size_t, c_void_p]
 MinisketchLib.minisketch_decode.restype = c_size_t
 
 #Sketch class.
-class Sketch():
+class Sketch:
     #Constructor.
     def __init__(
         self,

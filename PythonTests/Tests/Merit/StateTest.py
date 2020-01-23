@@ -24,14 +24,9 @@ def StateTest(
     file.close()
 
     #Blockchain.
-    blockchain: Blockchain = Blockchain.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        blocks
-    )
+    blockchain: Blockchain = Blockchain.fromJSON(blocks)
     #State.
-    state: State = State(100)
+    state: State = State()
 
     def checkState(
         block: int

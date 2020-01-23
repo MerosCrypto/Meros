@@ -21,11 +21,7 @@ from hashlib import blake2b
 import json
 
 #Blockchain.
-blockchain: Blockchain = Blockchain(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-)
+blockchain: Blockchain = Blockchain()
 
 #BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
@@ -53,7 +49,7 @@ blockchain.add(block)
 print("Generated Partial Block " + str(len(blockchain.blocks)) + ".")
 
 #Create a DataDifficulty.
-dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), 0)
+dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AA" * 32), 0)
 dataDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the DataDifficulty.
@@ -61,14 +57,14 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], [dataDiff.toSignedElement()]),
+        BlockHeader.createContents([], [], [dataDiff]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [dataDiff.toSignedElement()], dataDiff.signature)
+    BlockBody([], [dataDiff], dataDiff.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -82,21 +78,21 @@ dataDiffConflicting = SignedDataDifficulty(bytes.fromhex("8888888888888888888888
 dataDiffConflicting.sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the two of them.
-mr: PartialMeritRemoval = PartialMeritRemoval(dataDiff, dataDiffConflicting.toSignedElement())
+mr: PartialMeritRemoval = PartialMeritRemoval(dataDiff, dataDiffConflicting)
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], [mr.toSignedElement()]),
+        BlockHeader.createContents([], [], [mr]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [mr.toSignedElement()], mr.signature)
+    BlockBody([], [mr], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())

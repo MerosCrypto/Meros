@@ -4,7 +4,7 @@
 from typing import List
 
 #BLS lib.
-from PythonTests.Libs.BLS import PrivateKey, PublicKey
+from PythonTests.Libs.BLS import PrivateKey, Signature
 
 #Blockchain class.
 from PythonTests.Classes.Merit.Blockchain import Blockchain
@@ -31,16 +31,11 @@ def HundredSixSignedElementsTest(
     rpc: RPC
 ) -> None:
     #Blockchain. Solely used to get the genesis Block hash.
-    blockchain: Blockchain = Blockchain(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-    )
+    blockchain: Blockchain = Blockchain()
 
     #BLS Key.
     blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
-    blsPubKey: PublicKey = blsPrivKey.toPublicKey()
-    sig: bytes = blsPrivKey.sign(bytes()).serialize()
+    sig: Signature = blsPrivKey.sign(bytes())
 
     #Create a Data.
     #This is required so the Verification isn't terminated early for having an unknown hash.
@@ -48,9 +43,9 @@ def HundredSixSignedElementsTest(
 
     #Create a signed Verification, SendDifficulty, and DataDifficulty.
     elements: List[SignedElement] = [
-        SignedVerification(data, 1, blsPubKey, sig).toSignedElement(),
-        SignedSendDifficulty(bytes.fromhex("00" * 32), 0, 1, blsPubKey, sig).toSignedElement(),
-        SignedDataDifficulty(bytes.fromhex("00" * 32), 0, 1, blsPubKey, sig).toSignedElement()
+        SignedVerification(data, 1, sig),
+        SignedSendDifficulty(bytes.fromhex("00" * 32), 0, 1, sig),
+        SignedDataDifficulty(bytes.fromhex("00" * 32), 0, 1, sig)
     ]
 
     for elem in elements:

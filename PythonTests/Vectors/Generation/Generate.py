@@ -6,7 +6,9 @@ import PythonTests.Vectors.Generation.Merit.StateBlocks
 
 #Transactions.
 import PythonTests.Vectors.Generation.Transactions.ClaimedMint
+import PythonTests.Vectors.Generation.Transactions.AggregatedClaim
 import PythonTests.Vectors.Generation.Transactions.SameInput
+import PythonTests.Vectors.Generation.Transactions.CompetingFinalized
 import PythonTests.Vectors.Generation.Transactions.Fifty
 
 #Consensus.
@@ -21,3 +23,5 @@ import PythonTests.Vectors.Generation.Consensus.MeritRemoval.VerifyCompeting
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.InvalidCompeting
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Partial
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Repeat
+
+import PythonTests.Vectors.Generation.Consensus.HundredSix.BlockElements

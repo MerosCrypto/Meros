@@ -60,19 +60,9 @@ def EightyEightTest(
     file.close()
 
     #Merit.
-    merit: Merit = Merit(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100
-    )
-
+    merit: Merit = Merit()
     #Spam Filter.
-    dataFilter: SpamFilter = SpamFilter(
-        bytes.fromhex(
-            "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-        )
-    )
+    dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
     #Handshake with the node.
     rpc.meros.connect(254, 254, merit.blockchain.blocks[0].header.hash)
@@ -167,7 +157,7 @@ def EightyEightTest(
         BlockBody(
             packets,
             [],
-            Signature.aggregate([verifs[0].blsSignature, verifs[1].blsSignature]).serialize()
+            Signature.aggregate([verifs[0].signature, verifs[1].signature])
         )
     )
     if block.header.serializeHash()[:-4] != template["header"]:

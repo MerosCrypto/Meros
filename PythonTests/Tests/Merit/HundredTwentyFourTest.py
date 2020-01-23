@@ -30,11 +30,7 @@ def HundredTwentyFourTest(
     file.close()
 
     #Blockchain. Solely used to get the genesis Block hash.
-    blockchain: Blockchain = Blockchain(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16)
-    )
+    blockchain: Blockchain = Blockchain()
 
     #Parse the Blocks from the vectors.
     for i in range(2):

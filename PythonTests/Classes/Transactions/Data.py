@@ -12,7 +12,9 @@ import ed25519
 from hashlib import blake2b
 
 #Data class.
-class Data(Transaction):
+class Data(
+    Transaction
+):
     #Constructor.
     def __init__(
         self,

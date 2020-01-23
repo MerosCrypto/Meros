@@ -47,12 +47,7 @@ def TElementTest(
     file.close()
 
     #Merit.
-    merit: Merit = Merit(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100
-    )
+    merit: Merit = Merit()
 
     #Handshake with the node.
     rpc.meros.connect(254, 254, merit.blockchain.blocks[0].header.hash)
@@ -88,7 +83,7 @@ def TElementTest(
             raise TestError("Unexpected message sent: " + msg.hex().upper())
 
     #Create and transmit a DataDifficulty.
-    dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), 0, 0, blsPrivKey.toPublicKey())
+    dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), 0, 0)
     dataDiff.sign(0, blsPrivKey)
     rpc.meros.signedElement(dataDiff)
     sleep(0.5)
@@ -96,7 +91,7 @@ def TElementTest(
     #Verify the block template has the DataDifficulty.
     template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey])
     template["header"] = bytes.fromhex(template["header"])
-    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [dataDiff.toSignedElement()]):
+    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [dataDiff]):
         raise TestError("Block template doesn't have the Data Difficulty.")
 
     #Mine the Block.
@@ -104,14 +99,14 @@ def TElementTest(
         BlockHeader(
             0,
             block.header.hash,
-            BlockHeader.createContents(merit.state.nicks, [], [dataDiff.toSignedElement()]),
+            BlockHeader.createContents(merit.state.nicks, [], [dataDiff]),
             1,
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
             0,
             int.from_bytes(template["header"][-4:], byteorder="big"),
         ),
-        BlockBody([], [dataDiff.toSignedElement()], dataDiff.signature)
+        BlockBody([], [dataDiff], dataDiff.signature)
     )
     if block.header.serializeHash()[:-4] != template["header"]:
         raise TestError("Failed to recreate the header.")
@@ -137,7 +132,7 @@ def TElementTest(
     )
 
     #Create and transmit a new DataDifficulty.
-    dataDiff = SignedDataDifficulty(bytes.fromhex("AA" * 32), 1, 0, blsPrivKey.toPublicKey())
+    dataDiff = SignedDataDifficulty(bytes.fromhex("AA" * 32), 1, 0)
     dataDiff.sign(0, blsPrivKey)
     rpc.meros.signedElement(dataDiff)
     sleep(0.5)
@@ -145,26 +140,26 @@ def TElementTest(
     #Verify the block template has the DataDifficulty.
     template = rpc.call("merit", "getBlockTemplate", [blsPubKey])
     template["header"] = bytes.fromhex(template["header"])
-    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [dataDiff.toSignedElement()]):
+    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [dataDiff]):
         raise TestError("Block template doesn't have the new Data Difficulty.")
 
     #Create and transmit a new DataDifficulty reusing an existing nonce.
-    signatures: List[Signature] = [dataDiff.blsSignature]
-    dataDiff = SignedDataDifficulty(bytes.fromhex("BB" * 32), 1, 0, blsPrivKey.toPublicKey())
+    signatures: List[Signature] = [dataDiff.signature]
+    dataDiff = SignedDataDifficulty(bytes.fromhex("BB" * 32), 1, 0)
     dataDiff.sign(0, blsPrivKey)
-    signatures.append(dataDiff.blsSignature)
+    signatures.append(dataDiff.signature)
     rpc.meros.signedElement(dataDiff)
     sleep(0.5)
 
     #Verify the block template has a MeritRemoval.
     mr: MeritRemoval = MeritRemoval(
-        SignedDataDifficulty(bytes.fromhex("AA" * 32), 1, 0, blsPrivKey.toPublicKey()).toSignedElement(),
-        SignedDataDifficulty(bytes.fromhex("BB" * 32), 1, 0, blsPrivKey.toPublicKey()).toSignedElement(),
+        SignedDataDifficulty(bytes.fromhex("AA" * 32), 1, 0),
+        SignedDataDifficulty(bytes.fromhex("BB" * 32), 1, 0),
         False
     )
     template = rpc.call("merit", "getBlockTemplate", [blsPubKey])
     template["header"] = bytes.fromhex(template["header"])
-    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [mr.toElement()]):
+    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [mr]):
         raise TestError("Block template doesn't have the Merit Removal.")
 
     #Mine the Block.
@@ -172,14 +167,14 @@ def TElementTest(
         BlockHeader(
             0,
             block.header.hash,
-            BlockHeader.createContents(merit.state.nicks, [], [mr.toElement()]),
+            BlockHeader.createContents(merit.state.nicks, [], [mr]),
             1,
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
             0,
             int.from_bytes(template["header"][-4:], byteorder="big"),
         ),
-        BlockBody([], [mr.toElement()], Signature.aggregate(signatures).serialize())
+        BlockBody([], [mr], Signature.aggregate(signatures))
     )
     if block.header.serializeHash()[:-4] != template["header"]:
         raise TestError("Failed to recreate the header.")

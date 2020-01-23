@@ -51,11 +51,11 @@ def VerifyCompetingTest(
         transactions.add(data)
 
     #Initial Data's Verification.
-    verif: SignedVerification = SignedVerification.fromSignedJSON(nicks, vectors["verification"])
+    verif: SignedVerification = SignedVerification.fromSignedJSON(vectors["verification"])
 
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(nicks, keys, vectors["removal"])
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(keys, vectors["removal"])
 
     #Create and execute a Liver to cause a Signed MeritRemoval.
     def sendElements() -> None:

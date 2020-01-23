@@ -1,7 +1,7 @@
 #Tests proper handling of a MeritRemoval created from Verifications verifying competing, and invalid, Transactions.
 
 #Types.
-from typing import Dict, List, IO, Any
+from typing import Dict, IO, Any
 
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
@@ -34,14 +34,13 @@ def InvalidCompetingTest(
     keys: Dict[bytes, int] = {
         bytes.fromhex(vectors["blockchain"][0]["header"]["miner"]): 0
     }
-    nicks: List[bytes] = [bytes.fromhex(vectors["blockchain"][0]["header"]["miner"])]
 
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(nicks, keys, vectors["removal"])
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(keys, vectors["removal"])
 
     #Create and execute a Liver to handle the MeritRemoval.
     def sendMeritRemoval() -> None:

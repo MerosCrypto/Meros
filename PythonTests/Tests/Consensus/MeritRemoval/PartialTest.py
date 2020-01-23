@@ -35,7 +35,7 @@ def PartialTest(
 
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: PartialMeritRemoval = PartialMeritRemoval.fromSignedJSON(nicks, keys, vectors["removal"])
+    removal: PartialMeritRemoval = PartialMeritRemoval.fromSignedJSON(keys, vectors["removal"])
 
     #Create and execute a Liver to cause a Partial MeritRemoval.
     def sendElement() -> None:

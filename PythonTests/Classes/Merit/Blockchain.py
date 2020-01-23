@@ -16,25 +16,23 @@ from PythonTests.Classes.Merit.Block import Block
 class Blockchain:
     #Constructor.
     def __init__(
-        self,
-        genesis: bytes,
-        blockTime: int,
-        startDifficulty: int
+        self
     ) -> None:
-        self.upcomingKey: bytes = genesis.rjust(32, b'\0')
+        self.genesis: bytes = b"MEROS_DEVELOPER_NETWORK".rjust(32, b'\0')
+
+        self.upcomingKey: bytes = self.genesis
         setRandomXKey(self.upcomingKey)
 
-        self.blockTime: int = blockTime
+        self.blockTime: int = 60
 
-        self.startDifficulty: int = startDifficulty
-        self.maxDifficulty: int = (2 ** 256) - 1
-        self.difficulties: List[Tuple[int, int]] = [(startDifficulty, 1)]
+        self.startDifficulty: int = int("FA" + ("AA" * 31), 16)
+        self.difficulties: List[Tuple[int, int]] = [(self.startDifficulty, 1)]
 
         self.blocks: List[Block] = [
             Block(
                 BlockHeader(
                     0,
-                    genesis.rjust(32, b'\0'),
+                    self.genesis,
                     bytes(32),
                     0,
                     bytes(4),
@@ -89,7 +87,7 @@ class Blockchain:
             periodTime: int = block.header.time - self.blocks[len(self.blocks) - 1 - blocksPerPeriod].header.time
 
             #Possible values.
-            possible: int = self.maxDifficulty - self.difficulties[-1][0]
+            possible: int = ((2 ** 256) - 1) - self.difficulties[-1][0]
             #Change.
             change: int = 0
             #New difficulty.
@@ -162,12 +160,9 @@ class Blockchain:
     #JSON -> Blockchain.
     @staticmethod
     def fromJSON(
-        genesis: bytes,
-        blockTime: int,
-        startDifficulty: int,
         blocks: List[Dict[str, Any]]
     ) -> Any:
-        result = Blockchain(genesis, blockTime, startDifficulty)
+        result = Blockchain()
         for block in blocks:
             result.add(Block.fromJSON(result.keys, block))
         return result

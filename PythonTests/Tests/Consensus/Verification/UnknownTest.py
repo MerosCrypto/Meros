@@ -33,13 +33,7 @@ def VUnknownTest(
     file.close()
 
     #Merit.
-    merit: Merit = Merit.fromJSON(
-        b"MEROS_DEVELOPER_NETWORK",
-        60,
-        int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-        100,
-        vectors["blockchain"]
-    )
+    merit: Merit = Merit.fromJSON(vectors["blockchain"])
 
     #Custom function to send the last Block and verify it errors at the right place.
     def checkFail() -> None:

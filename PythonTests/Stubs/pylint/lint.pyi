@@ -1,6 +1,6 @@
 from pylint.checkers import BaseChecker
 
-class PyLinter():
+class PyLinter:
     def register_checker(
         self,
         checker: BaseChecker

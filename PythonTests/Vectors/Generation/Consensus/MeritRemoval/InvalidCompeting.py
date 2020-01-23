@@ -41,19 +41,10 @@ bbFile.close()
 #Transactions.
 transactions: Transactions = Transactions()
 #Merit.
-merit: Merit = Merit(
-    b"MEROS_DEVELOPER_NETWORK",
-    60,
-    int("FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", 16),
-    100
-)
+merit: Merit = Merit()
 
 #SpamFilter.
-dataFilter: SpamFilter = SpamFilter(
-    bytes.fromhex(
-        "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-    )
-)
+dataFilter: SpamFilter = SpamFilter(bytes.fromhex("CC" * 32))
 
 #Ed25519 keys.
 edPrivKey: ed25519.SigningKey = ed25519.SigningKey(b'\0' * 32)
@@ -133,21 +124,21 @@ competingVerif: SignedVerification = SignedVerification(send.hash)
 competingVerif.sign(0, blsPrivKey)
 
 #Create a MeritRemoval out of the conflicting Verifications.
-mr: SignedMeritRemoval = SignedMeritRemoval(verif.toSignedElement(), competingVerif.toSignedElement())
+mr: SignedMeritRemoval = SignedMeritRemoval(verif, competingVerif)
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents([], [], [mr.toSignedElement()]),
+        BlockHeader.createContents([], [], [mr]),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), []),
         0,
         merit.blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [mr.toSignedElement()], mr.signature)
+    BlockBody([], [mr], mr.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, merit.blockchain.difficulty())

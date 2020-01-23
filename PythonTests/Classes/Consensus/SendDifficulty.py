@@ -1,17 +1,19 @@
 #Types.
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 #BLS lib.
-from PythonTests.Libs.BLS import PrivateKey, PublicKey, Signature
+from PythonTests.Libs.BLS import PrivateKey, Signature
 
 #Element class.
-from PythonTests.Classes.Consensus.Element import Element
+from PythonTests.Classes.Consensus.Element import Element, SignedElement
 
 #SendDifficulty Prefix.
 SEND_DIFFICULTY_PREFIX: bytes = b'\2'
 
 #SendDifficulty class.
-class SendDifficulty(Element):
+class SendDifficulty(
+    Element
+):
     #Constructor.
     def __init__(
         self,
@@ -24,13 +26,6 @@ class SendDifficulty(Element):
         self.difficulty: bytes = difficulty
         self.nonce: int = nonce
         self.holder: int = holder
-
-    #Element -> SendDifficulty. Satisifes static typing requirements.
-    @staticmethod
-    def fromElement(
-        elem: Element
-    ) -> Any:
-        return elem
 
     #Serialize for signing.
     def signatureSerialize(
@@ -65,22 +60,20 @@ class SendDifficulty(Element):
     ) -> Any:
         return SendDifficulty(bytes.fromhex(json["difficulty"]), json["nonce"], json["holder"])
 
-class SignedSendDifficulty(SendDifficulty):
+class SignedSendDifficulty(
+    SignedElement,
+    SendDifficulty
+):
     #Constructor.
     def __init__(
         self,
         difficulty: bytes,
         nonce: int = 0,
         holder: int = 0,
-        holderKey: Optional[PublicKey] = None,
-        signature: bytes = Signature().serialize()
+        signature: Signature = Signature()
     ) -> None:
         SendDifficulty.__init__(self, difficulty, nonce, holder)
-        self.signature: bytes = signature
-
-        self.blsSignature: Signature
-        if holderKey:
-            self.blsSignature = Signature(self.signature)
+        self.signature: Signature = signature
 
     #Sign.
     def sign(
@@ -89,8 +82,7 @@ class SignedSendDifficulty(SendDifficulty):
         privKey: PrivateKey
     ) -> None:
         self.holder = holder
-        self.blsSignature = privKey.sign(self.signatureSerialize())
-        self.signature = self.blsSignature.serialize()
+        self.signature = privKey.sign(self.signatureSerialize())
 
     #Serialize.
     #pylint: disable=unused-argument
@@ -98,13 +90,7 @@ class SignedSendDifficulty(SendDifficulty):
         self,
         lookup: List[bytes] = []
     ) -> bytes:
-        return SendDifficulty.serialize(self) + self.signature
-
-    #SignedSendDifficulty -> SignedElement.
-    def toSignedElement(
-        self
-    ) -> Any:
-        return self
+        return SendDifficulty.serialize(self) + self.signature.serialize()
 
     #SignedSendDifficulty -> JSON.
     def toSignedJSON(
@@ -118,19 +104,17 @@ class SignedSendDifficulty(SendDifficulty):
             "difficulty": self.difficulty.hex().upper(),
 
             "signed": True,
-            "signature": self.signature.hex().upper()
+            "signature": self.signature.serialize().hex().upper()
         }
 
     #JSON -> SignedSendDifficulty.
     @staticmethod
     def fromSignedJSON(
-        nicks: List[bytes],
         json: Dict[str, Any]
     ) -> Any:
         return SignedSendDifficulty(
             bytes.fromhex(json["difficulty"]),
             json["nonce"],
             json["holder"],
-            PublicKey(nicks[json["holder"]]),
-            bytes.fromhex(json["signature"])
+            Signature(bytes.fromhex(json["signature"]))
         )

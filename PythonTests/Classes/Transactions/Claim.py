@@ -11,7 +11,9 @@ from PythonTests.Classes.Transactions.Transaction import Transaction
 from hashlib import blake2b
 
 #Claim class.
-class Claim(Transaction):
+class Claim(
+    Transaction
+):
     #Constructor.
     def __init__(
         self,

@@ -5,7 +5,9 @@ from typing import Dict, List, Tuple, Any
 from PythonTests.Classes.Transactions.Transaction import Transaction
 
 #Mint class.
-class Mint(Transaction):
+class Mint(
+    Transaction
+):
     #Constructor.
     def __init__(
         self,

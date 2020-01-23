@@ -1,2 +1,2 @@
-class IRawChecker():
+class IRawChecker:
     ...
