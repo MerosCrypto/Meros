@@ -18,6 +18,8 @@ type
 
         Syncing                   = 2,
         SyncingAcknowledged       = 3,
+        PeersRequest              = 4,
+        Peers                     = 5,
         BlockListRequest          = 6,
         BlockList                 = 7,
 
@@ -68,6 +70,8 @@ proc hash*(
 const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Handshake:                 @[BYTE_LEN + BYTE_LEN + BYTE_LEN + PORT_LEN + HASH_LEN],
     MessageType.BlockchainTail:            @[HASH_LEN],
+    MessageType.PeersRequest:              @[],
+    MessageType.Peers:                     @[BYTE_LEN, IP_LEN + PORT_LEN],
 
     MessageType.Syncing:                   @[],
     MessageType.SyncingAcknowledged:       @[],

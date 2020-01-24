@@ -108,6 +108,41 @@ proc handle(
                         of MessageType.Handshake:
                             await client.send(newMessage(MessageType.BlockchainTail, networkFunctions.getTail().toString()))
 
+                        of MessageType.PeersRequest:
+                            var
+                                #Clients we have yet to send.
+                                usable: seq[Client] = networkFunctions.getClients()
+                                #Peers we want to send.
+                                peers: int = min(8, usable.len)
+                                #Result to send back.
+                                res: string
+
+                            while peers > 0:
+                                if rand(high(usable)) < peers:
+                                    #Skip Clients who aren't servers.
+                                    if not usable[0].server:
+                                        usable.del(0)
+                                        if peers > usable.len:
+                                            dec(peers)
+                                        continue
+
+                                    #Skip the Client who sent us this message.
+                                    if usable[0].id == msg.client:
+                                        usable.del(0)
+                                        if peers > usable.len:
+                                            dec(peers)
+                                        continue
+
+                                    #Append the peer.
+                                    res &= usable[0].ip & usable[0].port.toBinary(PORT_LEN)
+                                    dec(peers)
+
+                                #Delete this Client from usable.
+                                usable.del(0)
+
+                            #Send the peers.
+                            await client.send(newMessage(MessageType.Peers, char(res.len div (IP_LEN + PORT_LEN)) & res))
+
                         of MessageType.BlockListRequest:
                             var
                                 res: string = ""
@@ -252,7 +287,7 @@ proc add*(
     socket: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [], async.} =
-    #If the Client is already connected, close the socket and return.
+    #Get the IP.
     var addressParts: seq[string] = @[]
     try:
         addressParts = socket.getPeerAddr()[0].split(".")
@@ -270,12 +305,14 @@ proc add*(
     except ValueError as e:
         doAssert(false, "IP contained an invalid integer: " & e.msg)
 
-    if clients.connected.contains(ip):
-        try:
-            socket.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
-        return
+    if not networkFunctions.allowRepeatConnections():
+        #If the Client is already connected, close the socket and return.
+        if clients.connected.contains(ip):
+            try:
+                socket.close()
+            except Exception as e:
+                doAssert(false, "Failed to close a socket: " & e.msg)
+            return
 
     #Create the Client.
     var client: Client = newClient(

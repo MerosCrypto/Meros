@@ -52,7 +52,13 @@ case config.network:
             DATA_DIFFICULTY:  "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
 
             NETWORK_ID: 1,
-            NETWORK_PROTOCOL: 0
+            NETWORK_PROTOCOL: 0,
+
+            SEEDS: @[
+                (ip: "seed1.meroscrypto.io", port: 5132),
+                (ip: "seed2.meroscrypto.io", port: 5132),
+                (ip: "seed3.meroscrypto.io", port: 5132),
+            ]
         )
 
     of "devnet":
@@ -68,7 +74,9 @@ case config.network:
 
             #By not using 255, we allow eventually extending these fields. If we read 255, we also read an extra byte,
             NETWORK_ID: 254,
-            NETWORK_PROTOCOL: 254
+            NETWORK_PROTOCOL: 254,
+
+            SEEDS: @[]
         )
 
     else:

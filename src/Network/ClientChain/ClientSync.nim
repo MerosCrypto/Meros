@@ -2,7 +2,8 @@ include ClientHandshake
 
 #Tell the Client we're syncing.
 proc startSyncing*(
-    client: Client
+    client: Client,
+    networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [
     ClientError
 ], async.} =
@@ -18,18 +19,52 @@ proc startSyncing*(
         await client.send(newMessage(MessageType.Syncing))
         var sentReq: uint32 = getTime()
 
-        #Discard every message until we get a SyncingAcknowledged.
-        var msg: Message
+        #Handle every message until we get a SyncingAcknowledged.
+        var msg: Message = await client.recv()
         while msg.content != SyncingAcknowledged:
             #If the client doesn't send a SyncingAcknowledged in time, raise an error.
             if getTime() > sentReq + 2:
                 raise newException(ClientError, "Client never responded to the fact we were syncing.")
 
+            try:
+                await networkFunctions.handle(msg)
+            except Spam:
+                discard
             msg = await client.recv()
     except ClientError as e:
         raise e
     except Exception as e:
         doAssert(false, "Starting Syncing with a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+#Sync peers.
+proc syncPeers*(
+    client: Client
+): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [
+    ClientError
+], async.} =
+    try:
+        #Send the request.
+        await client.send(newMessage(MessageType.PeersRequest))
+        client.pendingSyncRequest = true
+
+        #Get their response.
+        var msg: Message = await client.recv()
+        client.pendingSyncRequest = false
+
+        #Parse the response.
+        if msg.content != MessageType.Peers:
+            raise newException(ClientError, "Client didn't respond with Peers to our PeersRequest.")
+
+        #Add the peer.
+        for p in countup(0, msg.message.len - 1, IP_LEN + PORT_LEN):
+            result.add((
+                ip: msg.message[p ..< p + IP_LEN],
+                port: msg.message[p + IP_LEN ..< p + IP_LEN + PORT_LEN].fromBinary()
+            ))
+    except ClientError as e:
+        raise e
+    except Exception as e:
+        doAssert(false, "Syncing peers threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 #Sync a Transaction.
 proc syncTransaction*(

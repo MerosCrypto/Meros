@@ -33,10 +33,11 @@ import ../Serialize/Consensus/ParseVerificationPacket
 import ../Serialize/Merit/ParseBlockHeader
 import ../Serialize/Merit/ParseBlockBody
 
-#Message, SketchyBlock, and Client objects.
+#Network objects.
 import ../objects/MessageObj
 import ../objects/SketchyBlockObj
 import ../objects/ClientObj
+import ../objects/NetworkLibFunctionBoxObj
 
 #Export the Client object.
 export ClientObj

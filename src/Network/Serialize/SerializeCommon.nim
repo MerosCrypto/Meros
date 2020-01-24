@@ -10,6 +10,7 @@ const
     BYTE_LEN*:           int = 1
     PORT_LEN*:           int = 2
     NICKNAME_LEN*:       int = 2
+    IP_LEN*:             int = 4
     INT_LEN*:            int = 4
     SALT_LEN*:           int = 8
     SKETCH_HASH_LEN*:    int = 8
@@ -46,7 +47,6 @@ const
         int8(GAS_PRICE_PREFIX),
         int8(MERIT_REMOVAL_PREFIX)
     }
-
 
 #Deseralizes a string by getting the length of the next set of bytes, slicing that out, and moving on.
 func deserialize*(

@@ -29,3 +29,6 @@ type ChainParams = object
     NETWORK_ID: int
     #Protocol version.
     NETWORK_PROTOCOL: int
+
+    #Seed servers.
+    SEEDS: seq[tuple[ip: string, port: int]]

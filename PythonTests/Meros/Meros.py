@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple, Any
 
 #Transactions classes.
 from PythonTests.Classes.Transactions.Transaction import Transaction
@@ -40,6 +40,8 @@ class MessageType(
 
     Syncing                   = 2
     SyncingAcknowledged       = 3
+    PeersRequest              = 4
+    Peers                     = 5
     BlockListRequest          = 6
     BlockList                 = 7
 
@@ -85,6 +87,8 @@ lengths: Dict[MessageType, List[int]] = {
 
     MessageType.Syncing:                   [],
     MessageType.SyncingAcknowledged:       [],
+    MessageType.PeersRequest:              [],
+    MessageType.Peers:                     [1, -6],
     MessageType.BlockListRequest:          [34],
     MessageType.BlockList:                 [1, -32, 32],
 
@@ -115,17 +119,20 @@ class Meros:
     #Constructor.
     def __init__(
         self,
-        db: str,
+        test: str,
         tcp: int,
         rpc: int
     ) -> None:
         #Save the config.
-        self.db: str = db
+        self.db: str = test
         self.tcp: int = tcp
         self.rpc: int = rpc
 
         #Create the instance.
-        self.process: Popen[Any] = Popen(["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", db, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)])
+        command: List[str] = ["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)]
+        if test == "PeersTest":
+            command.append("--allow-repeat-connections")
+        self.process: Popen[Any] = Popen(command)
 
         #Create message/response lists.
         self.msgs: List[bytes] = []
@@ -165,7 +172,7 @@ class Meros:
         result: bytes = self.socketRecv(1)
         header: MessageType = MessageType(result[0])
 
-        #If this was SyncingOver, add an empty bytesself.
+        #If this was SyncingOver, add an empty bytes.
         #This is so playback works.
         if header == MessageType.SyncingOver:
             self.msgs.append(bytes())
@@ -230,7 +237,11 @@ class Meros:
 
             result += self.socketRecv(length)
 
-        if header != MessageType.Handshake:
+        if header not in {
+            MessageType.Handshake,
+            MessageType.PeersRequest,
+            MessageType.Peers
+        }:
             self.ress.append(result)
         return result
 
@@ -284,6 +295,32 @@ class Meros:
     ) -> bytes:
         res: bytes = MessageType.SyncingAcknowledged.toByte()
         self.send(res)
+        return res
+
+    #Send a peers request.
+    def peersRequest(
+        self
+    ) -> bytes:
+        res: bytes = MessageType.PeersRequest.toByte()
+        self.send(res, False)
+        return res
+
+    #Send peers.
+    def peers(
+        self,
+        peers: List[Tuple[str, int]]
+    ) -> bytes:
+        res: bytes = MessageType.Peers.toByte()
+        for peer in peers:
+            ipParts: List[str] = peer[0].split(".")
+            res += (
+                int(ipParts[0]).to_bytes(1, byteorder="big") +
+                int(ipParts[1]).to_bytes(1, byteorder="big") +
+                int(ipParts[2]).to_bytes(1, byteorder="big") +
+                int(ipParts[3]).to_bytes(1, byteorder="big") +
+                peer[1].to_bytes(2, byteorder="big")
+            )
+        self.send(res, False)
         return res
 
     #Send a Block List.

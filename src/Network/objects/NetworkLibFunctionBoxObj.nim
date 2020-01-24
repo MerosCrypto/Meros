@@ -12,16 +12,21 @@ import ../../Database/Merit/Block
 #Transaction lib.
 import ../../Database/Transactions/Transaction
 
-#Message object.
+#Message and Client objects.
 import MessageObj
+import ClientObj
 
 #Async standard lib.
 import asyncdispatch
 
 type NetworkLibFunctionBox* = ref object
+    allowRepeatConnections*: proc (): bool {.noSideEffect, raises: [].}
+
     getNetworkID*: proc (): int {.noSideEffect, raises: [].}
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
     getPort*: proc (): int {.noSideEffect, raises: [].}
+
+    getClients*: proc (): seq[Client] {.raises: [].}
 
     getTail*: proc (): Hash[256] {.inline, raises: [].}
 

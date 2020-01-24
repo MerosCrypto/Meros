@@ -83,6 +83,9 @@ class Syncer:
             if MessageType(msg[0]) == MessageType.Syncing:
                 self.rpc.meros.syncingAcknowledged()
 
+            elif MessageType(msg[0]) == MessageType.PeersRequest:
+                self.rpc.meros.peers([])
+
             elif MessageType(msg[0]) == MessageType.BlockListRequest:
                 reqHash = msg[3 : 51]
                 for b in range(len(self.merit.blockchain.blocks)):

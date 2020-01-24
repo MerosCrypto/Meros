@@ -12,6 +12,53 @@ Once https://github.com/nim-lang/Nim/issues/12530 is fixed, the following code b
 raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
 ]#
 
+#Request peers.
+proc requestPeers*(
+    network: Network,
+    seeds: seq[tuple[ip: string, port: int]]
+): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [], async.} =
+    if network.clients.clients.len == 0:
+        return seeds
+
+    var ips: HashSet[string] = initHashSet[string]()
+    for client in network.clients.notSyncing:
+        try:
+            #Start syncing.
+            await client.startSyncing(network.networkFunctions)
+
+            #Request peers.
+            var
+                peers: seq[tuple[ip: string, port: int]] = await client.syncPeers()
+                p: int = 0
+            while p < peers.len:
+                if ips.contains(peers[p].ip):
+                    peers.del(p)
+                    continue
+
+                ips.incl(peers[p].ip)
+                result.add((
+                    ip: (
+                        ($int(peers[p].ip[0])) & "." &
+                        ($int(peers[p].ip[1])) & "." &
+                        ($int(peers[p].ip[2])) & "." &
+                        ($int(peers[p].ip[3]))
+                    ),
+                    port: peers[p].port
+                ))
+                inc(p)
+
+            #Stop syncing.
+            await client.stopSyncing()
+
+            #Break if we got enough peers.
+            if peers.len > 8:
+                break
+        except ClientError:
+            network.clients.disconnect(client.id)
+            continue
+        except Exception as e:
+            doAssert(false, "Syncing peers threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
 #Request a Transaction.
 proc requestTransaction*(
     network: Network,
@@ -23,7 +70,7 @@ proc requestTransaction*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing()
+            await client.startSyncing(network.networkFunctions)
 
             #Get the Transaction.
             try:
@@ -61,7 +108,7 @@ proc requestVerificationPackets(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing()
+            await client.startSyncing(network.networkFunctions)
 
             #Get the VerificationPacket.
             try:
@@ -98,7 +145,7 @@ proc requestSketchHashes(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing()
+            await client.startSyncing(network.networkFunctions)
 
             #Get the SketchHash.
             try:
@@ -457,7 +504,7 @@ proc requestBlockBody*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing()
+            await client.startSyncing(network.networkFunctions)
 
             #Get the BlockBody.
             try:
@@ -493,7 +540,7 @@ proc requestBlockHeader*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing()
+            await client.startSyncing(network.networkFunctions)
 
             #Get the BlockHeader.
             try:
@@ -531,7 +578,7 @@ proc requestBlockList*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing()
+            await client.startSyncing(network.networkFunctions)
 
             #Get the Block List.
             try:

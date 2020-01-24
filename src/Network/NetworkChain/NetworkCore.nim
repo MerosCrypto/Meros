@@ -32,6 +32,7 @@ proc newNetwork*(
     protocol: int,
     server: bool,
     port: int,
+    allowRepeatConnections: bool,
     mainFunctions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     #Create the Network.
@@ -48,12 +49,18 @@ proc newNetwork*(
     result = network
 
     #Provide functions for the Network Functions Box.
+    result.networkFunctions.allowRepeatConnections = func (): bool {.forceCheck: [].} =
+        allowRepeatConnections
+
     result.networkFunctions.getNetworkID = func (): int {.forceCheck: [].} =
         id
     result.networkFunctions.getProtocol = func (): int {.forceCheck: [].} =
         protocol
     result.networkFunctions.getPort = func (): int {.forceCheck: [].} =
         port
+
+    result.networkFunctions.getClients = proc (): seq[Client] {.forceCheck: [].} =
+        network.clients.clients
 
     result.networkFunctions.getTail = mainFunctions.merit.getTail
     result.networkFunctions.getBlockHashBefore = mainFunctions.merit.getBlockHashBefore
