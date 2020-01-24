@@ -86,7 +86,7 @@ proc newNetwork*(
 
                 #Create an artificial BlockchainTail message.
                 try:
-                    await network.networkFunctions.handle(newMessage(MessageType.BlockchainTail, msg.message[3 ..< 35]))
+                    await network.networkFunctions.handle(newMessage(MessageType.BlockchainTail, msg.message[5 ..< 37]))
                 except ClientError as e:
                     raise e
                 except Spam as e:
