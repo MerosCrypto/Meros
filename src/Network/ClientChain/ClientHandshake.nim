@@ -1,5 +1,8 @@
 include ClientSendRecv
 
+#Service bits.
+const SERVER_SERVICE: uint8 = 0b10000000
+
 #Handshake.
 proc handshake*(
     client: Client,
@@ -17,7 +20,7 @@ proc handshake*(
                 MessageType.Handshake,
                 char(id) &
                 char(protocol) &
-                (if server: char(1) else: char(0)) &
+                (if server: char(SERVER_SERVICE) else: char(0)) &
                 tail.toString()
             )
         )
@@ -43,7 +46,8 @@ proc handshake*(
         if int(handshakeSeq[1][0]) != protocol:
             raise newException(ClientError, "Client responded to a Handshake with a different Protocol Version.")
 
-        if int(handshakeSeq[2][0]) == 1:
+        #Set the service flags.
+        if (uint8(handshakeSeq[2][0]) and SERVER_SERVICE) == SERVER_SERVICE:
             client.server = true
 
         #Return their tail.
