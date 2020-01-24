@@ -288,9 +288,20 @@ proc add*(
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [], async.} =
     #Get the IP.
-    var addressParts: seq[string] = @[]
+    var
+        address: string
+        addressParts: seq[string]
     try:
-        addressParts = socket.getPeerAddr()[0].split(".")
+        address = socket.getPeerAddr()[0]
+
+        if (socket.getLocalAddr()[0] == address) and (address != "127.0.0.1"):
+            try:
+                socket.close()
+            except Exception as e:
+                doAssert(false, "Failed to close a socket: " & e.msg)
+            return
+
+        addressParts = address.split(".")
     except OSError as e:
         doAssert(false, "Failed to get a peer's address: " & e.msg)
 
