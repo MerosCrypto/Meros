@@ -54,8 +54,14 @@ import random
 #Networking standard libs.
 import asyncdispatch, asyncnet
 
+#Sets standard lib.
+import sets
+
 #Table standard lib.
 import tables
+
+#String utils standard lib.
+import strutils
 
 #Handle a client.
 proc handle(
@@ -241,16 +247,38 @@ proc handle(
 #Add a new Client from a Socket.
 proc add*(
     clients: Clients,
-    ip: string,
-    port: int,
     server: bool,
     socket: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [], async.} =
+    #If the Client is already connected, close the socket and return.
+    var addressParts: seq[string] = @[]
+    try:
+        addressParts = socket.getPeerAddr()[0].split(".")
+    except OSError as e:
+        doAssert(false, "Failed to get a peer's address: " & e.msg)
+
+    var ip: string
+    try:
+        ip = (
+            char(parseInt(addressParts[0])) &
+            char(parseInt(addressParts[1])) &
+            char(parseInt(addressParts[2])) &
+            char(parseInt(addressParts[3]))
+        )
+    except ValueError as e:
+        doAssert(false, "IP contained an invalid integer: " & e.msg)
+
+    if clients.connected.contains(ip):
+        try:
+            socket.close()
+        except Exception as e:
+            doAssert(false, "Failed to close a socket: " & e.msg)
+        return
+
     #Create the Client.
     var client: Client = newClient(
         ip,
-        port,
         clients.count,
         socket
     )

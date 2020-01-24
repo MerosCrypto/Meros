@@ -16,6 +16,9 @@ import NetworkLibFunctionBoxObj
 #Client library.
 import ../Client as ClientFile
 
+#Sets standard lib.
+import sets
+
 #Async standard lib.
 import asyncdispatch
 
@@ -25,6 +28,8 @@ type Clients* = ref object
     count*: int
     #Seq of every Client.
     clients*: seq[Client]
+    #Set of the IPs of our peers.
+    connected*: HashSet[string]
 
 #Constructor.
 proc newClients*(
@@ -34,7 +39,8 @@ proc newClients*(
     var clients: Clients = Clients(
         #Starts at 1 because the local node is 0.
         count: 1,
-        clients: newSeq[Client]()
+        clients: newSeq[Client](),
+        connected: initHashSet[string]()
     )
     result = clients
 
@@ -53,6 +59,7 @@ proc newClients*(
                     #Close clients who have been inactive for half a minute.
                     if clients.clients[c].isClosed or (clients.clients[c].last + 30 <= getTime()):
                         clients.clients[c].close()
+                        clients.connected.excl(clients.clients[c].ip)
                         clients.clients.del(c)
                         continue
 
@@ -92,6 +99,7 @@ proc newClients*(
                                         )
                                     except ClientError:
                                         clients.clients[c].close()
+                                        clients.connected.excl(clients.clients[c].ip)
                                         clients.clients.del(c)
                                         noInc = true
                                     except Exception as e:
@@ -116,8 +124,11 @@ func add*(
 ) {.forceCheck: [].} =
     #We do not inc(clients.total) here.
     #Clients calls it after Client creation.
-    #Why? After we create a client, but before we add it, we call handshake, which takes an unspecified amount of time.
+    #Why? After we create a Client, but before we add it, we call handshake, which takes an unspecified amount of time.
     clients.clients.add(client)
+
+    #Mark the Client as connected.
+    clients.connected.incl(client.ip)
 
 #Disconnect.
 proc disconnect*(
@@ -127,6 +138,7 @@ proc disconnect*(
     for i in 0 ..< clients.clients.len:
         if id == clients.clients[i].id:
             clients.clients[i].close()
+            clients.connected.excl(clients.clients[i].ip)
             clients.clients.del(i)
             break
 
@@ -141,6 +153,12 @@ proc shutdown*(
         except Exception:
             discard
         clients.clients.delete(0)
+
+    #Clear the connected set.
+    #This should never be needed.
+    #If we're shutting down the network, we're shutting down the node.
+    #That said, it's better safe than sorry.
+    clients.connected = initHashSet[string]()
 
 #Getter.
 func `[]`*(

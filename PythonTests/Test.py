@@ -12,7 +12,6 @@ from PythonTests.Meros.RPC import RPC
 from PythonTests.Tests.Merit.ChainAdvancementTest import ChainAdvancementTest
 from PythonTests.Tests.Merit.DifficultyTest import DifficultyTest
 from PythonTests.Tests.Merit.StateTest import StateTest
-from PythonTests.Tests.Merit.HundredTest import HundredTest
 from PythonTests.Tests.Merit.HundredTwentyFourTest import HundredTwentyFourTest
 
 from PythonTests.Tests.Merit.Templates.EightyEightTest import EightyEightTest
@@ -43,6 +42,9 @@ from PythonTests.Tests.Consensus.HundredSix.HundredSixSignedElementsTest import 
 from PythonTests.Tests.Consensus.HundredSix.HundredSixBlockElementsTest import HundredSixBlockElementsTest
 from PythonTests.Tests.Consensus.HundredSix.HundredSixMeritRemovalsTest import HundredSixMeritRemovalsTest
 
+from PythonTests.Tests.Network.MultipleConnectionsTest import MultipleConnectionsTest
+from PythonTests.Tests.Network.HundredTest import HundredTest
+
 #Arguments.
 from sys import argv
 
@@ -66,7 +68,6 @@ tests: List[Callable[[RPC], None]] = [
     ChainAdvancementTest,
     DifficultyTest,
     StateTest,
-    HundredTest,
     HundredTwentyFourTest,
 
     EightyEightTest,
@@ -95,7 +96,10 @@ tests: List[Callable[[RPC], None]] = [
 
     HundredSixSignedElementsTest,
     HundredSixBlockElementsTest,
-    HundredSixMeritRemovalsTest
+    HundredSixMeritRemovalsTest,
+
+    MultipleConnectionsTest,
+    HundredTest
 ]
 
 #Tests to run.

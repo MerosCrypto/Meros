@@ -277,16 +277,13 @@ proc listen*(
     while not network.server.isClosed():
         #Accept a new client.
         #This is in a try/catch since ending the server while accepting a new Client will throw an Exception.
-        var client: tuple[address: string, client: AsyncSocket]
         try:
-            client = await network.server.acceptAddr()
+            var client: AsyncSocket = await network.server.accept()
 
             #Pass it to Clients.
             asyncCheck network.clients.add(
-                client.address,
-                0,
                 true,
-                client.client,
+                client,
                 network.networkFunctions
             )
         except Exception:
@@ -318,8 +315,6 @@ proc connect*(
         await socket.connect(ip, Port(port))
         #Pass it off to clients.
         asyncCheck network.clients.add(
-            ip,
-            port,
             not network.server.isNil,
             socket,
             network.networkFunctions

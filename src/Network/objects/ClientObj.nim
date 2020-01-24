@@ -11,8 +11,6 @@ import asyncnet
 type Client* = ref object
     #IP.
     ip*: string
-    #Port.
-    port*: int
     #Server who can accept connections.
     server*: bool
 
@@ -33,13 +31,11 @@ type Client* = ref object
 #Constructor.
 func newClient*(
     ip: string,
-    port: int,
     id: int,
     socket: AsyncSocket
 ): Client {.inline, forceCheck: [].} =
     Client(
         ip: ip,
-        port: port,
         server: false,
 
         id: id,
