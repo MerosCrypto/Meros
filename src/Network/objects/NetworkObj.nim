@@ -18,6 +18,9 @@ type Network* = ref object
     id*: int
     #Protocol version.
     protocol*: int
+    #Server port.
+    port*: int
+
     #Clients.
     clients*: Clients
     #Server.
@@ -32,12 +35,15 @@ proc newNetworkObj*(
     id: int,
     protocol: int,
     server: bool,
+    port: int,
     networkFunctions: NetworkLibFunctionBox,
     mainFunctions: GlobalFunctionBox
 ): Network {.inline, forceCheck: [].} =
     Network(
         id: id,
         protocol: protocol,
+        port: port,
+
         clients: newClients(networkFunctions, server),
         networkFunctions: networkFunctions,
         mainFunctions: mainFunctions

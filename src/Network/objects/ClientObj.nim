@@ -13,6 +13,8 @@ type Client* = ref object
     ip*: string
     #Server who can accept connections.
     server*: bool
+    #Port of their server.
+    port*: int
 
     #ID.
     id*: int
@@ -37,6 +39,7 @@ func newClient*(
     Client(
         ip: ip,
         server: false,
+        port: -1,
 
         id: id,
         syncLevels: 0,

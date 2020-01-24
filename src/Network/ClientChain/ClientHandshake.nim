@@ -9,18 +9,25 @@ proc handshake*(
     id: int,
     protocol: int,
     server: bool,
+    port: int,
     tail: Hash[256]
 ): Future[Hash[256]] {.forceCheck: [
     ClientError
 ], async.} =
     try:
+        #Supported services.
+        var services: uint8 = 0
+        if server:
+            services = services and SERVER_SERVICE
+
         #Send a handshake.
         await client.send(
             newMessage(
                 MessageType.Handshake,
                 char(id) &
                 char(protocol) &
-                (if server: char(SERVER_SERVICE) else: char(0)) &
+                char(services) &
+                port.toBinary() &
                 tail.toString()
             )
         )
@@ -37,6 +44,7 @@ proc handshake*(
             BYTE_LEN,
             BYTE_LEN,
             BYTE_LEN,
+            PORT_LEN,
             HASH_LEN
         )
         #Verify their Network ID.
@@ -50,9 +58,13 @@ proc handshake*(
         if (uint8(handshakeSeq[2][0]) and SERVER_SERVICE) == SERVER_SERVICE:
             client.server = true
 
+        #If the client is a server, grab their port.
+        if client.server:
+            client.port = handshakeSeq[3].fromBinary()
+
         #Return their tail.
         try:
-            result = handshake.message[3 ..< 35].toHash(256)
+            result = handshakeSeq[4].toHash(256)
         except ValueError as e:
             doAssert(false, "Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
     except ClientError as e:

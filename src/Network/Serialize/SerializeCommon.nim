@@ -8,6 +8,7 @@ export Util
 const
     #Lengths of various data types and messages.
     BYTE_LEN*:           int = 1
+    PORT_LEN*:           int = 2
     NICKNAME_LEN*:       int = 2
     INT_LEN*:            int = 4
     SALT_LEN*:           int = 8

@@ -93,6 +93,7 @@ proc newClients*(
                                                 MessageType.Handshake,
                                                 char(networkFunctions.getNetworkID()) &
                                                 char(networkFunctions.getProtocol()) &
+                                                networkFunctions.getPort().toBinary() &
                                                 (if server: char(1) else: char(0)) &
                                                 tail.toString()
                                             )

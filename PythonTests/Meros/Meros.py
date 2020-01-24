@@ -80,7 +80,7 @@ class MessageType(
 #A negative number means read the last length * X bytes.
 #A zero means custom logic should be used.
 lengths: Dict[MessageType, List[int]] = {
-    MessageType.Handshake:                 [35],
+    MessageType.Handshake:                 [37],
     MessageType.BlockchainTail:            [32],
 
     MessageType.Syncing:                   [],
@@ -240,7 +240,7 @@ class Meros:
         network: int,
         protocol: int,
         tail: bytes
-    ) -> int:
+    ) -> None:
         #Save the network/protocol.
         self.network = network
         self.protocol = protocol
@@ -254,7 +254,7 @@ class Meros:
             MessageType.Handshake.toByte() +
             network.to_bytes(1, "big") +
             protocol.to_bytes(1, "big") +
-            b'\0' +
+            b'\0\0\0' +
             tail,
             False
         )
@@ -269,9 +269,6 @@ class Meros:
             raise Exception("Connected to a node on a diffirent network.")
         if response[2] != protocol:
             raise Exception("Connected to a node using a diffirent protocol.")
-
-        #Return their height.
-        return int.from_bytes(response[3 : 7], "big")
 
     #Start Syncing.
     def syncing(

@@ -31,6 +31,7 @@ proc newNetwork*(
     id: int,
     protocol: int,
     server: bool,
+    port: int,
     mainFunctions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     #Create the Network.
@@ -38,6 +39,7 @@ proc newNetwork*(
         id,
         protocol,
         server,
+        port,
         newNetworkLibFunctionBox(),
         mainFunctions
     )
@@ -50,6 +52,8 @@ proc newNetwork*(
         id
     result.networkFunctions.getProtocol = func (): int {.forceCheck: [].} =
         protocol
+    result.networkFunctions.getPort = func (): int {.forceCheck: [].} =
+        port
 
     result.networkFunctions.getTail = mainFunctions.merit.getTail
     result.networkFunctions.getBlockHashBefore = mainFunctions.merit.getBlockHashBefore
@@ -244,8 +248,7 @@ proc newNetwork*(
 
 #Listen on a port.
 proc listen*(
-    network: Network,
-    config: Config
+    network: Network
 ) {.forceCheck: [], async.} =
     #Start listening.
     try:
@@ -259,7 +262,7 @@ proc listen*(
 
     try:
         network.server.setSockOpt(OptReuseAddr, true)
-        network.server.bindAddr(Port(config.tcpPort))
+        network.server.bindAddr(Port(network.port))
     except OSError as e:
         doAssert(false, "Failed to set the Network's server socket options and bind it due to an OSError: " & e.msg)
     except ValueError as e:
@@ -283,6 +286,7 @@ proc listen*(
             #Pass it to Clients.
             asyncCheck network.clients.add(
                 true,
+                network.port,
                 client,
                 network.networkFunctions
             )
@@ -316,6 +320,7 @@ proc connect*(
         #Pass it off to clients.
         asyncCheck network.clients.add(
             not network.server.isNil,
+            network.port,
             socket,
             network.networkFunctions
         )

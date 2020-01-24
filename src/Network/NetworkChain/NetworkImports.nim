@@ -23,9 +23,6 @@ import ../../Database/Merit/State
 #Global Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#Config object.
-import ../../objects/ConfigObj
-
 #Parse libs.
 import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend

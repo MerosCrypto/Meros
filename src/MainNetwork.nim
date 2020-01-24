@@ -7,13 +7,14 @@ proc mainNetwork() {.forceCheck: [].} =
             params.NETWORK_ID,
             params.NETWORK_PROTOCOL,
             config.server,
+            config.tcpPort,
             functions
         )
 
         #Start listening, if we're supposed to.
         if config.server:
             try:
-                asyncCheck network.listen(config)
+                asyncCheck network.listen()
             except Exception:
                 discard
 

@@ -21,6 +21,7 @@ import asyncdispatch
 type NetworkLibFunctionBox* = ref object
     getNetworkID*: proc (): int {.noSideEffect, raises: [].}
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
+    getPort*: proc (): int {.noSideEffect, raises: [].}
 
     getTail*: proc (): Hash[256] {.inline, raises: [].}
 

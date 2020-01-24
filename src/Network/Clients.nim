@@ -248,6 +248,7 @@ proc handle(
 proc add*(
     clients: Clients,
     server: bool,
+    port: int,
     socket: AsyncSocket,
     networkFunctions: NetworkLibFunctionBox
 ) {.forceCheck: [], async.} =
@@ -292,6 +293,7 @@ proc add*(
             networkFunctions.getNetworkID(),
             networkFunctions.getProtocol(),
             server,
+            port,
             networkFunctions.getTail()
         )
     except ClientError:

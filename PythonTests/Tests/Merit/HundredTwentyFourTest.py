@@ -44,7 +44,7 @@ def HundredTwentyFourTest(
         MessageType.Handshake.toByte() +
         (254).to_bytes(1, "big") +
         (254).to_bytes(1, "big") +
-        b'\0' +
+        b'\0\0\0' +
         blockchain.last(),
         False
     )
