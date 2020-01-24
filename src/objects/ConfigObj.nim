@@ -27,7 +27,7 @@ import json
 const
     #Help test.
     HELP_TEXT: string = """
-Meros Full Node v0.6.0.
+Meros Full Node v0.6.1.
 Parameters can be specified over the CLI or via a JSON file, named
 `settings.json`, placed in the data directory.
 
