@@ -37,6 +37,9 @@ import ../Database/Transactions/objects/DataObj
 import ../Network/objects/MessageObj
 import ../Network/objects/SketchyBlockObj
 
+#Locks standard lib.
+import locks
+
 #Async lib.
 import asyncdispatch
 
@@ -216,15 +219,34 @@ type
             nick: uint16
         ): bool {.inline, raises: [].}
 
+        addBlockInternal*: proc (
+            newBlock: SketchyBlock,
+            sketcher: Sketcher,
+            syncing: bool,
+            lock: ref Lock
+        ): Future[void]
+
         addBlock*: proc (
             newBlock: SketchyBlock,
             sketcher: Sketcher,
             syncing: bool
         ): Future[void]
 
+        addBlockByHeaderInternal*: proc (
+            header: BlockHeader,
+            syncing: bool,
+            lock: ref Lock
+        ): Future[void]
+
         addBlockByHeader*: proc (
             header: BlockHeader,
             syncing: bool
+        ): Future[void]
+
+        addBlockByHashInternal*: proc (
+            hash: Hash[256],
+            syncing: bool,
+            lock: ref Lock
         ): Future[void]
 
         addBlockByHash*: proc (
