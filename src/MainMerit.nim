@@ -130,12 +130,14 @@ proc mainMerit() {.forceCheck: [].} =
             var
                 newBlock: Block
                 elements: seq[BlockElement]
+                verified: bool = false
             try:
                 (newBlock, elements) = await network.sync(
                     merit.state,
                     sketchyBlock,
                     sketcher
                 )
+                verified = true
             except ValueError as e:
                 raise e
             except DataMissing as e:
@@ -143,8 +145,9 @@ proc mainMerit() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
             finally:
-                lockedBlock = Hash[256]()
-                release(lock[])
+                if not verified:
+                    lockedBlock = Hash[256]()
+                    release(lock[])
 
             #Add every Verification Packet.
             for packet in newBlock.body.packets:
@@ -215,6 +218,9 @@ proc mainMerit() {.forceCheck: [].} =
                 doAssert(false, "Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
             echo "Successfully added the Block."
+
+            lockedBlock = Hash[256]()
+            release(lock[])
 
             if not syncing:
                 #Broadcast the Block.
