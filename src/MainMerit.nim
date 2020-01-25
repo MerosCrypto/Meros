@@ -417,6 +417,7 @@ proc mainMerit() {.forceCheck: [].} =
             finally:
                 lockedBlock = Hash[256]()
                 release(lock[])
+            lockedBlock = sketchyBlock.data.header.hash
 
             try:
                 await functions.merit.addBlockInternal(sketchyBlock, @[], syncing, lock)
