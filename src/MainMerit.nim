@@ -107,6 +107,12 @@ proc mainMerit() {.forceCheck: [].} =
         ], async.} =
             while true:
                 if tryAcquire(lock[]):
+                    if lockedBlock != Hash[256]():
+                        release(lock[])
+                        try:
+                            await sleepAsync(50)
+                        except Exception as e:
+                            doAssert(false, "Failed to complete an async sleep: " & e.msg)
                     break
 
                 try:

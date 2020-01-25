@@ -117,7 +117,7 @@ proc newNetwork*(
                 except DataMissing as e:
                     raise newException(ClientError, "Client sent us a tail which failed to fully sync: " & e.msg)
                 except DataExists as e:
-                    doAssert(false, "Syncing and adding a tail we didn't have threw a DataExists error: " & e.msg)
+                    return
                 except NotConnected:
                     return
                 except Exception as e:
