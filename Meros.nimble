@@ -26,8 +26,10 @@ requires "stint"
 requires "nimcrypto"
 requires "normalize"
 
-#Procedures
-proc gatherTestFiles(dir: string): seq[string] =
+#Procedures.
+proc gatherTestFiles(
+    dir: string
+): seq[string] =
     var files: seq[string] = newSeq[string]()
     for d in listDirs(dir):
         for f in gatherTestFiles(d):
@@ -38,7 +40,9 @@ proc gatherTestFiles(dir: string): seq[string] =
             files.add(f)
     return files
 
-proc nimbleExec(command: string) =
+proc nimbleExec(
+    command: string
+) =
     let nimbleExe: string = system.findExe("nimble")
     if nimbleExe == "":
         echo "Failed to find executable `nimble`."
@@ -46,7 +50,9 @@ proc nimbleExec(command: string) =
 
     exec nimbleExe & " " & command
 
-proc nimExec(command: string) =
+proc nimExec(
+    command: string
+) =
     let nimExe: string = system.findExe("nim")
     if nimExe == "":
         echo "Failed to find executable `nim`."
@@ -59,7 +65,7 @@ let
     testWorkingDir: string = buildDir / "tests"
     testsDir: string = thisDir() / "tests"
 
-#Tasks
+#Tasks.
 task clean, "Clean all build files.":
     rmDir projectDir() / "build"
 
@@ -70,7 +76,7 @@ task install, "Install Meros.":
     setCommand "nop"
 
 task unit, "Run unit tests.":
-    # Gather parameters to pass to `nim c -r ...`
+    #Gather parameters to pass to `nim c -r ...`.
     var additionalParams: seq[string] = newSeq[string]()
     for i in countdown(system.paramCount(), 1):
         var v: string = system.paramStr(i)
@@ -107,7 +113,7 @@ task unit, "Run unit tests.":
     nimExec "c -r " & allTestsFile & " " & params
 
 task e2e, "Run end-to-end tests.":
-    #TODO: setup and run `PythonTests`
+    #TODO: setup and run `PythonTests`.
     echo "Not yet implemented."
 
 task test, "Run all tests.":

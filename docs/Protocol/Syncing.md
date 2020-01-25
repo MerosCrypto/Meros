@@ -1,49 +1,8 @@
 # Syncing
 
-Syncing is a state between two nodes where one needs to catch up. To initiate syncing, the node missing data (the "syncer") sends `Syncing`. In response, the node which received `Syncing` (the "syncee") sends `SyncingAcknowledged`. `SyncingAcknowledged` exists so the syncer doesn't confuse normal network traffic with responses to the data it requests to sync.
+### Syncing
 
-During syncing, the syncer can only send:
-
-- `Handshake`
-
-- `PeersRequest`
-- `BlockListRequest`
-
-- `CheckpointRequest`
-- `BlockHeaderRequest`
-- `BlockBodyRequest`
-- `SketchHashesRequest`
-- `SketchHashRequests`
-- `TransactionRequest`
-
-- `SyncingOver`
-
-The syncee can only send:
-
-- `BlockchainTail`
-
-- `Peers`
-- `BlockList`
-
-- `DataMissing`
-
-- `Claim`
-- `Send`
-- `Data`
-- `Lock`
-- `Unlock`
-
-- `Checkpoint`
-- `BlockHeader`
-- `BlockBody`
-- `SketchHashes`
-- `VerificationPacket`
-
-The syncee only sends messages in direct response to a request from the syncer.
-
-### Syncing and SyncingAcknowledged
-
-Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After receiving `SyncingAcknowledged`, the syncer may send requests for missing data, one at a time. Sending multiple requests before receiving a response to the first request will lead to undefined behavior.
+`Syncing` is described in the Handshake documentation.
 
 ### PeersRequest and Peers
 
@@ -83,6 +42,5 @@ Both `Syncing` and `SyncingAcknowledged` have a message length of 0. After recei
 
 ### Violations in Meros
 
-- Meros doesn't support the `PeersRequest` and `Peers` message types.
 - Meros doesn't support the `BlockListRequest` forwards mode.
 - Meros doesn't support the `CheckpointRequest` message type.
