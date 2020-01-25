@@ -60,7 +60,7 @@ proc syncPeers*(
             raise newException(ClientError, "Client didn't respond with Peers to our PeersRequest.")
 
         #Add the peer.
-        for p in countup(0, msg.message.len - 1, IP_LEN + PORT_LEN):
+        for p in countup(1, msg.message.len - 1, IP_LEN + PORT_LEN):
             result.add((
                 ip: msg.message[p ..< p + IP_LEN],
                 port: msg.message[p + IP_LEN ..< p + IP_LEN + PORT_LEN].fromBinary()
