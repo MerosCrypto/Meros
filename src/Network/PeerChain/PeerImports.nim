@@ -36,10 +36,10 @@ import ../Serialize/Merit/ParseBlockBody
 #Network objects.
 import ../objects/MessageObj
 import ../objects/SketchyBlockObj
-import ../objects/ClientObj
+import ../objects/PeerObj
 
-#Export the Client object.
-export ClientObj
+#Export the Peer object.
+export PeerObj
 
 #Algorithm standard lib.
 import algorithm

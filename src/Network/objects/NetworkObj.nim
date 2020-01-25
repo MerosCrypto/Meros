@@ -4,8 +4,8 @@ import ../../lib/Errors
 #Global Function Box object.
 import ../../objects/GlobalFunctionBoxObj
 
-#Import the Clients object.
-import ClientsObj
+#Import the Peers object.
+import PeersObj
 
 #Network Function Box.
 import NetworkLibFunctionBoxObj
@@ -21,8 +21,8 @@ type Network* = ref object
     #Server port.
     port*: int
 
-    #Clients.
-    clients*: Clients
+    #Peers.
+    peers*: Peers
     #Server.
     server*: AsyncSocket
     #Network Function Box.
@@ -44,7 +44,7 @@ proc newNetworkObj*(
         protocol: protocol,
         port: port,
 
-        clients: newClients(networkFunctions, server),
+        peers: newPeers(networkFunctions, server),
         networkFunctions: networkFunctions,
         mainFunctions: mainFunctions
     )

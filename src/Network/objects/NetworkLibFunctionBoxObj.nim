@@ -12,9 +12,9 @@ import ../../Database/Merit/Block
 #Transaction lib.
 import ../../Database/Transactions/Transaction
 
-#Message and Client objects.
+#Message and Peer objects.
 import MessageObj
-import ClientObj
+import PeerObj
 
 #Async standard lib.
 import asyncdispatch
@@ -26,7 +26,7 @@ type NetworkLibFunctionBox* = ref object
     getProtocol*: proc (): int {.noSideEffect, raises: [].}
     getPort*: proc (): int {.noSideEffect, raises: [].}
 
-    getClients*: proc (): seq[Client] {.raises: [].}
+    getPeers*: proc (): seq[Peer] {.raises: [].}
 
     getTail*: proc (): Hash[256] {.inline, raises: [].}
 

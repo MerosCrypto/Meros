@@ -468,7 +468,7 @@ proc listen*(
 
     #Accept new connections infinitely.
     while not rpc.server.isClosed():
-        #Add the Client to the seq.
+        #Add the client to the seq.
         #Receive the new client.
         var connection: AsyncSocket
         try:

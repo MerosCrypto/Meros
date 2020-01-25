@@ -34,13 +34,13 @@ import Serialize/Transactions/SerializeData
 #Message object.
 import objects/MessageObj
 
-#Client lib and Clients object.
-import Client
-import objects/ClientsObj
+#Peer lib and Peers object.
+import Peer
+import objects/PeersObj
 
-#Export Client/ClientsObj.
-export Client
-export ClientsObj
+#Export Peer/PeersObj.
+export Peer
+export PeersObj
 
 #Network Function Box.
 import objects/NetworkLibFunctionBoxObj
@@ -63,19 +63,19 @@ import tables
 #String utils standard lib.
 import strutils
 
-#Handle a client.
+#Handle a Peer.
 proc handle(
-    client: Client,
+    peer: Peer,
     networkFunctions: NetworkLibFunctionBox,
     tail: Hash[256]
 ) {.forceCheck: [
-    ClientError
+    PeerError
 ], async.} =
     try:
-        #Simulate a BlockchainTail message to trigger syncing from a newly handshaked client.
+        #Simulate a BlockchainTail message to trigger syncing from a newly handshaked Peer.
         try:
             await networkFunctions.handle(newMessage(
-                client.id,
+                peer.id,
                 MessageType.BlockchainTail,
                 32,
                 tail.toString()
@@ -86,32 +86,32 @@ proc handle(
         #Message loop variable.
         var msg: Message
 
-        #While the client is still connected...
-        while not client.isClosed():
+        #While the Peer is still connected...
+        while not peer.isClosed():
             #Read in a new message.
-            msg = await client.recv()
+            msg = await peer.recv()
 
             #If this was a message changing the sync state, update it and continue.
             if msg.content == MessageType.Syncing:
-                client.remoteSync = true
+                peer.remoteSync = true
 
                 #Send SyncingAcknowledged.
-                await client.send(newMessage(MessageType.SyncingAcknowledged))
+                await peer.send(newMessage(MessageType.SyncingAcknowledged))
 
                 #Handle the syncing messages.
-                while (not client.isClosed()) and client.remoteSync:
+                while (not peer.isClosed()) and peer.remoteSync:
                     #Read in a new message.
-                    msg = await client.recv()
+                    msg = await peer.recv()
 
                     #Switch based off the message type.
                     case msg.content:
                         of MessageType.Handshake:
-                            await client.send(newMessage(MessageType.BlockchainTail, networkFunctions.getTail().toString()))
+                            await peer.send(newMessage(MessageType.BlockchainTail, networkFunctions.getTail().toString()))
 
                         of MessageType.PeersRequest:
                             var
-                                #Clients we have yet to send.
-                                usable: seq[Client] = networkFunctions.getClients()
+                                #Peers we have yet to send.
+                                usable: seq[Peer] = networkFunctions.getPeers()
                                 #Peers we want to send.
                                 peers: int = min(8, usable.len)
                                 #Result to send back.
@@ -119,15 +119,15 @@ proc handle(
 
                             while peers > 0:
                                 if rand(high(usable)) < peers:
-                                    #Skip Clients who aren't servers.
+                                    #Skip Peers who aren't servers.
                                     if not usable[0].server:
                                         usable.del(0)
                                         if peers > usable.len:
                                             dec(peers)
                                         continue
 
-                                    #Skip the Client who sent us this message.
-                                    if usable[0].id == msg.client:
+                                    #Skip the Peer who sent us this message.
+                                    if usable[0].id == msg.peer:
                                         usable.del(0)
                                         if peers > usable.len:
                                             dec(peers)
@@ -137,11 +137,11 @@ proc handle(
                                     res &= usable[0].ip & usable[0].port.toBinary(PORT_LEN)
                                     dec(peers)
 
-                                #Delete this Client from usable.
+                                #Delete this Peer from usable.
                                 usable.del(0)
 
                             #Send the peers.
-                            await client.send(newMessage(MessageType.Peers, char(res.len div (IP_LEN + PORT_LEN)) & res))
+                            await peer.send(newMessage(MessageType.Peers, char(res.len div (IP_LEN + PORT_LEN)) & res))
 
                         of MessageType.BlockListRequest:
                             var
@@ -163,14 +163,14 @@ proc handle(
                                         res &= last.toString()
                                         inc(i)
                                 else:
-                                    raise newException(ClientError, "Client requested an invalid direction for their BlockList.")
+                                    raise newException(PeerError, "Peer requested an invalid direction for their BlockList.")
                             except IndexError:
                                 discard
 
                             if i == -1:
-                                await client.send(newMessage(MessageType.DataMissing))
+                                await peer.send(newMessage(MessageType.DataMissing))
                             else:
-                                await client.send(newMessage(MessageType.BlockList, char(i) & res))
+                                await peer.send(newMessage(MessageType.BlockList, char(i) & res))
 
                         of MessageType.BlockHeaderRequest:
                             var header: BlockHeader
@@ -179,10 +179,10 @@ proc handle(
                             except ValueError as e:
                                 doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
-                                await client.send(newMessage(MessageType.DataMissing))
+                                await peer.send(newMessage(MessageType.DataMissing))
                                 continue
 
-                            await client.send(newMessage(MessageType.BlockHeader, header.serialize()))
+                            await peer.send(newMessage(MessageType.BlockHeader, header.serialize()))
 
                         of MessageType.BlockBodyRequest:
                             var requested: Block
@@ -191,10 +191,10 @@ proc handle(
                             except ValueError as e:
                                 doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
-                                await client.send(newMessage(MessageType.DataMissing))
+                                await peer.send(newMessage(MessageType.DataMissing))
                                 continue
 
-                            await client.send(newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt)))
+                            await peer.send(newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt)))
 
                         of MessageType.SketchHashesRequest:
                             var requested: Block
@@ -203,13 +203,13 @@ proc handle(
                             except ValueError as e:
                                 doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
-                                await client.send(newMessage(MessageType.DataMissing))
+                                await peer.send(newMessage(MessageType.DataMissing))
                                 continue
 
                             var res: string = requested.body.packets.len.toBinary(INT_LEN)
                             for packet in requested.body.packets:
                                 res &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
-                            await client.send(newMessage(MessageType.SketchHashes, res))
+                            await peer.send(newMessage(MessageType.SketchHashes, res))
 
                         of MessageType.SketchHashRequests:
                             var requested: Block
@@ -218,7 +218,7 @@ proc handle(
                             except ValueError as e:
                                 doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
-                                await client.send(newMessage(MessageType.DataMissing))
+                                await peer.send(newMessage(MessageType.DataMissing))
                                 continue
 
                             #Create a Table of the Sketch Hashes.
@@ -228,7 +228,7 @@ proc handle(
 
                             try:
                                 for i in 0 ..< msg.message[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary():
-                                    await client.send(newMessage(
+                                    await peer.send(newMessage(
                                         MessageType.VerificationPacket,
                                         packets[msg.message[
                                             HASH_LEN + INT_LEN + (i * SKETCH_HASH_LEN) ..<
@@ -236,7 +236,7 @@ proc handle(
                                         ]].serialize()
                                     ))
                             except KeyError:
-                                await client.send(newMessage(MessageType.DataMissing))
+                                await peer.send(newMessage(MessageType.DataMissing))
 
                         of MessageType.TransactionRequest:
                             var tx: Transaction
@@ -247,7 +247,7 @@ proc handle(
                             except ValueError as e:
                                 doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                             except IndexError:
-                                await client.send(newMessage(MessageType.DataMissing))
+                                await peer.send(newMessage(MessageType.DataMissing))
                                 continue
 
                             var content: MessageType
@@ -261,27 +261,27 @@ proc handle(
                                 else:
                                     doAssert(false, "Responding with an unsupported Transaction type to a TransactionRequest.")
 
-                            await client.send(newMessage(content, tx.serialize()))
+                            await peer.send(newMessage(content, tx.serialize()))
 
                         of MessageType.SyncingOver:
-                            client.remoteSync = false
+                            peer.remoteSync = false
 
                         else:
-                            raise newException(ClientError, "Client sent a message which can't be sent during syncing during syncing.")
+                            raise newException(PeerError, "Peer sent a message which can't be sent during syncing during syncing.")
             else:
                 #Handle our new message.
                 try:
                     await networkFunctions.handle(msg)
                 except Spam:
                     continue
-    except ClientError as e:
+    except PeerError as e:
         raise e
     except Exception as e:
         doAssert(false, "Receiving/sending/handling a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Add a new Client from a Socket.
+#Add a new Peer from a Socket.
 proc add*(
-    clients: Clients,
+    peers: Peers,
     server: bool,
     port: int,
     socket: AsyncSocket,
@@ -317,95 +317,95 @@ proc add*(
         doAssert(false, "IP contained an invalid integer: " & e.msg)
 
     if not networkFunctions.allowRepeatConnections():
-        #If the Client is already connected, close the socket and return.
-        if clients.connected.contains(ip):
+        #If the Peer is already connected, close the socket and return.
+        if peers.connected.contains(ip):
             try:
                 socket.close()
             except Exception as e:
                 doAssert(false, "Failed to close a socket: " & e.msg)
             return
 
-    #Create the Client.
-    var client: Client = newClient(
+    #Create the Peer.
+    var peer: Peer = newPeer(
         ip,
-        clients.count,
+        peers.count,
         socket
     )
-    #Increase the count so the next client has an unique ID.
-    inc(clients.count)
+    #Increase the count so the next Peer has an unique ID.
+    inc(peers.count)
 
-    #Handshake with the Client.
+    #Handshake with the Peer.
     var tail: Hash[256]
     try:
-        tail = await client.handshake(
+        tail = await peer.handshake(
             networkFunctions.getNetworkID(),
             networkFunctions.getProtocol(),
             server,
             port,
             networkFunctions.getTail()
         )
-    except ClientError:
-        client.close()
+    except PeerError:
+        peer.close()
         return
     except Exception as e:
         doAssert(false, "Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    #Add the new Client to Clients.
-    clients.add(client)
+    #Add the new Peer to Peers.
+    peers.add(peer)
 
     #Handle it.
     try:
-        await client.handle(networkFunctions, tail)
-    #If an IndexError happened, we couldn't get the Client to reply to them.
+        await peer.handle(networkFunctions, tail)
+    #If an IndexError happened, we couldn't get the Peer to reply to them.
     #This means something else disconnected and removed them.
     except IndexError:
         #Disconnect them again to be safe.
-        clients.disconnect(client.id)
-    except ClientError:
-        clients.disconnect(client.id)
+        peers.disconnect(peer.id)
+    except PeerError:
+        peers.disconnect(peer.id)
     except Exception as e:
-        doAssert(false, "Handling a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        doAssert(false, "Handling a Peer threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 #Reply to a message.
 proc reply*(
-    clients: Clients,
+    peers: Peers,
     msg: Message,
     res: Message
 ) {.forceCheck: [
     IndexError
 ], async.} =
-    #Get the client.
-    var client: Client
+    #Get the Peer.
+    var peer: Peer
     try:
-        client = clients[msg.client]
+        peer = peers[msg.peer]
     except IndexError as e:
         raise e
 
     #Try to send the message.
     try:
-        await client.send(res)
-    #If that failed, disconnect the client.
-    except ClientError:
-        clients.disconnect(client.id)
+        await peer.send(res)
+    #If that failed, disconnect the Peer.
+    except PeerError:
+        peers.disconnect(peer.id)
     except Exception as e:
         doAssert(false, "Replying to a message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-#Broadcast a message to all clients.
+#Broadcast a message to our Peers.
 proc broadcast*(
-    clients: Clients,
+    peers: Peers,
     msg: Message
 ) {.forceCheck: [], async.} =
-    if clients.clients.len == 0:
+    if peers.peers.len == 0:
         return
 
     var
-        #Clients we need to broadcast to.
+        #Peers we need to broadcast to.
         req: int = max(
-            min(clients.clients.len, 3),
-            int(ceil(sqrt(float(clients.clients.len))))
+            min(peers.peers.len, 3),
+            int(ceil(sqrt(float(peers.peers.len))))
         )
-        #Clients we have yet to handle.
-        usable: seq[Client] = clients.clients
+        #Peers we have yet to handle.
+        usable: seq[Peer] = peers.peers
 
     while req > 0:
         if usable[0].remoteSync or (usable[0].syncLevels != 0):
@@ -415,8 +415,8 @@ proc broadcast*(
             continue
 
         if rand(high(usable)) < req:
-            #Skip the Client who sent us this message.
-            if usable[0].id == msg.client:
+            #Skip the Peer who sent us this message.
+            if usable[0].id == msg.peer:
                 usable.del(0)
                 if req > usable.len:
                     dec(req)
@@ -426,11 +426,11 @@ proc broadcast*(
             try:
                 await usable[0].send(msg)
                 dec(req)
-            #If that failed, mark the Client for disconnection.
-            except ClientError:
-                clients.disconnect(usable[0].id)
+            #If that failed, mark the Peer for disconnection.
+            except PeerError:
+                peers.disconnect(usable[0].id)
             except Exception as e:
-                doAssert(false, "Broadcasting a message to a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                doAssert(false, "Broadcasting a message to a Peer threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-        #Delete this Client from usable.
+        #Delete this Peer from usable.
         usable.del(0)

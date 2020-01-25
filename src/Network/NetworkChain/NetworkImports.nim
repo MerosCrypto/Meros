@@ -47,9 +47,9 @@ export NetworkObj
 #Network Function Box.
 import ../objects/NetworkLibFunctionBoxObj
 
-#Clients library.
-import ../Clients
-export Clients.Client
+#Peers library.
+import ../Peers
+export Peers.Peer
 
 #Networking standard libs.
 import asyncdispatch, asyncnet

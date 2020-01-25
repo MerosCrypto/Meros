@@ -51,7 +51,7 @@ type
 
     #Message object.
     Message* = object
-        client*: int
+        peer*: int
         content*: MessageType
         len*: int
         message*: string
@@ -103,13 +103,13 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
 
 #Constructor for incoming data.
 func newMessage*(
-    client: int,
+    peer: int,
     content: MessageType,
     len: int,
     message: string
 ): Message {.inline, forceCheck: [].} =
     Message(
-        client: client,
+        peer: peer,
         content: content,
         len: len,
         message: message
@@ -121,7 +121,7 @@ func newMessage*(
     message: string = ""
 ): Message {.inline, forceCheck: [].} =
     Message(
-        client: 0,
+        peer: 0,
         content: content,
         len: message.len,
         message: message

@@ -7,8 +7,8 @@ import ../../lib/Util
 #Socket standard lib.
 import asyncnet
 
-#Client object.
-type Client* = ref object
+#Peer object.
+type Peer* = ref object
     #IP.
     ip*: string
     #Server who can accept connections.
@@ -18,27 +18,20 @@ type Client* = ref object
 
     #ID.
     id*: int
-    #Are we syncing? Every sync process adds one, removing one as it terminates.
-    syncLevels*: int
-    #Do we have a pending sync request?
-    pendingSyncRequest*: bool
-    #Whether or not the client is syncing.
-    remoteSync*: bool
-    #Whether or not they started syncing when we started syncing.
-    syncedSameTime*: bool
     #Time of their last message.
     last*: uint32
 
-    #Socket.
-    socket*: AsyncSocket
+    #Sockets.
+    live*: AsyncSocket
+    sync*: AsyncSocket
 
 #Constructor.
-func newClient*(
+func newPeer*(
     ip: string,
     id: int,
     socket: AsyncSocket
-): Client {.inline, forceCheck: [].} =
-    Client(
+): Peer {.inline, forceCheck: [].} =
+    Peer(
         ip: ip,
         server: false,
         port: -1,
@@ -53,17 +46,17 @@ func newClient*(
         socket: socket
     )
 
-#Check if a Client is closed.
+#Check if a Peer is closed.
 func isClosed*(
-    client: Client
+    peer: Peer
 ): bool {.inline, forceCheck: [].} =
-    client.socket.isClosed()
+    peer.socket.isClosed()
 
-#Close a Client.
+#Close a Peer.
 proc close*(
-    client: Client
+    peer: Peer
 ) {.forceCheck: [].} =
     try:
-        client.socket.close()
+        peer.socket.close()
     except Exception:
         discard

@@ -46,7 +46,7 @@ proc module*(
 
                 try:
                     await functions.network.connect(params[0].getStr(), params[1].getInt())
-                except ClientError:
+                except PeerError:
                     raise newJSONRPCError(-6, "Couldn't connect")
                 except Exception as e:
                     doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)

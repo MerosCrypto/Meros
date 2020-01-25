@@ -8,7 +8,7 @@ Once https://github.com/nim-lang/Nim/issues/12530 is fixed, the following code b
     if synced:
         return
 
-#If we exited the loop, we failed to sync the body from every client.
+#If we exited the loop, we failed to sync the body from every Peer.
 raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
 ]#
 
@@ -17,21 +17,21 @@ proc requestPeers*(
     network: Network,
     seeds: seq[tuple[ip: string, port: int]]
 ): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [], async.} =
-    if network.clients.clients.len == 0:
+    if network.peers.peers.len == 0:
         return seeds
 
     var ips: HashSet[string] = initHashSet[string]()
-    for client in network.clients.notSyncing:
+    for peer in network.peers.notSyncing:
         try:
             #Start syncing.
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
+                await peer.startSyncing()
+            except UnsyncablePeerError:
                 continue
 
             #Request peers.
             var
-                peers: seq[tuple[ip: string, port: int]] = await client.syncPeers()
+                peers: seq[tuple[ip: string, port: int]] = await peer.syncPeers()
                 p: int = 0
             while p < peers.len:
                 if ips.contains(peers[p].ip):
@@ -51,13 +51,13 @@ proc requestPeers*(
                 inc(p)
 
             #Stop syncing.
-            await client.stopSyncing()
+            await peer.stopSyncing()
 
             #Break if we got enough peers.
             if peers.len > 8:
                 break
-        except ClientError:
-            network.clients.disconnect(client.id)
+        except PeerError:
+            network.peers.disconnect(peer.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing peers threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -70,25 +70,25 @@ proc requestTransaction*(
     DataMissing
 ], async.} =
     var synced: bool = false
-    for client in network.clients.notSyncing:
+    for peer in network.peers.notSyncing:
         try:
             #Start syncing.
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
+                await peer.startSyncing()
+            except UnsyncablePeerError:
                 continue
 
             #Get the Transaction.
             try:
-                result = await client.syncTransaction(hash, Hash[256](), Hash[256]())
+                result = await peer.syncTransaction(hash, Hash[256](), Hash[256]())
                 synced = true
             except DataMissing:
                 discard
 
             #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
+            await peer.stopSyncing()
+        except PeerError:
+            network.peers.disconnect(peer.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -111,25 +111,25 @@ proc requestVerificationPackets(
     DataMissing
 ], async.} =
     var synced: bool = false
-    for client in network.clients.notSyncing:
+    for peer in network.peers.notSyncing:
         try:
             #Start syncing.
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
+                await peer.startSyncing()
+            except UnsyncablePeerError:
                 continue
 
             #Get the VerificationPacket.
             try:
-                result = await client.syncVerificationPackets(blockHash, sketchHashes, sketchSalt)
+                result = await peer.syncVerificationPackets(blockHash, sketchHashes, sketchSalt)
                 synced = true
             except DataMissing:
                 discard
 
             #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
+            await peer.stopSyncing()
+        except PeerError:
+            network.peers.disconnect(peer.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing Verification Packets threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -151,25 +151,25 @@ proc requestSketchHashes(
     DataMissing
 ], async.} =
     var synced: bool = false
-    for client in network.clients.notSyncing:
+    for peer in network.peers.notSyncing:
         try:
             #Start syncing.
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
+                await peer.startSyncing()
+            except UnsyncablePeerError:
                 continue
 
             #Get the SketchHash.
             try:
-                result = await client.syncSketchHashes(hash, sketchCheck)
+                result = await peer.syncSketchHashes(hash, sketchCheck)
                 synced = true
             except DataMissing:
                 discard
 
             #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
+            await peer.stopSyncing()
+        except PeerError:
+            network.peers.disconnect(peer.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing Sketch Hashes threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -304,7 +304,7 @@ proc sync*(
             try:
                 transactions[tx] = await network.requestTransaction(tx)
             except DataMissing:
-                #Since we did not get this Transaction, this Block is trying to archive unknown Verification OR we just don't have a proper client set.
+                #Since we did not get this Transaction, this Block is trying to archive unknown Verification OR we just don't have a proper Peer set.
                 #The first is assumed.
                 raise newException(ValueError, "Block tries to archive unknown Verifications.")
             except Exception as e:
@@ -513,25 +513,25 @@ proc requestBlockBody*(
     DataMissing
 ], async.} =
     var synced: bool = false
-    for client in network.clients.notSyncing:
+    for peer in network.peers.notSyncing:
         try:
             #Start syncing.
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
+                await peer.startSyncing()
+            except UnsyncablePeerError:
                 continue
 
             #Get the BlockBody.
             try:
-                result = await client.syncBlockBody(hash)
+                result = await peer.syncBlockBody(hash)
                 synced = true
             except DataMissing:
                 discard
 
             #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
+            await peer.stopSyncing()
+        except PeerError:
+            network.peers.disconnect(peer.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing a BlockBody threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -552,25 +552,25 @@ proc requestBlockHeader*(
     DataMissing
 ], async.} =
     var synced: bool = false
-    for client in network.clients.notSyncing:
+    for peer in network.peers.notSyncing:
         try:
             #Start syncing.
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
+                await peer.startSyncing()
+            except UnsyncablePeerError:
                 continue
 
             #Get the BlockHeader.
             try:
-                result = await client.syncBlockHeader(hash)
+                result = await peer.syncBlockHeader(hash)
                 synced = true
             except DataMissing:
                 discard
 
             #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
+            await peer.stopSyncing()
+        except PeerError:
+            network.peers.disconnect(peer.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing a BlockHeader threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -593,25 +593,25 @@ proc requestBlockList*(
     DataMissing
 ], async.} =
     var synced: bool = false
-    for client in network.clients.notSyncing:
+    for peer in network.peers.notSyncing:
         try:
             #Start syncing.
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
+                await peer.startSyncing()
+            except UnsyncablePeerError:
                 continue
 
             #Get the Block List.
             try:
-                result = await client.syncBlockList(forwards, amount, hash)
+                result = await peer.syncBlockList(forwards, amount, hash)
                 synced = true
             except DataMissing:
                 discard
 
             #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
+            await peer.stopSyncing()
+        except PeerError:
+            network.peers.disconnect(peer.id)
             continue
         except Exception as e:
             doAssert(false, "Syncing a Block List threw an Exception despite catching all thrown Exceptions: " & e.msg)

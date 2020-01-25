@@ -1,30 +1,30 @@
-include ClientImports
+include PeerImports
 
 #Send a message.
 proc send*(
-    client: Client,
+    peer: Peer,
     msg: Message
 ) {.forceCheck: [
-    ClientError
+    PeerError
 ], async.} =
-    #Make sure the client is open.
-    if not client.socket.isClosed():
+    #Make sure the Peer is open.
+    if not peer.socket.isClosed():
         try:
-            await client.socket.send(msg.toString())
+            await peer.socket.send(msg.toString())
         except Exception as e:
-            raise newException(ClientError, "Couldn't send to a Client: " & e.msg)
+            raise newException(PeerError, "Couldn't send to a Peer: " & e.msg)
     #If it isn't, raise an Error.
     else:
-        raise newException(ClientError, "Client was closed.")
+        raise newException(PeerError, "Peer was closed.")
 
 #Receive a message.
 proc recv*(
-    client: Client
+    peer: Peer
 ): Future[Message] {.forceCheck: [
-    ClientError
+    PeerError
 ], async.} =
-    if client.syncedSameTime:
-        client.syncedSameTime = false
+    if peer.syncedSameTime:
+        peer.syncedSameTime = false
         return newMessage(MessageType.Syncing)
 
     var
@@ -34,17 +34,17 @@ proc recv*(
 
     #Receive the content type.
     try:
-        msg = await client.socket.recv(1)
+        msg = await peer.socket.recv(1)
     except Exception as e:
-        raise newException(ClientError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+        raise newException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
 
-    #If the message length is 0, because the client disconnected...
+    #If the message length is 0, because the Peer disconnected...
     if msg.len == 0:
-        raise newException(ClientError, "Client disconnected.")
+        raise newException(PeerError, "Peer disconnected.")
 
     #Make sure the content is valid.
     if not (int(msg[0]) < int(MessageType.End)):
-        raise newException(ClientError, "Client sent an invalid Message Type: " & $int(msg[0]))
+        raise newException(PeerError, "Peer sent an invalid Message Type: " & $int(msg[0]))
 
     #Extract the content.
     content = MessageType(msg[0])
@@ -90,7 +90,7 @@ proc recv*(
                             MERIT_REMOVAL_PREFIX
                         )
                     except ValueError as e:
-                        raise newException(ClientError, e.msg)
+                        raise newException(PeerError, e.msg)
 
                 of MessageType.BlockHeader:
                     if int(msg[^1]) == 1:
@@ -98,33 +98,33 @@ proc recv*(
                     elif int(msg[^1]) == 0:
                         len = NICKNAME_LEN
                     else:
-                        raise newException(ClientError, "Client sent us a Blockheader with an invalid new miner.")
+                        raise newException(PeerError, "Peer sent us a Blockheader with an invalid new miner.")
 
                 of MessageType.BlockBody:
                     for _ in 0 ..< msg[msg.len - INT_LEN ..< msg.len].fromBinary():
                         len += BYTE_LEN
                         try:
-                            msg &= await client.socket.recv(len)
+                            msg &= await peer.socket.recv(len)
                         except Exception as e:
-                            raise newException(ClientError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+                            raise newException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                         size += len
                         if msg.len != size:
-                            raise newException(ClientError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
+                            raise newException(PeerError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
                         try:
                             len = BLOCK_ELEMENT_SET.getLength(msg[^1])
                         except ValueError as e:
-                            raise newException(ClientError, e.msg)
+                            raise newException(PeerError, e.msg)
 
                         if int(msg[^1]) == MERIT_REMOVAL_PREFIX:
                             for _ in 0 ..< 2:
                                 try:
-                                    msg &= await client.socket.recv(len)
+                                    msg &= await peer.socket.recv(len)
                                 except Exception as e:
-                                    raise newException(ClientError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+                                    raise newException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
                                 size += len
                                 if msg.len != size:
-                                    raise newException(ClientError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
+                                    raise newException(PeerError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
                                 var elemI: int = msg.len - 1
                                 len = 0
@@ -143,7 +143,7 @@ proc recv*(
                                         MERIT_REMOVAL_PREFIX
                                     )
                                 except ValueError as e:
-                                    raise newException(ClientError, e.msg)
+                                    raise newException(PeerError, e.msg)
                             dec(len)
 
                 else:
@@ -151,22 +151,22 @@ proc recv*(
 
         #Recv the data.
         try:
-            msg &= await client.socket.recv(len)
+            msg &= await peer.socket.recv(len)
         except Exception as e:
-            raise newException(ClientError, "Receiving from the Client's socket threw an Exception: " & e.msg)
+            raise newException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
 
         #Add the length to the size and verify the size.
         size += len
         if msg.len != size:
-            raise newException(ClientError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
+            raise newException(PeerError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
     #Create a proper Message to be returned.
     result = newMessage(
-        client.id,
+        peer.id,
         content,
         size,
         msg
     )
 
     #Update the time of their last message.
-    client.last = getTime()
+    peer.last = getTime()

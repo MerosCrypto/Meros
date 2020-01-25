@@ -7,9 +7,9 @@ proc broadcast*(
     msg: Message
 ) {.forceCheck: [], async.} =
     try:
-        await network.clients.broadcast(msg)
+        await network.peers.broadcast(msg)
     except Exception as e:
-        doAssert(false, "Clients.broadcast(Message) threw an Exception not naturally throwing any Exception: " & e.msg)
+        doAssert(false, "Peers.broadcast(Message) threw an Exception not naturally throwing any Exception: " & e.msg)
 
 #Reply to a message.
 proc reply*(
@@ -20,11 +20,11 @@ proc reply*(
     IndexError
 ], async.} =
     try:
-        await network.clients.reply(msg, res)
+        await network.peers.reply(msg, res)
     except IndexError as e:
         raise e
     except Exception as e:
-        doAssert(false, "Clients.reply(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
+        doAssert(false, "Peers.reply(Message, Message) threw an Exception not naturally throwing any Exception: " & e.msg)
 
 #Constructor.
 proc newNetwork*(
@@ -59,8 +59,8 @@ proc newNetwork*(
     result.networkFunctions.getPort = func (): int {.forceCheck: [].} =
         port
 
-    result.networkFunctions.getClients = proc (): seq[Client] {.forceCheck: [].} =
-        network.clients.clients
+    result.networkFunctions.getPeers = proc (): seq[Peer] {.forceCheck: [].} =
+        network.peers.peers
 
     result.networkFunctions.getTail = mainFunctions.merit.getTail
     result.networkFunctions.getBlockHashBefore = mainFunctions.merit.getBlockHashBefore
@@ -72,14 +72,14 @@ proc newNetwork*(
     result.networkFunctions.handle = proc (
         msg: Message
     ) {.forceCheck: [
-        ClientError,
+        PeerError,
         Spam
     ], async.} =
         #Handle the message.
         case msg.content:
             of MessageType.Handshake:
                 try:
-                    await network.clients.reply(
+                    await network.peers.reply(
                         msg,
                         newMessage(
                             MessageType.BlockchainTail,
@@ -87,14 +87,14 @@ proc newNetwork*(
                         )
                     )
                 except IndexError:
-                    raise newException(ClientError, "Couldn't respond to a Handshake sent as a keep-alive message.")
+                    raise newException(PeerError, "Couldn't respond to a Handshake sent as a keep-alive message.")
                 except Exception as e:
                     doAssert(false, "Replying `Handshake` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 #Create an artificial BlockchainTail message.
                 try:
                     await network.networkFunctions.handle(newMessage(MessageType.BlockchainTail, msg.message[5 ..< 37]))
-                except ClientError as e:
+                except PeerError as e:
                     raise e
                 except Spam as e:
                     doAssert(false, "BlockchainTail message raised a Spam exception: " & e.msg)
@@ -113,7 +113,7 @@ proc newNetwork*(
                 try:
                     await mainFunctions.merit.addBlockByHash(tail, true)
                 except ValueError as e:
-                    raise newException(ClientError, "Client sent us a tail which failed to add due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Peer sent us a tail which failed to add due to a ValueError: " & e.msg)
                 except DataMissing, DataExists, NotConnected:
                     return
                 except Exception as e:
@@ -128,12 +128,12 @@ proc newNetwork*(
                 try:
                     claim = msg.message.parseClaim()
                 except ValueError as e:
-                    raise newException(ClientError, "Claim contained an invalid Signature: " & e.msg)
+                    raise newException(PeerError, "Claim contained an invalid Signature: " & e.msg)
 
                 try:
                     mainFunctions.transactions.addClaim(claim)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the Claim failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the Claim failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -142,14 +142,14 @@ proc newNetwork*(
                 try:
                     send = msg.message.parseSend(network.mainFunctions.consensus.getSendDifficulty())
                 except ValueError as e:
-                    raise newException(ClientError, "Send contained an invalid Signature: " & e.msg)
+                    raise newException(PeerError, "Send contained an invalid Signature: " & e.msg)
                 except Spam as e:
                     raise e
 
                 try:
                     mainFunctions.transactions.addSend(send)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the Send failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the Send failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -158,14 +158,14 @@ proc newNetwork*(
                 try:
                     data = msg.message.parseData(network.mainFunctions.consensus.getDataDifficulty())
                 except ValueError as e:
-                    raise newException(ClientError, "Parsing the Data failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Parsing the Data failed due to a ValueError: " & e.msg)
                 except Spam as e:
                     raise e
 
                 try:
                     mainFunctions.transactions.addData(data)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the Data failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the Data failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -174,12 +174,12 @@ proc newNetwork*(
                 try:
                     verif = msg.message.parseSignedVerification()
                 except ValueError as e:
-                    raise newException(ClientError, "SignedVerification didn't contain a valid signature: " & e.msg)
+                    raise newException(PeerError, "SignedVerification didn't contain a valid signature: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedVerification(verif)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the SignedVerification failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -188,12 +188,12 @@ proc newNetwork*(
                 try:
                     sendDiff = msg.message.parseSignedSendDifficulty()
                 except ValueError as e:
-                    raise newException(ClientError, "SignedSendDifficulty didn't contain a valid signature: " & e.msg)
+                    raise newException(PeerError, "SignedSendDifficulty didn't contain a valid signature: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedSendDifficulty(sendDiff)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the SignedSendDifficulty failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the SignedSendDifficulty failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -202,12 +202,12 @@ proc newNetwork*(
                 try:
                     dataDiff = msg.message.parseSignedDataDifficulty()
                 except ValueError as e:
-                    raise newException(ClientError, "SignedDataDifficulty didn't contain a valid signature: " & e.msg)
+                    raise newException(PeerError, "SignedDataDifficulty didn't contain a valid signature: " & e.msg)
 
                 try:
                     mainFunctions.consensus.addSignedDataDifficulty(dataDiff)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the SignedDataDifficulty failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the SignedDataDifficulty failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
 
@@ -216,12 +216,12 @@ proc newNetwork*(
                 try:
                     mr = msg.message.parseSignedMeritRemoval()
                 except ValueError as e:
-                    raise newException(ClientError, "Parsing the SignedMeritRemoval failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Parsing the SignedMeritRemoval failed due to a ValueError: " & e.msg)
 
                 try:
                     await mainFunctions.consensus.addSignedMeritRemoval(mr)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the SignedMeritRemoval failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the SignedMeritRemoval failed due to a ValueError: " & e.msg)
                 except DataExists:
                     return
                 except Exception as e:
@@ -232,12 +232,12 @@ proc newNetwork*(
                 try:
                     header = msg.message.parseBlockHeader()
                 except ValueError as e:
-                    raise newException(ClientError, "Block didn't contain a valid hash: " & e.msg)
+                    raise newException(PeerError, "Block didn't contain a valid hash: " & e.msg)
 
                 try:
                     await mainFunctions.merit.addBlockByHeader(header, false)
                 except ValueError as e:
-                    raise newException(ClientError, "Adding the Block failed due to a ValueError: " & e.msg)
+                    raise newException(PeerError, "Adding the Block failed due to a ValueError: " & e.msg)
                 except DataMissing, DataExists, NotConnected:
                     return
                 except Exception as e:
@@ -247,7 +247,7 @@ proc newNetwork*(
                 doAssert(false, "Trying to handle a Message of Type End despite explicitly refusing to receive messages of Type End.")
 
             else:
-                raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing: " & $msg.content)
+                raise newException(PeerError, "Peer sent us a message which can only be sent while syncing when neither of us are syncing: " & $msg.content)
 
 #Listen on a port.
 proc listen*(
@@ -281,16 +281,16 @@ proc listen*(
 
     #Accept new connections infinitely.
     while not network.server.isClosed():
-        #Accept a new client.
-        #This is in a try/catch since ending the server while accepting a new Client will throw an Exception.
+        #Accept a new Peer.
+        #This is in a try/catch since ending the server while accepting a new Peer will throw an Exception.
         try:
-            var client: AsyncSocket = await network.server.accept()
+            var peer: AsyncSocket = await network.server.accept()
 
-            #Pass it to Clients.
-            asyncCheck network.clients.add(
+            #Pass it to Peers.
+            asyncCheck network.peers.add(
                 true,
                 network.port,
-                client,
+                peer,
                 network.networkFunctions
             )
         except Exception:
@@ -302,16 +302,16 @@ proc connect*(
     ip: string,
     port: int
 ) {.forceCheck: [
-    ClientError
+    PeerError
 ], async.} =
     #Create the socket.
     var socket: AsyncSocket
     try:
         socket = newAsyncSocket()
     except OSError as e:
-        doAssert(false, "Couldn't create a client socket due to an OSError: " & e.msg)
+        doAssert(false, "Couldn't create a socket due to an OSError: " & e.msg)
     except ValueError as e:
-        doAssert(false, "Couldn't create a client socket due to an ValueError: " & e.msg)
+        doAssert(false, "Couldn't create a socket due to an ValueError: " & e.msg)
     except IOSelectorsException as e:
         doAssert(false, "Failed to create the Network's server socket due to an IOSelectorsException: " & e.msg)
     except Exception as e:
@@ -320,15 +320,15 @@ proc connect*(
     #Connect.
     try:
         await socket.connect(ip, Port(port))
-        #Pass it off to clients.
-        asyncCheck network.clients.add(
+        #Pass it off to Peers.
+        asyncCheck network.peers.add(
             not network.server.isNil,
             network.port,
             socket,
             network.networkFunctions
         )
     except Exception as e:
-        raise newException(ClientError, "Couldn't connect to a node: " & e.msg)
+        raise newException(PeerError, "Couldn't connect to a node: " & e.msg)
 
 #Shutdown all Network operations.
 proc shutdown*(
@@ -340,5 +340,5 @@ proc shutdown*(
     except Exception:
         discard
 
-    #Shutdown the clients.
-    network.clients.shutdown()
+    #Shutdown the Peers.
+    network.peers.shutdown()
