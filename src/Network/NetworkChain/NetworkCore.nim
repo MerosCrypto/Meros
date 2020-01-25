@@ -123,6 +123,10 @@ proc newNetwork*(
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
+            #Can be sent to us even if we aren't syncing if the two nodes start syncing at the same time.
+            of MessageType.SyncingAcknowledged:
+                discard
+
             of MessageType.Claim:
                 var claim: Claim
                 try:
@@ -251,7 +255,7 @@ proc newNetwork*(
                 doAssert(false, "Trying to handle a Message of Type End despite explicitly refusing to receive messages of Type End.")
 
             else:
-                raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing.")
+                raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing: " & $msg.content)
 
 #Listen on a port.
 proc listen*(
