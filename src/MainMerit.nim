@@ -269,6 +269,25 @@ proc mainMerit() {.forceCheck: [].} =
             ValueError,
             DataMissing
         ], async.} =
+            while true:
+                if tryAcquire(blockLock[]):
+                    if lockedBlock != Hash[256]():
+                        release(blockLock[])
+                        try:
+                            await sleepAsync(50)
+                        except Exception as e:
+                            doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                        continue
+                    break
+
+                try:
+                    await sleepAsync(10)
+                except Exception as e:
+                    doAssert(false, "Failed to complete an async sleep: " & e.msg)
+
+            lockedBlock = sketchyBlock.data.header.hash
+            release(blockLock[])
+
             try:
                 await functions.merit.addBlockInternal(sketchyBlock, sketcherArg, syncing, blockLock)
             except ValueError as e:
