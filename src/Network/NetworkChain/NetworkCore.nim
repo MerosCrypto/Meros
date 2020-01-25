@@ -116,7 +116,7 @@ proc newNetwork*(
                     raise newException(ClientError, "Client sent us a tail which failed to add due to a ValueError: " & e.msg)
                 except DataMissing as e:
                     raise newException(ClientError, "Client sent us a tail which failed to fully sync: " & e.msg)
-                except DataExists as e:
+                except DataExists:
                     return
                 except NotConnected:
                     return

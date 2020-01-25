@@ -113,6 +113,7 @@ proc mainMerit() {.forceCheck: [].} =
                             await sleepAsync(50)
                         except Exception as e:
                             doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                        continue
                     break
 
                 try:
@@ -295,6 +296,7 @@ proc mainMerit() {.forceCheck: [].} =
                             await sleepAsync(50)
                         except Exception as e:
                             doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                        continue
                     break
 
                 try:
