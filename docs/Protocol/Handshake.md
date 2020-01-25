@@ -1,6 +1,6 @@
 # Handshake
 
-`Handshake` is sent when two nodes form a new connection. It declares the current connection as the Live socket. It has a message length of 5-bytes; the 1-byte network ID, 1-byte protocol ID, 1-byte supported services, and 2-byte server port.
+`Handshake` is sent when two nodes form a new connection. It declares the current connection as the Live socket. It has a message length of 37-bytes; the 1-byte network ID, 1-byte protocol ID, 1-byte supported services, and 2-byte server port, and the 32-byte sender's Blockchain's tail Block's hash.
 
 The supported services byte uses bit masks to declare support for various functionality.
 
