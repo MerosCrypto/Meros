@@ -395,6 +395,9 @@ proc broadcast*(
     clients: Clients,
     msg: Message
 ) {.forceCheck: [], async.} =
+    if clients.clients.len == 0:
+        return
+
     var
         #Clients we need to broadcast to.
         req: int = max(
@@ -407,6 +410,8 @@ proc broadcast*(
     while req > 0:
         if usable[0].remoteSync or (usable[0].syncLevels != 0):
             usable.del(0)
+            if req > usable.len:
+                dec(req)
             continue
 
         if rand(high(usable)) < req:
