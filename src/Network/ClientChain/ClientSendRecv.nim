@@ -23,6 +23,10 @@ proc recv*(
 ): Future[Message] {.forceCheck: [
     ClientError
 ], async.} =
+    if client.syncedSameTime:
+        client.syncedSameTime = false
+        return newMessage(MessageType.Syncing)
+
     var
         content: MessageType
         size: int

@@ -47,7 +47,8 @@ type
     NotInEpochs*  = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Network Errors.
-    ClientError* = object of Exception #Used when a socket breaks/disconnects/a Client breaks protocol.
+    ClientError* = object of Exception           #Used when a socket breaks/disconnects/a Client breaks protocol.
+    UnsyncableClientError* = object of Exception #Used when a Client isn't syncable for some special reason.
 
     #Network Statuses.
     Spam* = object of Exception #Used when a Send/Data doesn't beat the difficulty.

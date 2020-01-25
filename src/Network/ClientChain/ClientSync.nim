@@ -2,10 +2,10 @@ include ClientHandshake
 
 #Tell the Client we're syncing.
 proc startSyncing*(
-    client: Client,
-    networkFunctions: NetworkLibFunctionBox
+    client: Client
 ) {.forceCheck: [
-    ClientError
+    ClientError,
+    UnsyncableClientError
 ], async.} =
     #Increment syncLevels.
     inc(client.syncLevels)
@@ -26,12 +26,15 @@ proc startSyncing*(
             if getTime() > sentReq + 2:
                 raise newException(ClientError, "Client never responded to the fact we were syncing.")
 
-            try:
-                await networkFunctions.handle(msg)
-            except Spam:
-                discard
+            if msg.content == Syncing:
+                client.syncedSameTime = true
+                await client.send(newMessage(SyncingOver))
+                raise newException(UnsyncableClientError, "They started syncing with us.")
+
             msg = await client.recv()
     except ClientError as e:
+        raise e
+    except UnsyncableClientError as e:
         raise e
     except Exception as e:
         doAssert(false, "Starting Syncing with a Client threw an Exception despite catching all thrown Exceptions: " & e.msg)
