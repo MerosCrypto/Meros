@@ -33,8 +33,9 @@ import ../Database/Transactions/objects/ClaimObj
 import ../Database/Transactions/objects/SendObj
 import ../Database/Transactions/objects/DataObj
 
-#Message and SketchyBlock objects.
+#Network objects.
 import ../Network/objects/MessageObj
+import ../Network/objects/ClientObj
 import ../Network/objects/SketchyBlockObj
 
 #Locks standard lib.
@@ -293,6 +294,8 @@ type
             ip: string,
             port: int
         ): Future[void]
+
+        getPeers*: proc (): seq[Client] {.inline, raises: [].}
 
         broadcast*: proc (
             msgType: MessageType,
