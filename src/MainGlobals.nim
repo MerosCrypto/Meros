@@ -13,9 +13,13 @@ var
 
     #Consensus.
     consensus {.threadvar.}: Consensus
+    smrLock: Lock
 
     #Merit.
     merit {.threadvar.}: Merit
+    blockLock: ref Lock = new(Lock)
+    innerBlockLock: ref Lock = new(Lock)
+    lockedBlock: Hash[256]
 
     #Transactions.
     transactions {.threadvar.}: Transactions
@@ -34,6 +38,9 @@ var
     toRPC: Channel[JSONNode]  #Channel to the RPC from the GUI.
     toGUI: Channel[JSONNode]  #Channel to the GUI from the RPC.
     rpc {.threadvar.}: RPC    #RPC object.
+
+initLock(blockLock[])
+initLock(innerBlockLock[])
 
 case config.network:
     of "mainnet":

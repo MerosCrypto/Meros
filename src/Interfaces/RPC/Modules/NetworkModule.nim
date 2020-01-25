@@ -10,6 +10,9 @@ import ../objects/RPCObj
 #Async standard lib.
 import asyncdispatch
 
+#Async networking standard lib.
+import asyncnet
+
 #Default network port.
 const DEFAULT_PORT {.intdefine.}: int = 5132
 
@@ -47,5 +50,29 @@ proc module*(
                     raise newJSONRPCError(-6, "Couldn't connect")
                 except Exception as e:
                     doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
+
+            #Get the peers we're connected to.
+            "getPeers" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ): Future[void] {.forceCheck: [], async.} =
+                res["result"] = % []
+
+                for client in functions.network.getPeers():
+                    try:
+                        res["result"].add(%* {
+                            "ip": client.socket.getPeerAddr()[0],
+                            "server": client.server
+                        })
+                    except KeyError as e:
+                        doAssert(false, "Couldn't set the result: " & e.msg)
+                    except OSError as e:
+                        doAssert(false, "Couldn't get the peer address from a connected socket: " & e.msg)
+
+                    if client.server:
+                        try:
+                            res["result"]["port"] = % client.port
+                        except KeyError as e:
+                            doAssert(false, "Couldn't add the port the result: " & e.msg)
     except Exception as e:
         doAssert(false, "Couldn't create the Network Module: " & e.msg)

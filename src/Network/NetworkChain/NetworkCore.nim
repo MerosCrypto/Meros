@@ -114,14 +114,14 @@ proc newNetwork*(
                     await mainFunctions.merit.addBlockByHash(tail, true)
                 except ValueError as e:
                     raise newException(ClientError, "Client sent us a tail which failed to add due to a ValueError: " & e.msg)
-                except DataMissing as e:
-                    raise newException(ClientError, "Client sent us a tail which failed to fully sync: " & e.msg)
-                except DataExists as e:
-                    doAssert(false, "Syncing and adding a tail we didn't have threw a DataExists error: " & e.msg)
-                except NotConnected:
+                except DataMissing, DataExists, NotConnected:
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+            #Can be sent to us even if we aren't syncing if the two nodes start syncing at the same time.
+            of MessageType.SyncingAcknowledged:
+                discard
 
             of MessageType.Claim:
                 var claim: Claim
@@ -238,11 +238,7 @@ proc newNetwork*(
                     await mainFunctions.merit.addBlockByHeader(header, false)
                 except ValueError as e:
                     raise newException(ClientError, "Adding the Block failed due to a ValueError: " & e.msg)
-                except DataMissing:
-                    return
-                except DataExists:
-                    return
-                except NotConnected:
+                except DataMissing, DataExists, NotConnected:
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -251,7 +247,7 @@ proc newNetwork*(
                 doAssert(false, "Trying to handle a Message of Type End despite explicitly refusing to receive messages of Type End.")
 
             else:
-                raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing.")
+                raise newException(ClientError, "Client sent us a message which can only be sent while syncing when neither of us are syncing: " & $msg.content)
 
 #Listen on a port.
 proc listen*(

@@ -49,6 +49,7 @@ import ../objects/NetworkLibFunctionBoxObj
 
 #Clients library.
 import ../Clients
+export Clients.Client
 
 #Networking standard libs.
 import asyncdispatch, asyncnet

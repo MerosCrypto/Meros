@@ -45,6 +45,7 @@ from PythonTests.Tests.Consensus.HundredSix.HundredSixMeritRemovalsTest import H
 from PythonTests.Tests.Network.MultipleConnectionsTest import MultipleConnectionsTest
 from PythonTests.Tests.Network.PeersTest import PeersTest
 from PythonTests.Tests.Network.HundredTest import HundredTest
+from PythonTests.Tests.Network.HundredTwentySixTest import HundredTwentySixTest
 
 #Arguments.
 from sys import argv
@@ -101,7 +102,8 @@ tests: List[Callable[[RPC], None]] = [
 
     MultipleConnectionsTest,
     PeersTest,
-    HundredTest
+    HundredTest,
+    HundredTwentySixTest
 ]
 
 #Tests to run.

@@ -37,7 +37,6 @@ import ../Serialize/Merit/ParseBlockBody
 import ../objects/MessageObj
 import ../objects/SketchyBlockObj
 import ../objects/ClientObj
-import ../objects/NetworkLibFunctionBoxObj
 
 #Export the Client object.
 export ClientObj

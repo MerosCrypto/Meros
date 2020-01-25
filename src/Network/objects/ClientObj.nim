@@ -24,6 +24,8 @@ type Client* = ref object
     pendingSyncRequest*: bool
     #Whether or not the client is syncing.
     remoteSync*: bool
+    #Whether or not they started syncing when we started syncing.
+    syncedSameTime*: bool
     #Time of their last message.
     last*: uint32
 
@@ -45,6 +47,7 @@ func newClient*(
         syncLevels: 0,
         pendingSyncRequest: false,
         remoteSync: false,
+        syncedSameTime: false,
         last: 0,
 
         socket: socket

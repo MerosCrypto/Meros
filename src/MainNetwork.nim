@@ -34,6 +34,10 @@ proc mainNetwork() {.forceCheck: [].} =
             except Exception as e:
                 doAssert(false, "Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
+        #Get the peers we're connected to.
+        functions.network.getPeers = proc (): seq[Client] {.inline, forceCheck: [].} =
+            network.clients.clients
+
         #Broadcast a message.
         functions.network.broadcast = proc (
             msgType: MessageType,

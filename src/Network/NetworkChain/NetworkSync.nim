@@ -24,7 +24,10 @@ proc requestPeers*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing(network.networkFunctions)
+            try:
+                await client.startSyncing()
+            except UnsyncableClientError:
+                continue
 
             #Request peers.
             var
@@ -70,7 +73,10 @@ proc requestTransaction*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing(network.networkFunctions)
+            try:
+                await client.startSyncing()
+            except UnsyncableClientError:
+                continue
 
             #Get the Transaction.
             try:
@@ -108,7 +114,10 @@ proc requestVerificationPackets(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing(network.networkFunctions)
+            try:
+                await client.startSyncing()
+            except UnsyncableClientError:
+                continue
 
             #Get the VerificationPacket.
             try:
@@ -145,7 +154,10 @@ proc requestSketchHashes(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing(network.networkFunctions)
+            try:
+                await client.startSyncing()
+            except UnsyncableClientError:
+                continue
 
             #Get the SketchHash.
             try:
@@ -504,7 +516,10 @@ proc requestBlockBody*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing(network.networkFunctions)
+            try:
+                await client.startSyncing()
+            except UnsyncableClientError:
+                continue
 
             #Get the BlockBody.
             try:
@@ -540,7 +555,10 @@ proc requestBlockHeader*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing(network.networkFunctions)
+            try:
+                await client.startSyncing()
+            except UnsyncableClientError:
+                continue
 
             #Get the BlockHeader.
             try:
@@ -578,7 +596,10 @@ proc requestBlockList*(
     for client in network.clients.notSyncing:
         try:
             #Start syncing.
-            await client.startSyncing(network.networkFunctions)
+            try:
+                await client.startSyncing()
+            except UnsyncableClientError:
+                continue
 
             #Get the Block List.
             try:

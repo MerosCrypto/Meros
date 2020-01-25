@@ -57,6 +57,9 @@ import os
 #Thread standard lib.
 import threadpool
 
+#Locks standard lib.
+import locks
+
 #Async standard lib.
 import asyncdispatch
 
