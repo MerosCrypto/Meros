@@ -415,6 +415,7 @@ proc mainMerit() {.forceCheck: [].} =
             except NotConnected as e:
                 raise e
             finally:
+                lockedBlock = Hash[256]()
                 release(lock[])
 
             try:

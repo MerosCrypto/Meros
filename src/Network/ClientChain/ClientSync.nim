@@ -27,6 +27,7 @@ proc startSyncing*(
                 raise newException(ClientError, "Client never responded to the fact we were syncing.")
 
             if msg.content == Syncing:
+                dec(client.syncLevels)
                 client.syncedSameTime = true
                 await client.send(newMessage(SyncingOver))
                 raise newException(UnsyncableClientError, "They started syncing with us.")
