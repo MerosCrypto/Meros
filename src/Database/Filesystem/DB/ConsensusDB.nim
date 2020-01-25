@@ -14,9 +14,11 @@ import ../../../Wallet/MinerWallet
 import ../../Transactions/objects/TransactionObj
 
 #Element objects.
+import ../../Consensus/Elements/objects/VerificationObj
+import ../../Consensus/Elements/objects/VerificationPacketObj
 import ../../Consensus/Elements/objects/SendDifficultyObj
 import ../../Consensus/Elements/objects/DataDifficultyObj
-import ../../Consensus/Elements/objects/MeritRemovalObj
+import ../../Consensus/Elements/MeritRemoval
 
 #TransactionStatus object.
 import ../../Consensus/objects/TransactionStatusObj
@@ -92,7 +94,23 @@ template TRANSACTION(
 template MERIT_REMOVAL(
     mr: MeritRemoval
 ): string =
-    Blake256(mr.serialize()).toString() & "r"
+    var
+        e1: Element = mr.element1
+        e2: Element = mr.element2
+    if e1 of MeritRemovalVerificationPacket:
+        e1 = newVerificationObj(cast[MeritRemovalVerificationPacket](e1).hash)
+    if e2 of MeritRemovalVerificationPacket:
+        e2 = newVerificationObj(cast[MeritRemovalVerificationPacket](e2).hash)
+
+    Blake256(
+        newMeritRemoval(
+            mr.holder,
+            mr.partial,
+            e1,
+            e2,
+            @[]
+        ).serialize()
+    ).toString() & "r"
 
 template MALICIOUS_PROOFS(): string =
     "p"
