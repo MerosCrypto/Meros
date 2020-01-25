@@ -107,7 +107,7 @@ proc mainMerit() {.forceCheck: [].} =
         ], async.} =
             while true:
                 if tryAcquire(lock[]):
-                    if lockedBlock != Hash[256]():
+                    if lockedBlock != sketchyBlock.data.header.hash:
                         release(lock[])
                         try:
                             await sleepAsync(50)
