@@ -21,3 +21,7 @@ def HundredTwentySixTest(
     #Verify Meros stops syncing.
     if rpc.meros.recv() != MessageType.SyncingOver.toByte():
         raise TestError("Meros didn't stop syncing.")
+
+    #Verify Meros send SyncingAcknowledged.
+    if rpc.meros.recv() != MessageType.SyncingAcknowledged.toByte():
+        raise TestError("Meros didn't acknowledge our syncing.")

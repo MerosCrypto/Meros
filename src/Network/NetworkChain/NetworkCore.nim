@@ -114,11 +114,7 @@ proc newNetwork*(
                     await mainFunctions.merit.addBlockByHash(tail, true)
                 except ValueError as e:
                     raise newException(ClientError, "Client sent us a tail which failed to add due to a ValueError: " & e.msg)
-                except DataMissing as e:
-                    raise newException(ClientError, "Client sent us a tail which failed to fully sync: " & e.msg)
-                except DataExists:
-                    return
-                except NotConnected:
+                except DataMissing, DataExists, NotConnected:
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
@@ -242,11 +238,7 @@ proc newNetwork*(
                     await mainFunctions.merit.addBlockByHeader(header, false)
                 except ValueError as e:
                     raise newException(ClientError, "Adding the Block failed due to a ValueError: " & e.msg)
-                except DataMissing:
-                    return
-                except DataExists:
-                    return
-                except NotConnected:
+                except DataMissing, DataExists, NotConnected:
                     return
                 except Exception as e:
                     doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
