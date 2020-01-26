@@ -139,7 +139,7 @@ proc mainMerit() {.forceCheck: [].} =
                 elements: seq[BlockElement]
                 verified: bool = false
             try:
-                (newBlock, elements) = await network.sync(
+                (newBlock, elements) = await network.syncManager.sync(
                     merit.state,
                     sketchyBlock,
                     sketcher
@@ -158,7 +158,7 @@ proc mainMerit() {.forceCheck: [].} =
 
             #Add every Verification Packet.
             for packet in newBlock.body.packets:
-                network.mainFunctions.consensus.addVerificationPacket(packet)
+                functions.consensus.addVerificationPacket(packet)
 
             #Check who has their Merit removed.
             var removed: set[uint16] = {}
@@ -191,9 +191,9 @@ proc mainMerit() {.forceCheck: [].} =
             for elem in elements:
                 case elem:
                     of SendDifficulty as sendDiff:
-                        network.mainFunctions.consensus.addSendDifficulty(sendDiff)
+                        functions.consensus.addSendDifficulty(sendDiff)
                     of DataDifficulty as dataDiff:
-                        network.mainFunctions.consensus.addDataDifficulty(dataDiff)
+                        functions.consensus.addDataDifficulty(dataDiff)
 
             #Archive the hashes handled by the popped Epoch.
             transactions.archive(epoch)
@@ -351,7 +351,8 @@ proc mainMerit() {.forceCheck: [].} =
 
                         #Get the list of Blocks before this Block.
                         try:
-                            queue &= await network.requestBlockList(false, increment, queue[^1])
+                            discard
+                            #queue &= await network.requestBlockList(false, increment, queue[^1])
                         except DataMissing as e:
                             #This should only be raised if:
                             #A) The requested Block is unknown.
@@ -401,7 +402,8 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
 
                 try:
-                    sketchyBlock = newSketchyBlockObj(header, await network.requestBlockBody(header.hash))
+                    discard
+                    #sketchyBlock = newSketchyBlockObj(header, await network.requestBlockBody(header.hash))
                 except DataMissing as e:
                     raise newException(ValueError, e.msg)
                 except Exception as e:
@@ -465,7 +467,8 @@ proc mainMerit() {.forceCheck: [].} =
                 return
 
             try:
-                await functions.merit.addBlockByHeaderInternal(await network.requestBlockHeader(hash), syncing, lock)
+                discard
+                #await functions.merit.addBlockByHeaderInternal(await network.requestBlockHeader(hash), syncing, lock)
             except ValueError as e:
                 raise e
             except DataMissing as e:

@@ -4,12 +4,6 @@ import ../lib/Errors
 #Util lib.
 import ../lib/Util
 
-#Hash lib.
-import ../lib/Hash
-
-#Sketcher lib.
-import ../lib/Sketcher
-
 #Block object.
 import ../Database/Merit/objects/BlockObj
 
@@ -18,14 +12,22 @@ import ../Database/Consensus/Elements/Elements
 
 #Message object.
 import objects/MessageObj
+export MessageObj
 
 #SketchyBlock object.
 import objects/SketchyBlockObj
-export SketchyBlock
+export SketchyBlockObj
 
 #Peer lib.
 import Peer
 export Peer
+
+#LiveManager object.
+import objects/LiveManagerObj
+
+#SyncManager lib.
+import SyncManager
+export SyncManager
 
 #Network object.
 import objects/NetworkObj
@@ -43,30 +45,6 @@ import tables
 #String utils standard lib.
 import strutils
 
-#Service bytes.
-const SERVER_SERVICE*: uint8 = 0b10000000
-
-#Handle a Peer's Live socket's messages.
-proc handleLive(
-    network: Network,
-    peer: Peer,
-    tail: Hash[256]
-) {.forceCheck: [
-    PeerError
-], async.} =
-    discard
-
-#Sync a Block.
-proc sync*(
-    network: Network,
-    sketchyBlock: SketchyBlock,
-    sketcher: Sketcher
-): Future[tuple[syncedBlock: Block, elements: seq[BlockElement]]] {.forceCheck: [
-    ValueError,
-    DataMissing
-], async.} =
-    discard
-
 #Connect to a new Peer.
 proc connect*(
     network: Network,
@@ -76,7 +54,7 @@ proc connect*(
     PeerError
 ], async.} =
     #Don't allow connections to self.
-    if (not network.server.isClosed) and (address == "127.0.0.1") and (port == network.port):
+    if (not network.server.isClosed) and (address == "127.0.0.1") and (port == network.liveManager.port):
         return
 
     var
@@ -135,27 +113,10 @@ proc connect*(
         if not hasLive:
             live = newAsyncSocket()
             await live.connect(address, Port(port))
-            await live.send(newMessage(
-                MessageType.Handshake,
-                char(network.network) &
-                char(network.protocol) &
-                network.port.toBinary() &
-                network.services &
-                network.functions.merit.getTail().toString()
-            ).toString())
-
         #Create the Sync socket if necessary.
         if not hasSync:
             sync = newAsyncSocket()
             await sync.connect(address, Port(port))
-            await sync.send(newMessage(
-                MessageType.Syncing,
-                char(network.network) &
-                char(network.protocol) &
-                network.port.toBinary() &
-                network.services &
-                network.functions.merit.getTail().toString()
-            ).toString())
     except Exception:
         if not live.isNil:
             try:
@@ -176,7 +137,7 @@ proc connect*(
 
     #Create the Peer, if necessary.
     if peer.isNil:
-        peer = newPeer(ip, true, port)
+        peer = newPeer(ip)
         network.add(peer)
 
     #Set the sockets.
@@ -184,6 +145,15 @@ proc connect*(
     peer.sync = sync
     network.live[ip] = peer.id
     network.sync[ip] = peer.id
+
+    #Handle the connections.
+    try:
+        if not hasLive:
+            asyncCheck network.liveManager.handle(peer)
+        if not hasSync:
+            asyncCheck network.syncManager.handle(peer)
+    except Exception as e:
+        doAssert(false, "Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
 
 #Handle a new connection.
 proc handle*(
@@ -222,7 +192,7 @@ proc handle*(
 
     var first: string
     try:
-        first = await socket.recv(1)
+        first = await socket.recv(1, {SocketFlag.Peek})
         if first.len != 1:
             raise newException(Exception, "")
     except Exception:
@@ -239,38 +209,6 @@ proc handle*(
             doAssert(false, "Failed to close a socket: " & e.msg)
         return
 
-    try:
-        first &= await socket.recv(LIVE_LENS[MessageType.Handshake][0])
-        if first.len != LIVE_LENS[MessageType.Handshake][0] + 1:
-            raise newException(Exception, "")
-    except KeyError as e:
-        doAssert(false, "Couldn't get the length of the Handshake message: " & e.msg)
-    except Exception:
-        try:
-            socket.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
-        return
-
-    if (int(first[1]) != network.network) or (int(first[2]) != network.protocol):
-        try:
-            socket.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
-        return
-
-    var
-        server: bool
-        port: int
-        tail: Hash[256]
-    if (uint8(first[3]) and SERVER_SERVICE) == SERVER_SERVICE:
-        server = true
-        port = first[4 ..< 6].fromBinary()
-    try:
-        tail = first[6 ..< 38].toHash(256)
-    except ValueError as e:
-        doAssert(false, "Failed to create a 32-byte hash out of a 32-byte piece of data: " & e.msg)
-
     var peer: Peer
     if MessageType(first[0]) == MessageType.Handshake:
         if network.live.hasKey(ip) and (address != "127.0.0.1"):
@@ -283,13 +221,13 @@ proc handle*(
         try:
             peer = network.peers[network.sync[ip]]
         except KeyError:
-            peer = newPeer(ip, server, port)
+            peer = newPeer(ip)
             network.add(peer)
         network.live[ip] = peer.id
 
         peer.live = socket
         try:
-            asyncCheck network.handleLive(peer, tail)
+            asyncCheck network.liveManager.handle(peer)
         except PeerError:
             network.disconnect(peer)
         except Exception as e:
@@ -306,12 +244,17 @@ proc handle*(
         try:
             peer = network.peers[network.live[ip]]
         except KeyError:
-            peer = newPeer(ip, server, port)
+            peer = newPeer(ip)
             network.add(peer)
         network.sync[ip] = peer.id
 
         peer.sync = socket
-        #TODO: SyncManager.
+        try:
+            asyncCheck network.syncManager.handle(peer)
+        except PeerError:
+            network.disconnect(peer)
+        except Exception as e:
+            doAssert(false, "Handling a Sync socket threw an Exception despite catching all Exceptions: " & e.msg)
 
 #Listen for new Network.
 proc listen*(
@@ -325,7 +268,7 @@ proc listen*(
 
     try:
         network.server.setSockOpt(OptReuseAddr, true)
-        network.server.bindAddr(Port(network.port))
+        network.server.bindAddr(Port(network.liveManager.port))
     except Exception as e:
         doAssert(false, "Failed to set the Network's server socket options and bind it: " & e.msg)
 
@@ -336,7 +279,8 @@ proc listen*(
         doAssert(false, "Failed to start listening on the Network's server socket: " & e.msg)
 
     #Update the services byte.
-    network.services = char(uint8(network.services) or SERVER_SERVICE)
+    network.liveManager.updateServices(SERVER_SERVICE)
+    network.syncManager.updateServices(SERVER_SERVICE)
 
     #Accept new connections infinitely.
     while not network.server.isClosed():

@@ -7,6 +7,9 @@ import ../../lib/Util
 #Socket standard lib.
 import asyncnet
 
+#Service bytes.
+const SERVER_SERVICE*: uint8 = 0b10000000
+
 #Peer object.
 type Peer* = ref object
     #ID.
@@ -29,13 +32,9 @@ type Peer* = ref object
 #Constructor.
 func newPeer*(
     ip: string,
-    server: bool,
-    port: int
 ): Peer {.inline, forceCheck: [].} =
     Peer(
         ip: ip,
-        server: server,
-        port: port,
 
         last: getTime()
     )

@@ -13,8 +13,15 @@ import ../../objects/GlobalFunctionBoxObj
 #Message object.
 import MessageObj
 
+#Manager objects.
+import LiveManagerObj
+import SyncManagerObj
+
 #Peer library.
 import ../Peer as PeerFile
+
+#SerializeCommon lib.
+import ../Serialize/SerializeCommon
 
 #Random standard lib.
 import random
@@ -28,14 +35,6 @@ import asyncnet
 
 #Network object.
 type Network* = ref object
-    #Network ID.
-    network*: int
-    #Protocol version.
-    protocol*: int
-
-    #Services byte.
-    services*: char
-
     #Used to provide each Peer an unique ID.
     count*: int
     #Table of every Peer.
@@ -47,10 +46,13 @@ type Network* = ref object
     #Set of the IPs of our peers who have Sync sockets.
     sync*: Table[string, int]
 
-    #Server port.
-    port*: int
     #Server.
     server*: AsyncSocket
+
+    #Live Manager.
+    liveManager*: LiveManager
+    #Sync Manager.
+    syncManager*: SyncManager
 
     #Global Function Box.
     functions*: GlobalFunctionBox
@@ -63,9 +65,6 @@ proc newNetwork*(
     functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     var network: Network = Network(
-        network: network,
-        protocol: protocol,
-
         #Starts at 1 because the local node is 0.
         count: 1,
         peers: initTable[int, Peer](),
@@ -73,7 +72,18 @@ proc newNetwork*(
         live: initTable[string, int](),
         sync: initTable[string, int](),
 
-        port: port,
+        liveManager: newLiveManager(
+            network,
+            protocol,
+            port,
+            functions
+        ),
+        syncManager: newSyncManager(
+            network,
+            protocol,
+            port,
+            functions
+        ),
 
         functions: functions
     )
@@ -108,10 +118,10 @@ proc newNetwork*(
                     await peer.sendLive(
                         newMessage(
                             MessageType.Handshake,
-                            char(network.network) &
-                            char(network.protocol) &
-                            network.port.toBinary() &
-                            network.services &
+                            char(network.liveManager.protocol) &
+                            char(network.liveManager.network) &
+                            network.liveManager.services &
+                            network.liveManager.port.toBinary(PORT_LEN) &
                             tail.toString()
                         )
                     )
@@ -143,7 +153,7 @@ proc add*(
 proc getPeers*(
     network: Network,
     reqArg: int,
-    skip: int,
+    skip: int = 1,
     live: bool = false,
     server: bool = false
 ): seq[Peer] {.forceCheck: [].} =

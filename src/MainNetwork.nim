@@ -6,9 +6,7 @@ proc mainNetwork() {.forceCheck: [].} =
         network = newNetwork(
             params.NETWORK_ID,
             params.NETWORK_PROTOCOL,
-            config.server,
             config.tcpPort,
-            config.allowRepeatConnections,
             functions
         )
 
@@ -36,7 +34,7 @@ proc mainNetwork() {.forceCheck: [].} =
 
         #Get the peers we're connected to.
         functions.network.getPeers = proc (): seq[Peer] {.inline, forceCheck: [].} =
-            network.clients.clients
+            network.getPeers(network.peers.len)
 
         #Broadcast a message.
         functions.network.broadcast = proc (
@@ -57,7 +55,8 @@ proc mainNetwork() {.forceCheck: [].} =
         proc requestPeersRegularly() {.forceCheck: [], async.} =
             var peers: seq[tuple[ip: string, port: int]]
             try:
-                peers = await network.requestPeers(params.SEEDS)
+                discard
+                #peers = await network.requestPeers(params.SEEDS)
             except Exception as e:
                 doAssert(false, "requestPeers threw an Exception despite not actually throwing any: " & e.msg)
 
