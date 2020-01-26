@@ -55,6 +55,30 @@ import tables
 #String utils standard lib.
 import strutils
 
+#Sync a missing Transaction.
+proc syncTransaction*(
+    manager: SyncManager,
+    hash: Hash[256]
+): Future[Transaction] {.forceCheck: [], async.} =
+    discard
+
+#Sync missing Verification Packets.
+proc syncVerificationPackets*(
+    manager: SyncManager,
+    hash: Hash[256],
+    sketchHashes: seq[uint64],
+    salt: string
+): Future[seq[VerificationPacket]] {.forceCheck: [], async.} =
+    discard
+
+#Sync missing Sketch Hashes.
+proc syncSketchHashes*(
+    manager: SyncManager,
+    hash: Hash[256],
+    sketchCheck: Hash[256]
+): Future[seq[uint64]] {.forceCheck: [], async.} =
+    discard
+
 #Sync a Block's missing Transactions/VerificationPackets.
 proc sync*(
     manager: SyncManager,
@@ -117,13 +141,10 @@ proc sync*(
 
         #Sync the list of sketch hashes.
         try:
-            discard
-            #[
-            missingPackets = await manager.requestSketchHashes(
+            missingPackets = await manager.syncSketchHashes(
                 newBlock.data.header.hash,
                 newBlock.data.header.sketchCheck
             )
-            ]#
         except DataMissing as e:
             raise e
         except Exception as e:
@@ -139,8 +160,7 @@ proc sync*(
     #Sync the missing VerificationPackets.
     if missingPackets.len != 0:
         try:
-            discard
-            #packets &= await manager.requestVerificationPackets(newBlock.data.header.hash, missingPackets, newBlock.data.header.sketchSalt)
+            packets &= await manager.syncVerificationPackets(newBlock.data.header.hash, missingPackets, newBlock.data.header.sketchSalt)
         except DataMissing as e:
             raise e
         except Exception as e:
@@ -179,8 +199,7 @@ proc sync*(
         #Get the Transactions.
         for tx in missingTXs:
             try:
-                discard
-                #transactions[tx] = await manager.requestTransaction(tx)
+                transactions[tx] = await manager.syncTransaction(tx)
             except DataMissing:
                 #Since we did not get this Transaction, this Block is trying to archive unknown Verification OR we just don't have a proper Peer set.
                 #The first is assumed.
@@ -382,3 +401,33 @@ proc sync*(
                     doAssert(false, "Verifying a MeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         hasElem.incl(elem.holder)
+
+#Sync a missing BlockBody.
+proc syncBlockBody*(
+    manager: SyncManager,
+    hash: Hash[256]
+): Future[SketchyBlockBody] {.forceCheck: [], async.} =
+    discard
+
+#Sync a missing BlockHeader.
+proc syncBlockHeader*(
+    manager: SyncManager,
+    hash: Hash[256]
+): Future[BlockHeader] {.forceCheck: [], async.} =
+    discard
+
+#Sync a missing BlockList.
+proc syncBlockList*(
+    manager: SyncManager,
+    forwards: bool,
+    amount: int,
+    hash: Hash[256]
+): Future[seq[Hash[256]]] {.forceCheck: [], async.} =
+    discard
+
+#Sync peers.
+proc syncPeers*(
+    manager: SyncManager,
+    seeds: seq[tuple[ip: string, port: int]]
+): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [], async.} =
+    discard

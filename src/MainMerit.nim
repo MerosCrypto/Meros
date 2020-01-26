@@ -351,8 +351,7 @@ proc mainMerit() {.forceCheck: [].} =
 
                         #Get the list of Blocks before this Block.
                         try:
-                            discard
-                            #queue &= await network.requestBlockList(false, increment, queue[^1])
+                            queue &= await network.syncManager.syncBlockList(false, increment, queue[^1])
                         except DataMissing as e:
                             #This should only be raised if:
                             #A) The requested Block is unknown.
@@ -402,12 +401,11 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
 
                 try:
-                    discard
-                    #sketchyBlock = newSketchyBlockObj(header, await network.requestBlockBody(header.hash))
+                    sketchyBlock = newSketchyBlockObj(header, await network.syncManager.syncBlockBody(header.hash))
                 except DataMissing as e:
                     raise newException(ValueError, e.msg)
                 except Exception as e:
-                    doAssert(false, "Network.requestBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
+                    doAssert(false, "SyncManager.syncBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
             except ValueError as e:
                 raise e
             except DataMissing as e:
@@ -467,8 +465,7 @@ proc mainMerit() {.forceCheck: [].} =
                 return
 
             try:
-                discard
-                #await functions.merit.addBlockByHeaderInternal(await network.requestBlockHeader(hash), syncing, lock)
+                await functions.merit.addBlockByHeaderInternal(await network.syncManager.syncBlockHeader(hash), syncing, lock)
             except ValueError as e:
                 raise e
             except DataMissing as e:

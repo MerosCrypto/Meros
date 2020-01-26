@@ -55,8 +55,7 @@ proc mainNetwork() {.forceCheck: [].} =
         proc requestPeersRegularly() {.forceCheck: [], async.} =
             var peers: seq[tuple[ip: string, port: int]]
             try:
-                discard
-                #peers = await network.requestPeers(params.SEEDS)
+                peers = await network.syncManager.syncPeers(params.SEEDS)
             except Exception as e:
                 doAssert(false, "requestPeers threw an Exception despite not actually throwing any: " & e.msg)
 

@@ -7,7 +7,7 @@ import ../../lib/Util
 #Hash lib.
 import ../../lib/Hash
 
-#BlockHeader lib.
+#BlockHeader object.
 import ../../Database/Merit/objects/BlockHeaderObj
 
 #Elements lib.
