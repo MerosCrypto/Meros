@@ -6,9 +6,9 @@ The message types are as follows (with their list number being their byte header
 
 <ol start="0">
 <li><code>Handshake</code></li>
+<li><code>Syncing</code></li>
 <li><code>BlockchainTail</code></li>
 <br>
-<li><code>Syncing</code></li>
 <li><code>PeersRequest</code></li>
 <li><code>Peers</code></li>
 <li><code>BlockListRequest</code></li>

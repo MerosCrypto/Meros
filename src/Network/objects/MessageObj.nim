@@ -14,9 +14,9 @@ type
     #Message Type enum. Even though pure is no longer enforced, it does solve ambiguity issues.
     MessageType* {.pure.} = enum
         Handshake                 = 0,
-        BlockchainTail            = 1,
+        Syncing                   = 1,
+        BlockchainTail            = 2,
 
-        Syncing                   = 2,
         PeersRequest              = 3,
         Peers                     = 4,
         BlockListRequest          = 5,
