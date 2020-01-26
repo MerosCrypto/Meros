@@ -94,7 +94,6 @@ proc handle*(
     manager: SyncManager,
     peer: Peer
 ) {.forceCheck: [], async.} =
-    discard """
     #Send our Syncing and get their Syncing.
     var msg: Message
     try:
@@ -362,4 +361,3 @@ proc handle*(
             await peer.sendSync(res)
         except Exception as e:
             doAssert(false, "Failed to reply to a Sync request: " & e.msg)
-    """
