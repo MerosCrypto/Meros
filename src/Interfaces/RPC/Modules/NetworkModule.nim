@@ -10,9 +10,6 @@ import ../objects/RPCObj
 #Async standard lib.
 import asyncdispatch
 
-#Async networking standard lib.
-import asyncnet
-
 #Default network port.
 const DEFAULT_PORT {.intdefine.}: int = 5132
 
@@ -61,13 +58,16 @@ proc module*(
                 for client in functions.network.getPeers():
                     try:
                         res["result"].add(%* {
-                            "ip": client.socket.getPeerAddr()[0],
+                            "ip": (
+                                $int(client.ip[0]) & "." &
+                                $int(client.ip[1]) & "." &
+                                $int(client.ip[2]) & "." &
+                                $int(client.ip[3])
+                            ),
                             "server": client.server
                         })
                     except KeyError as e:
                         doAssert(false, "Couldn't set the result: " & e.msg)
-                    except OSError as e:
-                        doAssert(false, "Couldn't get the peer address from a connected socket: " & e.msg)
 
                     if client.server:
                         try:

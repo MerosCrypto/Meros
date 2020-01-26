@@ -17,43 +17,40 @@ type
         BlockchainTail            = 1,
 
         Syncing                   = 2,
-        SyncingAcknowledged       = 3,
-        PeersRequest              = 4,
-        Peers                     = 5,
-        BlockListRequest          = 6,
-        BlockList                 = 7,
+        PeersRequest              = 3,
+        Peers                     = 4,
+        BlockListRequest          = 5,
+        BlockList                 = 6,
 
-        BlockHeaderRequest        = 9,
-        BlockBodyRequest          = 10,
-        SketchHashesRequest       = 11,
-        SketchHashRequests        = 12,
-        TransactionRequest        = 13,
-        DataMissing               = 14,
-        SyncingOver               = 15,
+        BlockHeaderRequest        = 8,
+        BlockBodyRequest          = 9,
+        SketchHashesRequest       = 10,
+        SketchHashRequests        = 11,
+        TransactionRequest        = 12,
+        DataMissing               = 13,
 
-        Claim                     = 16,
-        Send                      = 17,
-        Data                      = 18,
+        Claim                     = 14,
+        Send                      = 15,
+        Data                      = 16,
 
-        SignedVerification        = 21,
-        SignedSendDifficulty      = 22,
-        SignedDataDifficulty      = 23,
-        SignedMeritRemoval        = 25,
+        SignedVerification        = 19,
+        SignedSendDifficulty      = 20,
+        SignedDataDifficulty      = 21,
+        SignedMeritRemoval        = 23,
 
-        BlockHeader               = 27,
-        BlockBody                 = 28,
-        SketchHashes              = 29,
-        VerificationPacket        = 30,
+        BlockHeader               = 25,
+        BlockBody                 = 26,
+        SketchHashes              = 27,
+        VerificationPacket        = 28,
 
         #End is used to mark the end of the Enum.
         #We need to check if we were sent a valid MessageType, and we do this via checking if value < End.
-        End = 31
+        End = 29
 
     #Message object.
     Message* = object
         peer*: int
         content*: MessageType
-        len*: int
         message*: string
 
 #Hash a MessageType.
@@ -67,24 +64,9 @@ proc hash*(
 #A positive number means read X bytes.
 #A negative number means read the last length * X bytes.
 #A zero means custom logic should be used.
-const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
+const LIVE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Handshake:                 @[BYTE_LEN + BYTE_LEN + BYTE_LEN + PORT_LEN + HASH_LEN],
     MessageType.BlockchainTail:            @[HASH_LEN],
-    MessageType.PeersRequest:              @[],
-    MessageType.Peers:                     @[BYTE_LEN, IP_LEN + PORT_LEN],
-
-    MessageType.Syncing:                   @[],
-    MessageType.SyncingAcknowledged:       @[],
-    MessageType.BlockListRequest:          @[BYTE_LEN + BYTE_LEN + HASH_LEN],
-    MessageType.BlockList:                 @[BYTE_LEN, -HASH_LEN, HASH_LEN],
-
-    MessageType.BlockHeaderRequest:        @[HASH_LEN],
-    MessageType.BlockBodyRequest:          @[HASH_LEN],
-    MessageType.SketchHashesRequest:       @[HASH_LEN],
-    MessageType.SketchHashRequests:        @[HASH_LEN, INT_LEN, -SKETCH_HASH_LEN],
-    MessageType.TransactionRequest:        @[HASH_LEN],
-    MessageType.DataMissing:               @[],
-    MessageType.SyncingOver:               @[],
 
     MessageType.Claim:                     @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), ED_PUBLIC_KEY_LEN + BLS_SIGNATURE_LEN],
     MessageType.Send:                      @[BYTE_LEN, -(HASH_LEN + BYTE_LEN), BYTE_LEN, -(ED_PUBLIC_KEY_LEN + MEROS_LEN), ED_SIGNATURE_LEN + INT_LEN],
@@ -95,7 +77,30 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
     MessageType.SignedDataDifficulty:      @[NICKNAME_LEN + INT_LEN + HASH_LEN + BLS_SIGNATURE_LEN],
     MessageType.SignedMeritRemoval:        @[NICKNAME_LEN + BYTE_LEN + BYTE_LEN, 0, 0, BLS_SIGNATURE_LEN - 1],
 
-    MessageType.BlockHeader:               @[BLOCK_HEADER_DATA_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN],
+    MessageType.BlockHeader:               @[BLOCK_HEADER_DATA_LEN, 0, INT_LEN + INT_LEN + BLS_SIGNATURE_LEN]
+}.toTable()
+
+const SYNC_LENS*: Table[MessageType, seq[int]] = {
+    MessageType.BlockchainTail:            LIVE_LENS[MessageType.BlockchainTail],
+
+    MessageType.Syncing:                   LIVE_LENS[MessageType.Handshake],
+    MessageType.PeersRequest:              @[],
+    MessageType.Peers:                     @[BYTE_LEN, IP_LEN + PORT_LEN],
+    MessageType.BlockListRequest:          @[BYTE_LEN + BYTE_LEN + HASH_LEN],
+    MessageType.BlockList:                 @[BYTE_LEN, -HASH_LEN, HASH_LEN],
+
+    MessageType.BlockHeaderRequest:        @[HASH_LEN],
+    MessageType.BlockBodyRequest:          @[HASH_LEN],
+    MessageType.SketchHashesRequest:       @[HASH_LEN],
+    MessageType.SketchHashRequests:        @[HASH_LEN, INT_LEN, -SKETCH_HASH_LEN],
+    MessageType.TransactionRequest:        @[HASH_LEN],
+    MessageType.DataMissing:               @[],
+
+    MessageType.Claim:                     LIVE_LENS[MessageType.Claim],
+    MessageType.Send:                      LIVE_LENS[MessageType.Send],
+    MessageType.Data:                      LIVE_LENS[MessageType.Data],
+
+    MessageType.BlockHeader:               LIVE_LENS[MessageType.BlockHeader],
     MessageType.BlockBody:                 @[INT_LEN, -SKETCH_HASH_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
     MessageType.SketchHashes:              @[INT_LEN, -SKETCH_HASH_LEN],
     MessageType.VerificationPacket:        @[NICKNAME_LEN, -NICKNAME_LEN, HASH_LEN]
@@ -105,13 +110,11 @@ const MESSAGE_LENS*: Table[MessageType, seq[int]] = {
 func newMessage*(
     peer: int,
     content: MessageType,
-    len: int,
     message: string
 ): Message {.inline, forceCheck: [].} =
     Message(
         peer: peer,
         content: content,
-        len: len,
         message: message
     )
 
@@ -123,7 +126,6 @@ func newMessage*(
     Message(
         peer: 0,
         content: content,
-        len: message.len,
         message: message
     )
 

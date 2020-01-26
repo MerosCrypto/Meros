@@ -129,10 +129,7 @@ class Meros:
         self.rpc: int = rpc
 
         #Create the instance.
-        command: List[str] = ["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)]
-        if test == "PeersTest":
-            command.append("--allow-repeat-connections")
-        self.process: Popen[Any] = Popen(command)
+        self.process: Popen[Any] = Popen(["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)])
 
         #Create message/response lists.
         self.msgs: List[bytes] = []

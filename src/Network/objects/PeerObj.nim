@@ -9,6 +9,9 @@ import asyncnet
 
 #Peer object.
 type Peer* = ref object
+    #ID.
+    id*: int
+
     #IP.
     ip*: string
     #Server who can accept connections.
@@ -16,8 +19,6 @@ type Peer* = ref object
     #Port of their server.
     port*: int
 
-    #ID.
-    id*: int
     #Time of their last message.
     last*: uint32
 
@@ -28,35 +29,39 @@ type Peer* = ref object
 #Constructor.
 func newPeer*(
     ip: string,
-    id: int,
-    socket: AsyncSocket
+    server: bool,
+    port: int
 ): Peer {.inline, forceCheck: [].} =
     Peer(
         ip: ip,
-        server: false,
-        port: -1,
+        server: server,
+        port: port,
 
-        id: id,
-        syncLevels: 0,
-        pendingSyncRequest: false,
-        remoteSync: false,
-        syncedSameTime: false,
-        last: 0,
-
-        socket: socket
+        last: getTime()
     )
 
 #Check if a Peer is closed.
 func isClosed*(
     peer: Peer
 ): bool {.inline, forceCheck: [].} =
-    peer.socket.isClosed()
+    (
+        (not peer.live.isNil) and (not peer.live.isClosed())
+    ) or (
+        (not peer.sync.isNil) and (not peer.sync.isClosed())
+    )
 
 #Close a Peer.
 proc close*(
     peer: Peer
 ) {.forceCheck: [].} =
     try:
-        peer.socket.close()
+        if not peer.live.isNil:
+            peer.live.close()
+    except Exception:
+        discard
+
+    try:
+        if not peer.sync.isNil:
+            peer.sync.close()
     except Exception:
         discard

@@ -47,7 +47,8 @@ type
     NotInEpochs*  = object of Exception #Used when we try to add a Hash to Epochs and it's not already present in said Epochs.
 
     #Network Errors.
-    PeerError* = object of Exception #Used when a socket breaks/disconnects/a Peer breaks protocol.
+    SocketError* = object of Exception #Used when a socket breaks.
+    PeerError*   = object of Exception #Used when a Peer breaks protocol.
 
     #Network Statuses.
     Spam* = object of Exception #Used when a Send/Data doesn't beat the difficulty.
