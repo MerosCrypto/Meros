@@ -4,8 +4,8 @@ proc mainNetwork() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Network..
         network = newNetwork(
-            params.NETWORK_ID,
             params.NETWORK_PROTOCOL,
+            params.NETWORK_ID,
             config.tcpPort,
             functions
         )

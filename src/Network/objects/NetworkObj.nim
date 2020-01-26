@@ -38,7 +38,7 @@ type Network* = ref object
     #Used to provide each Peer an unique ID.
     count*: int
     #Table of every Peer.
-    peers*: Table[int, Peer]
+    peers*: TableRef[int, Peer]
     #IDs of every Peer.
     ids*: seq[int]
     #Set of the IPs of our peers who have Live sockets.
@@ -59,34 +59,37 @@ type Network* = ref object
 
 #Constructor.
 proc newNetwork*(
-    network: int,
     protocol: int,
+    networkID: int,
     port: int,
     functions: GlobalFunctionBox
 ): Network {.forceCheck: [].} =
     var network: Network = Network(
         #Starts at 1 because the local node is 0.
         count: 1,
-        peers: initTable[int, Peer](),
+        peers: newTable[int, Peer](),
         ids: @[],
         live: initTable[string, int](),
         sync: initTable[string, int](),
 
-        liveManager: newLiveManager(
-            network,
-            protocol,
-            port,
-            functions
-        ),
-        syncManager: newSyncManager(
-            network,
-            protocol,
-            port,
-            functions
-        ),
-
         functions: functions
     )
+
+    network.liveManager = newLiveManager(
+        protocol,
+        networkID,
+        port,
+        network.peers,
+        functions
+    )
+    network.syncManager = newSyncManager(
+        protocol,
+        networkID,
+        port,
+        network.peers,
+        functions
+    )
+
     result = network
 
     #Add a repeating timer to remove inactive Peers.

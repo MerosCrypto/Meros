@@ -23,7 +23,7 @@ import ../../objects/GlobalFunctionBoxObj
 import MessageObj
 
 #Peer lib.
-import ../Peer
+import ../Peer as PeerFile
 
 #SerializeCommon lib.
 import ../Serialize/SerializeCommon
@@ -43,31 +43,41 @@ import ../Serialize/Transactions/ParseData
 #Async standard lib.
 import asyncdispatch
 
+#Tables standard lib.
+import tables
+
 #LiveManager object.
 type LiveManager* = ref object
-    #Network ID.
-    network*: int
     #Protocol version.
     protocol*: int
+    #Network ID.
+    network*: int
     #Services byte.
     services*: char
     #Server port.
     port*: int
+
+    #Table of every Peer.
+    peers: TableRef[int, Peer]
 
     #Global Function Box.
     functions*: GlobalFunctionBox
 
 #Constructor.
 func newLiveManager*(
-    network: int,
     protocol: int,
+    network: int,
     port: int,
+    peers: TableRef[int, Peer],
     functions: GlobalFunctionBox
 ): LiveManager {.forceCheck: [].} =
     LiveManager(
-        network: network,
         protocol: protocol,
+        network: network,
         port: port,
+
+        peers: peers,
+
         functions: functions
     )
 

@@ -17,6 +17,9 @@ export PeerObj
 #Element serialize lib. Implements getLength.
 import Serialize/Consensus/ParseElement
 
+#Locks standard lib.
+import locks
+
 #Networking standard libs.
 import asyncdispatch, asyncnet
 
@@ -50,6 +53,26 @@ proc sendSync*(
         except Exception as e:
             doAssert(false, "Failed to close a socket: " & e.msg)
         peer.sync = nil
+
+#Send a Sync Request.
+proc syncRequest*(
+    peer: Peer,
+    id: int,
+    msg: Message
+) {.forceCheck: [], async.} =
+    while not tryAcquire(peer.syncLock):
+        try:
+            await sleepAsync(10)
+        except Exception as e:
+            doAssert(false, "Couldn't complete an async sleep: " & e.msg)
+
+    peer.requests.add(id)
+    try:
+        await peer.sendSync(msg)
+    except Exception as e:
+        doAssert(false, "Couldn't send to a peer's Sync socket: " & e.msg)
+
+    release(peer.syncLock)
 
 #Receive a message.
 proc recv(

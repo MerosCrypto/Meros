@@ -4,7 +4,10 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Socket standard lib.
+#Locks standard lib.
+import locks
+
+#Networking standard lib.
 import asyncnet
 
 #Service bytes.
@@ -25,6 +28,11 @@ type Peer* = ref object
     #Time of their last message.
     last*: uint32
 
+    #Sync Lock.
+    syncLock*: Lock
+    #Pending sync requests.
+    requests*: seq[int]
+
     #Sockets.
     live*: AsyncSocket
     sync*: AsyncSocket
@@ -32,12 +40,12 @@ type Peer* = ref object
 #Constructor.
 func newPeer*(
     ip: string,
-): Peer {.inline, forceCheck: [].} =
-    Peer(
+): Peer {.forceCheck: [].} =
+    result = Peer(
         ip: ip,
-
         last: getTime()
     )
+    initLock(result.syncLock)
 
 #Check if a Peer is closed.
 func isClosed*(

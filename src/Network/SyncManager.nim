@@ -36,6 +36,9 @@ export SketchyBlock
 import Peer
 export Peer
 
+#SyncRequest object.
+import objects/SyncRequestObj
+
 #SyncManager object.
 import objects/SyncManagerObj
 export SyncManagerObj
@@ -59,8 +62,22 @@ import strutils
 proc syncTransaction*(
     manager: SyncManager,
     hash: Hash[256]
-): Future[Transaction] {.forceCheck: [], async.} =
-    discard
+): Future[Transaction] {.forceCheck: [].} =
+    #Create the future.
+    result = newFuture[Transaction]("syncTransaction")
+
+    #Create the request and register it.
+    var
+        id: int = manager.requests.len
+        request: TransactionSyncRequest = result.newTransactionSyncRequest(hash)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a TransactionRequest to a Peer: " & e.msg)
 
 #Sync missing Verification Packets.
 proc syncVerificationPackets*(
@@ -68,7 +85,7 @@ proc syncVerificationPackets*(
     hash: Hash[256],
     sketchHashes: seq[uint64],
     salt: string
-): Future[seq[VerificationPacket]] {.forceCheck: [], async.} =
+): Future[seq[VerificationPacket]] {.forceCheck: [].} =
     discard
 
 #Sync missing Sketch Hashes.
@@ -76,7 +93,7 @@ proc syncSketchHashes*(
     manager: SyncManager,
     hash: Hash[256],
     sketchCheck: Hash[256]
-): Future[seq[uint64]] {.forceCheck: [], async.} =
+): Future[seq[uint64]] {.forceCheck: [].} =
     discard
 
 #Sync a Block's missing Transactions/VerificationPackets.
@@ -406,14 +423,14 @@ proc sync*(
 proc syncBlockBody*(
     manager: SyncManager,
     hash: Hash[256]
-): Future[SketchyBlockBody] {.forceCheck: [], async.} =
+): Future[SketchyBlockBody] {.forceCheck: [].} =
     discard
 
 #Sync a missing BlockHeader.
 proc syncBlockHeader*(
     manager: SyncManager,
     hash: Hash[256]
-): Future[BlockHeader] {.forceCheck: [], async.} =
+): Future[BlockHeader] {.forceCheck: [].} =
     discard
 
 #Sync a missing BlockList.
@@ -422,12 +439,12 @@ proc syncBlockList*(
     forwards: bool,
     amount: int,
     hash: Hash[256]
-): Future[seq[Hash[256]]] {.forceCheck: [], async.} =
+): Future[seq[Hash[256]]] {.forceCheck: [].} =
     discard
 
 #Sync peers.
 proc syncPeers*(
     manager: SyncManager,
     seeds: seq[tuple[ip: string, port: int]]
-): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [], async.} =
+): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [].} =
     discard

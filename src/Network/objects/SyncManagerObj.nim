@@ -25,8 +25,11 @@ import ../../objects/GlobalFunctionBoxObj
 #Message object.
 import MessageObj
 
+#SyncRequest object.
+import SyncRequestObj
+
 #Peer lib.
-import ../Peer
+import ../Peer as PeerFile
 
 #Serialization libs.
 import ../Serialize/SerializeCommon
@@ -43,6 +46,10 @@ import ../Serialize/Transactions/SerializeClaim
 import ../Serialize/Transactions/SerializeSend
 import ../Serialize/Transactions/SerializeData
 
+import ../Serialize/Transactions/ParseClaim
+import ../Serialize/Transactions/ParseSend
+import ../Serialize/Transactions/ParseData
+
 #Async standard lib.
 import asyncdispatch
 
@@ -51,34 +58,39 @@ import tables
 
 #SyncManager object.
 type SyncManager* = ref object
-    #Network ID.
-    network: int
     #Protocol version.
     protocol: int
+    #Network ID.
+    network: int
     #Services byte.
     services: char
     #Server port.
     port: int
 
-    #Requested Transactions.
-    requestedTXs: Table[Hash[256], Transaction]
-    #Requested VerificationPackets.
-    requestedVPs: Table[int, VerificationPacket]
+    #Table of every Peer.
+    peers*: TableRef[int, Peer]
+    #Ongoing Requests.
+    requests*: Table[int, SyncRequest]
 
     #Global Function Box.
     functions*: GlobalFunctionBox
 
 #Constructor.
 func newSyncManager*(
-    network: int,
     protocol: int,
+    network: int,
     port: int,
+    peers: TableRef[int, Peer],
     functions: GlobalFunctionBox
 ): SyncManager {.forceCheck: [].} =
     SyncManager(
-        network: network,
         protocol: protocol,
+        network: network,
         port: port,
+
+        peers: peers,
+        requests: initTable[int, SyncRequest](),
+
         functions: functions
     )
 
@@ -332,7 +344,37 @@ proc handle*(
                 doAssert(false)
 
             of MessageType.Claim:
-                doAssert(false)
+                #Verify there's a Sync Request to check.
+                if peer.requests.len == 0:
+                    peer.close()
+                    return
+
+                #Verify the Request is still active.
+                if not manager.requests.hasKey(peer.requests[0]):
+                    peer.requests.delete(0)
+                    continue
+
+                try:
+                    #Verify it's for a Transaction.
+                    if not (manager.requests[peer.requests[0]] of TransactionSyncRequest):
+                        peer.close()
+                        return
+
+                    #Complete the future.
+                    var request: TransactionSyncRequest = cast[TransactionSyncRequest](manager.requests[peer.requests[0]])
+                    try:
+                        request.result.complete(msg.message.parseClaim())
+                    except ValueError:
+                        peer.close()
+                        return
+                    except Exception as e:
+                        doAssert(false, "Couldn't complete a Future: " & e.msg)
+                except KeyError as e:
+                    doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
+
+                #Delete the Request.
+                manager.requests.del(peer.requests[0])
+                peer.requests.delete(0)
 
             of MessageType.Send:
                 doAssert(false)
@@ -356,8 +398,9 @@ proc handle*(
                 peer.close()
                 return
 
-        #Reply with the response.
-        try:
-            await peer.sendSync(res)
-        except Exception as e:
-            doAssert(false, "Failed to reply to a Sync request: " & e.msg)
+        #Reply with the response, if there is one.
+        if res.content != MessageType.End:
+            try:
+                await peer.sendSync(res)
+            except Exception as e:
+                doAssert(false, "Failed to reply to a Sync request: " & e.msg)
