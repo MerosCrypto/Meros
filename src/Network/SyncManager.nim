@@ -83,10 +83,24 @@ proc syncTransaction*(
 proc syncVerificationPackets*(
     manager: SyncManager,
     hash: Hash[256],
-    sketchHashes: seq[uint64],
-    salt: string
+    salt: string,
+    sketchHashes: seq[uint64]
 ): Future[seq[VerificationPacket]] {.forceCheck: [].} =
-    discard
+    #Create the future.
+    result = newFuture[seq[VerificationPacket]]("syncVerificationPackets")
+
+    #Create the request and register it.
+    var
+        id: int = manager.requests.len
+        request: SketchHashSyncRequests = result.newSketchHashSyncRequests(hash, salt, sketchHashes)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a SketchHashSyncRequests to a Peer: " & e.msg)
 
 #Sync missing Sketch Hashes.
 proc syncSketchHashes*(
@@ -94,7 +108,21 @@ proc syncSketchHashes*(
     hash: Hash[256],
     sketchCheck: Hash[256]
 ): Future[seq[uint64]] {.forceCheck: [].} =
-    discard
+    #Create the future.
+    result = newFuture[seq[uint64]]("syncSketchHashes")
+
+    #Create the request and register it.
+    var
+        id: int = manager.requests.len
+        request: SketchHashesSyncRequest = result.newSketchHashesSyncRequest(hash, sketchCheck)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a SketchHashesSyncRequest to a Peer: " & e.msg)
 
 #Sync a Block's missing Transactions/VerificationPackets.
 proc sync*(
@@ -177,7 +205,7 @@ proc sync*(
     #Sync the missing VerificationPackets.
     if missingPackets.len != 0:
         try:
-            packets &= await manager.syncVerificationPackets(newBlock.data.header.hash, missingPackets, newBlock.data.header.sketchSalt)
+            packets &= await manager.syncVerificationPackets(newBlock.data.header.hash, newBlock.data.header.sketchSalt, missingPackets)
         except DataMissing as e:
             raise e
         except Exception as e:
@@ -422,16 +450,45 @@ proc sync*(
 #Sync a missing BlockBody.
 proc syncBlockBody*(
     manager: SyncManager,
-    hash: Hash[256]
+    hash: Hash[256],
+    contents: Hash[256]
 ): Future[SketchyBlockBody] {.forceCheck: [].} =
-    discard
+    #Create the future.
+    result = newFuture[SketchyBlockBody]("syncBlockBody")
+
+    #Create the request and register it.
+    var
+        id: int = manager.requests.len
+        request: BlockBodySyncRequest = result.newBlockBodySyncRequest(hash, contents)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a BlockBodySyncRequest to a Peer: " & e.msg)
 
 #Sync a missing BlockHeader.
 proc syncBlockHeader*(
     manager: SyncManager,
     hash: Hash[256]
 ): Future[BlockHeader] {.forceCheck: [].} =
-    discard
+    #Create the future.
+    result = newFuture[BlockHeader]("syncBlockHeader")
+
+    #Create the request and register it.
+    var
+        id: int = manager.requests.len
+        request: BlockHeaderSyncRequest = result.newBlockHeaderSyncRequest(hash)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a BlockHeaderSyncRequest to a Peer: " & e.msg)
 
 #Sync a missing BlockList.
 proc syncBlockList*(
@@ -440,11 +497,25 @@ proc syncBlockList*(
     amount: int,
     hash: Hash[256]
 ): Future[seq[Hash[256]]] {.forceCheck: [].} =
-    discard
+    #Create the future.
+    result = newFuture[seq[Hash[256]]]("syncBlockList")
+
+    #Create the request and register it.
+    var
+        id: int = manager.requests.len
+        request: BlockListSyncRequest = result.newBlockListSyncRequest(forwards, amount, hash)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
 
 #Sync peers.
 proc syncPeers*(
     manager: SyncManager,
     seeds: seq[tuple[ip: string, port: int]]
 ): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [].} =
-    discard
+    return

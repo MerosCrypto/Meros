@@ -29,6 +29,10 @@ type
     SyncRequest* = ref object of RootObj
         msg*: Message
 
+    DataMissingSyncRequest* = ref object of SyncRequest
+        check*: bool
+        result*: Future[void]
+
     PeersSyncRequest* = ref object of SyncRequest
         check*: bool
         result*: Future[seq[tuple[ip: string, port: int]]]
@@ -103,21 +107,23 @@ proc newBlockHeaderSyncRequest*(
 
 proc newBlockBodySyncRequest*(
     future: Future[SketchyBlockBody],
+    hash: Hash[256],
     contents: Hash[256]
 ): BlockBodySyncRequest {.inline, forceCheck: [].} =
     BlockBodySyncRequest(
-        msg: newMessage(MessageType.BlockBodyRequest, contents.toString()),
+        msg: newMessage(MessageType.BlockBodyRequest, hash.toString()),
         check: contents,
         result: future
     )
 
 proc newSketchHashesSyncRequest*(
     future: Future[seq[uint64]],
-    hash: Hash[256]
+    hash: Hash[256],
+    sketchCheck: Hash[256]
 ): SketchHashesSyncRequest {.inline, forceCheck: [].} =
     SketchHashesSyncRequest(
         msg: newMessage(MessageType.SketchHashesRequest, hash.toString()),
-        check: hash,
+        check: sketchCheck,
         result: future
     )
 

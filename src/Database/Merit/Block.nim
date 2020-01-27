@@ -38,7 +38,7 @@ import ../../Network/Serialize/Consensus/SerializeMeritRemoval
 import algorithm
 
 #Verify the sketchCheck Merkle.
-proc verifySketchCheck(
+proc verifySketchCheck*(
     sketchCheck: Hash[256],
     sketchHashes: seq[uint64]
 ) {.raises: [

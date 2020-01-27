@@ -401,7 +401,7 @@ proc mainMerit() {.forceCheck: [].} =
                     doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
 
                 try:
-                    sketchyBlock = newSketchyBlockObj(header, await network.syncManager.syncBlockBody(header.hash))
+                    sketchyBlock = newSketchyBlockObj(header, await network.syncManager.syncBlockBody(header.hash, header.contents))
                 except DataMissing as e:
                     raise newException(ValueError, e.msg)
                 except Exception as e:
