@@ -4,8 +4,8 @@ import ../../lib/Errors
 #Hash lib.
 import ../../lib/Hash
 
-#Block lib.
-import ../../Database/Merit/Block
+#BlockHeader object.
+import ../../Database/Merit/objects/BlockHeaderObj
 
 #Elements lib.
 import ../../Database/Consensus/Elements/Elements
@@ -15,6 +15,9 @@ import ../../Database/Transactions/Transaction as TransactionFile
 
 #Message object.
 import MessageObj
+
+#SketchyBlock object.
+import SketchyBlockObj
 
 #SerializeCommon standard lib.
 import ../Serialize/SerializeCommon
@@ -27,24 +30,31 @@ type
         msg*: Message
 
     PeersSyncRequest* = ref object of SyncRequest
+        check*: bool
         result*: Future[seq[tuple[ip: string, port: int]]]
 
     BlockListSyncRequest* = ref object of SyncRequest
+        check*: bool
         result*: Future[seq[Hash[256]]]
 
     TransactionSyncRequest* = ref object of SyncRequest
+        check*: Hash[256]
         result*: Future[Transaction]
 
     BlockHeaderSyncRequest* = ref object of SyncRequest
+        check*: Hash[256]
         result*: Future[BlockHeader]
 
     BlockBodySyncRequest* = ref object of SyncRequest
-        result*: Future[BlockBody]
+        check*: Hash[256]
+        result*: Future[SketchyBlockBody]
 
     SketchHashesSyncRequest* = ref object of SyncRequest
+        check*: Hash[256]
         result*: Future[seq[uint64]]
 
     SketchHashSyncRequests* = ref object of SyncRequest
+        check*: tuple[salt: string, sketchHashes: seq[uint64]]
         result*: Future[seq[VerificationPacket]]
 
 proc newPeersSyncRequest*(
@@ -77,6 +87,7 @@ proc newTransactionSyncRequest*(
 ): TransactionSyncRequest {.inline, forceCheck: [].} =
     TransactionSyncRequest(
         msg: newMessage(MessageType.TransactionRequest, hash.toString()),
+        check: hash,
         result: future
     )
 
@@ -86,15 +97,17 @@ proc newBlockHeaderSyncRequest*(
 ): BlockHeaderSyncRequest {.inline, forceCheck: [].} =
     BlockHeaderSyncRequest(
         msg: newMessage(MessageType.BlockHeaderRequest, hash.toString()),
+        check: hash,
         result: future
     )
 
 proc newBlockBodySyncRequest*(
-    future: Future[BlockBody],
-    hash: Hash[256]
+    future: Future[SketchyBlockBody],
+    contents: Hash[256]
 ): BlockBodySyncRequest {.inline, forceCheck: [].} =
     BlockBodySyncRequest(
-        msg: newMessage(MessageType.BlockBodyRequest, hash.toString()),
+        msg: newMessage(MessageType.BlockBodyRequest, contents.toString()),
+        check: contents,
         result: future
     )
 
@@ -104,12 +117,14 @@ proc newSketchHashesSyncRequest*(
 ): SketchHashesSyncRequest {.inline, forceCheck: [].} =
     SketchHashesSyncRequest(
         msg: newMessage(MessageType.SketchHashesRequest, hash.toString()),
+        check: hash,
         result: future
     )
 
 proc newSketchHashSyncRequests*(
     future: Future[seq[VerificationPacket]],
     hash: Hash[256],
+    salt: string,
     sketchHashes: seq[uint64]
 ): SketchHashSyncRequests {.forceCheck: [].} =
     result = SketchHashSyncRequests(
@@ -117,6 +132,10 @@ proc newSketchHashSyncRequests*(
             MessageType.SketchHashRequests,
             hash.toString() &
             sketchHashes.len.toBinary(INT_LEN)
+        ),
+        check: (
+            salt: salt,
+            sketchHashes: sketchHashes
         ),
         result: future
     )

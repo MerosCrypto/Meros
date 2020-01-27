@@ -4,8 +4,9 @@ import ../../lib/Errors
 #Util lib.
 import ../../lib/Util
 
-#Hash lib.
+#Hash and Merkle libs.
 import ../../lib/Hash
+import ../../lib/Merkle
 
 #Sketcher lib.
 import ../../lib/Sketcher
@@ -28,6 +29,9 @@ import MessageObj
 #SyncRequest object.
 import SyncRequestObj
 
+#SketchyBlock object.
+import SketchyBlockObj
+
 #Peer lib.
 import ../Peer as PeerFile
 
@@ -45,6 +49,9 @@ import ../Serialize/Consensus/SerializeMeritRemoval
 import ../Serialize/Transactions/SerializeClaim
 import ../Serialize/Transactions/SerializeSend
 import ../Serialize/Transactions/SerializeData
+
+import ../Serialize/Merit/ParseBlockHeader
+import ../Serialize/Merit/ParseBlockBody
 
 import ../Serialize/Transactions/ParseClaim
 import ../Serialize/Transactions/ParseSend
@@ -100,6 +107,49 @@ func updateServices*(
     service: uint8
 ) {.forceCheck: [].} =
     manager.services = char(uint8(manager.services) and service)
+
+#Handle a SyncRequest Response.
+proc handleResponse[SyncRequestType, ResultType, CheckType](
+    manager: SyncManager,
+    peer: Peer,
+    msg: Message,
+    parse: proc (
+        serialization: string,
+        check: CheckType
+    ): ResultType {.raises: [
+        ValueError
+    ].}
+) {.forceCheck: [
+    PeerError
+].} =
+    #Verify there's a Sync Request to check.
+    if peer.requests.len == 0:
+        raise newException(PeerError, "Peer sent us a Transaction without any pending SyncRequests.")
+
+    #Verify the Request is still active.
+    if not manager.requests.hasKey(peer.requests[0]):
+        peer.requests.delete(0)
+        return
+
+    try:
+        #Verify this response is valid for the SyncRequest type.
+        if not (manager.requests[peer.requests[0]] of SyncRequestType):
+            raise newException(PeerError, "Peer sent us an invalid response to our SyncRequest.")
+
+        #Complete the future.
+        var request: SyncRequestType = cast[SyncRequestType](manager.requests[peer.requests[0]])
+        try:
+            request.result.complete(msg.message.parse(request.check))
+        except ValueError:
+            raise newException(PeerError, "Peer sent us an unparsable response to our SyncRequest.")
+        except Exception as e:
+            doAssert(false, "Couldn't complete a Future: " & e.msg)
+    except KeyError as e:
+        doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
+
+    #Delete the Request.
+    manager.requests.del(peer.requests[0])
+    peer.requests.delete(0)
 
 #Handle a new connection.
 proc handle*(
@@ -344,49 +394,150 @@ proc handle*(
                 doAssert(false)
 
             of MessageType.Claim:
-                #Verify there's a Sync Request to check.
-                if peer.requests.len == 0:
+                try:
+                    handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
+                        manager,
+                        peer,
+                        msg,
+                        proc (
+                            serialization: string,
+                            check: Hash[256]
+                        ): Transaction {.forceCheck: [
+                            ValueError
+                        ].} =
+                            try:
+                                result = serialization.parseClaim()
+                            except ValueError as e:
+                                raise e
+
+                            if result.hash != check:
+                                raise newException(ValueError, "Peer sent the wrong Transaction.")
+                    )
+                except ValueError as e:
+                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                except PeerError:
                     peer.close()
                     return
 
-                #Verify the Request is still active.
-                if not manager.requests.hasKey(peer.requests[0]):
-                    peer.requests.delete(0)
-                    continue
-
-                try:
-                    #Verify it's for a Transaction.
-                    if not (manager.requests[peer.requests[0]] of TransactionSyncRequest):
-                        peer.close()
-                        return
-
-                    #Complete the future.
-                    var request: TransactionSyncRequest = cast[TransactionSyncRequest](manager.requests[peer.requests[0]])
-                    try:
-                        request.result.complete(msg.message.parseClaim())
-                    except ValueError:
-                        peer.close()
-                        return
-                    except Exception as e:
-                        doAssert(false, "Couldn't complete a Future: " & e.msg)
-                except KeyError as e:
-                    doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
-
-                #Delete the Request.
-                manager.requests.del(peer.requests[0])
-                peer.requests.delete(0)
-
             of MessageType.Send:
-                doAssert(false)
+                try:
+                    handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
+                        manager,
+                        peer,
+                        msg,
+                        proc (
+                            serialization: string,
+                            check: Hash[256]
+                        ): Transaction {.forceCheck: [
+                            ValueError
+                        ].} =
+                            try:
+                                result = serialization.parseSend(Hash[256]())
+                            except ValueError as e:
+                                raise e
+                            except Spam as e:
+                                doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
+
+                            if result.hash != check:
+                                raise newException(ValueError, "Peer sent the wrong Transaction.")
+                    )
+                except ValueError as e:
+                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                except PeerError:
+                    peer.close()
+                    return
 
             of MessageType.Data:
-                doAssert(false)
+                try:
+                    handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
+                        manager,
+                        peer,
+                        msg,
+                        proc (
+                            serialization: string,
+                            check: Hash[256]
+                        ): Transaction {.forceCheck: [
+                            ValueError
+                        ].} =
+                            try:
+                                result = serialization.parseData(Hash[256]())
+                            except ValueError as e:
+                                raise e
+                            except Spam as e:
+                                doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
+
+                            if result.hash != check:
+                                raise newException(ValueError, "Peer sent the wrong Transaction.")
+                    )
+                except ValueError as e:
+                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                except PeerError:
+                    peer.close()
+                    return
 
             of MessageType.BlockHeader:
-                doAssert(false)
+                try:
+                    handleResponse[BlockHeaderSyncRequest, BlockHeader, Hash[256]](
+                        manager,
+                        peer,
+                        msg,
+                        proc (
+                            serialization: string,
+                            check: Hash[256]
+                        ): BlockHeader {.forceCheck: [
+                            ValueError
+                        ].} =
+                            try:
+                                result = serialization.parseBlockHeader(Hash[256]())
+                            except ValueError as e:
+                                raise e
+
+                            if result.hash != check:
+                                raise newException(ValueError, "Peer sent the wrong BlockHeader.")
+                    )
+                except ValueError as e:
+                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                except PeerError:
+                    peer.close()
+                    return
 
             of MessageType.BlockBody:
-                doAssert(false)
+                try:
+                    handleResponse[BlockBodySyncRequest, SketchyBlockBody, Hash[256]](
+                        manager,
+                        peer,
+                        msg,
+                        proc (
+                            serialization: string,
+                            check: Hash[256]
+                        ): SketchyBlockBody {.forceCheck: [
+                            ValueError
+                        ].} =
+                            try:
+                                result = serialization.parseBlockBody()
+                            except ValueError as e:
+                                raise e
+
+                            if (
+                                (result.data.elements.len == 0) and
+                                (result.data.packetsContents == Hash[256]())
+                            ):
+                                if check == Hash[256]():
+                                    return
+                                raise newException(ValueError, "Peer sent the wrong BlockBody.")
+
+                            var elementsMerkle: Merkle
+                            for elem in result.data.elements:
+                                elementsMerkle.add(Blake256(elem.serializeContents()))
+
+                            if Blake256(result.data.packetsContents.toString() & elementsMerkle.hash.toString()) != check:
+                                raise newException(ValueError, "Peer sent the wrong BlockBody.")
+                    )
+                except ValueError as e:
+                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                except PeerError:
+                    peer.close()
+                    return
 
             of MessageType.SketchHashes:
                 doAssert(false)
