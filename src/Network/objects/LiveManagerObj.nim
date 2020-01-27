@@ -104,7 +104,15 @@ proc handle*(
             manager.port.toBinary(PORT_LEN) &
             manager.functions.merit.getTail().toString()
         ))
+    except SocketError:
+        return
+    except Exception as e:
+        doAssert(false, "Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+    try:
         msg = await peer.recvLive()
+    except SocketError:
+        return
     except PeerError:
         peer.close()
         return
@@ -128,27 +136,14 @@ proc handle*(
 
     peer.port = msg.message[3 ..< 5].fromBinary()
 
-    var tail: Hash[256]
-    try:
-        tail = msg.message[5 ..< 37].toHash(256)
-    except ValueError as e:
-        doAssert(false, "Couldn't create a 32-byte hash from a 32-byte value: " & e.msg)
-
-    #Add the tail.
-    try:
-        await manager.functions.merit.addBlockByHash(tail, true)
-    except ValueError, DataMissing:
-        peer.close()
-        return
-    except DataExists, NotConnected:
-        discard
-    except Exception as e:
-        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+    #We don't bother with the initial tail as we do that for the Sync socket.
 
     #Receive and handle messages forever.
     while true:
         try:
             msg = await peer.recvLive()
+        except SocketError:
+            return
         except PeerError:
             peer.close()
             return
@@ -165,12 +160,20 @@ proc handle*(
                                 manager.functions.merit.getTail().toString()
                             )
                         )
+                    except SocketError:
+                        return
                     except Exception as e:
                         doAssert(false, "Replying `BlockchainTail` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                     #Add the tail.
+                    var tail: Hash[256]
                     try:
-                        await manager.functions.merit.addBlockByHash(tail, true)
+                        tail = msg.message[5 ..< 37].toHash(256)
+                    except ValueError as e:
+                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+
+                    try:
+                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
                     except ValueError, DataMissing:
                         peer.close()
                         return
@@ -189,7 +192,7 @@ proc handle*(
 
                     #Add the Block.
                     try:
-                        await manager.functions.merit.addBlockByHash(tail, true)
+                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
                     except ValueError, DataMissing:
                         peer.close()
                         return
@@ -226,7 +229,7 @@ proc handle*(
                     var mr: SignedMeritRemoval = msg.message.parseSignedMeritRemoval()
 
                     try:
-                        await manager.functions.consensus.addSignedMeritRemoval(mr)
+                        asyncCheck manager.functions.consensus.addSignedMeritRemoval(mr)
                     except ValueError:
                         peer.close()
                         return
@@ -239,7 +242,7 @@ proc handle*(
                     var header: BlockHeader = msg.message.parseBlockHeader()
 
                     try:
-                        await manager.functions.merit.addBlockByHeader(header, false)
+                        asyncCheck manager.functions.merit.addBlockByHeader(header, false)
                     except ValueError, DataMissing:
                         peer.close()
                         return

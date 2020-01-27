@@ -179,6 +179,8 @@ proc handle*(
             manager.functions.merit.getTail().toString()
         ))
         msg = await peer.recvSync()
+    except SocketError:
+        return
     except PeerError:
         peer.close()
         return
@@ -202,501 +204,505 @@ proc handle*(
 
     peer.port = msg.message[3 ..< 5].fromBinary()
 
-    var tail: Hash[256]
-    try:
-        tail = msg.message[5 ..< 37].toHash(256)
-    except ValueError as e:
-        doAssert(false, "Couldn't create a 32-byte hash from a 32-byte value: " & e.msg)
-
-    #Add the tail.
-    try:
-        await manager.functions.merit.addBlockByHash(tail, true)
-    except ValueError, DataMissing:
-        peer.close()
-        return
-    except DataExists, NotConnected:
-        discard
-    except Exception as e:
-        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+    #Create an artificial BlockTail message.
+    msg = newMessage(MessageType.BlockchainTail, msg.message[5 ..< 37])
 
     #Receive and handle messages forever.
     var res: Message
     while true:
+        res = newMessage(MessageType.End)
+
+        block thisMsg:
+            case msg.content:
+                of MessageType.Syncing:
+                    res = newMessage(
+                        MessageType.BlockchainTail,
+                        manager.functions.merit.getTail().toString()
+                    )
+
+                    #Add the tail.
+                    var tail: Hash[256]
+                    try:
+                        tail = msg.message[5 ..< 37].toHash(256)
+                    except ValueError as e:
+                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+
+                    try:
+                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
+                    except ValueError, DataMissing:
+                        peer.close()
+                        return
+                    except DataExists, NotConnected:
+                        discard
+                    except Exception as e:
+                        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+                of MessageType.BlockchainTail:
+                    #Get the tail.
+                    var tail: Hash[256]
+                    try:
+                        tail = msg.message[0 ..< 32].toHash(256)
+                    except ValueError as e:
+                        doAssert(false, "Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
+
+                    #Add the Block.
+                    try:
+                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
+                    except ValueError, DataMissing:
+                        peer.close()
+                        return
+                    except DataExists, NotConnected:
+                        discard
+                    except Exception as e:
+                        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+                of MessageType.PeersRequest:
+                    doAssert(false)
+
+                of MessageType.Peers:
+                    doAssert(false)
+
+                of MessageType.BlockListRequest:
+                    var
+                        list: string = ""
+                        last: Hash[256]
+                        i: int = -1
+
+                    try:
+                        last = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash(256)
+                    except ValueError as e:
+                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+
+                    try:
+                        #Backwards.
+                        if int(msg.message[0]) == 0:
+                            while i < int(msg.message[1]):
+                                last = manager.functions.merit.getBlockHashBefore(last)
+                                list &= last.toString()
+                                inc(i)
+                        #Forwards.
+                        elif int(msg.message[0]) == 1:
+                            while i < int(msg.message[1]):
+                                last = manager.functions.merit.getBlockHashAfter(last)
+                                list &= last.toString()
+                                inc(i)
+                        else:
+                            peer.close()
+                            return
+                    except IndexError:
+                        discard
+
+                    if i == -1:
+                        res = newMessage(MessageType.DataMissing)
+                    else:
+                        res = newMessage(MessageType.BlockList, char(i) & list)
+
+                of MessageType.BlockList:
+                    try:
+                        handleResponse[BlockListSyncRequest, seq[Hash[256]], bool](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: bool
+                            ): seq[Hash[256]] {.forceCheck: [].} =
+                                #Parse out the hashes.
+                                result = newSeq[Hash[256]](1 + int(serialization[0]))
+                                for i in 0 ..< result.len:
+                                    try:
+                                        result[i] = msg.message[BYTE_LEN + (i * HASH_LEN) ..< BYTE_LEN + HASH_LEN + (i * HASH_LEN)].toHash(256)
+                                    except ValueError as e:
+                                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+                        )
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.BlockHeaderRequest:
+                    try:
+                        res = newMessage(
+                            MessageType.BlockHeader,
+                            manager.functions.merit.getBlockByHash(msg.message.toHash(256)).header.serialize()
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                    except IndexError:
+                        res = newMessage(MessageType.DataMissing)
+
+                of MessageType.BlockBodyRequest:
+                    try:
+                        var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash(256))
+                        res = newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt))
+                    except ValueError as e:
+                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                    except IndexError:
+                        res = newMessage(MessageType.DataMissing)
+
+                of MessageType.SketchHashesRequest:
+                    var requested: Block
+                    try:
+                        requested = manager.functions.merit.getBlockByHash(msg.message.toHash(256))
+                        res = newMessage(MessageType.SketchHashes, requested.body.packets.len.toBinary(INT_LEN))
+                        for packet in requested.body.packets:
+                            res.message &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
+                    except ValueError as e:
+                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                    except IndexError:
+                        res = newMessage(MessageType.DataMissing)
+
+                of MessageType.SketchHashRequests:
+                    var requested: Block
+                    try:
+                        requested = manager.functions.merit.getBlockByHash(msg.message[0 ..< HASH_LEN].toHash(256))
+
+                        #Create a Table of the Sketch Hashes.
+                        var packets: Table[string, VerificationPacket] = initTable[string, VerificationPacket]()
+                        for packet in requested.body.packets:
+                            packets[sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)] = packet
+
+                        for i in 0 ..< msg.message[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary():
+                            res = newMessage(
+                                MessageType.VerificationPacket,
+                                packets[msg.message[
+                                    HASH_LEN + INT_LEN + (i * SKETCH_HASH_LEN) ..<
+                                    HASH_LEN + INT_LEN + SKETCH_HASH_LEN + (i * SKETCH_HASH_LEN)
+                                ]].serialize()
+                            )
+
+                            try:
+                                await peer.sendSync(res)
+                            except SocketError:
+                                return
+                            except Exception as e:
+                                doAssert(false, "Failed to reply to a Sync request: " & e.msg)
+
+                        res = newMessage(MessageType.End)
+                    except ValueError as e:
+                        doAssert(false, "Couldn't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                    except IndexError, KeyError:
+                        res = newMessage(MessageType.DataMissing)
+
+                of MessageType.TransactionRequest:
+                    var tx: Transaction
+                    try:
+                        tx = manager.functions.transactions.getTransaction(msg.message.toHash(256))
+                        if tx of Mint:
+                            raise newException(IndexError, "TransactionRequest asked for a Mint.")
+
+                        var content: MessageType
+                        case tx:
+                            of Claim as _:
+                                content = MessageType.Claim
+                            of Send as _:
+                                content = MessageType.Send
+                            of Data as _:
+                                content = MessageType.Data
+                            else:
+                                doAssert(false, "Responding with an unsupported Transaction type to a TransactionRequest.")
+
+                        res = newMessage(content, tx.serialize())
+                    except ValueError as e:
+                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                    except IndexError:
+                        res = newMessage(MessageType.DataMissing)
+
+                of MessageType.DataMissing:
+                    try:
+                        handleResponse[DataMissingSyncRequest, void, bool](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: bool
+                            ): void {.forceCheck: [].} =
+                                doAssert(false, "Handling a DataMissing got to the parse function.")
+                        )
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.Claim:
+                    try:
+                        handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: Hash[256]
+                            ): Transaction {.forceCheck: [
+                                ValueError
+                            ].} =
+                                try:
+                                    result = serialization.parseClaim()
+                                except ValueError as e:
+                                    raise e
+
+                                if result.hash != check:
+                                    raise newException(ValueError, "Peer sent the wrong Transaction.")
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.Send:
+                    try:
+                        handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: Hash[256]
+                            ): Transaction {.forceCheck: [
+                                ValueError
+                            ].} =
+                                try:
+                                    result = serialization.parseSend(Hash[256]())
+                                except ValueError as e:
+                                    raise e
+                                except Spam as e:
+                                    doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
+
+                                if result.hash != check:
+                                    raise newException(ValueError, "Peer sent the wrong Transaction.")
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.Data:
+                    try:
+                        handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: Hash[256]
+                            ): Transaction {.forceCheck: [
+                                ValueError
+                            ].} =
+                                try:
+                                    result = serialization.parseData(Hash[256]())
+                                except ValueError as e:
+                                    raise e
+                                except Spam as e:
+                                    doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
+
+                                if result.hash != check:
+                                    raise newException(ValueError, "Peer sent the wrong Transaction.")
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.BlockHeader:
+                    try:
+                        handleResponse[BlockHeaderSyncRequest, BlockHeader, Hash[256]](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: Hash[256]
+                            ): BlockHeader {.forceCheck: [
+                                ValueError
+                            ].} =
+                                try:
+                                    result = serialization.parseBlockHeader(
+                                        cast[BlockHeaderSyncRequest](
+                                            manager.requests[peer.requests[0]]
+                                        ).check
+                                    )
+                                except ValueError as e:
+                                    raise e
+
+                                if result.hash != check:
+                                    raise newException(ValueError, "Peer sent the wrong BlockHeader.")
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.BlockBody:
+                    try:
+                        handleResponse[BlockBodySyncRequest, SketchyBlockBody, Hash[256]](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: Hash[256]
+                            ): SketchyBlockBody {.forceCheck: [
+                                ValueError
+                            ].} =
+                                try:
+                                    result = serialization.parseBlockBody()
+                                except ValueError as e:
+                                    raise e
+
+                                if (
+                                    (result.data.elements.len == 0) and
+                                    (result.data.packetsContents == Hash[256]())
+                                ):
+                                    if check == Hash[256]():
+                                        return
+                                    raise newException(ValueError, "Peer sent the wrong BlockBody.")
+
+                                var elementsMerkle: Merkle
+                                for elem in result.data.elements:
+                                    elementsMerkle.add(Blake256(elem.serializeContents()))
+
+                                if Blake256(result.data.packetsContents.toString() & elementsMerkle.hash.toString()) != check:
+                                    raise newException(ValueError, "Peer sent the wrong BlockBody.")
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.SketchHashes:
+                    try:
+                        handleResponse[SketchHashesSyncRequest, seq[uint64], Hash[256]](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string,
+                                check: Hash[256]
+                            ): seq[uint64] {.forceCheck: [
+                                ValueError
+                            ].} =
+                                #Parse out the sketch hashes.
+                                result = newSeq[uint64](msg.message[0 ..< INT_LEN].fromBinary())
+                                for i in 0 ..< result.len:
+                                    result[i] = uint64(msg.message[INT_LEN + (i * SKETCH_HASH_LEN) ..< INT_LEN + SKETCH_HASH_LEN + (i * SKETCH_HASH_LEN)].fromBinary())
+
+                                #Sort the result.
+                                result.sort(SortOrder.Descending)
+
+                                #Verify the sketchCheck Merkle.
+                                try:
+                                    check.verifySketchCheck(result)
+                                except ValueError as e:
+                                    raise e
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                    except PeerError:
+                        peer.close()
+                        return
+
+                of MessageType.VerificationPacket:
+                    #Verify there's a Sync Request to check.
+                    if peer.requests.len == 0:
+                        peer.close()
+                        return
+
+                    #Verify the Request is still active.
+                    if not manager.requests.hasKey(peer.requests[0]):
+                        peer.requests.delete(0)
+                        break thisMsg
+
+                    var request: SketchHashSyncRequests
+                    try:
+                        #Verify the Request is a SketchHashSyncRequests.
+                        if not (manager.requests[peer.requests[0]] of SketchHashSyncRequests):
+                            peer.close()
+                            return
+
+                        request = cast[SketchHashSyncRequests](manager.requests[peer.requests[0]])
+                    except KeyError as e:
+                        doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
+
+                    #Receive the rest of the packets.
+                    var packets: seq[VerificationPacket] = newSeq[Verificationpacket](request.check.sketchHashes.len)
+
+                    #Parse and verify the initial packet.
+                    try:
+                        packets[0] = msg.message.parseVerificationPacket()
+                    except ValueError:
+                        peer.close()
+                        return
+                    if sketchHash(request.check.salt, packets[0]) != request.check.sketchHashes[0]:
+                        peer.close()
+                        return
+
+                    var i: int = 1
+                    while i < packets.len:
+                        try:
+                            msg = await peer.recvSync()
+                        except SocketError:
+                            return
+                        except PeerError:
+                            peer.close()
+                            return
+                        except Exception as e:
+                            doAssert(false, "Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+                        if msg.content == MessageType.DataMissing:
+                            break
+
+                        #Parse and verify the packet.
+                        try:
+                            packets[i] = msg.message.parseVerificationPacket()
+                        except ValueError:
+                            peer.close()
+                            return
+                        if sketchHash(request.check.salt, packets[i]) != request.check.sketchHashes[i]:
+                            peer.close()
+                            return
+
+                        #Increment i.
+                        inc(i)
+
+                    #Verify we received every packet.
+                    if i != request.check.sketchHashes.len:
+                        break thisMsg
+
+                    #Complete the future, if it's still incomplete.
+                    if not request.result.finished:
+                        try:
+                            request.result.complete(packets)
+                        except Exception as e:
+                            doAssert(false, "Couldn't complete a Future: " & e.msg)
+
+                    #Delete the Request.
+                    manager.requests.del(peer.requests[0])
+                    peer.requests.delete(0)
+
+                else:
+                    peer.close()
+                    return
+
+            #Reply with the response, if there is one.
+            if res.content != MessageType.End:
+                try:
+                    await peer.sendSync(res)
+                except SocketError:
+                    return
+                except Exception as e:
+                    doAssert(false, "Failed to reply to a Sync request: " & e.msg)
+
+        #Receive the next message.
         try:
             msg = await peer.recvSync()
+        except SocketError:
+            return
         except PeerError:
             peer.close()
             return
         except Exception as e:
             doAssert(false, "Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-        res = newMessage(MessageType.End)
-
-        case msg.content:
-            of MessageType.Syncing:
-                res = newMessage(
-                    MessageType.BlockchainTail,
-                    manager.functions.merit.getTail().toString()
-                )
-
-                #Add the tail.
-                try:
-                    tail = msg.message[5 ..< 37].toHash(256)
-                except ValueError as e:
-                    doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
-                try:
-                    await manager.functions.merit.addBlockByHash(tail, true)
-                except ValueError, DataMissing:
-                    peer.close()
-                    return
-                except DataExists, NotConnected:
-                    discard
-                except Exception as e:
-                    doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            of MessageType.BlockchainTail:
-                #Get the tail.
-                var tail: Hash[256]
-                try:
-                    tail = msg.message[0 ..< 32].toHash(256)
-                except ValueError as e:
-                    doAssert(false, "Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
-
-                #Add the Block.
-                try:
-                    await manager.functions.merit.addBlockByHash(tail, true)
-                except ValueError, DataMissing:
-                    peer.close()
-                    return
-                except DataExists, NotConnected:
-                    discard
-                except Exception as e:
-                    doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-            of MessageType.PeersRequest:
-                doAssert(false)
-
-            of MessageType.Peers:
-                doAssert(false)
-
-            of MessageType.BlockListRequest:
-                var
-                    list: string = ""
-                    last: Hash[256]
-                    i: int = -1
-
-                try:
-                    last = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash(256)
-                except ValueError as e:
-                    doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
-
-                try:
-                    #Backwards.
-                    if int(msg.message[0]) == 0:
-                        while i < int(msg.message[1]):
-                            last = manager.functions.merit.getBlockHashBefore(last)
-                            list &= last.toString()
-                            inc(i)
-                    #Forwards.
-                    elif int(msg.message[0]) == 1:
-                        while i < int(msg.message[1]):
-                            last = manager.functions.merit.getBlockHashAfter(last)
-                            list &= last.toString()
-                            inc(i)
-                    else:
-                        peer.close()
-                        return
-                except IndexError:
-                    discard
-
-                if i == -1:
-                    res = newMessage(MessageType.DataMissing)
-                else:
-                    res = newMessage(MessageType.BlockList, char(i) & list)
-
-            of MessageType.BlockList:
-                try:
-                    handleResponse[BlockListSyncRequest, seq[Hash[256]], bool](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: bool
-                        ): seq[Hash[256]] {.forceCheck: [].} =
-                            #Parse out the hashes.
-                            result = newSeq[Hash[256]](1 + int(serialization[0]))
-                            for i in 0 ..< result.len:
-                                try:
-                                    result[i] = msg.message[BYTE_LEN + (i * HASH_LEN) ..< BYTE_LEN + HASH_LEN + (i * HASH_LEN)].toHash(256)
-                                except ValueError as e:
-                                    doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
-                    )
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.BlockHeaderRequest:
-                try:
-                    res = newMessage(
-                        MessageType.BlockHeader,
-                        manager.functions.merit.getBlockByHash(msg.message.toHash(256)).header.serialize()
-                    )
-                except ValueError as e:
-                    doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
-                except IndexError:
-                    res = newMessage(MessageType.DataMissing)
-
-            of MessageType.BlockBodyRequest:
-                try:
-                    var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash(256))
-                    res = newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt))
-                except ValueError as e:
-                    doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
-                except IndexError:
-                    res = newMessage(MessageType.DataMissing)
-
-            of MessageType.SketchHashesRequest:
-                var requested: Block
-                try:
-                    requested = manager.functions.merit.getBlockByHash(msg.message.toHash(256))
-                    res = newMessage(MessageType.SketchHashes, requested.body.packets.len.toBinary(INT_LEN))
-                    for packet in requested.body.packets:
-                        res.message &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
-                except ValueError as e:
-                    doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
-                except IndexError:
-                    res = newMessage(MessageType.DataMissing)
-
-            of MessageType.SketchHashRequests:
-                var requested: Block
-                try:
-                    requested = manager.functions.merit.getBlockByHash(msg.message[0 ..< HASH_LEN].toHash(256))
-
-                    #Create a Table of the Sketch Hashes.
-                    var packets: Table[string, VerificationPacket] = initTable[string, VerificationPacket]()
-                    for packet in requested.body.packets:
-                        packets[sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)] = packet
-
-                    for i in 0 ..< msg.message[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary():
-                        res = newMessage(
-                            MessageType.VerificationPacket,
-                            packets[msg.message[
-                                HASH_LEN + INT_LEN + (i * SKETCH_HASH_LEN) ..<
-                                HASH_LEN + INT_LEN + SKETCH_HASH_LEN + (i * SKETCH_HASH_LEN)
-                            ]].serialize()
-                        )
-
-                        try:
-                            await peer.sendSync(res)
-                        except Exception as e:
-                            doAssert(false, "Failed to reply to a Sync request: " & e.msg)
-                except ValueError as e:
-                    doAssert(false, "Couldn't convert a 32-byte message to a 32-byte hash: " & e.msg)
-                except IndexError, KeyError:
-                    res = newMessage(MessageType.DataMissing)
-
-            of MessageType.TransactionRequest:
-                var tx: Transaction
-                try:
-                    tx = manager.functions.transactions.getTransaction(msg.message.toHash(256))
-                    if tx of Mint:
-                        raise newException(IndexError, "TransactionRequest asked for a Mint.")
-
-                    var content: MessageType
-                    case tx:
-                        of Claim as _:
-                            content = MessageType.Claim
-                        of Send as _:
-                            content = MessageType.Send
-                        of Data as _:
-                            content = MessageType.Data
-                        else:
-                            doAssert(false, "Responding with an unsupported Transaction type to a TransactionRequest.")
-
-                    res = newMessage(content, tx.serialize())
-                except ValueError as e:
-                    doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
-                except IndexError:
-                    res = newMessage(MessageType.DataMissing)
-
-            of MessageType.DataMissing:
-                try:
-                    handleResponse[DataMissingSyncRequest, void, bool](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: bool
-                        ): void {.forceCheck: [].} =
-                            doAssert(false, "Handling a DataMissing got to the parse function.")
-                    )
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.Claim:
-                try:
-                    handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: Hash[256]
-                        ): Transaction {.forceCheck: [
-                            ValueError
-                        ].} =
-                            try:
-                                result = serialization.parseClaim()
-                            except ValueError as e:
-                                raise e
-
-                            if result.hash != check:
-                                raise newException(ValueError, "Peer sent the wrong Transaction.")
-                    )
-                except ValueError as e:
-                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.Send:
-                try:
-                    handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: Hash[256]
-                        ): Transaction {.forceCheck: [
-                            ValueError
-                        ].} =
-                            try:
-                                result = serialization.parseSend(Hash[256]())
-                            except ValueError as e:
-                                raise e
-                            except Spam as e:
-                                doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
-
-                            if result.hash != check:
-                                raise newException(ValueError, "Peer sent the wrong Transaction.")
-                    )
-                except ValueError as e:
-                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.Data:
-                try:
-                    handleResponse[TransactionSyncRequest, Transaction, Hash[256]](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: Hash[256]
-                        ): Transaction {.forceCheck: [
-                            ValueError
-                        ].} =
-                            try:
-                                result = serialization.parseData(Hash[256]())
-                            except ValueError as e:
-                                raise e
-                            except Spam as e:
-                                doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
-
-                            if result.hash != check:
-                                raise newException(ValueError, "Peer sent the wrong Transaction.")
-                    )
-                except ValueError as e:
-                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.BlockHeader:
-                try:
-                    handleResponse[BlockHeaderSyncRequest, BlockHeader, Hash[256]](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: Hash[256]
-                        ): BlockHeader {.forceCheck: [
-                            ValueError
-                        ].} =
-                            try:
-                                result = serialization.parseBlockHeader(Hash[256]())
-                            except ValueError as e:
-                                raise e
-
-                            if result.hash != check:
-                                raise newException(ValueError, "Peer sent the wrong BlockHeader.")
-                    )
-                except ValueError as e:
-                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.BlockBody:
-                try:
-                    handleResponse[BlockBodySyncRequest, SketchyBlockBody, Hash[256]](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: Hash[256]
-                        ): SketchyBlockBody {.forceCheck: [
-                            ValueError
-                        ].} =
-                            try:
-                                result = serialization.parseBlockBody()
-                            except ValueError as e:
-                                raise e
-
-                            if (
-                                (result.data.elements.len == 0) and
-                                (result.data.packetsContents == Hash[256]())
-                            ):
-                                if check == Hash[256]():
-                                    return
-                                raise newException(ValueError, "Peer sent the wrong BlockBody.")
-
-                            var elementsMerkle: Merkle
-                            for elem in result.data.elements:
-                                elementsMerkle.add(Blake256(elem.serializeContents()))
-
-                            if Blake256(result.data.packetsContents.toString() & elementsMerkle.hash.toString()) != check:
-                                raise newException(ValueError, "Peer sent the wrong BlockBody.")
-                    )
-                except ValueError as e:
-                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.SketchHashes:
-                try:
-                    handleResponse[SketchHashesSyncRequest, seq[uint64], Hash[256]](
-                        manager,
-                        peer,
-                        msg,
-                        proc (
-                            serialization: string,
-                            check: Hash[256]
-                        ): seq[uint64] {.forceCheck: [
-                            ValueError
-                        ].} =
-                            #Parse out the sketch hashes.
-                            result = newSeq[uint64](msg.message[0 ..< INT_LEN].fromBinary())
-                            for i in 0 ..< result.len:
-                                result[i] = uint64(msg.message[INT_LEN + (i * SKETCH_HASH_LEN) ..< INT_LEN + SKETCH_HASH_LEN + (i * SKETCH_HASH_LEN)].fromBinary())
-
-                            #Sort the result.
-                            result.sort(SortOrder.Descending)
-
-                            #Verify the sketchCheck Merkle.
-                            try:
-                                check.verifySketchCheck(result)
-                            except ValueError as e:
-                                raise e
-                    )
-                except ValueError as e:
-                    doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
-                except PeerError:
-                    peer.close()
-                    return
-
-            of MessageType.VerificationPacket:
-                #Verify there's a Sync Request to check.
-                if peer.requests.len == 0:
-                    peer.close()
-                    return
-
-                #Verify the Request is still active.
-                if not manager.requests.hasKey(peer.requests[0]):
-                    peer.requests.delete(0)
-                    continue
-
-                var request: SketchHashSyncRequests
-                try:
-                    #Verify the Request is a SketchHashSyncRequests.
-                    if not (manager.requests[peer.requests[0]] of SketchHashSyncRequests):
-                        peer.close()
-                        return
-
-                    request = cast[SketchHashSyncRequests](manager.requests[peer.requests[0]])
-                except KeyError as e:
-                    doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
-
-                #Receive the rest of the packets.
-                var packets: seq[VerificationPacket] = newSeq[Verificationpacket](request.check.sketchHashes.len)
-
-                #Parse and verify the initial packet.
-                try:
-                    packets[0] = msg.message.parseVerificationPacket()
-                except ValueError:
-                    peer.close()
-                    return
-                if sketchHash(request.check.salt, packets[0]) != request.check.sketchHashes[0]:
-                    peer.close()
-                    return
-
-                var i: int = 1
-                while i < packets.len:
-                    try:
-                        msg = await peer.recvSync()
-                    except PeerError:
-                        peer.close()
-                        return
-                    except Exception as e:
-                        doAssert(false, "Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-                    if msg.content == MessageType.DataMissing:
-                        break
-
-                    #Parse and verify the packet.
-                    try:
-                        packets[i] = msg.message.parseVerificationPacket()
-                    except ValueError:
-                        peer.close()
-                        return
-                    if sketchHash(request.check.salt, packets[i]) != request.check.sketchHashes[i]:
-                        peer.close()
-                        return
-
-                    #Increment i.
-                    inc(i)
-
-                #Verify we received every packet.
-                if i != request.check.sketchHashes.len:
-                    continue
-
-                #Complete the future, if it's still incomplete.
-                if not request.result.finished:
-                    try:
-                        request.result.complete(packets)
-                    except Exception as e:
-                        doAssert(false, "Couldn't complete a Future: " & e.msg)
-
-                #Delete the Request.
-                manager.requests.del(peer.requests[0])
-                peer.requests.delete(0)
-
-            else:
-                peer.close()
-                return
-
-        #Reply with the response, if there is one.
-        if res.content != MessageType.End:
-            try:
-                await peer.sendSync(res)
-            except Exception as e:
-                doAssert(false, "Failed to reply to a Sync request: " & e.msg)

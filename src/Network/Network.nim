@@ -109,30 +109,18 @@ proc connect*(
         sync = peer.sync
 
     try:
-        #Create the Live socket if necessary.
-        if not hasLive:
-            live = newAsyncSocket()
-            await live.connect(address, Port(port))
         #Create the Sync socket if necessary.
         if not hasSync:
             sync = newAsyncSocket()
             await sync.connect(address, Port(port))
+        #Create the Live socket if necessary.
+        if not hasLive:
+            live = newAsyncSocket()
+            await live.connect(address, Port(port))
     except Exception:
-        if not live.isNil:
-            try:
-                sync.close()
-            except Exception as e:
-                doAssert(false, "Couldn't close a socket: " & e.msg)
-
-        if not sync.isNil:
-            try:
-                sync.close()
-            except Exception as e:
-                doAssert(false, "Couldn't close a socket: " & e.msg)
-
         if not peer.isNil:
+            peer.close()
             network.disconnect(peer)
-
         return
 
     #Create the Peer, if necessary.
@@ -148,10 +136,10 @@ proc connect*(
 
     #Handle the connections.
     try:
-        if not hasLive:
-            asyncCheck network.liveManager.handle(peer)
         if not hasSync:
             asyncCheck network.syncManager.handle(peer)
+        if not hasLive:
+            asyncCheck network.liveManager.handle(peer)
     except Exception as e:
         doAssert(false, "Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
 
@@ -171,8 +159,8 @@ proc handle*(
         if (socket.getLocalAddr()[0] == address) and (address != "127.0.0.1"):
             try:
                 socket.close()
-            except Exception as e:
-                doAssert(false, "Failed to close a socket: " & e.msg)
+            except Exception:
+                discard
             return
 
         addressParts = address.split(".")
@@ -198,15 +186,15 @@ proc handle*(
     except Exception:
         try:
             socket.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
+        except Exception:
+            discard
         return
 
     if not {MessageType.Handshake, MessageType.Syncing}.contains(MessageType(first[0])):
         try:
             socket.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
+        except Exception:
+            discard
         return
 
     var peer: Peer
@@ -214,8 +202,8 @@ proc handle*(
         if network.live.hasKey(ip) and (address != "127.0.0.1"):
             try:
                 socket.close()
-            except Exception as e:
-                doAssert(false, "Failed to close a socket: " & e.msg)
+            except Exception:
+                discard
             return
 
         try:
@@ -237,8 +225,8 @@ proc handle*(
         if network.sync.hasKey(ip) and (address != "127.0.0.1"):
             try:
                 socket.close()
-            except Exception as e:
-                doAssert(false, "Failed to close a socket: " & e.msg)
+            except Exception:
+                discard
             return
 
         try:
@@ -260,6 +248,10 @@ proc handle*(
 proc listen*(
     network: Network
 ) {.forceCheck: [], async.} =
+    #Update the services byte.
+    network.liveManager.updateServices(SERVER_SERVICE)
+    network.syncManager.updateServices(SERVER_SERVICE)
+
     #Start listening.
     try:
         network.server = newAsyncSocket()
@@ -277,10 +269,6 @@ proc listen*(
         network.server.listen()
     except Exception as e:
         doAssert(false, "Failed to start listening on the Network's server socket: " & e.msg)
-
-    #Update the services byte.
-    network.liveManager.updateServices(SERVER_SERVICE)
-    network.syncManager.updateServices(SERVER_SERVICE)
 
     #Accept new connections infinitely.
     while not network.server.isClosed():
@@ -309,7 +297,7 @@ proc broadcast*(
     for recipient in recipients:
         try:
             await recipient.sendLive(msg)
-        except PeerError:
-            network.disconnect(recipient)
+        except SocketError:
+            discard
         except Exception as e:
             doAssert(false, "Sending over a Live socket raised an Exception despite catching every Exception: " & e.msg)

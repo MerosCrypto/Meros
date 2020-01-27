@@ -104,6 +104,12 @@ proc newNetwork*(
             except KeyError as e:
                 doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
 
+            #Exclude nil sockets from live/sync.
+            if peer.live.isNil:
+                network.live.del(peer.ip)
+            if peer.sync.isNil:
+                network.sync.del(peer.ip)
+
             #Close Peers who have been inactive for half a minute.
             if peer.isClosed or (peer.last + 30 <= getTime()):
                 peer.close()
@@ -128,9 +134,8 @@ proc newNetwork*(
                             tail.toString()
                         )
                     )
-                except PeerError:
-                    #This will remove them on the next check.
-                    peer.close()
+                except SocketError:
+                    discard
                 except Exception as e:
                     doAssert(false, "Sending to a Peer threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -176,7 +181,7 @@ proc getPeers*(
                 continue
 
             #Skip peers who don't have a Live socket if that's a requirement.
-            if live and peer.live.isNil:
+            if live and (peer.live.isNil or peer.live.isClosed):
                 dec(peersLeft)
                 if req > peersLeft:
                     dec(req)

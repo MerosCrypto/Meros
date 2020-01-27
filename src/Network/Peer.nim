@@ -30,29 +30,35 @@ import tables
 proc sendLive*(
     peer: Peer,
     msg: Message
-) {.forceCheck: [], async.} =
+) {.forceCheck: [
+    SocketError
+], async.} =
     try:
         await peer.live.send(msg.toString())
-    except Exception:
+    except Exception as e:
         try:
             peer.live.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
+        except Exception:
+            discard
         peer.live = nil
+        raise newException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
 #Send a message via the Sync socket.
 proc sendSync*(
     peer: Peer,
     msg: Message
-) {.forceCheck: [], async.} =
+) {.forceCheck: [
+    SocketError
+], async.} =
     try:
         await peer.sync.send(msg.toString())
-    except Exception:
+    except Exception as e:
         try:
             peer.sync.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
+        except Exception:
+            discard
         peer.sync = nil
+        raise newException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
 #Send a Sync Request.
 proc syncRequest*(
@@ -69,6 +75,8 @@ proc syncRequest*(
     peer.requests.add(id)
     try:
         await peer.sendSync(msg)
+    except SocketError:
+        discard
     except Exception as e:
         doAssert(false, "Couldn't send to a peer's Sync socket: " & e.msg)
 
@@ -224,17 +232,19 @@ proc recv(
 proc recvLive*(
     peer: Peer
 ): Future[Message] {.forceCheck: [
+    SocketError,
     PeerError
 ], async.} =
     #Receive the message.
     try:
         result = await recv(peer.id, peer.live, LIVE_LENS)
-    except SocketError:
+    except SocketError as e:
         try:
             peer.live.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
+        except Exception:
+            discard
         peer.live = nil
+        raise e
     except PeerError as e:
         raise e
     except Exception as e:
@@ -247,17 +257,19 @@ proc recvLive*(
 proc recvSync*(
     peer: Peer
 ): Future[Message] {.forceCheck: [
+    SocketError,
     PeerError
 ], async.} =
     #Receive the message.
     try:
-        result = await recv(peer.id, peer.sync, LIVE_LENS)
-    except SocketError:
+        result = await recv(peer.id, peer.sync, SYNC_LENS)
+    except SocketError as e:
         try:
             peer.sync.close()
-        except Exception as e:
-            doAssert(false, "Failed to close a socket: " & e.msg)
+        except Exception:
+            discard
         peer.sync = nil
+        raise e
     except PeerError as e:
         raise e
     except Exception as e:
