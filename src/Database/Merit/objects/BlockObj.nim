@@ -37,6 +37,7 @@ proc newBlockObj*(
     sketchSalt: string,
     sketchCheck: Hash[256],
     miner: BLSPublicKey,
+    packetsContents: Hash[256],
     packets: seq[VerificationPacket],
     elements: seq[BlockElement],
     aggregate: BLSSignature,
@@ -58,6 +59,7 @@ proc newBlockObj*(
             signature
         ),
         body: newBlockBodyObj(
+            packetsContents,
             packets,
             elements,
             aggregate
@@ -72,6 +74,7 @@ proc newBlockObj*(
     sketchSalt: string,
     sketchCheck: Hash[256],
     miner: uint16,
+    packetsContents: Hash[256],
     packets: seq[VerificationPacket],
     elements: seq[BlockElement],
     aggregate: BLSSignature,
@@ -93,6 +96,7 @@ proc newBlockObj*(
             signature
         ),
         body: newBlockBodyObj(
+            packetsContents,
             packets,
             elements,
             aggregate

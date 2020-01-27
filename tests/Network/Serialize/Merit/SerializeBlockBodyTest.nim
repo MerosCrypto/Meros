@@ -9,6 +9,9 @@ import ../../../Fuzzed
 #Util lib.
 import ../../../../src/lib/Util
 
+#Hash lib.
+import ../../../../src/lib/Hash
+
 #Sketcher lib.
 import ../../../../src/lib/Sketcher
 
@@ -42,6 +45,8 @@ suite "SerializeBlockBody":
         var
             #Sketch salt.
             sketchSalt: string
+            #Packets contents.
+            packetsContents: Hash[256]
             #Packets.
             packets: seq[VerificationPacket] = @[]
             #Elements.
@@ -54,6 +59,10 @@ suite "SerializeBlockBody":
             sketchResult: SketchResult
 
     highFuzzTest "Serialize and parse.":
+        #Randomize the packets' contents.
+        for b in 0 ..< 32:
+            packetsContents.data[b] = uint8(rand(255))
+
         #Randomize the packets.
         for _ in 0 ..< rand(300):
             packets.add(newRandomVerificationPacket())
@@ -67,6 +76,7 @@ suite "SerializeBlockBody":
             sketchSalt = char(rand(255)) & char(rand(255)) & char(rand(255)) & char(rand(255))
 
             body = newBlockBodyObj(
+                packetsContents,
                 packets,
                 elements,
                 newMinerWallet().sign($rand(4096))
