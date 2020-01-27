@@ -478,24 +478,16 @@ proc mainMerit() {.forceCheck: [].} =
                 doAssert(false, "addBlockByHeaderInternal/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)
 
         functions.merit.addBlockByHash = proc (
-            hash: Hash[256],
-            syncing: bool
-        ) {.forceCheck: [
-            ValueError,
-            DataMissing,
-            DataExists,
-            NotConnected
-        ], async.} =
+            peer: Peer,
+            hash: Hash[256]
+        ) {.forceCheck: [], async.} =
             try:
-                await functions.merit.addBlockByHashInternal(hash, syncing, blockLock)
-            except ValueError as e:
-                raise e
-            except DataMissing as e:
-                raise e
-            except DataExists as e:
-                raise e
-            except NotConnected as e:
-                raise e
+                await functions.merit.addBlockByHashInternal(hash, true, blockLock)
+            except ValueError, DataMissing:
+                peer.close()
+                return
+            except DataExists, NotConnected:
+                discard
             except Exception as e:
                 doAssert(false, "addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
 

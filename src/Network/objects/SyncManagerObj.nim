@@ -228,12 +228,7 @@ proc handle*(
                         doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
                     try:
-                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
-                    except ValueError, DataMissing:
-                        peer.close()
-                        return
-                    except DataExists, NotConnected:
-                        discard
+                        asyncCheck manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
                         doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -247,12 +242,7 @@ proc handle*(
 
                     #Add the Block.
                     try:
-                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
-                    except ValueError, DataMissing:
-                        peer.close()
-                        return
-                    except DataExists, NotConnected:
-                        discard
+                        asyncCheck manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
                         doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -560,7 +550,7 @@ proc handle*(
                                         return
                                     raise newException(ValueError, "Peer sent the wrong BlockBody.")
 
-                                var elementsMerkle: Merkle
+                                var elementsMerkle: Merkle = newMerkle()
                                 for elem in result.data.elements:
                                     elementsMerkle.add(Blake256(elem.serializeContents()))
 

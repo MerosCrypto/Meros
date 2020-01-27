@@ -101,7 +101,7 @@ const SYNC_LENS*: Table[MessageType, seq[int]] = {
     MessageType.Data:                      LIVE_LENS[MessageType.Data],
 
     MessageType.BlockHeader:               LIVE_LENS[MessageType.BlockHeader],
-    MessageType.BlockBody:                 @[HASH_LEN + INT_LEN, -SKETCH_HASH_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
+    MessageType.BlockBody:                 @[HASH_LEN, INT_LEN, -SKETCH_HASH_LEN, INT_LEN, 0, BLS_SIGNATURE_LEN],
     MessageType.SketchHashes:              @[INT_LEN, -SKETCH_HASH_LEN],
     MessageType.VerificationPacket:        @[NICKNAME_LEN, -NICKNAME_LEN, HASH_LEN]
 }.toTable()

@@ -173,12 +173,7 @@ proc handle*(
                         doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
                     try:
-                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
-                    except ValueError, DataMissing:
-                        peer.close()
-                        return
-                    except DataExists, NotConnected:
-                        discard
+                        await manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
                         doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -192,12 +187,7 @@ proc handle*(
 
                     #Add the Block.
                     try:
-                        asyncCheck manager.functions.merit.addBlockByHash(tail, true)
-                    except ValueError, DataMissing:
-                        peer.close()
-                        return
-                    except DataExists, NotConnected:
-                        discard
+                        await manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
                         doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
@@ -229,7 +219,7 @@ proc handle*(
                     var mr: SignedMeritRemoval = msg.message.parseSignedMeritRemoval()
 
                     try:
-                        asyncCheck manager.functions.consensus.addSignedMeritRemoval(mr)
+                        await manager.functions.consensus.addSignedMeritRemoval(mr)
                     except ValueError:
                         peer.close()
                         return
@@ -242,7 +232,7 @@ proc handle*(
                     var header: BlockHeader = msg.message.parseBlockHeader()
 
                     try:
-                        asyncCheck manager.functions.merit.addBlockByHeader(header, false)
+                        await manager.functions.merit.addBlockByHeader(header, false)
                     except ValueError, DataMissing:
                         peer.close()
                         return

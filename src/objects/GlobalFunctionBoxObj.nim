@@ -251,8 +251,8 @@ type
         ): Future[void]
 
         addBlockByHash*: proc (
-            hash: Hash[256],
-            syncing: bool
+            peer: Peer,
+            hash: Hash[256]
         ): Future[void]
 
         testBlockHeader*: proc (
