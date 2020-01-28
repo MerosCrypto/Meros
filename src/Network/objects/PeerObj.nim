@@ -7,6 +7,12 @@ import ../../lib/Util
 #Locks standard lib.
 import locks
 
+#Table standard lib.
+import tables
+
+#Random standard lib.
+import random
+
 #Networking standard lib.
 import asyncnet
 
@@ -72,3 +78,46 @@ proc close*(
             peer.sync.close()
     except Exception:
         discard
+
+#Get random peers which meet criteria.
+#Helper function used in a few places.
+proc getPeers*(
+    peers: TableRef[int, Peer],
+    reqArg: int,
+    skip: int = 1,
+    live: bool = false,
+    server: bool = false
+): seq[Peer] {.forceCheck: [].} =
+    var
+        req: int = reqArg
+        peersLeft: int = peers.len
+    for peer in peers.values():
+        if req == 0:
+            break
+
+        if rand(peersLeft - 1) < req:
+            #Skip peers who aren't servers if that's a requirement.
+            if server and (not peer.server):
+                dec(peersLeft)
+                if req > peersLeft:
+                    dec(req)
+                continue
+
+            #Skip peers who don't have a Live socket if that's a requirement.
+            if live and (peer.live.isNil or peer.live.isClosed):
+                dec(peersLeft)
+                if req > peersLeft:
+                    dec(req)
+                continue
+
+            #Skip the Peer who sent us this message.
+            if peer.id == skip:
+                dec(peersLeft)
+                if req > peersLeft:
+                    dec(req)
+                continue
+
+            #Add the peers to the result, delete them from usable, and lower req.
+            result.add(peer)
+            dec(peersLeft)
+            dec(req)

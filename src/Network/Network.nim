@@ -284,8 +284,8 @@ proc broadcast*(
     network: Network,
     msg: Message
 ) {.forceCheck: [], async.} =
-    #Network we need to broadcast to.
-    var recipients: seq[Peer] = network.getPeers(
+    #Peers we're broadcasting to.
+    var recipients: seq[Peer] = network.peers.getPeers(
         max(
             min(network.peers.len, 3),
             int(ceil(sqrt(float(network.peers.len))))

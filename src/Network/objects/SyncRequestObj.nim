@@ -22,6 +22,9 @@ import SketchyBlockObj
 #SerializeCommon standard lib.
 import ../Serialize/SerializeCommon
 
+#Sets standard lib.
+import sets
+
 #Async standard lib.
 import asyncdispatch
 
@@ -29,12 +32,10 @@ type
     SyncRequest* = ref object of RootObj
         msg*: Message
 
-    DataMissingSyncRequest* = ref object of SyncRequest
-        check*: bool
-        result*: Future[void]
-
     PeersSyncRequest* = ref object of SyncRequest
-        check*: bool
+        remaining*: int
+        existing*: HashSet[string]
+        pending*: seq[tuple[ip: string, port: int]]
         result*: Future[seq[tuple[ip: string, port: int]]]
 
     BlockListSyncRequest* = ref object of SyncRequest
@@ -62,10 +63,13 @@ type
         result*: Future[seq[VerificationPacket]]
 
 proc newPeersSyncRequest*(
-    future: Future[seq[tuple[ip: string, port: int]]]
+    future: Future[seq[tuple[ip: string, port: int]]],
+    remaining: int
 ): PeersSyncRequest {.inline, forceCheck: [].} =
     PeersSyncRequest(
         msg: newMessage(MessageType.PeersRequest),
+        remaining: remaining,
+        existing: initHashSet[string](),
         result: future
     )
 

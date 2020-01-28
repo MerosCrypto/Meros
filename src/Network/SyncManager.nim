@@ -60,8 +60,25 @@ import strutils
 
 #Custom future which includes a set timeout.
 type SyncFuture[T] = ref object
-    future*: Future[T]
-    timeout*: int
+    manager: SyncManager
+    id: int
+
+    future: Future[T]
+    timeout: int
+
+proc newSyncFuture[T](
+    manager: SyncManagerObj.SyncManager, #Fixes a resolution bug in Nim.
+    id: int,
+    future: Future[T],
+    timeout: int
+): SyncFuture[T] {.inline, forceCheck: [].} =
+    SyncFuture[T](
+        manager: manager,
+        id: id,
+
+        future: future,
+        timeout: timeout
+    )
 
 #Await which completes the future after the timeout, raising DataMissing if the actual future had yet to complete.
 proc syncAwait*[T](
@@ -81,29 +98,45 @@ proc syncAwait*[T](
     except Exception as e:
         doAssert(false, "Couldn't create await a timeout: " & e.msg)
 
-    if timedOut:
-        raise newException(DataMissing, "SyncRequest timed out.")
+    when T is seq[tuple[ip: string, port: int]]:
+        if timedOut:
+            var request: PeersSyncRequest
+            try:
+                request = cast[PeersSyncRequest](future.manager.requests[future.id])
+            except KeyError as e:
+                doAssert(false, "Couldn't get a SyncRequest which timed out: " & e.msg)
+
+            future.manager.requests.del(future.id)
+            return request.pending
     else:
-        try:
-            result = future.future.read()
-        except ValueError as e:
-            doAssert(false, "Couldn't read the value of a completed future: " & e.msg)
+        if timedOut:
+            future.manager.requests.del(future.id)
+            raise newException(DataMissing, "SyncRequest timed out.")
+
+    try:
+        result = future.future.read()
+    except ValueError as e:
+        doAssert(false, "Couldn't read the value of a completed future: " & e.msg)
 
 #Sync a missing Transaction.
 proc syncTransaction*(
     manager: SyncManager,
     hash: Hash[256]
 ): SyncFuture[Transaction] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
     #Create the future.
-    result = SyncFuture[Transaction](
-        future: newFuture[Transaction]("syncTransaction"),
-        timeout: 2000
+    result = newSyncFuture[Transaction](
+        manager,
+        id,
+        newFuture[Transaction]("syncTransaction"),
+        2000
     )
 
     #Create the request and register it.
-    var
-        id: int = manager.requests.len
-        request: TransactionSyncRequest = result.future.newTransactionSyncRequest(hash)
+    var request: TransactionSyncRequest = result.future.newTransactionSyncRequest(hash)
     manager.requests[id] = request
 
     #Send the request to every peer.
@@ -120,16 +153,20 @@ proc syncVerificationPackets*(
     salt: string,
     sketchHashes: seq[uint64]
 ): SyncFuture[seq[VerificationPacket]] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
     #Create the future.
-    result = SyncFuture[seq[VerificationPacket]](
-        future: newFuture[seq[VerificationPacket]]("syncVerificationPackets"),
-        timeout: 3000
+    result = newSyncFuture[seq[VerificationPacket]](
+        manager,
+        id,
+        newFuture[seq[VerificationPacket]]("syncVerificationPackets"),
+        3000
     )
 
     #Create the request and register it.
-    var
-        id: int = manager.requests.len
-        request: SketchHashSyncRequests = result.future.newSketchHashSyncRequests(hash, salt, sketchHashes)
+    var request: SketchHashSyncRequests = result.future.newSketchHashSyncRequests(hash, salt, sketchHashes)
     manager.requests[id] = request
 
     #Send the request to every peer.
@@ -145,16 +182,20 @@ proc syncSketchHashes*(
     hash: Hash[256],
     sketchCheck: Hash[256]
 ): SyncFuture[seq[uint64]] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
     #Create the future.
-    result = SyncFuture[seq[uint64]](
-        future: newFuture[seq[uint64]]("syncSketchHashes"),
-        timeout: 3000
+    result = newSyncFuture[seq[uint64]](
+        manager,
+        id,
+        newFuture[seq[uint64]]("syncSketchHashes"),
+        3000
     )
 
     #Create the request and register it.
-    var
-        id: int = manager.requests.len
-        request: SketchHashesSyncRequest = result.future.newSketchHashesSyncRequest(hash, sketchCheck)
+    var request: SketchHashesSyncRequest = result.future.newSketchHashesSyncRequest(hash, sketchCheck)
     manager.requests[id] = request
 
     #Send the request to every peer.
@@ -493,16 +534,20 @@ proc syncBlockBody*(
     hash: Hash[256],
     contents: Hash[256]
 ): SyncFuture[SketchyBlockBody] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
     #Create the future.
-    result = SyncFuture[SketchyBlockBody](
-        future: newFuture[SketchyBlockBody]("syncBlockBody"),
-        timeout: 5000
+    result = newSyncFuture[SketchyBlockBody](
+        manager,
+        id,
+        newFuture[SketchyBlockBody]("syncBlockBody"),
+        5000
     )
 
     #Create the request and register it.
-    var
-        id: int = manager.requests.len
-        request: BlockBodySyncRequest = result.future.newBlockBodySyncRequest(hash, contents)
+    var request: BlockBodySyncRequest = result.future.newBlockBodySyncRequest(hash, contents)
     manager.requests[id] = request
 
     #Send the request to every peer.
@@ -517,16 +562,20 @@ proc syncBlockHeader*(
     manager: SyncManager,
     hash: Hash[256]
 ): SyncFuture[BlockHeader] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
     #Create the future.
-    result = SyncFuture[BlockHeader](
-        future: newFuture[BlockHeader]("syncBlockHeader"),
-        timeout: 5000
+    result = newSyncFuture[BlockHeader](
+        manager,
+        id,
+        newFuture[BlockHeader]("syncBlockHeader"),
+        5000
     )
 
     #Create the request and register it.
-    var
-        id: int = manager.requests.len
-        request: BlockHeaderSyncRequest = result.future.newBlockHeaderSyncRequest(hash)
+    var request: BlockHeaderSyncRequest = result.future.newBlockHeaderSyncRequest(hash)
     manager.requests[id] = request
 
     #Send the request to every peer.
@@ -543,16 +592,20 @@ proc syncBlockList*(
     amount: int,
     hash: Hash[256]
 ): SyncFuture[seq[Hash[256]]] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
     #Create the future.
-    result = SyncFuture[seq[Hash[256]]](
-        future: newFuture[seq[Hash[256]]]("syncBlockList"),
-        timeout: 3000
+    result = newSyncFuture[seq[Hash[256]]](
+        manager,
+        id,
+        newFuture[seq[Hash[256]]]("syncBlockList"),
+        3000
     )
 
     #Create the request and register it.
-    var
-        id: int = manager.requests.len
-        request: BlockListSyncRequest = result.future.newBlockListSyncRequest(forwards, amount, hash)
+    var request: BlockListSyncRequest = result.future.newBlockListSyncRequest(forwards, amount, hash)
     manager.requests[id] = request
 
     #Send the request to every peer.
@@ -567,4 +620,38 @@ proc syncPeers*(
     manager: SyncManager,
     seeds: seq[tuple[ip: string, port: int]]
 ): SyncFuture[seq[tuple[ip: string, port: int]]] {.forceCheck: [].} =
-    return
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
+    if manager.peers.len == 0:
+        result = newSyncFuture[seq[tuple[ip: string, port: int]]](
+            manager,
+            0,
+            newFuture[seq[tuple[ip: string, port: int]]]("syncPeers"),
+            3000
+        )
+        try:
+            result.future.complete(seeds)
+        except Exception as e:
+            doAssert(false, "Failed to complete a future: " & e.msg)
+        return
+
+    #Create the future.
+    result = newSyncFuture[seq[tuple[ip: string, port: int]]](
+        manager,
+        id,
+        newFuture[seq[tuple[ip: string, port: int]]]("syncPeers"),
+        3000
+    )
+
+    #Create the request and register it.
+    var request: PeersSyncRequest = result.future.newPeersSyncRequest(manager.peers.len)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)

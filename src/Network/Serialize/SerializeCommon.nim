@@ -12,6 +12,7 @@ const
     NICKNAME_LEN*:       int = 2
     IP_LEN*:             int = 4
     INT_LEN*:            int = 4
+    PEER_LEN*:           int = IP_LEN + PORT_LEN
     SALT_LEN*:           int = 8
     SKETCH_HASH_LEN*:    int = 8
     MEROS_LEN*:          int = 8

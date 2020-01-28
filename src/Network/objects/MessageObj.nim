@@ -85,7 +85,7 @@ const SYNC_LENS*: Table[MessageType, seq[int]] = {
 
     MessageType.Syncing:                   LIVE_LENS[MessageType.Handshake],
     MessageType.PeersRequest:              @[],
-    MessageType.Peers:                     @[BYTE_LEN, IP_LEN + PORT_LEN],
+    MessageType.Peers:                     @[BYTE_LEN, PEER_LEN],
     MessageType.BlockListRequest:          @[BYTE_LEN + BYTE_LEN + HASH_LEN],
     MessageType.BlockList:                 @[BYTE_LEN, -HASH_LEN, HASH_LEN],
 

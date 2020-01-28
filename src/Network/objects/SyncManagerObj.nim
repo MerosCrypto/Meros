@@ -62,11 +62,14 @@ import ../Serialize/Transactions/ParseData
 #Algorithm standard lib.
 import algorithm
 
-#Async standard lib.
-import asyncdispatch
+#Sets standard lib.
+import sets
 
 #Tables standard lib.
 import tables
+
+#Async standard lib.
+import asyncdispatch
 
 #SyncManager object.
 type SyncManager* = ref object
@@ -78,6 +81,9 @@ type SyncManager* = ref object
     services: char
     #Server port.
     port: int
+
+    #Next usable Request ID.
+    id*: int
 
     #Table of every Peer.
     peers*: TableRef[int, Peer]
@@ -99,6 +105,8 @@ func newSyncManager*(
         protocol: protocol,
         network: network,
         port: port,
+
+        id: 0,
 
         peers: peers,
         requests: initTable[int, SyncRequest](),
@@ -146,15 +154,44 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
         if not (manager.requests[peer.requests[0]] of SyncRequestType):
             raise newException(PeerError, "Peer sent us an invalid response to our SyncRequest.")
 
-        #Complete the future.
+        #Void result types are used for DataMissing.
+        when ResultType is void:
+            #Verify the request wasn't for Peers, the only request to now allow DataMissing.
+            if manager.requests[peer.requests[0]] of PeersSyncRequest:
+                raise newException(PeerError, "Peer sent us an invalid response to our SyncRequest.")
+
         when not (ResultType is void):
+            #Grab and cast the request.
             var request: SyncRequestType = cast[SyncRequestType](manager.requests[peer.requests[0]])
-            try:
-                request.result.complete(msg.message.parse(request.check))
-            except ValueError:
-                raise newException(PeerError, "Peer sent us an unparsable response to our SyncRequest.")
-            except Exception as e:
-                doAssert(false, "Couldn't complete a Future: " & e.msg)
+
+            #If it's a PeersSyncRequest, append to the pending peers list instead of completing the future.
+            when SyncRequestType is PeersSyncRequest:
+                try:
+                    for peerSuggestion in msg.message.parse():
+                        if request.existing.contains(peerSuggestion.ip):
+                            request.pending.add(peerSuggestion)
+                        request.existing.incl(peerSuggestion.ip)
+                except ValueError as e:
+                    doAssert(false, "Parsing peers raised a ValueError: " & e.msg)
+
+                #Mark that this Peer completed.
+                dec(request.remaining)
+
+                #If this was the last peer, complete the future.
+                if request.remaining == 0:
+                    try:
+                        request.result.complete(request.pending)
+                    except Exception as e:
+                        doAssert(false, "Couldn't complete a Future: " & e.msg)
+
+            #Complete the future.
+            else:
+                try:
+                    request.result.complete(msg.message.parse(request.check))
+                except ValueError:
+                    raise newException(PeerError, "Peer sent us an unparsable response to our SyncRequest.")
+                except Exception as e:
+                    doAssert(false, "Couldn't complete a Future: " & e.msg)
     except KeyError as e:
         doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
 
@@ -247,10 +284,37 @@ proc handle*(
                         doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 of MessageType.PeersRequest:
-                    doAssert(false)
+                    var peers: seq[Peer] = manager.peers.getPeers(
+                        min(manager.peers.len, 4),
+                        msg.peer,
+                        server = true
+                    )
+
+                    res = newMessage(MessageType.Peers, peers.len.toBinary())
+                    for peer in peers:
+                        res.message &= peer.ip & peer.port.toBinary()
 
                 of MessageType.Peers:
-                    doAssert(false)
+                    try:
+                        handleResponse[PeersSyncRequest, seq[tuple[ip: string, port: int]], void](
+                            manager,
+                            peer,
+                            msg,
+                            proc (
+                                serialization: string
+                            ): seq[tuple[ip: string, port: int]] {.forceCheck: [].} =
+                                result = newSeq[tuple[ip: string, port: int]](serialization[0].fromBinary())
+                                for p in 0 ..< result.len:
+                                    result[p] = (
+                                        ip: serialization[BYTE_LEN + (p * PEER_LEN) ..< BYTE_LEN + (p * PEER_LEN) + IP_LEN],
+                                        port: serialization[BYTE_LEN + (p * PEER_LEN) + IP_LEN ..< BYTE_LEN + (p * PEER_LEN) + PEER_LEN].fromBinary()
+                                    )
+                        )
+                    except ValueError as e:
+                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                    except PeerError:
+                        peer.close()
+                        return
 
                 of MessageType.BlockListRequest:
                     var
@@ -399,7 +463,7 @@ proc handle*(
 
                 of MessageType.DataMissing:
                     try:
-                        handleResponse[DataMissingSyncRequest, void, bool](
+                        handleResponse[SyncRequest, void, bool](
                             manager,
                             peer,
                             msg,
