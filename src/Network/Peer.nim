@@ -39,6 +39,9 @@ proc sendLive*(
     try:
         await peer.live.send(msg.toString())
     except Exception as e:
+        if peer.live.isNil:
+            raise newException(SocketError, "Live socket is null.")
+
         try:
             peer.live.close()
         except Exception:
@@ -59,6 +62,9 @@ proc sendSync*(
     try:
         await peer.sync.send(msg.toString())
     except Exception as e:
+        if peer.sync.isNil:
+            raise newException(SocketError, "Sync socket is null.")
+
         try:
             peer.sync.close()
         except Exception:
