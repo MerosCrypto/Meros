@@ -85,7 +85,7 @@ const SYNC_LENS*: Table[MessageType, seq[int]] = {
     MessageType.BlockchainTail:            LIVE_LENS[MessageType.BlockchainTail],
 
     MessageType.PeersRequest:              @[],
-    MessageType.Peers:                     @[BYTE_LEN, PEER_LEN],
+    MessageType.Peers:                     @[BYTE_LEN, -PEER_LEN],
     MessageType.BlockListRequest:          @[BYTE_LEN + BYTE_LEN + HASH_LEN],
     MessageType.BlockList:                 @[BYTE_LEN, -HASH_LEN, HASH_LEN],
 
