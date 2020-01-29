@@ -53,6 +53,9 @@ proc mainNetwork() {.forceCheck: [].} =
 
         #Every minute, look for new peers if we don't have enough already.
         proc requestPeersRegularly() {.forceCheck: [], async.} =
+            if network.peers.len >= 8:
+                return
+
             var peers: seq[tuple[ip: string, port: int]]
             try:
                 peers = await syncAwait network.syncManager.syncPeers(params.SEEDS)
@@ -69,7 +72,7 @@ proc mainNetwork() {.forceCheck: [].} =
 
         try:
             addTimer(
-                300000,
+                120000,
                 false,
                 proc (
                     fd: AsyncFD

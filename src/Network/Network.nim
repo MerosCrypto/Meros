@@ -57,16 +57,35 @@ proc connect*(
     if (not network.server.isClosed) and (address == "127.0.0.1") and (port == network.liveManager.port):
         return
 
+    #Create a socket.
+    var socket: AsyncSocket
+    try:
+        socket = newAsyncSocket()
+        await socket.connect(address, Port(port))
+    except Exception:
+        try:
+            socket.close()
+        except Exception:
+            discard
+        return
+
     var
-        addressParts: seq[string] = address.split(".")
+        addressParts: seq[string]
         ip: string
     try:
+        addressParts = socket.getPeerAddr()[0].split(".")
         ip = (
             char(parseInt(addressParts[0])) &
             char(parseInt(addressParts[1])) &
             char(parseInt(addressParts[2])) &
             char(parseInt(addressParts[3]))
         )
+    except OSError:
+        try:
+            socket.close()
+        except Exception:
+            discard
+        return
     except ValueError:
         raise newException(PeerError, "Invalid IP.")
 
@@ -89,10 +108,6 @@ proc connect*(
         except KeyError:
             doAssert(false, "Peer has a live socket but either not an entry in the live table or the peers table.")
 
-        #Don't try to connect if it's not a server.
-        if not peer.server:
-            return
-
         live = peer.live
         sync = peer.sync
     elif hasSync:
@@ -101,22 +116,20 @@ proc connect*(
         except KeyError:
             doAssert(false, "Peer has a sync socket but either not an entry in the sync table or the peers table.")
 
-        #Don't try to connect if it's not a server.
-        if not peer.server:
-            return
-
         live = peer.live
         sync = peer.sync
 
     try:
         #Create the Sync socket if necessary.
         if not hasSync:
-            sync = newAsyncSocket()
-            await sync.connect(address, Port(port))
+            sync = socket
+            socket = nil
         #Create the Live socket if necessary.
         if not hasLive:
-            live = newAsyncSocket()
-            await live.connect(address, Port(port))
+            live = socket
+            if live.isNil:
+                live = newAsyncSocket()
+                await live.connect(address, Port(port))
     except Exception:
         if not peer.isNil:
             peer.close()

@@ -86,7 +86,7 @@ func updateServices*(
     manager: LiveManager,
     service: uint8
 ) {.forceCheck: [].} =
-    manager.services = char(uint8(manager.services) and service)
+    manager.services = char(uint8(manager.services) or service)
 
 #Handle a new connection.
 proc handle*(

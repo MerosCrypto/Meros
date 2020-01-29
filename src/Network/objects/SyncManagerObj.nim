@@ -119,7 +119,7 @@ func updateServices*(
     manager: SyncManager,
     service: uint8
 ) {.forceCheck: [].} =
-    manager.services = char(uint8(manager.services) and service)
+    manager.services = char(uint8(manager.services) or service)
 
 #Handle a SyncRequest Response.
 proc handleResponse[SyncRequestType, ResultType, CheckType](
@@ -168,8 +168,16 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
             when SyncRequestType is PeersSyncRequest:
                 try:
                     for peerSuggestion in msg.message.parse():
-                        if request.existing.contains(peerSuggestion.ip):
-                            request.pending.add(peerSuggestion)
+                        if not request.existing.contains(peerSuggestion.ip):
+                            request.pending.add((
+                                ip: (
+                                    $peerSuggestion.ip[0].fromBinary() & "." &
+                                    $peerSuggestion.ip[1].fromBinary() & "." &
+                                    $peerSuggestion.ip[2].fromBinary() & "." &
+                                    $peerSuggestion.ip[3].fromBinary()
+                                ),
+                                port: peerSuggestion.port
+                            ))
                         request.existing.incl(peerSuggestion.ip)
                 except ValueError as e:
                     doAssert(false, "Parsing peers raised a ValueError: " & e.msg)
