@@ -69,7 +69,7 @@ def HundredTwentyThreeTest(
     def sendMeritRemoval() -> None:
         #Send the Datas.
         for data in datas:
-            if rpc.meros.transaction(data) != rpc.meros.recv():
+            if rpc.meros.liveTransaction(data) != rpc.meros.recv():
                 raise TestError("Meros didn't send us the Data.")
 
         #Send the initial Data's verification.
@@ -120,13 +120,6 @@ def HundredTwentyThreeTest(
                 #Send the BlockBody.
                 blockBodySynced = True
                 rpc.meros.blockBody([], block)
-
-            elif MessageType(msg[0]) == MessageType.SyncingOver:
-                pass
-
-            elif MessageType(msg[0]) == MessageType.BlockHeader:
-                #Raise a TestError if the Block was added.
-                raise TestError("Meros synced a Block with a repeated MeritRemoval.")
 
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())

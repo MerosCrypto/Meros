@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Tuple, Any
+from typing import Dict, Set, List, Tuple, Any
 
 #Transactions classes.
 from PythonTests.Classes.Transactions.Transaction import Transaction
@@ -36,36 +36,34 @@ class MessageType(
     Enum
 ):
     Handshake                 = 0
-    BlockchainTail            = 1
+    Syncing                   = 1
+    BlockchainTail            = 2
 
-    Syncing                   = 2
-    SyncingAcknowledged       = 3
-    PeersRequest              = 4
-    Peers                     = 5
-    BlockListRequest          = 6
-    BlockList                 = 7
+    PeersRequest              = 3
+    Peers                     = 4
+    BlockListRequest          = 5
+    BlockList                 = 6
 
-    BlockHeaderRequest        = 9
-    BlockBodyRequest          = 10
-    SketchHashesRequest       = 11
-    SketchHashRequests        = 12
-    TransactionRequest        = 13
-    DataMissing               = 14
-    SyncingOver               = 15
+    BlockHeaderRequest        = 8
+    BlockBodyRequest          = 9
+    SketchHashesRequest       = 10
+    SketchHashRequests        = 11
+    TransactionRequest        = 12
+    DataMissing               = 13
 
-    Claim                     = 16
-    Send                      = 17
-    Data                      = 18
+    Claim                     = 14
+    Send                      = 15
+    Data                      = 16
 
-    SignedVerification        = 21
-    SignedSendDifficulty      = 22
-    SignedDataDifficulty      = 23
-    SignedMeritRemoval        = 25
+    SignedVerification        = 19
+    SignedSendDifficulty      = 20
+    SignedDataDifficulty      = 21
+    SignedMeritRemoval        = 23
 
-    BlockHeader               = 27
-    BlockBody                 = 28
-    SketchHashes              = 29
-    VerificationPacket        = 30
+    BlockHeader               = 25
+    BlockBody                 = 26
+    SketchHashes              = 27
+    VerificationPacket        = 28
 
     #MessageType -> byte.
     def toByte(
@@ -81,57 +79,167 @@ class MessageType(
 #A positive number means read X bytes.
 #A negative number means read the last length * X bytes.
 #A zero means custom logic should be used.
-lengths: Dict[MessageType, List[int]] = {
-    MessageType.Handshake:                 [37],
-    MessageType.BlockchainTail:            [32],
+live_lengths: Dict[MessageType, List[int]] = {
+    MessageType.Handshake:            [37],
+    MessageType.BlockchainTail:       [32],
 
-    MessageType.Syncing:                   [],
-    MessageType.SyncingAcknowledged:       [],
-    MessageType.PeersRequest:              [],
-    MessageType.Peers:                     [1, -6],
-    MessageType.BlockListRequest:          [34],
-    MessageType.BlockList:                 [1, -32, 32],
+    MessageType.Claim:                [1, -33, 80],
+    MessageType.Send:                 [1, -33, 1, -40, 68],
+    MessageType.Data:                 [32, 1, -1, 69],
 
-    MessageType.BlockHeaderRequest:        [32],
-    MessageType.BlockBodyRequest:          [32],
-    MessageType.SketchHashesRequest:       [32],
-    MessageType.SketchHashRequests:        [32, 4, -8],
-    MessageType.TransactionRequest:        [32],
-    MessageType.DataMissing:               [],
-    MessageType.SyncingOver:               [],
+    MessageType.SignedVerification:   [82],
+    MessageType.SignedSendDifficulty: [86],
+    MessageType.SignedDataDifficulty: [86],
+    MessageType.SignedMeritRemoval:   [4, 0, 1, 0, 48],
 
-    MessageType.Claim:                     [1, -33, 80],
-    MessageType.Send:                      [1, -33, 1, -40, 68],
-    MessageType.Data:                      [32, 1, -1, 69],
-
-    MessageType.SignedVerification:        [82],
-    MessageType.SignedSendDifficulty:      [86],
-    MessageType.SignedDataDifficulty:      [86],
-    MessageType.SignedMeritRemoval:        [4, 0, 1, 0, 48],
-
-    MessageType.BlockHeader:               [107, 0, 56],
-    MessageType.BlockBody:                 [4, -8, 4, 0, 48],
-    MessageType.SketchHashes:              [4, -8],
-    MessageType.VerificationPacket:        [2, -2, 32]
+    MessageType.BlockHeader:          [107, 0, 56]
 }
 
-class Meros:
+sync_lengths: Dict[MessageType, List[int]] = {
+    MessageType.Syncing:             live_lengths[MessageType.Handshake],
+    MessageType.BlockchainTail:      [32],
+
+    MessageType.PeersRequest:        [],
+    MessageType.Peers:               [1, -6],
+    MessageType.BlockListRequest:    [34],
+    MessageType.BlockList:           [1, -32, 32],
+
+    MessageType.BlockHeaderRequest:  [32],
+    MessageType.BlockBodyRequest:    [32],
+    MessageType.SketchHashesRequest: [32],
+    MessageType.SketchHashRequests:  [32, 4, -8],
+    MessageType.TransactionRequest:  [32],
+    MessageType.DataMissing:         [],
+
+    MessageType.Claim:               live_lengths[MessageType.Claim],
+    MessageType.Send:                live_lengths[MessageType.Send],
+    MessageType.Data:                live_lengths[MessageType.Data],
+
+    MessageType.BlockHeader:         live_lengths[MessageType.BlockHeader],
+    MessageType.BlockBody:           [32, 4, -8, 4, 0, 48],
+    MessageType.SketchHashes:        [4, -8],
+    MessageType.VerificationPacket:  [2, -2, 32]
+}
+
+#Receive a message.
+def socketRecv(
+    connection: socket.socket,
+    length: int
+) -> bytes:
+    try:
+        result: bytes = connection.recv(length)
+        if len(result) != length:
+            raise TestError()
+        return result
+    except Exception:
+        raise TestError("Meros disconnected us.")
+
+def recv(
+    connection: socket.socket,
+    lengths: Dict[MessageType, List[int]]
+) -> bytes:
+    #Receive the header.
+    result: bytes = socketRecv(connection, 1)
+    header: MessageType = MessageType(result[0])
+
+    #Get the rest of the message.
+    length: int
+    for l in range(len(lengths[header])):
+        length = lengths[header][l]
+        if length < 0:
+            length = int.from_bytes(
+                result[-lengths[header][l - 1]:],
+                byteorder="big"
+            ) * abs(length)
+        elif length == 0:
+            if header == MessageType.SignedMeritRemoval:
+                if result[-1] == 0:
+                    length = 32
+                elif result[-1] == 1:
+                    result += socketRecv(connection, 2)
+                    length = (int.from_bytes(result[-2:], byteorder="big") * 96) + 32
+                elif result[-1] == 2:
+                    length = 36
+                elif result[-1] == 3:
+                    length = 36
+                else:
+                    raise Exception("Meros sent an Element we don't recognize.")
+
+            elif header == MessageType.BlockHeader:
+                if result[-1] == 1:
+                    length = 96
+                else:
+                    length = 2
+
+            elif header == MessageType.BlockBody:
+                elementsLen: int = int.from_bytes(result[-4:], byteorder="big")
+                for _ in range(elementsLen):
+                    result += socketRecv(connection, 1)
+                    if result[-1] == 2:
+                        result += socketRecv(connection, 38)
+                    elif result[-1] == 3:
+                        result += socketRecv(connection, 38)
+                    elif result[-1] == 4:
+                        result += socketRecv(connection, 10)
+                    elif result[-1] == 5:
+                        result += socketRecv(connection, 4)
+                        for e in range(2):
+                            if result[-1] == 0:
+                                result += socketRecv(connection, 32)
+                            elif result[-1] == 1:
+                                result += socketRecv(connection, 2)
+                                result += socketRecv(connection, (int.from_bytes(result[-2:], byteorder="big") * 96) + 32)
+                            elif result[-1] == 2:
+                                result += socketRecv(connection, 36)
+                            elif result[-1] == 3:
+                                result += socketRecv(connection, 36)
+                            elif result[-1] == 4:
+                                result += socketRecv(connection, 8)
+                            if e == 0:
+                                result += socketRecv(connection, 1)
+                    else:
+                        raise Exception("Block Body has an unknown element.")
+
+        result += socketRecv(connection, length)
+
+    return result
+
+class MerosSocket:
     #Constructor.
     def __init__(
         self,
-        test: str,
         tcp: int,
-        rpc: int
+        network: int,
+        protocol: int,
+        live: bool,
+        tail: bytes
     ) -> None:
-        #Save the config.
-        self.db: str = test
-        self.tcp: int = tcp
-        self.rpc: int = rpc
+        #Save the connection type.
+        self.live: bool = live
 
-        #Create the instance.
-        self.process: Popen[Any] = Popen(["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)])
+        #Create the connection and connect.
+        self.connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection.connect(("127.0.0.1", tcp))
 
-        #Create message/response lists.
+        #Send our Handshake.
+        self.connection.send(
+            (MessageType.Handshake.toByte() if live else MessageType.Syncing.toByte()) +
+            network.to_bytes(1, "big") +
+            protocol.to_bytes(1, "big") +
+            b'\0\0\0' +
+            tail
+        )
+
+        #Receive their Handshake.
+        response: bytes = recv(self.connection, live_lengths if live else sync_lengths)
+        if MessageType(response[0]) != (MessageType.Handshake if live else MessageType.Syncing):
+            raise TestError("Node didn't send the right Handshake for this connection type.")
+        if response[1] != network:
+            raise TestError("Connected to a node on a diffirent network.")
+        if response[2] != protocol:
+            raise TestError("Connected to a node using a diffirent protocol.")
+
+        #Declare lists for the messages.
         self.msgs: List[bytes] = []
         self.ress: List[bytes] = []
 
@@ -141,165 +249,76 @@ class Meros:
         msg: bytes,
         save: bool = True
     ) -> None:
-        try:
-            self.connection.send(msg)
-            if save:
-                self.msgs.append(msg)
-        except:
-            raise TestError("Node disconnected us as a peer.")
-
-    #Receive X bytes from the socket.
-    def socketRecv(
-        self,
-        length: int
-    ) -> bytes:
-        try:
-            result: bytes = self.connection.recv(length)
-            if len(result) != length:
-                raise Exception("")
-            return result
-        except:
-            raise TestError("Node disconnected us as a peer.")
+        self.ress.append(msg)
+        self.connection.send(msg)
 
     #Receive a message.
     def recv(
-        self
+        self,
+        save: bool = True
     ) -> bytes:
-        #Receive the header.
-        result: bytes = self.socketRecv(1)
-        header: MessageType = MessageType(result[0])
-
-        #If this was SyncingOver, add an empty bytes.
-        #This is so playback works.
-        if header == MessageType.SyncingOver:
-            self.msgs.append(bytes())
-
-        #Get the rest of the message.
-        length: int
-        for l in range(len(lengths[header])):
-            length = lengths[header][l]
-            if length < 0:
-                length = int.from_bytes(
-                    result[-lengths[header][l - 1]:],
-                    byteorder="big"
-                ) * abs(length)
-            elif length == 0:
-                if header == MessageType.SignedMeritRemoval:
-                    if result[-1] == 0:
-                        length = 32
-                    elif result[-1] == 1:
-                        result += self.socketRecv(2)
-                        length = (int.from_bytes(result[-2:], byteorder="big") * 96) + 32
-                    elif result[-1] == 2:
-                        length = 36
-                    elif result[-1] == 3:
-                        length = 36
-                    else:
-                        raise Exception("Meros sent an Element we don't recognize.")
-
-                elif header == MessageType.BlockHeader:
-                    if result[-1] == 1:
-                        length = 96
-                    else:
-                        length = 2
-
-                elif header == MessageType.BlockBody:
-                    elementsLen: int = int.from_bytes(result[-4:], byteorder="big")
-                    for _ in range(elementsLen):
-                        result += self.socketRecv(1)
-                        if result[-1] == 2:
-                            result += self.socketRecv(38)
-                        elif result[-1] == 3:
-                            result += self.socketRecv(38)
-                        elif result[-1] == 4:
-                            result += self.socketRecv(10)
-                        elif result[-1] == 5:
-                            result += self.socketRecv(4)
-                            for e in range(2):
-                                if result[-1] == 0:
-                                    result += self.socketRecv(32)
-                                elif result[-1] == 1:
-                                    result += self.socketRecv(2)
-                                    result += self.socketRecv((int.from_bytes(result[-2:], byteorder="big") * 96) + 32)
-                                elif result[-1] == 2:
-                                    result += self.socketRecv(36)
-                                elif result[-1] == 3:
-                                    result += self.socketRecv(36)
-                                elif result[-1] == 4:
-                                    result += self.socketRecv(8)
-                                if e == 0:
-                                    result += self.socketRecv(1)
-                        else:
-                            raise Exception("Block Body has an unknown element.")
-
-            result += self.socketRecv(length)
-
-        if header not in {
-            MessageType.Handshake,
-            MessageType.PeersRequest,
-            MessageType.Peers
-        }:
-            self.ress.append(result)
+        result: bytes = recv(self.connection, live_lengths if self.live else sync_lengths)
+        self.msgs.append(result)
         return result
 
-    #Connect to Meros and handshake with it.
-    def connect(
+    #Playback the connection's messages.
+    def playback(
+        self
+    ) -> None:
+        if self.live:
+            raise Exception("Attempted to playback a Live connection.")
+
+        for m in range(len(self.msgs)):
+            self.send(self.msgs[m])
+            if self.recv() != self.ress[m]:
+                raise TestError("Meros responded with a message different than expected.")
+
+class Meros:
+    #Constructor.
+    def __init__(
         self,
-        network: int,
-        protocol: int,
-        tail: bytes
+        test: str,
+        tcp: int,
+        rpc: int
     ) -> None:
         #Save the network/protocol.
-        self.network = network
-        self.protocol = protocol
+        self.network = 254
+        self.protocol = 254
 
-        #Connect.
-        self.connection: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.connect(("127.0.0.1", self.tcp))
+        #Save the config.
+        self.db: str = test
+        self.tcp: int = tcp
+        self.rpc: int = rpc
 
-        #Send our handshake.
-        self.send(
-            MessageType.Handshake.toByte() +
-            network.to_bytes(1, "big") +
-            protocol.to_bytes(1, "big") +
-            b'\0\0\0' +
-            tail,
-            False
-        )
+        #Create the instance.
+        self.process: Popen[Any] = Popen(["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)])
 
-        #Receive their handshake.
-        response: bytes = self.recv()
+        #Connection variables.
+        self.live: MerosSocket
+        self.sync: MerosSocket
 
-        #Verify their network/protocol.
-        if MessageType(response[0]) != MessageType.Handshake:
-            raise Exception("Node didn't send a Handshake.")
-        if response[1] != network:
-            raise Exception("Connected to a node on a diffirent network.")
-        if response[2] != protocol:
-            raise Exception("Connected to a node using a diffirent protocol.")
+        #Transactions we've sent.
+        self.sentTXs: Set[bytes] = set({})
 
-    #Start Syncing.
-    def syncing(
-        self
-    ) -> bytes:
-        res: bytes = MessageType.Syncing.toByte()
-        self.send(res)
-        return res
+    #Connect to Meros and Handshake with it.
+    def syncConnect(
+        self,
+        tail: bytes
+    ) -> None:
+        self.sync = MerosSocket(self.tcp, self.network, self.protocol, False, tail)
 
-    #Send Syncing Acknowledged.
-    def syncingAcknowledged(
-        self
-    ) -> bytes:
-        res: bytes = MessageType.SyncingAcknowledged.toByte()
-        self.send(res)
-        return res
+    def liveConnect(
+        self,
+        tail: bytes
+    ) -> None:
+        self.live = MerosSocket(self.tcp, self.network, self.protocol, True, tail)
 
     #Send a peers request.
     def peersRequest(
         self
     ) -> bytes:
         res: bytes = MessageType.PeersRequest.toByte()
-        self.send(res, False)
+        self.sync.send(res, False)
         return res
 
     #Send peers.
@@ -317,7 +336,7 @@ class Meros:
                 int(ipParts[3]).to_bytes(1, byteorder="big") +
                 peer[1].to_bytes(2, byteorder="big")
             )
-        self.send(res, False)
+        self.sync.send(res, False)
         return res
 
     #Send a Block List.
@@ -331,7 +350,7 @@ class Meros:
         )
         for blockHash in hashes:
             res += blockHash
-        self.send(res)
+        self.sync.send(res)
         return res
 
     #Send a Data Missing.
@@ -339,14 +358,16 @@ class Meros:
         self
     ) -> bytes:
         res: bytes = MessageType.DataMissing.toByte()
-        self.send(res)
+        self.sync.send(res)
         return res
 
-    #Send a Transaction.
-    def transaction(
+    #Send a Transaction over the Sync socket.
+    def syncTransaction(
         self,
         tx: Transaction
     ) -> bytes:
+        self.sentTXs.add(tx.hash)
+
         res: bytes = bytes()
         if isinstance(tx, Claim):
             res = MessageType.Claim.toByte()
@@ -356,7 +377,26 @@ class Meros:
             res = MessageType.Data.toByte()
         res += tx.serialize()
 
-        self.send(res)
+        self.sync.send(res)
+        return res
+
+    #Send a Transaction over the Live socket.
+    def liveTransaction(
+        self,
+        tx: Transaction
+    ) -> bytes:
+        self.sentTXs.add(tx.hash)
+
+        res: bytes = bytes()
+        if isinstance(tx, Claim):
+            res = MessageType.Claim.toByte()
+        elif isinstance(tx, Send):
+            res = MessageType.Send.toByte()
+        elif isinstance(tx, Data):
+            res = MessageType.Data.toByte()
+        res += tx.serialize()
+
+        self.live.send(res)
         return res
 
     #Send a Signed Element.
@@ -378,11 +418,11 @@ class Meros:
             raise Exception("Unsupported Element passed to Meros.signedElement.")
         res += elem.signedSerialize(lookup)
 
-        self.send(res)
+        self.live.send(res)
         return res
 
     #Send a Block Header.
-    def blockHeader(
+    def liveBlockHeader(
         self,
         header: BlockHeader
     ) -> bytes:
@@ -390,7 +430,19 @@ class Meros:
             MessageType.BlockHeader.toByte() +
             header.serialize()
         )
-        self.send(res)
+        self.live.send(res)
+        return res
+
+    #Send a Block Header.
+    def syncBlockHeader(
+        self,
+        header: BlockHeader
+    ) -> bytes:
+        res: bytes = (
+            MessageType.BlockHeader.toByte() +
+            header.serialize()
+        )
+        self.sync.send(res)
         return res
 
     #Send a Block Body.
@@ -403,7 +455,7 @@ class Meros:
             MessageType.BlockBody.toByte() +
             block.body.serialize(lookup, block.header.sketchSalt)
         )
-        self.send(res)
+        self.sync.send(res)
         return res
 
     #Send sketch hashes.
@@ -414,7 +466,7 @@ class Meros:
         res: bytes = MessageType.SketchHashes.toByte() + len(hashes).to_bytes(4, byteorder="big")
         for sketchHash in hashes:
             res += sketchHash.to_bytes(8, byteorder="big")
-        self.send(res)
+        self.sync.send(res)
         return res
 
     #Send a Verification Packet.
@@ -426,19 +478,8 @@ class Meros:
             MessageType.VerificationPacket.toByte() +
             packet.serialize()
         )
-        self.send(res)
+        self.sync.send(res)
         return res
-
-    #Playback all received messages and test the responses.
-    def playback(
-        self
-    ) -> None:
-        for i in range(len(self.ress)):
-            self.send(self.ress[i])
-            if len(self.msgs[i]) != 0:
-                buf: bytes = self.recv()
-                if self.msgs[i] != buf:
-                    raise TestError("Invalid playback response.")
 
     #Check the return code.
     def quit(

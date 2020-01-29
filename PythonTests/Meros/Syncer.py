@@ -73,20 +73,23 @@ class Syncer:
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.merit.blockchain.blocks[self.settings["height"]].header.hash)
+        self.rpc.meros.syncConnect(self.merit.blockchain.blocks[self.settings["height"]].header.hash)
 
         #Handle sync requests.
         reqHash: bytes = bytes()
         while True:
-            msg: bytes = self.rpc.meros.recv()
+            #Break out of the for loop if the sync finished.
+            #This means we sent every Block, every Element, every Transaction...
+            if (
+                (self.blockHashes == set()) and
+                (self.packets == {}) and
+                (self.txs == set())
+            ):
+                break
 
-            if MessageType(msg[0]) == MessageType.Syncing:
-                self.rpc.meros.syncingAcknowledged()
+            msg: bytes = self.rpc.meros.sync.recv()
 
-            elif MessageType(msg[0]) == MessageType.PeersRequest:
-                self.rpc.meros.peers([])
-
-            elif MessageType(msg[0]) == MessageType.BlockListRequest:
+            if MessageType(msg[0]) == MessageType.BlockListRequest:
                 reqHash = msg[3 : 51]
                 for b in range(len(self.merit.blockchain.blocks)):
                     if self.merit.blockchain.blocks[b].header.hash == reqHash:
@@ -128,7 +131,7 @@ class Syncer:
                 if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for a BlockHeader other than the next Block's on the last BlockList.")
 
-                self.rpc.meros.blockHeader(self.blocks[-1].header)
+                self.rpc.meros.syncBlockHeader(self.blocks[-1].header)
 
             elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
                 reqHash = msg[1 : 33]
@@ -198,22 +201,12 @@ class Syncer:
                 if reqHash not in self.txs:
                     raise TestError("Meros asked for a Transaction we haven't mentioned.")
 
-                self.rpc.meros.transaction(self.transactions.txs[reqHash])
+                self.rpc.meros.syncTransaction(self.transactions.txs[reqHash])
                 self.synced.add(reqHash)
                 self.txs.remove(reqHash)
 
                 if self.txs == set():
                     del self.blocks[-1]
-
-            elif MessageType(msg[0]) == MessageType.SyncingOver:
-                #Break out of the for loop if the sync finished.
-                #This means we sent every Block, every Element, every Transaction...
-                if (
-                    (self.blockHashes == set()) and
-                    (self.packets == {}) and
-                    (self.txs == set())
-                ):
-                    break
 
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())
@@ -227,4 +220,4 @@ class Syncer:
 
         if self.settings["playback"]:
             #Playback their messages.
-            self.rpc.meros.playback()
+            self.rpc.meros.sync.playback()

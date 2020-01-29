@@ -81,9 +81,9 @@ const LIVE_LENS*: Table[MessageType, seq[int]] = {
 }.toTable()
 
 const SYNC_LENS*: Table[MessageType, seq[int]] = {
+    MessageType.Syncing:                   LIVE_LENS[MessageType.Handshake],
     MessageType.BlockchainTail:            LIVE_LENS[MessageType.BlockchainTail],
 
-    MessageType.Syncing:                   LIVE_LENS[MessageType.Handshake],
     MessageType.PeersRequest:              @[],
     MessageType.Peers:                     @[BYTE_LEN, PEER_LEN],
     MessageType.BlockListRequest:          @[BYTE_LEN + BYTE_LEN + HASH_LEN],

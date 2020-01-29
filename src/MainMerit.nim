@@ -462,7 +462,7 @@ proc mainMerit() {.forceCheck: [].} =
         ], async.} =
             #Return if we already have this Block.
             if merit.blockchain.hasBlock(hash):
-                return
+                raise newException(DataExists, "Block was already added.")
 
             try:
                 await functions.merit.addBlockByHeaderInternal(await syncAwait network.syncManager.syncBlockHeader(hash), syncing, lock)

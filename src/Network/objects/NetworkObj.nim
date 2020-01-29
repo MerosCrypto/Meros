@@ -90,56 +90,75 @@ proc newNetwork*(
     result = network
 
     #Add a repeating timer to remove inactive Peers.
-    proc removeInactive() {.forceCheck: [], async.} =
-        var
-            p: int = 0
-            peer: Peer
-        while p < network.ids.len:
-            #Grab the peer.
-            try:
-                peer = network.peers[network.ids[p]]
-            except KeyError as e:
-                doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
-
-            #Exclude nil sockets from live/sync.
-            if peer.live.isNil:
-                network.live.del(peer.ip)
-            if peer.sync.isNil:
-                network.sync.del(peer.ip)
-
-            #Close Peers who have been inactive for half a minute.
-            if peer.isClosed or (peer.last + 30 <= getTime()):
-                peer.close()
-                network.live.del(peer.ip)
-                network.sync.del(peer.ip)
-                network.peers.del(network.ids[p])
-                network.ids.del(p)
-                continue
-
-            #Handshake with Peers who have been inactive for 20 seconds.
-            if peer.last + 20 <= getTime():
-                #Send the handshake.
-                var tail: Hash[256] = network.functions.merit.getTail()
+    proc removeInactive(
+        fd: AsyncFD
+    ): bool {.forceCheck: [].} =
+        {.gcsafe.}:
+            var
+                p: int = 0
+                peer: Peer
+            while p < network.ids.len:
+                #Grab the peer.
                 try:
-                    await peer.sendLive(
-                        newMessage(
-                            MessageType.Handshake,
-                            char(network.liveManager.protocol) &
-                            char(network.liveManager.network) &
-                            network.liveManager.services &
-                            network.liveManager.port.toBinary(PORT_LEN) &
-                            tail.toString()
-                        )
-                    )
-                except SocketError:
-                    discard
-                except Exception as e:
-                    doAssert(false, "Sending to a Peer threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                    peer = network.peers[network.ids[p]]
+                except KeyError as e:
+                    doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
 
-            #Move on to the next Peer.
-            inc(p)
+                #Exclude nil sockets from live/sync.
+                if peer.live.isNil:
+                    network.live.del(peer.ip)
+                if peer.sync.isNil:
+                    network.sync.del(peer.ip)
+
+                #Close Peers who have been inactive for half a minute.
+                if peer.isClosed or (peer.last + 30 <= getTime()):
+                    peer.close()
+                    network.live.del(peer.ip)
+                    network.sync.del(peer.ip)
+                    network.peers.del(network.ids[p])
+                    network.ids.del(p)
+                    continue
+
+                #Handshake with Peers who have been inactive for 20 seconds.
+                if peer.last + 20 <= getTime():
+                    #Send the Handshake.
+                    try:
+                        if (not peer.live.isNil) and (not peer.live.isClosed):
+                            asyncCheck peer.sendLive(
+                                newMessage(
+                                    MessageType.Handshake,
+                                    char(network.liveManager.protocol) &
+                                    char(network.liveManager.network) &
+                                    network.liveManager.services &
+                                    network.liveManager.port.toBinary(PORT_LEN) &
+                                    network.functions.merit.getTail().toString()
+                                )
+                            )
+                        else:
+                            asyncCheck peer.sendSync(
+                                newMessage(
+                                    MessageType.Syncing,
+                                    char(network.liveManager.protocol) &
+                                    char(network.liveManager.network) &
+                                    network.liveManager.services &
+                                    network.liveManager.port.toBinary(PORT_LEN) &
+                                    network.functions.merit.getTail().toString()
+                                )
+                            )
+                    except SocketError:
+                        discard
+                    except Exception as e:
+                        doAssert(false, "Sending to a Peer threw an Exception despite catching all thrown Exceptions: " & e.msg)
+
+                #Move on to the next Peer.
+                inc(p)
+
     try:
-        asyncCheck removeInactive()
+        addTimer(
+            8000,
+            false,
+            removeInactive
+        )
     except Exception as e:
         doAssert(false, "Failed to start the function which removes inactive Peers: " & e.msg)
 

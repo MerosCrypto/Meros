@@ -14,6 +14,12 @@ from PythonTests.Classes.Consensus.SendDifficulty import SendDifficulty
 from PythonTests.Classes.Consensus.DataDifficulty import DataDifficulty
 from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
 
+#Merkle function.
+from PythonTests.Classes.Merit.BlockHeader import merkle
+
+#Blake2b standard function.
+from hashlib import blake2b
+
 #BlockBody class.
 class BlockBody:
     #Constructor.
@@ -25,6 +31,11 @@ class BlockBody:
     ) -> None:
         self.packets: List[VerificationPacket] = list(packets)
         self.packets.sort(key=lambda packet: packet.hash, reverse=True)
+
+        packetsMerkle: List[bytes] = []
+        for packet in packets:
+            packetsMerkle.append(blake2b(packet.prefix + packet.serialize(), digest_size=32).digest())
+        self.packetsContents: bytes = merkle(packetsMerkle)
 
         self.elements: List[Element] = list(elements)
         self.aggregate: Signature = aggregate
@@ -45,6 +56,7 @@ class BlockBody:
             sketch.add(sketchSalt, packet)
 
         result: bytes = (
+            self.packetsContents +
             capacity.to_bytes(4, "big") +
             sketch.serialize() +
             len(self.elements).to_bytes(4, "big")

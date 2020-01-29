@@ -252,10 +252,16 @@ proc handle*(
         block thisMsg:
             case msg.content:
                 of MessageType.Syncing:
-                    res = newMessage(
-                        MessageType.BlockchainTail,
-                        manager.functions.merit.getTail().toString()
-                    )
+                    #Manually send the BlockchainTail now since adding the tail may create Sync Requests.
+                    try:
+                        await peer.sendSync(newMessage(
+                            MessageType.BlockchainTail,
+                            manager.functions.merit.getTail().toString()
+                        ))
+                    except SocketError:
+                        return
+                    except Exception as e:
+                        doAssert(false, "Failed to reply to a Sync request: " & e.msg)
 
                     #Add the tail.
                     var tail: Hash[256]
@@ -290,9 +296,9 @@ proc handle*(
                         server = true
                     )
 
-                    res = newMessage(MessageType.Peers, peers.len.toBinary())
+                    res = newMessage(MessageType.Peers, peers.len.toBinary(BYTE_LEN))
                     for peer in peers:
-                        res.message &= peer.ip & peer.port.toBinary()
+                        res.message &= peer.ip & peer.port.toBinary(PORT_LEN)
 
                 of MessageType.Peers:
                     try:

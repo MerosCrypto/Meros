@@ -60,13 +60,18 @@ class BlockHeader:
         hashes: List[bytes] = []
         for packet in packets:
             hashes.append(blake2b(packet.prefix + packet.serialize(), digest_size=32).digest())
+        packetsContents: bytes = merkle(hashes)
 
         #Hash each Element.
+        hashes = []
         for element in elements:
             hashes.append(blake2b(element.prefix + element.serialize(lookup), digest_size=32).digest())
+        elementsContents: bytes = merkle(hashes)
 
-        #Return the Merkle hash.
-        return merkle(hashes)
+        #Return the contents hash.
+        if (packetsContents == bytes(32)) and (elementsContents == bytes(32)):
+            return bytes(32)
+        return blake2b(packetsContents + elementsContents, digest_size=32).digest()
 
     #Create a sketchCheck Merkle.
     @staticmethod

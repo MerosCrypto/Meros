@@ -23,6 +23,9 @@ from PythonTests.Meros.Meros import MessageType
 #TestError Exception.
 from PythonTests.Tests.Errors import TestError
 
+#Sleep standard function.
+from time import sleep
+
 #JSON standard lib.
 import json
 
@@ -48,60 +51,50 @@ def HundredSixBlockElementsTest(
 
     for block in blocks:
         #Handshake with the node.
-        rpc.meros.connect(254, 254, blockchain.blocks[0].header.hash)
+        rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
+        rpc.meros.syncConnect(blockchain.blocks[0].header.hash)
 
         #Send the Block.
-        rpc.meros.blockHeader(block.header)
+        rpc.meros.liveBlockHeader(block.header)
 
         #Flag of if the Block's Body synced.
-        blockBodySynced: bool = False
+        doneSyncing: bool = False
 
         #Handle sync requests.
         reqHash: bytes = bytes()
         while True:
-            try:
-                msg: bytes = rpc.meros.recv()
-            except TestError:
-                if not blockBodySynced:
-                    raise TestError("Node disconnected us before syncing the body.")
+            if doneSyncing:
+                #Sleep for a second so Meros handles the Block.
+                sleep(1)
 
-                #Verify the node didn't crash.
+                #Try receiving from the Live socket, where Meros sends keep-alives.
                 try:
-                    if rpc.call("merit", "getHeight") != 1:
+                    if len(rpc.meros.live.recv()) != 0:
                         raise Exception()
+                except TestError:
+                    #Verify the node didn't crash.
+                    try:
+                        if rpc.call("merit", "getHeight") != 1:
+                            raise Exception()
+                    except Exception:
+                        raise TestError("Node crashed after being sent a malformed Element.")
+
+                    #Since the node didn't crash, break out of this loop to trigger the next test case.
+                    break
                 except Exception:
-                    raise TestError("Node crashed after being sent a malformed Element.")
+                    raise TestError("Meros sent a keep-alive.")
 
-                #Since the node didn't crash, break out of this loop to trigger the next test case.
-                break
-
-            if MessageType(msg[0]) == MessageType.Syncing:
-                rpc.meros.syncingAcknowledged()
-
-            elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+            msg: bytes = rpc.meros.sync.recv()
+            if MessageType(msg[0]) == MessageType.BlockBodyRequest:
                 reqHash = msg[1 : 33]
                 if reqHash != block.header.hash:
                     raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                 #Send the BlockBody.
-                blockBodySynced = True
                 rpc.meros.blockBody([], block)
 
-            elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
-                if not block.body.packets:
-                    raise TestError("Meros asked for Sketch Hashes from a Block without any.")
-
-                reqHash = msg[1 : 33]
-                if reqHash != block.header.hash:
-                    raise TestError("Meros asked for Sketch Hashes that didn't belong to the Block we just sent it.")
-
-                #Create the haashes.
-                hashes: List[int] = []
-                for packet in block.body.packets:
-                    hashes.append(Sketch.hash(block.header.sketchSalt, packet))
-
-                #Send the Sketch Hashes.
-                rpc.meros.sketchHashes(hashes)
+                if len(block.body.packets) == 0:
+                    doneSyncing = True
 
             elif MessageType(msg[0]) == MessageType.SketchHashRequests:
                 if not block.body.packets:
@@ -123,20 +116,15 @@ def HundredSixBlockElementsTest(
                         raise TestError("Meros asked for a non-existent Sketch Hash.")
                     rpc.meros.packet(packets[sketchHash])
 
+                doneSyncing = True
+
             elif MessageType(msg[0]) == MessageType.TransactionRequest:
                 reqHash = msg[1 : 33]
 
                 if reqHash not in transactions.txs:
                     raise TestError("Meros asked for a non-existent Transaction.")
 
-                rpc.meros.transaction(transactions.txs[reqHash])
-
-            elif MessageType(msg[0]) == MessageType.SyncingOver:
-                pass
-
-            elif MessageType(msg[0]) == MessageType.BlockHeader:
-                #Raise a TestError if the Block was added.
-                raise TestError("Meros synced a Block with an invalid holder.")
+                rpc.meros.syncTransaction(transactions.txs[reqHash])
 
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())

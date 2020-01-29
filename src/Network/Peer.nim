@@ -225,8 +225,8 @@ proc recv(
         if msg.len != size:
             raise newException(SocketError, "Didn't get a full message. Received " & $msg.len & " when we were supposed to receive " & $size & ".")
 
-        #Create a proper Message to be returned.
-        result = newMessage(id, content, msg)
+    #Create a proper Message to be returned.
+    result = newMessage(id, content, msg)
 
 #Receive a message over the Live socket.
 proc recvLive*(

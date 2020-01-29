@@ -8,8 +8,10 @@ from PythonTests.Libs.Minisketch import Sketch
 from PythonTests.Classes.Merit.Block import Block
 from PythonTests.Classes.Merit.Merit import Merit
 
-#VerificationPacket class.
+#Element classes.
+from PythonTests.Classes.Consensus.Verification import Verification
 from PythonTests.Classes.Consensus.VerificationPacket import VerificationPacket
+from PythonTests.Classes.Consensus.MeritRemoval import MeritRemoval
 
 #Transactions class.
 from PythonTests.Classes.Transactions.Transactions import Transactions
@@ -50,34 +52,79 @@ class Liver:
         self
     ) -> None:
         #Handshake with the node.
-        self.rpc.meros.connect(254, 254, self.merit.blockchain.blocks[0].header.hash)
+        self.rpc.meros.liveConnect(self.merit.blockchain.blocks[0].header.hash)
+        self.rpc.meros.syncConnect(self.merit.blockchain.blocks[0].header.hash)
 
         #Send each Block.
         for b in range(1, len(self.merit.blockchain.blocks)):
             #Grab the Block.
             block: Block = self.merit.blockchain.blocks[b]
 
+            #Set loop variables with pending data.
+            pendingBody: bool = True
+            pendingPackets: List[bytes] = []
+            pendingTXs: List[bytes] = []
+            for packet in block.body.packets:
+                pendingPackets.append(packet.hash)
+
+                if packet.hash not in self.rpc.meros.sentTXs:
+                    pendingTXs.append(packet.hash)
+
+            for elem in block.body.elements:
+                if isinstance(elem, MeritRemoval):
+                    #pylint: disable=consider-merging-isinstance
+                    if (
+                        (
+                            isinstance(elem.e1, Verification) or
+                            isinstance(elem.e1, VerificationPacket)
+                        ) and
+                        (elem.e1.hash not in self.rpc.meros.sentTXs) and
+                        (elem.e1.hash not in pendingTXs)
+                    ):
+                        pendingTXs.append(elem.e1.hash)
+
+                    if (
+                        (
+                            isinstance(elem.e2, Verification) or
+                            isinstance(elem.e2, VerificationPacket)
+                        ) and
+                        (elem.e2.hash not in self.rpc.meros.sentTXs) and
+                        (elem.e2.hash not in pendingTXs)
+                    ):
+                        pendingTXs.append(elem.e2.hash)
+
             #Send the Block.
-            self.rpc.meros.blockHeader(block.header)
+            self.rpc.meros.liveBlockHeader(block.header)
 
             #Handle sync requests.
             reqHash: bytes = bytes()
             while True:
-                msg: bytes = self.rpc.meros.recv()
+                #If we sent every bit of data, break.
+                if (
+                    (not pendingBody) and
+                    (not pendingPackets) and
+                    (not pendingTXs)
+                ):
+                    break
 
-                if MessageType(msg[0]) == MessageType.Syncing:
-                    self.rpc.meros.syncingAcknowledged()
+                #Receive the next message.
+                msg: bytes = self.rpc.meros.sync.recv()
 
-                elif MessageType(msg[0]) == MessageType.PeersRequest:
-                    self.rpc.meros.peers([])
+                if MessageType(msg[0]) == MessageType.BlockBodyRequest:
+                    #If we already sent the body, raise.
+                    if not pendingBody:
+                        raise TestError("Meros asked for the same Block Body multiple times.")
 
-                elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+                    #Verify Meros asked for the right Block Body.
                     reqHash = msg[1 : 33]
                     if reqHash != block.header.hash:
                         raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                     #Send the BlockBody.
                     self.rpc.meros.blockBody(self.merit.state.nicks, block)
+
+                    #Mark the body as sent.
+                    pendingBody = False
 
                 elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
                     if not block.body.packets:
@@ -115,25 +162,33 @@ class Liver:
                             raise TestError("Meros asked for a non-existent Sketch Hash.")
                         self.rpc.meros.packet(packets[sketchHash])
 
+                        #Delete the VerificationPacket from pending.
+                        del pendingPackets[pendingPackets.index(packets[sketchHash].hash)]
+
+                    #Make sure Meros asked for every packet.
+                    if pendingPackets:
+                        raise TestError("Meros didn't ask for every Verification Packet.")
+
                 elif MessageType(msg[0]) == MessageType.TransactionRequest:
                     reqHash = msg[1 : 33]
 
                     if self.transactions is None:
                         raise TestError("Meros asked for a Transaction when we have none.")
 
-                    if reqHash not in self.transactions.txs:
-                        raise TestError("Meros asked for a non-existent Transaction.")
+                    if reqHash not in pendingTXs:
+                        raise TestError("Meros asked for a non-existent Transaction, a Transaction part of a different Block, or an already sent Transaction.")
 
-                    self.rpc.meros.transaction(self.transactions.txs[reqHash])
+                    self.rpc.meros.syncTransaction(self.transactions.txs[reqHash])
 
-                elif MessageType(msg[0]) == MessageType.SyncingOver:
-                    pass
-
-                elif MessageType(msg[0]) == MessageType.BlockHeader:
-                    break
+                    #Delete the Transaction from pending.
+                    del pendingTXs[pendingTXs.index(reqHash)]
 
                 else:
                     raise TestError("Unexpected message sent: " + msg.hex().upper())
+
+            #Receive the BlockHeader from Meros.
+            if MessageType(self.rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
+                raise TestError("Meros didn't broadcast the new BlockHeader.")
 
             #Add any new nicks to the lookup table.
             if self.merit.blockchain.blocks[b].header.newMiner:

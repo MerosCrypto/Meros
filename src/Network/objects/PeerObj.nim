@@ -58,9 +58,9 @@ func isClosed*(
     peer: Peer
 ): bool {.inline, forceCheck: [].} =
     (
-        (not peer.live.isNil) and (not peer.live.isClosed())
-    ) or (
-        (not peer.sync.isNil) and (not peer.sync.isClosed())
+        peer.live.isNil or peer.live.isClosed()
+    ) and (
+        peer.sync.isNil or peer.sync.isClosed()
     )
 
 #Close a Peer.
