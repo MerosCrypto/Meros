@@ -192,6 +192,9 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
                     except Exception as e:
                         doAssert(false, "Couldn't complete a Future: " & e.msg)
 
+                #Delete the request from this Peer and return.
+                peer.requests.delete(0)
+                return
             #Complete the future.
             else:
                 try:

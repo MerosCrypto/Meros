@@ -34,7 +34,7 @@
 
 ### DataMissing
 
-`DataMissing` has a message length of 0 and is a valid response to any request, except `PeersRequest`. It signifies the syncee doesn't have the requested data.
+`DataMissing` has a message length of 0 and is a valid response to any request. It signifies the syncee doesn't have the requested data.
 
 ### SyncingOver
 
