@@ -104,10 +104,10 @@ proc newNetwork*(
                 except KeyError as e:
                     doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
 
-                #Exclude nil sockets from live/sync.
-                if peer.live.isNil:
+                #Exclude closed sockets from live/sync.
+                if peer.live.isNil or peer.live.isClosed:
                     network.live.del(peer.ip)
-                if peer.sync.isNil:
+                if peer.sync.isNil or peer.sync.isClosed:
                     network.sync.del(peer.ip)
 
                 #Close Peers who have been inactive for half a minute.

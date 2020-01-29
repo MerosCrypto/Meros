@@ -63,21 +63,24 @@ func isClosed*(
         peer.sync.isNil or peer.sync.isClosed()
     )
 
+#Safely close a Socket.
+proc safeClose*(
+    socket: AsyncSocket
+) {.forceCheck: [].} =
+    if socket.isNil:
+        return
+
+    try:
+        socket.close()
+    except Exception:
+        discard
+
 #Close a Peer.
 proc close*(
     peer: Peer
 ) {.forceCheck: [].} =
-    try:
-        if not peer.live.isNil:
-            peer.live.close()
-    except Exception:
-        discard
-
-    try:
-        if not peer.sync.isNil:
-            peer.sync.close()
-    except Exception:
-        discard
+    peer.live.safeClose()
+    peer.sync.safeClose()
 
 #Get random peers which meet criteria.
 #Helper function used in a few places.

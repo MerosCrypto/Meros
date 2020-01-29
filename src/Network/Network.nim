@@ -63,10 +63,7 @@ proc connect*(
         socket = newAsyncSocket()
         await socket.connect(address, Port(port))
     except Exception:
-        try:
-            socket.close()
-        except Exception:
-            discard
+        socket.safeClose()
         return
 
     var
@@ -81,10 +78,7 @@ proc connect*(
             char(parseInt(addressParts[3]))
         )
     except OSError:
-        try:
-            socket.close()
-        except Exception:
-            discard
+        socket.safeClose()
         return
     except ValueError:
         raise newException(PeerError, "Invalid IP.")
@@ -170,10 +164,7 @@ proc handle*(
 
         #Don't allow connections from our machine unless they're over localhost.
         if (socket.getLocalAddr()[0] == address) and (address != "127.0.0.1"):
-            try:
-                socket.close()
-            except Exception:
-                discard
+            socket.safeClose()
             return
 
         addressParts = address.split(".")
@@ -197,26 +188,17 @@ proc handle*(
         if first.len != 1:
             raise newException(Exception, "")
     except Exception:
-        try:
-            socket.close()
-        except Exception:
-            discard
+        socket.safeClose()
         return
 
     if not {MessageType.Handshake, MessageType.Syncing}.contains(MessageType(first[0])):
-        try:
-            socket.close()
-        except Exception:
-            discard
+        socket.safeClose()
         return
 
     var peer: Peer
     if MessageType(first[0]) == MessageType.Handshake:
         if network.live.hasKey(ip) and (address != "127.0.0.1"):
-            try:
-                socket.close()
-            except Exception:
-                discard
+            socket.safeClose()
             return
 
         try:
@@ -236,10 +218,7 @@ proc handle*(
 
     elif MessageType(first[0]) == MessageType.Syncing:
         if network.sync.hasKey(ip) and (address != "127.0.0.1"):
-            try:
-                socket.close()
-            except Exception:
-                discard
+            socket.safeClose()
             return
 
         try:

@@ -33,20 +33,10 @@ proc sendLive*(
 ) {.forceCheck: [
     SocketError
 ], async.} =
-    if peer.live.isNil:
-        raise newException(SocketError, "Live socket is null.")
-
     try:
         await peer.live.send(msg.toString())
     except Exception as e:
-        if peer.live.isNil:
-            raise newException(SocketError, "Live socket is null.")
-
-        try:
-            peer.live.close()
-        except Exception:
-            discard
-        peer.live = nil
+        peer.sync.safeClose()
         raise newException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
 #Send a message via the Sync socket.
@@ -56,20 +46,10 @@ proc sendSync*(
 ) {.forceCheck: [
     SocketError
 ], async.} =
-    if peer.sync.isNil:
-        raise newException(SocketError, "Sync socket is null.")
-
     try:
         await peer.sync.send(msg.toString())
     except Exception as e:
-        if peer.sync.isNil:
-            raise newException(SocketError, "Sync socket is null.")
-
-        try:
-            peer.sync.close()
-        except Exception:
-            discard
-        peer.sync = nil
+        peer.sync.safeClose()
         raise newException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
 #Send a Sync Request.
@@ -251,11 +231,7 @@ proc recvLive*(
     try:
         result = await recv(peer.id, peer.live, LIVE_LENS)
     except SocketError as e:
-        try:
-            peer.live.close()
-        except Exception:
-            discard
-        peer.live = nil
+        peer.live.safeClose()
         raise e
     except PeerError as e:
         raise e
@@ -276,11 +252,7 @@ proc recvSync*(
     try:
         result = await recv(peer.id, peer.sync, SYNC_LENS)
     except SocketError as e:
-        try:
-            peer.sync.close()
-        except Exception:
-            discard
-        peer.sync = nil
+        peer.sync.safeClose()
         raise e
     except PeerError as e:
         raise e
