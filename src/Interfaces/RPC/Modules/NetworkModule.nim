@@ -71,7 +71,7 @@ proc module*(
 
                     if client.server:
                         try:
-                            res["result"]["port"] = % client.port
+                            res["result"][res["result"].len - 1]["port"] = % client.port
                         except KeyError as e:
                             doAssert(false, "Couldn't add the port the result: " & e.msg)
     except Exception as e:
