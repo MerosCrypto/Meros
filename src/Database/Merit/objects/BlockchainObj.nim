@@ -118,6 +118,7 @@ proc newBlockchainObj*(
                 "".pad(4),
                 Hash[256](),
                 newBLSPublicKey(),
+                Hash[256](),
                 @[],
                 @[],
                 newBLSSignature(),

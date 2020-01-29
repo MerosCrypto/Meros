@@ -78,8 +78,11 @@ proc newSketchCheck*(
 proc newContents*(
     packets: seq[VerificationPacket],
     elements: seq[BlockElement]
-): Hash[256] {.forceCheck: [].} =
-    var calculated: Merkle = newMerkle()
+): tuple[packets: Hash[256], contents: Hash[256]] {.forceCheck: [].} =
+    var
+        packetsMerkle: Merkle = newMerkle()
+        elementsMerkle: Merkle = newMerkle()
+        empty: bool = true
 
     for packet in sorted(
         packets,
@@ -93,12 +96,18 @@ proc newContents*(
                 result = -1
         , SortOrder.Descending
     ):
-        calculated.add(Blake256(packet.serializeContents()))
+        empty = false
+        packetsMerkle.add(Blake256(packet.serializeContents()))
 
     for elem in elements:
-        calculated.add(Blake256(elem.serializeContents()))
+        empty = false
+        elementsMerkle.add(Blake256(elem.serializeContents()))
 
-    result = calculated.hash
+    if not empty:
+        result = (
+            packets: packetsMerkle.hash,
+            contents: Blake256(packetsMerkle.hash.toString() & elementsMerkle.hash.toString())
+        )
 
 #Constructor.
 proc newBlockHeader*(

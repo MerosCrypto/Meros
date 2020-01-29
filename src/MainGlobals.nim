@@ -58,8 +58,8 @@ case config.network:
             SEND_DIFFICULTY:  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             DATA_DIFFICULTY:  "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
 
-            NETWORK_ID: 1,
             NETWORK_PROTOCOL: 0,
+            NETWORK_ID: 0,
 
             SEEDS: @[
                 (ip: "seed1.meroscrypto.io", port: 5132),
@@ -79,9 +79,9 @@ case config.network:
             SEND_DIFFICULTY:  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             DATA_DIFFICULTY:  "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
 
-            #By not using 255, we allow eventually extending these fields. If we read 255, we also read an extra byte,
-            NETWORK_ID: 254,
+            #By not using 255, we allow eventually extending these fields. If we read 255, we can also read an extra byte,
             NETWORK_PROTOCOL: 254,
+            NETWORK_ID: 254,
 
             SEEDS: @[]
         )

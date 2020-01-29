@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
@@ -25,11 +28,11 @@ proc parseBlockBody*(
 ): SketchyBlockBody {.forceCheck: [
     ValueError
 ].} =
-    #Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
-    result.capacity = bodyStr[0 ..< INT_LEN].fromBinary()
+    #Packets Contents | Capacity | Sketch | Amount of Elements | Elements | Aggregate Signature
+    result.capacity = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
     var
         sketchLen: int = result.capacity * SKETCH_HASH_LEN
-        sketchStart: int = INT_LEN
+        sketchStart: int = HASH_LEN + INT_LEN
         elementsStart: int = sketchStart + sketchLen
 
         pbeResult: tuple[
@@ -62,8 +65,12 @@ proc parseBlockBody*(
     except BLSError:
         raise newException(ValueError, "Invalid aggregate signature.")
 
-    result.data = newBlockBodyObj(
-        @[],
-        elements,
-        aggregate
-    )
+    try:
+        result.data = newBlockBodyObj(
+            bodyStr[0 ..< HASH_LEN].toHash(256),
+            @[],
+            elements,
+            aggregate
+        )
+    except ValueError as e:
+        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)

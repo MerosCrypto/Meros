@@ -4,6 +4,9 @@ import ../../../../../lib/Errors
 #Util lib.
 import ../../../../../lib/Util
 
+#Hash lib.
+import ../../../../../lib/Hash
+
 #MinerWallet lib.
 import ../../../../../Wallet/MinerWallet
 
@@ -24,6 +27,7 @@ proc serialize*(
 ): string {.forceCheck: [].} =
     result =
         blockArg.header.serialize() &
+        blockArg.body.packetsContents.toString() &
         blockArg.body.packets.len.toBinary(INT_LEN)
 
     for packet in blockArg.body.packets:

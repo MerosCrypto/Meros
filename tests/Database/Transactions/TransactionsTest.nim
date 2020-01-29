@@ -32,7 +32,7 @@ import ../../../src/Database/Transactions/Transactions
 import ../TestDatabase
 
 #Test Merit lib.
-import ../TestMerit
+import ../Merit/TestMerit
 
 #Compare Transactions lib.
 import CompareTransactions

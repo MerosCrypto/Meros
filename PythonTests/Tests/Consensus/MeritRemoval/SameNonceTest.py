@@ -44,14 +44,14 @@ def SameNonceTest(
         rpc.meros.signedElement(removal.se2)
 
         #Verify the first Element.
-        if rpc.meros.recv() != (
+        if rpc.meros.live.recv() != (
             MessageType.SignedDataDifficulty.toByte() +
             removal.se1.signedSerialize()
         ):
             raise TestError("Meros didn't send us the Merit Removal.")
 
         #Verify the MeritRemoval.
-        if rpc.meros.recv() != (
+        if rpc.meros.live.recv() != (
             MessageType.SignedMeritRemoval.toByte() +
             removal.signedSerialize(nicks)
         ):
@@ -70,7 +70,7 @@ def SameNonceTest(
     #Create and execute a Liver to handle a Signed MeritRemoval.
     def sendMeritRemoval() -> None:
         #Send and verify the MeritRemoval.
-        if rpc.meros.signedElement(removal) != rpc.meros.recv():
+        if rpc.meros.signedElement(removal) != rpc.meros.live.recv():
             raise TestError("Meros didn't send us the Merit Removal.")
         verifyMeritRemoval(rpc, 1, 1, removal.holder, True)
 

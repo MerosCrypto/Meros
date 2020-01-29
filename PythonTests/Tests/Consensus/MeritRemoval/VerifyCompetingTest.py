@@ -61,20 +61,20 @@ def VerifyCompetingTest(
     def sendElements() -> None:
         #Send the Datas.
         for data in datas:
-            if rpc.meros.transaction(data) != rpc.meros.recv():
+            if rpc.meros.liveTransaction(data) != rpc.meros.live.recv():
                 raise TestError("Meros didn't send us the Data.")
 
         #Send the initial Data's verification.
-        if rpc.meros.signedElement(verif) != rpc.meros.recv():
+        if rpc.meros.signedElement(verif) != rpc.meros.live.recv():
             raise TestError("Meros didn't us the initial Data's Verification.")
 
         #Send the first Element.
-        if rpc.meros.signedElement(removal.se1) != rpc.meros.recv():
+        if rpc.meros.signedElement(removal.se1) != rpc.meros.live.recv():
             raise TestError("Meros didn't send us the Verification.")
 
         #Trigger the MeritRemoval.
         rpc.meros.signedElement(removal.se2)
-        if rpc.meros.recv() != (
+        if rpc.meros.live.recv() != (
             MessageType.SignedMeritRemoval.toByte() +
             removal.signedSerialize(nicks)
         ):
@@ -95,15 +95,15 @@ def VerifyCompetingTest(
     def sendMeritRemoval() -> None:
         #Send the Datas.
         for data in datas:
-            if rpc.meros.transaction(data) != rpc.meros.recv():
+            if rpc.meros.liveTransaction(data) != rpc.meros.live.recv():
                 raise TestError("Meros didn't send us the Data.")
 
         #Send the initial Data's verification.
-        if rpc.meros.signedElement(verif) != rpc.meros.recv():
+        if rpc.meros.signedElement(verif) != rpc.meros.live.recv():
             raise TestError("Meros didn't us the initial Data's Verification.")
 
         #Send and verify the MeritRemoval.
-        if rpc.meros.signedElement(removal) != rpc.meros.recv():
+        if rpc.meros.signedElement(removal) != rpc.meros.live.recv():
             raise TestError("Meros didn't send us the Merit Removal.")
         verifyMeritRemoval(rpc, 1, 1, removal.holder, True)
 

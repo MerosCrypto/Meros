@@ -43,7 +43,7 @@ def PartialTest(
         rpc.meros.signedElement(removal.se2)
 
         #Verify the MeritRemoval.
-        if rpc.meros.recv() != (
+        if rpc.meros.live.recv() != (
             MessageType.SignedMeritRemoval.toByte() +
             removal.signedSerialize(nicks)
         ):
@@ -62,7 +62,7 @@ def PartialTest(
     #Create and execute a Liver to handle a Partial MeritRemoval.
     def sendMeritRemoval() -> None:
         #Send and verify the MeritRemoval.
-        if rpc.meros.signedElement(removal) != rpc.meros.recv():
+        if rpc.meros.signedElement(removal) != rpc.meros.live.recv():
             raise TestError("Meros didn't send us the Merit Removal.")
         verifyMeritRemoval(rpc, 2, 2, removal.holder, True)
 

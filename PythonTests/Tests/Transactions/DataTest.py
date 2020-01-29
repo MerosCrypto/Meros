@@ -36,10 +36,10 @@ def DataTest(
     data.beat(spamFilter)
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, genesis)
+    rpc.meros.liveConnect(genesis)
 
     #Send the Data.
-    rpc.meros.transaction(data)
+    rpc.meros.liveTransaction(data)
 
     #Sleep for 100 milliseconds.
     sleep(0.1)

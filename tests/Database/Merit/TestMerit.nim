@@ -73,14 +73,16 @@ proc newBlankBlock*(
     time: uint32 = getTime(),
     proof: uint32 = 0
 ): Block =
+    var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
     result = newBlockObj(
         version,
         last,
-        newContents(packets, elements),
+        contents.contents,
         significant,
         sketchSalt,
         newSketchCheck(sketchSalt, packets),
         miner.publicKey,
+        contents.packets,
         packets,
         elements,
         aggregate,
@@ -102,14 +104,16 @@ proc newBlankBlock*(
     time: uint32 = getTime(),
     proof: uint32 = 0
 ): Block =
+    var contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(packets, elements)
     result = newBlockObj(
         version,
         last,
-        newContents(packets, elements),
+        contents.contents,
         significant,
         sketchSalt,
         newSketchCheck(sketchSalt, packets),
         nick,
+        contents.packets,
         packets,
         elements,
         aggregate,

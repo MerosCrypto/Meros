@@ -31,7 +31,7 @@ def RepeatTest(
     def sendBlock() -> None:
         #Send the Block with the MeritRemoval archived again.
         block: Block = Block.fromJSON(keys, vectors[-1])
-        rpc.meros.blockHeader(block.header)
+        rpc.meros.liveBlockHeader(block.header)
 
         #Flag of if the Block's Body synced.
         blockBodySynced: bool = False
@@ -39,17 +39,18 @@ def RepeatTest(
         #Handle sync requests.
         reqHash: bytes = bytes()
         while True:
-            try:
-                msg: bytes = rpc.meros.recv()
-            except TestError:
-                if not blockBodySynced:
-                    raise TestError("Node disconnected us before syncing the body.")
-                raise SuccessError("Meros didn't add the same MeritRemoval twice.")
+            if blockBodySynced:
+                #Try receiving from the Live socket, where Meros sends keep-alives.
+                try:
+                    if len(rpc.meros.live.recv()) != 0:
+                        raise Exception()
+                except TestError:
+                    raise SuccessError("Meros didn't add the same MeritRemoval twice.")
+                except Exception:
+                    raise TestError("Meros sent a keep-alive.")
 
-            if MessageType(msg[0]) == MessageType.Syncing:
-                rpc.meros.syncingAcknowledged()
-
-            elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+            msg: bytes = rpc.meros.sync.recv()
+            if MessageType(msg[0]) == MessageType.BlockBodyRequest:
                 reqHash = msg[1 : 33]
                 if reqHash != block.header.hash:
                     raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
@@ -57,13 +58,6 @@ def RepeatTest(
                 #Send the BlockBody.
                 blockBodySynced = True
                 rpc.meros.blockBody([], block)
-
-            elif MessageType(msg[0]) == MessageType.SyncingOver:
-                pass
-
-            elif MessageType(msg[0]) == MessageType.BlockHeader:
-                #Raise a TestError if the Block was added.
-                raise TestError("Meros synced a Block with a repeat MeritRemoval.")
 
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())

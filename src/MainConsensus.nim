@@ -15,7 +15,7 @@ proc syncMeritRemovalTransactions(
             discard functions.transactions.getTransaction(hash)
         except IndexError:
             try:
-                consensus.addMeritRemovalTransaction(await network.requestTransaction(hash))
+                consensus.addMeritRemovalTransaction(await syncAwait network.syncManager.syncTransaction(hash))
             except DataMissing:
                 raise newException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
             except Exception as e:

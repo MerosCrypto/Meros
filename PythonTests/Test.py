@@ -42,10 +42,8 @@ from PythonTests.Tests.Consensus.HundredSix.HundredSixSignedElementsTest import 
 from PythonTests.Tests.Consensus.HundredSix.HundredSixBlockElementsTest import HundredSixBlockElementsTest
 from PythonTests.Tests.Consensus.HundredSix.HundredSixMeritRemovalsTest import HundredSixMeritRemovalsTest
 
-from PythonTests.Tests.Network.MultipleConnectionsTest import MultipleConnectionsTest
 from PythonTests.Tests.Network.PeersTest import PeersTest
-from PythonTests.Tests.Network.HundredTest import HundredTest
-from PythonTests.Tests.Network.HundredTwentySixTest import HundredTwentySixTest
+from PythonTests.Tests.Network.HundredTwentyFiveTest import HundredTwentyFiveTest
 
 #Arguments.
 from sys import argv
@@ -100,10 +98,8 @@ tests: List[Callable[[RPC], None]] = [
     HundredSixBlockElementsTest,
     HundredSixMeritRemovalsTest,
 
-    MultipleConnectionsTest,
     PeersTest,
-    HundredTest,
-    HundredTwentySixTest
+    HundredTwentyFiveTest
 ]
 
 #Tests to run.

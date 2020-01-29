@@ -5,6 +5,7 @@
 - 1 Meros is equivalent to 10,000,000,000 Meri, and Meri is the lowest denomination of Meros. This means Meros has 10 decimals.
 
 - Ed25519 Signatures are created with a prefix of "MEROS" before the signed data. This is to stop transaction replays across networks.
+- If either IETF standards or Ethereum's specifications have finalized a BLS hashToG before Meros launches, Meros will likely switch over.
 
 - `Locks`/`Unlocks` are not specified as the MerosScript specification is still under development.
 

@@ -47,23 +47,19 @@ def InvalidCompetingTest(
         #Send and verify the MeritRemoval.
         removalBytes: bytes = rpc.meros.signedElement(removal)
 
-        done: bool = False
+        sent: int = 0
         while True:
-            try:
-                msg: bytes = rpc.meros.recv()
-            except TestError:
-                raise TestError("Node disconnected us.")
+            if sent == 2:
+                break
 
-            if MessageType(msg[0]) == MessageType.Syncing:
-                rpc.meros.syncingAcknowledged()
-            elif MessageType(msg[0]) == MessageType.TransactionRequest:
-                rpc.meros.transaction(transactions.txs[msg[1 : 33]])
-            elif MessageType(msg[0]) == MessageType.SyncingOver:
-                if done:
-                    break
-                done = True
+            msg: bytes = rpc.meros.sync.recv()
+            if MessageType(msg[0]) == MessageType.TransactionRequest:
+                rpc.meros.syncTransaction(transactions.txs[msg[1 : 33]])
+                sent += 1
+            else:
+                raise TestError("Unexpected message sent: " + msg.hex().upper())
 
-        if removalBytes != rpc.meros.recv():
+        if removalBytes != rpc.meros.live.recv():
             raise TestError("Meros didn't send us the Merit Removal.")
         verifyMeritRemoval(rpc, 11, 11, removal.holder, True)
 

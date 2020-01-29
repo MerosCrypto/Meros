@@ -6,10 +6,9 @@ The message types are as follows (with their list number being their byte header
 
 <ol start="0">
 <li><code>Handshake</code></li>
+<li><code>Syncing</code></li>
 <li><code>BlockchainTail</code></li>
 <br>
-<li><code>Syncing</code></li>
-<li><code>SyncingAcknowledged</code></li>
 <li><code>PeersRequest</code></li>
 <li><code>Peers</code></li>
 <li><code>BlockListRequest</code></li>
@@ -22,7 +21,6 @@ The message types are as follows (with their list number being their byte header
 <li><code>SketchHashRequests</code></li>
 <li><code>TransactionRequest</code></li>
 <li><code>DataMissing</code></li>
-<li><code>SyncingOver</code></li>
 <br>
 <li><code>Claim</code></li>
 <li><code>Send</code></li>
@@ -43,8 +41,8 @@ The message types are as follows (with their list number being their byte header
 <li><code>VerificationPacket</code></li>
 </ol>
 
-`Syncing` is sent to set the state to Syncing, as described in the Syncing docs. Every message between `Syncing` (exclusive) and `SyncingOver` (inclusive) can only be sent when the state between two nodes is Syncing. The node which started syncing can only send some, and the node which didn't start syncing can only send others, as described in the Syncing documentation.
+Every message between `Syncing` and `DataMissing`, as well as everything after `BlockBody` (inclusive), can only be sent over the Sync socket. `Handshake`, as well as every message between `SignedVerification` and `SignedMeritRemoval` can only be sent over the Live socket. Every other message (`BlockchainTail`, `Claim` through `Unlock`, `Checkpoint`, and `BlockHeader`) can be sent over either socket.
 
-Even if the state is syncing, the node which started syncing can send `Handshake`. The node which didn't start syncing can send `BlockHeight` and every message between `Claim` (inclusive) and `VerificationPacket` (inclusive).
+The Live socket is a connection where every message is proactive. When a node rebroadcasts new data, it's sent over the Live Socket. The Sync socket is a connection where every message is reactive. One party makes a request and one party makes a response. Either party can make a request at any point in time, yet the responses must be in the exact same order as the requests.
 
-When the state isn't syncing, nothing between `Syncing` (exclusive) and `SyncingOver` (inclusive), nor anything after `BlockHeader`, can be sent.
+Both sockets share the same port. This causes every node to have between 1 and 2 connections with each peer. Whoever causes the connection sends the first message, a procedure described in the Handshake documentation. Determining if a connection is the Sync socket or the Live socket is done via this first message.

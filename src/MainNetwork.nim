@@ -4,11 +4,9 @@ proc mainNetwork() {.forceCheck: [].} =
     {.gcsafe.}:
         #Create the Network..
         network = newNetwork(
-            params.NETWORK_ID,
             params.NETWORK_PROTOCOL,
-            config.server,
+            params.NETWORK_ID,
             config.tcpPort,
-            config.allowRepeatConnections,
             functions
         )
 
@@ -25,18 +23,18 @@ proc mainNetwork() {.forceCheck: [].} =
             ip: string,
             port: int
         ) {.forceCheck: [
-            ClientError
+            PeerError
         ], async.} =
             try:
                 await network.connect(ip, port)
-            except ClientError as e:
+            except PeerError as e:
                 raise e
             except Exception as e:
                 doAssert(false, "Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
         #Get the peers we're connected to.
-        functions.network.getPeers = proc (): seq[Client] {.inline, forceCheck: [].} =
-            network.clients.clients
+        functions.network.getPeers = proc (): seq[Peer] {.inline, forceCheck: [].} =
+            network.peers.getPeers(network.peers.len)
 
         #Broadcast a message.
         functions.network.broadcast = proc (
@@ -57,14 +55,14 @@ proc mainNetwork() {.forceCheck: [].} =
         proc requestPeersRegularly() {.forceCheck: [], async.} =
             var peers: seq[tuple[ip: string, port: int]]
             try:
-                peers = await network.requestPeers(params.SEEDS)
+                peers = await syncAwait network.syncManager.syncPeers(params.SEEDS)
             except Exception as e:
                 doAssert(false, "requestPeers threw an Exception despite not actually throwing any: " & e.msg)
 
             for peer in peers:
                 try:
                     await network.connect(peer.ip, peer.port)
-                except ClientError:
+                except PeerError:
                     discard
                 except Exception as e:
                     doAssert(false, "Couldn't connect to another node due to an Exception thrown by async: " & e.msg)

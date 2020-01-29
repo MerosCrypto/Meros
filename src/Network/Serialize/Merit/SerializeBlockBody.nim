@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../lib/Errors
 
+#Hash lib.
+import ../../../lib/Hash
+
 #Sketcher lib.
 import ../../../lib/Sketcher
 
@@ -34,7 +37,7 @@ proc serialize*(
     if (capacity == 0) and (body.packets.len != 0):
         capacity = body.packets.len div 5 + 1
 
-    result = capacity.toBinary(INT_LEN)
+    result = body.packetsContents.toString() & capacity.toBinary(INT_LEN)
 
     try:
         result &= newSketcher(body.packets).serialize(

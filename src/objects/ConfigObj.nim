@@ -49,7 +49,6 @@ OPTIONS:
         "ns": "no-server",
         "t":  "tcp-port",
         "r":  "rpc-port",
-        "rc":  "allow-repeat-connections",
         "ng": "no-gui"
     }.toTable()
 
@@ -61,7 +60,6 @@ OPTIONS:
         "no-server":                0,
         "tcp-port":                 1,
         "rpc-port":                 1,
-        "allow-repeat-connections": 0,
         "no-gui":                   0
     }.toTable()
 
@@ -80,9 +78,6 @@ type Config* = object
     tcpPort*: int
     #Port for the RPC to listen on.
     rpcPort*: int
-
-    #Allow repeat connections.
-    allowRepeatConnections*: bool
 
     #Spawn a GUI or not.
     gui*: bool
@@ -117,7 +112,6 @@ proc newConfig*(): Config {.forceCheck: [].} =
         server: true,
         tcpPort: 5132,
         rpcPort: 5133,
-        allowRepeatConnections: false,
 
         gui: true
     )
@@ -282,15 +276,6 @@ proc newConfig*(): Config {.forceCheck: [].} =
         settings.get("rpc-port", JInt).getInt(),
         int(parseUInt(options["rpc-port"][0]))
     )
-
-    if options.hasKey("allow-repeat-connections"):
-        result.allowRepeatConnections = true
-    else:
-        result.allowRepeatConnections.setParameter(
-            "allow-repeat-connections",
-            settings.get("allow-repeat-connections", JBool).getBool(),
-            parseBool(options["allow-repeat-connections"][0])
-        )
 
     if options.hasKey("no-gui"):
         result.gui = false

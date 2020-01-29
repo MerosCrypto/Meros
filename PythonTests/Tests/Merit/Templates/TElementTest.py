@@ -50,22 +50,19 @@ def TElementTest(
     merit: Merit = Merit()
 
     #Handshake with the node.
-    rpc.meros.connect(254, 254, merit.blockchain.blocks[0].header.hash)
+    rpc.meros.liveConnect(merit.blockchain.blocks[0].header.hash)
+    rpc.meros.syncConnect(merit.blockchain.blocks[0].header.hash)
 
     #Send the first Block.
     block: Block = Block.fromJSON(merit.blockchain.keys, blocks[0])
     merit.blockchain.add(block)
-    rpc.meros.blockHeader(block.header)
+    rpc.meros.liveBlockHeader(block.header)
 
     #Handle sync requests.
     reqHash: bytes = bytes()
     while True:
-        msg: bytes = rpc.meros.recv()
-
-        if MessageType(msg[0]) == MessageType.Syncing:
-            rpc.meros.syncingAcknowledged()
-
-        elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+        msg: bytes = rpc.meros.sync.recv()
+        if MessageType(msg[0]) == MessageType.BlockBodyRequest:
             reqHash = msg[1 : 33]
             if reqHash != block.header.hash:
                 raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
@@ -73,14 +70,13 @@ def TElementTest(
             #Send the BlockBody.
             rpc.meros.blockBody(merit.state.nicks, block)
 
-        elif MessageType(msg[0]) == MessageType.SyncingOver:
-            pass
-
-        elif MessageType(msg[0]) == MessageType.BlockHeader:
             break
 
         else:
             raise TestError("Unexpected message sent: " + msg.hex().upper())
+
+    if MessageType(rpc.meros.live.recv()[0]) != MessageType.BlockHeader:
+        raise TestError("Meros didn't broadcast the Block Header it just added.")
 
     #Create and transmit a DataDifficulty.
     dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), 0, 0)

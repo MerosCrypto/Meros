@@ -311,7 +311,9 @@ proc module*(
                 sketchers.del(id - 5)
 
                 #Create the Header.
-                var header: JSONNode = newJNull()
+                var
+                    contents: tuple[packets: Hash[256], contents: Hash[256]] = newContents(pending.packets, pending.elements)
+                    header: JSONNode = newJNull()
                 try:
                     var nick: uint16
                     try:
@@ -320,7 +322,7 @@ proc module*(
                         header = % newBlockHeader(
                             0,
                             functions.merit.getTail(),
-                            newContents(pending.packets, pending.elements),
+                            contents.contents,
                             1,
                             sketchSalt,
                             newSketchCheck(sketchSalt, pending.packets),
@@ -334,7 +336,7 @@ proc module*(
                         header = % newBlockHeader(
                             0,
                             functions.merit.getTail(),
-                            newContents(pending.packets, pending.elements),
+                            contents.contents,
                             1,
                             sketchSalt,
                             newSketchCheck(sketchSalt, pending.packets),
@@ -355,6 +357,7 @@ proc module*(
                         "key":  functions.merit.getRandomXCacheKey().toHex(),
                         "header": header,
                         "body": newBlockBodyObj(
+                            contents.packets,
                             pending.packets,
                             pending.elements,
                             pending.aggregate

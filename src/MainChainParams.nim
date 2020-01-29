@@ -25,10 +25,10 @@ type ChainParams = object
     #Initial Data Difficulty.
     DATA_DIFFICULTY: string
 
-    #Network ID.
-    NETWORK_ID: int
     #Protocol version.
     NETWORK_PROTOCOL: int
+    #Network ID.
+    NETWORK_ID: int
 
     #Seed servers.
     SEEDS: seq[tuple[ip: string, port: int]]

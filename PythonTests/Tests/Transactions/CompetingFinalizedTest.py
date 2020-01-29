@@ -47,22 +47,23 @@ def CompetingFinalizedTest(
         block: Block = merit.blockchain.blocks[-1]
 
         #Send the Block.
-        rpc.meros.blockHeader(block.header)
+        rpc.meros.liveBlockHeader(block.header)
 
         #Handle sync requests.
         reqHash: bytes = bytes()
         while True:
-            try:
-                msg: bytes = rpc.meros.recv()
-            except TestError:
-                if syncedTX:
+            if syncedTX:
+                #Try receiving from the Live socket, where Meros sends keep-alives.
+                try:
+                    if len(rpc.meros.live.recv()) != 0:
+                        raise Exception()
+                except TestError:
                     raise SuccessError("Node disconnected us after we sent an invalid Transaction.")
-                raise TestError("Node errored before syncing our Transaction.")
+                except Exception:
+                    raise TestError("Meros sent a keep-alive.")
 
-            if MessageType(msg[0]) == MessageType.Syncing:
-                rpc.meros.syncingAcknowledged()
-
-            elif MessageType(msg[0]) == MessageType.BlockBodyRequest:
+            msg: bytes = rpc.meros.sync.recv()
+            if MessageType(msg[0]) == MessageType.BlockBodyRequest:
                 reqHash = msg[1 : 33]
                 if reqHash != block.header.hash:
                     raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
@@ -112,15 +113,8 @@ def CompetingFinalizedTest(
                 if reqHash not in transactions.txs:
                     raise TestError("Meros asked for a non-existent Transaction.")
 
-                rpc.meros.transaction(transactions.txs[reqHash])
+                rpc.meros.syncTransaction(transactions.txs[reqHash])
                 syncedTX = True
-
-            elif MessageType(msg[0]) == MessageType.SyncingOver:
-                pass
-
-            elif MessageType(msg[0]) == MessageType.BlockHeader:
-                #Raise a TestError if the Block was added.
-                raise TestError("Meros synced a Transaction which competed with a finalized Transaction.")
 
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())

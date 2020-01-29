@@ -35,7 +35,7 @@ import ../Database/Transactions/objects/DataObj
 
 #Network objects.
 import ../Network/objects/MessageObj
-import ../Network/objects/ClientObj
+import ../Network/objects/PeerObj
 import ../Network/objects/SketchyBlockObj
 
 #Locks standard lib.
@@ -251,8 +251,8 @@ type
         ): Future[void]
 
         addBlockByHash*: proc (
-            hash: Hash[256],
-            syncing: bool
+            peer: Peer,
+            hash: Hash[256]
         ): Future[void]
 
         testBlockHeader*: proc (
@@ -295,7 +295,7 @@ type
             port: int
         ): Future[void]
 
-        getPeers*: proc (): seq[Client] {.inline, raises: [].}
+        getPeers*: proc (): seq[Peer] {.inline, raises: [].}
 
         broadcast*: proc (
             msgType: MessageType,

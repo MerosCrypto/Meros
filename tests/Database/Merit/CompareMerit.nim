@@ -49,6 +49,8 @@ proc compare*(
     bb1: BlockBody,
     bb2: BlockBody
 ) =
+    check(bb1.packetsContents == bb2.packetsContents)
+
     check(bb1.packets.len == bb2.packets.len)
     for p in 0 ..< bb1.packets.len:
         compare(bb1.packets[p], bb2.packets[p])

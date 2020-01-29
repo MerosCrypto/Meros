@@ -49,10 +49,11 @@ proc parseBlock*(
         INT_LEN + INT_LEN + BLS_SIGNATURE_LEN
     )
 
-    #Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature
+    #Packets Contents | Packets Length | Packets | Amount of Elements | Elements | Aggregate Signature
     var
-        packetsLen: int = bodyStr[0 ..< INT_LEN].fromBinary()
-        packetsStart: int = INT_LEN
+        packetsContents: Hash[256]
+        packetsLen: int = bodyStr[HASH_LEN ..< HASH_LEN + INT_LEN].fromBinary()
+        packetsStart: int = HASH_LEN + INT_LEN
 
         packets: seq[VerificationPacket] = newSeq[VerificationPacket](packetsLen)
         i: int
@@ -65,6 +66,11 @@ proc parseBlock*(
         elements: seq[BlockElement] = @[]
 
         aggregate: BLSSignature
+
+    try:
+        packetsContents = bodyStr[0 ..< HASH_LEN].toHash(256)
+    except ValueError as e:
+        doAssert(false, "Failed to create a 32-byte hash out of a 32-byte value: " & e.msg)
 
     i = packetsStart
     if bodyStr.len < i + NICKNAME_LEN:
@@ -112,6 +118,7 @@ proc parseBlock*(
     result = newBlockObj(
         header,
         newBlockBodyObj(
+            packetsContents,
             packets,
             elements,
             aggregate

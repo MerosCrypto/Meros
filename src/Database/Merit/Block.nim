@@ -103,15 +103,24 @@ proc verifyContents*(
     except ValueError as e:
         raise e
 
-    var calculated: Merkle = newMerkle()
+    var
+        packetsMerkle: Merkle = newMerkle()
+        elementsMerkle: Merkle = newMerkle()
+        empty: bool = true
 
     for packet in result:
-        calculated.add(Blake256(packet.serializeContents()))
+        empty = false
+        packetsMerkle.add(Blake256(packet.serializeContents()))
     for elem in elements:
-        calculated.add(Blake256(elem.serializeContents()))
+        empty = false
+        elementsMerkle.add(Blake256(elem.serializeContents()))
 
-    if calculated.hash != contents:
-        raise newException(ValueError, "Invalid contents Merkle.")
+    if not empty:
+        if Blake256(packetsMerkle.hash.toString() & elementsMerkle.hash.toString()) != contents:
+            raise newException(ValueError, "Invalid contents Merkle.")
+    else:
+        if contents != Hash[256]():
+            raise newException(ValueError, "Invalid contents Merkle.")
 
 #Verify a Block's aggregate signature via a nickname lookup function and a Table of Hash -> VerificationPacket.
 proc verifyAggregate*(

@@ -50,7 +50,7 @@ def HundredSixSignedElementsTest(
 
     for elem in elements:
         #Handshake with the node.
-        rpc.meros.connect(254, 254, blockchain.blocks[0].header.hash)
+        rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
 
         #Send the Element.
         rpc.meros.signedElement(elem)

@@ -1,190 +1,213 @@
-#Include the Second file in the chain, NetworkCore.
-include NetworkCore
+#Errors lib.
+import ../lib/Errors
 
-#[
-Once https://github.com/nim-lang/Nim/issues/12530 is fixed, the following code block can be applied to the following functions:
+#Util lib.
+import ../lib/Util
 
-    #Return if we synced the body.
-    if synced:
-        return
+#Hash lib.
+import ../lib/Hash
 
-#If we exited the loop, we failed to sync the body from every client.
-raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
-]#
+#Sketcher lib.
+import ../lib/Sketcher
 
-#Request peers.
-proc requestPeers*(
-    network: Network,
-    seeds: seq[tuple[ip: string, port: int]]
-): Future[seq[tuple[ip: string, port: int]]] {.forceCheck: [], async.} =
-    if network.clients.clients.len == 0:
-        return seeds
+#Block lib.
+import ../Database/Merit/Block as BlockFile
 
-    var ips: HashSet[string] = initHashSet[string]()
-    for client in network.clients.notSyncing:
-        try:
-            #Start syncing.
+#State lib.
+import ../Database/Merit/State
+
+#Elements lib.
+import ../Database/Consensus/Elements/Elements
+
+#TransactionStatus lib.
+import ../Database/Consensus/TransactionStatus
+
+#Transactions lib.
+import ../Database/Transactions/Transactions
+
+#Message object.
+import objects/MessageObj
+
+#SketchyBlock object.
+import objects/SketchyBlockObj
+export SketchyBlock
+
+#Peer lib.
+import Peer
+export Peer
+
+#SyncRequest object.
+import objects/SyncRequestObj
+
+#SyncManager object.
+import objects/SyncManagerObj
+export SyncManagerObj
+
+#Algorithm standard lib.
+import algorithm
+
+#Async standard lib.
+import asyncdispatch
+
+#Sets standard lib.
+import sets
+
+#Table standard lib.
+import tables
+
+#String utils standard lib.
+import strutils
+
+#Custom future which includes a set timeout.
+type SyncFuture[T] = ref object
+    manager: SyncManager
+    id: int
+
+    future: Future[T]
+    timeout: int
+
+proc newSyncFuture[T](
+    manager: SyncManagerObj.SyncManager, #Fixes a resolution bug in Nim.
+    id: int,
+    future: Future[T],
+    timeout: int
+): SyncFuture[T] {.inline, forceCheck: [].} =
+    SyncFuture[T](
+        manager: manager,
+        id: id,
+
+        future: future,
+        timeout: timeout
+    )
+
+#Await which completes the future after the timeout, raising DataMissing if the actual future had yet to complete.
+proc syncAwait*[T](
+    future: SyncFuture[T]
+): Future[T] {.forceCheck: [
+    DataMissing
+], async.} =
+    var timeout: Future[bool]
+    try:
+        timeout = withTimeout(future.future, future.timeout)
+    except Exception as e:
+        doAssert(false, "Couldn't create a timeout for this SyncRequest: " & e.msg)
+
+    var timedOut: bool
+    try:
+        timedOut = not await timeout
+    except Exception as e:
+        doAssert(false, "Couldn't create await a timeout: " & e.msg)
+
+    when T is seq[tuple[ip: string, port: int]]:
+        if timedOut:
+            var request: PeersSyncRequest
             try:
-                await client.startSyncing()
-            except UnsyncableClientError:
-                continue
+                request = cast[PeersSyncRequest](future.manager.requests[future.id])
+            except KeyError as e:
+                doAssert(false, "Couldn't get a SyncRequest which timed out: " & e.msg)
 
-            #Request peers.
-            var
-                peers: seq[tuple[ip: string, port: int]] = await client.syncPeers()
-                p: int = 0
-            while p < peers.len:
-                if ips.contains(peers[p].ip):
-                    peers.del(p)
-                    continue
+            future.manager.requests.del(future.id)
+            return request.pending
+    else:
+        if timedOut:
+            future.manager.requests.del(future.id)
+            raise newException(DataMissing, "SyncRequest timed out.")
 
-                ips.incl(peers[p].ip)
-                result.add((
-                    ip: (
-                        ($int(peers[p].ip[0])) & "." &
-                        ($int(peers[p].ip[1])) & "." &
-                        ($int(peers[p].ip[2])) & "." &
-                        ($int(peers[p].ip[3]))
-                    ),
-                    port: peers[p].port
-                ))
-                inc(p)
+    try:
+        result = future.future.read()
+    except ValueError as e:
+        doAssert(false, "Couldn't read the value of a completed future: " & e.msg)
 
-            #Stop syncing.
-            await client.stopSyncing()
-
-            #Break if we got enough peers.
-            if peers.len > 8:
-                break
-        except ClientError:
-            network.clients.disconnect(client.id)
-            continue
-        except Exception as e:
-            doAssert(false, "Syncing peers threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-#Request a Transaction.
-proc requestTransaction*(
-    network: Network,
+#Sync a missing Transaction.
+proc syncTransaction*(
+    manager: SyncManager,
     hash: Hash[256]
-): Future[Transaction] {.forceCheck: [
-    DataMissing
-], async.} =
-    var synced: bool = false
-    for client in network.clients.notSyncing:
+): SyncFuture[Transaction] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
+    #Create the future.
+    result = newSyncFuture[Transaction](
+        manager,
+        id,
+        newFuture[Transaction]("syncTransaction"),
+        2000
+    )
+
+    #Create the request and register it.
+    var request: TransactionSyncRequest = result.future.newTransactionSyncRequest(hash)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
         try:
-            #Start syncing.
-            try:
-                await client.startSyncing()
-            except UnsyncableClientError:
-                continue
-
-            #Get the Transaction.
-            try:
-                result = await client.syncTransaction(hash, Hash[256](), Hash[256]())
-                synced = true
-            except DataMissing:
-                discard
-
-            #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
-            continue
+            asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            doAssert(false, "Couldn't send a TransactionRequest to a Peer: " & e.msg)
 
-        #Break if we synced the Transaction.
-        if synced:
-            break
+#Sync missing Verification Packets.
+proc syncVerificationPackets*(
+    manager: SyncManager,
+    hash: Hash[256],
+    salt: string,
+    sketchHashes: seq[uint64]
+): SyncFuture[seq[VerificationPacket]] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
 
-    #Raise an Exception if we failed to sync the Transaction.
-    if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified Transaction.")
+    #Create the future.
+    result = newSyncFuture[seq[VerificationPacket]](
+        manager,
+        id,
+        newFuture[seq[VerificationPacket]]("syncVerificationPackets"),
+        3000
+    )
 
-#Request Verification Packets.
-proc requestVerificationPackets(
-    network: Network,
-    blockHash: Hash[256],
-    sketchHashes: seq[uint64],
-    sketchSalt: string
-): Future[seq[VerificationPacket]] {.forceCheck: [
-    DataMissing
-], async.} =
-    var synced: bool = false
-    for client in network.clients.notSyncing:
+    #Create the request and register it.
+    var request: SketchHashSyncRequests = result.future.newSketchHashSyncRequests(hash, salt, sketchHashes)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
         try:
-            #Start syncing.
-            try:
-                await client.startSyncing()
-            except UnsyncableClientError:
-                continue
-
-            #Get the VerificationPacket.
-            try:
-                result = await client.syncVerificationPackets(blockHash, sketchHashes, sketchSalt)
-                synced = true
-            except DataMissing:
-                discard
-
-            #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
-            continue
+            asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Syncing Verification Packets threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            doAssert(false, "Couldn't send a SketchHashSyncRequests to a Peer: " & e.msg)
 
-        #Break if we synced the Verification Packets.
-        if synced:
-            break
-
-    #Raise an Exception if we failed to sync the Verification Packets.
-    if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified Verification Packets.")
-
-#Request Sketch Hashes.
-proc requestSketchHashes(
-    network: Network,
+#Sync missing Sketch Hashes.
+proc syncSketchHashes*(
+    manager: SyncManager,
     hash: Hash[256],
     sketchCheck: Hash[256]
-): Future[seq[uint64]] {.forceCheck: [
-    DataMissing
-], async.} =
-    var synced: bool = false
-    for client in network.clients.notSyncing:
+): SyncFuture[seq[uint64]] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
+    #Create the future.
+    result = newSyncFuture[seq[uint64]](
+        manager,
+        id,
+        newFuture[seq[uint64]]("syncSketchHashes"),
+        3000
+    )
+
+    #Create the request and register it.
+    var request: SketchHashesSyncRequest = result.future.newSketchHashesSyncRequest(hash, sketchCheck)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
         try:
-            #Start syncing.
-            try:
-                await client.startSyncing()
-            except UnsyncableClientError:
-                continue
-
-            #Get the SketchHash.
-            try:
-                result = await client.syncSketchHashes(hash, sketchCheck)
-                synced = true
-            except DataMissing:
-                discard
-
-            #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
-            continue
+            asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Syncing Sketch Hashes threw an Exception despite catching all thrown Exceptions: " & e.msg)
-
-        #Break if we synced the Sketch Hashes.
-        if synced:
-            break
-
-    #Raise an Exception if we failed to sync the Sketch Hashes.
-    if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified Sketch Hashes.")
+            doAssert(false, "Couldn't send a SketchHashesSyncRequest to a Peer: " & e.msg)
 
 #Sync a Block's missing Transactions/VerificationPackets.
 proc sync*(
-    network: Network,
+    manager: SyncManager,
     state: State,
     newBlock: SketchyBlock,
     sketcher: Sketcher
@@ -244,7 +267,7 @@ proc sync*(
 
         #Sync the list of sketch hashes.
         try:
-            missingPackets = await network.requestSketchHashes(
+            missingPackets = await syncAwait manager.syncSketchHashes(
                 newBlock.data.header.hash,
                 newBlock.data.header.sketchCheck
             )
@@ -263,7 +286,7 @@ proc sync*(
     #Sync the missing VerificationPackets.
     if missingPackets.len != 0:
         try:
-            packets &= await network.requestVerificationPackets(newBlock.data.header.hash, missingPackets, newBlock.data.header.sketchSalt)
+            packets &= await syncAwait manager.syncVerificationPackets(newBlock.data.header.hash, newBlock.data.header.sketchSalt, missingPackets)
         except DataMissing as e:
             raise e
         except Exception as e:
@@ -284,7 +307,7 @@ proc sync*(
 
     #Check the Block's aggregate.
     try:
-        if not result[0].verifyAggregate(network.mainFunctions.merit.getPublicKey):
+        if not result[0].verifyAggregate(manager.functions.merit.getPublicKey):
             raise newException(ValueError, "Block has an invalid aggregate.")
     except IndexError as e:
         doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
@@ -293,7 +316,7 @@ proc sync*(
     for packet in result[0].body.packets:
         includedTXs.incl(packet.hash)
         try:
-            discard network.mainFunctions.transactions.getTransaction(packet.hash)
+            discard manager.functions.transactions.getTransaction(packet.hash)
         except IndexError:
             missingTXs.add(packet.hash)
 
@@ -302,9 +325,9 @@ proc sync*(
         #Get the Transactions.
         for tx in missingTXs:
             try:
-                transactions[tx] = await network.requestTransaction(tx)
+                transactions[tx] = await syncAwait manager.syncTransaction(tx)
             except DataMissing:
-                #Since we did not get this Transaction, this Block is trying to archive unknown Verification OR we just don't have a proper client set.
+                #Since we did not get this Transaction, this Block is trying to archive unknown Verification OR we just don't have a proper Peer set.
                 #The first is assumed.
                 raise newException(ValueError, "Block tries to archive unknown Verifications.")
             except Exception as e:
@@ -326,7 +349,7 @@ proc sync*(
                 if not first:
                     for input in tx.inputs:
                         try:
-                            discard network.mainFunctions.transactions.getTransaction(input.hash)
+                            discard manager.functions.transactions.getTransaction(input.hash)
                         #This TX is missing an input.
                         except IndexError:
                             #Look for the input in the pending Transactions.
@@ -341,7 +364,7 @@ proc sync*(
                 case tx:
                     of Claim as claim:
                         try:
-                            network.mainFunctions.transactions.addClaim(claim, true)
+                            manager.functions.transactions.addClaim(claim, true)
                         except ValueError:
                             raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
@@ -349,7 +372,7 @@ proc sync*(
 
                     of Send as send:
                         try:
-                            network.mainFunctions.transactions.addSend(send, true)
+                            manager.functions.transactions.addSend(send, true)
                         except ValueError:
                             raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
@@ -357,7 +380,7 @@ proc sync*(
 
                     of Data as data:
                         try:
-                            network.mainFunctions.transactions.addData(data, true)
+                            manager.functions.transactions.addData(data, true)
                         except ValueError:
                             raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
@@ -378,14 +401,14 @@ proc sync*(
         #Verify the predecessors of every Transaction are already mentioned on the chain OR also in this Block.
         var tx: Transaction
         try:
-            tx = network.mainFunctions.transactions.getTransaction(packet.hash)
+            tx = manager.functions.transactions.getTransaction(packet.hash)
         except IndexError as e:
             doAssert(false, "Couldn't get a Transaction we're confirmed to have: " & e.msg)
 
         if not ((tx of Claim) or ((tx of Data) and cast[Data](tx).isFirstData)):
             for input in tx.inputs:
                 try:
-                    if not (network.mainFunctions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
+                    if not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
                         raise newException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
                 except IndexError as e:
                     doAssert(false, "Couldn't get if a Transaction we're confirmed to have has an archived packet: " & e.msg)
@@ -393,7 +416,7 @@ proc sync*(
         #Get the status.
         var status: TransactionStatus
         try:
-            status = network.mainFunctions.consensus.getStatus(packet.hash)
+            status = manager.functions.consensus.getStatus(packet.hash)
         except IndexError as e:
             doAssert(false, "Couldn't get the status of a Transaction we're confirmed to have: " & e.msg)
 
@@ -457,7 +480,7 @@ proc sync*(
         case elem:
             of SendDifficulty as sendDiff:
                 if not newNonces.hasKey(sendDiff.holder):
-                    newNonces[sendDiff.holder] = network.mainFunctions.consensus.getArchivedNonce(sendDiff.holder)
+                    newNonces[sendDiff.holder] = manager.functions.consensus.getArchivedNonce(sendDiff.holder)
 
                 try:
                     if sendDiff.nonce != newNonces[sendDiff.holder] + 1:
@@ -477,7 +500,7 @@ proc sync*(
 
             of DataDifficulty as dataDiff:
                 if not newNonces.hasKey(dataDiff.holder):
-                    newNonces[dataDiff.holder] = network.mainFunctions.consensus.getArchivedNonce(dataDiff.holder)
+                    newNonces[dataDiff.holder] = manager.functions.consensus.getArchivedNonce(dataDiff.holder)
 
                 try:
                     if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
@@ -495,7 +518,7 @@ proc sync*(
                     raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
 
                 try:
-                    await network.mainFunctions.consensus.verifyUnsignedMeritRemoval(mr)
+                    await manager.functions.consensus.verifyUnsignedMeritRemoval(mr)
                 except ValueError as e:
                     raise e
                 except DataExists:
@@ -505,121 +528,130 @@ proc sync*(
 
         hasElem.incl(elem.holder)
 
-#Request a BlockBody.
-proc requestBlockBody*(
-    network: Network,
-    hash: Hash[256]
-): Future[SketchyBlockBody] {.forceCheck: [
-    DataMissing
-], async.} =
-    var synced: bool = false
-    for client in network.clients.notSyncing:
+#Sync a missing BlockBody.
+proc syncBlockBody*(
+    manager: SyncManager,
+    hash: Hash[256],
+    contents: Hash[256]
+): SyncFuture[SketchyBlockBody] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
+    #Create the future.
+    result = newSyncFuture[SketchyBlockBody](
+        manager,
+        id,
+        newFuture[SketchyBlockBody]("syncBlockBody"),
+        5000
+    )
+
+    #Create the request and register it.
+    var request: BlockBodySyncRequest = result.future.newBlockBodySyncRequest(hash, contents)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
         try:
-            #Start syncing.
-            try:
-                await client.startSyncing()
-            except UnsyncableClientError:
-                continue
-
-            #Get the BlockBody.
-            try:
-                result = await client.syncBlockBody(hash)
-                synced = true
-            except DataMissing:
-                discard
-
-            #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
-            continue
+            asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Syncing a BlockBody threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            doAssert(false, "Couldn't send a BlockBodySyncRequest to a Peer: " & e.msg)
 
-        #Break if we synced the body.
-        if synced:
-            break
-
-    #Raise an Exception if we failed to sync the body.
-    if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified BlockBody.")
-
-#Request a BlockHeader.
-proc requestBlockHeader*(
-    network: Network,
+#Sync a missing BlockHeader.
+proc syncBlockHeader*(
+    manager: SyncManager,
     hash: Hash[256]
-): Future[BlockHeader] {.forceCheck: [
-    DataMissing
-], async.} =
-    var synced: bool = false
-    for client in network.clients.notSyncing:
+): SyncFuture[BlockHeader] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
+    #Create the future.
+    result = newSyncFuture[BlockHeader](
+        manager,
+        id,
+        newFuture[BlockHeader]("syncBlockHeader"),
+        5000
+    )
+
+    #Create the request and register it.
+    var request: BlockHeaderSyncRequest = result.future.newBlockHeaderSyncRequest(hash)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
         try:
-            #Start syncing.
-            try:
-                await client.startSyncing()
-            except UnsyncableClientError:
-                continue
-
-            #Get the BlockHeader.
-            try:
-                result = await client.syncBlockHeader(hash)
-                synced = true
-            except DataMissing:
-                discard
-
-            #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
-            continue
+            asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Syncing a BlockHeader threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            doAssert(false, "Couldn't send a BlockHeaderSyncRequest to a Peer: " & e.msg)
 
-        #Break if we synced the header.
-        if synced:
-            break
-
-    #Raise an Exception if we failed to sync the header.
-    if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified BlockHeader.")
-
-#Request a Block List.
-proc requestBlockList*(
-    network: Network,
+#Sync a missing BlockList.
+proc syncBlockList*(
+    manager: SyncManager,
     forwards: bool,
     amount: int,
     hash: Hash[256]
-): Future[seq[Hash[256]]] {.forceCheck: [
-    DataMissing
-], async.} =
-    var synced: bool = false
-    for client in network.clients.notSyncing:
+): SyncFuture[seq[Hash[256]]] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
+
+    #Create the future.
+    result = newSyncFuture[seq[Hash[256]]](
+        manager,
+        id,
+        newFuture[seq[Hash[256]]]("syncBlockList"),
+        3000
+    )
+
+    #Create the request and register it.
+    var request: BlockListSyncRequest = result.future.newBlockListSyncRequest(forwards, amount, hash)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
         try:
-            #Start syncing.
-            try:
-                await client.startSyncing()
-            except UnsyncableClientError:
-                continue
-
-            #Get the Block List.
-            try:
-                result = await client.syncBlockList(forwards, amount, hash)
-                synced = true
-            except DataMissing:
-                discard
-
-            #Stop syncing.
-            await client.stopSyncing()
-        except ClientError:
-            network.clients.disconnect(client.id)
-            continue
+            asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Syncing a Block List threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            doAssert(false, "Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
 
-        #Break if we synced the list.
-        if synced:
-            break
+#Sync peers.
+proc syncPeers*(
+    manager: SyncManager,
+    seeds: seq[tuple[ip: string, port: int]]
+): SyncFuture[seq[tuple[ip: string, port: int]]] {.forceCheck: [].} =
+    #Get an ID.
+    var id: int = manager.id
+    inc(manager.id)
 
-    #Raise an Exception if we failed to sync the list.
-    if not synced:
-        raise newException(DataMissing, "Couldn't sync the specified Block List.")
+    if manager.peers.len == 0:
+        result = newSyncFuture[seq[tuple[ip: string, port: int]]](
+            manager,
+            0,
+            newFuture[seq[tuple[ip: string, port: int]]]("syncPeers"),
+            3000
+        )
+        try:
+            result.future.complete(seeds)
+        except Exception as e:
+            doAssert(false, "Failed to complete a future: " & e.msg)
+        return
+
+    #Create the future.
+    result = newSyncFuture[seq[tuple[ip: string, port: int]]](
+        manager,
+        id,
+        newFuture[seq[tuple[ip: string, port: int]]]("syncPeers"),
+        3000
+    )
+
+    #Create the request and register it.
+    var request: PeersSyncRequest = result.future.newPeersSyncRequest(manager.peers.len)
+    manager.requests[id] = request
+
+    #Send the request to every peer.
+    for peer in manager.peers.values():
+        try:
+            asyncCheck peer.syncRequest(id, request.msg)
+        except Exception as e:
+            doAssert(false, "Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
