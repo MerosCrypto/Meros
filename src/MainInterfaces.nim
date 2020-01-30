@@ -16,7 +16,7 @@ proc mainRPC() {.forceCheck: [].} =
             #Start listening.
             asyncCheck rpc.listen(config)
         except Exception as e:
-            doAssert(false, "Couldn't start the RPC: " & e.msg)
+            panic("Couldn't start the RPC: " & e.msg)
 
 when not defined(nogui):
     proc mainGUI() {.forceCheck: [].} =

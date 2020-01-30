@@ -14,7 +14,7 @@ proc getLength*(
     ValueError
 ].} =
     if not (int8(prefix) in possibilities):
-        raise newException(ValueError, "Parsing an Element that isn't a valid Element for this data.")
+        raise newLoggedException(ValueError, "Parsing an Element that isn't a valid Element for this data.")
 
     case int(prefix):
         #Verifications are never in Blocks. Verifications in MeritRemovals don't have their holder.
@@ -48,7 +48,7 @@ proc getLength*(
             result = NICKNAME_LEN + BYTE_LEN + BYTE_LEN
 
         else:
-            doAssert(false, "Possible Element wasn't supported.")
+            panic("Possible Element wasn't supported.")
 
     if actual == MERIT_REMOVAL_PREFIX:
         inc(result)

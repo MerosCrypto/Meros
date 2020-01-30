@@ -43,11 +43,11 @@ proc module*(
             ].} =
                 #Verify the params len.
                 if params.len > 2:
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
                 #Verify the params' types.
                 for param in params:
                     if param.kind != JString:
-                        raise newException(ParamError, "")
+                        raise newLoggedException(ParamError, "")
 
                 #Fill in optional params.
                 while params.len < 2:
@@ -86,7 +86,7 @@ proc module*(
                     (params[0].kind != JInt) or
                     (params[1].kind != JBool)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Get the account in question.
                 var wallet: HDWallet = functions.personal.getWallet()
@@ -102,7 +102,7 @@ proc module*(
                     else:
                         wallet = wallet.derive(0)
                 except ValueError as e:
-                    doAssert(false, "Unusable external/internal trees despite checking for their validity: " & e.msg)
+                    panic("Unusable external/internal trees despite checking for their validity: " & e.msg)
 
                 #Get the child.
                 try:
@@ -124,7 +124,7 @@ proc module*(
                     (params[0].kind != JString) or
                     (params[1].kind != JString)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 try:
                     res["result"] = % $functions.personal.send(params[0].getStr(), params[1].getStr())
@@ -146,7 +146,7 @@ proc module*(
                     (params.len != 1) or
                     (params[0].kind != JString)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 try:
                     res["result"] = % $functions.personal.data(params[0].getStr())
@@ -168,11 +168,11 @@ proc module*(
                     (params.len != 1) or
                     (params[0].kind != JString)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 try:
                     res["result"] = % newAddress(params[0].getStr())
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid Public Key")
     except Exception as e:
-        doAssert(false, "Couldn't create the Consensus Module: " & e.msg)
+        panic("Couldn't create the Consensus Module: " & e.msg)

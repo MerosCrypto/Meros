@@ -26,9 +26,9 @@ proc loop() {.forceCheck: [].} =
     try:
         msg = fromMain[].tryRecv()
     except ValueError as e:
-        doAssert(false, "Couldn't try to receive a message from main due to a ValueError: " & e.msg)
+        panic("Couldn't try to receive a message from main due to a ValueError: " & e.msg)
     except Exception as e:
-        doAssert(false, "Couldn't try to receive a message from main due to a Exception: " & e.msg)
+        panic("Couldn't try to receive a message from main due to a Exception: " & e.msg)
 
     #If there is a message...
     if msg.dataAvailable:
@@ -61,7 +61,7 @@ proc newGUI*(
             )
         )
     except Exception as e:
-        doAssert(false, "Couldn't create the WebView: " & e.msg)
+        panic("Couldn't create the WebView: " & e.msg)
 
     #Add the Bindings.
     gui.createBindings(loop)
@@ -77,22 +77,22 @@ proc newGUI*(
                         document.body.innerHTML = `{SEND}`;
                     """
                 except ValueError as e:
-                    doAssert(false, "Couldn't format the JS to load the main page: " & e.msg)
+                    panic("Couldn't format the JS to load the main page: " & e.msg)
 
                 if gui.webview.eval(js) != 0:
-                    doAssert(false, "Couldn't load the main page into the WebView.")
+                    panic("Couldn't load the main page into the WebView.")
 
                 #Start the loop.
                 try:
                     js = "setInterval(GUI.loop, 100);"
                 except ValueError as e:
-                    doAssert(false, "Couldn't format the JS to load the main page: " & e.msg)
+                    panic("Couldn't format the JS to load the main page: " & e.msg)
 
                 if gui.webview.eval(js) != 0:
-                    doAssert(false, "Couldn't start the Nim loop from the WebView.")
+                    panic("Couldn't start the Nim loop from the WebView.")
         )
     except Exception as e:
-        doAssert(false, "Couldn't dispatch a function to load the main page and start the Nim loop: " & e.msg)
+        panic("Couldn't dispatch a function to load the main page and start the Nim loop: " & e.msg)
 
     #Run the GUI.
     gui.webview.run()

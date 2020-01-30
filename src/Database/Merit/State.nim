@@ -42,7 +42,7 @@ proc getNickname(
         except IndexError:
             if newBlock:
                 return state.newHolder(blockArg.header.minerKey)
-            doAssert(false, $blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
+            panic($blockArg.header.minerKey & " in Block " & $blockArg.header.hash & " doesn't have a nickname.")
     else:
         result = blockArg.header.minerNick
 
@@ -51,6 +51,8 @@ proc processBlock*(
     state: var State,
     blockchain: Blockchain
 ): (uint16, int) {.forceCheck: [].} =
+    logInfo "State processing Block", hash = blockchain.tail.header.hash
+
     #Init the result.
     result = (uint16(0), -1)
 
@@ -71,7 +73,7 @@ proc processBlock*(
         try:
             nick = state.getNickname(blockchain[blockchain.height - 1 - state.deadBlocks])
         except IndexError as e:
-            doAssert(false, "State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
+            panic("State tried to remove dead Merit yet couldn't get the old Block: " & e.msg)
 
         #Do nothing if they had their Merit removed.
         var
@@ -134,7 +136,7 @@ proc revert*(
         try:
             revertingPast = blockchain[i]
         except IndexError as e:
-            doAssert(false, "Couldn't get the Block to revert past: " & e.msg)
+            panic("Couldn't get the Block to revert past: " & e.msg)
 
         #Restore removed Merit.
         for removal in state.loadBlockRemovals(i):
@@ -156,7 +158,7 @@ proc revert*(
             try:
                 nick = state.getNickname(blockchain[i - state.deadBlocks])
             except IndexError as e:
-                doAssert(false, "State couldn't get a historical Block being revived into the State: " & e.msg)
+                panic("State couldn't get a historical Block being revived into the State: " & e.msg)
 
             #Don't add Merit if the miner had a MeritRemoval.
             var removed: bool = false

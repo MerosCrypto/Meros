@@ -68,11 +68,11 @@ proc newHDWallet*(
         try:
             secret = secretArg.parseHexStr()
         except ValueError:
-            raise newException(ValueError, "Hex-length secret with invalid Hex data passed to newHDWallet.")
+            raise newLoggedException(ValueError, "Hex-length secret with invalid Hex data passed to newHDWallet.")
     elif secret.len == 32:
         discard
     else:
-        raise newException(ValueError, "Invalid length secret passed to newHDWallet.")
+        raise newLoggedException(ValueError, "Invalid length secret passed to newHDWallet.")
 
     #Keys.
     var
@@ -82,7 +82,7 @@ proc newHDWallet*(
     #Create the Private Key.
     privateKey.data = cast[array[64, cuchar]](SHA2_512(secret).data)
     if (uint8(privateKey.data[31]) and 0b00100000) != 0:
-        raise newException(ValueError, "Secret generated an invalid private key.")
+        raise newLoggedException(ValueError, "Secret generated an invalid private key.")
     privateKey.data[0]  = cuchar(uint8(privateKey.data[0])  and (not uint8(0b00000111)))
     privateKey.data[31] = cuchar(uint8(privateKey.data[31]) and (not uint8(0b10000000)))
     privateKey.data[31] = cuchar(uint8(privateKey.data[31]) or             0b01000000)
@@ -153,9 +153,9 @@ proc derive*(
     kL = (readUIntBE[256](zL) * 8) + readUIntBE[256](pPrivateKeyL)
     try:
         if kL mod l == 0:
-            raise newException(ValueError, "Deriving this child key produced an unusable PrivateKey.")
+            raise newLoggedException(ValueError, "Deriving this child key produced an unusable PrivateKey.")
     except DivByZeroError:
-        doAssert(false, "Performing a modulus of Ed25519's l raised a DivByZeroError.")
+        panic("Performing a modulus of Ed25519's l raised a DivByZeroError.")
 
     kR = readUIntBE[256](zR) + readUIntBE[256](pPrivateKeyR)
 
@@ -191,7 +191,7 @@ proc derive*(
     if path.len == 0:
         return wallet
     if path.len >= 2^20:
-        raise newException(ValueError, "Derivation path depth is too big.")
+        raise newLoggedException(ValueError, "Derivation path depth is too big.")
 
     try:
         result = wallet.derive(path[0])
@@ -242,5 +242,5 @@ proc next*(
         except ValueError:
             inc(i)
             if i == (uint32(2) ^ 31):
-                raise newException(ValueError, "This path is out of non-hardened keys.")
+                raise newLoggedException(ValueError, "This path is out of non-hardened keys.")
             continue

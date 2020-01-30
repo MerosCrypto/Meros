@@ -6,7 +6,7 @@ proc mainDatabase() {.forceCheck: [].} =
         try:
             database = newDB(config.dataDir / (config.network & "-" & config.db), MAX_DB_SIZE)
         except DBError as e:
-            doAssert(false, "Couldn't create the DB: " & e.msg)
+            panic("Couldn't create the DB: " & e.msg)
 
         var version: int = DB_VERSION
         try:
@@ -16,14 +16,14 @@ proc mainDatabase() {.forceCheck: [].} =
             try:
                 database.lmdb.put("merit", "version", DB_VERSION.toBinary())
             except Exception as e:
-                doAssert(false, "Couldn't save the DB version: " & e.msg)
+                panic("Couldn't save the DB version: " & e.msg)
 
         #Confirm the version.
         if version != DB_VERSION:
-            doAssert(false, "DB has a different version.")
+            panic("DB has a different version.")
 
         #Open the Wallet Database.
         try:
             wallet = newWalletDB(config.dataDir / (config.network & "-" & config.db & "-wallet"), MAX_DB_SIZE)
         except DBError as e:
-            doAssert(false, "Couldn't create the DB: " & e.msg)
+            panic("Couldn't create the DB: " & e.msg)

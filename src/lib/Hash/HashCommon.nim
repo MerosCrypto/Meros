@@ -12,7 +12,7 @@ export HashObj
 var EmptyHash*: ptr uint8
 
 #toHash functions.
-func toHash*(
+proc toHash*(
     hash: string,
     bits: static[int]
 ): Hash[bits] {.forceCheck: [
@@ -25,10 +25,10 @@ func toHash*(
         for i in countup(0, hash.len - 1, 2):
             result.data[i div 2] = uint8(parseHexInt(hash[i .. i + 1]))
     else:
-        raise newException(ValueError, "toHash not handed the right amount of data.")
+        raise newLoggedException(ValueError, "toHash not handed the right amount of data.")
 
 #toHash dedicated for Stint.
-func toHash*(
+proc toHash*(
     hash: openArray[byte],
     bits: static[int]
 ): Hash[bits] {.forceCheck: [
@@ -38,7 +38,7 @@ func toHash*(
         for i in 0 ..< hash.len:
             result.data[i] = uint8(hash[i])
     else:
-        raise newException(ValueError, "toHash not handed the right amount of data.")
+        raise newLoggedException(ValueError, "toHash not handed the right amount of data.")
 
 #To binary string.
 func toString*(

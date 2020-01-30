@@ -27,7 +27,7 @@ proc RipeMD_160*(
     result.data = ripemd160.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to RipeMD_160Hash.
-func toRipeMD_160Hash*(
+proc toRipeMD_160Hash*(
     hash: string
 ): RipeMD_160Hash {.forceCheck: [
     ValueError

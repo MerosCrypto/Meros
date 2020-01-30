@@ -45,7 +45,7 @@ proc Keccak_512*(
     result.data = keccak512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to Keccak_256Hash.
-func toKeccak_256Hash*(
+proc toKeccak_256Hash*(
     hash: string
 ): Keccak_256Hash {.forceCheck: [
     ValueError
@@ -56,7 +56,7 @@ func toKeccak_256Hash*(
         raise e
 
 #String to Keccak_512Hash.
-func toKeccak_512Hash*(
+proc toKeccak_512Hash*(
     hash: string
 ): Keccak_512Hash {.forceCheck: [
     ValueError

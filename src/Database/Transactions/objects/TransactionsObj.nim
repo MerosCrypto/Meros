@@ -44,15 +44,15 @@ proc getSender*(
     if data.isFirstData:
         try:
             if data.data.len != 32:
-                raise newException(DataMissing, "Initial data wasn't provided a public key.")
+                raise newLoggedException(DataMissing, "Initial data wasn't provided a public key.")
             return newEdPublicKey(data.data)
         except ValueError as e:
-            doAssert(false, "Couldn't create an EdPublicKey from a Data's input: " & e.msg)
+            panic("Couldn't create an EdPublicKey from a Data's input: " & e.msg)
     else:
         try:
             return transactions.db.loadDataSender(data.inputs[0].hash)
         except DBReadError:
-            raise newException(DataMissing, "Couldn't find the Data's input which was not its sender.")
+            raise newLoggedException(DataMissing, "Couldn't find the Data's input which was not its sender.")
 
 #Add a Transaction to the DAG.
 proc add*(
@@ -69,7 +69,7 @@ proc add*(
                 var spenders: seq[Hash[256]] = transactions.db.loadSpenders(input)
                 for spender in spenders:
                     if not transactions.transactions.hasKey(spender):
-                        raise newException(ValueError, "Transaction competes with a finalized Transaction.")
+                        raise newLoggedException(ValueError, "Transaction competes with a finalized Transaction.")
 
     if not (tx of Mint):
         #Add the Transaction to the cache.
@@ -85,7 +85,7 @@ proc add*(
             try:
                 transactions.db.saveDataSender(data, transactions.getSender(data))
             except DataMissing as e:
-                doAssert(false, "Added a Data we don't know the sender of: " & e.msg)
+                panic("Added a Data we don't know the sender of: " & e.msg)
 
 #Get a Transaction by its hash.
 proc `[]`*(
@@ -100,13 +100,13 @@ proc `[]`*(
         try:
             return transactions.transactions[hash]
         except KeyError as e:
-            doAssert(false, "Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
+            panic("Couldn't grab a Transaction despite confirming the key exists: " & e.msg)
 
     #Load the hash from the DB.
     try:
         result = transactions.db.load(hash)
     except DBReadError:
-        raise newException(IndexError, "Hash doesn't map to any Transaction.")
+        raise newLoggedException(IndexError, "Hash doesn't map to any Transaction.")
 
 #Transactions constructor.
 proc newTransactionsObj*(
@@ -136,12 +136,12 @@ proc newTransactionsObj*(
                 try:
                     result.add(db.load(packet.hash), false)
                 except ValueError as e:
-                    doAssert(false, "Adding a reloaded Transaction raised a ValueError: " & e.msg)
+                    panic("Adding a reloaded Transaction raised a ValueError: " & e.msg)
                 except DBReadError as e:
-                    doAssert(false, "Couldn't load a Transaction from the Database: " & e.msg)
+                    panic("Couldn't load a Transaction from the Database: " & e.msg)
                 mentioned.incl(packet.hash)
     except IndexError as e:
-        doAssert(false, "Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
+        panic("Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
 
 #Load a Public Key's UTXOs.
 proc getUTXOs*(
@@ -162,7 +162,7 @@ proc verify*(
     try:
         tx = transactions[hash]
     except IndexError as e:
-        doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
+        panic("Tried to mark a non-existent Transaction as verified: " & e.msg)
 
     case tx:
         of Claim as claim:
@@ -173,7 +173,7 @@ proc verify*(
             try:
                 transactions.db.saveDataTip(transactions.getSender(data), data.hash)
             except DataMissing as e:
-                doAssert(false, "Added and verified a Data which has a missing input: " & e.msg)
+                panic("Added and verified a Data which has a missing input: " & e.msg)
         else:
             discard
 
@@ -186,7 +186,7 @@ proc unverify*(
     try:
         tx = transactions[hash]
     except IndexError as e:
-        doAssert(false, "Tried to mark a non-existent Transaction as verified: " & e.msg)
+        panic("Tried to mark a non-existent Transaction as verified: " & e.msg)
 
     case tx:
         of Claim as claim:
@@ -197,7 +197,7 @@ proc unverify*(
             try:
                 transactions.db.saveDataTip(transactions.getSender(data), data.inputs[0].hash)
             except DataMissing as e:
-                doAssert(false, "Added, verified, and unverified a Data which has a missing input: " & e.msg)
+                panic("Added, verified, and unverified a Data which has a missing input: " & e.msg)
         else:
             discard
 
@@ -248,4 +248,4 @@ proc loadDataTip*(
     try:
         result = transactions.db.loadDataTip(key)
     except DBReadError:
-        raise newException(DataMissing, "Data tip not found.")
+        raise newLoggedException(DataMissing, "Data tip not found.")

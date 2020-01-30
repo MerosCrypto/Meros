@@ -46,7 +46,7 @@ proc parseBlockElement*(
         raise e
 
     if i + result.len > data.len:
-        raise newException(ValueError, "parseBlockElement not handed enough data to parse the next Element.")
+        raise newLoggedException(ValueError, "parseBlockElement not handed enough data to parse the next Element.")
 
     try:
         case int(data[i]):
@@ -55,11 +55,11 @@ proc parseBlockElement*(
             of DATA_DIFFICULTY_PREFIX:
                 result.element = parseDataDifficulty(data[i + 1 .. i + result.len])
             of GAS_PRICE_PREFIX:
-                doAssert(false, "GasPrices are not supported.")
+                panic("GasPrices are not supported.")
             of MERIT_REMOVAL_PREFIX:
                 result.element = parseMeritRemoval(data[i + 1 .. i + result.len])
             else:
-                doAssert(false, "Possible Element wasn't supported.")
+                panic("Possible Element wasn't supported.")
     except ValueError as e:
         raise e
 

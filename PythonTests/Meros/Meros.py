@@ -291,7 +291,7 @@ class Meros:
         self.rpc: int = rpc
 
         #Create the instance.
-        self.process: Popen[Any] = Popen(["./build/Meros", "--no-gui", "--data-dir", "./data/PythonTests", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc)])
+        self.process: Popen[Any] = Popen(["./build/Meros", "--data-dir", "./data/PythonTests", "--log-file", test + ".log", "--db", test, "--network", "devnet", "--tcp-port", str(tcp), "--rpc-port", str(rpc), "--no-gui"])
 
         #Connection variables.
         self.live: MerosSocket

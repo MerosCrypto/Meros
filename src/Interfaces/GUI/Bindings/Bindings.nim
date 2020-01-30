@@ -21,7 +21,7 @@ proc createBindings*(
     try:
         GUIBindings.addTo(gui, loop)
     except WebViewError as e:
-        doAssert(false, "GUIBindings.addTo threw a WebViewError just by passing it loop, despite having a blank raises pragma: " & e.msg)
+        panic("GUIBindings.addTo threw a WebViewError just by passing it loop, despite having a blank raises pragma: " & e.msg)
     #Add the Wallet bindings.
     PersonalBindings.addTo(gui)
     #Add the Transactions bindings.

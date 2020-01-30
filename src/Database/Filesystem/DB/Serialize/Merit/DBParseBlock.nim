@@ -70,11 +70,11 @@ proc parseBlock*(
     try:
         packetsContents = bodyStr[0 ..< HASH_LEN].toHash(256)
     except ValueError as e:
-        doAssert(false, "Failed to create a 32-byte hash out of a 32-byte value: " & e.msg)
+        panic("Failed to create a 32-byte hash out of a 32-byte value: " & e.msg)
 
     i = packetsStart
     if bodyStr.len < i + NICKNAME_LEN:
-        raise newException(ValueError, "DB parseBlock not handed enough data to get the amount of holders in the next VerificationPacket.")
+        raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the amount of holders in the next VerificationPacket.")
 
     var holders: seq[uint16]
     for p in 0 ..< packetsLen:
@@ -83,7 +83,7 @@ proc parseBlock*(
 
         #The holders is represented by a NICKNAME_LEN. This uses an INT_LEN so the last packet checks the elements length.
         if bodyStr.len < i + (holders.len * NICKNAME_LEN) + HASH_LEN + INT_LEN:
-            raise newException(ValueError, "DB parseBlock not handed enough data to get the holders in this VerificationPacket, its hash, and the amount of holders in the next VerificationPacket.")
+            raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the holders in this VerificationPacket, its hash, and the amount of holders in the next VerificationPacket.")
 
         for h in 0 ..< holders.len:
             holders[h] = uint16(bodyStr[i ..< i + NICKNAME_LEN].fromBinary())
@@ -107,12 +107,12 @@ proc parseBlock*(
         elements.add(pbeResult.element)
 
     if bodyStr.len < i + BLS_SIGNATURE_LEN:
-        raise newException(ValueError, "DB parseBlock not handed enough data to get the aggregate signature.")
+        raise newLoggedException(ValueError, "DB parseBlock not handed enough data to get the aggregate signature.")
 
     try:
         aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
     except BLSError:
-        raise newException(ValueError, "Invalid aggregate signature.")
+        raise newLoggedException(ValueError, "Invalid aggregate signature.")
 
     #Create the Block Object.
     result = newBlockObj(

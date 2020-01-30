@@ -30,7 +30,7 @@ proc mainNetwork() {.forceCheck: [].} =
             except PeerError as e:
                 raise e
             except Exception as e:
-                doAssert(false, "Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
+                panic("Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
         #Get the peers we're connected to.
         functions.network.getPeers = proc (): seq[Peer] {.inline, forceCheck: [].} =
@@ -49,7 +49,7 @@ proc mainNetwork() {.forceCheck: [].} =
                     )
                 )
             except Exception as e:
-                doAssert(false, "Network.broadcast threw an Exception despite not naturally throwing any: " & e.msg)
+                panic("Network.broadcast threw an Exception despite not naturally throwing any: " & e.msg)
 
         #Every minute, look for new peers if we don't have enough already.
         proc requestPeersRegularly() {.forceCheck: [], async.} =
@@ -60,7 +60,7 @@ proc mainNetwork() {.forceCheck: [].} =
             try:
                 peers = await syncAwait network.syncManager.syncPeers(params.SEEDS)
             except Exception as e:
-                doAssert(false, "requestPeers threw an Exception despite not actually throwing any: " & e.msg)
+                panic("requestPeers threw an Exception despite not actually throwing any: " & e.msg)
 
             for peer in peers:
                 try:
@@ -68,7 +68,7 @@ proc mainNetwork() {.forceCheck: [].} =
                 except PeerError:
                     discard
                 except Exception as e:
-                    doAssert(false, "Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
+                    panic("Couldn't connect to another node due to an Exception thrown by async: " & e.msg)
 
         try:
             addTimer(
@@ -81,16 +81,16 @@ proc mainNetwork() {.forceCheck: [].} =
                         {.gcsafe.}:
                             asyncCheck requestPeersRegularly()
                     except Exception as e:
-                        doAssert(false, "Couldn't request peers regularly due to an Exception thrown by async: " & e.msg)
+                        panic("Couldn't request peers regularly due to an Exception thrown by async: " & e.msg)
 
             )
         except OSError as e:
-            doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
+            panic("Couldn't set a timer due to an OSError: " & e.msg)
         except Exception as e:
-            doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
+            panic("Couldn't set a timer due to an Exception: " & e.msg)
 
         #Also request peers now.
         try:
             asyncCheck requestPeersRegularly()
         except Exception as e:
-            doAssert(false, "Couldn't request peers at the start of Meros: " & e.msg)
+            panic("Couldn't request peers at the start of Meros: " & e.msg)

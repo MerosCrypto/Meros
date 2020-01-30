@@ -107,7 +107,7 @@ proc handle*(
     except SocketError:
         return
     except Exception as e:
-        doAssert(false, "Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     try:
         msg = await peer.recvLive()
@@ -117,7 +117,7 @@ proc handle*(
         peer.close()
         return
     except Exception as e:
-        doAssert(false, "Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     if msg.content != MessageType.Handshake:
         peer.close()
@@ -148,7 +148,7 @@ proc handle*(
             peer.close()
             return
         except Exception as e:
-            doAssert(false, "Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            panic("Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         try:
             case msg.content:
@@ -163,19 +163,19 @@ proc handle*(
                     except SocketError:
                         return
                     except Exception as e:
-                        doAssert(false, "Replying `BlockchainTail` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        panic("Replying `BlockchainTail` in response to a keep-alive `Handshake` threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                     #Add the tail.
                     var tail: Hash[256]
                     try:
                         tail = msg.message[5 ..< 37].toHash(256)
                     except ValueError as e:
-                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+                        panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
                     try:
                         await manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
-                        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 of MessageType.BlockchainTail:
                     #Get the hash.
@@ -183,13 +183,13 @@ proc handle*(
                     try:
                         tail = msg.message[0 ..< 32].toHash(256)
                     except ValueError as e:
-                        doAssert(false, "Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
+                        panic("Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
 
                     #Add the Block.
                     try:
                         await manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
-                        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 of MessageType.Claim:
                     var claim: Claim = msg.message.parseClaim()
@@ -226,7 +226,7 @@ proc handle*(
                     except DataExists:
                         continue
                     except Exception as e:
-                        doAssert(false, "Adding a SignedMeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        panic("Adding a SignedMeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 of MessageType.BlockHeader:
                     var header: BlockHeader = msg.message.parseBlockHeader()
@@ -239,7 +239,7 @@ proc handle*(
                     except DataExists, NotConnected:
                         continue
                     except Exception as e:
-                        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 else:
                     peer.close()

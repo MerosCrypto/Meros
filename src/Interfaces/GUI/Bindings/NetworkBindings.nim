@@ -44,6 +44,6 @@ proc addTo*(
                     return
         )
     except KeyError as e:
-        doAssert(false, "Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)
+        panic("Couldn't bind the GUI functions to WebView due to a KeyError: " & e.msg)
     except Exception as e:
-        doAssert(false, "Couldn't bind the GUI functions to WebView due to a Exception: " & e.msg)
+        panic("Couldn't bind the GUI functions to WebView due to a Exception: " & e.msg)

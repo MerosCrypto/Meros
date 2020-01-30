@@ -36,7 +36,7 @@ proc parseTransaction*(
             except ValueError as e:
                 raise e
             except Spam:
-                doAssert(false, "parseSend believes a Hash is less than 0.")
+                panic("parseSend believes a Hash is less than 0.")
 
         of '\3':
             try:
@@ -44,7 +44,7 @@ proc parseTransaction*(
             except ValueError as e:
                 raise e
             except Spam:
-                doAssert(false, "parseData believes a Hash is less than 0.")
+                panic("parseData believes a Hash is less than 0.")
 
         else:
-            doAssert(false, "Invalid Transaction Type loaded from the Database: " & $int(tx[0]))
+            panic("Invalid Transaction Type loaded from the Database: " & $int(tx[0]))

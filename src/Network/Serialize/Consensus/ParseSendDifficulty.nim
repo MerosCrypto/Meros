@@ -32,7 +32,7 @@ proc parseSendDifficulty*(
         )
         result.holder = uint16(sendDiffSeq[0].fromBinary())
     except ValueError as e:
-        doAssert(false, "Failed to parse a 32-byte hash: " & e.msg)
+        panic("Failed to parse a 32-byte hash: " & e.msg)
 
 #Parse a Signed SendDifficulty.
 proc parseSignedSendDifficulty*(
@@ -57,6 +57,6 @@ proc parseSignedSendDifficulty*(
         result.holder = uint16(sendDiffSeq[0].fromBinary())
         result.signature = newBLSSignature(sendDiffSeq[3])
     except ValueError as e:
-        doAssert(false, "Failed to parse a 32-byte hash: " & e.msg)
+        panic("Failed to parse a 32-byte hash: " & e.msg)
     except BLSError:
-        raise newException(ValueError, "Invalid signature.")
+        raise newLoggedException(ValueError, "Invalid signature.")

@@ -8,19 +8,19 @@ import ../../../Database/Consensus/Elements/objects/ElementObj
 method serialize*(
     element: Element
 ): string {.base, forceCheck: [].} =
-    doAssert(false, "Element serialize method called.")
+    panic("Element serialize method called.")
 
 method serializeWithoutHolder*(
     element: Element
 ): string {.base, forceCheck: [].} =
-    doAssert(false, "Element serializeWithoutHolder method called.")
+    panic("Element serializeWithoutHolder method called.")
 
 method serializeContents*(
     element: Element
 ): string {.base, forceCheck: [].} =
-    doAssert(false, "Element serializeContents method called.")
+    panic("Element serializeContents method called.")
 
 method signedSerialize*(
     element: Element
 ): string {.base, forceCheck:[].} =
-    doAssert(false, "Element signedSerialize method called.")
+    panic("Element signedSerialize method called.")

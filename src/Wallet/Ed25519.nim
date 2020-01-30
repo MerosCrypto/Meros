@@ -28,7 +28,7 @@ type
         data*: array[64, uint8]
 
 #Constructors.
-func newEdPublicKey*(
+proc newEdPublicKey*(
     key: string
 ): EdPublicKey {.forceCheck: [
     ValueError
@@ -43,11 +43,11 @@ func newEdPublicKey*(
             for i in countup(0, 63, 2):
                 result.data[i div 2] = cuchar(parseHexInt(key[i .. i + 1]))
         except ValueError:
-            raise newException(ValueError, "Hex-length Public Key with invalid hex data passed to newEdPublicKey.")
+            raise newLoggedException(ValueError, "Hex-length Public Key with invalid hex data passed to newEdPublicKey.")
     else:
-        raise newException(ValueError, "Invalid length Public Key passed to newEdPublicKey.")
+        raise newLoggedException(ValueError, "Invalid length Public Key passed to newEdPublicKey.")
 
-func newEdSignature*(
+proc newEdSignature*(
     sigArg: string
 ): EdSignature {.forceCheck: [
     ValueError
@@ -59,9 +59,9 @@ func newEdSignature*(
         try:
             sig = sigArg.parseHexStr()
         except ValueError:
-            raise newException(ValueError, "Hex-length Signature with invalid Hex data passed to newEdSignature.")
+            raise newLoggedException(ValueError, "Hex-length Signature with invalid Hex data passed to newEdSignature.")
     else:
-        raise newException(ValueError, "Invalid length Signature passed to new EdSignature.")
+        raise newLoggedException(ValueError, "Invalid length Signature passed to new EdSignature.")
 
     copyMem(addr result.data[0], addr sig[0], 64)
 

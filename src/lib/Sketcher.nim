@@ -132,7 +132,7 @@ proc toSketch(
             hash = sketchHash(salt, sketcher[e].packet)
             #If there's a collision, throw.
             if result.hashes.hasKey(hash):
-                raise newException(SaltError, "Collision found while sketching values.")
+                raise newLoggedException(SaltError, "Collision found while sketching values.")
 
             result.sketch.add(hash)
             result.hashes[hash] = e
@@ -201,7 +201,7 @@ proc merge*(
             try:
                 result.packets.delete(sketch.hashes[result.missing[m]] - offset)
             except KeyError as e:
-                doAssert(false, "Couldn't get the index a hash maps to despite checking with hasKey first: " & e.msg)
+                panic("Couldn't get the index a hash maps to despite checking with hasKey first: " & e.msg)
             result.missing.delete(m)
             inc(offset)
             continue

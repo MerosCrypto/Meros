@@ -64,7 +64,7 @@ proc newBlockchainObj*(
             startDifficultyArg
         )
     except ValueError:
-        doAssert(false, "Couldn't create the Blockchain's starting difficulty.")
+        panic("Couldn't create the Blockchain's starting difficulty.")
 
     #Create the Blockchain.
     var genesis: string = genesisArg.pad(32)
@@ -83,7 +83,7 @@ proc newBlockchainObj*(
             miners: initTable[BLSPublicKey, uint16]()
         )
     except ValueError as e:
-        doAssert(false, "Couldn't convert the genesis to a hash, despite being padded to 32 bytes: " & e.msg)
+        panic("Couldn't convert the genesis to a hash, despite being padded to 32 bytes: " & e.msg)
 
     #Get the RandomX key from the DB.
     try:
@@ -104,7 +104,7 @@ proc newBlockchainObj*(
     except DBReadError as e:
         #Make sure we didn't get the height but not the tip.
         if result.height != 0:
-            doAssert(false, "Loaded the height but not the tip: " & e.msg)
+            panic("Loaded the height but not the tip: " & e.msg)
         result.height = 1
 
         #Create a Genesis Block.
@@ -128,9 +128,9 @@ proc newBlockchainObj*(
             )
             hash(genesisBlock.header)
         except ValueError as e:
-            doAssert(false, "Couldn't create the Genesis Block due to a ValueError: " & e.msg)
+            panic("Couldn't create the Genesis Block due to a ValueError: " & e.msg)
         except BLSError as e:
-            doAssert(false, "Couldn't create the Genesis Block due to a BLSError: " & e.msg)
+            panic("Couldn't create the Genesis Block due to a BLSError: " & e.msg)
         #Grab the tip.
         tip = genesisBlock.header.hash
 
@@ -147,7 +147,7 @@ proc newBlockchainObj*(
             last = result.db.loadBlock(tip)
             result.blocks.prepend(last)
         except DBReadError as e:
-            doAssert(false, "Couldn't load a Block from the Database: " & e.msg)
+            panic("Couldn't load a Block from the Database: " & e.msg)
 
         if last.header.last == result.genesis:
             break
@@ -157,7 +157,7 @@ proc newBlockchainObj*(
     try:
         result.difficulty = result.db.loadDifficulty()
     except DBReadError as e:
-        doAssert(false, "Couldn't load the Difficulty from the Database: " & e.msg)
+        panic("Couldn't load the Difficulty from the Database: " & e.msg)
 
     #Load the existing miners.
     var miners: seq[BLSPublicKey] = result.db.loadHolders()
@@ -195,7 +195,7 @@ proc add*(
         try:
             key = blockchain.db.loadUpcomingKey()
         except DBReadError:
-            doAssert(false, "Couldn't load the latest RandomX key.")
+            panic("Couldn't load the latest RandomX key.")
 
         blockchain.cacheKey = key
         setRandomXKey(blockchain.cacheKey)
@@ -216,10 +216,10 @@ proc `[]`*(
     IndexError
 ].} =
     if nonce < 0:
-        raise newException(IndexError, "Attempted to get a Block with a negative nonce.")
+        raise newLoggedException(IndexError, "Attempted to get a Block with a negative nonce.")
 
     if nonce >= blockchain.height:
-        raise newException(IndexError, "Specified nonce is greater than the Blockchain height.")
+        raise newLoggedException(IndexError, "Specified nonce is greater than the Blockchain height.")
     elif nonce >= blockchain.height - 10:
         var res: DoublyLinkedNode[Block] = blockchain.blocks.head
         for _ in 0 ..< nonce - max((blockchain.height - 10), 0):
@@ -229,7 +229,7 @@ proc `[]`*(
         try:
             result = blockchain.db.loadBlock(nonce)
         except DBReadError:
-            raise newException(IndexError, "Specified nonce doesn't match any Block.")
+            raise newLoggedException(IndexError, "Specified nonce doesn't match any Block.")
 
 proc `[]`*(
     blockchain: Blockchain,
@@ -240,7 +240,7 @@ proc `[]`*(
     try:
         result = blockchain.db.loadBlock(hash)
     except DBReadError:
-        raise newException(IndexError, "Block not found.")
+        raise newLoggedException(IndexError, "Block not found.")
 
 #Gets the last Block.
 func tail*(

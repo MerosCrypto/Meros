@@ -91,9 +91,9 @@ proc merge*(
             try:
                 result[rpc.prefix & key] = rpc.rpc[key]
             except KeyError as e:
-                doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+                panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
             except Exception as e:
-                doAssert(false, "Couldn't set a value in a table: " & e.msg)
+                panic("Couldn't set a value in a table: " & e.msg)
 
 #RPC Object Constructor.
 proc newRPCObj*(

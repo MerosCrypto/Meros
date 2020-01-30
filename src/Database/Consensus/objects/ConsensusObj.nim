@@ -107,9 +107,9 @@ proc newConsensusObj*(
             for n in result.archived[uint16(h)] + 1 .. result.db.load(uint16(h)):
                 result.signatures[uint16(h)].add(result.db.loadSignature(uint16(h), n))
         except KeyError as e:
-            doAssert(false, "Couldn't add a signature to the signature cache of a holder we just added: " & e.msg)
+            panic("Couldn't add a signature to the signature cache of a holder we just added: " & e.msg)
         except DBReadError as e:
-            doAssert(false, "Couldn't load a signature we know we have: " & e.msg)
+            panic("Couldn't load a signature we know we have: " & e.msg)
 
     #Load statuses still in Epochs.
     #Just like Epochs, this first requires loading the old last 5 Blocks and then the current last 5 Blocks.
@@ -130,7 +130,7 @@ proc newConsensusObj*(
                 try:
                     result.statuses[packet.hash] = result.db.load(packet.hash)
                 except DBReadError:
-                    doAssert(false, "Transaction archived on the Blockchain doesn't have a status.")
+                    panic("Transaction archived on the Blockchain doesn't have a status.")
 
                 #If this Transaction is close to being confirmed, add it to close.
                 try:
@@ -144,9 +144,9 @@ proc newConsensusObj*(
                     ):
                         result.close.incl(packet.hash)
                 except KeyError as e:
-                    doAssert(false, "Couldn't get a status we just added to the statuses table: " & e.msg)
+                    panic("Couldn't get a status we just added to the statuses table: " & e.msg)
     except IndexError as e:
-        doAssert(false, "Couldn't get a Block on the Blockchain: " & e.msg)
+        panic("Couldn't get a Block on the Blockchain: " & e.msg)
 
     #Load unmentioned Transactions.
     var unmentioned: seq[Hash[256]] = result.db.loadUnmentioned()
@@ -180,12 +180,12 @@ proc getStatus*(
         try:
             return consensus.statuses[hash]
         except KeyError as e:
-            doAssert(false, "Couldn't get a Status from the cache when the cache has the key: " & e.msg)
+            panic("Couldn't get a Status from the cache when the cache has the key: " & e.msg)
 
     try:
         result = consensus.db.load(hash)
     except DBReadError:
-        raise newException(IndexError, "Transaction doesn't have a status.")
+        raise newLoggedException(IndexError, "Transaction doesn't have a status.")
 
     #Add the Transaction to the cache if it's not yet out of Epochs.
     if result.merit == -1:
@@ -201,9 +201,9 @@ proc incEpoch*(
         status = consensus.getStatus(hash)
         inc(status.epoch)
     except ValueError:
-        doAssert(false, "Couldn't increment the Epoch of a Status with an invalid hash.")
+        panic("Couldn't increment the Epoch of a Status with an invalid hash.")
     except IndexError:
-        doAssert(false, "Couldn't get the Status we're incrementing the Epoch of.")
+        panic("Couldn't get the Status we're incrementing the Epoch of.")
     consensus.db.save(hash, status)
 
 #Calculate a Transaction's Merit.
@@ -227,7 +227,7 @@ proc calculateMeritSingle(
     #Check if the Transaction crossed its threshold.
     if merit >= state.nodeThresholdAt(status.epoch):
         if state.nodeThresholdAt(status.epoch) < 0:
-            doAssert(false, $tx.hash & " " & $status.epoch & " " & $state.processedBlocks)
+            panic($tx.hash & " " & $status.epoch & " " & $state.processedBlocks)
         #Make sure all parents are verified.
         try:
             for input in tx.inputs:
@@ -240,7 +240,7 @@ proc calculateMeritSingle(
                 ):
                     return
         except IndexError as e:
-            doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
+            panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
 
         #Mark the Transaction as verified.
         status.verified = true
@@ -270,7 +270,7 @@ proc calculateMerit*(
             if child != hash:
                 status = consensus.getStatus(child)
         except IndexError:
-            doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
+            panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
         wasVerified = status.verified
 
         consensus.calculateMeritSingle(
@@ -286,7 +286,7 @@ proc calculateMerit*(
                     for spender in spenders:
                         children.add(spender)
             except IndexError as e:
-                doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
+                panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
 #Unverify a Transaction.
 proc unverify*(
@@ -308,12 +308,12 @@ proc unverify*(
             if child != hash:
                 childStatus = consensus.getStatus(child)
         except IndexError:
-            doAssert(false, "Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
+            panic("Couldn't get the Transaction/Status for a Transaction we're calculating the Merit of.")
 
         #If this child was verified, unverify it and grab children.
         #Children of Transactions which aren't verified can't be verified and therefore can be skipped.
         if childStatus.verified:
-            echo "Verified Transaction was unverified: ", child
+            logWarn "Unverified Transaction", tx = child
             childStatus.verified = false
             consensus.db.save(child, childStatus)
 
@@ -323,7 +323,7 @@ proc unverify*(
                     for spender in spenders:
                         children.add(spender)
             except IndexError as e:
-                doAssert(false, "Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
+                panic("Couldn't get a child Transaction/child Transaction's Status we've marked as a spender of this Transaction: " & e.msg)
 
             #Notify the Transactions DAG about the unverification.
             consensus.functions.transactions.unverify(child)
@@ -343,7 +343,7 @@ proc finalize*(
         tx = consensus.functions.transactions.getTransaction(hash)
         status = consensus.getStatus(hash)
     except IndexError as e:
-        doAssert(false, "Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
+        panic("Couldn't get either the Transaction we're finalizing or its Status: " & e.msg)
 
     #Calculate the final Merit tally.
     status.merit = 0
@@ -370,7 +370,7 @@ proc finalize*(
                     consensus.statuses.del(hash)
                     return
         except IndexError as e:
-            doAssert(false, "Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
+            panic("Couldn't get the Status of a Transaction that was the parent to this Transaction: " & e.msg)
 
         #Mark the Transaction as verified.
         status.verified = true
@@ -385,7 +385,7 @@ proc finalize*(
                     if consensus.getStatus(spender).verified:
                         status.beaten = true
                 except IndexError as e:
-                    doAssert(false, "Couldn't get the Status of a competing Transaction: " & e.msg)
+                    panic("Couldn't get the Status of a competing Transaction: " & e.msg)
 
     #Save the status.
     #This will cause a double save for the finalized TX in the unverified case.
@@ -420,9 +420,9 @@ proc getPending*(
                     result.elements.add(consensus.db.load(holder, nonce + s))
                     signatures.add(consensus.signatures[holder][s])
     except KeyError as e:
-        doAssert(false, "Couldn't get the nonce/signatures/MeritRemoval of a holder we know we have: " & e.msg)
+        panic("Couldn't get the nonce/signatures/MeritRemoval of a holder we know we have: " & e.msg)
     except DBReadError as e:
-        doAssert(false, "Couldn't get an Element we know we have: " & e.msg)
+        panic("Couldn't get an Element we know we have: " & e.msg)
 
     var p: int = 0
     while p < result.packets.len:
@@ -433,7 +433,7 @@ proc getPending*(
         try:
             tx = consensus.functions.transactions.getTransaction(result.packets[p].hash)
         except IndexError as e:
-            doAssert(false, "Couldn't get a Transaction which has a packet: " & e.msg)
+            panic("Couldn't get a Transaction which has a packet: " & e.msg)
 
         block checkPredecessors:
             if tx of Claim:
@@ -446,7 +446,7 @@ proc getPending*(
                 try:
                     status = consensus.getStatus(input.hash)
                 except IndexError as e:
-                    doAssert(false, "Couldn't get the status of a Transaction before the current Transaction: " & e.msg)
+                    panic("Couldn't get the status of a Transaction before the current Transaction: " & e.msg)
 
                 mentioned = included.contains(input.hash) or ((status.holders.len != 0) and (not consensus.unmentioned.contains(input.hash)))
                 if not mentioned:

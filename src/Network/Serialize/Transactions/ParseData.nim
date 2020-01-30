@@ -23,10 +23,10 @@ proc parseData*(
 ].} =
     #Verify the input length.
     if dataStr.len < HASH_LEN + BYTE_LEN:
-        raise newException(ValueError, "parseData not handed enough data to get the length of the data.")
+        raise newLoggedException(ValueError, "parseData not handed enough data to get the length of the data.")
 
     if dataStr.len < HASH_LEN + BYTE_LEN + int(dataStr[HASH_LEN]) + BYTE_LEN:
-        raise newException(ValueError, "parseData not handed enough data to get the data.")
+        raise newLoggedException(ValueError, "parseData not handed enough data to get the data.")
 
     #Input | Data Length | Data | Signature | Proof
     var dataSeq: seq[string] = dataStr.deserialize(

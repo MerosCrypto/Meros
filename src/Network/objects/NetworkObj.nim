@@ -102,6 +102,7 @@ proc newNetwork*(
                 try:
                     peer = network.peers[network.ids[p]]
                 except KeyError as e:
+                    #Not a panic due to GC safety rules.
                     doAssert(false, "Failed to get a peer we have an ID for: " & e.msg)
 
                 #Exclude closed sockets from live/sync.
@@ -160,7 +161,7 @@ proc newNetwork*(
             removeInactive
         )
     except Exception as e:
-        doAssert(false, "Failed to start the function which removes inactive Peers: " & e.msg)
+        panic("Failed to start the function which removes inactive Peers: " & e.msg)
 
 #Add a peer.
 proc add*(

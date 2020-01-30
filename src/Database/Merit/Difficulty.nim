@@ -38,7 +38,7 @@ proc calculateNextDifficulty*(
     try:
          difficulty = ($last.difficulty).parse(StUInt[256], 16)
     except ValueError as e:
-        doAssert(false, "Couldn't parse a hash into a StUint: " & e.msg)
+        panic("Couldn't parse a hash into a StUint: " & e.msg)
 
     var
         #Final difficulty.
@@ -60,7 +60,7 @@ proc calculateNextDifficulty*(
     try:
         start = blockchain[blockchain.height - (blocksPerPeriod + 1)].header.time
     except IndexError:
-        doAssert(false, "Couldn't grab the Block which started this period.")
+        panic("Couldn't grab the Block which started this period.")
 
     #Calculate the actual time.
     actualTime = endTime - start
@@ -99,13 +99,13 @@ proc calculateNextDifficulty*(
             #Set the difficulty.
             difficulty -= change
     except DivByZeroError as e:
-        doAssert(false, "Dividing by ten raised a DivByZeroError: " & e.msg)
+        panic("Dividing by ten raised a DivByZeroError: " & e.msg)
 
     #Convert the difficulty to a hash.
     try:
         difficultyHash = dumpHex(difficulty).toHash(256)
     except ValueError as e:
-        doAssert(false, "Couldn't convert a StUInt to a hash: " & e.msg)
+        panic("Couldn't convert a StUInt to a hash: " & e.msg)
 
     #If the difficulty is lower than the starting difficulty, use that.
     if difficultyHash < blockchain.startDifficulty.difficulty:

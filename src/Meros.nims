@@ -26,6 +26,10 @@ switch("parallelBuild", "0")
 switch("nimcache", thisDir() & "/../build/nimcache/Meros")
 switch("out", thisDir() & "/../build/Meros")
 
+#Chronicles settings.
+switch("define", "chronicles_sinks:textlines[file]")
+switch("define", "chronicles_log_level:TRACE")
+
 when defined(merosRelease):
     #Disable extra debug info.
     switch("excessiveStackTrace", "off")

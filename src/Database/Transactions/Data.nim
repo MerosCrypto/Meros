@@ -27,7 +27,7 @@ proc newData*(
 ].} =
     #Verify the data length.
     if data.len == 0 or 256 < data.len:
-        raise newException(ValueError, "Data is too small or too large.")
+        raise newLoggedException(ValueError, "Data is too small or too large.")
 
     #Create the Data.
     result = newDataObj(

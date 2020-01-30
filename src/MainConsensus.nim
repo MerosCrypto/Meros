@@ -17,9 +17,9 @@ proc syncMeritRemovalTransactions(
             try:
                 consensus.addMeritRemovalTransaction(await syncAwait network.syncManager.syncTransaction(hash))
             except DataMissing:
-                raise newException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
+                raise newLoggedException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
             except Exception as e:
-                doAssert(false, "Syncing a MeritRemoval's Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                panic("Syncing a MeritRemoval's Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     try:
         case removal.element1:
@@ -40,7 +40,7 @@ proc syncMeritRemovalTransactions(
     except ValueError as e:
         raise e
     except Exception as e:
-        doAssert(false, "Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
 proc mainConsensus() {.forceCheck: [].} =
     {.gcsafe.}:
@@ -53,7 +53,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 params.DATA_DIFFICULTY.toHash(256)
             )
         except ValueError:
-            doAssert(false, "Invalid initial Send/Data difficulty.")
+            panic("Invalid initial Send/Data difficulty.")
 
         functions.consensus.getSendDifficulty = proc (): Hash[256] {.inline, forceCheck: [].} =
             consensus.filters.send.difficulty
@@ -96,7 +96,7 @@ proc mainConsensus() {.forceCheck: [].} =
             try:
                 result = consensus.getStatus(hash)
             except IndexError:
-                raise newException(IndexError, "Couldn't find a Status for that hash.")
+                raise newLoggedException(IndexError, "Couldn't find a Status for that hash.")
 
         functions.consensus.getThreshold = proc (
             epoch: int
@@ -124,7 +124,7 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ].} =
             #Print that we're adding the SignedVerification.
-            echo "Adding a new Signed Verification."
+            logInfo "New Verification", holder = verif.holder
 
             #Add the SignedVerification to the Consensus DAG.
             var mr: bool
@@ -152,10 +152,10 @@ proc mainConsensus() {.forceCheck: [].} =
                         cast[SignedMeritRemoval](consensus.malicious[verif.holder][0]).signedSerialize()
                     )
                 except KeyError as e:
-                    doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+                    panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
                 return
 
-            echo "Successfully added a new Signed Verification."
+            logInfo "Added Verification", holder = verif.holder
 
             #Broadcast the SignedVerification.
             functions.network.broadcast(
@@ -168,24 +168,24 @@ proc mainConsensus() {.forceCheck: [].} =
             packet: VerificationPacket
         ) {.forceCheck: [].} =
             #Print that we're adding the VerificationPacket.
-            echo "Adding a new Verification Packet from a Block."
+            logInfo "New Verification Packet from Block", hash = packet.hash, holders = packet.holders
 
             #Add the Verification to the Consensus DAG.
             consensus.add(merit.state, packet)
 
-            echo "Successfully added a new Verification Packet."
+            logInfo "Added Verification Packet from Block", hash = packet.hash, holders = packet.holders
 
         #Handle SendDifficulties.
         functions.consensus.addSendDifficulty = proc (
             sendDiff: SendDifficulty
         ) {.forceCheck: [].} =
             #Print that we're adding the SendDifficulty.
-            echo "Adding a new Send Difficulty from a Block."
+            logInfo "New Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
             #Add the SendDifficulty to the Consensus DAG.
             consensus.add(merit.state, sendDiff)
 
-            echo "Successfully added a new Send Difficulty."
+            logInfo "Added Send Difficulty from Block", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
         #Handle SignedSendDifficulties.
         functions.consensus.addSignedSendDifficulty = proc (
@@ -195,7 +195,7 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ].} =
             #Print that we're adding the SendDifficulty.
-            echo "Adding a new Send Difficulty."
+            logInfo "New Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
             #Add the SendDifficulty.
             var mr: bool
@@ -220,10 +220,10 @@ proc mainConsensus() {.forceCheck: [].} =
                         cast[SignedMeritRemoval](consensus.malicious[sendDiff.holder][0]).signedSerialize()
                     )
                 except KeyError as e:
-                    doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+                    panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
                 return
 
-            echo "Successfully added a new Signed Send Difficulty."
+            logInfo "Added Send Difficulty", holder = sendDiff.holder, difficulty = sendDiff.difficulty
 
             #Broadcast the SendDifficulty.
             functions.network.broadcast(
@@ -236,12 +236,12 @@ proc mainConsensus() {.forceCheck: [].} =
             dataDiff: DataDifficulty
         ) {.forceCheck: [].} =
             #Print that we're adding the DataDifficulty.
-            echo "Adding a new Data Difficulty from a Block."
+            logInfo "New Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
             #Add the DataDifficulty to the Consensus DAG.
             consensus.add(merit.state, dataDiff)
 
-            echo "Successfully added a new Data Difficulty."
+            logInfo "Added Data Difficulty from Block", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
         #Handle SignedDataDifficulties.
         functions.consensus.addSignedDataDifficulty = proc (
@@ -251,7 +251,7 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ].} =
             #Print that we're adding the DataDifficulty.
-            echo "Adding a new Data Difficulty."
+            logInfo "New Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
             #Add the DataDifficulty.
             var mr: bool = false
@@ -276,10 +276,10 @@ proc mainConsensus() {.forceCheck: [].} =
                         cast[SignedMeritRemoval](consensus.malicious[dataDiff.holder][0]).signedSerialize()
                     )
                 except KeyError as e:
-                    doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+                    panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
                 return
 
-            echo "Successfully added a new Signed Data Difficulty."
+            logInfo "Added Data Difficulty", holder = dataDiff.holder, difficulty = dataDiff.difficulty
 
             #Broadcast the DataDifficulty.
             functions.network.broadcast(
@@ -299,7 +299,7 @@ proc mainConsensus() {.forceCheck: [].} =
             except ValueError as e:
                 raise e
             except Exception as e:
-                doAssert(false, "Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             try:
                 consensus.verify(mr)
@@ -315,7 +315,7 @@ proc mainConsensus() {.forceCheck: [].} =
                         if cast[Element](mr) == cast[Element](cachedMR):
                             return
                 except KeyError:
-                    doAssert(false, "Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
+                    panic("Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")
                 raise e
 
         #Handle SignedMeritRemovals.
@@ -326,14 +326,14 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ], async.} =
             #Print that we're adding the MeritRemoval.
-            echo "Adding a new Merit Removal."
+            logInfo "New Merit Removal", holder = mr.holder
 
             try:
                 await syncMeritRemovalTransactions(mr)
             except ValueError as e:
                 raise e
             except Exception as e:
-                doAssert(false, "Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             while true:
                 if tryAcquire(smrLock):
@@ -342,7 +342,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 try:
                     await sleepAsync(10)
                 except Exception as e:
-                    doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                    panic("Failed to complete an async sleep: " & e.msg)
 
             #Add the MeritRemoval.
             try:
@@ -354,7 +354,7 @@ proc mainConsensus() {.forceCheck: [].} =
             finally:
                 release(smrLock)
 
-            echo "Successfully added a new Signed Merit Removal."
+            logInfo "Added Merit Removal", holder = mr.holder
 
             #Broadcast the first MeritRemoval.
             try:
@@ -363,4 +363,4 @@ proc mainConsensus() {.forceCheck: [].} =
                     cast[SignedMeritRemoval](consensus.malicious[mr.holder][0]).signedSerialize()
                 )
             except KeyError as e:
-                doAssert(false, "Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)
+                panic("Couldn't get the MeritRemoval of someone who just had one created: " & e.msg)

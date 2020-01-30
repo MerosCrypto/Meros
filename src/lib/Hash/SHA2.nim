@@ -61,7 +61,7 @@ proc PDKDF2_HMAC_SHA2_512*(
     discard pbkdf2(ctx, key, password, 2048, result.data)
 
 #String to SHA2_256Hash.
-func toSHA2_256Hash*(
+proc toSHA2_256Hash*(
     hash: string
 ): SHA2_256Hash {.forceCheck: [
     ValueError
@@ -72,7 +72,7 @@ func toSHA2_256Hash*(
         raise e
 
 #String to SHA2_512Hash.
-func toSHA2_512Hash*(
+proc toSHA2_512Hash*(
     hash: string
 ): SHA2_512Hash {.forceCheck: [
     ValueError

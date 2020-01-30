@@ -45,7 +45,7 @@ proc SHA3_512*(
     result.data = sha3_512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to SHA3_256Hash.
-func toSHA3_256Hash*(
+proc toSHA3_256Hash*(
     hash: string
 ): SHA3_256Hash {.forceCheck: [
     ValueError
@@ -56,7 +56,7 @@ func toSHA3_256Hash*(
         raise e
 
 #String to SHA3_512Hash.
-func toSHA3_512Hash*(
+proc toSHA3_512Hash*(
     hash: string
 ): SHA3_512Hash {.forceCheck: [
     ValueError

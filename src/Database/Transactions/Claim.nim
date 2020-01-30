@@ -27,7 +27,7 @@ proc newClaim*(
 ].} =
     #Verify the inputs length.
     if inputs.len < 1 or 255 < inputs.len:
-        raise newException(ValueError, "Claim has too little or too many inputs.")
+        raise newLoggedException(ValueError, "Claim has too little or too many inputs.")
 
     #Create the result.
     result = newClaimObj(
@@ -84,10 +84,10 @@ proc verify*(
                 )
             )
         except BLSError as e:
-            doAssert(false, "Infinite BLS Public Key entered the system: " & e.msg)
+            panic("Infinite BLS Public Key entered the system: " & e.msg)
 
     #Verify the signature.
     try:
         result = claim.signature.verify(agInfos.aggregate())
     except BLSError as e:
-        doAssert(false, "Couldn't verify a signature: " & e.msg)
+        panic("Couldn't verify a signature: " & e.msg)

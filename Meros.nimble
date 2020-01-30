@@ -25,6 +25,7 @@ requires "https://github.com/kayabaNerve/ForceCheck >= 1.3.2"
 requires "stint"
 requires "nimcrypto"
 requires "normalize"
+requires "chronicles"
 
 #Procedures.
 proc gatherTestFiles(

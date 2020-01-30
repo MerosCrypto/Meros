@@ -97,12 +97,12 @@ proc get(
         try:
             return db.transactions.cache[key]
         except KeyError as e:
-            doAssert(false, "Couldn't get a key from a table confirmed to exist: " & e.msg)
+            panic("Couldn't get a key from a table confirmed to exist: " & e.msg)
 
     try:
         result = db.lmdb.get("transactions", key)
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc commit*(
     db: DB
@@ -114,12 +114,12 @@ proc commit*(
             items[i] = (key: key, value: db.transactions.cache[key])
             inc(i)
     except KeyError as e:
-        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+        panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
 
     try:
         db.lmdb.put("transactions", items)
     except Exception as e:
-        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+        panic("Couldn't save data to the Database: " & e.msg)
 
     db.transactions.cache = initTable[string, string]()
 
@@ -163,7 +163,7 @@ proc load*(
     try:
         result = hash.parseTransaction(db.get(TRANSACTION(hash)))
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
     #Recalculate the output amount if this is a Claim.
     if result of Claim:
@@ -174,7 +174,7 @@ proc load*(
             try:
                 amount += db.get(OUTPUT(input)).parseMintOutput().amount
             except Exception as e:
-                doAssert(false, "Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
+                panic("Claim's spent Mints' outputs couldn't be loaded from the DB: " & e.msg)
 
         claim.outputs[0].amount = amount
 
@@ -192,7 +192,7 @@ proc loadSpenders*(
         try:
             result.add(spenders[h ..< h + 32].toHash(256))
         except ValueError as e:
-            doAssert(false, "Couldn't load a spending hash from the DB: " & e.msg)
+            panic("Couldn't load a spending hash from the DB: " & e.msg)
 
 proc loadDataSender*(
     db: DB,
@@ -203,7 +203,7 @@ proc loadDataSender*(
     try:
         result = newEdPublicKey(db.get(DATA_SENDER(hash)))
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadMintOutput*(
     db: DB,
@@ -214,7 +214,7 @@ proc loadMintOutput*(
     try:
         result = db.get(OUTPUT(input)).parseMintOutput()
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadSendOutput*(
     db: DB,
@@ -225,7 +225,7 @@ proc loadSendOutput*(
     try:
         result = db.get(OUTPUT(input)).parseSendOutput()
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadDataTip*(
     db: DB,
@@ -238,7 +238,7 @@ proc loadDataTip*(
     except DBReadError as e:
         raise e
     except ValueError as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadSpendable*(
     db: DB,
@@ -250,7 +250,7 @@ proc loadSpendable*(
     try:
         spendable = db.get(SPENDABLE(key))
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
     for i in countup(0, spendable.len - 1, 33):
         try:
@@ -261,7 +261,7 @@ proc loadSpendable*(
                 )
             )
         except ValueError as e:
-            raise newException(DBReadError, e.msg)
+            raise newLoggedException(DBReadError, e.msg)
 
 proc addToSpendable(
     db: DB,
@@ -288,7 +288,7 @@ proc removeFromSpendable(
     try:
         spendable = db.get(SPENDABLE(key))
     except DBReadError:
-        doAssert(false, "Trying to spend from someone without anything spendable.")
+        panic("Trying to spend from someone without anything spendable.")
 
     #Remove the specified output.
     for o in countup(0, spendable.len - 1, 33):
@@ -316,7 +316,7 @@ proc verify*(
             try:
                 key = db.loadSendOutput(cast[FundedInput](input)).key
             except DBReadError:
-                doAssert(false, "Removing a non-existent output.")
+                panic("Removing a non-existent output.")
 
             db.removeFromSpendable(
                 key,
@@ -336,7 +336,7 @@ proc unverify*(
             try:
                 key = db.loadSendOutput(cast[FundedInput](input)).key
             except DBReadError:
-                doAssert(false, "Restoring a non-existent output.")
+                panic("Restoring a non-existent output.")
 
             db.addToSpendable(
                 key,

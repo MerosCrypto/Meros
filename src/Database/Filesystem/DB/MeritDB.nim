@@ -109,12 +109,12 @@ proc get(
         try:
             return db.merit.cache[key]
         except KeyError as e:
-            doAssert(false, "Couldn't get a key from a table confirmed to exist: " & e.msg)
+            panic("Couldn't get a key from a table confirmed to exist: " & e.msg)
 
     try:
         result = db.lmdb.get("merit", key)
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc commit*(
     db: DB,
@@ -127,14 +127,14 @@ proc commit*(
             items[i] = (key: key, value: db.merit.cache[key])
             inc(i)
     except KeyError as e:
-        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+        panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
 
     var removals: string = ""
     try:
         for nick in db.merit.removals.keys():
             removals &= nick.toBinary(NICKNAME_LEN) & db.merit.removals[nick].toBinary(INT_LEN)
     except KeyError as e:
-        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+        panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
     if removals != "":
         items.add((key: BLOCK_REMOVALS(height - 1), value: removals))
         db.merit.removals = initTable[uint16, int]()
@@ -142,7 +142,7 @@ proc commit*(
     try:
         db.lmdb.put("merit", items)
     except Exception as e:
-        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+        panic("Couldn't save data to the Database: " & e.msg)
 
     db.merit.cache = initTable[string, string]()
 
@@ -256,7 +256,7 @@ proc loadHeight*(
     try:
         result = db.get(HEIGHT()).fromBinary()
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadTip*(
     db: DB
@@ -266,7 +266,7 @@ proc loadTip*(
     try:
         result = db.get(TIP()).toHash(256)
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadDifficulty*(
     db: DB
@@ -276,7 +276,7 @@ proc loadDifficulty*(
     try:
         result = db.get(DIFFICULTY()).parseDifficulty()
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadUnlocked*(
     db: DB,
@@ -298,7 +298,7 @@ proc loadBlockHeader*(
     try:
         result = db.get(BLOCK_HASH(hash)).parseBlockHeader(hash)
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadBlock*(
     db: DB,
@@ -309,7 +309,7 @@ proc loadBlock*(
     try:
         result = db.get(BLOCK_HASH(hash)).parseBlock()
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadBlock*(
     db: DB,
@@ -320,7 +320,7 @@ proc loadBlock*(
     try:
         result = db.get(db.get(BLOCK_NONCE(nonce))).parseBlock()
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc loadHolders*(
     db: DB
@@ -336,9 +336,9 @@ proc loadHolders*(
         try:
             result[h] = newBLSPublicKey(db.get(HOLDER_NICK(uint16(h))))
         except DBReadError as e:
-            doAssert(false, "Couldn't get a holder's BLS Public Key: " & e.msg)
+            panic("Couldn't get a holder's BLS Public Key: " & e.msg)
         except BLSError as e:
-            doAssert(false, "Couldn't load a holder's BLS Public Key: " & e.msg)
+            panic("Couldn't load a holder's BLS Public Key: " & e.msg)
 
 proc loadNickname*(
     db: DB,

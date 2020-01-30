@@ -30,7 +30,7 @@ proc mainMerit() {.forceCheck: [].} =
                 raise e
 
             if result == merit.blockchain.genesis:
-                raise newException(IndexError, "Requested the hash of the Block before the genesis.")
+                raise newLoggedException(IndexError, "Requested the hash of the Block before the genesis.")
 
         functions.merit.getBlockHashAfter = proc (
             hash: Hash[256]
@@ -68,7 +68,7 @@ proc mainMerit() {.forceCheck: [].} =
             IndexError
         ].} =
             if merit.state.holders.len <= int(nick):
-                raise newException(IndexError, "Nickname doesn't exist.")
+                raise newLoggedException(IndexError, "Nickname doesn't exist.")
             result = merit.state.holders[nick]
 
         functions.merit.getNickname = proc (
@@ -79,7 +79,7 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 result = merit.blockchain.miners[key]
             except KeyError as e:
-                raise newException(IndexError, e.msg)
+                raise newLoggedException(IndexError, e.msg)
 
         functions.merit.getTotalMerit = proc (): int {.inline, forceCheck: [].} =
             merit.state.unlocked
@@ -112,17 +112,17 @@ proc mainMerit() {.forceCheck: [].} =
                         try:
                             await sleepAsync(50)
                         except Exception as e:
-                            doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                            panic("Failed to complete an async sleep: " & e.msg)
                         continue
                     break
 
                 try:
                     await sleepAsync(10)
                 except Exception as e:
-                    doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                    panic("Failed to complete an async sleep: " & e.msg)
 
             #Print that we're adding the Block.
-            echo "Adding Block ", sketchyBlock.data.header.hash, "."
+            logInfo "New Block", hash = sketchyBlock.data.header.hash
 
             #Construct a sketcher.
             var sketcher: Sketcher = sketcherArg
@@ -150,11 +150,15 @@ proc mainMerit() {.forceCheck: [].} =
             except DataMissing as e:
                 raise e
             except Exception as e:
-                doAssert(false, "Syncing a Block threw an error despite catching all exceptions: " & e.msg)
+                panic("Syncing a Block threw an error despite catching all exceptions: " & e.msg)
             finally:
                 if not verified:
+                    logInfo "Invalid Block", hash = sketchyBlock.data.header.hash, reason = getCurrentException().msg
+
                     lockedBlock = Hash[256]()
                     release(lock[])
+
+            logInfo "Synced Block", hash = newBlock.header.hash
 
             #Add every Verification Packet.
             for packet in newBlock.body.packets:
@@ -180,6 +184,9 @@ proc mainMerit() {.forceCheck: [].} =
                 decd: int
             (epoch, incd, decd) = merit.postProcessBlock()
 
+
+            logInfo "Archiving Block", hash = newBlock.header.hash
+
             #Archive the Epochs.
             consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
 
@@ -203,6 +210,8 @@ proc mainMerit() {.forceCheck: [].} =
                 if newBlock.header.minerKey == wallet.miner.publicKey:
                     wallet.setMinerNick(uint16(merit.state.holders.len - 1))
 
+            logInfo "Minting Meros", hash = newBlock.header.hash
+
             #Calculate the rewards.
             var rewards: seq[Reward] = epoch.calculate(rewardsState, removed)
 
@@ -222,9 +231,9 @@ proc mainMerit() {.forceCheck: [].} =
             try:
                 wallet.commit(epoch, functions.transactions.getTransaction)
             except IndexError as e:
-                doAssert(false, "Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
+                panic("Passing a function that could raise an IndexError raised an IndexError: " & e.msg)
 
-            echo "Successfully added the Block."
+            logInfo "Added Block", hash = sketchyBlock.data.header.hash
 
             lockedBlock = Hash[256]()
             release(lock[])
@@ -246,9 +255,9 @@ proc mainMerit() {.forceCheck: [].} =
                             wallet.wallet.external.next().publicKey
                         )
                     except ValueError as e:
-                        doAssert(false, "Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
+                        panic("Created a Claim with a Mint yet newClaim raised a ValueError: " & e.msg)
                     except IndexError as e:
-                        doAssert(false, "Couldn't grab a Mint we just added: " & e.msg)
+                        panic("Couldn't grab a Mint we just added: " & e.msg)
 
                     #Sign the claim.
                     wallet.miner.sign(claim)
@@ -257,9 +266,9 @@ proc mainMerit() {.forceCheck: [].} =
                     try:
                         functions.transactions.addClaim(claim)
                     except ValueError as e:
-                        doAssert(false, "Failed to add a Claim due to a ValueError: " & e.msg)
+                        panic("Failed to add a Claim due to a ValueError: " & e.msg)
                     except DataExists:
-                        echo "Already added a Claim for the incoming Mint."
+                        logNotice "Already added Claim", hash = claim.hash
 
         functions.merit.addBlock = proc (
             sketchyBlock: SketchyBlock,
@@ -276,14 +285,14 @@ proc mainMerit() {.forceCheck: [].} =
                         try:
                             await sleepAsync(50)
                         except Exception as e:
-                            doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                            panic("Failed to complete an async sleep: " & e.msg)
                         continue
                     break
 
                 try:
                     await sleepAsync(10)
                 except Exception as e:
-                    doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                    panic("Failed to complete an async sleep: " & e.msg)
 
             lockedBlock = sketchyBlock.data.header.hash
             release(blockLock[])
@@ -295,7 +304,7 @@ proc mainMerit() {.forceCheck: [].} =
             except DataMissing as e:
                 raise e
             except Exception as e:
-                doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)
+                panic("addBlock threw an Exception despite catching all Exceptions: " & e.msg)
 
         functions.merit.addBlockByHeaderInternal = proc (
             header: BlockHeader,
@@ -314,21 +323,21 @@ proc mainMerit() {.forceCheck: [].} =
                         try:
                             await sleepAsync(50)
                         except Exception as e:
-                            doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                            panic("Failed to complete an async sleep: " & e.msg)
                         continue
                     break
 
                 try:
                     await sleepAsync(10)
                 except Exception as e:
-                    doAssert(false, "Failed to complete an async sleep: " & e.msg)
+                    panic("Failed to complete an async sleep: " & e.msg)
             lockedBlock = header.hash
 
             var sketchyBlock: SketchyBlock
             try:
                 #Return if we already have this Block.
                 if merit.blockchain.hasBlock(header.hash):
-                    raise newException(DataExists, "Block was already added.")
+                    raise newLoggedException(DataExists, "Block was already added.")
 
                 #Sync previous Blocks if this header isn't connected.
                 if merit.blockchain.tail.header.hash != header.last:
@@ -344,7 +353,7 @@ proc mainMerit() {.forceCheck: [].} =
                         #B) Their genesis doesn't match our genesis.
                         #C) Our peer is an idiot.
                         if queue.len != size + increment:
-                            raise newException(ValueError, "Blockchain has a different genesis.")
+                            raise newLoggedException(ValueError, "Blockchain has a different genesis.")
 
                         #Update the size.
                         size = queue.len
@@ -359,7 +368,7 @@ proc mainMerit() {.forceCheck: [].} =
                             #The second is impossible as we break once we find a Block we know.
                             raise e
                         except Exception as e:
-                            doAssert(false, "requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
+                            panic("requestBlockList threw an Exception despite catching all Exceptions: " & e.msg)
 
                     #Remove every Block we have from the queue's tail.
                     var lastRemoved: Hash[256] = merit.blockchain.tail.header.hash
@@ -370,7 +379,7 @@ proc mainMerit() {.forceCheck: [].} =
 
                     #If the last Block on both chains isn't our tail, raise NotConnected.
                     if lastRemoved != merit.blockchain.tail.header.hash:
-                        raise newException(NotConnected, "Blockchain split.")
+                        raise newLoggedException(NotConnected, "Blockchain split.")
 
                     #Clear the locked Block.
                     lockedBlock = Hash[256]()
@@ -386,9 +395,9 @@ proc mainMerit() {.forceCheck: [].} =
                         except DataExists as e:
                             raise e
                         except NotConnected as e:
-                            doAssert(false, "Parent addBlockByHeader didn't detect a Blockchain split: " & e.msg)
+                            panic("Parent addBlockByHeader didn't detect a Blockchain split: " & e.msg)
                         except Exception as e:
-                            doAssert(false, "addBlockByHash threw an Exception despite catching all Exceptions: " & e.msg)
+                            panic("addBlockByHash threw an Exception despite catching all Exceptions: " & e.msg)
 
                     #Set back the locked Block.
                     lockedBlock = header.hash
@@ -398,14 +407,14 @@ proc mainMerit() {.forceCheck: [].} =
                 except ValueError as e:
                     raise e
                 except NotConnected as e:
-                    doAssert(false, "Tried to add a Block that wasn't after the last Block: " & e.msg)
+                    panic("Tried to add a Block that wasn't after the last Block: " & e.msg)
 
                 try:
                     sketchyBlock = newSketchyBlockObj(header, await syncAwait network.syncManager.syncBlockBody(header.hash, header.contents))
                 except DataMissing as e:
-                    raise newException(ValueError, e.msg)
+                    raise newLoggedException(ValueError, e.msg)
                 except Exception as e:
-                    doAssert(false, "SyncManager.syncBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
+                    panic("SyncManager.syncBlockBody() threw an Exception despite catching all Exceptions: " & e.msg)
             except ValueError as e:
                 raise e
             except DataMissing as e:
@@ -426,7 +435,7 @@ proc mainMerit() {.forceCheck: [].} =
             except DataMissing as e:
                 raise e
             except Exception as e:
-                doAssert(false, "addBlock threw an Exception despite catching all Exceptions: " & e.msg)
+                panic("addBlock threw an Exception despite catching all Exceptions: " & e.msg)
 
         functions.merit.addBlockByHeader = proc (
             header: BlockHeader,
@@ -448,7 +457,7 @@ proc mainMerit() {.forceCheck: [].} =
             except NotConnected as e:
                 raise e
             except Exception as e:
-                doAssert(false, "addBlockByHeaderInternal threw an Exception despite catching all Exceptions: " & e.msg)
+                panic("addBlockByHeaderInternal threw an Exception despite catching all Exceptions: " & e.msg)
 
         functions.merit.addBlockByHashInternal = proc (
             hash: Hash[256],
@@ -462,7 +471,7 @@ proc mainMerit() {.forceCheck: [].} =
         ], async.} =
             #Return if we already have this Block.
             if merit.blockchain.hasBlock(hash):
-                raise newException(DataExists, "Block was already added.")
+                raise newLoggedException(DataExists, "Block was already added.")
 
             try:
                 await functions.merit.addBlockByHeaderInternal(await syncAwait network.syncManager.syncBlockHeader(hash), syncing, lock)
@@ -475,7 +484,7 @@ proc mainMerit() {.forceCheck: [].} =
             except NotConnected as e:
                 raise e
             except Exception as e:
-                doAssert(false, "addBlockByHeaderInternal/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)
+                panic("addBlockByHeaderInternal/requestBlockHeader threw an Exception despite catching all Exceptions: " & e.msg)
 
         functions.merit.addBlockByHash = proc (
             peer: Peer,
@@ -489,7 +498,7 @@ proc mainMerit() {.forceCheck: [].} =
             except DataExists, NotConnected:
                 discard
             except Exception as e:
-                doAssert(false, "addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
+                panic("addBlockByHashInternal threw an Exception despite catching all Exceptions: " & e.msg)
 
         #Tests a BlockHeader. Used by the RPC's addBlock method.
         functions.merit.testBlockHeader = proc (

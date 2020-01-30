@@ -56,7 +56,7 @@ proc error(
         if not data.isNil:
             res["error"]["data"] = data
     except KeyError as e:
-        doAssert(false, "Couldn't set an error's data field, despite just creating the data: " & e.msg)
+        panic("Couldn't set an error's data field, despite just creating the data: " & e.msg)
 
 #Create a new error response.
 proc newError(
@@ -86,7 +86,7 @@ proc handle*(
             error(res[], -32600, "Invalid Request")
             return
     except KeyError as e:
-        doAssert(false, "Couldn't check the RPC version despite confirming its existence: " & e.msg)
+        panic("Couldn't check the RPC version despite confirming its existence: " & e.msg)
 
     #Verify the method exists.
     try:
@@ -94,7 +94,7 @@ proc handle*(
             error(res[], -32600, "Invalid Request")
             return
     except KeyError as e:
-        doAssert(false, "Couldn't check the RPC method despite confirming its existence: " & e.msg)
+        panic("Couldn't check the RPC method despite confirming its existence: " & e.msg)
 
     #Add params if it was omitted.
     if (not req.hasKey("params")):
@@ -106,7 +106,7 @@ proc handle*(
             error(res[], -32600, "Invalid Request")
             return
     except KeyError as e:
-        doAssert(false, "Couldn't check the RPC params despite confirming their existence: " & e.msg)
+        panic("Couldn't check the RPC params despite confirming their existence: " & e.msg)
 
     #Override for system_quit.
     try:
@@ -115,10 +115,10 @@ proc handle*(
             try:
                 await reply(res[])
             except Exception as e:
-                doAssert(false, "Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
+                panic("Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
             rpc.quit()
     except KeyError as e:
-        doAssert(false, "Couldn't get the RPC method despite confirming its existence: " & e.msg)
+        panic("Couldn't get the RPC method despite confirming its existence: " & e.msg)
 
     try:
         #Make sure the method exists.
@@ -131,14 +131,14 @@ proc handle*(
 
     #Handle KeyErrors.
     except KeyError as e:
-        doAssert(false, "Couldn't call a RPC method despite confirming its existence: " & e.msg)
+        panic("Couldn't call a RPC method despite confirming its existence: " & e.msg)
 
     #If there was an invalid parameter, create the proper error response.
     except ParamError:
         try:
             res[] = newError(req["id"], -32602, "Invalid params")
         except KeyError as e:
-            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
         return
 
     #If a parameter had an invalid value, create the proper response.
@@ -146,20 +146,20 @@ proc handle*(
         try:
             res[] = newError(req["id"], e.code, e.msg, e.data)
         except KeyError as e:
-            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
         return
 
-    #If we doAssert(false), make sure it bubbles up.
+    #If we panic, make sure it bubbles up.
     except AssertionError as e:
-        doAssert(false, "RPC caused a doAssert(false): " & e.msg)
+        panic("RPC caused a panic: " & e.msg)
 
     #Else, respond that we had an internal error.
-    #Generally, we would doAssert(false) here, yet the amount of custom data that can be entered makes that a worrysome prospect.
+    #Generally, we would panic here, yet the amount of custom data that can be entered makes that a worrysome prospect.
     except Exception:
         try:
             res[] = newError(req["id"], -32603, "Internal error")
         except KeyError as e:
-            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
         return
 
     #If the result isn't null and has no result field, provide a result field of true.
@@ -190,13 +190,13 @@ proc handle*(
                 "id": req["id"]
             }
         except KeyError as e:
-            doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+            panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
 
         #Handle it.
         try:
             await handle(rpc, req, result, reply)
         except Exception as e:
-            doAssert(false, "Couldn't handle the request (JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
+            panic("Couldn't handle the request (JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
 
     #If this was a batch request...
     elif req.kind == JArray:
@@ -217,7 +217,7 @@ proc handle*(
                     "id": reqElem["id"]
                 }
             except KeyError as e:
-                doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+                panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
 
             #Check the request's type.
             try:
@@ -225,7 +225,7 @@ proc handle*(
                     results[].add(newError(reqElem["id"], -32600, "Invalid Request"))
                     continue
             except KeyError as e:
-                doAssert(false, "Couldn't get the ID despite guaranteeing its existence: " & e.msg)
+                panic("Couldn't get the ID despite guaranteeing its existence: " & e.msg)
 
             #Handle it.
             try:
@@ -240,10 +240,10 @@ proc handle*(
                         try:
                             await reply(results[])
                         except Exception as e:
-                            doAssert(false, "Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
+                            panic("Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
                 )
             except Exception as e:
-                doAssert(false, "Couldn't handle the request (batch JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
+                panic("Couldn't handle the request (batch JSON; return res), despite catching all naturally thrown Exceptions: " & e.msg)
 
             #If there was a result, add it.
             if not result[].isNil:
@@ -284,10 +284,10 @@ proc handle*(
                 try:
                     await reply($res)
                 except Exception as e:
-                    doAssert(false, "Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
+                    panic("Couldn't call reply, despite catching all naturally thrown Exceptions: " & e.msg)
         )
     except Exception as e:
-        doAssert(false, "Couldn't handle the request (string), despite catching all naturally thrown Exceptions: " & e.msg)
+        panic("Couldn't handle the request (string), despite catching all naturally thrown Exceptions: " & e.msg)
 
     #Return the string.
     if res[].isNil:
@@ -304,7 +304,7 @@ proc start*(
         try:
             await sleepAsync(1)
         except Exception as e:
-            doAssert(false, "Couldn't sleep for 1ms before checking the GUI->RPC channel for data: " & e.msg)
+            panic("Couldn't sleep for 1ms before checking the GUI->RPC channel for data: " & e.msg)
 
         #Try to get a message from the GUI.
         var data: tuple[
@@ -314,9 +314,9 @@ proc start*(
         try:
             data = rpc.toRPC[].tryRecv()
         except ValueError as e:
-            doAssert(false, "Couldn't read from the channel using tryRecv due to a ValueError: " & e.msg)
+            panic("Couldn't read from the channel using tryRecv due to a ValueError: " & e.msg)
         except Exception as e:
-            doAssert(false, "Couldn't read from the channel using tryRecv due to an Exception: " & e.msg)
+            panic("Couldn't read from the channel using tryRecv due to an Exception: " & e.msg)
 
         #If there's no data, continue.
         if not data.dataAvailable:
@@ -333,19 +333,19 @@ proc start*(
                     try:
                         rpc.toGUI[].send(replyArg)
                     except DeadThreadError as e:
-                        doAssert(false, "Couldn't send to a dead thread: " & e.msg)
+                        panic("Couldn't send to a dead thread: " & e.msg)
                     except Exception as e:
-                        doAssert(false, "Sending over a channel threw an Exception: " & e.msg)
+                        panic("Sending over a channel threw an Exception: " & e.msg)
             )
         except Exception as e:
-            doAssert(false, "Couldn't handle the request from the GUI, despite catching all naturally thrown Exceptions: " & e.msg)
+            panic("Couldn't handle the request from the GUI, despite catching all naturally thrown Exceptions: " & e.msg)
 
         try:
             rpc.toGUI[].send(res[])
         except DeadThreadError as e:
-            doAssert(false, "Couldn't send to a dead thread: " & e.msg)
+            panic("Couldn't send to a dead thread: " & e.msg)
         except Exception as e:
-            doAssert(false, "Sending over a channel threw an Exception: " & e.msg)
+            panic("Sending over a channel threw an Exception: " & e.msg)
 
 #Handle a connection.
 proc handle(
@@ -404,7 +404,7 @@ proc handle(
                         return
             )
         except Exception as e:
-            doAssert(false, "RPC's handle threw an Exception despite not naturally throwing anything: " & e.msg)
+            panic("RPC's handle threw an Exception despite not naturally throwing anything: " & e.msg)
 
         try:
             await client.send(res)
@@ -424,27 +424,27 @@ proc listen*(
     try:
         rpc.server = newAsyncSocket()
     except ValueError as e:
-        doAssert(false, "Failed to create the RPC's server socket due to a ValueError: " & e.msg)
+        panic("Failed to create the RPC's server socket due to a ValueError: " & e.msg)
     except IOSelectorsException as e:
-        doAssert(false, "Failed to create the RPC's server socket due to an IOSelectorsException: " & e.msg)
+        panic("Failed to create the RPC's server socket due to an IOSelectorsException: " & e.msg)
     except Exception as e:
-        doAssert(false, "Failed to create the RPC's server socket due to an Exception: " & e.msg)
+        panic("Failed to create the RPC's server socket due to an Exception: " & e.msg)
 
     try:
         rpc.server.setSockOpt(OptReuseAddr, true)
         rpc.server.bindAddr(Port(config.rpcPort))
     except OSError as e:
-        doAssert(false, "Failed to set the RPC's server socket options and bind it due to an OSError: " & e.msg)
+        panic("Failed to set the RPC's server socket options and bind it due to an OSError: " & e.msg)
     except ValueError as e:
-        doAssert(false, "Failed to bind the RPC's server socket due to a ValueError: " & e.msg)
+        panic("Failed to bind the RPC's server socket due to a ValueError: " & e.msg)
 
     #Start listening.
     try:
         rpc.server.listen()
     except OSError as e:
-        doAssert(false, "Failed to start listening on the RPC's server socket due to an OSError: " & e.msg)
+        panic("Failed to start listening on the RPC's server socket due to an OSError: " & e.msg)
     except Exception as e:
-        doAssert(false, "Failed to start listening on the RPC's server socket due to an Exception: " & e.msg)
+        panic("Failed to start listening on the RPC's server socket due to an Exception: " & e.msg)
 
     #Add a repeating timer to remove dead RPC clients.
     try:
@@ -462,9 +462,9 @@ proc listen*(
                     inc(i)
         )
     except OSError as e:
-        doAssert(false, "Couldn't set a timer due to an OSError: " & e.msg)
+        panic("Couldn't set a timer due to an OSError: " & e.msg)
     except Exception as e:
-        doAssert(false, "Couldn't set a timer due to an Exception: " & e.msg)
+        panic("Couldn't set a timer due to an Exception: " & e.msg)
 
     #Accept new connections infinitely.
     while not rpc.server.isClosed():
@@ -485,7 +485,7 @@ proc listen*(
         try:
             asyncCheck rpc.handle(connection)
         except Exception as e:
-            doAssert(false, "Handle threw an Exception despite not naturally throwing anything: " & e.msg)
+            panic("Handle threw an Exception despite not naturally throwing anything: " & e.msg)
 #Shutdown.
 proc shutdown*(
     rpc: RPC

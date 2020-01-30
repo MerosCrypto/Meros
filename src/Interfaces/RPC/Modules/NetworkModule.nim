@@ -29,24 +29,24 @@ proc module*(
             ], async.} =
                 #Verify the parameters length.
                 if (params.len != 1) and (params.len != 2):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Verify the paramters types.
                 if params[0].kind != JString:
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Supply the optional port argument if needed.
                 if params.len == 1:
                     params.add(% DEFAULT_PORT)
                 if params[1].kind != JInt:
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 try:
                     await functions.network.connect(params[0].getStr(), params[1].getInt())
                 except PeerError:
                     raise newJSONRPCError(-6, "Couldn't connect")
                 except Exception as e:
-                    doAssert(false, "MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
+                    panic("MainNetwork's connect threw an Exception despite not naturally throwing anything: " & e.msg)
 
             #Get the peers we're connected to.
             "getPeers" = proc (
@@ -67,12 +67,12 @@ proc module*(
                             "server": client.server
                         })
                     except KeyError as e:
-                        doAssert(false, "Couldn't set the result: " & e.msg)
+                        panic("Couldn't set the result: " & e.msg)
 
                     if client.server:
                         try:
                             res["result"][res["result"].len - 1]["port"] = % client.port
                         except KeyError as e:
-                            doAssert(false, "Couldn't add the port the result: " & e.msg)
+                            panic("Couldn't add the port the result: " & e.msg)
     except Exception as e:
-        doAssert(false, "Couldn't create the Network Module: " & e.msg)
+        panic("Couldn't create the Network Module: " & e.msg)

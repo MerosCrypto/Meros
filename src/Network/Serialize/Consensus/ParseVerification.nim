@@ -57,4 +57,4 @@ proc parseSignedVerification*(
     except ValueError as e:
         raise e
     except BLSError:
-        raise newException(ValueError, "Invalid signature.")
+        raise newLoggedException(ValueError, "Invalid signature.")

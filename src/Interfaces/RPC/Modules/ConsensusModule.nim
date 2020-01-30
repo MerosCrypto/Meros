@@ -49,14 +49,14 @@ proc module*(
                     (params.len != 1) or
                     (params[0].kind != JString)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Extract the parameter.
                 var hash: Hash[256]
                 try:
                     hash = params[0].getStr().toHash(256)
                 except ValueError:
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Get the Status.
                 var status: TransactionStatus
@@ -84,4 +84,4 @@ proc module*(
                     "competing": status.competing,
                 }
     except Exception as e:
-        doAssert(false, "Couldn't create the Consensus Module: " & e.msg)
+        panic("Couldn't create the Consensus Module: " & e.msg)

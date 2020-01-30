@@ -143,7 +143,7 @@ func recalculate(
     filter.difficulty = filter.median.difficulty
 
 #Handle the Merit change that comes with a new Block.
-func handleBlock*(
+proc handleBlock*(
     filter: var SpamFilter,
     incd: uint16,
     incdMerit: int
@@ -158,11 +158,11 @@ func handleBlock*(
             else:
                 inc(filter.right)
         except KeyError as e:
-            doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
+            panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
 
         filter.recalculate()
 
-func handleBlock*(
+proc handleBlock*(
     filter: var SpamFilter,
     incd: uint16,
     incdMerit: int,
@@ -182,7 +182,7 @@ func handleBlock*(
             else:
                 inc(filter.right)
     except KeyError as e:
-        doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
+        panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
 
     try:
         if (decdMerit mod 50 == 49) and filter.votes.hasKey(decd):
@@ -199,12 +199,12 @@ func handleBlock*(
             if decdMerit div 50 == 0:
                 filter.votes.del(decd)
     except KeyError as e:
-        doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
+        panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
 
     filter.recalculate()
 
 #Remove a holder's vote.
-func remove*(
+proc remove*(
     filter: var SpamFilter,
     holder: uint16,
     merit: int
@@ -222,7 +222,7 @@ func remove*(
             if filter.votes[holder].votes == 0:
                 filter.remove(filter.votes[holder])
         except KeyError as e:
-            doAssert(false, "Couldn't get a value by a key we confirmed we have: " & e.msg)
+            panic("Couldn't get a value by a key we confirmed we have: " & e.msg)
 
         #Delete the entry in the votes table.
         filter.votes.del(holder)
@@ -232,7 +232,7 @@ func remove*(
             filter.recalculate()
 
 #Update a holder's vote.
-func update*(
+proc update*(
     filter: var SpamFilter,
     holder: uint16,
     merit: int,

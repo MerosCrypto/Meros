@@ -68,7 +68,7 @@ proc newStateObj*(
         try:
             result.merit[uint16(h)] = result.db.loadMerit(uint16(h))
         except DBReadError as e:
-            doAssert(false, "Couldn't load a holder's Merit: " & e.msg)
+            panic("Couldn't load a holder's Merit: " & e.msg)
 
 #Save the Unlocked Merit.
 proc saveUnlocked*(
@@ -98,7 +98,7 @@ proc loadUnlocked*(
         try:
             result = state.db.loadUnlocked(blockNum)
         except DBReadError:
-            doAssert(false, "Couldn't load the Unlocked Merit for a Block below the `processedBlocks`.")
+            panic("Couldn't load the Unlocked Merit for a Block below the `processedBlocks`.")
 
 #Register a new Merit Holder.
 proc newHolder*(
@@ -117,7 +117,7 @@ proc `[]`*(
 ): int {.forceCheck: [].} =
     #Throw a fatal error if the nickname is invalid.
     if nick < 0:
-        doAssert(false, "Asking for the Merit of an invalid nickname.")
+        panic("Asking for the Merit of an invalid nickname.")
 
     #If the nick is out of bounds, yet still positive, return 0.
     if nick >= uint16(state.holders.len):
@@ -127,7 +127,7 @@ proc `[]`*(
     try:
         result = state.merit[nick]
     except KeyError as e:
-        doAssert(false, "State threw a KeyError when getting a value, despite checking the nick was in bounds: " & e.msg)
+        panic("State threw a KeyError when getting a value, despite checking the nick was in bounds: " & e.msg)
 
 #Get the removals from a Block.
 proc loadBlockRemovals*(
@@ -189,7 +189,7 @@ proc reverseLookup*(
     try:
         result = state.db.loadNickname(key)
     except DBReadError:
-        raise newException(IndexError, $key & " does not have a nickname.")
+        raise newLoggedException(IndexError, $key & " does not have a nickname.")
 
 #Access the holders.
 proc holders*(

@@ -45,7 +45,7 @@ proc parseBlockBody*(
         aggregate: BLSSignature
 
     if bodyStr.len < i:
-        raise newException(ValueError, "parseBlockBody not handed enough data to get the amount of Sketches/Elements.")
+        raise newLoggedException(ValueError, "parseBlockBody not handed enough data to get the amount of Sketches/Elements.")
 
     result.sketch = bodyStr[sketchStart ..< elementsStart]
 
@@ -58,12 +58,12 @@ proc parseBlockBody*(
         elements.add(pbeResult.element)
 
     if bodyStr.len < i + BLS_SIGNATURE_LEN:
-        raise newException(ValueError, "parseBlockBody not handed enough data to get the aggregate signature.")
+        raise newLoggedException(ValueError, "parseBlockBody not handed enough data to get the aggregate signature.")
 
     try:
         aggregate = newBLSSignature(bodyStr[i ..< i + BLS_SIGNATURE_LEN])
     except BLSError:
-        raise newException(ValueError, "Invalid aggregate signature.")
+        raise newLoggedException(ValueError, "Invalid aggregate signature.")
 
     try:
         result.data = newBlockBodyObj(
@@ -73,4 +73,4 @@ proc parseBlockBody*(
             aggregate
         )
     except ValueError as e:
-        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+        panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)

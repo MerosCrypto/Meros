@@ -49,13 +49,13 @@ proc verifySketchCheck*(
         var leaves: seq[Hash[256]] = newSeq[Hash[256]](sketchHashes.len)
         for h in 0 ..< sketchHashes.len:
             if (h != 0) and (sketchHashes[h] == sketchHashes[h - 1]):
-                raise newException(ValueError, "Sketch has a collision.")
+                raise newLoggedException(ValueError, "Sketch has a collision.")
             leaves[h] = Blake256(sketchHashes[h].toBinary(SKETCH_HASH_LEN))
 
         calculated = newMerkle(leaves).hash
 
     if calculated != sketchCheck:
-        raise newException(ValueError, "Invalid sketchCheck Merkle.")
+        raise newLoggedException(ValueError, "Invalid sketchCheck Merkle.")
 
 proc verifySketchCheck*(
     sketchCheck: Hash[256],
@@ -86,7 +86,7 @@ proc verifyContents*(
     try:
         result = sorted(
             packetsArg,
-            func (
+            proc (
                 x: VerificationPacket,
                 y: VerificationPacket
             ): int {.forceCheck: [
@@ -95,7 +95,7 @@ proc verifyContents*(
                 if x.hash > y.hash:
                     result = 1
                 elif x.hash == y.hash:
-                    raise newException(ValueError, "Block has two packets for the same hash.")
+                    raise newLoggedException(ValueError, "Block has two packets for the same hash.")
                 else:
                     result = -1
             , SortOrder.Descending
@@ -117,10 +117,10 @@ proc verifyContents*(
 
     if not empty:
         if Blake256(packetsMerkle.hash.toString() & elementsMerkle.hash.toString()) != contents:
-            raise newException(ValueError, "Invalid contents Merkle.")
+            raise newLoggedException(ValueError, "Invalid contents Merkle.")
     else:
         if contents != Hash[256]():
-            raise newException(ValueError, "Invalid contents Merkle.")
+            raise newLoggedException(ValueError, "Invalid contents Merkle.")
 
 #Verify a Block's aggregate signature via a nickname lookup function and a Table of Hash -> VerificationPacket.
 proc verifyAggregate*(
@@ -178,7 +178,7 @@ proc verifyAggregate*(
         return false
     #One of our holders has an infinite key.
     except BLSError:
-        doAssert(false, "Holder with an infinite key entered the system.")
+        panic("Holder with an infinite key entered the system.")
 
     #Verify the Signature.
     try:

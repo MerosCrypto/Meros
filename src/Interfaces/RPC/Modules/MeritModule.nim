@@ -79,7 +79,7 @@ proc `%**`(
                 try:
                     result["holders"].add(% $holder)
                 except KeyError as e:
-                    doAssert(false, "Couldn't add a holder to a VerificationPacket's JSON representation despite declaring an array for the holders: " & e.msg)
+                    panic("Couldn't add a holder to a VerificationPacket's JSON representation despite declaring an array for the holders: " & e.msg)
 
         of MeritRemoval as mr:
             result["descendant"] = % "MeritRemoval"
@@ -95,17 +95,17 @@ proc `%**`(
                 try:
                     element1.delete("holder")
                 except KeyError as e:
-                    doAssert(false, "Couldn't delete a key we confirmed was present: " & e.msg)
+                    panic("Couldn't delete a key we confirmed was present: " & e.msg)
             if element2.hasKey("holder"):
                 try:
                     element2.delete("holder")
                 except KeyError as e:
-                    doAssert(false, "Couldn't delete a key we confirmed was present: " & e.msg)
+                    panic("Couldn't delete a key we confirmed was present: " & e.msg)
 
             result["elements"] = % [element1, element2]
 
         else:
-            doAssert(false, "MeritModule's `%`(Element) passed an unsupported Element type.")
+            panic("MeritModule's `%`(Element) passed an unsupported Element type.")
 
 #Block -> JSON.
 proc `%`(
@@ -137,7 +137,7 @@ proc `%`(
         else:
             result["header"]["miner"] = % blockArg.header.minerNick
     except KeyError as e:
-        doAssert(false, "Couldn't add a miner to a BlockHeader's JSON representation despite declaring an object for the header: " & e.msg)
+        panic("Couldn't add a miner to a BlockHeader's JSON representation despite declaring an object for the header: " & e.msg)
 
     #Add the Packets.
     result["transactions"] = % []
@@ -148,7 +148,7 @@ proc `%`(
                 "holders": packet.holders
             })
     except KeyError as e:
-        doAssert(false, "Couldn't add a Transaction hash to a Block's JSON representation despite declaring an array for the hashes: " & e.msg)
+        panic("Couldn't add a Transaction hash to a Block's JSON representation despite declaring an array for the hashes: " & e.msg)
 
     #Add the Elements.
     result["elements"] = % []
@@ -156,7 +156,7 @@ proc `%`(
         for elem in blockArg.body.elements:
             result["elements"].add(%** elem)
     except KeyError as e:
-        doAssert(false, "Couldn't add an Element to a Block's JSON representation despite declaring an array for the Elements: " & e.msg)
+        panic("Couldn't add an Element to a Block's JSON representation despite declaring an array for the Elements: " & e.msg)
 
 #Create the Merit module.
 proc module*(
@@ -191,7 +191,7 @@ proc module*(
             ].} =
                 #Verify the parameters length.
                 if params.len != 1:
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Get the Block.
                 if params[0].kind == JInt:
@@ -209,7 +209,7 @@ proc module*(
                     except ValueError:
                         raise newJSONRPCError(-3, "Invalid hash")
                 else:
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
             #Get Total Merit.
             "getTotalMerit" = proc (
@@ -238,7 +238,7 @@ proc module*(
                     (params[0].kind != JInt) or
                     (params[0].getInt() >= 65536)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Extract the parameter.
                 var nick: uint16 = uint16(params[0].getInt())
@@ -260,7 +260,7 @@ proc module*(
             ].} =
                 #Verify and extract the parameter.
                 if (params.len != 1) or (params[0].kind != JString):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 var miner: BLSPublicKey
                 try:
@@ -302,7 +302,7 @@ proc module*(
 
                         break
                     except KeyError as e:
-                        doAssert(false, "Couldn't get a Sketcher we just created: " & e.msg)
+                        panic("Couldn't get a Sketcher we just created: " & e.msg)
                     except SaltError:
                         inc(sketchSaltNum)
                 sketchSalt = sketchSaltNum.toBinary(INT_LEN)
@@ -346,9 +346,9 @@ proc module*(
                             newBLSSignature()
                         ).serializeTemplate().toHex()
                 except IndexError as e:
-                    doAssert(false, "Couldn't get the Block with a nonce one lower than the height: " & e.msg)
+                    panic("Couldn't get the Block with a nonce one lower than the height: " & e.msg)
                 except BLSError:
-                    doAssert(false, "Couldn't create a temporary signature for a BlockHeader template.")
+                    panic("Couldn't create a temporary signature for a BlockHeader template.")
 
                 #Create the result.
                 try:
@@ -364,7 +364,7 @@ proc module*(
                         ).serialize(sketchSalt, pending.packets.len).toHex()
                     }
                 except ValueError as e:
-                    doAssert(false, "Block Body had sketch collision: " & e.msg)
+                    panic("Block Body had sketch collision: " & e.msg)
 
             #Publish a Block.
             "publishBlock" = proc (
@@ -380,7 +380,7 @@ proc module*(
                     (params[0].kind != JInt) or
                     (params[1].kind != JString)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 var sketchyBlock: SketchyBlock
                 try:
@@ -407,6 +407,6 @@ proc module*(
                 except DataMissing:
                     raise newJSONRPCError(-1, "Missing Block-referenced data")
                 except Exception as e:
-                    doAssert(false, "addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
+                    panic("addBlock threw a raw Exception, despite catching all Exception types it naturally raises: " & e.msg)
     except Exception as e:
-        doAssert(false, "Couldn't create the Merit Module: " & e.msg)
+        panic("Couldn't create the Merit Module: " & e.msg)

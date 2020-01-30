@@ -142,18 +142,18 @@ proc get(
     DBReadError
 ].} =
     if db.consensus.deleted.contains(key):
-        raise newException(DBReadError, "Key deleted.")
+        raise newLoggedException(DBReadError, "Key deleted.")
 
     if db.consensus.cache.hasKey(key):
         try:
             return db.consensus.cache[key]
         except KeyError as e:
-            doAssert(false, "Couldn't get a key from a table confirmed to exist: " & e.msg)
+            panic("Couldn't get a key from a table confirmed to exist: " & e.msg)
 
     try:
         result = db.lmdb.get("consensus", key)
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc commit*(
     db: DB
@@ -173,7 +173,7 @@ proc commit*(
             items[i] = (key: key, value: db.consensus.cache[key])
             inc(i)
     except KeyError as e:
-        doAssert(false, "Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+        panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
 
     #Save the unmentioned hashes.
     items[^1] = (key: UNMENTIONED(), value: db.consensus.unmentioned)
@@ -182,7 +182,7 @@ proc commit*(
     try:
         db.lmdb.put("consensus", items)
     except Exception as e:
-        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+        panic("Couldn't save data to the Database: " & e.msg)
 
     db.consensus.cache = initTable[string, string]()
 
@@ -297,7 +297,7 @@ proc loadUnmentioned*(
         try:
             result[i div 32] = unmentioned[i ..< i + 32].toHash(256)
         except ValueError as e:
-            doAssert(false, "Couldn't parse an unmentioned hash: " & e.msg)
+            panic("Couldn't parse an unmentioned hash: " & e.msg)
 
 proc load*(
     db: DB,
@@ -317,7 +317,7 @@ proc loadSendDifficulty*(
     try:
         result = db.get(HOLDER_SEND_DIFFICULTY(holder)).toHash(256)
     except ValueError:
-        doAssert(false, "Couldn't turn a 32-byte value into a 32-byte hash.")
+        panic("Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
         raise e
 
@@ -330,7 +330,7 @@ proc loadDataDifficulty*(
     try:
         result = db.get(HOLDER_DATA_DIFFICULTY(holder)).toHash(256)
     except ValueError:
-        doAssert(false, "Couldn't turn a 32-byte value into a 32-byte hash.")
+        panic("Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
         raise e
 
@@ -356,9 +356,9 @@ proc load*(
                 result = newDataDifficultyObj(nonce, elem[1 ..< 33].toHash(256))
                 result.holder = holder
             else:
-                doAssert(false, "Tried to load an unknown Block Element: " & $int(elem[0]))
+                panic("Tried to load an unknown Block Element: " & $int(elem[0]))
     except ValueError:
-        doAssert(false, "Couldn't convert a 32-byte value to a 32-byte hash.")
+        panic("Couldn't convert a 32-byte value to a 32-byte hash.")
 
 proc loadSignature*(
     db: DB,
@@ -370,7 +370,7 @@ proc loadSignature*(
     try:
         result = newBLSSignature(db.get(SIGNATURE(holder, nonce)))
     except BLSError as e:
-        doAssert(false, "Saved an invalid BLS signature to the Database: " & e.msg)
+        panic("Saved an invalid BLS signature to the Database: " & e.msg)
     except DBReadError as e:
         raise e
 
@@ -392,7 +392,7 @@ proc loadTransaction*(
     try:
         result = hash.parseTransaction(db.get(TRANSACTION(hash)))
     except ValueError as e:
-        doAssert(false, "Couldn't parse a Transaction saved to the Consensus DB: " & e.msg)
+        panic("Couldn't parse a Transaction saved to the Consensus DB: " & e.msg)
     except DBReadError as e:
         raise e
 
@@ -418,7 +418,7 @@ proc loadMaliciousProofs*(
                 try:
                     result[holder].add(db.get(HOLDER_MALICIOUS_PROOF(holder, p)).parseSignedMeritRemoval())
                 except ValueError as e:
-                    doAssert(false, "Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
+                    panic("Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
         except DBReadError:
             result.del(holder)
 

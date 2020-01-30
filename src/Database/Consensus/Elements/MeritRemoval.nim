@@ -89,4 +89,4 @@ proc agInfo*(
                 newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
             ].aggregate()
     except BLSError:
-        doAssert(false, "Holder with an infinite key entered the system.")
+        panic("Holder with an infinite key entered the system.")

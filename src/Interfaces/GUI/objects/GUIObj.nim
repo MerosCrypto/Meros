@@ -53,9 +53,9 @@ proc call*(
             "params": args
         })
     except DeadThreadError as e:
-        doAssert(false, "Couldn't send data to the RPC due to a DeadThreadError: " & e.msg)
+        panic("Couldn't send data to the RPC due to a DeadThreadError: " & e.msg)
     except Exception as e:
-        doAssert(false, "Couldn't send data to the RPC due to an Exception: " & e.msg)
+        panic("Couldn't send data to the RPC due to an Exception: " & e.msg)
 
     #If this is quit, don't bother trying to receive the result.
     #It should send a proper response, but we don't need it and recv is blocking.
@@ -66,19 +66,19 @@ proc call*(
     try:
         result = gui.toGUI[].recv()
     except ValueError as e:
-        doAssert(false, "Couldn't receive data from the RPC due to an ValueError: " & e.msg)
+        panic("Couldn't receive data from the RPC due to an ValueError: " & e.msg)
     except Exception as e:
-        doAssert(false, "Couldn't receive data from the RPC due to an Exception: " & e.msg)
+        panic("Couldn't receive data from the RPC due to an Exception: " & e.msg)
 
     #If it has an error, throw it.
     if result.hasKey("error"):
         try:
-            raise newException(RPCError, result["error"]["message"].getStr() & " (" & $result["error"]["code"] & ")" & ".")
+            raise newLoggedException(RPCError, result["error"]["message"].getStr() & " (" & $result["error"]["code"] & ")" & ".")
         except KeyError as e:
-            doAssert(false, "Couldn't get a JSON field despite confirming it exists: " & e.msg)
+            panic("Couldn't get a JSON field despite confirming it exists: " & e.msg)
 
     #Return the result.
     try:
         result = result["result"]
     except KeyError as e:
-        doAssert(false, "RPC didn't error yet didn't reply with a result either: " & e.msg)
+        panic("RPC didn't error yet didn't reply with a result either: " & e.msg)

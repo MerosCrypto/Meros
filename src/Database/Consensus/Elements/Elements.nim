@@ -154,7 +154,7 @@ proc `==`*(
                 return false
 
         else:
-            doAssert(false, "Unsupported Element type used in equality check.")
+            panic("Unsupported Element type used in equality check.")
 
 proc `!=`*(
     e1: Element,

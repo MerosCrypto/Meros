@@ -53,6 +53,8 @@ proc connect*(
 ) {.forceCheck: [
     PeerError
 ], async.} =
+    logInfo "Connecting", address = address, port = port
+
     #Don't allow connections to self.
     if (not network.server.isClosed) and (address == "127.0.0.1") and (port == network.liveManager.port):
         return
@@ -81,7 +83,7 @@ proc connect*(
         socket.safeClose()
         return
     except ValueError:
-        raise newException(PeerError, "Invalid IP.")
+        raise newLoggedException(PeerError, "Invalid IP.")
 
     #If we're already connected, don't create a new peer. Just create the missing connection, if possible.
     var
@@ -100,7 +102,7 @@ proc connect*(
         try:
             peer = network.peers[network.live[ip]]
         except KeyError:
-            doAssert(false, "Peer has a live socket but either not an entry in the live table or the peers table.")
+            panic("Peer has a live socket but either not an entry in the live table or the peers table.")
 
         live = peer.live
         sync = peer.sync
@@ -108,7 +110,7 @@ proc connect*(
         try:
             peer = network.peers[network.sync[ip]]
         except KeyError:
-            doAssert(false, "Peer has a sync socket but either not an entry in the sync table or the peers table.")
+            panic("Peer has a sync socket but either not an entry in the sync table or the peers table.")
 
         live = peer.live
         sync = peer.sync
@@ -142,13 +144,15 @@ proc connect*(
     network.sync[ip] = peer.id
 
     #Handle the connections.
+    logInfo "Handling", address = address, port = port
+
     try:
         if not hasSync:
             asyncCheck network.syncManager.handle(peer)
         if not hasLive:
             asyncCheck network.liveManager.handle(peer)
     except Exception as e:
-        doAssert(false, "Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
+        panic("Handling a new connection raised an Exception despite not throwing any Exceptions: " & e.msg)
 
 #Handle a new connection.
 proc handle*(
@@ -169,7 +173,7 @@ proc handle*(
 
         addressParts = address.split(".")
     except OSError as e:
-        doAssert(false, "Failed to get a peer's address: " & e.msg)
+        panic("Failed to get a peer's address: " & e.msg)
 
     var ip: string
     try:
@@ -180,13 +184,13 @@ proc handle*(
             char(parseInt(addressParts[3]))
         )
     except ValueError as e:
-        doAssert(false, "IP contained an invalid integer: " & e.msg)
+        panic("IP contained an invalid integer: " & e.msg)
 
     var first: string
     try:
         first = await socket.recv(1, {SocketFlag.Peek})
         if first.len != 1:
-            raise newException(Exception, "")
+            raise newLoggedException(Exception, "")
     except Exception:
         socket.safeClose()
         return
@@ -214,7 +218,7 @@ proc handle*(
         except PeerError:
             network.disconnect(peer)
         except Exception as e:
-            doAssert(false, "Handling a Live socket threw an Exception despite catching all Exceptions: " & e.msg)
+            panic("Handling a Live socket threw an Exception despite catching all Exceptions: " & e.msg)
 
     elif MessageType(first[0]) == MessageType.Syncing:
         if network.sync.hasKey(ip) and (address != "127.0.0.1"):
@@ -234,7 +238,7 @@ proc handle*(
         except PeerError:
             network.disconnect(peer)
         except Exception as e:
-            doAssert(false, "Handling a Sync socket threw an Exception despite catching all Exceptions: " & e.msg)
+            panic("Handling a Sync socket threw an Exception despite catching all Exceptions: " & e.msg)
 
 #Listen for new Network.
 proc listen*(
@@ -248,19 +252,19 @@ proc listen*(
     try:
         network.server = newAsyncSocket()
     except Exception as e:
-        doAssert(false, "Failed to create the Network's server socket: " & e.msg)
+        panic("Failed to create the Network's server socket: " & e.msg)
 
     try:
         network.server.setSockOpt(OptReuseAddr, true)
         network.server.bindAddr(Port(network.liveManager.port))
     except Exception as e:
-        doAssert(false, "Failed to set the Network's server socket options and bind it: " & e.msg)
+        panic("Failed to set the Network's server socket options and bind it: " & e.msg)
 
     #Start listening.
     try:
         network.server.listen()
     except Exception as e:
-        doAssert(false, "Failed to start listening on the Network's server socket: " & e.msg)
+        panic("Failed to start listening on the Network's server socket: " & e.msg)
 
     #Accept new connections infinitely.
     while not network.server.isClosed():
@@ -292,4 +296,4 @@ proc broadcast*(
         except SocketError:
             discard
         except Exception as e:
-            doAssert(false, "Sending over a Live socket raised an Exception despite catching every Exception: " & e.msg)
+            panic("Sending over a Live socket raised an Exception despite catching every Exception: " & e.msg)

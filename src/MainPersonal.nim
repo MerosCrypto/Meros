@@ -46,7 +46,7 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 child = wallet.wallet.external.next()
             except ValueError as e:
-                doAssert(false, "Wallet has no usable keys: " & e.msg)
+                panic("Wallet has no usable keys: " & e.msg)
             utxos = transactions.getUTXOs(child.publicKey)
             try:
                 amountOut = parseUInt(amountStr)
@@ -73,11 +73,11 @@ proc mainPersonal() {.forceCheck: [].} =
                     #Increment i.
                     inc(i)
             except IndexError as e:
-                doAssert(false, "Couldn't load a transaction we have an UTXO for: " & e.msg)
+                panic("Couldn't load a transaction we have an UTXO for: " & e.msg)
 
             #Make sure we have enough Meros.
             if amountIn < amountOut:
-                raise newException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
+                raise newLoggedException(NotEnoughMeros, "Wallet didn't have enough money to create a Send.")
 
             #Create the outputs.
             var outputs: seq[SendOutput]
@@ -116,9 +116,9 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 functions.transactions.addSend(send)
             except ValueError as e:
-                doAssert(false, "Created a Send which was invalid: " & e.msg)
+                panic("Created a Send which was invalid: " & e.msg)
             except DataExists as e:
-                doAssert(false, "Created a Send which already existed: " & e.msg)
+                panic("Created a Send which already existed: " & e.msg)
 
             #Retun the hash.
             result = send.hash
@@ -144,7 +144,7 @@ proc mainPersonal() {.forceCheck: [].} =
         try:
             child = wallet.wallet.external.next()
         except ValueError as e:
-            doAssert(false, "Wallet has no usable keys: " & e.msg)
+            panic("Wallet has no usable keys: " & e.msg)
 
         try:
             tip = wallet.loadDataTip()
@@ -163,7 +163,7 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 data = newData(Hash[256](), child.publicKey.toString())
             except ValueError as e:
-                doAssert(false, "Couldn't create the initial Data: " & e.msg)
+                panic("Couldn't create the initial Data: " & e.msg)
 
             #Sign it.
             child.sign(data)
@@ -175,7 +175,7 @@ proc mainPersonal() {.forceCheck: [].} =
             try:
                 functions.transactions.addData(data)
             except ValueError as e:
-                doAssert(false, "Created a Data which was invalid: " & e.msg)
+                panic("Created a Data which was invalid: " & e.msg)
             except DataExists as e:
                 raise e
 
@@ -195,7 +195,7 @@ proc mainPersonal() {.forceCheck: [].} =
         try:
             discard transactions[tip]
         except IndexError as e:
-            raise newException(ValueError, "Creating a Data which competed with a previous Data thanks to missing Datas: " & e.msg)
+            raise newLoggedException(ValueError, "Creating a Data which competed with a previous Data thanks to missing Datas: " & e.msg)
 
 
         #Create the Data.
@@ -214,7 +214,7 @@ proc mainPersonal() {.forceCheck: [].} =
         try:
             functions.transactions.addData(data)
         except ValueError as e:
-            doAssert(false, "Created a Data which was invalid: " & e.msg)
+            panic("Created a Data which was invalid: " & e.msg)
         except DataExists as e:
             raise e
 

@@ -146,13 +146,13 @@ func isValidAddress*(
         return false
 
 #Get the data encoded in an address.
-func getEncodedData*(
+proc getEncodedData*(
     address: string
 ): seq[byte] {.forceCheck: [
     ValueError
 ].} =
     if not address.isValidAddress():
-        raise newException(ValueError, "Invalid address.")
+        raise newLoggedException(ValueError, "Invalid address.")
 
     var data: string = address.substr(ADDRESS_HRP.len + 1, address.len).toLower()
     for c in 0 ..< data.len - 6:

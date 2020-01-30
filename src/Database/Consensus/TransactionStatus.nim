@@ -31,7 +31,7 @@ proc add*(
 
     #Raise DataExists if this verifier was already added.
     if status.holders.contains(verif.holder):
-        raise newException(DataExists, "Verification was already added.")
+        raise newLoggedException(DataExists, "Verification was already added.")
 
     #Add the Verification to the pending packet.
     status.pending.add(verif)
@@ -76,7 +76,7 @@ proc add*(
             try:
                 signatures.add(status.signatures[holder])
             except KeyError as e:
-                doAssert(false, "Couldn't create a new pending VerificaionPacket due to missing signatures: " & e.msg)
+                panic("Couldn't create a new pending VerificaionPacket due to missing signatures: " & e.msg)
 
     #Aggregate and set the signature.
     status.pending.signature = signatures.aggregate()

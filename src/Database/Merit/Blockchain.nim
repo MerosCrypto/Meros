@@ -58,55 +58,57 @@ proc testBlockHeader*(
 ].} =
     #Check the difficulty.
     if header.hash < blockchain.difficulty.difficulty:
-        raise newException(ValueError, "Block doesn't beat the difficulty.")
+        raise newLoggedException(ValueError, "Block doesn't beat the difficulty.")
 
     #Check the version.
     if header.version != 0:
-        raise newException(ValueError, "BlockHeader has an invalid version.")
+        raise newLoggedException(ValueError, "BlockHeader has an invalid version.")
 
     #Check the last hash.
     if header.last != blockchain.tail.header.hash:
-        raise newException(NotConnected, "Last hash isn't our tip.")
+        raise newLoggedException(NotConnected, "Last hash isn't our tip.")
 
     #Check significant.
     if (header.significant == 0) or (header.significant > uint16(26280)):
-        raise newException(ValueError, "Invalid significant.")
+        raise newLoggedException(ValueError, "Invalid significant.")
 
     var key: BLSPublicKey
     if header.newMiner:
         #Check a miner with a nickname isn't being marked as new.
         if blockchain.miners.hasKey(header.minerKey):
-            raise newException(ValueError, "Header marks a miner with a nickname as new.")
+            raise newLoggedException(ValueError, "Header marks a miner with a nickname as new.")
 
         #Make sure the key isn't infinite.
         if header.minerKey.isInf:
-            raise newException(ValueError, "Header has an infinite miner key.")
+            raise newLoggedException(ValueError, "Header has an infinite miner key.")
 
         #Grab the key.
         key = header.minerKey
     else:
         #Make sure the nick is valid.
         if header.minerNick >= uint16(lookup.len):
-            raise newException(ValueError, "Header has an invalid nickname.")
+            raise newLoggedException(ValueError, "Header has an invalid nickname.")
 
         key = lookup[header.minerNick]
 
     #Check the time.
     if (header.time < blockchain.tail.header.time) or (header.time > getTime() + 30):
-        raise newException(ValueError, "Block has an invalid time.")
+        raise newLoggedException(ValueError, "Block has an invalid time.")
 
     #Check the signature.
     try:
         if not header.signature.verify(newBLSAggregationInfo(key, RandomX(header.serializeHash()).toString())):
-            raise newException(ValueError, "Block has an invalid signature.")
+            raise newLoggedException(ValueError, "Block has an invalid signature.")
     except BLSError as e:
-        doAssert(false, "Failed to verify a BlockHeader's signature: " & e.msg)
+        panic("Failed to verify a BlockHeader's signature: " & e.msg)
 
 #Adds a block to the blockchain.
 proc processBlock*(
     blockchain: var Blockchain,
     newBlock: Block
 ) {.forceCheck: [].} =
+    logInfo "Blockchain processing Block", hash = newBlock.header.hash
+
     #Add the Block.
     blockchain.add(newBlock)
 

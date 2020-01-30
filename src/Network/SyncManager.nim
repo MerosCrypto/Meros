@@ -90,13 +90,13 @@ proc syncAwait*[T](
     try:
         timeout = withTimeout(future.future, future.timeout)
     except Exception as e:
-        doAssert(false, "Couldn't create a timeout for this SyncRequest: " & e.msg)
+        panic("Couldn't create a timeout for this SyncRequest: " & e.msg)
 
     var timedOut: bool
     try:
         timedOut = not await timeout
     except Exception as e:
-        doAssert(false, "Couldn't create await a timeout: " & e.msg)
+        panic("Couldn't create await a timeout: " & e.msg)
 
     when T is seq[tuple[ip: string, port: int]]:
         if timedOut:
@@ -104,19 +104,19 @@ proc syncAwait*[T](
             try:
                 request = cast[PeersSyncRequest](future.manager.requests[future.id])
             except KeyError as e:
-                doAssert(false, "Couldn't get a SyncRequest which timed out: " & e.msg)
+                panic("Couldn't get a SyncRequest which timed out: " & e.msg)
 
             future.manager.requests.del(future.id)
             return request.pending
     else:
         if timedOut:
             future.manager.requests.del(future.id)
-            raise newException(DataMissing, "SyncRequest timed out.")
+            raise newLoggedException(DataMissing, "SyncRequest timed out.")
 
     try:
         result = future.future.read()
     except ValueError as e:
-        doAssert(false, "Couldn't read the value of a completed future: " & e.msg)
+        panic("Couldn't read the value of a completed future: " & e.msg)
 
 #Sync a missing Transaction.
 proc syncTransaction*(
@@ -144,7 +144,7 @@ proc syncTransaction*(
         try:
             asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Couldn't send a TransactionRequest to a Peer: " & e.msg)
+            panic("Couldn't send a TransactionRequest to a Peer: " & e.msg)
 
 #Sync missing Verification Packets.
 proc syncVerificationPackets*(
@@ -174,7 +174,7 @@ proc syncVerificationPackets*(
         try:
             asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Couldn't send a SketchHashSyncRequests to a Peer: " & e.msg)
+            panic("Couldn't send a SketchHashSyncRequests to a Peer: " & e.msg)
 
 #Sync missing Sketch Hashes.
 proc syncSketchHashes*(
@@ -203,7 +203,7 @@ proc syncSketchHashes*(
         try:
             asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Couldn't send a SketchHashesSyncRequest to a Peer: " & e.msg)
+            panic("Couldn't send a SketchHashesSyncRequest to a Peer: " & e.msg)
 
 #Sync a Block's missing Transactions/VerificationPackets.
 proc sync*(
@@ -241,7 +241,7 @@ proc sync*(
                 newBlock.data.header.sketchSalt
             )
         except SaltError:
-            raise newException(ValueError, "Our sketch had a collision.")
+            raise newLoggedException(ValueError, "Our sketch had a collision.")
 
         #If the sketch resolved, save the found packets/missing items.
         packets = sketchResult.packets
@@ -274,7 +274,7 @@ proc sync*(
         except DataMissing as e:
             raise e
         except Exception as e:
-            doAssert(false, "Syncing a Block's SketchHashes threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            panic("Syncing a Block's SketchHashes threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         #Remove packets present in our sketcher.
         var m: int = 0
@@ -290,7 +290,7 @@ proc sync*(
         except DataMissing as e:
             raise e
         except Exception as e:
-            doAssert(false, "Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            panic("Syncing a Block's VerificationPackets threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #Verify the contents Merkle.
     try:
@@ -308,9 +308,9 @@ proc sync*(
     #Check the Block's aggregate.
     try:
         if not result[0].verifyAggregate(manager.functions.merit.getPublicKey):
-            raise newException(ValueError, "Block has an invalid aggregate.")
+            raise newLoggedException(ValueError, "Block has an invalid aggregate.")
     except IndexError as e:
-        doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
+        panic("Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
 
     #Find missing Transactions.
     for packet in result[0].body.packets:
@@ -329,9 +329,9 @@ proc sync*(
             except DataMissing:
                 #Since we did not get this Transaction, this Block is trying to archive unknown Verification OR we just don't have a proper Peer set.
                 #The first is assumed.
-                raise newException(ValueError, "Block tries to archive unknown Verifications.")
+                raise newLoggedException(ValueError, "Block tries to archive unknown Verifications.")
             except Exception as e:
-                doAssert(false, "Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                panic("Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     #List of Transactions we have yet to process.
     var todo: Table[Hash[256], Transaction]
@@ -358,7 +358,7 @@ proc sync*(
                                 todo[tx.hash] = tx
                                 break thisTX
                             else:
-                                raise newException(ValueError, "Block includes Verifications of a Transaction which has not had all its inputs mentioned in previous blocks/this block.")
+                                raise newLoggedException(ValueError, "Block includes Verifications of a Transaction which has not had all its inputs mentioned in previous blocks/this block.")
 
                 #Handle the Transaction.
                 case tx:
@@ -366,7 +366,7 @@ proc sync*(
                         try:
                             manager.functions.transactions.addClaim(claim, true)
                         except ValueError:
-                            raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
+                            raise newLoggedException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
                             continue
 
@@ -374,7 +374,7 @@ proc sync*(
                         try:
                             manager.functions.transactions.addSend(send, true)
                         except ValueError:
-                            raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
+                            raise newLoggedException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
                             continue
 
@@ -382,16 +382,16 @@ proc sync*(
                         try:
                             manager.functions.transactions.addData(data, true)
                         except ValueError:
-                            raise newException(ValueError, "Block includes Verifications of an invalid Transaction.")
+                            raise newLoggedException(ValueError, "Block includes Verifications of an invalid Transaction.")
                         except DataExists:
                             continue
 
                     else:
-                        doAssert(false, "Synced an Transaction of an unsyncable type.")
+                        panic("Synced an Transaction of an unsyncable type.")
 
         #Panic if the queue length didn't change.
         if transactions.len == todo.len:
-            doAssert(false, "Transaction queue length is unchanged.")
+            panic("Transaction queue length is unchanged.")
 
         #Set transactions to todo.
         transactions = todo
@@ -403,26 +403,26 @@ proc sync*(
         try:
             tx = manager.functions.transactions.getTransaction(packet.hash)
         except IndexError as e:
-            doAssert(false, "Couldn't get a Transaction we're confirmed to have: " & e.msg)
+            panic("Couldn't get a Transaction we're confirmed to have: " & e.msg)
 
         if not ((tx of Claim) or ((tx of Data) and cast[Data](tx).isFirstData)):
             for input in tx.inputs:
                 try:
                     if not (manager.functions.consensus.hasArchivedPacket(input.hash) or includedTXs.contains(input.hash)):
-                        raise newException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
+                        raise newLoggedException(ValueError, "Block's Transactions have predecessors which have yet to be mentioned on chain.")
                 except IndexError as e:
-                    doAssert(false, "Couldn't get if a Transaction we're confirmed to have has an archived packet: " & e.msg)
+                    panic("Couldn't get if a Transaction we're confirmed to have has an archived packet: " & e.msg)
 
         #Get the status.
         var status: TransactionStatus
         try:
             status = manager.functions.consensus.getStatus(packet.hash)
         except IndexError as e:
-            doAssert(false, "Couldn't get the status of a Transaction we're confirmed to have: " & e.msg)
+            panic("Couldn't get the status of a Transaction we're confirmed to have: " & e.msg)
 
         #Verify the Transaction is still in Epochs.
         if status.merit != -1:
-            raise newException(ValueError, "Block has a Transaction out of Epochs.")
+            raise newLoggedException(ValueError, "Block has a Transaction out of Epochs.")
 
         #Calculate the Merit to check the significant against.
         var merit: int = 0
@@ -431,13 +431,13 @@ proc sync*(
             if status.holders.contains(holder):
                 #If they're in holders. they're either an archived holder or a pending holder.
                 if not status.pending.holders.contains(holder):
-                    raise newException(ValueError, "Block archives holders who are already archived.")
+                    raise newLoggedException(ValueError, "Block archives holders who are already archived.")
 
             merit += state[holder]
 
         #Verify significant.
         if merit < int(result[0].header.significant):
-            raise newException(ValueError, "Block has an invalid significant.")
+            raise newLoggedException(ValueError, "Block has an invalid significant.")
 
     #Verify the included Elements.
     result[1] = result[0].body.elements
@@ -475,7 +475,7 @@ proc sync*(
 
     for elem in result[1]:
         if hasMR.contains(elem.holder):
-            raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
+            raise newLoggedException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
 
         case elem:
             of SendDifficulty as sendDiff:
@@ -492,11 +492,11 @@ proc sync*(
                         If we then acted on this knowledge, we'd risk desyncing.
                         Therefore, we have to just reject the Block for being invalid.
                         ]#
-                        raise newException(ValueError, "Block has an Element with an invalid nonce.")
+                        raise newLoggedException(ValueError, "Block has an Element with an invalid nonce.")
 
                     inc(newNonces[sendDiff.holder])
                 except KeyError:
-                    doAssert(false, "Table doesn't have a value for a key we made sure we had.")
+                    panic("Table doesn't have a value for a key we made sure we had.")
 
             of DataDifficulty as dataDiff:
                 if not newNonces.hasKey(dataDiff.holder):
@@ -504,27 +504,27 @@ proc sync*(
 
                 try:
                     if dataDiff.nonce != newNonces[dataDiff.holder] + 1:
-                        raise newException(ValueError, "Block has an Element with an invalid nonce.")
+                        raise newLoggedException(ValueError, "Block has an Element with an invalid nonce.")
 
                     inc(newNonces[dataDiff.holder])
                 except KeyError:
-                    doAssert(false, "Table doesn't have a value for a key we made sure we had.")
+                    panic("Table doesn't have a value for a key we made sure we had.")
 
             #of GasPrice as gasPrice:
             #    discard
 
             of MeritRemoval as mr:
                 if hasElem.contains(mr.holder):
-                    raise newException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
+                    raise newLoggedException(ValueError, "Block has an Element for a Merit Holder who had a Merit Removal.")
 
                 try:
                     await manager.functions.consensus.verifyUnsignedMeritRemoval(mr)
                 except ValueError as e:
                     raise e
                 except DataExists:
-                    raise newException(ValueError, "Block has an old MeritRemoval.")
+                    raise newLoggedException(ValueError, "Block has an old MeritRemoval.")
                 except Exception as e:
-                    doAssert(false, "Verifying a MeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                    panic("Verifying a MeritRemoval threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
         hasElem.incl(elem.holder)
 
@@ -555,7 +555,7 @@ proc syncBlockBody*(
         try:
             asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Couldn't send a BlockBodySyncRequest to a Peer: " & e.msg)
+            panic("Couldn't send a BlockBodySyncRequest to a Peer: " & e.msg)
 
 #Sync a missing BlockHeader.
 proc syncBlockHeader*(
@@ -583,7 +583,7 @@ proc syncBlockHeader*(
         try:
             asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Couldn't send a BlockHeaderSyncRequest to a Peer: " & e.msg)
+            panic("Couldn't send a BlockHeaderSyncRequest to a Peer: " & e.msg)
 
 #Sync a missing BlockList.
 proc syncBlockList*(
@@ -613,7 +613,7 @@ proc syncBlockList*(
         try:
             asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
+            panic("Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
 
 #Sync peers.
 proc syncPeers*(
@@ -634,7 +634,7 @@ proc syncPeers*(
         try:
             result.future.complete(seeds)
         except Exception as e:
-            doAssert(false, "Failed to complete a future: " & e.msg)
+            panic("Failed to complete a future: " & e.msg)
         return
 
     #Create the future.
@@ -654,4 +654,4 @@ proc syncPeers*(
         try:
             asyncCheck peer.syncRequest(id, request.msg)
         except Exception as e:
-            doAssert(false, "Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)
+            panic("Couldn't send a BlockListSyncRequest to a Peer: " & e.msg)

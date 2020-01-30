@@ -88,7 +88,7 @@ proc put(
     try:
         db.lmdb.put("", @[(key, val)])
     except Exception as e:
-        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+        panic("Couldn't save data to the Database: " & e.msg)
 
 proc put(
     db: WalletDB,
@@ -97,7 +97,7 @@ proc put(
     try:
         db.lmdb.put("", items)
     except Exception as e:
-        doAssert(false, "Couldn't save data to the Database: " & e.msg)
+        panic("Couldn't save data to the Database: " & e.msg)
 
 proc get(
     db: WalletDB,
@@ -108,7 +108,7 @@ proc get(
     try:
         result = db.lmdb.get("", key)
     except Exception as e:
-        raise newException(DBReadError, e.msg)
+        raise newLoggedException(DBReadError, e.msg)
 
 proc del(
     db: WalletDB,
@@ -117,7 +117,7 @@ proc del(
     try:
         db.lmdb.delete("", key)
     except Exception as e:
-        doAssert(false, "Couldn't delete data from the Database: " & e.msg)
+        panic("Couldn't delete data from the Database: " & e.msg)
 
 proc commit*(
     db: WalletDB,
@@ -135,7 +135,7 @@ proc commit*(
         try:
             tx = getTransaction(hash)
         except IndexError as e:
-            doAssert(false, "Couldn't get a Transaction that's now out of Epochs: " & e.msg)
+            panic("Couldn't get a Transaction that's now out of Epochs: " & e.msg)
 
         for input in tx.inputs:
             try:
@@ -156,7 +156,7 @@ proc commit*(
                 break
             inc(db.finalizedNonces)
         except DBReadError as e:
-            doAssert(false, "Couldn't get an input by its nonce: " & e.msg)
+            panic("Couldn't get an input by its nonce: " & e.msg)
 
     #This is finalized outside of the singular Transaction as:
     #1) finalizedNonces is an optimation, not a requirement.
@@ -185,13 +185,13 @@ proc newWalletDB*(
         )
         result.lmdb.open()
     except Exception as e:
-        raise newException(DBError, "Couldn't open the WalletDB: " & e.msg)
+        raise newLoggedException(DBError, "Couldn't open the WalletDB: " & e.msg)
 
     #Load the Wallet.
     try:
         result.wallet = newWallet(result.get(MNEMONIC()), "")
     except ValueError as e:
-        doAssert(false, "Failed to load the Wallet from the Database: " & e.msg)
+        panic("Failed to load the Wallet from the Database: " & e.msg)
     except DBReadError:
         result.put(MNEMONIC(), $result.wallet.mnemonic)
 
@@ -200,7 +200,7 @@ proc newWalletDB*(
         result.miner = newMinerWallet(result.get(MINER_KEY()))
         result.miner.nick = uint16(result.get(MINER_NICK()).fromBinary())
     except BLSError as e:
-        doAssert(false, "Failed to load the MinerWallet from the Database: " & e.msg)
+        panic("Failed to load the MinerWallet from the Database: " & e.msg)
     except DBReadError:
         result.put(MINER_KEY(), result.miner.privateKey.serialize())
         result.miner.initiated = false
@@ -218,7 +218,7 @@ proc newWalletDB*(
         try:
             input = result.get(INPUT_NONCE(n))
         except DBReadError as e:
-            doAssert(false, "Couldn't get an input by its nonce: " & e.msg)
+            panic("Couldn't get an input by its nonce: " & e.msg)
 
         if int(input[0]) == 1:
             continue
@@ -229,7 +229,7 @@ proc newWalletDB*(
     try:
         #See getNonces for why this check exists.
         discard result.get(USING_ELEMENT_NONCE)
-        doAssert(false, "Node was terminated in the middle of creating a new Element.")
+        panic("Node was terminated in the middle of creating a new Element.")
     except DBReadError:
         discard
     try:
@@ -246,7 +246,7 @@ proc close*(
     try:
         db.lmdb.close()
     except Exception as e:
-        raise newException(DBError, "Couldn't close the WalletDB: " & e.msg)
+        raise newLoggedException(DBError, "Couldn't close the WalletDB: " & e.msg)
 
 #Set the Wallet's mnemonic.
 proc setWallet*(
@@ -292,9 +292,9 @@ proc loadDataTip*(
     try:
         result = db.get(DATA_TIP()).toHash(256)
     except ValueError as e:
-        doAssert(false, "Couldn't parse the data tip from the WalletDB: " & e.msg)
+        panic("Couldn't parse the data tip from the WalletDB: " & e.msg)
     except DBReadError:
-        raise newException(DataMissing, "No Data Tip available.")
+        raise newLoggedException(DataMissing, "No Data Tip available.")
 
 #Mark that we're verifying a Transaction.
 #Assumes if the function completes, the nonce was used.
@@ -308,7 +308,7 @@ proc verifyTransaction*(
     #If we've already verified a Transaction sharing any inputs, raise.
     for input in tx.inputs:
         if db.verified.hasKey(input.toString()):
-            raise newException(ValueError, "Verified a competing Transaction.")
+            raise newLoggedException(ValueError, "Verified a competing Transaction.")
 
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]]()
     for input in tx.inputs:

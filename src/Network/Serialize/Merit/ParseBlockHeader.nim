@@ -72,7 +72,7 @@ proc parseBlockHeader*(
     except ValueError as e:
         raise e
     except BLSError:
-        raise newException(ValueError, "Invalid Public Key or Signature.")
+        raise newLoggedException(ValueError, "Invalid Public Key or Signature.")
 
     #Set the hash.
     result.hash = hash

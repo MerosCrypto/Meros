@@ -22,7 +22,7 @@ proc parseClaim*(
 ].} =
     #Verify the input length.
     if claimStr.len < BYTE_LEN:
-        raise newException(ValueError, "parseClaim not handed enough data to get the amount of inputs.")
+        raise newLoggedException(ValueError, "parseClaim not handed enough data to get the amount of inputs.")
 
     #Inputs Length | Inputs | Output Ed25519 Key | BLS Signatture
     var claimSeq: seq[string] = claimStr.deserialize(
@@ -35,7 +35,7 @@ proc parseClaim*(
     #Convert the inputs.
     var inputs: seq[FundedInput] = newSeq[FundedInput](int(claimSeq[0][0]))
     if inputs.len == 0:
-        raise newException(ValueError, "parseClaim handed a Claim with no inputs.")
+        raise newLoggedException(ValueError, "parseClaim handed a Claim with no inputs.")
     for i in countup(0, claimSeq[1].len - 1, HASH_LEN + BYTE_LEN):
         try:
             inputs[i div (HASH_LEN + BYTE_LEN)] = newFundedInput(
@@ -59,4 +59,4 @@ proc parseClaim*(
         result.signature = newBLSSignature(claimSeq[3])
         result.hash = Blake256("\1" & claimSeq[3])
     except BLSError:
-        raise newException(ValueError, "Invalid Signature.")
+        raise newLoggedException(ValueError, "Invalid Signature.")

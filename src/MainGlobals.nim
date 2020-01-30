@@ -115,3 +115,8 @@ functions.system.quit = proc () {.forceCheck: [].} =
 
     #Quit.
     quit(0)
+
+#Start the logger.
+if not (addr defaultChroniclesStream.output).open(config.dataDir / config.logFile, fmAppend):
+    echo "Couldn't open the log file."
+    quit(0)

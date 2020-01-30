@@ -24,10 +24,10 @@ proc parseVerificationPacket*(
     #Verify the data length.
     var verifiers: int
     if packet.len < NICKNAME_LEN:
-        raise newException(ValueError, "parseVerificationPacket not handed enough data to get the amount of verifiers.")
+        raise newLoggedException(ValueError, "parseVerificationPacket not handed enough data to get the amount of verifiers.")
     verifiers = packet[0 ..< NICKNAME_LEN].fromBinary()
     if packet.len != NICKNAME_LEN + (verifiers * NICKNAME_LEN) + HASH_LEN:
-        raise newException(ValueError, "parseVerificationPacket not handed enough data to get the verifiers and hash.")
+        raise newLoggedException(ValueError, "parseVerificationPacket not handed enough data to get the verifiers and hash.")
 
     #Create the VerificationPacket.
     try:
@@ -52,10 +52,10 @@ proc parseMeritRemovalVerificationPacket*(
     #Verify the data length.
     var verifiers: int
     if packet.len < NICKNAME_LEN:
-        raise newException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the amount of verifiers.")
+        raise newLoggedException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the amount of verifiers.")
     verifiers = packet[0 ..< NICKNAME_LEN].fromBinary()
     if packet.len != NICKNAME_LEN + (verifiers * BLS_PUBLIC_KEY_LEN) + HASH_LEN:
-        raise newException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the verifiers and hash.")
+        raise newLoggedException(ValueError, "parseMeritRemovalVerificationPacket not handed enough data to get the verifiers and hash.")
 
     #Create the MeritRemoval VerificationPacket.
     try:
@@ -69,4 +69,4 @@ proc parseMeritRemovalVerificationPacket*(
     except ValueError as e:
         raise e
     except BLSError:
-        raise newException(ValueError, "Invalid Public Key.")
+        raise newLoggedException(ValueError, "Invalid Public Key.")

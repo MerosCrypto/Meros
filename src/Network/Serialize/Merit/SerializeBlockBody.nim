@@ -46,7 +46,7 @@ proc serialize*(
             sketchSalt
         )
     except SaltError as e:
-        raise newException(ValueError, "BlockBody's elements have a collision with the specified sketchSalt: " & e.msg)
+        raise newLoggedException(ValueError, "BlockBody's elements have a collision with the specified sketchSalt: " & e.msg)
 
     result &= body.elements.len.toBinary(INT_LEN)
     for elem in body.elements:

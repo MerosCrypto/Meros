@@ -34,6 +34,7 @@ Parameters can be specified over the CLI or via a JSON file, named
 OPTIONS:
     -h,  --help                       Prints this help.
     -d,  --data-dir  <DATA_DIRECTORY> Directory to store data in.
+    -l,  --log-file  <LOG_FILE>       File to save the log to.
          --db        <DB_NAME>        Name for the database file.
     -n,  --network   <NETWORK>        Network to connect to.
     -ns, --no-server                  Don't accept incoming connections.
@@ -45,6 +46,7 @@ OPTIONS:
     shortParams: Table[string, string] = {
         "h":  "help",
         "d":  "data-dir",
+        "l":  "log-file",
         "n":  "network",
         "ns": "no-server",
         "t":  "tcp-port",
@@ -54,18 +56,21 @@ OPTIONS:
 
     #Table of how many arguments each parameter takes.
     longParams: Table[string, int] = {
-        "data-dir":                 1,
-        "db":                       1,
-        "network":                  1,
-        "no-server":                0,
-        "tcp-port":                 1,
-        "rpc-port":                 1,
-        "no-gui":                   0
+        "data-dir":  1,
+        "log-file":  1,
+        "db":        1,
+        "network":   1,
+        "no-server": 0,
+        "tcp-port":  1,
+        "rpc-port":  1,
+        "no-gui":    0
     }.toTable()
 
 type Config* = object
     #Data Directory.
     dataDir*: string
+    #Log file.
+    logFile*: string
     #DB Path.
     db*: string
 
@@ -83,7 +88,7 @@ type Config* = object
     gui*: bool
 
 #Returns the key if it exists and matches the passed type.
-func get(
+proc get(
     json: JSONNode,
     key: string,
     kind: JSONNodeKind
@@ -254,6 +259,13 @@ proc newConfig*(): Config {.forceCheck: [].} =
         "network",
         settings.get("network", JString).getStr(),
         options["network"][0]
+    )
+
+    result.logFile &= result.network & ".log"
+    result.logFile.setParameter(
+        "log-file",
+        settings.get("log-file", JString).getStr(),
+        options["log-file"][0]
     )
 
     if options.hasKey("no-server"):

@@ -137,7 +137,7 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
 ].} =
     #Verify there's a Sync Request to check.
     if peer.requests.len == 0:
-        raise newException(PeerError, "Peer sent us data without any pending SyncRequests.")
+        raise newLoggedException(PeerError, "Peer sent us data without any pending SyncRequests.")
 
     #Check if the message is DataMissing.
     if msg.content == MessageType.DataMissing:
@@ -152,13 +152,13 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
     try:
         #Verify this response is valid for the SyncRequest type.
         if not (manager.requests[peer.requests[0]] of SyncRequestType):
-            raise newException(PeerError, "Peer sent us an invalid response to our SyncRequest.")
+            raise newLoggedException(PeerError, "Peer sent us an invalid response to our SyncRequest.")
 
         #Void result types are used for DataMissing.
         when ResultType is void:
             #Verify the request wasn't for Peers, the only request to now allow DataMissing.
             if manager.requests[peer.requests[0]] of PeersSyncRequest:
-                raise newException(PeerError, "Peer sent us an invalid response to our SyncRequest.")
+                raise newLoggedException(PeerError, "Peer sent us an invalid response to our SyncRequest.")
 
         when not (ResultType is void):
             #Grab and cast the request.
@@ -180,7 +180,7 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
                             ))
                         request.existing.incl(peerSuggestion.ip)
                 except ValueError as e:
-                    doAssert(false, "Parsing peers raised a ValueError: " & e.msg)
+                    panic("Parsing peers raised a ValueError: " & e.msg)
 
                 #Mark that this Peer completed.
                 dec(request.remaining)
@@ -190,7 +190,7 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
                     try:
                         request.result.complete(request.pending)
                     except Exception as e:
-                        doAssert(false, "Couldn't complete a Future: " & e.msg)
+                        panic("Couldn't complete a Future: " & e.msg)
 
                 #Delete the request from this Peer and return.
                 peer.requests.delete(0)
@@ -200,11 +200,11 @@ proc handleResponse[SyncRequestType, ResultType, CheckType](
                 try:
                     request.result.complete(msg.message.parse(request.check))
                 except ValueError:
-                    raise newException(PeerError, "Peer sent us an unparsable response to our SyncRequest.")
+                    raise newLoggedException(PeerError, "Peer sent us an unparsable response to our SyncRequest.")
                 except Exception as e:
-                    doAssert(false, "Couldn't complete a Future: " & e.msg)
+                    panic("Couldn't complete a Future: " & e.msg)
     except KeyError as e:
-        doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
+        panic("Couldn't get a SyncRequest we confirmed we have: " & e.msg)
 
     #Delete the Request.
     manager.requests.del(peer.requests[0])
@@ -233,7 +233,7 @@ proc handle*(
         peer.close()
         return
     except Exception as e:
-        doAssert(false, "Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
+        panic("Handshaking threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     if msg.content != MessageType.Syncing:
         peer.close()
@@ -272,19 +272,19 @@ proc handle*(
                     except SocketError:
                         return
                     except Exception as e:
-                        doAssert(false, "Failed to reply to a Sync request: " & e.msg)
+                        panic("Failed to reply to a Sync request: " & e.msg)
 
                     #Add the tail.
                     var tail: Hash[256]
                     try:
                         tail = msg.message[5 ..< 37].toHash(256)
                     except ValueError as e:
-                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+                        panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
                     try:
                         asyncCheck manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
-                        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 of MessageType.BlockchainTail:
                     #Get the tail.
@@ -292,13 +292,13 @@ proc handle*(
                     try:
                         tail = msg.message[0 ..< 32].toHash(256)
                     except ValueError as e:
-                        doAssert(false, "Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
+                        panic("Couldn't turn a 32-byte string into a 32-byte hash: " & e.msg)
 
                     #Add the Block.
                     try:
                         asyncCheck manager.functions.merit.addBlockByHash(peer, tail)
                     except Exception as e:
-                        doAssert(false, "Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                        panic("Adding a Block threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                 of MessageType.PeersRequest:
                     var peers: seq[Peer] = manager.peers.getPeers(
@@ -328,7 +328,7 @@ proc handle*(
                                     )
                         )
                     except ValueError as e:
-                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                        panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
                     except PeerError:
                         peer.close()
                         return
@@ -342,7 +342,7 @@ proc handle*(
                     try:
                         last = msg.message[BYTE_LEN + BYTE_LEN ..< BYTE_LEN + BYTE_LEN + HASH_LEN].toHash(256)
                     except ValueError as e:
-                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+                        panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
 
                     try:
                         #Backwards.
@@ -384,7 +384,7 @@ proc handle*(
                                     try:
                                         result[i] = msg.message[BYTE_LEN + (i * HASH_LEN) ..< BYTE_LEN + HASH_LEN + (i * HASH_LEN)].toHash(256)
                                     except ValueError as e:
-                                        doAssert(false, "Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+                                        panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
                         )
                     except PeerError:
                         peer.close()
@@ -397,7 +397,7 @@ proc handle*(
                             manager.functions.merit.getBlockByHash(msg.message.toHash(256)).header.serialize()
                         )
                     except ValueError as e:
-                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                        panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                     except IndexError:
                         res = newMessage(MessageType.DataMissing)
 
@@ -406,7 +406,7 @@ proc handle*(
                         var requested: Block = manager.functions.merit.getBlockByHash(msg.message.toHash(256))
                         res = newMessage(MessageType.BlockBody, requested.body.serialize(requested.header.sketchSalt))
                     except ValueError as e:
-                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                        panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                     except IndexError:
                         res = newMessage(MessageType.DataMissing)
 
@@ -418,7 +418,7 @@ proc handle*(
                         for packet in requested.body.packets:
                             res.message &= sketchHash(requested.header.sketchSalt, packet).toBinary(SKETCH_HASH_LEN)
                     except ValueError as e:
-                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                        panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                     except IndexError:
                         res = newMessage(MessageType.DataMissing)
 
@@ -446,11 +446,11 @@ proc handle*(
                             except SocketError:
                                 return
                             except Exception as e:
-                                doAssert(false, "Failed to reply to a Sync request: " & e.msg)
+                                panic("Failed to reply to a Sync request: " & e.msg)
 
                         res = newMessage(MessageType.End)
                     except ValueError as e:
-                        doAssert(false, "Couldn't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                        panic("Couldn't convert a 32-byte message to a 32-byte hash: " & e.msg)
                     except IndexError, KeyError:
                         res = newMessage(MessageType.DataMissing)
 
@@ -459,7 +459,7 @@ proc handle*(
                     try:
                         tx = manager.functions.transactions.getTransaction(msg.message.toHash(256))
                         if tx of Mint:
-                            raise newException(IndexError, "TransactionRequest asked for a Mint.")
+                            raise newLoggedException(IndexError, "TransactionRequest asked for a Mint.")
 
                         var content: MessageType
                         case tx:
@@ -470,11 +470,11 @@ proc handle*(
                             of Data as _:
                                 content = MessageType.Data
                             else:
-                                doAssert(false, "Responding with an unsupported Transaction type to a TransactionRequest.")
+                                panic("Responding with an unsupported Transaction type to a TransactionRequest.")
 
                         res = newMessage(content, tx.serialize())
                     except ValueError as e:
-                        doAssert(false, "Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
+                        panic("Couln't convert a 32-byte message to a 32-byte hash: " & e.msg)
                     except IndexError:
                         res = newMessage(MessageType.DataMissing)
 
@@ -488,7 +488,7 @@ proc handle*(
                                 serialization: string,
                                 check: bool
                             ): void {.forceCheck: [].} =
-                                doAssert(false, "Handling a DataMissing got to the parse function.")
+                                panic("Handling a DataMissing got to the parse function.")
                         )
                     except PeerError:
                         peer.close()
@@ -512,10 +512,10 @@ proc handle*(
                                     raise e
 
                                 if result.hash != check:
-                                    raise newException(ValueError, "Peer sent the wrong Transaction.")
+                                    raise newLoggedException(ValueError, "Peer sent the wrong Transaction.")
                         )
                     except ValueError as e:
-                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                        panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
                     except PeerError:
                         peer.close()
                         return
@@ -537,13 +537,13 @@ proc handle*(
                                 except ValueError as e:
                                     raise e
                                 except Spam as e:
-                                    doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
+                                    panic("Synced Transaction was identified as Spam: " & e.msg)
 
                                 if result.hash != check:
-                                    raise newException(ValueError, "Peer sent the wrong Transaction.")
+                                    raise newLoggedException(ValueError, "Peer sent the wrong Transaction.")
                         )
                     except ValueError as e:
-                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                        panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
                     except PeerError:
                         peer.close()
                         return
@@ -565,13 +565,13 @@ proc handle*(
                                 except ValueError as e:
                                     raise e
                                 except Spam as e:
-                                    doAssert(false, "Synced Transaction was identified as Spam: " & e.msg)
+                                    panic("Synced Transaction was identified as Spam: " & e.msg)
 
                                 if result.hash != check:
-                                    raise newException(ValueError, "Peer sent the wrong Transaction.")
+                                    raise newLoggedException(ValueError, "Peer sent the wrong Transaction.")
                         )
                     except ValueError as e:
-                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                        panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
                     except PeerError:
                         peer.close()
                         return
@@ -598,10 +598,10 @@ proc handle*(
                                     raise e
 
                                 if result.hash != check:
-                                    raise newException(ValueError, "Peer sent the wrong BlockHeader.")
+                                    raise newLoggedException(ValueError, "Peer sent the wrong BlockHeader.")
                         )
                     except ValueError as e:
-                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                        panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
                     except PeerError:
                         peer.close()
                         return
@@ -629,17 +629,17 @@ proc handle*(
                                 ):
                                     if check == Hash[256]():
                                         return
-                                    raise newException(ValueError, "Peer sent the wrong BlockBody.")
+                                    raise newLoggedException(ValueError, "Peer sent the wrong BlockBody.")
 
                                 var elementsMerkle: Merkle = newMerkle()
                                 for elem in result.data.elements:
                                     elementsMerkle.add(Blake256(elem.serializeContents()))
 
                                 if Blake256(result.data.packetsContents.toString() & elementsMerkle.hash.toString()) != check:
-                                    raise newException(ValueError, "Peer sent the wrong BlockBody.")
+                                    raise newLoggedException(ValueError, "Peer sent the wrong BlockBody.")
                         )
                     except ValueError as e:
-                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                        panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
                     except PeerError:
                         peer.close()
                         return
@@ -671,7 +671,7 @@ proc handle*(
                                     raise e
                         )
                     except ValueError as e:
-                        doAssert(false, "Passing a function which can raise ValueError raised a ValueError: " & e.msg)
+                        panic("Passing a function which can raise ValueError raised a ValueError: " & e.msg)
                     except PeerError:
                         peer.close()
                         return
@@ -696,7 +696,7 @@ proc handle*(
 
                         request = cast[SketchHashSyncRequests](manager.requests[peer.requests[0]])
                     except KeyError as e:
-                        doAssert(false, "Couldn't get a SyncRequest we confirmed we have: " & e.msg)
+                        panic("Couldn't get a SyncRequest we confirmed we have: " & e.msg)
 
                     #Receive the rest of the packets.
                     var packets: seq[VerificationPacket] = newSeq[Verificationpacket](request.check.sketchHashes.len)
@@ -721,7 +721,7 @@ proc handle*(
                             peer.close()
                             return
                         except Exception as e:
-                            doAssert(false, "Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                            panic("Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
                         if msg.content == MessageType.DataMissing:
                             break
@@ -748,7 +748,7 @@ proc handle*(
                         try:
                             request.result.complete(packets)
                         except Exception as e:
-                            doAssert(false, "Couldn't complete a Future: " & e.msg)
+                            panic("Couldn't complete a Future: " & e.msg)
 
                     #Delete the Request.
                     manager.requests.del(peer.requests[0])
@@ -765,7 +765,7 @@ proc handle*(
                 except SocketError:
                     return
                 except Exception as e:
-                    doAssert(false, "Failed to reply to a Sync request: " & e.msg)
+                    panic("Failed to reply to a Sync request: " & e.msg)
 
         #Receive the next message.
         try:
@@ -776,4 +776,4 @@ proc handle*(
             peer.close()
             return
         except Exception as e:
-            doAssert(false, "Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)
+            panic("Receiving a new message threw an Exception despite catching all thrown Exceptions: " & e.msg)

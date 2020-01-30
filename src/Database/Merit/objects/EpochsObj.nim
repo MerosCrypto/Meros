@@ -60,14 +60,14 @@ func register*(
     epoch[hash] = @[]
 
 #Add a VerificationPacket to an Epoch.
-func add*(
+proc add*(
     epoch: var Epoch,
     packet: VerificationPacket
 ) {.forceCheck: [].} =
     try:
         epoch[packet.hash] = epoch[packet.hash].concat(packet.holders)
     except KeyError as e:
-        doAssert(false, "Adding a packet to an Epoch which doesn't have that hash registered: " & e.msg)
+        panic("Adding a packet to an Epoch which doesn't have that hash registered: " & e.msg)
 
 #Shift an Epoch.
 proc shift*(

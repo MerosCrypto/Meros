@@ -33,6 +33,8 @@ proc shift*(
     epochs: var Epochs,
     newBlock: Block
 ): Epoch {.forceCheck: [].} =
+    logInfo "Epochs processing Block", hash = newBlock.header.hash
+
     var
         #New Epoch for any Verifications belonging to Transactions that aren't in an older Epoch.
         newEpoch: Epoch = newEpoch()
@@ -78,7 +80,7 @@ proc newEpochs*(
         try:
             discard result.shift(blockchain[b])
         except IndexError as e:
-            doAssert(false, "Couldn't shift the last 10 Blocks from the chain: " & e.msg)
+            panic("Couldn't shift the last 10 Blocks from the chain: " & e.msg)
 
 #Calculate what share each holder deserves of the minted Meros.
 proc calculate*(
@@ -112,7 +114,7 @@ proc calculate*(
                     #Add their Merit to the Transaction's weight.
                     weight += state[holder]
         except KeyError as e:
-            doAssert(false, "Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.keys(): " & e.msg)
+            panic("Couldn't grab the verifiers for a hash in the Epoch grabbed from epoch.keys(): " & e.msg)
 
         #Make sure the Transaction was verified.
         if weight < ((state.unlocked div 2) + 1):
@@ -125,7 +127,7 @@ proc calculate*(
                     scores[holder] = 0
                 scores[holder] += 1
         except KeyError as e:
-            doAssert(false, "Either couldn't grab the verifiers for an Transaction in the Epoch or the score of a holder: " & e.msg)
+            panic("Either couldn't grab the verifiers for an Transaction in the Epoch or the score of a holder: " & e.msg)
 
     #Multiply every score by how much Merit the holder has.
     try:
@@ -137,7 +139,7 @@ proc calculate*(
             #Add the update score to the total.
             total += scores[holder]
     except KeyError as e:
-        doAssert(false, "Couldn't update a holder's score despite grabbing the holder by scores.keys(): " & e.msg)
+        panic("Couldn't update a holder's score despite grabbing the holder by scores.keys(): " & e.msg)
 
     #Turn the table into a seq.
     result = newSeq[Reward]()
@@ -150,11 +152,11 @@ proc calculate*(
                 )
             )
     except KeyError as e:
-        doAssert(false, "Couldn't grab the score of a holder grabbed from scores.keys(): " & e.msg)
+        panic("Couldn't grab the score of a holder grabbed from scores.keys(): " & e.msg)
 
     #Sort them by greatest score.
     result.sort(
-        func (
+        proc (
             x: Reward,
             y: Reward
         ): int {.forceCheck: [].} =
@@ -164,7 +166,7 @@ proc calculate*(
                 if x.nick < y.nick:
                     return 1
                 elif x.nick == y.nick:
-                    doAssert(false, "Epochs generated two rewards for the same nick.")
+                    panic("Epochs generated two rewards for the same nick.")
                 else:
                     return -1
             else:

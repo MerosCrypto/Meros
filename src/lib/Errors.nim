@@ -8,15 +8,87 @@ export ErrorsObjs
 #MeritRemoval object.
 import ../Database/Consensus/Elements/objects/MeritRemovalObj
 
+#Chronicles lib.
+when not defined(merosTests):
+    import chronicles
+    export chronicles
+
 #JSON standard lib.
 import json
 
+#Wrappers around Chronicles.
+template panic*(
+    msg: string
+) =
+    when not defined(merosTests):
+        try:
+            fatal "Panic", reason = msg
+        except Exception:
+            doAssert(false, "Couldn't log to the log file from panic.")
+
+    doAssert(false, msg)
+
+template logDebug*(
+    eventName: static[string],
+    props: varargs[untyped]
+) =
+    when not defined(merosTests):
+        try:
+            debug eventName, props
+        except Exception:
+            panic("Couldn't log to the log file from debug.")
+    else:
+        discard
+
+template logInfo*(
+    eventName: static[string],
+    props: varargs[untyped]
+) =
+    when not defined(merosTests):
+        try:
+            info eventName, props
+        except Exception:
+            panic("Couldn't log to the log file from info.")
+    else:
+        discard
+
+template logNotice*(
+    eventName: static[string],
+    props: varargs[untyped]
+) =
+    when not defined(merosTests):
+        try:
+            notice eventName, props
+        except Exception:
+            panic("Couldn't log to the log file from notice.")
+    else:
+        discard
+
+template logWarn*(
+    eventName: static[string],
+    props: varargs[untyped]
+) =
+    when not defined(merosTests):
+        try:
+            warn eventName, props
+        except Exception:
+            panic("Couldn't log to the log file from warn.")
+    else:
+        discard
+
 #Constructors.
+template newLoggedException*(
+    ExceptionType: typedesc,
+    error: string
+): untyped =
+    logDebug "New Exception", msg = error
+    newException(ExceptionType, error)
+
 proc newMaliciousMeritHolder*(
     msg: string,
     elem: Element
 ): ref MaliciousMeritHolder {.forceCheck: [].} =
-    result = newException(MaliciousMeritHolder, msg)
+    result = newLoggedException(MaliciousMeritHolder, msg)
     result.element = elem
 
 proc newSpam*(
@@ -24,7 +96,7 @@ proc newSpam*(
     hash: Hash[256],
     argon: Hash[256]
 ): ref Spam {.forceCheck: [].} =
-    result = newException(Spam, msg)
+    result = newLoggedException(Spam, msg)
     result.hash = hash
     result.argon = argon
 
@@ -33,7 +105,7 @@ proc newJSONRPCError*(
     msg: string,
     data: JSONNode = nil
 ): ref JSONRPCError =
-    result = newException(JSONRPCError, msg)
+    result = newLoggedException(JSONRPCError, msg)
     result.code = code
     result.data = data
 

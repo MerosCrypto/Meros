@@ -53,7 +53,7 @@ proc add*(
     #Verify it wasn't already added.
     try:
         discard transactions[claim.hash]
-        raise newException(DataExists, "Claim was already added.")
+        raise newLoggedException(DataExists, "Claim was already added.")
     except IndexError:
         discard
 
@@ -73,24 +73,24 @@ proc add*(
     #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
     for input in claim.inputs:
         if inputTable.contains(input.toString()):
-            raise newException(ValueError, "Claim spends the same input twice.")
+            raise newLoggedException(ValueError, "Claim spends the same input twice.")
         inputTable.incl(input.toString())
 
         try:
             if not (transactions[input.hash] of Mint):
-                raise newException(ValueError, "Claim doesn't spend a Mint.")
+                raise newLoggedException(ValueError, "Claim doesn't spend a Mint.")
         except IndexError:
-            raise newException(ValueError, "Claim spends a non-existant Mint.")
+            raise newLoggedException(ValueError, "Claim spends a non-existant Mint.")
 
         try:
             output = transactions.loadMintOutput(cast[FundedInput](input))
         except DBReadError:
-            raise newException(ValueError, "Claim spends a non-existant Mint.")
+            raise newLoggedException(ValueError, "Claim spends a non-existant Mint.")
 
         try:
             key = lookup(output.key)
         except IndexError as e:
-            doAssert(false, "Created a Mint to a non-existent Merit Holder: " & e.msg)
+            panic("Created a Mint to a non-existent Merit Holder: " & e.msg)
 
         claimers.add(key)
         amount += output.amount
@@ -100,7 +100,7 @@ proc add*(
 
     #Verify the signature.
     if not claim.verify(claimers):
-        raise newException(ValueError, "Claim has an invalid Signature.")
+        raise newLoggedException(ValueError, "Claim has an invalid Signature.")
 
     #Add the Claim.
     try:
@@ -119,16 +119,16 @@ proc add*(
     #Verify it wasn't already added.
     try:
         discard transactions[send.hash]
-        raise newException(DataExists, "Send was already added.")
+        raise newLoggedException(DataExists, "Send was already added.")
     except IndexError:
         discard
 
     #Verify the inputs length.
     if send.inputs.len < 1 or 255 < send.inputs.len:
-        raise newException(ValueError, "Send has too little or too many inputs.")
+        raise newLoggedException(ValueError, "Send has too little or too many inputs.")
     #Verify the outputs length.
     if send.outputs.len < 1 or 255 < send.outputs.len:
-        raise newException(ValueError, "Send has too little or too many outputs.")
+        raise newLoggedException(ValueError, "Send has too little or too many outputs.")
 
     var
         #Sender.
@@ -145,12 +145,12 @@ proc add*(
     try:
         senders[0] = transactions.loadSendOutput(cast[FundedInput](send.inputs[0])).key
     except DBReadError:
-        raise newException(ValueError, "Send spends a non-existant output.")
+        raise newLoggedException(ValueError, "Send spends a non-existant output.")
 
     #Add the amount the inputs provide. Also verify no inputs are spent multiple times.
     for input in send.inputs:
         if inputTable.contains(input.toString()):
-            raise newException(ValueError, "Send spends the same input twice.")
+            raise newLoggedException(ValueError, "Send spends the same input twice.")
         inputTable.incl(input.toString())
 
         try:
@@ -158,14 +158,14 @@ proc add*(
                 (not (transactions[input.hash] of Claim)) and
                 (not (transactions[input.hash] of Send))
             ):
-                raise newException(ValueError, "Send doesn't spend a Claim or Send.")
+                raise newLoggedException(ValueError, "Send doesn't spend a Claim or Send.")
         except IndexError:
-            raise newException(ValueError, "Send spends a non-existant Claim or Send.")
+            raise newLoggedException(ValueError, "Send spends a non-existant Claim or Send.")
 
         try:
             spent = transactions.loadSendOutput(cast[FundedInput](input))
         except DBReadError:
-            raise newException(ValueError, "Send spends a non-existant output.")
+            raise newLoggedException(ValueError, "Send spends a non-existant output.")
 
         if not senders.contains(spent.key):
             senders.add(spent.key)
@@ -175,18 +175,18 @@ proc add*(
     #Subtract the amount the outpts spend.
     for output in send.outputs:
         if output.amount == 0:
-            raise newException(ValueError, "Send output has an amount of 0.")
+            raise newLoggedException(ValueError, "Send output has an amount of 0.")
 
         amount -= output.amount
 
     #If the amount is not 9, there's a problem
     #It should be noted, amount can underflow. It's impossible to spend the full underflow.
     if amount != 0:
-        raise newException(ValueError, "Send outputs don't spend the amount provided by the inputs.")
+        raise newLoggedException(ValueError, "Send outputs don't spend the amount provided by the inputs.")
 
     #Verify the signature.
     if not senders.aggregate().verify(send.hash.toString(), send.signature):
-        raise newException(ValueError, "Send has an invalid Signature.")
+        raise newLoggedException(ValueError, "Send has an invalid Signature.")
 
     #Add the Send.
     try:
@@ -205,24 +205,24 @@ proc add*(
     #Verify it wasn't already added.
     try:
         discard transactions[data.hash]
-        raise newException(DataExists, "Data was already added.")
+        raise newLoggedException(DataExists, "Data was already added.")
     except IndexError:
         discard
 
     #Verify the inputs length.
     if data.inputs.len != 1:
-        raise newException(ValueError, "Data doesn't have one input.")
+        raise newLoggedException(ValueError, "Data doesn't have one input.")
 
     #Load the sender (which also verifies the input exists, if it's not the sender's key).
     var sender: EdPublicKey
     try:
         sender = transactions.getSender(data)
     except DataMissing as e:
-        raise newException(ValueError, "Data's input is either missing or not a Data: " & e.msg)
+        raise newLoggedException(ValueError, "Data's input is either missing or not a Data: " & e.msg)
 
     #Verify the signature.
     if not sender.verify(data.hash.toString(), data.signature):
-        raise newException(ValueError, "Data has an invalid Signature.")
+        raise newLoggedException(ValueError, "Data has an invalid Signature.")
 
     #Add the Data.
     try:
@@ -251,7 +251,7 @@ proc mint*(
     try:
         transactions.add(cast[Transaction](mint))
     except ValueError as e:
-        doAssert(false, "Adding a Mint raised a ValueError: " & e.msg)
+        panic("Adding a Mint raised a ValueError: " & e.msg)
 
 #Remove every hash in this Epoch from the cache/RAM.
 proc archive*(

@@ -31,10 +31,10 @@ proc Argon*(
             1
         ).data
     except Exception:
-        doAssert(false, "Argon2d raised an error.")
+        panic("Argon2d raised an error.")
 
 #String to ArgonHash.
-func toArgonHash*(
+proc toArgonHash*(
     hash: string
 ): ArgonHash {.forceCheck: [
     ValueError

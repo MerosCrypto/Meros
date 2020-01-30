@@ -44,7 +44,7 @@ proc parseMeritRemovalElement(
         raise e
 
     if i + result.len > data.len:
-        raise newException(ValueError, "parseMeritRemovalElement not handed enough data to parse the next Element.")
+        raise newLoggedException(ValueError, "parseMeritRemovalElement not handed enough data to parse the next Element.")
 
     try:
         case int(data[i]):
@@ -57,9 +57,9 @@ proc parseMeritRemovalElement(
             of DATA_DIFFICULTY_PREFIX:
                 result.element = parseDataDifficulty(holder & data[i + 1 ..< i + result.len])
             of GAS_PRICE_PREFIX:
-                doAssert(false, "GasPrices are not supported.")
+                panic("GasPrices are not supported.")
             else:
-                doAssert(false, "Possible Element wasn't supported.")
+                panic("Possible Element wasn't supported.")
     except ValueError as e:
         raise e
 
@@ -87,14 +87,14 @@ proc parseMeritRemoval*(
         element2: Element
 
     if mrSeq[1].len != 1:
-        raise newException(ValueError, "MeritRemoval not handed enough data to get if it's partial.")
+        raise newLoggedException(ValueError, "MeritRemoval not handed enough data to get if it's partial.")
     case int(mrSeq[1][0]):
         of 0:
             partial = false
         of 1:
             partial = true
         else:
-            raise newException(ValueError, "MeritRemoval has an invalid partial field.")
+            raise newLoggedException(ValueError, "MeritRemoval has an invalid partial field.")
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
@@ -141,14 +141,14 @@ proc parseSignedMeritRemoval*(
         element2: Element
 
     if mrSeq[1].len != 1:
-        raise newException(ValueError, "MeritRemoval not handed enough data to get if it's partial.")
+        raise newLoggedException(ValueError, "MeritRemoval not handed enough data to get if it's partial.")
     case int(mrSeq[1][0]):
         of 0:
             partial = false
         of 1:
             partial = true
         else:
-            raise newException(ValueError, "MeritRemoval has an invalid partial field.")
+            raise newLoggedException(ValueError, "MeritRemoval has an invalid partial field.")
 
     try:
         pmreResult = mrStr.parseMeritRemovalElement(i, mrSeq[0])
@@ -173,4 +173,4 @@ proc parseSignedMeritRemoval*(
             newBLSSignature(mrStr[mrStr.len - BLS_SIGNATURE_LEN ..< mrStr.len])
         )
     except BLSError:
-        raise newException(ValueError, "Invalid Signature.")
+        raise newLoggedException(ValueError, "Invalid Signature.")

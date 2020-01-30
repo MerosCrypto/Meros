@@ -68,7 +68,7 @@ proc newDB*(
         result.lmdb.open("consensus")
         result.lmdb.open("merit")
     except Exception as e:
-        raise newException(DBError, "Couldn't open the DB: " & e.msg)
+        raise newLoggedException(DBError, "Couldn't open the DB: " & e.msg)
 
 proc close*(
     db: DB
@@ -78,4 +78,4 @@ proc close*(
     try:
         db.lmdb.close()
     except Exception as e:
-        raise newException(DBError, "Couldn't close the DB: " & e.msg)
+        raise newLoggedException(DBError, "Couldn't close the DB: " & e.msg)

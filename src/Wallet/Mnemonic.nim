@@ -36,7 +36,7 @@ proc newMnemonic*(): Mnemonic {.forceCheck: [].} =
     try:
         randomFill(result.entropy)
     except RandomError as e:
-        doAssert(false, "Couldn't generate entropy for a mnemonic: " & e.msg)
+        panic("Couldn't generate entropy for a mnemonic: " & e.msg)
 
     #Calculate the checksum.
     result.checksum = $char(SHA2_256(result.entropy).data[0])
@@ -147,7 +147,7 @@ proc newMnemonic*(
 
     #Verify the entropy length.
     if entropyLen mod 32 != 0:
-        raise newException(ValueError, "Invalid length entropy.")
+        raise newLoggedException(ValueError, "Invalid length entropy.")
 
     #Extract the entropy from decoded.
     result.entropy = newString(entropyLen div 8)
@@ -174,18 +174,18 @@ proc newMnemonic*(
 
     #Verify the checksum.
     if result.checksum != decoded:
-        raise newException(ValueError, "Invalid checksum.")
+        raise newLoggedException(ValueError, "Invalid checksum.")
 
 #Generate a secret using the Mnemonic and the password.
 proc unlock*(
     mnemonic: Mnemonic,
     password: string = ""
-): string {.forceCheck: [].} =
+): string {.inline, forceCheck: [].} =
     PDKDF2_HMAC_SHA2_512(mnemonic.sentence.toNFKD(), ("mnemonic" & password.toNFKD())).toString()
 
 
 #Stringify a mnemonic.
 func `$`*(
     mnemonic: Mnemonic
-): string {.forceCheck: [].} =
+): string {.inline, forceCheck: [].} =
     mnemonic.sentence

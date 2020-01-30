@@ -18,7 +18,7 @@ proc verify(
             if consensus.getStatus(transaction.hash).beaten:
                 return
         except IndexError as e:
-            doAssert(false, "Asked to verify a Transaction without a Status: " & e.msg)
+            panic("Asked to verify a Transaction without a Status: " & e.msg)
 
         #Verify the Transaction.
         var verif: SignedVerification = newSignedVerificationObj(transaction.hash)
@@ -28,9 +28,9 @@ proc verify(
         try:
             functions.consensus.addSignedVerification(verif)
         except ValueError as e:
-            doAssert(false, "Created a Verification with an invalid signature: " & e.msg)
+            panic("Created a Verification with an invalid signature: " & e.msg)
         except DataExists as e:
-            doAssert(false, "Created a Verification which already exists: " & e.msg)
+            panic("Created a Verification which already exists: " & e.msg)
 
 proc mainTransactions() {.forceCheck: [].} =
     {.gcsafe.}:
@@ -66,14 +66,14 @@ proc mainTransactions() {.forceCheck: [].} =
             DataExists
         ].} =
             #Print that we're adding the Claim.
-            echo "Adding a new Claim."
+            logInfo "New Claim", hash = claim.hash
 
             #Add the Claim.
             try:
                 transactions.add(claim, functions.merit.getPublicKey)
             #Passing a function which can raise IndexError raised one.
             except IndexError as e:
-                doAssert(false, "Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
+                panic("Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
             #Invalid Claim.
             except ValueError as e:
                 raise e
@@ -84,7 +84,7 @@ proc mainTransactions() {.forceCheck: [].} =
             #Register the Claim with Consensus.
             consensus.register(merit.state, claim, merit.blockchain.height)
 
-            echo "Successfully added the Claim."
+            logInfo "Added Claim", hash = claim.hash
 
             if not syncing:
                 #Broadcast the Claim.
@@ -97,7 +97,7 @@ proc mainTransactions() {.forceCheck: [].} =
                 try:
                     asyncCheck verify(claim)
                 except Exception as e:
-                    doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+                    panic("Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
         #Handle Sends.
         functions.transactions.addSend = proc (
@@ -107,8 +107,8 @@ proc mainTransactions() {.forceCheck: [].} =
             ValueError,
             DataExists
         ].} =
-            #Print that we're adding the Send.
-            echo "Adding a new Send."
+            #Print that we're adding the Send
+            logInfo "New Send", hash = send.hash
 
             #Add the Send.
             try:
@@ -123,7 +123,7 @@ proc mainTransactions() {.forceCheck: [].} =
             #Register the Send with Consensus.
             consensus.register(merit.state, send, merit.blockchain.height)
 
-            echo "Successfully added the Send."
+            logInfo "Added Send", hash = send.hash
 
             if not syncing:
                 #Broadcast the Send.
@@ -136,7 +136,7 @@ proc mainTransactions() {.forceCheck: [].} =
                 try:
                     asyncCheck verify(send)
                 except Exception as e:
-                    doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+                    panic("Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
         #Handle Datas.
         functions.transactions.addData = proc (
@@ -146,8 +146,8 @@ proc mainTransactions() {.forceCheck: [].} =
             ValueError,
             DataExists
         ].} =
-            #Print that we're adding the Data.
-            echo "Adding a new Data."
+            #Print that we're adding the Data
+            logInfo "New Data", hash = data.hash
 
             #Add the Data.
             try:
@@ -161,8 +161,7 @@ proc mainTransactions() {.forceCheck: [].} =
 
             #Register the Data with Consensus.
             consensus.register(merit.state, data, merit.blockchain.height)
-
-            echo "Successfully added the Data."
+            logInfo "Added Data", hash = data.hash
 
             if not syncing:
                 #Broadcast the Data.
@@ -175,7 +174,7 @@ proc mainTransactions() {.forceCheck: [].} =
                 try:
                     asyncCheck verify(data)
                 except Exception as e:
-                    doAssert(false, "Verify threw an Exception despite not naturally throwing anything: " & e.msg)
+                    panic("Verify threw an Exception despite not naturally throwing anything: " & e.msg)
 
         #Mark a Transaction as verified.
         functions.transactions.verify = proc (

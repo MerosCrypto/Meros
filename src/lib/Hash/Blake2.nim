@@ -50,12 +50,15 @@ proc Blake2_64*(
     var state: ptr Blake2bState = cast[ptr Blake2bState](alloc0(sizeof(Blake2bState)))
 
     #Hash the bytes.
-    doAssert(state.init(8) == 0, "Failed to init a Blake2b State.")
-    doAssert(state.update(addr bytes[0], bytes.len) == 0, "Failed to update a Blake2b State.")
+    if state.init(8) != 0:
+        panic("Failed to init a Blake2b State.")
+    if state.update(addr bytes[0], bytes.len) != 0:
+        panic("Failed to update a Blake2b State.")
 
     #Save the result.
     var hash: string = newString(8)
-    doAssert(state.finalize(addr hash[0], 8) == 0, "Failed to finalize a Blake2b State.")
+    if state.finalize(addr hash[0], 8) != 0:
+        panic("Failed to finalize a Blake2b State.")
     result = uint64(hash.fromBinary())
 
     #Deallocate the state.
@@ -74,11 +77,14 @@ proc Blake2_256*(
     var state: ptr Blake2bState = cast[ptr Blake2bState](alloc0(sizeof(Blake2bState)))
 
     #Hash the bytes.
-    doAssert(state.init(32) == 0, "Failed to init a Blake2b State.")
-    doAssert(state.update(addr bytes[0], bytesArg.len) == 0, "Failed to update a Blake2b State.")
+    if state.init(32) != 0:
+        panic("Failed to init a Blake2b State.")
+    if state.update(addr bytes[0], bytesArg.len) != 0:
+        panic("Failed to update a Blake2b State.")
 
     #Save the result.
-    doAssert(state.finalize(addr result.data[0], 32) == 0, "Failed to finalize a Blake2b State.")
+    if state.finalize(addr result.data[0], 32) != 0:
+        panic("Failed to finalize a Blake2b State.")
 
     #Deallocate the state.
     dealloc(state)
@@ -100,7 +106,7 @@ proc Blake2_512*(
     result.data = blake2_512.digest(cast[ptr uint8](addr bytes[0]), uint(bytes.len)).data
 
 #String to Blake2_256Hash.
-func toBlake2_256Hash*(
+proc toBlake2_256Hash*(
     hash: string
 ): Blake2_256Hash {.forceCheck: [
     ValueError
@@ -111,7 +117,7 @@ func toBlake2_256Hash*(
         raise e
 
 #String to Blake2_512Hash.
-func toBlake2_512Hash*(
+proc toBlake2_512Hash*(
     hash: string
 ): Blake2_512Hash {.forceCheck: [
     ValueError

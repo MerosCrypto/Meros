@@ -35,10 +35,10 @@ proc RandomX*(
         var hashStr: string = vm.hash(data)
         copyMem(addr result.data[0], addr hashStr[0], 32)
     except Exception:
-        doAssert(false, "RandomX raised an error.")
+        panic("RandomX raised an error.")
 
 #String to RandomXHash.
-func toRandomXHash*(
+proc toRandomXHash*(
     hash: string
 ): RandomXHash {.forceCheck: [
     ValueError

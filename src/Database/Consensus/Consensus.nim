@@ -74,7 +74,7 @@ proc verify*(
     DataExists
 ].} =
     if consensus.db.hasMeritRemoval(mr):
-        raise newException(DataExists, "MeritRemoval already exists.")
+        raise newLoggedException(DataExists, "MeritRemoval already exists.")
 
     proc checkSecondCompeting(
         hash: Hash[256]
@@ -86,10 +86,10 @@ proc verify*(
             try:
                 status = consensus.db.load(hash)
             except DBReadError:
-                raise newException(ValueError, "Unknown hash.")
+                raise newLoggedException(ValueError, "Unknown hash.")
 
             if (not status.holders.contains(mr.holder)) or status.signatures.hasKey(mr.holder):
-                raise newException(ValueError, "Verification isn't archived.")
+                raise newLoggedException(ValueError, "Verification isn't archived.")
 
         var
             inputs: HashSet[string] = initHashSet[string]()
@@ -97,7 +97,7 @@ proc verify*(
         try:
             tx = consensus.functions.transactions.getTransaction(hash)
         except IndexError:
-            raise newException(ValueError, "Unknown Transaction verified in first Element.")
+            raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
 
         for input in tx.inputs:
             inputs.incl(input.toString())
@@ -109,16 +109,16 @@ proc verify*(
             of VerificationPacket as packet:
                 secondHash = packet.hash
             else:
-                raise newException(ValueError, "Invalid second Element.")
+                raise newLoggedException(ValueError, "Invalid second Element.")
         try:
             tx = consensus.functions.transactions.getTransaction(secondHash)
         except IndexError:
-            raise newException(ValueError, "Unknown Transaction verified in second Element.")
+            raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
 
         for input in tx.inputs:
             if inputs.contains(input.toString()):
                 return
-        raise newException(ValueError, "Transactions don't compete.")
+        raise newLoggedException(ValueError, "Transactions don't compete.")
 
     proc checkSecondSameNonce(
         nonce: int
@@ -127,25 +127,25 @@ proc verify*(
     ].} =
         try:
             if mr.partial and ((nonce > consensus.archived[mr.holder]) or (mr.element1 != consensus.db.load(mr.holder, nonce))):
-                raise newException(ValueError, "First Element isn't archived.")
+                raise newLoggedException(ValueError, "First Element isn't archived.")
         except KeyError:
-            raise newException(ValueError, "MeritRemoval has an invalid holder.")
+            raise newLoggedException(ValueError, "MeritRemoval has an invalid holder.")
         except DBReadError as e:
-            doAssert(false, "Nonce was within bounds yet no Element could be loaded: " & e.msg)
+            panic("Nonce was within bounds yet no Element could be loaded: " & e.msg)
 
         case mr.element2:
             of Verification as _:
-                raise newException(ValueError, "Invalid second Element.")
+                raise newLoggedException(ValueError, "Invalid second Element.")
             of VerificationPacket as _:
-                raise newException(ValueError, "Invalid second Element.")
+                raise newLoggedException(ValueError, "Invalid second Element.")
             of SendDifficulty as sd:
                 if nonce != sd.nonce:
-                    raise newException(ValueError, "Second Element has a distinct nonce.")
+                    raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
             of DataDifficulty as dd:
                 if nonce != dd.nonce:
-                    raise newException(ValueError, "Second Element has a distinct nonce.")
+                    raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
             else:
-                doAssert(false, "Unsupported MeritRemoval Element.")
+                panic("Unsupported MeritRemoval Element.")
 
     try:
         case mr.element1:
@@ -158,7 +158,7 @@ proc verify*(
             of DataDifficulty as dd:
                 checkSecondSameNonce(dd.nonce)
             else:
-                doAssert(false, "Unsupported MeritRemoval Element.")
+                panic("Unsupported MeritRemoval Element.")
     except ValueError as e:
         raise e
 
@@ -182,7 +182,7 @@ proc flag*(
             consensus.malicious[removal.holder].add(cast[SignedMeritRemoval](removal))
             consensus.db.saveMaliciousProof(cast[SignedMeritRemoval](removal))
         except KeyError as e:
-            doAssert(false, "Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
+            panic("Couldn't add a MeritRemoval to a seq we've confirmed exists: " & e.msg)
 
     #Reclaulcate the affected Transactions in Epochs.
     var
@@ -192,13 +192,13 @@ proc flag*(
         try:
             blockInEpochs = blockchain[b]
         except IndexError as e:
-            doAssert(false, "Couldn't get a Block from the Blockchain despite iterating up to the height: " & e.msg)
+            panic("Couldn't get a Block from the Blockchain despite iterating up to the height: " & e.msg)
 
         for packet in blockInEpochs.body.packets:
             try:
                 status = consensus.getStatus(packet.hash)
             except IndexError as e:
-                doAssert(false, "Couldn't get the status of a Transaction in Epochs at one point: " & e.msg)
+                panic("Couldn't get the status of a Transaction in Epochs at one point: " & e.msg)
 
             #Don't recalculate Transactions which have already finalized.
             if status.merit != -1:
@@ -218,7 +218,7 @@ proc flag*(
         try:
             status = consensus.getStatus(hash)
         except IndexError as e:
-            doAssert(false, "Couldn't get the status of a Transaction yet to be mentioned in Epochs: " & e.msg)
+            panic("Couldn't get the status of a Transaction yet to be mentioned in Epochs: " & e.msg)
 
         if status.verified and status.holders.contains(removal.holder):
             var merit: int = 0
@@ -263,7 +263,7 @@ proc register*(
             ):
                 status.beaten = true
         except IndexError:
-            doAssert(false, "Parent Transaction doesn't have a status.")
+            panic("Parent Transaction doesn't have a status.")
 
         #Check for competing Transactions.
         var spenders: seq[Hash[256]] = consensus.functions.transactions.getSpenders(input)
@@ -280,7 +280,7 @@ proc register*(
                     try:
                         consensus.getStatus(spender).competing = true
                     except IndexError:
-                        doAssert(false, "Competing Transaction doesn't have a Status despite being marked as a spender.")
+                        panic("Competing Transaction doesn't have a Status despite being marked as a spender.")
 
     #Set the status.
     consensus.setStatus(tx.hash, status)
@@ -300,7 +300,7 @@ proc add*(
         status = consensus.getStatus(packet.hash)
     #If there's no TX status, the TX wasn't registered.
     except IndexError:
-        doAssert(false, "Adding a VerificationPacket for a non-existent Transaction.")
+        panic("Adding a VerificationPacket for a non-existent Transaction.")
 
     #Add the packet.
     status.add(packet)
@@ -321,7 +321,7 @@ proc add*(
 ].} =
     #Verify the holder exists.
     if verif.holder >= uint16(state.holders.len):
-        raise newException(ValueError, "Invalid holder.")
+        raise newLoggedException(ValueError, "Invalid holder.")
 
     #Verify the signature.
     try:
@@ -331,16 +331,16 @@ proc add*(
                 verif.serializeWithoutHolder()
             )
         ):
-            raise newException(ValueError, "Invalid SignedVerification signature.")
+            raise newLoggedException(ValueError, "Invalid SignedVerification signature.")
     except BLSError:
-        doAssert(false, "Holder with an infinite key entered the system.")
+        panic("Holder with an infinite key entered the system.")
 
     #Get the Transaction.
     var tx: Transaction
     try:
         tx = consensus.functions.transactions.getTransaction(verif.hash)
     except IndexError:
-        raise newException(ValueError, "Unknown Verification.")
+        raise newLoggedException(ValueError, "Unknown Verification.")
 
     #Check if this holder verified a competing Transaction.
     for input in tx.inputs:
@@ -354,7 +354,7 @@ proc add*(
             try:
                 status = consensus.getStatus(spender)
             except IndexError as e:
-                doAssert(false, "Couldn't get the status of a Transaction: " & e.msg)
+                panic("Couldn't get the status of a Transaction: " & e.msg)
 
             if status.holders.contains(verif.holder):
                 try:
@@ -374,14 +374,14 @@ proc add*(
                         )
                     )
                 except KeyError as e:
-                    doAssert(false, "Couldn't get a holder's unarchived Verification signature: " & e.msg)
+                    panic("Couldn't get a holder's unarchived Verification signature: " & e.msg)
 
     #Get the status.
     var status: TransactionStatus
     try:
         status = consensus.getStatus(verif.hash)
     except IndexError:
-        doAssert(false, "SignedVerification added for a Transaction which was not registered.")
+        panic("SignedVerification added for a Transaction which was not registered.")
 
     #Add the Verification.
     try:
@@ -415,7 +415,7 @@ proc add*(
 ].} =
     #Verify the holder exists.
     if sendDiff.holder >= uint16(state.holders.len):
-        raise newException(ValueError, "Invalid holder.")
+        raise newLoggedException(ValueError, "Invalid holder.")
 
     #Verify the SendDifficulty's signature.
     try:
@@ -425,9 +425,9 @@ proc add*(
                 sendDiff.serializeWithoutHolder()
             )
         ):
-            raise newException(ValueError, "Invalid SendDifficulty signature.")
+            raise newLoggedException(ValueError, "Invalid SendDifficulty signature.")
     except BLSError:
-        raise newException(ValueError, "Invalid SendDifficulty signature.")
+        raise newLoggedException(ValueError, "Invalid SendDifficulty signature.")
 
     #Verify the nonce. This is done in NetworkSync for non-signed versions.
     if sendDiff.nonce != consensus.db.load(sendDiff.holder) + 1:
@@ -437,10 +437,10 @@ proc add*(
             try:
                 other = consensus.db.load(sendDiff.holder, sendDiff.nonce)
             except DBReadError as e:
-                doAssert(false, "Couldn't read a Block Element with a nonce lower than the holder's current nonce: " & e.msg)
+                panic("Couldn't read a Block Element with a nonce lower than the holder's current nonce: " & e.msg)
 
             if other == sendDiff:
-                raise newException(DataExists, "Already added this SendDifficulty.")
+                raise newLoggedException(DataExists, "Already added this SendDifficulty.")
 
             try:
                 var partial: bool = sendDiff.nonce <= consensus.archived[sendDiff.holder]
@@ -462,9 +462,9 @@ proc add*(
                     )
                 )
             except KeyError as e:
-                doAssert(false, "Either couldn't get a holder's archived nonce or one of their signatures: " & e.msg)
+                panic("Either couldn't get a holder's archived nonce or one of their signatures: " & e.msg)
 
-        raise newException(ValueError, "SendDifficulty skips a nonce.")
+        raise newLoggedException(ValueError, "SendDifficulty skips a nonce.")
 
     #Add the SendDifficulty.
     consensus.add(state, cast[SendDifficulty](sendDiff))
@@ -474,7 +474,7 @@ proc add*(
         consensus.signatures[sendDiff.holder].add(sendDiff.signature)
         consensus.db.saveSignature(sendDiff.holder, sendDiff.nonce, sendDiff.signature)
     except KeyError as e:
-        doAssert(false, "Couldn't cache a signature: " & e.msg)
+        panic("Couldn't cache a signature: " & e.msg)
 
 #Add a DataDifficulty.
 proc add*(
@@ -497,7 +497,7 @@ proc add*(
 ].} =
     #Verify the holder exists.
     if dataDiff.holder >= uint16(state.holders.len):
-        raise newException(ValueError, "Invalid holder.")
+        raise newLoggedException(ValueError, "Invalid holder.")
 
     #Verify the DataDifficulty's signature.
     try:
@@ -507,9 +507,9 @@ proc add*(
                 dataDiff.serializeWithoutHolder()
             )
         ):
-            raise newException(ValueError, "Invalid DataDifficulty signature.")
+            raise newLoggedException(ValueError, "Invalid DataDifficulty signature.")
     except BLSError:
-        raise newException(ValueError, "Invalid DataDifficulty signature.")
+        raise newLoggedException(ValueError, "Invalid DataDifficulty signature.")
 
     #Verify the nonce. This is done in NetworkSync for non-signed versions.
     if dataDiff.nonce != consensus.db.load(dataDiff.holder) + 1:
@@ -519,10 +519,10 @@ proc add*(
             try:
                 other = consensus.db.load(dataDiff.holder, dataDiff.nonce)
             except DBReadError as e:
-                doAssert(false, "Couldn't read a Block Element with a nonce lower than the holder's current nonce: " & e.msg)
+                panic("Couldn't read a Block Element with a nonce lower than the holder's current nonce: " & e.msg)
 
             if other == dataDiff:
-                raise newException(DataExists, "Already added this DataDifficulty.")
+                raise newLoggedException(DataExists, "Already added this DataDifficulty.")
 
             try:
                 var partial: bool = dataDiff.nonce <= consensus.archived[dataDiff.holder]
@@ -544,9 +544,9 @@ proc add*(
                     )
                 )
             except KeyError as e:
-                doAssert(false, "Either couldn't get a holder's archived nonce or one of their signatures: " & e.msg)
+                panic("Either couldn't get a holder's archived nonce or one of their signatures: " & e.msg)
 
-        raise newException(ValueError, "DataDifficulty skips a nonce.")
+        raise newLoggedException(ValueError, "DataDifficulty skips a nonce.")
 
     #Add the DataDifficulty.
     consensus.add(state, cast[DataDifficulty](dataDiff))
@@ -556,7 +556,7 @@ proc add*(
         consensus.signatures[dataDiff.holder].add(dataDiff.signature)
         consensus.db.saveSignature(dataDiff.holder, dataDiff.nonce, dataDiff.signature)
     except KeyError as e:
-        doAssert(false, "Couldn't cache a signature: " & e.msg)
+        panic("Couldn't cache a signature: " & e.msg)
 
 #Add a Merit Removal's Transaction.
 proc addMeritRemovalTransaction*(
@@ -575,7 +575,7 @@ proc getMeritRemovalTransaction*(
     try:
         result = consensus.db.loadTransaction(hash)
     except DBReadError as e:
-        raise newException(IndexError, e.msg)
+        raise newLoggedException(IndexError, e.msg)
 
 #Add a SignedMeritRemoval.
 proc add*(
@@ -589,7 +589,7 @@ proc add*(
 ].} =
     #Verify the MeritRemoval's signature.
     if not mr.signature.verify(mr.agInfo(state.holders[mr.holder])):
-        raise newException(ValueError, "Invalid MeritRemoval signature.")
+        raise newLoggedException(ValueError, "Invalid MeritRemoval signature.")
 
     try:
         consensus.verify(mr)
@@ -633,7 +633,7 @@ proc getUnfinalizedParents(
                 if consensus.getStatus(input.hash).merit == -1:
                     result.add(input.hash)
             except IndexError as e:
-                doAssert(false, "Couldn't get the Status of a Transaction used as an input in the specified Transaction: " & e.msg)
+                panic("Couldn't get the Status of a Transaction used as an input in the specified Transaction: " & e.msg)
 
 #Mark all mentioned packets as mentioned, reset pending, finalize finalized Transactions, and check close Transactions.
 proc archive*(
@@ -658,7 +658,7 @@ proc archive*(
             #Since this is a ref, we don't need to set it back.
             #We would if it needed to be saved to the DB, but the pending data isn't.
     except IndexError as e:
-        doAssert(false, "Newly archived Transaction doesn't have a TransactionStatus: " & e.msg)
+        panic("Newly archived Transaction doesn't have a TransactionStatus: " & e.msg)
 
     #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned:
@@ -684,7 +684,7 @@ proc archive*(
                 consensus.archived[holder] = nonce
                 consensus.db.saveArchived(holder, nonce)
         except KeyError as e:
-            doAssert(false, "Block had Elements with an invalid holder: " & e.msg)
+            panic("Block had Elements with an invalid holder: " & e.msg)
 
     try:
         for elem in elements:
@@ -696,9 +696,9 @@ proc archive*(
                 of MeritRemoval as _:
                     discard
                 else:
-                    doAssert(false, "Unsupported Block Element.")
+                    panic("Unsupported Block Element.")
     except KeyError:
-        doAssert(false, "Tried to archive an Element for a non-existent holder.")
+        panic("Tried to archive an Element for a non-existent holder.")
 
     #Transactions finalized out of order.
     var outOfOrder: HashSet[Hash[256]] = initHashSet[Hash[256]]()
@@ -722,7 +722,7 @@ proc archive*(
             try:
                 tx = consensus.functions.transactions.getTransaction(parent)
             except IndexError as e:
-                doAssert(false, "Couldn't get a Transaction that's out of Epochs: " & e.msg)
+                panic("Couldn't get a Transaction that's out of Epochs: " & e.msg)
 
             #Grab this Transaction's unfinalized parents.
             var newParents: seq[Hash[256]] = consensus.getUnfinalizedParents(tx)
@@ -732,7 +732,7 @@ proc archive*(
                 try:
                     consensus.finalize(state, parent, popped[hash])
                 except KeyError as e:
-                    doAssert(false, "Couldn't get a value from a Table using a key from .keys(): " & e.msg)
+                    panic("Couldn't get a value from a Table using a key from .keys(): " & e.msg)
                 outOfOrder.incl(parent)
             else:
                 #Else, add back this Transaction, and then add the new parents.
@@ -746,7 +746,7 @@ proc archive*(
         try:
             status = consensus.getStatus(hash)
         except IndexError:
-            doAssert(false, "Couldn't get the status of a Transaction that's close to being verified: " & $hash)
+            panic("Couldn't get the status of a Transaction that's close to being verified: " & $hash)
 
         #Remove finalized Transactions.
         if status.merit != -1:

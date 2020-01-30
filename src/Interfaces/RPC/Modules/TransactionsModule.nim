@@ -45,7 +45,7 @@ proc `%`(
                     "amount": $output.amount
                 })
     except KeyError as e:
-        doAssert(false, "Couldn't add inputs/outputs to input/output arrays we just created: " & e.msg)
+        panic("Couldn't add inputs/outputs to input/output arrays we just created: " & e.msg)
 
     case tx:
         of Mint as mint:
@@ -55,7 +55,7 @@ proc `%`(
                 for o in 0 ..< result["outputs"].len:
                     result["outputs"][o]["key"] = % $cast[MintOutput](mint.outputs[o]).key
             except KeyError as e:
-                doAssert(false, "Couldn't add a Mint's output's key to its output: " & e.msg)
+                panic("Couldn't add a Mint's output's key to its output: " & e.msg)
 
         of Claim as claim:
             result["descendant"] = % "Claim"
@@ -66,7 +66,7 @@ proc `%`(
                 for o in 0 ..< claim.outputs.len:
                     result["outputs"][o]["key"] = % $cast[SendOutput](claim.outputs[o]).key
             except KeyError as e:
-                doAssert(false, "Couldn't add a Claim's outputs' keys to its outputs: " & e.msg)
+                panic("Couldn't add a Claim's outputs' keys to its outputs: " & e.msg)
 
             result["signature"] = % $claim.signature
 
@@ -79,7 +79,7 @@ proc `%`(
                 for o in 0 ..< send.outputs.len:
                     result["outputs"][o]["key"] = % $cast[SendOutput](send.outputs[o]).key
             except KeyError as e:
-                doAssert(false, "Couldn't add a Send's inputs' nonces/outputs' keys to its inputs/outputs: " & e.msg)
+                panic("Couldn't add a Send's inputs' nonces/outputs' keys to its inputs/outputs: " & e.msg)
 
             result["signature"] = % $send.signature
             result["proof"] = % send.proof
@@ -113,7 +113,7 @@ proc module*(
                     (params.len != 1) or
                     (params[0].kind != JString)
                 ):
-                    raise newException(ParamError, "")
+                    raise newLoggedException(ParamError, "")
 
                 #Get the Transaction.
                 try:
@@ -123,4 +123,4 @@ proc module*(
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid hash")
     except Exception as e:
-        doAssert(false, "Couldn't create the Transactions Module: " & e.msg)
+        panic("Couldn't create the Transactions Module: " & e.msg)

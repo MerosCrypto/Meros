@@ -8,4 +8,4 @@ import ../../../..//Transactions/objects/TransactionObj
 method serialize*(
     output: Output
 ): string {.base, forceCheck: [].} =
-    doAssert(false, "Output serialize method called.")
+    panic("Output serialize method called.")
