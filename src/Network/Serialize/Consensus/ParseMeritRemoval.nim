@@ -4,8 +4,8 @@ import ../../../lib/Errors
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
-#MeritRemoval object.
-import ../../../Database/Consensus/Elements/objects/MeritRemovalObj
+#MeritRemoval lib.
+import ../../../Database/Consensus/Elements/MeritRemoval
 
 #Serialize/Deserialize functions.
 import ../SerializeCommon
@@ -110,11 +110,12 @@ proc parseMeritRemoval*(
         raise e
 
     #Create the MeritRemoval.
-    result = newMeritRemovalObj(
+    result = newMeritRemoval(
         uint16(mrSeq[0].fromBinary()),
         partial,
         element1,
-        element2
+        element2,
+        @[]
     )
 
 #Parse a Signed MeritRemoval.
@@ -165,12 +166,13 @@ proc parseSignedMeritRemoval*(
 
     #Create the SignedMeritRemoval.
     try:
-        result = newSignedMeritRemovalObj(
+        result = newSignedMeritRemoval(
             uint16(mrSeq[0].fromBinary()),
             partial,
             element1,
             element2,
-            newBLSSignature(mrStr[mrStr.len - BLS_SIGNATURE_LEN ..< mrStr.len])
+            newBLSSignature(mrStr[mrStr.len - BLS_SIGNATURE_LEN ..< mrStr.len]),
+            @[]
         )
     except BLSError:
         raise newLoggedException(ValueError, "Invalid Signature.")

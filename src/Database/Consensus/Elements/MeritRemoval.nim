@@ -20,8 +20,39 @@ import ../../../Network/Serialize/Consensus/SerializeVerification
 import ../../../Network/Serialize/Consensus/SerializeVerificationPacket
 import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 
+#Calculate the MeritRemoval's reason.
+proc calculateMeritRemovalReason*(
+    holder: uint16,
+    element1: Element,
+    element2: Element
+): Hash[256] {.forceCheck: [].} =
+    var
+        e1: Hash[256]
+        e2: Hash[256]
+
+    if element1 of MeritRemovalVerificationPacket:
+        e1 = Blake256(
+            cast[MeritRemovalVerificationPacket](element1).serializeAsVerificationWithoutHolder()
+        )
+    else:
+        e1 = Blake256(element1.serializeWithoutHolder())
+
+    if element2 of MeritRemovalVerificationPacket:
+        e2 = Blake256(
+            cast[MeritRemovalVerificationPacket](element2).serializeAsVerificationWithoutHolder()
+        )
+    else:
+        e2 = Blake256(element2.serializeWithoutHolder())
+
+    if e2 < e1:
+        var temp: Hash[256] = e2
+        e2 = e1
+        e1 = temp
+
+    result = Blake256(holder.toBinary(NICKNAME_LEN) & e1.toString() & e2.toString())
+
 #Constructor wrappers.
-func newMeritRemoval*(
+proc newMeritRemoval*(
     nick: uint16,
     partial: bool,
     e1Arg: Element,
@@ -40,10 +71,11 @@ func newMeritRemoval*(
         nick,
         partial,
         e1,
-        e2
+        e2,
+        calculateMeritRemovalReason(nick, e1, e2)
     )
 
-func newSignedMeritRemoval*(
+proc newSignedMeritRemoval*(
     nick: uint16,
     partial: bool,
     e1Arg: Element,
@@ -64,6 +96,7 @@ func newSignedMeritRemoval*(
         partial,
         e1,
         e2,
+        calculateMeritRemovalReason(nick, e1, e2),
         signature
     )
 

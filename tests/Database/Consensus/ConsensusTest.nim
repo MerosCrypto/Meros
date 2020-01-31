@@ -91,12 +91,13 @@ suite "Consensus":
                 var
                     sendDiff: SendDifficulty = newSendDifficultyObj(rand(200000), diff1)
                     dataDiff: DataDifficulty = newDataDifficultyObj(rand(200000), diff2)
-                    removal: SignedMeritRemoval = newSignedMeritRemovalObj(
+                    removal: SignedMeritRemoval = newSignedMeritRemoval(
                         uint16(rand(500)),
                         rand(1) == 0,
                         sendDiff,
                         dataDiff,
-                        newMinerWallet().sign("")
+                        newMinerWallet().sign(""),
+                        @[]
                     )
                 sendDiff.holder = removal.holder
                 dataDiff.holder = removal.holder

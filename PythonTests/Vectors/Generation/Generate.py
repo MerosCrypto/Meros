@@ -28,4 +28,6 @@ import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Swap
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Packet
 
+import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredThirtyFive
+
 import PythonTests.Vectors.Generation.Consensus.HundredSix.BlockElements

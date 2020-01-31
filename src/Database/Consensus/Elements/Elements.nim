@@ -149,7 +149,8 @@ proc `==`*(
                 (mr1.holder != cast[MeritRemoval](e2).holder) or
                 (mr1.partial != cast[MeritRemoval](e2).partial) or
                 (not (cast[Element](mr1.element1) == cast[Element](cast[MeritRemoval](e2).element1))) or
-                (not (cast[Element](mr1.element2) == cast[Element](cast[MeritRemoval](e2).element2)))
+                (not (cast[Element](mr1.element2) == cast[Element](cast[MeritRemoval](e2).element2))) or
+                (mr1.reason != cast[MeritRemoval](e2).reason)
             ):
                 return false
 

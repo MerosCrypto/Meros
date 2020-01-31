@@ -312,7 +312,7 @@ proc mainConsensus() {.forceCheck: [].} =
 
                 try:
                     for cachedMR in consensus.malicious[mr.holder]:
-                        if cast[Element](mr) == cast[Element](cachedMR):
+                        if mr.reason == cachedMR.reason:
                             return
                 except KeyError:
                     panic("Merit Holder confirmed to be in malicious doesn't have an entry in malicious.")

@@ -44,18 +44,18 @@ suite "ParseElement":
     test "Serialization.":
         var sendDiff: SendDifficulty = newRandomSendDifficulty()
         check(sendDiff.serialize().len == {
-            int8(SEND_DIFFICULTY_PREFIX)
+            uint8(SEND_DIFFICULTY_PREFIX)
         }.getLength(char(SEND_DIFFICULTY_PREFIX)))
 
         var dataDiff: DataDifficulty = newRandomDataDifficulty()
         check(dataDiff.serialize().len == {
-            int8(DATA_DIFFICULTY_PREFIX)
+            uint8(DATA_DIFFICULTY_PREFIX)
         }.getLength(char(DATA_DIFFICULTY_PREFIX)))
 
         #[
         var gasPrice: GasPrice = newRandomGasPrice()
         check(gasPrice.serialize().len == {
-            int8(GAS_PRICE_PREFIX)
+            uint8(GAS_PRICE_PREFIX)
         }.getLength(char(GAS_PRICE_PREFIX)))
         ]#
 
@@ -113,12 +113,13 @@ suite "ParseElement":
                     holder,
                     rand(1) == 0,
                     e1,
-                    e2
+                    e2,
+                    Hash[256]()
                 )
 
                 var
                     len: int = {
-                        int8(MERIT_REMOVAL_PREFIX)
+                        uint8(MERIT_REMOVAL_PREFIX)
                     }.getLength(char(MERIT_REMOVAL_PREFIX))
                     eLen: int
                 dec(len)
@@ -127,7 +128,7 @@ suite "ParseElement":
                     eLen = 0
                     if int(mr.serialize()[len]) == VERIFICATION_PACKET_PREFIX:
                         eLen = {
-                            int8(VERIFICATION_PACKET_PREFIX)
+                            uint8(VERIFICATION_PACKET_PREFIX)
                         }.getLength(char(VERIFICATION_PACKET_PREFIX))
 
                     len += MERIT_REMOVAL_ELEMENT_SET.getLength(
