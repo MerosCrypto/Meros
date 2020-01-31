@@ -38,6 +38,7 @@ from PythonTests.Tests.Consensus.MeritRemoval.MultipleTest import MultipleTest
 from PythonTests.Tests.Consensus.MeritRemoval.PendingActionsTest import PendingActionsTest
 from PythonTests.Tests.Consensus.MeritRemoval.RepeatTest import RepeatTest
 
+from PythonTests.Tests.Consensus.MeritRemoval.HundredTwentyThree.HTTSwapTest import HTTSwapTest
 from PythonTests.Tests.Consensus.MeritRemoval.HundredTwentyThree.HTTPacketTest import HTTPacketTest
 
 from PythonTests.Tests.Consensus.HundredSix.HundredSixSignedElementsTest import HundredSixSignedElementsTest
@@ -96,6 +97,7 @@ tests: List[Callable[[RPC], None]] = [
     PendingActionsTest,
     RepeatTest,
 
+    HTTSwapTest,
     HTTPacketTest,
 
     HundredSixSignedElementsTest,
