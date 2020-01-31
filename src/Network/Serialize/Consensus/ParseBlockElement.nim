@@ -33,7 +33,7 @@ proc parseBlockElement*(
                     holders: int = 0
                 if int(data[i + result.len]) == VERIFICATION_PACKET_PREFIX:
                     holdersLen = {
-                        int8(VERIFICATION_PACKET_PREFIX)
+                        uint8(VERIFICATION_PACKET_PREFIX)
                     }.getLength(data[i + result.len])
                     holders = data[i + result.len + 1 .. i + result.len + holdersLen].fromBinary()
 

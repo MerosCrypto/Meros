@@ -135,7 +135,7 @@ proc recv(
                     try:
                         if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
                             len = {
-                                int8(VERIFICATION_PACKET_PREFIX)
+                                uint8(VERIFICATION_PACKET_PREFIX)
                             }.getLength(msg[elemI])
 
                         len += MERIT_REMOVAL_ELEMENT_SET.getLength(
@@ -188,7 +188,7 @@ proc recv(
                                 try:
                                     if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
                                         len = {
-                                            int8(VERIFICATION_PACKET_PREFIX)
+                                            uint8(VERIFICATION_PACKET_PREFIX)
                                         }.getLength(msg[elemI])
 
                                     len += MERIT_REMOVAL_ELEMENT_SET.getLength(

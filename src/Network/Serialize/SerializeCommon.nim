@@ -33,20 +33,20 @@ const
     MERIT_REMOVAL_PREFIX*:       int = 5
 
     #Elements that can be in a MeritRemoval.
-    MERIT_REMOVAL_ELEMENT_SET*: set[int8] = {
-        int8(VERIFICATION_PREFIX),
-        int8(VERIFICATION_PACKET_PREFIX),
-        int8(SEND_DIFFICULTY_PREFIX),
-        int8(DATA_DIFFICULTY_PREFIX),
-        int8(GAS_PRICE_PREFIX)
+    MERIT_REMOVAL_ELEMENT_SET*: set[uint8] = {
+        uint8(VERIFICATION_PREFIX),
+        uint8(VERIFICATION_PACKET_PREFIX),
+        uint8(SEND_DIFFICULTY_PREFIX),
+        uint8(DATA_DIFFICULTY_PREFIX),
+        uint8(GAS_PRICE_PREFIX)
     }
 
     #Elements that can be in a Block.
-    BLOCK_ELEMENT_SET*: set[int8] = {
-        int8(SEND_DIFFICULTY_PREFIX),
-        int8(DATA_DIFFICULTY_PREFIX),
-        int8(GAS_PRICE_PREFIX),
-        int8(MERIT_REMOVAL_PREFIX)
+    BLOCK_ELEMENT_SET*: set[uint8] = {
+        uint8(SEND_DIFFICULTY_PREFIX),
+        uint8(DATA_DIFFICULTY_PREFIX),
+        uint8(GAS_PRICE_PREFIX),
+        uint8(MERIT_REMOVAL_PREFIX)
     }
 
 #Deseralizes a string by getting the length of the next set of bytes, slicing that out, and moving on.

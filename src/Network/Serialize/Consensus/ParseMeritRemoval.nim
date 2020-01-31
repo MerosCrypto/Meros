@@ -32,7 +32,7 @@ proc parseMeritRemovalElement(
         result.len = 0
         if int(data[i]) == VERIFICATION_PACKET_PREFIX:
             result.len = {
-                int8(VERIFICATION_PACKET_PREFIX)
+                uint8(VERIFICATION_PACKET_PREFIX)
             }.getLength(data[i])
 
         result.len += MERIT_REMOVAL_ELEMENT_SET.getLength(
