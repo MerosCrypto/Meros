@@ -2,6 +2,7 @@
 #Tests the Verification Packet related causes.
 #1) That a VC MeritRemoval of Verifications where one is turned into a Packet is identified as a repeat.
 #2) That a VC MeritRemoval of Verification Packets where one has their holders re-ordered is identified as a repeat.
+#Also tests receiving a SignedMeritRemoval containing VerificationPackets.
 
 #Types.
 from typing import Dict, List, IO, Any
@@ -65,9 +66,7 @@ def HTTPacketTest(
                     raise TestError("Meros didn't send us the Data.")
 
             #Send and verify the MeritRemoval.
-            buf1 = rpc.meros.signedElement(mr)
-            buf2 = rpc.meros.live.recv()
-            if buf1 != buf2:
+            if rpc.meros.signedElement(mr) != rpc.meros.live.recv():
                 raise TestError("Meros didn't send us the Merit Removal.")
             verifyMeritRemoval(rpc, 1, 1, mr.holder, True)
 
