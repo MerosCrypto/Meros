@@ -40,6 +40,13 @@ method serializeWithoutHolder*(
         result &= holder.serialize()
     result &= packet.hash.toString()
 
+#Used to generate MeritRemoval AggregationInfos.
+#We generally call to serializeWithoutHolder for this but VerificationPackets are an edge case.
+proc serializeAsVerificationWithoutHolder*(
+    packet: MeritRemovalVerificationPacket
+): string {.inline, forceCheck: [].} =
+    char(VERIFICATION_PREFIX) & packet.hash.toString()
+
 #Serialize a VerificationPacket for inclusion in a BlockHeader's contents Merkle.
 method serializeContents*(
     packet: VerificationPacket

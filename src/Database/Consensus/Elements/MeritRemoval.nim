@@ -79,14 +79,26 @@ proc agInfo*(
     holder: BLSPublicKey
 ): BLSAggregationInfo {.forceCheck: [].} =
     try:
-        #If this is a partial MeritRemoval, the signature is the second Element's.
-        if mr.partial:
+        if mr.element2 of MeritRemovalVerificationPacket:
+            var packet: MeritRemovalVerificationPacket = cast[MeritRemovalVerificationPacket](mr.element2)
+            result = newBLSAggregationInfo(packet.holders.aggregate(), packet.serializeAsVerificationWithoutHolder())
+        else:
             result = newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
-        #Else, it's both Elements' signatures aggregated.
+
+        #If this is a partial MeritRemoval, the signature is just the second Element's.
+        if mr.partial:
+            return
+
+        if mr.element1 of MeritRemovalVerificationPacket:
+            var packet: MeritRemovalVerificationPacket = cast[MeritRemovalVerificationPacket](mr.element1)
+            result = @[
+                newBLSAggregationInfo(packet.holders.aggregate(), packet.serializeAsVerificationWithoutHolder()),
+                result
+            ].aggregate()
         else:
             result = @[
                 newBLSAggregationInfo(holder, mr.element1.serializeWithoutHolder()),
-                newBLSAggregationInfo(holder, mr.element2.serializeWithoutHolder())
+                result
             ].aggregate()
     except BLSError:
         panic("Holder with an infinite key entered the system.")

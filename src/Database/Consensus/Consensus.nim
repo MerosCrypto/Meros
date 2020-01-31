@@ -106,7 +106,7 @@ proc verify*(
         case mr.element2:
             of Verification as verif:
                 secondHash = verif.hash
-            of VerificationPacket as packet:
+            of MeritRemovalVerificationPacket as packet:
                 secondHash = packet.hash
             else:
                 raise newLoggedException(ValueError, "Invalid second Element.")
@@ -136,7 +136,7 @@ proc verify*(
         case mr.element2:
             of Verification as _:
                 raise newLoggedException(ValueError, "Invalid second Element.")
-            of VerificationPacket as _:
+            of MeritRemovalVerificationPacket as _:
                 raise newLoggedException(ValueError, "Invalid second Element.")
             of SendDifficulty as sd:
                 if nonce != sd.nonce:
@@ -151,7 +151,7 @@ proc verify*(
         case mr.element1:
             of Verification as verif:
                 checkSecondCompeting(verif.hash)
-            of VerificationPacket as packet:
+            of MeritRemovalVerificationPacket as packet:
                 checkSecondCompeting(packet.hash)
             of SendDifficulty as sd:
                 checkSecondSameNonce(sd.nonce)
