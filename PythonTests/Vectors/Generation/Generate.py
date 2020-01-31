@@ -24,6 +24,7 @@ import PythonTests.Vectors.Generation.Consensus.MeritRemoval.InvalidCompeting
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Partial
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.Repeat
 
+import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Partial
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Swap
 import PythonTests.Vectors.Generation.Consensus.MeritRemoval.HundredTwentyThree.Packet
 

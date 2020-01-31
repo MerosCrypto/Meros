@@ -1,5 +1,5 @@
 #https://github.com/MerosCrypto/Meros/issues/123.
-#Tests that a MeritRemoval which has its Elements swapped and is sent again is rejected.
+#Tests that a partial MeritRemoval sent again as a non-partial MeritRemoval is rejected.
 
 #Types.
 from typing import Dict, IO, Any
@@ -21,10 +21,10 @@ from time import sleep
 #JSON standard lib.
 import json
 
-def HTTSwapTest(
+def HTTPartialTest(
     rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "r")
+    file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Partial.json", "r")
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
@@ -48,10 +48,10 @@ def HTTSwapTest(
                     if len(rpc.meros.live.recv()) != 0:
                         raise Exception()
                 except TestError:
-                    #Verify the height is 3.
-                    #The genesis Block, the Block granting Merit, and the Block containing the MeritRemoval originally.
+                    #Verify the height is 4.
+                    #The genesis Block, the Block granting Merit, the Block with the Difficulty, and the Block containing the MeritRemoval originally.
                     try:
-                        if rpc.call("merit", "getHeight") != 3:
+                        if rpc.call("merit", "getHeight") != 4:
                             raise Exception()
                     except Exception:
                         raise TestError("Node added a Block containg a repeat MeritRemoval.")
@@ -78,6 +78,6 @@ def HTTSwapTest(
         rpc,
         vectors["blockchain"],
         callbacks={
-            2: sendRepeatMeritRemoval
+            3: sendRepeatMeritRemoval
         }
     ).live()

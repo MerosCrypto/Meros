@@ -90,8 +90,8 @@ def HTTPacketTest(
                         if len(rpc.meros.live.recv()) != 0:
                             raise Exception()
                     except TestError:
-                        #Verify the height is 2.
-                        #The genesis Block and the Block containing the MeritRemoval originally.
+                        #Verify the height is 3.
+                        #The genesis Block, the Block granting Merit, and the Block containing the MeritRemoval originally.
                         try:
                             if rpc.call("merit", "getHeight") != 3:
                                 raise Exception()
