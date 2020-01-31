@@ -71,7 +71,7 @@ def SameInputTest(
                     raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                 #Send the BlockBody.
-                rpc.meros.blockBody(merit.state.nicks, block)
+                rpc.meros.blockBody(block)
 
             elif MessageType(msg[0]) == MessageType.SketchHashesRequest:
                 if not block.body.packets:

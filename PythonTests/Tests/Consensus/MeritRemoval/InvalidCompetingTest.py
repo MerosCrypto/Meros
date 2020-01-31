@@ -31,16 +31,12 @@ def InvalidCompetingTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    keys: Dict[bytes, int] = {
-        bytes.fromhex(vectors["blockchain"][0]["header"]["miner"]): 0
-    }
-
     #Transactions.
     transactions: Transactions = Transactions.fromJSON(vectors["transactions"])
 
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(keys, vectors["removal"])
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removal"])
 
     #Create and execute a Liver to handle the MeritRemoval.
     def sendMeritRemoval() -> None:

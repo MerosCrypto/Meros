@@ -46,7 +46,7 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 #Add a single Block to create Merit.
 bbFile: IO[Any] = open("PythonTests/Vectors/Merit/BlankBlocks.json", "r")
 blocks: List[Dict[str, Any]] = json.loads(bbFile.read())
-blockchain.add(Block.fromJSON(blockchain.keys, blocks[0]))
+blockchain.add(Block.fromJSON(blocks[0]))
 bbFile.close()
 
 #Create a Data with an invalid signature.
@@ -66,7 +66,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], packets),
+        BlockHeader.createContents(packets),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), packets),

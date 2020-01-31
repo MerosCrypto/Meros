@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 #RandomX lib.
 from PythonTests.Libs.RandomX import RandomX
@@ -41,10 +41,9 @@ class Block:
 
     #Serialize.
     def serialize(
-        self,
-        lookup: List[bytes]
+        self
     ) -> bytes:
-        return self.header.serialize() + self.body.serialize(lookup, self.header.sketchSalt)
+        return self.header.serialize() + self.body.serialize(self.header.sketchSalt)
 
     #Block -> JSON.
     def toJSON(
@@ -58,10 +57,9 @@ class Block:
     #JSON -> Block.
     @staticmethod
     def fromJSON(
-        keys: Dict[bytes, int],
         json: Dict[str, Any]
     ) -> Any:
         return Block(
             BlockHeader.fromJSON(json["header"]),
-            BlockBody.fromJSON(keys, json)
+            BlockBody.fromJSON(json)
         )

@@ -121,7 +121,7 @@ class Liver:
                         raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                     #Send the BlockBody.
-                    self.rpc.meros.blockBody(self.merit.state.nicks, block)
+                    self.rpc.meros.blockBody(block)
 
                     #Mark the body as sent.
                     pendingBody = False

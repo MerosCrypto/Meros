@@ -164,5 +164,5 @@ class Blockchain:
     ) -> Any:
         result = Blockchain()
         for block in blocks:
-            result.add(Block.fromJSON(result.keys, block))
+            result.add(Block.fromJSON(block))
         return result

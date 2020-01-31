@@ -45,7 +45,6 @@ class BlockHeader:
     #Create a contents Merkle.
     @staticmethod
     def createContents(
-        lookup: List[bytes],
         packetsArg: List[VerificationPacket] = [],
         elements: List[Element] = []
     ) -> bytes:
@@ -65,7 +64,7 @@ class BlockHeader:
         #Hash each Element.
         hashes = []
         for element in elements:
-            hashes.append(blake2b(element.prefix + element.serialize(lookup), digest_size=32).digest())
+            hashes.append(blake2b(element.prefix + element.serialize(), digest_size=32).digest())
         elementsContents: bytes = merkle(hashes)
 
         #Return the contents hash.

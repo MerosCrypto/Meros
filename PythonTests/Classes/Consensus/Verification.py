@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey, Signature
@@ -27,15 +27,13 @@ class Verification(
 
     #Serialize for signing.
     def signatureSerialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         return self.prefix + self.hash
 
     #Serialize.
     def serialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         return self.holder.to_bytes(2, "big") + self.hash
 
@@ -83,8 +81,7 @@ class SignedVerification(
     #Serialize.
     #pylint: disable=unused-argument
     def signedSerialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         return Verification.serialize(self) + self.signature.serialize()
 

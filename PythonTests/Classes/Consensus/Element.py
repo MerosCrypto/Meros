@@ -1,7 +1,7 @@
 #pylint: disable=no-self-use
 
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 #BLS lib.
 from PythonTests.Libs.BLS import Signature
@@ -18,15 +18,13 @@ class Element(
 
     @abstractmethod
     def signatureSerialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         pass
 
     @abstractmethod
     def serialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         pass
 
@@ -44,8 +42,7 @@ class SignedElement(
 
     @abstractmethod
     def signedSerialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         pass
 

@@ -138,7 +138,7 @@ class Syncer:
                 if reqHash != self.blocks[-1].header.hash:
                     raise TestError("Meros asked for a BlockBody other than the next Block's on the last BlockList.")
 
-                self.rpc.meros.blockBody(self.merit.state.nicks, self.blocks[-1])
+                self.rpc.meros.blockBody(self.blocks[-1])
                 self.blockHashes.remove(self.blocks[-1].header.hash)
 
                 #Set packets/transactions.

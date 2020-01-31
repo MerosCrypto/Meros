@@ -60,7 +60,7 @@ blsPubKeys: List[PublicKey] = [
 
 #Add 4 Blank Blocks.
 for i in range(4):
-    merit.add(Block.fromJSON(merit.blockchain.keys, blankBlocks[i]))
+    merit.add(Block.fromJSON(blankBlocks[i]))
 
 #Add a 5th Block to another verifier.
 block: Block = Block(
@@ -117,7 +117,7 @@ for packet in packets:
         BlockHeader(
             0,
             merit.blockchain.last(),
-            BlockHeader.createContents([], [packet]),
+            BlockHeader.createContents([packet]),
             1,
             bytes(4),
             BlockHeader.createSketchCheck(bytes(4), [packet]),
@@ -204,7 +204,7 @@ for packet in packets:
         BlockHeader(
             0,
             merit.blockchain.last(),
-            BlockHeader.createContents([], [packet]),
+            BlockHeader.createContents([packet]),
             1,
             bytes(4),
             BlockHeader.createSketchCheck(bytes(4), [packet]),

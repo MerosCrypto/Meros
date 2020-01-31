@@ -33,11 +33,6 @@ def VerifyCompetingTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    keys: Dict[bytes, int] = {
-        bytes.fromhex(vectors["blockchain"][0]["header"]["miner"]): 0
-    }
-    nicks: List[bytes] = [bytes.fromhex(vectors["blockchain"][0]["header"]["miner"])]
-
     #Datas.
     datas: List[Data] = [
         Data.fromJSON(vectors["datas"][0]),
@@ -55,7 +50,7 @@ def VerifyCompetingTest(
 
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(keys, vectors["removal"])
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removal"])
 
     #Create and execute a Liver to cause a Signed MeritRemoval.
     def sendElements() -> None:
@@ -76,7 +71,7 @@ def VerifyCompetingTest(
         rpc.meros.signedElement(removal.se2)
         if rpc.meros.live.recv() != (
             MessageType.SignedMeritRemoval.toByte() +
-            removal.signedSerialize(nicks)
+            removal.signedSerialize()
         ):
             raise TestError("Meros didn't send us the Merit Removal.")
         verifyMeritRemoval(rpc, 1, 1, removal.holder, True)

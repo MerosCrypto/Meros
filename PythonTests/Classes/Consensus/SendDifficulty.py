@@ -1,5 +1,5 @@
 #Types.
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 #BLS lib.
 from PythonTests.Libs.BLS import PrivateKey, Signature
@@ -29,15 +29,13 @@ class SendDifficulty(
 
     #Serialize for signing.
     def signatureSerialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         return SEND_DIFFICULTY_PREFIX + self.nonce.to_bytes(4, "big") + self.difficulty
 
     #Serialize.
     def serialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         return self.holder.to_bytes(2, "big") + self.nonce.to_bytes(4, "big") + self.difficulty
 
@@ -87,8 +85,7 @@ class SignedSendDifficulty(
     #Serialize.
     #pylint: disable=unused-argument
     def signedSerialize(
-        self,
-        lookup: List[bytes] = []
+        self
     ) -> bytes:
         return SendDifficulty.serialize(self) + self.signature.serialize()
 

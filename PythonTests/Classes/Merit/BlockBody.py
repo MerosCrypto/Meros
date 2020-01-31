@@ -43,7 +43,6 @@ class BlockBody:
     #Serialize.
     def serialize(
         self,
-        lookup: List[bytes],
         sketchSalt: bytes,
         capacityArg: int = -1
     ) -> bytes:
@@ -63,7 +62,7 @@ class BlockBody:
         )
 
         for elem in self.elements:
-            result += elem.prefix + elem.serialize(lookup)
+            result += elem.prefix + elem.serialize()
 
         result += self.aggregate.serialize()
         return result
@@ -92,7 +91,6 @@ class BlockBody:
     #JSON -> Blockbody.
     @staticmethod
     def fromJSON(
-        keys: Dict[bytes, int],
         json: Dict[str, Any]
     ) -> Any:
         packets: List[VerificationPacket] = []
@@ -112,6 +110,6 @@ class BlockBody:
             elif element["descendant"] == "DataDifficulty":
                 elements.append(DataDifficulty.fromJSON(element))
             elif element["descendant"] == "MeritRemoval":
-                elements.append(MeritRemoval.fromJSON(keys, element))
+                elements.append(MeritRemoval.fromJSON(element))
 
         return BlockBody(packets, elements, Signature(bytes.fromhex(json["aggregate"])))

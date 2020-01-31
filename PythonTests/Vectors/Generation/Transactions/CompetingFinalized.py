@@ -53,7 +53,7 @@ blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Add 1 Blank Block.
 for i in range(1):
-    merit.add(Block.fromJSON(merit.blockchain.keys, blankBlocks[i]))
+    merit.add(Block.fromJSON(blankBlocks[i]))
 
 #Create the Data and a successor.
 first: Data = Data(bytes(32), edPubKey.to_bytes())
@@ -84,7 +84,7 @@ block: Block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents([], packets),
+        BlockHeader.createContents(packets),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), packets),
@@ -131,7 +131,7 @@ block = Block(
     BlockHeader(
         0,
         merit.blockchain.last(),
-        BlockHeader.createContents([], [VerificationPacket(competitor.hash, [0])]),
+        BlockHeader.createContents([VerificationPacket(competitor.hash, [0])]),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(competitor.hash, [0])]),

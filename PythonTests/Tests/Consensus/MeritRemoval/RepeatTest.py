@@ -24,13 +24,9 @@ def RepeatTest(
     vectors: List[Dict[str, Any]] = json.loads(file.read())
     file.close()
 
-    keys: Dict[bytes, int] = {
-        bytes.fromhex(vectors[0]["header"]["miner"]): 0
-    }
-
     def sendBlock() -> None:
         #Send the Block with the MeritRemoval archived again.
-        block: Block = Block.fromJSON(keys, vectors[-1])
+        block: Block = Block.fromJSON(vectors[-1])
         rpc.meros.liveBlockHeader(block.header)
 
         #Flag of if the Block's Body synced.
@@ -57,7 +53,7 @@ def RepeatTest(
 
                 #Send the BlockBody.
                 blockBodySynced = True
-                rpc.meros.blockBody([], block)
+                rpc.meros.blockBody(block)
 
             else:
                 raise TestError("Unexpected message sent: " + msg.hex().upper())

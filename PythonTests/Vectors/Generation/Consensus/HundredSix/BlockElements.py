@@ -62,7 +62,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [VerificationPacket(data.hash, [1])]),
+        BlockHeader.createContents([VerificationPacket(data.hash, [1])]),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), [VerificationPacket(data.hash, [1])]),
@@ -85,7 +85,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], elements),
+        BlockHeader.createContents([], elements),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), []),
@@ -108,7 +108,7 @@ block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [], elements),
+        BlockHeader.createContents([], elements),
         1,
         bytes(4),
         BlockHeader.createSketchCheck(bytes(4), []),
