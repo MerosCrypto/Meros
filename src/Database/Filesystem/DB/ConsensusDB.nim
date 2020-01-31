@@ -118,7 +118,7 @@ template MERIT_REMOVAL(
         e2 = e1
         e1 = temp
 
-    Blake256(mr.holder.toBinary(NICKNAME_LEN) & e1.toString() & e2.toString()) & "r"
+    Blake256(mr.holder.toBinary(NICKNAME_LEN) & e1.toString() & e2.toString()).toString() & "r"
 
 template MALICIOUS_PROOFS(): string =
     "p"

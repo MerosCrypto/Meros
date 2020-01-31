@@ -137,11 +137,18 @@ proc recv(
                             len = {
                                 uint8(VERIFICATION_PACKET_PREFIX)
                             }.getLength(msg[elemI])
+                            size += len
+
+                            try:
+                                msg &= await socket.recv(len)
+                            except Exception as e:
+                                raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                            len = -1
 
                         len += MERIT_REMOVAL_ELEMENT_SET.getLength(
                             msg[elemI],
                             if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
-                                msg[elemI .. elemI + len].fromBinary()
+                                msg[elemI + 1 ..< msg.len].fromBinary()
                             else:
                                 0,
                             MERIT_REMOVAL_PREFIX
@@ -190,11 +197,18 @@ proc recv(
                                         len = {
                                             uint8(VERIFICATION_PACKET_PREFIX)
                                         }.getLength(msg[elemI])
+                                        size += len
+
+                                        try:
+                                            msg &= await socket.recv(len)
+                                        except Exception as e:
+                                            raise newLoggedException(PeerError, "Receiving from the Peer's socket threw an Exception: " & e.msg)
+                                        len = 0
 
                                     len += MERIT_REMOVAL_ELEMENT_SET.getLength(
                                         msg[elemI],
                                         if int(msg[elemI]) == VERIFICATION_PACKET_PREFIX:
-                                            msg[elemI .. elemI + len].fromBinary()
+                                            msg[elemI + 1 ..< msg.len].fromBinary()
                                         else:
                                             0,
                                         MERIT_REMOVAL_PREFIX
