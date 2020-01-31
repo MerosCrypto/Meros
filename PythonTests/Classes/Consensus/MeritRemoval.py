@@ -186,7 +186,7 @@ class PartialMeritRemoval(
         elif json["elements"][1]["descendant"] == "VerificationPacket":
             e2 = SignedMeritRemovalVerificationPacket.fromSignedJSON(json["elements"][1])
         elif json["elements"][1]["descendant"] == "SendDifficulty":
-            e2 = SignedSendDifficulty.fromSignedJSON(json["h"][1])
+            e2 = SignedSendDifficulty.fromSignedJSON(json["elements"][1])
         elif json["elements"][1]["descendant"] == "DataDifficulty":
             e2 = SignedDataDifficulty.fromSignedJSON(json["elements"][1])
 
@@ -274,7 +274,7 @@ class SignedMeritRemoval(
         elif json["elements"][1]["descendant"] == "VerificationPacket":
             e2 = SignedMeritRemovalVerificationPacket.fromSignedJSON(json["elements"][1])
         elif json["elements"][1]["descendant"] == "SendDifficulty":
-            e2 = SignedSendDifficulty.fromSignedJSON(json["h"][1])
+            e2 = SignedSendDifficulty.fromSignedJSON(json["elements"][1])
         elif json["elements"][1]["descendant"] == "DataDifficulty":
             e2 = SignedDataDifficulty.fromSignedJSON(json["elements"][1])
 

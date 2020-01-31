@@ -119,6 +119,10 @@ proc verify*(
                 secondHash = packet.hash
             else:
                 raise newLoggedException(ValueError, "Invalid second Element.")
+
+        if hash == secondHash:
+            raise newLoggedException(ValueError, "MeritRemoval claims a Transaction competes with itself.")
+
         try:
             tx = consensus.functions.transactions.getTransaction(secondHash)
         except IndexError:
@@ -150,9 +154,21 @@ proc verify*(
             of SendDifficulty as sd:
                 if nonce != sd.nonce:
                     raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
+
+                if (
+                    (mr.element1 of SendDifficulty) and
+                    (cast[SendDifficulty](mr.element1).difficulty == sd.difficulty)
+                ):
+                    raise newLoggedException(ValueError, "Elements are the same.")
             of DataDifficulty as dd:
                 if nonce != dd.nonce:
                     raise newLoggedException(ValueError, "Second Element has a distinct nonce.")
+
+                if (
+                    (mr.element1 of DataDifficulty) and
+                    (cast[DataDifficulty](mr.element1).difficulty == dd.difficulty)
+                ):
+                    raise newLoggedException(ValueError, "Elements are the same.")
             else:
                 panic("Unsupported MeritRemoval Element.")
 

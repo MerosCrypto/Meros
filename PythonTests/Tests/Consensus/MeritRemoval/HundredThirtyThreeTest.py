@@ -47,6 +47,11 @@ def HundredThirtyThreeTest(
         i: int
     ) -> None:
         def sendMeritRemoval() -> None:
+            #Send the Datas.
+            for data in datas:
+                if rpc.meros.liveTransaction(data) != rpc.meros.live.recv():
+                    raise TestError("Meros didn't send us the Data.")
+
             #Send the Block containing the modified Merit Removal.
             block: Block = Block.fromJSON(vectors["blockchains"][i][-1])
             rpc.meros.liveBlockHeader(block.header)
