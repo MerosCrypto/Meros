@@ -68,7 +68,8 @@ proc newConsensus*(
 #Verify a MeritRemoval's validity.
 proc verify*(
     consensus: Consensus,
-    mr: MeritRemoval
+    mr: MeritRemoval,
+    lookup: seq[BLSPublicKey]
 ) {.forceCheck: [
     ValueError,
     DataExists
@@ -107,6 +108,14 @@ proc verify*(
             of Verification as verif:
                 secondHash = verif.hash
             of MeritRemovalVerificationPacket as packet:
+                #Verify this Packet actually includes this holder.
+                var found: bool = false
+                for holder in packet.holders:
+                    if holder == lookup[mr.holder]:
+                        found = true
+                if not found:
+                    raise newLoggedException(ValueError, "Merit Removal Verification Packet doesn't include this holder.")
+
                 secondHash = packet.hash
             else:
                 raise newLoggedException(ValueError, "Invalid second Element.")
@@ -152,6 +161,14 @@ proc verify*(
             of Verification as verif:
                 checkSecondCompeting(verif.hash)
             of MeritRemovalVerificationPacket as packet:
+                #Verify this Packet actually includes this holder.
+                var found: bool = false
+                for holder in packet.holders:
+                    if holder == lookup[mr.holder]:
+                        found = true
+                if not found:
+                    raise newLoggedException(ValueError, "Merit Removal Verification Packet doesn't include this holder.")
+
                 checkSecondCompeting(packet.hash)
             of SendDifficulty as sd:
                 checkSecondSameNonce(sd.nonce)
@@ -592,7 +609,7 @@ proc add*(
         raise newLoggedException(ValueError, "Invalid MeritRemoval signature.")
 
     try:
-        consensus.verify(mr)
+        consensus.verify(mr, state.holders)
     except ValueError as e:
         raise e
     except DataExists as e:

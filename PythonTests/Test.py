@@ -42,6 +42,7 @@ from PythonTests.Tests.Consensus.MeritRemoval.HundredTwentyThree.HTTPartialTest 
 from PythonTests.Tests.Consensus.MeritRemoval.HundredTwentyThree.HTTSwapTest import HTTSwapTest
 from PythonTests.Tests.Consensus.MeritRemoval.HundredTwentyThree.HTTPacketTest import HTTPacketTest
 
+from PythonTests.Tests.Consensus.MeritRemoval.HundredThirtyThreeTest import HundredThirtyThreeTest
 from PythonTests.Tests.Consensus.MeritRemoval.HundredThirtyFiveTest import HundredThirtyFiveTest
 
 from PythonTests.Tests.Consensus.HundredSix.HundredSixSignedElementsTest import HundredSixSignedElementsTest
@@ -104,6 +105,7 @@ tests: List[Callable[[RPC], None]] = [
     HTTSwapTest,
     HTTPacketTest,
 
+    HundredThirtyThreeTest,
     HundredThirtyFiveTest,
 
     HundredSixSignedElementsTest,

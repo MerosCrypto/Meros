@@ -302,7 +302,7 @@ proc mainConsensus() {.forceCheck: [].} =
                 panic("Syncing a MeritRemoval's Transactions threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
             try:
-                consensus.verify(mr)
+                consensus.verify(mr, merit.state.holders)
             except ValueError as e:
                 raise e
             except DataExists as e:
