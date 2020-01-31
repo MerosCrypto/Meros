@@ -1,7 +1,7 @@
 #Tests proper handling of a MeritRemoval where one Element is already archived.
 
 #Types.
-from typing import Dict, List, IO, Any
+from typing import Dict, IO, Any
 
 #PartialMeritRemoval class.
 from PythonTests.Classes.Consensus.MeritRemoval import PartialMeritRemoval
@@ -28,14 +28,9 @@ def PartialTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    keys: Dict[bytes, int] = {
-        bytes.fromhex(vectors["blockchain"][0]["header"]["miner"]): 0
-    }
-    nicks: List[bytes] = [bytes.fromhex(vectors["blockchain"][0]["header"]["miner"])]
-
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: PartialMeritRemoval = PartialMeritRemoval.fromSignedJSON(keys, vectors["removal"])
+    removal: PartialMeritRemoval = PartialMeritRemoval.fromSignedJSON(vectors["removal"])
 
     #Create and execute a Liver to cause a Partial MeritRemoval.
     def sendElement() -> None:
@@ -45,7 +40,7 @@ def PartialTest(
         #Verify the MeritRemoval.
         if rpc.meros.live.recv() != (
             MessageType.SignedMeritRemoval.toByte() +
-            removal.signedSerialize(nicks)
+            removal.signedSerialize()
         ):
             raise TestError("Meros didn't send us the Merit Removal.")
         verifyMeritRemoval(rpc, 2, 2, removal.holder, True)

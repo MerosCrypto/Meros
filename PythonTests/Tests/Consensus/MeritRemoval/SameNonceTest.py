@@ -1,7 +1,7 @@
 #Tests proper handling of a MeritRemoval created from Difficulty/Gas Price Updates sharing nonces.
 
 #Types.
-from typing import Dict, List, IO, Any
+from typing import Dict, IO, Any
 
 #SignedMeritRemoval class.
 from PythonTests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
@@ -28,14 +28,9 @@ def SameNonceTest(
     vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    keys: Dict[bytes, int] = {
-        bytes.fromhex(vectors["blockchain"][0]["header"]["miner"]): 0
-    }
-    nicks: List[bytes] = [bytes.fromhex(vectors["blockchain"][0]["header"]["miner"])]
-
     #MeritRemoval.
     #pylint: disable=no-member
-    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(keys, vectors["removal"])
+    removal: SignedMeritRemoval = SignedMeritRemoval.fromSignedJSON(vectors["removal"])
 
     #Create and execute a Liver to cause a Signed MeritRemoval.
     def sendElements() -> None:
@@ -53,7 +48,7 @@ def SameNonceTest(
         #Verify the MeritRemoval.
         if rpc.meros.live.recv() != (
             MessageType.SignedMeritRemoval.toByte() +
-            removal.signedSerialize(nicks)
+            removal.signedSerialize()
         ):
             raise TestError("Meros didn't send us the Merit Removal.")
         verifyMeritRemoval(rpc, 1, 1, removal.holder, True)

@@ -25,7 +25,7 @@ proc syncMeritRemovalTransactions(
         case removal.element1:
             of Verification as verif:
                 await syncMeritRemovalTransaction(verif.hash)
-            of VerificationPacket as packet:
+            of MeritRemovalVerificationPacket as packet:
                 await syncMeritRemovalTransaction(packet.hash)
             else:
                 discard
@@ -33,7 +33,7 @@ proc syncMeritRemovalTransactions(
         case removal.element2:
             of Verification as verif:
                 await syncMeritRemovalTransaction(verif.hash)
-            of VerificationPacket as packet:
+            of MeritRemovalVerificationPacket as packet:
                 await syncMeritRemovalTransaction(packet.hash)
             else:
                 discard

@@ -47,7 +47,7 @@ def HundredSixBlockElementsTest(
     #Parse the Blocks from the vectors.
     blocks: List[Block] = []
     for block in vectors["blocks"]:
-        blocks.append(Block.fromJSON({}, block))
+        blocks.append(Block.fromJSON(block))
 
     for block in blocks:
         #Handshake with the node.
@@ -91,7 +91,7 @@ def HundredSixBlockElementsTest(
                     raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
                 #Send the BlockBody.
-                rpc.meros.blockBody([], block)
+                rpc.meros.blockBody(block)
 
                 if len(block.body.packets) == 0:
                     doneSyncing = True

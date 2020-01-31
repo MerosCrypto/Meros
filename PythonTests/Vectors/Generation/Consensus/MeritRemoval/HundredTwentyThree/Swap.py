@@ -6,7 +6,7 @@ from PythonTests.Libs.BLS import PrivateKey, PublicKey
 
 #Element classes.
 from PythonTests.Classes.Consensus.DataDifficulty import SignedDataDifficulty
-from PythonTests.Classes.Consensus.MeritRemoval import PartialMeritRemoval
+from PythonTests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
 #Blockchain classes.
 from PythonTests.Classes.Merit.BlockHeader import BlockHeader
@@ -20,12 +20,12 @@ from hashlib import blake2b
 #JSON standard lib.
 import json
 
-#Blockchain.
-blockchain: Blockchain = Blockchain()
-
 #BLS Keys.
 blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
+
+#Blockchains.
+blockchain: Blockchain = Blockchain()
 
 #Generate a Block granting the holder Merit.
 block = Block(
@@ -46,39 +46,18 @@ block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Hundred Twenty Three Swap Block " + str(len(blockchain.blocks)) + ".")
 
-#Create a DataDifficulty.
-dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AA" * 32), 0)
-dataDiff.sign(0, blsPrivKey)
+#Create conflicting Data Difficulties.
+dataDiffs: List[SignedDataDifficulty] = [
+    SignedDataDifficulty(bytes.fromhex("AA" * 32), 0),
+    SignedDataDifficulty(bytes.fromhex("BB" * 32), 0)
+]
+dataDiffs[0].sign(0, blsPrivKey)
+dataDiffs[1].sign(0, blsPrivKey)
 
-#Generate a Block containing the DataDifficulty.
-block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [dataDiff]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [dataDiff], dataDiff.signature)
-)
-#Mine it.
-block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
-blockchain.add(block)
-print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
-
-#Create a conflicting DataDifficulty with the same nonce.
-dataDiffConflicting = SignedDataDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 0)
-dataDiffConflicting.sign(0, blsPrivKey)
-
-#Create a MeritRemoval out of the two of them.
-mr: PartialMeritRemoval = PartialMeritRemoval(dataDiff, dataDiffConflicting)
+#Create a MeritRemoval out of the conflicting Data Difficulties.
+mr: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[0], dataDiffs[1])
 
 #Generate a Block containing the MeritRemoval.
 block = Block(
@@ -99,30 +78,35 @@ block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Hundred Twenty Three Swap Block " + str(len(blockchain.blocks)) + ".")
 
-#Generate another Block containing the MeritRemoval.
+#Create a MeritRemoval with the Elements swapped.
+swapped: SignedMeritRemoval = SignedMeritRemoval(dataDiffs[1], dataDiffs[0])
+
+#Generate a Block containing the swapped MeritRemoval.
 block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [mr]),
+        BlockHeader.createContents([], [swapped]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [mr], mr.signature)
+    BlockBody([], [swapped], swapped.signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
 
 #Add it.
 blockchain.add(block)
-print("Generated Repeat Block " + str(len(blockchain.blocks)) + ".")
+print("Generated Hundred Twenty Three Swap Block " + str(len(blockchain.blocks)) + ".")
 
-result: List[Dict[str, Any]] = blockchain.toJSON()
-vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Repeat.json", "w")
+result: Dict[str, Any] = {
+    "blockchain": blockchain.toJSON()
+}
+vectors: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Swap.json", "w")
 vectors.write(json.dumps(result))
 vectors.close()

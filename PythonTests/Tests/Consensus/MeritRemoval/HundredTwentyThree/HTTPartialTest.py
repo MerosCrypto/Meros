@@ -1,9 +1,10 @@
-#Tests proper handling of a MeritRemoval which has already been archived.
+#https://github.com/MerosCrypto/Meros/issues/123.
+#Tests that a partial MeritRemoval sent again as a non-partial MeritRemoval is rejected.
 
 #Types.
-from typing import Dict, List, IO, Any
+from typing import Dict, IO, Any
 
-#Block class.
+#Merit classes.
 from PythonTests.Classes.Merit.Block import Block
 
 #Meros classes.
@@ -14,19 +15,22 @@ from PythonTests.Meros.Liver import Liver
 #TestError and SuccessError Exceptions.
 from PythonTests.Tests.Errors import TestError, SuccessError
 
+#Sleep standard function.
+from time import sleep
+
 #JSON standard lib.
 import json
 
-def RepeatTest(
+def HTTPartialTest(
     rpc: RPC
 ) -> None:
-    file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/Repeat.json", "r")
-    vectors: List[Dict[str, Any]] = json.loads(file.read())
+    file: IO[Any] = open("PythonTests/Vectors/Consensus/MeritRemoval/HundredTwentyThree/Partial.json", "r")
+    vectors: Dict[str, Any] = json.loads(file.read())
     file.close()
 
-    def sendBlock() -> None:
-        #Send the Block with the MeritRemoval archived again.
-        block: Block = Block.fromJSON(vectors[-1])
+    def sendRepeatMeritRemoval() -> None:
+        #Send the Block containing the modified Merit Removal.
+        block: Block = Block.fromJSON(vectors["blockchain"][-1])
         rpc.meros.liveBlockHeader(block.header)
 
         #Flag of if the Block's Body synced.
@@ -36,12 +40,24 @@ def RepeatTest(
         reqHash: bytes = bytes()
         while True:
             if blockBodySynced:
+                #Sleep for a second so Meros handles the Block.
+                sleep(1)
+
                 #Try receiving from the Live socket, where Meros sends keep-alives.
                 try:
                     if len(rpc.meros.live.recv()) != 0:
                         raise Exception()
                 except TestError:
-                    raise SuccessError("Meros didn't add the same MeritRemoval twice.")
+                    #Verify the height is 4.
+                    #The genesis Block, the Block granting Merit, the Block with the Difficulty, and the Block containing the MeritRemoval originally.
+                    try:
+                        if rpc.call("merit", "getHeight") != 4:
+                            raise Exception()
+                    except Exception:
+                        raise TestError("Node added a Block containg a repeat MeritRemoval.")
+
+                    #Since the node didn't add the Block, raise SuccessError.
+                    raise SuccessError("Node didn't add a Block containing a repeat MeritRemoval.")
                 except Exception:
                     raise TestError("Meros sent a keep-alive.")
 
@@ -60,8 +76,8 @@ def RepeatTest(
 
     Liver(
         rpc,
-        vectors,
+        vectors["blockchain"],
         callbacks={
-            3: sendBlock
+            3: sendRepeatMeritRemoval
         }
     ).live()

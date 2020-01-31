@@ -155,19 +155,7 @@ proc verifyAggregate*(
         #Iterate over every Element.
         for e in 0 ..< blockArg.body.elements.len:
             if blockArg.body.elements[e] of MeritRemoval:
-                var mr: MeritRemoval = cast[MeritRemoval](blockArg.body.elements[e])
-                agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
-                    lookup(blockArg.body.elements[e].holder),
-                    mr.element2.serializeWithoutHolder()
-                )
-                if not mr.partial:
-                    agInfos[blockArg.body.packets.len + e] = @[
-                        newBLSAggregationInfo(
-                            lookup(blockArg.body.elements[e].holder),
-                            mr.element1.serializeWithoutHolder()
-                        ),
-                        agInfos[blockArg.body.packets.len + e]
-                    ].aggregate()
+                agInfos[blockArg.body.packets.len + e] = cast[MeritRemoval](blockArg.body.elements[e]).agInfo(lookup(blockArg.body.elements[e].holder))
             else:
                 agInfos[blockArg.body.packets.len + e] = newBLSAggregationInfo(
                     lookup(blockArg.body.elements[e].holder),

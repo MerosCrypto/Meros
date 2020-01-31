@@ -34,7 +34,7 @@ def HundredTwentyFourTest(
 
     #Parse the Blocks from the vectors.
     for i in range(2):
-        blockchain.add(Block.fromJSON({}, vectors[i]))
+        blockchain.add(Block.fromJSON(vectors[i]))
 
     #Handshake with the node.
     rpc.meros.liveConnect(blockchain.blocks[0].header.hash)
@@ -92,7 +92,7 @@ def HundredTwentyFourTest(
                     raise TestError("Meros asked for a Block Body that didn't belong to the next Block.")
 
                 #Send the Block.
-                rpc.meros.blockBody([], blockchain.blocks[bB])
+                rpc.meros.blockBody(blockchain.blocks[bB])
                 bB += 1
 
             else:

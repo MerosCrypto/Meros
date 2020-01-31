@@ -29,6 +29,7 @@ import ../../../Network/Serialize/SerializeCommon
 import Serialize/Transactions/DBSerializeTransaction
 import Serialize/Transactions/ParseTransaction
 
+import ../../../Network/Serialize/Consensus/SerializeVerificationPacket
 import ../../../Network/Serialize/Consensus/SerializeMeritRemoval
 import ../../../Network/Serialize/Consensus/ParseMeritRemoval
 
@@ -95,22 +96,29 @@ template MERIT_REMOVAL(
     mr: MeritRemoval
 ): string =
     var
-        e1: Element = mr.element1
-        e2: Element = mr.element2
-    if e1 of MeritRemovalVerificationPacket:
-        e1 = newVerificationObj(cast[MeritRemovalVerificationPacket](e1).hash)
-    if e2 of MeritRemovalVerificationPacket:
-        e2 = newVerificationObj(cast[MeritRemovalVerificationPacket](e2).hash)
+        e1: Hash[256]
+        e2: Hash[256]
 
-    Blake256(
-        newMeritRemoval(
-            mr.holder,
-            mr.partial,
-            e1,
-            e2,
-            @[]
-        ).serialize()
-    ).toString() & "r"
+    if mr.element1 of MeritRemovalVerificationPacket:
+        e1 = Blake256(
+            cast[MeritRemovalVerificationPacket](mr.element1).serializeAsVerificationWithoutHolder()
+        )
+    else:
+        e1 = Blake256(mr.element1.serializeWithoutHolder())
+
+    if mr.element2 of MeritRemovalVerificationPacket:
+        e2 = Blake256(
+            cast[MeritRemovalVerificationPacket](mr.element2).serializeAsVerificationWithoutHolder()
+        )
+    else:
+        e2 = Blake256(mr.element2.serializeWithoutHolder())
+
+    if e2 < e1:
+        var temp: Hash[256] = e2
+        e2 = e1
+        e1 = temp
+
+    Blake256(mr.holder.toBinary(NICKNAME_LEN) & e1.toString() & e2.toString()).toString() & "r"
 
 template MALICIOUS_PROOFS(): string =
     "p"

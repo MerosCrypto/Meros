@@ -69,7 +69,7 @@ def EightyEightTest(
     rpc.meros.syncConnect(merit.blockchain.blocks[0].header.hash)
 
     #Send the first Block.
-    block: Block = Block.fromJSON(merit.blockchain.keys, blocks[0])
+    block: Block = Block.fromJSON(blocks[0])
     merit.blockchain.add(block)
     rpc.meros.liveBlockHeader(block.header)
 
@@ -83,7 +83,7 @@ def EightyEightTest(
                 raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
             #Send the BlockBody.
-            rpc.meros.blockBody(merit.state.nicks, block)
+            rpc.meros.blockBody(block)
 
             break
 
@@ -135,7 +135,7 @@ def EightyEightTest(
     )
     template["header"] = bytes.fromhex(template["header"])
     packets: List[VerificationPacket] = [VerificationPacket(datas[0].hash, [0]), VerificationPacket(datas[1].hash, [0])]
-    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, packets):
+    if template["header"][36 : 68] != BlockHeader.createContents(packets):
         raise TestError("Block template doesn't have both Verification Packets.")
 
     #Mine the Block.
@@ -143,7 +143,7 @@ def EightyEightTest(
         BlockHeader(
             0,
             block.header.hash,
-            BlockHeader.createContents(merit.state.nicks, packets),
+            BlockHeader.createContents(packets),
             1,
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], packets),
@@ -159,7 +159,6 @@ def EightyEightTest(
     if block.header.serializeHash()[:-4] != template["header"]:
         raise TestError("Failed to recreate the header.")
     if block.body.serialize(
-        merit.state.nicks,
         block.header.sketchSalt,
         len(packets)
     ) != bytes.fromhex(template["body"]):
@@ -178,7 +177,7 @@ def EightyEightTest(
                 template["header"] +
                 block.header.proof.to_bytes(4, byteorder="big") +
                 block.header.signature +
-                block.body.serialize(merit.state.nicks, block.header.sketchSalt, len(packets))
+                block.body.serialize(block.header.sketchSalt, len(packets))
             ).hex()
         ]
     )

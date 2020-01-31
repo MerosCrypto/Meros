@@ -54,7 +54,7 @@ def TElementTest(
     rpc.meros.syncConnect(merit.blockchain.blocks[0].header.hash)
 
     #Send the first Block.
-    block: Block = Block.fromJSON(merit.blockchain.keys, blocks[0])
+    block: Block = Block.fromJSON(blocks[0])
     merit.blockchain.add(block)
     rpc.meros.liveBlockHeader(block.header)
 
@@ -68,7 +68,7 @@ def TElementTest(
                 raise TestError("Meros asked for a Block Body that didn't belong to the Block we just sent it.")
 
             #Send the BlockBody.
-            rpc.meros.blockBody(merit.state.nicks, block)
+            rpc.meros.blockBody(block)
 
             break
 
@@ -87,7 +87,7 @@ def TElementTest(
     #Verify the block template has the DataDifficulty.
     template: Dict[str, Any] = rpc.call("merit", "getBlockTemplate", [blsPubKey])
     template["header"] = bytes.fromhex(template["header"])
-    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [dataDiff]):
+    if template["header"][36 : 68] != BlockHeader.createContents([], [dataDiff]):
         raise TestError("Block template doesn't have the Data Difficulty.")
 
     #Mine the Block.
@@ -95,7 +95,7 @@ def TElementTest(
         BlockHeader(
             0,
             block.header.hash,
-            BlockHeader.createContents(merit.state.nicks, [], [dataDiff]),
+            BlockHeader.createContents([], [dataDiff]),
             1,
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
@@ -106,7 +106,7 @@ def TElementTest(
     )
     if block.header.serializeHash()[:-4] != template["header"]:
         raise TestError("Failed to recreate the header.")
-    if block.body.serialize(merit.state.nicks, block.header.sketchSalt) != bytes.fromhex(template["body"]):
+    if block.body.serialize(block.header.sketchSalt) != bytes.fromhex(template["body"]):
         raise TestError("Failed to recreate the body.")
 
     block.mine(blsPrivKey, merit.blockchain.difficulty())
@@ -122,7 +122,7 @@ def TElementTest(
                 template["header"] +
                 block.header.proof.to_bytes(4, byteorder="big") +
                 block.header.signature +
-                block.body.serialize(merit.state.nicks, block.header.sketchSalt)
+                block.body.serialize(block.header.sketchSalt)
             ).hex()
         ]
     )
@@ -136,7 +136,7 @@ def TElementTest(
     #Verify the block template has the DataDifficulty.
     template = rpc.call("merit", "getBlockTemplate", [blsPubKey])
     template["header"] = bytes.fromhex(template["header"])
-    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [dataDiff]):
+    if template["header"][36 : 68] != BlockHeader.createContents([], [dataDiff]):
         raise TestError("Block template doesn't have the new Data Difficulty.")
 
     #Create and transmit a new DataDifficulty reusing an existing nonce.
@@ -155,7 +155,7 @@ def TElementTest(
     )
     template = rpc.call("merit", "getBlockTemplate", [blsPubKey])
     template["header"] = bytes.fromhex(template["header"])
-    if template["header"][36 : 68] != BlockHeader.createContents(merit.state.nicks, [], [mr]):
+    if template["header"][36 : 68] != BlockHeader.createContents([], [mr]):
         raise TestError("Block template doesn't have the Merit Removal.")
 
     #Mine the Block.
@@ -163,7 +163,7 @@ def TElementTest(
         BlockHeader(
             0,
             block.header.hash,
-            BlockHeader.createContents(merit.state.nicks, [], [mr]),
+            BlockHeader.createContents([], [mr]),
             1,
             template["header"][-43 : -39],
             BlockHeader.createSketchCheck(template["header"][-43 : -39], []),
@@ -174,7 +174,7 @@ def TElementTest(
     )
     if block.header.serializeHash()[:-4] != template["header"]:
         raise TestError("Failed to recreate the header.")
-    if block.body.serialize(merit.state.nicks, block.header.sketchSalt) != bytes.fromhex(template["body"]):
+    if block.body.serialize(block.header.sketchSalt) != bytes.fromhex(template["body"]):
         raise TestError("Failed to recreate the body.")
 
     block.mine(blsPrivKey, merit.blockchain.difficulty())
@@ -190,7 +190,7 @@ def TElementTest(
                 template["header"] +
                 block.header.proof.to_bytes(4, byteorder="big") +
                 block.header.signature +
-                block.body.serialize(merit.state.nicks, block.header.sketchSalt)
+                block.body.serialize(block.header.sketchSalt)
             ).hex()
         ]
     )
