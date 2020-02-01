@@ -33,7 +33,7 @@ proc shift*(
     epochs: var Epochs,
     newBlock: Block
 ): Epoch {.forceCheck: [].} =
-    logInfo "Epochs processing Block", hash = newBlock.header.hash
+    logDebug "Epochs processing Block", hash = newBlock.header.hash
 
     var
         #New Epoch for any Verifications belonging to Transactions that aren't in an older Epoch.

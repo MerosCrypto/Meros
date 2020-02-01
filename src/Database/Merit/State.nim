@@ -51,7 +51,7 @@ proc processBlock*(
     state: var State,
     blockchain: Blockchain
 ): (uint16, int) {.forceCheck: [].} =
-    logInfo "State processing Block", hash = blockchain.tail.header.hash
+    logDebug "State processing Block", hash = blockchain.tail.header.hash
 
     #Init the result.
     result = (uint16(0), -1)

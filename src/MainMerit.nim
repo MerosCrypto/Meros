@@ -158,7 +158,7 @@ proc mainMerit() {.forceCheck: [].} =
                     lockedBlock = Hash[256]()
                     release(lock[])
 
-            logInfo "Synced Block", hash = newBlock.header.hash
+            logDebug "Synced Block", hash = newBlock.header.hash
 
             #Add every Verification Packet.
             for packet in newBlock.body.packets:
@@ -184,8 +184,7 @@ proc mainMerit() {.forceCheck: [].} =
                 decd: int
             (epoch, incd, decd) = merit.postProcessBlock()
 
-
-            logInfo "Archiving Block", hash = newBlock.header.hash
+            logDebug "Archiving Block", hash = newBlock.header.hash
 
             #Archive the Epochs.
             consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
@@ -210,7 +209,7 @@ proc mainMerit() {.forceCheck: [].} =
                 if newBlock.header.minerKey == wallet.miner.publicKey:
                     wallet.setMinerNick(uint16(merit.state.holders.len - 1))
 
-            logInfo "Minting Meros", hash = newBlock.header.hash
+            logDebug "Minting Meros", hash = newBlock.header.hash
 
             #Calculate the rewards.
             var rewards: seq[Reward] = epoch.calculate(rewardsState, removed)

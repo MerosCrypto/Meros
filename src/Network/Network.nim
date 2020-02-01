@@ -53,7 +53,7 @@ proc connect*(
 ) {.forceCheck: [
     PeerError
 ], async.} =
-    logInfo "Connecting", address = address, port = port
+    logDebug "Connecting", address = address, port = port
 
     #Don't allow connections to self.
     if (not network.server.isClosed) and (address == "127.0.0.1") and (port == network.liveManager.port):
@@ -144,7 +144,7 @@ proc connect*(
     network.sync[ip] = peer.id
 
     #Handle the connections.
-    logInfo "Handling Client connection", address = address, port = port
+    logDebug "Handling Client connection", address = address, port = port
 
     try:
         if not hasSync:
@@ -175,7 +175,7 @@ proc handle*(
     except OSError as e:
         panic("Failed to get a peer's address: " & e.msg)
 
-    logInfo "Accepting ", address = address
+    logDebug "Accepting ", address = address
 
     var ip: string
     try:
@@ -216,7 +216,7 @@ proc handle*(
 
         peer.live = socket
         try:
-            logInfo "Handling Live Server connection", address = address
+            logDebug "Handling Live Server connection", address = address
             asyncCheck network.liveManager.handle(peer)
         except PeerError:
             network.disconnect(peer)
@@ -237,7 +237,7 @@ proc handle*(
 
         peer.sync = socket
         try:
-            logInfo "Handling Sync Server connection", address = address
+            logDebug "Handling Sync Server connection", address = address
             asyncCheck network.syncManager.handle(peer)
         except PeerError:
             network.disconnect(peer)
@@ -248,7 +248,7 @@ proc handle*(
 proc listen*(
     network: Network
 ) {.forceCheck: [], async.} =
-    logInfo "Listening", port = network.liveManager.port
+    logDebug "Listening", port = network.liveManager.port
 
     #Update the services byte.
     network.liveManager.updateServices(SERVER_SERVICE)

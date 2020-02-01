@@ -99,7 +99,7 @@ proc syncAwait*[T](
         panic("Couldn't create await a timeout: " & e.msg)
 
     if not timedOut:
-        logInfo "Sync Request resolved", id = future.id
+        logDebug "Sync Request resolved", id = future.id
 
     when T is seq[tuple[ip: string, port: int]]:
         if timedOut:
@@ -113,7 +113,7 @@ proc syncAwait*[T](
             return request.pending
     else:
         if timedOut:
-            logInfo "SyncRequest timed out", id = future.id
+            logDebug "SyncRequest timed out", id = future.id
             future.manager.requests.del(future.id)
             raise newLoggedException(DataMissing, "SyncRequest timed out.")
 
@@ -131,7 +131,7 @@ proc syncTransaction*(
     var id: int = manager.id
     inc(manager.id)
 
-    logInfo "Syncing Transaction", id = id, hash = hash
+    logDebug "Syncing Transaction", id = id, hash = hash
 
     #Create the future.
     result = newSyncFuture[Transaction](
@@ -163,7 +163,7 @@ proc syncVerificationPackets*(
     var id: int = manager.id
     inc(manager.id)
 
-    logInfo "Syncing Verification Packets", id = id, hash = hash
+    logDebug "Syncing Verification Packets", id = id, hash = hash
 
     #Create the future.
     result = newSyncFuture[seq[VerificationPacket]](
@@ -194,7 +194,7 @@ proc syncSketchHashes*(
     var id: int = manager.id
     inc(manager.id)
 
-    logInfo "Syncing Sketch Hashes", id = id, hash = hash
+    logDebug "Syncing Sketch Hashes", id = id, hash = hash
 
     #Create the future.
     result = newSyncFuture[seq[uint64]](
@@ -264,10 +264,10 @@ proc sync*(
             missingPackets
         )
 
-        logInfo "Resolved Sketch and verified Sketch Check", hash = newBlock.data.header.hash
+        logDebug "Resolved Sketch and verified Sketch Check", hash = newBlock.data.header.hash
     #Sketch failed to decode.
     except ValueError:
-        logInfo "Sketch resolution failed, syncing Sketch Hashes", hash = newBlock.data.header.hash
+        logDebug "Sketch resolution failed, syncing Sketch Hashes", hash = newBlock.data.header.hash
 
         #Clear packets.
         packets = @[]
@@ -297,7 +297,7 @@ proc sync*(
                 missingPackets.del(m)
             inc(m)
 
-        logInfo "Synced Sketch Hashes", hash = newBlock.data.header.hash
+        logDebug "Synced Sketch Hashes", hash = newBlock.data.header.hash
 
     #Sync the missing VerificationPackets.
     if missingPackets.len != 0:
@@ -328,7 +328,7 @@ proc sync*(
     except IndexError as e:
         panic("Passing a function which can raise an IndexError raised an IndexError: " & e.msg)
 
-    logInfo "Verified contents and aggregate", hash = newBlock.data.header.hash
+    logDebug "Verified contents and aggregate", hash = newBlock.data.header.hash
 
     #Find missing Transactions.
     for packet in result[0].body.packets:
@@ -351,7 +351,7 @@ proc sync*(
             except Exception as e:
                 panic("Syncing a Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
-    logInfo "Synced missing Transactions", hash = newBlock.data.header.hash
+    logDebug "Synced missing Transactions", hash = newBlock.data.header.hash
 
     #List of Transactions we have yet to process.
     var todo: Table[Hash[256], Transaction]
@@ -416,7 +416,7 @@ proc sync*(
         #Set transactions to todo.
         transactions = todo
 
-    logInfo "Added missing Transactions", hash = newBlock.data.header.hash
+    logDebug "Added missing Transactions", hash = newBlock.data.header.hash
 
     #Verify the included packets.
     for packet in result[0].body.packets:
@@ -560,7 +560,7 @@ proc syncBlockBody*(
     var id: int = manager.id
     inc(manager.id)
 
-    logInfo "Syncing Block Body", id = id, hash = hash
+    logDebug "Syncing Block Body", id = id, hash = hash
 
     #Create the future.
     result = newSyncFuture[SketchyBlockBody](
@@ -590,7 +590,7 @@ proc syncBlockHeader*(
     var id: int = manager.id
     inc(manager.id)
 
-    logInfo "Syncing Block Header", id = id, hash = hash
+    logDebug "Syncing Block Header", id = id, hash = hash
 
     #Create the future.
     result = newSyncFuture[BlockHeader](
@@ -622,7 +622,7 @@ proc syncBlockList*(
     var id: int = manager.id
     inc(manager.id)
 
-    logInfo "Syncing Block List", id = id, forwards = forwards, amount = amount
+    logDebug "Syncing Block List", id = id, forwards = forwards, amount = amount
 
     #Create the future.
     result = newSyncFuture[seq[Hash[256]]](
@@ -652,7 +652,7 @@ proc syncPeers*(
     var id: int = manager.id
     inc(manager.id)
 
-    logInfo "Syncing Peers", id = id
+    logDebug "Syncing Peers", id = id
 
     if manager.peers.len == 0:
         result = newSyncFuture[seq[tuple[ip: string, port: int]]](

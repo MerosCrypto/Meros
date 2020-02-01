@@ -107,7 +107,7 @@ proc processBlock*(
     blockchain: var Blockchain,
     newBlock: Block
 ) {.forceCheck: [].} =
-    logInfo "Blockchain processing Block", hash = newBlock.header.hash
+    logDebug "Blockchain processing Block", hash = newBlock.header.hash
 
     #Add the Block.
     blockchain.add(newBlock)
