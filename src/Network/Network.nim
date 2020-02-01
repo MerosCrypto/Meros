@@ -197,6 +197,10 @@ proc handle*(
         socket.safeClose()
         return
 
+    if not (int(first[0]) < int(MessageType.End)):
+        socket.safeClose()
+        return
+
     if not {MessageType.Handshake, MessageType.Syncing}.contains(MessageType(first[0])):
         socket.safeClose()
         return
