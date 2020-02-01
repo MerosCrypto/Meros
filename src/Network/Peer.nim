@@ -29,7 +29,8 @@ import tables
 #Send a message via the Live socket.
 proc sendLive*(
     peer: Peer,
-    msg: Message
+    msg: Message,
+    noRaise: bool = false
 ) {.forceCheck: [
     SocketError
 ], async.} =
@@ -37,12 +38,14 @@ proc sendLive*(
         await peer.live.send(msg.toString())
     except Exception as e:
         peer.sync.safeClose()
-        raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
+        if not noRaise:
+            raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
 #Send a message via the Sync socket.
 proc sendSync*(
     peer: Peer,
-    msg: Message
+    msg: Message,
+    noRaise: bool = false
 ) {.forceCheck: [
     SocketError
 ], async.} =
@@ -50,7 +53,8 @@ proc sendSync*(
         await peer.sync.send(msg.toString())
     except Exception as e:
         peer.sync.safeClose()
-        raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
+        if not noRaise:
+            raise newLoggedException(SocketError, "Failed to send to the Peer's live socket: " & e.msg)
 
 #Send a Sync Request.
 proc syncRequest*(

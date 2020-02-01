@@ -133,7 +133,8 @@ proc newNetwork*(
                                     network.liveManager.services &
                                     network.liveManager.port.toBinary(PORT_LEN) &
                                     network.functions.merit.getTail().toString()
-                                )
+                                ),
+                                true
                             )
                         else:
                             asyncCheck peer.sendSync(
@@ -144,7 +145,8 @@ proc newNetwork*(
                                     network.liveManager.services &
                                     network.liveManager.port.toBinary(PORT_LEN) &
                                     network.functions.merit.getTail().toString()
-                                )
+                                ),
+                                true
                             )
                     except SocketError:
                         discard
