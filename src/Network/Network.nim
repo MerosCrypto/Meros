@@ -173,7 +173,8 @@ proc handle*(
 
         addressParts = address.split(".")
     except OSError as e:
-        panic("Failed to get a peer's address: " & e.msg)
+        socket.safeClose()
+        return
 
     logDebug "Accepting ", address = address
 
