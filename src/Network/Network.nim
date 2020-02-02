@@ -172,7 +172,7 @@ proc handle*(
             return
 
         addressParts = address.split(".")
-    except OSError as e:
+    except OSError:
         socket.safeClose()
         return
 

@@ -14,7 +14,7 @@ import tables
 type
     TransactionsDB* = ref object
         cache*: Table[string, string]
-        deleted*: seq[string]
+        deleted*: HashSet[string]
 
     ConsensusDB* = ref object
         cache*: Table[string, string]
@@ -36,7 +36,7 @@ type
 proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
     TransactionsDB(
         cache: initTable[string, string](),
-        deleted: @[]
+        deleted: initHashSet[string]()
     )
 proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
     ConsensusDB(

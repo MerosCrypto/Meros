@@ -22,7 +22,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export toString, getUTXOs, loadSpenders, loadDataTip, verify, unverify
+export toString, getUTXOs, loadSpenders, verify, unverify
 
 #Sets standard lib.
 import sets
@@ -252,6 +252,9 @@ proc mint*(
         transactions.add(cast[Transaction](mint))
     except ValueError as e:
         panic("Adding a Mint raised a ValueError: " & e.msg)
+
+    #Verify it.
+    transactions.verify(mint.hash)
 
 #Remove every hash in this Epoch from the cache/RAM.
 proc archive*(

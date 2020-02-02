@@ -4,15 +4,13 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#Wallet libs.
-import ../../../Wallet/MinerWallet
+#Wallet lib.
 import ../../../Wallet/Wallet
 
 #VerificationPacket object.
 import ../../Consensus/Elements/objects/VerificationPacketObj
 
-#Block and Blockchain libs.
-import ../../Merit/Block
+#Blockchain lib.
 import ../../Merit/Blockchain
 
 #Transactions DB lib.
@@ -66,10 +64,14 @@ proc add*(
         #Verify every input doesn't have a spender out of Epochs.
         if not ((tx of Data) and (tx.inputs[0].hash == Hash[256]())):
             for input in tx.inputs:
+                if not (transactions.db.isVerified(input.hash) or transactions.transactions.hasKey(input.hash)):
+                    raise newLoggedException(ValueError, "Transaction spends a finalized Transaction which was beaten.")
+
                 var spenders: seq[Hash[256]] = transactions.db.loadSpenders(input)
-                for spender in spenders:
-                    if not transactions.transactions.hasKey(spender):
-                        raise newLoggedException(ValueError, "Transaction competes with a finalized Transaction.")
+                if spenders.len == 0:
+                    continue
+                if not transactions.transactions.hasKey(spenders[0]):
+                    raise newLoggedException(ValueError, "Transaction competes with a finalized Transaction.")
 
     if not (tx of Mint):
         #Add the Transaction to the cache.
@@ -164,18 +166,7 @@ proc verify*(
     except IndexError as e:
         panic("Tried to mark a non-existent Transaction as verified: " & e.msg)
 
-    case tx:
-        of Claim as claim:
-            transactions.db.verify(claim)
-        of Send as send:
-            transactions.db.verify(send)
-        of Data as data:
-            try:
-                transactions.db.saveDataTip(transactions.getSender(data), data.hash)
-            except DataMissing as e:
-                panic("Added and verified a Data which has a missing input: " & e.msg)
-        else:
-            discard
+    transactions.db.verify(tx)
 
 #Mark a Transaction as unverified, removing its outputs from spendable.
 proc unverify*(
@@ -188,18 +179,7 @@ proc unverify*(
     except IndexError as e:
         panic("Tried to mark a non-existent Transaction as verified: " & e.msg)
 
-    case tx:
-        of Claim as claim:
-            transactions.db.unverify(claim)
-        of Send as send:
-            transactions.db.unverify(send)
-        of Data as data:
-            try:
-                transactions.db.saveDataTip(transactions.getSender(data), data.inputs[0].hash)
-            except DataMissing as e:
-                panic("Added, verified, and unverified a Data which has a missing input: " & e.msg)
-        else:
-            discard
+    transactions.db.unverify(tx)
 
 #Delete a hash from the cache.
 func del*(
@@ -237,15 +217,3 @@ proc loadSpenders*(
     input: Input
 ): seq[Hash[256]] {.inline, forceCheck: [].} =
     transactions.db.loadSpenders(input)
-
-#Load a Data Tip.
-proc loadDataTip*(
-    transactions: Transactions,
-    key: EdPublicKey
-): Hash[256] {.forceCheck: [
-    DataMissing
-].} =
-    try:
-        result = transactions.db.loadDataTip(key)
-    except DBReadError:
-        raise newLoggedException(DataMissing, "Data tip not found.")

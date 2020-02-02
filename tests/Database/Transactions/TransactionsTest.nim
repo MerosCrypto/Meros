@@ -3,9 +3,6 @@
 #Test lib.
 import unittest
 
-#Errors lib.
-import ../../../src/lib/Errors
-
 #Util lib.
 import ../../../src/lib/Util
 
@@ -88,6 +85,8 @@ suite "Transactions":
 
             #Transactions.
             txs: seq[Transaction] = @[]
+            #Data Tips.
+            dataTips: Table[EdPublicKey, Hash[256]] = initTable[EdPublicKey, Hash[256]]()
             #Table of a hash to the block it first appeared on.
             first: Table[Hash[256], int] = initTable[Hash[256], int]()
 
@@ -218,34 +217,23 @@ suite "Transactions":
                         dataStr[c] = char(rand(255))
 
                     try:
-                        discard transactions.loadDataTip(wallet.publicKey)
-                    except DataMissing:
+                        discard dataTips[wallet.publicKey]
+                    except KeyError:
                         data = newData(Hash[256](), wallet.publicKey.toString())
                         wallet.sign(data)
                         data.mine(Hash[256]())
                         transactions.add(data)
                         verify(data, 0)
                         transactions.verify(data.hash)
+                        dataTips[wallet.publicKey] = data.hash
 
-                    #We don't guarantee the data tip will be verified except for the initial verification.
-                    #Any Data which isn't verified won't be saved as the tip.
-                    #That said, if it's out-of-Epochs, it can no longer be competed with.
-                    #Manually update the tip under these situations.
-                    var spenders: seq[Hash[256]] = db.loadSpenders(
-                        newInput(
-                            transactions.loadDataTip(wallet.publicKey)
-                        )
-                    )
-                    if spenders.len != 0:
-                        if not transactions.transactions.hasKey(spenders[0]):
-                            db.saveDataTip(wallet.publicKey, spenders[0])
-
-                    data = newData(transactions.loadDataTip(wallet.publicKey), dataStr)
+                    data = newData(dataTips[wallet.publicKey], dataStr)
                     wallet.sign(data)
                     data.mine(Hash[256]())
                     transactions.add(data)
-
                     verify(data, 0)
+                    transactions.verify(data.hash)
+                    dataTips[wallet.publicKey] = data.hash
 
             #Randomly select old transactions.
             var reused: HashSet[Hash[256]] = initHashSet[Hash[256]]()

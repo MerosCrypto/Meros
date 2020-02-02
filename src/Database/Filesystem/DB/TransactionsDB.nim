@@ -7,8 +7,7 @@ import ../../../lib/Util
 #Hash lib.
 import ../../../lib/Hash
 
-#Wallet libs.
-import ../../../Wallet/MinerWallet
+#Wallet lib.
 import ../../../Wallet/Wallet
 
 #Transaction lib.
@@ -28,6 +27,9 @@ import Serialize/Transactions/ParseTransaction
 #DB object.
 import objects/DBObj
 export DBObj
+
+#Sets standard lib.
+import sets
 
 #Tables standard lib.
 import tables
@@ -69,15 +71,15 @@ template DATA_SENDER(
 ): string =
     hash.toString() & "se"
 
-template DATA_TIP(
-    key: EdPublicKey
-): string =
-    key.toString() & "dt"
-
 template SPENDABLE(
     key: EdPublicKey
 ): string =
     key.toString() & "$p"
+
+template VERIFIED_TRANSACTION(
+    hash: Hash[256]
+): string =
+    hash.toString() & "vt"
 
 #Put/Get/Commit for the Transactions DB.
 proc put(
@@ -107,6 +109,14 @@ proc get(
 proc commit*(
     db: DB
 ) {.forceCheck: [].} =
+    for key in db.transactions.deleted:
+        try:
+            db.lmdb.delete("transactions", key)
+        except Exception:
+            #If we delete something before it's committed, it'll throw.
+            discard
+    db.transactions.deleted = initHashSet[string]()
+
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.transactions.cache.len)
     try:
         var i: int = 0
@@ -145,13 +155,6 @@ proc saveDataSender*(
     sender: EdPublicKey
 ) {.forceCheck: [].} =
     db.put(DATA_SENDER(data.hash), sender.toString())
-
-proc saveDataTip*(
-    db: DB,
-    key: EdPublicKey,
-    hash: Hash[256]
-) {.forceCheck: [].} =
-    db.put(DATA_TIP(key), hash.toString())
 
 #Load functions.
 proc load*(
@@ -227,19 +230,6 @@ proc loadSendOutput*(
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
-proc loadDataTip*(
-    db: DB,
-    key: EdPublicKey
-): Hash[256] {.forceCheck: [
-    DBReadError
-].} =
-    try:
-        result = db.get(DATA_TIP(key)).toHash(256)
-    except DBReadError as e:
-        raise e
-    except ValueError as e:
-        raise newLoggedException(DBReadError, e.msg)
-
 proc loadSpendable*(
     db: DB,
     key: EdPublicKey
@@ -296,58 +286,78 @@ proc removeFromSpendable(
             db.put(SPENDABLE(key), spendable[0 ..< o] & spendable[o + 33 ..< spendable.len])
             break
 
-#Add a Claim/Send's outputs to spendable while removing a Send's inputs.
+#Add a outputs to spendable while removing spent inputs.
 proc verify*(
     db: DB,
-    tx: Claim or Send
+    tx: Transaction
 ) {.forceCheck: [].} =
+    #Mark the Transaction as verified.
+    db.put(VERIFIED_TRANSACTION(tx.hash), "")
+
     #Add spendable outputs.
-    for o in 0 ..< tx.outputs.len:
-        db.addToSpendable(
-            cast[SendOutput](tx.outputs[o]).key,
-            tx.hash,
-            o
-        )
-
-    if tx of Send:
-        #Remove spent inputs.
-        for input in tx.inputs:
-            var key: EdPublicKey
-            try:
-                key = db.loadSendOutput(cast[FundedInput](input)).key
-            except DBReadError:
-                panic("Removing a non-existent output.")
-
-            db.removeFromSpendable(
-                key,
-                input.hash,
-                cast[FundedInput](input).nonce
+    if (tx of Claim) or (tx of Send):
+        for o in 0 ..< tx.outputs.len:
+            db.addToSpendable(
+                cast[SendOutput](tx.outputs[o]).key,
+                tx.hash,
+                o
             )
 
-#Add a Send's inputs back to spendable while removing the Claim/Send's outputs.
+        if tx of Send:
+            #Remove spent inputs.
+            for input in tx.inputs:
+                var key: EdPublicKey
+                try:
+                    key = db.loadSendOutput(cast[FundedInput](input)).key
+                except DBReadError:
+                    panic("Removing a non-existent output.")
+
+                db.removeFromSpendable(
+                    key,
+                    input.hash,
+                    cast[FundedInput](input).nonce
+                )
+
+#Add a inputs back to spendable while removing unverified outputs.
 proc unverify*(
     db: DB,
-    tx: Claim or Send
+    tx: Transaction
 ) {.forceCheck: [].} =
-    #Restore inputs.
-    if tx of Send:
-        for input in tx.inputs:
-            var key: EdPublicKey
-            try:
-                key = db.loadSendOutput(cast[FundedInput](input)).key
-            except DBReadError:
-                panic("Restoring a non-existent output.")
+    #Remove the mark that the Transaction was verified.
+    db.transactions.cache.del(VERIFIED_TRANSACTION(tx.hash))
+    db.transactions.deleted.incl(VERIFIED_TRANSACTION(tx.hash))
 
-            db.addToSpendable(
-                key,
-                input.hash,
-                cast[FundedInput](input).nonce
+    if (tx of Claim) or (tx of Send):
+        #Remove outputs.
+        for o in 0 ..< tx.outputs.len:
+            db.removeFromSpendable(
+                cast[SendOutput](tx.outputs[o]).key,
+                tx.hash,
+                o
             )
 
-    #Remove outputs.
-    for o in 0 ..< tx.outputs.len:
-        db.removeFromSpendable(
-            cast[SendOutput](tx.outputs[o]).key,
-            tx.hash,
-            o
-        )
+        #Restore inputs.
+        if tx of Send:
+            for input in tx.inputs:
+                var key: EdPublicKey
+                try:
+                    key = db.loadSendOutput(cast[FundedInput](input)).key
+                except DBReadError:
+                    panic("Restoring a non-existent output.")
+
+                db.addToSpendable(
+                    key,
+                    input.hash,
+                    cast[FundedInput](input).nonce
+                )
+
+#Get if a Transaction was verified.
+proc isVerified*(
+    db: DB,
+    hash: Hash[256]
+): bool {.forceCheck: [].} =
+    try:
+        discard db.get(VERIFIED_TRANSACTION(hash))
+        result = true
+    except DBReadError:
+        result = false

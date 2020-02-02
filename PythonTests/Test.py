@@ -162,7 +162,8 @@ for test in tests:
 
     #Meros instance.
     meros: Meros = Meros(test.__name__, port, port + 1)
-    sleep(5)
+    port += 2
+    sleep(15)
 
     rpc: RPC = RPC(meros)
     try:
