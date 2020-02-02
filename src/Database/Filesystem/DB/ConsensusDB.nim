@@ -110,7 +110,7 @@ template HOLDER_MALICIOUS_PROOF(
 ): string =
     holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN) & "p"
 
-#Put/Get/Commit for the Consensus DB.
+#Put/Get/Del/Commit for the Consensus DB.
 proc put(
     db: DB,
     key: string,
@@ -139,6 +139,13 @@ proc get(
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
+proc del(
+    db: DB,
+    key: string
+) {.forceCheck: [].} =
+    db.consensus.deleted.incl(key)
+    db.consensus.cache.del(key)
+
 proc commit*(
     db: DB
 ) {.forceCheck: [].} =
@@ -160,8 +167,11 @@ proc commit*(
         panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
 
     #Save the unmentioned hashes.
-    items[^1] = (key: UNMENTIONED(), value: db.consensus.unmentioned)
-    db.consensus.unmentioned = ""
+    var unmentioned: string
+    for hash in db.consensus.unmentioned:
+        unmentioned &= hash.toString()
+    items[^1] = (key: UNMENTIONED(), value: unmentioned)
+    db.consensus.unmentioned = initHashSet[Hash[256]]()
 
     try:
         db.lmdb.put("consensus", items)
@@ -182,7 +192,13 @@ proc addUnmentioned*(
     db: DB,
     unmentioned: Hash[256]
 ) {.inline, forceCheck: [].} =
-    db.consensus.unmentioned &= unmentioned.toString()
+    db.consensus.unmentioned.incl(unmentioned)
+
+proc mention*(
+    db: DB,
+    mentioned: Hash[256]
+) {.inline, forceCheck: [].} =
+    db.consensus.unmentioned.excl(mentioned)
 
 proc save*(
     db: DB,
@@ -269,17 +285,18 @@ proc load*(
 
 proc loadUnmentioned*(
     db: DB
-): seq[Hash[256]] {.forceCheck: [].} =
+): HashSet[Hash[256]] {.forceCheck: [].} =
+    result = initHashSet[Hash[256]]()
+
     var unmentioned: string
     try:
         unmentioned = db.get(UNMENTIONED())
     except DBReadError:
-        return @[]
+        return
 
-    result = newSeq[Hash[256]](unmentioned.len div 32)
-    for i in countup(0, unmentioned.len - 1, 32):
+    for h in countup(0, unmentioned.len - 1, 32):
         try:
-            result[i div 32] = unmentioned[i ..< i + 32].toHash(256)
+            result.incl(unmentioned[h ..< h + 32].toHash(256))
         except ValueError as e:
             panic("Couldn't parse an unmentioned hash: " & e.msg)
 
@@ -412,7 +429,8 @@ proc deleteSignature*(
     holder: uint16,
     nonce: int
 ) {.inline, forceCheck: [].} =
-    db.consensus.deleted.incl(SIGNATURE(holder, nonce))
+    db.del(SIGNATURE(holder, nonce))
+    db.del(SIGNATURE(holder, nonce))
 
 #Delete malicious proofs for a holder.
 proc deleteMaliciousProofs*(
@@ -421,9 +439,9 @@ proc deleteMaliciousProofs*(
 ) {.forceCheck: [].} =
     try:
         var proofs: int = db.get(HOLDER_MALICIOUS_PROOFS(holder)).fromBinary()
-        db.consensus.deleted.incl(HOLDER_MALICIOUS_PROOFS(holder))
+        db.del(HOLDER_MALICIOUS_PROOFS(holder))
         for p in 0 .. proofs:
-            db.consensus.deleted.incl(HOLDER_MALICIOUS_PROOF(holder, p))
+            db.del(HOLDER_MALICIOUS_PROOF(holder, p))
     except DBReadError:
         discard
 
@@ -437,3 +455,11 @@ proc hasMeritRemoval*(
         result = true
     except DBReadError:
         result = false
+
+#Prune a Transaction.
+proc prune*(
+    db: DB,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    db.del(TRANSACTION(hash))
+    db.del(STATUS(hash))

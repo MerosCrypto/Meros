@@ -81,13 +81,14 @@ template VERIFIED_TRANSACTION(
 ): string =
     hash.toString() & "vt"
 
-#Put/Get/Commit for the Transactions DB.
+#Put/Get/Del/Commit for the Transactions DB.
 proc put(
     db: DB,
     key: string,
     val: string
 ) {.forceCheck: [].} =
     db.transactions.cache[key] = val
+    db.transactions.deleted.excl(key)
 
 proc get(
     db: DB,
@@ -95,6 +96,9 @@ proc get(
 ): string {.forceCheck: [
     DBReadError
 ].} =
+    if db.transactions.deleted.contains(key):
+        raise newLoggedException(DBReadError, "Key deleted.")
+
     if db.transactions.cache.hasKey(key):
         try:
             return db.transactions.cache[key]
@@ -105,6 +109,13 @@ proc get(
         result = db.lmdb.get("transactions", key)
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
+
+proc del(
+    db: DB,
+    key: string
+) {.forceCheck: [].} =
+    db.transactions.deleted.incl(key)
+    db.transactions.cache.del(key)
 
 proc commit*(
     db: DB
@@ -324,8 +335,7 @@ proc unverify*(
     tx: Transaction
 ) {.forceCheck: [].} =
     #Remove the mark that the Transaction was verified.
-    db.transactions.cache.del(VERIFIED_TRANSACTION(tx.hash))
-    db.transactions.deleted.incl(VERIFIED_TRANSACTION(tx.hash))
+    db.del(VERIFIED_TRANSACTION(tx.hash))
 
     if (tx of Claim) or (tx of Send):
         #Remove outputs.
@@ -361,3 +371,63 @@ proc isVerified*(
         result = true
     except DBReadError:
         result = false
+
+#Prune a Transaction.
+proc prune*(
+    db: DB,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    #Get the TX.
+    var tx: Transaction
+    try:
+        tx = db.load(hash)
+    except DBReadError:
+        return
+
+    #Delete the Transaction.
+    db.del(TRANSACTION(hash))
+
+    #Delete if its verified.
+    db.del(VERIFIED_TRANSACTION(hash))
+
+    #Remove it as a spender.
+    var hashStr: string = hash.toString()
+    for i in 0 ..< tx.inputs.len:
+        var spenders: string
+        try:
+            spenders = db.get(OUTPUT_SPENDERS(tx.inputs[i]))
+        except DBReadError as e:
+            panic("Couldn't get the spenders of a spent input: " & e.msg)
+
+        for h in countup(0, spenders.len - 1, 32):
+            if spenders[h ..< h + 32] == hashStr:
+                spenders = spenders[0 ..< h] & spenders[h ..< spenders.len]
+
+        db.put(OUTPUT_SPENDERS(tx.inputs[i]), spenders)
+
+        #If we were the only spender of this output, restore the output as spendable.
+        if (spenders.len == 0) and (tx of Send):
+            try:
+                db.addToSpendable(
+                    cast[SendOutput](
+                        db.load(tx.inputs[i].hash).outputs[cast[FundedInput](tx.inputs[i]).nonce]
+                    ).key,
+                    tx.inputs[i].hash,
+                    cast[FundedInput](tx.inputs[i]).nonce
+                )
+            except DBReadError:
+                panic("Couldn't load the Transaction the Transaction we're pruning spent.")
+
+    for o in 0 ..< tx.outputs.len:
+        #Delete its outputs and their spenders.
+        db.del(OUTPUT(hash, o))
+        var spenders: string
+        try:
+            spenders = db.get(OUTPUT_SPENDERS(newFundedInput(hash, o)))
+        except DBReadError:
+            discard
+        db.del(OUTPUT_SPENDERS(newFundedInput(hash, o)))
+
+        #If it has no spenders and is tracked by spendable, remove it.
+        if (spenders == "") and (tx.outputs[o] of SendOutput):
+            db.removeFromSpendable(cast[SendOutput](tx.outputs[o]).key, hash, o)

@@ -91,6 +91,10 @@ type
             hash: Hash[256]
         ) {.raises: [].}
 
+        prune*: proc (
+            hash: Hash[256]
+        ) {.inline, raises: [].}
+
     ConsensusFunctionBox* = ref object
         getSendDifficulty*: proc (): Hash[256] {.inline, raises: [].}
         getDataDifficulty*: proc (): Hash[256] {.inline, raises: [].}

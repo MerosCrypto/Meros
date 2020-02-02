@@ -81,7 +81,7 @@ proc newConsensusObj*(
 
         statuses: initTable[Hash[256], TransactionStatus](),
         close: initHashSet[Hash[256]](),
-        unmentioned: initHashSet[Hash[256]](),
+        unmentioned: db.loadUnmentioned(),
 
         archived: initTable[uint16, int]()
     )
@@ -147,11 +147,6 @@ proc newConsensusObj*(
                     panic("Couldn't get a status we just added to the statuses table: " & e.msg)
     except IndexError as e:
         panic("Couldn't get a Block on the Blockchain: " & e.msg)
-
-    #Load unmentioned Transactions.
-    var unmentioned: seq[Hash[256]] = result.db.loadUnmentioned()
-    for hash in unmentioned:
-        result.unmentioned.incl(hash)
 
 #Set a Transaction as unmentioned.
 proc setUnmentioned*(
@@ -386,6 +381,42 @@ proc finalize*(
                         status.beaten = true
                 except IndexError as e:
                     panic("Couldn't get the Status of a competing Transaction: " & e.msg)
+
+    #If the status was beaten and has no holders, prune it and its descendants.
+    if status.beaten and (status.holders.len == 0):
+        var
+            pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+            toPrune: seq[Hash[256]] = @[hash]
+            current: Hash[256]
+        while toPrune.len == 0:
+            #Grab the latest descendant.
+            current = toPrune[^1]
+            toPrune.del(toPrune.len - 1)
+            pruned.incl(current)
+
+            #Get the Transactions's outputs.
+            var outputs: seq[Output]
+            try:
+                outputs = consensus.functions.transactions.getTransaction(current).outputs
+            except IndexError as e:
+                panic("Attempting to prune a pruned Transaction: " & e.msg)
+
+            for o in 0 ..< outputs.len:
+                #Add every spender of each output to the list of Transactions to prune.
+                var input: FundedInput = newFundedInput(current, o)
+                for spender in consensus.functions.transactions.getSpenders(input):
+                    if not pruned.contains(spender):
+                        toPrune.add(spender)
+
+            #Remove the current descendant from RAM.
+            consensus.statuses.del(current)
+            consensus.unmentioned.excl(current)
+            consensus.close.excl(current)
+
+            #Remove the current descendant from the Database.
+            consensus.db.prune(current)
+            consensus.functions.transactions.prune(current)
+        return
 
     #Save the status.
     #This will cause a double save for the finalized TX in the unverified case.

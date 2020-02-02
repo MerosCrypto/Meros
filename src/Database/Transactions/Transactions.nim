@@ -22,7 +22,7 @@ export Transaction
 #Transactions object.
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
-export toString, getUTXOs, loadSpenders, verify, unverify
+export toString, getUTXOs, loadSpenders, verify, unverify, prune
 
 #Sets standard lib.
 import sets

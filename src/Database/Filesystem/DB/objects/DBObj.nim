@@ -1,6 +1,9 @@
 #Errors lib.
 import ../../../../lib/Errors
 
+#Hash lib.
+import ../../../../lib/Hash
+
 #DB lib.
 import mc_lmdb
 export put, get, delete
@@ -20,7 +23,7 @@ type
         cache*: Table[string, string]
         deleted*: HashSet[string]
         malicious*: set[uint16]
-        unmentioned*: string
+        unmentioned*: HashSet[Hash[256]]
 
     MeritDB* = ref object
         cache*: Table[string, string]
@@ -43,7 +46,7 @@ proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
         cache: initTable[string, string](),
         deleted: initHashSet[string](),
         malicious: {},
-        unmentioned: ""
+        unmentioned: initHashSet[Hash[256]]()
     )
 proc newMeritDB(): MeritDB {.inline, forceCheck: [].} =
     MeritDB(

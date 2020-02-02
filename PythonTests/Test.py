@@ -22,6 +22,7 @@ from PythonTests.Tests.Transactions.AggregatedClaimTest import AggregatedClaimTe
 from PythonTests.Tests.Transactions.SameInputTest import SameInputTest
 from PythonTests.Tests.Transactions.CompetingFinalizedTest import CompetingFinalizedTest
 from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
+from PythonTests.Tests.Transactions.PruneUnaddableTest import PruneUnaddableTest
 
 from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
@@ -86,6 +87,7 @@ tests: List[Callable[[RPC], None]] = [
     SameInputTest,
     CompetingFinalizedTest,
     FiftyTest,
+    PruneUnaddableTest,
 
     VUnknownTest,
     VParsableTest,
@@ -162,8 +164,7 @@ for test in tests:
 
     #Meros instance.
     meros: Meros = Meros(test.__name__, port, port + 1)
-    port += 2
-    sleep(15)
+    sleep(5)
 
     rpc: RPC = RPC(meros)
     try:

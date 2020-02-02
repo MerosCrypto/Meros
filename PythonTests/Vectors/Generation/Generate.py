@@ -10,6 +10,7 @@ import PythonTests.Vectors.Generation.Transactions.AggregatedClaim
 import PythonTests.Vectors.Generation.Transactions.SameInput
 import PythonTests.Vectors.Generation.Transactions.CompetingFinalized
 import PythonTests.Vectors.Generation.Transactions.Fifty
+import PythonTests.Vectors.Generation.Transactions.PruneUnaddable
 
 #Consensus.
 import PythonTests.Vectors.Generation.Consensus.Verification.Parsable

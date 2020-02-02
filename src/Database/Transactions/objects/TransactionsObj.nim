@@ -188,6 +188,14 @@ func del*(
 ) {.forceCheck: [].} =
     transactions.transactions.del(hash)
 
+#Prune a Transactions.
+proc prune*(
+    transactions: var Transactions,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    transactions.transactions.del(hash)
+    transactions.db.prune(hash)
+
 #Load a Mint Output.
 proc loadMintOutput*(
     transactions: Transactions,

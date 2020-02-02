@@ -187,3 +187,9 @@ proc mainTransactions() {.forceCheck: [].} =
             hash: Hash[256]
         ) {.forceCheck: [].} =
             transactions.unverify(hash)
+
+        #Prune a Transaction from the Database.
+        functions.transactions.prune = proc (
+            hash: Hash[256]
+        ) {.inline, forceCheck: [].} =
+            transactions.prune(hash)
