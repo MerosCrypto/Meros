@@ -129,11 +129,15 @@ proc calculate*(
         except KeyError as e:
             panic("Either couldn't grab the verifiers for an Transaction in the Epoch or the score of a holder: " & e.msg)
 
-    #Multiply every score by how much Merit the holder has.
-    try:
-        for malicious in removed:
-            scores.del(malicious)
+    #Make sure at least one Transaction didn't default.
+    if scores.len == 0:
+        return @[]
 
+    #Multiply every score by how much Merit the holder has.
+    for malicious in removed:
+        scores.del(malicious)
+
+    try:
         for holder in scores.keys():
             scores[holder] = scores[holder] * uint64(state[holder])
             #Add the update score to the total.
