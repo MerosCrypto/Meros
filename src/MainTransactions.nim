@@ -46,10 +46,7 @@ proc mainTransactions() {.forceCheck: [].} =
             try:
                 result = transactions[hash]
             except IndexError as e:
-                try:
-                    result = consensus.getMeritRemovalTransaction(hash)
-                except IndexError:
-                    raise e
+                raise e
 
         #Get a Transaction's spenders.
         functions.transactions.getSpenders = proc (

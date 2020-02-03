@@ -9,17 +9,22 @@ from PythonTests.Classes.Transactions.Transactions import Transactions
 #MeritRemoval class.
 from PythonTests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 
+#Blockchain class.
+from PythonTests.Classes.Merit.Blockchain import Blockchain
+
 #Meros classes.
 from PythonTests.Meros.Meros import MessageType
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Liver import Liver
-from PythonTests.Meros.Syncer import Syncer
 
 #MeritRemoval verifier.
 from PythonTests.Tests.Consensus.Verify import verifyMeritRemoval
 
-#TestError Exception.
-from PythonTests.Tests.Errors import TestError
+#Blockchain verifier.
+from PythonTests.Tests.Merit.Verify import verifyBlockchain
+
+#TestError and SuccessError Exceptions.
+from PythonTests.Tests.Errors import TestError, SuccessError
 
 #JSON standard lib.
 import json
@@ -57,18 +62,20 @@ def InvalidCompetingTest(
 
         if removalBytes != rpc.meros.live.recv():
             raise TestError("Meros didn't send us the Merit Removal.")
-        verifyMeritRemoval(rpc, 11, 11, removal.holder, True)
+        verifyMeritRemoval(rpc, 1, 1, removal.holder, True)
+
+    #Verify the MeritRemoval and the Blockchain.
+    def verify() -> None:
+        verifyMeritRemoval(rpc, 1, 1, removal.holder, False)
+        verifyBlockchain(rpc, Blockchain.fromJSON(vectors["blockchain"]))
+        raise SuccessError("MeritRemoval and Blockchain were properly handled.")
 
     Liver(
         rpc,
         vectors["blockchain"],
         transactions,
         callbacks={
-            11: sendMeritRemoval,
-            12: lambda: verifyMeritRemoval(rpc, 11, 11, removal.holder, False)
+            1: sendMeritRemoval,
+            2: verify
         }
     ).live()
-
-    #Create and execute a Syncer to handle the MeritRemoval.
-    Syncer(rpc, vectors["blockchain"], transactions).sync()
-    verifyMeritRemoval(rpc, 11, 11, removal.holder, False)

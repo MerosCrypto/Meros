@@ -15,11 +15,14 @@ proc syncMeritRemovalTransactions(
             discard functions.transactions.getTransaction(hash)
         except IndexError:
             try:
-                consensus.addMeritRemovalTransaction(await syncAwait network.syncManager.syncTransaction(hash))
-            except DataMissing:
-                raise newLoggedException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
-            except Exception as e:
-                panic("Syncing a MeritRemoval's Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
+                discard consensus.getMeritRemovalTransaction(hash)
+            except IndexError:
+                try:
+                    consensus.addMeritRemovalTransaction(await syncAwait network.syncManager.syncTransaction(hash))
+                except DataMissing:
+                    raise newLoggedException(ValueError, "Couldn't find the Transaction behind a MeritRemoval.")
+                except Exception as e:
+                    panic("Syncing a MeritRemoval's Transaction threw an Exception despite catching all thrown Exceptions: " & e.msg)
 
     try:
         case removal.element1:

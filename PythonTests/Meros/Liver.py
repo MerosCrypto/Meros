@@ -1,5 +1,5 @@
 #Types.
-from typing import Callable, Dict, List, Union, Any
+from typing import Callable, Dict, List, Optional, Any
 
 #Sketch class.
 from PythonTests.Libs.Minisketch import Sketch
@@ -33,19 +33,19 @@ class Liver:
         self,
         rpc: RPC,
         blockchain: List[Dict[str, Any]],
-        transactions: Union[Transactions, None] = None,
+        transactions: Optional[Transactions] = None,
         callbacks: Dict[int, Callable[[], None]] = {},
-        everyBlock: Union[Callable[[int], None], None] = None
+        everyBlock: Optional[Callable[[int], None]] = None
     ) -> None:
         #RPC.
         self.rpc: RPC = rpc
 
         #Arguments.
         self.merit: Merit = Merit.fromJSON(blockchain)
-        self.transactions: Union[Transactions, None] = transactions
+        self.transactions: Optional[Transactions] = transactions
 
         self.callbacks: Dict[int, Callable[[], None]] = dict(callbacks)
-        self.everyBlock: Union[Callable[[int], None], None] = everyBlock
+        self.everyBlock: Optional[Callable[[int], None]] = everyBlock
 
     #Sned the DB and verify it.
     def live(

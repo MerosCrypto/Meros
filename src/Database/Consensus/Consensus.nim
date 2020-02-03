@@ -65,6 +65,25 @@ proc newConsensus*(
 ): Consensus {.inline, forceCheck: [].} =
     newConsensusObj(functions, db, state, sendDiff, dataDiff)
 
+#Add a Merit Removal's Transaction.
+proc addMeritRemovalTransaction*(
+    consensus: Consensus,
+    tx: Transaction
+) {.inline, forceCheck: [].} =
+    consensus.db.saveTransaction(tx)
+
+#Get a Merit Removal's Transaction.
+proc getMeritRemovalTransaction*(
+    consensus: Consensus,
+    hash: Hash[256]
+): Transaction {.forceCheck: [
+    IndexError
+].} =
+    try:
+        result = consensus.db.loadTransaction(hash)
+    except DBReadError as e:
+        raise newLoggedException(IndexError, e.msg)
+
 #Verify a MeritRemoval's validity.
 proc verify*(
     consensus: Consensus,
@@ -98,7 +117,10 @@ proc verify*(
         try:
             tx = consensus.functions.transactions.getTransaction(hash)
         except IndexError:
-            raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
+            try:
+                tx = consensus.getMeritRemovalTransaction(hash)
+            except IndexError:
+                raise newLoggedException(ValueError, "Unknown Transaction verified in first Element.")
 
         for input in tx.inputs:
             inputs.incl(input.toString())
@@ -126,7 +148,10 @@ proc verify*(
         try:
             tx = consensus.functions.transactions.getTransaction(secondHash)
         except IndexError:
-            raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
+            try:
+                tx = consensus.getMeritRemovalTransaction(hash)
+            except IndexError:
+                raise newLoggedException(ValueError, "Unknown Transaction verified in second Element.")
 
         for input in tx.inputs:
             if inputs.contains(input.toString()):
@@ -590,25 +615,6 @@ proc add*(
         consensus.db.saveSignature(dataDiff.holder, dataDiff.nonce, dataDiff.signature)
     except KeyError as e:
         panic("Couldn't cache a signature: " & e.msg)
-
-#Add a Merit Removal's Transaction.
-proc addMeritRemovalTransaction*(
-    consensus: Consensus,
-    tx: Transaction
-) {.inline, forceCheck: [].} =
-    consensus.db.saveTransaction(tx)
-
-#Get a Merit Removal's Transaction.
-proc getMeritRemovalTransaction*(
-    consensus: Consensus,
-    hash: Hash[256]
-): Transaction {.forceCheck: [
-    IndexError
-].} =
-    try:
-        result = consensus.db.loadTransaction(hash)
-    except DBReadError as e:
-        raise newLoggedException(IndexError, e.msg)
 
 #Add a SignedMeritRemoval.
 proc add*(
