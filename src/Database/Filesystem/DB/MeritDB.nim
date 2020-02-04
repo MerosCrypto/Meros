@@ -10,6 +10,9 @@ import ../../../lib/Hash
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
 
+#Elements lib.
+import ../../Consensus/Elements/Elements
+
 #Difficulty, BlockHeader, and Block objects.
 import ../../Merit/objects/DifficultyObj
 import ../../Merit/objects/BlockHeaderObj
@@ -442,7 +445,8 @@ proc hasBlock*(
 #Delete a Block.
 proc deleteBlock*(
     db: DB,
-    nonce: int
+    nonce: int,
+    elements: seq[BlockElement]
 ) {.forceCheck: [].} =
     var hash: Hash[256]
     try:
@@ -456,6 +460,19 @@ proc deleteBlock*(
     db.del(BLOCK_HASH(hash))
     db.del(DIFFICULTY(nonce + 1))
     db.del(TOTAL_UNLOCKED_MERIT(nonce))
+    db.del(BLOCK_REMOVALS(nonce))
+
+    for elem in elements:
+        if elem of MeritRemoval:
+            var removals: string
+            try:
+                removals = db.get(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder))
+            except DBReadError as e:
+                doAssert(false, "Couldn't get the removals of a holder with a MeritRemoval: " & e.msg)
+            if removals.len == INT_LEN:
+                db.del(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder))
+            else:
+                db.put(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder), removals[0 ..< removals.len - INT_LEN])
 
 #Delete the latest holder.
 proc deleteHolder*(
@@ -474,3 +491,4 @@ proc deleteHolder*(
         panic("Tried to delete a holder who didn't have their key saved: " & e.msg)
     db.del(HOLDER_NICK(holders))
     db.del(MERIT(holders))
+    db.del(HOLDER_REMOVALS(holders))

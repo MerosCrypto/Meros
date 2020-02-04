@@ -169,6 +169,11 @@ proc revert*(
             #Else, mark that this miner's Merit changed.
             else:
                 changedMerit.incl(uint16(blockchain[b].header.minerNick))
+
+            #If this Block had a Merit Removal, mark the affected holder in changedMerit.
+            for elem in blockchain[b].body.elements:
+                if elem of MeritRemoval:
+                    changedMerit.incl(cast[MeritRemoval](elem).holder)
         except IndexError as e:
             panic("Couldn't grab the Block we're reverting past: " & e.msg)
 
@@ -187,10 +192,17 @@ proc revert*(
             else:
                 changedMerit.incl(deadBlock.header.minerNick)
 
+            for elem in deadBlock.body.elements:
+                if elem of MeritRemoval:
+                    changedMerit.incl(cast[MeritRemoval](elem).holder)
+
+        #Delete the Block.
+        try:
+            blockchain.db.deleteBlock(b, blockchain[b].body.elements)
+        except IndexError as e:
+            doAssert(false, "Couldn't get a Block's Elements before we deleted it.")
         #Rewind the cache.
         blockchain.rewindCache()
-        #Delete the Block.
-        blockchain.db.deleteBlock(b)
 
         #Decrement the height.
         dec(blockchain.height)

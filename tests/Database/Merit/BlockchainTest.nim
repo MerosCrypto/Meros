@@ -69,6 +69,9 @@ suite "Blockchain":
             #Database copies.
             databases: seq[Table[string, string]] = @[]
 
+            #Used Element nonces.
+            elementNonces: Table[int, int] = initTable[int, int]()
+
             #Transaction hash.
             hash: Hash[256]
             #Packets.
@@ -95,13 +98,57 @@ suite "Blockchain":
                 for _ in 0 ..< rand(300):
                     packets.add(newValidVerificationPacket(state.holders))
 
-            #Randomize the Elements.
+                #Randomize the Elements.
+                elements = @[]
+                if rand(1) == 0:
+                    var
+                        holder: int = rand(high(miners))
+                        elementNonce: int
+                    try:
+                        elementNonce = elementNonces[holder]
+                    except KeyError:
+                        elementNonce = 0
+                    elementNonces[holder] = elementNonce + 1
+
+                    proc randomHash(): Hash[256] =
+                        for b in 0 ..< 32:
+                            result.data[b] = uint8(rand(255))
+
+                    case rand(2):
+                        of 0:
+                            var sd: SignedSendDifficulty = newSignedSendDifficultyObj(elementNonce, randomHash())
+                            miners[holder].sign(sd)
+                            elements.add(sd)
+                        of 1:
+                            var dd: SignedDataDifficulty = newSignedDataDifficultyObj(elementNonce, randomHash())
+                            miners[holder].sign(dd)
+                            elements.add(dd)
+                        of 2:
+                            var
+                                e1: SignedDataDifficulty
+                                e2: SignedDataDifficulty
+                            e1 = newSignedDataDifficultyObj(elementNonce, randomHash())
+                            e2 = newSignedDataDifficultyObj(elementNonce, randomHash())
+                            miners[holder].sign(e1)
+                            miners[holder].sign(e2)
+
+                            elements.add(newSignedMeritRemoval(
+                                uint16(holder),
+                                false,
+                                e1,
+                                e2,
+                                @[e1.signature, e2.signature].aggregate(),
+                                @[]
+                            ))
+                        else:
+                            panic("Generated a number outside of the provided range.")
 
             #Decide if this is a nickname or new miner Block.
             if (miners.len == 0) or (rand(2) == 0):
                 #New miner.
                 miner = miners.len
                 miners.add(newMinerWallet())
+                miners[^1].nick = uint16(miner)
 
                 #Create the Block with the new miner.
                 mining = newBlankBlock(
