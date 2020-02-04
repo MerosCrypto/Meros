@@ -17,9 +17,6 @@ import ../../Filesystem/DB/MeritDB
 import DifficultyObj
 import BlockObj
 
-#Lists standard lib.
-import lists
-
 #Tables standard lib.
 import tables
 
@@ -37,8 +34,8 @@ type Blockchain* = object
 
     #Height.
     height*: int
-    #Linked List of the last 10 Blocks.
-    blocks: DoublyLinkedList[Block]
+    #Cache of the last 10 Blocks.
+    blocks: seq[Block]
     #Current Difficulty.
     difficulty*: Difficulty
 
@@ -77,7 +74,7 @@ proc newBlockchainObj*(
             startDifficulty: startDifficulty,
 
             height: 0,
-            blocks: initDoublyLinkedList[Block](),
+            blocks: @[],
             difficulty: startDifficulty,
 
             miners: initTable[BLSPublicKey, uint16]()
@@ -105,6 +102,9 @@ proc newBlockchainObj*(
         #Make sure we didn't get the height but not the tip.
         if result.height != 0:
             panic("Loaded the height but not the tip: " & e.msg)
+        #Make sure we didn't get the tip but not the difficulty.
+        if tip != Hash[256]():
+            panic("Loaded the height and tip but not the difficulty: " & e.msg)
         result.height = 1
 
         #Create a Genesis Block.
@@ -138,14 +138,14 @@ proc newBlockchainObj*(
         result.db.saveHeight(result.height)
         result.db.saveTip(tip)
         result.db.save(0, genesisBlock)
-        result.db.save(result.difficulty)
+        result.db.save(result.height, result.difficulty)
 
     #Load the last 10 Blocks.
     var last: Block
     for i in 0 ..< 10:
         try:
             last = result.db.loadBlock(tip)
-            result.blocks.prepend(last)
+            result.blocks = @[last] & result.blocks
         except DBReadError as e:
             panic("Couldn't load a Block from the Database: " & e.msg)
 
@@ -155,7 +155,7 @@ proc newBlockchainObj*(
 
     #Load the Difficulty.
     try:
-        result.difficulty = result.db.loadDifficulty()
+        result.difficulty = result.db.loadDifficulty(result.height)
     except DBReadError as e:
         panic("Couldn't load the Difficulty from the Database: " & e.msg)
 
@@ -164,16 +164,16 @@ proc newBlockchainObj*(
     for m in 0 ..< miners.len:
         result.miners[miners[m]] = uint16(m)
 
-#Adds a Block.
+#Add a Block.
 proc add*(
     blockchain: var Blockchain,
     newBlock: Block
 ) {.forceCheck: [].} =
     #Add the Block to the cache.
-    blockchain.blocks.append(newBlock)
+    blockchain.blocks.add(newBlock)
     #Delete the Block we're no longer caching.
     if blockchain.height >= 10:
-        blockchain.blocks.remove(blockchain.blocks.head)
+        blockchain.blocks.delete(0)
 
     #Save the Block to the database.
     blockchain.db.saveTip(newBlock.header.hash)
@@ -201,6 +201,17 @@ proc add*(
         setRandomXKey(blockchain.cacheKey)
         blockchain.db.saveKey(blockchain.cacheKey)
 
+#Rewind the cache a Block.
+proc rewindCache*(
+    blockchain: var Blockchain
+) {.forceCheck: [].} =
+    blockchain.blocks.delete(blockchain.blocks.len - 1)
+    if blockchain.height > 10:
+        try:
+            blockchain.blocks = @[blockchain.db.loadBlock(blockchain.blocks[0].header.last)] & blockchain.blocks
+        except DBReadError as e:
+            panic("Couldn't get the Block 11 Blocks before the tail when rewinding the cache: " & e.msg)
+
 #Check if a Block exists.
 proc hasBlock*(
     blockchain: Blockchain,
@@ -221,10 +232,7 @@ proc `[]`*(
     if nonce >= blockchain.height:
         raise newLoggedException(IndexError, "Specified nonce is greater than the Blockchain height.")
     elif nonce >= blockchain.height - 10:
-        var res: DoublyLinkedNode[Block] = blockchain.blocks.head
-        for _ in 0 ..< nonce - max((blockchain.height - 10), 0):
-            res = res.next
-        result = res.value
+        result = blockchain.blocks[min(10, blockchain.blocks.len) - (blockchain.height - nonce)]
     else:
         try:
             result = blockchain.db.loadBlock(nonce)
@@ -246,4 +254,4 @@ proc `[]`*(
 func tail*(
     blockchain: Blockchain
 ): Block {.inline, forceCheck: [].} =
-    blockchain.blocks.tail.value
+    blockchain.blocks[^1]

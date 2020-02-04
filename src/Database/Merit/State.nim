@@ -13,10 +13,12 @@ import ../Filesystem/DB/MeritDB
 #MeritRemoval object.
 import ../Consensus/Elements/objects/MeritRemovalObj
 
-#BlockHeader, Block, and Blockchain libs.
+#BlockHeader and Block libs.
 import BlockHeader
 import Block
-import Blockchain
+
+#Blockchain object.
+import objects/BlockchainObj
 
 #State object.
 import objects/StateObj
@@ -27,7 +29,7 @@ proc newState*(
     db: DB,
     deadBlocks: int,
     blockchainHeight: int
-): State {.forceCheck: [].} =
+): State {.inline, forceCheck: [].} =
     newStateObj(db, deadBlocks, blockchainHeight)
 
 #Get the nickname of the miner in a Block.

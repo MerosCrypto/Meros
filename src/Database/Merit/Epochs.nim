@@ -1,8 +1,9 @@
 #Errors lib.
 import ../../lib/Errors
 
-#Hash lib.
-import ../../lib/Hash
+when not defined(merosTests):
+    #Hash lib.
+    import ../../lib/Hash
 
 #VerificationPacket object.
 import ../Consensus/Elements/objects/VerificationPacketObj

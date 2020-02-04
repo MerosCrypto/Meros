@@ -26,11 +26,17 @@ import Difficulty
 import BlockHeader
 import Block
 
+#State lib.
+import State
+
 #Blockchain object.
 import objects/BlockchainObj
 export BlockchainObj
 
-#Tables lib.
+#Sets standard lib.
+import sets
+
+#Tables standard lib.
 import tables
 
 #Create a new Blockchain.
@@ -102,7 +108,7 @@ proc testBlockHeader*(
     except BLSError as e:
         panic("Failed to verify a BlockHeader's signature: " & e.msg)
 
-#Adds a block to the blockchain.
+#Adds a Block to the Blockchain.
 proc processBlock*(
     blockchain: var Blockchain,
     newBlock: Block
@@ -137,4 +143,98 @@ proc processBlock*(
             blocksPerPeriod = 144
 
         blockchain.difficulty = blockchain.calculateNextDifficulty(blocksPerPeriod)
-        blockchain.db.save(blockchain.difficulty)
+    blockchain.db.save(blockchain.height, blockchain.difficulty)
+
+#Revert the Blockchain to a certain height.
+proc revert*(
+    blockchain: var Blockchain,
+    state: var State,
+    height: int
+) {.forceCheck: [].} =
+    #Revert the State.
+    state.revert(blockchain, height)
+    state.oldData = false
+
+    #Miners we changed the Merit of.
+    var changedMerit: HashSet[uint16] = initHashSet[uint16]()
+
+    #Revert the Blocks.
+    for b in countdown(blockchain.height - 1, height):
+        try:
+            #If this Block had a new miner, delete it.
+            if blockchain[b].header.newMiner:
+                blockchain.miners.del(blockchain[b].header.minerKey)
+                blockchain.db.deleteHolder()
+                changedMerit.excl(uint16(blockchain.miners.len))
+            #Else, mark that this miner's Merit changed.
+            else:
+                changedMerit.incl(uint16(blockchain[b].header.minerNick))
+        except IndexError as e:
+            panic("Couldn't grab the Block we're reverting past: " & e.msg)
+
+        if b > state.deadBlocks:
+            var deadBlock: Block
+            try:
+                deadBlock = blockchain[b - state.deadBlocks]
+            except IndexError as e:
+                panic("Couldn't grab the Block whose Merit died when the Block we're reverting past was added: " & e.msg)
+
+            if deadBlock.header.newMiner:
+                try:
+                    changedMerit.incl(blockchain.miners[deadBlock.header.minerKey])
+                except KeyError as e:
+                    panic("Couldn't get the nickname of a miner who's Merit died: " & e.msg)
+            else:
+                changedMerit.incl(deadBlock.header.minerNick)
+
+        #Rewind the cache.
+        blockchain.rewindCache()
+        #Delete the Block.
+        blockchain.db.deleteBlock(b)
+
+        #Decrement the height.
+        dec(blockchain.height)
+
+    #Save the reverted to tip.
+    blockchain.db.saveTip(blockchain.tail.header.hash)
+
+    #Save the reverted to height.
+    blockchain.db.saveHeight(blockchain.height)
+
+    #Load the reverted to difficulty.
+    try:
+        blockchain.difficulty = blockchain.db.loadDifficulty(blockchain.height)
+    except DBReadError as e:
+        panic("Couldn't load the difficulty of the Block we reverted to: " & e.msg)
+
+    #Update the RandomX keys.
+    var
+        currentKeyHeight: int = blockchain.height - 64
+        blockUsedAsKey: int = (currentKeyHeight - (currentKeyHeight mod 2048)) - 1
+        blockUsedAsUpcomingKey: int = (blockchain.height - (blockchain.height mod 2048)) - 1
+        currentKey: string
+    if blockUsedAsKey == -1:
+        currentKey = blockchain.genesis.toString()
+    else:
+        try:
+            currentKey = blockchain[blockUsedAsKey].header.hash.toString()
+        except IndexError as e:
+            panic("Couldn't grab the Block used as the current RandomX key: " & e.msg)
+
+    #Rebuild the RandomX cache if needed.
+    if currentKey != blockchain.cacheKey:
+        blockchain.cacheKey = currentKey
+        setRandomXKey(blockchain.cacheKey)
+        blockchain.db.saveKey(blockchain.cacheKey)
+
+    if blockUsedAsUpcomingKey == -1:
+        blockchain.db.saveUpcomingKey(blockchain.genesis.toString())
+    else:
+        try:
+            blockchain.db.saveUpcomingKey(blockchain[blockUsedAsUpcomingKey].header.hash.toString())
+        except IndexError as e:
+            panic("Couldn't grab the Block used as the upcoming RandomX key: " & e.msg)
+
+    #Update the Merit of everyone who had their Merit changed.
+    for holder in changedMerit:
+        blockchain.db.saveMerit(holder, state[holder])

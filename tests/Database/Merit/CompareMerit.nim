@@ -83,13 +83,21 @@ proc compare*(
     bc1: Blockchain,
     bc2: Blockchain
 ) =
+    check(bc1.genesis == bc2.genesis)
     check(bc1.blockTime == bc2.blockTime)
     compare(bc1.startDifficulty, bc2.startDifficulty)
 
     check(bc1.height == bc2.height)
+    var last: Hash[256] = bc1.genesis
     for b in 0 ..< bc1.height:
+        check(bc1[b].header.last == last)
         compare(bc1[b], bc2[b])
+        last = bc1[b].header.hash
+    check(bc1.tail.header.hash == last)
+    check(bc2.tail.header.hash == last)
     compare(bc1.difficulty, bc2.difficulty)
+
+    check(bc1.cacheKey == bc2.cacheKey)
 
     check(bc1.miners.len == bc2.miners.len)
     for key in bc1.miners.keys():

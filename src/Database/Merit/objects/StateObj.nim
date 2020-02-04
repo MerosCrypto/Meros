@@ -17,7 +17,6 @@ import BlockObj
 import tables
 
 #State object.
-#This cannot be a ref object due to how we copy it for reversions.
 type State* = object
     #DB.
     db: DB

@@ -32,6 +32,9 @@ export DBObj
 #Tables standard lib.
 import tables
 
+#Sets standard lib.
+import sets
+
 #Key generators.
 template RANDOMX_KEY(): string =
     "r"
@@ -44,9 +47,6 @@ template HEIGHT(): string =
 
 template TIP(): string =
     "t"
-
-template DIFFICULTY(): string =
-    "d"
 
 template HOLDERS(): string =
     "n" #"N"icks, since "h" is taken.
@@ -66,6 +66,11 @@ template BLOCK_NONCE(
 ): string =
     nonce.toBinary(INT_LEN)
 
+template DIFFICULTY(
+    nonce: int
+): string =
+    nonce.toBinary(INT_LEN) & "d"
+
 template HOLDER_NICK(
     nick: uint16
 ): string =
@@ -75,6 +80,11 @@ template HOLDER_KEY(
     key: BLSPublicKey
 ): string =
     key.serialize()
+
+template HOLDER_KEY(
+    key: string
+): string =
+    key
 
 template MERIT(
     nick: uint16
@@ -98,6 +108,9 @@ proc put(
     val: string
 ) {.forceCheck: [].} =
     db.merit.cache[key] = val
+    db.merit.deleted.excl(key)
+    when defined(merosTests):
+        db.merit.used.incl(key)
 
 proc get(
     db: DB,
@@ -105,6 +118,9 @@ proc get(
 ): string {.forceCheck: [
     DBReadError
 ].} =
+    if db.merit.deleted.contains(key):
+        raise newLoggedException(DBReadError, "Key deleted.")
+
     if db.merit.cache.hasKey(key):
         try:
             return db.merit.cache[key]
@@ -116,10 +132,27 @@ proc get(
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
+proc del(
+    db: DB,
+    key: string
+) {.forceCheck: [].} =
+    db.merit.deleted.incl(key)
+    db.merit.cache.del(key)
+    when defined(merosTests):
+        db.merit.used.excl(key)
+
 proc commit*(
     db: DB,
     height: int
 ) {.forceCheck: [].} =
+    for key in db.merit.deleted:
+        try:
+            db.lmdb.delete("merit", key)
+        except Exception:
+            #If we delete something before it's committed, it'll throw.
+            discard
+    db.merit.deleted = initHashSet[string]()
+
     var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.merit.cache.len)
     try:
         var i: int = 0
@@ -173,9 +206,10 @@ proc saveTip*(
 
 proc save*(
     db: DB,
+    height: int,
     difficulty: Difficulty
 ) {.forceCheck: [].} =
-    db.put(DIFFICULTY(), difficulty.serialize())
+    db.put(DIFFICULTY(height), difficulty.serialize())
 
 proc saveUnlocked*(
     db: DB,
@@ -269,12 +303,13 @@ proc loadTip*(
         raise newLoggedException(DBReadError, e.msg)
 
 proc loadDifficulty*(
-    db: DB
+    db: DB,
+    height: int
 ): Difficulty {.forceCheck: [
     DBReadError
 ].} =
     try:
-        result = db.get(DIFFICULTY()).parseDifficulty()
+        result = db.get(DIFFICULTY(height)).parseDifficulty()
     except Exception as e:
         raise newLoggedException(DBReadError, e.msg)
 
@@ -403,3 +438,39 @@ proc hasBlock*(
         return true
     except DBReadError:
         return false
+
+#Delete a Block.
+proc deleteBlock*(
+    db: DB,
+    nonce: int
+) {.forceCheck: [].} =
+    var hash: Hash[256]
+    try:
+        hash = db.get(BLOCK_NONCE(nonce)).toHash(256)
+    except ValueError as e:
+        panic("Couldn't convert a 32-byte value to a 32-byte hash: " & e.msg)
+    except DBReadError as e:
+        panic("Tried to delete a Block which doesn't exist: " & e.msg)
+
+    db.del(BLOCK_NONCE(nonce))
+    db.del(BLOCK_HASH(hash))
+    db.del(DIFFICULTY(nonce + 1))
+    db.del(TOTAL_UNLOCKED_MERIT(nonce))
+
+#Delete the latest holder.
+proc deleteHolder*(
+    db: DB
+) {.forceCheck: [].} =
+    var holders: uint16
+    try:
+        holders = uint16(db.get(HOLDERS()).fromBinary() - 1)
+    except DBReadError as e:
+        panic("There isn't any holders to delete: " & e.msg)
+    db.put(HOLDERS(), holders.toBinary())
+
+    try:
+        db.del(HOLDER_KEY(db.get(HOLDER_NICK(holders))))
+    except DBReadError as e:
+        panic("Tried to delete a holder who didn't have their key saved: " & e.msg)
+    db.del(HOLDER_NICK(holders))
+    db.del(MERIT(holders))

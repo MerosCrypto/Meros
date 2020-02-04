@@ -27,7 +27,10 @@ type
 
     MeritDB* = ref object
         cache*: Table[string, string]
+        deleted*: HashSet[string]
         removals*: Table[uint16, int]
+        when defined(merosTests):
+            used*: HashSet[string]
 
     DB* = ref object
         lmdb*: LMDB
@@ -41,6 +44,7 @@ proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
         cache: initTable[string, string](),
         deleted: initHashSet[string]()
     )
+
 proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
     ConsensusDB(
         cache: initTable[string, string](),
@@ -48,11 +52,21 @@ proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =
         malicious: {},
         unmentioned: initHashSet[Hash[256]]()
     )
+
 proc newMeritDB(): MeritDB {.inline, forceCheck: [].} =
-    MeritDB(
-        cache: initTable[string, string](),
-        removals: initTable[uint16, int]()
-    )
+    when not defined(merosTests):
+        MeritDB(
+            cache: initTable[string, string](),
+            deleted: initHashSet[string](),
+            removals: initTable[uint16, int]()
+        )
+    else:
+        MeritDB(
+            cache: initTable[string, string](),
+            deleted: initHashSet[string](),
+            removals: initTable[uint16, int](),
+            used: initHashSet[string]()
+        )
 
 proc newDB*(
     path: string,
