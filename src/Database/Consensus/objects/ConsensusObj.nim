@@ -385,37 +385,25 @@ proc finalize*(
     #If the status was beaten and has no holders, prune it and its descendants.
     if status.beaten and (status.holders.len == 0):
         var
+            #Discover the tree.
+            tree: seq[Hash[256]] = consensus.functions.transactions.discoverTree(hash)
+            #Create a set of pruned Transactions as the tree will have duplicates.
             pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
-            toPrune: seq[Hash[256]] = @[hash]
-            current: Hash[256]
-        while toPrune.len == 0:
-            #Grab the latest descendant.
-            current = toPrune[^1]
-            toPrune.del(toPrune.len - 1)
-            pruned.incl(current)
 
-            #Get the Transactions's outputs.
-            var outputs: seq[Output]
-            try:
-                outputs = consensus.functions.transactions.getTransaction(current).outputs
-            except IndexError as e:
-                panic("Attempting to prune a pruned Transaction: " & e.msg)
+        #Prune the tree.
+        for h in countdown(tree.len - 1, 0):
+            if pruned.contains(tree[h]):
+                continue
+            pruned.incl(tree[h])
 
-            for o in 0 ..< outputs.len:
-                #Add every spender of each output to the list of Transactions to prune.
-                var input: FundedInput = newFundedInput(current, o)
-                for spender in consensus.functions.transactions.getSpenders(input):
-                    if not pruned.contains(spender):
-                        toPrune.add(spender)
+            #Remove the Transaction from RAM.
+            consensus.statuses.del(tree[h])
+            consensus.unmentioned.excl(tree[h])
+            consensus.close.excl(tree[h])
 
-            #Remove the current descendant from RAM.
-            consensus.statuses.del(current)
-            consensus.unmentioned.excl(current)
-            consensus.close.excl(current)
-
-            #Remove the current descendant from the Database.
-            consensus.db.prune(current)
-            consensus.functions.transactions.prune(current)
+            #Remove the Transaction from the Database.
+            consensus.db.prune(tree[h])
+            consensus.functions.transactions.prune(tree[h])
         return
 
     #Save the status.

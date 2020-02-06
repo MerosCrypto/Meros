@@ -271,6 +271,34 @@ proc archive*(
     for hash in epoch.keys():
         transactions.del(hash)
 
+#Discover a Transaction tree.
+proc discoverTree*(
+    transactions: Transactions,
+    hash: Hash[256]
+): seq[Hash[256]] {.forceCheck: [].} =
+    try:
+        discard transactions[hash]
+    except IndexError:
+        return @[]
+
+    result = @[hash]
+    var
+        queue: seq[Hash[256]] = @[hash]
+        current: Hash[256]
+    while queue.len != 0:
+        #Grab the latest descendant.
+        current = queue.pop()
+
+        try:
+            #Iterate over the Transaction's outputs.
+            for o in 0 ..< transactions[current].outputs.len:
+                #Add every spender of each output to the queue.
+                var spenders: seq[Hash[256]] = transactions.loadSpenders(newFundedInput(current, o))
+                result &= spenders
+                queue &= spenders
+        except IndexError as e:
+            panic("Couldn't discover a Transaction in a tree: " & e.msg)
+
 #Revert old Blocks.
 #Simply deletes the created Mint trees and updates unmentioned.
 proc revert*(
@@ -295,37 +323,20 @@ proc revert*(
         except IndexError:
             continue
 
-        #Discover the tree.
         var
+            #Discover the tree.
+            tree: seq[Hash[256]] = transactions.discoverTree(mint)
+            #Create a set of pruned Transactions as the tree will have duplicates.
             pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
-            unmodQueue: seq[Hash[256]] = @[mint]
-            queue: seq[Hash[256]] = @[mint]
-            current: Hash[256]
-        while queue.len != 0:
-            #Grab the latest descendant.
-            current = queue.pop()
 
-            #Get the Transaction's outputs.
-            var outputs: seq[Output]
-            try:
-                outputs = transactions[current].outputs
-            except IndexError as e:
-                panic("Couldn't discover a Transaction in a tree: " & e.msg)
-
-            for o in 0 ..< outputs.len:
-                #Add every spender of each output to the queue.
-                var input: FundedInput = newFundedInput(current, o)
-                for spender in transactions.loadSpenders(input):
-                    unmodQueue.add(spender)
-                    queue.add(spender)
-
-        for h in countdown(unmodQueue.len - 1, 0):
-            if pruned.contains(unmodQueue[h]):
+        #Prune the tree.
+        for h in countdown(tree.len - 1, 0):
+            if pruned.contains(tree[h]):
                 continue
-            pruned.incl(unmodQueue[h])
+            pruned.incl(tree[h])
 
-            transactions.prune(unmodQueue[h])
-            unmentioned.excl(unmodQueue[h])
+            transactions.prune(tree[h])
+            unmentioned.excl(tree[h])
 
     #Remove Transactions from unmentioned that were actually mentioned.
     for b in min(height - 6, 1) ..< height:
