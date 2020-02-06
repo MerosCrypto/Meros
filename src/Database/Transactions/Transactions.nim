@@ -24,6 +24,8 @@ export Transaction
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
 export toString, getUTXOs, loadSpenders, verify, unverify, prune
+when defined(merosTests):
+    export getSender
 
 #Sets standard lib.
 import sets
@@ -269,3 +271,69 @@ proc archive*(
     for hash in epoch.keys():
         transactions.del(hash)
 
+#Revert old Blocks.
+#Simply deletes the created Mint trees and updates unmentioned.
+proc revert*(
+    transactions: var Transactions,
+    blockchain: Blockchain,
+    height: int
+) {.forceCheck: [].} =
+    var unmentioned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+    for b in countdown(blockchain.height - 1, height):
+        #Mark every Transaction in the Block as unmentioned.
+        var mint: Hash[256]
+        try:
+            mint = blockchain[b].header.hash
+            for packet in blockchain[b].body.packets:
+                unmentioned.incl(packet.hash)
+        except IndexError as e:
+            doAssert(false, "Failed to get a Block we're reverting past: " & e.msg)
+
+        try:
+            #Make sure the Block created a Mint.
+            discard transactions[mint]
+        except IndexError:
+            continue
+
+        #Discover the tree.
+        var
+            pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+            unmodQueue: seq[Hash[256]] = @[mint]
+            queue: seq[Hash[256]] = @[mint]
+            current: Hash[256]
+        while queue.len != 0:
+            #Grab the latest descendant.
+            current = queue.pop()
+
+            #Get the Transaction's outputs.
+            var outputs: seq[Output]
+            try:
+                outputs = transactions[current].outputs
+            except IndexError as e:
+                panic("Couldn't discover a Transaction in a tree: " & e.msg)
+
+            for o in 0 ..< outputs.len:
+                #Add every spender of each output to the queue.
+                var input: FundedInput = newFundedInput(current, o)
+                for spender in transactions.loadSpenders(input):
+                    unmodQueue.add(spender)
+                    queue.add(spender)
+
+        for h in countdown(unmodQueue.len - 1, 0):
+            if pruned.contains(unmodQueue[h]):
+                continue
+            pruned.incl(unmodQueue[h])
+
+            transactions.prune(unmodQueue[h])
+            unmentioned.excl(unmodQueue[h])
+
+    #Remove Transactions from unmentioned that were actually mentioned.
+    for b in min(height - 6, 1) ..< height:
+        try:
+            for packet in blockchain[b].body.packets:
+                unmentioned.excl(packet.hash)
+        except IndexError as e:
+            doAssert(false, "Failed to get a Block we're reverting past: " & e.msg)
+
+    #Actually update unmentioned.
+    transactions.unmention(unmentioned)

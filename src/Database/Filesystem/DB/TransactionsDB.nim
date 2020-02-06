@@ -441,7 +441,8 @@ proc prune*(
 
         for h in countup(0, spenders.len - 1, 32):
             if spenders[h ..< h + 32] == hashStr:
-                spenders = spenders[0 ..< h] & spenders[h ..< spenders.len]
+                spenders = spenders[0 ..< h] & spenders[h + 32 ..< spenders.len]
+                break
 
         db.put(OUTPUT_SPENDERS(tx.inputs[i]), spenders)
 
