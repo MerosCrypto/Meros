@@ -8,7 +8,8 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 import ../../Wallet/MinerWallet
 
-#Blockchain and Epochs libs.
+#Block, Blockchain, and Epochs libs.
+import ../Merit/Block
 import ../Merit/Blockchain
 import ../Merit/Epochs
 
@@ -256,10 +257,15 @@ proc mint*(
     #Verify it.
     transactions.verify(mint.hash)
 
-#Remove every hash in this Epoch from the cache/RAM.
+#Mark every Transaction as mentioned and remove every hash in this Epoch from the cache/RAM.
 proc archive*(
     transactions: var Transactions,
+    newBlock: Block,
     epoch: Epoch
 ) {.forceCheck: [].} =
+    for packet in newBlock.body.packets:
+        transactions.mention(packet.hash)
+
     for hash in epoch.keys():
         transactions.del(hash)
+

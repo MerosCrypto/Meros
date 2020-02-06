@@ -237,7 +237,7 @@ suite "Consensus":
             elements = @[]
 
             #Archive the hashes handled by the popped Epoch.
-            transactions.archive(epoch)
+            transactions.archive(mining, epoch)
 
             #Commit the DBs.
             db.commit(merit.blockchain.height)

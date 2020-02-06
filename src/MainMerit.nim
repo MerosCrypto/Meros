@@ -202,7 +202,7 @@ proc mainMerit() {.forceCheck: [].} =
                         functions.consensus.addDataDifficulty(dataDiff)
 
             #Archive the hashes handled by the popped Epoch.
-            transactions.archive(epoch)
+            transactions.archive(newBlock, epoch)
 
             #If this header had a new miner, check if it was us.
             if newBlock.header.newMiner:
