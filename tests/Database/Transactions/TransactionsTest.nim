@@ -101,10 +101,8 @@ suite "Transactions":
             #Blocks.
             blocks: seq[Block]
 
-            #Epochs.
-            epochs: seq[Epoch] = @[]
             #Rewards.
-            rewards: seq[seq[Reward]] = @[]
+            rewards: Table[Hash[256], seq[Reward]] = initTable[Hash[256], seq[Reward]]()
 
             #Trees reverted.
             reverted: HashSet[Hash[256]] = initHashSet[Hash[256]]()
@@ -223,23 +221,38 @@ suite "Transactions":
 
         #Replay the Blockchain and Transactions from Block 10.
         proc replay() =
-            #Add back every Block.
-            for b in 10 ..< 30:
-                merit.processBlock(blocks[b])
-                discard merit.postProcessBlock()
-
             #Reload Transactions to fix its cache.
             commit(merit.blockchain.height)
             transactions = newTransactions(db, merit.blockchain)
 
-            #Verify the Datas are in the cache.
             for tx in txs.values():
-                if (tx of Data) and (first[tx.hash] > 5):
+                #Verify finalized Transactions are untouched.
+                if first[tx.hash] <= 5:
+                    compare(transactions[tx.hash], tx)
+                #Verify the Datas are in the cache.
+                elif tx of Data:
                     compare(transactions.transactions[tx.hash], tx)
+                #Verify Claims/Sends which don't have a mint > 10 are in the cache.
+                elif (
+                    ((tx of Claim) or (tx of Send)) and
+                    (first[tx.hash] < 10)
+                ):
+                    compare(transactions.transactions[tx.hash], tx)
+                #Verify everything else was pruned.
+                else:
+                    try:
+                        discard transactions[tx.hash]
+                        check(false)
+                    except IndexError:
+                        discard
 
             #Add back each Block and its Transactions.
             for b in 10 ..< 30:
-                for packet in merit.blockchain[b].body.packets:
+                #Add back the Transactions.
+                for packet in blocks[b - 1].body.packets:
+                    if transactions.transactions.hasKey(packet.hash):
+                        continue
+
                     var tx: Transaction = txs[packet.hash]
                     case tx:
                         of Claim as claim:
@@ -256,10 +269,19 @@ suite "Transactions":
                             transactions.add(data)
                         else:
                             panic("Replaying an unknown Transaction type.")
+                    transactions.verify(tx.hash)
 
-                transactions.archive(merit.blockchain[b], epochs[b - 1])
-                transactions.mint(merit.blockchain[b].header.hash, rewards[b - 1])
-                commit(b + 1)
+                #Add back the Block.
+                merit.processBlock(blocks[b - 1])
+
+                #Archive the Epoch.
+                transactions.archive(newBlock, merit.postProcessBlock()[0])
+
+                #Mint Meros.
+                transactions.mint(blocks[b - 1].header.hash, rewards[blocks[b - 1].header.hash])
+
+                #Commit the DB.
+                commit(merit.blockchain.height)
 
             #Verify spendable.
             for w in 0 ..< wallets.len:
@@ -344,24 +366,23 @@ suite "Transactions":
             merit.processBlock(newBlock)
             blocks.add(newBlock)
 
-            #Archive the epoch.
-            epochs.add(merit.postProcessBlock()[0])
-            transactions.archive(newBlock, epochs[^1])
+            #Archive the Epoch.
+            transactions.archive(newBlock, merit.postProcessBlock()[0])
 
             #Create a Mint/Claim to fund all planned Sends.
             var claims: seq[Claim] = @[]
-            rewards.add(@[])
+            rewards[newBlock.header.hash] = @[]
             for w in 0 ..< wallets.len:
                 if needed[w] == 0:
                     continue
 
-                rewards[^1].add(newReward(0, uint64(needed[w]) + uint64(rand(2000))))
+                rewards[newBlock.header.hash].add(newReward(0, uint64(needed[w]) + uint64(rand(2000))))
                 claims.add(newClaim(
-                    @[newFundedInput(newBlock.header.hash, rewards[^1].len - 1)],
+                    @[newFundedInput(newBlock.header.hash, rewards[newBlock.header.hash].len - 1)],
                     wallets[w].publicKey
                 ))
                 holder.sign(claims[^1])
-            transactions.mint(newBlock.header.hash, rewards[^1])
+            transactions.mint(newBlock.header.hash, rewards[newBlock.header.hash])
 
             #Commit the DB.
             commit(merit.blockchain.height)
