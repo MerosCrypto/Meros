@@ -246,7 +246,7 @@ suite "Transactions":
                         discard
 
             #Add back each Block and its Transactions.
-            for b in 10 ..< 30:
+            for b in 10 .. 30:
                 #Add back the Transactions.
                 for packet in blocks[b - 1].body.packets:
                     #Since we already verified:
@@ -289,6 +289,39 @@ suite "Transactions":
 
                 #Commit the DB.
                 commit(merit.blockchain.height)
+
+            #Add back the last Transactions.
+            for packet in blocks[^1].body.packets:
+                try:
+                    discard transactions[packet.hash]
+                    continue
+                except IndexError:
+                    discard
+
+                var tx: Transaction = txs[packet.hash]
+                case tx:
+                    of Claim as claim:
+                        transactions.add(
+                            claim,
+                            proc (
+                                h: uint16
+                            ): BLSPublicKey =
+                                holder.publicKey
+                        )
+                    of Send as send:
+                        transactions.add(send)
+                    of Data as data:
+                        transactions.add(data)
+                    else:
+                        panic("Replaying an unknown Transaction type.")
+                transactions.verify(tx.hash)
+
+            #Verify Transactions.
+            for tx in txs.keys():
+                try:
+                    compare(transactions[tx], txs[tx])
+                except IndexError:
+                    check(false)
 
             #Verify spendable.
             for w in 0 ..< wallets.len:
@@ -434,6 +467,16 @@ suite "Transactions":
                     wallets[w].sign(send)
                     send.mine(Hash[256]())
                     add(send, mints)
+
+        #Create one last Block for the latest Claims/Sends.
+        newBlock = newBlankBlock(
+            last = merit.blockchain.tail.header.hash,
+            miner = holder,
+            nick = uint16(0),
+            packets = packets,
+            time = merit.blockchain.tail.header.time + 1
+        )
+        blocks.add(newBlock)
 
         #Create a copy of spendable for every wallet.
         for w in 0 ..< wallets.len:
