@@ -91,6 +91,10 @@ type
             hash: Hash[256]
         ) {.raises: [].}
 
+        discoverTree*: proc (
+            hash: Hash[256]
+        ): seq[Hash[256]] {.inline, raises: [].}
+
         prune*: proc (
             hash: Hash[256]
         ) {.inline, raises: [].}

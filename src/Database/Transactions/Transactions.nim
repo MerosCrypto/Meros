@@ -8,7 +8,8 @@ import ../../lib/Hash
 import ../../Wallet/Wallet
 import ../../Wallet/MinerWallet
 
-#Blockchain and Epochs libs.
+#Block, Blockchain, and Epochs libs.
+import ../Merit/Block
 import ../Merit/Blockchain
 import ../Merit/Epochs
 
@@ -23,6 +24,8 @@ export Transaction
 import objects/TransactionsObj
 export TransactionsObj.Transactions, `[]`
 export toString, getUTXOs, loadSpenders, verify, unverify, prune
+when defined(merosTests):
+    export getSender
 
 #Sets standard lib.
 import sets
@@ -256,10 +259,92 @@ proc mint*(
     #Verify it.
     transactions.verify(mint.hash)
 
-#Remove every hash in this Epoch from the cache/RAM.
+#Mark every Transaction as mentioned and remove every hash in this Epoch from the cache/RAM.
 proc archive*(
     transactions: var Transactions,
+    newBlock: Block,
     epoch: Epoch
 ) {.forceCheck: [].} =
+    for packet in newBlock.body.packets:
+        transactions.mention(packet.hash)
+
     for hash in epoch.keys():
         transactions.del(hash)
+
+#Discover a Transaction tree.
+proc discoverTree*(
+    transactions: Transactions,
+    hash: Hash[256]
+): seq[Hash[256]] {.forceCheck: [].} =
+    try:
+        discard transactions[hash]
+    except IndexError:
+        return @[]
+
+    result = @[hash]
+    var
+        queue: seq[Hash[256]] = @[hash]
+        current: Hash[256]
+    while queue.len != 0:
+        #Grab the latest descendant.
+        current = queue.pop()
+
+        try:
+            #Iterate over the Transaction's outputs.
+            for o in 0 ..< transactions[current].outputs.len:
+                #Add every spender of each output to the queue.
+                var spenders: seq[Hash[256]] = transactions.loadSpenders(newFundedInput(current, o))
+                result &= spenders
+                queue &= spenders
+        except IndexError as e:
+            panic("Couldn't discover a Transaction in a tree: " & e.msg)
+
+#Revert old Blocks.
+#Simply deletes the created Mint trees and updates unmentioned.
+proc revert*(
+    transactions: var Transactions,
+    blockchain: Blockchain,
+    height: int
+) {.forceCheck: [].} =
+    var unmentioned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+    for b in countdown(blockchain.height - 1, height):
+        #Mark every Transaction in the Block as unmentioned.
+        var mint: Hash[256]
+        try:
+            mint = blockchain[b].header.hash
+            for packet in blockchain[b].body.packets:
+                unmentioned.incl(packet.hash)
+        except IndexError as e:
+            doAssert(false, "Failed to get a Block we're reverting past: " & e.msg)
+
+        try:
+            #Make sure the Block created a Mint.
+            discard transactions[mint]
+        except IndexError:
+            continue
+
+        var
+            #Discover the tree.
+            tree: seq[Hash[256]] = transactions.discoverTree(mint)
+            #Create a set of pruned Transactions as the tree will have duplicates.
+            pruned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
+
+        #Prune the tree.
+        for h in countdown(tree.len - 1, 0):
+            if pruned.contains(tree[h]):
+                continue
+            pruned.incl(tree[h])
+
+            transactions.prune(tree[h])
+            unmentioned.excl(tree[h])
+
+    #Remove Transactions from unmentioned that were actually mentioned.
+    for b in min(height - 6, 1) ..< height:
+        try:
+            for packet in blockchain[b].body.packets:
+                unmentioned.excl(packet.hash)
+        except IndexError as e:
+            doAssert(false, "Failed to get a Block we're reverting past: " & e.msg)
+
+    #Actually update unmentioned.
+    transactions.unmention(unmentioned)

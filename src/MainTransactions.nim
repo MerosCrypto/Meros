@@ -185,6 +185,12 @@ proc mainTransactions() {.forceCheck: [].} =
         ) {.forceCheck: [].} =
             transactions.unverify(hash)
 
+        #Discover a Transaction tree.
+        functions.transactions.discoverTree = proc (
+            hash: Hash[256]
+        ): seq[Hash[256]] {.inline, forceCheck: [].} =
+            transactions.discoverTree(hash)
+
         #Prune a Transaction from the Database.
         functions.transactions.prune = proc (
             hash: Hash[256]

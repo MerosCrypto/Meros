@@ -45,6 +45,9 @@ func toString*(
         result &= char(0)
 
 #Key generators.
+template UNMENTIONED_TRANSACTIONS(): string =
+    "u"
+
 template TRANSACTION(
     hash: Hash[256]
 ): string =
@@ -128,7 +131,7 @@ proc commit*(
             discard
     db.transactions.deleted = initHashSet[string]()
 
-    var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.transactions.cache.len)
+    var items: seq[tuple[key: string, value: string]] = newSeq[tuple[key: string, value: string]](db.transactions.cache.len + 1)
     try:
         var i: int = 0
         for key in db.transactions.cache.keys():
@@ -136,6 +139,11 @@ proc commit*(
             inc(i)
     except KeyError as e:
         panic("Couldn't get a value from the table despiting getting the key from .keys(): " & e.msg)
+
+    var unmentioned: string
+    for hash in db.transactions.unmentioned:
+        unmentioned &= hash.toString()
+    items[^1] = (key: UNMENTIONED_TRANSACTIONS(), value: unmentioned)
 
     try:
         db.lmdb.put("transactions", items)
@@ -150,6 +158,7 @@ proc save*(
     tx: Transaction
 ) {.forceCheck: [].} =
     db.put(TRANSACTION(tx.hash), tx.serialize())
+    db.transactions.unmentioned.incl(tx.hash)
 
     for input in tx.inputs:
         try:
@@ -160,6 +169,18 @@ proc save*(
     for o in 0 ..< tx.outputs.len:
         db.put(OUTPUT(tx.hash, o), tx.outputs[o].serialize())
 
+proc mention*(
+    db: DB,
+    hash: Hash[256]
+) {.forceCheck: [].} =
+    db.transactions.unmentioned.excl(hash)
+
+proc unmention*(
+    db: DB,
+    hashes: HashSet[Hash[256]]
+) {.inline, forceCheck: [].} =
+    db.transactions.unmentioned = db.transactions.unmentioned + hashes
+
 proc saveDataSender*(
     db: DB,
     data: Data,
@@ -168,6 +189,22 @@ proc saveDataSender*(
     db.put(DATA_SENDER(data.hash), sender.toString())
 
 #Load functions.
+proc loadUnmentioned*(
+    db: DB
+): seq[Hash[256]] {.forceCheck: [].} =
+    var unmentioned: string
+    try:
+        unmentioned = db.get(UNMENTIONED_TRANSACTIONS())
+    except DBReadError:
+        return
+
+    result = newSeq[Hash[256]](unmentioned.len div 32)
+    for h in 0 ..< result.len:
+        try:
+            result[h] = unmentioned[h * 32 ..< (h + 1) * 32].toHash(256)
+        except ValueError as e:
+            panic("Couldn't create a 32-byte hash out of a 32-byte value: " & e.msg)
+
 proc load*(
     db: DB,
     hash: Hash[256]
@@ -390,6 +427,9 @@ proc prune*(
     #Delete if its verified.
     db.del(VERIFIED_TRANSACTION(hash))
 
+    #Delete if its unmentioned.
+    db.transactions.unmentioned.excl(hash)
+
     #Remove it as a spender.
     var hashStr: string = hash.toString()
     for i in 0 ..< tx.inputs.len:
@@ -401,7 +441,8 @@ proc prune*(
 
         for h in countup(0, spenders.len - 1, 32):
             if spenders[h ..< h + 32] == hashStr:
-                spenders = spenders[0 ..< h] & spenders[h ..< spenders.len]
+                spenders = spenders[0 ..< h] & spenders[h + 32 ..< spenders.len]
+                break
 
         db.put(OUTPUT_SPENDERS(tx.inputs[i]), spenders)
 

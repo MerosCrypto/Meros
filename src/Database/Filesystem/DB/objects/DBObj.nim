@@ -18,6 +18,7 @@ type
     TransactionsDB* = ref object
         cache*: Table[string, string]
         deleted*: HashSet[string]
+        unmentioned*: HashSet[Hash[256]]
 
     ConsensusDB* = ref object
         cache*: Table[string, string]
@@ -42,7 +43,8 @@ type
 proc newTransactionsDB(): TransactionsDB {.inline, forceCheck: [].} =
     TransactionsDB(
         cache: initTable[string, string](),
-        deleted: initHashSet[string]()
+        deleted: initHashSet[string](),
+        unmentioned: initHashSet[Hash[256]]()
     )
 
 proc newConsensusDB(): ConsensusDB {.inline, forceCheck: [].} =

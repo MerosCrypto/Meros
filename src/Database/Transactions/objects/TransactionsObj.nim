@@ -25,12 +25,11 @@ import sets
 #Tables standard library.
 import tables
 
-type
-    Transactions* = object
-        #DB Function Box.
-        db: DB
-        #Transactions which have yet to leave Epochs.
-        transactions*: Table[Hash[256], Transaction]
+type Transactions* = object
+    #DB Function Box.
+    db: DB
+    #Transactions which have yet to leave Epochs.
+    transactions*: Table[Hash[256], Transaction]
 
 #Get a Data's sender.
 proc getSender*(
@@ -122,9 +121,9 @@ proc newTransactionsObj*(
     )
 
     #Load the Transactions from the DB.
-    var mentioned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
     try:
         #Find which Transactions were mentioned before the last 5 blocks.
+        var mentioned: HashSet[Hash[256]] = initHashSet[Hash[256]]()
         for b in max(0, blockchain.height - 10) ..< blockchain.height - 5:
             for packet in blockchain[b].body.packets:
                 mentioned.incl(packet.hash)
@@ -142,6 +141,15 @@ proc newTransactionsObj*(
                 except DBReadError as e:
                     panic("Couldn't load a Transaction from the Database: " & e.msg)
                 mentioned.incl(packet.hash)
+
+        #Load the unmentioned Transactions.
+        for hash in db.loadUnmentioned():
+            try:
+                result.add(db.load(hash), false)
+            except ValueError as e:
+                panic("Adding a reloaded unmentioned Transaction raised a ValueError: " & e.msg)
+            except DBReadError as e:
+                panic("Couldn't load an unmentioned Transaction from the Database: " & e.msg)
     except IndexError as e:
         panic("Couldn't load hashes from the Blockchain while reloading Transactions: " & e.msg)
 
@@ -154,6 +162,13 @@ proc getUTXOs*(
         result = transactions.db.loadSpendable(key)
     except DBReadError:
         result = @[]
+
+#Mark a Transaction as mentioned.
+proc mention*(
+    transactions: Transactions,
+    hash: Hash[256]
+) {.inline, forceCheck: [].} =
+    transactions.db.mention(hash)
 
 #Mark a Transaction as verified, removing the outputs it spends from spendable.
 proc verify*(
@@ -180,6 +195,13 @@ proc unverify*(
         panic("Tried to mark a non-existent Transaction as verified: " & e.msg)
 
     transactions.db.unverify(tx)
+
+#Mark Transactions as unmentioned.
+proc unmention*(
+    transactions: Transactions,
+    hashes: HashSet[Hash[256]]
+) {.inline, forceCheck: [].} =
+    transactions.db.unmention(hashes)
 
 #Delete a hash from the cache.
 func del*(

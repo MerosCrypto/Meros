@@ -12,7 +12,7 @@ export Data
 #Macros standard lib.
 import macros
 
-#Custom Element case statement.
+#Custom Transaction case statement.
 macro match*(
     tx: Transaction
 ): untyped =
@@ -49,7 +49,7 @@ macro match*(
                             branch[0][1],
                             newNimNode(nnkCast).add(
                                 branch[0][1],
-                                newIdentNode(symbol.strVal)
+                                symbol
                             )
                         )
                     )
