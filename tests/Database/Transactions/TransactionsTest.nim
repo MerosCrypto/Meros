@@ -87,6 +87,8 @@ suite "Transactions":
 
             #Copy of Transactions.
             txs: Table[Hash[256], Transaction] = initTable[Hash[256], Transaction]()
+            #HashSet of the reverted Mints.
+            revertedMints: HashSet[Hash[256]] = initHashSet[Hash[256]]()
             #Mapping of Transaction to Mint trees.
             mintTrees: Table[Hash[256], HashSet[Hash[256]]] = initTable[Hash[256], HashSet[Hash[256]]]()
             #Data Tips.
@@ -229,14 +231,11 @@ suite "Transactions":
                 #Verify finalized Transactions are untouched.
                 if first[tx.hash] <= 5:
                     compare(transactions[tx.hash], tx)
-                #Verify the Datas are in the cache.
-                elif tx of Data:
-                    compare(transactions.transactions[tx.hash], tx)
-                #Verify Claims/Sends which don't have a mint > 10 are in the cache.
+                #Verify Claims/Sends (which don't have a mint > 10) and Datas are in the cache.
                 elif (
                     ((tx of Claim) or (tx of Send)) and
-                    (first[tx.hash] < 10)
-                ):
+                    ((mintTrees[tx.hash] * revertedMints).len == 0)
+                ) or (tx of Data):
                     compare(transactions.transactions[tx.hash], tx)
                 #Verify everything else was pruned.
                 else:
@@ -250,8 +249,16 @@ suite "Transactions":
             for b in 10 ..< 30:
                 #Add back the Transactions.
                 for packet in blocks[b - 1].body.packets:
-                    if transactions.transactions.hasKey(packet.hash):
+                    #Since we already verified:
+                    #- The correct Transactions were pruned.
+                    #- The correct Transactions are in the cache.
+                    #- The correct Transactions are in the database,
+                    #This is fine.
+                    try:
+                        discard transactions[packet.hash]
                         continue
+                    except IndexError:
+                        discard
 
                     var tx: Transaction = txs[packet.hash]
                     case tx:
@@ -293,7 +300,7 @@ suite "Transactions":
 
 
     test "Reloaded and reverted transactions.":
-        for _ in 0 ..< 30:
+        for b in 1 .. 30:
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
                 var password: string = $char(wallets.len)
@@ -383,6 +390,9 @@ suite "Transactions":
                 ))
                 holder.sign(claims[^1])
             transactions.mint(newBlock.header.hash, rewards[newBlock.header.hash])
+
+            if b >= 10:
+                revertedMints.incl(newBlock.header.hash)
 
             #Commit the DB.
             commit(merit.blockchain.height)
