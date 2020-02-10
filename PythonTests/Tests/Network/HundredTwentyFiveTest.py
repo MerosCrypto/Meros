@@ -22,7 +22,7 @@ def HundredTwentyFiveTest(
     lanIP = lanIPFinder.getsockname()[0]
     lanIPFinder.close()
 
-    if lanIP[0 : 4] != "192.":
+    if not (lanIP.split(".")[0] in {"10", "172", "192"}):
         raise Exception("Failed to get the LAN IP.")
 
     #Blockchain. Solely used to get the genesis Block hash.
