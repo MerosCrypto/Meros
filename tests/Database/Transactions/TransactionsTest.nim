@@ -344,7 +344,6 @@ suite "Transactions":
             #Create a random amount of Wallets.
             for _ in 0 ..< rand(2) + 2:
                 var password: string = $char(wallets.len)
-                while true:
                 wallets.add(newWallet(""))
                 walletsLookup[wallets[^1].publicKey] = wallets.len - 1
 
@@ -503,6 +502,7 @@ suite "Transactions":
 
         #Revert the entire DAG to Block 10.
         transactions.revert(merit.blockchain, 10)
+        merit.blockchain.revert(merit.state, 10)
         verify()
 
         #Replay every Block/Transaction again.
