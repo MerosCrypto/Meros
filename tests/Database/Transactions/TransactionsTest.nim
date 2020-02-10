@@ -156,7 +156,7 @@ suite "Transactions":
             for w in 0 ..< wallets.len:
                 var o: int = 0
                 while o < revertedSpendable[w].len:
-                    if symmetricDifference(mintTrees[revertedSpendable[w][o].hash], reverted).len == 0:
+                    if (mintTrees[revertedSpendable[w][o].hash] * reverted).len != 0:
                         if not alreadyReverted.contains(revertedSpendable[w][o].hash):
                             alreadyReverted.incl(revertedSpendable[w][o].hash)
 
@@ -176,6 +176,23 @@ suite "Transactions":
                         revertedSpendable[w].del(o)
                         continue
                     inc(o)
+
+        #Sort the UTXOs.
+        proc sortUTXOs(
+            x: FundedInput,
+            y: FundedInput
+        ): int =
+            if x.hash < y.hash:
+                return -1
+            elif x.hash == y.hash:
+                if x.nonce < y.nonce:
+                    return -1
+                elif x.nonce == y.nonce:
+                    check(false)
+                else:
+                    return 1
+            else:
+                return 1
 
         #Verify the Transactions DB pruned the right trees.
         proc verify() =
@@ -199,21 +216,6 @@ suite "Transactions":
                 check(inputs.len == revertedSpendable[w].len)
 
                 #Sort the UTXOs.
-                proc sortUTXOs(
-                    x: FundedInput,
-                    y: FundedInput
-                ): int =
-                    if x.hash < y.hash:
-                        return -1
-                    elif x.hash == y.hash:
-                        if x.nonce < y.nonce:
-                            return -1
-                        elif x.nonce == y.nonce:
-                            check(false)
-                        else:
-                            return 1
-                    else:
-                        return 1
                 inputs.sort(sortUTXOs)
                 revertedSpendable[w].sort(sortUTXOs)
 
@@ -326,6 +328,11 @@ suite "Transactions":
             #Verify spendable.
             for w in 0 ..< wallets.len:
                 var inputs: seq[FundedInput] = transactions.getUTXOs(wallets[w].publicKey)
+
+                #Sort the UTXOs.
+                inputs.sort(sortUTXOs)
+                spendable[w].sort(sortUTXOs)
+
                 check(inputs.len == spendable[w].len)
                 for i in 0 ..< inputs.len:
                     check(inputs[i].hash == spendable[w][i].hash)
