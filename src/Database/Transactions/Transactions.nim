@@ -179,11 +179,11 @@ proc add*(
     for output in send.outputs:
         if output.amount == 0:
             raise newLoggedException(ValueError, "Send output has an amount of 0.")
+        if amount < output.amount:
+            raise newLoggedException(ValueError, "Send underflows.")
 
         amount -= output.amount
 
-    #If the amount is not 9, there's a problem
-    #It should be noted, amount can underflow. It's impossible to spend the full underflow.
     if amount != 0:
         raise newLoggedException(ValueError, "Send outputs don't spend the amount provided by the inputs.")
 
