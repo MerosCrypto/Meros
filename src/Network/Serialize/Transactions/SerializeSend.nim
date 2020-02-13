@@ -21,11 +21,12 @@ export SerializeTransaction
 method serializeHash*(
     send: Send
 ): string {.forceCheck: [].} =
-    result = "\2"
+    result = "\2" & char(send.inputs.len)
     for input in send.inputs:
         result &=
             input.hash.toString() &
             cast[FundedInput](input).nonce.toBinary(BYTE_LEN)
+    result &= char(send.outputs.len)
     for output in send.outputs:
         result &=
             cast[SendOutput](output).key.toString() &

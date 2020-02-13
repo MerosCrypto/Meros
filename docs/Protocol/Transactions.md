@@ -55,7 +55,7 @@ Every output's key must be an Ed25519 Public Key. The specified key does not nee
 
 The amount sent in the transaction must be less than (2 ^ 64) - 1. The sum of the amount of every output must be equal to the sum of the amount of every input.
 
-Send hashes are defined as `Blake2b-256("\2" + inputs[0] + ... + inputs[n] + outputs[0] + ... outputs[n])`, where every input takes up 33 bytes (the 32-byte hash and 1-byte output index) and every output takes up 40 bytes (the 32-byte key and 8-byte amount).
+Send hashes are defined as `Blake2b-256("\2" + inputs.length + inputs[0] + ... + inputs[n] + outputs.length + outputs[0] + ... outputs[n])`, where the inputs length takes up 1 byte, every input takes up 33 bytes (the 32-byte hash and 1-byte output index), the outputs length takes up 1 byte, and every output takes up 40 bytes (the 32-byte key and 8-byte amount).
 
 The signature must be the signature produced by the sender signing the hash.
 

@@ -26,7 +26,16 @@ class Send(
     ) -> None:
         self.inputs: List[Tuple[bytes, int]] = inputs
         self.outputs: List[Tuple[bytes, int]] = outputs
-        self.hash = blake2b(b"\2" + self.serializeInputs() + self.serializeOutputs(), digest_size=32).digest()
+        self.hash = blake2b(
+            (
+                b"\2" +
+                len(self.inputs).to_bytes(1, "big") +
+                self.serializeInputs() +
+                len(self.outputs).to_bytes(1, "big") +
+                self.serializeOutputs()
+            ),
+            digest_size=32
+        ).digest()
 
         self.signature: bytes = signature
 
