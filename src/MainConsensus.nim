@@ -329,7 +329,7 @@ proc mainConsensus() {.forceCheck: [].} =
             DataExists
         ], async.} =
             #Print that we're adding the MeritRemoval.
-            logInfo "New Merit Removal", holder = mr.holder
+            logInfo "New Merit Removal", holder = mr.holder, reason = mr.reason
 
             try:
                 await syncMeritRemovalTransactions(mr)
@@ -357,7 +357,7 @@ proc mainConsensus() {.forceCheck: [].} =
             finally:
                 release(smrLock)
 
-            logInfo "Added Merit Removal", holder = mr.holder
+            logInfo "Added Merit Removal", holder = mr.holder, reason = mr.reason
 
             #Broadcast the first MeritRemoval.
             try:

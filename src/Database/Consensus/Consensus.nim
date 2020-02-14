@@ -231,6 +231,15 @@ proc flag*(
     if not consensus.malicious.hasKey(removal.holder):
         consensus.malicious[removal.holder] = @[]
 
+    #Return the MeritRemoval if it's already flagged.
+    try:
+        for mr in consensus.malicious[removal.holder]:
+            if removal.reason == mr.reason:
+                logDebug "We already have this MR"
+                return
+    except KeyError as e:
+        doAssert(false, "Failed to get the MeritRemovals for a holder which just had their seq created: " & e.msg)
+
     #Save the MeritRemoval to the database.
     consensus.db.save(removal)
 
@@ -644,14 +653,34 @@ proc add*(
 #This also removes any votes they may have in the SpamFilter.
 proc remove*(
     consensus: Consensus,
-    holder: uint16,
+    mr: MeritRemoval,
     merit: int
 ) {.forceCheck: [].} =
-    consensus.malicious.del(holder)
-    consensus.db.deleteMaliciousProofs(holder)
+    logInfo "Archiving Merit Removal", holder = mr.holder, reason = mr.reason
 
-    consensus.filters.send.remove(holder, merit)
-    consensus.filters.data.remove(holder, merit)
+    #If the MeritRemoval was first found in a Block, it won't be in the cache or DB.
+    var found: bool = false
+    try:
+        var m: int = 0
+        while m < consensus.malicious[mr.holder].len:
+            if mr.reason == consensus.malicious[mr.holder][m].reason:
+                consensus.malicious[mr.holder].del(m)
+                found = true
+                break
+            inc(m)
+
+        if consensus.malicious[mr.holder].len == 0:
+            consensus.malicious.del(mr.holder)
+    except KeyError as e:
+        doAssert(false, "Tried to remove Merit from a holder without any Merit Removals: " & e.msg)
+    except IndexError as e:
+        doAssert(false, "Tried to remove a Merit Removal from a holder without that Merit Removal: " & e.msg)
+
+    if found:
+        consensus.db.deleteMaliciousProof(mr)
+
+    consensus.filters.send.remove(mr.holder, merit)
+    consensus.filters.data.remove(mr.holder, merit)
 
 #Get a Transaction's unfinalized parents.
 proc getUnfinalizedParents(

@@ -71,7 +71,7 @@ suite "Consensus":
             )
 
             #Currently have Merit Removals.
-            malicious: seq[uint16] = @[]
+            malicious: Table[uint16, seq[MeritRemoval]] = initTable[uint16, seq[MeritRemoval]]()
 
         #Create 100 Merit Holders.
         for h in 0 ..< 100:
@@ -103,13 +103,20 @@ suite "Consensus":
                 dataDiff.holder = removal.holder
 
                 consensus.flag(merit.blockchain, merit.state, removal)
-                if not malicious.contains(removal.holder):
-                    malicious.add(removal.holder)
+                if malicious.hasKey(removal.holder):
+                    malicious[removal.holder].add(removal)
+                else:
+                    malicious[removal.holder] = @[cast[MeritRemoval](removal)]
 
-            #Remove an existing holder's MeritRemovals.
-            var toRemove: int = rand(malicious.len - 1)
-            consensus.remove(malicious[toRemove], 0)
-            malicious.del(toRemove)
+            #Remove random MeritRemovals.
+            for holder in malicious.keys():
+                var mr: int = 0
+                while mr < malicious[holder].len:
+                    if rand(1) == 0:
+                        consensus.remove(malicious[holder][mr], 0)
+                        malicious[holder].del(mr)
+                        continue
+                    inc(mr)
 
             #Reload Consensus.
             var reloaded: Consensus = newConsensus(
@@ -201,11 +208,11 @@ suite "Consensus":
                 )
 
             #Check who has their Merit removed.
-            var removed: set[uint16] = {}
+            var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
             for elem in mining.body.elements:
                 if elem of MeritRemoval:
                     consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-                    removed.incl(elem.holder)
+                    removed[elem.holder] = cast[MeritRemoval](elem)
 
             #Add a Block to the Blockchain to generate a holder.
             merit.processBlock(mining)
@@ -224,8 +231,8 @@ suite "Consensus":
             consensus.archive(merit.state, mining.body.packets, mining.body.elements, epoch, incd, decd)
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
-            for removee in removed:
-                consensus.remove(removee, rewardsState[removee])
+            for removee in removed.keys():
+                consensus.remove(removed[removee], rewardsState[removee])
 
             #Add the elements.
             for elem in elements:

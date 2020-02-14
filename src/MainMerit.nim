@@ -165,11 +165,11 @@ proc mainMerit() {.forceCheck: [].} =
                 functions.consensus.addVerificationPacket(packet)
 
             #Check who has their Merit removed.
-            var removed: set[uint16] = {}
+            var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
             for elem in newBlock.body.elements:
                 if elem of MeritRemoval:
                     consensus.flag(merit.blockchain, merit.state, cast[MeritRemoval](elem))
-                    removed.incl(elem.holder)
+                    removed[elem.holder] = cast[MeritRemoval](elem)
 
             #Add the Block to the Blockchain.
             merit.processBlock(newBlock)
@@ -190,8 +190,11 @@ proc mainMerit() {.forceCheck: [].} =
             consensus.archive(merit.state, newBlock.body.packets, newBlock.body.elements, epoch, incd, decd)
 
             #Have the Consensus handle every person who suffered a MeritRemoval.
-            for removee in removed:
-                consensus.remove(removee, rewardsState[removee])
+            try:
+                for removee in removed.keys():
+                    consensus.remove(removed[removee], rewardsState[removee])
+            except KeyError as e:
+                doAssert(false, "Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
 
             #Add every Element.
             for elem in elements:

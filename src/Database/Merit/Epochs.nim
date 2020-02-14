@@ -5,8 +5,9 @@ when not defined(merosTests):
     #Hash lib.
     import ../../lib/Hash
 
-#VerificationPacket object.
+#VerificationPacket and MeritRemoval object.
 import ../Consensus/Elements/objects/VerificationPacketObj
+import ../Consensus/Elements/objects/MeritRemovalObj
 
 #Block, Blockcain, and State lib.
 import Block
@@ -87,7 +88,7 @@ proc newEpochs*(
 proc calculate*(
     epoch: Epoch,
     state: var State,
-    removed: set[uint16]
+    removed: Table[uint16, MeritRemoval]
 ): seq[Reward] {.forceCheck: [].} =
     #If the epoch is empty, do nothing.
     if epoch.len == 0:
@@ -111,7 +112,7 @@ proc calculate*(
         try:
             #Iterate over every holder who verified a tx.
             for holder in epoch[tx]:
-                if not removed.contains(holder):
+                if not removed.hasKey(holder):
                     #Add their Merit to the Transaction's weight.
                     weight += state[holder]
         except KeyError as e:
@@ -135,7 +136,7 @@ proc calculate*(
         return @[]
 
     #Multiply every score by how much Merit the holder has.
-    for malicious in removed:
+    for malicious in removed.keys():
         scores.del(malicious)
 
     try:

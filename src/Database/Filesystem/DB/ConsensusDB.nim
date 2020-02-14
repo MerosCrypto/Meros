@@ -432,18 +432,38 @@ proc deleteSignature*(
     db.del(SIGNATURE(holder, nonce))
     db.del(SIGNATURE(holder, nonce))
 
-#Delete malicious proofs for a holder.
-proc deleteMaliciousProofs*(
+#Delete a malicious proof for a holder.
+proc deleteMaliciousProof*(
     db: DB,
-    holder: uint16
+    mr: MeritRemoval
 ) {.forceCheck: [].} =
+    var proofs: int
     try:
-        var proofs: int = db.get(HOLDER_MALICIOUS_PROOFS(holder)).fromBinary()
-        db.del(HOLDER_MALICIOUS_PROOFS(holder))
-        for p in 0 .. proofs:
-            db.del(HOLDER_MALICIOUS_PROOF(holder, p))
-    except DBReadError:
-        discard
+        #Get the proof count and updae it.
+        proofs = db.get(HOLDER_MALICIOUS_PROOFS(mr.holder)).fromBinary()
+        if proofs == 0:
+            db.del(HOLDER_MALICIOUS_PROOFS(mr.holder))
+        else:
+            db.put(HOLDER_MALICIOUS_PROOFS(mr.holder), (proofs - 1).toBinary())
+    except DBReadError as e:
+        doAssert(false, "Couldn't get the amount of malicious proofs a holder has when deleting one: " & e.msg)
+
+    try:
+        #Find the proof we're deleting.
+        for p in 0 ..< proofs:
+            try:
+                if db.get(HOLDER_MALICIOUS_PROOF(mr.holder, p)).parseMeritRemoval().reason == mr.reason:
+                    db.put(HOLDER_MALICIOUS_PROOF(mr.holder, p), db.get(HOLDER_MALICIOUS_PROOF(mr.holder, proofs)))
+                    break
+            except ValueError as e:
+                panic("Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
+    except DBReadError as e:
+        doAssert(false, "Couldn't load a malicious proof of a holder when deleting one: " & e.msg)
+
+    #Delete the last proof.
+    #If we haven't found the proof already, it is the last proof.
+    #If we did find it, we moved the last proof to its place.
+    db.del(HOLDER_MALICIOUS_PROOF(mr.holder, proofs))
 
 #Check if a MeritRemoval exists.
 proc hasMeritRemoval*(
