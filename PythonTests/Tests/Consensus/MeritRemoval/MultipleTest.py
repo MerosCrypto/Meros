@@ -1,7 +1,7 @@
 #Tests proper creation and handling of multiple MeritRemovals when Meros receives multiple causes for a MeritRemoval.
 
 #Types.
-from typing import Dict, IO, Any
+from typing import Dict, List, IO, Any
 
 #SignedMeritRemoval class.
 from PythonTests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
@@ -10,7 +10,6 @@ from PythonTests.Classes.Consensus.MeritRemoval import SignedMeritRemoval
 from PythonTests.Tests.Errors import TestError
 
 #Meros classes.
-from PythonTests.Meros.Meros import MessageType
 from PythonTests.Meros.RPC import RPC
 from PythonTests.Meros.Liver import Liver
 from PythonTests.Meros.Syncer import Syncer
