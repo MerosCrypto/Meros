@@ -248,9 +248,9 @@ suite "Transactions":
                         discard
 
             #Add back each Block and its Transactions.
-            for b in 10 .. 30:
+            for b in 9 ..< blocks.len:
                 #Add back the Transactions.
-                for packet in blocks[b - 1].body.packets:
+                for packet in blocks[b].body.packets:
                     #Since we already verified:
                     #- The correct Transactions were pruned.
                     #- The correct Transactions are in the cache.
@@ -281,13 +281,14 @@ suite "Transactions":
                     transactions.verify(tx.hash)
 
                 #Add back the Block.
-                merit.processBlock(blocks[b - 1])
+                merit.processBlock(blocks[b])
 
                 #Archive the Epoch.
                 transactions.archive(newBlock, merit.postProcessBlock()[0])
 
                 #Mint Meros.
-                transactions.mint(blocks[b - 1].header.hash, rewards[blocks[b - 1].header.hash])
+                if b != blocks.len - 1:
+                    transactions.mint(blocks[b].header.hash, rewards[blocks[b].header.hash])
 
                 #Commit the DB.
                 commit(merit.blockchain.height)
@@ -482,7 +483,10 @@ suite "Transactions":
             packets = packets,
             time = merit.blockchain.tail.header.time + 1
         )
+        merit.processBlock(newBlock)
         blocks.add(newBlock)
+        transactions.archive(newBlock, merit.postProcessBlock()[0])
+        commit(merit.blockchain.height)
 
         #Create a copy of spendable for every wallet.
         for w in 0 ..< wallets.len:
