@@ -33,10 +33,12 @@ proc add*(
     if status.holders.contains(verif.holder):
         raise newLoggedException(DataExists, "Verification was already added.")
 
-    #Add the Verification to the pending packet.
-    status.pending.add(verif)
     #Add the holder to holders.
     status.holders.incl(verif.holder)
+    status.pending.incl(verif.holder)
+
+    #Add the Verification to the pending packet.
+    status.packet.add(verif)
     #Cache the signature.
     status.signatures[verif.holder] = verif.signature
 
@@ -44,39 +46,31 @@ proc add*(
 #This is used to add a VerificationPacket from a Block.
 proc add*(
     status: TransactionStatus,
-    packet: VerificationPacket
+    archived: VerificationPacket
 ) {.forceCheck: [].} =
-    #Don't change the status of finalized Transactions.
-    if status.merit != -1:
-        return
-
-    #Mark the holders in the table.
-    for holder in packet.holders:
+    #Mark the holders in the sets.
+    for holder in archived.holders:
         status.holders.incl(holder)
+        status.pending.excl(holder)
+        status.signatures.del(holder)
 
     var
-        #Grab the pending packet.
-        pending: SignedVerificationPacket = status.pending
+        #Grab the existing pending packet.
+        packet: SignedVerificationPacket = status.packet
         #List of signatures to aggregate for the new pending.
         signatures: seq[BLSSignature] = @[]
-        #Holder we're currently working with.
-        holder: uint16
 
-    #Clear pending.
-    status.pending = newSignedVerificationPacketObj(status.pending.hash)
+    #Regenerate the pending packet.
+    status.packet = newSignedVerificationPacketObj(packet.hash)
     #Find holders the new packet is missing.
-    for h in 0 ..< pending.holders.len:
-        holder = pending.holders[h]
-        if packet.holders.contains(holder):
-            status.signatures.del(holder)
-        else:
-            #If the new packet is missing holders, add the holder to the recreated pending.
-            status.pending.holders.add(holder)
-            #Add their signature to the signature seq.
+    for holder in packet.holders:
+        #Add the holder, if they weren't archived.
+        if status.pending.contains(holder):
+            status.packet.holders.add(holder)
             try:
                 signatures.add(status.signatures[holder])
             except KeyError as e:
                 panic("Couldn't create a new pending VerificaionPacket due to missing signatures: " & e.msg)
 
     #Aggregate and set the signature.
-    status.pending.signature = signatures.aggregate()
+    status.packet.signature = signatures.aggregate()

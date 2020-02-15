@@ -39,11 +39,12 @@ proc compare*(
 
     #Compare the Transaction's holders.
     check(symmetricDifference(ts1.holders, ts2.holders).len == 0)
+    check(symmetricDifference(ts1.pending, ts2.pending).len == 0)
 
     #Compare the pending VerificationPackets.
-    compare(ts1.pending, ts2.pending)
+    compare(ts1.packet, ts2.packet)
 
-    #Compare the pending signatures table.
+    #Compare the signatures table.
     check(ts1.signatures.len == ts2.signatures.len)
     for h in ts1.signatures.keys():
         check(ts1.signatures[h] == ts2.signatures[h])

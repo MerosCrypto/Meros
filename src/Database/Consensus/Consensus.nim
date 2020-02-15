@@ -713,20 +713,9 @@ proc archive*(
     incd: uint16,
     decd: int
 ) {.forceCheck: [].} =
-    try:
-        for packet in shifted:
-            #Delete every mentioned hash in the Block from unmentioned.
-            consensus.unmentioned.excl(packet.hash)
-
-            #Clear the Status's pending VerificationPacket.
-            var status: TransactionStatus = consensus.getStatus(packet.hash)
-            status.pending = newSignedVerificationPacketObj(packet.hash)
-            status.signatures = initTable[uint16, BLSSignature]()
-
-            #Since this is a ref, we don't need to set it back.
-            #We would if it needed to be saved to the DB, but the pending data isn't.
-    except IndexError as e:
-        panic("Newly archived Transaction doesn't have a TransactionStatus: " & e.msg)
+    #Delete every mentioned hash in the Block from unmentioned.
+    for packet in shifted:
+        consensus.unmentioned.excl(packet.hash)
 
     #Update the Epoch for every unmentioned Transaction.
     for hash in consensus.unmentioned:

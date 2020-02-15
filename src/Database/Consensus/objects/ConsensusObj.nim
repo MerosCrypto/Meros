@@ -406,6 +406,11 @@ proc finalize*(
             consensus.functions.transactions.prune(tree[h])
         return
 
+    #Clear the pending/signature data.
+    status.pending = initHashSet[uint16]()
+    status.packet = newSignedVerificationPacketObj(status.packet.hash)
+    status.signatures = initTable[uint16, BLSSignature]()
+
     #Save the status.
     #This will cause a double save for the finalized TX in the unverified case.
     consensus.db.save(hash, status)
@@ -421,9 +426,9 @@ proc getPending*(
 ] {.forceCheck: [].} =
     var included: HashSet[Hash[256]] = initHashSet[Hash[256]]()
     for status in consensus.statuses.values():
-        if status.pending.holders.len != 0:
-            result.packets.add(status.pending)
-            included.incl(status.pending.hash)
+        if status.packet.holders.len != 0:
+            result.packets.add(status.packet)
+            included.incl(status.packet.hash)
 
     var signatures: seq[BLSSignature] = @[]
     try:

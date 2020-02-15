@@ -39,8 +39,10 @@ type TransactionStatus* = ref object
     #Since this an uint16, it could be a set, yet we need to be able to get the set length.
     #Nim's set type doesn't have that functionality.
     holders*: HashSet[uint16]
+    #Pending holders.
+    pending*: HashSet[uint16]
     #Packet for the next Block.
-    pending*: SignedVerificationPacket
+    packet*: SignedVerificationPacket
     #Table of pending holders to their signature.
     signatures*: Table[uint16, BLSSignature]
 
@@ -59,7 +61,8 @@ proc newTransactionStatusObj*(
         beaten: false,
 
         holders: initHashSet[uint16](),
-        pending: newSignedVerificationPacketObj(hash),
+        pending: initHashSet[uint16](),
+        packet: newSignedVerificationPacketObj(hash),
         signatures: initTable[uint16, BLSSignature](),
 
         merit: -1

@@ -207,6 +207,10 @@ suite "Consensus":
                     aggregate = aggregate
                 )
 
+            #Add every packet.
+            for packet in mining.body.packets:
+                consensus.add(merit.state, packet)
+
             #Check who has their Merit removed.
             var removed: Table[uint16, MeritRemoval] = initTable[uint16, MeritRemoval]()
             for elem in mining.body.elements:
@@ -323,11 +327,8 @@ suite "Consensus":
 
             #Iterate through the existing Epochs to add new Verifications to old Transactions.
             for epoch in merit.epochs:
-                if rand(1) == 0:
-                    continue
-
                 for tx in epoch.keys():
-                    if rand(1) == 0:
+                    if rand(2) == 0:
                         continue
 
                     #Create the packet.
@@ -355,13 +356,6 @@ suite "Consensus":
                     #If no holder was added, delete the packet.
                     if packets[^1].holders == @[]:
                         packets.del(high(packets))
-
-            #Slow but functional.
-            for tx in unsigned:
-                for packet in packets:
-                    if tx == packet.hash:
-                        consensus.add(merit.state, packet)
-                        break
 
             #Add Difficulties.
             var
