@@ -327,8 +327,7 @@ proc unverify*(
 proc finalize*(
     consensus: Consensus,
     state: State,
-    hash: Hash[256],
-    holders: seq[uint16]
+    hash: Hash[256]
 ) {.forceCheck: [].} =
     #Get the Transaction/Status.
     var
@@ -342,8 +341,10 @@ proc finalize*(
 
     #Calculate the final Merit tally.
     status.merit = 0
-    for holder in holders:
-        #Add the Merit.
+    for holder in status.holders:
+        if status.pending.contains(holder):
+            status.holders.excl(holder)
+            continue
         status.merit += state[holder]
 
     #Make sure verified Transaction's Merit is above the node protocol threshold.
@@ -406,12 +407,8 @@ proc finalize*(
             consensus.functions.transactions.prune(tree[h])
         return
 
-    #Clear the pending/signature data.
-    status.pending = initHashSet[uint16]()
-    status.packet = newSignedVerificationPacketObj(status.packet.hash)
-    status.signatures = initTable[uint16, BLSSignature]()
-
     #Save the status.
+    #Saving it, now that it's finalized, will strip all pending/signature data.
     #This will cause a double save for the finalized TX in the unverified case.
     consensus.db.save(hash, status)
     consensus.statuses.del(hash)

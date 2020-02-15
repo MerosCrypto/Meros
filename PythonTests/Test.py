@@ -25,9 +25,10 @@ from PythonTests.Tests.Transactions.FiftyTest import FiftyTest
 from PythonTests.Tests.Transactions.PruneUnaddableTest import PruneUnaddableTest
 from PythonTests.Tests.Transactions.HundredFourtySevenTest import HundredFourtySevenTest
 
-from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.ParsableTest import VParsableTest
+from PythonTests.Tests.Consensus.Verification.UnknownTest import VUnknownTest
 from PythonTests.Tests.Consensus.Verification.CompetingTest import VCompetingTest
+from PythonTests.Tests.Consensus.Verification.HundredFourtyTwoTest import HundredFourtyTwoTest
 
 from PythonTests.Tests.Consensus.Difficulties.SendDifficultyTest import SendDifficultyTest
 from PythonTests.Tests.Consensus.Difficulties.DataDifficultyTest import DataDifficultyTest
@@ -91,9 +92,10 @@ tests: List[Callable[[RPC], None]] = [
     PruneUnaddableTest,
     HundredFourtySevenTest,
 
-    VUnknownTest,
     VParsableTest,
+    VUnknownTest,
     VCompetingTest,
+    HundredFourtyTwoTest,
 
     SendDifficultyTest,
     DataDifficultyTest,

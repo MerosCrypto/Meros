@@ -68,13 +68,11 @@ proc module*(
                 #Get the verifiers and Merit.
                 var
                     verifiers: JSONNode = % []
-                    merit: int = status.merit
-                if merit == -1:
-                    merit = 0
-                    for holder in status.holders:
-                        verifiers.add(% holder)
-                        if not functions.consensus.isMalicious(holder):
-                            merit += functions.merit.getMerit(holder)
+                    merit: int = max(status.merit, 0)
+                for holder in status.holders:
+                    verifiers.add(% holder)
+                    if (status.merit == -1) and (not functions.consensus.isMalicious(holder)):
+                        merit += functions.merit.getMerit(holder)
 
                 res["result"] = %* {
                     "verifiers":  verifiers,

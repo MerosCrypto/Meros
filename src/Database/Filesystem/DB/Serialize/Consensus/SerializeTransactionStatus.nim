@@ -34,7 +34,7 @@ proc serialize*(
     try:
         for holder in status.holders:
             result &= holder.toBinary(NICKNAME_LEN)
-            if status.signatures.hasKey(holder):
+            if (status.merit == -1) and status.signatures.hasKey(holder):
                 result &= char(true)
                 result &= status.signatures[holder].serialize()
             else:
