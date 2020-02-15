@@ -200,7 +200,7 @@ proc revert*(
         try:
             blockchain.db.deleteBlock(b, blockchain[b].body.elements)
         except IndexError:
-            doAssert(false, "Couldn't get a Block's Elements before we deleted it.")
+            panic("Couldn't get a Block's Elements before we deleted it.")
         #Rewind the cache.
         blockchain.rewindCache()
 

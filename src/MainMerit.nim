@@ -194,7 +194,7 @@ proc mainMerit() {.forceCheck: [].} =
                 for removee in removed.keys():
                     consensus.remove(removed[removee], rewardsState[removee])
             except KeyError as e:
-                doAssert(false, "Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
+                panic("Couldn't get the Merit Removal of a holder who just had one archived: " & e.msg)
 
             #Add every Element.
             for elem in elements:

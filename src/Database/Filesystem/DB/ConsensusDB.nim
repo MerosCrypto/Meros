@@ -446,7 +446,7 @@ proc deleteMaliciousProof*(
         else:
             db.put(HOLDER_MALICIOUS_PROOFS(mr.holder), (proofs - 1).toBinary())
     except DBReadError as e:
-        doAssert(false, "Couldn't get the amount of malicious proofs a holder has when deleting one: " & e.msg)
+        panic("Couldn't get the amount of malicious proofs a holder has when deleting one: " & e.msg)
 
     try:
         #Find the proof we're deleting.
@@ -458,7 +458,7 @@ proc deleteMaliciousProof*(
             except ValueError as e:
                 panic("Couldn't parse a MeritRemoval we saved to the database as a malicious proof: " & e.msg)
     except DBReadError as e:
-        doAssert(false, "Couldn't load a malicious proof of a holder when deleting one: " & e.msg)
+        panic("Couldn't load a malicious proof of a holder when deleting one: " & e.msg)
 
     #Delete the last proof.
     #If we haven't found the proof already, it is the last proof.

@@ -468,7 +468,7 @@ proc deleteBlock*(
             try:
                 removals = db.get(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder))
             except DBReadError as e:
-                doAssert(false, "Couldn't get the removals of a holder with a MeritRemoval: " & e.msg)
+                panic("Couldn't get the removals of a holder with a MeritRemoval: " & e.msg)
             if removals.len == INT_LEN:
                 db.del(HOLDER_REMOVALS(cast[MeritRemoval](elem).holder))
             else:

@@ -238,7 +238,7 @@ proc flag*(
                 logDebug "We already have this MR"
                 return
     except KeyError as e:
-        doAssert(false, "Failed to get the MeritRemovals for a holder which just had their seq created: " & e.msg)
+        panic("Failed to get the MeritRemovals for a holder which just had their seq created: " & e.msg)
 
     #Save the MeritRemoval to the database.
     consensus.db.save(removal)
@@ -672,9 +672,9 @@ proc remove*(
         if consensus.malicious[mr.holder].len == 0:
             consensus.malicious.del(mr.holder)
     except KeyError as e:
-        doAssert(false, "Tried to remove Merit from a holder without any Merit Removals: " & e.msg)
+        panic("Tried to remove Merit from a holder without any Merit Removals: " & e.msg)
     except IndexError as e:
-        doAssert(false, "Tried to remove a Merit Removal from a holder without that Merit Removal: " & e.msg)
+        panic("Tried to remove a Merit Removal from a holder without that Merit Removal: " & e.msg)
 
     if found:
         consensus.db.deleteMaliciousProof(mr)

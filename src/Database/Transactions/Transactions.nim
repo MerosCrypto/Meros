@@ -315,7 +315,7 @@ proc revert*(
             for packet in blockchain[b].body.packets:
                 unmentioned.incl(packet.hash)
         except IndexError as e:
-            doAssert(false, "Failed to get a Block we're reverting past: " & e.msg)
+            panic("Failed to get a Block we're reverting past: " & e.msg)
 
         try:
             #Make sure the Block created a Mint.
@@ -344,7 +344,7 @@ proc revert*(
             for packet in blockchain[b].body.packets:
                 unmentioned.excl(packet.hash)
         except IndexError as e:
-            doAssert(false, "Failed to get a Block we're reverting past: " & e.msg)
+            panic("Failed to get a Block we're reverting past: " & e.msg)
 
     #Actually update unmentioned.
     transactions.unmention(unmentioned)
