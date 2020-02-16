@@ -682,6 +682,76 @@ proc remove*(
     consensus.filters.send.remove(mr.holder, merit)
     consensus.filters.data.remove(mr.holder, merit)
 
+    #If the removed MeritRemoval involved a SendDifficulty, DataDifficulty, or GasPrice, we need to:
+    #- Save that the nonce was used.
+    #- Update the difficulties/gas price.
+    var usedNonces: HashSet[int] = consensus.db.loadMeritRemovalNonces(mr.holder)
+    proc updateIfTail(
+        elem: Element
+    ) {.forceCheck: [].} =
+        case elem:
+            of Verification as _:
+                return
+
+            of MeritRemovalVerificationPacket as _:
+                return
+
+            of SendDifficulty as sd:
+                if not usedNonces.contains(sd.nonce):
+                    consensus.db.saveMeritRemovalNonce(mr.holder, sd.nonce)
+                    usedNonces.incl(sd.nonce)
+
+                if sd.nonce == consensus.db.loadSendDifficultyNonce(sd.holder):
+                    var
+                        found: bool = false
+                        other: BlockElement
+                    for n in countdown(sd.nonce - 1, 0):
+                        if usedNonces.contains(n):
+                            continue
+
+                        try:
+                            other = consensus.db.load(sd.holder, n)
+                        except DBReadError as e:
+                            panic("Couldn't grab a BlockElement when iterating down from the last SendDifficulty: " & e.msg)
+                        if other of SendDifficulty:
+                            found = true
+                            consensus.db.override(cast[SendDifficulty](other))
+                            break
+
+                    if not found:
+                        consensus.db.deleteSendDifficulty(sd.holder)
+
+            of DataDifficulty as dd:
+                if not usedNonces.contains(dd.nonce):
+                    consensus.db.saveMeritRemovalNonce(mr.holder, dd.nonce)
+                    usedNonces.incl(dd.nonce)
+
+                if dd.nonce == consensus.db.loadDataDifficultyNonce(dd.holder):
+                    var
+                        found: bool = false
+                        other: BlockElement
+                    for n in countdown(dd.nonce - 1, 0):
+                        if usedNonces.contains(n):
+                            continue
+
+                        try:
+                            other = consensus.db.load(dd.holder, n)
+                        except DBReadError as e:
+                            panic("Couldn't grab a BlockElement when iterating down from the last DataDifficulty: " & e.msg)
+                        if other of DataDifficulty:
+                            found = true
+                            consensus.db.override(cast[DataDifficulty](other))
+                            break
+
+                    if not found:
+                        consensus.db.deleteDataDifficulty(dd.holder)
+
+            else:
+                panic("Archiving a Merit Removal with an unknown Element.")
+
+    updateIfTail(mr.element1)
+    updateIfTail(mr.element2)
+
 #Get a Transaction's unfinalized parents.
 proc getUnfinalizedParents(
     consensus: Consensus,

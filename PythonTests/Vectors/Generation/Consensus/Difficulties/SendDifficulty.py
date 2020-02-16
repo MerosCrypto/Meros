@@ -78,7 +78,7 @@ for _ in range(24):
     print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 #Now that we have aa vote, update our vote.
-sendDiff = SignedSendDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 1)
+sendDiff = SignedSendDifficulty(bytes.fromhex("88" * 32), 1)
 sendDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the new SendDifficulty.
@@ -127,6 +127,25 @@ block.mine(blsPrivKey, blockchain.difficulty())
 #Add it.
 blockchain.add(block)
 print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
+
+#Mine another 50 Blocks.
+for _ in range(50):
+    block = Block(
+        BlockHeader(
+            0,
+            blockchain.last(),
+            bytes(32),
+            1,
+            bytes(4),
+            bytes(32),
+            0,
+            blockchain.blocks[-1].header.time + 1200
+        ),
+        BlockBody()
+    )
+    block.mine(blsPrivKey, blockchain.difficulty())
+    blockchain.add(block)
+    print("Generated SendDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON()

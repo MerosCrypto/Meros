@@ -81,6 +81,8 @@ MeritRemovals have the following fields:
 
 `MeritRemoval` has a variable message length; the 2-byte holder, 1-byte of "\1" if partial or "\0" if not, the 1-byte sign prefix for the first Element, the serialized version of the first Element without the holder, the 1-byte sign prefix for the Element, and the serialized version of the second Element without the holder. If the sign prefix for an Element is "\1", that means it's a VerificationPacket. The VerificationPacket is serialized including every Merit Holder's BLS Public Key, instead of their nickname, without any sorting required. This is to enable MeritRemovals involving holders whose nicknames were lost due to a chain reorganization. None of the included keys may be infinite. Even though MeritRemovals are not directly signed, they use a prefix of "\5" inside a Block Header's content Merkle. That said, `MeritRemoval` is not a standalone message type.
 
+If a same-nonce MeritRemoval occurs, and the Merit Holder regains enough Merit to vote on Send/Data Difficulties, as well as the Gas Price, the regained vote must not use a nonce which has an archived MeritRemoval.
+
 ### SignedVerification, SignedSendDifficulty, SignedDataDifficulty, SignedGasPrice, and SignedMeritRemoval
 
 Every "Signed" object is the same as their non-"Signed" counterpart, except they don't rely on a Block's aggregate signature and have the extra field of:

@@ -69,10 +69,20 @@ template HOLDER_SEND_DIFFICULTY(
 ): string =
     holder.toBinary(NICKNAME_LEN) & "s"
 
+template SEND_DIFFICULTY_NONCE(
+    holder: uint16
+): string =
+    holder.toBinary(NICKNAME_LEN) & "sn"
+
 template HOLDER_DATA_DIFFICULTY(
     holder: uint16
 ): string =
     holder.toBinary(NICKNAME_LEN) & "d"
+
+template DATA_DIFFICULTY_NONCE(
+    holder: uint16
+): string =
+    holder.toBinary(NICKNAME_LEN) & "dn"
 
 template BLOCK_ELEMENT(
     holder: uint16,
@@ -91,11 +101,6 @@ template TRANSACTION(
 ): string =
     hash.toString() & "t"
 
-template MERIT_REMOVAL(
-    mr: MeritRemoval
-): string =
-    mr.reason.toString() & "r"
-
 template MALICIOUS_PROOFS(): string =
     "p"
 
@@ -109,6 +114,16 @@ template HOLDER_MALICIOUS_PROOF(
     nonce: int
 ): string =
     holder.toBinary(NICKNAME_LEN) & nonce.toBinary(INT_LEN) & "p"
+
+template MERIT_REMOVAL(
+    mr: MeritRemoval
+): string =
+    mr.reason.toString() & "r"
+
+template MERIT_REMOVAL_NONCES(
+    holder: uint16
+): string =
+    holder.toBinary(NICKNAME_LEN) & "n"
 
 #Put/Get/Del/Commit for the Consensus DB.
 proc put(
@@ -206,11 +221,26 @@ proc save*(
 ) {.forceCheck: [].} =
     db.put(HOLDER_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
     db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toString())
+    db.put(SEND_DIFFICULTY_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
 
     db.put(
         BLOCK_ELEMENT(sendDiff.holder, sendDiff.nonce),
         char(SEND_DIFFICULTY_PREFIX) & sendDiff.difficulty.toString()
     )
+
+proc override*(
+    db: DB,
+    sendDiff: SendDifficulty
+) {.forceCheck: [].} =
+    db.put(HOLDER_SEND_DIFFICULTY(sendDiff.holder), sendDiff.difficulty.toString())
+    db.put(SEND_DIFFICULTY_NONCE(sendDiff.holder), sendDiff.nonce.toBinary())
+
+proc override*(
+    db: DB,
+    dataDiff: DataDifficulty
+) {.forceCheck: [].} =
+    db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toString())
+    db.put(DATA_DIFFICULTY_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
 
 proc save*(
     db: DB,
@@ -218,6 +248,7 @@ proc save*(
 ) {.forceCheck: [].} =
     db.put(HOLDER_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
     db.put(HOLDER_DATA_DIFFICULTY(dataDiff.holder), dataDiff.difficulty.toString())
+    db.put(DATA_DIFFICULTY_NONCE(dataDiff.holder), dataDiff.nonce.toBinary())
 
     db.put(
         BLOCK_ELEMENT(dataDiff.holder, dataDiff.nonce),
@@ -271,6 +302,19 @@ proc save*(
 ) {.inline, forceCheck: [].} =
     db.put(MERIT_REMOVAL(mr), "")
 
+proc saveMeritRemovalNonce*(
+    db: DB,
+    holder: uint16,
+    nonce: int
+) {.forceCheck: [].} =
+    var existing: string
+    try:
+        existing = db.get(MERIT_REMOVAL_NONCES(holder))
+    except DBReadError:
+        discard
+
+    db.put(MERIT_REMOVAL_NONCES(holder), existing & nonce.toBinary(INT_LEN))
+
 #Load functions.
 proc load*(
     db: DB,
@@ -322,6 +366,15 @@ proc loadSendDifficulty*(
     except DBReadError as e:
         raise e
 
+proc loadSendDifficultyNonce*(
+    db: DB,
+    holder: uint16
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(SEND_DIFFICULTY_NONCE(holder)).fromBinary()
+    except DBReadError:
+        return -1
+
 proc loadDataDifficulty*(
     db: DB,
     holder: uint16
@@ -334,6 +387,15 @@ proc loadDataDifficulty*(
         panic("Couldn't turn a 32-byte value into a 32-byte hash.")
     except DBReadError as e:
         raise e
+
+proc loadDataDifficultyNonce*(
+    db: DB,
+    holder: uint16
+): int {.forceCheck: [].} =
+    try:
+        result = db.get(DATA_DIFFICULTY_NONCE(holder)).fromBinary()
+    except DBReadError:
+        return -1
 
 proc load*(
     db: DB,
@@ -423,6 +485,21 @@ proc loadMaliciousProofs*(
         except DBReadError:
             result.del(holder)
 
+proc loadMeritRemovalNonces*(
+    db: DB,
+    holder: uint16
+): HashSet[int] {.forceCheck: [].} =
+    result = initHashSet[int]()
+
+    var nonces: string
+    try:
+        nonces = db.get(MERIT_REMOVAL_NONCES(holder))
+    except DBReadError:
+        return
+
+    for n in countup(0, nonces.len - 1, INT_LEN):
+        result.incl(nonces[n ..< n + INT_LEN].fromBinary())
+
 #Delete a now-aggregated signature.
 proc deleteSignature*(
     db: DB,
@@ -431,6 +508,22 @@ proc deleteSignature*(
 ) {.inline, forceCheck: [].} =
     db.del(SIGNATURE(holder, nonce))
     db.del(SIGNATURE(holder, nonce))
+
+#Delete a holder's current Send Difficulty.
+proc deleteSendDifficulty*(
+    db: DB,
+    holder: uint16
+) {.forceCheck: [].} =
+    db.del(HOLDER_SEND_DIFFICULTY(holder))
+    db.del(SEND_DIFFICULTY_NONCE(holder))
+
+#Delete a holder's current Data Difficulty.
+proc deleteDataDifficulty*(
+    db: DB,
+    holder: uint16
+) {.forceCheck: [].} =
+    db.del(HOLDER_DATA_DIFFICULTY(holder))
+    db.del(DATA_DIFFICULTY_NONCE(holder))
 
 #Delete a malicious proof for a holder.
 proc deleteMaliciousProof*(

@@ -31,7 +31,19 @@ def DataDifficultyTest(
     def vmr() -> None:
         verifyMeritRemoval(rpc, 52, 52, 0, False)
         vddStarting()
+    def vEarnedBack() -> None:
+        vddStarting()
 
     #Create and execute a Liver/Syncer.
-    Liver(rpc, vectors["blockchain"], callbacks={26: vddStarting, 50: vddEarnedVote, 51: vddVoted, 52: vmr}).live()
+    Liver(
+        rpc,
+        vectors["blockchain"],
+        callbacks={
+            26: vddStarting,
+            50: vddEarnedVote,
+            51: vddVoted,
+            52: vmr,
+            103: vEarnedBack
+        }
+    ).live()
     Syncer(rpc, vectors["blockchain"]).sync()

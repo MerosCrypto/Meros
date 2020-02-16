@@ -31,22 +31,26 @@ blsPrivKey: PrivateKey = PrivateKey(blake2b(b'\0', digest_size=32).digest())
 blsPubKey: PublicKey = blsPrivKey.toPublicKey()
 
 #Create a DataDifficulty.
-dataDiff: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("AA" * 32), 0)
-dataDiff.sign(0, blsPrivKey)
+dataDiffs: List[SignedDataDifficulty] = [
+    SignedDataDifficulty(bytes.fromhex("AA" * 32), 0),
+    SignedDataDifficulty(bytes.fromhex("88" * 32), 1)
+]
+for dataDiff in dataDiffs:
+    dataDiff.sign(0, blsPrivKey)
 
 #Generate a Block containing the DataDifficulty.
 block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [dataDiff]),
+        BlockHeader.createContents([], [dataDiffs[0]]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [dataDiff], dataDiff.signature)
+    BlockBody([], [dataDiffs[0]], dataDiffs[0].signature)
 )
 #Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
@@ -70,63 +74,68 @@ for _ in range(24):
         ),
         BlockBody()
     )
-    #Mine it.
     block.mine(blsPrivKey, blockchain.difficulty())
-
-    #Add it.
     blockchain.add(block)
     print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 #Now that we have aa vote, update our vote.
-dataDiff = SignedDataDifficulty(bytes.fromhex("8888888888888888888888888888888888888888888888888888888888888888"), 1)
-dataDiff.sign(0, blsPrivKey)
-
-#Generate a Block containing the new DataDifficulty.
 block = Block(
     BlockHeader(
         0,
         blockchain.last(),
-        BlockHeader.createContents([], [dataDiff]),
+        BlockHeader.createContents([], [dataDiffs[1]]),
         1,
         bytes(4),
         bytes(32),
         0,
         blockchain.blocks[-1].header.time + 1200
     ),
-    BlockBody([], [dataDiff], dataDiff.signature)
+    BlockBody([], [dataDiffs[1]], dataDiffs[1].signature)
 )
-#Mine it.
 block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
 blockchain.add(block)
 print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
-#Create a MeritRemoval by reusing a nonce.
-competing: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), 1)
-competing.sign(0, blsPrivKey)
-mr: PartialMeritRemoval = PartialMeritRemoval(dataDiff, competing)
+#Create MeritRemovals by reusing nonces.
+for n in range(2):
+    competing: SignedDataDifficulty = SignedDataDifficulty(bytes.fromhex("00" * 32), n)
+    competing.sign(0, blsPrivKey)
+    mr: PartialMeritRemoval = PartialMeritRemoval(dataDiffs[n], competing)
+    block = Block(
+        BlockHeader(
+            0,
+            blockchain.last(),
+            BlockHeader.createContents([], [mr]),
+            1,
+            bytes(4),
+            bytes(32),
+            0,
+            blockchain.blocks[-1].header.time + 1200
+        ),
+        BlockBody([], [mr], mr.signature)
+    )
+    block.mine(blsPrivKey, blockchain.difficulty())
+    blockchain.add(block)
+    print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
-#Generate a Block containing the MeritRemoval.
-block = Block(
-    BlockHeader(
-        0,
-        blockchain.last(),
-        BlockHeader.createContents([], [mr]),
-        1,
-        bytes(4),
-        bytes(32),
-        0,
-        blockchain.blocks[-1].header.time + 1200
-    ),
-    BlockBody([], [mr], mr.signature)
-)
-#Mine it.
-block.mine(blsPrivKey, blockchain.difficulty())
-
-#Add it.
-blockchain.add(block)
-print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
+#Mine another 50 Blocks.
+for _ in range(50):
+    block = Block(
+        BlockHeader(
+            0,
+            blockchain.last(),
+            bytes(32),
+            1,
+            bytes(4),
+            bytes(32),
+            0,
+            blockchain.blocks[-1].header.time + 1200
+        ),
+        BlockBody()
+    )
+    block.mine(blsPrivKey, blockchain.difficulty())
+    blockchain.add(block)
+    print("Generated DataDifficulty Block " + str(len(blockchain.blocks)) + ".")
 
 result: Dict[str, Any] = {
     "blockchain": blockchain.toJSON()
