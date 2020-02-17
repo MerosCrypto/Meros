@@ -4,8 +4,9 @@ import ../../../lib/Errors
 #Hash lib.
 import ../../../lib/Hash
 
-#Wallet lib.
+#Address and Wallet libs.
 import ../../../Wallet/Wallet
+import ../../../Wallet/Address
 
 #MinerWallet lib.
 import ../../../Wallet/MinerWallet
@@ -100,7 +101,7 @@ proc module*(
 ): RPCFunctions {.forceCheck: [].} =
     try:
         newRPCFunctions:
-            #Get Transaction by hash.
+            #Get a Transaction by hash.
             "getTransaction" = proc (
                 res: JSONNode,
                 params: JSONNode
@@ -122,5 +123,38 @@ proc module*(
                     raise newJSONRPCError(-2, "Transaction not found")
                 except ValueError:
                     raise newJSONRPCError(-3, "Invalid hash")
+
+            #Get a key's balance.
+            "getBalance" = proc (
+                res: JSONNode,
+                params: JSONNode
+            ) {.forceCheck: [
+                ParamError
+            ].} =
+                #Verify the parameters.
+                if (
+                    (params.len != 1) or
+                    (params[0].kind != JString)
+                ):
+                    raise newLoggedException(ParamError, "")
+
+                #Get the UTXOs.
+                var utxos: seq[FundedInput]
+                try:
+                    utxos = functions.transactions.getUTXOs(
+                        newEdPublicKey(
+                            cast[string](Address.getEncodedData(params[0].getStr()))
+                        )
+                    )
+                except ValueError:
+                    raise newLoggedException(ParamError, "")
+
+                var balance: uint64 = 0
+                for utxo in utxos:
+                    try:
+                        balance += cast[SendOutput](functions.transactions.getTransaction(utxo.hash).outputs[utxo.nonce]).amount
+                    except IndexError as e:
+                        doAssert(false, "Failed to get a Transaction which was a spendable UTXO: " & e.msg)
+                res["result"] = % $balance
     except Exception as e:
         panic("Couldn't create the Transactions Module: " & e.msg)

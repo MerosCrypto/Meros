@@ -55,6 +55,10 @@ type
             IndexError
         ].}
 
+        getUTXOs*: proc (
+            key: EdPublicKey
+        ): seq[FundedInput] {.inline, raises: [].}
+
         getSpenders*: proc (
             input: Input
         ): seq[Hash[256]] {.inline, raises: [].}

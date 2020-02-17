@@ -48,6 +48,13 @@ The result is an array of objects, each as follows:
 - `hash`  (string)
 - `nonce` (int)
 
+### `getBalance`
+
+`getBalance` replies with the balance of the specified Public Key. It takes in one argument:
+- Hash (string)
+
+The result is a string of the balance.
+
 ### `publishClaim`
 
 `publishClaim` parses the serialized Claim, adds it to the local Transactions DAG, and if it's valid, publishes it. It takes in one argument.

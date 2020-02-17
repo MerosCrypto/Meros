@@ -38,3 +38,10 @@ The result is an object, as follows:
     - `signature` (string)
     - `proof`     (int)
     - `argon`     (string)
+
+### `getBalance`
+
+`getBalance` replies with the balance of the specified address. It takes in one argument:
+- address (string)
+
+The result is a string of the balance.

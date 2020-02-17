@@ -31,12 +31,14 @@ const ARGUMENTS: Table[string, seq[char]] = {
     "consensus_getStatus":         @['b'],
 
     "transactions_getTransaction": @['b'],
+    "transactions_getBalance":     @['s'],
 
     "network_connect":             @['s', 'i'],
     "network_peers":               @[],
 
     "personal_getMiner":           @[],
     "personal_setMnemonic":        @['b', 'b'],
+    "personal_getAddress":         @[],
 
     "personal_send":               @['s', 's'],
     "personal_data":               @['s'],
@@ -103,7 +105,7 @@ if paramCount() >= p:
             of 'b':
                 try:
                     payload["params"].add(% parseHexStr(paramStr(p)).toHex())
-                except ValueError as e:
+                except ValueError:
                     echo "Non-hex value passed at position ", p, "."
                     quit(1)
 

@@ -37,7 +37,7 @@ proc newEdPublicKey*(
     if key.len == 32:
         for i in 0 ..< 32:
             result.data[i] = key[i]
-        #If it's hex...
+    #If it's hex...
     elif key.len == 64:
         try:
             for i in countup(0, 63, 2):

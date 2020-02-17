@@ -196,3 +196,9 @@ proc mainTransactions() {.forceCheck: [].} =
             hash: Hash[256]
         ) {.inline, forceCheck: [].} =
             transactions.prune(hash)
+
+        #Get a key's UTXOs.
+        functions.transactions.getUTXOs = proc (
+            key: EdPublicKey
+        ): seq[FundedInput] {.inline, forceCheck: [].} =
+            transactions.getUTXOs(key)
