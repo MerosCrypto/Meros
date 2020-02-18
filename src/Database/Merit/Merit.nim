@@ -74,3 +74,14 @@ proc postProcessBlock*(
 
     #Have the state process the block.
     (result[1], result[2]) = merit.state.processBlock(merit.blockchain)
+
+#Revert the Blockchain/State/Epochs.
+proc revert*(
+    merit: Merit,
+    height: int
+) {.forceCheck: [].} =
+    #Reverting the Blockchain reverts the State.
+    merit.blockchain.revert(merit.state, height)
+    #We don't have an Epochs reversion algorithm. We just rebuild it.
+    #If the amount of Blocks reverted is greater than the Epochs length, this is faster.
+    merit.epochs = newEpochs(merit.blockchain)

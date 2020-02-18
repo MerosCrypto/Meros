@@ -499,14 +499,14 @@ suite "Transactions":
             transactions.revert(merit.blockchain, merit.blockchain.height - 1)
             revertSpendable()
             verify()
-            merit.blockchain.revert(merit.state, merit.blockchain.height - 1)
+            merit.revert(merit.blockchain.height - 1)
 
         #Replay every Block/Transaction.
         replay()
 
         #Revert the entire DAG to Block 10.
         transactions.revert(merit.blockchain, 10)
-        merit.blockchain.revert(merit.state, 10)
+        merit.revert(10)
         verify()
 
         #Replay every Block/Transaction again.
